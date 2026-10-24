@@ -7,7 +7,7 @@
 
   "TA-004": { "estado": "pendiente" },
 
-  "TA-005": { "estado": "pendiente" },
+  "TA-005": { "estado": "en_curso", "rama": "ta-005-arnes-pruebas" },
 
   "TA-006": { "estado": "pendiente" },
 

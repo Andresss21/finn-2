@@ -2,5 +2,8 @@
   "name": "@finn/web",
   "private": true,
   "version": "0.0.0",
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
 }

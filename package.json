@@ -16,12 +16,26 @@
     "plan:siguiente": "node tools/plan/estado.ts siguiente",
     "plan:anexos": "node tools/plan/anexos.ts --plan docs/08-tareas.md --anexos docs/anexos --negativo",
     "plan:encargo": "node tools/plan/encargo.ts --plan docs/08-tareas.md --docs docs --tarea",
-    "plan:permisos": "node --test tools/plan/permisos.test.ts"
+    "plan:permisos": "node --test tools/plan/permisos.test.ts",
+    "test": "vitest run --project unidad --project escenarios-motor --project contratos --project componentes --passWithNoTests",
+    "test:unidad": "vitest run --project unidad --passWithNoTests",
+    "test:escenarios": "vitest run --project escenarios-motor --passWithNoTests",
+    "test:contratos": "vitest run --project contratos --passWithNoTests",
+    "test:integracion": "vitest run --project integracion --coverage.enabled=false --passWithNoTests",
+    "test:componentes": "vitest run --project componentes --coverage.enabled=false --passWithNoTests",
+    "test:e2e": "node tools/pruebas/e2e.mjs",
+    "bench": "vitest bench --run --project unidad --passWithNoTests",
+    "test:respaldo": "node --test --test-reporter=spec \"tools/respaldo/test/**/*.test.*\""
   },
   "prettier": "@finn/config/prettier",
   "devDependencies": {
     "@finn/config": "workspace:*",
+    "@vitest/browser-playwright": "4.1.12",
+    "@vitest/coverage-v8": "4.1.12",
+    "eslint": "10.13.0",
+    "playwright": "1.56.1",
     "prettier": "3.9.10",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "4.1.12"
   }
 }

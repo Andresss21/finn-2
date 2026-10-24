@@ -1,0 +1,3 @@
+const t = new Date('2026-01-15T12:00:00Z');
+const u = Date.parse('2026-01-15');
+await page.waitForSelector('#listo');

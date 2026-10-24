@@ -5,6 +5,11 @@
   "type": "module",
   "exports": {
     "./tsconfig.base.json": "./tsconfig.base.json",
-    "./prettier": "./prettier.config.mjs"
+    "./prettier": "./prettier.config.mjs",
+    "./eslint/pruebas": "./eslint/pruebas.mjs"
+  },
+  "dependencies": {
+    "eslint-plugin-playwright": "2.12.1",
+    "typescript-eslint": "8.72.0"
   }
 }
