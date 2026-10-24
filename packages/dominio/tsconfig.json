@@ -1,0 +1,4 @@
+{
+  "extends": "@finn/config/tsconfig.base.json",
+  "include": ["src", "escenarios"]
+}

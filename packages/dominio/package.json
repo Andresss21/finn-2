@@ -1,0 +1,18 @@
+{
+  "name": "@finn/dominio",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./valores": "./src/valores/index.ts",
+    "./escenarios": "./escenarios/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@finn/config": "workspace:*",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules
+pnpm-lock.yaml
+generado
+_entrada
+.claude
+supabase/config.toml
+*.md

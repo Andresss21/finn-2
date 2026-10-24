@@ -1,0 +1,8 @@
+packages:
+  - apps/web
+  - packages/dominio
+  - packages/db
+  - packages/aplicacion
+  - packages/sms
+  - packages/conciliacion
+  - packages/config
