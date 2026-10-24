@@ -9,7 +9,7 @@
 
   "TA-005": { "estado": "terminada", "pr": 3 },
 
-  "TA-006": { "estado": "pendiente" },
+  "TA-006": { "estado": "en_curso", "rama": "ta-006-matriz-inventario" },
 
   "TA-007": { "estado": "pendiente" },
 

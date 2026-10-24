@@ -14,6 +14,8 @@
     "formato:comprobar": "prettier --check .",
     "versiones": "node tools/pruebas/versiones.mjs",
     "versiones:negativo": "node tools/lint/controles/versiones/negativo.mjs",
+    "pruebas:listar": "node tools/pruebas/listar.ts",
+    "pruebas:matriz": "node tools/pruebas/matriz.ts verificar",
     "plan:verificar": "node tools/plan/estado.ts verificar",
     "plan:siguiente": "node tools/plan/estado.ts siguiente",
     "plan:anexos": "node tools/plan/anexos.ts --plan docs/08-tareas.md --anexos docs/anexos --negativo",
