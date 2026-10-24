@@ -1,0 +1,16 @@
+[
+  { "patron": "apps/web/src/app/layout.tsx", "fts": "marco" },
+  { "patron": "apps/web/src/app/(finn)/layout.tsx", "fts": "marco" },
+  { "patron": "apps/web/src/navegacion/**", "fts": "marco" },
+  { "patron": "apps/web/src/sw/**", "fts": "marco" },
+  { "patron": "apps/web/src/instrumentation.ts", "fts": "marco" },
+  { "patron": "apps/web/src/middleware.ts", "fts": "marco" },
+  { "patron": "apps/web/next.config.*", "fts": "marco" },
+  { "patron": "packages/aplicacion/src/index.ts", "fts": "marco" },
+  { "patron": "packages/aplicacion/src/contratos/**", "fts": "marco" },
+  { "patron": "packages/aplicacion/src/errores/**", "fts": "marco" },
+  { "patron": "packages/dominio/src/**", "fts": [] },
+  { "patron": "packages/db/src/**", "fts": [] },
+  { "patron": "packages/conciliacion/src/**", "fts": [] },
+  { "patron": "packages/sms/src/**", "fts": [] }
+]
