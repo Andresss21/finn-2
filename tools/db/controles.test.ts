@@ -77,6 +77,25 @@ describe('C1 verificar-migraciones (03 §11.6)', () => {
     expect(r.texto).toContain('✓ 1 migraciones revisadas');
     expect(r.codigo).toBe(0);
   });
+
+  it('C1 falla con un catálogo inexistente en lugar de pasar sin revisar', () => {
+    const dir = join(controles, 'con-catalogo');
+    const r = c1(join(dir, 'migrations'), join(dir, 'no-existe.txt'));
+    expect(r.codigo).toBe(2);
+    expect(r.texto).toContain('no-existe.txt» no es una migración');
+  });
+
+  it('C1 falla con un nombre de migración nueva inexistente', () => {
+    const dir = join(controles, 'con-catalogo');
+    const r = c1(
+      join(dir, 'migrations'),
+      join(dir, 'catalogo-esperado.txt'),
+      '20261101000200_m_estado_respaldo',
+      '20261199000000_m_no_existe',
+    );
+    expect(r.codigo).toBe(2);
+    expect(r.texto).toContain('«20261199000000_m_no_existe» no es una migración');
+  });
 });
 
 describe('C2 inmutabilidad (03 §11.6)', () => {

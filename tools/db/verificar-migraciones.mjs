@@ -18,6 +18,17 @@ const porDefecto = path.join(dir, '..', 'catalogo-esperado.txt');
 const catalogo =
   resto[0] && esArchivo(resto[0]) ? resto.shift() : esArchivo(porDefecto) ? porDefecto : null;
 const nuevas = resto;
+// Un nombre de migración nueva que no existe (o un catálogo mal escrito, que cae aquí) no puede
+// dejar el control en verde sin revisar nada.
+const inexistentes = nuevas.filter((n) => !fs.existsSync(path.join(dir, n, 'migration.sql')));
+if (inexistentes.length) {
+  console.error(
+    inexistentes
+      .map((n) => `✗ «${n}» no es una migración de ${dir} ni un catálogo existente`)
+      .join('\n'),
+  );
+  process.exit(2);
+}
 const errores = [];
 
 // Nombres protegidos: todo objeto manual de la instantánea (CHECK, índices de expresión,
