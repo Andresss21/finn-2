@@ -45,7 +45,12 @@ export default defineConfig({
         test: {
           ...comun,
           name: 'unidad',
-          include: ['packages/*/src/**/*.test.ts', 'tools/lint/**/*.test.ts'],
+          include: [
+            'packages/*/src/**/*.test.ts',
+            'tools/db/**/*.test.ts',
+            'tools/lint/**/*.test.ts',
+            'tools/pruebas/**/*.test.ts',
+          ],
           exclude: [...excluidos, '**/*.ctr.test.ts', '**/*.int.test.ts', '**/*.rh.test.ts'],
           sequence: orden,
         },
