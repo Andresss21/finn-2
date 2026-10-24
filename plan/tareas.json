@@ -51,7 +51,7 @@
 
   "TA-100": { "estado": "terminada", "pr": 6 },
 
-  "TA-101": { "estado": "pendiente" },
+  "TA-101": { "estado": "terminada", "pr": 15 },
 
   "TA-102": { "estado": "pendiente" },
 
