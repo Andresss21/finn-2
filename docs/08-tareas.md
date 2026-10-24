@@ -574,7 +574,7 @@ compartido: —
 
 **Comandos.** `pnpm plan:verificar`; `pnpm plan:verificar --negativo`; `pnpm plan:siguiente`; **[B2]** `pnpm plan:anexos`.
 
-**Terminada cuando.** Los tres pasan, PRU-SEG-OPER-101 pasa y `plan:siguiente` lista TA-003, TA-005 y TA-011 como disponibles. Después del merge, una sesión nueva de Claude Code rechaza `vercel whoami` y la lectura de `~/.ssh/finn_resultados` (lo comprobás vos al abrir TA-003).
+**Terminada cuando.** Los tres pasan, PRU-SEG-OPER-101 pasa y `plan:siguiente` lista TA-003 y TA-005 como disponibles **[CH-11]**. Después del merge, una sesión nueva de Claude Code rechaza `vercel whoami` y la lectura de `~/.ssh/finn_resultados` (lo comprobás vos al abrir TA-003).
 
 #### TA-003 Lint de fronteras de paquetes
 
@@ -1276,7 +1276,7 @@ Registro: las TU con procedimiento `PRU-MAN` se registran en `pruebas/manuales/r
 - **Comprobación, antes de TA-001:** en Git Bash, `node C:/finn/_entrada/08-tareas-verificacion/tools/plan/anexos.ts --plan C:/finn/_entrada/08-tareas.md --anexos C:/finn/_entrada --entrada --negativo` debe terminar en `RESULTADO: PASA`. Comprueba la lista de arriba, los 34 archivos citados en las tablas del plan (abriendo los zips, también `finn-marca.zip` dentro de `finn-entrega.zip`), 52 íconos en `iconos/` y 7 glifos en `iconos/estados/`. Lo corre el orquestador al arrancar (§37.8) y se detiene si falla. **Si falta un archivo: aviso, nunca reconstrucción desde los `.md`** (§36.3).
 - **Commit inicial** (en `C:\finn\repo`, que TU-01 dejó vacío): copiar la carpeta `arranque/.claude/` del zip de verificación a `C:\finn\repo\.claude\` (`settings.json`, `agents/tarea-opus.md`, `agents/tarea-sonnet.md`, `hooks/aprobar.mjs`; §37.10), y después `git add .claude/settings.json .claude/agents .claude/hooks`, `git commit -S -m "Inicio: permisos, subagentes y hook de aprobación"` y `git push origin main`. Con eso `main` existe (los worktrees salen de ahí) y las barreras rigen desde la primera sesión. `settings.local.json` (TU-01) no se versiona.
 - **[A2]** Las muestras sin anonimizar nunca van a `_entrada` (TU-13).
-- **Resultado:** la salida de `anexos.ts` en `plan/tu.md` (la registra TA-002 al crearlo); `docs/anexos/INDICE.md` del PR de TA-002 lista cada archivo.
+- **Resultado:** **[CH-12]** la salida de `anexos.ts` va en la descripción del PR de TA-002, y vos la copiás a `plan/tu.md` con tu primer commit firmado (TU-05); `docs/anexos/INDICE.md` del PR de TA-002 lista cada archivo.
 
 ### TU-05 Clave SSH de firma
 
@@ -1472,6 +1472,9 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-07** **[D]** | Dependencias de las fichas (P8-19.1). En 06 §2.0, la fila **Dependencias** pasa a: "Features que tienen que existir antes. **De construcción**: la ficha no se puede construir sin ellas. **De datos**: la ficha se construye y se prueba con el estado sembrado por operaciones; los CA afectados quedan pendientes de punta a punta hasta que exista la ficha que produce ese estado (07 §13, CH-08)". Las fichas FT-03, FT-04, FT-08, FT-16, FT-19, FT-34, FT-35 y FT-54 marcan cuáles de sus dependencias son de datos (las de DT-26, §19.7) | 06 §2.0 y esas 8 fichas | **Aprobado** (P8-19.1); **aplicado [F8]** |
 | **CH-08** **[D]** | Pendientes de punta a punta en la matriz (DT-27). 07 §13 agrega `pruebas/pendientes-e2e.json` y la regla: una ficha que completa pendientes no pasa a `terminada` sin una E2E que cite cada CA; `features.json` marca esos CA de la ficha [I] como `pendiente_e2e`. 07 §27 agrega la condición. 07 §30 agrega a la puerta: "ningún CA pendiente de punta a punta, salvo los de fichas [P]" | 07 §13, §27, §30 | **Aprobado** (P8-19.1); **aplicado [F8]** |
 | **CH-09** | Nombres de la entrega real (arranque de TA-002). (1) La verificación de 04 y 05 llegó como `04-backend-verificacion.zip` y `05-frontend-verificacion-{A,B,C,D}.zip`, no como `.md`, y eso satisface TU-04 punto 5. (2) El zip de la Fase 3 es `finn-fase3-base-de-datos.zip` (no empieza con `03-`) y satisface TU-04 punto 6. (3) `contraste.py` (§23.2, TA-201, PRU-DOM-PWA-001) es en la entrega `prototipos/tokens.py` de `05-frontend-verificacion-D.zip` (versión [R3]); TA-201 lo porta como `tools/pruebas/contraste.py`. `tools/plan/anexos.ts` cambia `ENTRADA_MD` y el patrón del zip de la Fase 3, y lee la cita nueva de §23.2 | 08 TU-04 (puntos 5 y 6), §23.2; `tools/plan/anexos.ts` | **Aprobado por el usuario** (arranque de TA-002); **aplicado [CH-09]** en TA-002 |
+| **CH-10** | Tamaño de TA-002: §1.1 clasifica `docs/**` como dato, que suma al total de DT-01, y TA-002 copia los documentos y los zips sin cambios. En DT-14, un archivo de `docs/` o de `docs/anexos/` copiado byte a byte de `C:\finn\_entrada\` o de un zip de la entrega es portado y no suma al total | 08 §11.2 (DT-14) | **Aprobado por el usuario** (TA-002); **aplicado [CH-10]** en TA-002 |
+| **CH-11** | "Terminada cuando" de TA-002 decía que `plan:siguiente` lista TA-003, TA-005 y TA-011, pero TA-011 depende de TA-003. Pasa a "lista TA-003 y TA-005"; TA-011 no cambia | 08 TA-002 | **Aprobado por el usuario** (TA-002); **aplicado [CH-11]** en TA-002 |
+| **CH-12** | TU-04 pedía que TA-002 registrara la salida de `anexos.ts` en `plan/tu.md`, que `CLAUDE.md` (§4) y §4.1 le prohíben tocar. La salida va en la descripción del PR de TA-002 y el usuario la copia a `plan/tu.md` con su primer commit firmado (TU-05) | 08 TU-04 | **Aprobado por el usuario** (TA-002); **aplicado [CH-12]** en TA-002 |
 
 ---
 
@@ -1538,6 +1541,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 
 Buena parte de B1 y B2 copia archivos ya verificados: migraciones, `schema.prisma`, `catalogo.sql`, el oráculo, el prototipo de los escenarios, `recorridos.py` y `estado_a7.py`. Copiarlos no es escribir código, pero DT-01 los contaría como producción. `tamano.ts` (TA-010) agrega una clase:
 - **Portado:** un archivo idéntico, byte a byte, a su fuente. La fuente es un archivo de `docs/anexos/` (los zips) o, si no está en los zips, el contenido de un bloque de código de `docs/0n-*.md` cuya sección nombra esa ruta. Por ejemplo, las migraciones de 03 §10.4 y la de EN-2 en 04 §10.2.
+- **[CH-10]** También es portado un archivo de `docs/` o de `docs/anexos/` copiado byte a byte de `C:\finn\_entrada\` o de un zip de la entrega.
 - No cuenta en producción, archivos ni total. `pr:mergear` informa cada portado con su fuente y su huella.
 - Una sola línea distinta lo vuelve producción.
 
