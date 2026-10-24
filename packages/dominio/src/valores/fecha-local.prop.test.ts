@@ -43,7 +43,7 @@ function igualQueTemporal(propia: () => FechaLocal, oraculo: () => Temporal.Plai
 }
 
 describe('PRU-PROP-VAL', () => {
-  it('PRU-PROP-VAL-101 [ADR-16, RT-08, 01 §4.2.1, 01 §4.12] FechaLocal frente a Temporal.PlainDate: días, inicio de mes, meses y años con recorte', () => {
+  it('PRU-PROP-VAL-101 [P18, supuesto 15, N8] FechaLocal (ADR-16) frente a Temporal.PlainDate: días, inicio de mes, meses y años con recorte', () => {
     // Validación: acepta exactamente las fechas que existen.
     fc.assert(
       fc.property(

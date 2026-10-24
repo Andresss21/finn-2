@@ -4,7 +4,7 @@ import { Centavos } from './index';
 const c = Centavos.desdeEntero;
 
 describe('PRU-DOM-VAL', () => {
-  it('PRU-DOM-VAL-101 [ADR-15, RT-07, ESC-36, ESC-37] Centavos: constructores, operaciones y los dos redondeos con aritmética entera', () => {
+  it('PRU-DOM-VAL-101 [H11, ESC-36, ESC-37] Centavos (ADR-15): constructores, operaciones y los dos redondeos con aritmética entera', () => {
     // Constructores: solo enteros seguros.
     expect(c(0)).toBe(0);
     expect(c(-123_450)).toBe(-123_450);
