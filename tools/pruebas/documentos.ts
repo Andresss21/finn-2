@@ -32,7 +32,7 @@ const g = (m: RegExpMatchArray | null, i: number): string => m?.[i] ?? '';
 const todos = (t: string, re: RegExp): string[] => [...t.matchAll(re)].map((x) => g(x, 1));
 
 /** Bloques `#### FT-nn … [I|M|P]` de 06 §2 (hasta §4, Recorridos). */
-function bloques(d06: string) {
+export function bloques(d06: string) {
   const cuerpo = d06.split('## 2. Fichas por feature')[1]?.split('## 4. Recorridos')[0] ?? '';
   return cuerpo
     .split(/^#### /m)
