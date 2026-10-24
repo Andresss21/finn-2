@@ -5,7 +5,7 @@
 
   "TA-003": { "estado": "terminada", "pr": 4 },
 
-  "TA-004": { "estado": "en_curso", "rama": "ta-004-lint-cliente" },
+  "TA-004": { "estado": "terminada", "pr": 8 },
 
   "TA-005": { "estado": "terminada", "pr": 3 },
 
