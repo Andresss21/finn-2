@@ -12,5 +12,8 @@
   "devDependencies": {
     "@finn/config": "workspace:*",
     "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@finn/dominio": "workspace:*"
   }
 }
