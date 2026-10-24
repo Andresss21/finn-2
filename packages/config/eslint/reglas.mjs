@@ -1,3 +1,7 @@
+import { archivosServidor } from './reglas/archivos-servidor.mjs';
+import { centavos } from './reglas/centavos.mjs';
+import { jsxDeshabilitado } from './reglas/jsx-deshabilitado.mjs';
+
 // Reglas propias de frontera (ADR-21, 04 §1.5 d, L20). Un plugin aparte evita que
 // otra regla de `no-restricted-*` las pise al combinar configuraciones.
 const esMiembro = (n, objeto, propiedad) =>
@@ -132,4 +136,14 @@ const cliente = {
   },
 };
 
-export default { rules: { reloj, l20, dinero, cliente } };
+export default {
+  rules: {
+    reloj,
+    l20,
+    dinero,
+    cliente,
+    centavos,
+    'archivos-servidor': archivosServidor,
+    'jsx-deshabilitado': jsxDeshabilitado,
+  },
+};

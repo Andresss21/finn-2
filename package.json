@@ -8,7 +8,7 @@
   },
   "scripts": {
     "typecheck": "pnpm -r --if-present run typecheck",
-    "lint": "eslint . && node tools/ci/verificar-dependencias.mjs && depcruise --config .dependency-cruiser.cjs apps packages",
+    "lint": "eslint . && node tools/ci/verificar-dependencias.mjs && node tools/ci/lecturas-interactivas.mjs && stylelint \"apps/web/**/*.css\" --allow-empty-input && depcruise --config .dependency-cruiser.cjs apps packages",
     "depcruise": "depcruise --config .dependency-cruiser.cjs apps packages",
     "formato": "prettier --write .",
     "formato:comprobar": "prettier --check .",
@@ -39,6 +39,7 @@
     "eslint": "10.13.0",
     "playwright": "1.56.1",
     "prettier": "3.9.10",
+    "stylelint": "17.16.0",
     "typescript": "5.9.3",
     "vitest": "4.1.12"
   }
