@@ -1,0 +1,24 @@
+{
+  "name": "prisma",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "@prisma/schema-engine-wasm": "^7.10.0-7.561d7b42579a2459cc8edf3788918b626c640023",
+    "dotenv": "^18.0.9",
+    "pg": "^8.23.1",
+    "prisma": "^7.10.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  },
+  "type": "module"
+}

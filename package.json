@@ -11,7 +11,12 @@
     "formato": "prettier --write .",
     "formato:comprobar": "prettier --check .",
     "versiones": "node tools/pruebas/versiones.mjs",
-    "versiones:negativo": "node tools/lint/controles/versiones/negativo.mjs"
+    "versiones:negativo": "node tools/lint/controles/versiones/negativo.mjs",
+    "plan:verificar": "node tools/plan/estado.ts verificar",
+    "plan:siguiente": "node tools/plan/estado.ts siguiente",
+    "plan:anexos": "node tools/plan/anexos.ts --plan docs/08-tareas.md --anexos docs/anexos --negativo",
+    "plan:encargo": "node tools/plan/encargo.ts --plan docs/08-tareas.md --docs docs --tarea",
+    "plan:permisos": "node --test tools/plan/permisos.test.ts"
   },
   "prettier": "@finn/config/prettier",
   "devDependencies": {

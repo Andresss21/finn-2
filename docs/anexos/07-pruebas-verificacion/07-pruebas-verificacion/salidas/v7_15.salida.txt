@@ -1,0 +1,6 @@
+ ✓ |chromium| src/componentes.cmp.test.tsx > PRU-CMP-VAL > PRU-CMP-VAL-001 el indicador de sobregiro tiene nombre accesible por tipo, no solo color (PF-2) 83ms
+ ✓ |chromium| src/componentes.cmp.test.tsx > PRU-CMP-VAL > PRU-CMP-VAL-002 control negativo: sin nombre y con poco contraste, axe lo detecta 18ms
+ ✓ |chromium| src/componentes.cmp.test.tsx > PRU-CMP-VAL > PRU-CMP-VAL-003 monto mal escrito: el error queda asociado al campo y se anuncia 119ms
+ ✓ |chromium| src/componentes.cmp.test.tsx > PRU-CMP-VAL > PRU-CMP-VAL-004 el foco y el teclado son reales: Tab mueve el foco al campo 23ms
+      Tests  4 passed (4)
+   Duration  2.18s (transform 0ms, setup 0ms, collect 481ms, tests 244ms, environment 0ms, prepare 1.17s)

@@ -1,0 +1,4 @@
+{ "name": "v7-web", "private": true, "type": "module",
+  "scripts": { "build": "next build", "start": "next start -p 3107" },
+  "dependencies": { "next": "16.4.1", "react": "19.3.1", "react-dom": "19.3.1" },
+  "devDependencies": { "@playwright/test": "1.56.0", "@types/node": "24", "@types/react": "19", "typescript": "5" } }

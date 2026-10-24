@@ -1,0 +1,5 @@
+{ "hoy": "2027-03-12T08:20:00Z", "runs": [
+  { "jobs": [ { "started_at": "2027-03-01T10:00:00Z", "completed_at": "2027-03-01T10:02:31Z" }, { "started_at": "2027-03-01T10:02:40Z", "completed_at": "2027-03-01T10:06:00Z" } ] },
+  { "jobs": [ { "started_at": "2027-03-02T10:00:00Z", "completed_at": "2027-03-02T10:11:00Z" }, { "started_at": null, "completed_at": null } ] },
+  { "jobs": [ { "started_at": "2027-03-03T08:15:00Z", "completed_at": "2027-03-03T08:35:01Z", "labels": ["ubuntu-24.04"] } ] }
+] }

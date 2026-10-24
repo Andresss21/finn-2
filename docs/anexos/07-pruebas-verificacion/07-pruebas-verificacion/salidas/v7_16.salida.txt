@@ -1,0 +1,90 @@
+igual             | A.7 Inicio         | LPA                                              | $312.40                                  → $312.40
+igual             | A.7 Inicio         | En camino                                        | $40.00                                   → $40.00
+igual             | A.7 Inicio         | Reducción proyectada al cierre                   | $26.30                                   → $26.30
+cambia            | A.7 Inicio         | Mascota (archivada) con Disponible               | $8.00                                    → $0.00
+igual             | A.7 Inicio         | Patrimonio: activos                              | $6,520.20                                → $6,520.20
+igual             | A.7 Inicio         | Patrimonio: deudas                               | $4,852.18                                → $4,852.18
+igual             | A.7 Inicio         | Patrimonio: neto                                 | $1,668.02                                → $1,668.02
+igual             | A.7 Presupuesto    | Supermercado: asig                               | $350.00                                  → $350.00
+igual             | A.7 Presupuesto    | Supermercado: gastado                            | $287.15                                  → $287.15
+igual             | A.7 Presupuesto    | Supermercado: arr                                | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Supermercado: disp                               | $62.85                                   → $62.85
+igual             | A.7 Presupuesto    | Luz y agua: asig                                 | $65.00                                   → $65.00
+igual             | A.7 Presupuesto    | Luz y agua: gastado                              | $58.40                                   → $58.40
+igual             | A.7 Presupuesto    | Luz y agua: arr                                  | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Luz y agua: disp                                 | $6.60                                    → $6.60
+igual             | A.7 Presupuesto    | Internet y teléfono: asig                        | $45.00                                   → $45.00
+igual             | A.7 Presupuesto    | Internet y teléfono: gastado                     | $45.00                                   → $45.00
+igual             | A.7 Presupuesto    | Internet y teléfono: arr                         | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Internet y teléfono: disp                        | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Restaurantes: asig                               | $120.00                                  → $120.00
+igual             | A.7 Presupuesto    | Restaurantes: gastado                            | $146.30                                  → $146.30
+igual             | A.7 Presupuesto    | Restaurantes: arr                                | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Restaurantes: disp                               | −$26.30                                  → −$26.30
+igual             | A.7 Presupuesto    | Gasolina: asig                                   | $80.00                                   → $80.00
+igual             | A.7 Presupuesto    | Gasolina: gastado                                | $98.75                                   → $98.75
+igual             | A.7 Presupuesto    | Gasolina: arr                                    | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Gasolina: disp                                   | −$18.75                                  → −$18.75
+igual             | A.7 Presupuesto    | Netflix: asig                                    | $15.49                                   → $15.49
+igual             | A.7 Presupuesto    | Netflix: gastado                                 | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Netflix: arr                                     | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Netflix: disp                                    | $15.49                                   → $15.49
+igual             | A.7 Presupuesto    | Fondo de emergencia: asig                        | $100.00                                  → $100.00
+igual             | A.7 Presupuesto    | Fondo de emergencia: gastado                     | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Fondo de emergencia: arr                         | $1,250.00                                → $1,250.00
+igual             | A.7 Presupuesto    | Fondo de emergencia: disp                        | $1,350.00                                → $1,350.00
+igual             | A.7 Presupuesto    | Viaje: asig                                      | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Viaje: gastado                                   | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Viaje: arr                                       | $184.62                                  → $184.62
+igual             | A.7 Presupuesto    | Viaje: disp                                      | $184.62                                  → $184.62
+cambia            | A.7 Presupuesto    | Farmacia: asig                                   | —                                        → $12.35
+cambia            | A.7 Presupuesto    | Farmacia: gastado                                | —                                        → $12.35
+cambia            | A.7 Presupuesto    | Farmacia: arr                                    | —                                        → $0.00
+cambia            | A.7 Presupuesto    | Farmacia: disp                                   | $27.65 (Registrar)                       → $0.00
+cambia            | A.7 Presupuesto    | Cuota del préstamo: asig                         | —                                        → $210.00
+cambia            | A.7 Presupuesto    | Cuota del préstamo: gastado                      | —                                        → $0.00
+cambia            | A.7 Presupuesto    | Cuota del préstamo: arr                          | —                                        → $0.00
+cambia            | A.7 Presupuesto    | Cuota del préstamo: disp                         | — (no estaba)                            → $210.00
+cambia            | A.7 Presupuesto    | totales: asignado                                | $775.49                                  → $997.84
+cambia            | A.7 Presupuesto    | totales: gastado                                 | $635.60                                  → $647.95
+cambia            | A.7 Presupuesto    | totales: disponible                              | $1,574.51                                → $1,784.51
+cambia            | A.7 Presupuesto    | Pago Visa Oro: actividad                         | $623.43                                  → $166.60
+cambia            | A.7 Presupuesto    | Pago Visa Oro: arrastre                          | (no se mostraba; 0)                      → $456.83
+igual             | A.7 Presupuesto    | Pago Visa Oro: disponible (reservado)            | $623.43                                  → $623.43
+igual             | A.7 Presupuesto    | Visa Oro: te falta reservar                      | $18.75                                   → $18.75
+igual             | A.7 Presupuesto    | Visa Oro: reserva excedente                      | $0.00                                    → $0.00
+igual             | A.7 Presupuesto    | Fondo: pide / falta                              | $175.00 / $75.00                         → $175.00 / $75.00
+igual             | A.7 Presupuesto    | Viaje: falta                                     | $92.31                                   → $92.31
+igual             | A.7 Presupuesto    | Supermercado: meta                               | cubierta                                 → cubierta
+igual             | A.7 Presupuesto    | Netflix: meta                                    | cubierta                                 → cubierta
+igual             | A.7 Detalle        | Restaurantes: consumos (cubierto/no cubierto)    | 23/09 $42.10 ($42.10/$0.00) · 30/09 $25.60 ($25.60/$0.00) · 05/10 $8.75 ($8.75/$0.00) · 08/10 $23.05 ($23.05/$0.00) · 11/10 $28.30 ($20.50/$7.80) · 13/10 $18.50 ($0.00/$18.50) → 23/09 $42.10 ($42.10/$0.00) · 30/09 $25.60 ($25.60/$0.00) · 05/10 $8.75 ($8.75/$0.00) · 08/10 $23.05 ($23.05/$0.00) · 11/10 $28.30 ($20.50/$7.80) · 13/10 $18.50 ($0.00/$18.50)
+cambia            | A.7 Detalle        | Restaurantes: historial asig/gastado/disp        | mar $100.00/$88.20/$11.80 · abr $100.00/$101.50/−$1.50 · may $100.00/$96.40/$3.60 · jun $100.00/$112.20/−$12.20 · jul $120.00/$104.75/$15.25 · ago $120.00/$118.90/$1.10 → mar $100.00/$88.20/$11.80 · abr $102.00/$101.50/$12.30 · may $100.00/$96.40/$15.90 · jun $100.00/$112.20/$3.70 · jul $120.00/$104.75/$18.95 · ago $99.95/$118.90/$0.00
+igual             | A.7 Detalle        | Restaurantes: "Se pasó N de 6" (CA-14.9)         | 2                                        → 2
+igual             | A.7 Cuentas        | Cuenta corriente: saldo                          | $1,284.60                                → $1,284.60
+igual             | A.7 Cuentas        | Cuenta corriente: confirmado                     | $1,296.95                                → $1,296.95
+igual             | A.7 Cuentas        | Cuenta de ahorro                                 | $3,120.00                                → $3,120.00
+igual             | A.7 Cuentas        | Efectivo                                         | $4,404.60                                → $4,404.60
+igual             | A.7 Cuentas        | Visa Oro: deuda                                  | $642.18                                  → $642.18
+igual             | A.7 Cuentas        | Visa Oro: confirmado                             | $607.18                                  → $607.18
+igual             | A.7 Cuentas        | Visa Oro: uso del límite                         | 25.69 %                                  → 25.69 %
+cambia            | A.7 Cuentas        | Visa Oro: para no generar intereses              | $512.40                                  → $370.63
+igual             | A.7 Gasto semanal  | Supermercado por semana                          | $92.40 · $71.15 · $88.60 · $35.00 · $0.00 → $92.40 · $71.15 · $88.60 · $35.00 · $0.00
+igual             | 06 §3.5.12         | Supermercado: Disp. proyectado                   | $5.42                                    → $5.42
+igual             | 06 §3.5.12         | Restaurantes: Disp. proyectado                   | −$55.56                                  → −$55.56
+igual             | 06 §3.5.12         | Gasolina: Disp. proyectado                       | −$38.50                                  → −$38.50
+igual             | 06 §3.5.12         | Netflix: Disp. proyectado                        | $0.00                                    → $0.00
+igual             | 06 §3.5.12         | Luz y agua: Disp. proyectado                     | $6.60                                    → $6.60
+igual             | 06 §3.5.12         | Internet y teléfono: Disp. proyectado            | $0.00                                    → $0.00
+igual             | 06 CA-62.1         | hallazgos de ritmo                               | Restaurantes, Gasolina                   → Restaurantes, Gasolina
+igual             | 06 CA-62.2         | categorías sobregiradas al cierre                | 2                                        → 2
+igual             | 06 CA-62.2         | LPA bajaría                                      | $50.44                                   → $50.44
+igual             | 06 CA-62.2         | te faltaría reservar (Visa Oro)                  | $43.62                                   → $43.62
+igual             | 06 CA-62.2         | te sobrarían                                     | $1,546.64                                → $1,546.64
+igual             | 06 CA-63.3         | Restaurantes: camino a / promedio / variación    | $175.56 / $111.95 / +56.82 %             → $175.56 / $111.95 / +56.82 %
+igual             | 06 §3.5.12 (V6-01) | Presupuesto contra la realidad: Restaurantes     | sin sugerencia                           → sin sugerencia
+cambia            | LPA detalle        | reducciones de períodos cerrados                 | (no se mostraba)                         → ago $12.00
+cambia            | LPA detalle        | asignado en futuros                              | (no se mostraba)                         → $1,665.51
+
+68 iguales, 18 cambian, 0 citados por CA cambian
+
+Semilla de 4.2 (antes del paso 3): LPA $312.40 · Supermercado gastado $252.15, disponible $97.85 · Visa Oro deuda $607.18, reservado $588.43, te falta reservar $18.75 · efectivo $4,404.60 · identidad comprobada

@@ -1,0 +1,22 @@
+# V7-01 — preparar-base.sh
+bootstrap
+  44 ms
+migraciones
+  334 ms (12 carpetas)
+C5 (reglas-catalogo.sql): 0 filas
+R14: 0 filas
+C6 diferencias con catalogo-esperado.txt de 03:
+> funcion|ahora()|definer=t|config=search_path=finn, pg_catalog|cuerpo=4e775579db6ffb2dfbe107403277ca9f
+> funcion|instante()|definer=t|config=search_path=finn, pg_catalog|cuerpo=78551f305092d2d66be8d8fc127a2b9a
+> funcion|purgar_eliminaciones()|definer=t|config=search_path=finn, pg_catalog|cuerpo=73eca03c7297b6a4053d6092e8962b46
+< privilegio|_prisma_migrations|finn_respaldo|SELECT
+> privilegio|ahora()|finn_app|EXECUTE
+> privilegio|instante()|finn_app|EXECUTE
+> privilegio|purgar_eliminaciones()|finn_app|EXECUTE
+< tabla|_prisma_migrations|rls=t|force=f|
+
+# Suite INT
+clonar + reloj: 75 ms
+ ✓ int/protocolo.int.test.ts (6 tests) 207ms
+      Tests  6 passed (6)
+   Duration  529ms (transform 74ms, setup 0ms, collect 93ms, tests 207ms, environment 0ms, prepare 72ms)

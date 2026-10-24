@@ -1,0 +1,19 @@
+== caso 1: solo firmas del usuario
+ok    3dbe278 resultado firmado por el usuario
+salida 0
+== caso 2: un commit firmado con otra clave
+FALLA b9d6216 resultado firmado con otra clave: no está firmado por un firmante permitido
+ok    3dbe278 resultado firmado por el usuario
+salida 1
+== caso 3: un commit sin firma
+FALLA b0cac07 resultado sin firma: no está firmado por un firmante permitido
+ok    3dbe278 resultado firmado por el usuario
+salida 1
+== caso 4: el PR agrega su propia clave (los firmantes se leen de la base)
+FALLA 4c20112 el PR agrega otra clave a firmantes y firma con ella: no está firmado por un firmante permitido
+ok    3dbe278 resultado firmado por el usuario
+salida 1
+== control: si se leyeran los firmantes del propio PR, el caso 4 pasaría
+ok    4c20112 el PR agrega otra clave a firmantes y firma con ella
+ok    3dbe278 resultado firmado por el usuario
+salida 0

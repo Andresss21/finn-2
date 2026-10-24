@@ -1,0 +1,487 @@
+{
+  "TA-001": { "estado": "terminada", "pr": 1 },
+
+  "TA-002": { "estado": "en_curso", "rama": "ta-002-documentos-anexos" },
+
+  "TA-003": { "estado": "pendiente" },
+
+  "TA-004": { "estado": "pendiente" },
+
+  "TA-005": { "estado": "pendiente" },
+
+  "TA-006": { "estado": "pendiente" },
+
+  "TA-007": { "estado": "pendiente" },
+
+  "TA-008": { "estado": "pendiente" },
+
+  "TA-009": { "estado": "pendiente" },
+
+  "TA-010": { "estado": "pendiente" },
+
+  "TA-011": { "estado": "pendiente" },
+
+  "TA-012": { "estado": "pendiente" },
+
+  "TA-013": { "estado": "pendiente" },
+
+  "TA-014": { "estado": "pendiente" },
+
+  "TA-015": { "estado": "pendiente" },
+
+  "TA-050": { "estado": "pendiente" },
+
+  "TA-051": { "estado": "pendiente" },
+
+  "TA-052": { "estado": "pendiente" },
+
+  "TA-053": { "estado": "pendiente" },
+
+  "TA-054": { "estado": "pendiente" },
+
+  "TA-055": { "estado": "pendiente" },
+
+  "TA-056": { "estado": "pendiente" },
+
+  "TA-057": { "estado": "pendiente" },
+
+  "TA-058": { "estado": "pendiente" },
+
+  "TA-059": { "estado": "pendiente" },
+
+  "TA-100": { "estado": "pendiente" },
+
+  "TA-101": { "estado": "pendiente" },
+
+  "TA-102": { "estado": "pendiente" },
+
+  "TA-103": { "estado": "pendiente" },
+
+  "TA-104": { "estado": "pendiente" },
+
+  "TA-105": { "estado": "pendiente" },
+
+  "TA-106": { "estado": "pendiente" },
+
+  "TA-107": { "estado": "pendiente" },
+
+  "TA-108": { "estado": "pendiente" },
+
+  "TA-109": { "estado": "pendiente" },
+
+  "TA-110": { "estado": "pendiente" },
+
+  "TA-111": { "estado": "pendiente" },
+
+  "TA-112": { "estado": "pendiente" },
+
+  "TA-113": { "estado": "pendiente" },
+
+  "TA-114": { "estado": "pendiente" },
+
+  "TA-115": { "estado": "pendiente" },
+
+  "TA-116": { "estado": "pendiente" },
+
+  "TA-117": { "estado": "pendiente" },
+
+  "TA-118": { "estado": "pendiente" },
+
+  "TA-119": { "estado": "pendiente" },
+
+  "TA-120": { "estado": "pendiente" },
+
+  "TA-121": { "estado": "pendiente" },
+
+  "TA-122": { "estado": "pendiente" },
+
+  "TA-123": { "estado": "pendiente" },
+
+  "TA-124": { "estado": "pendiente" },
+
+  "TA-125": { "estado": "pendiente" },
+
+  "TA-126": { "estado": "pendiente" },
+
+  "TA-127": { "estado": "pendiente" },
+
+  "TA-128": { "estado": "pendiente" },
+
+  "TA-129": { "estado": "pendiente" },
+
+  "TA-130": { "estado": "pendiente" },
+
+  "TA-131": { "estado": "pendiente" },
+
+  "TA-132": { "estado": "pendiente" },
+
+  "TA-133": { "estado": "pendiente" },
+
+  "TA-134": { "estado": "pendiente" },
+
+  "TA-135": { "estado": "pendiente" },
+
+  "TA-136": { "estado": "pendiente" },
+
+  "TA-137": { "estado": "pendiente" },
+
+  "TA-138": { "estado": "pendiente" },
+
+  "TA-139": { "estado": "pendiente" },
+
+  "TA-140": { "estado": "pendiente" },
+
+  "TA-141": { "estado": "pendiente" },
+
+  "TA-142": { "estado": "pendiente" },
+
+  "TA-143": { "estado": "pendiente" },
+
+  "TA-144": { "estado": "pendiente" },
+
+  "TA-145": { "estado": "pendiente" },
+
+  "TA-146": { "estado": "pendiente" },
+
+  "TA-147": { "estado": "pendiente" },
+
+  "TA-150": { "estado": "pendiente" },
+
+  "TA-151": { "estado": "pendiente" },
+
+  "TA-152": { "estado": "pendiente" },
+
+  "TA-153": { "estado": "pendiente" },
+
+  "TA-154": { "estado": "pendiente" },
+
+  "TA-155": { "estado": "pendiente" },
+
+  "TA-156": { "estado": "pendiente" },
+
+  "TA-157": { "estado": "pendiente" },
+
+  "TA-158": { "estado": "pendiente" },
+
+  "TA-159": { "estado": "pendiente" },
+
+  "TA-160": { "estado": "pendiente" },
+
+  "TA-161": { "estado": "pendiente" },
+
+  "TA-162": { "estado": "pendiente" },
+
+  "TA-163": { "estado": "pendiente" },
+
+  "TA-164": { "estado": "pendiente" },
+
+  "TA-165": { "estado": "pendiente" },
+
+  "TA-166": { "estado": "pendiente" },
+
+  "TA-167": { "estado": "pendiente" },
+
+  "TA-168": { "estado": "pendiente" },
+
+  "TA-169": { "estado": "pendiente" },
+
+  "TA-170": { "estado": "pendiente" },
+
+  "TA-171": { "estado": "pendiente" },
+
+  "TA-172": { "estado": "pendiente" },
+
+  "TA-173": { "estado": "pendiente" },
+
+  "TA-174": { "estado": "pendiente" },
+
+  "TA-175": { "estado": "pendiente" },
+
+  "TA-176": { "estado": "pendiente" },
+
+  "TA-177": { "estado": "pendiente" },
+
+  "TA-178": { "estado": "pendiente" },
+
+  "TA-179": { "estado": "pendiente" },
+
+  "TA-180": { "estado": "pendiente" },
+
+  "TA-181": { "estado": "pendiente" },
+
+  "TA-182": { "estado": "pendiente" },
+
+  "TA-183": { "estado": "pendiente" },
+
+  "TA-184": { "estado": "pendiente" },
+
+  "TA-185": { "estado": "pendiente" },
+
+  "TA-186": { "estado": "pendiente" },
+
+  "TA-187": { "estado": "pendiente" },
+
+  "TA-188": { "estado": "pendiente" },
+
+  "TA-189": { "estado": "pendiente" },
+
+  "TA-190": { "estado": "pendiente" },
+
+  "TA-191": { "estado": "pendiente" },
+
+  "TA-192": { "estado": "pendiente" },
+
+  "TA-193": { "estado": "pendiente" },
+
+  "TA-194": { "estado": "pendiente" },
+
+  "TA-195": { "estado": "pendiente" },
+
+  "TA-196": { "estado": "pendiente" },
+
+  "TA-197": { "estado": "pendiente" },
+
+  "TA-198": { "estado": "pendiente" },
+
+  "TA-199": { "estado": "pendiente" },
+
+  "TA-200": { "estado": "pendiente" },
+
+  "TA-201": { "estado": "pendiente" },
+
+  "TA-202": { "estado": "pendiente" },
+
+  "TA-203": { "estado": "pendiente" },
+
+  "TA-204": { "estado": "pendiente" },
+
+  "TA-205": { "estado": "pendiente" },
+
+  "TA-206": { "estado": "pendiente" },
+
+  "TA-207": { "estado": "pendiente" },
+
+  "TA-208": { "estado": "pendiente" },
+
+  "TA-209": { "estado": "pendiente" },
+
+  "TA-210": { "estado": "pendiente" },
+
+  "TA-211": { "estado": "pendiente" },
+
+  "TA-212": { "estado": "pendiente" },
+
+  "TA-213": { "estado": "pendiente" },
+
+  "TA-214": { "estado": "pendiente" },
+
+  "TA-215": { "estado": "pendiente" },
+
+  "TA-216": { "estado": "pendiente" },
+
+  "TA-217": { "estado": "pendiente" },
+
+  "TA-218": { "estado": "pendiente" },
+
+  "TA-219": { "estado": "pendiente" },
+
+  "TA-220": { "estado": "pendiente" },
+
+  "TA-221": { "estado": "pendiente" },
+
+  "TA-222": { "estado": "pendiente" },
+
+  "TA-223": { "estado": "pendiente" },
+
+  "TA-224": { "estado": "pendiente" },
+
+  "TA-250": { "estado": "pendiente" },
+
+  "TA-251": { "estado": "pendiente" },
+
+  "TA-252": { "estado": "pendiente" },
+
+  "TA-253": { "estado": "pendiente" },
+
+  "TA-260": { "estado": "pendiente" },
+
+  "TA-261": { "estado": "pendiente" },
+
+  "TA-262": { "estado": "pendiente" },
+
+  "TA-263": { "estado": "pendiente" },
+
+  "TA-280": { "estado": "pendiente" },
+
+  "TA-281": { "estado": "pendiente" },
+
+  "TA-282": { "estado": "pendiente" },
+
+  "TA-283": { "estado": "pendiente" },
+
+  "TA-284": { "estado": "pendiente" },
+
+  "TA-285": { "estado": "pendiente" },
+
+  "TA-286": { "estado": "pendiente" },
+
+  "TA-287": { "estado": "pendiente" },
+
+  "TA-288": { "estado": "pendiente" },
+
+  "TA-289": { "estado": "pendiente" },
+
+  "TA-290": { "estado": "pendiente" },
+
+  "TA-291": { "estado": "pendiente" },
+
+  "TA-292": { "estado": "pendiente" },
+
+  "TA-293": { "estado": "pendiente" },
+
+  "TA-294": { "estado": "pendiente" },
+
+  "TA-295": { "estado": "pendiente" },
+
+  "TA-296": { "estado": "pendiente" },
+
+  "TA-297": { "estado": "pendiente" },
+
+  "TA-298": { "estado": "pendiente" },
+
+  "TA-299": { "estado": "pendiente" },
+
+  "TA-300": { "estado": "pendiente" },
+
+  "TA-301": { "estado": "pendiente" },
+
+  "TA-302": { "estado": "pendiente" },
+
+  "TA-303": { "estado": "pendiente" },
+
+  "TA-304": { "estado": "pendiente" },
+
+  "TA-305": { "estado": "pendiente" },
+
+  "TA-306": { "estado": "pendiente" },
+
+  "TA-307": { "estado": "pendiente" },
+
+  "TA-308": { "estado": "pendiente" },
+
+  "TA-309": { "estado": "pendiente" },
+
+  "TA-310": { "estado": "pendiente" },
+
+  "TA-311": { "estado": "pendiente" },
+
+  "TA-312": { "estado": "pendiente" },
+
+  "TA-313": { "estado": "pendiente" },
+
+  "TA-314": { "estado": "pendiente" },
+
+  "TA-315": { "estado": "pendiente" },
+
+  "TA-400": { "estado": "pendiente" },
+
+  "TA-401": { "estado": "pendiente" },
+
+  "TA-402": { "estado": "pendiente" },
+
+  "TA-403": { "estado": "pendiente" },
+
+  "TA-404": { "estado": "pendiente" },
+
+  "TA-405": { "estado": "pendiente" },
+
+  "TA-406": { "estado": "pendiente" },
+
+  "TA-407": { "estado": "pendiente" },
+
+  "TA-408": { "estado": "pendiente" },
+
+  "TA-409": { "estado": "pendiente" },
+
+  "TA-410": { "estado": "pendiente" },
+
+  "TA-411": { "estado": "pendiente" },
+
+  "TA-412": { "estado": "pendiente" },
+
+  "TA-413": { "estado": "pendiente" },
+
+  "TA-414": { "estado": "pendiente" },
+
+  "TA-415": { "estado": "pendiente" },
+
+  "TA-416": { "estado": "pendiente" },
+
+  "TA-417": { "estado": "pendiente" },
+
+  "TA-418": { "estado": "pendiente" },
+
+  "TA-419": { "estado": "pendiente" },
+
+  "TA-420": { "estado": "pendiente" },
+
+  "TA-421": { "estado": "pendiente" },
+
+  "TA-422": { "estado": "pendiente" },
+
+  "TA-423": { "estado": "pendiente" },
+
+  "TA-424": { "estado": "pendiente" },
+
+  "TA-425": { "estado": "pendiente" },
+
+  "TA-426": { "estado": "pendiente" },
+
+  "TA-427": { "estado": "pendiente" },
+
+  "TA-428": { "estado": "pendiente" },
+
+  "TA-429": { "estado": "pendiente" },
+
+  "TA-430": { "estado": "pendiente" },
+
+  "TA-431": { "estado": "pendiente" },
+
+  "TA-432": { "estado": "pendiente" },
+
+  "TA-433": { "estado": "pendiente" },
+
+  "TA-434": { "estado": "pendiente" },
+
+  "TA-435": { "estado": "pendiente" },
+
+  "TA-436": { "estado": "pendiente" },
+
+  "TA-437": { "estado": "pendiente" },
+
+  "TA-438": { "estado": "pendiente" },
+
+  "TA-439": { "estado": "pendiente" },
+
+  "TA-446": { "estado": "pendiente" },
+
+  "TA-447": { "estado": "pendiente" },
+
+  "TA-470": { "estado": "pendiente" },
+
+  "TA-500": { "estado": "pendiente" },
+
+  "TA-501": { "estado": "pendiente" },
+
+  "TA-502": { "estado": "pendiente" },
+
+  "TA-503": { "estado": "pendiente" },
+
+  "TA-504": { "estado": "pendiente" },
+
+  "TA-505": { "estado": "pendiente" },
+
+  "TA-506": { "estado": "pendiente" },
+
+  "TA-549": { "estado": "bloqueada", "motivo": "CF-03" }
+}

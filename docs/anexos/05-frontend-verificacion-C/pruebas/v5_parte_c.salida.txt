@@ -1,0 +1,49 @@
+V5-20 · JS descargado al abrir cada ruta (contexto nuevo; tamaño codificado, gzip de next start)
+  /base               7 archivos   135.8 KiB  (sobre /base:  +0.0 KiB)
+  /formulario         9 archivos   178.1 KiB  (sobre /base: +42.3 KiB)
+  /formulario-es      9 archivos   179.4 KiB  (sobre /base: +43.6 KiB)
+  /formulario-llaves  9 archivos   178.2 KiB  (sobre /base: +42.4 KiB)
+  /formulario-z       8 archivos   168.0 KiB  (sobre /base: +32.2 KiB)
+  /grafico-servidor   6 archivos   132.4 KiB  (sobre /base:  -3.4 KiB)
+  /grafico-cliente    7 archivos   141.7 KiB  (sobre /base:  +5.9 KiB)
+V5-21 · D-8: señal de EnlaceFinn sin prefetch, esperando la hidratación (10 iteraciones)
+  señal: 84 / 50 / 52 / 53 / 54 / 52 / 56 / 53 / 53 / 52 ms
+  con señal: 10/10 · contenido en 1557 a 1598 ms
+V5-22 · caché del enrutador (staleTimes por defecto)
+  atrás → origen restaurado de la caché: True · adelante → destino restaurado: True
+  enlace al origen otra vez → render nuevo: True · enlace al destino otra vez → render nuevo: True
+V5-24 · axe-core 4.x (wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa, best-practice)
+  claro : violaciones ninguna · reglas que pasan 36 · a revisar a mano []
+  oscuro: violaciones ninguna · reglas que pasan 36 · a revisar a mano []
+  /base             : violaciones ninguna
+  /formulario       : violaciones ninguna
+  /grafico-servidor : violaciones ninguna
+V5-25 · árbol de accesibilidad (aria_snapshot de Playwright)
+  /base main:
+    - main:
+      - heading "Base" [level=1]
+      - paragraph: "Disponible: menos $1,234.50"
+      - text: Sobregiro con débito o efectivo
+      - link "Tokens":
+        - /url: /tokens
+  /grafico-servidor figure:
+    - figure "Gasto por mes":
+      - text: Gasto por mes
+      - 'img "Gasto por mes. Mayor: mar con $1,430.00."'
+      - 'table "Gasto por mes: datos del gráfico"':
+        - caption: "Gasto por mes: datos del gráfico"
+        - rowgroup:
+          - row "Período Gastado":
+            - columnheader "Período"
+            - columnheader "Gastado"
+        - rowgroup:
+          - row "ene $1,200.00":
+            - rowheader "ene"
+            - cell "$1,200.00"
+          - row "feb $950.50":
+            - rowheader "feb"
+            - cell "$950.50"
+          - row "mar $1,430.00":
+            - rowheader "mar"
+            - cell "$1,430.00"
+  getByText("menos $1,234.50") encuentra el monto: 1

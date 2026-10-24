@@ -1,0 +1,8 @@
+# V7-06 — tiempos base (este entorno, no el runner)
+pnpm install del monorepo realista (mono/): frío 27 s; caliente (almacén en caché, --offline) 4 s; almacén 1,2 GB
+next build, app de prueba de 05 Parte D (14 page.tsx): 15 s (16 CPU), 14 s (2 CPU con taskset)
+next build, app de V7-04 (2 rutas): 8 s
+propiedades 5 × 2000 casos: 4,8 s (16 CPU), 4,5 s (2 CPU)
+propiedades 5 × 300 / 2000 / 10000: 1,65 s / 4,77 s / 17,67 s
+12 migraciones: 0,58 s; clonar base de prueba + reloj: 91 ms; 50 escrituras por PgBouncer: 0,38 s
+Playwright, 3 pruebas con arranque de next start: 2,8 s

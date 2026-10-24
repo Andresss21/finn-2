@@ -1,0 +1,27 @@
+completo, modo puerta: PASA; avisos 0; pruebas 730; manuales 9
+detecta M1: quitar la prueba de CA-30.4 → 1 error(es): M1 CA-30.4 (FT-30 [I]) sin prueba activa ni procedimiento manual
+detecta M1: quitar la PRU-MAN de CA-02.5 (manual) → 1 error(es): M1 CA-02.5 está marcado (manual) en 06 y no tiene PRU-MAN
+detecta M2: quitar PRU-ESC-17@int → 1 error(es): M2 ESC-17 sin PRU-ESC-17@int
+detecta M3: quitar la prueba de AV-24 → 1 error(es): M3 AV-24 sin prueba automática
+detecta M4: quitar la prueba de INV-28 → 1 error(es): M4 INV-28 sin prueba PROP, DOM, INT o ESQ
+detecta M5: quitar la E2E de REC-4.6 → 1 error(es): M5 REC-4.6 sin prueba E2E
+detecta M6: quitar V5-12 de verificaciones-previas.json → 1 error(es): M6 V5-12 no está en pruebas/verificaciones-previas.json
+detecta M7: referencia con errata CA-30.40 → 1 error(es): M7 PRU-DOM-TARJ-003 cita CA-30.40, que no existe en los documentos
+detecta M8: identificador repetido en otro archivo → 1 error(es): M8 identificador repetido PRU-DOM-TARJ-003 en packages/dominio/src/tarj.test.ts y packages/aplicacion/test/otra.int.test.ts
+detecta M8: prueba INT en un archivo .e2e.ts → 1 error(es): M8 PRU-INT-ACCESO-001 es INT y está en apps/web/e2e/x.e2e.ts
+detecta M9: cuarentena vencida → 2 error(es): M9 cuarentena vencida: PRU-DOM-TARJ-003 (venció el 2027-02-15; inestable) | M1 CA-30.4 (FT-30 [I]) sin prueba activa ni procedimiento manual
+detecta M10: PRU-MAN sin pasos → 2 error(es): M10 PRU-MAN-ACCESO-001 sin procedimiento completo (Disparador, Pasos numerados y Resultado esperado) | M1 CA-02.5 está marcado (manual) en 06 y no tiene PRU-MAN
+detecta M11: quitar la PRU-MAN de CA-34.14 ⚠ (S6-1) → 1 error(es): M11 CA-34.14 ⚠ (S6-1): falta la PRU-MAN que lo rehace con las muestras reales
+detecta M12: archivo de código sin feature → 1 error(es): M12 apps/web/src/app/(finn)/nueva/page.tsx no está en pruebas/mapa-codigo.json
+detecta M13: FT-49 (diferida) marcada terminada → 1 error(es): M13 FT-49 está diferida en 06; no puede estar terminada sin el CT que la active
+mutaciones detectadas: 15 de 15
+incremental (FT-30 terminada sin sus pruebas): 7 M1, todos de FT-30: true; otros errores: 0
+pruebas:ft FT-30 → 7 CA, REC-4.4, 8 pruebas, comandos:
+   pnpm test:e2e -- -g "PRU-E2E-TARJ-002|PRU-E2E-TARJ-003|PRU-E2E-INICIO-008"
+   pnpm test:componentes -t "PRU-CMP-TARJ-002|PRU-CMP-TARJ-003"
+   pnpm test:integracion -t "PRU-RH-TARJ-003"
+   pnpm test:unidad -t "PRU-DOM-TARJ-003"
+   pnpm test:integracion -t "PRU-INT-TARJ-003"
+afectadas(pagar-tarjeta.ts) → fts FT-30, E2E 3, total 8
+afectadas(layout.tsx) → todo: true
+informe: 77 fichas; puerta abierta: true

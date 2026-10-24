@@ -1,0 +1,61 @@
+Plan: 34 archivos citados en 3 tablas; anexos: 0 archivos indexados en /tmp/claude-0/s/anx_vacio.
+Presentes: 0; faltan: 31; a revisar a mano: 3.
+FALTA firmas.sh (zip: 07; tareas: TA-009; 8.2 Archivos de los zips que cita la Parte A)
+FALTA minutos.ts (zip: 07; tareas: TA-013; 8.2 Archivos de los zips que cita la Parte A)
+FALTA verificar-migraciones.mjs (zip: 03; tareas: TA-011; 8.2 Archivos de los zips que cita la Parte A)
+FALTA tokens.css (zip: `finn-entrega.zip`, zip de la marca; tareas: Parte C (**[C]** detalle en §23.2); 8.2 Archivos de los zips que cita la Parte A)
+FALTA tokens.json (zip: `finn-entrega.zip`, zip de la marca; tareas: Parte C (**[C]** detalle en §23.2); 8.2 Archivos de los zips que cita la Parte A)
+FALTA catalogo.sql (zip: Fase 3; tareas: TA-051; 16.4 Archivos de los zips que cita la Parte B)
+FALTA reglas-catalogo.sql (zip: Fase 3; tareas: TA-051; 16.4 Archivos de los zips que cita la Parte B)
+FALTA respaldar.mjs (zip: Fase 3; tareas: TA-251; 16.4 Archivos de los zips que cita la Parte B)
+FALTA restaurar.sh (zip: Fase 3; tareas: TA-251; 16.4 Archivos de los zips que cita la Parte B)
+FALTA sql/03_regla_r14.sql (zip: Fase 4; tareas: TA-051; 16.4 Archivos de los zips que cita la Parte B)
+FALTA webhook/cuerpo.ts (zip: Fase 4; tareas: TA-177; 16.4 Archivos de los zips que cita la Parte B)
+FALTA t17.py (zip: Fase 4; tareas: TA-252; 16.4 Archivos de los zips que cita la Parte B)
+FALTA trazabilidad.py (zip: Fase 5 / Fase 7; tareas: TA-252; 16.4 Archivos de los zips que cita la Parte B)
+FALTA cobertura.py (zip: Fase 5 / Fase 7; tareas: TA-252; 16.4 Archivos de los zips que cita la Parte B)
+FALTA motor_min.py (zip: Fase 6; tareas: TA-112; 16.4 Archivos de los zips que cita la Parte B)
+FALTA recorridos.py (zip: Fase 6; tareas: TA-135, TA-252; 16.4 Archivos de los zips que cita la Parte B)
+FALTA trazabilidad.py (zip: Fase 6; tareas: TA-135, TA-252; 16.4 Archivos de los zips que cita la Parte B)
+FALTA revisar_fichas.py (zip: Fase 6; tareas: TA-135, TA-252; 16.4 Archivos de los zips que cita la Parte B)
+FALTA prueba_reportes.py (zip: Fase 6; tareas: TA-135, TA-252; 16.4 Archivos de los zips que cita la Parte B)
+FALTA reportes.py (zip: Fase 6; tareas: TA-135, TA-252; 16.4 Archivos de los zips que cita la Parte B)
+FALTA escenarios/tipos.ts (zip: Fase 7; tareas: TA-130, TA-188; 16.4 Archivos de los zips que cita la Parte B)
+FALTA estado_a7.py (zip: Fase 7; tareas: TA-147; 16.4 Archivos de los zips que cita la Parte B)
+FALTA comparar.py (zip: Fase 7; tareas: TA-147; 16.4 Archivos de los zips que cita la Parte B)
+FALTA motor_min.py (zip: Fase 7; tareas: TA-147; 16.4 Archivos de los zips que cita la Parte B)
+FALTA tokens.css (zip: `finn-entrega.zip`; tareas: TA-201; 23.2 Archivos de los zips que cita la Parte C)
+FALTA tokens.json (zip: `finn-entrega.zip`; tareas: TA-201; 23.2 Archivos de los zips que cita la Parte C)
+FALTA iconos/ (zip: `finn-entrega.zip`; tareas: TA-202; 23.2 Archivos de los zips que cita la Parte C)
+FALTA iconos/estados/ (zip: `finn-entrega.zip`; tareas: TA-202; 23.2 Archivos de los zips que cita la Parte C)
+FALTA finn-marca.zip (zip: `finn-entrega.zip` (zip dentro del zip); tareas: TA-203; 23.2 Archivos de los zips que cita la Parte C)
+FALTA manifest-icons.json (zip: `finn-entrega.zip` (zip dentro del zip); tareas: TA-203; 23.2 Archivos de los zips que cita la Parte C)
+FALTA contraste.py (zip: Fase 5; tareas: TA-201 (PRU-DOM-PWA-001); 23.2 Archivos de los zips que cita la Parte C)
+REVISAR matriz.ts (la cita dice "o equivalente" o "prototipo"; zip: 07; tareas: TA-006, TA-007)
+REVISAR regla-r15.sql (la cita dice "o equivalente" o "prototipo"; zip: Fase 7; tareas: TA-056)
+REVISAR reloj-simulado.sql (la cita dice "o equivalente" o "prototipo"; zip: Fase 7; tareas: TA-056)
+Lista de TU-04: faltan 23.
+FALTA (TU-04) 00-decisiones.md
+FALTA (TU-04) 01-dominio.md
+FALTA (TU-04) 02-tecnologias.md
+FALTA (TU-04) 03-base-de-datos.md
+FALTA (TU-04) 04-backend.md
+FALTA (TU-04) 05-frontend.md
+FALTA (TU-04) 06-features.md
+FALTA (TU-04) 07-pruebas.md
+FALTA (TU-04) 08-tareas.md
+FALTA (TU-04) 05-anexo-encargo-claude-design.md
+FALTA (TU-04) 06-identidad-visual.md
+FALTA (TU-04) Finn 2.0 — Características, Funciones y Mejoras.md
+FALTA (TU-04) 04-backend-verificacion.md
+FALTA (TU-04) 05-frontend-verificacion.md
+FALTA (TU-04) zip de la Fase 3 (03-*.zip)
+FALTA (TU-04) zip de la Fase 4 (04-*.zip)
+FALTA (TU-04) zip de la Fase 5 (05-*.zip)
+FALTA (TU-04) zip de la Fase 6 (06-*.zip)
+FALTA (TU-04) zip de la Fase 7 (07-*.zip)
+FALTA (TU-04) zip de la Fase 8 (08-*.zip)
+FALTA (TU-04) finn-entrega.zip
+FALTA (TU-04) 52 íconos en iconos/ de finn-entrega.zip (hay 0)
+FALTA (TU-04) 7 glifos en iconos/estados/ de finn-entrega.zip (hay 0)
+RESULTADO: FALLA

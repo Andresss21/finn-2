@@ -1,0 +1,1 @@
+{"name":"v7-cmp","private":true,"type":"module","devDependencies":{"@types/react":"^19.3.0","@vitejs/plugin-react":"^5.2.0","@vitest/browser":"^3.2.7","axe-core":"^4.14.0","playwright":"^1.56.0","react":"^19.3.1","react-dom":"^19.3.1","typescript":"^5.9.3","vitest":"^3.2.7","vitest-browser-react":"^1.0.1"}}

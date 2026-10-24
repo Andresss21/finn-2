@@ -1,0 +1,1 @@
+V5-34 · /base con RegistroServiceWorker propio: 139.6 KB (Parte C sin registro: 139,1 KB) · /con-provider (SerwistProvider de @serwist/turbopack): +2.4 KB sobre una página sin componentes de cliente propios · sw.js: 35.8 KB (11.7 KB con gzip)

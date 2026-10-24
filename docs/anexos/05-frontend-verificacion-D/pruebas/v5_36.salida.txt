@@ -1,0 +1,6 @@
+Consultas: 18/18 · operaciones con pantalla: 60/61 (sin pantalla: OP-35, el webhook) · flujos: 49 · carpetas de flujo repetidas: 0
+V5-36: §15 coincide con §2 y 4.14
+--- control negativo:
+Consultas: 18/18 · operaciones con pantalla: 59/61 (sin pantalla: OP-35, el webhook) · flujos: 49 · carpetas de flujo repetidas: 0
+la tabla 15.2 no coincide con la generada
+operaciones sin pantalla: OP-48

@@ -1,0 +1,1 @@
+V5-11 crear sola: 132 ms; crear con una lectura de 900 ms en vuelo: 875 ms

@@ -1,0 +1,9 @@
+
+apps/web/src/componentes/dominio/monto.tsx
+  2:1  error  '@finn/dominio/valores' import is restricted from being used. Solo los formularios pueden importar Centavos en ejecución (PF-3). Fuera de ellos, usá "import type"  @typescript-eslint/no-restricted-imports
+
+apps/web/src/componentes/formularios/usa-motor.tsx
+  1:1  error  '@finn/dominio' import is restricted from being used. La interfaz solo importa tipos del dominio  @typescript-eslint/no-restricted-imports
+
+✖ 2 problems (2 errors, 0 warnings)
+

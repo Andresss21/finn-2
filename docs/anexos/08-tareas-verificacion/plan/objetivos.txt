@@ -1,0 +1,1426 @@
+# Objetivos del plan de la Fase 8: id | parte | fuente. Generado por catalogo.py desde docs/ (01, 04, 06, 07)
+# y las listas de cada parte; `verificar.ts --docs` comprueba que no falte ningún objetivo derivado de los documentos.
+ADR-20 | A | 02 ADR-20
+BE-01 | A | 04 §1.1
+BE-04 | A | 04 §1.4
+BE-03b | A | 04 §1.5 b
+ADR-21-tipado | A | 02 ADR-21 (tipado)
+DP-06 | A | 07 §5.1
+ADR-21-instrucciones | A | 02 ADR-21 (instrucciones para agentes)
+DT-03 | A | 08 §1.3
+DT-04 | A | 08 §1.4
+DT-09 | A | 08 §4
+ADR-21-lint-dominio | A | 02 ADR-21 (lint, dominio)
+ADR-21-lint-prisma | A | 02 ADR-21 (lint, Prisma fuera de db)
+ADR-21-lint-prisma8 | A | 02 ADR-21 (lint, Prisma 8)
+ADR-21-lint-centavos | A | 02 ADR-21 (lint, Centavos)
+BE-02 | A | 04 §1.3
+BE-03a | A | 04 §1.5 a
+BE-03c | A | 04 §1.5 c
+BE-03d | A | 04 §1.5 d
+L1 | A | 05 §1.7
+L2 | A | 05 §1.7
+L3 | A | 05 §1.7
+L4 | A | 05 §1.7
+L5 | A | 05 §1.7
+L6 | A | 05 §1.7
+L7 | A | 05 §1.7
+L8 | A | 05 §1.7
+L9 | A | 05 §1.7
+L10 | A | 05 §1.7
+L11 | A | 05 §1.7
+L12 | A | 05 §1.7
+L13 | A | 05 §1.7
+L14 | A | 05 §1.7
+L15 | A | 05 §1.7
+L16 | A | 05 §1.7
+L17 | A | 05 §1.7
+L18 | A | 05 §1.7
+L19 | A | 05 §1.7
+L20 | A | 07 §4.4 (CT-02)
+DP-01 | A | 07 §1.1
+DP-03 | A | 07 §3.1
+DP-08 | A | 07 §3.2
+DP-09 | A | 07 §8
+DP-11-determinismo | A | 07 §7.1
+DP-11-cuarentena | A | 07 §7.3
+DP-11-aviso | A | 07 §7.3
+CT-04 | A | 07 §10
+M1 | A | 07 §13.3
+M2 | A | 07 §13.3
+M3 | A | 07 §13.3
+M4 | A | 07 §13.3
+M5 | A | 07 §13.3
+M6 | A | 07 §13.3
+M7 | A | 07 §13.3
+M8 | A | 07 §13.3
+M9 | A | 07 §13.3
+M10 | A | 07 §13.3
+M11 | A | 07 §13.3
+M12 | A | 07 §13.3
+M13 | A | 07 §13.3
+M14 | A | 07 §13.3
+M15 | A | 07 §13.3
+M16 | A | 07 §13.3
+M17 | A | 07 §13.3
+DP-15 | A | 07 §13.4
+DP-18 | A | 07 §16.1
+DP-19 | A | 07 §13.6
+DP-20 | A | 07 §13.2
+DP-24 | A | 07 §22.2
+DP-25 | A | 07 §21
+P7-20 | A | 07 §29
+P7-13 | A | 07 §6.3
+P7-18 | A | 07 §13.5
+DT-01 | A | 08 §1.1
+DT-05 | A | 08 §1.5
+DT-06 | A | 08 §1.6
+C1 | A | 03 §11.6
+C2 | A | 03 §11.6
+DP-10 | A | 07 §6.3
+DP-33 | A | 07 §32.2
+M5-fusion | A | 07 §32.2 (palanca M5 de 07 §6.5)
+WF-ci | A | 07 §6.1
+SEG-gitleaks | A | 07 §6.1, §19.1
+WF-nocturno | A | 07 §6.1
+M4-ahorro | A | 07 §6.5 (palanca M4)
+DP-12 | A | 07 §6.5
+DP-36 | A | 07 §32.3
+P7-5-persistencia | A | 07 §6.6
+CH-01 | A | 08 §7
+CH-02 | A | 08 §7
+CH-04 | A | 08 §7
+CT-03 | A | 07 §34 (CT-03: procedimientos manuales de Android y NVDA) [A2]
+DT-13 | A | 08 §11.1 (permisos de Claude Code como barrera) [A2]
+DT-14 | A | 08 §11.2 (clase portado en tamano.ts) [A2]
+DT-20 | A | 08 §1.5 (revisión obligatoria por archivos de producción; resumen de pr:mergear) [B2]
+DT-33 | A | 08 §37.3 (aprobación de las obligatorias solo con el mensaje del usuario; hook y archivo de aprobación) [F8]
+OP-01 | B | 04 §3 (operación en @finn/aplicacion)
+OP-01@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-02 | B | 04 §3 (operación en @finn/aplicacion)
+OP-02@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-03 | B | 04 §3 (operación en @finn/aplicacion)
+OP-03@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-04 | B | 04 §3 (operación en @finn/aplicacion)
+OP-04@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-05 | B | 04 §3 (operación en @finn/aplicacion)
+OP-05@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-06 | B | 04 §3 (operación en @finn/aplicacion)
+OP-06@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-07 | B | 04 §3 (operación en @finn/aplicacion)
+OP-07@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-08 | B | 04 §3 (operación en @finn/aplicacion)
+OP-08@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-09 | B | 04 §3 (operación en @finn/aplicacion)
+OP-09@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-10 | B | 04 §3 (operación en @finn/aplicacion)
+OP-10@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-11 | B | 04 §3 (operación en @finn/aplicacion)
+OP-11@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-12 | B | 04 §3 (operación en @finn/aplicacion)
+OP-12@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-13 | B | 04 §3 (operación en @finn/aplicacion)
+OP-13@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-14 | B | 04 §3 (operación en @finn/aplicacion)
+OP-14@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-15 | B | 04 §3 (operación en @finn/aplicacion)
+OP-15@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-16 | B | 04 §3 (operación en @finn/aplicacion)
+OP-16@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-17 | B | 04 §3 (operación en @finn/aplicacion)
+OP-17@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-18 | B | 04 §3 (operación en @finn/aplicacion)
+OP-18@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-19 | B | 04 §3 (operación en @finn/aplicacion)
+OP-19@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-20 | B | 04 §3 (operación en @finn/aplicacion)
+OP-20@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-21 | B | 04 §3 (operación en @finn/aplicacion)
+OP-21@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-22 | B | 04 §3 (operación en @finn/aplicacion)
+OP-22@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-23 | B | 04 §3 (operación en @finn/aplicacion)
+OP-23@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-24 | B | 04 §3 (operación en @finn/aplicacion)
+OP-24@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-25 | B | 04 §3 (operación en @finn/aplicacion)
+OP-25@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-26 | B | 04 §3 (operación en @finn/aplicacion)
+OP-26@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-27 | B | 04 §3 (operación en @finn/aplicacion)
+OP-27@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-28 | B | 04 §3 (operación en @finn/aplicacion)
+OP-28@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-29 | B | 04 §3 (operación en @finn/aplicacion)
+OP-29@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-30 | B | 04 §3 (operación en @finn/aplicacion)
+OP-30@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-31 | B | 04 §3 (operación en @finn/aplicacion)
+OP-31@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-32 | B | 04 §3 (operación en @finn/aplicacion)
+OP-32@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-33 | B | 04 §3 (operación en @finn/aplicacion)
+OP-33@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-34 | B | 04 §3 (operación en @finn/aplicacion)
+OP-34@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-35 | B | 04 §3 (operación en @finn/aplicacion)
+OP-35@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-36 | B | 04 §3 (operación en @finn/aplicacion)
+OP-36@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-37 | B | 04 §3 (operación en @finn/aplicacion)
+OP-37@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-38 | B | 04 §3 (operación en @finn/aplicacion)
+OP-38@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-39 | B | 04 §3 (operación en @finn/aplicacion)
+OP-39@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-40 | B | 04 §3 (operación en @finn/aplicacion)
+OP-40@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-41 | B | 04 §3 (operación en @finn/aplicacion)
+OP-41@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-42 | B | 04 §3 (operación en @finn/aplicacion)
+OP-42@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-43 | B | 04 §3 (operación en @finn/aplicacion)
+OP-43@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-44 | B | 04 §3 (operación en @finn/aplicacion)
+OP-44@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-45 | B | 04 §3 (operación en @finn/aplicacion)
+OP-45@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-46 | B | 04 §3 (operación en @finn/aplicacion)
+OP-46@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-47 | B | 04 §3 (operación en @finn/aplicacion)
+OP-47@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-48 | B | 04 §3 (operación en @finn/aplicacion)
+OP-48@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-49 | B | 04 §3 (operación en @finn/aplicacion)
+OP-49@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-50 | B | 04 §3 (operación en @finn/aplicacion)
+OP-50@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-51 | B | 04 §3 (operación en @finn/aplicacion)
+OP-51@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-52 | B | 04 §3 (operación en @finn/aplicacion)
+OP-52@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OP-53 | B | 04 §3 (operación en @finn/aplicacion)
+OP-53@dom | B | 04 §2.4 y 01 §5 (comando de aplicar)
+OPT-01 | B | 04 §3.10
+OPT-02 | B | 04 §3.10
+OPT-03 | B | 04 §3.10
+OPT-04 | B | 04 §3.10
+OPT-05 | B | 04 §3.10
+OPT-06 | B | 04 §3.10
+OPT-07 | B | 04 §3.10
+OPT-08 | B | 04 §3.10
+OPT-09 | B | 04 §3.10
+ESC-01@motor | B | 01 §8, 07 §12.3 (PRU-ESC-01@motor)
+ESC-01@int | B | 01 §8, 07 §12.3 (PRU-ESC-01@int)
+ESC-02@motor | B | 01 §8, 07 §12.3 (PRU-ESC-02@motor)
+ESC-02@int | B | 01 §8, 07 §12.3 (PRU-ESC-02@int)
+ESC-03@motor | B | 01 §8, 07 §12.3 (PRU-ESC-03@motor)
+ESC-03@int | B | 01 §8, 07 §12.3 (PRU-ESC-03@int)
+ESC-04@motor | B | 01 §8, 07 §12.3 (PRU-ESC-04@motor)
+ESC-04@int | B | 01 §8, 07 §12.3 (PRU-ESC-04@int)
+ESC-05@motor | B | 01 §8, 07 §12.3 (PRU-ESC-05@motor)
+ESC-05@int | B | 01 §8, 07 §12.3 (PRU-ESC-05@int)
+ESC-06@motor | B | 01 §8, 07 §12.3 (PRU-ESC-06@motor)
+ESC-06@int | B | 01 §8, 07 §12.3 (PRU-ESC-06@int)
+ESC-07@motor | B | 01 §8, 07 §12.3 (PRU-ESC-07@motor)
+ESC-07@int | B | 01 §8, 07 §12.3 (PRU-ESC-07@int)
+ESC-08@motor | B | 01 §8, 07 §12.3 (PRU-ESC-08@motor)
+ESC-08@int | B | 01 §8, 07 §12.3 (PRU-ESC-08@int)
+ESC-09@motor | B | 01 §8, 07 §12.3 (PRU-ESC-09@motor)
+ESC-09@int | B | 01 §8, 07 §12.3 (PRU-ESC-09@int)
+ESC-10@motor | B | 01 §8, 07 §12.3 (PRU-ESC-10@motor)
+ESC-10@int | B | 01 §8, 07 §12.3 (PRU-ESC-10@int)
+ESC-11@motor | B | 01 §8, 07 §12.3 (PRU-ESC-11@motor)
+ESC-11@int | B | 01 §8, 07 §12.3 (PRU-ESC-11@int)
+ESC-12@motor | B | 01 §8, 07 §12.3 (PRU-ESC-12@motor)
+ESC-12@int | B | 01 §8, 07 §12.3 (PRU-ESC-12@int)
+ESC-13@motor | B | 01 §8, 07 §12.3 (PRU-ESC-13@motor)
+ESC-13@int | B | 01 §8, 07 §12.3 (PRU-ESC-13@int)
+ESC-14@motor | B | 01 §8, 07 §12.3 (PRU-ESC-14@motor)
+ESC-14@int | B | 01 §8, 07 §12.3 (PRU-ESC-14@int)
+ESC-15@motor | B | 01 §8, 07 §12.3 (PRU-ESC-15@motor)
+ESC-15@int | B | 01 §8, 07 §12.3 (PRU-ESC-15@int)
+ESC-16@motor | B | 01 §8, 07 §12.3 (PRU-ESC-16@motor)
+ESC-16@int | B | 01 §8, 07 §12.3 (PRU-ESC-16@int)
+ESC-17@motor | B | 01 §8, 07 §12.3 (PRU-ESC-17@motor)
+ESC-17@int | B | 01 §8, 07 §12.3 (PRU-ESC-17@int)
+ESC-18@motor | B | 01 §8, 07 §12.3 (PRU-ESC-18@motor)
+ESC-18@int | B | 01 §8, 07 §12.3 (PRU-ESC-18@int)
+ESC-19@motor | B | 01 §8, 07 §12.3 (PRU-ESC-19@motor)
+ESC-19@int | B | 01 §8, 07 §12.3 (PRU-ESC-19@int)
+ESC-20@motor | B | 01 §8, 07 §12.3 (PRU-ESC-20@motor)
+ESC-20@int | B | 01 §8, 07 §12.3 (PRU-ESC-20@int)
+ESC-21@motor | B | 01 §8, 07 §12.3 (PRU-ESC-21@motor)
+ESC-21@int | B | 01 §8, 07 §12.3 (PRU-ESC-21@int)
+ESC-22@motor | B | 01 §8, 07 §12.3 (PRU-ESC-22@motor)
+ESC-22@int | B | 01 §8, 07 §12.3 (PRU-ESC-22@int)
+ESC-23@motor | B | 01 §8, 07 §12.3 (PRU-ESC-23@motor)
+ESC-23@int | B | 01 §8, 07 §12.3 (PRU-ESC-23@int)
+ESC-24@motor | B | 01 §8, 07 §12.3 (PRU-ESC-24@motor)
+ESC-24@int | B | 01 §8, 07 §12.3 (PRU-ESC-24@int)
+ESC-25@motor | B | 01 §8, 07 §12.3 (PRU-ESC-25@motor)
+ESC-25@int | B | 01 §8, 07 §12.3 (PRU-ESC-25@int)
+ESC-26@motor | B | 01 §8, 07 §12.3 (PRU-ESC-26@motor)
+ESC-26@int | B | 01 §8, 07 §12.3 (PRU-ESC-26@int)
+ESC-27@motor | B | 01 §8, 07 §12.3 (PRU-ESC-27@motor)
+ESC-27@int | B | 01 §8, 07 §12.3 (PRU-ESC-27@int)
+ESC-28@motor | B | 01 §8, 07 §12.3 (PRU-ESC-28@motor)
+ESC-28@int | B | 01 §8, 07 §12.3 (PRU-ESC-28@int)
+ESC-29@motor | B | 01 §8, 07 §12.3 (PRU-ESC-29@motor)
+ESC-29@int | B | 01 §8, 07 §12.3 (PRU-ESC-29@int)
+ESC-30@motor | B | 01 §8, 07 §12.3 (PRU-ESC-30@motor)
+ESC-30@int | B | 01 §8, 07 §12.3 (PRU-ESC-30@int)
+ESC-31@motor | B | 01 §8, 07 §12.3 (PRU-ESC-31@motor)
+ESC-31@int | B | 01 §8, 07 §12.3 (PRU-ESC-31@int)
+ESC-32@motor | B | 01 §8, 07 §12.3 (PRU-ESC-32@motor)
+ESC-32@int | B | 01 §8, 07 §12.3 (PRU-ESC-32@int)
+ESC-33@motor | B | 01 §8, 07 §12.3 (PRU-ESC-33@motor)
+ESC-33@int | B | 01 §8, 07 §12.3 (PRU-ESC-33@int)
+ESC-34@motor | B | 01 §8, 07 §12.3 (PRU-ESC-34@motor)
+ESC-34@int | B | 01 §8, 07 §12.3 (PRU-ESC-34@int)
+ESC-35@motor | B | 01 §8, 07 §12.3 (PRU-ESC-35@motor)
+ESC-35@int | B | 01 §8, 07 §12.3 (PRU-ESC-35@int)
+ESC-36@motor | B | 01 §8, 07 §12.3 (PRU-ESC-36@motor)
+ESC-36@int | B | 01 §8, 07 §12.3 (PRU-ESC-36@int)
+ESC-37@motor | B | 01 §8, 07 §12.3 (PRU-ESC-37@motor)
+ESC-37@int | B | 01 §8, 07 §12.3 (PRU-ESC-37@int)
+ESC-38@motor | B | 01 §8, 07 §12.3 (PRU-ESC-38@motor)
+ESC-38@int | B | 01 §8, 07 §12.3 (PRU-ESC-38@int)
+ESC-39@motor | B | 01 §8, 07 §12.3 (PRU-ESC-39@motor)
+ESC-39@int | B | 01 §8, 07 §12.3 (PRU-ESC-39@int)
+ESC-40@motor | B | 01 §8, 07 §12.3 (PRU-ESC-40@motor)
+ESC-40@int | B | 01 §8, 07 §12.3 (PRU-ESC-40@int)
+ESC-41@motor | B | 01 §8, 07 §12.3 (PRU-ESC-41@motor)
+ESC-41@int | B | 01 §8, 07 §12.3 (PRU-ESC-41@int)
+ESC-42@motor | B | 01 §8, 07 §12.3 (PRU-ESC-42@motor)
+ESC-42@int | B | 01 §8, 07 §12.3 (PRU-ESC-42@int)
+ESC-43@motor | B | 01 §8, 07 §12.3 (PRU-ESC-43@motor)
+ESC-43@int | B | 01 §8, 07 §12.3 (PRU-ESC-43@int)
+ESC-44@motor | B | 01 §8, 07 §12.3 (PRU-ESC-44@motor)
+ESC-44@int | B | 01 §8, 07 §12.3 (PRU-ESC-44@int)
+ESC-45@motor | B | 01 §8, 07 §12.3 (PRU-ESC-45@motor)
+ESC-45@int | B | 01 §8, 07 §12.3 (PRU-ESC-45@int)
+ESC-46@motor | B | 01 §8, 07 §12.3 (PRU-ESC-46@motor)
+ESC-46@int | B | 01 §8, 07 §12.3 (PRU-ESC-46@int)
+ESC-47@motor | B | 01 §8, 07 §12.3 (PRU-ESC-47@motor)
+ESC-47@int | B | 01 §8, 07 §12.3 (PRU-ESC-47@int)
+ESC-48@motor | B | 01 §8, 07 §12.3 (PRU-ESC-48@motor)
+ESC-48@int | B | 01 §8, 07 §12.3 (PRU-ESC-48@int)
+ESC-49@motor | B | 01 §8, 07 §12.3 (PRU-ESC-49@motor)
+ESC-49@int | B | 01 §8, 07 §12.3 (PRU-ESC-49@int)
+ESC-50@motor | B | 01 §8, 07 §12.3 (PRU-ESC-50@motor)
+ESC-50@int | B | 01 §8, 07 §12.3 (PRU-ESC-50@int)
+INV-01 | B | 01 §6 (M4)
+INV-02 | B | 01 §6 (M4)
+INV-03 | B | 01 §6 (M4)
+INV-04 | B | 01 §6 (M4)
+INV-05 | B | 01 §6 (M4)
+INV-06 | B | 01 §6 (M4)
+INV-07 | B | 01 §6 (M4)
+INV-08 | B | 01 §6 (M4)
+INV-09 | B | 01 §6 (M4)
+INV-10 | B | 01 §6 (M4)
+INV-11 | B | 01 §6 (M4)
+INV-12 | B | 01 §6 (M4)
+INV-13 | B | 01 §6 (M4)
+INV-14 | B | 01 §6 (M4)
+INV-15 | B | 01 §6 (M4)
+INV-16 | B | 01 §6 (M4)
+INV-17 | B | 01 §6 (M4)
+INV-18 | B | 01 §6 (M4)
+INV-19 | B | 01 §6 (M4)
+INV-20 | B | 01 §6 (M4)
+INV-21 | B | 01 §6 (M4)
+INV-22 | B | 01 §6 (M4)
+INV-23 | B | 01 §6 (M4)
+INV-24 | B | 01 §6 (M4)
+INV-25 | B | 01 §6 (M4)
+INV-26 | B | 01 §6 (M4)
+INV-27 | B | 01 §6 (M4)
+INV-28 | B | 01 §6 (M4)
+CB-01 | B | 01 §9 (M14)
+CB-02 | B | 01 §9 (M14)
+CB-03 | B | 01 §9 (M14)
+CB-04 | B | 01 §9 (M14)
+CB-05 | B | 01 §9 (M14)
+CB-06 | B | 01 §9 (M14)
+CB-07 | B | 01 §9 (M14)
+CB-08 | B | 01 §9 (M14)
+CB-09 | B | 01 §9 (M14)
+CB-10 | B | 01 §9 (M14)
+CB-11 | B | 01 §9 (M14)
+CB-12 | B | 01 §9 (M14)
+CB-13 | B | 01 §9 (M14)
+CB-14 | B | 01 §9 (M14)
+CB-15 | B | 01 §9 (M14)
+CB-16 | B | 01 §9 (M14)
+CB-17 | B | 01 §9 (M14)
+CB-18 | B | 01 §9 (M14)
+CB-19 | B | 01 §9 (M14)
+CB-20 | B | 01 §9 (M14)
+CB-21 | B | 01 §9 (M14)
+CB-22 | B | 01 §9 (M14)
+CB-23 | B | 01 §9 (M14)
+CB-24 | B | 01 §9 (M14)
+CB-25 | B | 01 §9 (M14)
+CB-26 | B | 01 §9 (M14)
+CB-27 | B | 01 §9 (M14)
+CB-28 | B | 01 §9 (M14)
+CB-29 | B | 01 §9 (M14)
+CB-30 | B | 01 §9 (M14)
+CB-31 | B | 01 §9 (M14)
+CB-32 | B | 01 §9 (M14)
+CB-33 | B | 01 §9 (M14)
+CB-34 | B | 01 §9 (M14)
+AV-01 | B | 01 §5.0.7 (M3)
+AV-02 | B | 01 §5.0.7 (M3)
+AV-03 | B | 01 §5.0.7 (M3)
+AV-04 | B | 01 §5.0.7 (M3)
+AV-05 | B | 01 §5.0.7 (M3)
+AV-06 | B | 01 §5.0.7 (M3)
+AV-07 | B | 01 §5.0.7 (M3)
+AV-08 | B | 01 §5.0.7 (M3)
+AV-09 | B | 01 §5.0.7 (M3)
+AV-10 | B | 01 §5.0.7 (M3)
+AV-11 | B | 01 §5.0.7 (M3)
+AV-12 | B | 01 §5.0.7 (M3)
+AV-13 | B | 01 §5.0.7 (M3)
+AV-14 | B | 01 §5.0.7 (M3)
+AV-15 | B | 01 §5.0.7 (M3)
+AV-16 | B | 01 §5.0.7 (M3)
+AV-17 | B | 01 §5.0.7 (M3)
+AV-18 | B | 01 §5.0.7 (M3)
+AV-19 | B | 01 §5.0.7 (M3)
+AV-20 | B | 01 §5.0.7 (M3)
+AV-21 | B | 01 §5.0.7 (M3)
+AV-22 | B | 01 §5.0.7 (M3)
+AV-23 | B | 01 §5.0.7 (M3)
+AV-24 | B | 01 §5.0.7 (M3)
+Q-actividad | B | 04 §6, 06 §6.3
+Q-ajustes | B | 04 §6, 06 §6.3
+Q-bandeja | B | 04 §6, 06 §6.3
+Q-cuentas | B | 04 §6, 06 §6.3
+Q-detalleCategoria | B | 04 §6, 06 §6.3
+Q-detalleCuenta | B | 04 §6, 06 §6.3
+Q-detalleLpa | B | 04 §6, 06 §6.3
+Q-detalleTransaccion | B | 04 §6, 06 §6.3
+Q-estructura | B | 04 §6, 06 §6.3
+Q-formulario | B | 04 §6, 06 §6.3
+Q-inicio | B | 04 §6, 06 §6.3
+Q-metas | B | 04 §6, 06 §6.3
+Q-notificaciones | B | 04 §6, 06 §6.3
+Q-porCobrar | B | 04 §6, 06 §6.3
+Q-presupuesto | B | 04 §6, 06 §6.3
+Q-programadas | B | 04 §6, 06 §6.3
+Q-reglas | B | 04 §6, 06 §6.3
+Q-reporte | B | 04 §6, 06 §6.3
+Q-sugerencia | B | 04 §6, 06 §6.3
+REP-categorias | B | 04 §6.9, 06 §3.5 y §6.3
+REP-cumplimiento | B | 04 §6.9, 06 §3.5 y §6.3
+REP-flujo_efectivo | B | 04 §6.9, 06 §3.5 y §6.3
+REP-gasto_semanal | B | 04 §6.9, 06 §3.5 y §6.3
+REP-hallazgos | B | 04 §6.9, 06 §3.5 y §6.3
+REP-hormiga | B | 04 §6.9, 06 §3.5 y §6.3
+REP-ingresos_gastos | B | 04 §6.9, 06 §3.5 y §6.3
+REP-patrimonio | B | 04 §6.9, 06 §3.5 y §6.3
+REP-realidad | B | 04 §6.9, 06 §3.5 y §6.3
+REP-remanente | B | 04 §6.9, 06 §3.5 y §6.3
+REP-ritmo | B | 04 §6.9, 06 §3.5 y §6.3
+REP-suscripciones | B | 04 §6.9, 06 §3.5 y §6.3
+REP-tarjetas | B | 04 §6.9, 06 §3.5 y §6.3
+REP-tendencia | B | 04 §6.9, 06 §3.5 y §6.3
+REP-top_comercios | B | 04 §6.9, 06 §3.5 y §6.3
+REP-datos_base | B | 04 §6.9.4 (CF-09)
+FORM-archivar_categoria | B | 04 §6.14.4, 06 §6.3
+FORM-asignar | B | 04 §6.14.4, 06 §6.3
+FORM-cobrar | B | 04 §6.14.4, 06 §6.3
+FORM-condonar | B | 04 §6.14.4, 06 §6.3
+FORM-cuenta | B | 04 §6.14.4, 06 §6.3
+FORM-cuota_prestamo | B | 04 §6.14.4, 06 §6.3
+FORM-devolver | B | 04 §6.14.4, 06 §6.3
+FORM-editar_transaccion | B | 04 §6.14.4, 06 §6.3
+FORM-formato | B | 04 §6.14.4, 06 §6.3
+FORM-fusionar | B | 04 §6.14.4, 06 §6.3
+FORM-meta | B | 04 §6.14.4, 06 §6.3
+FORM-movimiento | B | 04 §6.14.4, 06 §6.3
+FORM-pagar_tarjeta | B | 04 §6.14.4, 06 §6.3
+FORM-programada | B | 04 §6.14.4, 06 §6.3
+FORM-registrar | B | 04 §6.14.4, 06 §6.3
+BE-05 | C | 04 §0.6 (Server Actions y lista cerrada de Route Handlers (apps/web))
+BE-06 | C | 04 §0.6 (bodySizeLimit de Next)
+BE-07 | B | 04 §0.6
+BE-08 | B | 04 §0.6
+BE-09 | B | 04 §0.6
+BE-10 | B | 04 §0.6
+BE-11 | B | 04 §0.6
+BE-12 | B | 04 §0.6
+BE-13 | B | 04 §0.6
+BE-14 | B | 04 §0.6
+BE-15 | B | 04 §0.6
+BE-16 | B | 04 §0.6
+BE-17 | B | 04 §0.6
+BE-18 | B | 04 §0.6
+BE-19 | B | 04 §0.6
+BE-20 | B | 04 §0.6
+BE-21 | B | 04 §0.6
+BE-22 | B | 04 §0.6
+BE-23 | B | 04 §0.6
+BE-24 | B | 04 §0.6
+BE-25 | B | 04 §0.6
+BE-26 | B | 04 §0.6
+BE-27 | B | 04 §0.6
+BE-28 | B | 04 §0.6
+BE-29 | B | 04 §0.6
+BE-30 | B | 04 §0.6
+BE-31 | B | 04 §0.6
+BE-32 | B | 04 §0.6
+BE-33 | B | 04 §0.6
+BE-34 | B | 04 §0.6
+BE-35 | B | 04 §0.6
+BE-36 | B | 04 §0.6
+BE-37 | B | 04 §0.6
+BE-38 | B | 04 §0.6
+BE-39 | B | 04 §0.6
+BE-40 | B | 04 §0.6
+BE-41 | B | 04 §0.6
+BE-42 | B | 04 §0.6
+BE-43 | B | 04 §0.6
+BE-44 | B | 04 §0.6
+BE-45 | B | 04 §0.6
+BE-46 | B | 04 §0.6
+BE-47 | B | 04 §0.6
+BE-48 | B | 04 §0.6
+BE-49 | B | 04 §0.6
+BE-50 | B | 04 §0.6
+BE-51 | B | 04 §0.6
+BE-52 | B | 04 §0.6
+BE-53 | B | 04 §0.6
+BE-54 | B | 04 §0.6
+BE-55 | B | 04 §0.6
+BE-56 | B | 04 §0.6
+BE-57 | B | 04 §0.6
+BE-58 | B | 04 §0.6
+BE-59 | B | 04 §0.6
+BE-60 | B | 04 §0.6
+BE-61 | B | 04 §0.6
+BE-62 | B | 04 §0.6
+BE-63 | B | 04 §0.6
+BE-09-tipos | B | 04 §2.4 (tipos públicos)
+BE-09-calcular | B | 04 §2.4 (calcular y verificarInvariantes)
+MIG-00 | B | 03 §10.1 y Enmiendas: bootstrap.sql (03 §10.4.1)
+MIG-01 | B | 03 §10.1 y Enmiendas: m_inicio
+MIG-02 | B | 03 §10.1 y Enmiendas: g_tablas
+MIG-03 | B | 03 §10.1 y Enmiendas: m_restricciones
+MIG-04 | B | 03 §10.1 y Enmiendas: m_funciones
+MIG-05 | B | 03 §10.1 y Enmiendas: m_triggers
+MIG-06 | B | 03 §10.1 y Enmiendas: m_seguridad
+MIG-07 | B | 03 §10.1 y Enmiendas: m_datos_iniciales
+MIG-08 | B | 03 §10.1 y Enmiendas: m_purgar_eliminaciones (EN-2)
+MIG-09 | B | 03 §10.1 y Enmiendas: g_conciliacion_modo (CF-01)
+MIG-10 | B | 03 §10.1 y Enmiendas: g_notificaciones_aviso_nulo (CF-16)
+MIG-11 | B | 03 §10.1 y Enmiendas: g_programadas_reactivada (CF-20)
+MIG-12 | B | 03 §10.1 y Enmiendas: m_reloj (CT-02)
+MIG-13 | B | 03 §10.1 y Enmiendas: g_instantes_ahora (CT-02)
+MIG-14 | B | 03 §10.1 y Enmiendas: m_bloqueo_marca (CT-06)
+MIG-15 | B | 03 §10.1 y Enmiendas: m_formatos_bac (DT-12)
+MIG-schema | B | 03 §10.1 y Enmiendas: schema.prisma (03 §10.3)
+C3 | B | 03 §11.6
+C4 | B | 03 §11.6
+C5 | B | 03 §11.6
+C6 | B | 03 §11.6
+R1 | B | 03 §11.6
+R2 | B | 03 §11.6
+R3 | B | 03 §11.6
+R4 | B | 03 §11.6
+R5 | B | 03 §11.6
+R6 | B | 03 §11.6
+R7 | B | 03 §11.6
+R8 | B | 03 §11.6
+R9 | B | 03 §11.6
+R10 | B | 03 §11.6
+R11 | B | 03 §11.6
+R12 | B | 03 §11.6
+R13 | B | 03 §11.6
+R14 | B | 03 §11.6 (EN-2)
+R15 | B | 03 §11.6 (CT-02)
+CF-01 | B | 06 §0.7
+CF-02 | B | 06 §0.7
+CF-04 | B | 06 §0.7
+CF-05 | B | 06 §0.7
+CF-06 | B | 06 §0.7
+CF-07 | B | 06 §0.7
+CF-09 | B | 06 §0.7
+CF-14 | B | 06 §0.7
+CF-15 | B | 06 §0.7
+CF-16 | B | 06 §0.7
+CF-17 | B | 06 §0.7
+CF-18 | B | 06 §0.7
+CF-19 | B | 06 §0.7
+CF-20 | B | 06 §0.7
+CF-21 | B | 06 §0.7
+CF-22 | B | 06 §0.7
+CF-24 | B | 06 §0.7
+CF-25 | B | 06 §0.7
+CF-08 | C | 06 §0.7 (web)
+CF-10 | C | 06 §0.7 (web)
+CF-11 | C | 06 §0.7 (web)
+CF-12 | C | 06 §0.7 (web)
+CF-13 | C | 06 §0.7 (web)
+CF-23 | D | 06 §0.7 (web; FT-69, ficha [M]) [C]
+CF-03 | D | 06 §0.7 (diferido; FT-49)
+CT-01-escritura | B | 07 §34: escribir() y leer() fijan finn.hoy y finn.desfase_ms
+CT-01-funcion | B | 07 §34: relojPermitido() y relojDePrueba()
+CT-01-barrera1 | C | 07 §34: instrumentation.ts (barrera 1)
+CT-01-barrera1b | C | 07 §34: vercel env ls en desplegar (barrera 1b)
+CT-02-base | B | 07 §34: m_reloj, R15 y reloj-simulado.sql
+CT-02-defaults | B | 07 §34: g_instantes_ahora
+CT-02-instante | B | 07 §34: finn.instante() en el paso 3 de 04 §4.2
+CT-05 | B | 07 §34: oráculo
+CT-06 | B | 07 §34: m_bloqueo_marca
+CT-07 | B | 07 §34: semilla de A.7
+CT-08 | B | 07 §34: scripts de la Fase 5
+CT-09 | C | 07 §34: despliegue de emergencia y restauración semanal
+DP-05 | B | 07 §5.2
+DP-07 | B | 07 §5.3
+DP-13 | B | 07 §12.3
+DP-14 | B | 07 §12.3
+DP-16 | B | 07 §12.3
+DP-17 | B | 07 §12.4
+DP-23 | B | 07 §19.2
+DP-26 | B | 07 §19.4
+DP-27 | B | 07 §28.4
+P7-12-disparador | B | 07 §32.1 (c4-explicar)
+P7-12-a | B | 07 §4.4 (dbgenerated)
+P7-12-b | B | 07 §32.1 (respaldo b)
+P7-2-pooler | B | 07 §5.3 (PgBouncer)
+CH-03 | B | 08 §7
+CH-05 | B | 08 §7
+DT-12 | B | 08 §6
+ADR-15 | B | 02
+ADR-16 | B | 02
+ADR-17 | B | 02
+ADR-22-scripts | B | 02 ADR-22, 03 §12
+PR-1-valores | B | 02 Enmiendas (PR-1)
+PR-2 | B | 03 Enmiendas (PR-2)
+EN-1 | B | 03 Enmiendas
+EN-2-tarea | B | 04 §10.2
+GEN-base | B | 07 §12.5
+GEN-operaciones | B | 07 §12.5
+MOT-5.0 | B | 01 §5.0
+MOT-AnexoA | B | 01 Anexo A
+MOT-diferencial | B | 07 §3.1
+SEM-4.3 | B | 07 §12.4
+SEM-4.6 | B | 07 §12.4
+SEM-A7 | B | 07 §28
+DB-errores | B | 04 §7.3
+DB-mapeo | B | 04 §13
+DB-repositorios | B | 04 §1.2, 03 §3.28
+VOL-generador | B | 07 §12.7
+APP-config | B | 04 §14.2
+SMS-interprete | B | 04 §8.3
+CI-politica-patrones | B | 04 §8.5, 07 §31.5
+N-02-intentos | B | 02 N-02
+SP-01-anonimizar | B | 07 §23
+SP-01-BAC | B | 04 SP-01, 08 §6
+CONC-decodificar | B | 04 §9.3
+CONC-BAC-tarjeta | B | 02 ADR-17
+CONC-BAC-debito | B | 02 ADR-17
+CONC-Agricola | B | 02 ADR-17
+NOTIF-catalogo | B | 04 §11.2
+TAREA-diaria | B | 04 §10.2
+TAREA-paso1 | B | 04 §10.2 paso 1
+TAREA-pasos3y4 | B | 04 §10.2 pasos 3 y 4
+RESP-manifiesto | B | 03 §12.1
+HUMO-base | B | 04 §17
+HUMO-iad1-auth | B | 04 §17 (H-09, H-10)
+TRZ-fases | B | 07 §13.7, §35
+MOT-4.2 | B | 01 §4.2
+MOT-4.3 | B | 01 §4.3
+MOT-4.4 | B | 01 §4.4
+MOT-4.5 | B | 01 §4.5
+MOT-4.6 | B | 01 §4.6
+MOT-4.7 | B | 01 §4.7
+MOT-4.8 | B | 01 §4.8
+MOT-4.9 | B | 01 §4.9
+MOT-4.10 | B | 01 §4.10
+MOT-4.12 | B | 01 §4.12
+MOT-4.13 | B | 01 §4.13
+MOT-4.14 | B | 01 §4.14
+MOT-4.16 | B | 01 §4.16
+MOT-4.17 | B | 01 §4.17
+SEL-inicio | B | 04 §6.0.5 (selectores de inicio)
+SEL-presupuesto | B | 04 §6.0.5 (selectores de presupuesto)
+SEL-detalleLpa | B | 04 §6.0.5 (selectores de detalleLpa)
+SEL-detalleCategoria | B | 04 §6.0.5 (selectores de detalleCategoria)
+SEL-metas | B | 04 §6.0.5 (selectores de metas)
+SEL-estructura | B | 04 §6.0.5 (selectores de estructura)
+SEL-cuentas | B | 04 §6.0.5 (selectores de cuentas)
+SEL-detalleCuenta | B | 04 §6.0.5 (selectores de detalleCuenta)
+SEL-actividad | B | 04 §6.0.5 (selectores de actividad)
+SEL-detalleTransaccion | B | 04 §6.0.5 (selectores de detalleTransaccion)
+SEL-bandeja | B | 04 §6.0.5 (selectores de bandeja)
+SEL-sugerencia | B | 04 §6.0.5 (selectores de sugerencia)
+SEL-formulario | B | 04 §6.0.5 (selectores de formulario)
+SEL-porCobrar | B | 04 §6.0.5 (selectores de porCobrar)
+SEL-programadas | B | 04 §6.0.5 (selectores de programadas)
+CA-01.1 | C | 06 FT-01 [I]
+CA-01.2 | C | 06 FT-01 [I]
+CA-01.3 | C | 06 FT-01 [I]
+CA-01.4 | C | 06 FT-01 [I]
+CA-01.5 | C | 06 FT-01 [I]
+CA-01.6 | C | 06 FT-01 [I]
+CA-01.7 | C | 06 FT-01 [I]
+CA-02.1 | C | 06 FT-02 [I]
+CA-02.2 | C | 06 FT-02 [I]
+CA-02.3 | C | 06 FT-02 [I]
+CA-02.4 | C | 06 FT-02 [I]
+CA-02.5 | C | 06 FT-02 [I]
+CA-03.1 | C | 06 FT-03 [I]
+CA-03.2 | C | 06 FT-03 [I]
+CA-03.3 | C | 06 FT-03 [I]
+CA-03.4 | C | 06 FT-03 [I]
+CA-03.5 | C | 06 FT-03 [I]
+CA-04.1 | C | 06 FT-04 [I]
+CA-04.2 | C | 06 FT-04 [I]
+CA-04.3 | C | 06 FT-04 [I]
+CA-04.4 | C | 06 FT-04 [I]
+CA-04.5 | C | 06 FT-04 [I]
+CA-04.6 | C | 06 FT-04 [I]
+CA-04.7 | C | 06 FT-04 [I]
+CA-04.8 | C | 06 FT-04 [I]
+CA-04.9 | C | 06 FT-04 [I]
+CA-04.10 | C | 06 FT-04 [I]
+CA-04.11 | C | 06 FT-04 [I]
+CA-04.12 | C | 06 FT-04 [I]
+CA-04.13 | C | 06 FT-04 [I]
+CA-05.1 | D | 06 FT-05 [M]
+CA-05.2 | D | 06 FT-05 [M]
+CA-05.3 | D | 06 FT-05 [M]
+CA-05.4 | D | 06 FT-05 [M]
+CA-05.5 | D | 06 FT-05 [M]
+CA-05.6 | D | 06 FT-05 [M]
+CA-06.1 | D | 06 FT-06 [M]
+CA-06.2 | D | 06 FT-06 [M]
+CA-06.3 | D | 06 FT-06 [M]
+CA-06.4 | D | 06 FT-06 [M]
+CA-06.5 | D | 06 FT-06 [M]
+CA-06.6 | D | 06 FT-06 [M]
+CA-08.1 | C | 06 FT-08 [I]
+CA-08.2 | C | 06 FT-08 [I]
+CA-08.3 | C | 06 FT-08 [I]
+CA-08.4 | C | 06 FT-08 [I]
+CA-08.5 | C | 06 FT-08 [I]
+CA-08.6 | C | 06 FT-08 [I]
+CA-08.7 | C | 06 FT-08 [I]
+CA-08.8 | C | 06 FT-08 [I]
+CA-08.9 | C | 06 FT-08 [I]
+CA-08.10 | C | 06 FT-08 [I]
+CA-08.11 | C | 06 FT-08 [I]
+CA-08.12 | C | 06 FT-08 [I]
+CA-09.1 | C | 06 FT-09 [I]
+CA-09.2 | C | 06 FT-09 [I]
+CA-09.3 | C | 06 FT-09 [I]
+CA-09.4 | C | 06 FT-09 [I]
+CA-09.5 | C | 06 FT-09 [I]
+CA-09.6 | C | 06 FT-09 [I]
+CA-09.7 | C | 06 FT-09 [I]
+CA-09.8 | C | 06 FT-09 [I]
+CA-09.9 | C | 06 FT-09 [I]
+CA-09.10 | C | 06 FT-09 [I]
+CA-09.11 | C | 06 FT-09 [I]
+CA-09.12 | C | 06 FT-09 [I]
+CA-09.13 | C | 06 FT-09 [I]
+CA-10.1 | C | 06 FT-10 [I]
+CA-10.2 | C | 06 FT-10 [I]
+CA-10.3 | C | 06 FT-10 [I]
+CA-10.4 | C | 06 FT-10 [I]
+CA-10.5 | C | 06 FT-10 [I]
+CA-10.6 | C | 06 FT-10 [I]
+CA-10.7 | C | 06 FT-10 [I]
+CA-10.8 | C | 06 FT-10 [I]
+CA-11.1 | C | 06 FT-11 [I]
+CA-11.2 | C | 06 FT-11 [I]
+CA-11.3 | C | 06 FT-11 [I]
+CA-11.4 | C | 06 FT-11 [I]
+CA-12.1 | D | 06 FT-12 [M]
+CA-12.2 | D | 06 FT-12 [M]
+CA-12.3 | D | 06 FT-12 [M]
+CA-12.4 | D | 06 FT-12 [M]
+CA-12.5 | D | 06 FT-12 [M]
+CA-12.6 | D | 06 FT-12 [M]
+CA-12.7 | D | 06 FT-12 [M]
+CA-12.8 | D | 06 FT-12 [M]
+CA-12.9 | D | 06 FT-12 [M]
+CA-13.1 | D | 06 FT-13 [M]
+CA-13.2 | D | 06 FT-13 [M]
+CA-13.3 | D | 06 FT-13 [M]
+CA-13.4 | D | 06 FT-13 [M]
+CA-14.1 | C | 06 FT-14 [I]
+CA-14.2 | C | 06 FT-14 [I]
+CA-14.3 | C | 06 FT-14 [I]
+CA-14.4 | C | 06 FT-14 [I]
+CA-14.5 | C | 06 FT-14 [I]
+CA-14.6 | C | 06 FT-14 [I]
+CA-14.7 | C | 06 FT-14 [I]
+CA-14.8 | C | 06 FT-14 [I]
+CA-14.9 | C | 06 FT-14 [I]
+CA-14.10 | C | 06 FT-14 [I]
+CA-15.1 | D | 06 FT-15 [M]
+CA-15.2 | D | 06 FT-15 [M]
+CA-15.3 | D | 06 FT-15 [M]
+CA-15.4 | D | 06 FT-15 [M]
+CA-15.5 | D | 06 FT-15 [M]
+CA-16.1 | C | 06 FT-16 [I]
+CA-16.2 | C | 06 FT-16 [I]
+CA-16.3 | C | 06 FT-16 [I]
+CA-16.4 | C | 06 FT-16 [I]
+CA-16.5 | C | 06 FT-16 [I]
+CA-16.6 | C | 06 FT-16 [I]
+CA-16.7 | C | 06 FT-16 [I]
+CA-17.1 | C | 06 FT-17 [I]
+CA-17.2 | C | 06 FT-17 [I]
+CA-17.3 | C | 06 FT-17 [I]
+CA-17.4 | C | 06 FT-17 [I]
+CA-17.5 | C | 06 FT-17 [I]
+CA-17.6 | C | 06 FT-17 [I]
+CA-17.7 | C | 06 FT-17 [I]
+CA-18.1 | C | 06 FT-18 [I]
+CA-18.2 | C | 06 FT-18 [I]
+CA-18.3 | C | 06 FT-18 [I]
+CA-18.4 | C | 06 FT-18 [I]
+CA-18.5 | C | 06 FT-18 [I]
+CA-18.6 | C | 06 FT-18 [I]
+CA-19.1 | C | 06 FT-19 [I]
+CA-19.2 | C | 06 FT-19 [I]
+CA-19.3 | C | 06 FT-19 [I]
+CA-19.4 | C | 06 FT-19 [I]
+CA-19.5 | C | 06 FT-19 [I]
+CA-19.6 | C | 06 FT-19 [I]
+CA-19.7 | C | 06 FT-19 [I]
+CA-20.1 | D | 06 FT-20 [M]
+CA-20.2 | D | 06 FT-20 [M]
+CA-20.3 | D | 06 FT-20 [M]
+CA-20.4 | D | 06 FT-20 [M]
+CA-20.5 | D | 06 FT-20 [M]
+CA-21.1 | C | 06 FT-21 [I]
+CA-21.2 | C | 06 FT-21 [I]
+CA-21.3 | C | 06 FT-21 [I]
+CA-21.4 | C | 06 FT-21 [I]
+CA-21.5 | C | 06 FT-21 [I]
+CA-21.6 | C | 06 FT-21 [I]
+CA-21.7 | C | 06 FT-21 [I]
+CA-21.8 | C | 06 FT-21 [I]
+CA-21.9 | C | 06 FT-21 [I]
+CA-21.10 | C | 06 FT-21 [I]
+CA-21.11 | C | 06 FT-21 [I]
+CA-21.12 | C | 06 FT-21 [I]
+CA-22.1 | C | 06 FT-22 [I]
+CA-22.2 | C | 06 FT-22 [I]
+CA-22.3 | C | 06 FT-22 [I]
+CA-23.1 | C | 06 FT-23 [I]
+CA-23.2 | C | 06 FT-23 [I]
+CA-23.3 | C | 06 FT-23 [I]
+CA-24.1 | C | 06 FT-24 [I]
+CA-24.2 | C | 06 FT-24 [I]
+CA-24.3 | C | 06 FT-24 [I]
+CA-24.4 | C | 06 FT-24 [I]
+CA-24.5 | C | 06 FT-24 [I]
+CA-24.6 | C | 06 FT-24 [I]
+CA-25.1 | C | 06 FT-25 [I]
+CA-25.2 | C | 06 FT-25 [I]
+CA-25.3 | C | 06 FT-25 [I]
+CA-25.4 | C | 06 FT-25 [I]
+CA-25.5 | C | 06 FT-25 [I]
+CA-25.6 | C | 06 FT-25 [I]
+CA-25.7 | C | 06 FT-25 [I]
+CA-25.8 | C | 06 FT-25 [I]
+CA-26.1 | C | 06 FT-26 [I]
+CA-26.2 | C | 06 FT-26 [I]
+CA-26.3 | C | 06 FT-26 [I]
+CA-26.4 | C | 06 FT-26 [I]
+CA-26.5 | C | 06 FT-26 [I]
+CA-26.6 | C | 06 FT-26 [I]
+CA-27.1 | C | 06 FT-27 [I]
+CA-27.2 | C | 06 FT-27 [I]
+CA-27.3 | C | 06 FT-27 [I]
+CA-27.4 | C | 06 FT-27 [I]
+CA-27.5 | C | 06 FT-27 [I]
+CA-27.6 | C | 06 FT-27 [I]
+CA-27.7 | C | 06 FT-27 [I]
+CA-28.1 | D | 06 FT-28 [M]
+CA-28.2 | D | 06 FT-28 [M]
+CA-28.3 | D | 06 FT-28 [M]
+CA-28.4 | D | 06 FT-28 [M]
+CA-28.5 | D | 06 FT-28 [M]
+CA-28.6 | D | 06 FT-28 [M]
+CA-28.7 | D | 06 FT-28 [M]
+CA-28.8 | D | 06 FT-28 [M]
+CA-28.9 | D | 06 FT-28 [M]
+CA-29.1 | C | 06 FT-29 [I]
+CA-29.2 | C | 06 FT-29 [I]
+CA-29.3 | C | 06 FT-29 [I]
+CA-29.4 | C | 06 FT-29 [I]
+CA-29.5 | C | 06 FT-29 [I]
+CA-29.6 | C | 06 FT-29 [I]
+CA-29.7 | C | 06 FT-29 [I]
+CA-29.8 | C | 06 FT-29 [I]
+CA-30.1 | C | 06 FT-30 [I]
+CA-30.2 | C | 06 FT-30 [I]
+CA-30.3 | C | 06 FT-30 [I]
+CA-30.4 | C | 06 FT-30 [I]
+CA-30.5 | C | 06 FT-30 [I]
+CA-30.6 | C | 06 FT-30 [I]
+CA-30.7 | C | 06 FT-30 [I]
+CA-31.1 | D | 06 FT-31 [M]
+CA-31.2 | D | 06 FT-31 [M]
+CA-31.3 | D | 06 FT-31 [M]
+CA-31.4 | D | 06 FT-31 [M]
+CA-32.1 | D | 06 FT-32 [M]
+CA-32.2 | D | 06 FT-32 [M]
+CA-32.3 | D | 06 FT-32 [M]
+CA-32.4 | D | 06 FT-32 [M]
+CA-33.1 | D | 06 FT-33 [M]
+CA-33.2 | D | 06 FT-33 [M]
+CA-33.3 | D | 06 FT-33 [M]
+CA-33.4 | D | 06 FT-33 [M]
+CA-33.5 | D | 06 FT-33 [M]
+CA-33.6 | D | 06 FT-33 [M]
+CA-34.1 | C | 06 FT-34 [I]
+CA-34.2 | C | 06 FT-34 [I]
+CA-34.3 | C | 06 FT-34 [I]
+CA-34.4 | C | 06 FT-34 [I]
+CA-34.5 | C | 06 FT-34 [I]
+CA-34.6 | C | 06 FT-34 [I]
+CA-34.7 | C | 06 FT-34 [I]
+CA-34.8 | C | 06 FT-34 [I]
+CA-34.9 | C | 06 FT-34 [I]
+CA-34.10 | C | 06 FT-34 [I]
+CA-34.11 | C | 06 FT-34 [I]
+CA-34.12 | C | 06 FT-34 [I]
+CA-34.13 | C | 06 FT-34 [I]
+CA-34.14 | C | 06 FT-34 [I]
+CA-35.1 | C | 06 FT-35 [I]
+CA-35.2 | C | 06 FT-35 [I]
+CA-35.3 | C | 06 FT-35 [I]
+CA-35.4 | C | 06 FT-35 [I]
+CA-35.5 | C | 06 FT-35 [I]
+CA-35.6 | C | 06 FT-35 [I]
+CA-35.7 | C | 06 FT-35 [I]
+CA-35.8 | C | 06 FT-35 [I]
+CA-35.9 | C | 06 FT-35 [I]
+CA-35.10 | C | 06 FT-35 [I]
+CA-35.11 | C | 06 FT-35 [I]
+CA-36.1 | D | 06 FT-36 [M]
+CA-36.2 | D | 06 FT-36 [M]
+CA-36.3 | D | 06 FT-36 [M]
+CA-36.4 | D | 06 FT-36 [M]
+CA-36.5 | D | 06 FT-36 [M]
+CA-37.1 | C | 06 FT-37 [I]
+CA-37.2 | C | 06 FT-37 [I]
+CA-37.3 | C | 06 FT-37 [I]
+CA-37.4 | C | 06 FT-37 [I]
+CA-37.5 | C | 06 FT-37 [I]
+CA-37.6 | C | 06 FT-37 [I]
+CA-38.1 | C | 06 FT-38 [I]
+CA-38.2 | C | 06 FT-38 [I]
+CA-38.3 | C | 06 FT-38 [I]
+CA-38.4 | C | 06 FT-38 [I]
+CA-38.5 | C | 06 FT-38 [I]
+CA-38.6 | C | 06 FT-38 [I]
+CA-39.1 | D | 06 FT-39 [M]
+CA-39.2 | D | 06 FT-39 [M]
+CA-39.3 | D | 06 FT-39 [M]
+CA-39.4 | D | 06 FT-39 [M]
+CA-78.1 | D | 06 FT-78 [M]
+CA-78.2 | D | 06 FT-78 [M]
+CA-78.3 | D | 06 FT-78 [M]
+CA-78.4 | D | 06 FT-78 [M]
+CA-78.5 | D | 06 FT-78 [M]
+CA-78.6 | D | 06 FT-78 [M]
+CA-78.7 | D | 06 FT-78 [M]
+CA-78.8 | D | 06 FT-78 [M]
+CA-78.9 | D | 06 FT-78 [M]
+CA-78.10 | D | 06 FT-78 [M]
+CA-78.11 | D | 06 FT-78 [M]
+CA-78.12 | D | 06 FT-78 [M]
+CA-78.13 | D | 06 FT-78 [M]
+CA-78.14 | D | 06 FT-78 [M]
+CA-78.15 | D | 06 FT-78 [M]
+CA-40.1 | D | 06 FT-40 [M]
+CA-40.2 | D | 06 FT-40 [M]
+CA-40.3 | D | 06 FT-40 [M]
+CA-40.4 | D | 06 FT-40 [M]
+CA-40.5 | D | 06 FT-40 [M]
+CA-40.6 | D | 06 FT-40 [M]
+CA-40.7 | D | 06 FT-40 [M]
+CA-40.8 | D | 06 FT-40 [M]
+CA-41.1 | D | 06 FT-41 [M]
+CA-41.2 | D | 06 FT-41 [M]
+CA-41.3 | D | 06 FT-41 [M]
+CA-41.4 | D | 06 FT-41 [M]
+CA-41.5 | D | 06 FT-41 [M]
+CA-41.6 | D | 06 FT-41 [M]
+CA-42.1 | D | 06 FT-42 [M]
+CA-42.2 | D | 06 FT-42 [M]
+CA-42.3 | D | 06 FT-42 [M]
+CA-42.4 | D | 06 FT-42 [M]
+CA-42.5 | D | 06 FT-42 [M]
+CA-42.6 | D | 06 FT-42 [M]
+CA-43.1 | D | 06 FT-43 [M]
+CA-43.2 | D | 06 FT-43 [M]
+CA-43.3 | D | 06 FT-43 [M]
+CA-43.4 | D | 06 FT-43 [M]
+CA-43.5 | D | 06 FT-43 [M]
+CA-43.6 | D | 06 FT-43 [M]
+CA-43.7 | D | 06 FT-43 [M]
+CA-43.8 | D | 06 FT-43 [M]
+CA-43.9 | D | 06 FT-43 [M]
+CA-43.10 | D | 06 FT-43 [M]
+CA-44.1 | D | 06 FT-44 [M]
+CA-44.2 | D | 06 FT-44 [M]
+CA-44.3 | D | 06 FT-44 [M]
+CA-44.4 | D | 06 FT-44 [M]
+CA-44.5 | D | 06 FT-44 [M]
+CA-44.6 | D | 06 FT-44 [M]
+CA-45.1 | D | 06 FT-45 [M]
+CA-45.2 | D | 06 FT-45 [M]
+CA-45.3 | D | 06 FT-45 [M]
+CA-45.4 | D | 06 FT-45 [M]
+CA-45.5 | D | 06 FT-45 [M]
+CA-46.1 | D | 06 FT-46 [M]
+CA-46.2 | D | 06 FT-46 [M]
+CA-46.3 | D | 06 FT-46 [M]
+CA-46.4 | D | 06 FT-46 [M]
+CA-46.5 | D | 06 FT-46 [M]
+CA-46.6 | D | 06 FT-46 [M]
+CA-46.7 | D | 06 FT-46 [M]
+CA-47.1 | D | 06 FT-47 [M]
+CA-47.2 | D | 06 FT-47 [M]
+CA-47.3 | D | 06 FT-47 [M]
+CA-47.4 | D | 06 FT-47 [M]
+CA-48.1 | D | 06 FT-48 [M]
+CA-48.2 | D | 06 FT-48 [M]
+CA-48.3 | D | 06 FT-48 [M]
+CA-49.1 | D | 06 FT-49 [P]
+CA-49.2 | D | 06 FT-49 [P]
+CA-49.3 | D | 06 FT-49 [P]
+CA-50.1 | C | 06 FT-50 [I]
+CA-50.2 | C | 06 FT-50 [I]
+CA-50.3 | C | 06 FT-50 [I]
+CA-50.4 | C | 06 FT-50 [I]
+CA-50.5 | C | 06 FT-50 [I]
+CA-50.6 | C | 06 FT-50 [I]
+CA-50.7 | C | 06 FT-50 [I]
+CA-51.1 | C | 06 FT-51 [I]
+CA-51.2 | C | 06 FT-51 [I]
+CA-51.3 | C | 06 FT-51 [I]
+CA-51.4 | C | 06 FT-51 [I]
+CA-51.5 | C | 06 FT-51 [I]
+CA-51.6 | C | 06 FT-51 [I]
+CA-51.7 | C | 06 FT-51 [I]
+CA-51.8 | C | 06 FT-51 [I]
+CA-52.1 | C | 06 FT-52 [I]
+CA-52.2 | C | 06 FT-52 [I]
+CA-52.3 | C | 06 FT-52 [I]
+CA-52.4 | C | 06 FT-52 [I]
+CA-52.5 | C | 06 FT-52 [I]
+CA-53.1 | C | 06 FT-53 [I]
+CA-53.2 | C | 06 FT-53 [I]
+CA-53.3 | C | 06 FT-53 [I]
+CA-53.4 | C | 06 FT-53 [I]
+CA-53.5 | C | 06 FT-53 [I]
+CA-53.6 | C | 06 FT-53 [I]
+CA-53.7 | C | 06 FT-53 [I]
+CA-54.1 | C | 06 FT-54 [I]
+CA-54.2 | C | 06 FT-54 [I]
+CA-54.3 | C | 06 FT-54 [I]
+CA-54.4 | C | 06 FT-54 [I]
+CA-54.5 | C | 06 FT-54 [I]
+CA-55.1 | D | 06 FT-55 [M]
+CA-55.2 | D | 06 FT-55 [M]
+CA-55.3 | D | 06 FT-55 [M]
+CA-55.4 | D | 06 FT-55 [M]
+CA-56.1 | D | 06 FT-56 [P]
+CA-56.2 | D | 06 FT-56 [P]
+CA-56.3 | D | 06 FT-56 [P]
+CA-57.1 | D | 06 FT-57 [M]
+CA-57.2 | D | 06 FT-57 [M]
+CA-57.3 | D | 06 FT-57 [M]
+CA-57.4 | D | 06 FT-57 [M]
+CA-58.1 | D | 06 FT-58 [P]
+CA-58.2 | D | 06 FT-58 [P]
+CA-58.3 | D | 06 FT-58 [P]
+CA-59.1 | D | 06 FT-59 [P]
+CA-59.2 | D | 06 FT-59 [P]
+CA-59.3 | D | 06 FT-59 [P]
+CA-60.1 | D | 06 FT-60 [M]
+CA-60.2 | D | 06 FT-60 [M]
+CA-60.3 | D | 06 FT-60 [M]
+CA-60.4 | D | 06 FT-60 [M]
+CA-60.5 | D | 06 FT-60 [M]
+CA-60.6 | D | 06 FT-60 [M]
+CA-60.7 | D | 06 FT-60 [M]
+CA-60.8 | D | 06 FT-60 [M]
+CA-60.9 | D | 06 FT-60 [M]
+CA-60.10 | D | 06 FT-60 [M]
+CA-61.1 | D | 06 FT-61 [M]
+CA-61.2 | D | 06 FT-61 [M]
+CA-61.3 | D | 06 FT-61 [M]
+CA-61.4 | D | 06 FT-61 [M]
+CA-61.5 | D | 06 FT-61 [M]
+CA-61.6 | D | 06 FT-61 [M]
+CA-61.7 | D | 06 FT-61 [M]
+CA-62.1 | D | 06 FT-62 [M]
+CA-62.2 | D | 06 FT-62 [M]
+CA-62.3 | D | 06 FT-62 [M]
+CA-62.4 | D | 06 FT-62 [M]
+CA-62.5 | D | 06 FT-62 [M]
+CA-62.6 | D | 06 FT-62 [M]
+CA-62.7 | D | 06 FT-62 [M]
+CA-63.1 | D | 06 FT-63 [M]
+CA-63.2 | D | 06 FT-63 [M]
+CA-63.3 | D | 06 FT-63 [M]
+CA-63.4 | D | 06 FT-63 [M]
+CA-63.5 | D | 06 FT-63 [M]
+CA-64.1 | D | 06 FT-64 [P]
+CA-64.2 | D | 06 FT-64 [P]
+CA-64.3 | D | 06 FT-64 [P]
+CA-64.4 | D | 06 FT-64 [P]
+CA-64.5 | D | 06 FT-64 [P]
+CA-65.1 | D | 06 FT-65 [P]
+CA-65.2 | D | 06 FT-65 [P]
+CA-65.3 | D | 06 FT-65 [P]
+CA-65.4 | D | 06 FT-65 [P]
+CA-66.1 | D | 06 FT-66 [M]
+CA-66.2 | D | 06 FT-66 [M]
+CA-66.3 | D | 06 FT-66 [M]
+CA-66.4 | D | 06 FT-66 [M]
+CA-67.1 | D | 06 FT-67 [M]
+CA-67.2 | D | 06 FT-67 [M]
+CA-67.3 | D | 06 FT-67 [M]
+CA-67.4 | D | 06 FT-67 [M]
+CA-68.1 | D | 06 FT-68 [P]
+CA-68.2 | D | 06 FT-68 [P]
+CA-68.3 | D | 06 FT-68 [P]
+CA-69.1 | D | 06 FT-69 [M]
+CA-69.2 | D | 06 FT-69 [M]
+CA-69.3 | D | 06 FT-69 [M]
+CA-69.4 | D | 06 FT-69 [M]
+CA-69.5 | D | 06 FT-69 [M]
+CA-69.6 | D | 06 FT-69 [M]
+CA-70.1 | D | 06 FT-70 [M]
+CA-70.2 | D | 06 FT-70 [M]
+CA-70.3 | D | 06 FT-70 [M]
+CA-70.4 | D | 06 FT-70 [M]
+CA-70.5 | D | 06 FT-70 [M]
+CA-70.6 | D | 06 FT-70 [M]
+CA-70.7 | D | 06 FT-70 [M]
+CA-71.1 | D | 06 FT-71 [M]
+CA-71.2 | D | 06 FT-71 [M]
+CA-71.3 | D | 06 FT-71 [M]
+CA-71.4 | D | 06 FT-71 [M]
+CA-71.5 | D | 06 FT-71 [M]
+CA-71.6 | D | 06 FT-71 [M]
+CA-71.7 | D | 06 FT-71 [M]
+CA-71.8 | D | 06 FT-71 [M]
+CA-71.9 | D | 06 FT-71 [M]
+CA-71.10 | D | 06 FT-71 [M]
+CA-71.11 | D | 06 FT-71 [M]
+CA-71.12 | D | 06 FT-71 [M]
+CA-71.13 | D | 06 FT-71 [M]
+CA-71.14 | D | 06 FT-71 [M]
+CA-72.1 | D | 06 FT-72 [M]
+CA-72.2 | D | 06 FT-72 [M]
+CA-72.3 | D | 06 FT-72 [M]
+CA-72.4 | D | 06 FT-72 [M]
+CA-72.5 | D | 06 FT-72 [M]
+CA-72.6 | D | 06 FT-72 [M]
+CA-73.1 | D | 06 FT-73 [M]
+CA-73.2 | D | 06 FT-73 [M]
+CA-73.3 | D | 06 FT-73 [M]
+CA-73.4 | D | 06 FT-73 [M]
+CA-73.5 | D | 06 FT-73 [M]
+CA-73.6 | D | 06 FT-73 [M]
+CA-74.1 | D | 06 FT-74 [M]
+CA-74.2 | D | 06 FT-74 [M]
+CA-74.3 | D | 06 FT-74 [M]
+CA-74.4 | D | 06 FT-74 [M]
+CA-75.1 | D | 06 FT-75 [M]
+CA-75.2 | D | 06 FT-75 [M]
+CA-75.3 | D | 06 FT-75 [M]
+CA-76.1 | D | 06 FT-76 [M]
+CA-76.2 | D | 06 FT-76 [M]
+CA-76.3 | D | 06 FT-76 [M]
+CA-76.4 | D | 06 FT-76 [M]
+CA-77.1 | D | 06 FT-77 [P]
+CA-77.2 | D | 06 FT-77 [P]
+CA-77.3 | D | 06 FT-77 [P]
+RUTA-/ | C | 06 §6.4 (FT-01, FT-04, FT-06, FT-08, FT-16, FT-27, FT-31, FT-33, FT-41, FT-62)
+RUTA-/actividad | C | 06 §6.4 (FT-24, FT-64)
+RUTA-/actividad/[transaccionId] | C | 06 §6.4 (FT-08, FT-25, FT-35, FT-69)
+RUTA-/actividad/[transaccionId]/devolver | D | 06 §6.4 (FT-28)
+RUTA-/actividad/[transaccionId]/editar | C | 06 §6.4 (FT-25)
+RUTA-/actividad/[transaccionId]/eliminar | C | 06 §6.4 (FT-26)
+RUTA-/actividad/[transaccionId]/estado | C | 06 §6.4 (FT-26)
+RUTA-/actividad/[transaccionId]/eventos/eliminar | D | 06 §6.4 (FT-28)
+RUTA-/ajustes | C | 06 §6.4 (FT-04, FT-05, FT-76)
+RUTA-/ajustes/apariencia | D | 06 §6.4 (FT-77)
+RUTA-/ajustes/ciclo | D | 06 §6.4 (FT-72)
+RUTA-/ajustes/diagnostico | D | 06 §6.4 (FT-42, FT-76)
+RUTA-/ajustes/exportar | D | 06 §6.4 (FT-75)
+RUTA-/ajustes/formatos | D | 06 §6.4 (FT-73)
+RUTA-/ajustes/formatos/[formatoId] | D | 06 §6.4 (FT-73)
+RUTA-/ajustes/formatos/nuevo | D | 06 §6.4 (FT-73)
+RUTA-/ajustes/instituciones | D | 06 §6.4 (FT-73)
+RUTA-/ajustes/instituciones/[institucionId] | D | 06 §6.4 (FT-73)
+RUTA-/ajustes/instituciones/nueva | D | 06 §6.4 (FT-73)
+RUTA-/ajustes/notificaciones | D | 06 §6.4 (FT-06)
+RUTA-/ajustes/respaldo | D | 06 §6.4 (FT-76)
+RUTA-/ajustes/seguridad | D | 06 §6.4 (FT-74)
+RUTA-/ajustes/seguridad/factores/[factorId]/quitar | D | 06 §6.4 (FT-74)
+RUTA-/ajustes/seguridad/factores/nuevo | C | 06 §6.4 (FT-02, FT-74)
+RUTA-/ajustes/webhook | C | 06 §6.4 (FT-03, FT-04)
+RUTA-/bandeja | C | 06 §6.4 (FT-08, FT-34, FT-35, FT-36, FT-37, FT-38, FT-78, FT-70)
+RUTA-/bandeja/[movimientoId] | C | 06 §6.4 (FT-35, FT-37, FT-38, FT-78, FT-70)
+RUTA-/cuentas | C | 06 §6.4 (FT-33, FT-51)
+RUTA-/cuentas/[cuentaId] | C | 06 §6.4 (FT-08, FT-33, FT-52, FT-59, FT-71)
+RUTA-/cuentas/[cuentaId]/archivar | C | 06 §6.4 (FT-53)
+RUTA-/cuentas/[cuentaId]/conciliar | D | 06 §6.4 (FT-43)
+RUTA-/cuentas/[cuentaId]/condiciones | D | 06 §6.4 (FT-55, FT-58)
+RUTA-/cuentas/[cuentaId]/cuota | C | 06 §6.4 (FT-54)
+RUTA-/cuentas/[cuentaId]/editar | C | 06 §6.4 (FT-53)
+RUTA-/cuentas/[cuentaId]/eliminar | C | 06 §6.4 (FT-53)
+RUTA-/cuentas/[cuentaId]/pagar | C | 06 §6.4 (FT-30, FT-66)
+RUTA-/cuentas/nueva | C | 06 §6.4 (FT-04, FT-21, FT-50, FT-58)
+RUTA-/cuentas/ordenar | C | 06 §6.4 (FT-53)
+RUTA-/ingresar | C | 06 §6.4 (FT-01)
+RUTA-/ingresar/inscribir | C | 06 §6.4 (FT-01, FT-02)
+RUTA-/ingresar/verificar | C | 06 §6.4 (FT-01, FT-02)
+RUTA-/metas | C | 06 §6.4 (FT-17)
+RUTA-/metas/[metaId] | C | 06 §6.4 (FT-17)
+RUTA-/metas/nueva | C | 06 §6.4 (FT-17)
+RUTA-/notificaciones | D | 06 §6.4 (FT-69)
+RUTA-/por-cobrar | D | 06 §6.4 (FT-45)
+RUTA-/por-cobrar/cobrar | D | 06 §6.4 (FT-46)
+RUTA-/por-cobrar/condonar/[lineaId] | D | 06 §6.4 (FT-47)
+RUTA-/por-cobrar/deudores/[deudorId]/renombrar | D | 06 §6.4 (FT-48)
+RUTA-/presupuesto | C | 06 §6.4 (FT-01, FT-04, FT-08, FT-09, FT-16, FT-29, FT-31)
+RUTA-/presupuesto/asignar/[categoriaId] | C | 06 §6.4 (FT-08, FT-10, FT-12)
+RUTA-/presupuesto/auto-asignar | D | 06 §6.4 (FT-13)
+RUTA-/presupuesto/categorias/[categoriaId] | C | 06 §6.4 (FT-08, FT-14, FT-16, FT-29, FT-31)
+RUTA-/presupuesto/categorias/[categoriaId]/archivar | C | 06 §6.4 (FT-19)
+RUTA-/presupuesto/categorias/[categoriaId]/fusionar | D | 06 §6.4 (FT-20)
+RUTA-/presupuesto/categorias/[categoriaId]/sacar | C | 06 §6.4 (FT-19)
+RUTA-/presupuesto/estructura | C | 06 §6.4 (FT-04, FT-18)
+RUTA-/presupuesto/estructura/categorias/[categoriaId] | C | 06 §6.4 (FT-18)
+RUTA-/presupuesto/estructura/categorias/nueva | C | 06 §6.4 (FT-18)
+RUTA-/presupuesto/estructura/grupos/[grupoId] | C | 06 §6.4 (FT-18)
+RUTA-/presupuesto/estructura/grupos/nuevo | C | 06 §6.4 (FT-18)
+RUTA-/presupuesto/listo-para-asignar | C | 06 §6.4 (FT-08, FT-15)
+RUTA-/presupuesto/mover | C | 06 §6.4 (FT-11)
+RUTA-/programadas | D | 06 §6.4 (FT-40, FT-41)
+RUTA-/programadas/[programadaId] | D | 06 §6.4 (FT-40)
+RUTA-/programadas/[programadaId]/ocurrencias/[fechaEsperada] | D | 06 §6.4 (FT-08, FT-41, FT-71) [C] DT-23: la construye FT-41 [M]
+RUTA-/programadas/nueva | D | 06 §6.4 (FT-40, FT-65)
+RUTA-/registrar | C | 06 §6.4 (FT-21, FT-22, FT-23, FT-56)
+RUTA-/registrar/[tipo] | C | 06 §6.4 (FT-21, FT-22, FT-23, FT-28, FT-32, FT-43, FT-56, FT-57)
+RUTA-/registrar/gasto | C | 06 §6.4 (FT-21)
+RUTA-/reglas | D | 06 §6.4 (FT-39)
+RUTA-/reglas/[reglaId] | D | 06 §6.4 (FT-39)
+RUTA-/reglas/nueva | D | 06 §6.4 (FT-39)
+RUTA-/reportes | D | 06 §6.4 (FT-60)
+RUTA-/reportes/[tipo] | D | 06 §6.4 (FT-60, FT-61, FT-62, FT-63, FT-64, FT-65, FT-66, FT-67, FT-68)
+RUTA-/sin-conexion | C | 06 §6.4 (FT-05) [C] DT-23: página del service worker (05 §8.5)
+RUTA-/presupuesto/estructura/plantilla | C | 06 §6.4 (FT-04)
+RUTA-/cuentas/[cuentaId]/verificar-saldo | D | 06 §6.4 (FT-44)
+RH-sms | C | 04 §1.2 (Route Handler /api/sms)
+RH-tareas-diaria | C | 04 §1.2 (Route Handler /api/tareas/diaria)
+RH-respaldo | C | 04 §1.2 (Route Handler /api/respaldo/[evento])
+RH-exportar | C | 04 §1.2 (Route Handler /api/exportar/[formato])
+RH-notificaciones-accion | C | 04 §1.2 (Route Handler /api/notificaciones/accion)
+FE-01 | C | 05 §1.1 [C]
+FE-02 | C | 05 §1.2 [C]
+FE-03 | C | 05 §1.3 [C]
+FE-04 | C | 05 §1.4 [C]
+FE-05 | C | 05 §1.5 [C]
+FE-06 | C | 05 §1.6, 6.4 [C]
+FE-07 | C | 05 §4.4 [C]
+FE-08 | C | 05 §4.5 [C]
+FE-09 | C | 05 §4.6 [C]
+FE-10 | C | 05 §4.7 [C]
+FE-11 | C | 05 §4.8 [C]
+FE-12 | C | 05 §4.9 [C]
+FE-13 | C | 05 §4.10 [C]
+FE-14 | C | 05 §4.11 [C]
+FE-15 | C | 05 §4.12 [C]
+FE-16 | C | 05 §4.2 [C]
+FE-17 | C | 05 §5.2 [C]
+FE-18 | C | 05 §5.4 [C]
+FE-19 | C | 05 §5.5 [C]
+FE-20 | C | 05 §6.1, 6.2 [C]
+FE-21 | C | 05 §6.7 [C]
+FE-23 | C | 05 §12 [C]
+FE-24 | C | 05 §4.14 [C]
+FE-25 | C | 05 §4.15 [C]
+FE-26 | C | 05 §2.1 [C]
+FE-27 | C | 05 §2.2 [C]
+FE-28 | C | 05 §7.3 [C]
+FE-29 | C | 05 §3.1 a 3.3 [C]
+FE-30 | C | 05 §3.3 [C]
+FE-31 | C | 05 §3.4 [C]
+FE-32 | D | 05 §3.5 [C]
+FE-33 | C | 05 §7.1 [C]
+FE-34 | C | 05 §7.2 [C]
+FE-35 | C | 05 §7.4 [C]
+FE-36 | C | 05 §9.2 [C]
+FE-37 | C | 05 §9.5 [C]
+FE-38 | C | 05 §9.4 [C]
+FE-39 | C | 05 §7.1 [C]
+FE-40 | C | 05 §10.1 [C]
+FE-41 | C | 05 §10.3 [C]
+FE-42 | C | 05 §10.4 [C]
+FE-43 | C | 05 §10.7 [C]
+FE-44 | C | 05 §10.8 [C]
+FE-45 | C | 05 §10.8 [C]
+FE-46 | C | 05 §11.10 [C]
+FE-47 | C | 05 §11.5 [C]
+FE-48 | C | 05 §13.4 [C]
+FE-49 | C | 05 §13.3 [C]
+FE-50 | C | 05 §14.1 [C]
+FE-51 | C | 05 §14.2, 14.3 [C]
+FE-52 | C | 05 §8.1 [C]
+FE-53 | C | 05 §8.3 [C]
+FE-54 | C | 05 §8.4 [C]
+FE-55 | C | 05 §8.4 [C]
+FE-56 | C | 05 §8.5 [C]
+FE-57 | D | 05 §8.6 [C]
+FE-58 | D | 05 §8.7 [C]
+FE-59 | C | 05 §15.5 [C]
+REC-4.1 | D | 06 §4.1 (recorrido con fichas [M]) [C]
+REC-4.2 | D | 06 §4.2 (recorrido con fichas [M]) [C]
+REC-4.3 | D | 06 §4.3 (recorrido con fichas [M]) [C]
+REC-4.4 | D | 06 §4.4 (recorrido con fichas [M]) [C]
+REC-4.5 | D | 06 §4.5 (recorrido con fichas [M]) [C]
+REC-4.6 | D | 06 §4.6 (recorrido con fichas [M]) [C]
+SP-01-Agricola | D | 04 SP-01, CH-03: formatos de Banco Agrícola reescritos y F-2 activo (TU-14) [D]
+DT-27 | D | 08 §27.1: CA pendientes de punta a punta en la matriz (P8-19.1) [D]
+WF-respaldo | C | 07 §6.1
+WF-restauracion | C | 07 §6.1
+WF-desplegar | C | 07 §6.1
+DP-22 | C | 07 §19.1
+DP-29 | C | 07 §31.1
+AUTH-funciones | C | 04 §12.2
+PRU-CMP-VAL-005 | C | 07
+PRU-CTR-BAND-001 | B | 07
+PRU-DOM-BAND-001 | B | 07
+PRU-DOM-BAND-002 | B | 07
+PRU-DOM-CONC-001 | B | 07
+PRU-DOM-MOTOR-901 | B | 07
+PRU-DOM-MOTOR-902 | B | 07
+PRU-DOM-MOTOR-903 | B | 07
+PRU-DOM-MOTOR-904 | B | 07
+PRU-DOM-PWA-001 | C | 07
+PRU-DOM-RELOJ-001 | C | 07
+PRU-DOM-REP-001 | B | 07
+PRU-DOM-VAL-001 | B | 07
+PRU-DOM-VAL-002 | B | 07
+PRU-DOM-VAL-003 | B | 07
+PRU-DOM-VAL-004 | C | 07
+PRU-DOM-VAL-005 | C | 07
+PRU-DOM-VAL-006 | A | 07
+PRU-E2E-ACCESO-001 | C | 07
+PRU-E2E-BAND-001 | D | 07
+PRU-E2E-PRES-001 | C | 07
+PRU-E2E-PWA-001 | C | 07
+PRU-E2E-PWA-002 | C | 07
+PRU-E2E-PWA-003 | C | 07
+PRU-E2E-PWA-004 | C | 07
+PRU-E2E-PWA-005 | C | 07
+PRU-E2E-PWA-006 | C | 07
+PRU-E2E-PWA-007 | C | 07
+PRU-E2E-PWA-008 | C | 07
+PRU-E2E-PWA-009 | C | 07
+PRU-E2E-RELOJ-001 | C | 07
+PRU-E2E-RELOJ-002 | C | 07
+PRU-E2E-RELOJ-003 | C | 07
+PRU-E2E-TX-001 | C | 07
+PRU-E2E-TX-002 | C | 07
+PRU-E2E-TX-003 | C | 07
+PRU-E2E-TX-004 | C | 07
+PRU-E2E-TX-005 | C | 07
+PRU-ESQ-ESQ-001 | B | 07
+PRU-ESQ-POOL-001 | B | 07
+PRU-ESQ-RELOJ-003 | B | 07
+PRU-ESQ-RELOJ-004 | B | 07
+PRU-ESQ-RELOJ-005 | B | 07
+PRU-INT-BAND-001 | B | 07
+PRU-INT-ESQ-001 | B | 07
+PRU-INT-ESQ-002 | B | 07
+PRU-INT-ESQ-003 | B | 07
+PRU-INT-ESQ-004 | B | 07
+PRU-INT-ESQ-005 | B | 07
+PRU-INT-ESQ-006 | B | 07
+PRU-INT-ESQ-007 | B | 07
+PRU-INT-ESQ-008 | B | 07
+PRU-INT-ESQ-009 | B | 07
+PRU-INT-ESQ-010 | B | 07
+PRU-INT-ESQ-012 | B | 07
+PRU-INT-MOTOR-001 | B | 07
+PRU-INT-NOTIF-001 | B | 07
+PRU-INT-NOTIF-002 | B | 07
+PRU-INT-POOL-001 | B | 07 (CH-05)
+PRU-INT-POOL-002 | B | 07
+PRU-INT-POOL-003 | B | 07 (CH-05)
+PRU-INT-POOL-004 | B | 07
+PRU-INT-POOL-005 | B | 07 (CH-05)
+PRU-INT-POOL-006 | B | 07
+PRU-INT-RELOJ-010 | B | 07
+PRU-INT-VAL-001 | B | 07
+PRU-INT-VAL-002 | B | 07
+PRU-INT-VAL-003 | B | 07
+PRU-MAN-ACCESO-001 | A | 07
+PRU-MAN-BAND-001 | A | 07
+PRU-MAN-BAND-002 | A | 07
+PRU-MAN-BAND-003 | A | 07
+PRU-MAN-BAND-004 | A | 07
+PRU-MAN-CONC-001 | A | 07
+PRU-MAN-CTA-001 | A | 07
+PRU-MAN-CTA-002 | A | 07 (CH-04)
+PRU-MAN-ESQ-001 | A | 07
+PRU-MAN-NOTIF-001 | A | 07
+PRU-MAN-OPER-001 | A | 07
+PRU-MAN-OPER-002 | A | 07
+PRU-MAN-OPER-003 | A | 07
+PRU-MAN-PWA-001 | A | 07
+PRU-MAN-PWA-002 | A | 07
+PRU-PROP-REP-001 | B | 07
+PRU-PROP-REP-002 | B | 07
+PRU-PROP-REP-003 | B | 07
+PRU-PROP-REP-004 | B | 07
+PRU-PROP-VAL-001 | C | 07
+PRU-REN-BAND-001 | D | 07
+PRU-REN-ESQ-001 | B | 07
+PRU-REN-INICIO-001 | C | 07
+PRU-REN-MOTOR-001 | B | 07
+PRU-REN-PWA-001 | C | 07
+PRU-REN-PWA-002 | C | 07
+PRU-REN-PWA-003 | C | 07
+PRU-REN-PWA-004 | C | 07
+PRU-REN-TX-001 | C | 07
+PRU-SEG-ACCESO-001 | C | 07
+PRU-SEG-ACCESO-002 | C | 07
+PRU-SEG-BAND-001 | C | 07
+PRU-SEG-BAND-002 | B | 07
+PRU-SEG-CONC-001 | B | 07 (CH-06)
+PRU-SEG-ESQ-001 | B | 07
+PRU-SEG-NOTIF-001 | C | 07
+PRU-SEG-OPER-001 | A | 07
+PRU-SEG-OPER-002 | A | 07
+PRU-SEG-RELOJ-001 | C | 07
+PRU-SEG-RELOJ-002 | B | 07
+PRU-SEG-RELOJ-006 | C | 07
+PRU-SW-NOTIF-001 | D | 07
+PRU-SW-PWA-001 | C | 07
+PRU-SW-PWA-002 | C | 07
+PRU-SW-PWA-003 | C | 07
+PRU-SW-PWA-004 | C | 07
