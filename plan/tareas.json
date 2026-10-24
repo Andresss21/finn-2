@@ -49,7 +49,7 @@
 
   "TA-059": { "estado": "pendiente" },
 
-  "TA-100": { "estado": "en_curso", "rama": "ta-100-valores" },
+  "TA-100": { "estado": "terminada", "pr": 6 },
 
   "TA-101": { "estado": "pendiente" },
 
