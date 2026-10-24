@@ -209,7 +209,7 @@
 
   "TA-181": { "estado": "pendiente" },
 
-  "TA-182": { "estado": "pendiente" },
+  "TA-182": { "estado": "en_curso", "rama": "ta-182-conciliacion-decodificar" },
 
   "TA-183": { "estado": "pendiente" },
 
