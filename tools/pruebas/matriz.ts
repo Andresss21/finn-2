@@ -1,15 +1,18 @@
 // tools/pruebas/matriz.ts — matriz de trazabilidad (07 §13): lectura de los documentos, inventario y reglas M7, M8, M12 y M13
-// (TA-006); las reglas de cobertura M1 a M6, M9 a M11 y M14 viven en reglas.ts (TA-007). M15 a M18 llegan con sus tareas.
+// (TA-006); las reglas de cobertura M1 a M6, M9 a M11 y M14 viven en reglas.ts (TA-007) y M18 en pendientes.ts
+// (TA-015). M15 a M17 llegan con sus tareas.
 // Portado del prototipo de V7-09/V7-11. Node 24 lo ejecuta sin compilar (solo sintaxis borrable, sin dependencias).
 //   node tools/pruebas/matriz.ts verificar [--puerta]   sale con 1 si alguna regla falla (job `rapido`; nocturno con --puerta)
 //   node tools/pruebas/matriz.ts informe                cobertura por ficha y estado de la puerta
 // Entradas (cambiables con FINN_MATRIZ_*): docs/{01-dominio,04-backend,05-frontend,06-features}.md,
-// pruebas/{inventario,features,mapa-codigo,cuarentena,verificaciones-previas}.json y pruebas/manuales.md.
+// pruebas/{inventario,features,mapa-codigo,cuarentena,verificaciones-previas,pendientes-e2e}.json y pruebas/manuales.md.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { cambiosFuturos, fichas, objetivos } from './documentos.ts';
 import type { Documentos } from './documentos.ts';
 import { cobertura, globARegex, PATRON_CONSULTA, PATRON_OP, REF } from './reglas.ts';
 import type { Cuarentena, Previa } from './reglas.ts';
+import { ES_CA, pendientesE2e } from './pendientes.ts';
+import type { Pendiente } from './pendientes.ts';
 
 export type EstadoFt = 'pendiente' | 'en_curso' | 'terminada';
 export interface Prueba {
@@ -21,7 +24,8 @@ export interface Prueba {
 }
 export interface Entradas extends Documentos {
   inventario: { titulo: string; archivo: string }[];
-  features: Record<string, EstadoFt>;
+  features: Record<string, EstadoFt | 'pendiente_e2e'>; // FT-nn → estado; CA-nn.m → pendiente_e2e (M18)
+  pendientes: Pendiente[]; // pruebas/pendientes-e2e.json (CH-08)
   mapa: { patron: string; fts: string[] | 'marco' }[];
   manuales: string; // pruebas/manuales.md
   previas: Previa[] | null; // null: todavía no existe pruebas/verificaciones-previas.json (TA-008)
@@ -115,6 +119,10 @@ export function verificar(e: Entradas) {
   const { cubre, obj } = cob;
   errores.push(...cob.errores);
   const avisos = cob.avisos;
+  // M18 pendientes de punta a punta (CH-08)
+  const pen = pendientesE2e(e, cob.activas, obj);
+  errores.push(...pen.errores);
+  avisos.push(...pen.avisos);
   // M7 toda referencia citada existe en los documentos
   for (const p of lista)
     for (const x of p.refs)
@@ -126,6 +134,7 @@ export function verificar(e: Entradas) {
       errores.push(`M12 ${f} no está en pruebas/mapa-codigo.json`);
   // M13 features.json solo cita fichas que existen; la diferida no sale de pendiente
   for (const [ft, st] of Object.entries(e.features)) {
+    if (ES_CA.test(ft)) continue; // las marcas pendiente_e2e de los CA las revisa M18
     const f = fs.find((x) => x.ft === ft);
     if (!f) errores.push(`M13 pruebas/features.json cita ${ft}, que no tiene ficha`);
     else if (f.diferida && st !== 'pendiente')
@@ -198,6 +207,9 @@ export function cargarEntradas(raiz = '.', puerta = false): Entradas {
       leer(env('INVENTARIO', 'pruebas/inventario.json'), '[]'),
     ) as Entradas['inventario'],
     features: json(features) as Entradas['features'],
+    pendientes: json(
+      leer(env('PENDIENTES', 'pruebas/pendientes-e2e.json'), '[]'),
+    ) as Entradas['pendientes'],
     mapa: json(leer(env('MAPA', 'pruebas/mapa-codigo.json'), '[]')) as Entradas['mapa'],
     manuales: leer(env('MANUALES', 'pruebas/manuales.md')),
     previas: existsSync(env('PREVIAS', 'pruebas/verificaciones-previas.json'))
