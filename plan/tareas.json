@@ -1,7 +1,7 @@
 {
   "TA-001": { "estado": "terminada", "pr": 1 },
 
-  "TA-002": { "estado": "en_curso", "rama": "ta-002-documentos-anexos" },
+  "TA-002": { "estado": "terminada", "pr": 2 },
 
   "TA-003": { "estado": "pendiente" },
 

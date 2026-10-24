@@ -147,7 +147,7 @@ function entradaReal(): Entrada {
 }
 
 describe('PRU-SEG-OPER', () => {
-  it('PRU-SEG-OPER-101 [DT-13].claude/settings.json conserva las reglas de 08 §4.1 y no hay tokens versionados', () => {
+  it('PRU-SEG-OPER-101 [DT-13] .claude/settings.json conserva las reglas de 08 §4.1 y no hay tokens versionados', () => {
     const real = entradaReal();
     assert.deepEqual(comprobarPermisos(real), []);
     assert.equal(
