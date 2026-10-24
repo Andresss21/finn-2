@@ -1,0 +1,3 @@
+check|finn.cuentas|ck_cuentas_nombre|CHECK (((nombre = btrim(nombre)) AND (nombre <> ''::text)))
+tabla|cuentas|rls=t|force=f|finn:clase=M
+tabla|estado_respaldo|rls=t|force=f|finn:clase=S
