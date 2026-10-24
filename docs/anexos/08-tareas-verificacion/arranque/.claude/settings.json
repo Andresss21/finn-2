@@ -1,0 +1,33 @@
+{
+  "env": {
+    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "3",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"
+  },
+  "worktree": { "baseRef": "fresh" },
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/aprobar.mjs\"" } ] }
+    ]
+  },
+  "permissions": {
+    "disableBypassPermissionsMode": "disable",
+    "deny": [
+      "Bash(vercel *)", "Bash(npx vercel *)", "Bash(pnpm dlx vercel *)", "Bash(pnpm exec vercel *)",
+      "PowerShell(vercel *)", "PowerShell(npx vercel *)", "PowerShell(pnpm dlx vercel *)",
+      "Bash(gh secret *)", "Bash(gh variable *)", "Bash(gh pr merge *)", "Bash(gh auth *)", "Bash(gh api *secrets*)", "Bash(gh api *variables*)",
+      "PowerShell(gh secret *)", "PowerShell(gh variable *)", "PowerShell(gh pr merge *)", "PowerShell(gh auth *)",
+      "Bash(git push * main)", "Bash(git push * HEAD:main)", "Bash(git push --force *)", "Bash(git push -f *)", "Bash(git push --force-with-lease *)",
+      "Bash(git credential *)", "Bash(git config --global *)", "Bash(git config --system *)", "Bash(ssh-add *)", "Bash(ssh-keygen *)",
+      "Bash(prisma migrate deploy *)", "Bash(pnpm prisma migrate deploy *)", "Bash(npx prisma migrate deploy *)",
+      "Bash(supabase link *)", "Bash(supabase db push *)", "Bash(pnpm dlx supabase link *)", "Bash(pnpm dlx supabase db push *)",
+      "Edit(pruebas/manuales/resultados.md)", "Edit(pruebas/firmantes-permitidos)", "Edit(plan/tu.md)",
+      "Edit(.claude/settings.json)", "Edit(.claude/settings.local.json)", "Edit(.claude/agents/**)", "Edit(.claude/hooks/**)",
+      "Read(.claude/settings.local.json)",
+      "Read(//c/finn/_privado/**)", "Edit(//c/finn/_privado/**)",
+      "Edit(//c/finn/_entrada/**)",
+      "Edit(//c/finn/_aprobaciones/**)", "Bash(*_aprobaciones*)", "PowerShell(*_aprobaciones*)",
+      "Read(~/.ssh/**)", "Edit(~/.ssh/**)",
+      "Read(//c/Users/*/AppData/Roaming/GitHub CLI/**)", "Read(//c/Users/*/AppData/Roaming/com.vercel.cli/**)"
+    ]
+  }
+}

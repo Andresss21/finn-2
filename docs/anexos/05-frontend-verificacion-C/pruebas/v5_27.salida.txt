@@ -1,0 +1,2 @@
+V5-27a · interacción más lenta por corrida (CPU ×4): 48 / 40 / 48 / 48 / 56 ms · máximo 56 ms (presupuesto INP 200 ms)
+V5-27b · con movimiento reducido: transición 1e-05s, animación 1e-05s · sin preferencia: transición 0.3s

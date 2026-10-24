@@ -1,0 +1,16 @@
+== caso A: todo firmado por el usuario
+ok    fila de 2714a8f dos resultados firmados
+PASA
+salida 0
+== caso B: una fila editada sin firma
+FALLA fila de 0f7434f un agente cambia falla por pasa: commit sin firma válida
+ok    fila de 2714a8f dos resultados firmados
+FALLA commit 0f7434f un agente cambia falla por pasa tocó los archivos de resultados sin firma válida
+salida 1
+== caso C: una fila borrada sin firma (blame no la ve; el log sí)
+ok    fila de 2714a8f dos resultados firmados
+FALLA commit 1d5ca6f un agente borra la falla tocó los archivos de resultados sin firma válida
+salida 1
+== caso D: firmantes con dos claves
+FALLA firmantes-permitidos tiene 2 claves; debe tener exactamente 1
+salida 1

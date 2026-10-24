@@ -1,0 +1,32 @@
+Tareas estimadas por bloque (mín–máx):
+  B0 Fundación (exacto, con TA-015): 15–15
+  B1 Base de datos (exacto): 10–10
+  B2 Dominio (exacto): 48–48
+  B3 db, aplicación, sms, conciliación (exacto): 50–50
+  B4 Web base (exacto): 25–25
+  B5 Operación (exacto): 8–8
+  B6 Features [I] (exacto: 31 fichas, 233 CA): 36–36
+  B7 Features [M] (exacto: 38 fichas, 232 CA, 2 recorridos y TA-470): 43–43
+  B8 Features [P] y FT-49 (exacto): 8–8
+  Total: 243–243; hasta la puerta (sin [P]): 235–235. Un PR por tarea.
+
+07 §6.4: 3,75 pushes por PR (1,5 en listo)
+  Minutos por PR: 35.6 (PR + parte de las corridas de main)
+  Límite por pushes (150/mes): 40 PR/mes
+  PR/mes con ≤ 1700 min: 40 sin producción; 37 con producción; 35 si se mantiene el respaldo de la 1.0
+  PR/mes con la cuota completa (2000): 40 con producción
+  Minutos al mes a esa capacidad (con producción): 1687; pushes: 139
+  Meses hasta la puerta: 6.1–6.1 (solo CI; el ritmo real de agentes y revisiones puede ser menor)
+  Meses hasta terminar las [P]: 6.3–6.3
+
+DT-07: 2 pushes por PR (1 en listo)
+  Minutos por PR: 25.8 (PR + parte de las corridas de main)
+  Límite por pushes (150/mes): 75 PR/mes
+  PR/mes con ≤ 1700 min: 55 sin producción; 51 con producción; 49 si se mantiene el respaldo de la 1.0
+  PR/mes con la cuota completa (2000): 63 con producción
+  Minutos al mes a esa capacidad (con producción): 1686; pushes: 102
+  Meses hasta la puerta: 4.4–4.4 (solo CI; el ritmo real de agentes y revisiones puede ser menor)
+  Meses hasta terminar las [P]: 4.6–4.6
+
+Comprobación del modelo: con 3,75 pushes y 40 PR, minutos = 1794 (07 §32.2 da 1.804–1.834 con M5).
+Restauración semanal en la transición: +10 min en esos dos meses.

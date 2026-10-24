@@ -1,0 +1,19 @@
+PASA V5-03a revalidatePath actualiza la página con la respuesta — rev 2 · lpa 9000 · asignado 6000 · creadas 0 · llamadas 1
+PASA V5-03a esperado conserva la instantánea al abrir
+PASA V5-03b REQUIERE_CONFIRMACION muestra la previsualización
+PASA V5-03b confirmar con huella escribe al primer intento — rev 3 · lpa -5000 · asignado 20000 · creadas 0 · llamadas 3
+PASA V5-03c otra pestaña cambió el valor → conflicto_desactualizado
+PASA V5-04 doble envío: tres envíos en el mismo tick → una llamada — 1 llamadas
+PASA V5-05 ocupado: reintento único automático con el mismo id — listo|2|0fe6c5a0-72d7-4abd-942d-bad2cc44c693
+PASA V5-05 incierto: reintento único automático con el mismo id — listo:ya|2|8a5dce2c-d48d-4c39-86d8-a6f97c00f673
+PASA V5-05 INCIERTO tras aplicar: el reintento responde ya_aplicada y no duplica — rev 8 · lpa 7000 · asignado 8000 · creadas 2 · llamadas 11
+PASA V5-05 después de un éxito el siguiente envío usa un id nuevo — 25622894 → f87f9720
+PASA V5-06a navegación interna: /asignar se muestra superpuesto y la página de origen sigue montada — http://localhost:3100/asignar
+PASA V5-06b al terminar, router.back() cierra el superpuesto y vuelve a / — http://localhost:3100/ rev 11 · lpa 6000 · asignado 9000 · creadas 4 · llamadas 14
+PASA V5-06c recargar con el superpuesto abierto → página completa
+PASA V5-06d abrir la URL directamente → página completa
+PASA V5-06e atrás del navegador cierra el superpuesto
+PASA V5-07 router.refresh(): datos nuevos y borrador intacto — rev 11 · lpa 6000 · asignado 9000 · creadas 4 · llamadas 14 → rev 12 · lpa 5500 · asignado 9500 · creadas 4 · llamadas 15
+PASA V5-08 lectura interactiva: sin consulta con 1 carácter, la respuesta vieja se descarta — 2 consultas
+PASA V5-09 acción renombrada en la versión nueva → error de versión reconocible — error:version_nueva | POST: 409 40af571956 | consola: Failed to load resource: the server responded with a status of 409 (Conflict)
+18/18 pasan

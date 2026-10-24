@@ -1,0 +1,5 @@
+Plan: 243 tareas, 10 hitos con bloque, 20 TU; alcance: parte C; 1114 objetivos de 1424 en el catálogo.
+Documentos: 1092 objetivos derivados (CA 492, OP 53, OPT 9, ESC 50, INV 28, CB 34, AV 24, consultas 19, reportes 15, formularios 15, rutas 78, PRU 114); niveles 14, áreas 24.
+En el alcance: PRU 111, OP 53, ESC 100, INV 28, CB 34, AV 24, migraciones 17, CA 233.
+PRU en el plan (V8-03): 220; 114 definidos en 07, 0 por un CH (—), 106 nuevos (DT-17).
+RESULTADO: PASA

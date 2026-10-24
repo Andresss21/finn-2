@@ -1,0 +1,3 @@
+Documentos: 04-backend.md, 06-features.md, 07-pruebas.md. CA de 06: 492. Marcas [F8]: 04-backend.md 0, 06-features.md 10, 07-pruebas.md 25
+Control negativo: marca quitada detectada; CA cambiado detectado; línea de 04 quitada detectada.
+RESULTADO: PASA

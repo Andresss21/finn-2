@@ -1,0 +1,41 @@
+== V7-08 motor
+ ✓ escenarios/escenarios.motor.test.ts (8 tests) 11ms
+      Tests  8 passed (8)
+== V7-08 int
+ESC-08 paso 2: omitido desglose (de la operación)
+ESC-10 paso 3: omitido aviso AV-10 ausente
+ ✓ escenarios/escenarios.int.test.ts (8 tests) 2044ms
+   ✓ PRU-ESC@int > PRU-ESC-17@int [ESC-17, D2, C1] Sobregiro mixto el mismo día, con una transacción agregada tarde  642ms
+   ✓ PRU-ESC@int > PRU-ESC-18@int [ESC-18, C1, D2] Cambio de medio de pago  403ms
+      Tests  8 passed (8)
+== V7-08 controles (mutantes del núcleo y dato alterado)
+mutante= alterar=- → filas 19, fallidas 0, escenarios con la base rota 0, omitidas []
+  ESC-05 paso 3: Disp(Super): se esperaba 0, se obtuvo -100; identidad: 70000 + 20000 + 0 + 0 ≠ 100000
+  ESC-07: la base ESC-05 paso 3 no coincide: Disp(Super): se esperaba 0, se obtuvo -100; identidad: 70000 + 20000 + 0 + 0 ≠ 100000
+  ESC-10 paso 4: Disp(Salidas): se esperaba 0, se obtuvo -50; identidad: 5000 + -5000 + 0 + 0 ≠ 5000
+  ESC-17 paso 3: Disp(Super): se esperaba 0, se obtuvo -50; identidad: 38000 + -1000 + 0 + 0 ≠ 42000
+mutante=arrastre alterar=- → filas 17, fallidas 3, escenarios con la base rota 1, omitidas []
+  ESC-05 paso 2: Disp(Pago T): se esperaba 300, se obtuvo 400; S(T): se esperaba 100, se obtuvo 0; aviso AV-07 ausente; identidad: 70000 + 30000 + 0 + 10000 
+  ESC-05 paso 3: Disp(Pago T): se esperaba 300, se obtuvo 400; S(T): se esperaba 100, se obtuvo 0; identidad: 70000 + 40000 + 0 + 0 ≠ 100000
+  ESC-06: la base ESC-05 paso 2 no coincide: Disp(Pago T): se esperaba 300, se obtuvo 400; S(T): se esperaba 100, se obtuvo 0; avi
+  ESC-07: la base ESC-05 paso 2 no coincide: Disp(Pago T): se esperaba 300, se obtuvo 400; S(T): se esperaba 100, se obtuvo 0; avi
+  ESC-10 paso 2: Disp(Pago T): se esperaba 100, se obtuvo 150; S(T): se esperaba 50, se obtuvo 0; identidad: 10000 + 10000 + 0 + 5000 ≠ 20000
+  ESC-10 paso 3: Disp(Pago T): se esperaba -50, se obtuvo 0; aviso AV-10 ausente; aviso AV-04 ausente; identidad: 10000 + -5000 + 0 + 5000 ≠ 5000
+  ESC-10 paso 4: LPA: se esperaba 50, se obtuvo 100; identidad: 10000 + 0 + 0 + 0 ≠ 5000
+  ESC-17 paso 1: Disp(Pago T): se esperaba 40, se obtuvo 70; S(T): se esperaba 30, se obtuvo 0; identidad: 40000 + 4000 + 0 + 3000 ≠ 44000
+  ESC-17 paso 2: Disp(Pago T): se esperaba 40, se obtuvo 70; S(T): se esperaba 30, se obtuvo 0; identidad: 40000 + 2000 + 0 + 3000 ≠ 42000
+  ESC-17 paso 2′: Disp(Pago T): se esperaba 20, se obtuvo 70; S(T): se esperaba 50, se obtuvo 0; identidad: 40000 + 2000 + 0 + 5000 ≠ 42000
+  ESC-17 paso 3: Disp(Pago T): se esperaba 40, se obtuvo 70; S(T): se esperaba 30, se obtuvo 0; identidad: 38000 + 7000 + 0 + 0 ≠ 42000
+  ESC-18: la base ESC-17 paso 1 no coincide: Disp(Pago T): se esperaba 40, se obtuvo 70; S(T): se esperaba 30, se obtuvo 0; identi
+mutante=traslado alterar=- → filas 14, fallidas 9, escenarios con la base rota 3, omitidas []
+  ESC-17 paso 2′: SobTA: se esperaba 50, se obtuvo 30; Disp(Pago T): se esperaba 20, se obtuvo 40; S(T): se esperaba 50, se obtuvo 30
+mutante=orden alterar=- → filas 19, fallidas 1, escenarios con la base rota 0, omitidas []
+  ESC-10 paso 3: LPA: se esperaba 100, se obtuvo 50; identidad: 5000 + -10000 + 0 + 5000 ≠ 5000
+  ESC-17 paso 2: LPA: se esperaba 400, se obtuvo 380; identidad: 38000 + -1000 + 0 + 3000 ≠ 42000
+  ESC-18: la base ESC-17 paso 2 no coincide: LPA: se esperaba 400, se obtuvo 380; identidad: 38000 + -1000 + 0 + 3000 ≠ 42000
+mutante=cierre alterar=- → filas 17, fallidas 2, escenarios con la base rota 1, omitidas []
+  ESC-06 paso 3: LPA: se esperaba 601, se obtuvo 600
+mutante=- alterar=ESC-06:3:lpa:601 → filas 19, fallidas 1, escenarios con la base rota 0, omitidas []
+== V7-08 control int (clave de orden perdida al cargar)
+   × PRU-ESC@int > PRU-ESC-17@int [ESC-17, D2, C1] Sobregiro mixto el mismo día, con una transacción agregada tarde 843ms
+     → ESC-17 paso 2′: expected [ …(3) ] to deeply equal []

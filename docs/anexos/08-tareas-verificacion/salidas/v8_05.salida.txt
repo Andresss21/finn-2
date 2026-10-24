@@ -1,0 +1,8 @@
+Carpeta sintética: 30 nombres (archivos vacíos); finn-marca.zip dentro de finn-entrega.zip; 12 en fase-7.zip; 12 extraídos.
+Plan: 34 archivos citados en 3 tablas; anexos: 113 archivos indexados en /tmp/claude-0/s/anx_prueba/anexos.
+Presentes: 34; faltan: 0; a revisar a mano: 0.
+Lista de TU-04: completa, con 52 íconos y 7 glifos.
+Control negativo: quitar firmas.sh del índice se detecta.
+RESULTADO: PASA
+Con webhook/cuerpo.ts borrado de la carpeta: detectado
+Con 51 íconos en finn-entrega.zip: detectado

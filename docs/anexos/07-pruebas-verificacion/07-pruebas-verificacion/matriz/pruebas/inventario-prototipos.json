@@ -1,0 +1,130 @@
+[
+ {
+  "titulo": "PRU-ESC@int > PRU-ESC-05@int [ESC-05, C1] Compra con tarjeta no cubierta y cierre",
+  "archivo": "escenarios/escenarios.int.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@int > PRU-ESC-06@int [ESC-06, H3] Asignación posterior que cubre el sobregiro con tarjeta",
+  "archivo": "escenarios/escenarios.int.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@int > PRU-ESC-07@int [ESC-07, P1] Cubrir deuda sin respaldo de un período cerrado",
+  "archivo": "escenarios/escenarios.int.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@int > PRU-ESC-08@int [ESC-08, P8] Pago parcial con desglose",
+  "archivo": "escenarios/escenarios.int.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@int > PRU-ESC-09@int [ESC-09, P8] Pago total",
+  "archivo": "escenarios/escenarios.int.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@int > PRU-ESC-10@int [ESC-10, H5, O2] Pago excedente, antes y después del cierre",
+  "archivo": "escenarios/escenarios.int.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@int > PRU-ESC-17@int [ESC-17, D2, C1] Sobregiro mixto el mismo día, con una transacción agregada tarde",
+  "archivo": "escenarios/escenarios.int.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@int > PRU-ESC-18@int [ESC-18, C1, D2] Cambio de medio de pago",
+  "archivo": "escenarios/escenarios.int.test.ts"
+ },
+ {
+  "titulo": "PRU-PROP-MOTOR > PRU-PROP-MOTOR-001 inv. 1: identidad de saldo en cualquier estado y cualquier hoy",
+  "archivo": "dominio/propiedades.prop.test.ts"
+ },
+ {
+  "titulo": "PRU-PROP-MOTOR > PRU-PROP-MOTOR-002 inv. 28: 0 ≤ parte de tarjeta ≤ sobregiro total, en toda categoría y período",
+  "archivo": "dominio/propiedades.prop.test.ts"
+ },
+ {
+  "titulo": "PRU-PROP-MOTOR > PRU-PROP-MOTOR-003 inv. 2 y 3: deuda = R⁺ + S − RE y S·RE = 0",
+  "archivo": "dominio/propiedades.prop.test.ts"
+ },
+ {
+  "titulo": "PRU-PROP-MOTOR > PRU-PROP-MOTOR-004 inv. 26: el resultado no depende del orden en que se registraron los hechos",
+  "archivo": "dominio/propiedades.prop.test.ts"
+ },
+ {
+  "titulo": "PRU-PROP-MOTOR > PRU-PROP-MOTOR-005 §4.15: el cierre no cambia S(t) ni la identidad (hoy = fin de A → inicio del siguiente)",
+  "archivo": "dominio/propiedades.prop.test.ts"
+ },
+ {
+  "titulo": "PRU-PROP-MOTOR-006 núcleo TS = motor_min.py en LPA, efectivo, Disponibles, S y SobTA",
+  "archivo": "dominio/diferencial.prop.test.ts"
+ },
+ {
+  "titulo": "PRU-INT-PROTO > PRU-INT-PROTO-001 escritura de hechos sin el bloqueo → FN001 (ADR-06)",
+  "archivo": "int/protocolo.int.test.ts"
+ },
+ {
+  "titulo": "PRU-INT-PROTO > PRU-INT-PROTO-002 con el bloqueo: la revisión sube una vez por transacción aunque haya varias sentencias",
+  "archivo": "int/protocolo.int.test.ts"
+ },
+ {
+  "titulo": "PRU-INT-PROTO > PRU-INT-PROTO-003 ESC-01 paso 1 por SQL: saldo inicial con reloj simulado y verificación diferida al confirmar",
+  "archivo": "int/protocolo.int.test.ts"
+ },
+ {
+  "titulo": "PRU-INT-PROTO > PRU-INT-PROTO-004 fecha posterior a hoy simulado → FN002 (inv. 12)",
+  "archivo": "int/protocolo.int.test.ts"
+ },
+ {
+  "titulo": "PRU-INT-PROTO > PRU-INT-PROTO-005 efecto que no suma el total → FN003 al confirmar (diferida)",
+  "archivo": "int/protocolo.int.test.ts"
+ },
+ {
+  "titulo": "PRU-INT-PROTO > PRU-INT-PROTO-006 un rol sin BYPASSRLS (como anon) ve 0 filas; finn_app no tiene TRUNCATE ni puede quitar triggers",
+  "archivo": "int/protocolo.int.test.ts"
+ },
+ {
+  "titulo": "control",
+  "archivo": "escenarios/control.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@motor > PRU-ESC-05@motor [ESC-05, C1] Compra con tarjeta no cubierta y cierre",
+  "archivo": "escenarios/escenarios.motor.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@motor > PRU-ESC-06@motor [ESC-06, H3] Asignación posterior que cubre el sobregiro con tarjeta",
+  "archivo": "escenarios/escenarios.motor.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@motor > PRU-ESC-07@motor [ESC-07, P1] Cubrir deuda sin respaldo de un período cerrado",
+  "archivo": "escenarios/escenarios.motor.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@motor > PRU-ESC-08@motor [ESC-08, P8] Pago parcial con desglose",
+  "archivo": "escenarios/escenarios.motor.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@motor > PRU-ESC-09@motor [ESC-09, P8] Pago total",
+  "archivo": "escenarios/escenarios.motor.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@motor > PRU-ESC-10@motor [ESC-10, H5, O2] Pago excedente, antes y después del cierre",
+  "archivo": "escenarios/escenarios.motor.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@motor > PRU-ESC-17@motor [ESC-17, D2, C1] Sobregiro mixto el mismo día, con una transacción agregada tarde",
+  "archivo": "escenarios/escenarios.motor.test.ts"
+ },
+ {
+  "titulo": "PRU-ESC@motor > PRU-ESC-18@motor [ESC-18, C1, D2] Cambio de medio de pago",
+  "archivo": "escenarios/escenarios.motor.test.ts"
+ },
+ {
+  "titulo": "PRU-E2E-RELOJ-001 el servidor sigue el archivo del reloj en cada petición, sin reiniciar",
+  "archivo": "apps/web/e2e/reloj.e2e.ts"
+ },
+ {
+  "titulo": "PRU-E2E-RELOJ-002 RT-21: la pantalla abierta pasa al día siguiente a medianoche sin recargar (05 §6.7)",
+  "archivo": "apps/web/e2e/reloj.e2e.ts"
+ },
+ {
+  "titulo": "PRU-E2E-RELOJ-003 hallazgo: next start corre con NODE_ENV=production; el guardia no puede depender de NODE_ENV",
+  "archivo": "apps/web/e2e/reloj.e2e.ts"
+ }
+]

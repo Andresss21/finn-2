@@ -1,0 +1,10 @@
+--- locale del navegador: es-SV
+V5-01b propiedad: 900.000 textos, 0 fallos
+V5-02b: 400.000 montos; texto decimal → 0 diferencias; c/100 → 0 diferencias
+{"version":"Chrome/141.0.7390.37","icu":"(navegador)","mesCortoIntl":["15 sept 2026","15 oct 2026"],"instanteIntlDirecto":"05/10/2026, 14:32","fechaIntl":"05/10/2026"}
+50 comprobaciones, 0 fallos
+--- locale del navegador: en-US
+V5-01b propiedad: 900.000 textos, 0 fallos
+V5-02b: 400.000 montos; texto decimal → 0 diferencias; c/100 → 0 diferencias
+{"version":"Chrome/141.0.7390.37","icu":"(navegador)","mesCortoIntl":["15 sept 2026","15 oct 2026"],"instanteIntlDirecto":"05/10/2026, 14:32","fechaIntl":"05/10/2026"}
+50 comprobaciones, 0 fallos

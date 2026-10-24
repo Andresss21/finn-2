@@ -1,0 +1,10 @@
+# 03 no se modifica: cada enmienda es una línea en "Enmiendas posteriores".
+d03 = Doc('03-base-de-datos.md')
+d03.s = d03.s.rstrip('\n') + """
+- **CF-14** (Fase 6, P6-13). **§0.2:** P13 queda cerrada **sin migración** desde Finn 1.0; la 2.0 arranca desde cero con saldos iniciales. DB-02 no cambia (su justificación vale para inserciones por SQL manual). Detalle en `06-features.md` §3.1.
+- **CF-01** (Fase 6, P6-5). **§3.1 y §3 (`conciliaciones`):** enum nuevo `modo_conciliacion` (`estado_cuenta`, `saldo`) y columna `conciliaciones.modo modo_conciliacion NOT NULL DEFAULT 'estado_cuenta'`, inmutable como el resto de la fila (`e_solo_insercion`). OP-47 la deja en el valor por defecto y OP-53 (verificar saldo) escribe `saldo`. Migración de expansión generada (§11.4); las filas existentes quedan como `estado_cuenta`. Detalle en `06-features.md` §3.2.3 y `04-backend.md` OP-53.
+- **CF-16** (Fase 6, P6-17). **§3.28, `notificaciones.aviso`:** admite nulo ("aviso del catálogo de 01 §5.0.7, o nulo si el motivo no es un aviso del dominio"); el `CHECK (aviso ~ '^AV-[0-9]{2}$')` no cambia. **§10:** migración generada `AAAAMMDDHHMMSS_g_notificaciones_aviso_nulo` con `ALTER TABLE finn.notificaciones ALTER COLUMN aviso DROP NOT NULL` (expansión) y `aviso String?` en el modelo Prisma `Notificacion`. Los motivos nuevos `pago_tarjeta_proximo` (CF-07) y `cuota_proxima` (CF-24) no necesitan migración: `motivo` es texto. Verificado en `06-features.md` V6-04 (35 de 35 inserciones con la columna nula); detalle en §3.13.
+- **CF-20** (Fase 6, P6-20). **§3.23, `programadas`:** columna nueva `reactivada_desde date NULL`, sin valor por defecto (migración de expansión generada). OP-42 la fija en hoy al reactivar una programada inactiva; desactivar no la toca. Las ocurrencias pendientes son las de fecha ≥ `primera_fecha` y, si no es nula, ≥ `reactivada_desde`. Detalle en `06-features.md` §0.12 y `04-backend.md` OP-42.
+- **CF-03** (Fase 6) queda **diferido**: el permiso de `g_linea_con_eventos` para unir deudores no se aplica (`06-features.md` §3.4).
+"""
+d03.n += 5

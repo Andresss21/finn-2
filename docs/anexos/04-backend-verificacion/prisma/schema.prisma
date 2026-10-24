@@ -1,0 +1,52 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generado/prisma"
+  moduleFormat = "esm"
+  runtime      = "nodejs"
+}
+datasource db {
+  provider = "postgresql"
+  schemas  = ["finn"]
+}
+model Revision {
+  id                        Int     @id @default(1) @db.SmallInt
+  valor                     BigInt  @default(0)
+  ultimaTransaccion         BigInt? @map("ultima_transaccion")
+  revisionMinimaIncremental BigInt  @default(0) @map("revision_minima_incremental")
+  @@map("revision")
+  @@schema("finn")
+}
+model Transaccion {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fecha        DateTime @db.Date
+  horaRegistro DateTime @map("hora_registro") @db.Timestamptz(6)
+  claveOrden   DateTime @map("clave_orden") @db.Timestamptz(6)
+  total        Int
+  secuencia    BigInt   @unique(map: "ux_transacciones_secuencia") @default(dbgenerated())
+  comercio     String?
+  revision     BigInt   @default(0)
+  lineas       Linea[]
+  @@map("transacciones")
+  @@schema("finn")
+}
+model Linea {
+  id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transaccionId String @map("transaccion_id") @db.Uuid
+  orden         Int    @db.SmallInt
+  monto         Int
+  revision      BigInt @default(0)
+  transaccion   Transaccion @relation(fields: [transaccionId], references: [id], onDelete: Cascade)
+  @@unique([transaccionId, orden])
+  @@map("lineas")
+  @@schema("finn")
+}
+model Asignacion {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoriaId   String   @map("categoria_id") @db.Uuid
+  periodoInicio DateTime @map("periodo_inicio") @db.Date
+  monto         Int
+  revision      BigInt   @default(0)
+  @@unique([categoriaId, periodoInicio])
+  @@map("asignaciones")
+  @@schema("finn")
+}

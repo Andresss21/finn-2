@@ -1,0 +1,15 @@
+
+Running 3 tests using 1 worker
+
+  ✓  1 [movil] › e2e/reloj.e2e.ts:4:1 › PRU-E2E-RELOJ-001 el servidor sigue el archivo del reloj en cada petición, sin reiniciar (37ms)
+  ✓  2 [movil] › e2e/reloj.e2e.ts:12:1 › PRU-E2E-RELOJ-002 RT-21: la pantalla abierta pasa al día siguiente a medianoche sin recargar (05 §6.7) (592ms)
+  ✓  3 [movil] › e2e/reloj.e2e.ts:29:1 › PRU-E2E-RELOJ-003 hallazgo: next start corre con NODE_ENV=production; el guardia no puede depender de NODE_ENV (190ms)
+
+  3 passed (2.8s)
+
+# Barreras de producción (manual, ver LEEME)
+G1 VERCEL_ENV=production + FINN_RELOJ_ARCHIVO → código de salida 1; "finn: reloj de prueba presente en producción; la aplicación no arranca (BE-30, CT-01)"
+G2 FINN_ENTORNO=produccion + FINN_RELOJ_ARCHIVO → código de salida 1
+G3 VERCEL_ENV=production sin reloj → arranca; página con NODE_ENV=production y reloj real
+G4 relojDePrueba() con VERCEL_ENV=production y archivo → null
+WebKit: browserType.launch: Executable doesn't exist at /opt/pw-browsers/webkit-2215/pw_run.sh

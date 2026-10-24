@@ -1,0 +1,8 @@
+V5-35 · compartido: 136.0 KB (6 archivos) · biblioteca de formularios: 46.2 KB (2 archivos; presupuesto 50 KB)
+  /formulario          propio:   0.7 KB
+  /formulario-es       propio:   1.9 KB
+  /formulario-llaves   propio:   0.7 KB
+  /base                propio:   3.6 KB
+  /grafico-servidor    propio:   0.0 KB
+  /sin-conexion        propio:   0.0 KB
+  /con-datos           propio:   3.6 KB

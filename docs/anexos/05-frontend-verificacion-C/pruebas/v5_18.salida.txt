@@ -1,0 +1,2 @@
+Árbol: 72 rutas; mapa: 76 filas; consultas usadas: 18/18; variantes de formulario: 17/17; operaciones: 60/61; avisos: 24/24; destinos de notificación: 9; parámetros: 35 usados, 35 en el catálogo
+T1 a T9 pasan

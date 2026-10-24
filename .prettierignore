@@ -5,3 +5,9 @@ _entrada
 .claude
 supabase/config.toml
 *.md
+# TA-002: anexos y scripts del plan copiados sin cambios de las verificaciones (DT-14); plan/ es dato.
+/docs
+/plan
+tools/plan/verificar.ts
+tools/plan/encargo.ts
+tools/plan/anexos.ts

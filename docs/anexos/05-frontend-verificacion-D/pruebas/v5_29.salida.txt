@@ -1,0 +1,14 @@
+V5-29a · registrado con alcance http://localhost:3210/ · controla la página tras recargar: True
+V5-29b · precache: 26 entradas, 788 KiB sin comprimir (21 de /_next/static) · fuera de /_next/static: ['/marca/icono-192.png', '/marca/icono-512.png', '/sin-conexion', '/marca/icono-maskable-512.png', '/marca/insignia-96.png']
+V5-29c · cachés: ['serwist-precache-v2-http://localhost:3210/'] · ¿alguna página o RSC guardada además de /sin-conexion? False
+V5-30b · sin red ni servidor, clic en un enlace del cliente: {'url': '/destino', 'sinConexion': True, 'datos': False, 'destino': False}
+V5-30a · sin red ni servidor, navegación de documento a /con-datos → contenido de /sin-conexion: True (la URL sigue siendo /con-datos)
+V5-31 · errores de instalabilidad (contexto efímero): [{'errorId': 'in-incognito', 'errorArguments': []}]
+V5-31 · errores de instalabilidad (perfil persistente): []
+V5-32a · push con la carga de CP-1 y una carga inválida → notificaciones: [{"t": "Finn", "b": "Tenés una notificación nueva.", "tag": "", "acc": [], "d": {"notificacionId": "", "destino": null, "movimientoId": null}}, {"t": "Compra en SUPER SELECTOS", "b": "Compra en SUPER SELECTOS por $45.00. Revisala en la bandeja.", "tag": "sms", "acc": ["Confirmar", "Rechazar"], "d": {"notificacionId": "7f1c2b9e-0000-4000-8000-000000000001", "destino": {"pantalla": "movimiento", "movimientoId": "7f1c2b9e-0000-4000-8000-0000000000aa"}, "movimientoId": "7f1c2b9e-0000-4000-8000-0000000000aa"}}]
+V5-32b · clic en la notificación → la ventana abierta navega a /bandeja/7f1c2b9e-0000-4000-8000-0000000000aa?notificacion=7f1c2b9e-0000-4000-8000-000000000001
+V5-32c · acción "Confirmar" con el Route Handler ausente en la app de prueba (404) → abre el movimiento: /bandeja/7f1c2b9e-0000-4000-8000-0000000000aa?notificacion=7f1c2b9e-0000-4000-8000-000000000001
+  archivos de /_next/static/chunks solo en la versión 1: 1 de 18
+V5-33a · con la versión 2 publicada, la pestaña abierta (data-version=v1) muestra 'Hay una versión nueva'
+V5-33b · un archivo de la versión 1: el servidor nuevo responde 404; desde la pestaña (service worker viejo) responde 200
+V5-33c · tras 'Recargar': data-version=v2 · aviso visible: False

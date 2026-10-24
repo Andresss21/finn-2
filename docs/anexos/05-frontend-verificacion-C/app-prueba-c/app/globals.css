@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@import "./tokens.css";
+@custom-variant dark (&:where(.dark, .dark *));
+@theme inline {
+  --color-fondo: var(--finn-fondo);
+  --color-superficie: var(--finn-superficie);
+  --color-superficie-elevada: var(--finn-superficie-elevada);
+  --color-superficie-hundida: var(--finn-superficie-hundida);
+  --color-borde-sutil: var(--finn-borde-sutil);
+  --color-borde-control: var(--finn-borde-control);
+  --color-foco: var(--finn-foco);
+  --color-velo: var(--finn-velo);
+  --color-texto: var(--finn-texto);
+  --color-texto-secundario: var(--finn-texto-secundario);
+  --color-texto-terciario: var(--finn-texto-terciario);
+  --color-texto-deshabilitado: var(--finn-texto-deshabilitado);
+  --color-enlace: var(--finn-enlace);
+  --color-texto-sobre-accion: var(--finn-texto-sobre-accion);
+  --color-accion: var(--finn-accion);
+  --color-accion-hover: var(--finn-accion-hover);
+  --color-accion-presionada: var(--finn-accion-presionada);
+  --color-accion-secundaria: var(--finn-accion-secundaria);
+  --color-peligro: var(--finn-peligro);
+  --color-texto-sobre-peligro: var(--finn-texto-sobre-peligro);
+  --color-positivo-texto: var(--finn-positivo-texto);
+  --color-positivo-fondo: var(--finn-positivo-fondo);
+  --color-positivo-borde: var(--finn-positivo-borde);
+  --color-cero-texto: var(--finn-cero-texto);
+  --color-cero-fondo: var(--finn-cero-fondo);
+  --color-cero-borde: var(--finn-cero-borde);
+  --color-advertencia-texto: var(--finn-advertencia-texto);
+  --color-advertencia-fondo: var(--finn-advertencia-fondo);
+  --color-advertencia-borde: var(--finn-advertencia-borde);
+  --color-problema-texto: var(--finn-problema-texto);
+  --color-problema-fondo: var(--finn-problema-fondo);
+  --color-problema-borde: var(--finn-problema-borde);
+  --color-deuda-texto: var(--finn-deuda-texto);
+  --color-deuda-fondo: var(--finn-deuda-fondo);
+  --color-deuda-borde: var(--finn-deuda-borde);
+  --color-deuda-sin-respaldo-texto: var(--finn-deuda-sin-respaldo-texto);
+  --color-deuda-sin-respaldo-fondo: var(--finn-deuda-sin-respaldo-fondo);
+  --color-deuda-sin-respaldo-borde: var(--finn-deuda-sin-respaldo-borde);
+  --color-informacion-texto: var(--finn-informacion-texto);
+  --color-informacion-fondo: var(--finn-informacion-fondo);
+  --color-informacion-borde: var(--finn-informacion-borde);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;  /* provisional: fuente del sistema (PF-1) */
+}
+@layer base { body { background: var(--finn-fondo); color: var(--finn-texto); } :focus-visible { outline: 2px solid var(--finn-foco); outline-offset: 2px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }

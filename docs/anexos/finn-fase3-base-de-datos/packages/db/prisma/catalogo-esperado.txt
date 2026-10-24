@@ -1,0 +1,488 @@
+check|finn.asignaciones|ck_asignaciones_monto|CHECK ((monto <> 0))
+check|finn.cambios_posteriores|ck_cambios_monto|CHECK ((monto_efecto <> 0))
+check|finn.cambios_posteriores|ck_cambios_motivos|CHECK ((cardinality(motivos) >= 1))
+check|finn.categorias|ck_categorias_clase_tarjeta|CHECK (((clase = 'pago'::finn.clase_categoria) = (tarjeta_id IS NOT NULL)))
+check|finn.categorias|ck_categorias_nombre|CHECK (((nombre = btrim(nombre)) AND (nombre <> ''::text)))
+check|finn.condonaciones|ck_condonaciones_monto|CHECK ((monto > 0))
+check|finn.cuentas|ck_cuentas_nombre|CHECK (((nombre = btrim(nombre)) AND (nombre <> ''::text)))
+check|finn.cuentas|ck_cuentas_ultimos4|CHECK ((ultimos4 ~ '^[0-9]{4}$'::text))
+check|finn.deudores|ck_deudores_nombre|CHECK (((nombre = btrim(nombre)) AND (nombre <> ''::text)))
+check|finn.efectos|ck_efectos_desglose|CHECK (((interes IS NULL) = (seguro IS NULL)))
+check|finn.efectos|ck_efectos_interes|CHECK ((interes >= 0))
+check|finn.efectos|ck_efectos_monto|CHECK (((monto <> 0) OR ((COALESCE(interes, 0) + COALESCE(seguro, 0)) > 0)))
+check|finn.efectos|ck_efectos_seguro|CHECK ((seguro >= 0))
+check|finn.estado_respaldo|ck_estado_respaldo_fila|CHECK ((id = 1))
+check|finn.eventos_sistema|ck_eventos_origen|CHECK ((origen = ANY (ARRAY['webhook'::text, 'tarea_diaria'::text, 'motor'::text, 'respaldo'::text, 'app'::text])))
+check|finn.formatos_bancarios|ck_formatos_banderas|CHECK ((banderas ~ '^i?m?s?u?$'::text))
+check|finn.formatos_bancarios|ck_formatos_decimal|CHECK ((monto_separador_decimal = ANY (ARRAY['.'::text, ','::text])))
+check|finn.formatos_bancarios|ck_formatos_fecha_grupo|CHECK (((POSITION(('(?<fecha>'::text) IN (patron)) > 0) = (cardinality(formatos_fecha) > 0)))
+check|finn.formatos_bancarios|ck_formatos_fecha|CHECK ((formatos_fecha <@ ARRAY['AAAA/MM/DD'::text, 'AAAAMMDD'::text, 'AAAA-MM-DD'::text, 'DD/MM/AAAA'::text]))
+check|finn.formatos_bancarios|ck_formatos_grupos|CHECK (((POSITION(('(?<ultimos4>'::text) IN (patron)) > 0) AND (POSITION(('(?<monto>'::text) IN (patron)) > 0)))
+check|finn.formatos_bancarios|ck_formatos_miles|CHECK ((monto_separador_miles = ANY (ARRAY[','::text, '.'::text, ''::text])))
+check|finn.formatos_bancarios|ck_formatos_nombre|CHECK (((nombre = btrim(nombre)) AND (nombre <> ''::text)))
+check|finn.formatos_bancarios|ck_formatos_patron|CHECK (((char_length(patron) >= 1) AND (char_length(patron) <= 1000)))
+check|finn.formatos_bancarios|ck_formatos_separadores|CHECK ((monto_separador_miles <> monto_separador_decimal))
+check|finn.grupos|ck_grupos_clave_sistema|CHECK ((clave_sistema = 'pagos_tarjeta'::text))
+check|finn.grupos|ck_grupos_nombre|CHECK (((nombre = btrim(nombre)) AND (nombre <> ''::text)))
+check|finn.instituciones|ck_instituciones_nombre|CHECK (((nombre = btrim(nombre)) AND (nombre <> ''::text)))
+check|finn.inversiones|ck_inversiones_rendimiento|CHECK ((rendimiento_anual_esperado_millonesimas >= 0))
+check|finn.inversiones|ck_inversiones_tipo|CHECK ((tipo = 'inversion'::finn.tipo_cuenta))
+check|finn.lineas|ck_lineas_destino|CHECK ((num_nonnulls(categoria_id, deudor_id, linea_original_id) = 1))
+check|finn.lineas|ck_lineas_monto|CHECK ((monto > 0))
+check|finn.lineas|ck_lineas_orden|CHECK ((orden >= 1))
+check|finn.metas|ck_metas_fecha_para|CHECK (((tipo <> 'para_fecha'::finn.tipo_meta) OR (fecha_objetivo IS NOT NULL)))
+check|finn.metas|ck_metas_fecha_periodo|CHECK (((tipo <> ALL (ARRAY['mensual'::finn.tipo_meta, 'semanal'::finn.tipo_meta])) OR (fecha_objetivo IS NULL)))
+check|finn.metas|ck_metas_modo|CHECK (((tipo = ANY (ARRAY['mensual'::finn.tipo_meta, 'semanal'::finn.tipo_meta])) = (modo IS NOT NULL)))
+check|finn.metas|ck_metas_monto|CHECK ((monto > 0))
+check|finn.movimiento_lineas|ck_movimiento_lineas_destino|CHECK ((num_nonnulls(categoria_id, deudor_id, linea_original_id) <= 1))
+check|finn.movimiento_lineas|ck_movimiento_lineas_monto|CHECK ((monto > 0))
+check|finn.movimiento_lineas|ck_movimiento_lineas_orden|CHECK ((orden >= 1))
+check|finn.movimientos|ck_movimientos_aprobado|CHECK (((estado = 'aprobado'::finn.estado_movimiento) = (transaccion_id IS NOT NULL)))
+check|finn.movimientos|ck_movimientos_coincidencia|CHECK (((estado <> 'con_coincidencia'::finn.estado_movimiento) OR (esperada_programada_id IS NOT NULL)))
+check|finn.movimientos|ck_movimientos_dup_estado|CHECK (((estado <> 'posible_duplicado'::finn.estado_movimiento) OR (num_nonnulls(duplicado_transaccion_id, duplicado_movimiento_id) = 1)))
+check|finn.movimientos|ck_movimientos_duplicado|CHECK ((num_nonnulls(duplicado_transaccion_id, duplicado_movimiento_id) <= 1))
+check|finn.movimientos|ck_movimientos_esperada|CHECK (((esperada_programada_id IS NULL) = (esperada_fecha IS NULL)))
+check|finn.movimientos|ck_movimientos_monto|CHECK ((monto > 0))
+check|finn.notificaciones|ck_notificaciones_aviso|CHECK ((aviso ~ '^AV-[0-9]{2}$'::text))
+check|finn.notificaciones|ck_notificaciones_motivo|CHECK (((motivo = btrim(motivo)) AND (motivo <> ''::text)))
+check|finn.ocurrencias_resueltas|ck_ocurrencias_transaccion|CHECK (((estado = 'omitida'::finn.estado_ocurrencia) = (transaccion_id IS NULL)))
+check|finn.prestamos|ck_prestamos_comision|CHECK ((comision >= 0))
+check|finn.prestamos|ck_prestamos_contraparte|CHECK (((contraparte = btrim(contraparte)) AND (contraparte <> ''::text)))
+check|finn.prestamos|ck_prestamos_cuotas_pagadas|CHECK (((cuotas_pagadas_al_crear >= 0) AND (cuotas_pagadas_al_crear <= plazo_cuotas)))
+check|finn.prestamos|ck_prestamos_cuota|CHECK ((cuota_pactada > 0))
+check|finn.prestamos|ck_prestamos_frecuencia_dias|CHECK ((frecuencia_dias > 0))
+check|finn.prestamos|ck_prestamos_frecuencia|CHECK (((frecuencia = 'cada_n_dias'::finn.frecuencia) = (frecuencia_dias IS NOT NULL)))
+check|finn.prestamos|ck_prestamos_monto_original|CHECK ((monto_original > 0))
+check|finn.prestamos|ck_prestamos_plazo|CHECK ((plazo_cuotas > 0))
+check|finn.prestamos|ck_prestamos_seguro|CHECK ((seguro_primer_mes >= 0))
+check|finn.prestamos|ck_prestamos_tasa|CHECK ((tasa_nominal_anual_millonesimas >= 0))
+check|finn.prestamos|ck_prestamos_tipo|CHECK ((tipo = 'prestamo'::finn.tipo_cuenta))
+check|finn.programada_lineas|ck_programada_lineas_monto|CHECK ((monto > 0))
+check|finn.programada_lineas|ck_programada_lineas_orden|CHECK ((orden >= 1))
+check|finn.programadas|ck_programadas_comercio|CHECK (((comercio = btrim(comercio)) AND (comercio <> ''::text)))
+check|finn.programadas|ck_programadas_destino_distinto|CHECK ((cuenta_destino_id <> cuenta_id))
+check|finn.programadas|ck_programadas_destino|CHECK (((tipo = 'gasto'::finn.tipo_programada) = (cuenta_destino_id IS NULL)))
+check|finn.programadas|ck_programadas_fecha_fin|CHECK ((fecha_fin >= primera_fecha))
+check|finn.programadas|ck_programadas_frecuencia_dias|CHECK ((frecuencia_dias > 0))
+check|finn.programadas|ck_programadas_frecuencia|CHECK (((frecuencia = 'cada_n_dias'::finn.frecuencia) = (frecuencia_dias IS NOT NULL)))
+check|finn.programadas|ck_programadas_monto|CHECK ((monto > 0))
+check|finn.programadas|ck_programadas_tolerancia|CHECK ((tolerancia >= 0))
+check|finn.reglas_comercio|ck_reglas_patron|CHECK (((patron = btrim(patron)) AND (patron <> ''::text)))
+check|finn.revision|ck_revision_fila|CHECK ((id = 1))
+check|finn.revision|ck_revision_valor|CHECK ((valor >= 0))
+check|finn.sms_procesamientos|ck_procesamientos_duplicado|CHECK ((num_nonnulls(duplicado_transaccion_id, duplicado_movimiento_id) <= 1))
+check|finn.sms_procesamientos|ck_procesamientos_error|CHECK (((resultado = 'error'::finn.resultado_procesamiento) = (error_detalle IS NOT NULL)))
+check|finn.sms_procesamientos|ck_procesamientos_esperada|CHECK (((esperada_programada_id IS NULL) = (esperada_fecha IS NULL)))
+check|finn.sms_procesamientos|ck_procesamientos_formato|CHECK ((((formato_id IS NULL) AND (cardinality(formatos_coincidentes) <> 1)) OR ((formato_id IS NOT NULL) AND (cardinality(formatos_coincidentes) = 1) AND (formato_id = formatos_coincidentes[1]))))
+check|finn.sms_procesamientos|ck_procesamientos_intento|CHECK ((intento >= 1))
+check|finn.sms_procesamientos|ck_procesamientos_monto|CHECK ((monto > 0))
+check|finn.sms_procesamientos|ck_procesamientos_tipo|CHECK (((formato_id IS NULL) OR (tipo_movimiento IS NOT NULL)))
+check|finn.sms_procesamientos|ck_procesamientos_ultimos4|CHECK ((ultimos4 ~ '^[0-9]{4}$'::text))
+check|finn.sms_procesamientos|ck_procesamientos_varios|CHECK (((cardinality(formatos_coincidentes) <= 1) OR (resultado = 'no_reconocido'::finn.resultado_procesamiento)))
+check|finn.sms_recibidos|ck_sms_remitente|CHECK ((remitente <> ''::text))
+check|finn.sms_recibidos|ck_sms_texto|CHECK (((char_length(texto) >= 1) AND (char_length(texto) <= 2000)))
+check|finn.suscripciones_push|ck_suscripciones_endpoint|CHECK ((endpoint ~~ 'https://%'::text))
+check|finn.tarjetas|ck_tarjetas_color|CHECK ((color ~ '^#[0-9A-F]{6}$'::text))
+check|finn.tarjetas|ck_tarjetas_dia_corte|CHECK (((dia_corte >= 1) AND (dia_corte <= 31)))
+check|finn.tarjetas|ck_tarjetas_dia_pago|CHECK (((dia_pago >= 1) AND (dia_pago <= 31)))
+check|finn.tarjetas|ck_tarjetas_limite|CHECK ((limite_credito > 0))
+check|finn.tarjetas|ck_tarjetas_tasa|CHECK ((tasa_anual_millonesimas >= 0))
+check|finn.tarjetas|ck_tarjetas_tipo|CHECK ((tipo = 'tarjeta'::finn.tipo_cuenta))
+check|finn.token_webhook|ck_token_fila|CHECK ((id = 1))
+check|finn.token_webhook|ck_token_hash|CHECK ((hash_sha256 ~ '^[0-9a-f]{64}$'::text))
+check|finn.transacciones|ck_transacciones_cobro|CHECK (((tipo = 'cobro'::finn.tipo_transaccion) = (linea_cobrada_id IS NOT NULL)))
+check|finn.transacciones|ck_transacciones_comercio|CHECK (((comercio = btrim(comercio)) AND (comercio <> ''::text)))
+check|finn.transacciones|ck_transacciones_conciliada|CHECK (((estado_bancario = 'conciliada'::finn.estado_bancario) = (conciliacion_id IS NOT NULL)))
+check|finn.transacciones|ck_transacciones_moneda_par|CHECK (((moneda_original IS NULL) = (monto_original IS NULL)))
+check|finn.transacciones|ck_transacciones_moneda|CHECK ((moneda_original ~ '^[A-Z]{3}$'::text))
+check|finn.transacciones|ck_transacciones_monto_original|CHECK ((monto_original > (0)::numeric))
+check|finn.transacciones|ck_transacciones_total|CHECK ((total > 0))
+check|finn.vigencias_ciclo|ck_vigencias_dia|CHECK (((dia_inicio >= 1) AND (dia_inicio <= 31)))
+funcion|clave_bloqueo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=b92cbc720968323c4eb562dbc94f9667
+funcion|eliminar_conciliaciones_de_cuenta(p_cuenta uuid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=09c9dc737ad4b6e9877b5aaf19b037c4
+funcion|es_de_esta_transaccion(p_xmin xid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=f7240230b93e46f36c34de64f614a18a
+funcion|es_inicio_de_periodo(f date, ignorar_desde date)|definer=t|config=search_path=finn, pg_catalog|cuerpo=e5fa28e23e4e716a7e484dad850b74d4
+funcion|hay_efecto(p_tx uuid, p_tipos finn.tipo_cuenta[], p_monto bigint)|definer=t|config=search_path=finn, pg_catalog|cuerpo=934c5286ef11966c3e07a54acf2b3b79
+funcion|hoy()|definer=t|config=search_path=finn, pg_catalog|cuerpo=9c6ed2eb352ff711be455500e56b9cf8
+funcion|inicio_del_periodo(f date)|definer=t|config=search_path=finn, pg_catalog|cuerpo=1a26e8369fe18ec0546026299301a82f
+funcion|operacion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=4f986aac82996d80261b81232f4d46cc
+funcion|rechazar(p_codigo text, p_mensaje text)|definer=t|config=search_path=finn, pg_catalog|cuerpo=152da7abe8273fa1acc3b2e2674c7310
+funcion|tg_asignacion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=c765f910735c389573d1b65b875a210e
+funcion|tg_asignar_secuencia()|definer=t|config=search_path=finn, pg_catalog|cuerpo=a0aaa802106934bbb208c11adcdca7b8
+funcion|tg_avanzar_revision()|definer=t|config=search_path=finn, pg_catalog|cuerpo=90ffb0b719e2129bb9ec13c1ea70a17a
+funcion|tg_destino_activo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=755bc74fc9d6f843662b68ac179242d2
+funcion|tg_efecto_cuenta_archivada()|definer=t|config=search_path=finn, pg_catalog|cuerpo=fba149bbce8d2d943986f6bf7ef40411
+funcion|tg_estampar_revision()|definer=t|config=search_path=finn, pg_catalog|cuerpo=1329f375f1d191a199ec64cce3a93c81
+funcion|tg_exigir_bloqueo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=2e2bc54750bc0341151a95d0098de6bc
+funcion|tg_fechas_hoy()|definer=t|config=search_path=finn, pg_catalog|cuerpo=7c3a9fd5ac6f97bf10d7ac0b92483fb7
+funcion|tg_inmutables()|definer=t|config=search_path=finn, pg_catalog|cuerpo=2f4d2806dbc172ff6788ad21683ddd19
+funcion|tg_linea_con_eventos()|definer=t|config=search_path=finn, pg_catalog|cuerpo=f145ad42a068df72b157ea16c2e585b7
+funcion|tg_programada_calendario()|definer=t|config=search_path=finn, pg_catalog|cuerpo=3bf347de8b741a6b454ea930a12147e2
+funcion|tg_registrar_eliminacion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=f6c189d06be0c479cb43866c8f51641d
+funcion|tg_solo_insercion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=437a0547ae1e4b6571092a42ad8fc733
+funcion|tg_transicion_estado_bancario()|definer=t|config=search_path=finn, pg_catalog|cuerpo=9b100efd2cd1e9342fbcef578902b1d2
+funcion|tg_transicion_movimiento()|definer=t|config=search_path=finn, pg_catalog|cuerpo=358149a3c3104ebf89a1ed017b950d81
+funcion|tg_transicion_ocurrencia()|definer=t|config=search_path=finn, pg_catalog|cuerpo=9176ff56771d578ba37fd1a1b5718d95
+funcion|tg_vigencia()|definer=t|config=search_path=finn, pg_catalog|cuerpo=19725229f5147986b0754d6c6be0fd6a
+funcion|tg_x_categoria()|definer=t|config=search_path=finn, pg_catalog|cuerpo=b937a71d615c032c9375b54deb3ec943
+funcion|tg_x_conciliacion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=75d1fc7fb3c2e27a29011f28544ff00d
+funcion|tg_x_cuenta()|definer=t|config=search_path=finn, pg_catalog|cuerpo=0d3629e4012efa246eb1f4ba74f1da77
+funcion|tg_x_eliminacion_cuenta()|definer=t|config=search_path=finn, pg_catalog|cuerpo=54e920fb1efd7fa8af3efe114f45dfb2
+funcion|tg_x_limites()|definer=t|config=search_path=finn, pg_catalog|cuerpo=badc97041a5c64354f838778080699e0
+funcion|tg_x_programada()|definer=t|config=search_path=finn, pg_catalog|cuerpo=6e062ab2fe649784d78c6eefe4813b3c
+funcion|tg_x_transaccion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=9abd4c236cb7a05d7939d73a27c09e95
+funcion|tiene_bloqueo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=ef8387f9dda34086a392cd4d5dae03a5
+funcion|tomar_bloqueo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=cec4a403a17acf488e77b010f0165e50
+funcion|verificar_categoria(p_categoria uuid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=203f763fab65517034407c9a4ff0e841
+funcion|verificar_conciliacion(p_tx uuid, p_estado_ant finn.estado_bancario, p_conc_ant uuid, p_sensible boolean)|definer=t|config=search_path=finn, pg_catalog|cuerpo=143579d025bc52ee12b839994ed5a200
+funcion|verificar_cuenta(p_cuenta uuid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=4992b8626db60b5ba75ddf26a52fb35c
+funcion|verificar_eliminacion_conciliada(p_conc uuid, p_fecha date)|definer=t|config=search_path=finn, pg_catalog|cuerpo=3dd7e3ad67566a8baffec25c805b2cf6
+funcion|verificar_grupo(p_grupo uuid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=166b7168661783f33afa4b26123e57eb
+funcion|verificar_limites_linea(p_linea uuid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=2eea17c42c788447b0e06b44be7d06ca
+funcion|verificar_programada(p_programada uuid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=bc66e4f8f547fca794bdbbca0a6e887f
+funcion|verificar_todo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=84824418e709f4e4314ff6ba5501eb22
+funcion|verificar_transaccion(p_id uuid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=c91900a94b40e6df97943c35189d775d
+funcion|xid_actual()|definer=t|config=search_path=finn, pg_catalog|cuerpo=c17a13cdce513af6d2a5941978780670
+indice|CREATE UNIQUE INDEX ux_categorias_grupo_nombre ON finn.categorias USING btree (grupo_id, lower(nombre))
+indice|CREATE UNIQUE INDEX ux_deudores_nombre ON finn.deudores USING btree (lower(nombre))
+indice|CREATE UNIQUE INDEX ux_grupos_nombre ON finn.grupos USING btree (lower(nombre))
+indice|CREATE UNIQUE INDEX ux_instituciones_nombre ON finn.instituciones USING btree (lower(nombre))
+indice|CREATE UNIQUE INDEX ux_reglas_patron ON finn.reglas_comercio USING btree (lower(patron))
+privilegio|_prisma_migrations|finn_respaldo|SELECT
+privilegio|asignaciones|finn_app|DELETE
+privilegio|asignaciones|finn_app|INSERT
+privilegio|asignaciones|finn_app|SELECT
+privilegio|asignaciones|finn_app|UPDATE
+privilegio|asignaciones|finn_respaldo|SELECT
+privilegio|cambios_posteriores|finn_app|INSERT
+privilegio|cambios_posteriores|finn_app|SELECT
+privilegio|cambios_posteriores|finn_respaldo|SELECT
+privilegio|categorias|finn_app|DELETE
+privilegio|categorias|finn_app|INSERT
+privilegio|categorias|finn_app|SELECT
+privilegio|categorias|finn_app|UPDATE
+privilegio|categorias|finn_respaldo|SELECT
+privilegio|conciliaciones|finn_app|INSERT
+privilegio|conciliaciones|finn_app|SELECT
+privilegio|conciliaciones|finn_respaldo|SELECT
+privilegio|condonaciones|finn_app|DELETE
+privilegio|condonaciones|finn_app|INSERT
+privilegio|condonaciones|finn_app|SELECT
+privilegio|condonaciones|finn_app|UPDATE
+privilegio|condonaciones|finn_respaldo|SELECT
+privilegio|cuentas|finn_app|DELETE
+privilegio|cuentas|finn_app|INSERT
+privilegio|cuentas|finn_app|SELECT
+privilegio|cuentas|finn_app|UPDATE
+privilegio|cuentas|finn_respaldo|SELECT
+privilegio|deudores|finn_app|DELETE
+privilegio|deudores|finn_app|INSERT
+privilegio|deudores|finn_app|SELECT
+privilegio|deudores|finn_app|UPDATE
+privilegio|deudores|finn_respaldo|SELECT
+privilegio|efectos|finn_app|DELETE
+privilegio|efectos|finn_app|INSERT
+privilegio|efectos|finn_app|SELECT
+privilegio|efectos|finn_app|UPDATE
+privilegio|efectos|finn_respaldo|SELECT
+privilegio|eliminaciones_id_seq|finn_respaldo|SELECT
+privilegio|eliminaciones|finn_app|SELECT
+privilegio|eliminaciones|finn_respaldo|SELECT
+privilegio|eliminar_conciliaciones_de_cuenta(p_cuenta uuid)|finn_app|EXECUTE
+privilegio|esquema finn|finn_app|USAGE
+privilegio|esquema finn|finn_respaldo|USAGE
+privilegio|estado_respaldo|finn_app|DELETE
+privilegio|estado_respaldo|finn_app|INSERT
+privilegio|estado_respaldo|finn_app|SELECT
+privilegio|estado_respaldo|finn_app|UPDATE
+privilegio|estado_respaldo|finn_respaldo|SELECT
+privilegio|eventos_sistema_id_seq|finn_app|USAGE
+privilegio|eventos_sistema_id_seq|finn_respaldo|SELECT
+privilegio|eventos_sistema|finn_app|DELETE
+privilegio|eventos_sistema|finn_app|INSERT
+privilegio|eventos_sistema|finn_app|SELECT
+privilegio|eventos_sistema|finn_app|UPDATE
+privilegio|eventos_sistema|finn_respaldo|SELECT
+privilegio|formatos_bancarios|finn_app|DELETE
+privilegio|formatos_bancarios|finn_app|INSERT
+privilegio|formatos_bancarios|finn_app|SELECT
+privilegio|formatos_bancarios|finn_app|UPDATE
+privilegio|formatos_bancarios|finn_respaldo|SELECT
+privilegio|grupos|finn_app|DELETE
+privilegio|grupos|finn_app|INSERT
+privilegio|grupos|finn_app|SELECT
+privilegio|grupos|finn_app|UPDATE
+privilegio|grupos|finn_respaldo|SELECT
+privilegio|hoy()|finn_app|EXECUTE
+privilegio|instituciones|finn_app|DELETE
+privilegio|instituciones|finn_app|INSERT
+privilegio|instituciones|finn_app|SELECT
+privilegio|instituciones|finn_app|UPDATE
+privilegio|instituciones|finn_respaldo|SELECT
+privilegio|inversiones|finn_app|DELETE
+privilegio|inversiones|finn_app|INSERT
+privilegio|inversiones|finn_app|SELECT
+privilegio|inversiones|finn_app|UPDATE
+privilegio|inversiones|finn_respaldo|SELECT
+privilegio|lineas|finn_app|DELETE
+privilegio|lineas|finn_app|INSERT
+privilegio|lineas|finn_app|SELECT
+privilegio|lineas|finn_app|UPDATE
+privilegio|lineas|finn_respaldo|SELECT
+privilegio|metas|finn_app|DELETE
+privilegio|metas|finn_app|INSERT
+privilegio|metas|finn_app|SELECT
+privilegio|metas|finn_app|UPDATE
+privilegio|metas|finn_respaldo|SELECT
+privilegio|movimiento_lineas|finn_app|DELETE
+privilegio|movimiento_lineas|finn_app|INSERT
+privilegio|movimiento_lineas|finn_app|SELECT
+privilegio|movimiento_lineas|finn_app|UPDATE
+privilegio|movimiento_lineas|finn_respaldo|SELECT
+privilegio|movimientos|finn_app|DELETE
+privilegio|movimientos|finn_app|INSERT
+privilegio|movimientos|finn_app|SELECT
+privilegio|movimientos|finn_app|UPDATE
+privilegio|movimientos|finn_respaldo|SELECT
+privilegio|notificaciones|finn_app|DELETE
+privilegio|notificaciones|finn_app|INSERT
+privilegio|notificaciones|finn_app|SELECT
+privilegio|notificaciones|finn_app|UPDATE
+privilegio|notificaciones|finn_respaldo|SELECT
+privilegio|ocurrencias_resueltas|finn_app|DELETE
+privilegio|ocurrencias_resueltas|finn_app|INSERT
+privilegio|ocurrencias_resueltas|finn_app|SELECT
+privilegio|ocurrencias_resueltas|finn_app|UPDATE
+privilegio|ocurrencias_resueltas|finn_respaldo|SELECT
+privilegio|prestamos|finn_app|DELETE
+privilegio|prestamos|finn_app|INSERT
+privilegio|prestamos|finn_app|SELECT
+privilegio|prestamos|finn_app|UPDATE
+privilegio|prestamos|finn_respaldo|SELECT
+privilegio|programada_lineas|finn_app|DELETE
+privilegio|programada_lineas|finn_app|INSERT
+privilegio|programada_lineas|finn_app|SELECT
+privilegio|programada_lineas|finn_app|UPDATE
+privilegio|programada_lineas|finn_respaldo|SELECT
+privilegio|programadas|finn_app|DELETE
+privilegio|programadas|finn_app|INSERT
+privilegio|programadas|finn_app|SELECT
+privilegio|programadas|finn_app|UPDATE
+privilegio|programadas|finn_respaldo|SELECT
+privilegio|reglas_comercio|finn_app|DELETE
+privilegio|reglas_comercio|finn_app|INSERT
+privilegio|reglas_comercio|finn_app|SELECT
+privilegio|reglas_comercio|finn_app|UPDATE
+privilegio|reglas_comercio|finn_respaldo|SELECT
+privilegio|revision|finn_app|SELECT
+privilegio|revision|finn_respaldo|SELECT
+privilegio|secuencia_creacion|finn_respaldo|SELECT
+privilegio|sms_procesamientos|finn_app|INSERT
+privilegio|sms_procesamientos|finn_app|SELECT
+privilegio|sms_procesamientos|finn_respaldo|SELECT
+privilegio|sms_recibidos|finn_app|INSERT
+privilegio|sms_recibidos|finn_app|SELECT
+privilegio|sms_recibidos|finn_respaldo|SELECT
+privilegio|suscripciones_push|finn_app|DELETE
+privilegio|suscripciones_push|finn_app|INSERT
+privilegio|suscripciones_push|finn_app|SELECT
+privilegio|suscripciones_push|finn_app|UPDATE
+privilegio|suscripciones_push|finn_respaldo|SELECT
+privilegio|tarjetas|finn_app|DELETE
+privilegio|tarjetas|finn_app|INSERT
+privilegio|tarjetas|finn_app|SELECT
+privilegio|tarjetas|finn_app|UPDATE
+privilegio|tarjetas|finn_respaldo|SELECT
+privilegio|token_webhook|finn_app|DELETE
+privilegio|token_webhook|finn_app|INSERT
+privilegio|token_webhook|finn_app|SELECT
+privilegio|token_webhook|finn_app|UPDATE
+privilegio|token_webhook|finn_respaldo|SELECT
+privilegio|tomar_bloqueo()|finn_app|EXECUTE
+privilegio|transacciones|finn_app|DELETE
+privilegio|transacciones|finn_app|INSERT
+privilegio|transacciones|finn_app|SELECT
+privilegio|transacciones|finn_app|UPDATE
+privilegio|transacciones|finn_respaldo|SELECT
+privilegio|vigencias_ciclo|finn_app|DELETE
+privilegio|vigencias_ciclo|finn_app|INSERT
+privilegio|vigencias_ciclo|finn_app|SELECT
+privilegio|vigencias_ciclo|finn_app|UPDATE
+privilegio|vigencias_ciclo|finn_respaldo|SELECT
+secuencia|eliminaciones_id_seq
+secuencia|eventos_sistema_id_seq
+secuencia|secuencia_creacion
+tabla|_prisma_migrations|rls=t|force=f|
+tabla|asignaciones|rls=t|force=f|finn:clase=M
+tabla|cambios_posteriores|rls=t|force=f|finn:clase=H
+tabla|categorias|rls=t|force=f|finn:clase=M
+tabla|conciliaciones|rls=t|force=f|finn:clase=M
+tabla|condonaciones|rls=t|force=f|finn:clase=M
+tabla|cuentas|rls=t|force=f|finn:clase=M
+tabla|deudores|rls=t|force=f|finn:clase=M
+tabla|efectos|rls=t|force=f|finn:clase=M
+tabla|eliminaciones|rls=t|force=f|finn:clase=T
+tabla|estado_respaldo|rls=t|force=f|finn:clase=T
+tabla|eventos_sistema|rls=t|force=f|finn:clase=T
+tabla|formatos_bancarios|rls=t|force=f|finn:clase=H
+tabla|grupos|rls=t|force=f|finn:clase=M
+tabla|instituciones|rls=t|force=f|finn:clase=H
+tabla|inversiones|rls=t|force=f|finn:clase=M
+tabla|lineas|rls=t|force=f|finn:clase=M
+tabla|metas|rls=t|force=f|finn:clase=M
+tabla|movimiento_lineas|rls=t|force=f|finn:clase=H
+tabla|movimientos|rls=t|force=f|finn:clase=H
+tabla|notificaciones|rls=t|force=f|finn:clase=T
+tabla|ocurrencias_resueltas|rls=t|force=f|finn:clase=M
+tabla|prestamos|rls=t|force=f|finn:clase=M
+tabla|programada_lineas|rls=t|force=f|finn:clase=M
+tabla|programadas|rls=t|force=f|finn:clase=M
+tabla|reglas_comercio|rls=t|force=f|finn:clase=H
+tabla|revision|rls=t|force=f|finn:clase=T
+tabla|sms_procesamientos|rls=t|force=f|finn:clase=I
+tabla|sms_recibidos|rls=t|force=f|finn:clase=I
+tabla|suscripciones_push|rls=t|force=f|finn:clase=T
+tabla|tarjetas|rls=t|force=f|finn:clase=M
+tabla|token_webhook|rls=t|force=f|finn:clase=T
+tabla|transacciones|rls=t|force=f|finn:clase=M
+tabla|vigencias_ciclo|rls=t|force=f|finn:clase=M
+trigger|finn.asignaciones|O|CREATE CONSTRAINT TRIGGER x_verificar_categoria AFTER INSERT OR DELETE OR UPDATE ON finn.asignaciones DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_categoria()
+trigger|finn.asignaciones|O|CREATE CONSTRAINT TRIGGER x_verificar_eliminacion_cuenta AFTER DELETE ON finn.asignaciones DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_eliminacion_cuenta()
+trigger|finn.asignaciones|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.asignaciones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.asignaciones|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.asignaciones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.asignaciones|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.asignaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.asignaciones|O|CREATE TRIGGER g_asignacion BEFORE INSERT OR DELETE OR UPDATE ON finn.asignaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_asignacion()
+trigger|finn.asignaciones|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.asignaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.cambios_posteriores|O|CREATE CONSTRAINT TRIGGER x_verificar_eliminacion_cuenta AFTER DELETE ON finn.cambios_posteriores DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_eliminacion_cuenta()
+trigger|finn.cambios_posteriores|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.cambios_posteriores FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.cambios_posteriores|O|CREATE TRIGGER e_solo_insercion BEFORE DELETE OR UPDATE ON finn.cambios_posteriores FOR EACH ROW EXECUTE FUNCTION finn.tg_solo_insercion('transaccion_id')
+trigger|finn.categorias|O|CREATE CONSTRAINT TRIGGER x_verificar_categoria AFTER INSERT OR UPDATE ON finn.categorias DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_categoria()
+trigger|finn.categorias|O|CREATE CONSTRAINT TRIGGER x_verificar_cuenta AFTER INSERT OR DELETE OR UPDATE OF tarjeta_id, archivada ON finn.categorias DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_cuenta()
+trigger|finn.categorias|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.categorias FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.categorias|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.categorias FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.categorias|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.categorias FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.categorias|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.categorias FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('clase', 'tarjeta_id')
+trigger|finn.categorias|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.categorias FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.conciliaciones|O|CREATE CONSTRAINT TRIGGER x_verificar_eliminacion_cuenta AFTER DELETE ON finn.conciliaciones DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_eliminacion_cuenta()
+trigger|finn.conciliaciones|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.conciliaciones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.conciliaciones|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.conciliaciones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.conciliaciones|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.conciliaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.conciliaciones|O|CREATE TRIGGER e_solo_insercion BEFORE DELETE OR UPDATE ON finn.conciliaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_solo_insercion()
+trigger|finn.conciliaciones|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.conciliaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.condonaciones|O|CREATE CONSTRAINT TRIGGER x_verificar_limites_linea AFTER INSERT OR DELETE ON finn.condonaciones DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_limites()
+trigger|finn.condonaciones|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.condonaciones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.condonaciones|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.condonaciones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.condonaciones|O|CREATE TRIGGER c_asignar_secuencia BEFORE INSERT ON finn.condonaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_asignar_secuencia()
+trigger|finn.condonaciones|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.condonaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.condonaciones|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.condonaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('linea_id', 'fecha', 'monto', 'clave_orden', 'secuencia')
+trigger|finn.condonaciones|O|CREATE TRIGGER f_fechas_hoy BEFORE INSERT ON finn.condonaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_fechas_hoy()
+trigger|finn.condonaciones|O|CREATE TRIGGER g_destino_activo BEFORE INSERT OR UPDATE OF categoria_id ON finn.condonaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_destino_activo()
+trigger|finn.condonaciones|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.condonaciones FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.cuentas|O|CREATE CONSTRAINT TRIGGER x_verificar_cuenta AFTER INSERT OR UPDATE ON finn.cuentas DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_cuenta()
+trigger|finn.cuentas|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.cuentas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.cuentas|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.cuentas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.cuentas|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.cuentas FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.cuentas|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.cuentas FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('tipo')
+trigger|finn.cuentas|O|CREATE TRIGGER f_fechas_hoy BEFORE INSERT OR UPDATE OF fecha_apertura ON finn.cuentas FOR EACH ROW EXECUTE FUNCTION finn.tg_fechas_hoy()
+trigger|finn.cuentas|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.cuentas FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.deudores|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.deudores FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.deudores|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.deudores FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.deudores|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.deudores FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.deudores|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.deudores FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.efectos|O|CREATE CONSTRAINT TRIGGER x_verificar_conciliacion AFTER INSERT OR DELETE OR UPDATE ON finn.efectos DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_conciliacion()
+trigger|finn.efectos|O|CREATE CONSTRAINT TRIGGER x_verificar_cuenta AFTER INSERT OR DELETE OR UPDATE ON finn.efectos DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_cuenta()
+trigger|finn.efectos|O|CREATE CONSTRAINT TRIGGER x_verificar_transaccion AFTER INSERT OR DELETE OR UPDATE ON finn.efectos DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_transaccion()
+trigger|finn.efectos|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.efectos FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.efectos|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.efectos FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.efectos|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.efectos FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.efectos|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.efectos FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('transaccion_id')
+trigger|finn.efectos|O|CREATE TRIGGER g_efecto_cuenta_archivada BEFORE INSERT OR DELETE OR UPDATE OF monto, cuenta_id ON finn.efectos FOR EACH ROW EXECUTE FUNCTION finn.tg_efecto_cuenta_archivada()
+trigger|finn.efectos|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.efectos FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.formatos_bancarios|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.formatos_bancarios FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.grupos|O|CREATE CONSTRAINT TRIGGER x_verificar_categoria AFTER INSERT OR UPDATE ON finn.grupos DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_categoria()
+trigger|finn.grupos|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.grupos FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.grupos|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.grupos FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.grupos|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.grupos FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.grupos|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.grupos FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('clave_sistema')
+trigger|finn.grupos|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.grupos FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.instituciones|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.instituciones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.inversiones|O|CREATE CONSTRAINT TRIGGER x_verificar_cuenta AFTER INSERT OR DELETE OR UPDATE ON finn.inversiones DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_cuenta()
+trigger|finn.inversiones|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.inversiones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.inversiones|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.inversiones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.inversiones|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.inversiones FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.inversiones|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.inversiones FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('cuenta_id', 'tipo')
+trigger|finn.inversiones|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.inversiones FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('cuenta_id')
+trigger|finn.lineas|O|CREATE CONSTRAINT TRIGGER x_verificar_limites_linea AFTER INSERT OR DELETE OR UPDATE ON finn.lineas DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_limites()
+trigger|finn.lineas|O|CREATE CONSTRAINT TRIGGER x_verificar_transaccion AFTER INSERT OR DELETE OR UPDATE ON finn.lineas DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_transaccion()
+trigger|finn.lineas|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.lineas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.lineas|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.lineas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.lineas|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.lineas FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.lineas|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.lineas FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('transaccion_id')
+trigger|finn.lineas|O|CREATE TRIGGER g_destino_activo BEFORE INSERT OR UPDATE OF categoria_id ON finn.lineas FOR EACH ROW EXECUTE FUNCTION finn.tg_destino_activo()
+trigger|finn.lineas|O|CREATE TRIGGER g_linea_con_eventos BEFORE UPDATE OF categoria_id, deudor_id ON finn.lineas FOR EACH ROW EXECUTE FUNCTION finn.tg_linea_con_eventos()
+trigger|finn.lineas|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.lineas FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.metas|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.metas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.metas|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.metas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.metas|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.metas FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.metas|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.metas FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('categoria_id', 'fecha_creacion')
+trigger|finn.metas|O|CREATE TRIGGER f_fechas_hoy BEFORE INSERT ON finn.metas FOR EACH ROW EXECUTE FUNCTION finn.tg_fechas_hoy()
+trigger|finn.metas|O|CREATE TRIGGER g_destino_activo BEFORE INSERT OR UPDATE OF categoria_id ON finn.metas FOR EACH ROW EXECUTE FUNCTION finn.tg_destino_activo()
+trigger|finn.metas|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.metas FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.movimiento_lineas|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.movimiento_lineas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.movimientos|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.movimientos FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.movimientos|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.movimientos FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('sms_id')
+trigger|finn.movimientos|O|CREATE TRIGGER h_transicion_movimiento BEFORE INSERT OR UPDATE OF estado ON finn.movimientos FOR EACH ROW EXECUTE FUNCTION finn.tg_transicion_movimiento()
+trigger|finn.ocurrencias_resueltas|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.ocurrencias_resueltas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.ocurrencias_resueltas|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.ocurrencias_resueltas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.ocurrencias_resueltas|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.ocurrencias_resueltas FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.ocurrencias_resueltas|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.ocurrencias_resueltas FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('programada_id', 'fecha_esperada')
+trigger|finn.ocurrencias_resueltas|O|CREATE TRIGGER h_transicion_ocurrencia BEFORE UPDATE ON finn.ocurrencias_resueltas FOR EACH ROW EXECUTE FUNCTION finn.tg_transicion_ocurrencia()
+trigger|finn.ocurrencias_resueltas|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.ocurrencias_resueltas FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.prestamos|O|CREATE CONSTRAINT TRIGGER x_verificar_cuenta AFTER INSERT OR DELETE OR UPDATE ON finn.prestamos DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_cuenta()
+trigger|finn.prestamos|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.prestamos FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.prestamos|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.prestamos FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.prestamos|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.prestamos FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.prestamos|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.prestamos FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('cuenta_id', 'tipo')
+trigger|finn.prestamos|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.prestamos FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('cuenta_id')
+trigger|finn.programada_lineas|O|CREATE CONSTRAINT TRIGGER x_verificar_categoria AFTER INSERT OR UPDATE ON finn.programada_lineas DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_categoria()
+trigger|finn.programada_lineas|O|CREATE CONSTRAINT TRIGGER x_verificar_programada AFTER INSERT OR DELETE OR UPDATE ON finn.programada_lineas DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_programada()
+trigger|finn.programada_lineas|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.programada_lineas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.programada_lineas|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.programada_lineas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.programada_lineas|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.programada_lineas FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.programada_lineas|O|CREATE TRIGGER g_destino_activo BEFORE INSERT OR UPDATE OF categoria_id ON finn.programada_lineas FOR EACH ROW EXECUTE FUNCTION finn.tg_destino_activo()
+trigger|finn.programada_lineas|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.programada_lineas FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.programadas|O|CREATE CONSTRAINT TRIGGER x_verificar_categoria AFTER INSERT OR UPDATE OF activa ON finn.programadas DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_categoria()
+trigger|finn.programadas|O|CREATE CONSTRAINT TRIGGER x_verificar_programada AFTER INSERT OR UPDATE ON finn.programadas DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_programada()
+trigger|finn.programadas|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.programadas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.programadas|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.programadas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.programadas|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.programadas FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.programadas|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.programadas FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('tipo')
+trigger|finn.programadas|O|CREATE TRIGGER g_programada_calendario BEFORE UPDATE OF primera_fecha, frecuencia, frecuencia_dias ON finn.programadas FOR EACH ROW EXECUTE FUNCTION finn.tg_programada_calendario()
+trigger|finn.programadas|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.programadas FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.reglas_comercio|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.reglas_comercio FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.reglas_comercio|O|CREATE TRIGGER g_destino_activo BEFORE INSERT OR UPDATE OF categoria_id ON finn.reglas_comercio FOR EACH ROW EXECUTE FUNCTION finn.tg_destino_activo()
+trigger|finn.sms_procesamientos|O|CREATE TRIGGER e_solo_insercion BEFORE DELETE OR UPDATE ON finn.sms_procesamientos FOR EACH ROW EXECUTE FUNCTION finn.tg_solo_insercion('cuenta_id', 'duplicado_transaccion_id', 'duplicado_movimiento_id', 'categoria_sugerida_id')
+trigger|finn.sms_recibidos|O|CREATE TRIGGER e_solo_insercion BEFORE DELETE OR UPDATE ON finn.sms_recibidos FOR EACH ROW EXECUTE FUNCTION finn.tg_solo_insercion()
+trigger|finn.tarjetas|O|CREATE CONSTRAINT TRIGGER x_verificar_cuenta AFTER INSERT OR DELETE OR UPDATE ON finn.tarjetas DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_cuenta()
+trigger|finn.tarjetas|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.tarjetas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.tarjetas|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.tarjetas FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.tarjetas|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.tarjetas FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.tarjetas|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.tarjetas FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('cuenta_id', 'tipo')
+trigger|finn.tarjetas|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.tarjetas FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('cuenta_id')
+trigger|finn.transacciones|O|CREATE CONSTRAINT TRIGGER x_verificar_conciliacion AFTER DELETE OR UPDATE ON finn.transacciones DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_conciliacion()
+trigger|finn.transacciones|O|CREATE CONSTRAINT TRIGGER x_verificar_cuenta AFTER UPDATE OF fecha ON finn.transacciones DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_cuenta()
+trigger|finn.transacciones|O|CREATE CONSTRAINT TRIGGER x_verificar_limites_linea AFTER INSERT OR DELETE OR UPDATE OF fecha, linea_cobrada_id ON finn.transacciones DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_limites()
+trigger|finn.transacciones|O|CREATE CONSTRAINT TRIGGER x_verificar_transaccion AFTER INSERT OR UPDATE OF tipo, total, linea_cobrada_id ON finn.transacciones DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finn.tg_x_transaccion()
+trigger|finn.transacciones|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.transacciones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.transacciones|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.transacciones FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.transacciones|O|CREATE TRIGGER c_asignar_secuencia BEFORE INSERT ON finn.transacciones FOR EACH ROW EXECUTE FUNCTION finn.tg_asignar_secuencia()
+trigger|finn.transacciones|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.transacciones FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.transacciones|O|CREATE TRIGGER d_inmutables BEFORE UPDATE ON finn.transacciones FOR EACH ROW EXECUTE FUNCTION finn.tg_inmutables('tipo', 'hora_registro', 'secuencia')
+trigger|finn.transacciones|O|CREATE TRIGGER f_fechas_hoy BEFORE INSERT OR UPDATE OF fecha, clave_orden ON finn.transacciones FOR EACH ROW EXECUTE FUNCTION finn.tg_fechas_hoy()
+trigger|finn.transacciones|O|CREATE TRIGGER h_transicion_estado_bancario BEFORE INSERT OR UPDATE OF estado_bancario, conciliacion_id ON finn.transacciones FOR EACH ROW EXECUTE FUNCTION finn.tg_transicion_estado_bancario()
+trigger|finn.transacciones|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.transacciones FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')
+trigger|finn.vigencias_ciclo|O|CREATE TRIGGER a_exigir_bloqueo BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.vigencias_ciclo FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_exigir_bloqueo()
+trigger|finn.vigencias_ciclo|O|CREATE TRIGGER b_avanzar_revision BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON finn.vigencias_ciclo FOR EACH STATEMENT EXECUTE FUNCTION finn.tg_avanzar_revision()
+trigger|finn.vigencias_ciclo|O|CREATE TRIGGER c_estampar_revision BEFORE INSERT OR UPDATE ON finn.vigencias_ciclo FOR EACH ROW EXECUTE FUNCTION finn.tg_estampar_revision()
+trigger|finn.vigencias_ciclo|O|CREATE TRIGGER g_vigencia BEFORE INSERT OR DELETE OR UPDATE ON finn.vigencias_ciclo FOR EACH ROW EXECUTE FUNCTION finn.tg_vigencia()
+trigger|finn.vigencias_ciclo|O|CREATE TRIGGER y_registrar_eliminacion AFTER DELETE ON finn.vigencias_ciclo FOR EACH ROW EXECUTE FUNCTION finn.tg_registrar_eliminacion('id')

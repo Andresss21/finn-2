@@ -1,0 +1,3 @@
+Encargos generados: 243; referencias a secciones comprobadas: 868.
+Control negativo: referencia inexistente y sección vacía detectadas.
+RESULTADO: PASA

@@ -1,0 +1,45 @@
+# Propiedades (FC_RUNS=2000)
+ ✓ dominio/propiedades.prop.test.ts (5 tests) 3518ms
+   ✓ PRU-PROP-MOTOR > PRU-PROP-MOTOR-001 inv. 1: identidad de saldo en cualquier estado y cualquier hoy  366ms
+   ✓ PRU-PROP-MOTOR > PRU-PROP-MOTOR-002 inv. 28: 0 ≤ parte de tarjeta ≤ sobregiro total, en toda categoría y período  1202ms
+   ✓ PRU-PROP-MOTOR > PRU-PROP-MOTOR-003 inv. 2 y 3: deuda = R⁺ + S − RE y S·RE = 0  372ms
+   ✓ PRU-PROP-MOTOR > PRU-PROP-MOTOR-004 inv. 26: el resultado no depende del orden en que se registraron los hechos  826ms
+   ✓ PRU-PROP-MOTOR > PRU-PROP-MOTOR-005 §4.15: el cierre no cambia S(t) ni la identidad (hoy = fin de A → inicio del siguiente)  750ms
+ ✓ dominio/diferencial.prop.test.ts (1 test) 545ms
+   ✓ PRU-PROP-MOTOR-006 núcleo TS = motor_min.py en LPA, efectivo, Disponibles, S y SobTA  543ms
+      Tests  6 passed (6)
+   Duration  4.67s (transform 106ms, setup 0ms, collect 160ms, tests 4.06s, environment 0ms, prepare 130ms)
+
+# Mutantes
+=== mutante: arrastre
+   × PRU-PROP-MOTOR-001 inv. 1: identidad de saldo en cualquier estado y cualquier hoy 29
+   ✓ PRU-PROP-MOTOR-002 inv. 28: 0 ≤ parte de tarjeta ≤ sobregiro total, en toda cat
+   ✓ PRU-PROP-MOTOR-003 inv. 2 y 3: deuda = R⁺ + S − RE y S·RE = 0  428ms
+   ✓ PRU-PROP-MOTOR-004 inv. 26: el resultado no depende del orden en que se registraron
+   × PRU-PROP-MOTOR-005 §4.15: el cierre no cambia S(t) ni la identidad (hoy = fin de A 
+=== mutante: traslado
+   × PRU-PROP-MOTOR-001 inv. 1: identidad de saldo en cualquier estado y cualquier hoy 35
+   ✓ PRU-PROP-MOTOR-002 inv. 28: 0 ≤ parte de tarjeta ≤ sobregiro total, en toda cat
+   ✓ PRU-PROP-MOTOR-003 inv. 2 y 3: deuda = R⁺ + S − RE y S·RE = 0  347ms
+   ✓ PRU-PROP-MOTOR-004 inv. 26: el resultado no depende del orden en que se registraron
+   × PRU-PROP-MOTOR-005 §4.15: el cierre no cambia S(t) ni la identidad (hoy = fin de A 
+=== mutante: orden
+   ✓ PRU-PROP-MOTOR-001 inv. 1: identidad de saldo en cualquier estado y cualquier hoy  
+   ✓ PRU-PROP-MOTOR-002 inv. 28: 0 ≤ parte de tarjeta ≤ sobregiro total, en toda cat
+   ✓ PRU-PROP-MOTOR-003 inv. 2 y 3: deuda = R⁺ + S − RE y S·RE = 0  352ms
+   × PRU-PROP-MOTOR-004 inv. 26: el resultado no depende del orden en que se registraron 
+   ✓ PRU-PROP-MOTOR-005 §4.15: el cierre no cambia S(t) ni la identidad (hoy = fin de A
+=== mutante: cierre
+   × PRU-PROP-MOTOR-001 inv. 1: identidad de saldo en cualquier estado y cualquier hoy 37
+   ✓ PRU-PROP-MOTOR-002 inv. 28: 0 ≤ parte de tarjeta ≤ sobregiro total, en toda cat
+   ✓ PRU-PROP-MOTOR-003 inv. 2 y 3: deuda = R⁺ + S − RE y S·RE = 0  353ms
+   ✓ PRU-PROP-MOTOR-004 inv. 26: el resultado no depende del orden en que se registraron
+   × PRU-PROP-MOTOR-005 §4.15: el cierre no cambia S(t) ni la identidad (hoy = fin de A 
+300 casos por propiedad: 1652 ms (5 propiedades)
+2000 casos por propiedad: 4772 ms (5 propiedades)
+10000 casos por propiedad: 17670 ms (5 propiedades)
+
+# Cobertura
+ Test Files  2 passed (2)
+File       | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+ nucleo.ts |     100 |     93.9 |     100 |     100 | 39,45-49,64       

@@ -1,0 +1,2 @@
+  claro : ['button-name', 'color-contrast', 'label', 'target-size'] → detecta los 3
+  oscuro: ['button-name', 'color-contrast', 'label', 'target-size'] → detecta los 3

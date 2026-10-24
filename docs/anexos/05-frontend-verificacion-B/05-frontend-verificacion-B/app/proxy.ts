@@ -1,0 +1,7 @@
+import { NextResponse, type NextRequest } from 'next/server';
+export function proxy(req: NextRequest) {
+  const h = new Headers(req.headers);
+  h.set('x-finn-ruta', req.nextUrl.pathname + req.nextUrl.search);
+  return NextResponse.next({ request: { headers: h } });
+}
+export const config = { matcher: ['/((?!_next/|favicon).*)'] };

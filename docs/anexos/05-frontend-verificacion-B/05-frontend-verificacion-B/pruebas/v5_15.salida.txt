@@ -1,0 +1,9 @@
+PASA V5-15a error.tsx recibe el idError como digest en producción — digest='E-7K2QPX'
+PASA V5-15b el mensaje original no llega al navegador — message='Minified React error #441; visit https://react.dev/errors/441 for the full message or use '
+PASA V5-15c un error no previsto llega con un digest numérico de Next y sin el texto — digest='3407632915'
+PASA V5-16a sesión vencida en una consulta → /ingresar con volver = ruta y búsqueda — http://localhost:3100/ingresar?volver=%2Fprotegida%3Fperiodo%3D2026-09-21
+PASA V5-16b volver externo se reemplaza por /
+PASA V5-16c volver con barra invertida se reemplaza por /
+PASA V5-17 NO_ENCONTRADO → notFound(): not-found.tsx con estado 404 — status=404
+registro del servidor contiene el digest E-7K2QPX: True
+7/7 pasan

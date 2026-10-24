@@ -1,0 +1,4 @@
+V5-01b propiedad: 900.000 textos, 0 fallos
+V5-02b: 400.000 montos; texto decimal → 0 diferencias; c/100 → 0 diferencias
+{"version":"v24.22.0","icu":"78.3","mesCortoIntl":["15 sept 2026","15 oct 2026"],"instanteIntlDirecto":"05/10/2026, 14:32","fechaIntl":"05/10/2026"}
+50 comprobaciones, 0 fallos

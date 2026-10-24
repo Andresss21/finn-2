@@ -1,0 +1,5 @@
+PASA  POOL-01 50 escrituras con bloqueo + SET LOCAL + Prisma: 0 errores, 376 ms
+PASA  POOL-02 transacciones siguientes sin finn.hoy, sin UTC forzado y sin bloqueo: ["∅/false","∅/false","∅/false","∅/false","∅/false","∅/false"]
+PASA  POOL-03 control: SET de sesión se ve desde otro cliente (la suite lo detecta): fusion
+PASA  POOL-04 control: bloqueo de sesión → otro cliente pasa tiene_bloqueo() sin tomarlo: true
+PASA  POOL-05 control: sentencia preparada con nombre falla en modo transacción: 26000 prepared statement "q_rev2" does not exist

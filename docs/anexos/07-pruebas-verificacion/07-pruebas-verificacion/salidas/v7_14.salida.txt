@@ -1,0 +1,43 @@
+== V7-14 parte 1 (REVOKE como rol no superusuario, como postgres en Supabase)
+ current_user | rolsuper 
+--------------+----------
+ sb_postgres  | f
+(1 row)
+
+                   funcion                    |  dueno   | acl 
+----------------------------------------------+----------+-----
+ pg_advisory_lock(bigint)                     | postgres | 
+ pg_advisory_lock_shared(bigint)              | postgres | 
+ pg_try_advisory_lock(bigint)                 | postgres | 
+ pg_try_advisory_lock_shared(bigint)          | postgres | 
+ pg_advisory_lock(integer,integer)            | postgres | 
+ pg_advisory_lock_shared(integer,integer)     | postgres | 
+ pg_try_advisory_lock(integer,integer)        | postgres | 
+ pg_try_advisory_lock_shared(integer,integer) | postgres | 
+(8 rows)
+
+psql:v7_14.sql:7: WARNING:  no privileges could be revoked for "pg_advisory_lock"
+REVOKE
+psql:v7_14.sql:8: WARNING:  no privileges could be revoked for "pg_advisory_lock"
+REVOKE
+           oid            |              proacl               
+--------------------------+-----------------------------------
+ pg_advisory_lock(bigint) | {=X/postgres,postgres=X/postgres}
+(1 row)
+
+-- como superusuario (Supabase no se lo da a postgres):
+REVOKE
+ERROR:  permission denied for function pg_advisory_lock
+== V7-14 parte 2 (marca local de la transacción, detrás de PgBouncer)
+== diseño actual de 03 (POOL-04)
+-- cliente A toma un bloqueo DE SESIÓN con la clave global y lo deja tomado (por el pooler):
+   
+-- cliente B, 10 escrituras SIN tomar_bloqueo() por el pooler (2 conexiones de servidor): pasaron 10, rechazadas con FN001 0
+-- con tomar_bloqueo(): pasa
+== con la marca local de la transacción
+-- cliente A toma un bloqueo DE SESIÓN con la clave global y lo deja tomado (por el pooler):
+   
+-- cliente B, 10 escrituras SIN tomar_bloqueo() por el pooler (2 conexiones de servidor): pasaron 0, rechazadas con FN001 10
+-- con tomar_bloqueo(): pasa
+== control: con la marca, una marca puesta a mano con otro valor no sirve
+   rechazos FN001: 1

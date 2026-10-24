@@ -1,0 +1,30 @@
+Plan: 243 tareas, 10 hitos con bloque, 20 TU; alcance: parte todas; 1424 objetivos de 1424 en el catálogo.
+Documentos: 1092 objetivos derivados (CA 492, OP 53, OPT 9, ESC 50, INV 28, CB 34, AV 24, consultas 19, reportes 15, formularios 15, rutas 78, PRU 114); niveles 14, áreas 24.
+En el alcance: PRU 114, OP 53, ESC 100, INV 28, CB 34, AV 24, migraciones 17, CA 492.
+PRU en el plan (V8-03): 220; 114 definidos en 07, 0 por un CH (—), 106 nuevos (DT-17).
+detectada: quitar el dueño de un objetivo → E8-sin-tarea
+detectada: ciclo entre dos tareas → E4-ciclo
+detectada: dependencia de una tarea posterior → E5-dependencia-posterior
+detectada: tarea demasiado grande → E6-tamano
+detectada: hito que requiere una tarea posterior → E7-hito
+detectada: tarea duplicada → E1-duplicada
+detectada: dependencia inexistente → E2-dependencia-inexistente
+detectada: PRU que no existe en 07 → E9-pru-inexistente
+detectada: objetivo con dos dueños → E8-varios-duenos
+detectada: TU inexistente → E3-tu-inexistente
+detectada: excepción de tamaño en otra tarea → E6-excepcion
+detectada: PRU nueva con un área que 07 no tiene → E9-pru-area
+detectada: catálogo sin un CA de 06 → E11-catalogo-incompleto
+detectada: PRU de 07 de la parte sin dueño → E8-sin-tarea
+detectada: TU de una tarea etiquetada que el hito no lista → E7-hito-tu
+detectada: HT-6 sin un lote de ESC@int que tocan sus fichas → E7-pruebas
+detectada: HT-6 sin el diferencial contra el oráculo → E7-pruebas
+detectada: HT-6 sin la tarea de un trozo de una ficha → E7-fichas
+detectada: HT-6 que requiere una tarea de otro hito sin ser dueña de una prueba exigida → E7-hito
+detectada: ficha de HT-6 cuyo CA queda sin dueño → E8-sin-tarea
+detectada: pendiente sin su E2E en la ficha que lo completa → E12-sin-e2e
+detectada: HT-8 sin la tarea que cierra un pendiente → E12-pendiente-en-hito
+detectada: TA-139 a la segunda ola sin cambiar las dependencias del escenario (el error de P8-20) → E13-escenario-orden
+detectada: HT-9 que no va después de HT-8 → E7-hitos
+Control negativo: 24 de 24 mutaciones detectadas.
+RESULTADO: PASA

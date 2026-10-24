@@ -1,0 +1,5 @@
+  /base: rendimiento 87 · accesibilidad 100 · LCP 2.38 s · TBT 423 ms · CLS 0.000
+  /formulario: rendimiento 96 · accesibilidad 100 · LCP 1.10 s · TBT 230 ms · CLS 0.000
+  /grafico-servidor: rendimiento 96 · accesibilidad 100 · LCP 1.65 s · TBT 204 ms · CLS 0.000
+  /tokens: rendimiento 99 · accesibilidad 100 · LCP 1.63 s · TBT 134 ms · CLS 0.000
+Terminated

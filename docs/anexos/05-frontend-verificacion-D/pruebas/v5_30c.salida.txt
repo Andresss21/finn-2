@@ -1,0 +1,1 @@
+V5-30c · sin conexión, clic en EnlaceFinn: {'url': '/con-datos', 'datos': True, 'sinConexion': False, 'avisos': ['/destino']}

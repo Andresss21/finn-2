@@ -1,0 +1,10 @@
+P1 R15 en la plantilla (0 filas = pasa)                        0
+P2 plantilla: desfase de +1 año ignorado por ahora()          ignorado
+P3 plantilla: el override se niega (base sin marca de prueba)  no está marcada como base de prueba (finn.reloj_simulado)
+P4 R15 en la base de prueba (debe detectar el override)        3 filas
+P5 C6 plantilla vs prueba: líneas distintas                   5 (ahora() desfase() instante() )
+P6 ESC-46: recibido_en por DEFAULT con el reloj simulado       2027-02-20 18:59 local · 2027-02-21 UTC · hoy() 2027-02-20
+P7 finn.instante() con el mismo desfase                        instante monotono y coherente
+P8 finn_app no puede cambiar el cuerpo de ahora()              permission denied for schema finn
+P9 finn_app no puede activar la marca de base de prueba        must be owner of database finn_v7
+P10 control negativo R15 (2 violaciones sembradas)             2 filas: R15 reloj directo en x_mala();R15 DEFAULT con reloj directo: notificaciones.creada_en = CU;

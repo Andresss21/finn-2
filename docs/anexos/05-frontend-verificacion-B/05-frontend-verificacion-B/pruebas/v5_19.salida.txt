@@ -1,0 +1,6 @@
+normal       | Abrir lento normal                     | loading.tsx: 122/74/84 ms     | useLinkStatus: nunca            | contenido: 2111/2075/2062 ms
+interceptada | Abrir lento                            | loading.tsx: 79/61/73 ms      | useLinkStatus: nunca            | contenido: 2082/2075/2080 ms
+normal       | Normal sin prefetch                    | loading.tsx: —/—/102 ms       | useLinkStatus: nunca            | contenido: 2104/2117/2105 ms
+interceptada | Interceptada sin prefetch              | loading.tsx: —/101/127 ms     | useLinkStatus: nunca            | contenido: 2116/2103/2125 ms
+normal       | Normal sin prefetch con estado         | loading.tsx: —/—/99 ms        | useLinkStatus: 75/147/76 ms     | contenido: 2083/2063/2074 ms
+interceptada | Interceptada sin prefetch con estado   | loading.tsx: nunca            | useLinkStatus: —/76/64 ms       | contenido: 2094/2090/2095 ms
