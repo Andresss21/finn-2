@@ -1,0 +1,6 @@
+# Generado por tools/pruebas/generar-config-supabase.mjs desde infra/versiones.env. No editar.
+project_id = "finn"
+
+[db]
+port = 54322
+major_version = 17

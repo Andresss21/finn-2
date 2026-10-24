@@ -1,0 +1,22 @@
+{
+  "name": "finn",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "formato": "prettier --write .",
+    "formato:comprobar": "prettier --check .",
+    "versiones": "node tools/pruebas/versiones.mjs",
+    "versiones:negativo": "node tools/lint/controles/versiones/negativo.mjs"
+  },
+  "prettier": "@finn/config/prettier",
+  "devDependencies": {
+    "@finn/config": "workspace:*",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3"
+  }
+}
