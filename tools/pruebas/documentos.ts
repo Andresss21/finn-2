@@ -28,7 +28,8 @@ export interface Documentos {
 }
 
 const unicos = (xs: Iterable<string>): string[] => [...new Set(xs)];
-const todos = (t: string, re: RegExp): string[] => [...t.matchAll(re)].map((x) => x[1]!);
+const g = (m: RegExpMatchArray | null, i: number): string => m?.[i] ?? '';
+const todos = (t: string, re: RegExp): string[] => [...t.matchAll(re)].map((x) => g(x, 1));
 
 /** Bloques `#### FT-nn … [I|M|P]` de 06 §2 (hasta §4, Recorridos). */
 function bloques(d06: string) {
@@ -39,7 +40,7 @@ function bloques(d06: string) {
     .flatMap((b) => {
       const m = b.match(/^(FT-\d{2}) .*\[(I|M|P)\](.*)/);
       return m
-        ? [{ ft: m[1]!, prioridad: m[2] as Prioridad, diferida: /diferida/.test(m[3]!), b }]
+        ? [{ ft: g(m, 1), prioridad: m[2] as Prioridad, diferida: /diferida/.test(g(m, 3)), b }]
         : [];
     });
 }
@@ -47,7 +48,7 @@ function bloques(d06: string) {
 export function fichas(d06: string): Ficha[] {
   const citas = (b: string, bloque: string, re: RegExp): string[] =>
     unicos(
-      (b.split(`**${bloque}.**`)[1] ?? '').split(/\*\*[A-Z][a-z]+\.\*\*|\n\n\*\*/)[0]!.match(re) ??
+      (b.split(`**${bloque}.**`)[1] ?? '').split(/\*\*[A-Z][a-z]+\.\*\*|\n\n\*\*/)[0]?.match(re) ??
         [],
     );
   return bloques(d06).map(({ b, ...f }) => ({
@@ -63,14 +64,14 @@ export function objetivos(d: Documentos): Objetivo[] {
   for (const { b, ft, prioridad, diferida } of bloques(d.d06))
     for (const c of b.matchAll(/^- \*\*(CA-\d{2}\.\d{1,2})([^*]*)\*\*/gm))
       r.push({
-        id: c[1]!,
+        id: g(c, 1),
         tipo: 'CA',
         ft,
         prioridad,
         diferida,
-        manual: /\(manual\)/.test(c[2]!),
-        advertencia: /⚠/.test(c[2]!),
-        s61: /S6-1/.test(c[2]!),
+        manual: /\(manual\)/.test(g(c, 2)),
+        advertencia: /⚠/.test(g(c, 2)),
+        s61: /S6-1/.test(g(c, 2)),
       });
   // ESC (01 §8), AV (01 §5.0.7), invariantes (01 §6) y casos borde (01 §9, P7-16)
   const tipo = (t: Objetivo['tipo'], ids: string[]) =>
@@ -90,7 +91,7 @@ export function objetivos(d: Documentos): Objetivo[] {
   const rec = d.d06.split('## 4. Recorridos')[1]?.split(/^## 5\./m)[0] ?? '';
   for (const b of rec.split(/^### /m).slice(1)) {
     const m = b.match(/^4\.([1-6]) /);
-    if (m) r.push({ id: 'REC-4.' + m[1], tipo: 'REC', fts: unicos(b.match(/FT-\d{2}/g) ?? []) });
+    if (m) r.push({ id: 'REC-4.' + g(m, 1), tipo: 'REC', fts: unicos(b.match(/FT-\d{2}/g) ?? []) });
   }
   // Verificaciones previas: V-nn y H-nn (04), V5-nn (05), V6-nn (06) y la prueba de catálogo de CF-16
   const ver = [

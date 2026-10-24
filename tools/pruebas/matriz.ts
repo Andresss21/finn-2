@@ -62,7 +62,7 @@ export function pruebas(e: Entradas): { lista: Prueba[]; errores: string[] } {
   const lista: Prueba[] = [];
   const errores: string[] = [];
   for (const { titulo: t0, archivo } of e.inventario) {
-    const titulo = t0.split(' > ').pop()!; // Vitest une los describe con " > "
+    const titulo = t0.split(' > ').pop() ?? ''; // Vitest une los describe con " > "
     if (!titulo.startsWith('PRU-')) {
       if (ES_PRUEBA.test(archivo) && !HERRAMIENTA.test(archivo))
         errores.push(`M8 prueba sin identificador: "${titulo}" (${archivo})`);
@@ -85,7 +85,7 @@ export function pruebas(e: Entradas): { lista: Prueba[]; errores: string[] } {
     for (const x of refs)
       if (!REF.test(x) && !DECISION.test(x))
         errores.push(`M7 referencia con formato desconocido "${x}" en ${id}`);
-    lista.push({ id: id!, nivel, area, refs: refs.filter((x) => REF.test(x)), archivo });
+    lista.push({ id: id ?? '', nivel, area, refs: refs.filter((x) => REF.test(x)), archivo });
   }
   const vistos = new Map<string, string>();
   for (const p of lista) {
@@ -141,13 +141,14 @@ export function verificar(e: Entradas) {
       o.tipo === 'CA' &&
       !o.diferida &&
       cubre.has(o.id) &&
-      (e.features[o.ft!] ?? 'pendiente') === 'pendiente'
+      (e.features[o.ft ?? ''] ?? 'pendiente') === 'pendiente'
     )
       avisos.push(`M13 ${o.id} tiene pruebas y ${o.ft} sigue pendiente en pruebas/features.json`);
   return { errores, avisos, obj, lista, cubre };
 }
 
 // ---------------------------------------------------------------- entradas desde el disco
+const json = (t: string): unknown => JSON.parse(t);
 const leer = (p: string, d = ''): string => (existsSync(p) ? readFileSync(p, 'utf8') : d);
 
 /** Archivos de código de `apps/web/src` y `packages/*\/src`, sin las pruebas (07 §13.3, M12). */
@@ -179,9 +180,11 @@ export function cargarEntradas(raiz = '.'): Entradas {
     d04: leer(env('D04', 'docs/04-backend.md')),
     d05: leer(env('D05', 'docs/05-frontend.md')),
     d06: leer(env('D06', 'docs/06-features.md')),
-    inventario: JSON.parse(leer(env('INVENTARIO', 'pruebas/inventario.json'), '[]')),
-    features: JSON.parse(features),
-    mapa: JSON.parse(leer(env('MAPA', 'pruebas/mapa-codigo.json'), '[]')),
+    inventario: json(
+      leer(env('INVENTARIO', 'pruebas/inventario.json'), '[]'),
+    ) as Entradas['inventario'],
+    features: json(features) as Entradas['features'],
+    mapa: json(leer(env('MAPA', 'pruebas/mapa-codigo.json'), '[]')) as Entradas['mapa'],
     codigo: archivosDeCodigo(raiz),
   };
 }

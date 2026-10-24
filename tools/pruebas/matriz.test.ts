@@ -81,8 +81,13 @@ function recuento(d: Documentos) {
     verificacionesPrevias: n('VER'),
   };
 }
+const fila = (e: Entradas, i: number): { titulo: string; archivo: string } => {
+  const p = e.inventario[i];
+  if (!p) throw new Error('sin prueba');
+  return p;
+};
 const reglas = (e: Entradas): string[] => [
-  ...new Set(verificar(e).errores.map((x) => x.split(' ')[0]!)),
+  ...new Set(verificar(e).errores.map((x) => x.split(' ')[0] ?? '')),
 ];
 
 describe('matriz: lectura de los documentos (07 §13.1, §35)', () => {
@@ -113,7 +118,7 @@ describe('matriz: lectura de los documentos (07 §13.1, §35)', () => {
       inventario: [],
       mapa: JSON.parse(
         readFileSync(new URL('../../pruebas/mapa-codigo.json', import.meta.url), 'utf8'),
-      ),
+      ) as Entradas['mapa'],
       codigo: archivosDeCodigo(fileURLToPath(new URL('../..', import.meta.url))),
     };
     expect(verificar(real).errores).toEqual([]);
@@ -123,19 +128,19 @@ describe('matriz: lectura de los documentos (07 §13.1, §35)', () => {
 describe('matriz: mutaciones (V7-09)', () => {
   it('M7: referencia inexistente (errata CA-30.40)', () => {
     const e = base();
-    e.inventario[0]!.titulo = e.inventario[0]!.titulo.replace('CA-30.4,', 'CA-30.4, CA-30.40,');
+    fila(e, 0).titulo = fila(e, 0).titulo.replace('CA-30.4,', 'CA-30.4, CA-30.40,');
     expect(reglas(e)).toEqual(['M7']);
   });
 
   it('M7: ficha inexistente', () => {
     const e = base();
-    e.inventario[3]!.titulo = e.inventario[3]!.titulo.replace('FT-09', 'FT-99');
+    fila(e, 3).titulo = fila(e, 3).titulo.replace('FT-09', 'FT-99');
     expect(reglas(e)).toEqual(['M7']);
   });
 
   it('M7: referencia con formato desconocido', () => {
     const e = base();
-    e.inventario[0]!.titulo = e.inventario[0]!.titulo.replace('CA-30.4,', 'CA-30,');
+    fila(e, 0).titulo = fila(e, 0).titulo.replace('CA-30.4,', 'CA-30,');
     expect(reglas(e)).toEqual(['M7']);
   });
 
@@ -146,7 +151,7 @@ describe('matriz: mutaciones (V7-09)', () => {
       'PRU-INT-NADA-001 [CA-30.4] x',
     ]) {
       const e = base();
-      e.inventario[0]!.titulo = mal;
+      fila(e, 0).titulo = mal;
       expect(reglas(e)).toEqual(['M8']);
     }
   });
@@ -154,7 +159,7 @@ describe('matriz: mutaciones (V7-09)', () => {
   it('M8: identificador repetido en otro archivo', () => {
     const e = base();
     e.inventario.push({
-      ...e.inventario[0]!,
+      ...fila(e, 0),
       archivo: 'packages/aplicacion/test/otra.int.test.ts',
     });
     expect(reglas(e)).toEqual(['M8']);
@@ -162,7 +167,7 @@ describe('matriz: mutaciones (V7-09)', () => {
 
   it('M8: nivel que no corresponde al archivo (INT en un .e2e.ts)', () => {
     const e = base();
-    e.inventario[0]!.archivo = 'apps/web/e2e/x.e2e.ts';
+    fila(e, 0).archivo = 'apps/web/e2e/x.e2e.ts';
     expect(reglas(e)).toEqual(['M8']);
   });
 
@@ -224,6 +229,6 @@ describe('inventario: unión de las listas de Vitest y Playwright', () => {
       { titulo: 'a > PRU-DOM-VAL-001 x', archivo: 'packages/dominio/src/a.test.ts' },
     ]);
     expect(sinRepetir([...v, ...p, ...p])).toHaveLength(2);
-    expect(p[0]!.archivo).toBe('apps/web/e2e/pres.e2e.ts');
+    expect(p[0]?.archivo).toBe('apps/web/e2e/pres.e2e.ts');
   });
 });
