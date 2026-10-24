@@ -1,12 +1,15 @@
-// tools/pruebas/matriz.ts — matriz de trazabilidad (07 §13), primera mitad (TA-006): lectura de los documentos,
-// inventario y reglas M7, M8, M12 y M13 en modo incremental. M1 a M6, M9 a M11 y M14 a M16 llegan con TA-007.
+// tools/pruebas/matriz.ts — matriz de trazabilidad (07 §13): lectura de los documentos, inventario y reglas M7, M8, M12 y M13
+// (TA-006); las reglas de cobertura M1 a M6, M9 a M11 y M14 viven en reglas.ts (TA-007). M15 a M18 llegan con sus tareas.
 // Portado del prototipo de V7-09/V7-11. Node 24 lo ejecuta sin compilar (solo sintaxis borrable, sin dependencias).
-//   node tools/pruebas/matriz.ts verificar    sale con 1 si alguna regla falla (job `rapido`)
+//   node tools/pruebas/matriz.ts verificar [--puerta]   sale con 1 si alguna regla falla (job `rapido`; nocturno con --puerta)
+//   node tools/pruebas/matriz.ts informe                cobertura por ficha y estado de la puerta
 // Entradas (cambiables con FINN_MATRIZ_*): docs/{01-dominio,04-backend,05-frontend,06-features}.md,
-// pruebas/inventario.json, pruebas/features.json y pruebas/mapa-codigo.json.
+// pruebas/{inventario,features,mapa-codigo,cuarentena,verificaciones-previas}.json y pruebas/manuales.md.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { cambiosFuturos, fichas, objetivos } from './documentos.ts';
-import type { Documentos, Objetivo } from './documentos.ts';
+import type { Documentos } from './documentos.ts';
+import { cobertura, globARegex, PATRON_CONSULTA, PATRON_OP, REF } from './reglas.ts';
+import type { Cuarentena, Previa } from './reglas.ts';
 
 export type EstadoFt = 'pendiente' | 'en_curso' | 'terminada';
 export interface Prueba {
@@ -20,6 +23,11 @@ export interface Entradas extends Documentos {
   inventario: { titulo: string; archivo: string }[];
   features: Record<string, EstadoFt>;
   mapa: { patron: string; fts: string[] | 'marco' }[];
+  manuales: string; // pruebas/manuales.md
+  previas: Previa[] | null; // null: todavía no existe pruebas/verificaciones-previas.json (TA-008)
+  cuarentena: Cuarentena[];
+  hoy: string; // AAAA-MM-DD
+  puerta: boolean;
   codigo: string[]; // archivos de apps/web/src y packages/*/src, relativos a la raíz y con `/`
 }
 
@@ -48,9 +56,6 @@ const ARCHIVO_DE: Record<string, RegExp> = {
 };
 const TITULO =
   /^(PRU-(?:ESC-\d{2}@(motor|int)|([A-Z0-9]+)-([A-Z]+)-(\d{3})))(?:\s+\[([^\]]*)\])?\s+(.+)$/;
-// Referencias válidas entre corchetes (07 §13.1); las decisiones de 00 y 01 (P1, H3, C1, Q2a…) son contexto
-const REF =
-  /^(CA-\d{2}\.\d{1,2}|ESC-\d{2}|AV-\d{2}|INV-\d{2}|CB-\d{2}|REC-4\.[1-6]|V-\d{2}|V5-\d{2}|V6-\d{2}|H-\d{2}|CF-\d{2}|FT-\d{2})$/;
 const DECISION =
   /^([A-Z]{1,2}\d{1,2}[a-z]?|[A-Z]-\d{1,2}|supuesto \d+|ajuste \d|error \d+|inv\. \d+|fila \d+|R\d+)$/;
 const ES_PRUEBA = /\.(test|e2e)\.tsx?$|\.bench\.ts$/;
@@ -97,36 +102,27 @@ export function pruebas(e: Entradas): { lista: Prueba[]; errores: string[] } {
   return { lista, errores };
 }
 
-// ---------------------------------------------------------------- patrones de código (M12, 07 §13.6)
-export function globARegex(g: string): RegExp {
-  const re = g
-    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-    .replace(/\*\*\//g, '\u0001')
-    .replace(/\*\*/g, '\u0002')
-    .replace(/\*/g, '[^/]*')
-    .replace(/\u0001/g, '(.*/)?')
-    .replace(/\u0002/g, '.*');
-  return new RegExp(`^${re}$`);
-}
-
 // ---------------------------------------------------------------- reglas
 export function verificar(e: Entradas) {
-  const obj: Objetivo[] = objetivos(e);
   const { lista, errores } = pruebas(e);
-  const avisos: string[] = [];
   const fs = fichas(e.d06);
-  const ids = new Set([...obj.map((o) => o.id), ...cambiosFuturos(e.d06), ...fs.map((f) => f.ft)]);
+  const ids = new Set([
+    ...objetivos(e).map((o) => o.id),
+    ...cambiosFuturos(e.d06),
+    ...fs.map((f) => f.ft),
+  ]);
+  const cob = cobertura(e, lista, ids);
+  const { cubre, obj } = cob;
+  errores.push(...cob.errores);
+  const avisos = cob.avisos;
   // M7 toda referencia citada existe en los documentos
-  const cubre = new Map<string, string[]>();
   for (const p of lista)
-    for (const x of p.refs) {
+    for (const x of p.refs)
       if (!ids.has(x)) errores.push(`M7 ${p.id} cita ${x}, que no existe en los documentos`);
-      cubre.set(x, [...(cubre.get(x) ?? []), p.id]);
-    }
-  // M12 cada archivo de código de la app pertenece a alguna feature o al marco
+  // M12 cada archivo de código de la app pertenece a alguna feature o al marco, o se resuelve por las Piezas (CH-01)
   const patrones = e.mapa.map((m) => globARegex(m.patron));
   for (const f of e.codigo)
-    if (!patrones.some((re) => re.test(f)))
+    if (!patrones.some((re) => re.test(f)) && !PATRON_OP.test(f) && !PATRON_CONSULTA.test(f))
       errores.push(`M12 ${f} no está en pruebas/mapa-codigo.json`);
   // M13 features.json solo cita fichas que existen; la diferida no sale de pendiente
   for (const [ft, st] of Object.entries(e.features)) {
@@ -144,7 +140,25 @@ export function verificar(e: Entradas) {
       (e.features[o.ft ?? ''] ?? 'pendiente') === 'pendiente'
     )
       avisos.push(`M13 ${o.id} tiene pruebas y ${o.ft} sigue pendiente en pruebas/features.json`);
-  return { errores, avisos, obj, lista, cubre };
+  return { errores, avisos, obj, lista, cubre, activas: cob.activas, man: cob.man };
+}
+export type Resultado = ReturnType<typeof verificar>;
+
+/** Cobertura por ficha y estado de la puerta (P7-8). */
+export function informe(r: Resultado) {
+  const fts = [...new Set(r.obj.flatMap((o) => (o.tipo === 'CA' && o.ft ? [o.ft] : [])))].sort();
+  const filas = fts.map((ft) => {
+    const cas = r.obj.filter((o) => o.tipo === 'CA' && o.ft === ft);
+    const cubiertos = cas.filter((c) => r.cubre.get(c.id)?.length).length;
+    const estado = cas[0]?.diferida ? 'diferida' : cubiertos === cas.length ? 'cubierta' : 'falta';
+    return { ft, prioridad: cas[0]?.prioridad, cas: cas.length, cubiertos, estado };
+  });
+  const faltan = r.obj
+    .filter(
+      (o) => o.tipo === 'CA' && o.prioridad !== 'P' && !o.diferida && !r.cubre.get(o.id)?.length,
+    )
+    .map((o) => o.id);
+  return { filas, puertaAbierta: faltan.length === 0, faltanParaLaPuerta: faltan };
 }
 
 // ---------------------------------------------------------------- entradas desde el disco
@@ -172,7 +186,7 @@ export function archivosDeCodigo(raiz = '.'): string[] {
   return sal.sort();
 }
 
-export function cargarEntradas(raiz = '.'): Entradas {
+export function cargarEntradas(raiz = '.', puerta = false): Entradas {
   const env = (k: string, d: string): string => process.env['FINN_MATRIZ_' + k] ?? `${raiz}/${d}`;
   const features = leer(env('FEATURES', 'pruebas/features.json'), '{}');
   return {
@@ -185,6 +199,13 @@ export function cargarEntradas(raiz = '.'): Entradas {
     ) as Entradas['inventario'],
     features: json(features) as Entradas['features'],
     mapa: json(leer(env('MAPA', 'pruebas/mapa-codigo.json'), '[]')) as Entradas['mapa'],
+    manuales: leer(env('MANUALES', 'pruebas/manuales.md')),
+    previas: existsSync(env('PREVIAS', 'pruebas/verificaciones-previas.json'))
+      ? (json(leer(env('PREVIAS', 'pruebas/verificaciones-previas.json'))) as Previa[])
+      : null,
+    cuarentena: json(leer(env('CUARENTENA', 'pruebas/cuarentena.json'), '[]')) as Cuarentena[],
+    hoy: process.env['FINN_MATRIZ_HOY'] ?? new Date().toISOString().slice(0, 10),
+    puerta,
     codigo: archivosDeCodigo(raiz),
   };
 }
@@ -192,17 +213,28 @@ export function cargarEntradas(raiz = '.'): Entradas {
 // ---------------------------------------------------------------- CLI
 if (import.meta.main) {
   const [cmd = 'verificar'] = process.argv.slice(2);
-  if (cmd !== 'verificar') {
-    console.error(`comando desconocido: ${cmd} (por ahora: verificar)`);
+  if (!['verificar', 'informe'].includes(cmd)) {
+    console.error(`comando desconocido: ${cmd} (verificar, informe)`);
     process.exit(2);
   }
-  const e = cargarEntradas();
+  const e = cargarEntradas('.', process.argv.includes('--puerta'));
   const r = verificar(e);
+  if (cmd === 'informe') {
+    const i = informe(r);
+    for (const f of i.filas)
+      console.log(`${f.ft} [${f.prioridad}] ${f.cubiertos}/${f.cas} CA: ${f.estado}`);
+    console.log(
+      `puerta ${i.puertaAbierta ? 'abierta' : 'cerrada'}: faltan ${i.faltanParaLaPuerta.length} CA [I] y [M]`,
+    );
+    process.exit(0);
+  }
   const n = (t: string): number => r.obj.filter((o) => o.tipo === t).length;
   const cuenta = ['CA', 'ESC', 'AV', 'INV', 'CB', 'REC', 'VER'].map((t) => `${n(t)} ${t}`);
-  console.log(`objetivos: ${fichas(e.d06).length} fichas, ${cuenta.join(', ')}; modo incremental`);
   console.log(
-    `pruebas con identificador: ${r.lista.length}; archivos de código: ${e.codigo.length}`,
+    `objetivos: ${fichas(e.d06).length} fichas, ${cuenta.join(', ')}; modo ${e.puerta ? 'puerta' : 'incremental'}`,
+  );
+  console.log(
+    `pruebas activas: ${r.activas.length}; manuales: ${r.man.length}; archivos de código: ${e.codigo.length}`,
   );
   for (const a of r.avisos) console.log('aviso  ' + a);
   for (const x of r.errores) console.log('error  ' + x);
