@@ -3,7 +3,7 @@
 
   "TA-002": { "estado": "terminada", "pr": 2 },
 
-  "TA-003": { "estado": "pendiente" },
+  "TA-003": { "estado": "en_curso", "rama": "ta-003-lint-fronteras" },
 
   "TA-004": { "estado": "pendiente" },
 

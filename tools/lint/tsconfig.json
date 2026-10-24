@@ -1,0 +1,5 @@
+{
+  "extends": "@finn/config/tsconfig.base.json",
+  "compilerOptions": { "types": ["node"], "allowImportingTsExtensions": true, "jsx": "preserve" },
+  "include": ["*.ts", "controles/paquetes/**/*.ts"]
+}

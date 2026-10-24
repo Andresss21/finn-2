@@ -8,6 +8,8 @@
   },
   "scripts": {
     "typecheck": "pnpm -r --if-present run typecheck",
+    "lint": "eslint . && node tools/ci/verificar-dependencias.mjs && depcruise --config .dependency-cruiser.cjs apps packages",
+    "depcruise": "depcruise --config .dependency-cruiser.cjs apps packages",
     "formato": "prettier --write .",
     "formato:comprobar": "prettier --check .",
     "versiones": "node tools/pruebas/versiones.mjs",
@@ -30,8 +32,10 @@
   "prettier": "@finn/config/prettier",
   "devDependencies": {
     "@finn/config": "workspace:*",
+    "@types/node": "24.19.2",
     "@vitest/browser-playwright": "4.1.12",
     "@vitest/coverage-v8": "4.1.12",
+    "dependency-cruiser": "18.7.0",
     "eslint": "10.13.0",
     "playwright": "1.56.1",
     "prettier": "3.9.10",

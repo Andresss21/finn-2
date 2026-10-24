@@ -6,10 +6,14 @@
   "exports": {
     "./tsconfig.base.json": "./tsconfig.base.json",
     "./prettier": "./prettier.config.mjs",
-    "./eslint/pruebas": "./eslint/pruebas.mjs"
+    "./eslint/pruebas": "./eslint/pruebas.mjs",
+    "./eslint": "./eslint/index.mjs"
   },
   "dependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
     "eslint-plugin-playwright": "2.12.1",
+    "typescript": "5.9.3",
     "typescript-eslint": "8.72.0"
   }
 }
