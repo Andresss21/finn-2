@@ -1,10 +1,12 @@
 // Pruebas de la matriz (TA-006): los conteos de 07 §35 sobre docs/ y las mutaciones de V7-09 de M7, M8, M12 y M13.
 // Es una prueba de herramienta del repositorio: no lleva identificador PRU- (el encargo de TA-006 no tiene `pru`).
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { dePlaywright, deVitest, sinRepetir } from './listar.ts';
-import { archivosDeCodigo, verificar } from './matriz.ts';
+import { archivosDeCodigo, informe, resultadosCorrida, verificar } from './matriz.ts';
 import { afectadas, fichasPorPiezas, piezas } from './afectadas.ts';
 import type { Previa } from './reglas.ts';
 import { fichas, objetivos } from './documentos.ts';
@@ -41,6 +43,7 @@ const base = (): Entradas => ({
     },
   ],
   manuales: '',
+  resultadosManuales: '',
   previas: null,
   cuarentena: [],
   hoy: '2027-03-01',
@@ -252,6 +255,8 @@ const ARCHIVO: Record<string, string> = {
   PROP: 'packages/dominio/src/tx.prop.test.ts',
 };
 const idDe = (titulo: string): string => titulo.split(' > ').pop()?.split(' ')[0] ?? '';
+const RESULTADOS_ENCABEZADO =
+  '| Manual | Fecha | Dispositivo | Resultado | Quién | Versión | Nota |\n|---|---|---|---|---|---|---|\n';
 function completo(): Entradas {
   const e = base();
   const obj = objetivos(e);
@@ -293,13 +298,20 @@ function completo(): Entradas {
       ),
     );
   e.previas = previas;
-  e.manuales = obj
-    .filter((o) => o.tipo === 'CA' && (o.manual || o.advertencia))
+  const conManual = obj.filter((o) => o.tipo === 'CA' && (o.manual || o.advertencia));
+  const idMan = (k: number): string => `PRU-MAN-TX-${String(k + 1).padStart(3, '0')}`;
+  e.manuales = conManual
     .map(
       (o, k) =>
-        `### PRU-MAN-TX-${String(k + 1).padStart(3, '0')} [${o.id}] procedimiento\n\n**Disparador:** antes de terminar ${o.ft}.\n\n**Pasos:**\n1. Hacer.\n\n**Resultado esperado:** lo del CA.\n`,
+        `### ${idMan(k)} [${o.id}] procedimiento\n\n**Disparador:** antes de terminar ${o.ft}.\n\n**Pasos:**\n1. Hacer.\n\n**Resultado esperado:** lo del CA.\n`,
     )
     .join('\n');
+  // Cada manual con un resultado "pasa" registrado por el usuario (M16, 07 §22.2)
+  e.resultadosManuales =
+    RESULTADOS_ENCABEZADO +
+    conManual
+      .map((_, k) => `| ${idMan(k)} | 2027-02-20 | Android 15 | pasa | Andrés | a1b2c3d | |`)
+      .join('\n');
   for (const f of fichas(e.d06)) e.features[f.ft] = f.diferida ? 'pendiente' : 'terminada';
   e.puerta = true;
   return e;
@@ -317,6 +329,21 @@ const quitarManual = (e: Entradas, ref: string): void => {
     new RegExp(`### PRU-MAN-\\S+ \\[${ref}\\][\\s\\S]*?(?=### |$)`),
     '',
   );
+};
+
+const vigente = (id: string) => ({
+  id,
+  motivo: 'inestable',
+  desde: '2027-02-25',
+  vence: '2027-03-11',
+});
+/** Resultados de una corrida en la que todas las pruebas automáticas pasaron. */
+const verdes = (e: Entradas): Record<string, 'pasada' | 'fallida' | 'omitida'> =>
+  Object.fromEntries(e.inventario.map((p) => [idDe(p.titulo), 'pasada' as const]));
+const manualDe = (e: Entradas, ca: string): string => {
+  const m = e.manuales.match(new RegExp(`### (PRU-MAN-\\S+) \\[${ca}\\]`));
+  if (!m?.[1]) throw new Error('sin manual de ' + ca);
+  return m[1];
 };
 
 describe('matriz: mutaciones de la cobertura (V7-09, V7-11)', () => {
@@ -435,6 +462,59 @@ describe('matriz: mutaciones de la cobertura (V7-09, V7-11)', () => {
         quitar(e, 'CB-21');
       },
     ],
+    [
+      'M15',
+      'FT-30 terminada con una prueba en cuarentena (vigente)',
+      (e) => {
+        // Otra prueba cubre CA-30.4, así que M1 no salta: solo M15
+        e.inventario.push({
+          titulo: 'PRU-INT-TX-900 [CA-30.4] otra',
+          archivo: 'packages/aplicacion/test/tx.int.test.ts',
+        });
+        e.cuarentena.push(vigente(idDe(primera(e, 'CA-30.4').titulo)));
+      },
+    ],
+    [
+      'M15',
+      'FT-30 terminada con una prueba fallida en la corrida',
+      (e) => {
+        e.resultados = verdes(e);
+        e.resultados[idDe(primera(e, 'CA-30.4').titulo)] = 'fallida';
+      },
+    ],
+    [
+      'M16',
+      'FT-02 sin resultado del manual de CA-02.5',
+      (e) => {
+        const m = manualDe(e, 'CA-02.5');
+        e.resultadosManuales = e.resultadosManuales
+          .split('\n')
+          .filter((l) => !l.includes(m))
+          .join('\n');
+      },
+    ],
+    [
+      'M16',
+      'manual que falló después de pasar',
+      (e) => {
+        e.resultadosManuales += `\n| ${manualDe(e, 'CA-02.5')} | 2027-02-28 | Android 15 | falla | Andrés | def5678 | |`;
+      },
+    ],
+    [
+      'M16',
+      'fila de resultado sin dispositivo',
+      (e) => {
+        e.resultadosManuales += `\n| ${manualDe(e, 'CA-02.5')} | 2027-02-28 |  | pasa | Andrés | def5678 | |`;
+      },
+    ],
+    [
+      'M16',
+      'resultado de un manual que no existe',
+      (e) => {
+        e.resultadosManuales +=
+          '\n| PRU-MAN-TX-999 | 2027-02-28 | Android 15 | pasa | Andrés | def5678 | |';
+      },
+    ],
   ];
   for (const [regla, que, mutar] of mutaciones)
     it(`${regla}: ${que}`, () => {
@@ -451,8 +531,10 @@ describe('matriz: mutaciones de la cobertura (V7-09, V7-11)', () => {
       desde: '2027-02-25',
       vence: '2027-03-11',
     });
+    // FT-30 está terminada: además, M15 (TA-009) no la deja terminada con esa prueba en cuarentena
     expect(verificar(e).errores).toEqual([
       'M1 CA-30.4 (FT-30 [I]) sin prueba activa ni procedimiento manual',
+      `M15 FT-30 está terminada y ${idDe(primera(e, 'CA-30.4').titulo)} está en cuarentena`,
     ]);
   });
 
@@ -503,6 +585,132 @@ describe('matriz: modos incremental y puerta (07 §13.4)', () => {
     expect(por('M2')).toHaveLength(new Set(fs.flatMap((f) => f.esc)).size);
     expect(por('M3')).toHaveLength(new Set(fs.flatMap((f) => f.av)).size);
     expect(r.errores.filter((x) => !/^(M1|M2|M3|M4|M5|M6|M11|M14) /.test(x))).toEqual([]);
+  });
+});
+
+describe('matriz: M15 y M16, cierre de fichas y manuales pendientes (P7-18, V7-11)', () => {
+  it('M15: con todas las pruebas en verde en la corrida, la base completa pasa', () => {
+    const e = completo();
+    e.resultados = verdes(e);
+    expect(verificar(e).errores).toEqual([]);
+  });
+
+  it('M15: una prueba sin resultado en la corrida falla', () => {
+    const e = completo();
+    const id = idDe(primera(e, 'CA-30.4').titulo);
+    e.resultados = Object.fromEntries(Object.entries(verdes(e)).filter(([k]) => k !== id));
+    expect(verificar(e).errores).toEqual([
+      `M15 FT-30 está terminada y ${id} no pasó en esta corrida (sin resultado)`,
+    ]);
+  });
+
+  it('M15: una ficha en_curso no se mira', () => {
+    const e = completo();
+    e.features['FT-30'] = 'en_curso';
+    e.puerta = false;
+    e.resultados = verdes(e);
+    e.resultados[idDe(primera(e, 'CA-30.4').titulo)] = 'fallida';
+    expect(verificar(e).errores.filter((x) => x.startsWith('M15'))).toEqual([]);
+  });
+
+  it('M16: incremental sin resultados manuales da avisos y 0 errores; en modo puerta, la puerta queda cerrada', () => {
+    const e = completo();
+    e.resultadosManuales = '';
+    e.puerta = false;
+    const r = verificar(e);
+    expect(r.errores).toEqual([]);
+    const avisos = r.avisos.filter((a) => a.startsWith('M16 '));
+    expect(avisos.length).toBeGreaterThan(0);
+    expect(avisos.length).toBe(r.manualesPendientes.size);
+    expect(informe(r).puertaAbierta).toBe(false);
+    e.puerta = true;
+    const p = verificar(e);
+    expect(p.errores.filter((x) => x.startsWith('M16 '))).toHaveLength(avisos.length);
+    const i = informe(p);
+    expect(i.puertaAbierta).toBe(false);
+    expect(i.fichasConManualPendiente.length).toBeGreaterThan(0);
+    expect(i.filas.find((f) => f.ft === 'FT-02')?.estado).toBe('manual pendiente');
+  });
+
+  it('M16: vale el último resultado (una falla posterior reabre; un pasa posterior cierra)', () => {
+    const e = completo();
+    const m = manualDe(e, 'CA-02.5');
+    e.resultadosManuales += `\n| ${m} | 2027-02-28 | Android 15 | falla | Andrés | def5678 | |`;
+    expect(verificar(e).errores).toEqual([
+      `M16 FT-02 con manual pendiente: ${m} (falló el 2027-02-28)`,
+    ]);
+    e.resultadosManuales += `\n| ${m} | 2027-02-28 | Android 15 | pasa | Andrés | def5679 | reintento |`;
+    expect(verificar(e).errores).toEqual([]);
+  });
+
+  it('M16: la base completa con todos los manuales en "pasa" deja la puerta abierta', () => {
+    const i = informe(verificar(completo()));
+    expect(i.fichasConManualPendiente).toEqual([]);
+    expect(i.puertaAbierta).toBe(true);
+  });
+
+  it('M15: lee los informes JSON de Vitest y de Playwright de --resultados', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'finn-resultados-'));
+    try {
+      writeFileSync(
+        join(dir, 'vitest.json'),
+        JSON.stringify({
+          testResults: [
+            {
+              assertionResults: [
+                {
+                  fullName: 'PRU-INT-TX > PRU-INT-TX-001 [CA-30.4] a',
+                  title: 'x',
+                  status: 'passed',
+                },
+                { fullName: 'PRU-INT-TX-002 [CA-30.5] b', title: 'x', status: 'failed' },
+                { fullName: 'PRU-INT-TX-003 [CA-30.6] c', title: 'x', status: 'skipped' },
+                { fullName: 'sin identificador', title: 'x', status: 'passed' },
+              ],
+            },
+          ],
+        }),
+      );
+      writeFileSync(
+        join(dir, 'playwright.json'),
+        JSON.stringify({
+          suites: [
+            {
+              specs: [
+                { title: 'PRU-E2E-TX-001 [CA-30.4] e', ok: true, tests: [{ status: 'flaky' }] },
+              ],
+              suites: [
+                {
+                  specs: [
+                    {
+                      title: 'PRU-E2E-TX-002 [CA-30.5] f',
+                      ok: false,
+                      tests: [{ status: 'unexpected' }],
+                    },
+                    // la misma prueba en otro navegador: basta una que falle
+                    {
+                      title: 'PRU-INT-TX-001 [CA-30.4] a',
+                      ok: false,
+                      tests: [{ status: 'unexpected' }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+      );
+      writeFileSync(join(dir, 'leeme.txt'), 'no es JSON');
+      expect(resultadosCorrida(dir)).toEqual({
+        'PRU-INT-TX-001': 'fallida',
+        'PRU-INT-TX-002': 'fallida',
+        'PRU-INT-TX-003': 'omitida',
+        'PRU-E2E-TX-001': 'pasada',
+        'PRU-E2E-TX-002': 'fallida',
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

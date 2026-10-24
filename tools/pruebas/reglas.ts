@@ -1,5 +1,5 @@
-// tools/pruebas/reglas.ts — reglas de cobertura de la matriz (07 §13.3, TA-007): M1 a M6, M9, M10, M11 y M14, y los
-// patrones compartidos con `afectadas.ts`. Portado del prototipo de V7-09/V7-11. Node 24 lo ejecuta sin compilar.
+// tools/pruebas/reglas.ts — reglas de cobertura de la matriz (07 §13.3, TA-007): M1 a M6, M9, M10, M11 y M14 (TA-007),
+// M15 y M16 (TA-009), y los patrones compartidos con `afectadas.ts`. Portado del prototipo de V7-09/V7-11. Node 24 lo ejecuta sin compilar.
 import { fichas, objetivos } from './documentos.ts';
 import type { Ficha, Objetivo } from './documentos.ts';
 import type { EstadoFt, Entradas, Prueba } from './matriz.ts';
@@ -155,7 +155,82 @@ export function cobertura(e: Entradas, lista: Prueba[], ids: Set<string>) {
     for (const v of e.previas)
       if (!ids.has(v.id))
         errores.push(`M6 verificaciones-previas.json cita ${v.id}, que no existe`);
-  return { errores, avisos, cubre, obj, activas, man };
+  // M15 (P7-18): una ficha terminada tiene todas las pruebas automáticas de sus CA fuera de cuarentena y, con los
+  // resultados de la corrida (`--resultados`, job `cierre`), en verde
+  const casDe = (ft: string): Set<string> =>
+    new Set(obj.filter((o) => o.tipo === 'CA' && o.ft === ft).map((o) => o.id));
+  for (const f of fs) {
+    if (estado(f.ft) !== 'terminada') continue;
+    const cas = casDe(f.ft);
+    for (const p of lista.filter((x) => x.refs.some((r) => cas.has(r))))
+      if (enCuarentena.has(p.id))
+        errores.push(`M15 ${f.ft} está terminada y ${p.id} está en cuarentena`);
+      else if (e.resultados && e.resultados[p.id] !== 'pasada')
+        errores.push(
+          `M15 ${f.ft} está terminada y ${p.id} no pasó en esta corrida (${e.resultados[p.id] ?? 'sin resultado'})`,
+        );
+  }
+  // M16 (P7-18): cada PRU-MAN de una ficha exigida tiene como último resultado "pasa"; si no, "manual pendiente"
+  const rm = resultadosManuales(e.resultadosManuales);
+  errores.push(...rm.errores);
+  const ult = ultimoResultado(rm.filas);
+  for (const x of ult.keys())
+    if (!man.some((m) => m.id === x))
+      errores.push(`M16 resultados.md registra ${x}, que no está en pruebas/manuales.md`);
+  const manualesPendientes = new Map<string, string[]>();
+  for (const f of fs) {
+    if (!ex(f.ft)) continue;
+    const cas = casDe(f.ft);
+    const pend = man
+      .filter((m) => m.refs.some((r) => cas.has(r)) && ult.get(m.id)?.resultado !== 'pasa')
+      .map((m) => {
+        const u = ult.get(m.id);
+        return `${m.id} (${u ? `falló el ${u.fecha}` : 'sin resultado'})`;
+      });
+    if (pend.length) {
+      manualesPendientes.set(f.ft, pend);
+      falta(e.puerta, `M16 ${f.ft} con manual pendiente: ${pend.join(', ')}`);
+    }
+  }
+  return { errores, avisos, cubre, obj, activas, man, manualesPendientes };
+}
+
+export interface ResultadoManual {
+  id: string;
+  fecha: string;
+  resultado: 'pasa' | 'falla';
+}
+/** Filas de `pruebas/manuales/resultados.md` (07 §22.2): | Manual | Fecha | Dispositivo | Resultado | Quién | Versión | Nota | */
+export function resultadosManuales(texto: string): { filas: ResultadoManual[]; errores: string[] } {
+  const filas: ResultadoManual[] = [];
+  const errores: string[] = [];
+  for (const l of texto.split('\n')) {
+    const c = l.split('|').map((x) => x.trim());
+    if (!/^PRU-MAN-/.test(c[1] ?? '')) continue;
+    const [, id = '', fecha = '', dispositivo, resultado = '', quien, version] = c;
+    if (
+      !/^PRU-MAN-[A-Z0-9]+-\d{3}$/.test(id) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(fecha) ||
+      !dispositivo ||
+      (resultado !== 'pasa' && resultado !== 'falla') ||
+      !quien ||
+      !version
+    ) {
+      errores.push(`M16 fila de resultado incompleta: ${l.trim()}`);
+      continue;
+    }
+    filas.push({ id, fecha, resultado });
+  }
+  return { filas, errores };
+}
+/** Vale el último resultado de cada manual: el de fecha mayor y, a igual fecha, la fila posterior. */
+export function ultimoResultado(filas: ResultadoManual[]): Map<string, ResultadoManual> {
+  const m = new Map<string, ResultadoManual>();
+  for (const f of filas) {
+    const a = m.get(f.id);
+    if (!a || f.fecha >= a.fecha) m.set(f.id, f);
+  }
+  return m;
 }
 
 /** M6: sin el JSON (lo trae TA-008) solo falla el modo puerta; con el JSON, falta cada una de las 92 que no figure. */
