@@ -11,7 +11,7 @@
 
   "TA-006": { "estado": "terminada", "pr": 5 },
 
-  "TA-007": { "estado": "en_curso", "rama": "ta-007-matriz-cobertura" },
+  "TA-007": { "estado": "terminada", "pr": 9 },
 
   "TA-008": { "estado": "pendiente" },
 
