@@ -58,14 +58,17 @@ export default defineConfig({
             'tools/ci/**/*.test.ts',
             'tools/db/**/*.test.ts',
             'tools/lint/**/*.test.ts',
+            'tools/plan/**/*.test.ts',
             'tools/pruebas/**/*.test.ts',
           ],
+          // permisos.test.ts corre con `node --test` (pnpm plan:permisos).
           exclude: [
             ...excluidos,
             ...PRUEBAS_RECHECK,
             '**/*.ctr.test.ts',
             '**/*.int.test.ts',
             '**/*.rh.test.ts',
+            'tools/plan/permisos.test.ts',
           ],
           sequence: orden,
         },
