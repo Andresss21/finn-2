@@ -7,3 +7,5 @@ export {
   normalizarUltimos4,
   type FormatoFecha,
 } from './normalizadores';
+export { validarFormato, TIEMPO_ANALISIS_MS } from './validar-formato';
+export type { ValidacionFormato } from './validar-formato';

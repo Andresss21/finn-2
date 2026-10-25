@@ -32,6 +32,7 @@
     "test:componentes": "vitest run --project componentes --coverage.enabled=false --passWithNoTests",
     "test:e2e": "node tools/pruebas/e2e.mjs",
     "bench": "vitest bench --run --project unidad --passWithNoTests",
+    "ci:politica-patrones": "node tools/ci/politica-patrones.ts",
     "test:respaldo": "node --test --test-reporter=spec \"tools/respaldo/test/**/*.test.*\""
   },
   "prettier": "@finn/config/prettier",
