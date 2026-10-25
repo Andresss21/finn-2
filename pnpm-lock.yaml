@@ -125,6 +125,10 @@ importers:
         version: 5.9.3
 
   packages/sms:
+    dependencies:
+      '@finn/dominio':
+        specifier: workspace:*
+        version: link:../dominio
     devDependencies:
       '@finn/config':
         specifier: workspace:*
