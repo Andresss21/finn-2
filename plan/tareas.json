@@ -17,7 +17,7 @@
 
   "TA-009": { "estado": "terminada", "pr": 12 },
 
-  "TA-010": { "estado": "pendiente" },
+  "TA-010": { "estado": "en_curso", "rama": "ta-010-pr-mergear" },
 
   "TA-011": { "estado": "terminada", "pr": 7 },
 
