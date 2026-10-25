@@ -46,6 +46,7 @@ const base = (): Entradas => ({
   hoy: '2027-03-01',
   puerta: false,
   features: {},
+  pendientes: [],
   mapa: [
     { patron: 'apps/web/src/app/(finn)/layout.tsx', fts: 'marco' },
     { patron: 'apps/web/src/app/(finn)/tarjetas/**', fts: ['FT-29', 'FT-30'] },
