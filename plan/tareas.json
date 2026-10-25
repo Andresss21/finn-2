@@ -15,7 +15,7 @@
 
   "TA-008": { "estado": "pendiente" },
 
-  "TA-009": { "estado": "pendiente" },
+  "TA-009": { "estado": "terminada", "pr": 12 },
 
   "TA-010": { "estado": "pendiente" },
 

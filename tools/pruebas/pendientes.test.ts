@@ -22,6 +22,7 @@ const base = (pendientes: Pendiente[], features: Entradas['features']): Entradas
   pendientes,
   mapa: [],
   manuales: '',
+  resultadosManuales: '',
   previas: null,
   cuarentena: [],
   hoy: '2027-03-01',
