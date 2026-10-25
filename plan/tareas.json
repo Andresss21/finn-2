@@ -197,7 +197,7 @@
 
   "TA-175": { "estado": "terminada", "pr": 11 },
 
-  "TA-176": { "estado": "pendiente" },
+  "TA-176": { "estado": "en_curso", "rama": "ta-176-politica-patrones" },
 
   "TA-177": { "estado": "pendiente" },
 
