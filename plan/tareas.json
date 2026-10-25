@@ -53,7 +53,7 @@
 
   "TA-101": { "estado": "terminada", "pr": 15 },
 
-  "TA-102": { "estado": "pendiente" },
+  "TA-102": { "estado": "en_curso", "rama": "ta-102-generadores" },
 
   "TA-103": { "estado": "pendiente" },
 
