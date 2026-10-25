@@ -562,7 +562,7 @@ Para cada categoría normal c y período p:
 
 1. **Entradas del período:** Ent(c, p) = Σ aportes de devoluciones D-2, D-3 y D-4 a c en p.
 2. **Fondo:** F(c, p) = Arr(c, p) + Asig(c, p) + Ent(c, p). No importa en qué momento se asignó ni cuándo llegó la entrada. [H3]
-3. **Orden:** los consumos de c en p, con su monto neto m_k, se ordenan por (fecha, clave de orden, orden de línea). [D2]
+3. **Orden:** los consumos de c en p, con su monto neto m_k, se ordenan por (fecha, clave de orden, secuencia de creación, orden de línea). [D2, CB-21] **[CH-14]**
 4. **Reparto:**
    ```
    restante ← F(c, p)
