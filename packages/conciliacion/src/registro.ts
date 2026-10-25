@@ -1,3 +1,7 @@
+import { agricolaDebito } from './adaptadores/agricola-debito';
+import { agricolaPdf } from './adaptadores/agricola-pdf';
+import { agricolaPortal } from './adaptadores/agricola-portal';
+import { bacDebito } from './adaptadores/bac-debito';
 import { bacTarjeta } from './adaptadores/bac-tarjeta';
 import { decodificar } from './decodificar';
 import {
@@ -14,28 +18,15 @@ interface Firma {
   detectar: Adaptador['detectar'];
 }
 
-const empiezaCon = (filas: string[][], prefijo: string): boolean =>
-  filas.some((f) => f[0]?.trim().startsWith(prefijo) === true);
-
 /** Las seis firmas de ADR-17, de la más específica a la más general. */
 export const FIRMAS: readonly Firma[] = [
   {
     id: 'ba_tarjeta_portal',
     tipoCuenta: 'tarjeta',
-    detectar: (t) =>
-      t.includes('Autorizacion,Fecha Transaccion,Fecha Aplicada,Concepto,Cargos ($),Abonos ($)'),
+    detectar: (t, f) => agricolaPortal.detectar(t, f),
   },
-  {
-    id: 'ba_debito',
-    tipoCuenta: 'efectivo',
-    detectar: (t) =>
-      t.includes('Detalle de Estado Bancario') && t.includes('Referencia de Transacci'),
-  },
-  {
-    id: 'bac_debito',
-    tipoCuenta: 'efectivo',
-    detectar: (t) => t.includes('Detalle de Estado Bancario') && t.includes('Saldo Inicial'),
-  },
+  { id: 'ba_debito', tipoCuenta: 'efectivo', detectar: (t, f) => agricolaDebito.detectar(t, f) },
+  { id: 'bac_debito', tipoCuenta: 'efectivo', detectar: (t, f) => bacDebito.detectar(t, f) },
   {
     id: 'cuscatlan_tarjeta',
     tipoCuenta: 'tarjeta',
@@ -44,7 +35,7 @@ export const FIRMAS: readonly Firma[] = [
   {
     id: 'ba_tarjeta_pdf_csv',
     tipoCuenta: 'tarjeta',
-    detectar: (_t, filas) => empiezaCon(filas, 'VT'),
+    detectar: (t, f) => agricolaPdf.detectar(t, f),
   },
   { id: 'bac_tarjeta', tipoCuenta: 'tarjeta', detectar: (t, f) => bacTarjeta.detectar(t, f) },
 ];
@@ -52,8 +43,14 @@ export const FIRMAS: readonly Firma[] = [
 /** Formatos reconocidos y rechazados (CH-03: Cuscatlán excluido). */
 const EXCLUIDOS: ReadonlySet<IdFormatoCsv> = new Set(['cuscatlan_tarjeta']);
 
-/** Adaptadores con `extraer` implementado; TA-183 agrega los demás. */
-export const ADAPTADORES: Partial<Record<IdFormatoCsv, Adaptador>> = { bac_tarjeta: bacTarjeta };
+/** Adaptadores con `extraer` implementado (⚠ S6-1: sintéticos hasta TU-13 y TU-14); Cuscatlán no tiene (CH-03). */
+export const ADAPTADORES: Partial<Record<IdFormatoCsv, Adaptador>> = {
+  bac_tarjeta: bacTarjeta,
+  bac_debito: bacDebito,
+  ba_tarjeta_portal: agricolaPortal,
+  ba_tarjeta_pdf_csv: agricolaPdf,
+  ba_debito: agricolaDebito,
+};
 
 export function leerEstado(bytes: Uint8Array): EstadoNormalizado | ErrorLectura {
   const d = decodificar(bytes);

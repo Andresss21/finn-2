@@ -211,7 +211,7 @@
 
   "TA-182": { "estado": "terminada", "pr": 13 },
 
-  "TA-183": { "estado": "pendiente" },
+  "TA-183": { "estado": "en_curso", "rama": "ta-183-adaptadores-bac-agricola" },
 
   "TA-184": { "estado": "pendiente" },
 
