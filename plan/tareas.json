@@ -55,7 +55,7 @@
 
   "TA-102": { "estado": "pendiente" },
 
-  "TA-103": { "estado": "pendiente" },
+  "TA-103": { "estado": "en_curso", "rama": "ta-103-periodos" },
 
   "TA-104": { "estado": "pendiente" },
 
