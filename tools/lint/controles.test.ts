@@ -14,9 +14,11 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ESLint } from 'eslint';
-import { describe, expect, it } from 'vitest';
+import stylelint from 'stylelint';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { configurar } from '@finn/config/eslint';
 import { verificar } from '../ci/verificar-dependencias.mjs';
+import { LISTA_CERRADA, verificarLecturas } from '../ci/lecturas-interactivas.mjs';
 import { pruebas } from '../../packages/config/eslint/pruebas.mjs';
 
 const raiz = fileURLToPath(new URL('../..', import.meta.url));
@@ -191,5 +193,197 @@ describe('controles de lint (fronteras de paquetes)', () => {
         rmSync(tmp, { recursive: true, force: true });
       }
     }
+  });
+});
+
+// Controles del cliente (TA-004, 05 §1.7). Cada archivo de controles/web/ declara la ruta donde "vive" y la
+// regla que debe marcarlo; se lintea con esa ruta virtual, porque las reglas apuntan a las carpetas de 05 §1.1.
+const carpetaWeb = join(raiz, 'tools', 'lint', 'controles', 'web');
+const controlesWeb = readdirSync(carpetaWeb)
+  .filter((f) => /^L\d\d-.*\.(tsx?|css)$/.test(f))
+  .map((f) => {
+    const texto = readFileSync(join(carpetaWeb, f), 'utf8');
+    const clave = (k: string): string =>
+      new RegExp(`^(?:// |\\s*)${k}: (.+?)(?: \\*/)?$`, 'm').exec(texto)?.[1]?.trim() ?? '';
+    return {
+      archivo: f,
+      regla: /^L\d\d/.exec(f)?.[0] ?? '',
+      ruta: clave('ruta'),
+      id: clave('regla'),
+      texto,
+    };
+  });
+
+// Rutas virtuales de las pruebas de "lo permitido": van al proyecto por defecto junto con las de los controles.
+const LIMPIOS: [string, string][] = [
+  [
+    'apps/web/src/formularios/f.ts',
+    "import { centavos } from '@finn/dominio/valores';\nexport const c = centavos;\n",
+  ],
+  [
+    'apps/web/src/componentes/dominio/f.ts',
+    "import type { Centavos } from '@finn/dominio/valores';\nexport type T = Centavos;\n",
+  ],
+  [
+    'apps/web/src/componentes/navegacion/enlace-finn.tsx',
+    "import Link from 'next/link';\nexport const E = Link;\n",
+  ],
+  [
+    'apps/web/src/componentes/base/b.tsx',
+    "import * as D from '@radix-ui/react-dialog';\nexport const B = D;\n",
+  ],
+  [
+    'apps/web/src/formato/m.ts',
+    "export const f = new Intl.NumberFormat('es-CL');\nexport const h = (d: Date): string => d.toLocaleString();\n",
+  ],
+  [
+    'apps/web/src/cliente/almacen.ts',
+    "export const l = (): string | null => sessionStorage.getItem('k');\n",
+  ],
+  ['apps/web/src/cliente/reloj.ts', 'export const a = (): number => new Date(0).getTime();\n'],
+  ['apps/web/src/textos/t.tsx', 'export const T = () => <p>Hola</p>;\n'],
+  [
+    'apps/web/src/componentes/dominio/ok.tsx',
+    'import * as z from \'zod\';\nexport const Ok = ({ s }: { s: string }) => <p className="text-texto bg-superficie p-4">{s}{z.string().length}</p>;\n',
+  ],
+  [
+    'apps/web/src/componentes/dominio/off.tsx',
+    'export const Off = () => <button disabled className="text-texto-deshabilitado">{null}</button>;\n',
+  ],
+];
+
+// Una sola corrida de ESLint en un proceso aparte para todas las rutas virtuales (tools/lint/controles/lintar-virtual.mjs).
+const resultadosWeb = new Map<string, string[]>();
+beforeAll(() => {
+  const items = [
+    ...controlesWeb
+      .filter((c) => /\.tsx?$/.test(c.archivo))
+      .map((c) => ({ ruta: c.ruta, codigo: c.texto })),
+    ...LIMPIOS.map(([ruta, codigo]) => ({ ruta, codigo })),
+  ];
+  const salida = spawnSync(
+    process.execPath,
+    [join(raiz, 'tools', 'lint', 'controles', 'lintar-virtual.mjs')],
+    {
+      cwd: raiz,
+      input: JSON.stringify(items),
+      encoding: 'utf8',
+      maxBuffer: 1 << 26,
+    },
+  );
+  if (salida.status !== 0) throw new Error(salida.stderr);
+  for (const [ruta, reglas] of Object.entries(
+    JSON.parse(salida.stdout) as Record<string, string[]>,
+  ))
+    resultadosWeb.set(ruta, reglas);
+}, 120_000);
+const lintarWeb = (ruta: string): string[] => resultadosWeb.get(ruta) ?? [];
+
+const configStylelint = join(raiz, 'stylelint.config.mjs');
+async function reglasCss(codigo: string, ruta: string): Promise<string[]> {
+  const r = await stylelint.lint({
+    code: codigo,
+    codeFilename: join(raiz, ruta),
+    configFile: configStylelint,
+  });
+  return (r.results[0]?.warnings ?? []).map((w) => w.rule);
+}
+
+describe('controles de lint (cliente L1 a L19)', () => {
+  it('hay un control por cada regla de L1 a L19', () => {
+    const cubiertas = new Set(controlesWeb.map((c) => c.regla));
+    for (let n = 1; n <= 19; n++)
+      expect(cubiertas, `L${n}`).toContain(`L${String(n).padStart(2, '0')}`);
+    for (const c of controlesWeb) expect(c.ruta && c.id, c.archivo).toBeTruthy();
+  });
+
+  it(
+    'PRU-DOM-VAL-006 [L1 y L3: ESLint sobre el archivo de control falla con esas reglas (V5-12)]',
+    { timeout: 120_000 },
+    () => {
+      const l1 = controlesWeb.find((c) => c.regla === 'L01');
+      const l3 = controlesWeb.find((c) => c.regla === 'L03');
+      expect(lintarWeb(l1?.ruta ?? '')).toContain('@typescript-eslint/no-restricted-imports');
+      expect(lintarWeb(l3?.ruta ?? '')).toContain('finn/centavos');
+    },
+  );
+
+  it('cada control de ESLint falla con su regla', () => {
+    for (const c of controlesWeb.filter((x) => /\.tsx?$/.test(x.archivo) && x.regla !== 'L10')) {
+      expect(lintarWeb(c.ruta), `${c.archivo} debe fallar con ${c.id}`).toContain(c.id);
+    }
+  });
+
+  it('L10: una exportación fuera de la lista cerrada o un use server fuera de lugar fallan', () => {
+    const c = controlesWeb.find((x) => x.regla === 'L10');
+    const interactivas = 'apps/web/src/servidor/lecturas/interactivas.ts';
+    const casos = [
+      { ruta: c?.ruta ?? '', texto: c?.texto ?? '', falla: true },
+      {
+        ruta: interactivas,
+        texto: "'use server';\nexport async function otraLectura() {}\n",
+        falla: true,
+      },
+      {
+        ruta: interactivas,
+        texto: `'use server';\n${LISTA_CERRADA.map((n) => `export async function ${n}() {}`).join('\n')}\n`,
+        falla: false,
+      },
+    ];
+    for (const caso of casos) {
+      const tmp = mkdtempSync(join(tmpdir(), 'finn-lecturas-'));
+      try {
+        mkdirSync(join(tmp, dirname(caso.ruta)), { recursive: true });
+        writeFileSync(join(tmp, caso.ruta), caso.texto);
+        expect(verificarLecturas(tmp).length > 0, caso.ruta).toBe(caso.falla);
+      } finally {
+        rmSync(tmp, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it('L12: stylelint rechaza colores literales y deja pasar tokens.css y var()', async () => {
+    const c = controlesWeb.find((x) => x.archivo.endsWith('.css'));
+    const obtenidas = await reglasCss(c?.texto ?? '', c?.ruta ?? '');
+    expect(obtenidas).toContain('color-no-hex');
+    expect(obtenidas).toContain('function-disallowed-list');
+    expect(await reglasCss(c?.texto ?? '', 'apps/web/src/estilos/tokens.css')).toEqual([]);
+    expect(await reglasCss('.a { color: var(--texto); }\n', c?.ruta ?? '')).toEqual([]);
+  });
+
+  it(
+    'lo permitido pasa: formularios con valores, textos con literales, formato con Intl',
+    { timeout: 120_000 },
+    () => {
+      const deLaTabla = (r: string): boolean =>
+        /^parse:|restricted|^finn\/(centavos|archivos-servidor|jsx-deshabilitado)|jsx-no-literals|jsx-a11y/.test(
+          r,
+        );
+      for (const [ruta] of LIMPIOS) {
+        expect(lintarWeb(ruta).filter(deLaTabla), ruta).toEqual([]);
+      }
+    },
+  );
+
+  it('las excepciones de 05 §1.7 están en la configuración', async () => {
+    const eslint = new ESLint({
+      cwd: raiz,
+      overrideConfigFile: true,
+      overrideConfig: configurar(),
+    });
+    const nivel = async (ruta: string, regla: string): Promise<unknown> => {
+      const c = (await eslint.calculateConfigForFile(join(raiz, ruta))) as {
+        rules?: Record<string, unknown>;
+      };
+      const v = c.rules?.[regla];
+      return Array.isArray(v) ? v[0] : v;
+    };
+    expect(await nivel('apps/web/src/formato/m.ts', 'finn/centavos')).toBeUndefined();
+    expect(await nivel('apps/web/src/componentes/dominio/m.ts', 'finn/centavos')).toBe(2);
+    expect(await nivel('apps/web/src/textos/t.tsx', 'react/jsx-no-literals')).toBeUndefined();
+    expect(await nivel('apps/web/src/componentes/dominio/t.tsx', 'react/jsx-no-literals')).toBe(2);
+    expect(
+      await nivel('apps/web/src/cliente/almacen.ts', 'no-restricted-properties'),
+    ).toBeUndefined();
   });
 });
