@@ -8,7 +8,7 @@
 // Entradas (cambiables con FINN_MATRIZ_*): docs/{01-dominio,04-backend,05-frontend,06-features}.md,
 // pruebas/{inventario,features,mapa-codigo,cuarentena,verificaciones-previas,pendientes-e2e}.json, pruebas/manuales.md
 // y pruebas/manuales/resultados.md.
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { cambiosFuturos, fichas, objetivos } from './documentos.ts';
 import type { Documentos } from './documentos.ts';
@@ -225,6 +225,37 @@ export function archivosDeCodigo(raiz = '.'): string[] {
   return sal.sort();
 }
 
+/**
+ * El inventario (`pruebas/inventario.json`, fuera del control de versiones) lo genera `pnpm pruebas:listar`. Sin él, o más
+ * viejo que algún archivo de prueba, la matriz contaría 0 pruebas (o pruebas viejas) y pasaría en silencio: se rechaza.
+ * Devuelve el mensaje de error, o null si el inventario está vigente.
+ */
+export function inventarioVencido(
+  raiz = '.',
+  ruta = `${raiz}/pruebas/inventario.json`,
+): string | null {
+  const AYUDA = 'corré `pnpm pruebas:listar` antes de `pnpm pruebas:matriz`';
+  if (!existsSync(ruta)) return `no existe ${ruta}: ${AYUDA}`;
+  const generado = statSync(ruta).mtimeMs;
+  let masNuevo: { ruta: string; t: number } | undefined;
+  const bajar = (dir: string): void => {
+    if (!existsSync(dir)) return;
+    for (const d of readdirSync(dir, { withFileTypes: true })) {
+      if (d.name === 'node_modules' || d.name.startsWith('.')) continue;
+      const r = `${dir}/${d.name}`;
+      if (d.isDirectory()) bajar(r);
+      else if (ES_PRUEBA.test(d.name)) {
+        const t = statSync(r).mtimeMs;
+        if (t > generado && (masNuevo === undefined || t > masNuevo.t)) masNuevo = { ruta: r, t };
+      }
+    }
+  };
+  for (const d of ['apps', 'packages', 'tools']) bajar(`${raiz}/${d}`);
+  return masNuevo === undefined
+    ? null
+    : `${ruta} está vencido: ${masNuevo.ruta} es más nuevo; ${AYUDA}`;
+}
+
 interface Spec {
   title: string;
   ok: boolean;
@@ -307,6 +338,11 @@ if (import.meta.main) {
   const dir = k < 0 ? undefined : process.argv[k + 1];
   if (k >= 0 && (dir === undefined || !existsSync(dir))) {
     console.error('--resultados necesita un directorio con los informes JSON de la corrida');
+    process.exit(2);
+  }
+  const vencido = inventarioVencido('.', process.env['FINN_MATRIZ_INVENTARIO']);
+  if (vencido !== null) {
+    console.error('error  inventario ' + vencido);
     process.exit(2);
   }
   const e = cargarEntradas('.', process.argv.includes('--puerta'), dir);

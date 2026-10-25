@@ -54,13 +54,13 @@ function privado(archivos: Record<string, string | Uint8Array>): string {
 }
 
 describe('PRU-SEG-BAND', () => {
-  it('PRU-SEG-BAND-002 [CH-03, SP-01-anonimizar] ninguna muestra del repositorio tiene 13 a 19 dígitos seguidos ni unos últimos 4 de FINN_ULTIMOS4_REALES', () => {
+  it('PRU-SEG-BAND-002 CH-03, SP-01-anonimizar: ninguna muestra del repositorio tiene 13 a 19 dígitos seguidos ni unos últimos 4 de FINN_ULTIMOS4_REALES', () => {
     const ultimos4 = leerUltimos4(process.env['FINN_ULTIMOS4_REALES'] ?? '');
     for (const archivo of archivosDeMuestras(raiz))
       expect(revisar(readFileSync(archivo, 'latin1'), ultimos4), archivo).toEqual([]);
   });
 
-  it('PRU-SEG-BAND-002 [CH-03, SP-01-anonimizar] control: una muestra sin anonimizar falla', () => {
+  it('PRU-SEG-BAND-002 CH-03, SP-01-anonimizar: control: una muestra sin anonimizar falla', () => {
     const hallazgos = revisar(CSV_CRUDO, ULTIMOS4);
     expect(hallazgos).toContain('línea 1: últimos 4 reales 1111');
     expect(hallazgos).toContain('línea 6: secuencia de 13 dígitos');
@@ -70,7 +70,7 @@ describe('PRU-SEG-BAND', () => {
     expect(revisar('fecha 20221111 cuenta 123456789012', ULTIMOS4)).toEqual([]);
   });
 
-  it('PRU-SEG-BAND-002 [CH-03, SP-01-anonimizar] reemplazos de 07 §23: últimos 4 a 0000..0009, personas, cuentas y referencias a ceros; montos y fechas intactos', () => {
+  it('PRU-SEG-BAND-002 CH-03, SP-01-anonimizar: reemplazos de 07 §23: últimos 4 a 0000..0009, personas, cuentas y referencias a ceros; montos y fechas intactos', () => {
     const sms = anonimizarTexto(SMS_CRUDO, config).texto;
     expect(sms).toBe(
       'BAC: VISA 0001: PERSONA A, has realizado una compra por USD 1,250.40 en el comercio: SUPER X 2026/10/05 ref 000000000',
@@ -94,7 +94,7 @@ describe('PRU-SEG-BAND', () => {
     expect(() => anonimizarTexto('VISA ****9876 compra', config)).toThrow(/9876/);
   });
 
-  it('PRU-SEG-BAND-002 [CH-03, SP-01-anonimizar] clasifica los SMS por tipo, con "tipo:" como corrección explícita', () => {
+  it('PRU-SEG-BAND-002 CH-03, SP-01-anonimizar: clasifica los SMS por tipo, con "tipo:" como corrección explícita', () => {
     expect(clasificarSms('has realizado una compra por USD 5.00')).toEqual({
       tipo: 'compra',
       texto: 'has realizado una compra por USD 5.00',
@@ -109,7 +109,7 @@ describe('PRU-SEG-BAND', () => {
     });
   });
 
-  it('PRU-SEG-BAND-002 [CH-03, SP-01-anonimizar] ejecutar escribe solo las salidas anonimizadas y muestras-cobertura.json por institución y formato', async () => {
+  it('PRU-SEG-BAND-002 CH-03, SP-01-anonimizar: ejecutar escribe solo las salidas anonimizadas y muestras-cobertura.json por institución y formato', async () => {
     const csv1252 = Uint8Array.from([
       ...Buffer.from('Titular,JUAN PRUEBA\r\nDescripci'),
       0xf3,
@@ -174,7 +174,7 @@ describe('PRU-SEG-BAND', () => {
     expect(despues.csv).toHaveLength(2);
   });
 
-  it('PRU-SEG-BAND-002 [CH-03, SP-01-anonimizar] ejecutar se detiene sin escribir nada ante una salida que no pasaría el control o una entrada incompleta', async () => {
+  it('PRU-SEG-BAND-002 CH-03, SP-01-anonimizar: ejecutar se detiene sin escribir nada ante una salida que no pasaría el control o una entrada incompleta', async () => {
     const repo = carpeta();
     const base = { 'nombres.txt': '', 'sms/bac.txt': 'compra USD 1.00' };
     // 16 dígitos a ceros siguen siendo 16 dígitos: el control fallaría, así que no se escribe.

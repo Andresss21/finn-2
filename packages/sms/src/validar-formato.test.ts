@@ -12,7 +12,7 @@ const con = (cambios: Partial<FormatoSms>): FormatoSms => ({
 });
 
 describe('PRU-DOM-BAND', () => {
-  it('PRU-DOM-BAND-002 [V-24, BE-46] política de patrones: tres controles exponenciales, F-1..F-3 de 03 §9.5 rechazados, grado ≤ 2 aceptado y las verificaciones previas de 04 §8.5', () => {
+  it('PRU-DOM-BAND-002 [V-24] BE-46: política de patrones: tres controles exponenciales, F-1..F-3 de 03 §9.5 rechazados, grado ≤ 2 aceptado y las verificaciones previas de 04 §8.5', () => {
     // Tres patrones exponenciales de control (V-24): se detectan y se rechazan con la cadena de ataque.
     for (const patron of [
       String.raw`^(?<ultimos4>\d{4}) (?<monto>(?:\d+)+)$`,

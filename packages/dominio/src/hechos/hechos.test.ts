@@ -237,7 +237,7 @@ const COLUMNAS: { readonly [T in TablaEscribible]: Record<keyof FilasPorTabla[T]
 };
 
 describe('PRU-DOM-MOTOR', () => {
-  it('PRU-DOM-MOTOR-101 [BE-09-tipos] Los tipos públicos de los hechos compilan con los nombres del modelo Prisma y TablaEscribible coincide con las tablas [M] y [H] de 03 §0.4', () => {
+  it('PRU-DOM-MOTOR-101 BE-09-tipos: Los tipos públicos de los hechos compilan con los nombres del modelo Prisma y TablaEscribible coincide con las tablas [M] y [H] de 03 §0.4', () => {
     // [M] (18) y [H] (6) de 03 §0.4 / §1.2, sin las [I] ni las [T].
     type Esperadas =
       | 'vigencias_ciclo'
