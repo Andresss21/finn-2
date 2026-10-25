@@ -1475,6 +1475,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-10** | Tamaño de TA-002: §1.1 clasifica `docs/**` como dato, que suma al total de DT-01, y TA-002 copia los documentos y los zips sin cambios. En DT-14, un archivo de `docs/` o de `docs/anexos/` copiado byte a byte de `C:\finn\_entrada\` o de un zip de la entrega es portado y no suma al total | 08 §11.2 (DT-14) | **Aprobado por el usuario** (TA-002); **aplicado [CH-10]** en TA-002 |
 | **CH-11** | "Terminada cuando" de TA-002 decía que `plan:siguiente` lista TA-003, TA-005 y TA-011, pero TA-011 depende de TA-003. Pasa a "lista TA-003 y TA-005"; TA-011 no cambia | 08 TA-002 | **Aprobado por el usuario** (TA-002); **aplicado [CH-11]** en TA-002 |
 | **CH-12** | TU-04 pedía que TA-002 registrara la salida de `anexos.ts` en `plan/tu.md`, que `CLAUDE.md` (§4) y §4.1 le prohíben tocar. La salida va en la descripción del PR de TA-002 y el usuario la copia a `plan/tu.md` con su primer commit firmado (TU-05) | 08 TU-04 | **Aprobado por el usuario** (TA-002); **aplicado [CH-12]** en TA-002 |
+| **CH-14** | Orden del reparto D2. 03 §5.4, 01 §4.1 conv. 2 y `cronologico` de TA-104 ordenan por (fecha, clave de orden, secuencia, orden de línea); 01 §4.5 paso 3, 02 RT-09 y PRU-DOM-MOTOR-104 de TA-105 decían otra cosa. Se unifica en (fecha, clave de orden, secuencia de creación, orden de línea) | 01 §4.5 (paso 3); 02 RT-09; 08 TA-105 (PRU-DOM-MOTOR-104) | **Aprobado por el usuario** (TA-105); **aplicado [CH-14]** en TA-105 |
 
 ---
 
@@ -2292,7 +2293,7 @@ compartido: —
 **Archivos.** `packages/dominio/src/calculo/d2.ts`.
 
 **Pruebas primero.**
-- **PRU-DOM-MOTOR-104** (nueva, DT-17): reparto D2 con el orden (fecha, clave de orden, orden de línea, secuencia), dos líneas de una compra en la misma categoría (CB-08) y el desempate por secuencia (CB-21).
+- **PRU-DOM-MOTOR-104** (nueva, DT-17): reparto D2 con el orden (fecha, clave de orden, secuencia, orden de línea) **[CH-14]**, dos líneas de una compra en la misma categoría (CB-08) y el desempate por secuencia (CB-21).
 - **PRU-PROP-MOTOR-103** (nueva, DT-17): inv. 28 y las propiedades de §4.5: 0 ≤ SobT ≤ sobregiro total; las partes no cubiertas son un sufijo; cada traslado resta y suma el mismo monto (inv. 5).
 - Las dos pruebas nuevas.
 
