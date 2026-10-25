@@ -1,0 +1,24 @@
+{
+  "sms": [
+    {
+      "institucion": "BAC",
+      "archivo": "packages/sms/pruebas/muestras/bac.txt",
+      "tipos": { "compra": 2, "sin_clasificar": 1 }
+    }
+  ],
+  "csv": [
+    {
+      "formato": "bac_debito",
+      "institucion": "BAC",
+      "archivos": ["packages/conciliacion/pruebas/muestras/bac_debito-01.csv"]
+    },
+    {
+      "formato": "bac_tarjeta",
+      "institucion": "BAC",
+      "archivos": [
+        "packages/conciliacion/pruebas/muestras/bac_tarjeta-01.csv",
+        "packages/conciliacion/pruebas/muestras/bac_tarjeta-02.csv"
+      ]
+    }
+  ]
+}

@@ -47,6 +47,7 @@ export default defineConfig({
           name: 'unidad',
           include: [
             'packages/*/src/**/*.test.ts',
+            'tools/ci/**/*.test.ts',
             'tools/db/**/*.test.ts',
             'tools/lint/**/*.test.ts',
             'tools/pruebas/**/*.test.ts',
