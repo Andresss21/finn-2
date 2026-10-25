@@ -3,16 +3,22 @@
 // obligatoria, 5 resumen, 6 `gh pr merge --squash`. `--dry-run` y `--resumen` (Markdown) hacen 1 a 5 y nunca mergean.
 // `--sin-ci` acepta un PR sin ningún check, solo hasta que TA-012 traiga ci.yml, y lo deja escrito en la salida.
 // Sale con 0 (listo o mergeado), 1 (no se mergea) o 3 (con --dry-run o --resumen: todo en orden salvo --aprobado).
+// TA-014: "Qué mirar" obligatorio, el resumen de 08 §1.5 (resumen-revision.ts), DT-20, la aprobación de DT-33
+// (aprobacion.ts; `--aprobado --terminal`) y `--excepcion-tamano "<motivo>"` (CH-15).
 import { spawnSync } from 'node:child_process';
+import { createInterface } from 'node:readline/promises';
 import type { Entradas } from '../pruebas/matriz.ts';
 import { lineasResumen, resumenPendientes } from '../pruebas/pendientes.ts';
 import { resumen } from '../pruebas/resumen.ts';
+import * as ap from './aprobacion.ts';
 import { leerFichas } from './encargo.ts';
+import * as rv from './resumen-revision.ts';
 import * as t from './tamano.ts';
 
 export type Respuesta = { status: number; stdout: string; stderr: string };
 export type Run = (cmd: string, args: string[]) => Respuesta;
-// entrada: carpeta de la entrada de los documentos (CH-10), si existe en esta PC
+// entrada: carpeta de la entrada de los documentos (CH-10), si existe en esta PC; terminal: la tarea que el usuario
+// escribió con --terminal; aprobaciones: carpeta de DT-33 (solo las pruebas la cambian)
 export type Opciones = {
   numero: number;
   aprobado: boolean;
@@ -20,6 +26,9 @@ export type Opciones = {
   resumen: boolean;
   sinCi: boolean;
   entrada?: string;
+  terminal?: string;
+  excepcionTamano?: string;
+  aprobaciones?: string;
 };
 
 const DEL_USUARIO = [
@@ -27,18 +36,7 @@ const DEL_USUARIO = [
   'pruebas/firmantes-permitidos',
   'plan/tu.md',
 ];
-// Áreas de DT-05 (08 §1.5). `docs/` no es un área: sus copias de anexos no son el código que protegen.
-const AREAS: [string, RegExp][] = [
-  ['migraciones y esquema', /^(packages\/db\/prisma\/|tools\/db\/)/],
-  ['motor', /^packages\/dominio\/src\/(calculo|operaciones|valores)\//],
-  [
-    'seguridad',
-    /(^|\/)(proxy\.ts$|api\/)|^tools\/pruebas\/firmas\.sh$|autoriz|aal2|firma|token(?!s?\.(css|json)$)/i,
-  ],
-  ['reloj', /reloj|(^|\/)instrumentation\.ts$/i],
-  ['CI y workflows', /^(\.github\/|tools\/ci\/)/],
-  ['instrucciones de los agentes', /^(CLAUDE\.md|\.claude\/settings\.json)$/],
-];
+const DIFF_COMPLETO = /^(packages\/db\/prisma\/migrations\/|CLAUDE\.md$|\.claude\/settings\.json$)/;
 const CHECKS = (aTerminada: boolean): [string, boolean][] => [
   ['rapido', true],
   ['cierre', aTerminada],
@@ -46,7 +44,10 @@ const CHECKS = (aTerminada: boolean): [string, boolean][] => [
   ['e2e', false],
 ];
 
-export function mergear(op: Opciones, run: Run): { codigo: number; salida: string[] } {
+export function mergear(
+  op: Opciones,
+  run: Run,
+): { codigo: number; salida: string[]; revision: string } {
   const [salida, fallas] = [[] as string[], [] as string[]];
   const out = (paso: number, s: string): number => salida.push(`paso ${paso}: ${s}`);
   const sh = (linea: string, ...extra: string[]): string | null => {
@@ -57,7 +58,8 @@ export function mergear(op: Opciones, run: Run): { codigo: number; salida: strin
   const vista = sh(
     `gh pr view ${n} --json title,body,state,isDraft,headRefName,headRefOid,baseRefName`,
   );
-  if (vista === null) return { codigo: 1, salida: [`no se pudo leer el PR #${n} con gh pr view`] };
+  if (vista === null)
+    return { codigo: 1, salida: [`no se pudo leer el PR #${n} con gh pr view`], revision: '' };
   const pr = JSON.parse(vista) as Record<string, string>;
   const [base, cab, titulo] = [
     `origin/${pr['baseRefName']}`,
@@ -69,9 +71,14 @@ export function mergear(op: Opciones, run: Run): { codigo: number; salida: strin
   sh(`git fetch origin ${pr['baseRefName']} pull/${n}/head`);
   const show = (ref: string, p: string, d = ''): string => sh('git show', `${ref}:${p}`) ?? d;
   const json = <T>(ref: string, p: string, d: string): T => JSON.parse(show(ref, p, d)) as T;
-  const ficha =
-    leerFichas(show(base, 'docs/08-tareas.md')).find((f) => f.id === tarea)?.datos ?? {};
+  const f = leerFichas(show(base, 'docs/08-tareas.md')).find((x) => x.id === tarea);
+  const ficha = f?.datos ?? {};
   salida.push(`pr:mergear #${n} — ${titulo}`);
+  // "Qué mirar:" con su texto en la misma línea o en las siguientes, hasta el próximo campo del informe
+  const campo = /^Qué mirar:(.*(?:\n(?![A-ZÁÉÍÓÚ][\wáéíóúñ ]*:).*)*)/m;
+  const mirar = campo.exec(pr['body'] ?? '')?.[1]?.trim() ?? '';
+  if (!mirar || /^nada\b/i.test(mirar))
+    fallas.push('el informe no tiene "Qué mirar:" con el archivo y lo más riesgoso (08 §1.5)');
   if (pr['state'] !== 'OPEN') fallas.push(`el PR está ${pr['state']}`);
   if (pr['isDraft']) fallas.push('el PR está en borrador');
   if (!ficha['revision'])
@@ -159,41 +166,79 @@ export function mergear(op: Opciones, run: Run): { codigo: number; salida: strin
     { id: tarea, cubre, excepcion: ficha['excepcion'] ?? '' },
     { fuentes, excepciones },
   );
-  out(
-    3,
-    `tamaño medido: prod=${m.prod} archivos=${m.archivos} ca=${m.ca} migraciones=${m.migraciones} total=${m.total}`,
-  );
+  const medido = `prod=${m.prod} archivos=${m.archivos} ca=${m.ca} migraciones=${m.migraciones} total=${m.total}`;
+  out(3, `tamaño medido: ${medido}`);
   out(3, `tamaño declarado: ${ficha['tamano'] ?? '—'}`);
   for (const p of m.portados) out(3, `portado: ${p.ruta} ← ${p.fuente} (huella ${p.huella})`);
-  fallas.push(...m.errores.map((x) => 'paso 3: ' + x));
+  // CH-15: con un motivo, un exceso sigue; sobre el 30 % o en una obligatoria, solo con --aprobado. Migraciones no.
+  const motivo = op.excepcionTamano?.trim() ?? '';
+  const pedida = m.excesos.length > 0 && op.excepcionTamano !== undefined;
+  const migr = m.excesos.some((x) => x.medida === 'migraciones');
+  if (pedida && !motivo) fallas.push('paso 3: --excepcion-tamano necesita un motivo (CH-15)');
+  if (pedida && migr) fallas.push('paso 3: el límite de migraciones no admite excepción (CH-15)');
+  const vale = pedida && !!motivo && !migr;
+  const medidas = m.excesos.map((x) => `${x.medida}=${x.n}/${x.lim}`).join(' ');
+  const excepcion = vale ? `Excepción-tamaño: ${medidas} — ${motivo}` : '';
+  if (vale) out(3, excepcion);
+  const errores = m.errores.filter((x) => !vale || !x.startsWith('DT-01 '));
+  fallas.push(...errores.map((x) => 'paso 3: ' + x));
 
-  // Paso 4: revisión obligatoria por la ficha y por los archivos (DT-05)
+  // Paso 4: revisión obligatoria por la ficha y por los archivos de producción (DT-05, DT-20)
   const criticos = m.detalle.flatMap((d) => {
-    const area = d.ruta.startsWith('docs/') ? undefined : AREAS.find(([, re]) => re.test(d.ruta));
-    return area ? [`${area[0]}: ${d.ruta} (+${d.agregadas} −${d.borradas}, ${d.clase})`] : [];
+    const area = t.areaCritica(d);
+    return area ? [`${area}: ${d.ruta} (+${d.agregadas} −${d.borradas}, ${d.clase})`] : [];
   });
   if (/^[+-]\s*"ci:/m.test(sh(`git diff -U0 ${rango} -- package.json`) ?? ''))
     criticos.push('CI y workflows: package.json (scripts ci:*)');
   const obligatoria = ficha['revision'] === 'obligatoria' || criticos.length > 0;
   out(4, `revisión ${obligatoria ? 'obligatoria' : 'normal'} (ficha: ${ficha['revision'] ?? '—'})`);
   for (const c of criticos) out(4, 'área crítica: ' + c);
-  const faltaAprobacion = obligatoria && !op.aprobado;
+  const exige = obligatoria || (vale && m.excesos.some((x) => x.n > x.lim * 1.3));
+  // DT-33: el archivo que escribe el hook con el "mergeá TA-nnn" del usuario, o la tarea escrita con --terminal
+  let [aprobadoPor, archivoAprobacion] = ['', ''];
+  if (op.aprobado && op.terminal !== undefined) {
+    if (op.terminal.trim().toUpperCase() === tarea) aprobadoPor = 'usuario (terminal)';
+    else fallas.push(`paso 4: la tarea escrita en la terminal no es ${tarea}`);
+  } else if (op.aprobado) {
+    const fecha = (sh(`git log -1 --format=%cI ${cab}`) ?? '').trim();
+    const a = ap.leerAprobacion(tarea, fecha, op.aprobaciones);
+    if (a.ok) [aprobadoPor, archivoAprobacion] = [`usuario (mensaje ${a.huella})`, a.archivo];
+    else fallas.push('paso 4: aprobación (DT-33): ' + a.error);
+  }
+  const faltaAprobacion = exige && !op.aprobado;
   if (faltaAprobacion)
-    out(4, 'revisión obligatoria: el merge exige --aprobado tras el "mergeá" del usuario');
+    out(
+      4,
+      `${obligatoria ? 'revisión obligatoria' : 'excepción de tamaño sobre el 30 %'}: el merge exige --aprobado tras el "mergeá ${tarea}" del usuario`,
+    );
 
-  // Paso 5: resumen (07 §22.2, RS7-09, DT-07, 07 §31.5)
+  // Paso 5: resumen (07 §22.2, RS7-09, DT-07, 07 §31.5) y las secciones de 08 §1.5
   for (const l of [...fichas.lineas, ...lineasResumen(resumenPendientes(base5, e))]) out(5, l);
-  const viejos = archivos.filter((a) => !a.nuevo);
-  const pruebas = viejos.filter((a) => t.clasificar(a.ruta) === 'prueba').map((a) => a.ruta);
-  const quitado = pruebas.length ? (sh(`git diff -U0 ${rango} --`, ...pruebas) ?? '') : '';
-  const ids = quitado
-    .split('\n')
-    .flatMap((l) => (/^-(?!--)/.test(l) ? (l.match(/PRU-[A-Z0-9@-]+/g) ?? []) : []));
-  const datos = viejos.filter((a) => /(^|\/)(escenarios\/datos|__datos__|muestras)\//.test(a.ruta));
-  const cambiadas = [...new Set(ids)]
-    .map((x) => `título o expectativa de ${x}`)
-    .concat(datos.map((a) => `datos ${a.ruta}`));
-  out(5, `pruebas cuyo título o datos cambiaron (RS7-09): ${cambiadas.join('; ') || 'ninguna'}`);
+  const dePrueba = archivos.filter((a) => t.clasificar(a.ruta) === 'prueba').map((a) => a.ruta);
+  const diffPruebas = dePrueba.length ? (sh(`git diff -U0 ${rango} --`, ...dePrueba) ?? '') : '';
+  const datos = archivos.filter(
+    (a) => !a.nuevo && /(^|\/)(escenarios\/datos|__datos__|muestras)\//.test(a.ruta),
+  );
+  const patrones = rv.patrones(f?.secciones['Archivos'] ?? '');
+  const revision = rv.revision({
+    pruebas: rv.pruebasDelDiff(diffPruebas, (r) => show(cab, r), nuevos),
+    cubre: cubre.filter((c) => c && c !== '—'),
+    pru: (ficha['pru'] ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.startsWith('PRU-')),
+    datos: datos.map((a) => a.ruta),
+    ...{ medido, declarado: ficha['tamano'] ?? '—', excepcion, criticos },
+    portados: m.portados.map((p) => `${p.ruta} ← ${p.fuente} (huella ${p.huella})`),
+    fuera: m.detalle
+      .filter((d) => d.clase === 'produccion' && !patrones.some((p) => p.test(d.ruta)))
+      .map((d) => d.ruta),
+    deps: estados.flatMap(([, r = '']) =>
+      /(^|\/)package\.json$/.test(r) ? rv.depsNuevas(show(base, r, '{}'), show(cab, r, '{}')) : [],
+    ),
+    normalCritica: ficha['revision'] === 'normal' && criticos.length > 0,
+    diffCompleto: archivos.filter((a) => DIFF_COMPLETO.test(a.ruta)).map((a) => a.ruta),
+  });
   const act = sh(
     `gh api repos/{owner}/{repo}/activity?ref=refs/heads/${pr['headRefName']}&per_page=100`,
   );
@@ -209,18 +254,17 @@ export function mergear(op: Opciones, run: Run): { codigo: number; salida: strin
   out(5, 'despliegue de emergencia pendiente: ' + emergencia(e.resultadosManuales, sh));
 
   // Paso 6: merge
-  if (fallas.length)
-    return { codigo: 1, salida: [...salida, ...fallas.map((f) => 'FALLA ' + f), 'NO SE MERGEA'] };
+  const fin = (codigo: number, ...l: string[]) => ({ codigo, salida: [...salida, ...l], revision });
+  if (fallas.length) return fin(1, ...fallas.map((x) => 'FALLA ' + x), 'NO SE MERGEA');
   if (op.dryRun || op.resumen)
-    return {
-      codigo: faltaAprobacion ? 3 : 0,
-      salida: [
-        ...salida,
-        `listo${faltaAprobacion ? ' salvo --aprobado' : ''}; el paso 6 (merge) no se ejecutó`,
-      ],
-    };
-  if (faltaAprobacion) return { codigo: 1, salida: [...salida, 'NO SE MERGEA: falta --aprobado'] };
-  const cuerpo = `Tarea: ${tarea}${obligatoria ? '\nAprobado-por: usuario' : ''}`;
+    return fin(
+      faltaAprobacion ? 3 : 0,
+      `listo${faltaAprobacion ? ' salvo --aprobado' : ''}; el paso 6 (merge) no se ejecutó`,
+    );
+  if (faltaAprobacion) return fin(1, 'NO SE MERGEA: falta --aprobado');
+  const cuerpo = [`Tarea: ${tarea}`, aprobadoPor && `Aprobado-por: ${aprobadoPor}`, excepcion]
+    .filter(Boolean)
+    .join('\n');
   const r = run('gh', [
     'pr',
     'merge',
@@ -233,15 +277,13 @@ export function mergear(op: Opciones, run: Run): { codigo: number; salida: strin
     '--body',
     cuerpo,
   ]);
-  return {
-    codigo: r.status ? 1 : 0,
-    salida: [
-      ...salida,
-      r.status
-        ? `gh pr merge falló: ${r.stderr.trim()}`
-        : `mergeado (${cuerpo.replace('\n', '; ')})`,
-    ],
-  };
+  if (!r.status && archivoAprobacion) ap.consumirAprobacion(archivoAprobacion);
+  return fin(
+    r.status ? 1 : 0,
+    r.status
+      ? `gh pr merge falló: ${r.stderr.trim()}`
+      : `mergeado (${cuerpo.replaceAll('\n', '; ')})`,
+  );
 }
 
 /** 07 §31.5: el último despliegue de emergencia (sin contar ensayos) sigue pendiente hasta una corrida verde de main que lo contenga. */
@@ -268,10 +310,25 @@ function emergencia(
 
 if (import.meta.main) {
   const a = process.argv.slice(2);
-  const numero = Number(a.find((x) => /^\d+$/.test(x)));
+  const iExc = a.indexOf('--excepcion-tamano');
+  const numero = Number(a.find((x, i) => /^\d+$/.test(x) && (iExc < 0 || i !== iExc + 1)));
   if (!numero) {
-    console.error('uso: pnpm pr:mergear <número> [--aprobado] [--dry-run] [--resumen] [--sin-ci]');
+    console.error(
+      'uso: pnpm pr:mergear <número> [--aprobado [--terminal]] [--dry-run] [--resumen] [--sin-ci] [--excepcion-tamano "<motivo>"]',
+    );
     process.exit(2);
+  }
+  let terminal: string | undefined;
+  if (a.includes('--terminal')) {
+    if (!a.includes('--aprobado') || !ap.puedePreguntar(process.env, !!process.stdin.isTTY)) {
+      console.error(
+        '--terminal va con --aprobado, en una terminal interactiva y fuera de Claude Code',
+      );
+      process.exit(2);
+    }
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    terminal = await rl.question(`Para aprobar el PR #${numero}, escribí su tarea (TA-nnn): `);
+    rl.close();
   }
   const run: Run = (cmd, args) => {
     const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 256 << 20 });
@@ -284,10 +341,12 @@ if (import.meta.main) {
     resumen: f('--resumen'),
     sinCi: f('--sin-ci'),
   };
-  const r = mergear(
-    { numero, ...op, entrada: process.env['FINN_ENTRADA'] ?? 'C:/finn/_entrada' },
-    run,
+  const entrada = process.env['FINN_ENTRADA'] ?? 'C:/finn/_entrada';
+  const excepcionTamano = iExc >= 0 ? (a[iExc + 1] ?? '') : undefined;
+  const r = mergear({ numero, ...op, entrada, terminal, excepcionTamano }, run);
+  const texto = r.salida.join('\n');
+  console.log(
+    op.resumen ? `${r.revision}\n\n### Comprobaciones\n\n\`\`\`text\n${texto}\n\`\`\`` : texto,
   );
-  console.log(op.resumen ? '```text\n' + r.salida.join('\n') + '\n```' : r.salida.join('\n'));
   process.exit(r.codigo);
 }
