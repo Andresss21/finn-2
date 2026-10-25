@@ -6,6 +6,7 @@
     "apps/web/*.ts",
     "tools/pruebas/*.ts",
     "tools/pruebas/test/*.ts",
-    "tools/db/*.ts"
+    "tools/db/*.ts",
+    "tools/ci/*.ts"
   ]
 }
