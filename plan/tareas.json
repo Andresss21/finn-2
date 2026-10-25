@@ -63,7 +63,7 @@
 
   "TA-106": { "estado": "terminada", "pr": 24 },
 
-  "TA-107": { "estado": "pendiente" },
+  "TA-107": { "estado": "en_curso", "rama": "ta-107-motor-tarjetas-lpa" },
 
   "TA-108": { "estado": "pendiente" },
 
