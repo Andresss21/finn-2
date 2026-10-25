@@ -188,7 +188,7 @@ Textos en español neutro; voseo en lo que se le habla al usuario.
 
 **Dónde se controla.**
 - **En el plan:** cada tarea declara su estimación (`tamano`). El script de verificación (§9) rechaza una estimación que supere un límite.
-- **En el PR:** `pnpm pr:mergear` mide el diff real con `git diff --numstat origin/main...` y la clasificación de arriba. Si supera un límite, no mergea y pide partir la tarea (DT-02: la parte nueva recibe un número nuevo). No hay excepciones por comentario.
+- **En el PR:** `pnpm pr:mergear` mide el diff real con `git diff --numstat origin/main...` y la clasificación de arriba. Si supera un límite, no mergea y pide partir la tarea (DT-02: la parte nueva recibe un número nuevo). Una excepción de tamaño se registra solo con `pr:mergear <n> --excepcion-tamano "<motivo>"`. Para una tarea **normal** que excede un límite en hasta un 30 %, la aplica el orquestador por la regla permanente del usuario; para una **obligatoria**, o un exceso mayor al 30 %, solo vale junto con `--aprobado` después de que el usuario la acepte en la sesión. El motivo y las medidas quedan en el commit de merge (`Excepción-tamaño: prod=607/400 — <motivo>`). Fuera de esto, se parte la tarea (DT-02). **[CH-15]**
 
 **Justificación.**
 - 400 líneas de producción es el tamaño a partir del cual una revisión deja de ver los errores, y cabe con holgura en una sesión de un agente junto con la lectura de las secciones citadas.
@@ -1476,6 +1476,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-11** | "Terminada cuando" de TA-002 decía que `plan:siguiente` lista TA-003, TA-005 y TA-011, pero TA-011 depende de TA-003. Pasa a "lista TA-003 y TA-005"; TA-011 no cambia | 08 TA-002 | **Aprobado por el usuario** (TA-002); **aplicado [CH-11]** en TA-002 |
 | **CH-12** | TU-04 pedía que TA-002 registrara la salida de `anexos.ts` en `plan/tu.md`, que `CLAUDE.md` (§4) y §4.1 le prohíben tocar. La salida va en la descripción del PR de TA-002 y el usuario la copia a `plan/tu.md` con su primer commit firmado (TU-05) | 08 TU-04 | **Aprobado por el usuario** (TA-002); **aplicado [CH-12]** en TA-002 |
 | **CH-14** | Orden del reparto D2. 03 §5.4, 01 §4.1 conv. 2 y `cronologico` de TA-104 ordenan por (fecha, clave de orden, secuencia, orden de línea); 01 §4.5 paso 3, 02 RT-09 y PRU-DOM-MOTOR-104 de TA-105 decían otra cosa. Se unifica en (fecha, clave de orden, secuencia de creación, orden de línea) | 01 §4.5 (paso 3); 02 RT-09; 08 TA-105 (PRU-DOM-MOTOR-104) | **Aprobado por el usuario** (TA-105); **aplicado [CH-14]** en TA-105 |
+| **CH-15** | Excepción de tamaño registrada. En §1.1, "No hay excepciones por comentario." pasa a: una excepción se registra solo con `pr:mergear <n> --excepcion-tamano "<motivo>"`; en una tarea normal con un exceso de hasta el 30 % la aplica el orquestador por la regla permanente del usuario; en una obligatoria, o con un exceso mayor, solo con `--aprobado` tras la aceptación del usuario en la sesión; motivo y medidas en el commit de merge (`Excepción-tamaño:`). El límite de migraciones no admite excepción; DT-15 no cambia | 08 §1.1 (DT-01) | **Aprobado por el usuario** (TA-014); **aplicado [CH-15]** en TA-014 |
 
 ---
 

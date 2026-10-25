@@ -33,6 +33,27 @@ const NOMBRES: Record<string, string> = {
   total: 'total',
 };
 const nombre = (r: string): string => r.slice(r.lastIndexOf('/') + 1);
+// Áreas de DT-05 (08 §1.5)
+const AREAS: [string, RegExp][] = [
+  ['migraciones y esquema', /^(packages\/db\/prisma\/|tools\/db\/)/],
+  ['motor', /^packages\/dominio\/src\/(calculo|operaciones|valores)\//],
+  [
+    'seguridad',
+    /(^|\/)(proxy\.ts$|api\/)|^tools\/pruebas\/firmas\.sh$|autoriz|aal2|firma|token(?!s?\.(css|json)$)/i,
+  ],
+  ['reloj', /reloj|(^|\/)instrumentation\.ts$/i],
+  ['CI y workflows', /^(\.github\/|tools\/ci\/)/],
+  ['instrucciones de los agentes', /^(CLAUDE\.md|\.claude\/settings\.json)$/],
+];
+// DT-20: siempre de producción para esta regla, aunque su clase de §1.1 sea otra (firmas.sh: la tabla de §1.5 lo nombra)
+const SIEMPRE =
+  /^(CLAUDE\.md|\.claude\/settings\.json|packages\/db\/prisma\/migrations\/.*|\.github\/workflows\/.*|tools\/pruebas\/firmas\.sh)$/;
+
+/** DT-20: solo un archivo de producción dentro de un área de DT-05 vuelve obligatoria una tarea. */
+export const areaCritica = (d: { ruta: string; clase: string }): string | undefined =>
+  d.clase === 'produccion' || SIEMPRE.test(d.ruta)
+    ? AREAS.find(([, re]) => re.test(d.ruta))?.[0]
+    : undefined;
 
 /** Clase de 08 §1.1. Lo explícito gana: generado, después dato, después prueba. */
 export function clasificar(r: string): Clase {
@@ -156,8 +177,10 @@ export function medir(
     migraciones: new Set(carpetas).size,
     total: sumar(detalle.filter((d) => d.clase !== 'generado' && d.clase !== 'portado')),
   };
-  for (const [k, n] of Object.entries(v))
-    if (n > (lim[k] ?? 0))
-      errores.push(`DT-01 ${NOMBRES[k]} ${n} > ${lim[k]}${/prod|total/.test(k) ? ' líneas' : ''}`);
-  return { ...v, portados, detalle, errores };
+  const excesos = Object.entries(v).flatMap(([medida, n]) =>
+    n > (lim[medida] ?? 0) ? [{ medida, n, lim: lim[medida] ?? 0 }] : [],
+  );
+  for (const { medida: k, n } of excesos)
+    errores.push(`DT-01 ${NOMBRES[k]} ${n} > ${lim[k]}${/prod|total/.test(k) ? ' líneas' : ''}`);
+  return { ...v, portados, detalle, errores, excesos };
 }
