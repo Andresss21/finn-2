@@ -28,6 +28,14 @@ const comun = { retries: 0 } as const;
 const excluidos = ['**/node_modules/**', '**/dist/**', '**/.next/**', '**/.claude/**'];
 const orden = { shuffle: true, seed: semilla } as const;
 
+// Pruebas que ejecutan `recheck` (04 §8.5). Su fuzzer usa subtiempos de reloj (ataque, incubación,
+// siembra) y con la CPU ocupada estima mal el grado (devuelve 3 para un patrón de grado 2). Por eso
+// viven en su propio proyecto, que `tools/pruebas/vitest.mjs` corre después del resto y de a un archivo.
+const PRUEBAS_RECHECK = [
+  'packages/sms/src/validar-formato.test.ts',
+  'tools/ci/formatos-bac.test.ts',
+];
+
 export default defineConfig({
   test: {
     passWithNoTests: true,
@@ -56,11 +64,22 @@ export default defineConfig({
           // permisos.test.ts corre con `node --test` (pnpm plan:permisos).
           exclude: [
             ...excluidos,
+            ...PRUEBAS_RECHECK,
             '**/*.ctr.test.ts',
             '**/*.int.test.ts',
             '**/*.rh.test.ts',
             'tools/plan/permisos.test.ts',
           ],
+          sequence: orden,
+        },
+      },
+      {
+        extends: false,
+        test: {
+          ...comun,
+          name: 'unidad-recheck',
+          include: PRUEBAS_RECHECK,
+          exclude: excluidos,
           sequence: orden,
         },
       },
