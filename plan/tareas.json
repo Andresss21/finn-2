@@ -53,11 +53,11 @@
 
   "TA-101": { "estado": "terminada", "pr": 15 },
 
-  "TA-102": { "estado": "pendiente" },
+  "TA-102": { "estado": "terminada", "pr": 17 },
 
-  "TA-103": { "estado": "pendiente" },
+  "TA-103": { "estado": "terminada", "pr": 16 },
 
-  "TA-104": { "estado": "pendiente" },
+  "TA-104": { "estado": "terminada", "pr": 18 },
 
   "TA-105": { "estado": "pendiente" },
 
@@ -195,9 +195,9 @@
 
   "TA-174": { "estado": "pendiente" },
 
-  "TA-175": { "estado": "pendiente" },
+  "TA-175": { "estado": "terminada", "pr": 11 },
 
-  "TA-176": { "estado": "pendiente" },
+  "TA-176": { "estado": "terminada", "pr": 19 },
 
   "TA-177": { "estado": "pendiente" },
 
@@ -205,13 +205,13 @@
 
   "TA-179": { "estado": "pendiente" },
 
-  "TA-180": { "estado": "pendiente" },
+  "TA-180": { "estado": "terminada", "pr": 20 },
 
   "TA-181": { "estado": "pendiente" },
 
-  "TA-182": { "estado": "pendiente" },
+  "TA-182": { "estado": "terminada", "pr": 13 },
 
-  "TA-183": { "estado": "pendiente" },
+  "TA-183": { "estado": "terminada", "pr": 21 },
 
   "TA-184": { "estado": "pendiente" },
 

@@ -1,5 +1,12 @@
 {
   "extends": "@finn/config/tsconfig.base.json",
   "compilerOptions": { "types": ["node"], "allowImportingTsExtensions": true },
-  "include": ["*.ts", "apps/web/*.ts", "tools/pruebas/*.ts", "tools/db/*.ts"]
+  "include": [
+    "*.ts",
+    "apps/web/*.ts",
+    "tools/pruebas/*.ts",
+    "tools/pruebas/test/*.ts",
+    "tools/db/*.ts",
+    "tools/ci/*.ts"
+  ]
 }
