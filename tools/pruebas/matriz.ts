@@ -1,19 +1,21 @@
 // tools/pruebas/matriz.ts — matriz de trazabilidad (07 §13): lectura de los documentos, inventario y reglas M7, M8, M12 y M13
-// (TA-006); las reglas de cobertura M1 a M6, M9 a M11 y M14 (TA-007), M15 y M16 (TA-009) viven en reglas.ts. M17 es
-// tools/pruebas/firmas.sh; M18 llega con su tarea.
+// (TA-006); las reglas de cobertura M1 a M6, M9 a M11 y M14 (TA-007), M15 y M16 (TA-009) viven en reglas.ts y M18 en
+// pendientes.ts (TA-015). M17 es tools/pruebas/firmas.sh (TA-009).
 // Portado del prototipo de V7-09/V7-11. Node 24 lo ejecuta sin compilar (solo sintaxis borrable, sin dependencias).
 //   node tools/pruebas/matriz.ts verificar [--puerta] [--resultados <dir>]   sale con 1 si alguna regla falla (job
 //     `rapido`; nocturno con --puerta; job `cierre` con --resultados: informes JSON de Vitest y Playwright, M15)
 //   node tools/pruebas/matriz.ts informe                cobertura por ficha y estado de la puerta
 // Entradas (cambiables con FINN_MATRIZ_*): docs/{01-dominio,04-backend,05-frontend,06-features}.md,
-// pruebas/{inventario,features,mapa-codigo,cuarentena,verificaciones-previas}.json, pruebas/manuales.md y
-// pruebas/manuales/resultados.md.
+// pruebas/{inventario,features,mapa-codigo,cuarentena,verificaciones-previas,pendientes-e2e}.json, pruebas/manuales.md
+// y pruebas/manuales/resultados.md.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { cambiosFuturos, fichas, objetivos } from './documentos.ts';
 import type { Documentos } from './documentos.ts';
 import { cobertura, globARegex, PATRON_CONSULTA, PATRON_OP, REF } from './reglas.ts';
 import type { Cuarentena, Previa } from './reglas.ts';
+import { ES_CA, pendientesE2e } from './pendientes.ts';
+import type { Pendiente } from './pendientes.ts';
 
 export type EstadoFt = 'pendiente' | 'en_curso' | 'terminada';
 export type EstadoCorrida = 'pasada' | 'fallida' | 'omitida';
@@ -26,7 +28,8 @@ export interface Prueba {
 }
 export interface Entradas extends Documentos {
   inventario: { titulo: string; archivo: string }[];
-  features: Record<string, EstadoFt>;
+  features: Record<string, EstadoFt | 'pendiente_e2e'>; // FT-nn → estado; CA-nn.m → pendiente_e2e (M18)
+  pendientes: Pendiente[]; // pruebas/pendientes-e2e.json (CH-08)
   mapa: { patron: string; fts: string[] | 'marco' }[];
   manuales: string; // pruebas/manuales.md
   resultadosManuales: string; // pruebas/manuales/resultados.md (M16); solo lo escribe el usuario, firmado (M17)
@@ -122,6 +125,10 @@ export function verificar(e: Entradas) {
   const { cubre, obj } = cob;
   errores.push(...cob.errores);
   const avisos = cob.avisos;
+  // M18 pendientes de punta a punta (CH-08)
+  const pen = pendientesE2e(e, cob.activas, obj);
+  errores.push(...pen.errores);
+  avisos.push(...pen.avisos);
   // M7 toda referencia citada existe en los documentos
   for (const p of lista)
     for (const x of p.refs)
@@ -133,6 +140,7 @@ export function verificar(e: Entradas) {
       errores.push(`M12 ${f} no está en pruebas/mapa-codigo.json`);
   // M13 features.json solo cita fichas que existen; la diferida no sale de pendiente
   for (const [ft, st] of Object.entries(e.features)) {
+    if (ES_CA.test(ft)) continue; // las marcas pendiente_e2e de los CA las revisa M18
     const f = fs.find((x) => x.ft === ft);
     if (!f) errores.push(`M13 pruebas/features.json cita ${ft}, que no tiene ficha`);
     else if (f.diferida && st !== 'pendiente')
@@ -271,6 +279,9 @@ export function cargarEntradas(raiz = '.', puerta = false, resultados?: string):
       leer(env('INVENTARIO', 'pruebas/inventario.json'), '[]'),
     ) as Entradas['inventario'],
     features: json(features) as Entradas['features'],
+    pendientes: json(
+      leer(env('PENDIENTES', 'pruebas/pendientes-e2e.json'), '[]'),
+    ) as Entradas['pendientes'],
     mapa: json(leer(env('MAPA', 'pruebas/mapa-codigo.json'), '[]')) as Entradas['mapa'],
     manuales: leer(env('MANUALES', 'pruebas/manuales.md')),
     resultadosManuales: leer(env('RESULTADOS_MANUALES', 'pruebas/manuales/resultados.md')),

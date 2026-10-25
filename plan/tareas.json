@@ -5,7 +5,7 @@
 
   "TA-003": { "estado": "terminada", "pr": 4 },
 
-  "TA-004": { "estado": "pendiente" },
+  "TA-004": { "estado": "terminada", "pr": 8 },
 
   "TA-005": { "estado": "terminada", "pr": 3 },
 
@@ -27,7 +27,7 @@
 
   "TA-014": { "estado": "pendiente" },
 
-  "TA-015": { "estado": "pendiente" },
+  "TA-015": { "estado": "terminada", "pr": 14 },
 
   "TA-050": { "estado": "pendiente" },
 
@@ -51,7 +51,7 @@
 
   "TA-100": { "estado": "terminada", "pr": 6 },
 
-  "TA-101": { "estado": "pendiente" },
+  "TA-101": { "estado": "terminada", "pr": 15 },
 
   "TA-102": { "estado": "pendiente" },
 

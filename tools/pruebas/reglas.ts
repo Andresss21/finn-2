@@ -99,7 +99,11 @@ export function cobertura(e: Entradas, lista: Prueba[], ids: Set<string>) {
   for (const m of man)
     if (m.completo) for (const x of m.refs.filter((r) => REF.test(r))) anotar(x, m.id);
 
-  const estado = (ft: string): EstadoFt => e.features[ft] ?? 'pendiente';
+  // Las claves CA-nn.m de features.json (pendiente_e2e, M18) no son estados de ficha
+  const estado = (ft: string): EstadoFt => {
+    const v = e.features[ft] ?? 'pendiente';
+    return v === 'pendiente_e2e' ? 'pendiente' : v;
+  };
   const ex = (ft: string): boolean =>
     exigida(
       fs.find((f) => f.ft === ft),
