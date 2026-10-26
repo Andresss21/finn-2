@@ -87,7 +87,7 @@ describe('PRU-ESC-MOTOR', () => {
     expect(comparar({}, roto).fallos).toEqual(['identidad: 900 + 50 + 0 + 0 ≠ 1000']);
   });
 
-  it('PRU-ESC-MOTOR-004 [ESC-01] regla 4: la base de "continúa" se corre hasta el paso y se compara', async () => {
+  it('PRU-ESC-MOTOR-004 [ESC-01] regla 4: la base de continúa se corre hasta el paso y se compara', async () => {
     const base = (lpa: number) =>
       esc('B-04', [
         { n: '1', ops: [ingreso(1000)], espera: { lpa } },
