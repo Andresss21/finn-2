@@ -1,0 +1,43 @@
+{
+  "v7_07": {
+    "hoy": "2027-03-12T08:20:00Z",
+    "runs": [
+      {
+        "id": 1,
+        "name": "ci",
+        "jobs": [
+          { "started_at": "2027-03-01T10:00:00Z", "completed_at": "2027-03-01T10:02:31Z" },
+          { "started_at": "2027-03-01T10:02:40Z", "completed_at": "2027-03-01T10:06:00Z" }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "ci",
+        "jobs": [
+          { "started_at": "2027-03-02T10:00:00Z", "completed_at": "2027-03-02T10:11:00Z" },
+          { "started_at": null, "completed_at": null }
+        ]
+      },
+      {
+        "id": 3,
+        "name": "nocturno",
+        "jobs": [{ "started_at": "2027-03-03T08:15:00Z", "completed_at": "2027-03-03T08:35:01Z" }]
+      }
+    ],
+    "minutos": 39
+  },
+  "proyeccion": {
+    "hoy": "2026-10-12T08:15:00Z",
+    "usados": 700,
+    "proyeccion": 1808,
+    "modo": "ahorro"
+  },
+  "normal": { "hoy": "2026-10-12T08:15:00Z", "usados": 500, "proyeccion": 1292, "modo": "normal" },
+  "reserva": {
+    "hoy": "2026-10-20T08:15:00Z",
+    "cron_restauracion": "0 9 * * 0",
+    "pendiente": 38,
+    "amenazada": { "usados": 1280, "recortes": ["e2e-pr-al-pasar-a-listo", "nocturno-semanal"] },
+    "agotada": { "usados": 1500, "aviso": 167 }
+  }
+}

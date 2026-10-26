@@ -111,10 +111,27 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(pkg.scripts['ci:integracion']).toContain('publicar-resultados.mjs integracion');
   });
 
-  it('workflows: permisos mínimos; solo rapido agrega statuses: write (CH-16)', () => {
+  it('workflows: permisos mínimos; rapido agrega statuses: write (CH-16) y e2e issues: write (07 §7.3)', () => {
     expect(wf.permissions).toEqual(LECTURA);
     expect(job('rapido').permissions).toEqual({ ...LECTURA, statuses: 'write' });
-    for (const n of ['e2e', 'cierre']) expect(job(n).permissions, n).toBeUndefined();
+    expect(job('e2e').permissions).toEqual({ ...LECTURA, issues: 'write' });
+    expect(job('cierre').permissions).toBeUndefined();
+  });
+
+  it('workflows: rapido restaura el modo de M4 por prefijo antes de ci:rapido, sin guardarlo (07 §6.5)', () => {
+    const pasos = job('rapido').steps;
+    const i = pasos.findIndex((p) => p.uses?.startsWith('actions/cache/restore@'));
+    expect(pasos[i]?.with).toMatchObject({
+      path: 'test-results/ci-modo',
+      'restore-keys': 'ci-modo-',
+    });
+    expect(i).toBeLessThan(pasos.findIndex((p) => p.run === 'pnpm ci:rapido'));
+    expect(
+      Object.values(wf.jobs)
+        .flatMap((j) => j.steps)
+        .some((p) => /cache\/save@/.test(p.uses ?? '')),
+    ).toBe(false);
+    expect(wf.env?.['FINN_ACCION']).toBe('${{ github.event.action }}');
   });
 
   it('workflows: gitleaks fijado por versión y suma, antes de ci:rapido y solo en rapido', () => {
@@ -137,11 +154,53 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     const node = /^NODE=(\d+)$/m.exec(readFileSync(join(raiz, 'infra', 'versiones.env'), 'utf8'));
     for (const [n, j] of Object.entries(wf.jobs)) {
       for (const p of j.steps.filter((x) => x.uses !== undefined))
-        expect(p.uses, n).toMatch(/^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/);
+        expect(p.uses, n).toMatch(/^[\w.-]+\/[\w.-]+(\/[\w.-]+)?@[0-9a-f]{40}$/);
       const setup = j.steps.find((p) => p.uses?.startsWith('actions/setup-node@'));
       expect(String(setup?.with?.['node-version']), n).toBe(node?.[1]);
       expect(setup?.with?.['cache'], n).toBe('pnpm');
     }
+  });
+});
+
+describe('workflows: nocturno.yml (07 §6.1, §6.5; CH-02)', () => {
+  const n = load(
+    readFileSync(join(raiz, '.github', 'workflows', 'nocturno.yml'), 'utf8'),
+  ) as Workflow;
+  const nj = (x: string): Job => n.jobs[x] ?? { steps: [] };
+
+  it('workflows: lunes, miércoles y viernes a las 08:15 UTC, y a mano', () => {
+    expect(n.on['schedule']).toEqual([{ cron: '15 8 * * 1,3,5' }]);
+    expect(Object.keys(n.on).sort()).toEqual(['schedule', 'workflow_dispatch']);
+    expect(n.permissions).toEqual({ contents: 'read' });
+    for (const j of Object.values(n.jobs))
+      for (const p of j.steps.filter((x) => x.uses !== undefined))
+        expect(p.uses).toMatch(/^[\w.-]+\/[\w.-]+(\/[\w.-]+)?@[0-9a-f]{40}$/);
+  });
+
+  it('workflows: minutos corre siempre, solo él lee la API y sube minutos-AAAAMM por 90 días (CH-02)', () => {
+    const m = nj('minutos');
+    expect(m.permissions).toEqual({ contents: 'read', actions: 'read' });
+    expect(m.outputs?.['correr']).toBe('${{ steps.minutos.outputs.correr }}');
+    const art = m.steps.find((p) => p.uses?.startsWith('actions/upload-artifact@'));
+    expect(art?.with).toMatchObject({
+      name: 'minutos-${{ steps.minutos.outputs.mes }}',
+      path: 'test-results/minutos/',
+      'retention-days': 90,
+    });
+  });
+
+  it('workflows: las suites dependen de minutos, corren con correr y llaman solo a pnpm ci:nocturno', () => {
+    const suites = Object.entries(n.jobs).filter(([x]) => x !== 'minutos');
+    expect(suites.length).toBeGreaterThan(0);
+    for (const [x, j] of suites) {
+      expect(j.name).toBe(x);
+      expect(lista(j.needs), x).toEqual(['minutos']);
+      expect(j.if, x).toBe("needs.minutos.outputs.correr == 'true'");
+      expect(j.permissions, x).toBeUndefined();
+      const runs = j.steps.flatMap((p) => (p.run ? [p.run.trim()] : []));
+      expect(runs, x).toEqual([INSTALAR, 'pnpm ci:nocturno']);
+    }
+    expect(pkg.scripts['ci:nocturno']).toBe('node tools/ci/afecta.mjs nocturno');
   });
 });
 

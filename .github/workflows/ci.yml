@@ -1,6 +1,7 @@
 # CI de Finn (TA-012; 07 §6.1, §6.2, §32.2; DP-10, DP-33, DP-34; CH-16). Cada job llama solo a sus `pnpm ci:<job>`;
 # las decisiones (M1 a M3 y cierre) viven en tools/ci/afecta.mjs y tools/ci/workflows.test.ts comprueba este archivo.
 # `rapido` corre `integracion` dentro (M5) y la publica como estado de commit aparte. `desplegar` llega con B5.
+# M4 (TA-013; 07 §6.5): `rapido` restaura el modo que dejó el nocturno; tools/ci/minutos.ts y afecta.mjs lo aplican.
 name: ci
 
 on:
@@ -22,6 +23,7 @@ permissions:
 env:
   FINN_EVENTO: ${{ github.event_name }}
   FINN_BORRADOR: ${{ github.event.pull_request.draft }}
+  FINN_ACCION: ${{ github.event.action }}
   FINN_BASE: ${{ github.event_name == 'push' && github.event.before || 'origin/main' }}
   FC_RUNS: ${{ github.event_name == 'push' && '2000' || '300' }}
 
@@ -66,6 +68,12 @@ jobs:
           tar -xzf "$archivo" gitleaks
           echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
       - run: pnpm install --frozen-lockfile
+      # La entrada más reciente (la de main se ve desde los PR); minutos.ts usa solo la del mes en curso
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: test-results/ci-modo
+          key: ci-modo-${{ github.run_id }}
+          restore-keys: ci-modo-
       - id: rapido
         run: pnpm ci:rapido
       - if: steps.rapido.outputs.integracion == 'true'
@@ -87,6 +95,12 @@ jobs:
     if: needs.rapido.outputs.e2e == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # 07 §7.3: issues: write solo aquí, para el issue `prueba-inestable` de cada prueba flaky
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+      issues: write
     env:
       FINN_E2E_GREP: ${{ needs.rapido.outputs.grep_e2e }}
     steps:
@@ -100,7 +114,9 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
-      - run: pnpm ci:e2e
+      - env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: pnpm ci:e2e
       # El informe JSON para cierre; las trazas solo existen si una prueba falló (07 §6.4: 3 días)
       - if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
