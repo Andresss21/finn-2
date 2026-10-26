@@ -5,7 +5,7 @@
 // mismas reglas (N5): no se filtra en ningún paso.
 import type { Asignacion, Categoria, Hechos, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
-import type { FechaLocal } from '../valores/fecha-local';
+import { FechaLocal } from '../valores/fecha-local';
 import { actividadDePago, actividadNormal } from './actividad';
 import { asignado, noCubiertaDe, type RepartoD2, repartoD2, trasladoA } from './d2';
 import { type Aporte, aportes, consumos, type HechosDeConsumo } from './devoluciones';
@@ -50,7 +50,10 @@ export interface Celda {
 }
 
 export interface Presupuesto {
-  /** Del más antiguo con algún hecho o asignación hasta el activo o la última asignación. */
+  /**
+   * Del más antiguo con algún hecho o asignación hasta el activo o la última asignación, más los
+   * `proyectados` períodos siguientes (proyección con actividad cero, §4.6).
+   */
   readonly periodos: readonly Periodo[];
   readonly activo: Periodo;
   /** En orden de evaluación: por período; dentro de él, las normales y después las de pago. */
@@ -65,12 +68,17 @@ const en = (p: Periodo, fecha: FechaLocal) => p.inicio <= fecha && fecha <= p.fi
 const suma = (xs: readonly Centavos[]) => xs.reduce(Centavos.sumar, Centavos.cero);
 const negativo = (x: Centavos) => Centavos.max(Centavos.cero, Centavos.negar(x));
 
-/** Primer y último período: §4.1 conv. 5 y las asignaciones futuras (proyección, §4.6). */
+/**
+ * Primer y último período: §4.1 conv. 5 y las asignaciones futuras (proyección, §4.6), más
+ * `proyectados` períodos posteriores al último con datos. Esos no tienen hechos ni asignaciones:
+ * con la misma fórmula dan Arr = máx(0, Disp anterior) y Asig = Act = 0.
+ */
 function rango(
   h: HechosDePresupuesto,
   c: Ciclo,
   hoy: FechaLocal,
   implicitos: readonly PagoImplicito[],
+  proyectados: number,
 ) {
   const fechas = [
     hoy,
@@ -80,7 +88,8 @@ function rango(
     ...implicitos.map((x) => x.fecha),
   ];
   const desde = fechas.reduce((a, b) => (b < a ? b : a));
-  const hasta = fechas.reduce((a, b) => (b > a ? b : a));
+  let hasta = fechas.reduce((a, b) => (b > a ? b : a));
+  for (let k = 0; k < proyectados; k++) hasta = FechaLocal.sumarDias(periodoDe(c, hasta).fin, 1);
   return periodosEntre(c, periodoDe(c, desde).inicio, hasta);
 }
 
@@ -94,8 +103,9 @@ export function presupuesto(
   c: Ciclo,
   hoy: FechaLocal,
   pagosImplicitos: readonly PagoImplicito[] = [],
+  proyectados = 0,
 ): Presupuesto {
-  const periodos = rango(h, c, hoy, pagosImplicitos);
+  const periodos = rango(h, c, hoy, pagosImplicitos, proyectados);
   const normales = h.categorias.filter((x) => x.clase === 'normal');
   const dePago = h.categorias.filter((x) => x.clase === 'pago');
   const ks = consumos(h, c);
