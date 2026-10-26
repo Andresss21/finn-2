@@ -1,8 +1,8 @@
 // Selector de Inicio (04 §6.1; BE-37 horizonte de 7 días; CF-18 primeros pasos en 06 §3.15). Los montos
 // salen de la instantánea y de `avisosDeEstado` (AV-14, AV-17, AV-20); no hay fórmulas propias.
 // Fuera del selector quedan lo que lee la consulta ([H] y [T]: `Encabezado`, `bandeja`,
-// `cambiosRetroactivos`, `recientes`, `hallazgosRitmo`) y las `accion: Propuesta` de AV-08 y AV-14,
-// que arma la aplicación (04 §7.10).
+// `cambiosRetroactivos`, `recientes`) y las `accion: Propuesta` de AV-08, AV-14 y de los hallazgos de
+// ritmo, que arma la aplicación (04 §7.10); `hallazgosRitmo` sale del selector `ritmo` (06 §3.7, CF-06).
 import { avisosDeEstado } from '../avisos/estado';
 import { desgloseAlPagar } from '../calculo/patrimonio';
 import { pagoExcedente } from '../calculo/sobregiros';
@@ -17,6 +17,8 @@ import {
   type SobregiroDto,
   sobregiroDe,
 } from './comunes';
+import { type HallazgoDeRitmo, ritmo } from './reportes/ritmo';
+import { RITMO_INICIO_MAX } from './reportes/umbrales';
 
 /** Horizonte de "próximos pagos" en Inicio: 7 días (BE-37). */
 export const HORIZONTE_PROXIMOS_PAGOS = 7;
@@ -55,6 +57,8 @@ export interface InicioSel {
     readonly metasVencidas: { categoria: Ref; falta: Centavos }[];
     /** Sin `accion`: la propuesta de AV-14 la arma la aplicación. */
     readonly archivadasConDisponible: { categoria: Ref; disponible: Centavos }[];
+    /** Los RITMO_INICIO_MAX de mayor impacto de `ritmo` (06 §3.7); sin texto ni propuesta. */
+    readonly hallazgosRitmo: HallazgoDeRitmo[];
     readonly pagosTarjetaProximos: {
       tarjeta: Ref;
       fechaPago: FechaLocal;
@@ -178,6 +182,7 @@ export function inicio(i: Instantanea, smsConectado: boolean): InicioSel {
           categoria: nom.categoria(a.datos.categoriaId as Uuid),
           disponible: a.datos.monto as Centavos,
         })),
+      hallazgosRitmo: ritmo(i).hallazgos.slice(0, RITMO_INICIO_MAX),
       pagosTarjetaProximos,
     },
     primerosPasos: hecho.cuenta && hecho.categorias && hecho.sms ? null : hecho,

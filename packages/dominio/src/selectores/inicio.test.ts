@@ -203,6 +203,7 @@ const i = estado();
 describe('selectores de Inicio y detalle de LPA', () => {
   it('PRU-DOM-PRES-104 [AV-07, AV-14, AV-17] Inicio: atención, próximos pagos a 7 días (BE-37), pagos de tarjeta y patrimonio', () => {
     const x = inicio(i, false);
+    expect(x.atencion.hallazgosRitmo).toEqual([]);
     expect([x.lpa, x.enCamino, x.lpaNegativo, x.reduccionProyectadaAlCierre]).toEqual([
       c(1000),
       0,
