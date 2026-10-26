@@ -123,7 +123,7 @@
 
   "TA-131": { "estado": "terminada", "pr": 72 },
 
-  "TA-132": { "estado": "pendiente" },
+  "TA-132": { "estado": "en_curso", "rama": "ta-132-escenarios-11-20" },
 
   "TA-133": { "estado": "pendiente" },
 
