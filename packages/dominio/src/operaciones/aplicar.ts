@@ -16,6 +16,12 @@ import { verificarInvariantes } from '../invariantes';
 import type { FechaLocal } from '../valores/fecha-local';
 import { aplicarCambios, verificarComunes } from './comunes';
 import { avisosNuevosDeEstado, impacto, retroactiva } from './impacto';
+import { op01 } from './op-01';
+import { op02 } from './op-02';
+import { op03 } from './op-03';
+import { op04 } from './op-04';
+import { op05 } from './op-05';
+import { op06 } from './op-06';
 import { op48 } from './op-48';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
 
@@ -35,6 +41,12 @@ type Operacion = ComandoDominio['operacion'];
 const OPERACIONES: {
   readonly [K in Operacion]: Manejador<Extract<ComandoDominio, { operacion: K }>>;
 } = {
+  'OP-01': op01,
+  'OP-02': op02,
+  'OP-03': op03,
+  'OP-04': op04,
+  'OP-05': op05,
+  'OP-06': op06,
   'OP-48': (antes, comando) => {
     const r = op48(antes.hechos.prestamos, comando);
     return esRechazo(r) ? r : { cambios: r };
@@ -46,10 +58,11 @@ const AV01 = { codigo: 'AV-01', momento: 'antes_y_despues', requiereConfirmacion
 
 /** El contrato público (04 §2.4); devuelve `ResultadoAplicar`. */
 export function aplicar(hechos: Hechos, comando: ComandoDominio, hoy: FechaLocal) {
-  const tabla: Partial<Record<string, Manejador<ComandoDominio>>> = OPERACIONES;
+  // Cada manejador recibe solo la variante de su OP: la tabla la elige por `operacion`.
+  const tabla = OPERACIONES as Partial<Record<string, Manejador<never>>>;
   const manejador = tabla[comando.operacion];
   if (manejador === undefined) throw new TypeError(`operación desconocida: ${comando.operacion}`);
-  return ejecutar(hechos, comando, hoy, manejador);
+  return ejecutar(hechos, comando, hoy, manejador as Manejador<ComandoDominio>);
 }
 
 /** El marco de `aplicar` con una operación dada (también la usan las pruebas del marco). */

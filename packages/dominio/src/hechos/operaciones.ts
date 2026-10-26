@@ -1,9 +1,9 @@
 // Contrato de `aplicar` (04 §2.4, §7.5): comando, cambios, rechazos, impacto y avisos.
 import type { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import type { FilasPorTabla, Prestamo } from './filas';
+import type { Cuenta, FilasPorTabla, Inversion, Prestamo, Tarjeta } from './filas';
 import type { Hechos } from './hechos';
-import type { Uuid } from './identificadores';
+import type { GeneradorIds, Instante, Uuid } from './identificadores';
 
 /** Tablas [M] y [H] que una operación puede escribir (03 §0.4). */
 export type TablaEscribible = keyof FilasPorTabla;
@@ -22,8 +22,52 @@ export interface ComandoOp48 {
   readonly esperado: Partial<CamposPrestamo>;
 }
 
+/** Atributos de un subtipo de cuenta que trae la entrada (sin `cuentaId` ni `revision`). */
+type Sub<T> = Omit<T, 'cuentaId' | 'revision'>;
+export type SubtipoCuenta = Sub<Tarjeta> | Sub<Prestamo> | Sub<Inversion>;
+type Editables<T> = Partial<Omit<Sub<T>, 'tipo'>>;
+
+/** Entrada resuelta de las OP de cuentas (04 §3.1, BE-10); la aplicación agrega id, instante e ids. */
+export interface ComandoOp01 {
+  readonly operacion: 'OP-01';
+  readonly id: Uuid;
+  readonly instante: Instante;
+  readonly ids: GeneradorIds;
+  readonly cuenta: Pick<Cuenta, 'tipo' | 'nombre' | 'institucionId' | 'ultimos4'> & {
+    readonly fechaApertura?: FechaLocal; // por defecto, hoy
+  };
+  readonly subtipo?: SubtipoCuenta; // falta solo en efectivo
+  readonly saldo: Centavos; // como lo escribe el usuario: en una tarjeta, positivo = deuda
+}
+export interface ComandoOp02 {
+  readonly operacion: 'OP-02';
+  readonly cuentaId: Uuid;
+  readonly instante: Instante;
+  readonly ids: GeneradorIds;
+  readonly campos: Partial<Pick<Cuenta, 'nombre' | 'institucionId' | 'ultimos4' | 'fechaApertura'>>;
+  readonly subtipo?: Editables<Tarjeta> | Editables<Prestamo> | Editables<Inversion>;
+}
+export interface ComandoOp03 {
+  readonly operacion: 'OP-03';
+  readonly orden: readonly Uuid[];
+}
+export interface ComandoOp04 {
+  readonly operacion: 'OP-04';
+  readonly cuentaId: Uuid;
+  readonly devolverAsignacionesFuturas?: boolean;
+}
+export interface ComandoOp05 {
+  readonly operacion: 'OP-05';
+  readonly cuentaId: Uuid;
+}
+export interface ComandoOp06 {
+  readonly operacion: 'OP-06';
+  readonly cuentaId: Uuid;
+}
+
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
-export type ComandoDominio = ComandoOp48;
+export type ComandoDominio =
+  ComandoOp01 | ComandoOp02 | ComandoOp03 | ComandoOp04 | ComandoOp05 | ComandoOp06 | ComandoOp48;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =
