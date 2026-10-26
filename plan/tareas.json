@@ -299,7 +299,7 @@
 
   "TA-251": { "estado": "pendiente" },
 
-  "TA-252": { "estado": "pendiente" },
+  "TA-252": { "estado": "en_curso", "rama": "ta-252-scripts-fases" },
 
   "TA-253": { "estado": "pendiente" },
 

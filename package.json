@@ -42,7 +42,8 @@
     "ci:cierre": "pnpm pruebas:listar && node tools/pruebas/matriz.ts verificar --resultados test-results/informes",
     "ci:local": "node tools/ci/afecta.mjs local",
     "ci:politica-patrones": "node tools/ci/politica-patrones.ts",
-    "test:respaldo": "node --test --test-reporter=spec \"tools/respaldo/test/**/*.test.*\""
+    "test:respaldo": "node --test --test-reporter=spec \"tools/respaldo/test/**/*.test.*\"",
+    "docs:comprobar": "node tools/docs/comprobar.mjs"
   },
   "prettier": "@finn/config/prettier",
   "devDependencies": {
