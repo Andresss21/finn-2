@@ -393,7 +393,7 @@ tu: TU-03, TU-06
 
 ```hito
 despues: TA-147
-requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231
+requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235
 tu: —
 ```
 
@@ -1638,7 +1638,7 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 122 | TA-122 | B2 | 1 | HT-2 | obligatoria | `aplicar`: aprobar todos, descartar, reglas, reprocesar y crear a mano (OP-38, OP-39, OP-41, OP-49, OP-50) | 300 | 0 |
 | 123 | TA-123 | B2 | 1 | HT-2 | obligatoria | `aplicar`: conciliación y verificar saldo (OP-45, OP-46, OP-47, OP-53) | 320 | 0 |
 | 124 | TA-124 | B2 | 1 | HT-2 | normal | `operacionesArb` y propiedades de períodos, asignaciones y estructura | 0 | 0 |
-| 125 | TA-125 | B2 | 1 | HT-2 | normal | Selectores de Inicio, Presupuesto y detalle de LPA | 320 | 0 |
+| 125 | TA-125 | B2 | 1 | HT-2 | normal | Selectores de Presupuesto (parte 1; la parte 2 es TA-234) | 376 | 0 |
 | 126 | TA-126 | B2 | 1 | HT-2 | normal | Selectores de detalle de categoría, metas y estructura | 280 | 0 |
 | 127 | TA-231 | B2 | 1 | HT-2 | normal | Selector de detalle de categoría de pago de tarjeta (parte 2 de TA-126) | 300 | 0 |
 | 128 | TA-127 | B2 | 1 | HT-2 | normal | Selectores de cuentas, detalle de cuenta, actividad y detalle de transacción | 320 | 0 |
@@ -1652,6 +1652,8 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 136 | TA-138 | B2 | 1 | HT-2 | obligatoria | `aplicar`: condonar, devolver y eliminar evento (OP-32 a OP-34) | 340 | 0 |
 | 137 | TA-139 | B2 | 1 | HT-2 | obligatoria | `aplicar`: programadas (OP-42 a OP-44, OP-51) | 300 | 0 |
 | 138 | TA-134 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-37, ESC-38, ESC-39, ESC-42, ESC-43, ESC-44, ESC-46, ESC-47, ESC-48, ESC-49 | 20 | 0 |
+| 139 | TA-234 | B2 | 1 | HT-2 | normal | Selectores de Inicio y detalle de LPA (parte 2 de TA-125) | 275 | 0 |
+| 140 | TA-235 | B2 | 1 | HT-2 | obligatoria | Proyección de períodos futuros en `calcular` (04 §6.2, 01 §4.6) | 120 | 0 |
 | 150 | TA-150 | B3 | 1 | HT-3 | obligatoria | `escribir()` y `leer()`: el protocolo de 04 §4.2 | 300 | 0 |
 | 151 | TA-151 | B3 | 1 | HT-3 | normal | Errores de la base y conversiones de fechas y montos | 220 | 0 |
 | 152 | TA-152 | B3 | 1 | HT-3 | normal | Carga de hechos (BE-21) | 240 | 0 |
@@ -2913,7 +2915,9 @@ compartido: —
 
 **Terminada cuando.** La prueba pasa con 2.000 casos en local.
 
-#### TA-125 Selectores de Inicio, Presupuesto y detalle de LPA
+#### TA-125 Selectores de Presupuesto (parte 1; la parte 2 es TA-234)
+
+Partida en dos por tamaño (DT-02, 08 §1.2): esta parte tiene los tipos comunes de los selectores y el selector de Presupuesto; Inicio y el detalle de LPA son TA-234. Un período posterior al último que calculó `calcular` lanza `RangeError` hasta que TA-235 lo proyecte.
 
 ```tarea
 orden: 125
@@ -2923,26 +2927,89 @@ depende: TA-110
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=320 archivos=4 ca=0 migraciones=0 total=760
-cubre: SEL-inicio, SEL-presupuesto, SEL-detalleLpa, BE-37, BE-39, CF-18
+tamano: prod=376 archivos=2 ca=0 migraciones=0 total=775
+cubre: SEL-presupuesto, BE-39
 pru: PRU-DOM-PRES-102
 compartido: CF-25 (proporciones de Presupuesto; dueño TA-136)
 ```
 
 **Qué construir.**
-- `selectores/inicio.ts`, `presupuesto.ts`, `detalle-lpa.ts` con los campos de 04 §6.1, §6.2 y §6.4 que salen del motor.
+- `selectores/comunes.ts` (`Ref`, `SobregiroDto`, `PeriodoDto`, nombres por id y causas del excedente) y `selectores/presupuesto.ts` con los campos de 04 §6.2 que salen del motor, los filtros de BE-39 y las proporciones de CF-25.
 
-**Leer.** 04 §6.0.5, §6.1, §6.2, §6.4; 06 §3.15 (CF-18), §5.8 (CF-25).
+**Leer.** 04 §6.0.5, §6.2; 06 §5.8 (CF-25).
 
-**Archivos.** `packages/dominio/src/selectores/{inicio,presupuesto,detalle-lpa}.ts`.
+**Archivos.** `packages/dominio/src/selectores/{comunes,presupuesto}.ts`.
 
 **Pruebas primero.**
-- **PRU-DOM-PRES-102** (nueva, DT-17): los datos de `InicioDto`, `PresupuestoDto` (con los filtros de BE-39 y las proporciones de CF-25) y `DetalleLpaDto` salen de la instantánea sin fórmulas propias; próximos pagos con horizonte de 7 días (BE-37) y primeros pasos (CF-18).
+- **PRU-DOM-PRES-102** (nueva, DT-17): los datos de `PresupuestoDto` (con los filtros de BE-39 y las proporciones de CF-25) salen de la instantánea sin fórmulas propias; período cerrado y período fuera del rango calculado.
 - La prueba nueva.
 
 **Comandos.** `pnpm test:unidad -t "PRU-DOM-PRES-102"`; `pnpm ci:local`.
 
 **Terminada cuando.** La prueba pasa; ningún selector repite una fórmula de `calculo/` (revisión del informe).
+
+#### TA-234 Selectores de Inicio y detalle de LPA (parte 2 de TA-125)
+
+Parte 2 de TA-125 (DT-02, 08 §1.2): los selectores de Inicio (04 §6.1) y del detalle de Listo para asignar (04 §6.4).
+
+```tarea
+orden: 139
+bloque: B2
+hito: HT-2
+depende: TA-125
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=275 archivos=2 ca=0 migraciones=0 total=480
+cubre: SEL-inicio, SEL-detalleLpa, BE-37, CF-18
+pru: PRU-DOM-PRES-104
+compartido: —
+```
+
+**Qué construir.**
+- `selectores/inicio.ts` y `selectores/detalle-lpa.ts` con los campos de 04 §6.1 y §6.4 que salen del motor (la consulta arma `Encabezado`, `bandeja`, `cambiosRetroactivos`, `hallazgosRitmo`, `recientes` y las `accion` de AV-08 y AV-14).
+
+**Leer.** 04 §6.0.5, §6.1, §6.4; 06 §3.15 (CF-18).
+
+**Archivos.** `packages/dominio/src/selectores/{inicio,detalle-lpa}.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-PRES-104** (nueva, DT-17): los datos de `InicioDto` y `DetalleLpaDto` salen de la instantánea sin fórmulas propias; próximos pagos con horizonte de 7 días (BE-37), primeros pasos (CF-18) y la descomposición de LPA que suma `lpa`.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-PRES-104"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa; ningún selector repite una fórmula de `calculo/` (revisión del informe).
+
+#### TA-235 Proyección de períodos futuros en `calcular` (04 §6.2, 01 §4.6)
+
+```tarea
+orden: 140
+bloque: B2
+hito: HT-2
+depende: TA-109
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=120 archivos=2 ca=0 migraciones=0 total=300
+cubre: —
+pru: PRU-DOM-MOTOR-111
+compartido: —
+```
+
+**Qué construir.**
+- `presupuesto()` de un período posterior al último de la instantánea da el Disponible proyectado con actividad cero (04 §6.2, 01 §4.6), sin que los selectores calculen nada. El diseño (extender el rango de períodos en `calcular` o una función del motor) lo decide esta tarea. Hoy `selectores/presupuesto.ts` lanza `RangeError` en ese caso (límite conocido de TA-125). No bloquea nada de B2; la necesita la consulta de presupuesto de B3 (TA-169).
+
+**Leer.** 01 §4.6; 04 §2.4, §6.2.
+
+**Archivos.** `packages/dominio/src/calculo/{calcular,disponible}.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-MOTOR-111** (nueva, DT-17): el período siguiente al último con datos tiene Arr = máx(0, último Disp), Asig = Act = 0 y se obtiene de la instantánea; las invariantes de `verificarInvariantes` siguen sin romperse.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-MOTOR-111"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa; `PRU-PROP-MOTOR-105` sigue en verde.
 
 #### TA-126 Selectores de detalle de categoría, metas y estructura
 
@@ -4304,7 +4371,7 @@ compartido: —
 orden: 168
 bloque: B3
 hito: HT-3
-depende: TA-159, TA-125, TA-129
+depende: TA-159, TA-125, TA-234, TA-235, TA-129
 tu: —
 revision: normal
 paralelo: libre
