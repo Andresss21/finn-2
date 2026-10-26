@@ -179,6 +179,7 @@ function estado(ajustar: (h: Hechos) => Hechos = (h) => h) {
         saldoEstado: c(740),
         terminadaEn: '2027-04-11T08:00:00.000Z' as Instante,
         diferenciaAceptada: c(0),
+        modo: 'estado_cuenta',
         revision: null,
       },
     ],

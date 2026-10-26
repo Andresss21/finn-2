@@ -444,6 +444,7 @@ describe('PRU-DOM-CTA-102: aplicar, operaciones de cuentas (01 §5.1, 04 §3.1)'
       saldoEstado: c(1000),
       terminadaEn: ins('2027-02-01T10:00:00.000Z'),
       diferenciaAceptada: c(0),
+      modo: 'estado_cuenta',
       revision: null,
     };
     const conciliada = {

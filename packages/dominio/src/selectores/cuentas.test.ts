@@ -3,6 +3,7 @@ import { calcular } from '../calculo/calcular';
 import type {
   BigintTexto,
   CambioPosterior,
+  Conciliacion,
   Categoria,
   Cuenta,
   Efecto,
@@ -304,6 +305,7 @@ function estado() {
         saldoEstado: c(2000),
         terminadaEn: '2027-04-01T08:00:00.000Z' as Instante,
         diferenciaAceptada: c(0),
+        modo: 'estado_cuenta',
         revision: null,
       },
       {
@@ -313,6 +315,7 @@ function estado() {
         saldoEstado: c(1900),
         terminadaEn: '2027-04-11T08:00:00.000Z' as Instante,
         diferenciaAceptada: c(0),
+        modo: 'estado_cuenta',
         revision: null,
       },
     ],
@@ -491,7 +494,12 @@ describe('PRU-DOM-CTA', () => {
         ],
       },
     ]);
-    const modos = detalleCuenta(i, id('ef'), { modos: new Map([[id('con0'), 'saldo']]) });
+    const saldo = (x: Conciliacion) => (x.id === id('con0') ? { ...x, modo: 'saldo' as const } : x);
+    const conSaldo = {
+      ...i,
+      hechos: { ...i.hechos, conciliaciones: i.hechos.conciliaciones.map(saldo) },
+    };
+    const modos = detalleCuenta(conSaldo, id('ef'));
     expect(modos.conciliaciones.map((x) => x.modo)).toEqual(['estado_cuenta', 'saldo']);
     expect(ef.programadas).toEqual([
       { programada: { id: id('prog-in'), nombre: 'RESCATE' }, rol: 'destino', activa: false },
