@@ -393,7 +393,7 @@ tu: TU-03, TU-06
 
 ```hito
 despues: TA-147
-requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147
+requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230
 tu: —
 ```
 
@@ -1481,6 +1481,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-16** | Permisos de `ci.yml` con M5. Un job produce un solo check, así que publicar `integracion` desde `rapido` (07 §32.2, DP-33) requiere `statuses: write`, que la lista de permisos mínimos de TA-012 no tenía. Permisos a nivel del workflow: `contents: read`, `actions: read`, `pull-requests: read`; solo el job `rapido` agrega `statuses: write`, para que `tools/ci/publicar-resultados.mjs` publique el estado de commit `integracion`; ningún otro job escribe. `gh pr checks` lista los estados de commit junto con los checks. Descartado: un job `integracion` reflejo con `needs: rapido` (~85 min/mes, anula el ahorro de DP-33) | 08 TA-012 (Qué construir, permisos) | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-16]** en TA-012 |
 | **CH-17** | Tercer redondeo para los modelos de préstamo. 01 §0.4, 02 RT-07 y ADR-15 decían que solo hay dos redondeos, y A.2 (reglas 2 y 3) divide el interés y el seguro. 01 §0.4 agrega: el interés y el seguro de cada cuota se redondean al centavo con la mitad hacia arriba, derivados informativos sin efecto presupuestario (A.1, Límites); "Ninguna otra regla divide montos" pasa a "Ninguna otra regla del motor divide montos". RT-07 y ADR-15 pasan a tres redondeos: `redondear(B × num / den) = ⌊(2·B·num + den) / (2·den)⌋` para B·num ≥ 0, en `bigint` dentro de `centavos.ts` (interés: num = tasa en millonésimas × d_k, den = 365 × 10⁶, DB-13; seguro: num = S₁, den = M). TA-111 agrega a **Archivos** `valores/centavos.ts` y `hechos/operaciones.ts`; PRU-DOM-CTA-101 cubre el borde del redondeo. No cambia ningún número de A.2 | 01 §0.4; 02 RT-07, ADR-15; 08 TA-111 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-17]** en TA-111 |
 | **CH-18** | Ruta de los scripts de trazabilidad portados. TA-252 los porta a `tools/docs/`, pero 04 §18.4 decía `tools/ci/trazabilidad.py` y 05 §15 y §16, `tools/ci/` para `cobertura.py` y `trazabilidad.py`: quedaban dos scripts distintos con la misma ruta. 04 §18.4 (BE-63) pasa a `tools/docs/t17.py` (portado del zip), que `pnpm docs:comprobar` corre en `rapido` cuando el diff toca `docs/`; 05 §15 y §16 pasan a `tools/docs/fase5/trazabilidad.py` y `tools/docs/fase5/` (con `cobertura.py`); en TA-252, **Archivos** cambia "`.github/workflows/ci.yml` (paso condicional)" por "`tools/ci/afecta.mjs` (paso condicional de `rapido`, DP-34) y `package.json` (script)". Solo documentos | 04 §18.4; 05 §15, §16; 08 TA-252 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-18]** en TA-252 (corrección) |
+| **CH-19** | Dónde vive el diferencial contra el oráculo. TA-112 pedía `packages/dominio/test/diferencial.prop.test.ts`, que lanza `motor_min.py` con `python -I`, pero 02 ADR-21 prohíbe E/S y módulos de Node en `@finn/dominio` (ESLint y dependency-cruiser lo aplican también a sus pruebas) y 07 §1.1 da a `PROP` la frontera de `DOM` (sin E/S). El diferencial pasa a `tools/pruebas/oraculo/diferencial.prop.test.ts`, junto al oráculo (07 §3.1, CT-05), nivel `PROP` del proyecto `unidad`; importa `calcular` y `hechosArb` por ruta relativa y `fast-check` 4.10.2 se agrega a la raíz. 07 §1.1 (fila `PROP`, "Dónde vive") y §19.4 (`FINN_MUTANTE` lo lee solo `vitest.config.ts`; L20 no lo cubre) se enmiendan; en TA-112 cambia **Archivos**. Sin excepciones de lint ni de depcruise | 07 §1.1, §19.4; 08 TA-112 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-19]** en TA-112 |
 
 ---
 
@@ -1699,13 +1700,14 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 600 | TA-136 | B2 | 2 | HT-2 | obligatoria | `aplicar`: asignación rápida y cambiar el ciclo (OP-16, OP-19) | 260 | 0 |
 | 601 | TA-137 | B2 | 2 | HT-2 | obligatoria | `aplicar`: inversiones y desembolso (OP-25, OP-26) | 180 | 0 |
 | 604 | TA-140 | B2 | 2 | HT-2 | normal | Selectores de por cobrar, programadas y contextos de formulario (ola 2) | 260 | 0 |
-| 605 | TA-141 | B2 | 2 | HT-2 | normal | Reportes base y gasto semanal (04 §6.9.2, §6.9.3) | 340 | 0 |
-| 606 | TA-142 | B2 | 2 | HT-2 | normal | Reportes accionables: realidad, hormiga y suscripciones (CF-04) | 320 | 0 |
-| 607 | TA-143 | B2 | 2 | HT-2 | normal | Reportes de tarjetas, hallazgos y flujo de efectivo (CF-02, CF-04) | 300 | 0 |
-| 608 | TA-144 | B2 | 2 | HT-2 | normal | `datos_base` y sus pares con los selectores (CF-09) | 160 | 0 |
-| 609 | TA-145 | B2 | 2 | HT-2 | normal | Escenarios en el motor: ESC-21, ESC-23, ESC-25, ESC-26, ESC-27, ESC-28, ESC-29, ESC-30 | 20 | 0 |
-| 610 | TA-146 | B2 | 2 | HT-2 | normal | Escenarios en el motor: ESC-40, ESC-41, ESC-45, ESC-50 | 20 | 0 |
-| 611 | TA-147 | B2 | 2 | HT-2 | normal | Semilla de A.7 completa (CT-07) | 30 | 0 |
+| 605 | TA-141 | B2 | 2 | HT-2 | normal | Reportes base (04 §6.9.2, §6.9.3; parte 1) | 396 | 0 |
+| 606 | TA-230 | B2 | 2 | HT-2 | normal | Reportes: top de comercios y gasto semanal (parte 2 de TA-141) | 287 | 0 |
+| 607 | TA-142 | B2 | 2 | HT-2 | normal | Reportes accionables: realidad, hormiga y suscripciones (CF-04) | 320 | 0 |
+| 608 | TA-143 | B2 | 2 | HT-2 | normal | Reportes de tarjetas, hallazgos y flujo de efectivo (CF-02, CF-04) | 300 | 0 |
+| 609 | TA-144 | B2 | 2 | HT-2 | normal | `datos_base` y sus pares con los selectores (CF-09) | 160 | 0 |
+| 610 | TA-145 | B2 | 2 | HT-2 | normal | Escenarios en el motor: ESC-21, ESC-23, ESC-25, ESC-26, ESC-27, ESC-28, ESC-29, ESC-30 | 20 | 0 |
+| 611 | TA-146 | B2 | 2 | HT-2 | normal | Escenarios en el motor: ESC-40, ESC-41, ESC-45, ESC-50 | 20 | 0 |
+| 612 | TA-147 | B2 | 2 | HT-2 | normal | Semilla de A.7 completa (CT-07) | 30 | 0 |
 | 620 | TA-168 | B3 | 2 | HT-3 | normal | Exportar en JSON y CSV (OPT-08) | 240 | 0 |
 | 621 | TA-192 | B3 | 2 | HT-3 | normal | Asignación rápida, ciclo, inversiones y desembolso (OP-16, OP-19, OP-25, OP-26) | 280 | 0 |
 | 624 | TA-195 | B3 | 2 | HT-3 | normal | Formatos bancarios e instituciones (OPT-05 a OPT-07, BE-47) | 260 | 0 |
@@ -2523,7 +2525,7 @@ compartido: —
 
 **Leer.** 07 §3.1 (oráculo), §8, §19.4; 02 "Enmiendas posteriores" (CT-05).
 
-**Archivos.** `tools/pruebas/oraculo/motor_min.py` (portado), `packages/dominio/src/calculo/mutantes.ts`, `packages/dominio/test/diferencial.prop.test.ts`, `.github/workflows/nocturno.yml`.
+**Archivos.** `tools/pruebas/oraculo/motor_min.py` (portado), `tools/pruebas/oraculo/oraculo.py`, `tools/pruebas/oraculo/diferencial.prop.test.ts`, `packages/dominio/src/calculo/mutantes.ts`, los enganches en `packages/dominio/src/calculo/{d2,disponible,lpa}.ts`, `vitest.config.ts`, `tools/ci/afecta.mjs` (mutantes en `nocturno()`), `.github/workflows/nocturno.yml`, `tsconfig.json`, `package.json` y `pnpm-lock.yaml` (`fast-check` en la raíz). **[CH-19]**
 
 **Pruebas primero.**
 - **PRU-PROP-MOTOR-106** (nueva, DT-17): diferencial: para hechos del subconjunto congelado de V7-03, `calcular` y `motor_min.py` dan los mismos Disponibles, S, RE y LPA.
@@ -3418,7 +3420,9 @@ compartido: SEL-formulario (los contextos de la ola 2)
 
 **Terminada cuando.** La prueba pasa.
 
-#### TA-141 Reportes base y gasto semanal (04 §6.9.2, §6.9.3)
+#### TA-141 Reportes base (04 §6.9.2, §6.9.3; parte 1)
+
+Partida en dos por tamaño (DT-02, 08 §1.2): esta parte tiene los reportes base y `existiaEn`; el top de comercios y el gasto semanal son TA-230.
 
 ```tarea
 orden: 605
@@ -3428,32 +3432,63 @@ depende: TA-109
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=340 archivos=9 ca=0 migraciones=0 total=820
-cubre: REP-categorias, REP-cumplimiento, REP-ingresos_gastos, REP-patrimonio, REP-remanente, REP-tendencia, REP-top_comercios, REP-gasto_semanal, BE-40
-pru: PRU-PROP-REP-001, PRU-DOM-REP-101
+tamano: prod=396 archivos=9 ca=0 migraciones=0 total=820
+cubre: REP-categorias, REP-cumplimiento, REP-ingresos_gastos, REP-patrimonio, REP-remanente, REP-tendencia
+pru: PRU-DOM-REP-101
 compartido: —
 ```
 
 **Qué construir.**
-- Un selector por reporte en `selectores/reportes/` con las fórmulas [Propio] de BE-40 y la referencia semanal con redondeo acumulado.
+- Un selector por reporte base en `selectores/reportes/` (`tendencia`, `categorias`, `ingresos_gastos`, `remanente`, `cumplimiento`, `patrimonio`) con las fórmulas [Propio] de BE-40 (ventana W y filtro de cuentas K), y `existiaEn` (CF-17).
 
-**Leer.** 04 §6.9.1 a §6.9.3; 06 §2.10 (FT-60, FT-61).
+**Leer.** 04 §6.9.1 y §6.9.2; 06 §2.10 (FT-60).
 
-**Archivos.** `packages/dominio/src/selectores/reportes/*.ts`.
+**Archivos.** `packages/dominio/src/selectores/reportes/{comunes,existia-en,tendencia,categorias,ingresos-gastos,remanente,cumplimiento,patrimonio,index}.ts`.
 
 **Pruebas primero.**
 - **PRU-DOM-REP-101** (nueva, DT-17): cada reporte base con un estado conocido y su tabla equivalente con los mismos números.
-- PRU-PROP-REP-001 (V-22): la referencia semanal suma exactamente lo asignado y nunca es negativa.
-- La prueba nueva.
 
-**Comandos.** `pnpm test:unidad -t "PRU-PROP-REP-001|PRU-DOM-REP-101"`; `pnpm ci:local`.
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-REP-101"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
+#### TA-230 Reportes: top de comercios y gasto semanal (parte 2 de TA-141)
+
+Parte 2 de TA-141 (DT-02, 08 §1.2): el top de comercios (BE-43) y el gasto semanal con su referencia de redondeo acumulado.
+
+```tarea
+orden: 606
+bloque: B2
+hito: HT-2
+depende: TA-141
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=290 archivos=3 ca=0 migraciones=0 total=660
+cubre: REP-top_comercios, REP-gasto_semanal, BE-40
+pru: PRU-PROP-REP-001, PRU-DOM-REP-102
+compartido: —
+```
+
+**Qué construir.**
+- `selectores/reportes/top-comercios.ts` (04 §6.9.2 y §6.9.6, BE-43) y `gasto-semanal.ts` (04 §6.9.3, BE-40) con la referencia semanal con redondeo acumulado, y su exportación en `index.ts`.
+
+**Leer.** 04 §6.9.2 (`top_comercios`), §6.9.3 y §6.9.6; 06 §2.10 (FT-60, FT-61).
+
+**Archivos.** `packages/dominio/src/selectores/reportes/{top-comercios,gasto-semanal,index}.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-REP-102** (nueva, DT-17): el top de comercios y el gasto semanal con un estado conocido y su tabla equivalente con los mismos números.
+- PRU-PROP-REP-001 (V-22): la referencia semanal suma exactamente lo asignado y nunca es negativa.
+
+**Comandos.** `pnpm test:unidad -t "PRU-PROP-REP-001|PRU-DOM-REP-102"`; `pnpm ci:local`.
 
 **Terminada cuando.** Las dos pruebas pasan.
 
 #### TA-142 Reportes accionables: realidad, hormiga y suscripciones (CF-04)
 
 ```tarea
-orden: 606
+orden: 607
 bloque: B2
 hito: HT-2
 depende: TA-129, TA-141
@@ -3484,7 +3519,7 @@ compartido: —
 #### TA-143 Reportes de tarjetas, hallazgos y flujo de efectivo (CF-02, CF-04)
 
 ```tarea
-orden: 607
+orden: 608
 bloque: B2
 hito: HT-2
 depende: TA-142
@@ -3514,7 +3549,7 @@ compartido: —
 #### TA-144 `datos_base` y sus pares con los selectores (CF-09)
 
 ```tarea
-orden: 608
+orden: 609
 bloque: B2
 hito: HT-2
 depende: TA-143, TA-126
@@ -3549,7 +3584,7 @@ compartido: —
 #### TA-145 Escenarios en el motor: ESC-21, ESC-23, ESC-25, ESC-26, ESC-27, ESC-28, ESC-29, ESC-30
 
 ```tarea
-orden: 609
+orden: 610
 bloque: B2
 hito: HT-2
 depende: TA-138, TA-131
@@ -3582,7 +3617,7 @@ compartido: —
 #### TA-146 Escenarios en el motor: ESC-40, ESC-41, ESC-45, ESC-50
 
 ```tarea
-orden: 610
+orden: 611
 bloque: B2
 hito: HT-2
 depende: TA-115, TA-136, TA-137, TA-138, TA-139, TA-131
@@ -3615,7 +3650,7 @@ compartido: —
 #### TA-147 Semilla de A.7 completa (CT-07)
 
 ```tarea
-orden: 611
+orden: 612
 bloque: B2
 hito: HT-2
 depende: TA-135, TA-139, TA-143
