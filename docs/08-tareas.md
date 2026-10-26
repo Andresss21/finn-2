@@ -393,7 +393,7 @@ tu: TU-03, TU-06
 
 ```hito
 despues: TA-147
-requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235
+requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235, TA-237
 tu: —
 ```
 
@@ -1641,7 +1641,7 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 125 | TA-125 | B2 | 1 | HT-2 | normal | Selectores de Presupuesto (parte 1; la parte 2 es TA-234) | 376 | 0 |
 | 126 | TA-126 | B2 | 1 | HT-2 | normal | Selectores de detalle de categoría, metas y estructura | 280 | 0 |
 | 127 | TA-231 | B2 | 1 | HT-2 | normal | Selector de detalle de categoría de pago de tarjeta (parte 2 de TA-126) | 300 | 0 |
-| 128 | TA-127 | B2 | 1 | HT-2 | normal | Selectores de cuentas, detalle de cuenta, actividad y detalle de transacción | 320 | 0 |
+| 128 | TA-127 | B2 | 1 | HT-2 | normal | Selectores de actividad y detalle de transacción (parte 1; la parte 2 es TA-237) | 398 | 0 |
 | 129 | TA-128 | B2 | 1 | HT-2 | normal | Selectores de la bandeja, sugerencias y contextos de formulario (ola 1) | 320 | 0 |
 | 130 | TA-129 | B2 | 1 | HT-2 | normal | Reporte de ritmo y hallazgos de ritmo en Inicio (CF-04, CF-06) | 240 | 0 |
 | 131 | TA-130 | B2 | 1 | HT-2 | normal | Ejecutor de escenarios `motor` y ESC-01, ESC-02 | 260 | 0 |
@@ -1654,6 +1654,7 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 138 | TA-134 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-37, ESC-38, ESC-39, ESC-42, ESC-43, ESC-44, ESC-46, ESC-47, ESC-48, ESC-49 | 20 | 0 |
 | 139 | TA-234 | B2 | 1 | HT-2 | normal | Selectores de Inicio y detalle de LPA (parte 2 de TA-125) | 275 | 0 |
 | 140 | TA-235 | B2 | 1 | HT-2 | obligatoria | Proyección de períodos futuros en `calcular` (04 §6.2, 01 §4.6) | 120 | 0 |
+| 141 | TA-237 | B2 | 1 | HT-2 | normal | Selectores de cuentas y detalle de cuenta (parte 2 de TA-127) | 400 | 0 |
 | 150 | TA-150 | B3 | 1 | HT-3 | obligatoria | `escribir()` y `leer()`: el protocolo de 04 §4.2 | 300 | 0 |
 | 151 | TA-151 | B3 | 1 | HT-3 | normal | Errores de la base y conversiones de fechas y montos | 220 | 0 |
 | 152 | TA-152 | B3 | 1 | HT-3 | normal | Carga de hechos (BE-21) | 240 | 0 |
@@ -3076,7 +3077,9 @@ compartido: —
 
 **Terminada cuando.** La prueba pasa.
 
-#### TA-127 Selectores de cuentas, detalle de cuenta, actividad y detalle de transacción
+#### TA-127 Selectores de actividad y detalle de transacción (parte 1; la parte 2 es TA-237)
+
+Partida por tamaño (DT-02, 08 §1.2): esta parte tiene la actividad y el detalle de una transacción; las cuentas y el detalle de cuenta son TA-237.
 
 ```tarea
 orden: 128
@@ -3086,24 +3089,58 @@ depende: TA-110, TA-111
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=320 archivos=4 ca=0 migraciones=0 total=760
-cubre: SEL-cuentas, SEL-detalleCuenta, SEL-actividad, SEL-detalleTransaccion
+tamano: prod=398 archivos=2 ca=0 migraciones=0 total=700
+cubre: SEL-actividad, SEL-detalleTransaccion
 pru: PRU-DOM-CTA-103
 compartido: —
 ```
 
 **Qué construir.**
-- `selectores/cuentas.ts`, `detalle-cuenta.ts`, `actividad.ts`, `detalle-transaccion.ts` (04 §6.5 a §6.7).
+- `selectores/actividad.ts` y `detalle-transaccion.ts` (04 §6.7). Dejan también `filaDe`, `indice`, `paginar` y `claveDe`, que usa TA-237.
 
-**Leer.** 04 §6.5, §6.6, §6.7; 01 §4.14.
+**Leer.** 04 §6.7; 01 §4.10.
 
-**Archivos.** `packages/dominio/src/selectores/{cuentas,detalle-cuenta,actividad,detalle-transaccion}.ts`.
+**Archivos.** `packages/dominio/src/selectores/{actividad,detalle-transaccion}.ts`.
 
 **Pruebas primero.**
-- **PRU-DOM-CTA-103** (nueva, DT-17): posición neta, saldos por cuenta, desglose del pago y monto para no generar intereses, tabla de amortización y movimientos con su saldo confirmado; actividad con búsqueda y el detalle de una transacción con sus eventos.
+- **PRU-DOM-CTA-103** (nueva, DT-17): actividad con búsqueda, filtros y cursor, y el detalle de una transacción con sus eventos y restricciones.
 - La prueba nueva.
 
 **Comandos.** `pnpm test:unidad -t "PRU-DOM-CTA-103"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
+#### TA-237 Selectores de cuentas y detalle de cuenta (parte 2 de TA-127)
+
+Parte 2 de TA-127 (DT-02, 08 §1.2): TA-127 tiene la actividad y el detalle de transacción; esta parte tiene las cuentas y el detalle de cuenta (04 §6.5 y §6.6). **Punto de partida:** el commit `ec25f1c` (rama local `ta-237-base`), que ya tiene `cuentas.ts` y `detalle-cuenta.ts` sin pruebas.
+
+```tarea
+orden: 141
+bloque: B2
+hito: HT-2
+depende: TA-127
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=2 ca=0 migraciones=0 total=800
+cubre: SEL-cuentas, SEL-detalleCuenta
+pru: PRU-DOM-CTA-105
+compartido: —
+```
+
+**Qué construir.**
+- `selectores/cuentas.ts` y `detalle-cuenta.ts` (04 §6.5, §6.6): posición neta con sus barras, saldos por tipo, tarjetas con próximo corte y pago, préstamos, saldo corrido, conciliaciones, desglose al pagar y tabla de amortización. Reusa `filaDe`, `indice` y `paginar` de `actividad.ts`.
+- El código del commit mide 474 líneas de producción: se espera un exceso de hasta el 30 %, que el orquestador acepta en el merge (CH-15). La ficha declara 400 porque el verificador no admite más.
+
+**Leer.** 04 §6.5, §6.6; 01 §4.14.
+
+**Archivos.** `packages/dominio/src/selectores/{cuentas,detalle-cuenta}.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-CTA-105** (nueva, DT-17; PRU-DOM-CTA-104 es de TA-137): posición neta, saldos por cuenta, desglose del pago y monto para no generar intereses, tabla de amortización y movimientos con su saldo corrido.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-CTA-105"`; `pnpm ci:local`.
 
 **Terminada cuando.** La prueba pasa.
 
