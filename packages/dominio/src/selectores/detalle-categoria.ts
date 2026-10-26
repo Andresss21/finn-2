@@ -105,8 +105,6 @@ export interface DetalleCategoria {
   };
 }
 
-const PERIODOS_DE_HISTORIAL = 6;
-
 /** Suma / n en centavos, mitad hacia arriba y simétrico en negativos. */
 function promedio(total: Centavos, n: number): Centavos {
   const p = Centavos.proporcionMitadArriba(Centavos.max(total, Centavos.negar(total)), 1, n);
@@ -135,45 +133,37 @@ export function detalleCategoria(
   const { periodos, celdas, repartos, aportes } = i.presupuesto;
   const inicio = opciones.periodoInicio ?? i.presupuesto.activo.inicio;
   const k = periodos.findIndex((p) => p.inicio === inicio);
-  const celda = celdas.find((x) => x.categoriaId === categoriaId && x.periodo.inicio === inicio);
-  const reparto = repartos.find(
-    (x) => x.categoriaId === categoriaId && x.periodo.inicio === inicio,
-  );
+  const deC = <T extends { categoriaId: Uuid; periodo: Periodo }>(
+    xs: readonly T[],
+    desde: FechaLocal,
+  ) => xs.find((x) => x.categoriaId === categoriaId && x.periodo.inicio === desde);
+  const celda = deC(celdas, inicio);
+  const reparto = deC(repartos, inicio);
   if (k < 0 || celda === undefined || reparto === undefined)
     throw new RangeError(`el período ${inicio} no está en el presupuesto`);
   const p = celda.periodo;
   const dentro = (f: FechaLocal) => p.inicio <= f && f <= p.fin;
-
   const cx = contexto(i);
   const transaccion = new Map(h.transacciones.map((t) => [t.id, t]));
   const txDeLinea = new Map(h.lineas.map((l) => [l.id, l.transaccionId]));
   const cuentas = new Map(h.cuentas.map((c) => [c.id, c]));
-
   const sobre = Centavos.sumar(celda.sobT, celda.sobD);
   const evaluada = i.metas.find((m) => m.categoriaId === categoriaId)?.evaluacion ?? null;
   const meta = h.metas.find((m) => m.categoriaId === categoriaId);
-  const celdaActiva = celdas.find(
-    (x) => x.categoriaId === categoriaId && x.periodo.inicio === i.presupuesto.activo.inicio,
-  );
+  const celdaActiva = deC(celdas, i.presupuesto.activo.inicio);
   const progresoBp =
     meta === undefined || celdaActiva === undefined
       ? undefined
       : progresoDeMeta(meta.tipo, celdaActiva.disponible, meta.monto);
-  const anterior = periodos[k - 1]?.inicio;
-  const siguiente = periodos[k + 1]?.inicio;
 
   // Calendario: gastado de cada día con consumos o entradas, como Gastado restringido a la fecha.
-  const dias = [
-    ...new Set([
-      ...cx.consumos
-        .filter((x) => x.categoriaId === categoriaId && dentro(x.fecha))
-        .map((x) => x.fecha),
-      ...aportes
-        .filter((x) => x.categoriaId === categoriaId && dentro(x.fecha))
-        .map((x) => x.fecha),
-    ]),
-  ].sort();
-  const porDia = dias
+  const dias = new Set(
+    [...cx.consumos, ...aportes]
+      .filter((x) => x.categoriaId === categoriaId && dentro(x.fecha))
+      .map((x) => x.fecha),
+  );
+  const porDia = [...dias]
+    .sort()
     .map((fecha) => ({
       fecha,
       gastado: gastado(cx.consumos, aportes, categoriaId, {
@@ -184,7 +174,6 @@ export function detalleCategoria(
     }))
     .filter((d) => d.gastado !== 0);
   const maximo = porDia.reduce((m, d) => Centavos.max(m, d.gastado), Centavos.cero);
-
   const historial = celdas
     .filter(
       (x) =>
@@ -193,20 +182,21 @@ export function detalleCategoria(
         x.periodo.fin < p.inicio &&
         existiaEn(i, categoriaId, x.periodo),
     )
-    .slice(-PERIODOS_DE_HISTORIAL)
+    .slice(-6)
     .map((x) => ({
       periodo: x.periodo,
       asignado: x.asignado,
       gastado: Centavos.negar(x.actividad),
       disponible: x.disponible,
     }));
-
   const activas = new Map(h.programadas.filter((x) => x.activa).map((x) => [x.id, x]));
-  const proxima = (programadaId: Uuid): FechaLocal | undefined =>
-    i.ocurrencias
+  const proxima = (programadaId: Uuid) => {
+    const f = i.ocurrencias
       .filter((o) => o.programadaId === programadaId)
       .map((o) => o.fecha)
       .sort()[0];
+    return f === undefined ? {} : { proxima: f };
+  };
 
   return {
     categoria: refDe(cat),
@@ -214,8 +204,8 @@ export function detalleCategoria(
     clase: 'normal',
     periodo: p,
     navegacion: {
-      ...(anterior === undefined ? {} : { anterior }),
-      ...(siguiente === undefined ? {} : { siguiente }),
+      ...(k > 0 ? { anterior: periodos[k - 1]?.inicio as FechaLocal } : {}),
+      ...(k < periodos.length - 1 ? { siguiente: periodos[k + 1]?.inicio as FechaLocal } : {}),
     },
     numeros: {
       asignado: celda.asignado,
@@ -240,7 +230,6 @@ export function detalleCategoria(
         k2.fuente === 'linea'
           ? { transaccionId: txDeLinea.get(k2.id) as Uuid }
           : { condonacionId: k2.id };
-      const cuenta = cuentas.get(k2.cuentaId);
       return {
         origen,
         fecha: k2.fecha,
@@ -248,7 +237,7 @@ export function detalleCategoria(
           'transaccionId' in origen
             ? (transaccion.get(origen.transaccionId)?.comercio ?? null)
             : null,
-        cuenta: refDe(cuenta ?? { id: k2.cuentaId, nombre: '' }),
+        cuenta: refDe(cuentas.get(k2.cuentaId) ?? { id: k2.cuentaId, nombre: '' }),
         medio: k2.tarjetaId === null ? ('debito' as const) : ('tarjeta' as const),
         montoNeto: k2.neto,
         cubierto: x.cubierto,
@@ -300,15 +289,11 @@ export function detalleCategoria(
     historial,
     programadas: h.programada_lineas
       .filter((l) => l.categoriaId === categoriaId && activas.has(l.programadaId))
-      .map((l) => {
-        const g = activas.get(l.programadaId);
-        const f = proxima(l.programadaId);
-        return {
-          programada: { id: l.programadaId, nombre: g?.comercio ?? '' },
-          monto: l.monto,
-          ...(f === undefined ? {} : { proxima: f }),
-        };
-      }),
+      .map((l) => ({
+        programada: { id: l.programadaId, nombre: activas.get(l.programadaId)?.comercio ?? '' },
+        monto: l.monto,
+        ...proxima(l.programadaId),
+      })),
     reglas: (opciones.reglas ?? [])
       .filter((x) => x.categoriaId === categoriaId)
       .map((x) => ({ id: x.id, patron: x.patron })),
