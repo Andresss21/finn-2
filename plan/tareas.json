@@ -75,7 +75,7 @@
 
   "TA-112": { "estado": "pendiente" },
 
-  "TA-113": { "estado": "pendiente" },
+  "TA-113": { "estado": "en_curso", "rama": "ta-113-aplicar" },
 
   "TA-114": { "estado": "pendiente" },
 
