@@ -32,6 +32,7 @@ Quedan fuera del dominio:
   - Meta semanal: redondeo al centavo, con la mitad hacia arriba (H11).
   - Metas de ahorro: la división entre períodos se redondea hacia arriba al centavo (⌈·⌉), para que la suma alcance la meta.
   - Modelos de cálculo de préstamos (Anexo A): el interés y el seguro de cada cuota se redondean al centavo con la mitad hacia arriba. Son derivados informativos, sin efecto presupuestario (A.1, Límites). **[CH-17]**
+  - Reparto proporcional de los reportes (06 §3.5.3, FD-19): cada parte es la proporcional truncada al centavo y los centavos que faltan van a las partes con el resto mayor, de modo que la suma es exacta. Es informativo, sin efecto presupuestario. **[CH-20]**
   - Ninguna otra regla del motor divide montos. [supuesto 1] **[CH-17]**
 - **Fechas:** toda fecha de negocio es una fecha local de America/El_Salvador (UTC−6, sin horario de verano), sin hora. [P18]
 - **Instantes:** la hora de registro y la clave de orden son instantes. Solo sirven para ordenar y nunca deciden un período. [D2]
