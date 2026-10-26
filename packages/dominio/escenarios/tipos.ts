@@ -30,7 +30,15 @@ export type Op =
   | { op: 'OP-07'; categoria: string }
   | { op: 'OP-14'; categoria: string; monto: number; periodo?: Periodo } // δ sobre Asig(c, p); el ejecutor la pasa a valor absoluto
   | { op: 'OP-17'; periodo?: Periodo } // Auto-asignar: por defecto el período activo
-  | { op: 'OP-18'; categoria: string; monto: number; tipo?: 'mensual' } // crea una meta mensual (modo acumular)
+  | { op: 'OP-15'; origen: string; destino: string; monto: number; periodo?: Periodo } // mover (por defecto, el período activo)
+  | {
+      op: 'OP-18';
+      categoria: string;
+      monto?: number; // al crear; al editar solo cambia lo que se nombra
+      tipo?: 'mensual' | 'para_fecha'; // 'mensual' crea en modo acumular
+      fecha?: string; // para_fecha: la fecha objetivo
+      editar?: true; // edita la meta de la categoría en vez de crearla
+    }
   | {
       op: 'OP-20';
       cuenta: string;
