@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { calcular } from '../calculo/calcular';
 import type {
+  BigintTexto,
   Categoria,
   Condonacion,
   Cuenta,
@@ -63,7 +64,7 @@ function estado() {
       fecha: f(fecha),
       horaRegistro: `${fecha}T12:00:00.000Z` as Instante,
       claveOrden: `${fecha}T12:00:00.000Z` as Instante,
-      secuencia: String(transacciones.length + 1),
+      secuencia: String(transacciones.length + 1) as BigintTexto,
       origen: 'manual',
       estadoBancario: 'confirmada',
       conciliacionId: null,

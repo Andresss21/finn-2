@@ -152,12 +152,12 @@ export function detalleTransaccion(i: Instantanea, transaccionId: Uuid, o: Datos
     cambiosPosteriores: (o.cambios ?? [])
       .filter((c) => c.transaccionId === t.id)
       .map((c) => ({ registradoEn: c.registradoEn, motivos: c.motivos })),
-    ...(sms !== undefined
-      ? { origenDetalle: { sms } }
-      : programada === undefined
-        ? {}
-        : {
-            origenDetalle: {
+    origenDetalle:
+      sms !== undefined
+        ? { sms }
+        : programada === undefined
+          ? undefined
+          : {
               programada: {
                 programada: {
                   id: programada.programadaId,
@@ -167,7 +167,6 @@ export function detalleTransaccion(i: Instantanea, transaccionId: Uuid, o: Datos
                 fechaEsperada: programada.fechaEsperada,
               },
             },
-          }),
     restricciones: {
       puedeEliminar: !conEventos && !archivada,
       ...(conEventos
