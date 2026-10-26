@@ -313,6 +313,20 @@ export interface ComandoOp30 {
   readonly estadoNuevo: 'pendiente' | 'confirmada';
 }
 
+// ── TA-119: cobrar y renombrar deudor (04 §3.5). `esperado` de OP-52 lo compara la aplicación (4.6.2).
+/** OP-31: con `asignarAPagoTarjeta`, la misma operación asigna R a pago(t) en el activo (BE-36). */
+export interface ComandoOp31 extends AltaTransaccion {
+  readonly operacion: 'OP-31';
+  readonly lineaId: Uuid; // la línea por cobrar
+  readonly cuentaId: Uuid; // efectivo o tarjeta
+  readonly asignarAPagoTarjeta?: boolean; // solo si el por cobrar fue con tarjeta y C entra en efectivo
+}
+export interface ComandoOp52 {
+  readonly operacion: 'OP-52';
+  readonly deudorId: Uuid;
+  readonly nombre: string; // TextoLimpio
+}
+
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
 export type ComandoDominio =
   | ComandoOp01
@@ -345,7 +359,10 @@ export type ComandoDominio =
   // TA-118
   | ComandoOp28
   | ComandoOp29
-  | ComandoOp30;
+  | ComandoOp30
+  // TA-119
+  | ComandoOp31
+  | ComandoOp52;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =
