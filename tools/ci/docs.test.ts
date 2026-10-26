@@ -24,7 +24,12 @@ const decidir = (archivos: string[]) => {
     {
       cwd: raiz,
       encoding: 'utf8',
-      env: { ...process.env, FINN_EVENTO: 'pull_request', FINN_BORRADOR: 'true', GITHUB_OUTPUT: '' },
+      env: {
+        ...process.env,
+        FINN_EVENTO: 'pull_request',
+        FINN_BORRADOR: 'true',
+        GITHUB_OUTPUT: '',
+      },
     },
   );
   expect(r.status, r.stderr).toBe(0);

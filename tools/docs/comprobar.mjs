@@ -47,6 +47,8 @@ for (const [nombre, script, args] of SCRIPTS) {
   for (const l of ok ? salida.slice(-3) : salida) console.log(`    ${l}`);
 }
 console.log(
-  fallidos ? `docs:comprobar: ${fallidos} de ${SCRIPTS.length} fallan` : 'docs:comprobar: pasan los 7',
+  fallidos
+    ? `docs:comprobar: ${fallidos} de ${SCRIPTS.length} fallan`
+    : 'docs:comprobar: pasan los 7',
 );
 process.exit(fallidos ? 1 : 0);
