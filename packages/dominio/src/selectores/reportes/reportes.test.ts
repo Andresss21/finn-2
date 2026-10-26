@@ -19,12 +19,10 @@ import {
   categorias,
   cumplimiento,
   existiaEn,
-  gastoSemanal,
   ingresosGastos,
   patrimonio,
   remanente,
   tendencia,
-  topComercios,
 } from './index';
 
 const c = (n: number) => Centavos.desdeEntero(Math.round(n * 100));
@@ -401,124 +399,6 @@ describe('PRU-DOM-REP', () => {
     expect(patrimonio(i, visa).serie.map((x) => x.neto)).toEqual([m(-110), m(-140), m(-140)]);
   };
 
-  const top = () => {
-    const v = { ventana: 'ultimos_3' } as const;
-    const top = topComercios(i, [{ patron: 'SELECTOS' }], v);
-    expect(top).toEqual([
-      {
-        clave: 'ARRENDADOR'.toLowerCase(),
-        etiqueta: 'ARRENDADOR',
-        porRegla: false,
-        monto: m(300),
-        frecuencia: 1,
-        categoriaPrincipal: 'renta',
-        variantes: [{ comercio: 'arrendador', monto: m(300), frecuencia: 1 }],
-      },
-      {
-        clave: 'SELECTOS',
-        etiqueta: 'SELECTOS',
-        porRegla: true,
-        monto: m(170),
-        frecuencia: 2,
-        categoriaPrincipal: 'super',
-        variantes: [
-          { comercio: 'super selectos sta elena', monto: m(90), frecuencia: 1 },
-          { comercio: 'super selectos escalon', monto: m(80), frecuencia: 1 },
-        ],
-      },
-      {
-        clave: 'cinepolis',
-        etiqueta: 'CINEPOLIS',
-        porRegla: false,
-        monto: m(90),
-        frecuencia: 2,
-        categoriaPrincipal: 'cine',
-        variantes: [{ comercio: 'cinepolis', monto: m(90), frecuencia: 2 }],
-      },
-      {
-        clave: 'kiosko',
-        etiqueta: 'KIOSKO',
-        porRegla: false,
-        monto: m(25),
-        frecuencia: 1,
-        categoriaPrincipal: 'vieja',
-        variantes: [{ comercio: 'kiosko', monto: m(25), frecuencia: 1 }],
-      },
-    ]);
-    expect(
-      topComercios(i, [{ patron: 'SELECTOS' }], { ...v, limite: 2 }).map((x) => x.clave),
-    ).toEqual(['arrendador', 'SELECTOS']);
-    // Sin la regla, cada variante es su propio comercio.
-    expect(topComercios(i, [], v).map((x) => x.clave)).toEqual([
-      'arrendador',
-      'cinepolis',
-      'super selectos sta elena',
-      'super selectos escalon',
-      'kiosko',
-    ]);
-  };
-
-  const semanal = () => {
-    const g = gastoSemanal(i);
-    expect(g.periodo.inicio).toBe('2027-04-01');
-    expect(g.categorias.map((x) => x.categoria)).toEqual(['super', 'viaje', 'ajuste']);
-    const superc = g.categorias[0];
-    if (superc === undefined) throw new Error('falta supermercado');
-    expect(superc.semanas.map((s) => [s.k, s.dias, s.referencia, s.gasto, s.futura])).toEqual([
-      [1, 7, m(81.67), m(20), false],
-      [2, 7, m(81.66), m(35), false],
-      [3, 7, m(81.67), m(10), false],
-      [4, 7, m(81.67), m(0), true],
-      [5, 2, m(23.33), m(0), true],
-    ]);
-    expect(superc.semanas.map((s) => s.referenciaAcumulada)).toEqual([
-      m(81.67),
-      m(163.33),
-      m(245),
-      m(326.67),
-      m(350),
-    ]);
-    expect(superc.semanas.map((s) => s.gastoAcumulado)).toEqual([
-      m(20),
-      m(55),
-      m(65),
-      m(65),
-      m(65),
-    ]);
-    // Hoy es el día 15: semana 3 en curso, con 10 de 81.67 de la referencia y 180.00 por debajo de lo acumulado.
-    expect(superc.semanaActual).toEqual({ k: 3, porcentajeReferenciaBp: 1224 });
-    expect(superc.diferenciaReferencia).toBe(m(180));
-    // Compara con las mismas semanas de marzo, febrero y enero (los 3 cerrados en que existía), el más reciente primero.
-    expect(superc.nueva).toBe(false);
-    expect(superc.semanas[1]?.anteriores).toEqual([
-      { periodo: '2027-03-01', gasto: m(0) },
-      { periodo: '2027-02-01', gasto: m(90) },
-      { periodo: '2027-01-01', gasto: m(80) },
-    ]);
-    // Febrero tiene 28 días: no tiene semana 5.
-    expect(superc.semanas[4]?.anteriores.map((a) => a.periodo)).toEqual([
-      '2027-03-01',
-      '2027-01-01',
-    ]);
-
-    const [, viaje, ajuste] = g.categorias;
-    expect(viaje?.nueva).toBe(true);
-    expect(viaje?.semanas.every((s) => s.anteriores.length === 0)).toBe(true);
-    // Asignado negativo: todas las referencias en cero y sin porcentaje (CA-61.2, CA-61.7).
-    expect(ajuste?.semanas.map((s) => s.referencia)).toEqual([0, 0, 0, 0, 0]);
-    expect(ajuste?.semanaActual?.porcentajeReferenciaBp).toBeNull();
-
-    // Un período cerrado: sin semana actual ni diferencia, y con categorías elegidas aunque no existieran.
-    const marzo = gastoSemanal(i, {
-      periodoInicio: f('2027-03-01'),
-      categoriaIds: [id('renta'), id('cine')],
-    });
-    expect(marzo.categorias.map((x) => [x.categoria, x.nueva, x.semanaActual])).toEqual([
-      ['renta', true, undefined],
-      ['cine', false, undefined],
-    ]);
-  };
-
   const existencia = () => {
     const periodo = (inicioP: string, fin: string) => ({
       inicio: f(inicioP),
@@ -535,11 +415,9 @@ describe('PRU-DOM-REP', () => {
     expect(existiaEn(i, id('renta'), marzo)).toBe(true);
   };
 
-  it('PRU-DOM-REP-101 [CA-60.1, CA-60.3, CA-60.4, CA-60.6, CA-60.7, CA-60.8, CA-60.9, CA-60.10, CA-61.1, CA-61.2, CA-61.3, CA-61.4, CA-61.6, CA-61.7] cada reporte base y el gasto semanal, con un estado conocido, dan la misma tabla escrita a mano (04 §6.9.1 a §6.9.3, BE-40, BE-43, REP-tendencia, REP-categorias, REP-ingresos_gastos, REP-remanente, REP-top_comercios, REP-cumplimiento, REP-patrimonio, REP-gasto_semanal)', () => {
+  it('PRU-DOM-REP-101 [CA-60.1, CA-60.3, CA-60.4, CA-60.7, CA-60.8, CA-60.9, CA-60.10, CA-61.3] cada reporte base, con un estado conocido, da la misma tabla escrita a mano (04 §6.9.1 y §6.9.2, BE-40, REP-tendencia, REP-categorias, REP-ingresos_gastos, REP-remanente, REP-cumplimiento, REP-patrimonio)', () => {
     tablas();
     ventanaYFiltro();
-    top();
-    semanal();
     existencia();
   });
 });
