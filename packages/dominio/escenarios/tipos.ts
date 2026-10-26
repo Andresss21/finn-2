@@ -1,17 +1,11 @@
-// Formato de un escenario de 01 §8 como datos (07 §12.3, DP-13). Portado del prototipo de V7-08 y completado con las reglas
-// 1 a 11: cada operación nombra su `op: 'OP-nn'` (la lee la regla E13 de `plan:verificar --escenarios`), hay rechazos,
-// ramas y `extra`. Montos en dólares, como en las tablas de 01; el ejecutor los pasa a centavos. Fechas de negocio
-// 'AAAA-MM-DD'; instantes locales 'AAAA-MM-DDThh:mm' (America/El_Salvador).
+// Formato de un escenario de 01 §8 como datos (07 §12.3, DP-13; portado del prototipo de V7-08). Cada operación nombra su
+// `op: 'OP-nn'` (la lee la regla E13 de `plan:verificar --escenarios`). Montos en dólares, como en las tablas de 01; el
+// ejecutor los pasa a centavos. Fechas 'AAAA-MM-DD'; instantes locales 'AAAA-MM-DDThh:mm' (America/El_Salvador).
 export type Periodo = 'P1' | 'P2' | 'P3' | 'P4' | 'P5' | 'P6';
 /** Inicio de cada período (01 §8.0, ciclo con día de inicio 21, 2027). */
-export const PERIODOS: Record<Periodo, string> = {
-  P1: '2027-01-21',
-  P2: '2027-02-21',
-  P3: '2027-03-21',
-  P4: '2027-04-21',
-  P5: '2027-05-21',
-  P6: '2027-06-21',
-};
+export const PERIODOS = Object.fromEntries(
+  ['01-21', '02-21', '03-21', '04-21', '05-21', '06-21'].map((f, k) => [`P${k + 1}`, `2027-${f}`]),
+) as Record<Periodo, string>;
 
 /** Atributos de un préstamo en curso que 01 §8 no da (DP-16 no los completa): los trae el dato. */
 export interface DatosPrestamo {
@@ -35,16 +29,7 @@ export type Op =
     }
   | { op: 'OP-07'; categoria: string }
   | { op: 'OP-14'; categoria: string; monto: number; periodo?: Periodo } // δ sobre Asig(c, p); el ejecutor la pasa a valor absoluto
-  | {
-      op: 'OP-20';
-      ref: string;
-      cuenta: string;
-      lineas: [string, number][];
-      fecha?: string;
-      registrado?: string;
-    }
-  | { op: 'OP-21'; monto: number; cuenta?: string; fecha?: string; registrado?: string }
-  | { op: 'OP-23'; tarjeta: string; monto: number; fecha?: string; registrado?: string };
+  | { op: 'OP-21'; monto: number; cuenta?: string; fecha?: string; registrado?: string };
 
 export interface Espera {
   ef?: number;
@@ -96,10 +81,7 @@ export interface Observado {
   sobta: number;
   tarjetas: Record<string, [number, number, number]>;
   avisos: string[];
-  /** Las consultas de `espera.extra` que este ejecutor sabe evaluar, en centavos. */
-  extra: Record<string, number>;
-  /** Código del rechazo, si alguna operación del paso se rechazó. */
-  rechazo?: string;
-  /** Con un rechazo: si la instantánea completa quedó igual a la anterior (regla 7). */
-  intacto?: boolean;
+  extra: Record<string, number>; // las consultas de `espera.extra` que este ejecutor evalúa
+  rechazo?: string; // código del rechazo, si alguna operación del paso se rechazó
+  intacto?: boolean; // con un rechazo: la instantánea completa quedó igual (regla 7)
 }
