@@ -160,16 +160,39 @@ function comando(s: Estado, op: Op): ComandoDominio {
         ),
         ids,
       };
-    case 'OP-18':
+    case 'OP-15':
+      return {
+        operacion: 'OP-15',
+        origenId: categoriaId(s, op.origen),
+        destinoId: categoriaId(s, op.destino),
+        periodoInicio: FechaLocal.desdeTexto(
+          op.periodo ? PERIODOS[op.periodo] : calcular(s.hechos, s.hoy).presupuesto.activo.inicio,
+        ),
+        monto: c(op.monto),
+        ids,
+      };
+    case 'OP-18': {
+      const fechaObjetivo = op.fecha ? { fechaObjetivo: FechaLocal.desdeTexto(op.fecha) } : {};
+      if (op.editar)
+        return {
+          operacion: 'OP-18',
+          accion: 'editar',
+          metaId: id(`meta-${op.categoria}`),
+          ...(op.monto !== undefined && { monto: c(op.monto) }),
+          ...fechaObjetivo,
+        };
+      const paraFecha = op.tipo === 'para_fecha';
       return {
         operacion: 'OP-18',
         accion: 'crear',
         id: id(`meta-${op.categoria}`),
         categoriaId: categoriaId(s, op.categoria),
-        tipo: 'mensual',
-        modo: 'acumular',
-        monto: c(op.monto),
+        tipo: paraFecha ? 'para_fecha' : 'mensual',
+        ...(!paraFecha && { modo: 'acumular' as const }),
+        monto: c(op.monto ?? 0),
+        ...fechaObjetivo,
       };
+    }
     case 'OP-20':
       return {
         operacion: 'OP-20',
@@ -220,6 +243,8 @@ function desglose(i: Instantanea, arg: string): number {
 const EXTRAS: Record<string, (i: Instantanea, arg: string) => number> = {
   patrimonio: (i) => i.patrimonio.total,
   reduccionProyectada: (i) => i.reduccionProyectada,
+  // Σ de las reducciones por sobregiro con débito de los períodos cerrados (detalle de LPA).
+  reduccionesDebito: (i) => i.lpa.sobregirosDebito,
   // Desglose del pago (§4.14) de la tarjeta `T` al día de hoy: 'T:campo'. `desgloseAntes` se evalúa antes de las operaciones.
   desglose: desglose,
   desgloseAntes: desglose,
