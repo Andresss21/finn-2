@@ -17,7 +17,7 @@ export interface DatosPrestamo {
 }
 
 /** Operaciones que entienden los ejecutores; las demás las agrega la tarea que trae su OP (E13). */
-export type Op =
+type OpBase =
   | {
       op: 'OP-01';
       cuenta: string;
@@ -35,7 +35,8 @@ export type Op =
       op: 'OP-18';
       categoria: string;
       monto?: number; // al crear; al editar solo cambia lo que se nombra
-      tipo?: 'mensual' | 'para_fecha'; // 'mensual' crea en modo acumular
+      tipo?: 'mensual' | 'semanal' | 'para_fecha'; // mensual y semanal: acumular por defecto
+      modo?: 'acumular' | 'rellenar_hasta';
       fecha?: string; // para_fecha: la fecha objetivo
       editar?: true; // edita la meta de la categoría en vez de crearla
     }
@@ -50,7 +51,8 @@ export type Op =
       registrado?: string;
     }
   | { op: 'OP-21'; monto: number; cuenta?: string; fecha?: string; registrado?: string }
-  | { op: 'OP-28'; etiqueta: string; cuenta: string } // cambiar la cuenta (el medio) de la transacción
+  | { op: 'OP-28'; etiqueta: string; cuenta?: string; fecha?: string } // cambiar la cuenta (el medio) o la fecha de la transacción
+  | { op: 'OP-29'; etiqueta: string } // eliminar la transacción
   | { op: 'OP-31'; cobro: string; monto: number; cuenta?: string } // cobrar el por cobrar de la transacción `cobro`
   | {
       op: 'OP-27';
@@ -61,6 +63,9 @@ export type Op =
       destino?: string; // transferencia: la tarjeta que toma la deuda
     }
   | { op: 'OP-23'; tarjeta: string; monto: number; origen?: string; fecha?: string };
+
+/** `hoy`: el día en que se hace esa operación dentro del paso (un historial que cruza períodos: no se asigna a uno cerrado). */
+export type Op = OpBase & { hoy?: string };
 
 export interface Espera {
   ef?: number;
