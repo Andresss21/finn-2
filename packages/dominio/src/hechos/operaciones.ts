@@ -5,6 +5,7 @@ import type {
   Cuenta,
   FilasPorTabla,
   Inversion,
+  Meta,
   MovimientoLinea,
   Prestamo,
   ReglaComercio,
@@ -133,6 +134,41 @@ export interface ComandoOp13 {
   readonly id: Uuid;
   readonly reglas?: readonly ReglaComercio[]; // las de la categoría, [H] (BE-10)
 }
+// ── TA-116: presupuesto y metas (04 §3.3). `esperado` lo compara la aplicación (4.6.2).
+/** OP-14: valor absoluto de Asig(c, p); puede ser negativo (supuesto 6, CB-09). */
+export interface ComandoOp14 {
+  readonly operacion: 'OP-14';
+  readonly categoriaId: Uuid;
+  readonly periodoInicio: FechaLocal;
+  readonly montoNuevo: Centavos;
+  readonly ids: GeneradorIds;
+}
+export interface ComandoOp15 {
+  readonly operacion: 'OP-15';
+  readonly origenId: Uuid;
+  readonly destinoId: Uuid;
+  readonly periodoInicio: FechaLocal;
+  readonly monto: Centavos; // > 0
+  readonly ids: GeneradorIds;
+}
+export interface ComandoOp17 {
+  readonly operacion: 'OP-17';
+  readonly periodoInicio: FechaLocal;
+  readonly categorias?: readonly Uuid[];
+  readonly ids: GeneradorIds;
+}
+/** Atributos de una meta que se editan (01 OP-18); `fechaObjetivo: null` la quita de una anual. */
+export type CamposMeta = Partial<Pick<Meta, 'monto' | 'modo' | 'fechaObjetivo'>>;
+export type ComandoOp18 = { readonly operacion: 'OP-18' } & (
+  | ({ readonly accion: 'crear'; readonly id: Uuid; readonly categoriaId: Uuid } & Pick<
+      Meta,
+      'tipo' | 'monto'
+    > &
+      CamposMeta)
+  | ({ readonly accion: 'editar'; readonly metaId: Uuid } & CamposMeta)
+  | { readonly accion: 'eliminar'; readonly metaId: Uuid }
+);
+
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
 export type ComandoDominio =
   | ComandoOp01
@@ -148,6 +184,10 @@ export type ComandoDominio =
   | ComandoOp11
   | ComandoOp12
   | ComandoOp13
+  | ComandoOp14
+  | ComandoOp15
+  | ComandoOp17
+  | ComandoOp18
   | ComandoOp48;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */

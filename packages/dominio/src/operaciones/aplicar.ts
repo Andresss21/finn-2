@@ -31,6 +31,10 @@ import { op10 } from './op-10';
 import { op11 } from './op-11';
 import { op12 } from './op-12';
 import { op13 } from './op-13';
+import { op14 } from './op-14';
+import { op15 } from './op-15';
+import { op17 } from './op-17';
+import { op18 } from './op-18';
 import { op48 } from './op-48';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
 
@@ -63,6 +67,11 @@ const OPERACIONES: {
   'OP-11': op11,
   'OP-12': op12,
   'OP-13': op13,
+  // TA-116: presupuesto y metas.
+  'OP-14': op14,
+  'OP-15': op15,
+  'OP-17': op17,
+  'OP-18': op18,
   'OP-48': (antes, comando) => {
     const r = op48(antes.hechos.prestamos, comando);
     return esRechazo(r) ? r : { cambios: r };
