@@ -25,6 +25,10 @@ function tieneCodigo(dir: string): boolean {
 const dominioTieneCodigo = tieneCodigo(join(raiz, 'packages', 'dominio', 'src'));
 
 const comun = { retries: 0 } as const;
+// Mutantes del motor (07 §19.4, TA-112): FINN_MUTANTE llega a @finn/dominio solo como constante de
+// compilación de estos dos proyectos (calculo/mutantes.ts); sin la variable, no se define nada.
+const mutante = process.env['FINN_MUTANTE'] ?? '';
+const define = mutante === '' ? {} : { __FINN_MUTANTE__: JSON.stringify(mutante) };
 const excluidos = ['**/node_modules/**', '**/dist/**', '**/.next/**', '**/.claude/**'];
 const orden = { shuffle: true, seed: semilla } as const;
 
@@ -50,6 +54,7 @@ export default defineConfig({
     projects: [
       {
         extends: false,
+        define,
         test: {
           ...comun,
           name: 'unidad',
@@ -85,6 +90,7 @@ export default defineConfig({
       },
       {
         extends: false,
+        define,
         test: {
           ...comun,
           name: 'escenarios-motor',

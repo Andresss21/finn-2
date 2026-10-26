@@ -73,7 +73,7 @@
 
   "TA-111": { "estado": "terminada", "pr": 35 },
 
-  "TA-112": { "estado": "pendiente" },
+  "TA-112": { "estado": "en_curso", "rama": "ta-112-oraculo-diferencial" },
 
   "TA-113": { "estado": "pendiente" },
 
