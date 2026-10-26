@@ -6,6 +6,7 @@ import type { Hechos, TipoTransaccion } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
 import { type Celda, type Presupuesto, reduccionDe } from './disponible';
+import { mutante } from './mutantes';
 import type { Periodo } from './periodos';
 import {
   dineroEnCamino,
@@ -102,7 +103,10 @@ export function listoParaAsignar(
   cobros: readonly PorCobrar[],
 ): DetalleLpa {
   const a = b.activo.inicio;
-  const cerradas = b.celdas.filter((x) => x.estado === 'cerrado');
+  // Mutante 'cierre' (07 §19.4): el activo reduce LPA como si ya hubiera cerrado.
+  const cerradas = b.celdas.filter(
+    (x) => x.estado === 'cerrado' || (mutante('cierre') && x.estado === 'activo'),
+  );
   const detalle = {
     entradas: entradas(h, cobros),
     asignadoCerrados: asignadoSi(h, (p) => p < a),

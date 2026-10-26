@@ -132,7 +132,7 @@ Cada prueba pertenece a un solo nivel. Una regla de frontera dice qué va en cad
 |---|---|---|---|---|---|
 | Dominio | `DOM` | Funciones puras de `@finn/dominio` (motor, selectores, `Centavos`, `FechaLocal`, umbrales), intérprete y normalizadores de `@finn/sms`, adaptadores de `@finn/conciliacion` sobre texto ya decodificado, módulos de formato (V-18) | Sin E/S, sin base, sin `Date`, sin red | `packages/*/src/**/*.test.ts` | `rapido` |
 | Escenarios | `ESC` | Los 50 escenarios de 01 §8 como datos, en dos ejecutores: `motor` (`aplicar` + `calcular`) e `int` (operación + consulta contra PostgreSQL) | El escenario no decide el nivel: es el mismo archivo en los dos | `packages/dominio/escenarios/datos/esc-nn.ts` | `rapido` (motor), `integracion` (int) |
-| Propiedades | `PROP` | Invariantes de 01 §6 y equivalencias (memoria = carga nueva, `FechaLocal` frente a Temporal, redondeos, diferencial contra el oráculo) | Igual que `DOM`; generadores en lugar de casos fijos | `packages/*/src/**/*.prop.test.ts` | `rapido` (300 casos), `main` (2.000), nocturno (10.000) |
+| Propiedades | `PROP` | Invariantes de 01 §6 y equivalencias (memoria = carga nueva, `FechaLocal` frente a Temporal, redondeos, diferencial contra el oráculo) | Igual que `DOM`; generadores en lugar de casos fijos | `packages/*/src/**/*.prop.test.ts`; el diferencial, en `tools/pruebas/oraculo/diferencial.prop.test.ts` (lanza el oráculo: E/S fuera de `@finn/dominio`, CT-05) **[CH-19]** | `rapido` (300 casos), `main` (2.000), nocturno (10.000) |
 | Contratos | `CTR` | Esquemas Zod de toda frontera: cuerpo del webhook (BE-60), entradas de las Server Actions, variables de entorno, filas de CSV ya extraídas, exportación JSON | Sin base; solo validación | `packages/aplicacion/src/**/*.ctr.test.ts`, `apps/web/src/**/*.ctr.test.ts` | `rapido` |
 | Aplicación | `INT` | Operaciones y consultas de `@finn/aplicacion` contra PostgreSQL real con el esquema completo: protocolo de 04 §4.2, idempotencia (BE-17), conflictos (`revisionVista`), disparadores y códigos FN, RLS y privilegios como `finn_app`, migraciones de expansión, pooler | Sin Next ni navegador | `packages/aplicacion/test/**/*.int.test.ts`, `packages/db/test/**/*.int.test.ts` | `integracion` |
 | Esquema | `ESQ` | Controles C1 a C6 de 03 §11.6, reglas R1 a R15, prueba de catálogo de CF-16 | No prueba operaciones | `tools/db/`, `packages/db/test/catalogo.int.test.ts` | `rapido` (C1, C2), `integracion` (C3 a C6), respaldo nocturno (C5, C6 contra producción) |
@@ -1099,7 +1099,7 @@ Cada CB tiene al menos una prueba automática. El área sugerida es la del CB; e
 Los 4 mutantes de V7-03 (arrastre, traslado, orden y cierre) se compilan en el motor real detrás de `FINN_MUTANTE` y solo en el job nocturno. El nocturno corre `PROP` y `ESC@motor` con cada uno.
 - **Si un mutante sobrevive, el nocturno falla:** las pruebas dejaron de proteger esa regla.
 - En V7-08, los escenarios mataron los 4.
-- `L20` impide leer `FINN_MUTANTE` fuera del núcleo, y R15 no aplica porque es código de la aplicación sin reloj.
+- `FINN_MUTANTE` solo se lee en `vitest.config.ts`, que lo inyecta como constante de compilación `__FINN_MUTANTE__` en los proyectos de prueba; el dominio no lee el entorno **[CH-19]**. R15 no aplica porque es código de la aplicación sin reloj.
 
 ### 19.5 Pooler y bloqueos de sesión (CT-06)
 

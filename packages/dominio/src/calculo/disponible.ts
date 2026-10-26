@@ -9,6 +9,7 @@ import type { FechaLocal } from '../valores/fecha-local';
 import { actividadDePago, actividadNormal } from './actividad';
 import { asignado, noCubiertaDe, type RepartoD2, repartoD2, trasladoA } from './d2';
 import { type Aporte, aportes, consumos, type HechosDeConsumo } from './devoluciones';
+import { mutante } from './mutantes';
 import {
   type Ciclo,
   type EstadoDePeriodo,
@@ -161,9 +162,15 @@ export function presupuesto(
       );
       siguientes.push(celdaDe(x, act));
     }
-    // Paso 4: arrastre al período siguiente.
+    // Paso 4: arrastre al período siguiente. Mutante 'arrastre' (07 §19.4): arrastra el negativo
+    // de una categoría normal.
     for (const y of siguientes)
-      arrastres.set(y.categoriaId, Centavos.max(Centavos.cero, y.disponible));
+      arrastres.set(
+        y.categoriaId,
+        mutante('arrastre') && y.clase === 'normal'
+          ? y.disponible
+          : Centavos.max(Centavos.cero, y.disponible),
+      );
     repartos.push(...delPeriodo);
     celdas.push(...siguientes);
   }

@@ -8,7 +8,9 @@
 // pull_request), FINN_BASE (por defecto origin/main; en main, el commit anterior al push). Con GITHUB_OUTPUT, las
 // decisiones quedan como salidas del paso. M4 (07 §6.5): el modo sale del estado que ci.yml restauró de la caché.
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync, rmSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { afectadas } from '../pruebas/afectadas.ts';
 import { ESTADO, e2eDePr, recortesVigentes } from './minutos.ts';
@@ -181,12 +183,66 @@ function inestables() {
 
 /** Las suites del nocturno que ya existen (07 §6.1): PROP con FC_RUNS=10000 (lo fija nocturno.yml); con tantos casos el timeout de 5 s no alcanza, así que sube solo acá. */
 function nocturno() {
-  return correr([
+  const prop = correr([
     [
       'PROP',
-      'node tools/pruebas/vitest.mjs --project unidad --testTimeout=120000 packages/dominio',
+      'node tools/pruebas/vitest.mjs --project unidad --testTimeout=120000 packages/dominio tools/pruebas/oraculo',
     ],
   ]);
+  return mutantes() && prop;
+}
+
+// Mutantes del motor (07 §19.4, DP-26; TA-112): vitest.config.ts compila FINN_MUTANTE en @finn/dominio.
+const MUTANTES = ['arrastre', 'traslado', 'orden', 'cierre'];
+const VITEST = join(
+  dirname(createRequire(import.meta.url).resolve('vitest/package.json')),
+  'vitest.mjs',
+);
+
+/** PROP y ESC@motor con cada mutante: si ninguna prueba falla, el mutante sobrevivió y el nocturno falla. */
+function mutantes() {
+  const vivos = [];
+  for (const m of MUTANTES) {
+    const informe = `test-results/mutantes/${m}.json`;
+    rmSync(informe, { force: true }); // un informe de otra corrida no cuenta
+    console.log(
+      enCi
+        ? `::group::mutante ${m}`
+        : `
+▶ mutante ${m}`,
+    );
+    spawnSync(
+      process.execPath,
+      [
+        VITEST,
+        'run',
+        '--project',
+        'unidad',
+        '--project',
+        'escenarios-motor',
+        '--coverage.enabled=false',
+        '--passWithNoTests',
+        '--bail=1',
+        '--testTimeout=120000',
+        '--reporter=default',
+        '--reporter=json',
+        `--outputFile.json=${informe}`,
+        '.prop.test.ts',
+        '.motor.test.ts',
+      ],
+      { stdio: 'inherit', env: { ...process.env, FINN_MUTANTE: m } },
+    );
+    if (enCi) console.log('::endgroup::');
+    const fallidas = existsSync(informe)
+      ? (JSON.parse(readFileSync(informe, 'utf8')).numFailedTests ?? 0)
+      : 0;
+    if (fallidas > 0) console.log(`✓ mutante ${m}: muerto (${fallidas} pruebas fallidas)`);
+    else {
+      console.error(`✗ mutante ${m}: sobrevivió (ninguna PROP ni ESC@motor falló)`);
+      vivos.push(m);
+    }
+  }
+  return vivos.length === 0;
 }
 
 const argv = process.argv.slice(2);
