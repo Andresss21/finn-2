@@ -12,10 +12,9 @@ export type CodigoComun =
   | 'periodo_cerrado' // §5.0.4, inv. 18
   | 'invariante_violada'; // §5.0.1; la aplicación lo trata como INTERNO (04 §2.4)
 
-export const rechazo = (codigo: CodigoComun, datos: NonNullable<Rechazo['datos']>): Rechazo => ({
-  codigo,
-  datos,
-});
+export function rechazo(codigo: CodigoComun, datos: NonNullable<Rechazo['datos']>): Rechazo {
+  return { codigo, datos };
+}
 
 /** Un rechazo `invariante_violada` por cada violación, con el número y el detalle. */
 export const porInvariantes = (vs: readonly Violacion[]): readonly Rechazo[] =>

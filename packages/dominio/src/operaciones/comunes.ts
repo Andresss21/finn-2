@@ -1,6 +1,5 @@
-// Reglas comunes de 01 §5.0 que el marco de `aplicar` verifica en toda operación sobre el estado que
-// resultaría de aplicarla (§5.0.1): períodos cerrados (§5.0.4), archivo (§5.0.5) y fechas (§5.0.6).
-// También aplica los cambios a los hechos, con las cascadas de 03 (DB-12), para `hechosNuevos`.
+// Reglas comunes de 01 §5.0 que `aplicar` verifica sobre el estado resultante (§5.0.1): períodos
+// cerrados (§5.0.4), archivo (§5.0.5), fechas (§5.0.6); y `hechosNuevos` con las cascadas (DB-12).
 import { saldo } from '../calculo/saldos';
 import type { Cambio, Hechos, Instantanea, Rechazo, TablaMotor } from '../hechos';
 import { Centavos } from '../valores/centavos';
@@ -22,9 +21,8 @@ const CASCADAS: Partial<Record<string, readonly string[]>> = {
 };
 
 /**
- * Los hechos después de los cambios. La base fija `revision` en cada fila escrita y `secuencia` al
- * insertar (BE-32): quedan pendientes (`null`). Los cambios a tablas [H] no entran en los hechos.
- * Insertar una fila que ya existe, o actualizar o eliminar una que no, es un error de programación.
+ * Los hechos después de los cambios; `revision` y `secuencia` las fija la base (BE-32) y quedan en
+ * `null`. Las tablas [H] no entran. Insertar una fila existente o tocar una inexistente lanza.
  */
 export function aplicarCambios(h: Hechos, cambios: readonly Cambio[]): Hechos {
   const t: Record<string, Fila[]> = Object.fromEntries(

@@ -3,15 +3,7 @@
 import { avisosDeEstado } from '../avisos/estado';
 import { periodoDe } from '../calculo/periodos';
 import type { EstadoDeTarjeta } from '../calculo/tarjetas';
-import type {
-  AvisoOperacion,
-  Cambio,
-  Hechos,
-  Impacto,
-  Instantanea,
-  ResultadoAplicar,
-  Uuid,
-} from '../hechos';
+import type { AvisoOperacion, Cambio, Impacto, Instantanea, ResultadoAplicar } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
 import { claveDe } from './comunes';
@@ -19,7 +11,7 @@ import { claveDe } from './comunes';
 const { restar, cero } = Centavos;
 
 /** Δ del valor de cada clave de `a` a `b`, en orden de clave. */
-function deltas<T>(a: readonly T[], b: readonly T[], par: (x: T) => readonly [Uuid, Centavos]) {
+function deltas<T, K>(a: readonly T[], b: readonly T[], par: (x: T) => readonly [K, Centavos]) {
   const [ma, mb] = [new Map(a.map(par)), new Map(b.map(par))];
   return [...new Set([...ma.keys(), ...mb.keys()])]
     .sort()
@@ -29,15 +21,8 @@ function deltas<T>(a: readonly T[], b: readonly T[], par: (x: T) => readonly [Uu
 const delActivo = (i: Instantanea) =>
   i.presupuesto.celdas.filter((x) => x.periodo.inicio === i.presupuesto.activo.inicio);
 
-/**
- * Δ LPA, Δ Disp(c, A) por categoría afectada, Δ S(t) y Δ RE(t) por tarjeta y Δ de la reducción
- * proyectada de LPA al cierre, de `antes` a `despues` (§5.0.3). Solo se listan los Δ ≠ 0.
- */
-export function impacto(
-  antes: Instantanea,
-  despues: Instantanea,
-  avisos: Impacto['avisos'],
-): Impacto {
+/** Δ LPA, Δ Disp(c, A), Δ S(t), Δ RE(t) y Δ de la reducción proyectada (§5.0.3); los Δ ≠ 0. */
+export function impacto(antes: Instantanea, despues: Instantanea): Omit<Impacto, 'avisos'> {
   const delta = (f: (i: Instantanea) => Centavos) => restar(f(despues), f(antes));
   const disp = deltas(delActivo(antes), delActivo(despues), (x) => [x.categoriaId, x.disponible]);
   const t = (f: (x: EstadoDeTarjeta) => Centavos) =>
@@ -51,28 +36,21 @@ export function impacto(
       return d === 0 && deltaReserva === 0 ? [] : [{ tarjetaId: k, deltaSaldo: d, deltaReserva }];
     }),
     deltaReduccionProyectadaLpaAlCierre: delta((i) => i.reduccionProyectada),
-    avisos,
   };
 }
 
 const CON_FECHA = new Set(['transacciones', 'efectos', 'lineas', 'condonaciones']);
 
-/** La fecha de una fila de `CON_FECHA` (la de su transacción, si no tiene), si está en `h`. */
-function fechaEn(h: Hechos, tabla: string, id: string): FechaLocal | undefined {
+/** La fecha de una fila de `CON_FECHA` (la de su transacción, si no tiene), si está en los hechos. */
+function fechaEn({ hechos: h }: Instantanea, tabla: string, id: string): FechaLocal | undefined {
   if (tabla === 'condonaciones') return h.condonaciones.find((x) => x.id === id)?.fecha;
-  const tx =
-    tabla === 'transacciones'
-      ? id
-      : [...h.efectos, ...h.lineas].find((x) => x.id === id)?.transaccionId;
+  const otras = [...h.efectos, ...h.lineas];
+  const tx = tabla === 'transacciones' ? id : otras.find((x) => x.id === id)?.transaccionId;
   return h.transacciones.find((t) => t.id === tx)?.fecha;
 }
 
 /** §5.0.3: la operación escribe un hecho con fecha en un período cerrado o lo cambia de período. */
-export function esRetroactiva(
-  antes: Instantanea,
-  despues: Instantanea,
-  cambios: readonly Cambio[],
-) {
+export function retroactiva(antes: Instantanea, despues: Instantanea, cambios: readonly Cambio[]) {
   const cerrado = (i: Instantanea, f: FechaLocal | undefined) =>
     f !== undefined && f < i.presupuesto.activo.inicio;
   const periodo = (i: Instantanea, f: FechaLocal | undefined) =>
@@ -80,8 +58,7 @@ export function esRetroactiva(
   return cambios.some((x) => {
     if (x.tipo === 'eliminarConciliacionesDeCuenta' || !CON_FECHA.has(x.tabla)) return false;
     const id = x.tipo === 'insertar' ? claveDe(x.fila) : x.id;
-    const a = fechaEn(antes.hechos, x.tabla, id);
-    const d = fechaEn(despues.hechos, x.tabla, id);
+    const [a, d] = [antes, despues].map((i) => fechaEn(i, x.tabla, id));
     return (
       cerrado(antes, a) ||
       cerrado(despues, d) ||
@@ -123,10 +100,9 @@ function canonica(v: unknown, nuevas: ReadonlyMap<unknown, string>): unknown {
 }
 
 /**
- * Serialización canónica de `impacto` y `avisos` (04 §4.3, V-20): todo valor igual al id de una
- * fila que la operación inserta se reemplaza por `@nueva#k`, con k = posición del cambio
- * `insertar` en la lista de cambios. Las listas se ordenan después del reemplazo, para que el
- * orden por id tampoco dependa del generador. La aplicación calcula el SHA-256 de este texto.
+ * Serialización canónica de `impacto` y `avisos` (04 §4.3, V-20): todo id de una fila insertada pasa
+ * a `@nueva#k` (k = posición de su `insertar` en los cambios) y las listas se ordenan después, para
+ * que tampoco el orden dependa del generador. La aplicación calcula el SHA-256 de este texto.
  */
 export function formaCanonicaDelImpacto(
   r: Pick<Extract<ResultadoAplicar, { ok: true }>, 'cambios' | 'impacto' | 'avisos'>,

@@ -15,15 +15,14 @@ import type {
 import { verificarInvariantes } from '../invariantes';
 import type { FechaLocal } from '../valores/fecha-local';
 import { aplicarCambios, verificarComunes } from './comunes';
-import { avisosNuevosDeEstado, esRetroactiva, impacto } from './impacto';
+import { avisosNuevosDeEstado, impacto, retroactiva } from './impacto';
 import { op48 } from './op-48';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
 
 /** Lo que produce una operación sobre la instantánea de antes, si no se rechaza. */
 export interface Efecto {
   readonly cambios: readonly Cambio[];
-  /** Avisos propios de la operación (AV-10 a AV-24, 04 §3.0.5). */
-  readonly avisos?: readonly AvisoOperacion[];
+  readonly avisos?: readonly AvisoOperacion[]; // los propios de la operación (AV-10 a AV-24)
   readonly operacionDeclarada?: OperacionDeclarada;
 }
 
@@ -42,12 +41,11 @@ const OPERACIONES: {
   },
 };
 
-/** El contrato público (04 §2.4). */
-export function aplicar(
-  hechos: Hechos,
-  comando: ComandoDominio,
-  hoy: FechaLocal,
-): ResultadoAplicar {
+/** AV-01 (§5.0.3): impacto retroactivo, antes y después de confirmar. */
+const AV01 = { codigo: 'AV-01', momento: 'antes_y_despues', requiereConfirmacion: true } as const;
+
+/** El contrato público (04 §2.4); devuelve `ResultadoAplicar`. */
+export function aplicar(hechos: Hechos, comando: ComandoDominio, hoy: FechaLocal) {
   const tabla: Partial<Record<string, Manejador<ComandoDominio>>> = OPERACIONES;
   const manejador = tabla[comando.operacion];
   if (manejador === undefined) throw new TypeError(`operación desconocida: ${comando.operacion}`);
@@ -78,21 +76,12 @@ export function ejecutar<C extends { readonly operacion: string }>(
   const violaciones = verificarInvariantes(despues);
   if (violaciones.length > 0) return { ok: false, rechazos: porInvariantes(violaciones) };
   const { cambios, avisos: propios = [], ...declarada } = efecto;
-  const { deltaLpa, deltaReduccionProyectadaLpaAlCierre, ...resto } = impacto(antes, despues, []);
-  // AV-01 (§5.0.3): antes y después de confirmar, con los Δ del período activo.
-  const av01: AvisoOperacion[] = esRetroactiva(antes, despues, cambios)
-    ? [
-        {
-          codigo: 'AV-01',
-          momento: 'antes_y_despues',
-          requiereConfirmacion: true,
-          datos: { deltaLpa, deltaReduccionProyectadaLpaAlCierre },
-        },
-      ]
-    : [];
-  const avisos = [...propios, ...av01, ...avisosNuevosDeEstado(antes, despues)].sort((a, b) =>
-    a.codigo < b.codigo ? -1 : a.codigo > b.codigo ? 1 : 0,
-  );
-  const total = { ...resto, deltaLpa, deltaReduccionProyectadaLpaAlCierre, avisos };
+  const delta = impacto(antes, despues);
+  const { deltaLpa, deltaReduccionProyectadaLpaAlCierre } = delta;
+  const datos = { deltaLpa, deltaReduccionProyectadaLpaAlCierre };
+  const av01 = retroactiva(antes, despues, cambios) ? [{ ...AV01, datos }] : [];
+  const avisos = [...propios, ...av01, ...avisosNuevosDeEstado(antes, despues)];
+  avisos.sort((a, b) => (a.codigo < b.codigo ? -1 : a.codigo > b.codigo ? 1 : 0));
+  const total = { ...delta, avisos };
   return { ok: true, cambios, ...declarada, hechosNuevos: despues.hechos, impacto: total, avisos };
 }

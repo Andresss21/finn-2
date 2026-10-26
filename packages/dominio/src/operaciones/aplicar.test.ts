@@ -8,6 +8,7 @@ import type {
   GeneradorIds,
   Hechos,
   Linea,
+  Meta,
   Prestamo,
   ResultadoAplicar,
   TipoCuenta,
@@ -303,6 +304,27 @@ describe('aplicar: marco común de las operaciones (01 §5.0, 04 §2.4)', () => 
     });
     expect(r.impacto.deltaLpa).toBe(0);
     expect(Object.isFrozen(h)).toBe(true);
+  });
+
+  it('PRU-DOM-MOTOR-110 MOT-5.0 BE-09: un estado que el motor no puede calcular se rechaza con invariante_violada; otro error se propaga', () => {
+    const huerfana = {
+      id: id('M'),
+      categoriaId: id('NO'),
+      tipo: 'mensual',
+      modo: null,
+      monto: c(10),
+      fechaObjetivo: null,
+      fechaCreacion: f('2027-03-01'),
+      revision: null,
+    } as unknown as Meta;
+    const r = prueba(base(), [{ tipo: 'insertar', tabla: 'metas', fila: huerfana }]);
+    expect(codigos(r)).toEqual(['invariante_violada']);
+    expect(r.ok ? '' : r.rechazos[0]?.datos?.error).toContain('inv. 25');
+    // Un monto que no es Centavos es un error de programación, no un rechazo.
+    const campos = { monto: 1n as unknown as Centavos };
+    expect(() =>
+      prueba(base(), [{ tipo: 'actualizar', tabla: 'efectos', id: id('ef-dm'), campos }]),
+    ).toThrow(TypeError);
   });
 
   it('PRU-DOM-MOTOR-110 MOT-5.0 BE-09: aplicar despacha OP-48 y devuelve su rechazo sin excepción', () => {
