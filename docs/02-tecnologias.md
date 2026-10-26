@@ -93,7 +93,7 @@ Este documento fija el stack tecnológico de Finn 2.0. Cada elección se justifi
 | RT-04 | **Los derivados no se guardan.** Prohibido guardar LPA, Disponible, reparto D2, S(t), RE(t) y el resto, incluso como caché que pueda desactualizarse. | §3 (regla de cierre), §4.1.1, inv. 26 | Motor de función pura `calcular(hechos, hoy)`. Sin columnas derivadas ni vistas materializadas. Cualquier memorización debe ser imposible de desactualizar. | ADR-07 |
 | RT-05 | **Rendimiento del recálculo** con 5 a 10 años de datos. | §4.1, §4.5, §4.6 | Ver 2.2. | ADR-07 |
 | RT-06 | **Simulación previa.** Antes de confirmar se calculan deltas en el período activo (AV-01, AV-10, AV-11, AV-13, AV-15) y la reducción proyectada. | §5.0.3, §5.0.7 | El motor acepta un conjunto de hechos hipotético. Se calcula antes y después, sin escribir. | ADR-07 |
-| RT-07 | **Montos en centavos enteros.** Solo existen dos redondeos: mitad hacia arriba (meta semanal) y techo (metas de ahorro). | §0.4, §4.12, OP-16 | Aritmética entera; prohibidos los flotantes en montos. | ADR-15 |
+| RT-07 | **Montos en centavos enteros.** Solo existen tres redondeos: mitad hacia arriba (meta semanal), techo (metas de ahorro) y la proporción mitad hacia arriba del Anexo A (interés y seguro de un préstamo) **[CH-17]**. | §0.4, §4.12, OP-16 | Aritmética entera; prohibidos los flotantes en montos. | ADR-15 |
 | RT-08 | **Fechas locales sin hora** en America/El_Salvador. "Hoy" es una entrada externa. Los instantes solo ordenan y nunca deciden un período. | §0.4, P5, P18, OP-35 paso 5, ESC-46 | Tipo fecha-sin-hora en el dominio; `hoy` se calcula una vez por petición en la frontera; prohibido `Date` dentro del dominio; conversión controlada en la capa de datos. | ADR-16, ADR-05 |
 | RT-09 | **Orden determinista.** (fecha, clave de orden, secuencia de creación, orden de línea): el desempate por orden de creación de la transacción va antes que el orden de línea **[CH-14]**. | §4.1.2, D2, CB-21, inv. 26 | La base de datos necesita una secuencia de creación monótona; un UUID aleatorio no sirve para desempatar. | Supuesto para la Fase 3 |
 | RT-10 | **Una sola fórmula por número.** Todas las vistas usan la misma. | inv. 27, error 11 | El motor devuelve una instantánea inmutable; las pantallas solo seleccionan y formatean. Sin caché de framework que sirva números viejos. | ADR-07, ADR-02 |
@@ -427,20 +427,21 @@ Cada ADR incluye contexto, opciones evaluadas, decisión, consecuencias y altern
 
 ### ADR-15 — Dinero: tipo `Centavos` propio
 
-- **Contexto.** RT-07: centavos enteros y solo dos redondeos.
+- **Contexto.** RT-07: centavos enteros y solo tres redondeos **[CH-17]**.
 - **Opciones.**
 
 | Opción | A favor | En contra |
 |---|---|---|
-| **Tipo marcado `Centavos` sobre `number` entero** | Sin dependencias; enteros exactos hasta 2^53 (unos 90 billones de dólares); suficiente para dos redondeos | Hay que escribir y probar las funciones |
+| **Tipo marcado `Centavos` sobre `number` entero** | Sin dependencias; enteros exactos hasta 2^53 (unos 90 billones de dólares); suficiente para tres redondeos **[CH-17]** | Hay que escribir y probar las funciones |
 | dinero.js | Librería especializada | Pensada para varias monedas; API más pesada; el dominio es solo USD |
 | `bigint` | Sin límite | Incómodo de serializar y de usar en la interfaz; innecesario con este rango |
 
 - **Decisión.**
   - `type Centavos = number & { readonly __marca: 'Centavos' }`, creado solo por constructores que verifican `Number.isSafeInteger`.
-  - Operaciones: suma, resta, negación, mín, máx, comparación y las dos divisiones del dominio, con aritmética entera:
+  - Operaciones: suma, resta, negación, mín, máx, comparación y las tres divisiones del dominio, con aritmética entera **[CH-17]**:
     - meta semanal, mitad hacia arriba: `redondear(m × d / 7) = ⌊(2·m·d + 7) / 14⌋` para m·d ≥ 0;
-    - metas de ahorro, techo: `⌈a / n⌉ = ⌊(a + n − 1) / n⌋` para a ≥ 0.
+    - metas de ahorro, techo: `⌈a / n⌉ = ⌊(a + n − 1) / n⌋` para a ≥ 0;
+    - proporción mitad hacia arriba del Anexo A: `redondear(B × num / den) = ⌊(2·B·num + den) / (2·den)⌋` para B·num ≥ 0, con num y den enteros, calculada en `bigint` dentro de `centavos.ts`. Interés: num = tasa en millonésimas × d_k, den = 365 × 10⁶ (DB-13). Seguro: num = S₁, den = M **[CH-17]**.
   - Formato de presentación con `Intl.NumberFormat('es-SV', { style: 'currency', currency: 'USD' })`, solo en la interfaz.
   - Entrada del usuario: se convierte de texto a centavos sin pasar por flotantes.
 - **Consecuencias.** Las pruebas verifican los valores de ESC-36 (221,43; 200,00; 214,29; 78,57) y de ESC-37 (92,31). Una regla de lint prohíbe operar montos con `/` fuera del módulo de dinero (ADR-21).
