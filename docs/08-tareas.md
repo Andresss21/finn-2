@@ -3674,7 +3674,7 @@ revision: normal
 paralelo: libre
 tamano: prod=320 archivos=4 ca=0 migraciones=0 total=800
 cubre: REP-realidad, REP-hormiga, REP-suscripciones, BE-43, CF-04
-pru: PRU-DOM-REP-102
+pru: PRU-DOM-REP-104
 compartido: —
 ```
 
@@ -3686,10 +3686,10 @@ compartido: —
 **Archivos.** `packages/dominio/src/selectores/reportes/{realidad,hormiga,suscripciones,agrupacion}.ts`.
 
 **Pruebas primero.**
-- **PRU-DOM-REP-102** (nueva, DT-17): realidad con su sugerencia, gastos hormiga y suscripciones con la clave de agrupación de BE-43 y sus variantes.
+- **PRU-DOM-REP-104** (nueva, DT-17): realidad con su sugerencia, gastos hormiga y suscripciones con la clave de agrupación de BE-43 y sus variantes.
 - La prueba nueva.
 
-**Comandos.** `pnpm test:unidad -t "PRU-DOM-REP-102"`; `pnpm ci:local`.
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-REP-104"`; `pnpm ci:local`.
 
 **Terminada cuando.** La prueba pasa.
 
