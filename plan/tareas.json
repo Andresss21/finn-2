@@ -153,7 +153,7 @@
 
   "TA-143": { "estado": "terminada", "pr": 68 },
 
-  "TA-144": { "estado": "pendiente" },
+  "TA-144": { "estado": "en_curso", "rama": "ta-144-datos-base" },
 
   "TA-145": { "estado": "pendiente" },
 
