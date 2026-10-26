@@ -79,7 +79,9 @@ export function nombres(i: Instantanea): Nombres {
       const m = new Map<Uuid, Ref>(
         filas.map((x) => [
           x.id,
-          x.archivada ? { id: x.id, nombre: x.nombre, archivada: true } : { id: x.id, nombre: x.nombre },
+          x.archivada
+            ? { id: x.id, nombre: x.nombre, archivada: true }
+            : { id: x.id, nombre: x.nombre },
         ]),
       );
       return (id: Uuid): Ref => {
