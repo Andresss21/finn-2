@@ -321,7 +321,17 @@ describe('PRU-DOM-MOTOR', () => {
     >();
     expectTypeOf<Impacto['deltaLpa']>().toEqualTypeOf<Centavos>();
     expectTypeOf<ComandoDominio['operacion']>().toEqualTypeOf<
-      'OP-01' | 'OP-02' | 'OP-03' | 'OP-04' | 'OP-05' | 'OP-06' | 'OP-48'
+      | 'OP-01'
+      | 'OP-02'
+      | 'OP-03'
+      | 'OP-04'
+      | 'OP-05'
+      | 'OP-06'
+      | 'OP-07'
+      | 'OP-09'
+      | 'OP-11'
+      | 'OP-12'
+      | 'OP-48'
     >();
     expectTypeOf<GeneradorIds['siguiente']>().toEqualTypeOf<() => Uuid>();
   });

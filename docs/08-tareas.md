@@ -393,7 +393,7 @@ tu: TU-03, TU-06
 
 ```hito
 despues: TA-147
-requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235, TA-237
+requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235, TA-236, TA-237
 tu: —
 ```
 
@@ -1628,7 +1628,7 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 112 | TA-112 | B2 | 1 | HT-2 | obligatoria | Oráculo, diferencial y mutantes del nocturno | 140 | 0 |
 | 113 | TA-113 | B2 | 1 | HT-2 | obligatoria | `aplicar()`: marco, rechazos, impacto y huella | 300 | 0 |
 | 114 | TA-114 | B2 | 1 | HT-2 | obligatoria | `aplicar`: cuentas (OP-01 a OP-06) | 320 | 0 |
-| 115 | TA-115 | B2 | 1 | HT-2 | obligatoria | `aplicar`: grupos y categorías (OP-07 a OP-13) | 360 | 0 |
+| 115 | TA-115 | B2 | 1 | HT-2 | obligatoria | `aplicar`: crear, archivar, sacar y fusionar categorías (OP-07, OP-09, OP-11, OP-12; parte 1; la parte 2 es TA-236) | 370 | 0 |
 | 116 | TA-116 | B2 | 1 | HT-2 | obligatoria | `aplicar`: asignar, mover, auto-asignar y metas (OP-14, OP-15, OP-17, OP-18) | 300 | 0 |
 | 117 | TA-117 | B2 | 1 | HT-2 | obligatoria | `aplicar`: registrar transacciones (OP-20 a OP-24, OP-27) | 380 | 0 |
 | 118 | TA-118 | B2 | 1 | HT-2 | obligatoria | `aplicar`: editar, eliminar y estado bancario (OP-28 a OP-30) | 320 | 0 |
@@ -1655,6 +1655,7 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 139 | TA-234 | B2 | 1 | HT-2 | normal | Selectores de Inicio y detalle de LPA (parte 2 de TA-125) | 275 | 0 |
 | 140 | TA-235 | B2 | 1 | HT-2 | obligatoria | Proyección de períodos futuros en `calcular` (04 §6.2, 01 §4.6) | 120 | 0 |
 | 141 | TA-237 | B2 | 1 | HT-2 | normal | Selectores de cuentas y detalle de cuenta (parte 2 de TA-127) | 400 | 0 |
+| 142 | TA-236 | B2 | 1 | HT-2 | obligatoria | `aplicar`: renombrar, desarchivar, eliminar y crear en lote (OP-08, OP-10, OP-13, CF-19; parte 2 de TA-115) | 220 | 0 |
 | 150 | TA-150 | B3 | 1 | HT-3 | obligatoria | `escribir()` y `leer()`: el protocolo de 04 §4.2 | 300 | 0 |
 | 151 | TA-151 | B3 | 1 | HT-3 | normal | Errores de la base y conversiones de fechas y montos | 220 | 0 |
 | 152 | TA-152 | B3 | 1 | HT-3 | normal | Carga de hechos (BE-21) | 240 | 0 |
@@ -2102,7 +2103,7 @@ Cada invariante (M4), caso borde (M14) y aviso (M3) tiene exactamente una tarea 
 | CB-13 → TA-103 | CB-14 → TA-114 | CB-15 → TA-120 | CB-16 → TA-120 | CB-17 → TA-120 | CB-18 → TA-123 |
 | CB-19 → TA-117 | CB-20 → TA-115 | CB-21 → TA-105 | CB-22 → TA-138 | CB-23 → TA-119 | CB-24 → TA-118 |
 | CB-25 → TA-116 | CB-26 → TA-117 | CB-27 → TA-116 | CB-28 → TA-117 | CB-29 → TA-117 | CB-30 → TA-118 |
-| CB-31 → TA-138 | CB-32 → TA-104 | CB-33 → TA-139 | CB-34 → TA-115 |
+| CB-31 → TA-138 | CB-32 → TA-104 | CB-33 → TA-139 | CB-34 → TA-236 |
 
 **Avisos (01 §5.0.7):**
 
@@ -2603,7 +2604,9 @@ compartido: —
 
 **Terminada cuando.** Cada rechazo de 04 §3.1 tiene su caso y pasa.
 
-#### TA-115 `aplicar`: grupos y categorías (OP-07 a OP-13)
+#### TA-115 `aplicar`: crear, archivar, sacar y fusionar categorías (OP-07, OP-09, OP-11, OP-12; parte 1; la parte 2 es TA-236)
+
+Partida por tamaño (DT-02, 08 §1.2): esta parte tiene las operaciones que necesitan los escenarios de la ola 1 (OP-07 para crear las categorías, OP-09 y OP-11 en ESC-44, OP-12 en ESC-42; E13) y las reglas comunes de búsqueda, nombre, grupo destino y dinero; renombrar, desarchivar, eliminar y la variante en lote de OP-07 son TA-236.
 
 ```tarea
 orden: 115
@@ -2613,26 +2616,60 @@ depende: TA-113
 tu: —
 revision: obligatoria
 paralelo: libre
-tamano: prod=360 archivos=7 ca=0 migraciones=0 total=980
-cubre: OP-07@dom, OP-08@dom, OP-09@dom, OP-10@dom, OP-11@dom, OP-12@dom, OP-13@dom, CF-19, INV-23, CB-20, CB-34, AV-13
+tamano: prod=370 archivos=7 ca=0 migraciones=0 total=1000
+cubre: OP-07@dom, OP-09@dom, OP-11@dom, OP-12@dom, INV-23, CB-20, AV-13
 pru: PRU-DOM-CATEG-101
 compartido: —
 ```
 
 **Qué construir.**
-- Una función por OP; OP-07 acepta `{ elementos }` (CF-19, 04 §3.2); OP-12 declara `operacionDeclarada: 'fusion'` (04 §4.4).
+- Una función por OP en `operaciones/op-07.ts`, `op-09.ts`, `op-11.ts` y `op-12.ts`, en la tabla de `aplicar.ts` y en `ComandoDominio`; OP-12 declara `operacionDeclarada: 'fusion'` (04 §4.4). `op-07.ts` deja `buscar`, `nombreOcupado` y `grupoValido`, y `op-09.ts` deja `ajustar`, `mover` y `destinoValido`, que usa TA-236.
 
-**Leer.** 01 §5.2, §7.6; 04 §3.2, §4.4; 06 §3.9 (CF-19); 01 §6 (inv. 20, 23); 01 §9 (CB-20, CB-34).
+**Leer.** 01 §5.2, §7.6; 04 §3.2, §4.4; 01 §6 (inv. 20, 23); 01 §9 (CB-20).
 
-**Archivos.** `packages/dominio/src/operaciones/op-0{7..9}.ts`, `op-1{0..3}.ts`.
+**Archivos.** `packages/dominio/src/operaciones/{op-07,op-09,op-11,op-12,aplicar,comunes}.ts`, `packages/dominio/src/hechos/operaciones.ts`.
 
 **Pruebas primero.**
-- **PRU-DOM-CATEG-101** (nueva, DT-17): OP-07 a OP-13: archivar como operación compuesta, sacar el Disponible de una archivada, fusión con asignaciones de períodos cerrados (O4) y su impacto (AV-13), fusión hacia una categoría con meta (CB-20), meta de una categoría archivada (CB-34), y la variante en lote de OP-07 (CF-19).
+- **PRU-DOM-CATEG-101** (nueva, DT-17): OP-07, OP-09, OP-11 y OP-12: crear un grupo o una categoría, archivar como operación compuesta, sacar el Disponible de una archivada, fusión con asignaciones de períodos cerrados (O4) y su impacto (AV-13, ESC-42), fusión hacia una categoría con meta (CB-20) y la categoría de pago fuera de la fusión (inv. 23).
 - La prueba nueva.
 
 **Comandos.** `pnpm test:unidad -t "PRU-DOM-CATEG-101"`; `pnpm ci:local`.
 
-**Terminada cuando.** Cada rechazo de 04 §3.2 tiene su caso y pasa; la fusión no rompe inv. 18.
+**Terminada cuando.** Cada rechazo de 04 §3.2 de OP-07, OP-09, OP-11 y OP-12 tiene su caso y pasa; la fusión no rompe inv. 18.
+
+#### TA-236 `aplicar`: renombrar, desarchivar, eliminar y crear en lote (OP-08, OP-10, OP-13, CF-19; parte 2 de TA-115)
+
+Parte 2 de TA-115 (DT-02, 08 §1.2). Ningún escenario de la ola 1 usa estas operaciones (E13). La rama local `ta-236-estructura-wip` tiene un borrador completo de esta parte, con su prueba, sobre el que se puede partir.
+
+```tarea
+orden: 142
+bloque: B2
+hito: HT-2
+depende: TA-115
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=220 archivos=6 ca=0 migraciones=0 total=520
+cubre: OP-08@dom, OP-10@dom, OP-13@dom, CF-19, CB-34
+pru: PRU-DOM-CATEG-104
+compartido: —
+```
+
+**Qué construir.**
+- Una función por OP en `operaciones/op-08.ts`, `op-10.ts` y `op-13.ts`, en la tabla de `aplicar.ts` y en `ComandoDominio`, con las reglas que dejó TA-115 en `op-07.ts`; OP-13 reusa `puedeEliminar` de `selectores/estructura.ts`.
+- La variante en lote de OP-07 (CF-19, 04 §3.2, 06 §3.9.1): `{ elementos }` de 1 a 15, en orden y no atómica; las categorías de un grupo que falló responden con su motivo sin intentarse, y un id ya creado responde `ya_aplicada`.
+
+**Leer.** 01 §5.2, §7.6; 04 §3.2, §4.6.1; 06 §3.9 (CF-19); 01 §9 (CB-34).
+
+**Archivos.** `packages/dominio/src/operaciones/{op-08,op-10,op-13,op-07,aplicar}.ts`, `packages/dominio/src/hechos/operaciones.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-CATEG-104** (nueva, DT-17): OP-08, OP-10 y OP-13 con cada rechazo de 04 §3.2; reordenar con posición × 10 solo en las filas que cambian; la meta de una categoría archivada vuelve a evaluarse al desarchivar (CB-34); y la variante en lote de OP-07 (CF-19) con un grupo que falla y la reanudación con los mismos ids.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-CATEG-104"`; `pnpm ci:local`.
+
+**Terminada cuando.** Cada rechazo de 04 §3.2 de OP-08, OP-10 y OP-13 tiene su caso y pasa.
 
 #### TA-116 `aplicar`: asignar, mover, auto-asignar y metas (OP-14, OP-15, OP-17, OP-18)
 
@@ -4248,7 +4285,7 @@ compartido: —
 orden: 163
 bloque: B3
 hito: HT-3
-depende: TA-162, TA-115
+depende: TA-162, TA-115, TA-236
 tu: —
 revision: normal
 paralelo: libre

@@ -119,8 +119,10 @@ export function verificarComunes(
     [...h.lineas, ...h.condonaciones].map((x) => [x.id, x.categoriaId]),
   );
   const [lineas, condonaciones] = [escritas(cambios, 'lineas'), escritas(cambios, 'condonaciones')];
+  // OP-09 sube Asig(c, A) para cubrir el sobregiro de la categoría que archiva (01 §5.2).
+  const cubre = operacion === 'OP-09';
   const categorias = new Set([
-    ...diferencias(h, despues, (_, c) => archivadas.has(c))
+    ...diferencias(h, despues, (_, c) => archivadas.has(c) && !cubre)
       .filter((x) => x.d > 0)
       .map((x) => x.categoriaId),
     ...[

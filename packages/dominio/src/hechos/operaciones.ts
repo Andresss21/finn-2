@@ -1,7 +1,15 @@
 // Contrato de `aplicar` (04 §2.4, §7.5): comando, cambios, rechazos, impacto y avisos.
 import type { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import type { Cuenta, FilasPorTabla, Inversion, Prestamo, Tarjeta } from './filas';
+import type {
+  Cuenta,
+  FilasPorTabla,
+  Inversion,
+  MovimientoLinea,
+  Prestamo,
+  ReglaComercio,
+  Tarjeta,
+} from './filas';
 import type { Hechos } from './hechos';
 import type { GeneradorIds, Instante, Uuid } from './identificadores';
 
@@ -65,9 +73,59 @@ export interface ComandoOp06 {
   readonly cuentaId: Uuid;
 }
 
+/** OP-07 (04 §3.2): un grupo o una categoría, la misma forma de cada elemento del lote (CF-19). */
+export interface ElementoOp07 {
+  readonly id: Uuid;
+  readonly tipo: 'grupo' | 'categoria';
+  readonly nombre: string;
+  readonly grupoId?: Uuid; // solo en una categoría
+}
+export interface ComandoOp07 extends ElementoOp07 {
+  readonly operacion: 'OP-07';
+}
+/** A dónde va (o de dónde sale) el dinero que se mueve: otra categoría o LPA. */
+export type DestinoDinero = { readonly categoriaId: Uuid } | 'lpa';
+export type DecisionProgramada =
+  | { readonly programadaId: Uuid; readonly accion: 'reasignar'; readonly categoriaId: Uuid }
+  | { readonly programadaId: Uuid; readonly accion: 'desactivar' };
+export interface ComandoOp09 {
+  readonly operacion: 'OP-09';
+  readonly categoriaId: Uuid;
+  readonly ids: GeneradorIds;
+  readonly destinoDisponible?: DestinoDinero; // si Disp(c, A) > 0
+  readonly cubrirSobregiroCon?: DestinoDinero; // si Disp(c, A) < 0
+  readonly devolverAsignacionesFuturas?: boolean;
+  readonly programadas?: readonly DecisionProgramada[];
+}
+export interface ComandoOp11 {
+  readonly operacion: 'OP-11';
+  readonly categoriaId: Uuid;
+  readonly ids: GeneradorIds;
+  readonly monto: Centavos;
+  readonly destino: DestinoDinero;
+}
+/** OP-12: las filas [H] del origen las resuelve la aplicación (BE-10). */
+export interface ComandoOp12 {
+  readonly operacion: 'OP-12';
+  readonly origenId: Uuid;
+  readonly destinoId: Uuid;
+  readonly ids: GeneradorIds;
+  readonly reglas: readonly ReglaComercio[];
+  readonly movimientoLineas: readonly MovimientoLinea[];
+}
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
 export type ComandoDominio =
-  ComandoOp01 | ComandoOp02 | ComandoOp03 | ComandoOp04 | ComandoOp05 | ComandoOp06 | ComandoOp48;
+  | ComandoOp01
+  | ComandoOp02
+  | ComandoOp03
+  | ComandoOp04
+  | ComandoOp05
+  | ComandoOp06
+  | ComandoOp07
+  | ComandoOp09
+  | ComandoOp11
+  | ComandoOp12
+  | ComandoOp48;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =

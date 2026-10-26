@@ -22,6 +22,10 @@ import { op03 } from './op-03';
 import { op04 } from './op-04';
 import { op05 } from './op-05';
 import { op06 } from './op-06';
+import { op07 } from './op-07';
+import { op09 } from './op-09';
+import { op11 } from './op-11';
+import { op12 } from './op-12';
 import { op48 } from './op-48';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
 
@@ -47,6 +51,10 @@ const OPERACIONES: {
   'OP-04': op04,
   'OP-05': op05,
   'OP-06': op06,
+  'OP-07': op07,
+  'OP-09': op09,
+  'OP-11': op11,
+  'OP-12': op12,
   'OP-48': (antes, comando) => {
     const r = op48(antes.hechos.prestamos, comando);
     return esRechazo(r) ? r : { cambios: r };
