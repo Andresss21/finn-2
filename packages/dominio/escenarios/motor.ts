@@ -193,17 +193,71 @@ function comando(s: Estado, op: Op): ComandoDominio {
         ...fechaObjetivo,
       };
     }
-    case 'OP-20':
+    case 'OP-20': {
+      const unica: { categoria?: string; deudor?: string; monto: number } = {
+        monto: op.monto,
+        ...(op.categoria && { categoria: op.categoria }),
+      };
+      const lineas = op.lineas ?? [unica];
       return {
         operacion: 'OP-20',
-        id: id(`t${++s.contador}`),
+        id: id(op.etiqueta ? `t-${op.etiqueta}` : `t${++s.contador}`),
         instante: hora(op.registrado),
         ids,
         fecha: fecha(op.fecha),
         total: c(op.monto),
         cuentaId: cuentaId(s, op.cuenta),
-        lineas: [{ monto: c(op.monto), destino: { categoriaId: categoriaId(s, op.categoria) } }],
+        lineas: lineas.map((l) => ({
+          monto: c(l.monto),
+          destino: l.deudor
+            ? { deudorNuevo: l.deudor }
+            : { categoriaId: categoriaId(s, l.categoria as string) },
+        })),
       };
+    }
+    case 'OP-28':
+      return {
+        operacion: 'OP-28',
+        transaccionId: id(`t-${op.etiqueta}`),
+        instante: hora(),
+        ids,
+        cuentaId: cuentaId(s, op.cuenta),
+      };
+    case 'OP-31': {
+      const linea = s.hechos.lineas.find(
+        (l) => l.transaccionId === id(`t-${op.cobro}`) && l.deudorId,
+      );
+      if (!linea?.deudorId) throw new Error(`OP-31: ${op.cobro} no tiene línea por cobrar`);
+      return {
+        operacion: 'OP-31',
+        id: id(`t${++s.contador}`),
+        instante: hora(),
+        ids,
+        fecha: fecha(),
+        total: c(op.monto),
+        lineaId: linea.id,
+        cuentaId: cuentaId(s, op.cuenta ?? 'Ahorro'),
+      };
+    }
+    case 'OP-27': {
+      const comun = {
+        operacion: 'OP-27' as const,
+        id: id(`t${++s.contador}`),
+        instante: hora(),
+        ids,
+        fecha: fecha(),
+        total: c(op.monto),
+        tarjetaId: cuentaId(s, op.tarjeta),
+      };
+      if (op.modalidad === 'avance')
+        return { ...comun, modalidad: 'avance', cuentaId: cuentaId(s, op.cuenta ?? 'Ahorro') };
+      if (op.modalidad === 'entrada') return { ...comun, modalidad: 'entrada' };
+      return {
+        ...comun,
+        modalidad: 'transferencia_deuda',
+        tarjetaDestinoId: cuentaId(s, op.destino as string),
+      };
+    }
     case 'OP-23':
       return {
         operacion: 'OP-23',
@@ -248,6 +302,23 @@ const EXTRAS: Record<string, (i: Instantanea, arg: string) => number> = {
   // Desglose del pago (§4.14) de la tarjeta `T` al día de hoy: 'T:campo'. `desgloseAntes` se evalúa antes de las operaciones.
   desglose: desglose,
   desgloseAntes: desglose,
+  // Dinero en camino del por cobrar con débito (D1) y partidas de reportes por clase (§4.13); `excedente` = ingreso de cobros.
+  enCamino: (i) => i.lpa.dineroEnCamino,
+  reporte: (i, clase) => {
+    const cobro = new Set(
+      i.hechos.transacciones.filter((t) => t.tipo === 'cobro').map((t) => t.id),
+    );
+    return i.clasificacion.partidas
+      .filter((x) =>
+        clase === 'excedente' ? x.clase === 'ingreso' && cobro.has(x.id) : x.clase === clase,
+      )
+      .reduce((a, x) => a + x.monto, 0);
+  },
+  // Saldo a favor de la tarjeta (Q4): lo pagado de más, el saldo positivo de la cuenta.
+  aFavor: (i, t) => {
+    const k = i.hechos.cuentas.find((x) => x.nombre === t);
+    return Math.max(0, i.cuentas.find((x) => x.cuentaId === k?.id)?.saldo ?? 0);
+  },
   lpaCierre: (i, p) => {
     const x = i.historialLpa.find((y) => y.periodo.inicio === PERIODOS[p as Periodo]);
     if (!x) throw new Error(`lpaCierre:${p}: el período no está cerrado`);

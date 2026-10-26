@@ -42,12 +42,24 @@ export type Op =
   | {
       op: 'OP-20';
       cuenta: string;
-      monto: number;
-      categoria: string;
+      monto: number; // el total
+      categoria?: string; // una sola línea, por el total
+      lineas?: { categoria?: string; deudor?: string; monto: number }[]; // split o por cobrar (`deudor` = por cobrar)
+      etiqueta?: string; // nombre con que otras operaciones (OP-28, OP-31) citan esta transacción
       fecha?: string;
       registrado?: string;
     }
   | { op: 'OP-21'; monto: number; cuenta?: string; fecha?: string; registrado?: string }
+  | { op: 'OP-28'; etiqueta: string; cuenta: string } // cambiar la cuenta (el medio) de la transacción
+  | { op: 'OP-31'; cobro: string; monto: number; cuenta?: string } // cobrar el por cobrar de la transacción `cobro`
+  | {
+      op: 'OP-27';
+      modalidad: 'avance' | 'entrada' | 'transferencia_deuda';
+      tarjeta: string;
+      monto: number;
+      cuenta?: string; // avance: el efectivo que recibe
+      destino?: string; // transferencia: la tarjeta que toma la deuda
+    }
   | { op: 'OP-23'; tarjeta: string; monto: number; origen?: string; fecha?: string };
 
 export interface Espera {
