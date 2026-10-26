@@ -81,7 +81,7 @@
 
   "TA-115": { "estado": "terminada", "pr": 53 },
 
-  "TA-236": { "estado": "pendiente" },
+  "TA-236": { "estado": "en_curso", "rama": "ta-236-estructura-lote" },
 
   "TA-116": { "estado": "pendiente" },
 
