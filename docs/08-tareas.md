@@ -393,7 +393,7 @@ tu: TU-03, TU-06
 
 ```hito
 despues: TA-147
-requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230
+requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231
 tu: —
 ```
 
@@ -1640,17 +1640,18 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 124 | TA-124 | B2 | 1 | HT-2 | normal | `operacionesArb` y propiedades de períodos, asignaciones y estructura | 0 | 0 |
 | 125 | TA-125 | B2 | 1 | HT-2 | normal | Selectores de Inicio, Presupuesto y detalle de LPA | 320 | 0 |
 | 126 | TA-126 | B2 | 1 | HT-2 | normal | Selectores de detalle de categoría, metas y estructura | 280 | 0 |
-| 127 | TA-127 | B2 | 1 | HT-2 | normal | Selectores de cuentas, detalle de cuenta, actividad y detalle de transacción | 320 | 0 |
-| 128 | TA-128 | B2 | 1 | HT-2 | normal | Selectores de la bandeja, sugerencias y contextos de formulario (ola 1) | 320 | 0 |
-| 129 | TA-129 | B2 | 1 | HT-2 | normal | Reporte de ritmo y hallazgos de ritmo en Inicio (CF-04, CF-06) | 240 | 0 |
-| 130 | TA-130 | B2 | 1 | HT-2 | normal | Ejecutor de escenarios `motor` y ESC-01, ESC-02 | 260 | 0 |
-| 131 | TA-131 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-03, ESC-04, ESC-05, ESC-06, ESC-07, ESC-08, ESC-09, ESC-10 | 20 | 0 |
-| 132 | TA-132 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-11, ESC-12, ESC-13, ESC-14, ESC-15, ESC-16, ESC-17, ESC-18, ESC-19, ESC-20 | 20 | 0 |
-| 133 | TA-133 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-22, ESC-24, ESC-31, ESC-32, ESC-33, ESC-34, ESC-35, ESC-36 | 20 | 0 |
-| 134 | TA-135 | B2 | 1 | HT-2 | normal | Semillas de los recorridos 4.3 y 4.6 y Restaurantes de A.7 | 40 | 0 |
-| 135 | TA-138 | B2 | 1 | HT-2 | obligatoria | `aplicar`: condonar, devolver y eliminar evento (OP-32 a OP-34) | 340 | 0 |
-| 136 | TA-139 | B2 | 1 | HT-2 | obligatoria | `aplicar`: programadas (OP-42 a OP-44, OP-51) | 300 | 0 |
-| 137 | TA-134 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-37, ESC-38, ESC-39, ESC-42, ESC-43, ESC-44, ESC-46, ESC-47, ESC-48, ESC-49 | 20 | 0 |
+| 127 | TA-231 | B2 | 1 | HT-2 | normal | Selector de detalle de categoría de pago de tarjeta (parte 2 de TA-126) | 300 | 0 |
+| 128 | TA-127 | B2 | 1 | HT-2 | normal | Selectores de cuentas, detalle de cuenta, actividad y detalle de transacción | 320 | 0 |
+| 129 | TA-128 | B2 | 1 | HT-2 | normal | Selectores de la bandeja, sugerencias y contextos de formulario (ola 1) | 320 | 0 |
+| 130 | TA-129 | B2 | 1 | HT-2 | normal | Reporte de ritmo y hallazgos de ritmo en Inicio (CF-04, CF-06) | 240 | 0 |
+| 131 | TA-130 | B2 | 1 | HT-2 | normal | Ejecutor de escenarios `motor` y ESC-01, ESC-02 | 260 | 0 |
+| 132 | TA-131 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-03, ESC-04, ESC-05, ESC-06, ESC-07, ESC-08, ESC-09, ESC-10 | 20 | 0 |
+| 133 | TA-132 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-11, ESC-12, ESC-13, ESC-14, ESC-15, ESC-16, ESC-17, ESC-18, ESC-19, ESC-20 | 20 | 0 |
+| 134 | TA-133 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-22, ESC-24, ESC-31, ESC-32, ESC-33, ESC-34, ESC-35, ESC-36 | 20 | 0 |
+| 135 | TA-135 | B2 | 1 | HT-2 | normal | Semillas de los recorridos 4.3 y 4.6 y Restaurantes de A.7 | 40 | 0 |
+| 136 | TA-138 | B2 | 1 | HT-2 | obligatoria | `aplicar`: condonar, devolver y eliminar evento (OP-32 a OP-34) | 340 | 0 |
+| 137 | TA-139 | B2 | 1 | HT-2 | obligatoria | `aplicar`: programadas (OP-42 a OP-44, OP-51) | 300 | 0 |
+| 138 | TA-134 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-37, ESC-38, ESC-39, ESC-42, ESC-43, ESC-44, ESC-46, ESC-47, ESC-48, ESC-49 | 20 | 0 |
 | 150 | TA-150 | B3 | 1 | HT-3 | obligatoria | `escribir()` y `leer()`: el protocolo de 04 §4.2 | 300 | 0 |
 | 151 | TA-151 | B3 | 1 | HT-3 | normal | Errores de la base y conversiones de fechas y montos | 220 | 0 |
 | 152 | TA-152 | B3 | 1 | HT-3 | normal | Carga de hechos (BE-21) | 240 | 0 |
@@ -2945,6 +2946,8 @@ compartido: CF-25 (proporciones de Presupuesto; dueño TA-136)
 
 #### TA-126 Selectores de detalle de categoría, metas y estructura
 
+Partida por tamaño (DT-02, 08 §1.2): esta parte tiene el detalle de la categoría normal, las metas y la estructura; el detalle de la categoría de pago es TA-231.
+
 ```tarea
 orden: 126
 bloque: B2
@@ -2954,7 +2957,7 @@ tu: —
 revision: normal
 paralelo: libre
 tamano: prod=280 archivos=3 ca=0 migraciones=0 total=680
-cubre: SEL-detalleCategoria, SEL-metas, SEL-estructura, CF-17
+cubre: SEL-metas, SEL-estructura, CF-17
 pru: PRU-DOM-CATEG-102
 compartido: —
 ```
@@ -2974,10 +2977,42 @@ compartido: —
 
 **Terminada cuando.** La prueba pasa.
 
-#### TA-127 Selectores de cuentas, detalle de cuenta, actividad y detalle de transacción
+#### TA-231 Selector de detalle de categoría de pago de tarjeta (parte 2 de TA-126)
+
+Parte 2 de TA-126 (DT-02, 08 §1.2): TA-126 tiene el detalle de la categoría normal, las metas y la estructura; esta parte tiene la variante `DetallePagoTarjetaDto` de 04 §6.3.
 
 ```tarea
 orden: 127
+bloque: B2
+hito: HT-2
+depende: TA-126
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=300 archivos=1 ca=0 migraciones=0 total=700
+cubre: SEL-detalleCategoria
+pru: PRU-DOM-CATEG-103
+compartido: —
+```
+
+**Qué construir.**
+- `selectores/detalle-pago-tarjeta.ts`: el detalle de pago(t) de 04 §6.3 (segundo bloque) con `tarjetaHoy`, `pagoExcedente`, los traslados, los pagos, los pagos implícitos, las devoluciones D-3 y D-4, el desglose al pagar (§4.14) y el historial. Lee la instantánea sin recalcular.
+
+**Leer.** 04 §6.3 (categoría de pago); 01 §4.7, §4.8 y §4.14.
+
+**Archivos.** `packages/dominio/src/selectores/detalle-pago-tarjeta.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-CATEG-103** (nueva, DT-17): traslados, pagos, pagos implícitos, devoluciones y desglose al pagar de una categoría de pago con un estado conocido.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-CATEG-103"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
+#### TA-127 Selectores de cuentas, detalle de cuenta, actividad y detalle de transacción
+
+```tarea
+orden: 128
 bloque: B2
 hito: HT-2
 depende: TA-110, TA-111
@@ -3008,7 +3043,7 @@ compartido: —
 #### TA-128 Selectores de la bandeja, sugerencias y contextos de formulario (ola 1)
 
 ```tarea
-orden: 128
+orden: 129
 bloque: B2
 hito: HT-2
 depende: TA-122, TA-127
@@ -3039,7 +3074,7 @@ compartido: —
 #### TA-129 Reporte de ritmo y hallazgos de ritmo en Inicio (CF-04, CF-06)
 
 ```tarea
-orden: 129
+orden: 130
 bloque: B2
 hito: HT-2
 depende: TA-125
@@ -3069,7 +3104,7 @@ compartido: CF-04 (tipo `ritmo`; dueño TA-142)
 #### TA-130 Ejecutor de escenarios `motor` y ESC-01, ESC-02
 
 ```tarea
-orden: 130
+orden: 131
 bloque: B2
 hito: HT-2
 depende: TA-114, TA-115, TA-116, TA-117
@@ -3102,7 +3137,7 @@ compartido: —
 #### TA-131 Escenarios en el motor: ESC-03, ESC-04, ESC-05, ESC-06, ESC-07, ESC-08, ESC-09, ESC-10
 
 ```tarea
-orden: 131
+orden: 132
 bloque: B2
 hito: HT-2
 depende: TA-130, TA-110
@@ -3135,7 +3170,7 @@ compartido: —
 #### TA-132 Escenarios en el motor: ESC-11, ESC-12, ESC-13, ESC-14, ESC-15, ESC-16, ESC-17, ESC-18, ESC-19, ESC-20
 
 ```tarea
-orden: 132
+orden: 133
 bloque: B2
 hito: HT-2
 depende: TA-131, TA-118, TA-119
@@ -3168,7 +3203,7 @@ compartido: —
 #### TA-133 Escenarios en el motor: ESC-22, ESC-24, ESC-31, ESC-32, ESC-33, ESC-34, ESC-35, ESC-36
 
 ```tarea
-orden: 133
+orden: 134
 bloque: B2
 hito: HT-2
 depende: TA-131, TA-118, TA-119
@@ -3201,7 +3236,7 @@ compartido: —
 #### TA-135 Semillas de los recorridos 4.3 y 4.6 y Restaurantes de A.7
 
 ```tarea
-orden: 134
+orden: 135
 bloque: B2
 hito: HT-2
 depende: TA-130, TA-129
@@ -3232,7 +3267,7 @@ compartido: —
 #### TA-138 `aplicar`: condonar, devolver y eliminar evento (OP-32 a OP-34)
 
 ```tarea
-orden: 135
+orden: 136
 bloque: B2
 hito: HT-2
 depende: TA-119, TA-124
@@ -3264,7 +3299,7 @@ compartido: GEN-operaciones (agrega OP-32 a OP-34)
 #### TA-139 `aplicar`: programadas (OP-42 a OP-44, OP-51)
 
 ```tarea
-orden: 136
+orden: 137
 bloque: B2
 hito: HT-2
 depende: TA-117, TA-124
@@ -3295,7 +3330,7 @@ compartido: GEN-operaciones (agrega OP-42 a OP-44 y OP-51)
 #### TA-134 Escenarios en el motor: ESC-37, ESC-38, ESC-39, ESC-42, ESC-43, ESC-44, ESC-46, ESC-47, ESC-48, ESC-49
 
 ```tarea
-orden: 137
+orden: 138
 bloque: B2
 hito: HT-2
 depende: TA-131, TA-115, TA-121, TA-123, TA-138, TA-139
