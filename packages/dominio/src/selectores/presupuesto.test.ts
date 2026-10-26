@@ -303,6 +303,8 @@ describe('selectores de Inicio, Presupuesto y detalle de LPA', () => {
       pagoExcedente: null,
     });
     expect(marzo.archivadasConDinero).toEqual([]);
-    expect(() => presupuesto(i, f('2027-05-01'))).toThrow(RangeError);
+    // Mayo es la proyección de `calcular` (TA-235); junio queda fuera del rango.
+    expect(presupuesto(i, f('2027-05-01')).periodo.estado).toBe('futuro');
+    expect(() => presupuesto(i, f('2027-06-01'))).toThrow(RangeError);
   });
 });

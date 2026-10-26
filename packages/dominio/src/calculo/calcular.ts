@@ -29,6 +29,13 @@ import { type EstadoDeTarjeta, estadoDeTarjeta } from './tarjetas';
 /** Horizonte de las ocurrencias pendientes: el mayor de BE-37 (30 días en Programadas). */
 const HORIZONTE_OCURRENCIAS = 30;
 
+/**
+ * Períodos futuros proyectados después del último con datos (§4.6; 04 §6.2, "Disp proyectado con
+ * actividad cero"). Uno basta: desde el primero sin hechos ni asignaciones, Disp ≥ 0 y cada período
+ * siguiente repite sus números, así que más períodos no agregan información [Propio, TA-235].
+ */
+const PERIODOS_PROYECTADOS = 1;
+
 /** Saldo de cuenta y saldo confirmado (§4.3). Deuda, capital y valor salen de `saldo` por tipo. */
 export interface SaldoDeCuenta {
   readonly cuentaId: Uuid;
@@ -104,8 +111,9 @@ export function calcular(hechos: Hechos, hoy: FechaLocal): Instantanea {
   }));
   // §4.10 antes que §4.6: los pagos implícitos de los cobros entran en Disp(pago(t)).
   const cobros = porCobrar(h);
-  // §4.4 a §4.6 en el orden de §4.1 conv. 4: D2, normales, pago y arrastre, período a período.
-  const b = presupuesto(h, c, hoy, pagosImplicitos(cobros));
+  // §4.4 a §4.6 en el orden de §4.1 conv. 4: D2, normales, pago y arrastre, período a período,
+  // con la proyección al final.
+  const b = presupuesto(h, c, hoy, pagosImplicitos(cobros), PERIODOS_PROYECTADOS);
   const tarjetas = h.cuentas
     .filter((k) => k.tipo === 'tarjeta')
     .map((k) => estadoDeTarjeta(h, b, k.id));

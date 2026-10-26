@@ -117,9 +117,9 @@ function barraDe(
 }
 
 /**
- * El período `periodoInicio` (por defecto, el activo) con el filtro de BE-39. Un período fuera del rango
- * que calculó `calcular` (más allá del último con hechos o asignaciones) lanza `RangeError`: el motor no
- * lo extiende (ver "Contradicciones" del informe de TA-125).
+ * El período `periodoInicio` (por defecto, el activo) con el filtro de BE-39. El rango de `calcular`
+ * llega hasta el período siguiente al último con hechos o asignaciones (proyección, §4.6, TA-235); un
+ * período fuera de él lanza `RangeError`.
  */
 export function presupuesto(
   i: Instantanea,
