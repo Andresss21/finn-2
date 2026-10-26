@@ -35,6 +35,12 @@ import { op14 } from './op-14';
 import { op15 } from './op-15';
 import { op17 } from './op-17';
 import { op18 } from './op-18';
+import { op20 } from './op-20';
+import { op21 } from './op-21';
+import { op22 } from './op-22';
+import { op23 } from './op-23';
+import { op24 } from './op-24';
+import { op27 } from './op-27';
 import { op48 } from './op-48';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
 
@@ -72,6 +78,13 @@ const OPERACIONES: {
   'OP-15': op15,
   'OP-17': op17,
   'OP-18': op18,
+  // TA-117: registrar transacciones.
+  'OP-20': op20,
+  'OP-21': op21,
+  'OP-22': op22,
+  'OP-23': op23,
+  'OP-24': op24,
+  'OP-27': op27,
   'OP-48': (antes, comando) => {
     const r = op48(antes.hechos.prestamos, comando);
     return esRechazo(r) ? r : { cambios: r };
