@@ -35,7 +35,7 @@ const categoria = (nombre: string) => `categoria-${nombre}`;
 const tarjeta = (deuda: number, sinRespaldo: number, reserva: number) =>
   ({ T: [deuda, sinRespaldo, reserva] }) as Record<string, [number, number, number]>;
 
-it('PRU-DOM-MOTOR-901 [V7-10] SEM-4.6: la semilla de 4.6 da los números de recorridos.py en los pasos 1 a 6', async () => {
+it('PRU-DOM-MOTOR-901 [V6-13] SEM-4.6: la semilla de 4.6 da los números de recorridos.py en los pasos 1 a 6', async () => {
   const s = await sembrar(estado46);
   await recorrer(s, [
     {
