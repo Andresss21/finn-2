@@ -109,7 +109,7 @@
 
   "TA-231": { "estado": "pendiente" },
 
-  "TA-127": { "estado": "en_curso", "rama": "ta-127-selectores-cuentas" },
+  "TA-127": { "estado": "terminada", "pr": 48 },
 
   "TA-237": { "estado": "pendiente" },
 
