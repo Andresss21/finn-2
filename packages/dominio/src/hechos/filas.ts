@@ -205,6 +205,7 @@ export interface Conciliacion {
   readonly saldoEstado: Centavos;
   readonly terminadaEn: Instante;
   readonly diferenciaAceptada: Centavos;
+  readonly modo: 'estado_cuenta' | 'saldo'; // CF-01 (06 §3.2.3): OP-47 o OP-53
   readonly revision: Revision;
 }
 

@@ -3,6 +3,7 @@
 // rechazo de negocio vuelve en `rechazos`; solo un comando mal formado lanza.
 import { calcular } from '../calculo/calcular';
 import type {
+  AltaDesdeEstado,
   AvisoOperacion,
   Cambio,
   ComandoDominio,
@@ -46,8 +47,11 @@ import { op29 } from './op-29';
 import { op30 } from './op-30';
 import { op31 } from './op-31';
 import { op35 } from './op-35';
+import { op46 } from './op-46';
+import { op47 } from './op-47';
 import { op48 } from './op-48';
 import { op52 } from './op-52';
+import { op53 } from './op-53';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
 
 /** Lo que produce una operación sobre la instantánea de antes, si no se rechaza. */
@@ -104,6 +108,11 @@ const OPERACIONES: {
   // TA-119: cobrar y renombrar deudor.
   'OP-31': op31,
   'OP-52': op52,
+  // TA-123: conciliación y verificar saldo (OP-45 es una lectura: `op45`).
+  'OP-46': (antes, x) =>
+    op46(antes, x, (a, y) => (OPERACIONES[y.operacion] as Manejador<AltaDesdeEstado>)(a, y)),
+  'OP-47': op47,
+  'OP-53': op53,
 };
 
 /** AV-01 (§5.0.3): impacto retroactivo, antes y después de confirmar. */

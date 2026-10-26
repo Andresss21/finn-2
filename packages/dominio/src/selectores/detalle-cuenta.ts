@@ -1,6 +1,6 @@
 // Detalle de cuenta (04 §6.6). Saldos, tarjeta y préstamo salen de la instantánea y de las funciones
 // del motor (`desgloseAlPagar`, `bancoAgricola`); las tablas [H] (instituciones, cambios posteriores)
-// y el modo de la conciliación llegan como parámetro.
+// llegan como parámetro.
 import { cicloDeFacturacion, desgloseAlPagar } from '../calculo/patrimonio';
 import { saldoAl } from '../calculo/saldos';
 import type {
@@ -22,11 +22,10 @@ import { claveDe, filaDe, indice, paginar, type TransaccionFila } from './activi
 import { nombres } from './comunes';
 import { puntosBasicos } from './reportes/comunes';
 
-/** Lo que no está en los hechos del motor: tablas [H] y el modo de cada conciliación (CF-01). */
+/** Lo que no está en los hechos del motor: tablas [H]. */
 export interface Auxiliares {
   readonly instituciones?: readonly Institucion[];
   readonly cambios?: readonly CambioPosterior[];
-  readonly modos?: ReadonlyMap<Uuid, 'estado_cuenta' | 'saldo'>;
 }
 
 export interface FilaDeAmortizacion {
@@ -220,7 +219,7 @@ export function detalleCuenta(i: Instantanea, cuentaId: Uuid, o: DetalleCuentaOp
         terminadaEn: c.terminadaEn,
         diferenciaAceptada: c.diferenciaAceptada,
         diferenciaActual: diferenciaActual(i, c),
-        modo: o.modos?.get(c.id) ?? ('estado_cuenta' as const),
+        modo: c.modo,
         transaccionesConciliadas: h.transacciones.filter((t) => t.conciliacionId === c.id).length,
         cambiosPosteriores: (o.cambios ?? [])
           .filter((p) => p.conciliacionId === c.id)

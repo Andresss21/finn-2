@@ -183,6 +183,7 @@ const COLUMNAS: { readonly [T in TablaEscribible]: Record<keyof FilasPorTabla[T]
     saldoEstado: true,
     terminadaEn: true,
     diferenciaAceptada: true,
+    modo: true,
     revision: true,
   },
   instituciones: { id: true, nombre: true },
@@ -351,6 +352,9 @@ describe('PRU-DOM-MOTOR', () => {
       | 'OP-30'
       | 'OP-31'
       | 'OP-52'
+      | 'OP-46'
+      | 'OP-47'
+      | 'OP-53'
     >();
     expectTypeOf<GeneradorIds['siguiente']>().toEqualTypeOf<() => Uuid>();
   });

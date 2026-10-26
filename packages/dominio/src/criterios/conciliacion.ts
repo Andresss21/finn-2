@@ -25,10 +25,13 @@ export function coincidenciasDeConciliacion(
   const pares = new Map<string, string>();
   for (const p of partidas) {
     const dias = (c: Candidata) => Math.abs(FechaLocal.diasEntre(c.fecha, p.fecha));
+    const clave = (a: Candidata, b: Candidata) =>
+      a.claveOrden < b.claveOrden ? -1 : a.claveOrden > b.claveOrden ? 1 : 0;
+    // Con la misma distancia y clave queda el orden de entrada (en BE-48, el de la secuencia).
     const [elegida] = candidatas
       .filter((c) => !usadas.has(c.id) && c.cuentaId === p.cuentaId && c.monto === p.monto)
       .filter((c) => dias(c) <= 3)
-      .sort((a, b) => dias(a) - dias(b) || (a.claveOrden < b.claveOrden ? -1 : 1));
+      .sort((a, b) => dias(a) - dias(b) || clave(a, b));
     if (elegida === undefined) continue;
     usadas.add(elegida.id);
     pares.set(p.id, elegida.id);

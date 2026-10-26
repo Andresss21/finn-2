@@ -327,6 +327,52 @@ export interface ComandoOp52 {
   readonly nombre: string; // TextoLimpio
 }
 
+// ── TA-123: conciliación y verificar saldo (04 §3.8, §9.5). La firma de la carga la verifica la aplicación (BE-49).
+/** Un movimiento del estado de cuenta; `monto` con signo, como efecto en la cuenta. */
+export interface MovimientoDelEstado {
+  readonly indice: number; // posición en el archivo (04 §9.2)
+  readonly fecha: FechaLocal;
+  readonly monto: Centavos;
+}
+/** El contenido de la carga firmada de OP-45; `saldoFinal` en la convención de 01 §0.4. */
+export interface EstadoDeCuenta {
+  readonly fechaEstado: FechaLocal;
+  readonly saldoFinal: Centavos;
+  readonly movimientos: readonly MovimientoDelEstado[];
+}
+/** Las altas que ejecuta OP-46 (01 §5.8: "OP-20 u otra operación según el tipo"). */
+export type AltaDesdeEstado =
+  ComandoOp20 | ComandoOp21 | ComandoOp22 | ComandoOp23 | ComandoOp24 | ComandoOp27 | ComandoOp31;
+/** OP-46: la fecha y el origen del alta los fija el movimiento (`importada`, `confirmada`). */
+export interface ComandoOp46 {
+  readonly operacion: 'OP-46';
+  readonly cuentaId: Uuid;
+  readonly estado: EstadoDeCuenta;
+  readonly movimientoIndice: number;
+  readonly alta: AltaDesdeEstado;
+}
+export interface ComandoOp47 {
+  readonly operacion: 'OP-47';
+  readonly id: Uuid; // de la conciliación
+  readonly instante: Instante;
+  readonly cuentaId: Uuid;
+  readonly estado: EstadoDeCuenta;
+  readonly coincidencias: readonly {
+    readonly transaccionId: Uuid;
+    readonly movimientoIndice: number;
+  }[];
+}
+/** OP-53 (CF-01): `saldoEstado` como lo escribe el usuario; en una tarjeta, positivo = deuda. */
+export interface ComandoOp53 {
+  readonly operacion: 'OP-53';
+  readonly id: Uuid; // de la conciliación
+  readonly instante: Instante;
+  readonly cuentaId: Uuid;
+  readonly fechaEstado: FechaLocal;
+  readonly saldoEstado: Centavos;
+  readonly marcar: { readonly todas: true } | { readonly ids: readonly Uuid[] };
+}
+
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
 export type ComandoDominio =
   | ComandoOp01
@@ -362,7 +408,11 @@ export type ComandoDominio =
   | ComandoOp30
   // TA-119
   | ComandoOp31
-  | ComandoOp52;
+  | ComandoOp52
+  // TA-123
+  | ComandoOp46
+  | ComandoOp47
+  | ComandoOp53;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =
