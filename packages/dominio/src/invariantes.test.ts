@@ -466,7 +466,11 @@ describe('PRU-DOM-MOTOR', () => {
     );
     const exportado = Object.entries(publico);
     expect(exportado.filter(([, v]) => internas.has(v)).map(([k]) => k)).toEqual([]);
-    expect(Object.keys(publico).sort()).toEqual(['calcular', 'verificarInvariantes']);
+    expect(Object.keys(publico).sort()).toEqual([
+      'avisosDeEstado',
+      'calcular',
+      'verificarInvariantes',
+    ]);
     expect(publico.calcular).toBe(calcular);
     expect(publico.verificarInvariantes).toBe(verificarInvariantes);
   });

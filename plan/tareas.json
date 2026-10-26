@@ -69,7 +69,7 @@
 
   "TA-109": { "estado": "terminada", "pr": 36 },
 
-  "TA-110": { "estado": "pendiente" },
+  "TA-110": { "estado": "en_curso", "rama": "ta-110-avisos-estado" },
 
   "TA-111": { "estado": "terminada", "pr": 35 },
 
