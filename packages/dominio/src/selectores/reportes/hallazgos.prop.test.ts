@@ -224,7 +224,7 @@ describe('PRU-PROP-REP', () => {
     );
   });
 
-  it('PRU-PROP-REP-004 [V6-11] REP-realidad (CF-04) realidad: el sugerido es un dólar entero y "te sobra" exige gasto en los tres períodos', () => {
+  it('PRU-PROP-REP-004 [V6-11] REP-realidad (CF-04) realidad: el sugerido es un dólar entero y te sobra exige gasto en los tres períodos', () => {
     const periodo = fc.record({
       asignado: fc.integer({ min: 0, max: 30_000 }),
       gastado: fc.integer({ min: 0, max: 30_000 }),
