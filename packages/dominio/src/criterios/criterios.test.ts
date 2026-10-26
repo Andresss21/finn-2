@@ -257,8 +257,8 @@ describe('PRU-DOM-BAND-101: criterios de comparación (01 §4.17) y OP-35 pasos 
 
   it('PRU-DOM-BAND-101 emparejamiento: misma cuenta, Δ monto ≤ tolerancia, Δ fecha ≤ 5 días; desempata por fecha más cercana, menor Δ monto y fecha esperada más antigua', () => {
     const h = base();
-    const de = (monto: number, fecha: string, ps: Programada[] = h.programadas, ms = []) =>
-      emparejar({ ...h, programadas: ps }, ms, {
+    const de = (monto: number, fecha: string, ps: readonly Programada[] = h.programadas) =>
+      emparejar({ ...h, programadas: ps }, [], {
         cuentaId: id('E'),
         monto: c(monto),
         fecha: f(fecha),
