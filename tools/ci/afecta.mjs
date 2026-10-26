@@ -174,9 +174,14 @@ function inestables() {
   return correr([['inestables', `node tools/pruebas/inestables.mjs ${informe}`]]);
 }
 
-/** Las suites del nocturno que ya existen (07 §6.1): PROP con FC_RUNS=10000 (lo fija nocturno.yml). */
+/** Las suites del nocturno que ya existen (07 §6.1): PROP con FC_RUNS=10000 (lo fija nocturno.yml); con tantos casos el timeout de 5 s no alcanza, así que sube solo acá. */
 function nocturno() {
-  return correr([['PROP', 'node tools/pruebas/vitest.mjs --project unidad packages/dominio']]);
+  return correr([
+    [
+      'PROP',
+      'node tools/pruebas/vitest.mjs --project unidad --testTimeout=120000 packages/dominio',
+    ],
+  ]);
 }
 
 const argv = process.argv.slice(2);
