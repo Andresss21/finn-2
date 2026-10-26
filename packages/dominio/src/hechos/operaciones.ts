@@ -75,7 +75,7 @@ export interface ComandoOp06 {
   readonly cuentaId: Uuid;
 }
 
-/** OP-07 (04 §3.2): un grupo o una categoría, la misma forma de cada elemento del lote (CF-19). */
+/** OP-07 (04 §3.2): un grupo o una categoría; la variante en lote (CF-19) es una lista de estos. */
 export interface ElementoOp07 {
   readonly id: Uuid;
   readonly tipo: 'grupo' | 'categoria';
@@ -84,6 +84,15 @@ export interface ElementoOp07 {
 }
 export interface ComandoOp07 extends ElementoOp07 {
   readonly operacion: 'OP-07';
+}
+/** OP-08: valor absoluto; el `esperado` (4.6.2) lo compara la aplicación bajo el bloqueo. */
+export interface ComandoOp08 {
+  readonly operacion: 'OP-08';
+  readonly tipo: 'grupo' | 'categoria';
+  readonly id: Uuid;
+  readonly nombre?: string;
+  readonly grupoId?: Uuid; // solo en una categoría
+  readonly orden?: number; // posición pedida en su lista, desde 1
 }
 /** A dónde va (o de dónde sale) el dinero que se mueve: otra categoría o LPA. */
 export type DestinoDinero = { readonly categoriaId: Uuid } | 'lpa';
@@ -98,6 +107,11 @@ export interface ComandoOp09 {
   readonly cubrirSobregiroCon?: DestinoDinero; // si Disp(c, A) < 0
   readonly devolverAsignacionesFuturas?: boolean;
   readonly programadas?: readonly DecisionProgramada[];
+}
+export interface ComandoOp10 {
+  readonly operacion: 'OP-10';
+  readonly categoriaId: Uuid;
+  readonly desarchivarGrupo?: boolean;
 }
 export interface ComandoOp11 {
   readonly operacion: 'OP-11';
@@ -114,6 +128,12 @@ export interface ComandoOp12 {
   readonly ids: GeneradorIds;
   readonly reglas: readonly ReglaComercio[];
   readonly movimientoLineas: readonly MovimientoLinea[];
+}
+export interface ComandoOp13 {
+  readonly operacion: 'OP-13';
+  readonly accion: 'eliminar_categoria' | 'eliminar_grupo' | 'archivar_grupo';
+  readonly id: Uuid;
+  readonly reglas?: readonly ReglaComercio[]; // las de la categoría, [H] (BE-10)
 }
 // ── TA-120: OP-35 Recibir SMS, pasos 2 a 11 (01 §5.6, 04 §3.6 y §8.4 c) ──
 /** Un SMS ya guardado en `sms_recibidos` (03 §3.17), con lo que miran los criterios de §4.17. */
@@ -163,9 +183,12 @@ export type ComandoDominio =
   | ComandoOp05
   | ComandoOp06
   | ComandoOp07
+  | ComandoOp08
   | ComandoOp09
+  | ComandoOp10
   | ComandoOp11
   | ComandoOp12
+  | ComandoOp13
   | ComandoOp48
   // TA-120
   | ComandoOp35;

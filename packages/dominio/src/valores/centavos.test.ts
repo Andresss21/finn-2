@@ -66,4 +66,44 @@ describe('PRU-DOM-VAL', () => {
     expect(() => Centavos.cuotaConTecho(c(100), 0)).toThrow(RangeError);
     expect(() => Centavos.cuotaConTecho(c(Number.MAX_SAFE_INTEGER), 2)).toThrow(RangeError);
   });
+
+  it('PRU-DOM-VAL-103 [V6-02] Centavos.repartirPorRestoMayor (FD-19, CH-20): partes truncadas, centavos a los restos mayores con el desempate del llamador, suma exacta y productos sobre 2^53', () => {
+    const alfa = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+    const inverso = (a: string, b: string) => alfa(b, a);
+    const pesos = (...xs: number[]) => new Map(xs.map((p, i) => [`m${i}`, c(p)] as const));
+    const partes = (m: Map<string, Centavos>) => [...m.values()];
+    const reparto = (monto: number, ps: Map<string, Centavos>, d = alfa) =>
+      Centavos.repartirPorRestoMayor(c(monto), ps, d);
+
+    // Resto empatado: 100 entre tres pesos iguales deja restos 1, 1, 1 y falta un centavo.
+    expect(partes(reparto(100, pesos(1, 1, 1)))).toEqual([34, 33, 33]);
+    expect(partes(reparto(100, pesos(1, 1, 1), inverso))).toEqual([33, 33, 34]);
+    // El centavo va al resto mayor, no al peso mayor: 3 × (1, 2, 7) / 10 = 0.3, 0.6 y 2.1.
+    expect(partes(reparto(3, pesos(1, 2, 7)))).toEqual([0, 1, 2]);
+    // 7 × (2, 3, 5) / 10 = 1.4, 2.1 y 3.5: falta un centavo, para el resto 5.
+    expect(partes(reparto(7, pesos(2, 3, 5)))).toEqual([1, 2, 4]);
+    // Todas las claves, en el orden de entrada, aunque su parte sea 0; monto 0 da ceros.
+    expect([...reparto(1, pesos(0, 5, 5))]).toEqual([
+      ['m0', 0],
+      ['m1', 1],
+      ['m2', 0],
+    ]);
+    expect(partes(reparto(0, pesos(3, 4)))).toEqual([0, 0]);
+    // Sin pesos, o con todos en 0, no hay reparto.
+    expect(reparto(500, pesos(0, 0)).size).toBe(0);
+    expect(reparto(500, new Map()).size).toBe(0);
+
+    // Producto mayor que 2^53, en bigint: 1,000,000,000,007 × 1,000,000,000,039 ≈ 10^24.
+    const grande = reparto(1_000_000_000_007, pesos(999_999_999_989, 1_000_000_000_039, 7));
+    expect(partes(grande)).toEqual([499_999_999_989, 500_000_000_014, 4]);
+    expect(partes(grande).reduce((s, x) => s + x, 0)).toBe(1_000_000_000_007);
+
+    // Suma exacta en una grilla de montos y pesos.
+    for (let monto = 0; monto <= 60; monto += 7)
+      for (const ps of [pesos(1, 2, 3), pesos(5, 0, 5), pesos(9_999, 1), pesos(13, 17, 19, 23)])
+        expect(partes(reparto(monto, ps)).reduce((s, x) => s + x, 0)).toBe(monto);
+
+    expect(() => reparto(-1, pesos(1, 1))).toThrow(RangeError);
+    expect(() => reparto(10, pesos(2, -1))).toThrow(RangeError);
+  });
 });

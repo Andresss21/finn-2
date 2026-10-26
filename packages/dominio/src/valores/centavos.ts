@@ -1,4 +1,4 @@
-// Dinero (02 ADR-15, RT-07): centavos enteros y solo tres redondeos [CH-17]. Único módulo que divide montos
+// Dinero (02 ADR-15, RT-07): centavos enteros y solo cuatro redondeos [CH-17, CH-20]. Único módulo que divide montos
 // (ADR-21); toda división es entera, sin pasar por flotantes.
 
 /** Monto en centavos enteros de USD. Solo lo crean los constructores de este módulo. */
@@ -69,6 +69,36 @@ function proporcionMitadArriba(base: Centavos, num: number, den: number): Centav
   return desdeEntero(Number((2n * BigInt(base) * BigInt(num) + d) / (2n * d)));
 }
 
+/**
+ * Reparto por resto mayor de los reportes (06 §3.5.3, FD-19; ADR-15 [CH-20]): cada parte es
+ * ⌊monto × peso / Σpesos⌋, en `bigint` porque el producto puede pasar 2^53, y los centavos que faltan
+ * van, de a uno, a las partes con el resto mayor; los restos iguales los ordena `desempate`, que da
+ * el llamador. La suma es exacta y devuelve todas las claves, en el orden de `pesos`, aunque su parte
+ * sea 0. Exige monto ≥ 0 y pesos ≥ 0; si Σpesos = 0 no hay reparto y devuelve un mapa vacío.
+ */
+function repartirPorRestoMayor<K>(
+  monto: Centavos,
+  pesos: ReadonlyMap<K, Centavos>,
+  desempate: (a: K, b: K) => number,
+): Map<K, Centavos> {
+  if (monto < 0 || [...pesos.values()].some((p) => p < 0))
+    throw new RangeError(`reparto inválido: ${monto} entre [${[...pesos.values()].join(', ')}]`);
+  const base = [...pesos.values()].reduce((s, p) => s + BigInt(p), 0n);
+  if (base === 0n) return new Map();
+  const filas = [...pesos].map(([clave, peso]) => {
+    const producto = BigInt(monto) * BigInt(peso);
+    return { clave, parte: producto / base, resto: producto % base };
+  });
+  const faltan = BigInt(monto) - filas.reduce((s, x) => s + x.parte, 0n);
+  const orden = [...filas].sort((a, b) =>
+    a.resto === b.resto ? desempate(a.clave, b.clave) : a.resto > b.resto ? -1 : 1,
+  );
+  const extra = new Set(orden.slice(0, Number(faltan)).map((x) => x.clave));
+  return new Map(
+    filas.map((x) => [x.clave, desdeEntero(Number(x.parte + (extra.has(x.clave) ? 1n : 0n)))]),
+  );
+}
+
 export const Centavos = {
   cero: 0 as Centavos,
   desdeEntero,
@@ -82,4 +112,5 @@ export const Centavos = {
   metaSemanalDelPeriodo,
   cuotaConTecho,
   proporcionMitadArriba,
+  repartirPorRestoMayor,
 } as const;
