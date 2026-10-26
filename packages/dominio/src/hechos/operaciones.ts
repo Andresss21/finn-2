@@ -266,6 +266,53 @@ export type ComandoOp27 = AltaTransaccion & {
     | { readonly modalidad: 'transferencia_deuda'; readonly tarjetaDestinoId: Uuid }
   );
 
+// ── TA-118: editar, eliminar y estado bancario (04 §3.4). `esperado` lo compara la aplicación (4.6.2).
+/** Una línea de la lista completa de OP-28: con `lineaId` se conserva; sin `destino`, el suyo. */
+export interface LineaEditada {
+  readonly lineaId?: Uuid;
+  readonly monto: Centavos;
+  readonly destino?: DestinoLinea; // obligatorio en una línea nueva
+}
+/**
+ * OP-28: solo los campos que cambian. Con un efecto movible, `cuentaId`; con dos, `origenId` (el
+ * efecto negativo) y `destinoId` (el positivo). El efecto sobre el préstamo de una cuota sigue al
+ * desglose.
+ */
+export interface ComandoOp28 {
+  readonly operacion: 'OP-28';
+  readonly transaccionId: Uuid;
+  readonly instante: Instante;
+  readonly ids: GeneradorIds;
+  readonly fecha?: FechaLocal;
+  readonly total?: Centavos;
+  readonly cuentaId?: Uuid;
+  readonly origenId?: Uuid;
+  readonly destinoId?: Uuid;
+  readonly lineas?: readonly LineaEditada[];
+  readonly comercio?: string | null;
+  readonly nota?: string | null;
+  readonly monedaOriginal?: string | null; // junto con montoOriginal (M4)
+  readonly montoOriginal?: DecimalTexto | null;
+  readonly desglose?: {
+    readonly capital: Centavos;
+    readonly interes: Centavos;
+    readonly seguro: Centavos;
+  };
+}
+/** OP-29: los movimientos [H] con `transaccion_id` = la transacción los resuelve la aplicación (BE-10). */
+export interface ComandoOp29 {
+  readonly operacion: 'OP-29';
+  readonly transaccionId: Uuid;
+  readonly instante: Instante;
+  readonly ids: GeneradorIds;
+  readonly movimientos: readonly Movimiento[];
+}
+export interface ComandoOp30 {
+  readonly operacion: 'OP-30';
+  readonly transaccionId: Uuid;
+  readonly estadoNuevo: 'pendiente' | 'confirmada';
+}
+
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
 export type ComandoDominio =
   | ComandoOp01
@@ -294,7 +341,11 @@ export type ComandoDominio =
   | ComandoOp22
   | ComandoOp23
   | ComandoOp24
-  | ComandoOp27;
+  | ComandoOp27
+  // TA-118
+  | ComandoOp28
+  | ComandoOp29
+  | ComandoOp30;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =

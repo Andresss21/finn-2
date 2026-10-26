@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { calcular } from '../calculo/calcular';
-import { capitalPendiente, saldo } from '../calculo/saldos';
+import { capitalPendiente, saldo, saldoConfirmado } from '../calculo/saldos';
 import type {
   ComandoDominio,
   ComandoOp01,
@@ -536,5 +536,526 @@ describe('PRU-DOM-TX-101: aplicar, registrar transacciones (01 §5.4, 04 §3.4)'
         } as ComandoDominio),
       ),
     ).toEqual(['cuenta_tipo_no_valido']);
+  });
+});
+
+// ── PRU-DOM-TX-102: editar, eliminar y estado bancario (OP-28 a OP-30) ──
+const INSTANTE2 = '2027-03-15T16:00:00.000Z' as Instante;
+const OCIO = id('OCIO');
+const H1 = hechos(
+  H0,
+  { operacion: 'OP-07', id: OCIO, tipo: 'categoria', nombre: 'Ocio', grupoId: id('A') },
+  cuenta('E3', 'efectivo', 0),
+  cuenta('E4', 'efectivo', 0),
+  { operacion: 'OP-04', cuentaId: id('E4') },
+);
+/** G: un gasto de 100 en E el 10 mar, 60 a SUPER (L1) y 40 por cobrar a Ana (L2). */
+const G = id('G');
+const conG = hechos(H1, {
+  ...(gasto('E', 100, [
+    [60, SUPER],
+    [40, { deudorId: id('ana') }],
+  ]) as object),
+  id: G,
+  comercio: 'Super',
+} as ComandoDominio);
+const lineasDe = (h: Hechos, t: Uuid) =>
+  h.lineas.filter((l) => l.transaccionId === t).sort((a, b) => a.orden - b.orden);
+const [L1, L2] = lineasDe(conG, G).map((l) => l.id) as [Uuid, Uuid];
+const EFECTO_G = conG.efectos.find((e) => e.transaccionId === G)?.id as Uuid;
+
+const editar = (transaccionId: string, x: object = {}, instante = INSTANTE2) =>
+  ({
+    operacion: 'OP-28',
+    transaccionId,
+    instante,
+    ids: contador(),
+    ...x,
+  }) as unknown as ComandoDominio;
+const eliminar = (transaccionId: string, movimientos: object[] = []) =>
+  ({
+    operacion: 'OP-29',
+    transaccionId,
+    instante: INSTANTE2,
+    ids: contador(),
+    movimientos,
+  }) as unknown as ComandoDominio;
+const marcar = (transaccionId: string, estadoNuevo: string) =>
+  ({ operacion: 'OP-30', transaccionId, estadoNuevo }) as unknown as ComandoDominio;
+const lineas = (...xs: [string | undefined, number, object?][]) =>
+  xs.map(([lineaId, monto, destino]) => ({
+    ...(lineaId !== undefined && { lineaId }),
+    monto: c(monto),
+    ...(destino && { destino }),
+  }));
+
+/** Una transacción escrita a mano (los eventos llegan con TA-119 y la conciliación con OP-47). */
+const fila = (t: string, tipo: string, fecha: FechaLocal, total: number, extra = {}) => ({
+  ...{ id: id(t), tipo, fecha, horaRegistro: INSTANTE, claveOrden: INSTANTE, secuencia: null },
+  ...{ origen: 'manual', estadoBancario: 'pendiente', conciliacionId: null, comercio: null },
+  ...{ nota: null, total: c(total), monedaOriginal: null, montoOriginal: null },
+  ...{ lineaCobradaId: null, revision: null, ...extra },
+});
+const efectoDe = (t: string, cuentaId: string, monto: number) => ({
+  ...{ id: id(`${t}.e`), transaccionId: id(t), cuentaId: id(cuentaId), monto: c(monto) },
+  ...{ interes: null, seguro: null, revision: null },
+});
+const con = (h: Hechos, x: Readonly<Record<string, readonly object[]>>): Hechos =>
+  Object.fromEntries(
+    Object.entries(h).map(([k, v]) => [k, [...(v as object[]), ...(x[k] ?? [])]]),
+  ) as unknown as Hechos;
+/** Un cobro de `monto` sobre L2, depositado en E. */
+const cobrar = (h: Hechos, monto: number, fecha = MAR) =>
+  con(h, {
+    transacciones: [fila('CB', 'cobro', fecha, monto, { lineaCobradaId: L2 })],
+    efectos: [efectoDe('CB', 'E', monto)],
+  });
+/** Una devolución vinculada de `monto` sobre L1, a E. */
+const devolver = (h: Hechos, monto: number, fecha = MAR) =>
+  con(h, {
+    transacciones: [fila('DV', 'devolucion', fecha, monto)],
+    efectos: [efectoDe('DV', 'E', monto)],
+    lineas: [
+      {
+        ...{ id: id('DV.1'), transaccionId: id('DV'), orden: 1, monto: c(monto) },
+        ...{ categoriaId: id('SUPER'), deudorId: null, lineaOriginalId: L1, revision: null },
+      },
+    ],
+  });
+/** Una condonación de `monto` sobre L2. */
+const condonar = (h: Hechos, monto: number) =>
+  con(h, {
+    condonaciones: [
+      {
+        ...{ id: id('K'), lineaId: L2, fecha: MAR, monto: c(monto), claveOrden: INSTANTE },
+        ...{ secuencia: null, categoriaId: id('SUPER'), revision: null },
+      },
+    ],
+  });
+/** La transacción `t` queda conciliada en la conciliación `cc` de la cuenta. */
+const conciliar = (h: Hechos, t: Uuid, cuentaId = 'E'): Hechos => {
+  const cc = {
+    ...{ id: id('cc'), cuentaId: id(cuentaId), fechaEstado: MAR, saldoEstado: c(0) },
+    ...{ terminadaEn: INSTANTE, diferenciaAceptada: c(0), revision: null },
+  };
+  const estado = { estadoBancario: 'conciliada', conciliacionId: id('cc') } as const;
+  return {
+    ...con(h, { conciliaciones: [cc] }),
+    transacciones: h.transacciones.map((x) => (x.id === t ? { ...x, ...estado } : x)),
+  };
+};
+const av16 = (transaccionId: string = G) => ({
+  codigo: 'AV-16',
+  momento: 'antes',
+  requiereConfirmacion: true,
+  datos: { transaccionId },
+});
+const pc = (motivos: string[], transaccionId: Uuid | null = G) => ({
+  tipo: 'insertar',
+  tabla: 'cambios_posteriores',
+  fila: {
+    ...{ id: expect.any(String) as string, conciliacionId: 'cc', transaccionId },
+    ...{ registradoEn: INSTANTE2, motivos, fecha: MAR, montoEfecto: c(-100), comercio: 'Super' },
+  },
+});
+const aConfirmada = { estadoBancario: 'confirmada', conciliacionId: null };
+const deTabla = (r: ResultadoAplicar, tabla: string) =>
+  exito(r).cambios.filter((x) => x.tipo !== 'eliminarConciliacionesDeCuenta' && x.tabla === tabla);
+const insertadas = (r: ResultadoAplicar) =>
+  deTabla(r, 'lineas').flatMap((x) => (x.tipo === 'insertar' ? [x.fila] : []));
+const primero = (r: ResultadoAplicar) => (r.ok ? undefined : r.rechazos[0]);
+
+describe('PRU-DOM-TX-102: aplicar, editar, eliminar y estado bancario (01 §5.4, §7.2; 04 §3.4)', () => {
+  it('PRU-DOM-TX-102 [INV-06, AV-16] OP-28 BE-16: total y líneas; Σ líneas = total, una línea sin eventos que cambia se reemplaza con un orden nuevo y la única línea sigue al total; una conciliada que cambia de total pasa a confirmada con un cambio posterior', () => {
+    const x = editar(G, { total: c(120), lineas: lineas([L1, 80], [L2, 40]) });
+    const r = exito(aplicarEn(conG, x));
+    expect(r.cambios).toEqual([
+      { tipo: 'actualizar', tabla: 'transacciones', id: G, campos: { total: c(120) } },
+      { tipo: 'actualizar', tabla: 'efectos', id: EFECTO_G, campos: { monto: c(-120) } },
+      { tipo: 'eliminar', tabla: 'lineas', id: L1 },
+      {
+        tipo: 'insertar',
+        tabla: 'lineas',
+        fila: {
+          ...{ id: `n${comandos}.1`, transaccionId: G, orden: 3, monto: c(80) },
+          ...{ categoriaId: 'SUPER', deudorId: null, lineaOriginalId: null, revision: null },
+        },
+      },
+    ]);
+    expect(saldo(r.hechosNuevos, id('E'))).toBe(c(880));
+    expect(disp(r.hechosNuevos, id('SUPER'))).toBe(c(220));
+    expect(codigos(r)).not.toContain('AV-16');
+    // Una línea nueva con su destino (un deudor nuevo), al final.
+    const mas = lineas([L1, 60], [L2, 40], [undefined, 20, { deudorNuevo: 'Beto' }]);
+    const n = aplicarEn(conG, editar(G, { total: c(120), lineas: mas }));
+    expect(insertadas(n)).toEqual([expect.objectContaining({ orden: 3, monto: c(20) })]);
+    expect(exito(n).hechosNuevos.deudores.map((d) => d.nombre)).toContain('Beto');
+    // Una sola línea sigue al total sin pedirla.
+    const uno = { ...(gasto('E', 50, [[50, SUPER]]) as object), id: id('S1') } as ComandoDominio;
+    const u = aplicarEn(hechos(conG, uno), editar('S1', { total: c(70) }));
+    expect(insertadas(u)).toEqual([
+      expect.objectContaining({ monto: c(70), categoriaId: 'SUPER' }),
+    ]);
+    expect(primero(aplicarEn(conG, editar(G, { total: c(120) })))).toEqual({
+      codigo: 'suma_lineas_distinta',
+      datos: { suma: c(100), total: c(120) },
+    });
+    const malas = [
+      lineas([L1, 60], [undefined, 40]), // línea nueva sin destino
+      lineas([L1, 100], [L2, 0]), // monto cero (CB-28)
+      lineas([L1, 60], ['X', 40]), // línea de otra transacción
+      lineas([L1, 60], [L1, 40]), // repetida
+    ];
+    for (const m of malas)
+      expect(() => aplicarEn(conG, editar(G, { total: c(100), lineas: m }))).toThrow(TypeError);
+    expect(() => aplicarEn(conG, editar(G, { total: c(0) }))).toThrow(TypeError);
+    expect(rechazos(aplicarEn(conG, editar('X')))).toEqual(['no_encontrado']);
+
+    // Conciliada: cambia el total → confirmada, cambio posterior con la foto conciliada y AV-16.
+    const k = exito(aplicarEn(conciliar(conG, G), x));
+    expect(k.cambios[0]).toEqual({
+      tipo: 'actualizar',
+      tabla: 'transacciones',
+      id: G,
+      campos: { total: c(120), ...aConfirmada },
+    });
+    expect(k.cambios.at(-1)).toEqual(pc(['monto']));
+    expect(k.avisos).toContainEqual(av16());
+    // Líneas sin cambio de total: sigue conciliada (§7.2).
+    const reparto = aplicarEn(
+      conciliar(conG, G),
+      editar(G, { lineas: lineas([L1, 50], [L2, 50]) }),
+    );
+    expect(deTabla(reparto, 'transacciones')).toEqual([]);
+    expect(deTabla(reparto, 'cambios_posteriores')).toEqual([]);
+    expect(exito(reparto).avisos).toContainEqual(av16());
+  });
+
+  it('PRU-DOM-TX-102 [CB-03, INV-09, INV-10] OP-28 BE-16: una línea no baja de lo ya cobrado, condonado o devuelto, ni desaparece ni cambia de destino si tiene eventos; con eventos conserva su fila', () => {
+    const hc = cobrar(conG, 30);
+    const bajar = (l: Uuid, a: number, otra: number, total: number) =>
+      editar(G, {
+        total: c(total),
+        lineas: l === L1 ? lineas([L1, a], [L2, otra]) : lineas([L1, otra], [L2, a]),
+      });
+    expect(primero(aplicarEn(hc, bajar(L2, 25, 60, 85)))).toEqual({
+      codigo: 'linea_menor_que_eventos',
+      datos: { lineaId: L2, resuelto: c(30) },
+    });
+    // Cobrado 30 y condonado 10: 39 ya es menos que lo resuelto.
+    expect(primero(aplicarEn(condonar(hc, 10), bajar(L2, 39, 60, 99)))).toEqual({
+      codigo: 'linea_menor_que_eventos',
+      datos: { lineaId: L2, resuelto: c(40) },
+    });
+    // Devuelto 20 sobre L1.
+    expect(primero(aplicarEn(devolver(conG, 20), bajar(L1, 15, 40, 55)))).toEqual({
+      codigo: 'linea_menor_que_eventos',
+      datos: { lineaId: L1, resuelto: c(20) },
+    });
+    // Quitar la línea con el cobro equivale a bajarla a cero.
+    expect(rechazos(aplicarEn(hc, editar(G, { total: c(60), lineas: lineas([L1, 60]) })))).toEqual([
+      'linea_menor_que_eventos',
+    ]);
+    // Con eventos no pasa de por cobrar a categoría ni de deudor.
+    for (const destino of [SUPER, { deudorNuevo: 'Beto' }])
+      expect(
+        rechazos(aplicarEn(hc, editar(G, { lineas: lineas([L1, 60], [L2, 40, destino]) }))),
+      ).toEqual(['linea_con_eventos_cambio_destino']);
+    // 35 ≥ 30: se permite y la línea conserva su id y su orden (F4).
+    const r = aplicarEn(hc, bajar(L2, 35, 60, 95));
+    expect(deTabla(r, 'lineas')).toEqual([
+      { tipo: 'actualizar', tabla: 'lineas', id: L2, campos: { monto: c(35) } },
+    ]);
+    expect(lineasDe(exito(r).hechosNuevos, G).map((l) => [l.id, l.orden])).toEqual([
+      [L1, 1],
+      [L2, 2],
+    ]);
+  });
+
+  it('PRU-DOM-TX-102 [AV-01, AV-16, INV-12] OP-28 fecha: la clave de orden pasa al instante del cambio (supuesto 5; al menos la anterior + 1 ms); ningún evento queda antes de la compra; una conciliada pasa a confirmada', () => {
+    const r = exito(aplicarEn(conG, editar(G, { fecha: f('2027-03-12') })));
+    expect(r.cambios).toEqual([
+      {
+        tipo: 'actualizar',
+        tabla: 'transacciones',
+        id: G,
+        campos: { fecha: f('2027-03-12'), claveOrden: INSTANTE2 },
+      },
+    ]);
+    const temprano = '2027-03-15T14:00:00.000Z' as Instante;
+    expect(
+      exito(aplicarEn(conG, editar(G, { fecha: f('2027-03-12') }, temprano))).cambios[0],
+    ).toMatchObject({
+      campos: { claveOrden: '2027-03-15T15:00:00.001Z' },
+    });
+    // A febrero (cerrado): se recalculan ambos períodos (I6) y AV-01.
+    const feb = exito(aplicarEn(conG, editar(G, { fecha: f('2027-02-10') })));
+    expect(codigos(feb)).toContain('AV-01');
+    expect(disp(feb.hechosNuevos, id('SUPER'))).toBe(c(300));
+    expect(rechazos(aplicarEn(conG, editar(G, { fecha: f('2027-03-16') })))).toEqual([
+      'fecha_posterior_a_hoy',
+    ]);
+    // Un cobro del 11 mar: la compra puede pasar al 11, no al 12.
+    const hc = cobrar(conG, 30, f('2027-03-11'));
+    expect(primero(aplicarEn(hc, editar(G, { fecha: f('2027-03-12') })))).toEqual({
+      codigo: 'fecha_posterior_a_eventos',
+      datos: { fecha: f('2027-03-11') },
+    });
+    expect(aplicarEn(hc, editar(G, { fecha: f('2027-03-11') })).ok).toBe(true);
+    const k = exito(aplicarEn(conciliar(conG, G), editar(G, { fecha: f('2027-03-12') })));
+    expect(k.cambios[0]).toMatchObject({ campos: aConfirmada });
+    expect(k.cambios.at(-1)).toEqual(pc(['fecha']));
+    expect(k.avisos).toContainEqual(av16());
+  });
+
+  it('PRU-DOM-TX-102 [CB-30, CB-19, CB-29, AV-16] OP-28 cuenta: el gasto pasa de efectivo a tarjeta; la cuenta nueva es compatible, abierta y sin devoluciones; una conciliada pasa a confirmada con un cambio posterior', () => {
+    const r = exito(aplicarEn(conG, editar(G, { cuentaId: 'T' })));
+    expect(r.cambios).toEqual([
+      { tipo: 'actualizar', tabla: 'efectos', id: EFECTO_G, campos: { cuentaId: 'T' } },
+    ]);
+    expect([saldo(r.hechosNuevos, id('E')), saldo(r.hechosNuevos, id('T'))]).toEqual([
+      c(1000),
+      c(-100),
+    ]);
+    // C1, D2 y H3: los 60 cubiertos de SUPER pasan a pago(T).
+    expect(disp(r.hechosNuevos, PAGO_T)).toBe(c(60));
+    expect(rechazos(aplicarEn(conG, editar(G, { cuentaId: 'L' })))).toEqual([
+      'cambio_tipo_de_cuenta_incompatible',
+    ]);
+    expect(rechazos(aplicarEn(conG, editar(G, { cuentaId: 'E4' })))).toEqual(['cuenta_archivada']);
+    expect(rechazos(aplicarEn(conG, editar(G, { cuentaId: 'X' })))).toEqual(['no_encontrado']);
+    expect(rechazos(aplicarEn(devolver(conG, 20), editar(G, { cuentaId: 'T' })))).toEqual([
+      'cambio_cuenta_con_devoluciones',
+    ]);
+    const viejo = { ...(gasto('E', 10, [[10, SUPER]], f('2027-02-05')) as object), id: id('G2') };
+    expect(
+      rechazos(aplicarEn(hechos(conG, viejo as ComandoDominio), editar('G2', { cuentaId: 'E2' }))),
+    ).toEqual(['fecha_anterior_a_apertura']);
+
+    // Transferencia E → E2: origen (efecto −) y destino (efecto +).
+    const tr = op({
+      operacion: 'OP-22',
+      id: id('TR'),
+      origenId: 'E',
+      destinoId: 'E2',
+      total: c(400),
+    });
+    const ht = hechos(conG, tr);
+    const a3 = exito(aplicarEn(ht, editar('TR', { destinoId: 'E3' })));
+    expect([saldo(a3.hechosNuevos, id('E2')), saldo(a3.hechosNuevos, id('E3'))]).toEqual([
+      0,
+      c(400),
+    ]);
+    expect(rechazos(aplicarEn(ht, editar('TR', { origenId: 'T' })))).toEqual([
+      'cambio_tipo_de_cuenta_incompatible',
+    ]);
+    expect(rechazos(aplicarEn(ht, editar('TR', { destinoId: 'E' })))).toEqual(['cuentas_iguales']);
+    expect(() => aplicarEn(ht, editar('TR', { cuentaId: 'E3' }))).toThrow(TypeError);
+    expect(() => aplicarEn(conG, editar(G, { destinoId: 'E3' }))).toThrow(TypeError);
+    // Un pago a otra tarjeta lleva su línea a pago(U).
+    const hp = hechos(conG, { ...(pagar('E', 'T', 50) as object), id: id('PG') } as ComandoDominio);
+    const p = aplicarEn(hp, editar('PG', { destinoId: 'U' }));
+    expect(insertadas(p)).toEqual([expect.objectContaining({ monto: c(50), categoriaId: PAGO_U })]);
+    expect(saldo(exito(p).hechosNuevos, id('U'))).toBe(c(50));
+
+    // CB-30: conciliada en E; cambia la cuenta → confirmada y cambio posterior por cuenta.
+    const k = exito(aplicarEn(conciliar(conG, G), editar(G, { cuentaId: 'T' })));
+    expect(k.cambios).toEqual([
+      { tipo: 'actualizar', tabla: 'transacciones', id: G, campos: aConfirmada },
+      { tipo: 'actualizar', tabla: 'efectos', id: EFECTO_G, campos: { cuentaId: 'T' } },
+      pc(['cuenta']),
+    ]);
+    expect(k.avisos).toContainEqual(av16());
+    // Conciliada en E y cambia el destino: el efecto conciliado no cambia y sigue conciliada.
+    const kt = aplicarEn(conciliar(ht, id('TR')), editar('TR', { destinoId: 'E3' }));
+    expect(exito(kt).cambios.map((x) => x.tipo)).toEqual(['actualizar']);
+    expect(deTabla(kt, 'efectos')).toHaveLength(1);
+    expect(exito(kt).avisos).toContainEqual(av16('TR'));
+  });
+
+  it('PRU-DOM-TX-102 [AV-16, INV-08, INV-20] OP-28 categoría de una línea: recalcula ambas categorías y no rompe la conciliación (P12); las devoluciones vinculadas cambian de categoría con ella', () => {
+    const x = editar(G, { lineas: lineas([L1, 60, { categoriaId: OCIO }], [L2, 40]) });
+    const r = aplicarEn(conG, x);
+    expect(deTabla(r, 'transacciones')).toEqual([]);
+    expect(insertadas(r)).toEqual([
+      expect.objectContaining({ orden: 3, monto: c(60), categoriaId: OCIO }),
+    ]);
+    expect([disp(exito(r).hechosNuevos, id('SUPER')), disp(exito(r).hechosNuevos, OCIO)]).toEqual([
+      c(300),
+      c(-60),
+    ]);
+    const k = aplicarEn(conciliar(conG, G), x);
+    expect(deTabla(k, 'cambios_posteriores')).toEqual([]);
+    expect(exito(k).hechosNuevos.transacciones.find((t) => t.id === G)?.estadoBancario).toBe(
+      'conciliada',
+    );
+    expect(exito(k).avisos).toContainEqual(av16());
+    // Con una devolución, la línea conserva su fila y la devolución la sigue.
+    expect(deTabla(aplicarEn(devolver(conG, 20), x), 'lineas')).toEqual([
+      { tipo: 'actualizar', tabla: 'lineas', id: L1, campos: { categoriaId: OCIO } },
+      { tipo: 'actualizar', tabla: 'lineas', id: 'DV.1', campos: { categoriaId: OCIO } },
+    ]);
+    const a = (categoriaId: Uuid) =>
+      editar(G, { lineas: lineas([L1, 60, { categoriaId }], [L2, 40]) });
+    expect(rechazos(aplicarEn(conG, a(PAGO_T)))).toEqual(['categoria_de_pago_no_permitida']);
+    expect(rechazos(aplicarEn(conG, a(id('VIEJA'))))).toEqual(['categoria_archivada']);
+  });
+
+  it('PRU-DOM-TX-102 [CB-24, AV-16] OP-28 comercio, nota y moneda original: sin efectos de cálculo; en una cuenta archivada solo se permite lo que no cambia su saldo', () => {
+    const campos = { comercio: 'Otro', nota: 'n', monedaOriginal: 'USD', montoOriginal: '2.50' };
+    const r = exito(aplicarEn(conG, editar(G, campos)));
+    expect(r.cambios).toEqual([{ tipo: 'actualizar', tabla: 'transacciones', id: G, campos }]);
+    expect(r.impacto).toMatchObject({ deltaLpa: 0, deltaDisponible: [], deltaTarjetas: [] });
+    expect(exito(aplicarEn(conG, editar(G, { comercio: 'Super' }))).cambios).toEqual([]);
+    expect(() => aplicarEn(conG, editar(G, { monedaOriginal: 'USD' }))).toThrow(TypeError);
+    const k = exito(aplicarEn(conciliar(conG, G), editar(G, { nota: 'n' })));
+    expect(k.cambios).toEqual([
+      { tipo: 'actualizar', tabla: 'transacciones', id: G, campos: { nota: 'n' } },
+    ]);
+    expect(k.avisos).toContainEqual(av16());
+
+    // CB-24: E5 recibe 50, gasta 50 (saldo 0) y se archiva.
+    const ingreso = op({ operacion: 'OP-21', id: id('I5'), cuentaId: 'E5', total: c(50) });
+    const ga = { ...(gasto('E5', 50, [[50, SUPER]]) as object), id: id('GA') } as ComandoDominio;
+    const archivar = { operacion: 'OP-04', cuentaId: id('E5') } as ComandoDominio;
+    const ha = hechos(conG, cuenta('E5', 'efectivo', 0), ingreso, ga, archivar);
+    const [la] = lineasDe(ha, id('GA')).map((l) => l.id);
+    expect(aplicarEn(ha, editar('GA', { nota: 'x' })).ok).toBe(true);
+    const otra = editar('GA', { lineas: lineas([la, 50, { categoriaId: OCIO }]) });
+    expect(aplicarEn(ha, otra).ok).toBe(true);
+    expect(rechazos(aplicarEn(ha, editar('GA', { total: c(40) })))).toEqual(['cuenta_archivada']);
+    expect(rechazos(aplicarEn(ha, editar('GA', { cuentaId: 'E' })))).toEqual(['cuenta_archivada']);
+    expect(rechazos(aplicarEn(ha, eliminar('GA')))).toEqual(['cuenta_archivada']);
+  });
+
+  it('PRU-DOM-TX-102 [INV-06] OP-28 OP-24 desglose de una cuota: cumple las precondiciones de OP-24 y cambia el capital pendiente; el abono sigue al total', () => {
+    const q = cuota('E', [388.08, 101.92, 10]);
+    const Q = (q as unknown as { id: Uuid }).id;
+    const hq = hechos(conG, q);
+    const efectoL = hq.efectos.find((e) => e.transaccionId === Q && e.cuentaId === 'L')?.id;
+    const d = (capital: number, interes: number, seguro: number) => ({
+      desglose: { capital: c(capital), interes: c(interes), seguro: c(seguro) },
+    });
+    const r = exito(aplicarEn(hq, editar(Q, d(400, 90, 10))));
+    expect(r.cambios).toEqual([
+      {
+        tipo: 'actualizar',
+        tabla: 'efectos',
+        id: efectoL,
+        campos: { monto: c(-400), interes: c(90) },
+      },
+    ]);
+    expect(capitalPendiente(r.hechosNuevos, id('L'))).toBe(c(9600));
+    const caro = exito(aplicarEn(hq, editar(Q, { total: c(600), ...d(500, 90, 10) })));
+    expect([
+      saldo(caro.hechosNuevos, id('E')),
+      capitalPendiente(caro.hechosNuevos, id('L')),
+    ]).toEqual([c(300), c(9500)]);
+    expect(primero(aplicarEn(hq, editar(Q, { total: c(600) })))).toEqual({
+      codigo: 'desglose_no_cuadra',
+      datos: { suma: c(500), total: c(600) },
+    });
+    // Pendiente sin esta cuota: 10.000.
+    expect(primero(aplicarEn(hq, editar(Q, { total: c(10000.01), ...d(10000.01, 0, 0) })))).toEqual(
+      {
+        codigo: 'capital_mayor_que_pendiente',
+        datos: { capital: c(10000.01), pendiente: c(10000) },
+      },
+    );
+    expect(() => aplicarEn(hq, editar(Q, d(410, -10, 0)))).toThrow(TypeError);
+    expect(() => aplicarEn(conG, editar(G, d(100, 0, 0)))).toThrow(TypeError);
+    const a = cuota('E', [1000, 0, 0], { modalidad: 'abono' });
+    const A = (a as unknown as { id: Uuid }).id;
+    const ha = hechos(conG, a);
+    expect(
+      capitalPendiente(exito(aplicarEn(ha, editar(A, { total: c(1500) }))).hechosNuevos, id('L')),
+    ).toBe(c(8500));
+    expect(() => aplicarEn(ha, editar(A, d(900, 100, 0)))).toThrow(TypeError);
+  });
+
+  it('PRU-DOM-TX-102 [CB-04, AV-01, AV-16] OP-29: elimina la transacción sin eventos; su movimiento queda descartado, la ocurrencia que resolvió vuelve a pendiente y, si estaba conciliada, queda un cambio posterior', () => {
+    const r = exito(aplicarEn(conG, eliminar(G)));
+    expect(r.cambios).toEqual([{ tipo: 'eliminar', tabla: 'transacciones', id: G }]);
+    expect(saldo(r.hechosNuevos, id('E'))).toBe(c(1000));
+    expect(r.hechosNuevos.lineas.filter((l) => l.transaccionId === G)).toEqual([]);
+    for (const h of [cobrar(conG, 30), devolver(conG, 20), condonar(conG, 10)])
+      expect(rechazos(aplicarEn(h, eliminar(G)))).toEqual(['transaccion_con_eventos']);
+    const k = exito(aplicarEn(conciliar(conG, G), eliminar(G)));
+    expect(k.cambios).toEqual([
+      pc(['eliminacion'], null),
+      { tipo: 'eliminar', tabla: 'transacciones', id: G },
+    ]);
+    expect(k.avisos).toContainEqual(av16());
+    const mov = (m: string, transaccionId: string) => ({
+      ...{ id: id(m), smsId: id('sms'), estado: 'aprobado', cuentaId: id('E'), fecha: MAR },
+      ...{ monto: c(100), comercio: null, tipoPropuesto: 'gasto', nota: null },
+      ...{ duplicadoTransaccionId: null, duplicadoMovimientoId: null, esperadaProgramadaId: null },
+      ...{ esperadaFecha: null, transaccionId: id(transaccionId) },
+    });
+    const programada = {
+      ...{ id: id('PR'), tipo: 'gasto', cuentaId: id('E'), cuentaDestinoId: null, comercio: 'S' },
+      ...{ monto: c(100), tolerancia: c(0), frecuencia: 'mensual', frecuenciaDias: null },
+      ...{ primeraFecha: MAR, fechaFin: null, registroAutomatico: false, activa: true },
+      revision: null,
+    };
+    const ocurrencia = {
+      ...{ id: id('OC'), programadaId: id('PR'), fechaEsperada: MAR, estado: 'registrada' },
+      ...{ transaccionId: G, revision: null },
+    };
+    const ho = con(conG, { programadas: [programada], ocurrencias_resueltas: [ocurrencia] });
+    expect(exito(aplicarEn(ho, eliminar(G, [mov('MV', G), mov('MV2', 'otra')]))).cambios).toEqual([
+      {
+        tipo: 'actualizar',
+        tabla: 'movimientos',
+        id: 'MV',
+        campos: { estado: 'descartado', transaccionId: null },
+      },
+      { tipo: 'eliminar', tabla: 'ocurrencias_resueltas', id: 'OC' },
+      { tipo: 'eliminar', tabla: 'transacciones', id: G },
+    ]);
+    // Eliminar el saldo inicial equivale a saldo inicial 0.
+    const deE = new Set(conG.efectos.filter((e) => e.cuentaId === 'E').map((e) => e.transaccionId));
+    const si = conG.transacciones.find((t) => t.tipo === 'saldo_inicial' && deE.has(t.id))?.id;
+    const s0 = exito(aplicarEn(conG, eliminar(si as Uuid)));
+    expect([saldo(s0.hechosNuevos, id('E')), s0.impacto.deltaLpa]).toEqual([c(-100), c(-1000)]);
+    const viejo = { ...(gasto('E', 10, [[10, SUPER]], f('2027-02-05')) as object), id: id('G2') };
+    expect(codigos(aplicarEn(hechos(conG, viejo as ComandoDominio), eliminar('G2')))).toContain(
+      'AV-01',
+    );
+    expect(rechazos(aplicarEn(conG, eliminar('X')))).toEqual(['no_encontrado']);
+  });
+
+  it('PRU-DOM-TX-102 OP-30: pendiente ↔ confirmada a mano (§7.2) cambia solo el saldo confirmado; a conciliada o desde conciliada, solo la conciliación', () => {
+    const r = exito(aplicarEn(conG, marcar(G, 'confirmada')));
+    expect(r.cambios).toEqual([
+      {
+        tipo: 'actualizar',
+        tabla: 'transacciones',
+        id: G,
+        campos: { estadoBancario: 'confirmada' },
+      },
+    ]);
+    expect([saldoConfirmado(conG, id('E')), saldoConfirmado(r.hechosNuevos, id('E'))]).toEqual([
+      0,
+      c(-100),
+    ]);
+    expect(r.impacto).toMatchObject({ deltaLpa: 0, deltaDisponible: [], deltaTarjetas: [] });
+    expect(exito(aplicarEn(r.hechosNuevos, marcar(G, 'pendiente'))).cambios).toEqual([
+      {
+        tipo: 'actualizar',
+        tabla: 'transacciones',
+        id: G,
+        campos: { estadoBancario: 'pendiente' },
+      },
+    ]);
+    expect(exito(aplicarEn(conG, marcar(G, 'pendiente'))).cambios).toEqual([]);
+    expect(primero(aplicarEn(conciliar(conG, G), marcar(G, 'confirmada')))).toEqual({
+      codigo: 'transicion_estado_bancario_invalida',
+      datos: { desde: 'conciliada', hacia: 'confirmada' },
+    });
+    expect(rechazos(aplicarEn(conG, marcar(G, 'conciliada')))).toEqual([
+      'transicion_estado_bancario_invalida',
+    ]);
+    expect(rechazos(aplicarEn(conG, marcar('X', 'confirmada')))).toEqual(['no_encontrado']);
   });
 });
