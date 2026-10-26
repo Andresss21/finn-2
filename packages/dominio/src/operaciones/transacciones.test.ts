@@ -89,9 +89,9 @@ const prestamo = {
 } as const;
 
 const alta = { instante: INSTANTE, fecha: MAR } as const;
-const op = <T extends ComandoDominio>(
-  x: Omit<T, 'ids' | 'instante' | 'fecha'> & { fecha?: FechaLocal },
-) => ({ ...alta, ids: contador(), ...x }) as unknown as ComandoDominio;
+/** Un alta con instante, fecha (por defecto, en marzo) y su propio generador de ids. */
+const op = (x: { readonly operacion: string } & Record<string, unknown>) =>
+  ({ ...alta, ids: contador(), ...x }) as unknown as ComandoDominio;
 
 /**
  * E (efectivo, 1.000 desde el 1 ene), E2 (efectivo, abierta el 10 feb), T y U (tarjetas sin deuda),
