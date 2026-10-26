@@ -435,6 +435,8 @@ describe('PRU-DOM-MOTOR', () => {
     );
   });
 
+  // Plazo propio, mismo criterio que bb312c2 (#33): en el run 40355731276 de ci.yml en main
+  // (runner de GitHub, cobertura v8) tardó 3424 ms, cerca de los 5 s por defecto. Mismos casos.
   it('PRU-DOM-MOTOR-108 [INV-01, INV-02, INV-03, INV-04, INV-17, INV-28] ninguna invariante rota en la instantánea de hechos válidos cualesquiera', () => {
     fc.assert(
       fc.property(hechosArb(FechaLocal.desdeTexto('2027-12-31')), (x) => {
@@ -442,7 +444,7 @@ describe('PRU-DOM-MOTOR', () => {
       }),
       opciones,
     );
-  });
+  }, 60_000);
 
   it('PRU-DOM-MOTOR-108 [INV-27] la API pública de @finn/dominio no exporta ninguna fórmula de calculo/', () => {
     // Fórmulas internas: todo lo que exportan los módulos de calculo/ (calcular.ts es la entrada pública).
