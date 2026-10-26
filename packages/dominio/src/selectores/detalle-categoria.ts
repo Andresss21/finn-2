@@ -105,6 +105,24 @@ export interface DetalleCategoria {
   };
 }
 
+/** Inicios de los períodos vecinos del k-ésimo (CP-9). */
+export const vecinos = (periodos: readonly Periodo[], k: number) => ({
+  ...(k > 0 ? { anterior: periodos[k - 1]?.inicio as FechaLocal } : {}),
+  ...(k < periodos.length - 1 ? { siguiente: periodos[k + 1]?.inicio as FechaLocal } : {}),
+});
+
+/** Hasta 6 celdas de períodos cerrados anteriores a `p` en que la categoría existía (CF-17). */
+export const celdasDelHistorial = (i: Instantanea, categoriaId: Uuid, p: Periodo) =>
+  i.presupuesto.celdas
+    .filter(
+      (x) =>
+        x.categoriaId === categoriaId &&
+        x.estado === 'cerrado' &&
+        x.periodo.fin < p.inicio &&
+        existiaEn(i, categoriaId, x.periodo),
+    )
+    .slice(-6);
+
 /** Suma / n en centavos, mitad hacia arriba y simétrico en negativos. */
 function promedio(total: Centavos, n: number): Centavos {
   const p = Centavos.proporcionMitadArriba(Centavos.max(total, Centavos.negar(total)), 1, n);
@@ -174,21 +192,12 @@ export function detalleCategoria(
     }))
     .filter((d) => d.gastado !== 0);
   const maximo = porDia.reduce((m, d) => Centavos.max(m, d.gastado), Centavos.cero);
-  const historial = celdas
-    .filter(
-      (x) =>
-        x.categoriaId === categoriaId &&
-        x.estado === 'cerrado' &&
-        x.periodo.fin < p.inicio &&
-        existiaEn(i, categoriaId, x.periodo),
-    )
-    .slice(-6)
-    .map((x) => ({
-      periodo: x.periodo,
-      asignado: x.asignado,
-      gastado: Centavos.negar(x.actividad),
-      disponible: x.disponible,
-    }));
+  const historial = celdasDelHistorial(i, categoriaId, p).map((x) => ({
+    periodo: x.periodo,
+    asignado: x.asignado,
+    gastado: Centavos.negar(x.actividad),
+    disponible: x.disponible,
+  }));
   const activas = new Map(h.programadas.filter((x) => x.activa).map((x) => [x.id, x]));
   const proxima = (programadaId: Uuid) => {
     const f = i.ocurrencias
@@ -203,10 +212,7 @@ export function detalleCategoria(
     grupo: refDe({ id: grupo.id, nombre: grupo.nombre, archivada: grupo.archivado }),
     clase: 'normal',
     periodo: p,
-    navegacion: {
-      ...(k > 0 ? { anterior: periodos[k - 1]?.inicio as FechaLocal } : {}),
-      ...(k < periodos.length - 1 ? { siguiente: periodos[k + 1]?.inicio as FechaLocal } : {}),
-    },
+    navegacion: vecinos(periodos, k),
     numeros: {
       asignado: celda.asignado,
       gastado: Centavos.negar(celda.actividad),

@@ -12,7 +12,7 @@ const TOPE = 10_000;
 const suma = (xs: readonly Centavos[]) => xs.reduce(Centavos.sumar, Centavos.cero);
 
 /** Primera fecha ≥ hoy con ese día del mes, recortado al fin de mes (§4.14, supuesto 19). */
-function proxima(dia: number, hoy: FechaLocal): FechaLocal {
+export function proxima(dia: number, hoy: FechaLocal): FechaLocal {
   const este = fechaDeCorte(dia, hoy);
   return este >= hoy ? este : fechaDeCorte(dia, FechaLocal.sumarMeses(hoy, 1));
 }
