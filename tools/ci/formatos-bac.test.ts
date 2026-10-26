@@ -46,7 +46,7 @@ const clave = (sms: string): string => {
 
 describe('PRU-DOM-BAND', () => {
   it(
-    'PRU-DOM-BAND-105 [DT-12, MIG-15, SP-01-BAC] cada formato del BAC reescrito reconoce sus muestras anonimizadas con los campos esperados y pasa la política de patrones; F-2 y F-3 inactivos',
+    'PRU-DOM-BAND-105 DT-12, MIG-15, SP-01-BAC: cada formato del BAC reescrito reconoce sus muestras anonimizadas con los campos esperados y pasa la política de patrones; F-2 y F-3 inactivos',
     () => {
       const formatos = leerFormatos(raiz).formatos;
       const porNombre = new Map(formatos.map((f) => [f.nombre, f]));

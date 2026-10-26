@@ -36,7 +36,7 @@ const caso = fc.record({
 });
 
 describe('PRU-PROP-MOTOR', () => {
-  it('PRU-PROP-MOTOR-103 [MOT-4.5, INV-28, INV-05] reparto D2 (01 §4.5): orden propio, partes no cubiertas en sufijo, 0 ≤ SobT ≤ sobregiro total y cada traslado resta y suma el mismo monto', () => {
+  it('PRU-PROP-MOTOR-103 [INV-28, INV-05] MOT-4.5: reparto D2 (01 §4.5): orden propio, partes no cubiertas en sufijo, 0 ≤ SobT ≤ sobregiro total y cada traslado resta y suma el mismo monto', () => {
     fc.assert(
       fc.property(caso, ({ hechos, claves, arrastres, ajustes }) => {
         const ci = ciclo(hechos.vigencias_ciclo);

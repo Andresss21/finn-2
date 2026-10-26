@@ -103,7 +103,7 @@ function comprobarHechos(h: Hechos, hoy: FechaLocal): void {
 }
 
 describe('PRU-PROP-MOTOR', () => {
-  it('PRU-PROP-MOTOR-101 [GEN-base, 07 §12.5, inv. 6, inv. 12, DM-2, CB-21, CB-28] fechaArb, montoArb y hechosArb respetan sus restricciones', () => {
+  it('PRU-PROP-MOTOR-101 [inv. 6, inv. 12, CB-21, CB-28] GEN-base (07 §12.5, DM-2): fechaArb, montoArb y hechosArb respetan sus restricciones', () => {
     // fechaArb: de 2027, nunca posterior a hoy.
     fc.assert(
       fc.property(
@@ -148,7 +148,7 @@ describe('PRU-PROP-MOTOR', () => {
     );
   });
 
-  it('PRU-PROP-MOTOR-101 [GEN-base, 07 §12.5] hechosArb produce de todo: pagos, devoluciones, gastos de varias líneas y asignaciones', () => {
+  it('PRU-PROP-MOTOR-101 GEN-base (07 §12.5): hechosArb produce de todo: pagos, devoluciones, gastos de varias líneas y asignaciones', () => {
     const muestra = fc.sample(hechosArb(FIN_2027), { ...opciones, numRuns: 300 });
     const tipos = new Set(muestra.flatMap((h) => h.transacciones.map((t) => t.tipo)));
     expect([...tipos].sort()).toEqual(['devolucion', 'gasto', 'ingreso', 'pago_tarjeta']);

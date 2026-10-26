@@ -53,7 +53,7 @@ const aporte = (cat: string, fecha: string, x: number): Aporte => ({
 });
 
 describe('PRU-DOM-MOTOR', () => {
-  it('PRU-DOM-MOTOR-104 [MOT-4.5, CB-08, CB-21] reparto D2 (01 §4.5): orden (fecha, clave de orden, secuencia, orden de línea), dos líneas de una compra en la misma categoría, desempate por secuencia, traslados, SobT y SobD', () => {
+  it('PRU-DOM-MOTOR-104 [CB-08, CB-21] MOT-4.5: reparto D2 (01 §4.5): orden (fecha, clave de orden, secuencia, orden de línea), dos líneas de una compra en la misma categoría, desempate por secuencia, traslados, SobT y SobD', () => {
     // Misma fecha y clave de orden: k2 (secuencia 2) va antes que k1 (secuencia 3) aunque k1 tenga
     // orden de línea 0 (CB-21, CH-14). k4 y k3 son dos líneas de la misma compra: van por su orden
     // de línea (CB-08). k1 está neteado por una D-1: reparte su neto (30), no su monto (40).

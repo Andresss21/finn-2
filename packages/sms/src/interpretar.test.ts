@@ -4,7 +4,7 @@ import { F1_BAC, F2_AGRICOLA, FORMATOS } from '../pruebas/sinteticos/formatos';
 import { interpretar, normalizarFecha, normalizarMonto, probar } from './index';
 
 describe('PRU-DOM-BAND', () => {
-  it('PRU-DOM-BAND-001 [V-23, PR-2] intérprete de SMS: los 13 sintéticos con su resultado, coincidencia doble y límite de 640 caracteres', () => {
+  it('PRU-DOM-BAND-001 [V-23] PR-2: intérprete de SMS: los 13 sintéticos con su resultado, coincidencia doble y límite de 640 caracteres', () => {
     expect(CASOS).toHaveLength(13);
 
     // Los 13 SMS de 04 §8.3 contra los tres formatos de 03 §9.5.

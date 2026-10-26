@@ -1,12 +1,18 @@
 // Pruebas de la matriz (TA-006): los conteos de 07 §35 sobre docs/ y las mutaciones de V7-09 de M7, M8, M12 y M13.
 // Es una prueba de herramienta del repositorio: no lleva identificador PRU- (el encargo de TA-006 no tiene `pru`).
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { dePlaywright, deVitest, sinRepetir } from './listar.ts';
-import { archivosDeCodigo, informe, resultadosCorrida, verificar } from './matriz.ts';
+import {
+  archivosDeCodigo,
+  informe,
+  inventarioVencido,
+  resultadosCorrida,
+  verificar,
+} from './matriz.ts';
 import { afectadas, fichasPorPiezas, piezas } from './afectadas.ts';
 import type { Previa } from './reglas.ts';
 import { fichas, objetivos } from './documentos.ts';
@@ -763,5 +769,38 @@ describe('afectadas (07 §13.6, DP-19, CH-01)', () => {
     const a = quien('packages/dominio/src/tx.test.ts');
     expect(a.total).toBeGreaterThan(0);
     expect(a.comandos[0]).toContain('pnpm test:unidad -t');
+  });
+});
+
+describe('inventario vigente (la matriz no pasa en silencio sin inventario)', () => {
+  const conRaiz = (f: (raiz: string) => void): void => {
+    const raiz = mkdtempSync(join(tmpdir(), 'finn-inv-'));
+    try {
+      mkdirSync(join(raiz, 'packages/a/src'), { recursive: true });
+      mkdirSync(join(raiz, 'pruebas'), { recursive: true });
+      f(raiz);
+    } finally {
+      rmSync(raiz, { recursive: true, force: true });
+    }
+  };
+
+  it('sin pruebas/inventario.json falla y dice que hay que correr pruebas:listar', () => {
+    conRaiz((raiz) => {
+      expect(inventarioVencido(raiz)).toMatch(/no existe .*inventario\.json.*pruebas:listar/);
+    });
+  });
+
+  it('con un archivo de prueba más nuevo que el inventario falla; regenerado, pasa', () => {
+    conRaiz((raiz) => {
+      const inv = join(raiz, 'pruebas/inventario.json');
+      const prueba = join(raiz, 'packages/a/src/a.test.ts');
+      writeFileSync(inv, '[]');
+      writeFileSync(prueba, '');
+      utimesSync(inv, 1_000, 1_000);
+      utimesSync(prueba, 2_000, 2_000);
+      expect(inventarioVencido(raiz)).toMatch(/vencido.*a\.test\.ts.*pruebas:listar/);
+      utimesSync(inv, 3_000, 3_000);
+      expect(inventarioVencido(raiz)).toBeNull();
+    });
   });
 });

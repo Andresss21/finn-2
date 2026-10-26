@@ -151,7 +151,7 @@ function escenario() {
 const hoy = f('2026-03-15');
 
 describe('PRU-DOM-MOTOR', () => {
-  it('PRU-DOM-MOTOR-105 [MOT-4.6, MOT-4.7, CB-11] Disponible, arrastre y cierre (01 §4.6) y sobregiros y pago excedente (01 §4.7): tres períodos, reinicio N(c, p), cierre en categorías normales, de pago y archivadas, reducción proyectada y atribución del pago excedente por causa', () => {
+  it('PRU-DOM-MOTOR-105 [CB-11] MOT-4.6 y MOT-4.7: Disponible, arrastre y cierre (01 §4.6) y sobregiros y pago excedente (01 §4.7): tres períodos, reinicio N(c, p), cierre en categorías normales, de pago y archivadas, reducción proyectada y atribución del pago excedente por causa', () => {
     const { libro, implicitos } = escenario();
     const b = presupuesto(libro, mensual, hoy, implicitos);
 
