@@ -1,7 +1,7 @@
 // Contrato de `aplicar` (04 §2.4, §7.5): comando, cambios, rechazos, impacto y avisos.
 import type { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import type { FilasPorTabla } from './filas';
+import type { FilasPorTabla, Prestamo } from './filas';
 import type { Hechos } from './hechos';
 import type { Uuid } from './identificadores';
 
@@ -11,11 +11,19 @@ export type TablaEscribible = keyof FilasPorTabla;
 /** Fila de cualquiera de las tablas escribibles. */
 export type FilaHecho = FilasPorTabla[TablaEscribible];
 
-/**
- * Comando que entiende `aplicar`. Unión vacía: cada OP agrega su variante al implementarse;
- * hasta entonces `aplicar` no acepta ninguno.
- */
-export type ComandoDominio = never;
+/** Campos editables de un préstamo (04 OP-48: los de `prestamos` salvo `cuenta_id` y `tipo`). */
+export type CamposPrestamo = Omit<Prestamo, 'cuentaId' | 'tipo' | 'revision'>;
+
+/** OP-48 (04 §3.9): valor absoluto; `esperado` trae lo que vio la interfaz (4.6.2). */
+export interface ComandoOp48 {
+  readonly operacion: 'OP-48';
+  readonly prestamoId: Uuid;
+  readonly campos: Partial<CamposPrestamo>;
+  readonly esperado: Partial<CamposPrestamo>;
+}
+
+/** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
+export type ComandoDominio = ComandoOp48;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =

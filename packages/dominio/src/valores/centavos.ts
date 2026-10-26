@@ -1,4 +1,4 @@
-// Dinero (02 ADR-15, RT-07): centavos enteros y solo dos redondeos. Único módulo que divide montos
+// Dinero (02 ADR-15, RT-07): centavos enteros y solo tres redondeos [CH-17]. Único módulo que divide montos
 // (ADR-21); toda división es entera, sin pasar por flotantes.
 
 /** Monto en centavos enteros de USD. Solo lo crean los constructores de este módulo. */
@@ -56,6 +56,19 @@ function cuotaConTecho(monto: Centavos, periodos: number): Centavos {
   return desdeEntero(cocienteEntero(entero(monto + (periodos - 1), 'meta de ahorro'), periodos));
 }
 
+/**
+ * Proporción del Anexo A (01 §0.4, ADR-15 [CH-17]): redondear(B × num / den) al centavo, mitad hacia
+ * arriba, como ⌊(2·B·num + den) / (2·den)⌋, en `bigint` porque B·num puede pasar 2^53. Interés:
+ * num = tasa en millonésimas × días, den = 365 × 10⁶; seguro: num = S₁, den = M. Exige B ≥ 0,
+ * num ≥ 0 y den ≥ 1 enteros.
+ */
+function proporcionMitadArriba(base: Centavos, num: number, den: number): Centavos {
+  if (base < 0 || entero(num, 'numerador') < 0 || entero(den, 'denominador') < 1)
+    throw new RangeError(`proporción inválida: ${base} × ${num} / ${den}`);
+  const d = BigInt(den);
+  return desdeEntero(Number((2n * BigInt(base) * BigInt(num) + d) / (2n * d)));
+}
+
 export const Centavos = {
   cero: 0 as Centavos,
   desdeEntero,
@@ -68,4 +81,5 @@ export const Centavos = {
   comparar,
   metaSemanalDelPeriodo,
   cuotaConTecho,
+  proporcionMitadArriba,
 } as const;
