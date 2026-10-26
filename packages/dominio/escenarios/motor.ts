@@ -187,8 +187,8 @@ function comando(s: Estado, op: Op): ComandoDominio {
         accion: 'crear',
         id: id(`meta-${op.categoria}`),
         categoriaId: categoriaId(s, op.categoria),
-        tipo: paraFecha ? 'para_fecha' : 'mensual',
-        ...(!paraFecha && { modo: 'acumular' as const }),
+        tipo: op.tipo ?? 'mensual',
+        ...(!paraFecha && { modo: op.modo ?? ('acumular' as const) }),
         monto: c(op.monto ?? 0),
         ...fechaObjetivo,
       };
@@ -221,7 +221,16 @@ function comando(s: Estado, op: Op): ComandoDominio {
         transaccionId: id(`t-${op.etiqueta}`),
         instante: hora(),
         ids,
-        cuentaId: cuentaId(s, op.cuenta),
+        ...(op.cuenta && { cuentaId: cuentaId(s, op.cuenta) }),
+        ...(op.fecha && { fecha: fecha(op.fecha) }),
+      };
+    case 'OP-29':
+      return {
+        operacion: 'OP-29',
+        transaccionId: id(`t-${op.etiqueta}`),
+        instante: hora(),
+        ids,
+        movimientos: [],
       };
     case 'OP-31': {
       const linea = s.hechos.lineas.find(
@@ -293,6 +302,13 @@ function desglose(i: Instantanea, arg: string): number {
   return d[campo] as number;
 }
 
+function evaluacionDeMeta(i: Instantanea, nombre: string) {
+  const cat = i.hechos.categorias.find((x) => x.nombre === nombre);
+  const m = i.metas.find((x) => x.categoriaId === cat?.id)?.evaluacion;
+  if (!m) throw new Error(`la categoría ${nombre} no tiene meta evaluada`);
+  return m;
+}
+
 /** Columnas fuera de la instantánea (regla 9) que `motor` evalúa; el argumento va después de ':'. */
 const EXTRAS: Record<string, (i: Instantanea, arg: string) => number> = {
   patrimonio: (i) => i.patrimonio.total,
@@ -319,6 +335,10 @@ const EXTRAS: Record<string, (i: Instantanea, arg: string) => number> = {
     const k = i.hechos.cuentas.find((x) => x.nombre === t);
     return Math.max(0, i.cuentas.find((x) => x.cuentaId === k?.id)?.saldo ?? 0);
   },
+  // Metas (§4.12): pedido, falta y monto del período de la meta de la categoría `Cat` en el período activo.
+  metaPedido: (i, cat) => evaluacionDeMeta(i, cat).pedido,
+  metaFalta: (i, cat) => evaluacionDeMeta(i, cat).falta,
+  metaPeriodo: (i, cat) => evaluacionDeMeta(i, cat).montoDelPeriodo ?? 0,
   lpaCierre: (i, p) => {
     const x = i.historialLpa.find((y) => y.periodo.inicio === PERIODOS[p as Periodo]);
     if (!x) throw new Error(`lpaCierre:${p}: el período no está cerrado`);
@@ -400,7 +420,10 @@ export const ejecutorMotor: Ejecutor<Estado> = {
     }
     let rechazo: string | undefined;
     for (const op of p.ops) {
+      const hoyDelPaso = s.hoy;
+      if (op.hoy) s.hoy = FechaLocal.desdeTexto(op.hoy);
       const r = aplicar(s.hechos, comando(s, op), s.hoy);
+      s.hoy = hoyDelPaso;
       if (!r.ok) {
         rechazo = r.rechazos[0]?.codigo ?? 'sin_codigo';
         break;
