@@ -1,0 +1,376 @@
+[
+  {
+    "id": "V-01",
+    "destino": "PRU-INT-ESQ-001"
+  },
+  {
+    "id": "V-02",
+    "destino": "PRU-INT-ESQ-002"
+  },
+  {
+    "id": "V-03",
+    "destino": "PRU-INT-ESQ-003"
+  },
+  {
+    "id": "V-04",
+    "destino": "PRU-INT-ESQ-004"
+  },
+  {
+    "id": "V-05",
+    "destino": "PRU-INT-POOL-006"
+  },
+  {
+    "id": "V-06",
+    "destino": "PRU-INT-ESQ-005"
+  },
+  {
+    "id": "V-07",
+    "destino": "PRU-INT-ESQ-006"
+  },
+  {
+    "id": "V-08",
+    "destino": "PRU-INT-ESQ-007"
+  },
+  {
+    "id": "V-09",
+    "destino": "PRU-INT-ESQ-008"
+  },
+  {
+    "id": "V-10",
+    "destino": "PRU-INT-ESQ-009"
+  },
+  {
+    "id": "V-11",
+    "destino": "PRU-INT-ESQ-010"
+  },
+  {
+    "id": "V-12",
+    "destino": "PRU-SEG-ESQ-001"
+  },
+  {
+    "id": "V-13",
+    "destino": "PRU-REN-MOTOR-001"
+  },
+  {
+    "id": "V-14",
+    "destino": "PRU-INT-VAL-001"
+  },
+  {
+    "id": "V-15",
+    "destino": "PRU-INT-VAL-002"
+  },
+  {
+    "id": "V-16",
+    "destino": "PRU-INT-MOTOR-001"
+  },
+  {
+    "id": "V-17",
+    "destino": "PRU-INT-VAL-003"
+  },
+  {
+    "id": "V-18",
+    "destino": "PRU-DOM-VAL-001"
+  },
+  {
+    "id": "V-19",
+    "destino": "PRU-DOM-VAL-002"
+  },
+  {
+    "id": "V-20",
+    "destino": "PRU-DOM-VAL-003"
+  },
+  {
+    "id": "V-21",
+    "destino": "PRU-ESQ-ESQ-001"
+  },
+  {
+    "id": "V-22",
+    "destino": "PRU-PROP-REP-001"
+  },
+  {
+    "id": "V-23",
+    "destino": "PRU-DOM-BAND-001"
+  },
+  {
+    "id": "V-24",
+    "destino": "PRU-DOM-BAND-002"
+  },
+  {
+    "id": "V-25",
+    "destino": "PRU-DOM-CONC-001"
+  },
+  {
+    "id": "V-26",
+    "destino": "PRU-SEG-CONC-001"
+  },
+  {
+    "id": "V-27",
+    "destino": "PRU-CTR-BAND-001",
+    "tambien": ["PRU-INT-BAND-001"]
+  },
+  {
+    "id": "V-28",
+    "destino": "PRU-INT-ESQ-012"
+  },
+  {
+    "id": "V-29",
+    "motivo": "Sin prueba permanente: verifica el documento, no el código. Se repite al cerrar la fase con los documentos enmendados"
+  },
+  {
+    "id": "V-30",
+    "destino": "PRU-REN-ESQ-001"
+  },
+  {
+    "id": "V5-01",
+    "destino": "PRU-DOM-VAL-004",
+    "tambien": ["PRU-PROP-VAL-001"]
+  },
+  {
+    "id": "V5-02",
+    "destino": "PRU-DOM-VAL-005"
+  },
+  {
+    "id": "V5-03",
+    "destino": "PRU-E2E-TX-001"
+  },
+  {
+    "id": "V5-04",
+    "destino": "PRU-E2E-TX-002"
+  },
+  {
+    "id": "V5-05",
+    "destino": "PRU-E2E-TX-003"
+  },
+  {
+    "id": "V5-06",
+    "destino": "PRU-E2E-PRES-001"
+  },
+  {
+    "id": "V5-07",
+    "destino": "PRU-E2E-TX-004"
+  },
+  {
+    "id": "V5-08",
+    "destino": "PRU-E2E-TX-005"
+  },
+  {
+    "id": "V5-09",
+    "destino": "PRU-E2E-PWA-001"
+  },
+  {
+    "id": "V5-10",
+    "destino": "PRU-DOM-RELOJ-001",
+    "tambien": ["PRU-E2E-RELOJ-002"]
+  },
+  {
+    "id": "V5-11",
+    "destino": "PRU-REN-TX-001"
+  },
+  {
+    "id": "V5-12",
+    "destino": "PRU-DOM-VAL-006"
+  },
+  {
+    "id": "V5-13",
+    "destino": "PRU-REN-PWA-001"
+  },
+  {
+    "id": "V5-14",
+    "motivo": "Sin prueba permanente: es un dato de la documentación de Vercel; su efecto lo cubre V5-09"
+  },
+  {
+    "id": "V5-15",
+    "destino": "PRU-E2E-PWA-002"
+  },
+  {
+    "id": "V5-16",
+    "destino": "PRU-E2E-ACCESO-001"
+  },
+  {
+    "id": "V5-17",
+    "destino": "PRU-E2E-PWA-003"
+  },
+  {
+    "id": "V5-18",
+    "motivo": "Sin prueba permanente: verifica el documento; en el código lo reemplazan M12 y PRU-SEG-ACCESO-002, que recorren las rutas reales"
+  },
+  {
+    "id": "V5-19",
+    "destino": "PRU-E2E-PWA-004"
+  },
+  {
+    "id": "V5-20",
+    "destino": "PRU-REN-PWA-002"
+  },
+  {
+    "id": "V5-21",
+    "destino": "PRU-E2E-PWA-005"
+  },
+  {
+    "id": "V5-22",
+    "destino": "PRU-E2E-PWA-006"
+  },
+  {
+    "id": "V5-23",
+    "destino": "PRU-DOM-PWA-001"
+  },
+  {
+    "id": "V5-24",
+    "destino": "PRU-E2E-PWA-007"
+  },
+  {
+    "id": "V5-25",
+    "destino": "PRU-CMP-VAL-005"
+  },
+  {
+    "id": "V5-26",
+    "destino": "PRU-REN-PWA-003"
+  },
+  {
+    "id": "V5-27",
+    "destino": "PRU-REN-PWA-004",
+    "tambien": ["PRU-E2E-PWA-008"]
+  },
+  {
+    "id": "V5-28",
+    "destino": "PRU-E2E-PWA-009"
+  },
+  {
+    "id": "V5-29",
+    "destino": "PRU-SW-PWA-001"
+  },
+  {
+    "id": "V5-30",
+    "destino": "PRU-SW-PWA-002"
+  },
+  {
+    "id": "V5-31",
+    "destino": "PRU-SW-PWA-003"
+  },
+  {
+    "id": "V5-32",
+    "destino": "PRU-SW-NOTIF-001"
+  },
+  {
+    "id": "V5-33",
+    "destino": "PRU-SW-PWA-004"
+  },
+  {
+    "id": "V5-34",
+    "destino": "PRU-REN-PWA-002"
+  },
+  {
+    "id": "V5-35",
+    "destino": "PRU-REN-PWA-001"
+  },
+  {
+    "id": "V5-36",
+    "motivo": "Sin prueba permanente: verifica el documento; se repite al cerrar la fase"
+  },
+  {
+    "id": "V6-01",
+    "destino": "PRU-DOM-MOTOR-903",
+    "tambien": ["PRU-DOM-REP-001"]
+  },
+  {
+    "id": "V6-02",
+    "destino": "PRU-PROP-REP-002"
+  },
+  {
+    "id": "V6-03",
+    "destino": "PRU-PROP-REP-003"
+  },
+  {
+    "id": "V6-04",
+    "destino": "PRU-INT-NOTIF-001"
+  },
+  {
+    "id": "V6-05",
+    "destino": "PRU-REN-INICIO-001"
+  },
+  {
+    "id": "V6-06",
+    "motivo": "Sin prueba permanente: verifica 06; corre en `rapido` si cambia `docs/`"
+  },
+  {
+    "id": "V6-07",
+    "destino": "PRU-REN-BAND-001"
+  },
+  {
+    "id": "V6-08",
+    "destino": "PRU-E2E-BAND-001"
+  },
+  {
+    "id": "V6-09",
+    "motivo": "Sin prueba permanente: ídem V6-06"
+  },
+  {
+    "id": "V6-10",
+    "motivo": "Sin prueba permanente: ídem V6-06"
+  },
+  {
+    "id": "V6-11",
+    "destino": "PRU-PROP-REP-004"
+  },
+  {
+    "id": "V6-12",
+    "motivo": "Sin prueba permanente: verifica documentos; se repite al cerrar esta fase"
+  },
+  {
+    "id": "V6-13",
+    "destino": "PRU-DOM-MOTOR-901",
+    "tambien": ["PRU-DOM-MOTOR-904"]
+  },
+  {
+    "id": "CF-16",
+    "destino": "PRU-INT-NOTIF-002"
+  },
+  {
+    "id": "H-01",
+    "motivo": "paso de la prueba de humo (SP-02), registrado en PRU-MAN-ESQ-001; la parte de CI es versiones.mjs (PG_MAYOR contra lo registrado), sin identificador PRU"
+  },
+  {
+    "id": "H-02",
+    "motivo": "paso de la prueba de humo (SP-02), registrado en PRU-MAN-ESQ-001; la parte de CI es bootstrap.sql en integracion (CT-06), sin identificador PRU propio"
+  },
+  {
+    "id": "H-03",
+    "motivo": "paso de la prueba de humo (SP-02), registrado en PRU-MAN-ESQ-001; la parte de CI es bootstrap.sql en integracion, sin identificador PRU propio"
+  },
+  {
+    "id": "H-04",
+    "motivo": "paso de la prueba de humo (SP-02), registrado en PRU-MAN-ESQ-001"
+  },
+  {
+    "id": "H-05",
+    "motivo": "paso de la prueba de humo (SP-02), registrado en PRU-MAN-ESQ-001; la parte de CI es C4 en integracion, sin identificador PRU propio"
+  },
+  {
+    "id": "H-06",
+    "destino": "PRU-INT-POOL-001"
+  },
+  {
+    "id": "H-07",
+    "destino": "PRU-INT-POOL-002"
+  },
+  {
+    "id": "H-08",
+    "motivo": "paso de la prueba de humo (SP-02), registrado en PRU-MAN-ESQ-001; la parte de CI es RES con volumen, sin identificador PRU propio"
+  },
+  {
+    "id": "H-09",
+    "destino": "PRU-REN-MOTOR-001"
+  },
+  {
+    "id": "H-10",
+    "motivo": "paso de la prueba de humo (SP-02), registrado en PRU-MAN-ESQ-001; la parte de CI es la E2E con la pila local (auth), sin identificador PRU propio"
+  },
+  {
+    "id": "H-11",
+    "motivo": "paso de la prueba de humo (SP-02), registrado en PRU-MAN-ESQ-001"
+  },
+  {
+    "id": "H-12",
+    "motivo": "paso de la prueba de humo (SP-02), registrado en PRU-MAN-ESQ-001"
+  }
+]

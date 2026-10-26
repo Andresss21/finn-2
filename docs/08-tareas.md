@@ -754,11 +754,11 @@ compartido: —
 **Qué construir.**
 - `pruebas/verificaciones-previas.json` con las 92 entradas de 07 §20 y §21 (`destino` o `motivo`).
 - `pruebas/manuales.md` con los 15 procedimientos de 07 §22.1, §29.2 y §31 (incluido PRU-MAN-CTA-002, CH-04), cada uno con Disparador, Dispositivo, Pasos numerados, Resultado esperado y Registro (DP-20).
-- `pruebas/manuales/resultados.md` solo con el encabezado de la tabla (07 §22.2).
+- `pruebas/manuales/resultados.md` no lo crea esta tarea: lo crea el usuario con su primera fila firmada (encabezado de 07 §22.2 más la fila), según TU-05 **[CH-13]**.
 
 **Leer.** 07 §20, §21, §22, §29.2, §31.1, §31.4, §31.5; CH-04.
 
-**Archivos.** `pruebas/verificaciones-previas.json`, `pruebas/manuales.md`, `pruebas/manuales/resultados.md`, `tools/pruebas/matriz.ts` (solo el lector de M6, si hace falta).
+**Archivos.** `pruebas/verificaciones-previas.json`, `pruebas/manuales.md`, `tools/pruebas/matriz.ts` (solo el lector de M6, si hace falta). **[CH-13]**
 
 **Pruebas primero.** M6 y M10 sobre los archivos reales: la matriz pasa en modo incremental. Control: quitar una entrada de verificaciones previas o los Pasos de un manual hace fallar M6 o M10.
 
@@ -1475,6 +1475,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-10** | Tamaño de TA-002: §1.1 clasifica `docs/**` como dato, que suma al total de DT-01, y TA-002 copia los documentos y los zips sin cambios. En DT-14, un archivo de `docs/` o de `docs/anexos/` copiado byte a byte de `C:\finn\_entrada\` o de un zip de la entrega es portado y no suma al total | 08 §11.2 (DT-14) | **Aprobado por el usuario** (TA-002); **aplicado [CH-10]** en TA-002 |
 | **CH-11** | "Terminada cuando" de TA-002 decía que `plan:siguiente` lista TA-003, TA-005 y TA-011, pero TA-011 depende de TA-003. Pasa a "lista TA-003 y TA-005"; TA-011 no cambia | 08 TA-002 | **Aprobado por el usuario** (TA-002); **aplicado [CH-11]** en TA-002 |
 | **CH-12** | TU-04 pedía que TA-002 registrara la salida de `anexos.ts` en `plan/tu.md`, que `CLAUDE.md` (§4) y §4.1 le prohíben tocar. La salida va en la descripción del PR de TA-002 y el usuario la copia a `plan/tu.md` con su primer commit firmado (TU-05) | 08 TU-04 | **Aprobado por el usuario** (TA-002); **aplicado [CH-12]** en TA-002 |
+| **CH-13** | Creación de `resultados.md`: TA-008 lo pedía, pero `CLAUDE.md`, §4.1 y M17 lo prohíben a los agentes; lo crea el usuario con su primera fila firmada | 08 TA-008 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-13]** en TA-008 |
 | **CH-14** | Orden del reparto D2. 03 §5.4, 01 §4.1 conv. 2 y `cronologico` de TA-104 ordenan por (fecha, clave de orden, secuencia, orden de línea); 01 §4.5 paso 3, 02 RT-09 y PRU-DOM-MOTOR-104 de TA-105 decían otra cosa. Se unifica en (fecha, clave de orden, secuencia de creación, orden de línea) | 01 §4.5 (paso 3); 02 RT-09; 08 TA-105 (PRU-DOM-MOTOR-104) | **Aprobado por el usuario** (TA-105); **aplicado [CH-14]** en TA-105 |
 | **CH-15** | Excepción de tamaño registrada. En §1.1, "No hay excepciones por comentario." pasa a: una excepción se registra solo con `pr:mergear <n> --excepcion-tamano "<motivo>"`; en una tarea normal con un exceso de hasta el 30 % la aplica el orquestador por la regla permanente del usuario; en una obligatoria, o con un exceso mayor, solo con `--aprobado` tras la aceptación del usuario en la sesión; motivo y medidas en el commit de merge (`Excepción-tamaño:`). El límite de migraciones no admite excepción; DT-15 no cambia | 08 §1.1 (DT-01) | **Aprobado por el usuario** (TA-014); **aplicado [CH-15]** en TA-014 |
 
