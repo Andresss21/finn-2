@@ -1,7 +1,6 @@
-// Clasificación para reportes (01 §4.13; N9, Q3, Q7, H13, D1, O1, H6). Cada movimiento queda en una
-// clase con su monto; el gasto va por categoría y neto de devoluciones. Los cobros salen de
-// `porCobrar` (§4.10), que separa la restitución del excedente. El ajuste de inversión no figura en
-// la tabla de §4.13 y no se clasifica; tampoco las devoluciones a un por cobrar (§4.10).
+// Clasificación para reportes (01 §4.13; N9, Q3, Q7, H13, D1, O1, H6): gasto por categoría, neto de
+// devoluciones; cobros, de `porCobrar` (§4.10). Fuera de §4.13 quedan sin clase el ajuste de valor
+// de una inversión (OP-25, sin efecto presupuestario) y las devoluciones a un por cobrar.
 import type { TipoTransaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
@@ -12,19 +11,14 @@ import type { PorCobrar } from './por-cobrar';
 export type ClaseDeReporte =
   'ingreso' | 'otras_entradas' | 'restitucion' | 'saldo_inicial' | 'gasto' | 'neutral';
 
+/** Monto ≥ 0, salvo el saldo inicial (signo de su cuenta) y una devolución (resta del gasto). */
 export interface Partida {
   /** La transacción, la línea o la condonación que la origina. */
   readonly id: Uuid;
-  /** `null` en una condonación. */
-  readonly transaccionId: Uuid | null;
   readonly fecha: FechaLocal;
   readonly clase: ClaseDeReporte;
   /** La categoría del gasto; `null` en las demás clases. */
   readonly categoriaId: Uuid | null;
-  /**
-   * Monto ≥ 0, salvo el saldo inicial (con el signo de su cuenta) y la devolución, que resta del
-   * gasto de su categoría.
-   */
   readonly monto: Centavos;
 }
 
@@ -55,6 +49,8 @@ const POR_TOTAL: Partial<Record<TipoTransaccion, ClaseDeReporte>> = {
   transferencia_tarjetas: 'neutral',
 };
 
+type Origen = Pick<Partida, 'id' | 'fecha'>;
+
 /** Las partidas de §4.13 de todos los hechos. `cobros` debe salir de los mismos hechos. */
 export function clasificacion(
   h: HechosDeConsumo,
@@ -62,65 +58,43 @@ export function clasificacion(
   cobros: readonly PorCobrar[],
 ): Clasificacion {
   const txs = new Map(h.transacciones.map((t) => [t.id, t]));
-  const deLinea = new Map(h.lineas.map((l) => [l.id, l.transaccionId]));
   const partidas: Partida[] = [];
-  const agregar = (
-    id: Uuid,
-    transaccionId: Uuid | null,
-    fecha: FechaLocal,
-    clase: ClaseDeReporte,
-    monto: Centavos,
-    categoriaId: Uuid | null = null,
-  ) => partidas.push({ id, transaccionId, fecha, clase, categoriaId, monto });
+  const agregar = (x: Origen, clase: ClaseDeReporte, monto: Centavos, cat: Uuid | null = null) =>
+    partidas.push({ id: x.id, fecha: x.fecha, clase, categoriaId: cat, monto });
 
   for (const t of h.transacciones) {
     const clase = POR_TOTAL[t.tipo];
-    if (clase !== undefined) agregar(t.id, t.id, t.fecha, clase, t.total);
-    if (t.tipo === 'saldo_inicial') {
-      const efecto = h.efectos.filter((e) => e.transaccionId === t.id).map((e) => e.monto);
-      agregar(t.id, t.id, t.fecha, 'saldo_inicial', efecto.reduce(Centavos.sumar, Centavos.cero));
-    }
+    if (clase !== undefined) agregar(t, clase, t.total);
+  }
+  // El saldo inicial, con el signo de su cuenta: el efecto de la transacción.
+  for (const e of h.efectos) {
+    const t = txs.get(e.transaccionId);
+    if (t?.tipo === 'saldo_inicial') agregar(t, 'saldo_inicial', e.monto);
   }
   // Restitución y excedente de cada cobro, en cualquier medio y cuenta [D1, O1, N9].
-  for (const x of cobros)
-    for (const e of x.eventos) {
-      if (e.tipo !== 'cobro') continue;
-      if (e.restituido > 0) agregar(e.id, e.id, e.fecha, 'restitucion', e.restituido);
-      if (e.excedente > 0) agregar(e.id, e.id, e.fecha, 'ingreso', e.excedente);
-    }
+  for (const e of cobros.flatMap((x) => x.eventos.filter((y) => y.tipo === 'cobro'))) {
+    if (e.restituido > 0) agregar(e, 'restitucion', e.restituido);
+    if (e.excedente > 0) agregar(e, 'ingreso', e.excedente);
+  }
   // Consumos netos de las devoluciones D-1 y, en negativo, las demás devoluciones a categoría.
-  for (const k of consumos(h, c)) {
-    const transaccionId = k.fuente === 'linea' ? (deLinea.get(k.id) ?? null) : null;
-    agregar(k.id, transaccionId, k.fecha, 'gasto', k.neto, k.categoriaId);
-  }
-  for (const d of clasificar(h, c)) {
-    if (d.caso === 'D-1') continue;
-    agregar(
-      d.lineaId,
-      deLinea.get(d.lineaId) ?? null,
-      d.fecha,
-      'gasto',
-      Centavos.negar(d.monto),
-      d.categoriaId,
-    );
-  }
+  for (const k of consumos(h, c)) agregar(k, 'gasto', k.neto, k.categoriaId);
+  for (const d of clasificar(h, c))
+    if (d.caso !== 'D-1')
+      agregar({ id: d.lineaId, fecha: d.fecha }, 'gasto', Centavos.negar(d.monto), d.categoriaId);
 
-  const costosFinancieros = h.efectos.flatMap((e): CostoFinanciero[] => {
+  // La categoría de la cuota es la de su línea (OP-24 registra una sola).
+  const costosFinancieros: CostoFinanciero[] = [];
+  for (const e of h.efectos) {
     const t = txs.get(e.transaccionId);
-    if (t?.tipo !== 'cuota_prestamo' || (e.interes === null && e.seguro === null)) return [];
-    const [primera] = h.lineas
-      .filter((l) => l.transaccionId === t.id)
-      .sort((a, b) => a.orden - b.orden);
-    return [
-      {
-        transaccionId: t.id,
-        fecha: t.fecha,
-        prestamoId: e.cuentaId,
-        categoriaId: primera?.categoriaId ?? null,
-        interes: e.interes ?? Centavos.cero,
-        seguro: e.seguro ?? Centavos.cero,
-      },
-    ];
-  });
+    if (t?.tipo !== 'cuota_prestamo' || (e.interes === null && e.seguro === null)) continue;
+    costosFinancieros.push({
+      transaccionId: t.id,
+      fecha: t.fecha,
+      prestamoId: e.cuentaId,
+      categoriaId: h.lineas.find((l) => l.transaccionId === t.id)?.categoriaId ?? null,
+      interes: e.interes ?? Centavos.cero,
+      seguro: e.seguro ?? Centavos.cero,
+    });
+  }
   return { partidas, costosFinancieros };
 }

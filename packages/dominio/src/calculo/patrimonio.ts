@@ -4,15 +4,7 @@ import type { Hechos, Tarjeta, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { porCobrarAbierto, type PorCobrar } from './por-cobrar';
-import {
-  capitalPendiente,
-  deuda,
-  type HechosDeSaldo,
-  saldo,
-  saldoAFavor,
-  saldoAl,
-  valorDeInversion,
-} from './saldos';
+import { capitalPendiente, deuda, type HechosDeSaldo, saldo, saldoAFavor, saldoAl } from './saldos';
 
 export interface PatrimonioNeto {
   readonly efectivo: Centavos;
@@ -28,7 +20,7 @@ const suma = (xs: readonly Centavos[]) => xs.reduce(Centavos.sumar, Centavos.cer
 
 /**
  * Σ saldos de efectivo + Σ saldos a favor + Σ valor de inversiones + Σ por cobrar abiertos
- * − Σ deudas de tarjeta − Σ capital pendiente de préstamos [P9]. `cobros` sale de los mismos hechos.
+ * − Σ deudas de tarjeta − Σ capital pendiente de préstamos [P9], con `cobros` de los mismos hechos.
  */
 export function patrimonioNeto(
   h: HechosDeSaldo & Pick<Hechos, 'cuentas'>,
@@ -39,7 +31,7 @@ export function patrimonioNeto(
   const x = {
     efectivo: de('efectivo', saldo),
     saldosAFavor: de('tarjeta', saldoAFavor),
-    inversiones: de('inversion', valorDeInversion),
+    inversiones: de('inversion', saldo),
     porCobrar: porCobrarAbierto(cobros),
     deudasDeTarjeta: de('tarjeta', deuda),
     prestamos: de('prestamo', capitalPendiente),
@@ -58,7 +50,7 @@ export function ultimoCorteAntesDe(diaCorte: number, f: FechaLocal): FechaLocal 
   return este < f ? este : fechaDeCorte(diaCorte, FechaLocal.sumarMeses(este, -1));
 }
 
-/** El ciclo de facturación que contiene `f`: del día siguiente a un corte hasta el corte siguiente. */
+/** Ciclo de facturación que contiene `f`: del día siguiente a un corte hasta el corte siguiente. */
 export function cicloDeFacturacion(
   diaCorte: number,
   f: FechaLocal,
@@ -69,7 +61,6 @@ export function cicloDeFacturacion(
 }
 
 export interface DesgloseDePago {
-  /** c₀. */
   readonly corte: FechaLocal;
   /** máx(0, −saldo(t, c₀)). */
   readonly deudaAnterior: Centavos;
@@ -81,7 +72,7 @@ export interface DesgloseDePago {
   readonly paraNoGenerarIntereses: Centavos;
 }
 
-/** Desglose al pagar en la fecha `f` [P8]. Informativo: no afecta ningún número. */
+/** Desglose al pagar en la fecha `f`, con c₀ = `corte` [P8]. Es informativo: no cambia nada. */
 export function desgloseAlPagar(
   h: HechosDeSaldo,
   t: Pick<Tarjeta, 'cuentaId' | 'diaCorte'>,
@@ -89,22 +80,20 @@ export function desgloseAlPagar(
 ): DesgloseDePago {
   const corte = ultimoCorteAntesDe(t.diaCorte, f);
   const fechas = new Map(h.transacciones.map((x) => [x.id, x.fecha]));
-  let cargos = Centavos.cero;
-  let pagado = Centavos.cero;
+  let cargosDelCiclo = Centavos.cero;
+  let yaPagado = Centavos.cero;
   for (const e of h.efectos) {
     const fecha = fechas.get(e.transaccionId);
     if (e.cuentaId !== t.cuentaId || fecha === undefined || fecha <= corte || fecha > f) continue;
-    if (e.monto < 0) cargos = Centavos.restar(cargos, e.monto);
-    else pagado = Centavos.sumar(pagado, e.monto);
+    if (e.monto < 0) cargosDelCiclo = Centavos.restar(cargosDelCiclo, e.monto);
+    else yaPagado = Centavos.sumar(yaPagado, e.monto);
   }
   const deudaAnterior = Centavos.max(Centavos.cero, Centavos.negar(saldoAl(h, t.cuentaId, corte)));
-  return {
-    corte,
-    deudaAnterior,
-    cargosDelCiclo: cargos,
-    yaPagado: pagado,
-    paraNoGenerarIntereses: Centavos.max(Centavos.cero, Centavos.restar(deudaAnterior, pagado)),
-  };
+  const paraNoGenerarIntereses = Centavos.max(
+    Centavos.cero,
+    Centavos.restar(deudaAnterior, yaPagado),
+  );
+  return { corte, deudaAnterior, cargosDelCiclo, yaPagado, paraNoGenerarIntereses };
 }
 
 /** Un pago de `monto` presentado aplicado primero a lo que queda de la deuda anterior. */

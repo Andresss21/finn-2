@@ -204,7 +204,7 @@ describe('PRU-DOM-MOTOR', () => {
       'gasto:casa': m(-10 + 300 + 60), // devolución D-2, cuota y aporte
       neutral: m(100 + 80), // pago de tarjeta y transferencia
     });
-    expect(x.partidas.find((p) => p.transaccionId === id('ajuste'))).toBeUndefined();
+    expect(x.partidas.find((p) => p.id === id('ajuste'))).toBeUndefined();
     expect(x.costosFinancieros).toEqual([
       {
         transaccionId: id('cuota'),

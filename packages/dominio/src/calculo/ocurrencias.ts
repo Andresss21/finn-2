@@ -1,5 +1,5 @@
-// Ocurrencias de transacciones programadas (01 §4.16; P17, M2, A-6). La existencia de una ocurrencia
-// es derivada; su resolución (emparejada, registrada u omitida) es un hecho. La reactivación de
+// Ocurrencias de las transacciones programadas (01 §4.16; P17, M2, A-6). Que una ocurrencia exista
+// es derivado; su resolución (emparejada, registrada u omitida) es un hecho. La reactivación de
 // CF-20 llega con TA-139: aquí una programada inactiva no genera ninguna ocurrencia.
 import type { Hechos, Programada, Uuid } from '../hechos';
 import { FechaLocal } from '../valores/fecha-local';
@@ -49,6 +49,9 @@ export function ocurrencias(
   return fechas;
 }
 
+/** Fecha y programada: una sola ocurrencia por par, así que dos claves nunca son iguales. */
+const clave = (x: OcurrenciaPendiente) => `${x.fecha}|${x.programadaId}`;
+
 /**
  * Pendientes: las ocurrencias sin resolución con fecha ≤ hoy + horizonte (en días: 7 en Inicio y
  * 30 en Programadas, BE-37), en orden de fecha y, a igual fecha, de programada.
@@ -68,13 +71,5 @@ export function pendientes(
         .filter((fecha) => !resueltas.has(`${p.id}|${fecha}`))
         .map((fecha) => ({ programadaId: p.id, fecha, atrasada: fecha < hoy })),
     )
-    .sort((a, b) =>
-      a.fecha !== b.fecha
-        ? FechaLocal.comparar(a.fecha, b.fecha)
-        : a.programadaId < b.programadaId
-          ? -1
-          : a.programadaId > b.programadaId
-            ? 1
-            : 0,
-    );
+    .sort((a, b) => (clave(a) < clave(b) ? -1 : 1));
 }

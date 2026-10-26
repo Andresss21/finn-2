@@ -1,6 +1,5 @@
-// Metas (01 §4.12 y §7.5; H11, P6, N8, O5, F2, A-4, supuestos 3 y 4). El pedido, la falta y el
-// estado son derivados: salen de la meta y de las celdas de `presupuesto` (§4.6). Las únicas
-// divisiones son las de `Centavos` (meta semanal y techo de las metas de ahorro, 01 §0.4).
+// Metas (01 §4.12 y §7.5; H11, P6, N8, O5, F2, A-4, supuestos 3 y 4). Pedido, falta y estado salen
+// de la meta y de las celdas de `presupuesto` (§4.6); solo dividen los redondeos de `Centavos`.
 import type { Categoria, Meta, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
@@ -11,8 +10,6 @@ export type EstadoDeMeta =
   'cubierta' | 'con_faltante' | 'cumplida' | 'en_curso' | 'completada' | 'vencida';
 
 export interface EvaluacionDeMeta {
-  readonly metaId: Uuid;
-  readonly categoriaId: Uuid;
   readonly periodo: Periodo;
   /** Base(c, p) = Arr(c, p) + Act(c, p) = Disp(c, p) − Asig(c, p). */
   readonly base: Centavos;
@@ -28,8 +25,6 @@ export interface EvaluacionDeMeta {
   readonly falta: Centavos;
   readonly estado: EstadoDeMeta;
 }
-
-type Valores = Pick<Celda, 'arrastre' | 'asignado' | 'actividad' | 'disponible'>;
 
 const cero = Centavos.cero;
 const positivo = (x: Centavos) => Centavos.max(cero, x);
@@ -52,11 +47,13 @@ export function fechaObjetivo(m: Meta, p: Periodo): FechaLocal {
   return FechaLocal.sumarAnios(fo0, k);
 }
 
-/**
- * Valores de la categoría en p. Después del último período de `b` no hay hechos ni asignaciones:
- * Arr = máx(0, último Disp) y Asig = Act = 0. Antes del primero, todo es 0.
- */
-function valoresEn(b: Presupuesto, categoriaId: Uuid, p: Periodo): Valores {
+// Valores de la categoría en p. Después del último período de `b` no hay hechos ni asignaciones:
+// Arr = máx(0, último Disp) y Asig = Act = 0. Antes del primero, todo es 0.
+function valoresEn(
+  b: Presupuesto,
+  categoriaId: Uuid,
+  p: Periodo,
+): Pick<Celda, 'arrastre' | 'actividad' | 'asignado' | 'disponible'> {
   const propias = b.celdas.filter((x) => x.categoriaId === categoriaId);
   const ultima = propias[propias.length - 1];
   if (ultima === undefined) throw new RangeError(`la categoría ${categoriaId} no tiene celdas`);
@@ -84,47 +81,39 @@ export function evaluarMeta(
   if (p.inicio < b.activo.inicio) throw new RangeError(`el período ${p.inicio} está cerrado`);
   const x = valoresEn(b, m.categoriaId, p);
   const base = Centavos.sumar(x.arrastre, x.actividad);
-  const evaluacion = (
-    pedido: Centavos,
-    estado: (falta: Centavos) => EstadoDeMeta,
-    resto: Pick<EvaluacionDeMeta, 'montoDelPeriodo' | 'fechaObjetivo' | 'periodosRestantes'>,
-  ): EvaluacionDeMeta => {
-    const falta = positivo(Centavos.restar(pedido, x.asignado));
-    const comun = { metaId: m.id, categoriaId: m.categoriaId, periodo: p, base };
-    return { ...comun, asignado: x.asignado, ...resto, pedido, falta, estado: estado(falta) };
-  };
-
+  let montoDelPeriodo: Centavos | null = null;
+  let fo: FechaLocal | null = null;
+  let n: number | null = null;
+  let pedido: Centavos;
+  let estado: EstadoDeMeta | null = null;
   if (m.tipo === 'mensual' || m.tipo === 'semanal') {
-    const montoDelPeriodo =
+    const monto =
       m.tipo === 'mensual' ? m.monto : Centavos.metaSemanalDelPeriodo(m.monto, duracion(p));
-    const pedido =
-      m.modo === 'rellenar_hasta'
-        ? positivo(Centavos.restar(montoDelPeriodo, x.arrastre))
-        : montoDelPeriodo;
-    return evaluacion(pedido, (falta) => (falta > 0 ? 'con_faltante' : 'cubierta'), {
-      montoDelPeriodo,
-      fechaObjetivo: null,
-      periodosRestantes: null,
-    });
+    pedido = m.modo === 'rellenar_hasta' ? positivo(Centavos.restar(monto, x.arrastre)) : monto;
+    montoDelPeriodo = monto;
+  } else {
+    fo = fechaObjetivo(m, p);
+    n = p.inicio > fo ? 1 : periodosEntre(c, p.inicio, fo).length;
+    const alcanza = (q: Periodo) => valoresEn(b, m.categoriaId, q).disponible >= m.monto;
+    estado = alcanza(b.activo) ? 'cumplida' : 'en_curso';
+    if (m.tipo === 'para_fecha' && hoy > fo)
+      estado = estado === 'cumplida' || alcanza(periodoDe(c, fo)) ? 'completada' : 'vencida';
+    pedido =
+      estado === 'completada'
+        ? cero
+        : Centavos.cuotaConTecho(positivo(Centavos.restar(m.monto, base)), n);
   }
-
-  const fo = fechaObjetivo(m, p);
-  const n = p.inicio > fo ? 1 : periodosEntre(c, p.inicio, fo).length;
-  const alcanza = (d: Centavos) => d >= m.monto;
-  const enActivo = alcanza(valoresEn(b, m.categoriaId, b.activo).disponible);
-  let estado: EstadoDeMeta = enActivo ? 'cumplida' : 'en_curso';
-  if (m.tipo === 'para_fecha' && hoy > fo)
-    estado =
-      enActivo || alcanza(valoresEn(b, m.categoriaId, periodoDe(c, fo)).disponible)
-        ? 'completada'
-        : 'vencida';
-  const pedido =
-    estado === 'completada'
-      ? cero
-      : Centavos.cuotaConTecho(positivo(Centavos.restar(m.monto, base)), n);
-  return evaluacion(pedido, () => estado, {
-    montoDelPeriodo: null,
+  const falta = positivo(Centavos.restar(pedido, x.asignado));
+  estado ??= falta > 0 ? 'con_faltante' : 'cubierta';
+  return {
+    periodo: p,
+    base,
+    asignado: x.asignado,
+    montoDelPeriodo,
     fechaObjetivo: fo,
     periodosRestantes: n,
-  });
+    pedido,
+    falta,
+    estado,
+  };
 }
