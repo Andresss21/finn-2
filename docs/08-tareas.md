@@ -393,7 +393,7 @@ tu: TU-03, TU-06
 
 ```hito
 despues: TA-147
-requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147
+requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230
 tu: —
 ```
 
@@ -1699,13 +1699,14 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 600 | TA-136 | B2 | 2 | HT-2 | obligatoria | `aplicar`: asignación rápida y cambiar el ciclo (OP-16, OP-19) | 260 | 0 |
 | 601 | TA-137 | B2 | 2 | HT-2 | obligatoria | `aplicar`: inversiones y desembolso (OP-25, OP-26) | 180 | 0 |
 | 604 | TA-140 | B2 | 2 | HT-2 | normal | Selectores de por cobrar, programadas y contextos de formulario (ola 2) | 260 | 0 |
-| 605 | TA-141 | B2 | 2 | HT-2 | normal | Reportes base y gasto semanal (04 §6.9.2, §6.9.3) | 340 | 0 |
-| 606 | TA-142 | B2 | 2 | HT-2 | normal | Reportes accionables: realidad, hormiga y suscripciones (CF-04) | 320 | 0 |
-| 607 | TA-143 | B2 | 2 | HT-2 | normal | Reportes de tarjetas, hallazgos y flujo de efectivo (CF-02, CF-04) | 300 | 0 |
-| 608 | TA-144 | B2 | 2 | HT-2 | normal | `datos_base` y sus pares con los selectores (CF-09) | 160 | 0 |
-| 609 | TA-145 | B2 | 2 | HT-2 | normal | Escenarios en el motor: ESC-21, ESC-23, ESC-25, ESC-26, ESC-27, ESC-28, ESC-29, ESC-30 | 20 | 0 |
-| 610 | TA-146 | B2 | 2 | HT-2 | normal | Escenarios en el motor: ESC-40, ESC-41, ESC-45, ESC-50 | 20 | 0 |
-| 611 | TA-147 | B2 | 2 | HT-2 | normal | Semilla de A.7 completa (CT-07) | 30 | 0 |
+| 605 | TA-141 | B2 | 2 | HT-2 | normal | Reportes base (04 §6.9.2, §6.9.3; parte 1) | 396 | 0 |
+| 606 | TA-230 | B2 | 2 | HT-2 | normal | Reportes: top de comercios y gasto semanal (parte 2 de TA-141) | 287 | 0 |
+| 607 | TA-142 | B2 | 2 | HT-2 | normal | Reportes accionables: realidad, hormiga y suscripciones (CF-04) | 320 | 0 |
+| 608 | TA-143 | B2 | 2 | HT-2 | normal | Reportes de tarjetas, hallazgos y flujo de efectivo (CF-02, CF-04) | 300 | 0 |
+| 609 | TA-144 | B2 | 2 | HT-2 | normal | `datos_base` y sus pares con los selectores (CF-09) | 160 | 0 |
+| 610 | TA-145 | B2 | 2 | HT-2 | normal | Escenarios en el motor: ESC-21, ESC-23, ESC-25, ESC-26, ESC-27, ESC-28, ESC-29, ESC-30 | 20 | 0 |
+| 611 | TA-146 | B2 | 2 | HT-2 | normal | Escenarios en el motor: ESC-40, ESC-41, ESC-45, ESC-50 | 20 | 0 |
+| 612 | TA-147 | B2 | 2 | HT-2 | normal | Semilla de A.7 completa (CT-07) | 30 | 0 |
 | 620 | TA-168 | B3 | 2 | HT-3 | normal | Exportar en JSON y CSV (OPT-08) | 240 | 0 |
 | 621 | TA-192 | B3 | 2 | HT-3 | normal | Asignación rápida, ciclo, inversiones y desembolso (OP-16, OP-19, OP-25, OP-26) | 280 | 0 |
 | 624 | TA-195 | B3 | 2 | HT-3 | normal | Formatos bancarios e instituciones (OPT-05 a OPT-07, BE-47) | 260 | 0 |
@@ -3418,7 +3419,9 @@ compartido: SEL-formulario (los contextos de la ola 2)
 
 **Terminada cuando.** La prueba pasa.
 
-#### TA-141 Reportes base y gasto semanal (04 §6.9.2, §6.9.3)
+#### TA-141 Reportes base (04 §6.9.2, §6.9.3; parte 1)
+
+Partida en dos por tamaño (DT-02, 08 §1.2): esta parte tiene los reportes base y `existiaEn`; el top de comercios y el gasto semanal son TA-230.
 
 ```tarea
 orden: 605
@@ -3428,32 +3431,63 @@ depende: TA-109
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=340 archivos=9 ca=0 migraciones=0 total=820
-cubre: REP-categorias, REP-cumplimiento, REP-ingresos_gastos, REP-patrimonio, REP-remanente, REP-tendencia, REP-top_comercios, REP-gasto_semanal, BE-40
-pru: PRU-PROP-REP-001, PRU-DOM-REP-101
+tamano: prod=396 archivos=9 ca=0 migraciones=0 total=820
+cubre: REP-categorias, REP-cumplimiento, REP-ingresos_gastos, REP-patrimonio, REP-remanente, REP-tendencia
+pru: PRU-DOM-REP-101
 compartido: —
 ```
 
 **Qué construir.**
-- Un selector por reporte en `selectores/reportes/` con las fórmulas [Propio] de BE-40 y la referencia semanal con redondeo acumulado.
+- Un selector por reporte base en `selectores/reportes/` (`tendencia`, `categorias`, `ingresos_gastos`, `remanente`, `cumplimiento`, `patrimonio`) con las fórmulas [Propio] de BE-40 (ventana W y filtro de cuentas K), y `existiaEn` (CF-17).
 
-**Leer.** 04 §6.9.1 a §6.9.3; 06 §2.10 (FT-60, FT-61).
+**Leer.** 04 §6.9.1 y §6.9.2; 06 §2.10 (FT-60).
 
-**Archivos.** `packages/dominio/src/selectores/reportes/*.ts`.
+**Archivos.** `packages/dominio/src/selectores/reportes/{comunes,existia-en,tendencia,categorias,ingresos-gastos,remanente,cumplimiento,patrimonio,index}.ts`.
 
 **Pruebas primero.**
 - **PRU-DOM-REP-101** (nueva, DT-17): cada reporte base con un estado conocido y su tabla equivalente con los mismos números.
-- PRU-PROP-REP-001 (V-22): la referencia semanal suma exactamente lo asignado y nunca es negativa.
-- La prueba nueva.
 
-**Comandos.** `pnpm test:unidad -t "PRU-PROP-REP-001|PRU-DOM-REP-101"`; `pnpm ci:local`.
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-REP-101"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
+#### TA-230 Reportes: top de comercios y gasto semanal (parte 2 de TA-141)
+
+Parte 2 de TA-141 (DT-02, 08 §1.2): el top de comercios (BE-43) y el gasto semanal con su referencia de redondeo acumulado.
+
+```tarea
+orden: 606
+bloque: B2
+hito: HT-2
+depende: TA-141
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=290 archivos=3 ca=0 migraciones=0 total=660
+cubre: REP-top_comercios, REP-gasto_semanal, BE-40
+pru: PRU-PROP-REP-001, PRU-DOM-REP-102
+compartido: —
+```
+
+**Qué construir.**
+- `selectores/reportes/top-comercios.ts` (04 §6.9.2 y §6.9.6, BE-43) y `gasto-semanal.ts` (04 §6.9.3, BE-40) con la referencia semanal con redondeo acumulado, y su exportación en `index.ts`.
+
+**Leer.** 04 §6.9.2 (`top_comercios`), §6.9.3 y §6.9.6; 06 §2.10 (FT-60, FT-61).
+
+**Archivos.** `packages/dominio/src/selectores/reportes/{top-comercios,gasto-semanal,index}.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-REP-102** (nueva, DT-17): el top de comercios y el gasto semanal con un estado conocido y su tabla equivalente con los mismos números.
+- PRU-PROP-REP-001 (V-22): la referencia semanal suma exactamente lo asignado y nunca es negativa.
+
+**Comandos.** `pnpm test:unidad -t "PRU-PROP-REP-001|PRU-DOM-REP-102"`; `pnpm ci:local`.
 
 **Terminada cuando.** Las dos pruebas pasan.
 
 #### TA-142 Reportes accionables: realidad, hormiga y suscripciones (CF-04)
 
 ```tarea
-orden: 606
+orden: 607
 bloque: B2
 hito: HT-2
 depende: TA-129, TA-141
@@ -3484,7 +3518,7 @@ compartido: —
 #### TA-143 Reportes de tarjetas, hallazgos y flujo de efectivo (CF-02, CF-04)
 
 ```tarea
-orden: 607
+orden: 608
 bloque: B2
 hito: HT-2
 depende: TA-142
@@ -3514,7 +3548,7 @@ compartido: —
 #### TA-144 `datos_base` y sus pares con los selectores (CF-09)
 
 ```tarea
-orden: 608
+orden: 609
 bloque: B2
 hito: HT-2
 depende: TA-143, TA-126
@@ -3549,7 +3583,7 @@ compartido: —
 #### TA-145 Escenarios en el motor: ESC-21, ESC-23, ESC-25, ESC-26, ESC-27, ESC-28, ESC-29, ESC-30
 
 ```tarea
-orden: 609
+orden: 610
 bloque: B2
 hito: HT-2
 depende: TA-138, TA-131
@@ -3582,7 +3616,7 @@ compartido: —
 #### TA-146 Escenarios en el motor: ESC-40, ESC-41, ESC-45, ESC-50
 
 ```tarea
-orden: 610
+orden: 611
 bloque: B2
 hito: HT-2
 depende: TA-115, TA-136, TA-137, TA-138, TA-139, TA-131
@@ -3615,7 +3649,7 @@ compartido: —
 #### TA-147 Semilla de A.7 completa (CT-07)
 
 ```tarea
-orden: 611
+orden: 612
 bloque: B2
 hito: HT-2
 depende: TA-135, TA-139, TA-143
