@@ -71,7 +71,7 @@
 
   "TA-110": { "estado": "pendiente" },
 
-  "TA-111": { "estado": "en_curso", "rama": "ta-111-agricola-ch17" },
+  "TA-111": { "estado": "terminada", "pr": 35 },
 
   "TA-112": { "estado": "pendiente" },
 
