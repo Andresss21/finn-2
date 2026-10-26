@@ -41,6 +41,9 @@ import { op22 } from './op-22';
 import { op23 } from './op-23';
 import { op24 } from './op-24';
 import { op27 } from './op-27';
+import { op28 } from './op-28';
+import { op29 } from './op-29';
+import { op30 } from './op-30';
 import { op35 } from './op-35';
 import { op48 } from './op-48';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
@@ -92,6 +95,10 @@ const OPERACIONES: {
   'OP-23': op23,
   'OP-24': op24,
   'OP-27': op27,
+  // TA-118: editar, eliminar y estado bancario.
+  'OP-28': op28,
+  'OP-29': op29,
+  'OP-30': op30,
 };
 
 /** AV-01 (§5.0.3): impacto retroactivo, antes y después de confirmar. */

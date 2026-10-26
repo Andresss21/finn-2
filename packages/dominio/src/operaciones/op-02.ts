@@ -21,7 +21,7 @@ export function claveOrdenEditada(instante: H.Instante, anterior: H.Instante): H
 }
 
 /** Los campos pedidos cuyo valor difiere del actual, o `undefined` si ninguno. */
-function distintos<T extends object>(actual: T, pedidos: object): Partial<T> | undefined {
+export function distintos<T extends object>(actual: T, pedidos: object): Partial<T> | undefined {
   const viejo = actual as Readonly<Record<string, unknown>>;
   const c = Object.entries(pedidos).filter(([k, v]) => v !== undefined && v !== viejo[k]);
   return c.length > 0 ? (Object.fromEntries(c) as Partial<T>) : undefined;
