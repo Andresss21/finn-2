@@ -1,0 +1,128 @@
+# CI de Finn (TA-012; 07 §6.1, §6.2, §32.2; DP-10, DP-33, DP-34; CH-16). Cada job llama solo a sus `pnpm ci:<job>`;
+# las decisiones (M1 a M3 y cierre) viven en tools/ci/afecta.mjs y tools/ci/workflows.test.ts comprueba este archivo.
+# `rapido` corre `integracion` dentro (M5) y la publica como estado de commit aparte. `desplegar` llega con B5.
+name: ci
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+  push:
+    branches: [main]
+
+# En PR, un push nuevo cancela la corrida anterior; en main no, y GitHub coalesce las pendientes (M3).
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'ci-main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
+env:
+  FINN_EVENTO: ${{ github.event_name }}
+  FINN_BORRADOR: ${{ github.event.pull_request.draft }}
+  FINN_BASE: ${{ github.event_name == 'push' && github.event.before || 'origin/main' }}
+  FC_RUNS: ${{ github.event_name == 'push' && '2000' || '300' }}
+
+jobs:
+  rapido:
+    name: rapido
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # CH-16: statuses: write solo aquí, para el estado de commit `integracion`
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+      statuses: write
+    outputs:
+      afecta_db: ${{ steps.rapido.outputs.afecta_db }}
+      afecta_web: ${{ steps.rapido.outputs.afecta_web }}
+      integracion: ${{ steps.rapido.outputs.integracion }}
+      e2e: ${{ steps.rapido.outputs.e2e }}
+      cierre: ${{ steps.rapido.outputs.cierre }}
+      grep_e2e: ${{ steps.rapido.outputs.grep_e2e }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 24, cache: pnpm }
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: gitleaks (fijado por versión y suma)
+        id: gitleaks
+        env:
+          GITLEAKS_VERSION: '8.30.1'
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          archivo="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          cd "$RUNNER_TEMP"
+          curl -sSfL -o "$archivo" "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$archivo"
+          echo "${GITLEAKS_SHA256}  $archivo" | sha256sum -c -
+          tar -xzf "$archivo" gitleaks
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - run: pnpm install --frozen-lockfile
+      - id: rapido
+        run: pnpm ci:rapido
+      - if: steps.rapido.outputs.integracion == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          FINN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: pnpm ci:integracion
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: informes-rapido
+          path: test-results/informes/
+          if-no-files-found: ignore
+          retention-days: 3
+
+  e2e:
+    name: e2e
+    needs: rapido
+    if: needs.rapido.outputs.e2e == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      FINN_E2E_GREP: ${{ needs.rapido.outputs.grep_e2e }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 24, cache: pnpm }
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm ci:e2e
+      # El informe JSON para cierre; las trazas solo existen si una prueba falló (07 §6.4: 3 días)
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: informes-e2e
+          path: apps/web/test-results/
+          if-no-files-found: ignore
+          retention-days: 3
+
+  cierre:
+    name: cierre
+    needs: [rapido, e2e]
+    if: ${{ !cancelled() && needs.rapido.result == 'success' && needs.rapido.outputs.cierre == 'true' && needs.e2e.result != 'failure' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { pattern: informes-*, merge-multiple: true, path: test-results/informes }
+      - run: pnpm ci:cierre
