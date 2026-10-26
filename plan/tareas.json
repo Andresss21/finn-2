@@ -115,7 +115,7 @@
 
   "TA-128": { "estado": "pendiente" },
 
-  "TA-129": { "estado": "pendiente" },
+  "TA-129": { "estado": "en_curso", "rama": "ta-129-ritmo" },
 
   "TA-130": { "estado": "pendiente" },
 
