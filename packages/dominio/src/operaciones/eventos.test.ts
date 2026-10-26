@@ -151,25 +151,20 @@ describe('PRU-DOM-COBRO-101: aplicar, cobrar y renombrar deudor (01 §4.10, §5.
     expect(lpa(H0)).toBe(c(600));
     const r = cobrar(H0, LD, 'E', 30);
     const { cambios, hechosNuevos: h } = exito(r);
-    expect(cambios).toEqual([
-      {
-        tipo: 'insertar',
-        tabla: 'transacciones',
-        fila: expect.objectContaining({
-          ...{ id: id(`C${cobros}`), tipo: 'cobro', fecha: MAR, total: c(30) },
-          ...{ lineaCobradaId: LD, claveOrden: INSTANTE, estadoBancario: 'pendiente' },
-        }),
+    expect(cambios).toHaveLength(2);
+    expect(cambios[0]).toMatchObject({
+      tipo: 'insertar',
+      tabla: 'transacciones',
+      fila: {
+        ...{ id: id(`C${cobros}`), tipo: 'cobro', fecha: MAR, total: c(30) },
+        ...{ lineaCobradaId: LD, claveOrden: INSTANTE, estadoBancario: 'pendiente' },
       },
-      {
-        tipo: 'insertar',
-        tabla: 'efectos',
-        fila: expect.objectContaining({
-          transaccionId: id(`C${cobros}`),
-          cuentaId: id('E'),
-          monto: c(30),
-        }),
-      },
-    ]);
+    });
+    expect(cambios[1]).toMatchObject({
+      tipo: 'insertar',
+      tabla: 'efectos',
+      fila: { transaccionId: id(`C${cobros}`), cuentaId: id('E'), monto: c(30) },
+    });
     expect(saldo(h, id('E'))).toBe(c(930));
     expect(lpa(h)).toBe(c(630));
     expect(linea(h, LD)).toMatchObject({ abierto: c(10), restituido: c(30) });
@@ -260,10 +255,8 @@ describe('PRU-DOM-COBRO-101: aplicar, cobrar y renombrar deudor (01 §4.10, §5.
       fecha: f('2027-03-05'),
       asignarAPagoTarjeta: true,
     });
-    expect(rechazos(previo)[0]).toMatchObject({
-      codigo: 'invariante_violada',
-      datos: { error: expect.stringContaining('inv. 9') },
-    });
+    expect(rechazos(previo).map((x) => x.codigo)).toEqual(['invariante_violada']);
+    expect(String(rechazos(previo)[0]?.datos?.['error'])).toContain('inv. 9');
     // Débito, o depósito en una tarjeta: no hay propuesta que aceptar.
     expect(() => cobrar(H0, LD, 'E', 10, { asignarAPagoTarjeta: true })).toThrow(TypeError);
     expect(() => cobrar(H0, LT, 'U', 10, { asignarAPagoTarjeta: true })).toThrow(TypeError);

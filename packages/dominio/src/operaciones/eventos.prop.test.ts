@@ -86,7 +86,6 @@ describe('PRU-PROP-COBRO', () => {
         } as unknown as ComandoDominio;
         const g = aplicar(h, gasto, HOY);
         fc.pre(g.ok);
-        if (!g.ok) return;
         let actual = g.hechosNuevos;
         const propias = actual.lineas.filter((l) => l.transaccionId === 'G');
         const [primera] = propias;
