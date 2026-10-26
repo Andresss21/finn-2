@@ -26,6 +26,7 @@ import { op07 } from './op-07';
 import { op09 } from './op-09';
 import { op11 } from './op-11';
 import { op12 } from './op-12';
+import { op35 } from './op-35';
 import { op48 } from './op-48';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
 
@@ -59,6 +60,8 @@ const OPERACIONES: {
     const r = op48(antes.hechos.prestamos, comando);
     return esRechazo(r) ? r : { cambios: r };
   },
+  // TA-120
+  'OP-35': op35,
 };
 
 /** AV-01 (§5.0.3): impacto retroactivo, antes y después de confirmar. */

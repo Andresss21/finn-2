@@ -91,7 +91,7 @@
 
   "TA-119": { "estado": "pendiente" },
 
-  "TA-120": { "estado": "pendiente" },
+  "TA-120": { "estado": "en_curso", "rama": "ta-120-criterios-op35" },
 
   "TA-121": { "estado": "pendiente" },
 

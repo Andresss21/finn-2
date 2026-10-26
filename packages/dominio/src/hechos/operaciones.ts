@@ -5,12 +5,14 @@ import type {
   Cuenta,
   FilasPorTabla,
   Inversion,
+  Movimiento,
   MovimientoLinea,
   Prestamo,
   ReglaComercio,
   Tarjeta,
 } from './filas';
 import type { Hechos } from './hechos';
+import type { TipoMovimientoBancario } from './enums';
 import type { GeneradorIds, Instante, Uuid } from './identificadores';
 
 /** Tablas [M] y [H] que una operación puede escribir (03 §0.4). */
@@ -113,6 +115,45 @@ export interface ComandoOp12 {
   readonly reglas: readonly ReglaComercio[];
   readonly movimientoLineas: readonly MovimientoLinea[];
 }
+// ── TA-120: OP-35 Recibir SMS, pasos 2 a 11 (01 §5.6, 04 §3.6 y §8.4 c) ──
+/** Un SMS ya guardado en `sms_recibidos` (03 §3.17), con lo que miran los criterios de §4.17. */
+export interface SmsRecibido {
+  readonly id: Uuid;
+  readonly texto: string;
+  readonly recibidoEn: Instante;
+}
+/** Un movimiento de la bandeja con el texto de su SMS (para "texto distinto", §4.17). */
+export interface MovimientoConTexto extends Movimiento {
+  readonly texto: string;
+}
+/**
+ * La interpretación que hizo `@finn/sms` fuera del bloqueo (BE-45), con lo mínimo que usa el
+ * dominio: el dominio no importa `@finn/sms`.
+ */
+export type InterpretacionSms =
+  | {
+      readonly resultado: 'reconocido';
+      readonly institucionId: Uuid; // la del formato que coincidió
+      readonly tipoMovimiento: TipoMovimientoBancario;
+      readonly ultimos4: string;
+      readonly monto: Centavos;
+      readonly comercio: string | null;
+      readonly fecha: FechaLocal | null;
+    }
+  | { readonly resultado: 'no_reconocido' };
+/** OP-35: las filas [H] de la bandeja y los SMS anteriores los resuelve la aplicación (BE-10). */
+export interface ComandoOp35 {
+  readonly operacion: 'OP-35';
+  readonly id: Uuid; // del movimiento
+  readonly ids: GeneradorIds; // de sus líneas
+  /** El SMS guardado en el paso 1, con la fecha local de `recibido_en` (`fechaLocalDeInstante`). */
+  readonly sms: SmsRecibido & { readonly fechaRecepcion: FechaLocal };
+  readonly interpretacion: InterpretacionSms;
+  readonly anteriores: readonly SmsRecibido[]; // basta con los de los 10 minutos anteriores
+  readonly movimientos: readonly MovimientoConTexto[];
+  readonly reglas: readonly ReglaComercio[];
+}
+
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
 export type ComandoDominio =
   | ComandoOp01
@@ -125,7 +166,9 @@ export type ComandoDominio =
   | ComandoOp09
   | ComandoOp11
   | ComandoOp12
-  | ComandoOp48;
+  | ComandoOp48
+  // TA-120
+  | ComandoOp35;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =
