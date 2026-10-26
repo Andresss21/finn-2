@@ -12,9 +12,9 @@ import type {
   ReglaComercio,
   Tarjeta,
 } from './filas';
-import type { TipoMovimientoBancario } from './enums';
+import type { OrigenTransaccion, TipoMovimientoBancario } from './enums';
 import type { Hechos } from './hechos';
-import type { GeneradorIds, Instante, Uuid } from './identificadores';
+import type { DecimalTexto, GeneradorIds, Instante, Uuid } from './identificadores';
 
 /** Tablas [M] y [H] que una operación puede escribir (03 §0.4). */
 export type TablaEscribible = keyof FilasPorTabla;
@@ -210,6 +210,62 @@ export interface ComandoOp35 {
   readonly reglas: readonly ReglaComercio[];
 }
 
+// ── TA-117: registrar transacciones (04 §3.4). Los montos llegan > 0 (MontoTexto, CB-28).
+/** Lo común de las altas (PT, 04 §3.0.4); `origen` por defecto es `manual`. */
+export interface AltaTransaccion {
+  readonly id: Uuid;
+  readonly instante: Instante;
+  readonly ids: GeneradorIds;
+  readonly fecha: FechaLocal;
+  readonly total: Centavos;
+  readonly comercio?: string;
+  readonly nota?: string;
+  readonly monedaOriginal?: string; // junto con montoOriginal (M4)
+  readonly montoOriginal?: DecimalTexto;
+  readonly origen?: OrigenTransaccion;
+}
+/** Destino de una línea (04 §3.0.2); `deudorNuevo` reutiliza el deudor con ese nombre. */
+export type DestinoLinea =
+  { readonly categoriaId: Uuid } | { readonly deudorId: Uuid } | { readonly deudorNuevo: string };
+export interface ComandoOp20 extends AltaTransaccion {
+  readonly operacion: 'OP-20';
+  readonly cuentaId: Uuid;
+  readonly lineas: readonly { readonly monto: Centavos; readonly destino: DestinoLinea }[];
+}
+export interface ComandoOp21 extends AltaTransaccion {
+  readonly operacion: 'OP-21';
+  readonly cuentaId: Uuid;
+}
+export interface ComandoOp22 extends AltaTransaccion {
+  readonly operacion: 'OP-22';
+  readonly origenId: Uuid;
+  readonly destinoId: Uuid;
+}
+export interface ComandoOp23 extends AltaTransaccion {
+  readonly operacion: 'OP-23';
+  readonly origenId: Uuid;
+  readonly tarjetaId: Uuid;
+}
+/** OP-24: el desglose es el que confirmó el usuario (el propuesto por el modelo, o corregido). */
+export interface ComandoOp24 extends AltaTransaccion {
+  readonly operacion: 'OP-24';
+  readonly modalidad: 'cuota' | 'abono';
+  readonly origenId: Uuid;
+  readonly prestamoId: Uuid;
+  readonly categoriaId: Uuid;
+  readonly capital: Centavos;
+  readonly interes: Centavos;
+  readonly seguro: Centavos;
+}
+export type ComandoOp27 = AltaTransaccion & {
+  readonly operacion: 'OP-27';
+  readonly tarjetaId: Uuid;
+} & (
+    | { readonly modalidad: 'avance'; readonly cuentaId: Uuid }
+    | { readonly modalidad: 'entrada' }
+    | { readonly modalidad: 'transferencia_deuda'; readonly tarjetaDestinoId: Uuid }
+  );
+
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
 export type ComandoDominio =
   | ComandoOp01
@@ -231,7 +287,14 @@ export type ComandoDominio =
   | ComandoOp18
   | ComandoOp48
   // TA-120
-  | ComandoOp35;
+  | ComandoOp35
+  // TA-117
+  | ComandoOp20
+  | ComandoOp21
+  | ComandoOp22
+  | ComandoOp23
+  | ComandoOp24
+  | ComandoOp27;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =

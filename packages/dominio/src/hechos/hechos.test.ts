@@ -340,6 +340,12 @@ describe('PRU-DOM-MOTOR', () => {
       | 'OP-18'
       | 'OP-48'
       | 'OP-35'
+      | 'OP-20'
+      | 'OP-21'
+      | 'OP-22'
+      | 'OP-23'
+      | 'OP-24'
+      | 'OP-27'
     >();
     expectTypeOf<GeneradorIds['siguiente']>().toEqualTypeOf<() => Uuid>();
   });
