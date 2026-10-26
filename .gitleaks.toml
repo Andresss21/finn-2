@@ -1,0 +1,9 @@
+# gitleaks sobre el diff en `rapido` (07 §3, §6.1; SEG-gitleaks). Reglas por defecto de la versión fijada en
+# .github/workflows/ci.yml, más una sola excepción: el secreto falso de control, que tools/ci/workflows.test.ts
+# escanea aparte con la configuración por defecto para comprobar que gitleaks falla.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Secreto falso de control (TA-012)"
+paths = ['''(?:^|/)tools/lint/controles/secreto\.txt$''']

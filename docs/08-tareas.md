@@ -897,7 +897,7 @@ compartido: —
 - Concurrencia: `pr-<número>` con cancelación en PR; sin cancelación en `main`.
 - `afecta_db` y `afecta_web` se publican desde `rapido`.
 - Caché del almacén de pnpm y de los navegadores de Playwright.
-- Permisos mínimos: `contents: read`, `actions: read`, `pull-requests: read`.
+- Permisos mínimos: a nivel del workflow, `contents: read`, `actions: read`, `pull-requests: read`. **Solo el job `rapido`** agrega `statuses: write`, para que `tools/ci/publicar-resultados.mjs` publique el estado de commit `integracion` cuando la fusión M5 lo corre. Ningún otro job tiene permisos de escritura. `gh pr checks` lista los estados de commit junto con los checks, así que `pr:mergear` lo lee igual. **[CH-16]**
 
 **Leer.** 07 §6.1 a §6.3, §6.5 (M1 a M3), §32.2 (M5), §31.5 (DP-34); CH-02.
 
@@ -1478,6 +1478,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-13** | Creación de `resultados.md`: TA-008 lo pedía, pero `CLAUDE.md`, §4.1 y M17 lo prohíben a los agentes; lo crea el usuario con su primera fila firmada | 08 TA-008 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-13]** en TA-008 |
 | **CH-14** | Orden del reparto D2. 03 §5.4, 01 §4.1 conv. 2 y `cronologico` de TA-104 ordenan por (fecha, clave de orden, secuencia, orden de línea); 01 §4.5 paso 3, 02 RT-09 y PRU-DOM-MOTOR-104 de TA-105 decían otra cosa. Se unifica en (fecha, clave de orden, secuencia de creación, orden de línea) | 01 §4.5 (paso 3); 02 RT-09; 08 TA-105 (PRU-DOM-MOTOR-104) | **Aprobado por el usuario** (TA-105); **aplicado [CH-14]** en TA-105 |
 | **CH-15** | Excepción de tamaño registrada. En §1.1, "No hay excepciones por comentario." pasa a: una excepción se registra solo con `pr:mergear <n> --excepcion-tamano "<motivo>"`; en una tarea normal con un exceso de hasta el 30 % la aplica el orquestador por la regla permanente del usuario; en una obligatoria, o con un exceso mayor, solo con `--aprobado` tras la aceptación del usuario en la sesión; motivo y medidas en el commit de merge (`Excepción-tamaño:`). El límite de migraciones no admite excepción; DT-15 no cambia | 08 §1.1 (DT-01) | **Aprobado por el usuario** (TA-014); **aplicado [CH-15]** en TA-014 |
+| **CH-16** | Permisos de `ci.yml` con M5. Un job produce un solo check, así que publicar `integracion` desde `rapido` (07 §32.2, DP-33) requiere `statuses: write`, que la lista de permisos mínimos de TA-012 no tenía. Permisos a nivel del workflow: `contents: read`, `actions: read`, `pull-requests: read`; solo el job `rapido` agrega `statuses: write`, para que `tools/ci/publicar-resultados.mjs` publique el estado de commit `integracion`; ningún otro job escribe. `gh pr checks` lista los estados de commit junto con los checks. Descartado: un job `integracion` reflejo con `needs: rapido` (~85 min/mes, anula el ahorro de DP-33) | 08 TA-012 (Qué construir, permisos) | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-16]** en TA-012 |
 
 ---
 
