@@ -99,7 +99,11 @@
 
   "TA-124": { "estado": "pendiente" },
 
-  "TA-125": { "estado": "pendiente" },
+  "TA-125": { "estado": "terminada", "pr": 43 },
+
+  "TA-234": { "estado": "pendiente" },
+
+  "TA-235": { "estado": "pendiente" },
 
   "TA-126": { "estado": "pendiente" },
 
