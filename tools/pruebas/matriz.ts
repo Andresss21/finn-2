@@ -1,17 +1,24 @@
 // tools/pruebas/matriz.ts — matriz de trazabilidad (07 §13): lectura de los documentos, inventario y reglas M7, M8, M12 y M13
-// (TA-006); las reglas de cobertura M1 a M6, M9 a M11 y M14 viven en reglas.ts (TA-007). M15 a M18 llegan con sus tareas.
+// (TA-006); las reglas de cobertura M1 a M6, M9 a M11 y M14 (TA-007), M15 y M16 (TA-009) viven en reglas.ts y M18 en
+// pendientes.ts (TA-015). M17 es tools/pruebas/firmas.sh (TA-009).
 // Portado del prototipo de V7-09/V7-11. Node 24 lo ejecuta sin compilar (solo sintaxis borrable, sin dependencias).
-//   node tools/pruebas/matriz.ts verificar [--puerta]   sale con 1 si alguna regla falla (job `rapido`; nocturno con --puerta)
+//   node tools/pruebas/matriz.ts verificar [--puerta] [--resultados <dir>]   sale con 1 si alguna regla falla (job
+//     `rapido`; nocturno con --puerta; job `cierre` con --resultados: informes JSON de Vitest y Playwright, M15)
 //   node tools/pruebas/matriz.ts informe                cobertura por ficha y estado de la puerta
 // Entradas (cambiables con FINN_MATRIZ_*): docs/{01-dominio,04-backend,05-frontend,06-features}.md,
-// pruebas/{inventario,features,mapa-codigo,cuarentena,verificaciones-previas}.json y pruebas/manuales.md.
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+// pruebas/{inventario,features,mapa-codigo,cuarentena,verificaciones-previas,pendientes-e2e}.json, pruebas/manuales.md
+// y pruebas/manuales/resultados.md.
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { cambiosFuturos, fichas, objetivos } from './documentos.ts';
 import type { Documentos } from './documentos.ts';
 import { cobertura, globARegex, PATRON_CONSULTA, PATRON_OP, REF } from './reglas.ts';
 import type { Cuarentena, Previa } from './reglas.ts';
+import { ES_CA, pendientesE2e } from './pendientes.ts';
+import type { Pendiente } from './pendientes.ts';
 
 export type EstadoFt = 'pendiente' | 'en_curso' | 'terminada';
+export type EstadoCorrida = 'pasada' | 'fallida' | 'omitida';
 export interface Prueba {
   id: string;
   nivel: string;
@@ -21,9 +28,12 @@ export interface Prueba {
 }
 export interface Entradas extends Documentos {
   inventario: { titulo: string; archivo: string }[];
-  features: Record<string, EstadoFt>;
+  features: Record<string, EstadoFt | 'pendiente_e2e'>; // FT-nn → estado; CA-nn.m → pendiente_e2e (M18)
+  pendientes: Pendiente[]; // pruebas/pendientes-e2e.json (CH-08)
   mapa: { patron: string; fts: string[] | 'marco' }[];
   manuales: string; // pruebas/manuales.md
+  resultadosManuales: string; // pruebas/manuales/resultados.md (M16); solo lo escribe el usuario, firmado (M17)
+  resultados?: Record<string, EstadoCorrida>; // de `--resultados <dir>` (M15); sin él, M15 mira solo la cuarentena
   previas: Previa[] | null; // null: todavía no existe pruebas/verificaciones-previas.json (TA-008)
   cuarentena: Cuarentena[];
   hoy: string; // AAAA-MM-DD
@@ -115,6 +125,10 @@ export function verificar(e: Entradas) {
   const { cubre, obj } = cob;
   errores.push(...cob.errores);
   const avisos = cob.avisos;
+  // M18 pendientes de punta a punta (CH-08)
+  const pen = pendientesE2e(e, cob.activas, obj);
+  errores.push(...pen.errores);
+  avisos.push(...pen.avisos);
   // M7 toda referencia citada existe en los documentos
   for (const p of lista)
     for (const x of p.refs)
@@ -126,6 +140,7 @@ export function verificar(e: Entradas) {
       errores.push(`M12 ${f} no está en pruebas/mapa-codigo.json`);
   // M13 features.json solo cita fichas que existen; la diferida no sale de pendiente
   for (const [ft, st] of Object.entries(e.features)) {
+    if (ES_CA.test(ft)) continue; // las marcas pendiente_e2e de los CA las revisa M18
     const f = fs.find((x) => x.ft === ft);
     if (!f) errores.push(`M13 pruebas/features.json cita ${ft}, que no tiene ficha`);
     else if (f.diferida && st !== 'pendiente')
@@ -140,25 +155,49 @@ export function verificar(e: Entradas) {
       (e.features[o.ft ?? ''] ?? 'pendiente') === 'pendiente'
     )
       avisos.push(`M13 ${o.id} tiene pruebas y ${o.ft} sigue pendiente en pruebas/features.json`);
-  return { errores, avisos, obj, lista, cubre, activas: cob.activas, man: cob.man };
+  return {
+    errores,
+    avisos,
+    obj,
+    lista,
+    cubre,
+    activas: cob.activas,
+    man: cob.man,
+    manualesPendientes: cob.manualesPendientes,
+  };
 }
 export type Resultado = ReturnType<typeof verificar>;
 
-/** Cobertura por ficha y estado de la puerta (P7-8). */
+/** Cobertura por ficha y estado de la puerta (P7-8): con un manual pendiente (M16) la ficha no cumple. */
 export function informe(r: Resultado) {
   const fts = [...new Set(r.obj.flatMap((o) => (o.tipo === 'CA' && o.ft ? [o.ft] : [])))].sort();
   const filas = fts.map((ft) => {
     const cas = r.obj.filter((o) => o.tipo === 'CA' && o.ft === ft);
     const cubiertos = cas.filter((c) => r.cubre.get(c.id)?.length).length;
-    const estado = cas[0]?.diferida ? 'diferida' : cubiertos === cas.length ? 'cubierta' : 'falta';
-    return { ft, prioridad: cas[0]?.prioridad, cas: cas.length, cubiertos, estado };
+    const pendientes = r.manualesPendientes.get(ft) ?? [];
+    const estado = cas[0]?.diferida
+      ? 'diferida'
+      : pendientes.length
+        ? 'manual pendiente'
+        : cubiertos === cas.length
+          ? 'cubierta'
+          : 'falta';
+    return { ft, prioridad: cas[0]?.prioridad, cas: cas.length, cubiertos, estado, pendientes };
   });
   const faltan = r.obj
     .filter(
       (o) => o.tipo === 'CA' && o.prioridad !== 'P' && !o.diferida && !r.cubre.get(o.id)?.length,
     )
     .map((o) => o.id);
-  return { filas, puertaAbierta: faltan.length === 0, faltanParaLaPuerta: faltan };
+  const conManual = filas
+    .filter((f) => f.prioridad !== 'P' && f.estado === 'manual pendiente')
+    .map((f) => f.ft);
+  return {
+    filas,
+    puertaAbierta: faltan.length === 0 && conManual.length === 0,
+    faltanParaLaPuerta: faltan,
+    fichasConManualPendiente: conManual,
+  };
 }
 
 // ---------------------------------------------------------------- entradas desde el disco
@@ -186,7 +225,80 @@ export function archivosDeCodigo(raiz = '.'): string[] {
   return sal.sort();
 }
 
-export function cargarEntradas(raiz = '.', puerta = false): Entradas {
+/**
+ * El inventario (`pruebas/inventario.json`, fuera del control de versiones) lo genera `pnpm pruebas:listar`. Sin él, o más
+ * viejo que algún archivo de prueba, la matriz contaría 0 pruebas (o pruebas viejas) y pasaría en silencio: se rechaza.
+ * Devuelve el mensaje de error, o null si el inventario está vigente.
+ */
+export function inventarioVencido(
+  raiz = '.',
+  ruta = `${raiz}/pruebas/inventario.json`,
+): string | null {
+  const AYUDA = 'corré `pnpm pruebas:listar` antes de `pnpm pruebas:matriz`';
+  if (!existsSync(ruta)) return `no existe ${ruta}: ${AYUDA}`;
+  const generado = statSync(ruta).mtimeMs;
+  let masNuevo: { ruta: string; t: number } | undefined;
+  const bajar = (dir: string): void => {
+    if (!existsSync(dir)) return;
+    for (const d of readdirSync(dir, { withFileTypes: true })) {
+      if (d.name === 'node_modules' || d.name.startsWith('.')) continue;
+      const r = `${dir}/${d.name}`;
+      if (d.isDirectory()) bajar(r);
+      else if (ES_PRUEBA.test(d.name)) {
+        const t = statSync(r).mtimeMs;
+        if (t > generado && (masNuevo === undefined || t > masNuevo.t)) masNuevo = { ruta: r, t };
+      }
+    }
+  };
+  for (const d of ['apps', 'packages', 'tools']) bajar(`${raiz}/${d}`);
+  return masNuevo === undefined
+    ? null
+    : `${ruta} está vencido: ${masNuevo.ruta} es más nuevo; ${AYUDA}`;
+}
+
+interface Spec {
+  title: string;
+  ok: boolean;
+  tests?: { status: string }[];
+}
+interface Suite {
+  specs?: Spec[];
+  suites?: Suite[];
+}
+/** Resultados de la corrida (M15): los informes JSON de Vitest (`--reporter=json`) y de Playwright de un directorio. */
+export function resultadosCorrida(dir: string): Record<string, EstadoCorrida> {
+  const sal: Record<string, EstadoCorrida> = {};
+  // Si una prueba aparece varias veces (proyectos o navegadores), cuenta la peor: fallida > omitida > pasada
+  const peso = { pasada: 0, omitida: 1, fallida: 2 } as const;
+  const poner = (titulo: string, st: EstadoCorrida): void => {
+    const k = titulo.split(' > ').pop()?.split(' ')[0] ?? '';
+    const antes = sal[k];
+    if (k.startsWith('PRU-') && (antes === undefined || peso[st] > peso[antes])) sal[k] = st;
+  };
+  const bajar = (s: Suite): void => {
+    for (const sp of s.specs ?? []) {
+      const ok = (sp.tests ?? []).every((t) => t.status === 'expected' || t.status === 'flaky');
+      poner(sp.title, sp.ok && ok ? 'pasada' : 'fallida');
+    }
+    for (const h of s.suites ?? []) bajar(h);
+  };
+  for (const f of readdirSync(dir).filter((x) => x.endsWith('.json'))) {
+    const j = json(readFileSync(join(dir, f), 'utf8')) as {
+      testResults?: { assertionResults?: { fullName?: string; title: string; status: string }[] }[];
+      suites?: Suite[];
+    };
+    for (const t of j.testResults ?? [])
+      for (const a of t.assertionResults ?? [])
+        poner(
+          a.fullName ?? a.title,
+          a.status === 'passed' ? 'pasada' : a.status === 'failed' ? 'fallida' : 'omitida',
+        );
+    for (const s of j.suites ?? []) bajar(s);
+  }
+  return sal;
+}
+
+export function cargarEntradas(raiz = '.', puerta = false, resultados?: string): Entradas {
   const env = (k: string, d: string): string => process.env['FINN_MATRIZ_' + k] ?? `${raiz}/${d}`;
   const features = leer(env('FEATURES', 'pruebas/features.json'), '{}');
   return {
@@ -198,8 +310,13 @@ export function cargarEntradas(raiz = '.', puerta = false): Entradas {
       leer(env('INVENTARIO', 'pruebas/inventario.json'), '[]'),
     ) as Entradas['inventario'],
     features: json(features) as Entradas['features'],
+    pendientes: json(
+      leer(env('PENDIENTES', 'pruebas/pendientes-e2e.json'), '[]'),
+    ) as Entradas['pendientes'],
     mapa: json(leer(env('MAPA', 'pruebas/mapa-codigo.json'), '[]')) as Entradas['mapa'],
     manuales: leer(env('MANUALES', 'pruebas/manuales.md')),
+    resultadosManuales: leer(env('RESULTADOS_MANUALES', 'pruebas/manuales/resultados.md')),
+    ...(resultados === undefined ? {} : { resultados: resultadosCorrida(resultados) }),
     previas: existsSync(env('PREVIAS', 'pruebas/verificaciones-previas.json'))
       ? (json(leer(env('PREVIAS', 'pruebas/verificaciones-previas.json'))) as Previa[])
       : null,
@@ -217,14 +334,29 @@ if (import.meta.main) {
     console.error(`comando desconocido: ${cmd} (verificar, informe)`);
     process.exit(2);
   }
-  const e = cargarEntradas('.', process.argv.includes('--puerta'));
+  const k = process.argv.indexOf('--resultados');
+  const dir = k < 0 ? undefined : process.argv[k + 1];
+  if (k >= 0 && (dir === undefined || !existsSync(dir))) {
+    console.error('--resultados necesita un directorio con los informes JSON de la corrida');
+    process.exit(2);
+  }
+  const vencido = inventarioVencido('.', process.env['FINN_MATRIZ_INVENTARIO']);
+  if (vencido !== null) {
+    console.error('error  inventario ' + vencido);
+    process.exit(2);
+  }
+  const e = cargarEntradas('.', process.argv.includes('--puerta'), dir);
   const r = verificar(e);
   if (cmd === 'informe') {
     const i = informe(r);
     for (const f of i.filas)
-      console.log(`${f.ft} [${f.prioridad}] ${f.cubiertos}/${f.cas} CA: ${f.estado}`);
+      console.log(
+        `${f.ft} [${f.prioridad}] ${f.cubiertos}/${f.cas} CA: ${f.estado}` +
+          (f.pendientes.length ? ` (${f.pendientes.join(', ')})` : ''),
+      );
     console.log(
-      `puerta ${i.puertaAbierta ? 'abierta' : 'cerrada'}: faltan ${i.faltanParaLaPuerta.length} CA [I] y [M]`,
+      `puerta ${i.puertaAbierta ? 'abierta' : 'cerrada'}: faltan ${i.faltanParaLaPuerta.length} CA [I] y [M]; ` +
+        `${i.fichasConManualPendiente.length} fichas con manual pendiente`,
     );
     process.exit(0);
   }

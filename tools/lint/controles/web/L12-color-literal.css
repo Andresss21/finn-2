@@ -1,0 +1,7 @@
+/* Control negativo de TA-004: debe fallar con la regla indicada.
+   ruta: apps/web/src/estilos/globals.css
+   regla: color-no-hex */
+.aviso {
+  color: #ff0000;
+  background: rgb(0 0 0);
+}

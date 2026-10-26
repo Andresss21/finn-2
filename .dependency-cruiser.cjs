@@ -86,6 +86,12 @@ module.exports = {
       '^(?!packages/db/)',
       PRISMA,
     ),
+    prohibida(
+      'pruebas-solo-en-pruebas',
+      '@finn/dominio/pruebas (generadores) solo lo importan archivos de prueba (07 §12.5)',
+      '^(?!.*(\\.test\\.tsx?$|/pruebas/|/test/))',
+      '(^@finn/dominio/pruebas$|^packages/dominio/src/pruebas/)',
+    ),
     prohibida('prisma-8', 'Prisma 8 (@prisma/orm-*) está prohibido (ADR-21)', '.', '^@prisma/orm-'),
   ],
   options: {

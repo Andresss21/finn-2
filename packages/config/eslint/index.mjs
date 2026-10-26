@@ -5,6 +5,7 @@ import { builtinModules } from 'node:module';
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import finn from './reglas.mjs';
+import { configurarWeb } from './web.mjs';
 
 const TS = '**/*.{ts,tsx}';
 const CONTROLES = 'tools/lint/controles/paquetes';
@@ -153,14 +154,16 @@ export function configurar({ controles = false } = {}) {
         'aplicacion no depende de la web ni de Prisma (04 §1.3).',
       ),
     },
-    {
-      files: web,
-      rules: prohibir(
-        [DOMINIO_SOLO_TIPOS],
-        ['@finn/db', '@finn/sms', '@finn/conciliacion', ...PRISMA, ...PRISMA_8],
-        'La web llega a la base solo por @finn/aplicacion (04 §1.3).',
-      ),
-    },
+    ...configurarWeb({
+      archivos: web,
+      paths: [DOMINIO_SOLO_TIPOS],
+      patrones: [
+        {
+          group: ['@finn/db', '@finn/sms', '@finn/conciliacion', ...PRISMA, ...PRISMA_8],
+          message: 'La web llega a la base solo por @finn/aplicacion (04 §1.3).',
+        },
+      ],
+    }),
     // L20 (CT-02).
     {
       files: [...aplicacion, ...web.map((g) => g.replace('apps/web/**', 'apps/web/src/app/**'))],
