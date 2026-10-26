@@ -224,7 +224,7 @@ const regla = (r: string, patron: string, cat: string): ReglaComercio => ({
 });
 
 describe('PRU-DOM-BAND-101: criterios de comparación (01 §4.17) y OP-35 pasos 2 a 11', () => {
-  it('PRU-DOM-BAND-101 [INV-16] autodescarte: texto idéntico en [t − 10 min, t), a 10 minutos exactos sí y a 10 min + 1 ms no; ningún otro caso se descarta solo', () => {
+  it('PRU-DOM-BAND-101 [INV-16] MOT-4.17, OP-35 autodescarte: texto idéntico en [t − 10 min, t), a 10 minutos exactos sí y a 10 min + 1 ms no; ningún otro caso se descarta solo', () => {
     const yo = sms('BAC: compra', T0, 'S');
     const es = (...xs: ReturnType<typeof sms>[]) => esAutodescarte(yo, xs);
     expect(es(sms('BAC: compra', '2027-03-15T14:50:00.000Z'))).toBe(true);
@@ -255,7 +255,7 @@ describe('PRU-DOM-BAND-101: criterios de comparación (01 §4.17) y OP-35 pasos 
     expect(resultado(b).m.estado).toBe('con_coincidencia');
   });
 
-  it('PRU-DOM-BAND-101 emparejamiento: misma cuenta, Δ monto ≤ tolerancia, Δ fecha ≤ 5 días; desempata por fecha más cercana, menor Δ monto y fecha esperada más antigua', () => {
+  it('PRU-DOM-BAND-101 MOT-4.17 emparejamiento: misma cuenta, Δ monto ≤ tolerancia, Δ fecha ≤ 5 días; desempata por fecha más cercana, menor Δ monto y fecha esperada más antigua', () => {
     const h = base();
     const de = (monto: number, fecha: string, ps: readonly Programada[] = h.programadas) =>
       emparejar({ ...h, programadas: ps }, [], {
@@ -294,7 +294,7 @@ describe('PRU-DOM-BAND-101: criterios de comparación (01 §4.17) y OP-35 pasos 
     expect(de(50, '2027-03-12', [semanal])).toEqual({ programadaId: 'W', fecha: f('2027-03-15') });
   });
 
-  it('PRU-DOM-BAND-101 [CB-16] la ocurrencia pendiente o registrada sin emparejar es candidata; una emparejada, omitida o ya propuesta no, y el segundo SMS se evalúa como posible duplicado', () => {
+  it('PRU-DOM-BAND-101 [CB-16] MOT-4.17, OP-35 la ocurrencia pendiente o registrada sin emparejar es candidata; una emparejada, omitida o ya propuesta no, y el segundo SMS se evalúa como posible duplicado', () => {
     const h = base();
     const ocurrencia = (estado: 'emparejada' | 'registrada' | 'omitida') => ({
       ...h,
@@ -345,7 +345,7 @@ describe('PRU-DOM-BAND-101: criterios de comparación (01 §4.17) y OP-35 pasos 
     });
   });
 
-  it('PRU-DOM-BAND-101 [CB-17] posible duplicado: transacción aprobada o movimiento pendiente, misma cuenta y monto, ±1 día y texto distinto', () => {
+  it('PRU-DOM-BAND-101 [CB-17] MOT-4.17, OP-35 posible duplicado: transacción aprobada o movimiento pendiente, misma cuenta y monto, ±1 día y texto distinto', () => {
     const h = base();
     const de = (monto: number, fecha: string, ms: MovimientoConTexto[] = [], texto = 'nuevo') =>
       duplicado(h, ms, { cuentaId: id('E'), monto: c(monto), fecha: f(fecha), texto });
@@ -395,7 +395,7 @@ describe('PRU-DOM-BAND-101: criterios de comparación (01 §4.17) y OP-35 pasos 
     ]);
   });
 
-  it('PRU-DOM-BAND-101 regla de comercio de patrón más largo (sin mayúsculas, sin archivadas) y, si no hay, sugerencia por historial', () => {
+  it('PRU-DOM-BAND-101 MOT-4.17, OP-35 regla de comercio de patrón más largo (sin mayúsculas, sin archivadas) y, si no hay, sugerencia por historial', () => {
     const h = base();
     const reglas = [
       regla('r1', 'super', 'CAFE'),
@@ -466,7 +466,7 @@ describe('PRU-DOM-BAND-101: criterios de comparación (01 §4.17) y OP-35 pasos 
     expect(coincide.avisos[0]?.datos).toMatchObject({ motivo: 'coincidencia', cuentaId: 'E' });
   });
 
-  it('PRU-DOM-BAND-101 [INV-13] los movimientos, las programadas y las esperadas no entran a calcular: OP-35 no cambia hechos, saldos, Disponibles ni LPA', () => {
+  it('PRU-DOM-BAND-101 [INV-13] OP-35 los movimientos, las programadas y las esperadas no entran a calcular: OP-35 no cambia hechos, saldos, Disponibles ni LPA', () => {
     const h = base();
     const r = recibir({ interpretacion: reconocido({ comercio: 'Super Selectos' }) }, h);
     expect(r.cambios.map((x) => x.tipo === 'insertar' && x.tabla)).toEqual([
@@ -485,7 +485,7 @@ describe('PRU-DOM-BAND-101: criterios de comparación (01 §4.17) y OP-35 pasos 
     expect(despues.lpa).toEqual(antes.lpa);
   });
 
-  it('PRU-DOM-BAND-101 coincidencia de conciliación: misma cuenta y monto, ±3 días, 1 a 1 por fecha más cercana y clave de orden más antigua', () => {
+  it('PRU-DOM-BAND-101 MOT-4.17 coincidencia de conciliación: misma cuenta y monto, ±3 días, 1 a 1 por fecha más cercana y clave de orden más antigua', () => {
     const p = (k: string, fecha: string, monto = 10, cuentaId = 'E') => ({
       id: k,
       cuentaId: id(cuentaId),
