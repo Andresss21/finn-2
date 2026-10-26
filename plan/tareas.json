@@ -107,7 +107,7 @@
 
   "TA-126": { "estado": "terminada", "pr": 43 },
 
-  "TA-231": { "estado": "pendiente" },
+  "TA-231": { "estado": "en_curso", "rama": "ta-231-detalle-pago-tarjeta" },
 
   "TA-127": { "estado": "terminada", "pr": 48 },
 
