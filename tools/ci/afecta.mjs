@@ -3,12 +3,15 @@
 //   node tools/ci/afecta.mjs rapido            `pnpm ci:rapido`: controles fijos, matriz y suites de `rapido`
 //   node tools/ci/afecta.mjs e2e               `pnpm ci:e2e`: en main la suite completa de `movil`; si no, las afectadas
 //   node tools/ci/afecta.mjs local             `pnpm ci:local` (DT-07): rapido y, según el diff, integracion y e2e
-// Entorno: FINN_EVENTO (pull_request | push; vacío en local), FINN_BORRADOR (true | false), FINN_BASE (por defecto
-// origin/main; en main, el commit anterior al push). Con GITHUB_OUTPUT, las decisiones quedan como salidas del paso.
+//   node tools/ci/afecta.mjs nocturno          `pnpm ci:nocturno` (TA-013): las suites del nocturno que ya existen
+// Entorno: FINN_EVENTO (pull_request | push; vacío en local), FINN_BORRADOR (true | false), FINN_ACCION (la acción del
+// pull_request), FINN_BASE (por defecto origin/main; en main, el commit anterior al push). Con GITHUB_OUTPUT, las
+// decisiones quedan como salidas del paso. M4 (07 §6.5): el modo sale del estado que ci.yml restauró de la caché.
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { afectadas } from '../pruebas/afectadas.ts';
+import { ESTADO, e2eDePr, recortesVigentes } from './minutos.ts';
 import { cargarEntradas, verificar } from '../pruebas/matriz.ts';
 import { cambiosDeEstado } from '../pruebas/resumen.ts';
 
@@ -57,6 +60,14 @@ function aTerminada(b) {
   return cambios.some((c) => c.endsWith('→ terminada'));
 }
 
+/** M4: en ahorro, e2e de PR solo al pasar a listo (07 §6.5, §32.3). Sin estado del mes, normal. */
+function e2eSegunModo() {
+  const estado = existsSync(ESTADO) ? JSON.parse(readFileSync(ESTADO, 'utf8')) : null;
+  return (
+    evento !== 'pull_request' || e2eDePr(recortesVigentes(estado, new Date()), env('FINN_ACCION'))
+  );
+}
+
 /** M1: integracion con afecta_db o PR listo. M2: e2e en PR listo con afecta_web. En main, todo (07 §6.1). */
 function decidir(archivos, b) {
   const db = archivos.some((a) => CI.test(a) || DB.test(a));
@@ -67,7 +78,7 @@ function decidir(archivos, b) {
     afecta_db: db,
     afecta_web: web,
     integracion: enMain || listo || db,
-    e2e: enMain || ((listo || evento === '') && web),
+    e2e: enMain || ((listo || evento === '') && web && e2eSegunModo()),
     cierre: enMain || aTerminada(b),
   };
 }
@@ -132,6 +143,7 @@ function rapido(archivos, b, d) {
     ['firmas', 'bash tools/pruebas/firmas.sh origin/main'],
     ['inventario', 'pnpm pruebas:listar'],
     ['matriz', 'pnpm pruebas:matriz'],
+    ['minutos', 'node tools/ci/minutos.ts rapido'],
     ...(enCi && cmp ? [['navegadores', NAVEGADORES]] : []),
     [
       'pruebas',
@@ -148,7 +160,23 @@ function e2e(archivos) {
   // e2e.mjs pasa por la consola en Windows: ahí el `|` del filtro va entre comillas
   const filtro = grep === 'todas' ? '' : ` -g ${windows ? `"${grep}"` : grep}`;
   const navegadores = enCi ? [['navegadores', NAVEGADORES]] : [];
-  return correr([...navegadores, ['e2e', `node tools/pruebas/e2e.mjs --project=movil${filtro}`]]);
+  const ok = correr([
+    ...navegadores,
+    ['e2e', `node tools/pruebas/e2e.mjs --project=movil${filtro}`],
+  ]);
+  return inestables() && ok;
+}
+
+/** 07 §7.3: en CI, al terminar Playwright, los `flaky` abren o actualizan su issue `prueba-inestable`. */
+function inestables() {
+  const informe = 'apps/web/test-results/informe.json';
+  if (!enCi || !existsSync(informe)) return true;
+  return correr([['inestables', `node tools/pruebas/inestables.mjs ${informe}`]]);
+}
+
+/** Las suites del nocturno que ya existen (07 §6.1): PROP con FC_RUNS=10000 (lo fija nocturno.yml). */
+function nocturno() {
+  return correr([['PROP', 'node tools/pruebas/vitest.mjs --project unidad packages/dominio']]);
 }
 
 const argv = process.argv.slice(2);
@@ -167,8 +195,9 @@ else if (modo === 'local') {
   ok = rapido(archivos, b, d);
   if (ok && d.afecta_db) ok = correr([['integracion', 'pnpm ci:integracion']]);
   if (ok && d.afecta_web) ok = e2e(archivos);
-} else if (modo !== 'decidir') {
-  console.error(`afecta: modo desconocido ${modo} (decidir, rapido, e2e, local)`);
+} else if (modo === 'nocturno') ok = nocturno();
+else if (modo !== 'decidir') {
+  console.error(`afecta: modo desconocido ${modo} (decidir, rapido, e2e, local, nocturno)`);
   ok = false;
 }
 process.exit(ok ? 0 : 1);
