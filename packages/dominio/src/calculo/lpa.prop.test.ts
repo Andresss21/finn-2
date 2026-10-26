@@ -176,6 +176,8 @@ const caso = fc.record({
 });
 
 describe('PRU-PROP-MOTOR', () => {
+  // Plazo propio, mismo criterio que bb312c2 (#33): en el run 40355731276 de ci.yml en main
+  // (runner de GitHub, cobertura v8) tardó 2399 ms, cerca de los 5 s por defecto. Mismos casos.
   it('PRU-PROP-MOTOR-104 [INV-01, INV-02, INV-03] identidad de saldo, deuda sin respaldo y S(t) = 0 o RE(t) = 0 (01 §6, §4.15), con por cobrar y en todo período: cualquier hoy y la comprobación de LPA al cierre de cada período hasta el activo', () => {
     fc.assert(
       fc.property(caso, ({ hechos, hoy, elegidas, eventos }) => {
@@ -217,5 +219,5 @@ describe('PRU-PROP-MOTOR', () => {
       }),
       opciones,
     );
-  });
+  }, 60_000);
 });

@@ -55,6 +55,8 @@ const congelada = (x: unknown): boolean =>
   typeof x !== 'object' || x === null || (Object.isFrozen(x) && Object.values(x).every(congelada));
 
 describe('PRU-PROP-MOTOR', () => {
+  // Plazo propio, mismo criterio que bb312c2 (#33): en el run 40355731276 de ci.yml en main
+  // (runner de GitHub, cobertura v8) tardó 7201 ms y pasó los 5 s por defecto. Mismos casos.
   it('PRU-PROP-MOTOR-105 [INV-26] los mismos hechos en cualquier orden de inserción producen la misma instantánea, congelada en profundidad (01 §4.1 conv. 1, 04 §2.4 BE-09)', () => {
     fc.assert(
       fc.property(casoArb, ({ h, otro }) => {
@@ -66,5 +68,5 @@ describe('PRU-PROP-MOTOR', () => {
       }),
       opciones,
     );
-  });
+  }, 60_000);
 });

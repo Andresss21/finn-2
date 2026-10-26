@@ -30,6 +30,8 @@ const casoArb = fc.record({
 });
 
 describe('PRU-PROP-META', () => {
+  // Plazo propio, mismo criterio que bb312c2 (#33): en el run 40355731276 de ci.yml en main
+  // (runner de GitHub, cobertura v8) tardó 5455 ms y pasó los 5 s por defecto. Mismos casos.
   it('PRU-PROP-META-101 MOT-4.12: en una meta de ahorro (anual o para una fecha), asignar en cada período restante su pedido ⌈máx(0, monto − Base) / n⌉ deja Disponible = máx(monto, lo previo) en el período de la fecha objetivo: la suma de los pedidos alcanza el monto sin pasarse (techo de 01 §0.4)', () => {
     fc.assert(
       fc.property(casoArb, ({ dia, tipo, dias, monto, previo }) => {
@@ -95,5 +97,5 @@ describe('PRU-PROP-META', () => {
       }),
       opciones,
     );
-  });
+  }, 60_000);
 });

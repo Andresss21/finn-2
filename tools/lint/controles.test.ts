@@ -89,6 +89,8 @@ describe('controles de lint (fronteras de paquetes)', () => {
     for (const c of controles) expect(c.ruta && c.eslint && c.cruiser, c.nombre).toBeTruthy();
   });
 
+  // Plazo propio, mismo criterio que bb312c2 (#33): en el run 40355731276 de ci.yml en main
+  // (runner de GitHub, cobertura v8) tardó 5393 ms y pasó los 5 s por defecto. Mismos casos.
   it('(d) ESLint: cada control falla con su regla y los limpios no fallan', async () => {
     const eslint = new ESLint({
       cwd: raiz,
@@ -108,7 +110,7 @@ describe('controles de lint (fronteras de paquetes)', () => {
         expect(obtenidas, `${c.nombre} debe fallar con ${c.eslint}`).toContain(c.eslint);
       }
     }
-  });
+  }, 60_000);
 
   it('(c) dependency-cruiser: cada control falla con su regla', () => {
     const tmp = mkdtempSync(join(tmpdir(), 'finn-depcruise-'));
