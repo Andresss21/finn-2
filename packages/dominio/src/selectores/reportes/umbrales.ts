@@ -13,3 +13,11 @@ export const REAL_TOL_MIN = usd(10);
 export const REAL_TOL_PCT = [10, 100] as const;
 export const PROM_VAR_MIN = usd(20);
 export const PROM_VAR_PCT = [25, 100] as const;
+export const HORMIGA_MONTO_MAX = usd(10);
+export const HORMIGA_CANT_MIN = 5;
+export const HORMIGA_TOTAL_MIN = usd(20);
+/** Períodos cerrados que mira la detección de suscripciones y cuántos deben traer el cobro. */
+export const SUSC_PERIODOS = 4;
+export const SUSC_PERIODOS_MIN = 3;
+export const SUSC_MONTO_PCT = [10, 100] as const;
+export const SUSC_DIAS = 5;
