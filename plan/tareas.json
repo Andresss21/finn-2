@@ -149,7 +149,7 @@
 
   "TA-238": { "estado": "terminada", "pr": 63 },
 
-  "TA-239": { "estado": "pendiente" },
+  "TA-239": { "estado": "en_curso", "rama": "ta-239-suscripciones" },
 
   "TA-143": { "estado": "pendiente" },
 
