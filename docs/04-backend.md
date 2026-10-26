@@ -4259,7 +4259,7 @@ Notas:
 
 ### 18.4 Verificación de la trazabilidad (BE-63, V-29)
 
-**BE-63. La trazabilidad se verifica con un script, no a mano.** `tools/ci/trazabilidad.py` (prototipo `t17.py` en el zip) lee este documento y comprueba:
+**BE-63. La trazabilidad se verifica con un script, no a mano.** `tools/docs/t17.py` (portado del zip), que `pnpm docs:comprobar` corre en `rapido` cuando el diff toca `docs/`, lee este documento y comprueba: **[CH-18]**
 
 | # | Regla | Falla si |
 |---|---|---|

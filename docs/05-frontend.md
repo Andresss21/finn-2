@@ -2804,7 +2804,7 @@ El `movimientoId` que necesitan las acciones de 11.5 sale de `destino` (`pantall
 
 **[F7]** **CT-08.** Las tablas 15.1 y 15.2 y el resultado se regeneraron con `trazabilidad.py` actualizado (lee la ruta aunque la celda lleve una marca **[Fn]**, y conoce OP-53). Las filas que la Fase 6 había agregado a mano (OP-07 en lote, OP-53) salen ahora del mapa; las acciones de un toque de CF-05 (4.14) aparecen en 15.2. Detalle en `07-pruebas.md` §34.
 
-Relaciona cada consulta y cada operación de 04 con su pantalla y su componente. Las tablas 15.1 y 15.2 **las genera** `tools/ci/trazabilidad.py` a partir del mapa de §2 y de las acciones de un toque de 4.14 (V5-36); no se editan a mano. Si cambia una fila de §2, se vuelven a generar y la CI comprueba que coincidan.
+Relaciona cada consulta y cada operación de 04 con su pantalla y su componente. Las tablas 15.1 y 15.2 **las genera** `tools/docs/fase5/trazabilidad.py` **[CH-18]** a partir del mapa de §2 y de las acciones de un toque de 4.14 (V5-36); no se editan a mano. Si cambia una fila de §2, se vuelven a generar y la CI comprueba que coincidan.
 
 Resultado actual: Consultas: 18/18 · operaciones con pantalla: 61/62 (sin pantalla: OP-35, el webhook) · flujos: 51 · carpetas de flujo repetidas: 0.
 
@@ -3081,7 +3081,7 @@ PD-1 se aprobó con la recomendación: el service worker guarda todos los archiv
 |---|---|
 | Claude Design | El Anexo A, como encargo autocontenido |
 | Fase 6 | Las fórmulas de los reportes de §16 de 04 (`datos_base`); la pantalla `/reportes/[tipo]` ya tiene ruta y contrato de gráficos |
-| Fase 7 | Las pruebas, con las convenciones de §14, los estados de 14.5, los controles de 11.10, 13.4 y 8.8, y los scripts `cobertura.py` y `trazabilidad.py` en `tools/ci` |
+| Fase 7 | Las pruebas, con las convenciones de §14, los estados de 14.5, los controles de 11.10, 13.4 y 8.8, y los scripts `cobertura.py` y `trazabilidad.py` en `tools/docs/fase5/` **[CH-18]** |
 | Fase 8 | La implementación: cada pantalla con su fila de §2, su consulta, sus operaciones (§15), sus estados (§7) y sus componentes (§10); los cambios CP-1 a CP-18 en 04 |
 
 ---
