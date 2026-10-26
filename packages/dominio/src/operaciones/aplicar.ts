@@ -44,8 +44,10 @@ import { op27 } from './op-27';
 import { op28 } from './op-28';
 import { op29 } from './op-29';
 import { op30 } from './op-30';
+import { op31 } from './op-31';
 import { op35 } from './op-35';
 import { op48 } from './op-48';
+import { op52 } from './op-52';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
 
 /** Lo que produce una operación sobre la instantánea de antes, si no se rechaza. */
@@ -99,6 +101,9 @@ const OPERACIONES: {
   'OP-28': op28,
   'OP-29': op29,
   'OP-30': op30,
+  // TA-119: cobrar y renombrar deudor.
+  'OP-31': op31,
+  'OP-52': op52,
 };
 
 /** AV-01 (§5.0.3): impacto retroactivo, antes y después de confirmar. */
