@@ -12,3 +12,6 @@ export { topComercios } from './top-comercios';
 export { realidad } from './realidad';
 export { hormiga } from './hormiga';
 export { suscripciones } from './suscripciones';
+export { tarjetas } from './tarjetas';
+export { flujoEfectivo } from './flujo-efectivo';
+export { hallazgos } from './hallazgos';
