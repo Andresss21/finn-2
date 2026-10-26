@@ -145,7 +145,7 @@
 
   "TA-230": { "estado": "terminada", "pr": 41 },
 
-  "TA-142": { "estado": "en_curso", "rama": "ta-142-reportes-accionables" },
+  "TA-142": { "estado": "terminada", "pr": 60 },
 
   "TA-143": { "estado": "pendiente" },
 
