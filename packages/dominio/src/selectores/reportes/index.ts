@@ -11,3 +11,4 @@ export { tendencia } from './tendencia';
 export { topComercios } from './top-comercios';
 export { realidad } from './realidad';
 export { hormiga } from './hormiga';
+export { suscripciones } from './suscripciones';
