@@ -39,11 +39,12 @@ export function impacto(antes: Instantanea, despues: Instantanea): Omit<Impacto,
   };
 }
 
-const CON_FECHA = new Set(['transacciones', 'efectos', 'lineas', 'condonaciones']);
+const CON_FECHA = new Set(['transacciones', 'efectos', 'lineas', 'condonaciones', 'asignaciones']);
 
-/** La fecha de una fila de `CON_FECHA` (la de su transacción, si no tiene), si está en los hechos. */
+/** La fecha de una fila de `CON_FECHA` (la de su transacción, o su período), si está en los hechos. */
 function fechaEn({ hechos: h }: Instantanea, tabla: string, id: string): FechaLocal | undefined {
   if (tabla === 'condonaciones') return h.condonaciones.find((x) => x.id === id)?.fecha;
+  if (tabla === 'asignaciones') return h.asignaciones.find((x) => x.id === id)?.periodoInicio;
   const otras = [...h.efectos, ...h.lineas];
   const tx = tabla === 'transacciones' ? id : otras.find((x) => x.id === id)?.transaccionId;
   return h.transacciones.find((t) => t.id === tx)?.fecha;
