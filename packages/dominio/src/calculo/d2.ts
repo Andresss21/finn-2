@@ -5,6 +5,7 @@
 import type { Asignacion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { type Aporte, type Consumo, cronologico, type NoCubierta } from './devoluciones';
+import { mutante } from './mutantes';
 import type { Periodo } from './periodos';
 
 const en = (p: Periodo, fecha: string) => p.inicio <= fecha && fecha <= p.fin;
@@ -75,9 +76,11 @@ export const asignado = (
 export function repartoD2(e: EntradaD2): RepartoD2 {
   const ent = entradas(e.aportes, e.categoriaId, e.periodo);
   const fondo = Centavos.sumar(Centavos.sumar(e.arrastre, e.asignado), ent);
-  const deCp = cronologico(
-    e.consumos.filter((k) => k.categoriaId === e.categoriaId && en(e.periodo, k.fecha)),
-  );
+  const deC = e.consumos.filter((k) => k.categoriaId === e.categoriaId && en(e.periodo, k.fecha));
+  // Mutante 'orden' (07 §19.4): reparte por id y no en orden cronológico.
+  const deCp = mutante('orden')
+    ? [...deC].sort((a, b) => (a.id < b.id ? -1 : 1))
+    : cronologico(deC);
 
   let restante = fondo;
   const partes = deCp.map((k): Parte => {
@@ -92,8 +95,9 @@ export function repartoD2(e: EntradaD2): RepartoD2 {
     const t = x.consumo.tarjetaId;
     if (t === null) continue;
     sobT = Centavos.sumar(sobT, x.noCubierto);
-    if (x.cubierto > 0)
-      traslados.set(t, Centavos.sumar(traslados.get(t) ?? Centavos.cero, x.cubierto));
+    // Mutante 'traslado' (07 §19.4): traslada el consumo entero, sin el tope de lo cubierto.
+    const tr = mutante('traslado') ? x.consumo.neto : x.cubierto;
+    if (tr > 0) traslados.set(t, Centavos.sumar(traslados.get(t) ?? Centavos.cero, tr));
   }
 
   const disponible = Centavos.restar(fondo, suma(partes.map((x) => x.consumo.neto)));

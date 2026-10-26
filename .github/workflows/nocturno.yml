@@ -1,7 +1,8 @@
 # Nocturno (TA-013; 07 §6.1, §6.5 M4, §32.3; P7-14; CH-02). `minutos` corre siempre, antes de mirar si main cambió:
 # suma los jobs del mes, decide el modo, lo guarda en la caché (ci-modo-AAAAMM-<run_id>, que ci.yml restaura) y sube el
 # uso por job como artefacto minutos-AAAAMM (90 días). Las suites se agregan como jobs a medida que existen
-# (escritorio, zona-distinta, webkit-parcial, SW, REN, RES, mutantes): dependen de `minutos` y corren con `correr`.
+# (escritorio, zona-distinta, webkit-parcial, SW, REN, RES): dependen de `minutos` y corren con `correr`. Los 4 mutantes
+# del motor (07 §19.4, DP-26; TA-112) corren en `prop`, dentro de `pnpm ci:nocturno` (tools/ci/afecta.mjs).
 name: nocturno
 
 on:
