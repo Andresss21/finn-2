@@ -20,6 +20,8 @@ const CI = /^(\.github\/|tools\/ci\/|pnpm-lock\.yaml$|infra\/|supabase\/)/;
 const DB =
   /^(packages\/(db|aplicacion)\/|tools\/db\/|apps\/web\/src\/app\/api\/|vitest\.config\.ts$)/;
 const WEB = /^(apps\/web\/|packages\/(?!.*\.test\.ts$))/;
+// Los documentos y los scripts de las fases anteriores (07 §13.7, TA-252): docs:comprobar solo si cambian
+const DOCS = /^(docs\/|tools\/docs\/)/;
 const NAVEGADORES = 'pnpm exec playwright install --with-deps chromium';
 
 const env = (k) => process.env[k] ?? '';
@@ -68,7 +70,8 @@ function e2eSegunModo() {
   );
 }
 
-/** M1: integracion con afecta_db o PR listo. M2: e2e en PR listo con afecta_web. En main, todo (07 §6.1). */
+/** M1: integracion con afecta_db o PR listo. M2: e2e en PR listo con afecta_web. En main, todo (07 §6.1).
+ * afecta_docs: el diff toca docs/ o tools/docs/ y `rapido` corre docs:comprobar (07 §13.7). */
 function decidir(archivos, b) {
   const db = archivos.some((a) => CI.test(a) || DB.test(a));
   const web = archivos.some((a) => CI.test(a) || WEB.test(a));
@@ -80,6 +83,7 @@ function decidir(archivos, b) {
     integracion: enMain || listo || db,
     e2e: enMain || ((listo || evento === '') && web && e2eSegunModo()),
     cierre: enMain || aTerminada(b),
+    afecta_docs: archivos.some((a) => DOCS.test(a)),
   };
 }
 
@@ -143,6 +147,7 @@ function rapido(archivos, b, d) {
     ['firmas', 'bash tools/pruebas/firmas.sh origin/main'],
     ['inventario', 'pnpm pruebas:listar'],
     ['matriz', 'pnpm pruebas:matriz'],
+    ...(d.afecta_docs ? [['docs', 'pnpm docs:comprobar']] : []),
     ['minutos', 'node tools/ci/minutos.ts rapido'],
     ...(enCi && cmp ? [['navegadores', NAVEGADORES]] : []),
     [
