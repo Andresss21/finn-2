@@ -31,7 +31,8 @@ Quedan fuera del dominio:
 - **Redondeo:**
   - Meta semanal: redondeo al centavo, con la mitad hacia arriba (H11).
   - Metas de ahorro: la división entre períodos se redondea hacia arriba al centavo (⌈·⌉), para que la suma alcance la meta.
-  - Ninguna otra regla divide montos. [supuesto 1]
+  - Modelos de cálculo de préstamos (Anexo A): el interés y el seguro de cada cuota se redondean al centavo con la mitad hacia arriba. Son derivados informativos, sin efecto presupuestario (A.1, Límites). **[CH-17]**
+  - Ninguna otra regla del motor divide montos. [supuesto 1] **[CH-17]**
 - **Fechas:** toda fecha de negocio es una fecha local de America/El_Salvador (UTC−6, sin horario de verano), sin hora. [P18]
 - **Instantes:** la hora de registro y la clave de orden son instantes. Solo sirven para ordenar y nunca deciden un período. [D2]
 - **Hoy:** la fecha local actual. Es una entrada externa (reloj), no un hecho del dominio.

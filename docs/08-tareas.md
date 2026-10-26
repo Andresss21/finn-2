@@ -1479,6 +1479,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-14** | Orden del reparto D2. 03 §5.4, 01 §4.1 conv. 2 y `cronologico` de TA-104 ordenan por (fecha, clave de orden, secuencia, orden de línea); 01 §4.5 paso 3, 02 RT-09 y PRU-DOM-MOTOR-104 de TA-105 decían otra cosa. Se unifica en (fecha, clave de orden, secuencia de creación, orden de línea) | 01 §4.5 (paso 3); 02 RT-09; 08 TA-105 (PRU-DOM-MOTOR-104) | **Aprobado por el usuario** (TA-105); **aplicado [CH-14]** en TA-105 |
 | **CH-15** | Excepción de tamaño registrada. En §1.1, "No hay excepciones por comentario." pasa a: una excepción se registra solo con `pr:mergear <n> --excepcion-tamano "<motivo>"`; en una tarea normal con un exceso de hasta el 30 % la aplica el orquestador por la regla permanente del usuario; en una obligatoria, o con un exceso mayor, solo con `--aprobado` tras la aceptación del usuario en la sesión; motivo y medidas en el commit de merge (`Excepción-tamaño:`). El límite de migraciones no admite excepción; DT-15 no cambia | 08 §1.1 (DT-01) | **Aprobado por el usuario** (TA-014); **aplicado [CH-15]** en TA-014 |
 | **CH-16** | Permisos de `ci.yml` con M5. Un job produce un solo check, así que publicar `integracion` desde `rapido` (07 §32.2, DP-33) requiere `statuses: write`, que la lista de permisos mínimos de TA-012 no tenía. Permisos a nivel del workflow: `contents: read`, `actions: read`, `pull-requests: read`; solo el job `rapido` agrega `statuses: write`, para que `tools/ci/publicar-resultados.mjs` publique el estado de commit `integracion`; ningún otro job escribe. `gh pr checks` lista los estados de commit junto con los checks. Descartado: un job `integracion` reflejo con `needs: rapido` (~85 min/mes, anula el ahorro de DP-33) | 08 TA-012 (Qué construir, permisos) | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-16]** en TA-012 |
+| **CH-17** | Tercer redondeo para los modelos de préstamo. 01 §0.4, 02 RT-07 y ADR-15 decían que solo hay dos redondeos, y A.2 (reglas 2 y 3) divide el interés y el seguro. 01 §0.4 agrega: el interés y el seguro de cada cuota se redondean al centavo con la mitad hacia arriba, derivados informativos sin efecto presupuestario (A.1, Límites); "Ninguna otra regla divide montos" pasa a "Ninguna otra regla del motor divide montos". RT-07 y ADR-15 pasan a tres redondeos: `redondear(B × num / den) = ⌊(2·B·num + den) / (2·den)⌋` para B·num ≥ 0, en `bigint` dentro de `centavos.ts` (interés: num = tasa en millonésimas × d_k, den = 365 × 10⁶, DB-13; seguro: num = S₁, den = M). TA-111 agrega a **Archivos** `valores/centavos.ts` y `hechos/operaciones.ts`; PRU-DOM-CTA-101 cubre el borde del redondeo. No cambia ningún número de A.2 | 01 §0.4; 02 RT-07, ADR-15; 08 TA-111 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-17]** en TA-111 |
 
 ---
 
@@ -2488,10 +2489,10 @@ compartido: —
 
 **Leer.** 01 Anexo A (A.1, A.2), 2.2.5, 2.2.23, OP-48; 04 OP-48.
 
-**Archivos.** `packages/dominio/src/prestamos/{contrato,agricola}.ts`, `packages/dominio/src/operaciones/op-48.ts`.
+**Archivos.** `packages/dominio/src/prestamos/{contrato,agricola}.ts`, `packages/dominio/src/operaciones/op-48.ts`, `packages/dominio/src/valores/centavos.ts` (solo la proporción mitad hacia arriba del Anexo A) y `packages/dominio/src/hechos/operaciones.ts` (la variante de OP-48 en `ComandoDominio`). **[CH-17]**
 
 **Pruebas primero.**
-- **PRU-DOM-CTA-101** (nueva, DT-17): el ejemplo numérico de A.2 (cuotas 1 a 3 con el abono del 20 de marzo) sale exacto, con el emparejamiento por número y por fecha (±10 días) y el umbral de 0.99 × Q.
+- **PRU-DOM-CTA-101** (nueva, DT-17): el ejemplo numérico de A.2 (cuotas 1 a 3 con el abono del 20 de marzo) sale exacto, con el emparejamiento por número y por fecha (±10 días) y el umbral de 0.99 × Q. Cubre también el borde del redondeo mitad hacia arriba de la proporción (01 §0.4). **[CH-17]**
 - La prueba nueva cita `[CA-55.1, CA-55.2]` como contexto (los CA son de la ficha FT-55, DT-18).
 
 **Comandos.** `pnpm test:unidad -t "PRU-DOM-CTA-101"`; `pnpm ci:local`.

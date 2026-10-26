@@ -320,7 +320,7 @@ describe('PRU-DOM-MOTOR', () => {
       'fusion' | 'eliminar_cuenta' | undefined
     >();
     expectTypeOf<Impacto['deltaLpa']>().toEqualTypeOf<Centavos>();
-    expectTypeOf<ComandoDominio>().toBeNever();
+    expectTypeOf<ComandoDominio['operacion']>().toEqualTypeOf<'OP-48'>();
     expectTypeOf<GeneradorIds['siguiente']>().toEqualTypeOf<() => Uuid>();
   });
 });
