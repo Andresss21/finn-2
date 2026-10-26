@@ -86,7 +86,7 @@ function armar(k: {
 
 describe('PRU-PROP-REP', () => {
   // Plazo propio: el nocturno corre 20.000 casos (mismo criterio que PRU-PROP-MOTOR-105).
-  it('PRU-PROP-REP-002 [V6-02] ritmo y proyección: determinista, exceso mínimo, futuro exacto y no negativo, monótono en los días restantes, reparto exacto y conservación del exceso', () => {
+  it('PRU-PROP-REP-002 [V6-02] REP-ritmo (CF-06) ritmo y proyección: determinista, exceso mínimo, futuro exacto y no negativo, monótono en los días restantes, reparto exacto y conservación del exceso', () => {
     fc.assert(
       fc.property(caso, (k) => {
         const a = armar(k);
@@ -123,7 +123,7 @@ describe('PRU-PROP-REP', () => {
     );
   }, 120_000);
 
-  it('PRU-PROP-REP-002 [V6-02] repartir: suma exacta, partes positivas y orden de entrada irrelevante', () => {
+  it('PRU-PROP-REP-002 [V6-02] REP-ritmo (CF-06) repartir: suma exacta, partes positivas y orden de entrada irrelevante', () => {
     fc.assert(
       fc.property(
         fc.integer({ min: 0, max: 5_000_000 }),

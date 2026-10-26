@@ -45,7 +45,6 @@ export interface ResultadoDeRitmo {
   readonly hallazgo: boolean;
 }
 
-const uno = Centavos.desdeEntero(1);
 const positivo = (x: Centavos) => Centavos.max(Centavos.cero, x);
 const total = (xs: readonly Centavos[]) => xs.reduce(Centavos.sumar, Centavos.cero);
 /** Orden de desempate de FD-19: `debito` antes que las tarjetas, estas por id. */
@@ -53,33 +52,16 @@ const porMedio = (a: Medio, b: Medio) =>
   a === b ? 0 : a === DEBITO ? -1 : b === DEBITO ? 1 : a < b ? -1 : 1;
 
 /**
- * Reparto por resto mayor (FD-19): cada parte es la proporcional truncada y los centavos que faltan
- * van a los restos mayores (empate: `debito` y después el id). La parte truncada sale de la
- * proporción de `Centavos` (mitad arriba) corregida con una comparación en `bigint`: no se divide.
+ * Reparto por resto mayor (FD-19) con el desempate de `porMedio`: la aritmética es de `Centavos`
+ * [CH-20]. Solo quedan los medios con parte positiva.
  */
 export function repartir(
   monto: Centavos,
   pesos: ReadonlyMap<Medio, Centavos>,
 ): Map<Medio, Centavos> {
-  const base = total([...pesos.values()]);
   const salida = new Map<Medio, Centavos>();
-  if (monto === 0 || base === 0) return salida;
-  const filas = [...pesos].map(([medio, peso]) => {
-    const exacto = BigInt(monto) * BigInt(peso);
-    const redondeada = Centavos.proporcionMitadArriba(monto, peso, base);
-    const parte =
-      BigInt(redondeada) * BigInt(base) > exacto ? Centavos.restar(redondeada, uno) : redondeada;
-    return { medio, parte, resto: exacto - BigInt(parte) * BigInt(base) };
-  });
-  const faltan = Centavos.restar(monto, total(filas.map((x) => x.parte)));
-  const orden = [...filas].sort((a, b) =>
-    a.resto === b.resto ? porMedio(a.medio, b.medio) : a.resto > b.resto ? -1 : 1,
-  );
-  const extra = new Set(orden.slice(0, faltan).map((x) => x.medio));
-  for (const x of filas) {
-    const v = extra.has(x.medio) ? Centavos.sumar(x.parte, uno) : x.parte;
-    if (v > 0) salida.set(x.medio, v);
-  }
+  for (const [medio, v] of Centavos.repartirPorRestoMayor(monto, pesos, porMedio))
+    if (v > 0) salida.set(medio, v);
   return salida;
 }
 

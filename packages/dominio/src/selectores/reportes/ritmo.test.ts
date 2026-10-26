@@ -147,7 +147,7 @@ const linea = (programadaId: string, categoria: string, monto: number) =>
   }) as ProgramadaLinea;
 
 describe('PRU-DOM-REP', () => {
-  it('PRU-DOM-REP-103 ritmo: proyección de Restaurantes, hallazgo con "mover" y totales del cierre', () => {
+  it('PRU-DOM-REP-103 REP-ritmo (CF-06) ritmo: proyección de Restaurantes, hallazgo con "mover" y totales del cierre', () => {
     const r = ritmo(estado());
     const rest = r.categorias.find((x) => x.categoria.id === 'rest');
     expect(rest).toMatchObject({
@@ -179,7 +179,7 @@ describe('PRU-DOM-REP', () => {
     });
   });
 
-  it('PRU-DOM-REP-103 ritmo: una programada pendiente se descuenta; una meta de ahorro impide "mover" y sin origen se asigna', () => {
+  it('PRU-DOM-REP-103 REP-ritmo (CF-06) ritmo: una programada pendiente se descuenta; una meta de ahorro impide "mover" y sin origen se asigna', () => {
     const r = ritmo(
       estado((h) => ({
         ...h,
@@ -208,7 +208,7 @@ describe('PRU-DOM-REP', () => {
     expect(r.hallazgos[0]?.accion).toEqual({ tipo: 'asignar', montoNuevo: c(125) });
   });
 
-  it('PRU-DOM-REP-103 ritmo: un consumo que resolvió una ocurrencia no es variable y menos de 3 consumos no se proyectan', () => {
+  it('PRU-DOM-REP-103 REP-ritmo (CF-06) ritmo: un consumo que resolvió una ocurrencia no es variable y menos de 3 consumos no se proyectan', () => {
     const r = ritmo(
       estado((h) => ({
         ...h,
@@ -252,7 +252,7 @@ describe('PRU-DOM-REP', () => {
     expect(pocos.hallazgos).toEqual([]);
   });
 
-  it('PRU-DOM-REP-103 Inicio muestra los RITMO_INICIO_MAX hallazgos de mayor impacto, los mismos del reporte', () => {
+  it('PRU-DOM-REP-103 REP-ritmo (CF-06) Inicio muestra los RITMO_INICIO_MAX hallazgos de mayor impacto, los mismos del reporte', () => {
     const mas = estado((h) => {
       const extra = ['a', 'b', 'c'].map((n, k) => ({
         id: id(n),
