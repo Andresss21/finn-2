@@ -99,7 +99,7 @@
 
   "TA-124": { "estado": "pendiente" },
 
-  "TA-125": { "estado": "en_curso", "rama": "ta-125-selectores-inicio-presupuesto" },
+  "TA-125": { "estado": "terminada", "pr": 42 },
 
   "TA-126": { "estado": "pendiente" },
 
