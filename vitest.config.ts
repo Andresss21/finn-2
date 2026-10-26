@@ -32,6 +32,13 @@ const define = mutante === '' ? {} : { __FINN_MUTANTE__: JSON.stringify(mutante)
 const excluidos = ['**/node_modules/**', '**/dist/**', '**/.next/**', '**/.claude/**'];
 const orden = { shuffle: true, seed: semilla } as const;
 
+// Plazo de los proyectos `unidad` y `escenarios-motor`. Con fast-check sobre `hechosArb` y la
+// cobertura v8, el runner de GitHub pasa los 5 s por defecto aunque en el PR haya pasado: run
+// 40355731276 de ci.yml en main (0d6128a) y run 40358730586 (52c8be7, PRU-DOM-MOTOR-111, 7348 ms).
+// #52 (139fce6) dio 60 s a cinco pruebas, una por una; esto cubre las que vengan. Los plazos propios
+// (60 s, 120 s y los 600 s de PRU-PROP-MOTOR-106) son mayores y siguen mandando.
+const plazoMotor = 30_000;
+
 // Pruebas que ejecutan `recheck` (04 §8.5). Su fuzzer usa subtiempos de reloj (ataque, incubación,
 // siembra) y con la CPU ocupada estima mal el grado (devuelve 3 para un patrón de grado 2). Por eso
 // viven en su propio proyecto, que `tools/pruebas/vitest.mjs` corre después del resto y de a un archivo.
@@ -58,6 +65,7 @@ export default defineConfig({
         test: {
           ...comun,
           name: 'unidad',
+          testTimeout: plazoMotor,
           include: [
             'packages/*/src/**/*.test.ts',
             'tools/ci/**/*.test.ts',
@@ -94,6 +102,7 @@ export default defineConfig({
         test: {
           ...comun,
           name: 'escenarios-motor',
+          testTimeout: plazoMotor,
           // Los datos viven en escenarios/datos/esc-nn.ts; el ejecutor `motor` los recorre.
           include: ['packages/dominio/escenarios/**/*.motor.test.ts'],
           exclude: excluidos,
