@@ -17,10 +17,8 @@ export function op40(antes: H.Instantanea, x: H.ComandoOp40): Efecto | H.Rechazo
     cambios: [{ tipo: 'actualizar', tabla: 'movimientos', id: m.id, campos }],
   });
   switch (x.decision) {
-    case 'confirmar_coincidencia': {
-      const { operacion: _, decision: __, ...aprobacion } = x;
-      return op37(antes, aprobacion);
-    }
+    case 'confirmar_coincidencia':
+      return op37(antes, x);
     case 'rechazar_coincidencia': {
       const { cuentaId, monto, fecha } = m;
       const otros = x.movimientos.filter((y) => y.id !== m.id);
