@@ -6,11 +6,13 @@ import type {
   AvisoOperacion,
   Cambio,
   ComandoDominio,
+  ElementoOp07,
   Hechos,
   Instantanea,
   OperacionDeclarada,
   Rechazo,
   ResultadoAplicar,
+  Uuid,
 } from '../hechos';
 import { verificarInvariantes } from '../invariantes';
 import type { FechaLocal } from '../valores/fecha-local';
@@ -23,9 +25,12 @@ import { op04 } from './op-04';
 import { op05 } from './op-05';
 import { op06 } from './op-06';
 import { op07 } from './op-07';
+import { op08 } from './op-08';
 import { op09 } from './op-09';
+import { op10 } from './op-10';
 import { op11 } from './op-11';
 import { op12 } from './op-12';
+import { op13 } from './op-13';
 import { op48 } from './op-48';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
 
@@ -52,9 +57,12 @@ const OPERACIONES: {
   'OP-05': op05,
   'OP-06': op06,
   'OP-07': op07,
+  'OP-08': op08,
   'OP-09': op09,
+  'OP-10': op10,
   'OP-11': op11,
   'OP-12': op12,
+  'OP-13': op13,
   'OP-48': (antes, comando) => {
     const r = op48(antes.hechos.prestamos, comando);
     return esRechazo(r) ? r : { cambios: r };
@@ -105,4 +113,54 @@ export function ejecutar<C extends { readonly operacion: string }>(
   avisos.sort((a, b) => (a.codigo < b.codigo ? -1 : a.codigo > b.codigo ? 1 : 0));
   const total = { ...delta, avisos };
   return { ok: true, cambios, ...declarada, hechosNuevos: despues.hechos, impacto: total, avisos };
+}
+
+/** Resultado de un elemento del lote de OP-07 (CF-19), en el orden de la entrada. */
+export interface ResultadoDeElemento {
+  readonly id: Uuid;
+  readonly resultado: 'creado' | 'ya_aplicada' | Rechazo;
+}
+
+/** Huella de creación de OP-07 (04 §4.6.1): tipo, nombre y grupo de la fila con ese id. */
+function yaCreado(h: Hechos, e: ElementoOp07): ResultadoDeElemento['resultado'] | undefined {
+  const previo = [...h.grupos, ...h.categorias].find((y) => y.id === e.id);
+  if (previo === undefined) return undefined;
+  const grupoId = 'grupoId' in previo ? previo.grupoId : undefined;
+  const tipo = grupoId === undefined ? 'grupo' : 'categoria';
+  const igual = tipo === e.tipo && previo.nombre === e.nombre && grupoId === e.grupoId;
+  return igual ? 'ya_aplicada' : { codigo: 'conflicto_id', datos: { id: e.id } };
+}
+
+/**
+ * CF-19 (04 §3.2, 06 §3.9.1): de 1 a 15 elementos, en orden, cada uno con su `aplicar` sobre los
+ * hechos que dejó el anterior (un `escribir()` por elemento, 04 §4.8). No es atómica: un rechazo no
+ * detiene a los demás, salvo a las categorías del grupo que falló, que responden con su motivo sin
+ * intentarse. Un id ya creado con los mismos datos responde `ya_aplicada`; con otros, `conflicto_id`.
+ */
+export function op07EnLote(
+  hechos: Hechos,
+  lote: { readonly elementos: readonly ElementoOp07[] },
+  hoy: FechaLocal,
+) {
+  const { elementos } = lote;
+  if (elementos.length < 1 || elementos.length > 15)
+    throw new TypeError(`OP-07 en lote: ${elementos.length} elementos`);
+  const fallidos = new Map<Uuid, Rechazo>();
+  let h = hechos;
+  const resultado = (e: ElementoOp07): ResultadoDeElemento['resultado'] => {
+    const delGrupo = e.grupoId === undefined ? undefined : fallidos.get(e.grupoId);
+    if (delGrupo !== undefined) return delGrupo;
+    const previo = yaCreado(h, e);
+    if (previo !== undefined) return previo;
+    const salida = aplicar(h, { operacion: 'OP-07', ...e }, hoy);
+    if (!salida.ok) return salida.rechazos[0] as Rechazo;
+    h = salida.hechosNuevos;
+    return 'creado';
+  };
+  const resultados = elementos.map((e): ResultadoDeElemento => {
+    const r = resultado(e);
+    if (typeof r !== 'string') fallidos.set(e.id, r);
+    return { id: e.id, resultado: r };
+  });
+  return { resultados, hechos: h };
 }
