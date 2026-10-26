@@ -29,7 +29,7 @@
     "pr:mergear": "node tools/plan/mergear.ts",
     "test": "node tools/pruebas/vitest.mjs --project unidad --project escenarios-motor --project contratos --project componentes",
     "test:unidad": "node tools/pruebas/vitest.mjs --project unidad",
-    "test:escenarios": "vitest run --project escenarios-motor --passWithNoTests",
+    "test:escenarios": "vitest run --project escenarios-motor --coverage.enabled=false --passWithNoTests",
     "test:contratos": "vitest run --project contratos --passWithNoTests",
     "test:integracion": "vitest run --project integracion --coverage.enabled=false --passWithNoTests",
     "test:componentes": "vitest run --project componentes --coverage.enabled=false --passWithNoTests",

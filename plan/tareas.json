@@ -119,7 +119,7 @@
 
   "TA-129": { "estado": "terminada", "pr": 55 },
 
-  "TA-130": { "estado": "pendiente" },
+  "TA-130": { "estado": "en_curso", "rama": "ta-130-ejecutor-escenarios" },
 
   "TA-131": { "estado": "pendiente" },
 
