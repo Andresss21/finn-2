@@ -3,11 +3,11 @@ import { calcular } from '../calculo/calcular';
 import type {
   BigintTexto,
   Categoria,
-  Condonacion,
   Cuenta,
   Efecto,
   Grupo,
   Hechos,
+  DecimalTexto,
   Instante,
   Linea,
   Transaccion,
@@ -28,7 +28,7 @@ const id = (t: string) => t as Uuid;
  * con la tarjeta (día 5), una compra conciliada de 200 en `super` con 150 de categoría y 50 por cobrar
  * a Ana (día 10), un cobro de 30 (día 12) y una devolución D-1 de 20 (día 13).
  */
-function estado() {
+function estado(ajustar: (h: Hechos) => Hechos = (h) => h) {
   const cuentas = [
     { id: id('ef'), tipo: 'efectivo', nombre: 'Efectivo', fechaApertura: f('2027-03-01') },
     { id: id('vi'), tipo: 'tarjeta', nombre: 'Visa', fechaApertura: f('2027-03-01') },
@@ -140,7 +140,7 @@ function estado() {
     transacciones,
     efectos,
     lineas,
-    condonaciones: [] as Condonacion[],
+    condonaciones: [],
     metas: [],
     programadas: [
       {
@@ -183,7 +183,7 @@ function estado() {
       },
     ],
   };
-  return calcular(hechos, f('2027-04-15'));
+  return calcular(ajustar(hechos), f('2027-04-15'));
 }
 
 const i = estado();
@@ -325,5 +325,107 @@ describe('actividad y detalle de transacción', () => {
       sms,
     });
     expect(() => detalleTransaccion(i, id('no-existe'))).toThrow(RangeError);
+  });
+
+  it('PRU-DOM-CTA-103 el detalle muestra moneda original, desglose, condonaciones y el bloqueo por cuenta archivada', () => {
+    const j = estado((h) => ({
+      ...h,
+      cuentas: h.cuentas.map((k) => (k.id === id('vi') ? { ...k, archivada: true } : k)),
+      transacciones: h.transacciones.map((t) =>
+        t.id === id('g-mar')
+          ? { ...t, monedaOriginal: 'USD', montoOriginal: '7.50' as DecimalTexto }
+          : t,
+      ),
+      efectos: h.efectos.map((e) =>
+        e.transaccionId === id('g-mar') ? { ...e, interes: c(1), seguro: c(2) } : e,
+      ),
+      condonaciones: [
+        {
+          id: id('cd1'),
+          lineaId: id('l-g-super-2'),
+          fecha: f('2027-04-14'),
+          monto: c(20),
+          claveOrden: '2027-04-14T12:00:00.000Z' as Instante,
+          secuencia: '99' as BigintTexto,
+          categoriaId: id('super'),
+          revision: null,
+        },
+      ],
+    }));
+    const m = detalleTransaccion(j, id('g-mar'));
+    expect(m.transaccion).toMatchObject({ monedaOriginal: 'USD', montoOriginal: '7.50' });
+    expect(m.efectos[0]).toMatchObject({ interes: c(1), seguro: c(2) });
+    expect(m.restricciones).toMatchObject({ puedeEliminar: true, puedeCambiarCuenta: true });
+    const p = detalleTransaccion(j, id('g-prog'));
+    expect(p.restricciones).toMatchObject({
+      puedeEliminar: false,
+      motivoNoEliminar: 'cuenta_archivada',
+      puedeCambiarCuenta: false,
+    });
+    const cobrar = detalleTransaccion(j, id('g-super')).lineas[1];
+    expect(cobrar?.porCobrar).toMatchObject({ abierto: c(0), condonado: c(20), estado: 'cerrado' });
+    expect(cobrar?.condonaciones).toEqual([
+      {
+        id: id('cd1'),
+        fecha: f('2027-04-14'),
+        monto: c(20),
+        categoria: { id: id('super'), nombre: 'Super' },
+      },
+    ]);
+  });
+
+  it('PRU-DOM-CTA-103 una devolución a por cobrar sigue el destino de su línea, y el límite de página se acota', () => {
+    const j = estado((h) => ({
+      ...h,
+      transacciones: [
+        ...h.transacciones.map((t) => (t.id === id('si') ? { ...t, secuencia: null } : t)),
+        {
+          ...(h.transacciones.find((t) => t.id === id('dev')) as Transaccion),
+          id: id('dev2'),
+          fecha: f('2027-04-14'),
+          secuencia: '90' as BigintTexto,
+          total: c(5),
+        },
+      ],
+      efectos: [
+        ...h.efectos,
+        {
+          id: id('ef-dev2'),
+          transaccionId: id('dev2'),
+          cuentaId: id('ef'),
+          monto: c(5),
+          interes: null,
+          seguro: null,
+          revision: null,
+        },
+      ],
+      lineas: [
+        ...h.lineas,
+        {
+          id: id('l-dev2'),
+          transaccionId: id('dev2'),
+          orden: 1,
+          monto: c(5),
+          categoriaId: null,
+          deudorId: null,
+          lineaOriginalId: id('l-g-super-2'),
+          revision: null,
+        },
+      ],
+    }));
+    const fila = actividad(j)
+      .dias.flatMap((d) => d.transacciones)
+      .find((t) => t.id === id('dev2'));
+    expect(fila?.lineas[0]?.destino).toMatchObject({ nombre: 'Ana', tipo: 'deudor' });
+    const d = detalleTransaccion(j, id('dev2'));
+    expect(d.lineas[0]?.destino).toEqual({
+      lineaOriginal: { id: id('l-g-super-2'), transaccionId: id('g-super') },
+    });
+    expect(detalleTransaccion(j, id('g-super')).lineas[1]?.porCobrar).toMatchObject({
+      devuelto: c(5),
+      abierto: c(15),
+    });
+    expect(ids(actividad(j, { limite: 0 }))).toHaveLength(1);
+    expect(ids(actividad(j, { limite: 500 }))).toHaveLength(7);
   });
 });
