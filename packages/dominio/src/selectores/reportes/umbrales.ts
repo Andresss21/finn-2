@@ -13,3 +13,6 @@ export const REAL_TOL_MIN = usd(10);
 export const REAL_TOL_PCT = [10, 100] as const;
 export const PROM_VAR_MIN = usd(20);
 export const PROM_VAR_PCT = [25, 100] as const;
+export const HORMIGA_MONTO_MAX = usd(10);
+export const HORMIGA_CANT_MIN = 5;
+export const HORMIGA_TOTAL_MIN = usd(20);
