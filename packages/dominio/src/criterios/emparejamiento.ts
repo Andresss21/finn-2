@@ -16,10 +16,7 @@ export interface Comparable {
   readonly fecha: FechaLocal;
 }
 
-export interface Esperada {
-  readonly programadaId: Uuid;
-  readonly fecha: FechaLocal;
-}
+export type Esperada = { readonly programadaId: Uuid; readonly fecha: FechaLocal };
 
 const clave = (programadaId: Uuid | null, fecha: FechaLocal | null) => `${programadaId}|${fecha}`;
 
