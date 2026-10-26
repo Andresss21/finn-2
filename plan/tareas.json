@@ -131,7 +131,7 @@
 
   "TA-140": { "estado": "pendiente" },
 
-  "TA-141": { "estado": "pendiente" },
+  "TA-141": { "estado": "en_curso", "rama": "ta-141-reportes" },
 
   "TA-142": { "estado": "pendiente" },
 
