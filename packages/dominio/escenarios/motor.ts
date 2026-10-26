@@ -4,6 +4,7 @@
 // minuto por operación, apertura 21/01/2027, tarjetas con límite $5,000 y corte 15, grupo "Gastos", saldo inicial 0.
 import { aplicar, avisosDeEstado, calcular } from '../src/index';
 import type { ComandoDominio, Hechos, Instantanea, Instante, Uuid } from '../src/index';
+import { desgloseAlPagar } from '../src/calculo/patrimonio';
 import { Centavos, FechaLocal } from '../src/valores/index';
 import type { Ejecutor } from './ejecutar';
 import {
@@ -151,6 +152,46 @@ function comando(s: Estado, op: Op): ComandoDominio {
       const montoNuevo = Centavos.sumar(actual, c(op.monto));
       return { operacion: 'OP-14', categoriaId: cat, periodoInicio, montoNuevo, ids };
     }
+    case 'OP-17':
+      return {
+        operacion: 'OP-17',
+        periodoInicio: FechaLocal.desdeTexto(
+          op.periodo ? PERIODOS[op.periodo] : calcular(s.hechos, s.hoy).presupuesto.activo.inicio,
+        ),
+        ids,
+      };
+    case 'OP-18':
+      return {
+        operacion: 'OP-18',
+        accion: 'crear',
+        id: id(`meta-${op.categoria}`),
+        categoriaId: categoriaId(s, op.categoria),
+        tipo: 'mensual',
+        modo: 'acumular',
+        monto: c(op.monto),
+      };
+    case 'OP-20':
+      return {
+        operacion: 'OP-20',
+        id: id(`t${++s.contador}`),
+        instante: hora(op.registrado),
+        ids,
+        fecha: fecha(op.fecha),
+        total: c(op.monto),
+        cuentaId: cuentaId(s, op.cuenta),
+        lineas: [{ monto: c(op.monto), destino: { categoriaId: categoriaId(s, op.categoria) } }],
+      };
+    case 'OP-23':
+      return {
+        operacion: 'OP-23',
+        id: id(`t${++s.contador}`),
+        instante: hora(),
+        ids,
+        fecha: fecha(op.fecha),
+        total: c(op.monto),
+        origenId: cuentaId(s, op.origen ?? 'Ahorro'),
+        tarjetaId: cuentaId(s, op.tarjeta),
+      };
     case 'OP-21':
       return {
         operacion: 'OP-21',
@@ -164,9 +205,24 @@ function comando(s: Estado, op: Op): ComandoDominio {
   }
 }
 
+/** Consultas que se observan antes de aplicar las operaciones del paso (el desglose que ve quien va a pagar). */
+const ANTES = new Set(['desgloseAntes']);
+function desglose(i: Instantanea, arg: string): number {
+  const [tarjeta = '', campo = ''] = arg.split(':');
+  const cuenta = i.hechos.cuentas.find((k) => k.nombre === tarjeta);
+  const t = i.hechos.tarjetas.find((x) => x.cuentaId === cuenta?.id);
+  if (!t) throw new Error(`desglose:${arg}: la tarjeta no existe`);
+  const d = desgloseAlPagar(i.hechos, t, i.hoy) as unknown as Record<string, number>;
+  return d[campo] as number;
+}
+
 /** Columnas fuera de la instantánea (regla 9) que `motor` evalúa; el argumento va después de ':'. */
 const EXTRAS: Record<string, (i: Instantanea, arg: string) => number> = {
   patrimonio: (i) => i.patrimonio.total,
+  reduccionProyectada: (i) => i.reduccionProyectada,
+  // Desglose del pago (§4.14) de la tarjeta `T` al día de hoy: 'T:campo'. `desgloseAntes` se evalúa antes de las operaciones.
+  desglose: desglose,
+  desgloseAntes: desglose,
   lpaCierre: (i, p) => {
     const x = i.historialLpa.find((y) => y.periodo.inicio === PERIODOS[p as Periodo]);
     if (!x) throw new Error(`lpaCierre:${p}: el período no está cerrado`);
@@ -188,7 +244,12 @@ const EXTRAS: Record<string, (i: Instantanea, arg: string) => number> = {
   },
 };
 
-function observar(s: Estado, claves: string[], avisos: Set<string>): Observado {
+function observar(
+  s: Estado,
+  claves: string[],
+  avisos: Set<string>,
+  previas: Observado['extra'] = {},
+): Observado {
   const i = calcular(s.hechos, s.hoy);
   const nombres = nombresDeCategorias(i.hechos);
   const cuentas = new Map(i.hechos.cuentas.map((k) => [k.id, k.nombre]));
@@ -200,8 +261,9 @@ function observar(s: Estado, claves: string[], avisos: Set<string>): Observado {
   for (const t of i.tarjetas)
     tarjetas[cuentas.get(t.tarjetaId) as string] = [t.deuda, t.sinRespaldo, t.reservaExcedente];
   for (const a of avisosDeEstado(i)) avisos.add(a.aviso);
-  const extra: Observado['extra'] = {};
+  const extra: Observado['extra'] = { ...previas };
   for (const k of claves) {
+    if (ANTES.has(k.split(':')[0] as string)) continue;
     const [nombre = '', arg = ''] = k.split(/:(.*)/s);
     const f = EXTRAS[nombre];
     if (f) extra[k] = f(i, arg);
@@ -231,6 +293,15 @@ export const ejecutorMotor: Ejecutor<Estado> = {
   paso(s: Estado, p: Paso) {
     if (p.hoy) s.hoy = FechaLocal.desdeTexto(p.hoy);
     const [antes, previa, avisos] = [{ ...s }, huella(s), new Set<string>()];
+    const previas: Observado['extra'] = {};
+    for (const k of Object.keys(p.espera.extra ?? {})) {
+      const [nombre = '', arg = ''] = k.split(/:(.*)/s);
+      if (ANTES.has(nombre))
+        previas[k] = (EXTRAS[nombre] as (i: Instantanea, a: string) => number)(
+          calcular(s.hechos, s.hoy),
+          arg,
+        );
+    }
     let rechazo: string | undefined;
     for (const op of p.ops) {
       const r = aplicar(s.hechos, comando(s, op), s.hoy);
@@ -242,7 +313,7 @@ export const ejecutorMotor: Ejecutor<Estado> = {
       for (const a of r.avisos) avisos.add(a.codigo);
     }
     if (rechazo !== undefined) Object.assign(s, antes); // atomicidad: la fila entera se descarta (01 §5.0.1)
-    const obs = observar(s, Object.keys(p.espera.extra ?? {}), avisos);
+    const obs = observar(s, Object.keys(p.espera.extra ?? {}), avisos, previas);
     return Promise.resolve(
       rechazo === undefined ? obs : { ...obs, rechazo, intacto: huella(s) === previa },
     );

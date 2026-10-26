@@ -29,7 +29,18 @@ export type Op =
     }
   | { op: 'OP-07'; categoria: string }
   | { op: 'OP-14'; categoria: string; monto: number; periodo?: Periodo } // δ sobre Asig(c, p); el ejecutor la pasa a valor absoluto
-  | { op: 'OP-21'; monto: number; cuenta?: string; fecha?: string; registrado?: string };
+  | { op: 'OP-17'; periodo?: Periodo } // Auto-asignar: por defecto el período activo
+  | { op: 'OP-18'; categoria: string; monto: number; tipo?: 'mensual' } // crea una meta mensual (modo acumular)
+  | {
+      op: 'OP-20';
+      cuenta: string;
+      monto: number;
+      categoria: string;
+      fecha?: string;
+      registrado?: string;
+    }
+  | { op: 'OP-21'; monto: number; cuenta?: string; fecha?: string; registrado?: string }
+  | { op: 'OP-23'; tarjeta: string; monto: number; origen?: string; fecha?: string };
 
 export interface Espera {
   ef?: number;
