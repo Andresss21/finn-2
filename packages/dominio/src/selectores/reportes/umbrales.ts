@@ -9,3 +9,7 @@ export const CONSUMOS_MIN_RITMO = 3;
 export const EXCESO_MIN = usd(5);
 export const EXCESO_MIN_PCT = [5, 100] as const;
 export const RITMO_INICIO_MAX = 3;
+export const REAL_TOL_MIN = usd(10);
+export const REAL_TOL_PCT = [10, 100] as const;
+export const PROM_VAR_MIN = usd(20);
+export const PROM_VAR_PCT = [25, 100] as const;

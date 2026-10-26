@@ -9,3 +9,4 @@ export { patrimonio } from './patrimonio';
 export { remanente } from './remanente';
 export { tendencia } from './tendencia';
 export { topComercios } from './top-comercios';
+export { realidad } from './realidad';

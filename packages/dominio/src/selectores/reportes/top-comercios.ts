@@ -6,6 +6,14 @@
 import type { Instantanea, ReglaComercio, Uuid } from '../../hechos';
 import { Centavos } from '../../valores/centavos';
 import {
+  claveDeComercio,
+  devueltoPorLinea,
+  masFrecuente,
+  menorPrimero,
+  patronesOrdenados,
+  SIN_COMERCIO,
+} from './agrupacion';
+import {
   conjuntoDeCuentas,
   contexto,
   dentro,
@@ -35,13 +43,6 @@ export interface ComercioDelTop {
   readonly variantes: readonly Variante[];
 }
 
-const SIN_COMERCIO = '(sin comercio)';
-
-/** Minúsculas, sin espacios en los extremos ni repetidos (04 §4.17). */
-const normalizar = (c: string): string => c.trim().replace(/\s+/g, ' ').toLowerCase();
-
-const menorPrimero = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
-
 interface Grupo {
   etiqueta: string;
   porRegla: boolean;
@@ -62,35 +63,19 @@ export function topComercios(
   const enW = (f: Parameters<typeof dentro>[1]) => ventana.some((p) => dentro(p, f));
   const cx = contexto(i);
   const h = i.hechos;
-  const txs = new Map(h.transacciones.map((t) => [t.id, t]));
-  const patrones = reglas
-    .map((r) => r.patron)
-    .sort((a, b) => b.length - a.length || menorPrimero(a, b));
-
+  const patrones = patronesOrdenados(reglas);
   // Devoluciones vinculadas a una línea, con fecha en W y cuenta en K.
-  const devuelto = new Map<Uuid, Centavos>();
-  for (const l of h.lineas) {
-    const t = txs.get(l.transaccionId);
-    if (t?.tipo !== 'devolucion' || l.lineaOriginalId === null) continue;
-    if (!enW(t.fecha) || !tocaK(k, cx.cuentasDe(t.id))) continue;
-    devuelto.set(
-      l.lineaOriginalId,
-      Centavos.sumar(devuelto.get(l.lineaOriginalId) ?? Centavos.cero, l.monto),
-    );
-  }
+  const devuelto = devueltoPorLinea(i, enW, k);
 
   const grupos = new Map<string, Grupo>();
   for (const t of h.transacciones) {
     if (t.tipo !== 'gasto' || !enW(t.fecha) || !tocaK(k, cx.cuentasDe(t.id))) continue;
     const lineas = h.lineas.filter((l) => l.transaccionId === t.id && l.categoriaId !== null);
     if (lineas.length === 0) continue;
-    const escrito = t.comercio === null ? '' : t.comercio.trim();
-    const normal = normalizar(escrito);
-    const patron = patrones.find((p) => normal.includes(p.toLowerCase()));
-    const clave = patron ?? (normal === '' ? SIN_COMERCIO : normal);
+    const { clave, porRegla, etiqueta, variante, escrito } = claveDeComercio(patrones, t.comercio);
     const g: Grupo = grupos.get(clave) ?? {
-      etiqueta: patron ?? SIN_COMERCIO,
-      porRegla: patron !== undefined,
+      etiqueta,
+      porRegla,
       monto: Centavos.cero,
       frecuencia: 0,
       porCategoria: new Map(),
@@ -106,9 +91,8 @@ export function topComercios(
     }
     g.monto = Centavos.sumar(g.monto, monto);
     g.frecuencia += 1;
-    const nombre = normal === '' ? SIN_COMERCIO : normal;
-    const v = g.variantes.get(nombre) ?? { monto: Centavos.cero, frecuencia: 0 };
-    g.variantes.set(nombre, {
+    const v = g.variantes.get(variante) ?? { monto: Centavos.cero, frecuencia: 0 };
+    g.variantes.set(variante, {
       monto: Centavos.sumar(v.monto, monto),
       frecuencia: v.frecuencia + 1,
     });
@@ -121,12 +105,9 @@ export function topComercios(
       const [principal] = [...g.porCategoria].sort(
         (a, b) => b[1] - a[1] || menorPrimero(a[0], b[0]),
       );
-      const [masFrecuente] = [...g.escritos].sort(
-        (a, b) => b[1] - a[1] || menorPrimero(a[0], b[0]),
-      );
       return {
         clave,
-        etiqueta: g.porRegla ? g.etiqueta : masFrecuente?.[0] || SIN_COMERCIO,
+        etiqueta: g.porRegla ? g.etiqueta : masFrecuente(g.escritos) || SIN_COMERCIO,
         porRegla: g.porRegla,
         monto: g.monto,
         frecuencia: g.frecuencia,
