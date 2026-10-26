@@ -211,9 +211,11 @@ describe('PRU-PROP-REP', () => {
             }),
           );
         const grupos = r.hallazgos.map((x) => miembros(x.clave));
-        grupos.forEach((a, k) =>
-          grupos.slice(k + 1).forEach((b) => expect([...a].some((n) => b.has(n))).toBe(false)),
-        );
+        grupos.forEach((a, k) => {
+          grupos.slice(k + 1).forEach((b) => {
+            expect([...a].some((n) => b.has(n))).toBe(false);
+          });
+        });
         expect(r.hallazgos.map((x) => x.total)).toEqual(
           [...r.hallazgos.map((x) => x.total)].sort((a, b) => b - a),
         );

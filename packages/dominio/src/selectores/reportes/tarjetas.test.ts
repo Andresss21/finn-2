@@ -83,11 +83,12 @@ function estado(ajustar: (h: Hechos) => Hechos = (h) => h) {
     tx(n, 'gasto', fecha, monto, [['vi', -monto]]);
     linea(n, 1, monto, 'c1');
   };
-  const pago = (n: string, fecha: string, monto: number) =>
+  const pago = (n: string, fecha: string, monto: number) => {
     tx(n, 'pago_tarjeta', fecha, monto, [
       ['ef', -monto],
       ['vi', monto],
     ]);
+  };
 
   tx('si', 'saldo_inicial', '2026-12-01', 1000, [['ef', 1000]]);
   cargo('v1', '2026-12-10', 200);
@@ -168,7 +169,7 @@ const conReserva = (h: Hechos): Hechos => ({
   ...h,
   asignaciones: [
     { id: id('a1'), categoriaId: id('pago-vi'), periodoInicio: f('2027-04-01'), monto: c(1000) },
-  ] as Hechos['asignaciones'],
+  ] as unknown as Hechos['asignaciones'],
 });
 
 describe('PRU-DOM-REP', () => {
