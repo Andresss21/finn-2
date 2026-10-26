@@ -101,7 +101,7 @@
 
   "TA-125": { "estado": "pendiente" },
 
-  "TA-126": { "estado": "en_curso", "rama": "ta-126-selectores-detalle" },
+  "TA-126": { "estado": "terminada", "pr": 43 },
 
   "TA-231": { "estado": "pendiente" },
 
