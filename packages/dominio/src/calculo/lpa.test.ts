@@ -199,7 +199,7 @@ function calcular(l: Libro) {
 }
 
 describe('PRU-DOM-MOTOR', () => {
-  it('PRU-DOM-MOTOR-106 [MOT-4.8, MOT-4.9, MOT-4.10] deuda sin respaldo, reserva excedente, LPA y por cobrar (01 §4.8 a §4.10): S(t), RE(t) y su descomposición; LPA con sus términos; LPA al cierre con su comprobación; saldo abierto, dinero en camino y pago implícito', () => {
+  it('PRU-DOM-MOTOR-106 MOT-4.8, MOT-4.9 y MOT-4.10: deuda sin respaldo, reserva excedente, LPA y por cobrar (01 §4.8 a §4.10): S(t), RE(t) y su descomposición; LPA con sus términos; LPA al cierre con su comprobación; saldo abierto, dinero en camino y pago implícito', () => {
     const l = escenario();
     const { cobros, b, lpa } = calcular(l);
 

@@ -65,7 +65,7 @@
 
   "TA-107": { "estado": "terminada", "pr": 27 },
 
-  "TA-108": { "estado": "pendiente" },
+  "TA-108": { "estado": "en_curso", "rama": "ta-108-motor-metas" },
 
   "TA-109": { "estado": "pendiente" },
 
