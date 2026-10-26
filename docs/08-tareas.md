@@ -392,8 +392,8 @@ tu: TU-03, TU-06
 ### HT-2 Motor con todos los escenarios
 
 ```hito
-despues: TA-147
-requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235, TA-236, TA-237
+despues: TA-239
+requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235, TA-236, TA-237, TA-238, TA-239
 tu: —
 ```
 
@@ -1708,7 +1708,9 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 604 | TA-140 | B2 | 2 | HT-2 | normal | Selectores de por cobrar, programadas y contextos de formulario (ola 2) | 260 | 0 |
 | 605 | TA-141 | B2 | 2 | HT-2 | normal | Reportes base (04 §6.9.2, §6.9.3; parte 1) | 396 | 0 |
 | 606 | TA-230 | B2 | 2 | HT-2 | normal | Reportes: top de comercios y gasto semanal (parte 2 de TA-141) | 287 | 0 |
-| 607 | TA-142 | B2 | 2 | HT-2 | normal | Reportes accionables: realidad, hormiga y suscripciones (CF-04) | 320 | 0 |
+| 607 | TA-142 | B2 | 2 | HT-2 | normal | Reportes accionables: realidad y clave de agrupación (CF-04; parte 1) | 334 | 0 |
+| 613 | TA-238 | B2 | 2 | HT-2 | normal | Reporte de gastos hormiga (parte 2 de TA-142) | 260 | 0 |
+| 614 | TA-239 | B2 | 2 | HT-2 | normal | Reporte de suscripciones (parte 3 de TA-142) | 250 | 0 |
 | 608 | TA-143 | B2 | 2 | HT-2 | normal | Reportes de tarjetas, hallazgos y flujo de efectivo (CF-02, CF-04) | 300 | 0 |
 | 609 | TA-144 | B2 | 2 | HT-2 | normal | `datos_base` y sus pares con los selectores (CF-09) | 160 | 0 |
 | 610 | TA-145 | B2 | 2 | HT-2 | normal | Escenarios en el motor: ESC-21, ESC-23, ESC-25, ESC-26, ESC-27, ESC-28, ESC-29, ESC-30 | 20 | 0 |
@@ -3662,7 +3664,9 @@ compartido: —
 
 **Terminada cuando.** Las dos pruebas pasan.
 
-#### TA-142 Reportes accionables: realidad, hormiga y suscripciones (CF-04)
+#### TA-142 Reportes accionables: realidad y clave de agrupación (CF-04; parte 1)
+
+Partida en tres por tamaño (DT-02, 08 §1.2): esta parte tiene `realidad` y la clave de agrupación de BE-43; los gastos hormiga son TA-238 y las suscripciones, TA-239.
 
 ```tarea
 orden: 607
@@ -3672,26 +3676,96 @@ depende: TA-129, TA-141
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=320 archivos=4 ca=0 migraciones=0 total=800
-cubre: REP-realidad, REP-hormiga, REP-suscripciones, BE-43, CF-04
-pru: PRU-DOM-REP-102
+tamano: prod=334 archivos=5 ca=0 migraciones=0 total=650
+cubre: REP-realidad, BE-43, CF-04
+pru: PRU-DOM-REP-104
 compartido: —
 ```
 
 **Qué construir.**
-- Selectores `realidad`, `hormiga` y `suscripciones` con las fórmulas de 06 §3.5 y `HallazgoDto`.
+- Selector `realidad` (06 §3.5.6 y §3.5.7) con sus hallazgos como datos; `agrupacion.ts` con la clave de BE-43 (el top de comercios la usa); umbrales REAL_* y PROM_*.
 
-**Leer.** 06 §3.5 (realidad, hormiga, suscripciones); 04 §6.9.5, §6.9.6 (BE-43).
+**Leer.** 06 §3.5 (realidad y comparación con el promedio); 04 §6.9.5, §6.9.6 (BE-43).
 
-**Archivos.** `packages/dominio/src/selectores/reportes/{realidad,hormiga,suscripciones,agrupacion}.ts`.
+**Archivos.** `packages/dominio/src/selectores/reportes/{realidad,agrupacion,top-comercios,umbrales,index}.ts`.
 
 **Pruebas primero.**
-- **PRU-DOM-REP-102** (nueva, DT-17): realidad con su sugerencia, gastos hormiga y suscripciones con la clave de agrupación de BE-43 y sus variantes.
+- **PRU-DOM-REP-104** (nueva, DT-17): realidad con su sugerencia y la comparación con el promedio, y la clave de agrupación de BE-43 con sus variantes.
 - La prueba nueva.
 
-**Comandos.** `pnpm test:unidad -t "PRU-DOM-REP-102"`; `pnpm ci:local`.
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-REP-104"`; `pnpm ci:local`.
 
 **Terminada cuando.** La prueba pasa.
+
+**Sin verificar.** El `estado` de los hallazgos (`advertencia` o `informacion`) frente a 05 §10.3: 06 no lo fija por tipo. `realidad` no recibe el filtro de cuentas K, porque `ritmo()` tampoco lo tiene.
+
+#### TA-238 Reporte de gastos hormiga (parte 2 de TA-142)
+
+Parte 2 de TA-142 (DT-02, 08 §1.2). El punto de partida es la rama `ta-142-reportes-accionables` (PR #60, sin mergear): trae `hormiga.ts` escrito y probado.
+
+```tarea
+orden: 613
+bloque: B2
+hito: HT-2
+depende: TA-142
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=260 archivos=3 ca=0 migraciones=0 total=420
+cubre: REP-hormiga
+pru: PRU-DOM-REP-105
+compartido: —
+```
+
+**Qué construir.**
+- Selector `hormiga` (06 §3.5.8): grupos por comercio (BE-43) y por categoría, deduplicación por compras compartidas y enlace a Actividad; umbrales HORMIGA_* en `umbrales.ts`.
+
+**Leer.** 06 §3.5.8; 04 §6.9.6 (BE-43).
+
+**Archivos.** `packages/dominio/src/selectores/reportes/{hormiga,umbrales,index}.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-REP-105** (nueva, DT-17): 12 cafeterías dan un hallazgo de categoría; el solapamiento deja el de mayor total; 4 compras no alcanzan.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-REP-105"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
+**Sin verificar.** El `estado` de los hallazgos frente a 05 §10.3; el filtro de cuentas K sí se aplica en este selector.
+
+#### TA-239 Reporte de suscripciones (parte 3 de TA-142)
+
+Parte 3 de TA-142 (DT-02, 08 §1.2). El punto de partida es la rama `ta-142-reportes-accionables` (PR #60, sin mergear): trae `suscripciones.ts` escrito y probado.
+
+```tarea
+orden: 614
+bloque: B2
+hito: HT-2
+depende: TA-142
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=250 archivos=3 ca=0 migraciones=0 total=400
+cubre: REP-suscripciones
+pru: PRU-DOM-REP-106
+compartido: —
+```
+
+**Qué construir.**
+- Selector `suscripciones` (06 §3.5.9): detección sobre los 4 últimos períodos cerrados, programada desactivada, "Ya programadas" y acciones como datos; umbrales SUSC_* en `umbrales.ts`.
+
+**Leer.** 06 §3.5.9; 04 §6.9.6 (BE-43).
+
+**Archivos.** `packages/dominio/src/selectores/reportes/{suscripciones,umbrales,index}.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-REP-106** (nueva, DT-17): la clave de BE-43 une las variantes, reactiva la programada desactivada, exige 3 de 4 períodos y con menos de 4 cerrados no detecta.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-REP-106"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
+**Sin verificar.** La tolerancia propuesta (la mayor diferencia respecto de la mediana entre los cobros que cuentan como tales; 06 §3.5.9 no aclara si son esos o todas las transacciones de la clave); el `estado` de los hallazgos frente a 05 §10.3.
 
 #### TA-143 Reportes de tarjetas, hallazgos y flujo de efectivo (CF-02, CF-04)
 
