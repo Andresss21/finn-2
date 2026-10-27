@@ -29,7 +29,7 @@
 
   "TA-015": { "estado": "terminada", "pr": 14 },
 
-  "TA-050": { "estado": "terminada", "pr": 81 },
+  "TA-050": { "estado": "en_curso", "rama": "ta-050-arnes-pg-3" },
 
   "TA-051": { "estado": "pendiente" },
 

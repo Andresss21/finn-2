@@ -76,6 +76,41 @@ jobs:
           restore-keys: ci-modo-
       - id: rapido
         run: pnpm ci:rapido
+      # CH-22: la imagen de PostgreSQL de integracion, por digest (infra/versiones.env), desde la caché, ECR
+      # con 3 intentos o el espejo de Google; se etiqueta como la pide el arnés para que testcontainers no la baje.
+      - id: pg-version
+        if: steps.rapido.outputs.integracion == 'true'
+        run: grep -E '^(PG_MAYOR|PG_IMAGEN_DIGEST)=' infra/versiones.env >> "$GITHUB_OUTPUT"
+      - if: steps.rapido.outputs.integracion == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/finn-pg
+          key: pg-${{ steps.pg-version.outputs.PG_MAYOR }}-${{ steps.pg-version.outputs.PG_IMAGEN_DIGEST }}
+      - id: pg-imagen
+        if: steps.rapido.outputs.integracion == 'true'
+        env:
+          PG_MAYOR: ${{ steps.pg-version.outputs.PG_MAYOR }}
+          PG_IMAGEN_DIGEST: ${{ steps.pg-version.outputs.PG_IMAGEN_DIGEST }}
+        run: |
+          set -euo pipefail
+          ecr="public.ecr.aws/docker/library/postgres"
+          tar="$HOME/.cache/finn-pg/postgres.tar"
+          if [ -f "$tar" ]; then
+            docker load -i "$tar"
+            exit 0
+          fi
+          origen=""
+          for i in 1 2 3; do
+            if docker pull "${ecr}@${PG_IMAGEN_DIGEST}"; then origen="$ecr"; break; fi
+            sleep $((i * 15))
+          done
+          if [ -z "$origen" ]; then
+            origen="mirror.gcr.io/library/postgres"
+            docker pull "${origen}@${PG_IMAGEN_DIGEST}"
+          fi
+          docker tag "${origen}@${PG_IMAGEN_DIGEST}" "${ecr}:${PG_MAYOR}"
+          mkdir -p "$(dirname "$tar")"
+          docker save -o "$tar" "${ecr}:${PG_MAYOR}"
       - if: steps.rapido.outputs.integracion == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}

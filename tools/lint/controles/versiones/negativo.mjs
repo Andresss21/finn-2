@@ -1,7 +1,8 @@
 // Control negativo de versiones.mjs: debe pasar en un árbol coherente y fallar
-// con un config.toml de otra versión mayor, un engines.node distinto o un Playwright distinto.
+// con un config.toml de otra versión mayor, un engines.node distinto, un Playwright distinto o un digest
+// de imagen mal formado (CH-22).
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,11 +11,17 @@ const aqui = dirname(fileURLToPath(import.meta.url));
 const raizRepo = join(aqui, '..', '..', '..', '..');
 const versiones = join(raizRepo, 'tools', 'pruebas', 'versiones.mjs');
 
-function armar({ pg = '17', node = '24.x', lock = null }) {
+function armar({ pg = '17', node = '24.x', lock = null, digest = null }) {
   const d = mkdtempSync(join(tmpdir(), 'finn-versiones-'));
   mkdirSync(join(d, 'infra'));
   mkdirSync(join(d, 'supabase'));
-  copyFileSync(join(raizRepo, 'infra', 'versiones.env'), join(d, 'infra', 'versiones.env'));
+  const env = join(d, 'infra', 'versiones.env');
+  copyFileSync(join(raizRepo, 'infra', 'versiones.env'), env);
+  if (digest !== null)
+    writeFileSync(
+      env,
+      readFileSync(env, 'utf8').replace(/^PG_IMAGEN_DIGEST=.*$/m, `PG_IMAGEN_DIGEST=${digest}`),
+    );
   writeFileSync(join(d, 'supabase', 'config.toml'), `[db]\nport = 54322\nmajor_version = ${pg}\n`);
   writeFileSync(join(d, 'package.json'), JSON.stringify({ engines: { node } }));
   if (lock) writeFileSync(join(d, 'pnpm-lock.yaml'), lock);
@@ -36,6 +43,8 @@ const casos = [
   ['engines.node distinto falla', { node: '22.x' }, 1],
   ['@playwright/test distinto en el lockfile falla', { lock: "'@playwright/test@1.55.0':\n" }, 1],
   ['@playwright/test 1.56.x en el lockfile pasa', { lock: "'@playwright/test@1.56.1':\n" }, 0],
+  ['PG_IMAGEN_DIGEST que no es sha256 falla', { digest: '17' }, 1],
+  ['PG_IMAGEN_DIGEST vacío falla', { digest: '' }, 1],
 ];
 let fallos = 0;
 for (const [nombre, opciones, esperado] of casos) {
