@@ -266,6 +266,22 @@ export type ComandoOp27 = AltaTransaccion & {
     | { readonly modalidad: 'transferencia_deuda'; readonly tarjetaDestinoId: Uuid }
   );
 
+// ── TA-137: inversiones y desembolso (04 §3.4).
+/** OP-25: en el ajuste, `total` lleva signo (MontoTextoConSigno ≠ 0) y no hay cuenta de efectivo. */
+export type ComandoOp25 = AltaTransaccion & {
+  readonly operacion: 'OP-25';
+  readonly inversionId: Uuid;
+} & (
+    | { readonly modalidad: 'aporte'; readonly cuentaId: Uuid; readonly categoriaId: Uuid }
+    | { readonly modalidad: 'retiro'; readonly cuentaId: Uuid }
+    | { readonly modalidad: 'ajuste' }
+  );
+export interface ComandoOp26 extends AltaTransaccion {
+  readonly operacion: 'OP-26';
+  readonly prestamoId: Uuid;
+  readonly cuentaId: Uuid;
+}
+
 // ── TA-118: editar, eliminar y estado bancario (04 §3.4). `esperado` lo compara la aplicación (4.6.2).
 /** Una línea de la lista completa de OP-28: con `lineaId` se conserva; sin `destino`, el suyo. */
 export interface LineaEditada {
@@ -462,7 +478,10 @@ export type ComandoDominio =
   // TA-121
   | ComandoOp36
   | ComandoOp37
-  | ComandoOp40;
+  | ComandoOp40
+  // TA-137
+  | ComandoOp25
+  | ComandoOp26;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =

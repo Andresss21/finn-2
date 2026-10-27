@@ -41,6 +41,8 @@ import { op21 } from './op-21';
 import { op22 } from './op-22';
 import { op23 } from './op-23';
 import { op24 } from './op-24';
+import { op25 } from './op-25';
+import { op26 } from './op-26';
 import { op27 } from './op-27';
 import { op28 } from './op-28';
 import { op29 } from './op-29';
@@ -120,6 +122,9 @@ const OPERACIONES: {
   'OP-36': op36,
   'OP-37': op37,
   'OP-40': op40,
+  // TA-137: inversiones y desembolso.
+  'OP-25': op25,
+  'OP-26': op26,
 };
 
 /** AV-01 (§5.0.3): impacto retroactivo, antes y después de confirmar. */
