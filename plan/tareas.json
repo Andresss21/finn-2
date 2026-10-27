@@ -133,7 +133,7 @@
 
   "TA-136": { "estado": "pendiente" },
 
-  "TA-137": { "estado": "en_curso", "rama": "ta-137-inversiones" },
+  "TA-137": { "estado": "terminada", "pr": 79 },
 
   "TA-138": { "estado": "pendiente" },
 
