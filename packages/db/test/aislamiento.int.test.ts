@@ -50,7 +50,7 @@ async function correrArchivos(compartida: string): Promise<Informe> {
   }
 }
 
-const propia = await crearBasePrueba();
+const propia = crearBasePrueba();
 
 it('PRU-INT-ESQ-101 dos archivos a la vez usan bases distintas clonadas de la plantilla y ninguno ve las filas del otro', async () => {
   const admin = new pg.Client({ connectionString: propia.urlAdmin });

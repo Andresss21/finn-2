@@ -4,7 +4,7 @@
 // sea el orden en que corran.
 import pg from 'pg';
 import { expect, it } from 'vitest';
-import { crearBasePrueba, urlDe, type BasePrueba } from '../ayudantes/base.ts';
+import { baseLlamada, crearBasePrueba, type BasePrueba } from '../ayudantes/base.ts';
 
 declare module 'vitest' {
   interface TaskMeta {
@@ -12,19 +12,15 @@ declare module 'vitest' {
   }
 }
 
-async function base(): Promise<BasePrueba> {
+function base(): BasePrueba {
   const compartida = process.env['FINN_ARNES_COMPARTIDA'];
-  if (compartida === undefined || compartida === '') return crearBasePrueba();
-  return {
-    nombre: compartida,
-    url: urlDe(compartida, 'app'),
-    urlMigraciones: urlDe(compartida, 'migraciones'),
-    urlAdmin: urlDe(compartida, 'admin'),
-  };
+  return compartida === undefined || compartida === ''
+    ? crearBasePrueba()
+    : baseLlamada(compartida);
 }
 
-export async function probarAislamiento(archivo: string): Promise<void> {
-  const b = await base();
+export function probarAislamiento(archivo: string): void {
+  const b = base();
   it(`archivo ${archivo}: ve solo su fila`, async ({ task }) => {
     task.meta.base = b.nombre;
     const c = new pg.Client({ connectionString: b.urlMigraciones });

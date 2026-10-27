@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
-import { afterAll, inject } from 'vitest';
+import { afterAll, beforeAll, inject } from 'vitest';
 import type { TestProject } from 'vitest/node';
 
 export type Rol = 'admin' | 'migraciones' | 'app';
@@ -57,6 +57,8 @@ export async function prepararPlantilla(urlMigraciones: string): Promise<void> {
 
 /** globalSetup de `integracion`: si algo falla, Vitest termina sin correr pruebas (07 §5.2, paso 4). */
 export async function setup(proyecto: TestProject): Promise<() => Promise<void>> {
+  // `vitest list` (pnpm pruebas:listar, 07 §2.1) solo recolecta: no necesita Docker ni descarga la imagen
+  if (process.argv.includes('list')) return () => Promise.resolve();
   // En CI el runner es efímero: sin Ryuk no se descarga su imagen de Docker Hub (07 §5.2, paso 1)
   if (process.env['CI']) process.env['TESTCONTAINERS_RYUK_DISABLED'] ??= 'true';
   const { PostgreSqlContainer } = await import('@testcontainers/postgresql');
@@ -108,20 +110,31 @@ async function comoAdmin(sql: string): Promise<void> {
   }
 }
 
+/** Una base del contenedor por su nombre; las URL se leen en las pruebas, no al recolectar. */
+export const baseLlamada = (nombre: string): BasePrueba => ({
+  nombre,
+  get url() {
+    return urlDe(nombre, 'app');
+  },
+  get urlMigraciones() {
+    return urlDe(nombre, 'migraciones');
+  },
+  get urlAdmin() {
+    return urlDe(nombre, 'admin');
+  },
+});
+
 /**
  * La base de este archivo: `CREATE DATABASE … TEMPLATE finn_plantilla`, marcada con
- * `finn.reloj_simulado = on`. Se llama al cargar el archivo (fuera de una prueba o un hook), porque
- * registra el `afterAll` que la borra al terminar.
+ * `finn.reloj_simulado = on`, en un `beforeAll`; un `afterAll` la borra al terminar el archivo. Se llama
+ * al cargar el archivo (fuera de una prueba o un hook); recolectar no toca la base.
  */
-export async function crearBasePrueba(): Promise<BasePrueba> {
+export function crearBasePrueba(): BasePrueba {
   const nombre = `finn_p_${randomUUID().replaceAll('-', '')}`;
+  beforeAll(async () => {
+    await comoAdmin(`CREATE DATABASE ${nombre} TEMPLATE ${PLANTILLA}`);
+    await comoAdmin(`ALTER DATABASE ${nombre} SET finn.reloj_simulado = on`);
+  });
   afterAll(() => comoAdmin(`DROP DATABASE IF EXISTS ${nombre} WITH (FORCE)`));
-  await comoAdmin(`CREATE DATABASE ${nombre} TEMPLATE ${PLANTILLA}`);
-  await comoAdmin(`ALTER DATABASE ${nombre} SET finn.reloj_simulado = on`);
-  return {
-    nombre,
-    url: urlDe(nombre, 'app'),
-    urlMigraciones: urlDe(nombre, 'migraciones'),
-    urlAdmin: urlDe(nombre, 'admin'),
-  };
+  return baseLlamada(nombre);
 }
