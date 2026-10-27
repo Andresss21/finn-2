@@ -229,7 +229,7 @@ describe('PRU-DOM-CTA-104: aplicar, inversiones y desembolso (01 §5.4, §4.13; 
     ]);
   });
 
-  it('PRU-DOM-CTA-104 OP-25: el retiro (inversión −X, efectivo +X) admite X = valor, entra a LPA como otras entradas y rechaza X > valor', () => {
+  it('PRU-DOM-CTA-104 OP-25: el retiro (inversión −X, efectivo +X) admite X = valor, entra a LPA como otras entradas y rechaza un X mayor que el valor', () => {
     const h1 = hechos(H0, op25('aporte', 200));
     expect(codigos(aplicarEn(h1, op25('retiro', 200.01)))).toEqual(['retiro_mayor_que_valor']);
     expect(rechazos(aplicarEn(h1, op25('retiro', 200.01)))[0]?.datos).toMatchObject({
