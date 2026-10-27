@@ -47,6 +47,9 @@ import { op29 } from './op-29';
 import { op30 } from './op-30';
 import { op31 } from './op-31';
 import { op35 } from './op-35';
+import { op36 } from './op-36';
+import { op37 } from './op-37';
+import { op40 } from './op-40';
 import { op46 } from './op-46';
 import { op47 } from './op-47';
 import { op48 } from './op-48';
@@ -113,6 +116,10 @@ const OPERACIONES: {
     op46(antes, x, (a, y) => (OPERACIONES[y.operacion] as Manejador<AltaDesdeEstado>)(a, y)),
   'OP-47': op47,
   'OP-53': op53,
+  // TA-121: editar, aprobar y resolver movimientos.
+  'OP-36': op36,
+  'OP-37': op37,
+  'OP-40': op40,
 };
 
 /** AV-01 (§5.0.3): impacto retroactivo, antes y después de confirmar. */

@@ -373,6 +373,52 @@ export interface ComandoOp53 {
   readonly marcar: { readonly todas: true } | { readonly ids: readonly Uuid[] };
 }
 
+// ── TA-121: editar, aprobar y resolver movimientos (04 §3.6). `esperado` lo compara la aplicación (4.6.2).
+/** El movimiento [H] y sus líneas, que resuelve la aplicación (BE-10). */
+export interface MovimientoConLineas {
+  readonly movimiento: Movimiento;
+  readonly lineas: readonly MovimientoLinea[];
+}
+/** Destino de una línea de movimiento (04 OP-36); sin destino, la línea queda sin destino. */
+export type DestinoMovimiento = DestinoLinea | { readonly lineaOriginalId: Uuid };
+/** OP-36: solo los campos que cambian; `lineas` es la lista completa. */
+export interface ComandoOp36 extends MovimientoConLineas {
+  readonly operacion: 'OP-36';
+  readonly ids: GeneradorIds;
+  readonly campos: Partial<
+    Pick<Movimiento, 'cuentaId' | 'fecha' | 'monto' | 'comercio' | 'tipoPropuesto' | 'nota'>
+  >;
+  readonly lineasNuevas?: readonly {
+    readonly monto: Centavos;
+    readonly destino?: DestinoMovimiento;
+  }[];
+}
+/** Lo que OP-37 agrega al movimiento (también la confirmación de OP-40). */
+export interface AprobacionMovimiento {
+  readonly id: Uuid; // de la transacción nueva; no se usa si se vincula a una registrada
+  readonly instante: Instante; // de la operación (cambio posterior de una registrada conciliada)
+  readonly recibidoEn: Instante; // del SMS: hora de registro y clave de orden (D2)
+  readonly ids: GeneradorIds;
+  readonly origenId?: Uuid; // obligatorio en un pago de tarjeta
+  readonly recordarRegla?: boolean;
+  readonly reglas?: readonly ReglaComercio[]; // las actuales, con `recordarRegla`
+}
+/** OP-37; con `categoriaId`, la variante "aprobar con categoría" (CF-21), sin `recordarRegla`. */
+export interface ComandoOp37 extends MovimientoConLineas, AprobacionMovimiento {
+  readonly operacion: 'OP-37';
+  readonly categoriaId?: Uuid;
+}
+/** OP-40: para rechazar una coincidencia, la bandeja y el texto del SMS (duplicados, §4.17). */
+export type ComandoOp40 = MovimientoConLineas & { readonly operacion: 'OP-40' } & (
+    | ({ readonly decision: 'confirmar_coincidencia' } & AprobacionMovimiento)
+    | {
+        readonly decision: 'rechazar_coincidencia';
+        readonly texto: string;
+        readonly movimientos: readonly MovimientoConTexto[];
+      }
+    | { readonly decision: 'es_legitimo' | 'es_duplicado' }
+  );
+
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
 export type ComandoDominio =
   | ComandoOp01
@@ -412,7 +458,11 @@ export type ComandoDominio =
   // TA-123
   | ComandoOp46
   | ComandoOp47
-  | ComandoOp53;
+  | ComandoOp53
+  // TA-121
+  | ComandoOp36
+  | ComandoOp37
+  | ComandoOp40;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =
