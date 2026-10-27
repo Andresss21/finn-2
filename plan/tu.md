@@ -32,3 +32,6 @@ RESULTADO: PASA
 
 | TU-03 | 2026-10-26 | hecho | RAM=32 GB (30,9 visibles), WSL2 memory=15 GB, processors=8 |
 | TU-06 | 2026-10-26 | hecho | Proyecto finn-2, server_version_num=170011 (PG 17) |
+| TU-01 | 2026-10-24 | hecho | Repositorio privado finn-2 y token de grano fino de los agentes |
+| TU-02 | 2026-10-24 | hecho | La 1.0 sin workflows activos; sin minutos consumidos |
+| TU-13 | 2026-10-26 | hecho | SMS BAC: compra (2), sin_clasificar (1); CSV: bac_debito (1), bac_tarjeta (2). Ver pruebas/muestras-cobertura.json |
