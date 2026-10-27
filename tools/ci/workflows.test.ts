@@ -57,6 +57,7 @@ const SCRIPTS: Record<string, string[]> = {
   e2e: ['ci:e2e'],
   cierre: ['ci:cierre'],
 };
+const PREPARACION = ['gitleaks', 'pg-version', 'pg-imagen'];
 
 describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
   it('workflows: corre en pull_request (opened, synchronize, ready_for_review) y en push a main', () => {
@@ -97,7 +98,8 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
 
   it('workflows: cada job llama solo a su pnpm ci:<job> (DP-34)', () => {
     for (const [n, j] of Object.entries(wf.jobs)) {
-      const runs = j.steps.filter((p) => p.run !== undefined && p.id !== 'gitleaks');
+      // gitleaks y la imagen de PostgreSQL (CH-22) preparan herramientas; no son suites
+      const runs = j.steps.filter((p) => p.run !== undefined && !PREPARACION.includes(p.id ?? ''));
       const scripts = runs.map((p) => p.run?.trim()).filter((r) => r !== INSTALAR);
       expect(scripts, n).toEqual((SCRIPTS[n] ?? []).map((s) => `pnpm ${s}`));
       expect(
@@ -148,6 +150,35 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
       expect(job(n).steps.some((p) => p.id === 'gitleaks' || /gitleaks/.test(p.run ?? ''))).toBe(
         false,
       );
+  });
+
+  it('workflows: la imagen de PostgreSQL se baja por digest de versiones.env, con caché, antes de ci:integracion y solo con integracion (CH-22)', () => {
+    const pasos = job('rapido').steps;
+    const i = (id: string): number => pasos.findIndex((p) => p.id === id);
+    const integ = pasos.findIndex((p) => p.run === 'pnpm ci:integracion');
+    const cache = pasos.findIndex(
+      (p, k) => k > i('pg-version') && k < i('pg-imagen') && p.uses?.startsWith('actions/cache@'),
+    );
+    expect(i('pg-version')).toBeGreaterThan(pasos.findIndex((p) => p.run === 'pnpm ci:rapido'));
+    expect(cache).toBeGreaterThan(i('pg-version'));
+    expect(i('pg-imagen')).toBeLessThan(integ);
+    for (const k of [i('pg-version'), cache, i('pg-imagen')])
+      expect(pasos[k]?.if).toBe("steps.rapido.outputs.integracion == 'true'");
+    expect(pasos[i('pg-version')]?.run).toContain('infra/versiones.env');
+    expect(pasos[cache]?.with?.['key']).toBe(
+      'pg-${{ steps.pg-version.outputs.PG_MAYOR }}-${{ steps.pg-version.outputs.PG_IMAGEN_DIGEST }}',
+    );
+    const script = pasos[i('pg-imagen')]?.run ?? '';
+    const pulls = [...script.matchAll(/docker pull "([^"]+)"/g)].map((m) => m[1]);
+    // ECR primero y el espejo de respaldo, siempre por digest; nunca un pull por tag
+    expect(pulls).toEqual(['${ecr}@${PG_IMAGEN_DIGEST}', '${origen}@${PG_IMAGEN_DIGEST}']);
+    expect(script).toContain('ecr="public.ecr.aws/docker/library/postgres"');
+    expect(script).toContain('origen="mirror.gcr.io/library/postgres"');
+    expect(script).not.toMatch(/docker pull [^\n]*:\$\{?PG_MAYOR/);
+    expect(script).toContain('docker tag "${origen}@${PG_IMAGEN_DIGEST}" "${ecr}:${PG_MAYOR}"');
+    expect(readFileSync(join(raiz, 'infra', 'versiones.env'), 'utf8')).toMatch(
+      /^PG_IMAGEN_DIGEST=sha256:[0-9a-f]{64}$/m,
+    );
   });
 
   it('workflows: acciones fijadas por commit y Node de infra/versiones.env', () => {

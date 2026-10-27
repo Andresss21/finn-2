@@ -9,8 +9,12 @@ const raiz = resolve(process.argv[2] ?? join(dirname(fileURLToPath(import.meta.u
 const v = leerVersiones(raiz);
 const errores = [];
 
-for (const k of ['PG_MAYOR', 'NODE', 'PLAYWRIGHT', 'SUPABASE_CLI']) {
+for (const k of ['PG_MAYOR', 'PG_IMAGEN_DIGEST', 'NODE', 'PLAYWRIGHT', 'SUPABASE_CLI']) {
   if (!v[k]) errores.push(`infra/versiones.env: falta ${k}`);
+}
+// CH-22: la imagen de PostgreSQL de CI se baja por digest del índice
+if (v.PG_IMAGEN_DIGEST && !/^sha256:[0-9a-f]{64}$/.test(v.PG_IMAGEN_DIGEST)) {
+  errores.push(`infra/versiones.env: PG_IMAGEN_DIGEST=${v.PG_IMAGEN_DIGEST} no es sha256:<64 hex>`);
 }
 
 // supabase/config.toml: db.major_version
