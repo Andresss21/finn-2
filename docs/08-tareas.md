@@ -1483,6 +1483,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-18** | Ruta de los scripts de trazabilidad portados. TA-252 los porta a `tools/docs/`, pero 04 §18.4 decía `tools/ci/trazabilidad.py` y 05 §15 y §16, `tools/ci/` para `cobertura.py` y `trazabilidad.py`: quedaban dos scripts distintos con la misma ruta. 04 §18.4 (BE-63) pasa a `tools/docs/t17.py` (portado del zip), que `pnpm docs:comprobar` corre en `rapido` cuando el diff toca `docs/`; 05 §15 y §16 pasan a `tools/docs/fase5/trazabilidad.py` y `tools/docs/fase5/` (con `cobertura.py`); en TA-252, **Archivos** cambia "`.github/workflows/ci.yml` (paso condicional)" por "`tools/ci/afecta.mjs` (paso condicional de `rapido`, DP-34) y `package.json` (script)". Solo documentos | 04 §18.4; 05 §15, §16; 08 TA-252 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-18]** en TA-252 (corrección) |
 | **CH-19** | Dónde vive el diferencial contra el oráculo. TA-112 pedía `packages/dominio/test/diferencial.prop.test.ts`, que lanza `motor_min.py` con `python -I`, pero 02 ADR-21 prohíbe E/S y módulos de Node en `@finn/dominio` (ESLint y dependency-cruiser lo aplican también a sus pruebas) y 07 §1.1 da a `PROP` la frontera de `DOM` (sin E/S). El diferencial pasa a `tools/pruebas/oraculo/diferencial.prop.test.ts`, junto al oráculo (07 §3.1, CT-05), nivel `PROP` del proyecto `unidad`; importa `calcular` y `hechosArb` por ruta relativa y `fast-check` 4.10.2 se agrega a la raíz. 07 §1.1 (fila `PROP`, "Dónde vive") y §19.4 (`FINN_MUTANTE` lo lee solo `vitest.config.ts`; L20 no lo cubre) se enmiendan; en TA-112 cambia **Archivos**. Sin excepciones de lint ni de depcruise | 07 §1.1, §19.4; 08 TA-112 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-19]** en TA-112 |
 | **CH-20** | Cuarto redondeo para el reparto de los reportes. TA-129 implementó el reparto por resto mayor de 06 §3.5.3 (FD-19: cada parte es la proporcional truncada y los centavos que faltan van a las partes con el resto mayor) en `selectores/reportes/ritmo.ts`, con productos y restos de montos en `bigint` fuera de `centavos.ts`, pero 01 §0.4 dice "Ninguna otra regla del motor divide montos", 02 RT-07 y ADR-15 hablan de tres redondeos y ADR-21 deja a `centavos.ts` como único módulo que divide montos. 01 §0.4 agrega al "Redondeo" el reparto por resto mayor de los reportes, informativo y sin efecto presupuestario; RT-07 y ADR-15 pasan a cuatro: `⌊m·w_i / W⌋` en `bigint` dentro de `centavos.ts` y los centavos que faltan a los restos `(m·w_i) mod W` mayores, con el desempate que da el llamador. `Centavos.repartirPorRestoMayor` lo implementa y `repartir` de `ritmo.ts` la llama sin aritmética propia; PRU-DOM-VAL-103 cubre la suma exacta, el resto empatado y un producto mayor que 2^53. No cambia ningún número de PRU-PROP-REP-002 | 01 §0.4; 02 RT-07, ADR-15 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-20]** en TA-129 (corrección) |
+| **CH-21** | `migrate deploy` en el arnés antes de que existan las migraciones de B1. TA-050 pide "`prisma migrate deploy` como `finn_migraciones` sobre `finn_plantilla`" y que la prueba pase en CI, pero el criterio de HT-1 dice "La migración 15 (formatos del BAC, TA-181) llega en B3", y esa migración ya está en `main` (#23) mientras las de TA-051 no: sobre la plantilla, `20261025000000_m_formatos_bac` falla con `ERROR: function finn.tomar_bloqueo() does not exist` (`tomar_bloqueo` la crea `m_funciones`, y `finn.formatos_bancarios`, `g_tablas`); además, la CLI de Prisma y `packages/db/prisma.config.ts` son archivos de TA-051. TA-050 deja el contenedor, el bootstrap, los roles de Supabase, `finn_plantilla` con el esquema `finn` de `finn_migraciones`, un gancho `prepararPlantilla(url)` sin migraciones y `crearBasePrueba()`; PRU-INT-ESQ-101 crea su propia tabla en cada base. TA-051 completa el gancho con `migrate deploy` y C3, C5 y C6 (`tools/db/plantilla.ts`) y agrega la CLI `prisma`. En TA-181, la dependencia de TA-051 queda como nota y no en `depende`, porque `plan:verificar` (S5) no acepta una tarea `terminada` con una dependencia `pendiente`; sus carpetas (20261011…) ordenan antes que 20261025, así que `migrate deploy` las aplica bien. En TA-050, **Archivos** usa el `vitest.config.ts` de la raíz (07 §2.3: un solo archivo con los proyectos) en lugar de `packages/db/vitest.config.ts`. 07 §5.2 no cambia: describe el job completo, que queda armado con TA-051 | 08 TA-050, TA-051, TA-181; criterio de HT-1 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-21]** en TA-050 |
 
 ---
 
@@ -1763,13 +1764,14 @@ compartido: —
 **Qué construir.**
 - `tools/db/bootstrap.sql` **portado** desde 03 §10.4.1 (DT-14): roles `finn_*`, esquema, `GRANT CREATE ON DATABASE`, `search_path` de `finn_migraciones`.
 - `tools/pruebas/roles-supabase.sql`: `anon`, `authenticated` y `service_role` sin privilegios (07 §5.2, paso 2).
-- `packages/db/test/ayudantes/base.ts`: contenedor de `PG_MAYOR` (leído de `infra/versiones.env`) desde `public.ecr.aws/docker/library/postgres`; bootstrap y roles como superusuario; `prisma migrate deploy` como `finn_migraciones` sobre `finn_plantilla`; `crearBasePrueba()` con `CREATE DATABASE … TEMPLATE finn_plantilla`, marca `finn.reloj_simulado = on` y borrado al terminar el archivo.
+- `packages/db/test/ayudantes/base.ts`: contenedor de `PG_MAYOR` (leído de `infra/versiones.env`) desde `public.ecr.aws/docker/library/postgres`; bootstrap y roles como superusuario; `finn_plantilla` con el esquema `finn` de propiedad de `finn_migraciones` y el gancho `prepararPlantilla(url)`, sin migraciones **[CH-21]**; `crearBasePrueba()` con `CREATE DATABASE … TEMPLATE finn_plantilla`, marca `finn.reloj_simulado = on` y borrado al terminar el archivo.
+- **[CH-21]** `prisma migrate deploy` como `finn_migraciones` sobre `finn_plantilla` y la CLI de Prisma pasan a TA-051, que completa el gancho.
 - `PG_MAYOR` en `infra/versiones.env` con la versión mayor que informaste en TU-06 (H-01); `versiones.mjs` sigue pasando.
 - El job `integracion` (TA-012, fusionado con `rapido` por M5) llama al ayudante antes de las suites `INT`, `ESQ` y `ESC@int`.
 
 **Leer.** 03 §10.4.1, §11.3; 07 §5.1, §5.2, §5.3 (tabla de piezas de Supabase); DT-14 de este documento.
 
-**Archivos.** `tools/db/bootstrap.sql` (portado), `tools/pruebas/roles-supabase.sql`, `packages/db/test/ayudantes/base.ts`, `packages/db/vitest.config.ts`, `infra/versiones.env`, `package.json` (script `test:integracion`).
+**Archivos.** `tools/db/bootstrap.sql` (portado), `tools/pruebas/roles-supabase.sql`, `packages/db/test/ayudantes/base.ts`, `vitest.config.ts` (proyecto `integracion`, 07 §2.3) **[CH-21]**, `infra/versiones.env`, `package.json` (script `test:integracion`); `packages/db/package.json`, `packages/db/tsconfig.json` y `pnpm-lock.yaml` (Testcontainers y `pg`) **[CH-21]**.
 
 **Pruebas primero.**
 - **PRU-INT-ESQ-101** (nueva, DT-17): dos archivos de prueba en paralelo usan bases distintas clonadas de la plantilla; uno no ve las filas del otro.
@@ -1778,7 +1780,7 @@ compartido: —
 
 **Comandos.** `pnpm test:integracion -t "PRU-INT-ESQ-101"`; `node tools/pruebas/versiones.mjs`; `pnpm ci:local`.
 
-**Terminada cuando.** La prueba pasa en Windows con Docker Desktop y en CI; `PG_MAYOR` coincide con H-01; el control falla como debe.
+**Terminada cuando.** La prueba pasa en Windows con Docker Desktop y en CI; `PG_MAYOR` coincide con H-01; el control falla como debe; `integracion` en verde en el PR. Sin migraciones aplicadas en la plantilla **[CH-21]**.
 
 #### TA-051 Esquema y migraciones de las fases 3 y 4, con C3, C5 y C6
 
@@ -1801,6 +1803,7 @@ excepcion: DT-15 migraciones=8
 - **Portado** (DT-14), sin cambiar un byte: `packages/db/prisma/schema.prisma` (03 §10.3), las 7 carpetas de 03 §10.1 (`m_inicio`, `g_tablas`, `m_restricciones`, `m_funciones`, `m_triggers`, `m_seguridad`, `m_datos_iniciales`) y `m_purgar_eliminaciones` de EN-2 (04 §10.2), con las fechas de carpeta de 03 §10.1 y de EN-2.
 - **Portado** desde el zip de la Fase 3: `tools/db/catalogo.sql`, `tools/db/reglas-catalogo.sql` (R1–R13) más R14 del zip de la Fase 4 (`sql/03_regla_r14.sql`), y `packages/db/prisma/catalogo-esperado.txt` regenerado en la plantilla (03 §11.5, paso 5).
 - `tools/db/plantilla.ts`: C3 (bootstrap + `migrate deploy` desde cero), C5 (`reglas-catalogo.sql` sin filas) y C6 (`catalogo.sql` frente a `catalogo-esperado.txt`), en ese orden, sobre la plantilla del arnés. Si uno falla, `integracion` termina sin correr pruebas (07 §5.2, paso 4).
+- **[CH-21]** `tools/db/plantilla.ts` completa el gancho `prepararPlantilla` de TA-050 con `migrate deploy` y C3, C5 y C6, y agrega la CLI `prisma`.
 - Excepción de tamaño DT-15: esta es la única tarea con más de una migración, porque C6 compara contra una instantánea del conjunto completo de 03 y EN-2.
 - CF-14: ninguna migración ni script importa datos de Finn 1.0 (P13 cerrada sin migración).
 
@@ -4906,6 +4909,7 @@ compartido: —
 **Qué construir.**
 - Migración manual `m_formatos_bac` con bloqueo (03 §11.2): F-1 reescrito desde las muestras del BAC (más los formatos del BAC que aparezcan) y F-2 y F-3 con `activo = false` (OPT-05).
 - Con esto `ci:politica-patrones` pasa (HT-5).
+- **[CH-21]** La migración usa `finn.tomar_bloqueo()` y `finn.formatos_bancarios`, que crean `m_funciones` y `g_tablas`: `migrate deploy` la aplica solo con las carpetas de TA-051, que ordenan antes. TA-051 no va en `depende` porque esta tarea ya está `terminada` (S5 de `plan:verificar`).
 
 **Leer.** 03 §7.6, §9.5, §11.2; 04 §8.5, OPT-05, SP-01, RS-03; §6 de este documento.
 

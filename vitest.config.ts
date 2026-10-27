@@ -129,6 +129,8 @@ export default defineConfig({
             'apps/web/src/app/api/**/*.rh.test.ts',
           ],
           exclude: excluidos,
+          // Arnés de PostgreSQL (TA-050, 07 §5.2): contenedor, bootstrap y plantilla antes de las suites
+          globalSetup: ['packages/db/test/ayudantes/base.ts'],
           testTimeout: 30_000,
           hookTimeout: 120_000,
         },
