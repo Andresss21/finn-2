@@ -30,3 +30,5 @@ RESULTADO: PASA
 
 ```
 
+| TU-03 | 2026-10-26 | hecho | RAM=32 GB (30,9 visibles), WSL2 memory=15 GB, processors=8 |
+| TU-06 | 2026-10-26 | hecho | Proyecto finn-2, server_version_num=170011 (PG 17) |
