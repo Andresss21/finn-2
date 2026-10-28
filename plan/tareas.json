@@ -115,7 +115,7 @@
 
   "TA-237": { "estado": "terminada", "pr": 51 },
 
-  "TA-232": { "estado": "en_curso", "rama": "ta-232-bandeja" },
+  "TA-232": { "estado": "terminada", "pr": 105 },
 
   "TA-233": { "estado": "pendiente" },
 
