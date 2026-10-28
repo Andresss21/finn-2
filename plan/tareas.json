@@ -41,7 +41,7 @@
 
   "TA-055": { "estado": "terminada", "pr": 88 },
 
-  "TA-056": { "estado": "pendiente" },
+  "TA-056": { "estado": "en_curso", "rama": "ta-056-reloj-base" },
 
   "TA-057": { "estado": "pendiente" },
 
