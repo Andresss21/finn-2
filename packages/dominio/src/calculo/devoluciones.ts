@@ -4,7 +4,7 @@
 import type { BigintTexto, Hechos, Instante, Linea, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import { destinos } from './destino';
+import { destinoDe } from './destino';
 import { type Ciclo, periodoDe } from './periodos';
 
 export type HechosDeConsumo = Pick<
@@ -76,10 +76,23 @@ export const cronologico = <T extends Momento>(xs: readonly T[]): T[] =>
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([, x]) => x);
 
-function indice(h: HechosDeConsumo) {
+/** Las filas por id, una vez por pasada [BE-23]; con ids repetidos queda la última. */
+export function porId<T extends { readonly id: Uuid }>(xs: readonly T[]): Map<Uuid, T> {
+  const m = new Map<Uuid, T>();
+  for (const x of xs) m.set(x.id, x);
+  return m;
+}
+
+function indice(
+  h: HechosDeConsumo,
+  transacciones: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
+) {
   const cuentas = new Map(h.cuentas.map((k) => [k.id, k]));
-  const transacciones = new Map(h.transacciones.map((t) => [t.id, t]));
-  const lineas = new Map(h.lineas.map((l) => [l.id, l]));
+  // Solo se buscan por id las líneas originales de una devolución y las de una condonación.
+  const buscadas = new Set<Uuid>(h.condonaciones.map((x) => x.lineaId));
+  for (const l of h.lineas) if (l.lineaOriginalId !== null) buscadas.add(l.lineaOriginalId);
+  const lineas = new Map<Uuid, Linea>();
+  for (const l of h.lineas) if (buscadas.has(l.id)) lineas.set(l.id, l);
   const medios = new Map<Uuid, Medio>();
   for (const e of h.efectos) {
     const k = cuentas.get(e.cuentaId);
@@ -104,15 +117,16 @@ function indice(h: HechosDeConsumo) {
     const t = tx(l.transaccionId);
     return { fecha: t.fecha, claveOrden: t.claveOrden, secuencia: t.secuencia, orden: l.orden };
   };
-  return { tx, medio, momento, linea: (id: Uuid) => lineas.get(id) };
+  return { tx, medio, momento, lineas, linea: (id: Uuid) => lineas.get(id) };
 }
 
 /** Las devoluciones a categoría con su caso D-1 a D-4, en orden cronológico. */
-export function clasificar(h: HechosDeConsumo, c: Ciclo): Devolucion[] {
-  const ix = indice(h);
-  const destino = destinos(h.lineas);
+export const clasificar = (h: HechosDeConsumo, c: Ciclo): Devolucion[] =>
+  clasificarCon(h, c, indice(h));
+
+function clasificarCon(h: HechosDeConsumo, c: Ciclo, ix: ReturnType<typeof indice>): Devolucion[] {
   const devoluciones = h.lineas.flatMap((e) => {
-    const { categoriaId } = destino(e);
+    const { categoriaId } = destinoDe(e, ix.lineas);
     if (categoriaId === null || ix.tx(e.transaccionId).tipo !== 'devolucion') return [];
     const m = ix.momento(e);
     const k = ix.medio(e.transaccionId);
@@ -146,10 +160,23 @@ export function clasificar(h: HechosDeConsumo, c: Ciclo): Devolucion[] {
 }
 
 /** Los consumos de §4.1 conv. 6 con su consumo neto, en orden cronológico. */
-export function consumos(h: HechosDeConsumo, c: Ciclo): Consumo[] {
-  const ix = indice(h);
+export const consumos = (h: HechosDeConsumo, c: Ciclo): Consumo[] => movimientos(h, c).consumos;
+
+/** `consumos` y `clasificar` de los mismos hechos, con un solo índice (una pasada, BE-23). */
+export interface Movimientos {
+  readonly consumos: Consumo[];
+  readonly devoluciones: Devolucion[];
+}
+
+export function movimientos(
+  h: HechosDeConsumo,
+  c: Ciclo,
+  transacciones: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
+): Movimientos {
+  const ix = indice(h, transacciones);
+  const devoluciones = clasificarCon(h, c, ix);
   const neteado = new Map<Uuid, Centavos>();
-  for (const d of clasificar(h, c))
+  for (const d of devoluciones)
     if (d.caso === 'D-1' && d.lineaOriginalId !== null)
       neteado.set(
         d.lineaOriginalId,
@@ -186,16 +213,21 @@ export function consumos(h: HechosDeConsumo, c: Ciclo): Consumo[] {
       neto: x.monto,
     };
   });
-  return cronologico([...deLineas, ...deCondonaciones]);
+  return { consumos: cronologico([...deLineas, ...deCondonaciones]), devoluciones };
 }
 
 /**
  * Aportes de las devoluciones D-2 a D-4. En D-3, a = mín(X, U_L − A_L) y r = X − a, con A_L la
  * suma de las partes a de las D-3 anteriores de L, en orden cronológico.
  */
-export function aportes(h: HechosDeConsumo, c: Ciclo, noCubierta: NoCubierta): Aporte[] {
+export const aportes = (h: HechosDeConsumo, c: Ciclo, noCubierta: NoCubierta): Aporte[] =>
+  aportesDe(clasificar(h, c), noCubierta);
+
+/** `aportes` sobre devoluciones clasificadas, en orden cronológico. A_L solo depende de las D-3
+ * anteriores de la misma L: basta con pasar esas y las que interesan. */
+export function aportesDe(devoluciones: readonly Devolucion[], noCubierta: NoCubierta): Aporte[] {
   const acumulado = new Map<Uuid, Centavos>();
-  return clasificar(h, c).flatMap((d): Aporte[] => {
+  return devoluciones.flatMap((d): Aporte[] => {
     const cero = Centavos.cero;
     if (d.caso === 'D-1') return [];
     if (d.caso === 'D-2') return [{ ...d, a: cero, aCategoria: d.monto, aPago: cero }];

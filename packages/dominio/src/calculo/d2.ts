@@ -29,6 +29,9 @@ export interface EntradaD2 {
   readonly arrastre: Centavos;
   /** Asig(c, p). */
   readonly asignado: Centavos;
+  /** `true` si `consumos` ya va en el orden de `cronologico` (un filtro de `consumos()`): no se
+   * reordena, porque ordenar un arreglo ya ordenado lo deja igual. */
+  readonly ordenados?: boolean;
 }
 
 export interface RepartoD2 {
@@ -80,7 +83,9 @@ export function repartoD2(e: EntradaD2): RepartoD2 {
   // Mutante 'orden' (07 §19.4): reparte por id y no en orden cronológico.
   const deCp = mutante('orden')
     ? [...deC].sort((a, b) => (a.id < b.id ? -1 : 1))
-    : cronologico(deC);
+    : e.ordenados === true
+      ? deC
+      : cronologico(deC);
 
   let restante = fondo;
   const partes = deCp.map((k): Parte => {

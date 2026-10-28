@@ -15,14 +15,15 @@ import type { Cuenta, Hechos, Instantanea, TablaMotor, Uuid } from '../hechos';
 import type { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
 import { type Clasificacion, clasificacion } from './clasificacion';
-import { type Presupuesto, presupuesto } from './disponible';
-import { type DetalleLpa, listoParaAsignar, lpaAlCierre } from './lpa';
+import { movimientos, porId } from './devoluciones';
+import { agrupar, type Presupuesto, presupuesto } from './disponible';
+import { type DetalleLpa, historialLpa, listoParaAsignar } from './lpa';
 import { type EvaluacionDeMeta, evaluarMeta } from './metas';
 import { type OcurrenciaPendiente, pendientes } from './ocurrencias';
 import { type PatrimonioNeto, patrimonioNeto } from './patrimonio';
 import { type Ciclo, ciclo, type Periodo } from './periodos';
 import { pagosImplicitos, type PorCobrar, porCobrar } from './por-cobrar';
-import { saldo, saldoConfirmado } from './saldos';
+import { saldo } from './saldos';
 import { reduccionProyectada, sobregiroConTarjetaDelActivo } from './sobregiros';
 import { type EstadoDeTarjeta, estadoDeTarjeta } from './tarjetas';
 
@@ -84,8 +85,12 @@ const clave = (x: object): string =>
 
 /** Tablas y filas ordenadas por nombre e id: la forma canónica de unos hechos (inv. 26). */
 function canonicos(h: Hechos): Hechos {
+  // La clave de cada fila se calcula una vez, no en cada comparación.
   const ordenar = (xs: readonly object[]) =>
-    [...xs].sort((a, b) => (clave(a) < clave(b) ? -1 : clave(a) > clave(b) ? 1 : 0));
+    xs
+      .map((x) => [clave(x), x] as const)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([, x]) => x);
   const tablas = (Object.keys(h) as TablaMotor[]).sort();
   return Object.fromEntries(tablas.map((t) => [t, ordenar(h[t])])) as unknown as Hechos;
 }
@@ -94,7 +99,9 @@ function canonicos(h: Hechos): Hechos {
 function congelar<T>(x: T): T {
   if (typeof x !== 'object' || x === null || Object.isFrozen(x)) return x;
   Object.freeze(x);
-  for (const v of Object.values(x)) congelar(v);
+  // Como recorrer `Object.values(x)`, sin copiar cada objeto en un arreglo.
+  if (Array.isArray(x)) for (const v of x) congelar(v);
+  else for (const k in x) if (Object.hasOwn(x, k)) congelar((x as Record<string, unknown>)[k]);
   return x;
 }
 
@@ -103,20 +110,27 @@ export function calcular(hechos: Hechos, hoy: FechaLocal): Instantanea {
   const h = canonicos(hechos);
   // §4.2: períodos; §4.3: saldos.
   const c = ciclo(h.vigencias_ciclo);
+  const txs = porId(h.transacciones);
+  // saldo(k) con solo los efectos de k y las transacciones por id: lo mismo que saldo(h, k).
+  const efectosDe = agrupar(h.efectos, (e) => e.cuentaId);
+  const saldoDe = (k: Uuid, filtro = {}) =>
+    saldo({ transacciones: [], efectos: efectosDe.get(k) ?? [] }, k, filtro, txs);
   const cuentas = h.cuentas.map((k) => ({
     cuentaId: k.id,
     tipo: k.tipo,
-    saldo: saldo(h, k.id),
-    confirmado: saldoConfirmado(h, k.id),
+    saldo: saldoDe(k.id),
+    confirmado: saldoDe(k.id, { confirmado: true }),
   }));
   // §4.10 antes que §4.6: los pagos implícitos de los cobros entran en Disp(pago(t)).
-  const cobros = porCobrar(h);
+  const cobros = porCobrar(h, undefined, txs);
   // §4.4 a §4.6 en el orden de §4.1 conv. 4: D2, normales, pago y arrastre, período a período,
   // con la proyección al final.
-  const b = presupuesto(h, c, hoy, pagosImplicitos(cobros), PERIODOS_PROYECTADOS);
+  // Consumos y devoluciones clasificadas, una vez para §4.4 a §4.6 y para §4.13.
+  const m = movimientos(h, c, txs);
+  const b = presupuesto(h, c, hoy, pagosImplicitos(cobros), PERIODOS_PROYECTADOS, m);
   const tarjetas = h.cuentas
     .filter((k) => k.tipo === 'tarjeta')
-    .map((k) => estadoDeTarjeta(h, b, k.id));
+    .map((k) => estadoDeTarjeta(h, b, k.id, saldoDe));
   const categorias = new Map(h.categorias.map((x) => [x.id, x]));
   const metas = h.metas.map((m) => {
     const x = categorias.get(m.categoriaId);
@@ -133,13 +147,11 @@ export function calcular(hechos: Hechos, hoy: FechaLocal): Instantanea {
     sobregiroConTarjeta: sobregiroConTarjetaDelActivo(b),
     reduccionProyectada: reduccionProyectada(b),
     tarjetas,
-    lpa: listoParaAsignar(h, b, cobros),
-    historialLpa: b.periodos
-      .filter((p) => p.inicio < b.activo.inicio)
-      .map((periodo) => ({ periodo, lpa: lpaAlCierre(h, b, periodo) })),
+    lpa: listoParaAsignar(h, b, cobros, txs),
+    historialLpa: historialLpa(h, b, cobros, txs),
     metas,
-    clasificacion: clasificacion(h, c, cobros),
-    patrimonio: patrimonioNeto(h, cobros),
+    clasificacion: clasificacion(h, c, cobros, m, txs),
+    patrimonio: patrimonioNeto(h, cobros, saldoDe),
     ocurrencias: pendientes(h, hoy, HORIZONTE_OCURRENCIAS),
   });
 }
