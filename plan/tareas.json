@@ -163,7 +163,7 @@
 
   "TA-150": { "estado": "terminada", "pr": 94 },
 
-  "TA-151": { "estado": "pendiente" },
+  "TA-151": { "estado": "en_curso", "rama": "ta-151-errores-mapeo" },
 
   "TA-152": { "estado": "pendiente" },
 
