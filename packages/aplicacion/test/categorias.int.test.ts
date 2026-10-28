@@ -18,7 +18,7 @@ const C1 = uuid(11),
   ASIG_C2 = uuid(31);
 const hoy = FechaLocal.desdeTexto(HOY);
 
-describe('PRU-INT-CAT', () => {
+describe('PRU-INT-CATEG', () => {
   const base = crearBasePrueba();
   let antes: Hechos;
 
@@ -28,7 +28,7 @@ describe('PRU-INT-CAT', () => {
     antes = await leer((t) => cargarHechos(t), RELOJ);
   });
 
-  it('PRU-INT-CAT-101 [INV-20] OP-09 con sobregiro se escribe sin FN011 y deja Disp(c, A) = 0; OP-14 en un período futuro de una archivada lo rechaza el dominio', async () => {
+  it('PRU-INT-CATEG-103 [INV-20] OP-09 con sobregiro se escribe sin FN011 y deja Disp(c, A) = 0; OP-14 en un período futuro de una archivada lo rechaza el dominio', async () => {
     const A = calcular(antes, hoy).presupuesto.activo.inicio;
     const disp = (h: Hechos) =>
       calcular(h, hoy)
