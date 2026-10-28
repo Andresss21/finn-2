@@ -131,7 +131,7 @@
 
   "TA-135": { "estado": "terminada", "pr": 73 },
 
-  "TA-136": { "estado": "pendiente" },
+  "TA-136": { "estado": "en_curso", "rama": "ta-136-asignacion-rapida-ciclo" },
 
   "TA-137": { "estado": "terminada", "pr": 79 },
 
