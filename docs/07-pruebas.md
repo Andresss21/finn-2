@@ -323,6 +323,7 @@ Hacen falta las dos funciones: si solo existiera `finn.ahora()`, una transacció
 - Las dos funciones nacen en una migración manual, con su cuerpo de producción.
 - El reemplazo solo ocurre en las bases de prueba, en el paso de siembra de CI, **después** de C3 a C6 sobre la plantilla.
 - La diferencia entre plantilla y base de prueba es exactamente de tres funciones (`ahora`, `instante`, `desfase`; V7-02 P5). La regla R15 la detecta (V7-02 P4).
+- **[CH-24]** R15 llega en dos pasos: `m_reloj` (TA-056) con las partes 1, 2 y 4, y la parte 3 (ningún `DEFAULT` con reloj directo) con `g_instantes_ahora` (TA-057), que es la que cambia los 9 `DEFAULT`.
 - El `DEFAULT` nuevo en `schema.prisma` sigue P7-12 a): `@default(dbgenerated("finn.ahora()"))`, con b) como respaldo automático si C4 o H-05 no quedan vacíos. La Parte D registra qué prueba dispara el cambio y cómo se nota.
 
 **Conteo de usos y su impacto.**
