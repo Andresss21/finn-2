@@ -6,7 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./valores": "./src/valores/index.ts",
-    "./pruebas": "./src/pruebas/generadores.ts",
+    "./pruebas": "./src/pruebas/index.ts",
     "./escenarios": "./escenarios/index.ts"
   },
   "scripts": {
