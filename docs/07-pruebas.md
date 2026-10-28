@@ -220,6 +220,7 @@ La matriz de la Parte B lee esos corchetes con `vitest list --json` y `playwrigh
 | `CMP` | `*.cmp.test.tsx` | `componentes` (modo navegador) | `pnpm test:componentes` |
 | `E2E`, `SW`, `REN` (web) | `apps/web/e2e/**/*.e2e.ts` | proyectos `movil`, `escritorio`, `zona-distinta`, `webkit-parcial` | `pnpm test:e2e -- --project=movil` |
 | `REN` (motor) | `packages/dominio/bench/*.bench.ts` | `vitest bench` | `pnpm bench` |
+| `REN` (carga) **[CH-33]** | `packages/db/test/*.int.test.ts` | `integracion` | `pnpm test:integracion -t PRU-REN` |
 | `RES` | `tools/respaldo/test/` | script | `pnpm test:respaldo` |
 
 - **Una prueba sola:** `pnpm test:integracion -t "PRU-INT-TARJ-004"`, o `pnpm test:e2e -- -g "PRU-E2E-PRES-012"`.

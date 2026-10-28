@@ -58,7 +58,7 @@ const ARCHIVO_DE: Record<string, RegExp> = {
   CMP: /\.cmp\.test\.tsx$/,
   E2E: /\.e2e\.ts$/,
   SW: /\/sw\/.*\.e2e\.ts$/,
-  REN: /(\.bench\.ts|\/rendimiento\/.*\.e2e\.ts)$/,
+  REN: /(\.bench\.ts|\.int\.test\.ts|\/rendimiento\/.*\.e2e\.ts)$/,
   RES: /tools\/respaldo\/test\//,
   SEG: /./,
   'ESC@motor': /escenarios\//,
