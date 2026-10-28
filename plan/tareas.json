@@ -35,7 +35,7 @@
 
   "TA-052": { "estado": "terminada", "pr": 85 },
 
-  "TA-053": { "estado": "pendiente" },
+  "TA-053": { "estado": "en_curso", "rama": "ta-053-conciliacion-modo" },
 
   "TA-054": { "estado": "pendiente" },
 

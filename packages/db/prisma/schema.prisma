@@ -195,6 +195,15 @@ enum MotivoCambio {
   @@schema("finn")
 }
 
+/// CF-01 (03, Enmiendas posteriores; 06 §3.2.3): OP-47 deja `estado_cuenta`, OP-53 escribe `saldo`
+enum ModoConciliacion {
+  estado_cuenta
+  saldo
+
+  @@map("modo_conciliacion")
+  @@schema("finn")
+}
+
 enum NivelEvento {
   info
   aviso
@@ -734,13 +743,15 @@ model OcurrenciaResuelta {
 
 /// [M] 3.26
 model Conciliacion {
-  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  cuentaId           String   @map("cuenta_id") @db.Uuid
-  fechaEstado        DateTime @map("fecha_estado") @db.Date
-  saldoEstado        Int      @map("saldo_estado")
-  terminadaEn        DateTime @map("terminada_en") @db.Timestamptz(6)
-  diferenciaAceptada Int      @map("diferencia_aceptada")
-  revision           BigInt   @default(0)
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cuentaId           String           @map("cuenta_id") @db.Uuid
+  fechaEstado        DateTime         @map("fecha_estado") @db.Date
+  saldoEstado        Int              @map("saldo_estado")
+  terminadaEn        DateTime         @map("terminada_en") @db.Timestamptz(6)
+  diferenciaAceptada Int              @map("diferencia_aceptada")
+  revision           BigInt           @default(0)
+  /// CF-01: inmutable como el resto de la fila (e_solo_insercion)
+  modo               ModoConciliacion @default(estado_cuenta)
 
   cuenta        Cuenta            @relation(fields: [cuentaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_conciliaciones_cuenta")
   transacciones Transaccion[]
