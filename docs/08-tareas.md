@@ -393,7 +393,7 @@ tu: TU-03, TU-06
 
 ```hito
 despues: TA-239
-requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235, TA-236, TA-237, TA-238, TA-239
+requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235, TA-236, TA-237, TA-238, TA-239, TA-232, TA-233, TA-240
 tu: —
 ```
 
@@ -1488,6 +1488,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-23** | `m_formatos_bac` no aplica con `prisma migrate deploy`. 03 §11.3, punto 2, dice: "`prisma migrate deploy` como `finn_migraciones` con `DIRECT_URL`. Aplica las carpetas pendientes en orden de nombre, cada una en una transacción"; pero CLAUDE.md y 03 §11.2 dicen "Una migración aplicada en `main` no se edita nunca", y TA-051 pide que C3 aplique desde cero las 9 carpetas, incluida `20261025000000_m_formatos_bac` (TA-181, #23). En TA-051, con Prisma 7.10 nativo y PostgreSQL 17, las 8 carpetas de 03 y EN-2 aplican y la novena falla: `Database error code: FN001` / `ERROR: finn: escritura en formatos_bancarios sin el bloqueo global (ADR-06)`. `migrate deploy` no aplica la carpeta en una sola transacción, y el `SELECT finn.tomar_bloqueo();` suelto (bloqueo de transacción) ya no existe cuando llega el `UPDATE`; con `psql -1 -f` el mismo archivo aplica. Resolución: (1) `m_formatos_bac` se corrige una sola vez: el bloqueo y los dos `UPDATE` van en un único `DO $$ BEGIN PERFORM finn.tomar_bloqueo(); … END $$;`, con las mismas filas escritas que el original con `psql -1` (comparadas en TA-051); nunca se aplicó en ninguna base; (2) C2 (`tools/db/inmutabilidad.sh`) permite solo esa modificación (M), con el SHA-256 del archivo nuevo fijado en el script; cualquier otro cambio sigue fallando; (3) C1 (`verificar-migraciones.mjs`) rechaza una `_m_` que escribe en tablas [M] o [H] fuera de un `DO` que tome antes `finn.tomar_bloqueo()`, con controles negativos `m-bloqueo-suelto` y `m-bloqueo-tarde`; (4) 03 §10.5 y §11.3 quedan enmendados (RK-06). `CLAUDE.md` no cambia | 03 §10.5, §11.2, §11.3, §11.6 (C1, C2); CLAUDE.md; 08 TA-051, TA-181 | **Aprobado por el usuario** (en la sesión: "Aprobar CH-23"); **aplicado [CH-23]** en TA-051 |
 | **CH-24** | La parte 3 de R15 no puede dar 0 filas en TA-056. 08 §TA-056 pide "PRU-ESQ-RELOJ-003: R15 da 0 filas en la plantilla", pero 07 §4.4 (tabla de conteo, fila 03 §10.1) reparte el cambio en dos migraciones: `m_reloj` ("funciones y cuerpo nuevo de `purgar_eliminaciones`") y `g_instantes_ahora` ("los 9 `DEFAULT`, generada por Prisma"), que es TA-057. Hasta TA-057, los 9 `DEFAULT CURRENT_TIMESTAMP` de `g_tablas` violan la parte 3 ("ningún `DEFAULT` con reloj directo"); el prototipo de la Fase 7 de `m_reloj` trae además los 9 `ALTER … SET DEFAULT finn.ahora()`, que dejarían C4 en rojo. Resolución: (1) TA-056 entrega R15 con las partes 1, 2 y 4 (cuerpos de producción exactos de `ahora()` e `instante()`; ningún reloj directo en funciones fuera de `ahora`, `instante` y `hoy`; ausencia de `finn.desfase()`): PRU-ESQ-RELOJ-003 comprueba 0 filas en la plantilla y un control negativo con 2 violaciones de esas partes (una función nueva con `now()` y el cuerpo de `finn.ahora()` alterado); `m_reloj` se porta del prototipo sin los 9 `ALTER … SET DEFAULT`, y todo lo demás queda igual; (2) TA-057 agrega la parte 3 de R15 en el mismo PR que `g_instantes_ahora`, extiende el control negativo de PRU-ESQ-RELOJ-003 con un `DEFAULT CURRENT_TIMESTAMP` sembrado (V7-02 P10) y suma `tools/db/regla-r15.sql` a sus archivos; si TA-057 termina con el respaldo b) de 07 §32.1, la parte 3 nace con la excepción de las 9 columnas. La definición de R15 y los números de 07 no cambian | 08 TA-056, TA-057; 07 §4.4 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-24]** en TA-056 |
 | **CH-25** | Solo lectura de `leer()` y la regla de `SET ` sin `LOCAL`. 04 §5.1 (paso 2) y V-07 piden `SET TRANSACTION READ ONLY` como primera sentencia de `leer()` en `packages/db/src/transacciones.ts`, pero 07 §19.5 y §5.3 (PRU-ESQ-POOL-001), 08 ("Reglas que no se discuten" y TA-058) y `CLAUDE.md` prohíben `SET ` sin `LOCAL` en `@finn/db` y `@finn/aplicacion`, y `tools/lint/bloqueos-sesion.mjs` rechaza esa sentencia. Resolución (opción b): `leer()` usa `SET LOCAL transaction_read_only = on`, sentencia de control equivalente que tampoco toma la instantánea y vale solo para la transacción; PRU-INT-ESQ-006 comprueba `repeatable read`, `transaction_read_only = on` y `25006`. La regla de `SET ` sin `LOCAL`, el lint y `CLAUDE.md` no cambian | 04 §0.7 (V-07), §5.1; 08 TA-150 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-25]** en TA-150 |
+| **CH-26** | Partición de TA-128 por tamaño (DT-02). El código de TA-128 midió prod≈1.148 y total≈1.902 contra una estimación de 320 y 760: pasa DT-01 por más del 30 %. Se parte en cuatro (cada una con prod ≤ 520 y total ≤ 1.560): TA-128 conserva `sugerencia.ts` y la `Propuesta` extendida (CF-05); TA-232, `bandeja.ts` (BE-41, CF-22); TA-233, `formulario.ts` parte 1; TA-240, `formulario.ts` parte 2. TA-140, TA-172 y TA-173 pasan a depender de la última parte que necesitan. El código completo queda en la rama `ta-128-origen-completo` (commit 103fcf9) | 08 §1.2 (DT-02); 08 TA-128, TA-232, TA-233, TA-240, TA-140, TA-172, TA-173 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-26]** en TA-128 |
 | **CH-27** | Devolución de un por cobrar en otra cuenta. 01 §5.5 OP-33a toma "la cuenta (por defecto, la de la compra)" con la sola precondición "Cuenta abierta", y 04 §3.5 dice "`cuentaId?` (por defecto, la de la compra)"; pero 01 §4.10 ("Efectos de cada evento, según el medio de pago de la compra de L y la cuenta del evento") define la fila de la devolución solo por el medio de la compra (débito: "Efectivo +X. Abierto −X, así que LPA +X"; tarjeta t: "Deuda(t) −X y S(t) −X"), sin distinguir la cuenta del evento como en el cobro. Una parte por cobrar devuelta en una cuenta de otro medio no tiene efecto definido y rompe la identidad de saldo (inv. 1): `aplicar` la rechazaba como `invariante_violada` (INTERNO). Resolución (opción A): OP-33a agrega la precondición "si el reparto tiene una parte sobre una línea por cobrar, la cuenta es la de la compra", con el rechazo `devolucion_por_cobrar_otra_cuenta`; las partes a categoría siguen admitiendo cualquier cuenta (D-2, D-4). El motor y §4.10 no cambian. Consecuencia: el catálogo pasa de 77 a 78 rechazos, y la salida de `t17.py` que registra 07 §35 y espera PRU-SEG-OPER-102 se actualiza | 01 §5.5 (OP-33a); 04 §3.5 (OP-33), §3.0.6; 07 §35; 08 TA-138; `tools/ci/docs.test.ts` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-27]** en TA-138 |
 
 ---
@@ -1649,7 +1650,7 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 126 | TA-126 | B2 | 1 | HT-2 | normal | Selectores de detalle de categoría, metas y estructura | 280 | 0 |
 | 127 | TA-231 | B2 | 1 | HT-2 | normal | Selector de detalle de categoría de pago de tarjeta (parte 2 de TA-126) | 300 | 0 |
 | 128 | TA-127 | B2 | 1 | HT-2 | normal | Selectores de actividad y detalle de transacción (parte 1; la parte 2 es TA-237) | 398 | 0 |
-| 129 | TA-128 | B2 | 1 | HT-2 | normal | Selectores de la bandeja, sugerencias y contextos de formulario (ola 1) | 320 | 0 |
+| 129 | TA-128 | B2 | 1 | HT-2 | normal | Sugerencia de categoría, comercios recientes y `Propuesta` extendida (parte 1 de la bandeja y los formularios de la ola 1) | 130 | 0 |
 | 130 | TA-129 | B2 | 1 | HT-2 | normal | Reporte de ritmo y hallazgos de ritmo en Inicio (CF-04, CF-06) | 240 | 0 |
 | 131 | TA-130 | B2 | 1 | HT-2 | normal | Ejecutor de escenarios `motor` y ESC-01, ESC-02 | 260 | 0 |
 | 132 | TA-131 | B2 | 1 | HT-2 | normal | Escenarios en el motor: ESC-03, ESC-04, ESC-05, ESC-06, ESC-07, ESC-08, ESC-09, ESC-10 | 20 | 0 |
@@ -1663,6 +1664,9 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 140 | TA-235 | B2 | 1 | HT-2 | obligatoria | Proyección de períodos futuros en `calcular` (04 §6.2, 01 §4.6) | 120 | 0 |
 | 141 | TA-237 | B2 | 1 | HT-2 | normal | Selectores de cuentas y detalle de cuenta (parte 2 de TA-127) | 400 | 0 |
 | 142 | TA-236 | B2 | 1 | HT-2 | obligatoria | `aplicar`: renombrar, desarchivar, eliminar y crear en lote (OP-08, OP-10, OP-13, CF-19; parte 2 de TA-115) | 220 | 0 |
+| 143 | TA-232 | B2 | 1 | HT-2 | normal | Selector de la bandeja de SMS (parte 2 de TA-128) | 400 | 0 |
+| 144 | TA-233 | B2 | 1 | HT-2 | normal | Contextos de formulario: catálogos, registrar, pagar tarjeta y cuota de préstamo (parte 3 de TA-128) | 400 | 0 |
+| 145 | TA-240 | B2 | 1 | HT-2 | normal | Contextos de formulario: editar, asignar, archivar, cuenta, movimiento y meta (parte 4 de TA-128) | 300 | 0 |
 | 150 | TA-150 | B3 | 1 | HT-3 | obligatoria | `escribir()` y `leer()`: el protocolo de 04 §4.2 | 300 | 0 |
 | 151 | TA-151 | B3 | 1 | HT-3 | normal | Errores de la base y conversiones de fechas y montos | 220 | 0 |
 | 152 | TA-152 | B3 | 1 | HT-3 | normal | Carga de hechos (BE-21) | 240 | 0 |
@@ -3195,7 +3199,9 @@ compartido: —
 
 **Terminada cuando.** La prueba pasa.
 
-#### TA-128 Selectores de la bandeja, sugerencias y contextos de formulario (ola 1)
+#### TA-128 Sugerencia de categoría, comercios recientes y `Propuesta` extendida (parte 1 de la bandeja y los formularios de la ola 1)
+
+Partida en cuatro por tamaño (DT-02, 08 §1.2, CH-26): esta parte tiene la sugerencia de categoría, los comercios recientes y la forma de `Propuesta` (CF-05); la bandeja es TA-232; los contextos de formulario son TA-233 y TA-240. **Punto de partida de las otras tres:** la rama `ta-128-origen-completo` (commit 103fcf9), que tiene todo el código y las pruebas de las cuatro partes.
 
 ```tarea
 orden: 129
@@ -3205,24 +3211,128 @@ depende: TA-122, TA-127
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=320 archivos=4 ca=0 migraciones=0 total=760
-cubre: SEL-bandeja, SEL-sugerencia, SEL-formulario, BE-41, CF-05, CF-22
+tamano: prod=130 archivos=2 ca=0 migraciones=0 total=450
+cubre: SEL-sugerencia, CF-05
 pru: PRU-DOM-BAND-104
 compartido: —
 ```
 
 **Qué construir.**
-- `selectores/bandeja.ts`, `sugerencia.ts`, `formulario.ts` (04 §6.8, §6.12, §6.14) con los contextos `registrar`, `pagar_tarjeta`, `cuota_prestamo`, `editar_transaccion`, `asignar`, `archivar_categoria`, `cuenta`, `movimiento` y `meta`.
+- `selectores/sugerencia.ts` (04 §6.14.3, §3.0.3): `sugerencia`, `comerciosRecientes`, el tipo `Propuesta` extendida y sus constructores `propuestaDeRegla` y `propuestaDeAjuste` (AV-21). El texto de cada propuesta (voseo, 7.10) lo pone la aplicación.
+- `ajuste` de `operaciones/op-47.ts` pasa a exportarse (una línea).
 
-**Leer.** 04 §6.0.3, §6.8, §6.14; 06 §3.6 (CF-05); 06 §0.7 (CF-22).
+**Leer.** 04 §6.0.3, §3.0.3, §6.14.3; 06 §3.6 (CF-05).
 
-**Archivos.** `packages/dominio/src/selectores/{bandeja,sugerencia,formulario}.ts`.
+**Archivos.** `packages/dominio/src/selectores/sugerencia.ts` y `packages/dominio/src/operaciones/op-47.ts` (solo el `export`).
 
 **Pruebas primero.**
-- **PRU-DOM-BAND-104** (nueva, DT-17): la bandeja con `destinosArrastre` y `arrastrable` (CF-22), la cuenta de origen propuesta para un pago de tarjeta (BE-41), la `Propuesta` extendida (CF-05) y los datos de los contextos de formulario de la ola 1.
+- **PRU-DOM-BAND-104** (nueva, DT-17): la regla de comercio manda sobre el historial, comercios recientes agrupados por comercio normalizado y la `Propuesta` extendida (regla de un toque y ajuste AV-21 que abre el flujo según la cuenta y el signo).
 - La prueba nueva.
 
 **Comandos.** `pnpm test:unidad -t "PRU-DOM-BAND-104"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
+#### TA-232 Selector de la bandeja de SMS (parte 2 de TA-128)
+
+Parte 2 de TA-128 (DT-02, 08 §1.2, CH-26). **Portar desde la rama `ta-128-origen-completo` (commit 103fcf9)**: `bandeja.ts` y las pruebas de la bandeja de `bandeja.test.ts` (fixture incluido). El código mide 423 líneas de producción: se espera un exceso de hasta el 30 %, que el orquestador acepta en el merge (CH-15); la ficha declara 400 porque el verificador no admite más.
+
+```tarea
+orden: 143
+bloque: B2
+hito: HT-2
+depende: TA-128
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=2 ca=0 migraciones=0 total=800
+cubre: SEL-bandeja, BE-41, CF-22
+pru: PRU-DOM-BAND-107
+compartido: —
+```
+
+**Qué construir.**
+- `selectores/bandeja.ts` (04 §6.8): `bandeja()` con contadores, movimientos y `aprobacion` (precondiciones de OP-37 y exclusiones de OP-38), `origenPropuestoPagoTarjeta` (BE-41) y `destinosDeArrastre` con `aprobacion.arrastrable` (CF-22).
+- `ARRASTRE_FRECUENTES_MAX` (6) y `ARRASTRE_FRECUENTES_DIAS` (90) en `selectores/reportes/umbrales.ts`.
+- Desvíos aceptados por el orquestador: sin `Encabezado` (lo agrega la consulta); el cursor de los descartados es la clave en texto (`recibidoEn|id`) y la consulta lo codifica; los datos [H] e [I] llegan como parámetro `DatosDeBandeja`.
+
+**Leer.** 04 §6.8 (BE-41); 06 §0.7 (CF-22).
+
+**Archivos.** `packages/dominio/src/selectores/{bandeja,reportes/umbrales}.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-BAND-107** (nueva, DT-17): la bandeja con `destinosArrastre` y `arrastrable` (CF-22), contadores, elegibles de OP-38 con sus motivos y la cuenta de origen propuesta para un pago de tarjeta (BE-41).
+- La prueba nueva.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-BAND-107"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
+#### TA-233 Contextos de formulario: catálogos, registrar, pagar tarjeta y cuota de préstamo (parte 3 de TA-128)
+
+Parte 3 de TA-128 (DT-02, 08 §1.2, CH-26). **Portar desde la rama `ta-128-origen-completo` (commit 103fcf9)**: de `formulario.ts`, el marco (`ParametrosFormulario`, `pide`, catálogos, `formulario` y `contextoDe`) con los contextos `registrar`, `pagar_tarjeta` y `cuota_prestamo`; de `bandeja.test.ts`, las pruebas de esos tres. Las demás variantes de `ParametrosFormulario` se agregan en TA-240.
+
+```tarea
+orden: 144
+bloque: B2
+hito: HT-2
+depende: TA-128, TA-232
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=1 ca=0 migraciones=0 total=800
+cubre: SEL-formulario
+pru: PRU-DOM-BAND-108
+compartido: —
+```
+
+**Qué construir.**
+- `selectores/formulario.ts` (04 §6.14): marco con los catálogos de 6.14.2 (`cuentas`, `categorias`, `categoriasPago`, `deudores`, `comercios`, `lpa`) y los contextos `registrar`, `pagar_tarjeta` y `cuota_prestamo`.
+- Desvíos aceptados por el orquestador: `pagar_tarjeta` devuelve `{ tarjetas: [...] }`, una entrada por tarjeta (filtrada por `tarjetaId` si viene); en `cuota_prestamo` el parámetro `fecha` no cambia la cuota propuesta (siempre la primera no pagada) y sin modelo de cálculo no hay desglose.
+
+**Leer.** 04 §6.14.
+
+**Archivos.** `packages/dominio/src/selectores/formulario.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-BAND-108** (nueva, DT-17): catálogos de gasto y de transferencia, cuenta propuesta, contexto de pago de tarjeta (deuda, reservado, desglose al pagar y origen propuesto por tarjeta) y de cuota de préstamo (categoría de la última cuota, sin modelo).
+- La prueba nueva.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-BAND-108"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
+#### TA-240 Contextos de formulario: editar, asignar, archivar, cuenta, movimiento y meta (parte 4 de TA-128)
+
+Parte 4 de TA-128 (DT-02, 08 §1.2, CH-26). **Portar desde la rama `ta-128-origen-completo` (commit 103fcf9)**: de `formulario.ts`, los contextos `editar_transaccion`, `asignar`, `archivar_categoria`, `cuenta`, `movimiento` y `meta`, con sus variantes de `ParametrosFormulario`; de `bandeja.test.ts`, sus pruebas. Exporta `promedio` de `selectores/reportes/realidad.ts`.
+
+```tarea
+orden: 145
+bloque: B2
+hito: HT-2
+depende: TA-233
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=300 archivos=2 ca=0 migraciones=0 total=700
+cubre: —
+pru: PRU-DOM-BAND-109
+compartido: SEL-formulario (los contextos de la ola 1 que quedan)
+```
+
+**Qué construir.**
+- Los seis contextos restantes de la ola 1 de `formulario.ts` (04 §6.14.4, CP-10a): `editar_transaccion` (detalle, archivadas marcadas y `capacidadDevolucion`), `asignar` (con las variantes de asignación rápida de CF-17 y CF-25), `archivar_categoria`, `cuenta`, `movimiento` y `meta`.
+- Desvío aceptado por el orquestador: el contexto `movimiento` trae el `MovimientoDto` sin `candidatas` de devolución; llegan con `devolver` en TA-140 (y OP-37 de devolución en TA-138).
+
+**Leer.** 04 §6.14.4 y §6.14.4.1; 01 OP-16 (CF-17, CF-25).
+
+**Archivos.** `packages/dominio/src/selectores/{formulario,reportes/realidad}.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-BAND-109** (nueva, DT-17): contexto de edición con las archivadas que ya usa; `asignar` con asignado, disponible, meta y las variantes rápidas; `archivar_categoria` con asignaciones futuras y programadas activas; `cuenta` al crear y al editar; `meta`; `movimiento` con el `MovimientoDto` de la bandeja.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-BAND-109"`; `pnpm ci:local`.
 
 **Terminada cuando.** La prueba pasa.
 
@@ -3585,7 +3695,7 @@ compartido: GEN-operaciones (agrega OP-25 y OP-26)
 orden: 604
 bloque: B2
 hito: HT-2
-depende: TA-128, TA-138, TA-139
+depende: TA-240, TA-138, TA-139
 tu: —
 revision: normal
 paralelo: libre
@@ -4624,7 +4734,7 @@ compartido: —
 orden: 171
 bloque: B3
 hito: HT-3
-depende: TA-159, TA-128, TA-155
+depende: TA-159, TA-232, TA-155
 tu: —
 revision: normal
 paralelo: libre
@@ -4655,7 +4765,7 @@ compartido: —
 orden: 172
 bloque: B3
 hito: HT-3
-depende: TA-159, TA-128
+depende: TA-159, TA-233
 tu: —
 revision: normal
 paralelo: libre

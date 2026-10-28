@@ -1,0 +1,5 @@
+// regla: prisma
+// Un evento sin ocurridoEn toma el DEFAULT now() de producción y no ve el reloj simulado (07 §32.1).
+type Tx = { eventoSistema: { create: (a: unknown) => Promise<unknown> } };
+export const registrar = (tx: Tx) =>
+  tx.eventoSistema.create({ data: { nivel: 'info', origen: 'app', mensaje: 'hola' } });

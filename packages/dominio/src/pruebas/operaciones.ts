@@ -14,8 +14,10 @@ import type {
   Instante,
   ResultadoAplicar,
   Uuid,
+  VarianteAsignacionRapida,
 } from '../hechos';
 import { aplicar } from '../operaciones/aplicar';
+import { asignacionRapida } from '../operaciones/op-16';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { montoArb } from './generadores';
@@ -92,12 +94,18 @@ const indice = fc.nat(1000);
 const normales = (i: Instantanea) => i.hechos.categorias.filter((x) => x.clase === 'normal');
 const bandera = fc.boolean();
 const nombreArb = fc.nat(1_000_000).map((n) => `Nombre ${n}`);
+const VARIANTES: readonly VarianteAsignacionRapida[] = [
+  'falta_meta',
+  'igual_periodo_anterior',
+  'promedio_gasto',
+  'cubrir_sobregiro',
+];
 const destinoDe = (i: Instantanea, k: number, aLpa: boolean) => {
   const otra = pick(normales(i), k);
   return aLpa || otra === undefined ? ('lpa' as const) : { categoriaId: otra.id };
 };
 
-/** Las operaciones de la ola 1 que tocan períodos, asignaciones y estructura (01 §5.1 a §5.4). */
+/** Las operaciones que tocan períodos, asignaciones y estructura (01 §5.1 a §5.4). */
 const ESPECIES = [
   especie({
     nombre: 'OP-14',
@@ -134,6 +142,31 @@ const ESPECIES = [
     nombre: 'OP-17',
     sel: fc.record({ p: desplazamiento }),
     armar: (i, x, s) => ({ operacion: 'OP-17', periodoInicio: periodoA(i, x.p), ids: s.ids() }),
+  }),
+  // TA-136: solo variantes que se ofrecen (04 §6.14.4); el ciclo, con cualquier día.
+  especie({
+    nombre: 'OP-16',
+    sel: fc.record({ c: indice, p: desplazamiento, v: fc.nat(3) }),
+    armar: (i, x, s) => {
+      const c = pick(normales(i), x.c);
+      if (c === undefined) return undefined;
+      const periodoInicio = periodoA(i, x.p);
+      const variante = VARIANTES[x.v] as VarianteAsignacionRapida;
+      const valores = asignacionRapida(i, c.id, periodoDe(i.ciclo, periodoInicio));
+      const ofrecida = {
+        falta_meta: valores.faltaMeta,
+        igual_periodo_anterior: valores.igualPeriodoAnterior,
+        promedio_gasto: valores.promedioGasto,
+        cubrir_sobregiro: valores.cubrirSobregiro,
+      }[variante];
+      if (ofrecida === undefined) return undefined;
+      return { operacion: 'OP-16', categoriaId: c.id, periodoInicio, variante, ids: s.ids() };
+    },
+  }),
+  especie({
+    nombre: 'OP-19',
+    sel: fc.record({ dia: fc.integer({ min: 1, max: 31 }) }),
+    armar: (_i, x, s) => ({ operacion: 'OP-19', diaInicio: x.dia, ids: s.ids() }),
   }),
   especie({
     nombre: 'OP-07',

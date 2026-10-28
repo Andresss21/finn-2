@@ -1,0 +1,5 @@
+// regla: sql
+// Sin lista de columnas, la inserción usa los DEFAULT: L21 no puede ver creado_en.
+type Tx = { $executeRawUnsafe: (s: string) => Promise<number> };
+export const token = (tx: Tx) =>
+  tx.$executeRawUnsafe('insert into "token_webhook" select 1, repeat(\'a\', 64)');
