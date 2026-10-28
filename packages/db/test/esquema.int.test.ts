@@ -138,7 +138,8 @@ describe('PRU-INT-ESQ', () => {
       // F-1 reescrito por 20261025000000_m_formatos_bac (TA-181, DT-12); F-2 y F-3 inactivos
       const F1 = String.raw`(?:MASTERCARD|VISA)\s+(?<ultimos4>\d{4}):\s+has realizado una compra por USD\s*(?<monto>\d[\d,]*(?:\.\d{1,2})?)\s+en el comercio:?\s+(?<comercio>\S+(?:\s+\S+)*?)\s+(?<fecha>\d{4}\/\d{2}\/\d{2}|\d{8})(?!\S)`;
       await con(base.urlAdmin, async (admin) => {
-        const q = async (sql: string): Promise<unknown[]> => (await admin.query(sql)).rows;
+        const q = async (sql: string): Promise<unknown[]> =>
+          (await admin.query<Record<string, unknown>>(sql)).rows;
         // 9.1: revision se inserta en 0; la siembra es una transacción sobre tablas [M] y la sube a 1 (5.3)
         expect(await q('SELECT id, valor, revision_minima_incremental FROM finn.revision')).toEqual(
           [{ id: 1, valor: '1', revision_minima_incremental: '0' }],

@@ -55,12 +55,14 @@ export const consultar: Consultar = async (urlBase, sql) => {
   const c = new pg.Client({ connectionString: urlBase });
   await c.connect();
   try {
-    const r: pg.QueryResult<unknown[]> | pg.QueryResult<unknown[]>[] = await c.query({
-      text: sql,
-      rowMode: 'array',
-    });
-    return (Array.isArray(r) ? r : [r]).flatMap((x) =>
-      (x.rows ?? []).map((f) => f.map((v) => (v === null ? '' : String(v))).join('|')),
+    // Un script con varias sentencias devuelve un resultado por sentencia (protocolo simple)
+    const r = (await c.query({ text: sql, rowMode: 'array' })) as unknown as
+      pg.QueryArrayResult | pg.QueryArrayResult[];
+    const resultados: pg.QueryArrayResult[] = Array.isArray(r) ? r : [r];
+    return resultados.flatMap((x) =>
+      (x.rows as unknown[][]).map((f) =>
+        f.map((v) => (v === null ? '' : String(v as string | number | boolean))).join('|'),
+      ),
     );
   } finally {
     await c.end();
