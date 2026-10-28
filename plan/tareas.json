@@ -135,7 +135,7 @@
 
   "TA-137": { "estado": "terminada", "pr": 79 },
 
-  "TA-138": { "estado": "pendiente" },
+  "TA-138": { "estado": "en_curso", "rama": "ta-138-devoluciones" },
 
   "TA-139": { "estado": "pendiente" },
 

@@ -343,6 +343,39 @@ export interface ComandoOp52 {
   readonly nombre: string; // TextoLimpio
 }
 
+// ── TA-138: condonar, devolver y eliminar evento (04 §3.5).
+export interface ComandoOp32 {
+  readonly operacion: 'OP-32';
+  readonly id: Uuid; // de la condonación
+  readonly instante: Instante; // su clave de orden
+  readonly lineaId: Uuid; // la línea por cobrar
+  readonly monto: Centavos;
+  readonly fecha: FechaLocal;
+  readonly categoriaId: Uuid;
+}
+/** OP-33a, vinculada a una compra: `cuentaId` por defecto, la de la compra. */
+export interface ComandoOp33a extends AltaTransaccion {
+  readonly operacion: 'OP-33';
+  readonly transaccionOriginalId: Uuid;
+  readonly cuentaId?: Uuid;
+  readonly reparto: readonly { readonly lineaId: Uuid; readonly monto: Centavos }[];
+}
+/** OP-33b, sin compra original: una línea a la categoría (D-2 o D-4). */
+export interface ComandoOp33b extends AltaTransaccion {
+  readonly operacion: 'OP-33';
+  readonly transaccionOriginalId?: never;
+  readonly cuentaId: Uuid;
+  readonly categoriaId: Uuid;
+}
+export type ComandoOp33 = ComandoOp33a | ComandoOp33b;
+/** OP-34; los movimientos [H] de la transacción del evento los resuelve la aplicación, como en OP-29. */
+export type ComandoOp34 = Omit<ComandoOp29, 'operacion' | 'transaccionId'> & {
+  readonly operacion: 'OP-34';
+} & (
+    | { readonly tipo: 'cobro' | 'devolucion'; readonly transaccionId: Uuid }
+    | { readonly tipo: 'condonacion'; readonly condonacionId: Uuid }
+  );
+
 // ── TA-123: conciliación y verificar saldo (04 §3.8, §9.5). La firma de la carga la verifica la aplicación (BE-49).
 /** Un movimiento del estado de cuenta; `monto` con signo, como efecto en la cuenta. */
 export interface MovimientoDelEstado {
@@ -524,7 +557,11 @@ export type ComandoDominio =
   | ComandoOp50
   // TA-137
   | ComandoOp25
-  | ComandoOp26;
+  | ComandoOp26
+  // TA-138
+  | ComandoOp32
+  | ComandoOp33
+  | ComandoOp34;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =
