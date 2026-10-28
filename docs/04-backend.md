@@ -830,7 +830,7 @@ Cada tabla aparece después de todas las tablas a las que apuntan sus claves for
 | **F1. Desvincular** | Cada `actualizar` que cambia una clave foránea cuyo valor anterior apunta a una fila que esta misma lista **elimina** | Tablas en orden 1→26; dentro de la tabla, por `id` | Las FK de 03 son `RESTRICT` e inmediatas (DB-12): hay que quitar o reapuntar la referencia antes de borrar. Casos: OP-29 (movimiento a `descartado` con `transaccion_id` nulo antes de borrar la transacción, 03 §4.6.1); OP-12 (líneas, condonaciones, programadas y reglas que pasan de la categoría origen a la destino antes de eliminar la origen) |
 | **F2. Eliminar** | Todos los `eliminar` y el cambio `eliminarConciliacionesDeCuenta` | Tablas en orden 26→1; dentro de la tabla, por `id`. `eliminarConciliacionesDeCuenta` se ejecuta en la posición de `conciliaciones` (13) | Los hijos se borran antes que los padres. En OP-06 da exactamente el orden de 03 §4.6.4: asignaciones de la categoría de pago (20) → transacción de saldo inicial (14, sus efectos en cascada) → `SELECT finn.eliminar_conciliaciones_de_cuenta($1)` (13) → categoría de pago (8) → cuenta (3, su subtipo en cascada) |
 | **F3. Insertar** | Todos los `insertar` | Tablas en orden 1→26; dentro de la tabla, en el orden en que los emitió el dominio | Los padres existen antes que los hijos. Una tabla con varias filas nuevas usa un solo `createMany` |
-| **F4. Actualizar** | Los `actualizar` que no fueron a F1 | Tablas en orden 1→26; dentro de la tabla, por `id` | Una actualización puede apuntar a una fila insertada en F3: por ejemplo, el movimiento `aprobado` con su `transaccion_id` nuevo (OP-37), o una transacción `conciliada` con la `conciliacion_id` recién creada (OP-47, `h_transicion_estado_bancario` exige que la conciliación sea de esta transacción de base de datos) |
+| **F4. Actualizar** | Los `actualizar` que no fueron a F1 | Tablas en orden 1→26; dentro de la tabla, por `id`. Las actualizaciones de `categorias` que pasan `archivada` a sí van al final de F4, después de `asignaciones` (20); las demás de `categorias` conservan su puesto (8) **[CH-31]** | Una actualización puede apuntar a una fila insertada en F3: por ejemplo, el movimiento `aprobado` con su `transaccion_id` nuevo (OP-37), o una transacción `conciliada` con la `conciliacion_id` recién creada (OP-47, `h_transicion_estado_bancario` exige que la conciliación sea de esta transacción de base de datos) |
 
 Reglas del traductor:
 - Una actualización de F1 solo puede apuntar a una fila que ya existía; si apunta a una fila nueva, el traductor lanza un error interno (indica un error del dominio).
@@ -852,7 +852,7 @@ Reglas del traductor:
 | `e_solo_insercion` | Sin `UPDATE`/`DELETE` en tablas de solo inserción, salvo HZ-1 | Prohibición del traductor (4.5.2) |
 | `f_fechas_hoy` | `clave_orden` cambia solo con la fecha y aumenta | El dominio fija `clave_orden = máx(instante, clave_orden anterior + 1 ms)` (13.1) |
 
-*Nota sobre OP-09.* `g_destino_activo` solo mira las altas de destinos, y `x_verificar_categoria` es diferida, así que el orden entre "archivar la categoría" y "llevar a cero su asignación" no provoca rechazos. Se deja explícito porque en F4 `categorias` (8) se actualiza antes que `asignaciones` (20).
+*Nota sobre OP-09.* `g_destino_activo` solo mira las altas de destinos y `x_verificar_categoria` es diferida, pero `g_asignacion` es inmediata y su regla 3 (inv. 20, 03 §4.5.3) rechaza δ > 0 si la categoría ya está archivada. Por eso, en F4, archivar la categoría va después de `asignaciones` (20): OP-09 (y OP-04 cuando archiva una categoría de pago) lleva Disp(c, A) a 0 con la categoría todavía activa, y solo después la archiva. Las asignaciones futuras que devuelve se eliminan en F2, también antes del archivo **[CH-31]**.
 
 #### 4.5.4 Ejemplo: OP-12 (fusionar Café en Salidas)
 
@@ -2570,7 +2570,7 @@ interface PresupuestoDto extends Encabezado {
   }[];
   pagosTarjeta: FilaPagoTarjeta[];                 // grupo del sistema "Pagos de tarjeta"
   archivadasConDinero: FilaCategoria[];            // solo el activo: archivadas con Disp(c, A) ≠ 0 (AV-14, N5)
-  totales: { asignado: Centavos; gastado: Centavos; disponible: Centavos };
+  totales: { asignado: Centavos; gastado: Centavos; disponible: Centavos };  // [CH-32] Σ de grupos[].totales: ver abajo
 }
 interface FilaCategoria {
   categoria: Ref; orden: number;
@@ -2594,6 +2594,7 @@ interface FilaPagoTarjeta {
 - **Períodos cerrados:** se muestran con los mismos campos y sin acciones de asignación (inv. 18). Incluyen las categorías archivadas que tuvieron asignación o actividad en ese período (producto §7, R4).
 - **Períodos futuros:** Disp proyectado con actividad cero (§4.6); `faltaReservar` y `reservaExcedente` solo se calculan en el activo (S y RE usan Disp(pago(t), A), inv. 2).
 - **Categorías archivadas** no aparecen en `grupos` del período activo ni de los futuros (R4); si tienen Disp ≠ 0 en el activo, aparecen en `archivadasConDinero`.
+- **`totales`** **[CH-32]**: Σ de asignado, gastado y Disponible de las categorías normales que el período muestra en `grupos` (con las archivadas que R4 muestra en un período cerrado), sin aplicar `filtro`: es la suma de `grupos[].totales` con `todas`. No incluye `pagosTarjeta` (franja propia, 06-identidad-visual §5) ni `archivadasConDinero`.
 
 **BE-39. Filtros de Presupuesto.** El producto (§7) pide "todas, sin fondos suficientes, sobregiradas o cubiertas" sin definirlos. Definición [Propio], excluyente y completa:
 - `sobregirada`: Disp(c, p) < 0.

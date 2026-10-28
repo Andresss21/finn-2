@@ -4,7 +4,7 @@ import type { Hechos, Tarjeta, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { porCobrarAbierto, type PorCobrar } from './por-cobrar';
-import { capitalPendiente, deuda, type HechosDeSaldo, saldo, saldoAFavor, saldoAl } from './saldos';
+import { aFavorDe, deudaDe, type HechosDeSaldo, saldo, saldoAl } from './saldos';
 
 export interface PatrimonioNeto {
   readonly efectivo: Centavos;
@@ -21,20 +21,22 @@ const suma = (xs: readonly Centavos[]) => xs.reduce(Centavos.sumar, Centavos.cer
 /**
  * Σ saldos de efectivo + Σ saldos a favor + Σ valor de inversiones + Σ por cobrar abiertos
  * − Σ deudas de tarjeta − Σ capital pendiente de préstamos [P9], con `cobros` de los mismos hechos.
+ * `saldoDe` da saldo(k), por omisión `saldo(h, k)`; capital pendiente y valor son el saldo (§4.3).
  */
 export function patrimonioNeto(
   h: HechosDeSaldo & Pick<Hechos, 'cuentas'>,
   cobros: readonly PorCobrar[],
+  saldoDe: (cuentaId: Uuid) => Centavos = (k) => saldo(h, k),
 ): PatrimonioNeto {
-  const de = (tipo: string, valor: (h: HechosDeSaldo, id: Uuid) => Centavos) =>
-    suma(h.cuentas.filter((k) => k.tipo === tipo).map((k) => valor(h, k.id)));
+  const de = (tipo: string, valor: (s: Centavos) => Centavos = (s) => s) =>
+    suma(h.cuentas.filter((k) => k.tipo === tipo).map((k) => valor(saldoDe(k.id))));
   const x = {
-    efectivo: de('efectivo', saldo),
-    saldosAFavor: de('tarjeta', saldoAFavor),
-    inversiones: de('inversion', saldo),
+    efectivo: de('efectivo'),
+    saldosAFavor: de('tarjeta', aFavorDe),
+    inversiones: de('inversion'),
     porCobrar: porCobrarAbierto(cobros),
-    deudasDeTarjeta: de('tarjeta', deuda),
-    prestamos: de('prestamo', capitalPendiente),
+    deudasDeTarjeta: de('tarjeta', deudaDe),
+    prestamos: de('prestamo'),
   };
   const activos = suma([x.efectivo, x.saldosAFavor, x.inversiones, x.porCobrar]);
   return { ...x, total: Centavos.restar(activos, Centavos.sumar(x.deudasDeTarjeta, x.prestamos)) };

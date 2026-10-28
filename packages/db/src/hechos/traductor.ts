@@ -314,12 +314,18 @@ export async function aplicarCambios(
       );
     for (const f of devueltas) recoger(tabla, f);
   }
-  // F4: el resto de las actualizaciones; pueden apuntar a filas de F3
+  // F4: el resto de las actualizaciones; pueden apuntar a filas de F3. Archivar una categoría va al final,
+  // después de `asignaciones`: `g_asignacion` (inv. 20) la ve activa mientras OP-09 lleva Disp(c, A) a 0
+  // (04 §4.5.2, §4.5.3) [CH-31]
+  const enF4 = actualizar.filter((c) => !enF1.has(c));
+  const archiva = (c: Actualizar): boolean =>
+    c.tabla === 'categorias' && (c.campos as Datos)['archivada'] === true;
   for (const tabla of ESCRIBIBLES) {
     await actualizarTabla(
       tabla,
-      actualizar.filter((c) => c.tabla === tabla && !enF1.has(c)),
+      enF4.filter((c) => c.tabla === tabla && !archiva(c)),
     );
   }
+  await actualizarTabla('categorias', enF4.filter(archiva));
   return valores;
 }
