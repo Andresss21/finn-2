@@ -3,10 +3,10 @@
 // `cobro` con `lineaCobradaId`, DB-05), las condonaciones y las líneas de devolución que la tienen
 // como `lineaOriginalId`. La condonación como consumo ya la da `consumos()` (§4.4): aquí solo baja
 // el saldo abierto. Los pagos implícitos entran a `presupuesto(…, pagosImplicitos)` (§4.6).
-import type { Hechos, Uuid } from '../hechos';
+import type { Hechos, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import { cronologico, type Medio, type Momento } from './devoluciones';
+import { cronologico, type Medio, type Momento, porId } from './devoluciones';
 import type { PagoImplicito } from './disponible';
 
 export type HechosDePorCobrar = Pick<
@@ -75,9 +75,12 @@ function medios(h: HechosDePorCobrar) {
  * solo las líneas y los eventos con fecha ≤ hasta (dinero en camino al fin(p), §4.9).
  * Una condonación o devolución que supera el saldo abierto en su momento rompe inv. 9: se rechaza.
  */
-export function porCobrar(h: HechosDePorCobrar, hasta?: FechaLocal): PorCobrar[] {
+export function porCobrar(
+  h: HechosDePorCobrar,
+  hasta?: FechaLocal,
+  txs: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
+): PorCobrar[] {
   const medio = medios(h);
-  const txs = new Map(h.transacciones.map((t) => [t.id, t]));
   const vale = (fecha: FechaLocal) => hasta === undefined || fecha <= hasta;
   const pendientes = new Map<Uuid, Pendiente[]>();
   const agregar = (lineaId: Uuid, e: Pendiente) => {

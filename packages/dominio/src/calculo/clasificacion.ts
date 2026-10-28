@@ -1,10 +1,10 @@
 // Clasificación para reportes (01 §4.13; N9, Q3, Q7, H13, D1, O1, H6): gasto por categoría, neto de
 // devoluciones; cobros, de `porCobrar` (§4.10). Fuera de §4.13 quedan sin clase el ajuste de valor
 // de una inversión (OP-25, sin efecto presupuestario) y las devoluciones a un por cobrar.
-import type { TipoTransaccion, Uuid } from '../hechos';
+import type { TipoTransaccion, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import { clasificar, consumos, type HechosDeConsumo } from './devoluciones';
+import { type HechosDeConsumo, movimientos, porId } from './devoluciones';
 import type { Ciclo } from './periodos';
 import type { PorCobrar } from './por-cobrar';
 
@@ -56,8 +56,9 @@ export function clasificacion(
   h: HechosDeConsumo,
   c: Ciclo,
   cobros: readonly PorCobrar[],
+  m = movimientos(h, c),
+  txs: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
 ): Clasificacion {
-  const txs = new Map(h.transacciones.map((t) => [t.id, t]));
   const partidas: Partida[] = [];
   const agregar = (x: Origen, clase: ClaseDeReporte, monto: Centavos, cat: Uuid | null = null) =>
     partidas.push({ id: x.id, fecha: x.fecha, clase, categoriaId: cat, monto });
@@ -77,8 +78,8 @@ export function clasificacion(
     if (e.excedente > 0) agregar(e, 'ingreso', e.excedente);
   }
   // Consumos netos de las devoluciones D-1 y, en negativo, las demás devoluciones a categoría.
-  for (const k of consumos(h, c)) agregar(k, 'gasto', k.neto, k.categoriaId);
-  for (const d of clasificar(h, c))
+  for (const k of m.consumos) agregar(k, 'gasto', k.neto, k.categoriaId);
+  for (const d of m.devoluciones)
     if (d.caso !== 'D-1')
       agregar({ id: d.lineaId, fecha: d.fecha }, 'gasto', Centavos.negar(d.monto), d.categoriaId);
 

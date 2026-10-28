@@ -5,7 +5,7 @@
 import type { Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { Presupuesto } from './disponible';
-import { deuda, type HechosDeSaldo } from './saldos';
+import { deudaDe, type HechosDeSaldo, saldo } from './saldos';
 import { pagoExcedente } from './sobregiros';
 
 export interface EstadoDeTarjeta {
@@ -26,19 +26,20 @@ export interface EstadoDeTarjeta {
 
 /**
  * S(t), RE(t) y su descomposición deuda(t) = R⁺(t) + S(t) − RE(t), con S(t) = 0 o RE(t) = 0.
- * `b` debe salir de `presupuesto` con los mismos hechos (y sus pagos implícitos, §4.10).
+ * `b` y `saldoDe` deben salir de los mismos hechos (`b`, con sus pagos implícitos, §4.10).
  */
 export function estadoDeTarjeta(
   h: HechosDeSaldo,
   b: Presupuesto,
   tarjetaId: Uuid,
+  saldoDe: (cuentaId: Uuid) => Centavos = (k) => saldo(h, k),
 ): EstadoDeTarjeta {
   const pago = b.celdas.find(
     (x) => x.clase === 'pago' && x.tarjetaId === tarjetaId && x.periodo.inicio === b.activo.inicio,
   );
   if (pago === undefined)
     throw new RangeError(`la tarjeta ${tarjetaId} no tiene categoría de pago`);
-  const d = deuda(h, tarjetaId);
+  const d = deudaDe(saldoDe(tarjetaId));
   const reservado = Centavos.max(Centavos.cero, pago.disponible);
   return {
     tarjetaId,
