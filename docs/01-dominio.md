@@ -1120,6 +1120,7 @@ Cualquier edición está sujeta a lo siguiente:
     - X ≤ el total menos las devoluciones previas (inv. 11).
     - Fecha ≥ la fecha original.
     - Cuenta abierta.
+    - Si el reparto tiene una parte sobre una línea por cobrar, la cuenta es la de la compra: §4.10 define la devolución de un por cobrar solo en ese medio y en otra cuenta rompería la identidad de saldo (inv. 1). Las partes a categoría admiten cualquier cuenta (D-2, D-4). **[CH-27]**
   - **Hechos:** transacción de devolución (+X en la cuenta); una línea por cada X_i con el destino de su línea original, aunque esa categoría esté archivada; un evento de devolución por línea.
   - **Derivados:** según los casos D-1 a D-4 (§4.4) y §4.10 para las líneas por cobrar.
   - **Avisos:** AV-14 si una categoría archivada queda con Disponible positivo; AV-06 o AV-08 según el efecto en pago(t); AV-01.

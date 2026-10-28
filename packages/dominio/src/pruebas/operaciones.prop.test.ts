@@ -68,7 +68,8 @@ function comprobar({ comando, antes, resultado, fotoAntes, fotoDespues }: Paso):
     expect(resultado.avisos.map((a) => a.codigo)).toContain('AV-11');
 
   // Inv. 20: una categoría archivada (después del paso) no recibe asignaciones positivas nuevas
-  // (OP-09 sube la suya para cubrir su sobregiro) ni líneas nuevas.
+  // (OP-09 sube la suya para cubrir su sobregiro) ni líneas nuevas, salvo una devolución vinculada a
+  // una de sus líneas existentes (OP-33a, ajuste 1).
   const archivadas = new Set<string>(
     resultado.hechosNuevos.categorias.filter((x) => x.archivada).map((x) => x.id),
   );
@@ -76,10 +77,16 @@ function comprobar({ comando, antes, resultado, fotoAntes, fotoDespues }: Paso):
     expect(
       dif.filter((x) => x.despues > x.antes && archivadas.has(x.clave.split('|')[0] as string)),
     ).toEqual([]);
-  const previas = new Set<string>(antes.hechos.lineas.map((l) => l.id));
+  const previas = new Map(antes.hechos.lineas.map((l) => [l.id as string, l.categoriaId]));
+  const deSuOriginal = (l: { lineaOriginalId: string | null; categoriaId: string | null }) =>
+    l.lineaOriginalId !== null && previas.get(l.lineaOriginalId) === l.categoriaId;
   expect(
     resultado.hechosNuevos.lineas.filter(
-      (l) => !previas.has(l.id) && l.categoriaId !== null && archivadas.has(l.categoriaId),
+      (l) =>
+        !previas.has(l.id) &&
+        l.categoriaId !== null &&
+        archivadas.has(l.categoriaId) &&
+        !deSuOriginal(l),
     ),
   ).toEqual([]);
 

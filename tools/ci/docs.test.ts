@@ -73,7 +73,8 @@ describe('PRU-SEG-OPER', () => {
     const bien = comprobar(intactos);
     expect(bien.status, bien.stdout + bien.stderr).toBe(0);
     for (const s of [
-      'escenarios: 50  avisos: 24  operaciones en 3.0.8: 62  consultas: 44  rechazos: 77',
+      // CH-27 agrega `devolucion_por_cobrar_otra_cuenta` a 04 §3.0.6: 77 → 78 rechazos (07 §35).
+      'escenarios: 50  avisos: 24  operaciones en 3.0.8: 62  consultas: 44  rechazos: 78',
       'PASA: T1 a T7',
       'operaciones con pantalla: 61/62 (sin pantalla: OP-35, el webhook) · flujos: 51 · carpetas de flujo repetidas: 0',
       'Árbol: 74 rutas; mapa: 78 filas; consultas usadas: 18/18; variantes de formulario: 18/18',
