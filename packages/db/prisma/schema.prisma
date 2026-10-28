@@ -1,0 +1,865 @@
+// Finn 2.0 — packages/db/prisma/schema.prisma
+// Prisma ORM 7 (GA). Fuente: 03-base-de-datos.md, secciones 3 y 10.
+// Los objetos que Prisma no representa (CHECK, índices de expresión,
+// funciones, triggers, RLS, privilegios, comentarios de clase) viven en las
+// migraciones manuales "_m_" y están protegidos según la sección 11.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generado/prisma"
+  moduleFormat = "esm"
+  runtime      = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["finn"]
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum TipoCuenta {
+  efectivo
+  tarjeta
+  prestamo
+  inversion
+
+  @@map("tipo_cuenta")
+  @@schema("finn")
+}
+
+enum ClaseCategoria {
+  normal
+  pago
+
+  @@map("clase_categoria")
+  @@schema("finn")
+}
+
+enum TipoTransaccion {
+  gasto
+  ingreso
+  saldo_inicial
+  transferencia
+  pago_tarjeta
+  cuota_prestamo
+  abono_capital
+  aporte_inversion
+  desembolso_prestamo
+  retiro_inversion
+  avance_efectivo
+  entrada_tarjeta
+  transferencia_tarjetas
+  cobro
+  devolucion
+  ajuste_inversion
+
+  @@map("tipo_transaccion")
+  @@schema("finn")
+}
+
+enum OrigenTransaccion {
+  sms
+  manual
+  importada
+  programada
+
+  @@map("origen_transaccion")
+  @@schema("finn")
+}
+
+enum EstadoBancario {
+  pendiente
+  confirmada
+  conciliada
+
+  @@map("estado_bancario")
+  @@schema("finn")
+}
+
+enum RedTarjeta {
+  visa
+  mastercard
+  otra
+
+  @@map("red_tarjeta")
+  @@schema("finn")
+}
+
+enum TipoTasa {
+  fija
+  variable
+
+  @@map("tipo_tasa")
+  @@schema("finn")
+}
+
+enum Frecuencia {
+  semanal
+  quincenal
+  mensual
+  anual
+  cada_n_dias
+
+  @@map("frecuencia")
+  @@schema("finn")
+}
+
+enum ModeloPrestamo {
+  banco_agricola
+
+  @@map("modelo_prestamo")
+  @@schema("finn")
+}
+
+enum TipoMeta {
+  mensual
+  semanal
+  anual
+  para_fecha
+
+  @@map("tipo_meta")
+  @@schema("finn")
+}
+
+enum ModoMeta {
+  acumular
+  rellenar_hasta
+
+  @@map("modo_meta")
+  @@schema("finn")
+}
+
+enum TipoProgramada {
+  gasto
+  pago_tarjeta
+  cuota_prestamo
+  aporte_inversion
+
+  @@map("tipo_programada")
+  @@schema("finn")
+}
+
+enum EstadoOcurrencia {
+  emparejada
+  registrada
+  omitida
+
+  @@map("estado_ocurrencia")
+  @@schema("finn")
+}
+
+enum TipoMovimientoBancario {
+  compra
+  deposito
+  pago_tarjeta
+  devolucion
+
+  @@map("tipo_movimiento_bancario")
+  @@schema("finn")
+}
+
+enum EstadoMovimiento {
+  pendiente
+  con_coincidencia
+  posible_duplicado
+  no_reconocido
+  error
+  aprobado
+  descartado
+  autodescartado
+
+  @@map("estado_movimiento")
+  @@schema("finn")
+}
+
+enum ResultadoProcesamiento {
+  pendiente
+  con_coincidencia
+  posible_duplicado
+  no_reconocido
+  autodescartado
+  error
+
+  @@map("resultado_procesamiento")
+  @@schema("finn")
+}
+
+enum MotivoCambio {
+  monto
+  fecha
+  cuenta
+  eliminacion
+
+  @@map("motivo_cambio")
+  @@schema("finn")
+}
+
+enum NivelEvento {
+  info
+  aviso
+  error
+
+  @@map("nivel_evento")
+  @@schema("finn")
+}
+
+// ───────────────────────────── Tiempo ─────────────────────────────
+
+/// [M] 3.2
+model VigenciaCiclo {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  diaInicio Int       @map("dia_inicio") @db.SmallInt
+  rigeDesde DateTime? @unique(map: "ux_vigencias_rige_desde") @map("rige_desde") @db.Date
+  revision  BigInt    @default(0)
+
+  @@map("vigencias_ciclo")
+  @@schema("finn")
+}
+
+// ───────────────────────────── Cuentas ─────────────────────────────
+
+/// [H] 3.3
+model Institucion {
+  id       String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre   String
+  cuentas  Cuenta[]
+  formatos FormatoBancario[]
+
+  @@map("instituciones")
+  @@schema("finn")
+}
+
+/// [M] 3.4
+model Cuenta {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo          TipoCuenta
+  nombre        String
+  institucionId String?    @map("institucion_id") @db.Uuid
+  ultimos4      String?
+  fechaApertura DateTime   @map("fecha_apertura") @db.Date
+  orden         Int        @default(0)
+  archivada     Boolean    @default(false)
+  revision      BigInt     @default(0)
+
+  institucion        Institucion?       @relation(fields: [institucionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cuentas_institucion")
+  tarjeta            Tarjeta?
+  prestamo           Prestamo?
+  inversion          Inversion?
+  efectos            Efecto[]
+  conciliaciones     Conciliacion[]
+  programadasOrigen  Programada[]       @relation("ProgramadaCuentaOrigen")
+  programadasDestino Programada[]       @relation("ProgramadaCuentaDestino")
+  movimientos        Movimiento[]
+  procesamientos     SmsProcesamiento[]
+
+  @@unique([id, tipo], map: "ux_cuentas_id_tipo")
+  @@unique([institucionId, ultimos4], map: "ux_cuentas_institucion_ultimos4")
+  @@map("cuentas")
+  @@schema("finn")
+}
+
+/// [M] 3.5
+model Tarjeta {
+  cuentaId              String      @id @map("cuenta_id") @db.Uuid
+  tipo                  TipoCuenta  @default(tarjeta)
+  limiteCredito         Int         @map("limite_credito")
+  tasaAnualMillonesimas Int?        @map("tasa_anual_millonesimas")
+  diaCorte              Int         @map("dia_corte") @db.SmallInt
+  diaPago               Int         @map("dia_pago") @db.SmallInt
+  red                   RedTarjeta?
+  color                 String?
+  revision              BigInt      @default(0)
+
+  cuenta        Cuenta     @relation(fields: [cuentaId, tipo], references: [id, tipo], onDelete: Cascade, onUpdate: Restrict, map: "fk_tarjetas_cuenta")
+  categoriaPago Categoria?
+
+  @@unique([cuentaId, tipo], map: "ux_tarjetas_cuenta_tipo")
+  @@map("tarjetas")
+  @@schema("finn")
+}
+
+/// [M] 3.6
+model Prestamo {
+  cuentaId                     String          @id @map("cuenta_id") @db.Uuid
+  tipo                         TipoCuenta      @default(prestamo)
+  contraparte                  String
+  montoOriginal                Int             @map("monto_original")
+  tasaNominalAnualMillonesimas Int?            @map("tasa_nominal_anual_millonesimas")
+  tipoTasa                     TipoTasa        @map("tipo_tasa")
+  seguroPrimerMes              Int?            @map("seguro_primer_mes")
+  comision                     Int?
+  frecuencia                   Frecuencia
+  frecuenciaDias               Int?            @map("frecuencia_dias") @db.SmallInt
+  cuotaPactada                 Int             @map("cuota_pactada")
+  plazoCuotas                  Int             @map("plazo_cuotas")
+  modeloCalculo                ModeloPrestamo? @map("modelo_calculo")
+  cuotasPagadasAlCrear         Int             @default(0) @map("cuotas_pagadas_al_crear")
+  revision                     BigInt          @default(0)
+
+  cuenta Cuenta @relation(fields: [cuentaId, tipo], references: [id, tipo], onDelete: Cascade, onUpdate: Restrict, map: "fk_prestamos_cuenta")
+
+  @@unique([cuentaId, tipo], map: "ux_prestamos_cuenta_tipo")
+  @@map("prestamos")
+  @@schema("finn")
+}
+
+/// [M] 3.7
+model Inversion {
+  cuentaId                           String     @id @map("cuenta_id") @db.Uuid
+  tipo                               TipoCuenta @default(inversion)
+  rendimientoAnualEsperadoMillonesimas Int?     @map("rendimiento_anual_esperado_millonesimas")
+  revision                           BigInt     @default(0)
+
+  cuenta Cuenta @relation(fields: [cuentaId, tipo], references: [id, tipo], onDelete: Cascade, onUpdate: Restrict, map: "fk_inversiones_cuenta")
+
+  @@unique([cuentaId, tipo], map: "ux_inversiones_cuenta_tipo")
+  @@map("inversiones")
+  @@schema("finn")
+}
+
+// ───────────────────────────── Presupuesto ─────────────────────────────
+
+/// [M] 3.8
+model Grupo {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre       String
+  orden        Int         @default(0)
+  archivado    Boolean     @default(false)
+  claveSistema String?     @unique(map: "ux_grupos_clave_sistema") @map("clave_sistema")
+  revision     BigInt      @default(0)
+  categorias   Categoria[]
+
+  @@map("grupos")
+  @@schema("finn")
+}
+
+/// [M] 3.9
+model Categoria {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  grupoId   String         @map("grupo_id") @db.Uuid
+  nombre    String
+  orden     Int            @default(0)
+  clase     ClaseCategoria @default(normal)
+  tarjetaId String?        @unique(map: "ux_categorias_tarjeta") @map("tarjeta_id") @db.Uuid
+  archivada Boolean        @default(false)
+  revision  BigInt         @default(0)
+
+  grupo            Grupo              @relation(fields: [grupoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_categorias_grupo")
+  tarjeta          Tarjeta?           @relation(fields: [tarjetaId], references: [cuentaId], onDelete: Restrict, onUpdate: Restrict, map: "fk_categorias_tarjeta")
+  asignaciones     Asignacion[]
+  meta             Meta?
+  lineas           Linea[]
+  condonaciones    Condonacion[]
+  programadaLineas ProgramadaLinea[]
+  reglas           ReglaComercio[]
+  movimientoLineas MovimientoLinea[]
+  sugerenciasSms   SmsProcesamiento[]
+
+  @@index([grupoId], map: "ix_categorias_grupo")
+  @@map("categorias")
+  @@schema("finn")
+}
+
+/// [M] 3.10
+model Asignacion {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoriaId   String   @map("categoria_id") @db.Uuid
+  periodoInicio DateTime @map("periodo_inicio") @db.Date
+  monto         Int
+  revision      BigInt   @default(0)
+
+  categoria Categoria @relation(fields: [categoriaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_asignaciones_categoria")
+
+  @@unique([categoriaId, periodoInicio], map: "ux_asignaciones_categoria_periodo")
+  @@index([periodoInicio], map: "ix_asignaciones_periodo")
+  @@map("asignaciones")
+  @@schema("finn")
+}
+
+/// [M] 3.11
+model Deudor {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre           String
+  revision         BigInt            @default(0)
+  lineas           Linea[]
+  movimientoLineas MovimientoLinea[]
+
+  @@map("deudores")
+  @@schema("finn")
+}
+
+// ───────────────────────────── Transacciones ─────────────────────────────
+
+/// [M] 3.12
+model Transaccion {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo           TipoTransaccion
+  fecha          DateTime          @db.Date
+  horaRegistro   DateTime          @map("hora_registro") @db.Timestamptz(6)
+  claveOrden     DateTime          @map("clave_orden") @db.Timestamptz(6)
+  secuencia      BigInt            @unique(map: "ux_transacciones_secuencia") @default(dbgenerated())
+  origen         OrigenTransaccion
+  estadoBancario EstadoBancario    @map("estado_bancario")
+  conciliacionId String?           @map("conciliacion_id") @db.Uuid
+  comercio       String?
+  nota           String?
+  total          Int
+  monedaOriginal String?           @map("moneda_original")
+  montoOriginal  Decimal?          @map("monto_original") @db.Decimal(18, 4)
+  lineaCobradaId String?           @map("linea_cobrada_id") @db.Uuid
+  revision       BigInt            @default(0)
+
+  conciliacion              Conciliacion?       @relation(fields: [conciliacionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_transacciones_conciliacion")
+  lineaCobrada              Linea?              @relation("CobroDeLinea", fields: [lineaCobradaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_transacciones_linea_cobrada")
+  efectos                   Efecto[]
+  lineas                    Linea[]             @relation("LineasDeTransaccion")
+  movimiento                Movimiento?         @relation("MovimientoAprobado")
+  ocurrencia                OcurrenciaResuelta?
+  cambiosPosteriores        CambioPosterior[]
+  duplicadoDeMovimientos    Movimiento[]        @relation("MovimientoDuplicadoTransaccion")
+  duplicadoDeProcesamientos SmsProcesamiento[]  @relation("ProcesamientoDuplicadoTransaccion")
+
+  @@index([fecha], map: "ix_transacciones_fecha")
+  @@index([conciliacionId], map: "ix_transacciones_conciliacion")
+  @@index([lineaCobradaId], map: "ix_transacciones_linea_cobrada")
+  @@map("transacciones")
+  @@schema("finn")
+}
+
+/// [M] 3.13
+model Efecto {
+  id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transaccionId String @map("transaccion_id") @db.Uuid
+  cuentaId      String @map("cuenta_id") @db.Uuid
+  monto         Int
+  interes       Int?
+  seguro        Int?
+  revision      BigInt @default(0)
+
+  transaccion Transaccion @relation(fields: [transaccionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_efectos_transaccion")
+  cuenta      Cuenta      @relation(fields: [cuentaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_efectos_cuenta")
+
+  @@unique([transaccionId, cuentaId], map: "ux_efectos_transaccion_cuenta")
+  @@index([cuentaId], map: "ix_efectos_cuenta")
+  @@map("efectos")
+  @@schema("finn")
+}
+
+/// [M] 3.14
+model Linea {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transaccionId   String  @map("transaccion_id") @db.Uuid
+  orden           Int     @db.SmallInt
+  monto           Int
+  categoriaId     String? @map("categoria_id") @db.Uuid
+  deudorId        String? @map("deudor_id") @db.Uuid
+  lineaOriginalId String? @map("linea_original_id") @db.Uuid
+  revision        BigInt  @default(0)
+
+  transaccion      Transaccion       @relation("LineasDeTransaccion", fields: [transaccionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_lineas_transaccion")
+  categoria        Categoria?        @relation(fields: [categoriaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_lineas_categoria")
+  deudor           Deudor?           @relation(fields: [deudorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_lineas_deudor")
+  lineaOriginal    Linea?            @relation("Devolucion", fields: [lineaOriginalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_lineas_linea_original")
+  devoluciones     Linea[]           @relation("Devolucion")
+  cobros           Transaccion[]     @relation("CobroDeLinea")
+  condonaciones    Condonacion[]
+  movimientoLineas MovimientoLinea[]
+
+  @@unique([transaccionId, orden], map: "ux_lineas_transaccion_orden")
+  @@index([categoriaId], map: "ix_lineas_categoria")
+  @@index([deudorId], map: "ix_lineas_deudor")
+  @@index([lineaOriginalId], map: "ix_lineas_original")
+  @@map("lineas")
+  @@schema("finn")
+}
+
+/// [M] 3.15
+model Condonacion {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lineaId     String   @map("linea_id") @db.Uuid
+  fecha       DateTime @db.Date
+  monto       Int
+  claveOrden  DateTime @map("clave_orden") @db.Timestamptz(6)
+  secuencia   BigInt   @unique(map: "ux_condonaciones_secuencia") @default(dbgenerated())
+  categoriaId String   @map("categoria_id") @db.Uuid
+  revision    BigInt   @default(0)
+
+  linea     Linea     @relation(fields: [lineaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_condonaciones_linea")
+  categoria Categoria @relation(fields: [categoriaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_condonaciones_categoria")
+
+  @@index([lineaId], map: "ix_condonaciones_linea")
+  @@index([categoriaId], map: "ix_condonaciones_categoria")
+  @@map("condonaciones")
+  @@schema("finn")
+}
+
+// ───────────────────────────── Metas ─────────────────────────────
+
+/// [M] 3.16
+model Meta {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoriaId   String    @unique(map: "ux_metas_categoria") @map("categoria_id") @db.Uuid
+  tipo          TipoMeta
+  modo          ModoMeta?
+  monto         Int
+  fechaObjetivo DateTime? @map("fecha_objetivo") @db.Date
+  fechaCreacion DateTime  @map("fecha_creacion") @db.Date
+  revision      BigInt    @default(0)
+
+  categoria Categoria @relation(fields: [categoriaId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_metas_categoria")
+
+  @@map("metas")
+  @@schema("finn")
+}
+
+// ───────────────────────────── Revisión ─────────────────────────────
+
+/// [I] 3.17
+model SmsRecibido {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  texto          String
+  remitente      String
+  recibidoEn     DateTime           @default(now()) @map("recibido_en") @db.Timestamptz(6)
+  procesamientos SmsProcesamiento[]
+  movimiento     Movimiento?
+
+  @@index([recibidoEn], map: "ix_sms_recibidos_recibido")
+  @@map("sms_recibidos")
+  @@schema("finn")
+}
+
+/// [I] 3.18
+model SmsProcesamiento {
+  id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  smsId                  String                  @map("sms_id") @db.Uuid
+  intento                Int                     @db.SmallInt
+  procesadoEn            DateTime                @default(now()) @map("procesado_en") @db.Timestamptz(6)
+  resultado              ResultadoProcesamiento
+  formatoId              String?                 @map("formato_id") @db.Uuid
+  formatosCoincidentes   String[]                @default([]) @map("formatos_coincidentes") @db.Uuid
+  tipoMovimiento         TipoMovimientoBancario? @map("tipo_movimiento")
+  ultimos4               String?
+  monto                  Int?
+  comercio               String?
+  fecha                  DateTime?               @db.Date
+  cuentaId               String?                 @map("cuenta_id") @db.Uuid
+  esperadaProgramadaId   String?                 @map("esperada_programada_id") @db.Uuid
+  esperadaFecha          DateTime?               @map("esperada_fecha") @db.Date
+  duplicadoTransaccionId String?                 @map("duplicado_transaccion_id") @db.Uuid
+  duplicadoMovimientoId  String?                 @map("duplicado_movimiento_id") @db.Uuid
+  categoriaSugeridaId    String?                 @map("categoria_sugerida_id") @db.Uuid
+  errorDetalle           String?                 @map("error_detalle")
+
+  sms                  SmsRecibido      @relation(fields: [smsId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_procesamientos_sms")
+  formato              FormatoBancario? @relation(fields: [formatoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_procesamientos_formato")
+  cuenta               Cuenta?          @relation(fields: [cuentaId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_procesamientos_cuenta")
+  esperadaProgramada   Programada?      @relation(fields: [esperadaProgramadaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_procesamientos_programada")
+  duplicadoTransaccion Transaccion?     @relation("ProcesamientoDuplicadoTransaccion", fields: [duplicadoTransaccionId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_procesamientos_dup_transaccion")
+  duplicadoMovimiento  Movimiento?      @relation("ProcesamientoDuplicadoMovimiento", fields: [duplicadoMovimientoId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_procesamientos_dup_movimiento")
+  categoriaSugerida    Categoria?       @relation(fields: [categoriaSugeridaId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_procesamientos_categoria")
+
+  @@unique([smsId, intento], map: "ux_procesamientos_sms_intento")
+  @@index([formatoId], map: "ix_procesamientos_formato")
+  @@index([cuentaId], map: "ix_procesamientos_cuenta")
+  @@index([esperadaProgramadaId], map: "ix_procesamientos_programada")
+  @@index([duplicadoTransaccionId], map: "ix_procesamientos_dup_transaccion")
+  @@index([duplicadoMovimientoId], map: "ix_procesamientos_dup_movimiento")
+  @@index([categoriaSugeridaId], map: "ix_procesamientos_categoria")
+  @@map("sms_procesamientos")
+  @@schema("finn")
+}
+
+/// [H] 3.19
+model Movimiento {
+  id                     String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  smsId                  String           @unique(map: "ux_movimientos_sms") @map("sms_id") @db.Uuid
+  estado                 EstadoMovimiento
+  cuentaId               String?          @map("cuenta_id") @db.Uuid
+  fecha                  DateTime?        @db.Date
+  monto                  Int?
+  comercio               String?
+  tipoPropuesto          TipoTransaccion? @map("tipo_propuesto")
+  nota                   String?
+  duplicadoTransaccionId String?          @map("duplicado_transaccion_id") @db.Uuid
+  duplicadoMovimientoId  String?          @map("duplicado_movimiento_id") @db.Uuid
+  esperadaProgramadaId   String?          @map("esperada_programada_id") @db.Uuid
+  esperadaFecha          DateTime?        @map("esperada_fecha") @db.Date
+  transaccionId          String?          @unique(map: "ux_movimientos_transaccion") @map("transaccion_id") @db.Uuid
+
+  sms                  SmsRecibido        @relation(fields: [smsId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_movimientos_sms")
+  cuenta               Cuenta?            @relation(fields: [cuentaId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_movimientos_cuenta")
+  duplicadoTransaccion Transaccion?       @relation("MovimientoDuplicadoTransaccion", fields: [duplicadoTransaccionId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_movimientos_dup_transaccion")
+  duplicadoMovimiento  Movimiento?        @relation("MovimientoDuplicado", fields: [duplicadoMovimientoId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_movimientos_dup_movimiento")
+  duplicados           Movimiento[]       @relation("MovimientoDuplicado")
+  esperadaProgramada   Programada?        @relation(fields: [esperadaProgramadaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_movimientos_programada")
+  transaccion          Transaccion?       @relation("MovimientoAprobado", fields: [transaccionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_movimientos_transaccion")
+  lineas               MovimientoLinea[]
+  citadoEnProcesamientos SmsProcesamiento[] @relation("ProcesamientoDuplicadoMovimiento")
+
+  @@index([estado], map: "ix_movimientos_estado")
+  @@index([cuentaId, fecha], map: "ix_movimientos_cuenta_fecha")
+  @@index([esperadaProgramadaId, esperadaFecha], map: "ix_movimientos_esperada")
+  @@index([duplicadoTransaccionId], map: "ix_movimientos_dup_transaccion")
+  @@index([duplicadoMovimientoId], map: "ix_movimientos_dup_movimiento")
+  @@map("movimientos")
+  @@schema("finn")
+}
+
+/// [H] 3.20
+model MovimientoLinea {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  movimientoId    String  @map("movimiento_id") @db.Uuid
+  orden           Int     @db.SmallInt
+  monto           Int
+  categoriaId     String? @map("categoria_id") @db.Uuid
+  deudorId        String? @map("deudor_id") @db.Uuid
+  lineaOriginalId String? @map("linea_original_id") @db.Uuid
+
+  movimiento    Movimiento @relation(fields: [movimientoId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_movimiento_lineas_movimiento")
+  categoria     Categoria? @relation(fields: [categoriaId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_movimiento_lineas_categoria")
+  deudor        Deudor?    @relation(fields: [deudorId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_movimiento_lineas_deudor")
+  lineaOriginal Linea?     @relation(fields: [lineaOriginalId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_movimiento_lineas_linea_original")
+
+  @@unique([movimientoId, orden], map: "ux_movimiento_lineas_orden")
+  @@index([categoriaId], map: "ix_movimiento_lineas_categoria")
+  @@index([deudorId], map: "ix_movimiento_lineas_deudor")
+  @@index([lineaOriginalId], map: "ix_movimiento_lineas_original")
+  @@map("movimiento_lineas")
+  @@schema("finn")
+}
+
+/// [H] 3.21
+model FormatoBancario {
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  institucionId         String                 @map("institucion_id") @db.Uuid
+  nombre                String
+  tipoMovimiento        TipoMovimientoBancario @map("tipo_movimiento")
+  patron                String
+  banderas              String                 @default("i")
+  montoSeparadorMiles   String                 @default(",") @map("monto_separador_miles")
+  montoSeparadorDecimal String                 @default(".") @map("monto_separador_decimal")
+  formatosFecha         String[]               @default([]) @map("formatos_fecha")
+  activo                Boolean                @default(true)
+
+  institucion    Institucion        @relation(fields: [institucionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_formatos_institucion")
+  procesamientos SmsProcesamiento[]
+
+  @@unique([institucionId, nombre], map: "ux_formatos_institucion_nombre")
+  @@map("formatos_bancarios")
+  @@schema("finn")
+}
+
+/// [H] 3.22
+model ReglaComercio {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patron      String
+  categoriaId String @map("categoria_id") @db.Uuid
+
+  categoria Categoria @relation(fields: [categoriaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reglas_categoria")
+
+  @@index([categoriaId], map: "ix_reglas_categoria")
+  @@map("reglas_comercio")
+  @@schema("finn")
+}
+
+// ───────────────────────────── Programadas ─────────────────────────────
+
+/// [M] 3.23
+model Programada {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo               TipoProgramada
+  cuentaId           String         @map("cuenta_id") @db.Uuid
+  cuentaDestinoId    String?        @map("cuenta_destino_id") @db.Uuid
+  comercio           String
+  monto              Int
+  tolerancia         Int            @default(0)
+  frecuencia         Frecuencia
+  frecuenciaDias     Int?           @map("frecuencia_dias") @db.SmallInt
+  primeraFecha       DateTime       @map("primera_fecha") @db.Date
+  fechaFin           DateTime?      @map("fecha_fin") @db.Date
+  registroAutomatico Boolean        @default(false) @map("registro_automatico")
+  activa             Boolean        @default(true)
+  revision           BigInt         @default(0)
+
+  cuenta         Cuenta               @relation("ProgramadaCuentaOrigen", fields: [cuentaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_programadas_cuenta")
+  cuentaDestino  Cuenta?              @relation("ProgramadaCuentaDestino", fields: [cuentaDestinoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_programadas_cuenta_destino")
+  lineas         ProgramadaLinea[]
+  ocurrencias    OcurrenciaResuelta[]
+  movimientos    Movimiento[]
+  procesamientos SmsProcesamiento[]
+
+  @@index([cuentaId], map: "ix_programadas_cuenta")
+  @@index([cuentaDestinoId], map: "ix_programadas_cuenta_destino")
+  @@map("programadas")
+  @@schema("finn")
+}
+
+/// [M] 3.24
+model ProgramadaLinea {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  programadaId String @map("programada_id") @db.Uuid
+  orden        Int    @db.SmallInt
+  monto        Int
+  categoriaId  String @map("categoria_id") @db.Uuid
+  revision     BigInt @default(0)
+
+  programada Programada @relation(fields: [programadaId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_programada_lineas_programada")
+  categoria  Categoria  @relation(fields: [categoriaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_programada_lineas_categoria")
+
+  @@unique([programadaId, orden], map: "ux_programada_lineas_orden")
+  @@index([categoriaId], map: "ix_programada_lineas_categoria")
+  @@map("programada_lineas")
+  @@schema("finn")
+}
+
+/// [M] 3.25
+model OcurrenciaResuelta {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  programadaId  String           @map("programada_id") @db.Uuid
+  fechaEsperada DateTime         @map("fecha_esperada") @db.Date
+  estado        EstadoOcurrencia
+  transaccionId String?          @unique(map: "ux_ocurrencias_transaccion") @map("transaccion_id") @db.Uuid
+  revision      BigInt           @default(0)
+
+  programada  Programada   @relation(fields: [programadaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ocurrencias_programada")
+  transaccion Transaccion? @relation(fields: [transaccionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ocurrencias_transaccion")
+
+  @@unique([programadaId, fechaEsperada], map: "ux_ocurrencias_programada_fecha")
+  @@map("ocurrencias_resueltas")
+  @@schema("finn")
+}
+
+// ───────────────────────────── Conciliación ─────────────────────────────
+
+/// [M] 3.26
+model Conciliacion {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cuentaId           String   @map("cuenta_id") @db.Uuid
+  fechaEstado        DateTime @map("fecha_estado") @db.Date
+  saldoEstado        Int      @map("saldo_estado")
+  terminadaEn        DateTime @map("terminada_en") @db.Timestamptz(6)
+  diferenciaAceptada Int      @map("diferencia_aceptada")
+  revision           BigInt   @default(0)
+
+  cuenta        Cuenta            @relation(fields: [cuentaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_conciliaciones_cuenta")
+  transacciones Transaccion[]
+  cambios       CambioPosterior[]
+
+  @@index([cuentaId, terminadaEn], map: "ix_conciliaciones_cuenta")
+  @@map("conciliaciones")
+  @@schema("finn")
+}
+
+/// [H] 3.27
+model CambioPosterior {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conciliacionId String         @map("conciliacion_id") @db.Uuid
+  transaccionId  String?        @map("transaccion_id") @db.Uuid
+  registradoEn   DateTime       @default(now()) @map("registrado_en") @db.Timestamptz(6)
+  motivos        MotivoCambio[]
+  fecha          DateTime       @db.Date
+  montoEfecto    Int            @map("monto_efecto")
+  comercio       String?
+
+  conciliacion Conciliacion @relation(fields: [conciliacionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cambios_conciliacion")
+  transaccion  Transaccion? @relation(fields: [transaccionId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_cambios_transaccion")
+
+  @@index([conciliacionId], map: "ix_cambios_conciliacion")
+  @@index([transaccionId], map: "ix_cambios_transaccion")
+  @@map("cambios_posteriores")
+  @@schema("finn")
+}
+
+// ───────────────────────────── Técnicas [T] ─────────────────────────────
+
+/// [T] 3.28
+model Revision {
+  id                         Int     @id @default(1) @db.SmallInt
+  valor                      BigInt  @default(0)
+  ultimaTransaccion          BigInt? @map("ultima_transaccion")
+  revisionMinimaIncremental  BigInt  @default(0) @map("revision_minima_incremental")
+
+  @@map("revision")
+  @@schema("finn")
+}
+
+/// [T] 3.28
+model Eliminacion {
+  id          BigInt   @id @default(autoincrement())
+  tabla       String
+  filaId      String   @map("fila_id") @db.Uuid
+  revision    BigInt
+  eliminadaEn DateTime @default(now()) @map("eliminada_en") @db.Timestamptz(6)
+
+  @@index([revision], map: "ix_eliminaciones_revision")
+  @@map("eliminaciones")
+  @@schema("finn")
+}
+
+/// [T] 3.28
+model SuscripcionPush {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  endpoint    String   @unique(map: "ux_suscripciones_endpoint")
+  claveP256dh String   @map("clave_p256dh")
+  claveAuth   String   @map("clave_auth")
+  agente      String?
+  creadaEn    DateTime @default(now()) @map("creada_en") @db.Timestamptz(6)
+  renovadaEn  DateTime @default(now()) @map("renovada_en") @db.Timestamptz(6)
+
+  @@map("suscripciones_push")
+  @@schema("finn")
+}
+
+/// [T] 3.28
+model Notificacion {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creadaEn      DateTime  @default(now()) @map("creada_en") @db.Timestamptz(6)
+  aviso         String
+  motivo        String
+  titulo        String
+  cuerpo        String
+  datos         Json?
+  leidaEn       DateTime? @map("leida_en") @db.Timestamptz(6)
+  pushEnviadaEn DateTime? @map("push_enviada_en") @db.Timestamptz(6)
+  pushError     String?   @map("push_error")
+
+  @@index([creadaEn], map: "ix_notificaciones_creada")
+  @@map("notificaciones")
+  @@schema("finn")
+}
+
+/// [T] 3.28
+model EventoSistema {
+  id         BigInt      @id @default(autoincrement())
+  ocurridoEn DateTime    @default(now()) @map("ocurrido_en") @db.Timestamptz(6)
+  nivel      NivelEvento
+  origen     String
+  mensaje    String
+  datos      Json?
+
+  @@index([ocurridoEn], map: "ix_eventos_ocurrido")
+  @@map("eventos_sistema")
+  @@schema("finn")
+}
+
+/// [T] 3.28
+model EstadoRespaldo {
+  id                   Int       @id @default(1) @db.SmallInt
+  ultimoRespaldoEn     DateTime? @map("ultimo_respaldo_en") @db.Timestamptz(6)
+  ultimoRespaldoObjeto String?   @map("ultimo_respaldo_objeto")
+  ultimaRestauracionEn DateTime? @map("ultima_restauracion_en") @db.Timestamptz(6)
+
+  @@map("estado_respaldo")
+  @@schema("finn")
+}
+
+/// [T] 3.28
+model TokenWebhook {
+  id         Int      @id @default(1) @db.SmallInt
+  hashSha256 String   @map("hash_sha256")
+  creadoEn   DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  @@map("token_webhook")
+  @@schema("finn")
+}

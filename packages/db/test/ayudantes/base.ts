@@ -1,6 +1,6 @@
 // Arnés de PostgreSQL de las pruebas de integración (TA-050; 07 §5.2, §5.3; DP-05, DP-07; CH-21).
 // - `setup` (globalSetup del proyecto `integracion`): contenedor de PG_MAYOR desde ECR; bootstrap.sql y
-//   roles-supabase.sql como superusuario sobre finn_plantilla; el gancho prepararPlantilla.
+//   roles-supabase.sql como superusuario sobre finn_plantilla; el gancho prepararPlantilla (C3, C5, C6).
 // - `crearBasePrueba()`: la base de un archivo, clonada de la plantilla y borrada al terminar el archivo.
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -8,6 +8,10 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { afterAll, beforeAll, inject } from 'vitest';
 import type { TestProject } from 'vitest/node';
+import {
+  prepararPlantilla as controlarPlantilla,
+  type Consultar,
+} from '../../../../tools/db/plantilla.ts';
 
 export type Rol = 'admin' | 'migraciones' | 'app';
 export type ConexionArnes = { host: string; puerto: number; claves: Record<Rol, string> };
@@ -46,14 +50,31 @@ const url = (c: ConexionArnes, base: string, rol: Rol): string =>
 /** URL de `base` con `rol`, en el contenedor que preparó `setup`. */
 export const urlDe = (base: string, rol: Rol): string => url(inject('finnPg'), base, rol);
 
+/** Un script SQL en una conexión propia, cerrada al terminar; filas como psql `-A -t` (columnas con `|`). */
+export const consultar: Consultar = async (urlBase, sql) => {
+  const c = new pg.Client({ connectionString: urlBase });
+  await c.connect();
+  try {
+    // Un script con varias sentencias devuelve un resultado por sentencia (protocolo simple)
+    const r = (await c.query({ text: sql, rowMode: 'array' })) as unknown as
+      pg.QueryArrayResult | pg.QueryArrayResult[];
+    const resultados: pg.QueryArrayResult[] = Array.isArray(r) ? r : [r];
+    return resultados.flatMap((x) =>
+      (x.rows as unknown[][]).map((f) =>
+        f.map((v) => (v === null ? '' : String(v as string | number | boolean))).join('|'),
+      ),
+    );
+  } finally {
+    await c.end();
+  }
+};
+
 /**
- * Gancho de la plantilla, como finn_migraciones, antes de clonar. TA-051 lo completa con
- * `prisma migrate deploy` y C3, C5 y C6 (tools/db/plantilla.ts, CH-21); hasta entonces no migra nada.
- * Tiene que cerrar sus conexiones: no se clona una base con sesiones abiertas.
+ * Gancho de la plantilla, como finn_migraciones, antes de clonar: `prisma migrate deploy` y C3, C5 y C6
+ * (tools/db/plantilla.ts, TA-051, CH-21). Cierra sus conexiones: no se clona una base con sesiones abiertas.
  */
-export async function prepararPlantilla(urlMigraciones: string): Promise<void> {
-  await Promise.resolve(urlMigraciones);
-}
+export const prepararPlantilla = (urlMigraciones: string): Promise<void> =>
+  controlarPlantilla(urlMigraciones, consultar);
 
 /** globalSetup de `integracion`: si algo falla, Vitest termina sin correr pruebas (07 §5.2, paso 4). */
 export async function setup(proyecto: TestProject): Promise<() => Promise<void>> {

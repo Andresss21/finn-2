@@ -110,6 +110,24 @@ for (const d of carpetas) {
     // Escrituras de datos en tablas de hechos: exigen el bloqueo (ADR-06).
     if (escribeHechos.test(cuerpo) && !/finn\.tomar_bloqueo\(\)/.test(cuerpo))
       err('escribe en tablas de hechos sin finn.tomar_bloqueo()');
+    // [CH-23] migrate deploy no aplica la carpeta en una sola transacción: el bloqueo y las escrituras
+    // van en el mismo DO, con el bloqueo antes de la primera escritura; nunca como sentencias sueltas.
+    else if (escribeHechos.test(cuerpo)) {
+      const bloques = [...cuerpo.matchAll(/\bDO\s+\$\$([\s\S]*?)\$\$/gi)].map((b) => b[1]);
+      // Fuera de todo DO y de todo cuerpo de función ($$…$$), que no escribe al migrar.
+      const fuera = cuerpo
+        .replace(/\bDO\s+\$\$[\s\S]*?\$\$/gi, '')
+        .replace(/\$\$[\s\S]*?\$\$/g, '');
+      const bloqueoTarde = bloques.some((b) => {
+        const escritura = b.search(escribeHechos);
+        const bloqueo = b.search(/finn\.tomar_bloqueo\(\)/);
+        return escritura >= 0 && (bloqueo < 0 || bloqueo > escritura);
+      });
+      if (escribeHechos.test(fuera) || bloqueoTarde)
+        err(
+          'escribe en tablas de hechos fuera de un DO que tome antes finn.tomar_bloqueo() (CH-23)',
+        );
+    }
   }
 }
 if (errores.length) {

@@ -130,6 +130,17 @@ export function aplicarMigraciones(
         ];
         continue;
       }
+      // TA-051: las migraciones de 03 también nombran la tabla en DDL, privilegios y cuerpos de DO que no
+      // cambian filas; se saltan, salvo un DROP o un ALTER de la tabla que no sea ADD CONSTRAINT.
+      if (!/^(UPDATE|DELETE|MERGE|COPY|TRUNCATE)\b/i.test(s)) {
+        if (
+          /^(DROP\b|ALTER\s+TABLE\s+"?finn"?\."?formatos_bancarios"?\s+(?!\s|ADD\s+CONSTRAINT\b))/i.test(
+            s,
+          )
+        )
+          falla('cambio de la tabla que esta lectura no entiende');
+        continue;
+      }
       const m =
         UPDATE.exec(s) ?? falla('sentencia sobre formatos_bancarios que esta lectura no entiende');
       const nombres = m[2] !== undefined ? [literal(m[2])] : cadenas(m[3] ?? '');
