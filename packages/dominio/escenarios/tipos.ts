@@ -21,15 +21,15 @@ type OpBase =
   | {
       op: 'OP-01';
       cuenta: string;
-      tipo?: 'efectivo' | 'tarjeta' | 'prestamo';
-      saldo?: number; // tarjeta: la deuda; préstamo: el capital pendiente
+      tipo?: 'efectivo' | 'tarjeta' | 'prestamo' | 'inversion';
+      saldo?: number; // tarjeta: la deuda; préstamo: el capital pendiente; inversión: su valor
       apertura?: string; // por defecto 2027-01-21 (DP-16)
       diaCorte?: number; // tarjeta: 15 por defecto
       ultimos4?: string; // con él la cuenta tiene institución, y un SMS la encuentra (OP-35)
       prestamo?: DatosPrestamo;
     }
   | { op: 'OP-07'; categoria: string }
-  | { op: 'OP-14'; categoria: string; monto: number; periodo?: Periodo } // δ sobre Asig(c, p); el ejecutor la pasa a valor absoluto
+  | { op: 'OP-14'; categoria: string; monto: number; periodo?: Periodo; desde?: string } // δ sobre Asig(c, p); el ejecutor la pasa a valor absoluto; `desde` = inicio del período, si no es de P1 a P6
   | { op: 'OP-17'; periodo?: Periodo } // Auto-asignar: por defecto el período activo
   | { op: 'OP-15'; origen: string; destino: string; monto: number; periodo?: Periodo } // mover (por defecto, el período activo)
   | {
@@ -76,6 +76,18 @@ type OpBase =
     }
   | { op: 'OP-23'; tarjeta: string; monto: number; origen?: string; fecha?: string }
   | { op: 'OP-06'; cuenta: string } // eliminar la cuenta
+  | { op: 'OP-19'; diaInicio: number } // cambiar el ciclo
+  | {
+      op: 'OP-25'; // aporte o retiro de una inversión (el ajuste no lo usa ningún escenario de 01 §8)
+      modalidad: 'aporte' | 'retiro';
+      inversion: string;
+      monto: number;
+      cuenta?: string; // por defecto Ahorro
+      categoria?: string; // solo en el aporte
+    }
+  | { op: 'OP-26'; prestamo: string; monto: number; cuenta?: string } // desembolso a una cuenta de efectivo (por defecto Ahorro)
+  | { op: 'OP-43'; modo: 'automatico' } // el registro automático de 04 §10.2 paso 1
+  | { op: 'OP-43'; modo: 'toque'; programada: string; fecha: string } // una ocurrencia, de un toque
   | {
       op: 'OP-09'; // archivar: `destino` = 'LPA' o una categoría
       categoria: string;
@@ -102,6 +114,7 @@ type OpBase =
       monto: number;
       categoria: string;
       primeraFecha: string;
+      automatico?: true; // con registro automático (por defecto, sin él)
     }
   | {
       op: 'OP-35'; // SMS de compra de la tarjeta `cuenta`; `recibido` = instante local de recepción
