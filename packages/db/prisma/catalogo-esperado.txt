@@ -121,7 +121,7 @@ funcion|tg_fechas_hoy()|definer=t|config=search_path=finn, pg_catalog|cuerpo=7c3
 funcion|tg_inmutables()|definer=t|config=search_path=finn, pg_catalog|cuerpo=2f4d2806dbc172ff6788ad21683ddd19
 funcion|tg_linea_con_eventos()|definer=t|config=search_path=finn, pg_catalog|cuerpo=f145ad42a068df72b157ea16c2e585b7
 funcion|tg_programada_calendario()|definer=t|config=search_path=finn, pg_catalog|cuerpo=3bf347de8b741a6b454ea930a12147e2
-funcion|tg_registrar_eliminacion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=f6c189d06be0c479cb43866c8f51641d
+funcion|tg_registrar_eliminacion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=c778a087bc01eda3ef0d09bbbca17cb1
 funcion|tg_solo_insercion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=437a0547ae1e4b6571092a42ad8fc733
 funcion|tg_transicion_estado_bancario()|definer=t|config=search_path=finn, pg_catalog|cuerpo=9b100efd2cd1e9342fbcef578902b1d2
 funcion|tg_transicion_movimiento()|definer=t|config=search_path=finn, pg_catalog|cuerpo=358149a3c3104ebf89a1ed017b950d81

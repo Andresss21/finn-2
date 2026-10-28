@@ -15,7 +15,7 @@ import { esRechazo } from './rechazos';
 type Registro = Pick<H.Conciliacion, 'fechaEstado' | 'saldoEstado' | 'modo'>;
 
 /** La propuesta de ajuste de AV-21 según la cuenta y el signo de d (CF-01; 06 §3.2.5). */
-const ajuste = (tipo: H.TipoCuenta, d: Centavos) =>
+export const ajuste = (tipo: H.TipoCuenta, d: Centavos) =>
   d < 0
     ? { operacion: 'OP-20' }
     : tipo === 'tarjeta'
