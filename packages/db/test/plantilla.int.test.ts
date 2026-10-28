@@ -19,14 +19,14 @@ async function comoAdmin(sql: string): Promise<void> {
   }
 }
 
-describe('C3, C5 y C6 sobre la plantilla', () => {
-  it('C3 C5 C6 pasan sobre la copia sana: migrate deploy sin pendientes, sin violaciones ni diferencias', async () => {
+describe('PRU-ESQ-ESQ', () => {
+  it('PRU-ESQ-ESQ-101 C3, C5 y C6 pasan sobre la copia sana: migrate deploy sin pendientes, sin violaciones ni diferencias', async () => {
     await expect(prepararPlantilla(sana.urlMigraciones, consultar)).resolves.toBeUndefined();
     expect(await c5(sana.urlMigraciones, consultar)).toEqual([]);
     expect(await c6(sana.urlMigraciones, consultar)).toEqual([]);
   }, 120_000);
 
-  it('C5 y C6 fallan sobre una copia dañada: trigger deshabilitado e índice de expresión borrado', async () => {
+  it('PRU-ESQ-ESQ-102 C5 y C6 fallan sobre una copia dañada: trigger deshabilitado e índice de expresión borrado', async () => {
     await comoAdmin(`ALTER TABLE finn.grupos DISABLE TRIGGER a_exigir_bloqueo;
                      DROP INDEX finn.ux_reglas_patron;`);
     const reglas = await c5(copia.urlMigraciones, consultar);
