@@ -2,9 +2,10 @@
 // detalle. Las reducciones salen de las celdas de `presupuesto` (§4.6) y el dinero en camino y las
 // entradas de cobros, de `porCobrar` (§4.10). `b` y `cobros` deben salir de los mismos hechos, con
 // `presupuesto(h, c, hoy, pagosImplicitos(cobros))`.
-import type { Hechos, TipoTransaccion } from '../hechos';
+import type { Hechos, TipoTransaccion, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
+import { porId } from './devoluciones';
 import { type Celda, type Presupuesto, reduccionDe } from './disponible';
 import { mutante } from './mutantes';
 import type { Periodo } from './periodos';
@@ -65,9 +66,9 @@ export function entradas(
   h: HechosDeLpa,
   cobros: readonly PorCobrar[],
   hasta?: FechaLocal,
+  txs: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
 ): EntradasPorClase {
   const efectivo = new Set(h.cuentas.filter((k) => k.tipo === 'efectivo').map((k) => k.id));
-  const txs = new Map(h.transacciones.map((t) => [t.id, t]));
   const vale = (fecha: FechaLocal) => hasta === undefined || fecha <= hasta;
   const por = {
     ingreso: Centavos.cero,
@@ -101,6 +102,7 @@ export function listoParaAsignar(
   h: HechosDeLpa,
   b: Presupuesto,
   cobros: readonly PorCobrar[],
+  txs: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
 ): DetalleLpa {
   const a = b.activo.inicio;
   // Mutante 'cierre' (07 §19.4): el activo reduce LPA como si ya hubiera cerrado.
@@ -108,7 +110,7 @@ export function listoParaAsignar(
     (x) => x.estado === 'cerrado' || (mutante('cierre') && x.estado === 'activo'),
   );
   const detalle = {
-    entradas: entradas(h, cobros),
+    entradas: entradas(h, cobros, undefined, txs),
     asignadoCerrados: asignadoSi(h, (p) => p < a),
     asignadoActivo: asignadoSi(h, (p) => p === a),
     asignadoFuturos: asignadoSi(h, (p) => p > a),
@@ -143,4 +145,77 @@ export function lpaAlCierre(h: HechosDeLpa, b: Presupuesto, p: Periodo): Centavo
     dineroEnCamino(cobros),
   ]);
   return Centavos.restar(entradas(h, cobros, p.fin).total, restado);
+}
+
+/** Σ de los montos con clave ≤ hasta, por sumas acumuladas sobre las claves ordenadas. */
+function acumulado(pares: readonly (readonly [FechaLocal, Centavos])[]) {
+  const xs = [...pares].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  const sumas: Centavos[] = [];
+  for (const [, m] of xs) sumas.push(Centavos.sumar(sumas.at(-1) ?? Centavos.cero, m));
+  return (hasta: FechaLocal): Centavos => {
+    let n = 0;
+    let alto = xs.length;
+    while (n < alto) {
+      const medio = (n + alto) >> 1;
+      if ((xs[medio] as readonly [FechaLocal, Centavos])[0] <= hasta) n = medio + 1;
+      else alto = medio;
+    }
+    return n === 0 ? Centavos.cero : (sumas[n - 1] as Centavos);
+  };
+}
+
+const despues = (a: FechaLocal, b: FechaLocal) => (a > b ? a : b);
+
+/**
+ * `lpaAlCierre` de cada período cerrado, en orden, en una pasada por los hechos [BE-23]: los mismos
+ * cuatro términos, como sumas acumuladas por fecha. `cobros` es `porCobrar(h)`. Los
+ * eventos de una línea van en orden cronológico, así que los de fecha ≤ fin(p) son un prefijo y dan
+ * los mismos R, Exc y saldo abierto que `porCobrar(h, fin(p))`; una línea con fecha > fin(p) no
+ * cuenta, por eso cada término entra en la más tardía de su fecha y la de su línea.
+ */
+export function historialLpa(
+  h: HechosDeLpa,
+  b: Presupuesto,
+  cobros: readonly PorCobrar[],
+  txs: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
+): { readonly periodo: Periodo; readonly lpa: Centavos }[] {
+  const efectivo = new Set(h.cuentas.filter((k) => k.tipo === 'efectivo').map((k) => k.id));
+  const deEfectos = h.efectos.flatMap((e): [FechaLocal, Centavos][] => {
+    const t = txs.get(e.transaccionId);
+    if (t === undefined || CLASE[t.tipo] === undefined || !efectivo.has(e.cuentaId)) return [];
+    return [[t.fecha, e.monto]];
+  });
+  const deCobros = cobros.flatMap((x) =>
+    entradasDeCobros([x]).map((e): [FechaLocal, Centavos] => [despues(x.fecha, e.fecha), e.monto]),
+  );
+  const entradasHasta = acumulado([...deEfectos, ...deCobros]);
+  const asignadoHasta = acumulado(h.asignaciones.map((a) => [a.periodoInicio, a.monto]));
+  const reducidoHasta = acumulado(b.celdas.map((x) => [x.periodo.inicio, reduccionDe(x)]));
+  // Dinero en camino: M de cada línea con débito y lo que cada evento baja su saldo abierto.
+  const enCaminoHasta = acumulado(
+    cobros
+      .filter((x) => x.medio.tarjetaId === null)
+      .flatMap((x) => {
+        let previo = x.monto;
+        const bajas = x.eventos.map((e): [FechaLocal, Centavos] => {
+          const baja = Centavos.restar(e.abierto, previo);
+          previo = e.abierto;
+          return [despues(x.fecha, e.fecha), baja];
+        });
+        return [[x.fecha, x.monto] as [FechaLocal, Centavos], ...bajas];
+      }),
+  );
+  return b.periodos
+    .filter((p) => p.inicio < b.activo.inicio)
+    .map((periodo) => ({
+      periodo,
+      lpa: Centavos.restar(
+        entradasHasta(periodo.fin),
+        suma([
+          asignadoHasta(periodo.inicio),
+          reducidoHasta(periodo.inicio),
+          enCaminoHasta(periodo.fin),
+        ]),
+      ),
+    }));
 }

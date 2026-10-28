@@ -25,6 +25,7 @@ const E1 = uuid(1),
   E2 = uuid(2),
   G1 = uuid(10),
   C1 = uuid(11),
+  C2 = uuid(12),
   K1 = uuid(15),
   K2 = uuid(16),
   L1 = uuid(301);
@@ -296,6 +297,23 @@ describe('PRU-INT-ESQ', () => {
     expect(h4.cuentas.some((x) => x.id === E2)).toBe(false);
     expect(h4.efectos.some((x) => x.id === ES)).toBe(false); // en cascada (DB-12)
     expect(await filasDe(`SELECT id::text AS x FROM finn.cambios_posteriores`)).toEqual([]);
+
+    // ── 5. [CH-31] Archivar una categoría va al final de F4, después de `asignaciones`: δ > 0 sobre la
+    // Asig(C2, A) existente pasa `g_asignacion` (inv. 20). Las demás actualizaciones de `categorias`, en su puesto.
+    const archivo: Cambio[] = [
+      { tipo: 'actualizar', tabla: 'categorias', id: C2, campos: { archivada: true } },
+      { tipo: 'actualizar', tabla: 'asignaciones', id: uuid(31), campos: { monto: c(5000) } },
+      { tipo: 'actualizar', tabla: 'categorias', id: C1, campos: { nombre: 'Comida y súper' } },
+    ];
+    const r5 = await aplicar(archivo);
+    expect(r5.sentencias).toEqual([
+      'update categorias',
+      'update asignaciones',
+      'update categorias',
+    ]);
+    const h5 = await cargar();
+    expect(h5.categorias.find((x) => x.id === C2)?.archivada).toBe(true);
+    expect(h5.asignaciones.find((x) => x.id === uuid(31))?.monto).toBe(5000);
     // El orden fijo es el de 04 §4.5.1
     expect(ORDEN_TABLAS.indexOf('asignaciones')).toBe(19);
   });
