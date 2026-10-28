@@ -161,7 +161,7 @@
 
   "TA-144": { "estado": "terminada", "pr": 69 },
 
-  "TA-145": { "estado": "pendiente" },
+  "TA-145": { "estado": "en_curso", "rama": "ta-145-escenarios-b2" },
 
   "TA-146": { "estado": "pendiente" },
 

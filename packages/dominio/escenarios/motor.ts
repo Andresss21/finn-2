@@ -242,10 +242,55 @@ function comando(s: Estado, op: Op): ComandoDominio {
         id: id(`t${++s.contador}`),
         instante: hora(),
         ids,
-        fecha: fecha(),
+        fecha: fecha(op.fecha),
         total: c(op.monto),
         lineaId: linea.id,
         cuentaId: cuentaId(s, op.cuenta ?? 'Ahorro'),
+      };
+    }
+    case 'OP-32': {
+      const linea = s.hechos.lineas.find(
+        (l) => l.transaccionId === id(`t-${op.cobro}`) && l.deudorId,
+      );
+      if (!linea) throw new Error(`OP-32: ${op.cobro} no tiene línea por cobrar`);
+      return {
+        operacion: 'OP-32',
+        id: id(`t${++s.contador}`),
+        instante: hora(),
+        lineaId: linea.id,
+        monto: c(op.monto),
+        fecha: fecha(op.fecha),
+        categoriaId: categoriaId(s, op.categoria),
+      };
+    }
+    case 'OP-33': {
+      const alta = {
+        operacion: 'OP-33' as const,
+        id: id(`t${++s.contador}`),
+        instante: hora(),
+        ids,
+        fecha: fecha(op.fecha),
+        total: c(op.monto),
+      };
+      if (op.compra === undefined)
+        return {
+          ...alta,
+          cuentaId: cuentaId(s, op.cuenta as string),
+          categoriaId: categoriaId(s, op.categoria as string),
+        };
+      const originales = s.hechos.lineas
+        .filter((l) => l.transaccionId === id(`t-${op.compra}`))
+        .sort((a, b) => a.orden - b.orden);
+      const reparto = (op.reparto ?? [{ linea: 1, monto: op.monto }]).map((r) => {
+        const l = originales[r.linea - 1];
+        if (!l) throw new Error(`OP-33: ${op.compra} no tiene la línea ${r.linea}`);
+        return { lineaId: l.id, monto: c(r.monto) };
+      });
+      return {
+        ...alta,
+        transaccionOriginalId: id(`t-${op.compra}`),
+        ...(op.cuenta && { cuentaId: cuentaId(s, op.cuenta) }),
+        reparto,
       };
     }
     case 'OP-27': {
