@@ -186,10 +186,12 @@ export function presupuesto(
     disponible: suma(filas.map((f) => f.disponible)),
   });
 
-  const grupos = porOrden(i.hechos.grupos).flatMap((g) => {
+  const visibles = porOrden(i.hechos.grupos).flatMap((g) => {
     const propias = normales.filter((x) => x.grupoId === g.id);
     if (propias.length === 0) return [];
-    const todas = porOrden(propias.filter(visible)).map((x) => fila(x.id, x.orden));
+    return [{ g, todas: porOrden(propias.filter(visible)).map((x) => fila(x.id, x.orden)) }];
+  });
+  const grupos = visibles.flatMap(({ g, todas }) => {
     const categorias = todas.filter(cumple);
     if ((g.archivado || filtro !== 'todas') && categorias.length === 0) return [];
     return [{ grupo: nom.grupo(g.id), orden: g.orden, categorias, totales: totalesDe(todas) }];
@@ -228,7 +230,6 @@ export function presupuesto(
     : [];
 
   const anterior = posicion > 0 ? b.periodos[posicion - 1] : undefined;
-  const conGastado = new Set(celdas.map((x) => x.categoriaId));
   return {
     periodo: periodoDto(i, p),
     navegacion: {
@@ -241,10 +242,7 @@ export function presupuesto(
     grupos,
     pagosTarjeta,
     archivadasConDinero,
-    totales: {
-      asignado: suma(celdas.map((x) => x.asignado)),
-      disponible: suma(celdas.map((x) => x.disponible)),
-      gastado: suma(normales.filter((x) => conGastado.has(x.id)).map((x) => gastadoEn(x.id, p))),
-    },
+    // [CH-32] Solo las normales visibles del período, sin filtro: Σ de `grupos[].totales` con `todas`.
+    totales: totalesDe(visibles.flatMap((x) => x.todas)),
   };
 }

@@ -65,10 +65,6 @@ function filas(i: Instantanea): Fila[] {
     out.push({ donde, que, publicado, calculado, ...(nuevo !== undefined && { nuevo }) });
   const p = presupuesto(i);
   const todas = p.grupos.flatMap((g) => g.categorias);
-  // Totales del Presupuesto de 05 A.7: Σ de las categorías normales. `p.totales.disponible` suma también las categorías de
-  // pago de tarjeta (+$623.43 aquí): se informa en el PR como duda sobre 04 §6.2, no se ajusta.
-  const totalDe = (k: 'asignado' | 'gastado' | 'disponible') =>
-    p.grupos.reduce((a, g) => a + g.totales[k], 0);
   const fila = (nombre: string) => {
     const f = todas.find((x) => x.categoria.nombre === nombre);
     if (!f) throw new Error(`la semilla no tiene la categoría ${nombre} en el Presupuesto`);
@@ -128,9 +124,10 @@ function filas(i: Instantanea): Fila[] {
       X('A.7 Presupuesto', `${c}: ${k}`, valores[n] as string, calc[n] as string, nuevoDe[c]?.[n]),
     );
   }
-  X('A.7 Presupuesto', 'totales: asignado', '$775.49', d(totalDe('asignado')), '$997.84');
-  X('A.7 Presupuesto', 'totales: gastado', '$635.60', d(totalDe('gastado')), '$647.95');
-  X('A.7 Presupuesto', 'totales: disponible', '$1,574.51', d(totalDe('disponible')), '$1,784.51');
+  // Totales del Presupuesto de 05 A.7: solo las categorías normales (04 §6.2, CH-32).
+  X('A.7 Presupuesto', 'totales: asignado', '$775.49', d(p.totales.asignado), '$997.84');
+  X('A.7 Presupuesto', 'totales: gastado', '$635.60', d(p.totales.gastado), '$647.95');
+  X('A.7 Presupuesto', 'totales: disponible', '$1,574.51', d(p.totales.disponible), '$1,784.51');
   X(
     'A.7 Presupuesto',
     'Pago Visa Oro: actividad',
