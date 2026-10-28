@@ -19,7 +19,7 @@ import { amortizacionDe, type Auxiliares } from './detalle-cuenta';
 import { type DatosDeOrigen, detalleTransaccion } from './detalle-transaccion';
 import { porOrden } from './estructura';
 import { metas } from './metas';
-import { lineasPorCobrar } from './por-cobrar';
+import { lineasPorCobrar, menor } from './por-cobrar';
 import { comerciosRecientes } from './sugerencia';
 
 export type ParametrosFormulario =
@@ -520,8 +520,6 @@ function contextoMeta(i: Instantanea, p: Extract<ParametrosFormulario, { operaci
 
 // ───────────── ola 2 (TA-140) ─────────────
 
-const antes = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
-
 function existeLinea(i: Instantanea, lineaId: Uuid) {
   const x = lineasPorCobrar(i).find((y) => y.lineaId === lineaId);
   if (x === undefined) throw new RangeError(`la línea ${lineaId} no es por cobrar`);
@@ -540,7 +538,7 @@ function contextoCobrar(i: Instantanea, p: Extract<ParametrosFormulario, { opera
           (p.lineaId === undefined || x.lineaId === p.lineaId) &&
           (p.deudorId === undefined || x.deudor.id === p.deudorId),
       )
-      .sort((a, b) => antes(a.fechaOrigen, b.fechaOrigen) || antes(a.lineaId, b.lineaId))
+      .sort((a, b) => menor(a.fechaOrigen, b.fechaOrigen) || menor(a.lineaId, b.lineaId))
       .map((x) => ({
         lineaId: x.lineaId,
         transaccionId: x.transaccionId,
@@ -587,22 +585,12 @@ function candidatasDeDevolucion(i: Instantanea, f: FiltroDeCandidatas = {}) {
   const h = i.hechos;
   const n = nombres(i);
   const q = f.busqueda?.trim().toLowerCase() ?? '';
+  const compraDe = new Map(h.lineas.map((l) => [l.id, l.transaccionId]));
   const devuelto = new Map<Uuid, Centavos>();
-  for (const l of h.lineas)
-    if (l.lineaOriginalId !== null)
-      devuelto.set(
-        l.lineaOriginalId,
-        Centavos.sumar(devuelto.get(l.lineaOriginalId) ?? Centavos.cero, l.monto),
-      );
-  const deLaCompra = new Map<Uuid, Centavos>();
-  for (const l of h.lineas)
-    deLaCompra.set(
-      l.transaccionId,
-      Centavos.sumar(
-        deLaCompra.get(l.transaccionId) ?? Centavos.cero,
-        devuelto.get(l.id) ?? Centavos.cero,
-      ),
-    );
+  for (const l of h.lineas) {
+    const t = l.lineaOriginalId === null ? undefined : compraDe.get(l.lineaOriginalId);
+    if (t !== undefined) devuelto.set(t, Centavos.sumar(devuelto.get(t) ?? Centavos.cero, l.monto));
+  }
   return h.transacciones
     .filter(
       (t) =>
@@ -614,7 +602,7 @@ function candidatasDeDevolucion(i: Instantanea, f: FiltroDeCandidatas = {}) {
     )
     .flatMap((t) => {
       const cuenta = h.efectos.find((e) => e.transaccionId === t.id)?.cuentaId;
-      const restante = Centavos.restar(t.total, deLaCompra.get(t.id) ?? Centavos.cero);
+      const restante = Centavos.restar(t.total, devuelto.get(t.id) ?? Centavos.cero);
       return cuenta === undefined ||
         restante <= 0 ||
         (f.cuentaId !== undefined && cuenta !== f.cuentaId) ||
@@ -623,7 +611,7 @@ function candidatasDeDevolucion(i: Instantanea, f: FiltroDeCandidatas = {}) {
         : [{ t, cuenta, restante }];
     })
     .sort((a, b) =>
-      antes(`${b.t.fecha}|${b.t.claveOrden}|${b.t.id}`, `${a.t.fecha}|${a.t.claveOrden}|${a.t.id}`),
+      menor(`${b.t.fecha}|${b.t.claveOrden}|${b.t.id}`, `${a.t.fecha}|${a.t.claveOrden}|${a.t.id}`),
     )
     .slice(0, MAX_CANDIDATAS)
     .map(({ t, cuenta, restante }) => ({

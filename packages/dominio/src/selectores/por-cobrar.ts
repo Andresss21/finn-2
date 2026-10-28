@@ -40,7 +40,7 @@ export interface PorCobrarSel {
 }
 
 const suma = (xs: readonly Centavos[]) => xs.reduce(Centavos.sumar, Centavos.cero);
-const menor = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+export const menor = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 const estadoDe = (x: Pick<PorCobrar, 'abierto' | 'monto'>): EstadoPorCobrar =>
   x.abierto === Centavos.cero ? 'cerrado' : x.abierto === x.monto ? 'abierto' : 'parcial';
