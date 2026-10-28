@@ -1,6 +1,7 @@
 // Formularios (04 §6.14, BE-42): catálogos comunes y el contexto propio de cada operación (ola 1:
 // `registrar`, `pagar_tarjeta`, `cuota_prestamo`, `editar_transaccion`, `asignar`, `archivar_categoria`,
-// `cuenta`, `movimiento` y `meta`; el resto llega con la ola 2, TA-140).
+// `cuenta`, `movimiento` y `meta`; ola 2, TA-140: `cobrar`, `condonar` y `devolver`; faltan
+// `fusionar`, `programada`, `regla`, `formato`, `conciliar` y `verificar_saldo`).
 // No calcula: cada número sale de la instantánea o de un selector. Las tablas [H] llegan como parámetro.
 import { desgloseAlPagar } from '../calculo/patrimonio';
 import type { Periodo } from '../calculo/periodos';
@@ -9,19 +10,16 @@ import type { Instantanea, Institucion, Linea, ReglaComercio, TipoCuenta, Uuid }
 import { asignacionRapida } from '../operaciones/op-16';
 import { desglosePropuesto } from '../operaciones/op-24';
 import { eventosDe } from '../operaciones/op-28';
+import { propuestaCondonacion } from '../operaciones/op-32';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import {
-  type DatosDeBandeja,
-  type MovimientoDto,
-  movimientoDeBandeja,
-  origenPropuestoPagoTarjeta,
-} from './bandeja';
+import { type DatosDeBandeja, movimientoDeBandeja, origenPropuestoPagoTarjeta } from './bandeja';
 import { nombres, type Ref, sobregiroDe } from './comunes';
 import { amortizacionDe, type Auxiliares } from './detalle-cuenta';
 import { type DatosDeOrigen, detalleTransaccion } from './detalle-transaccion';
 import { porOrden } from './estructura';
 import { metas } from './metas';
+import { lineasPorCobrar } from './por-cobrar';
 import { comerciosRecientes } from './sugerencia';
 
 export type ParametrosFormulario =
@@ -57,7 +55,19 @@ export type ParametrosFormulario =
   | { readonly operacion: 'archivar_categoria'; readonly categoriaId: Uuid }
   | { readonly operacion: 'cuenta'; readonly cuentaId?: Uuid; readonly tipo?: TipoCuenta }
   | { readonly operacion: 'movimiento'; readonly movimientoId: Uuid }
-  | { readonly operacion: 'meta'; readonly categoriaId?: Uuid; readonly metaId?: Uuid };
+  | { readonly operacion: 'meta'; readonly categoriaId?: Uuid; readonly metaId?: Uuid }
+  | {
+      readonly operacion: 'cobrar';
+      readonly lineaId?: Uuid;
+      readonly deudorId?: Uuid;
+      readonly fecha?: FechaLocal;
+    }
+  | { readonly operacion: 'condonar'; readonly lineaId: Uuid }
+  | {
+      readonly operacion: 'devolver';
+      readonly transaccionOriginalId?: Uuid;
+      readonly busqueda?: string;
+    };
 
 /** Lo que no está en los hechos del motor: tablas [H] e [I]. */
 export interface AuxiliaresDeFormulario extends Auxiliares, DatosDeOrigen {
@@ -97,7 +107,12 @@ function pide(p: ParametrosFormulario, esPago: boolean): readonly Pide[] {
     case 'movimiento':
       return ['cuentas', 'categorias', 'deudores', 'comercios'];
     case 'meta':
+    case 'condonar':
       return ['categorias'];
+    case 'cobrar':
+      return ['cuentas', 'categoriasPago', 'deudores'];
+    case 'devolver':
+      return ['cuentas'];
   }
 }
 
@@ -349,6 +364,13 @@ function contextoCuotaPrestamo(
   };
 }
 
+/** La capacidad de devolución de una línea, la de OP-33 (inv. 9 e inv. 10): lo abierto por cobrar, o monto − devuelto. */
+function capacidadDeLinea(i: Instantanea, l: Linea) {
+  const devuelto = suma(eventosDe(i.hechos, l).devoluciones.map((d) => d.monto));
+  const abierto = i.porCobrar.find((q) => q.lineaId === l.id)?.abierto;
+  return { devuelto, capacidad: abierto ?? Centavos.restar(l.monto, devuelto) };
+}
+
 function contextoEditar(i: Instantanea, transaccionId: Uuid, aux: AuxiliaresDeFormulario) {
   const h = i.hechos;
   const detalle = detalleTransaccion(i, transaccionId, aux);
@@ -365,22 +387,11 @@ function contextoEditar(i: Instantanea, transaccionId: Uuid, aux: AuxiliaresDeFo
     categoriasArchivadas,
     ...(conDevoluciones
       ? {
-          capacidadDevolucion: detalle.lineas.map((l) => {
-            // La misma capacidad que OP-33 (inv. 9 e inv. 10): lo abierto por cobrar, o monto − devuelto.
-            const devuelto = suma(
-              eventosDe(h, h.lineas.find((x) => x.id === l.id) as Linea).devoluciones.map(
-                (d) => d.monto,
-              ),
-            );
-            return {
-              lineaId: l.id,
-              monto: l.monto,
-              devuelto,
-              capacidad:
-                i.porCobrar.find((q) => q.lineaId === l.id)?.abierto ??
-                Centavos.restar(l.monto, devuelto),
-            };
-          }),
+          capacidadDevolucion: detalle.lineas.map((l) => ({
+            lineaId: l.id,
+            monto: l.monto,
+            ...capacidadDeLinea(i, h.lineas.find((x) => x.id === l.id) as Linea),
+          })),
         }
       : {}),
   };
@@ -507,6 +518,189 @@ function contextoMeta(i: Instantanea, p: Extract<ParametrosFormulario, { operaci
   return { ...(meta === undefined ? {} : { meta }), categoriasSinMeta };
 }
 
+// ───────────── ola 2 (TA-140) ─────────────
+
+const antes = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+
+function existeLinea(i: Instantanea, lineaId: Uuid) {
+  const x = lineasPorCobrar(i).find((y) => y.lineaId === lineaId);
+  if (x === undefined) throw new RangeError(`la línea ${lineaId} no es por cobrar`);
+  return x;
+}
+
+function contextoCobrar(i: Instantanea, p: Extract<ParametrosFormulario, { operacion: 'cobrar' }>) {
+  if (p.lineaId !== undefined) existeLinea(i, p.lineaId);
+  if (p.deudorId !== undefined && !i.hechos.deudores.some((d) => d.id === p.deudorId))
+    throw new RangeError(`el deudor ${p.deudorId} no existe`);
+  return {
+    lineas: lineasPorCobrar(i, p.fecha)
+      .filter(
+        (x) =>
+          x.abierto > 0 &&
+          (p.lineaId === undefined || x.lineaId === p.lineaId) &&
+          (p.deudorId === undefined || x.deudor.id === p.deudorId),
+      )
+      .sort((a, b) => antes(a.fechaOrigen, b.fechaOrigen) || antes(a.lineaId, b.lineaId))
+      .map((x) => ({
+        lineaId: x.lineaId,
+        transaccionId: x.transaccionId,
+        deudor: x.deudor,
+        fechaOrigen: x.fechaOrigen,
+        comercio: x.comercio,
+        monto: x.monto,
+        abierto: x.abierto,
+        medio: x.medio,
+        ...(x.tarjeta === undefined ? {} : { tarjeta: x.tarjeta }),
+        propuestaAV22: x.medio === 'tarjeta',
+      })),
+  };
+}
+
+function contextoCondonar(i: Instantanea, lineaId: Uuid) {
+  const x = existeLinea(i, lineaId);
+  const categoria = propuestaCondonacion(i.hechos, lineaId);
+  return {
+    linea: {
+      lineaId,
+      deudor: x.deudor,
+      abierto: x.abierto,
+      medio: x.medio,
+      fechaOrigen: x.fechaOrigen,
+    },
+    ...(categoria === null ? {} : { categoriaPropuesta: nombres(i).categoria(categoria) }),
+  };
+}
+
+interface FiltroDeCandidatas {
+  readonly busqueda?: string;
+  readonly cuentaId?: Uuid;
+  /** El monto que la compra todavía debe admitir. */
+  readonly montoMinimo?: Centavos;
+  /** La devolución no puede ser anterior a la compra. */
+  readonly hasta?: FechaLocal;
+}
+
+const MAX_CANDIDATAS = 20;
+
+/** Gastos con `restante > 0` (inv. 11), los más recientes primero; la búsqueda mira comercio y nota. */
+function candidatasDeDevolucion(i: Instantanea, f: FiltroDeCandidatas = {}) {
+  const h = i.hechos;
+  const n = nombres(i);
+  const q = f.busqueda?.trim().toLowerCase() ?? '';
+  const devuelto = new Map<Uuid, Centavos>();
+  for (const l of h.lineas)
+    if (l.lineaOriginalId !== null)
+      devuelto.set(
+        l.lineaOriginalId,
+        Centavos.sumar(devuelto.get(l.lineaOriginalId) ?? Centavos.cero, l.monto),
+      );
+  const deLaCompra = new Map<Uuid, Centavos>();
+  for (const l of h.lineas)
+    deLaCompra.set(
+      l.transaccionId,
+      Centavos.sumar(
+        deLaCompra.get(l.transaccionId) ?? Centavos.cero,
+        devuelto.get(l.id) ?? Centavos.cero,
+      ),
+    );
+  return h.transacciones
+    .filter(
+      (t) =>
+        t.tipo === 'gasto' &&
+        (f.hasta === undefined || t.fecha <= f.hasta) &&
+        (q === '' ||
+          (t.comercio ?? '').toLowerCase().includes(q) ||
+          (t.nota ?? '').toLowerCase().includes(q)),
+    )
+    .flatMap((t) => {
+      const cuenta = h.efectos.find((e) => e.transaccionId === t.id)?.cuentaId;
+      const restante = Centavos.restar(t.total, deLaCompra.get(t.id) ?? Centavos.cero);
+      return cuenta === undefined ||
+        restante <= 0 ||
+        (f.cuentaId !== undefined && cuenta !== f.cuentaId) ||
+        (f.montoMinimo !== undefined && restante < f.montoMinimo)
+        ? []
+        : [{ t, cuenta, restante }];
+    })
+    .sort((a, b) =>
+      antes(`${b.t.fecha}|${b.t.claveOrden}|${b.t.id}`, `${a.t.fecha}|${a.t.claveOrden}|${a.t.id}`),
+    )
+    .slice(0, MAX_CANDIDATAS)
+    .map(({ t, cuenta, restante }) => ({
+      transaccionId: t.id,
+      fecha: t.fecha,
+      comercio: t.comercio,
+      cuenta: n.cuenta(cuenta),
+      total: t.total,
+      restante,
+    }));
+}
+
+function contextoDevolver(
+  i: Instantanea,
+  p: Extract<ParametrosFormulario, { operacion: 'devolver' }>,
+) {
+  if (p.transaccionOriginalId === undefined)
+    return {
+      candidatas: candidatasDeDevolucion(
+        i,
+        p.busqueda === undefined ? {} : { busqueda: p.busqueda },
+      ),
+    };
+  const h = i.hechos;
+  const t = h.transacciones.find((x) => x.id === p.transaccionOriginalId);
+  if (t === undefined || t.tipo !== 'gasto')
+    throw new RangeError(`la compra ${p.transaccionOriginalId} no existe o no es un gasto`);
+  const n = nombres(i);
+  const cuenta = h.efectos.find((e) => e.transaccionId === t.id)?.cuentaId;
+  if (cuenta === undefined) throw new RangeError(`la compra ${t.id} no tiene cuenta`);
+  const lineas = h.lineas
+    .filter((l) => l.transaccionId === t.id)
+    .sort((a, b) => a.orden - b.orden)
+    .map((l) => {
+      const deudor = h.deudores.find((d) => d.id === l.deudorId);
+      const destino =
+        l.categoriaId !== null
+          ? { ...n.categoria(l.categoriaId), tipo: 'categoria' as const }
+          : { id: l.deudorId as Uuid, nombre: deudor?.nombre ?? '', tipo: 'deudor' as const };
+      return { lineaId: l.id, destino, monto: l.monto, ...capacidadDeLinea(i, l) };
+    });
+  const devuelto = suma(lineas.map((l) => l.devuelto));
+  return {
+    compra: {
+      transaccionId: t.id,
+      fecha: t.fecha,
+      comercio: t.comercio,
+      cuenta: n.cuenta(cuenta),
+      total: t.total,
+      devuelto,
+      restante: Centavos.restar(t.total, devuelto),
+    },
+    lineas,
+  };
+}
+
+function contextoMovimiento(
+  i: Instantanea,
+  p: Extract<ParametrosFormulario, { operacion: 'movimiento' }>,
+  aux: AuxiliaresDeFormulario,
+) {
+  if (aux.bandeja === undefined)
+    throw new TypeError('formulario(movimiento): faltan los datos de la bandeja');
+  const x = aux.bandeja.movimientos.find((y) => y.movimiento.id === p.movimientoId);
+  if (x === undefined) throw new RangeError(`el movimiento ${p.movimientoId} no existe`);
+  const m = x.movimiento;
+  const dto = movimientoDeBandeja(i, aux.bandeja, m, x.lineas);
+  if (m.tipoPropuesto !== 'devolucion') return { movimiento: dto };
+  // Misma cuenta, restante suficiente y compra no posterior al movimiento (04 §6.14.4).
+  const filtro: FiltroDeCandidatas = {
+    ...(m.cuentaId === null ? {} : { cuentaId: m.cuentaId }),
+    ...(m.monto === null ? {} : { montoMinimo: m.monto }),
+    ...(m.fecha === null ? {} : { hasta: m.fecha }),
+  };
+  return { movimiento: dto, candidatas: candidatasDeDevolucion(i, filtro) };
+}
+
 /** El contexto de cada operación (6.14.4), con la forma que devuelve su función. */
 interface Contextos {
   readonly registrar: ReturnType<typeof contextoRegistrar>;
@@ -516,9 +710,11 @@ interface Contextos {
   readonly asignar: ReturnType<typeof contextoAsignar>;
   readonly archivar_categoria: ReturnType<typeof contextoArchivar>;
   readonly cuenta: ReturnType<typeof contextoCuenta>;
-  /** Sin `candidatas` de devolución: llegan con `devolver` en TA-140. */
-  readonly movimiento: { readonly movimiento: MovimientoDto };
+  readonly movimiento: ReturnType<typeof contextoMovimiento>;
   readonly meta: ReturnType<typeof contextoMeta>;
+  readonly cobrar: ReturnType<typeof contextoCobrar>;
+  readonly condonar: ReturnType<typeof contextoCondonar>;
+  readonly devolver: ReturnType<typeof contextoDevolver>;
 }
 
 function contextoDe(i: Instantanea, p: ParametrosFormulario, aux: AuxiliaresDeFormulario) {
@@ -537,15 +733,16 @@ function contextoDe(i: Instantanea, p: ParametrosFormulario, aux: AuxiliaresDeFo
       return contextoArchivar(i, p.categoriaId);
     case 'cuenta':
       return contextoCuenta(i, p, aux);
-    case 'movimiento': {
-      if (aux.bandeja === undefined)
-        throw new TypeError('formulario(movimiento): faltan los datos de la bandeja');
-      const x = aux.bandeja.movimientos.find((y) => y.movimiento.id === p.movimientoId);
-      if (x === undefined) throw new RangeError(`el movimiento ${p.movimientoId} no existe`);
-      return { movimiento: movimientoDeBandeja(i, aux.bandeja, x.movimiento, x.lineas) };
-    }
+    case 'movimiento':
+      return contextoMovimiento(i, p, aux);
     case 'meta':
       return contextoMeta(i, p);
+    case 'cobrar':
+      return contextoCobrar(i, p);
+    case 'condonar':
+      return contextoCondonar(i, p.lineaId);
+    case 'devolver':
+      return contextoDevolver(i, p);
   }
 }
 
