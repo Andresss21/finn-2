@@ -13,3 +13,4 @@ export {
   type TrabajoEscritura,
   type TrabajoLectura,
 } from './transacciones.ts';
+export { sqlstateDe, type SqlstateDe } from './errores.ts';
