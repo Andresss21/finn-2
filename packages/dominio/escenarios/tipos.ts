@@ -25,6 +25,7 @@ type OpBase =
       saldo?: number; // tarjeta: la deuda; préstamo: el capital pendiente
       apertura?: string; // por defecto 2027-01-21 (DP-16)
       diaCorte?: number; // tarjeta: 15 por defecto
+      ultimos4?: string; // con él la cuenta tiene institución, y un SMS la encuentra (OP-35)
       prestamo?: DatosPrestamo;
     }
   | { op: 'OP-07'; categoria: string }
@@ -35,7 +36,7 @@ type OpBase =
       op: 'OP-18';
       categoria: string;
       monto?: number; // al crear; al editar solo cambia lo que se nombra
-      tipo?: 'mensual' | 'semanal' | 'para_fecha'; // mensual y semanal: acumular por defecto
+      tipo?: 'mensual' | 'semanal' | 'anual' | 'para_fecha'; // mensual y semanal: acumular por defecto
       modo?: 'acumular' | 'rellenar_hasta';
       fecha?: string; // para_fecha: la fecha objetivo
       editar?: true; // edita la meta de la categoría en vez de crearla
@@ -51,7 +52,7 @@ type OpBase =
       registrado?: string;
     }
   | { op: 'OP-21'; monto: number; cuenta?: string; fecha?: string; registrado?: string }
-  | { op: 'OP-28'; etiqueta: string; cuenta?: string; fecha?: string } // cambiar la cuenta (el medio) o la fecha de la transacción
+  | { op: 'OP-28'; etiqueta: string; cuenta?: string; fecha?: string; monto?: number } // cambiar la cuenta (el medio), la fecha o el total
   | { op: 'OP-29'; etiqueta: string } // eliminar la transacción
   | { op: 'OP-31'; cobro: string; monto: number; cuenta?: string; fecha?: string } // cobrar el por cobrar de la transacción `cobro`
   | { op: 'OP-32'; cobro: string; categoria: string; monto: number; fecha?: string } // condonar el por cobrar de `cobro` hacia una categoría
@@ -73,7 +74,53 @@ type OpBase =
       cuenta?: string; // avance: el efectivo que recibe
       destino?: string; // transferencia: la tarjeta que toma la deuda
     }
-  | { op: 'OP-23'; tarjeta: string; monto: number; origen?: string; fecha?: string };
+  | { op: 'OP-23'; tarjeta: string; monto: number; origen?: string; fecha?: string }
+  | { op: 'OP-06'; cuenta: string } // eliminar la cuenta
+  | {
+      op: 'OP-09'; // archivar: `destino` = 'LPA' o una categoría
+      categoria: string;
+      destino?: string;
+      devolverFuturas?: true;
+      desactivar?: string[]; // etiquetas de las programadas que se desactivan
+    }
+  | { op: 'OP-11'; categoria: string; monto: number; destino: string } // sacar de una archivada: 'LPA' o una categoría
+  | { op: 'OP-12'; origen: string; destino: string } // fusionar categorías
+  | {
+      op: 'OP-24'; // cuota de préstamo desde `origen` (por defecto Ahorro)
+      prestamo: string;
+      categoria: string;
+      capital: number;
+      interes: number;
+      seguro: number;
+      origen?: string;
+    }
+  | {
+      op: 'OP-42'; // programada de gasto mensual, a una categoría y sin registro automático
+      etiqueta: string;
+      cuenta: string;
+      comercio: string;
+      monto: number;
+      categoria: string;
+      primeraFecha: string;
+    }
+  | {
+      op: 'OP-35'; // SMS de compra de la tarjeta `cuenta`; `recibido` = instante local de recepción
+      etiqueta: string;
+      cuenta: string;
+      monto: number;
+      comercio: string;
+      recibido: string;
+      fecha: string;
+    }
+  | { op: 'OP-37'; etiqueta: string; categoria: string; aprobado: string } // aprobar con categoría (CF-21)
+  | {
+      op: 'OP-47'; // terminar la conciliación de `cuenta` con el estado de cuenta (montos con signo de efecto)
+      cuenta: string;
+      fecha: string;
+      saldo: number;
+      movimientos: { indice: number; fecha: string; monto: number }[];
+      coincidencias: { etiqueta: string; indice: number }[];
+    };
 
 /** `hoy`: el día en que se hace esa operación dentro del paso (un historial que cruza períodos: no se asigna a uno cerrado). */
 export type Op = OpBase & { hoy?: string };
