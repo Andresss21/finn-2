@@ -177,7 +177,7 @@
 
   "TA-157": { "estado": "pendiente" },
 
-  "TA-158": { "estado": "en_curso", "rama": "ta-158-errores-mensajes" },
+  "TA-158": { "estado": "terminada", "pr": 100 },
 
   "TA-159": { "estado": "pendiente" },
 
