@@ -15,6 +15,8 @@ import type {
 } from '../src/index';
 import { diferenciaActual } from '../src/selectores/detalle-cuenta';
 import { desgloseAlPagar } from '../src/calculo/patrimonio';
+import { ciclo, duracion, periodoDe } from '../src/calculo/periodos';
+import { op43Automatico } from '../src/operaciones/op-43';
 import { Centavos, FechaLocal } from '../src/valores/index';
 import type { Ejecutor } from './ejecutar';
 import {
@@ -124,26 +126,28 @@ function comando(s: Estado, op: Op): ComandoDominio {
         throw new Error(`OP-01: ${op.cuenta} no trae datos de préstamo`);
       const comunes = { tasaNominalAnualMillonesimas: null, seguroPrimerMes: null, comision: null };
       const subtipo =
-        tipo === 'tarjeta'
-          ? {
-              tipo,
-              limiteCredito: c(op.limite ?? 5000),
-              tasaAnualMillonesimas: null,
-              diaCorte: op.diaCorte ?? 15,
-            }
-          : p && {
-              ...comunes,
-              tipo,
-              contraparte: p.contraparte,
-              montoOriginal: c(p.montoOriginal),
-              tipoTasa: 'fija',
-              frecuencia: 'mensual',
-              frecuenciaDias: null,
-              modeloCalculo: null,
-              cuotaPactada: c(p.cuota),
-              plazoCuotas: p.plazoCuotas,
-              cuotasPagadasAlCrear: p.cuotasPagadas,
-            };
+        tipo === 'inversion'
+          ? { tipo, rendimientoAnualEsperadoMillonesimas: null }
+          : tipo === 'tarjeta'
+            ? {
+                tipo,
+                limiteCredito: c(op.limite ?? 5000),
+                tasaAnualMillonesimas: null,
+                diaCorte: op.diaCorte ?? 15,
+              }
+            : p && {
+                ...comunes,
+                tipo,
+                contraparte: p.contraparte,
+                montoOriginal: c(p.montoOriginal),
+                tipoTasa: 'fija',
+                frecuencia: 'mensual',
+                frecuenciaDias: null,
+                modeloCalculo: null,
+                cuotaPactada: c(p.cuota),
+                plazoCuotas: p.plazoCuotas,
+                cuotasPagadasAlCrear: p.cuotasPagadas,
+              };
       const [institucionId, ultimos4] = op.ultimos4 ? [BANCO, op.ultimos4] : [null, null];
       const cuenta = { tipo, nombre: op.cuenta, institucionId, ultimos4 };
       return {
@@ -168,7 +172,9 @@ function comando(s: Estado, op: Op): ComandoDominio {
       };
     case 'OP-14': {
       const inicio = calcular(s.hechos, s.hoy).presupuesto.activo.inicio;
-      const periodoInicio = FechaLocal.desdeTexto(op.periodo ? PERIODOS[op.periodo] : inicio);
+      const periodoInicio = FechaLocal.desdeTexto(
+        op.desde ?? (op.periodo ? PERIODOS[op.periodo] : inicio),
+      );
       const cat = categoriaId(s, op.categoria);
       const propia = (a: Hechos['asignaciones'][number]) =>
         a.categoriaId === cat && a.periodoInicio === periodoInicio;
@@ -426,7 +432,7 @@ function comando(s: Estado, op: Op): ComandoDominio {
         frecuenciaDias: null,
         primeraFecha: fecha(op.primeraFecha),
         fechaFin: null,
-        registroAutomatico: false,
+        registroAutomatico: op.automatico === true,
         lineas: [{ monto: c(op.monto), categoriaId: categoriaId(s, op.categoria) }],
       };
     case 'OP-35': {
@@ -482,6 +488,45 @@ function comando(s: Estado, op: Op): ComandoDominio {
         })),
       };
     }
+    case 'OP-19':
+      return { operacion: 'OP-19', diaInicio: op.diaInicio, ids };
+    case 'OP-25': {
+      const alta = {
+        operacion: 'OP-25' as const,
+        id: id(`t${++s.contador}`),
+        instante: hora(),
+        ids,
+        fecha: fecha(),
+        total: c(op.monto),
+        inversionId: cuentaId(s, op.inversion),
+        cuentaId: cuentaId(s, op.cuenta ?? 'Ahorro'),
+      };
+      if (op.modalidad === 'retiro') return { ...alta, modalidad: 'retiro' };
+      return { ...alta, modalidad: 'aporte', categoriaId: categoriaId(s, op.categoria as string) };
+    }
+    case 'OP-26':
+      return {
+        operacion: 'OP-26',
+        id: id(`t${++s.contador}`),
+        instante: hora(),
+        ids,
+        fecha: fecha(),
+        total: c(op.monto),
+        prestamoId: cuentaId(s, op.prestamo),
+        cuentaId: cuentaId(s, op.cuenta ?? 'Ahorro'),
+      };
+    case 'OP-43': {
+      if (op.modo === 'automatico')
+        throw new Error('OP-43 automático no es un comando: lo corre el paso');
+      return {
+        operacion: 'OP-43',
+        programadaId: id(`programada-${op.programada}`),
+        fechaEsperada: fecha(op.fecha),
+        id: id(`t${++s.contador}`),
+        instante: hora(),
+        ids,
+      };
+    }
     case 'OP-21':
       return {
         operacion: 'OP-21',
@@ -493,6 +538,14 @@ function comando(s: Estado, op: Op): ComandoDominio {
         cuentaId: cuentaId(s, op.cuenta ?? 'Ahorro'),
       };
   }
+}
+
+/** El registro automático de las programadas (04 §10.2 paso 1), con la hora de registro de la convención de DP-16. */
+function registroAutomatico(s: Estado) {
+  const minutos = 12 * 60 + ++s.reloj;
+  const ids = { siguiente: () => id(`n${++s.contador}`) };
+  const hora = instante(`${s.hoy}T${pad(Math.floor(minutos / 60))}:${pad(minutos % 60)}`);
+  return op43Automatico(s.hechos, s.hoy, ids, hora);
 }
 
 /** Consultas que se observan antes de aplicar las operaciones del paso (el desglose que ve quien va a pagar). */
@@ -567,6 +620,17 @@ const EXTRAS: Record<string, (i: Instantanea, arg: string) => number> = {
     i.presupuesto.celdas
       .filter((x) => x.periodo.inicio === PERIODOS[p as Periodo])
       .reduce((a, x) => a + x.arrastre, 0),
+  // Valor de la inversión `Nombre` (su saldo) y días del período que contiene `AAAA-MM-DD` (×100: las columnas van en dólares).
+  valorInversion: (i, n) => i.cuentas.find((x) => x.cuentaId === cuentaDe(i, n)?.id)?.saldo ?? 0,
+  diasPeriodo: (i, f) =>
+    duracion(periodoDe(ciclo(i.hechos.vigencias_ciclo), FechaLocal.desdeTexto(f))) * 100,
+  // Reportes de la transacción que dejó la fila (la última de los hechos): `reporteFila:otras_entradas` (01 §8, ESC-40).
+  reporteFila: (i, clase) => {
+    const ultima = i.hechos.transacciones.at(-1);
+    return i.clasificacion.partidas
+      .filter((x) => x.id === ultima?.id && x.clase === clase)
+      .reduce((a, x) => a + x.monto, 0);
+  },
   efAl: (i, fecha) => {
     const efectivo = new Set(
       i.hechos.cuentas.filter((k) => k.tipo === 'efectivo').map((k) => k.id),
@@ -650,6 +714,15 @@ export const ejecutorMotor: Ejecutor<Estado> = {
     for (const op of p.ops) {
       const hoyDelPaso = s.hoy;
       if (op.hoy) s.hoy = FechaLocal.desdeTexto(op.hoy);
+      if (op.op === 'OP-43' && op.modo === 'automatico') {
+        const a = registroAutomatico(s);
+        s.hoy = hoyDelPaso;
+        s.hechos = a.hechos;
+        for (const x of a.avisos) avisos.add(x.codigo);
+        for (const x of a.resultados)
+          if (x.salida.ok) for (const v of x.salida.avisos) avisos.add(v.codigo);
+        continue;
+      }
       const cmd = comando(s, op);
       const r = aplicar(s.hechos, cmd, s.hoy);
       s.hoy = hoyDelPaso;
