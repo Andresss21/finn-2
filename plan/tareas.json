@@ -189,7 +189,7 @@
 
   "TA-160": { "estado": "pendiente" },
 
-  "TA-161": { "estado": "en_curso", "rama": "ta-161-autorizar-sesion" },
+  "TA-161": { "estado": "terminada", "pr": 106 },
 
   "TA-162": { "estado": "pendiente" },
 
