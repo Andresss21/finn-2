@@ -34,8 +34,10 @@ import { op12 } from './op-12';
 import { op13 } from './op-13';
 import { op14 } from './op-14';
 import { op15 } from './op-15';
+import { op16 } from './op-16';
 import { op17 } from './op-17';
 import { op18 } from './op-18';
+import { op19 } from './op-19';
 import { op20 } from './op-20';
 import { op21 } from './op-21';
 import { op22 } from './op-22';
@@ -134,6 +136,9 @@ const OPERACIONES: {
   // TA-137: inversiones y desembolso.
   'OP-25': op25,
   'OP-26': op26,
+  // TA-136: asignación rápida y cambiar el ciclo.
+  'OP-16': op16,
+  'OP-19': op19,
 };
 
 /** AV-01 (§5.0.3): impacto retroactivo, antes y después de confirmar. */

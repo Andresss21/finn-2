@@ -1,0 +1,5 @@
+// regla: dinamico
+// Con el modelo en una variable, L21 no sabe la tabla: la inserción tiene que pasar por conAhora().
+type Delegado = { createManyAndReturn: (a: unknown) => Promise<unknown[]> };
+export const insertar = (tx: Record<string, Delegado>, modelo: string, filas: object[]) =>
+  tx[modelo].createManyAndReturn({ data: filas });

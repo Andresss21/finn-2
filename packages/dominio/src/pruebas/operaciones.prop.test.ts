@@ -83,7 +83,7 @@ function comprobar({ comando, antes, resultado, fotoAntes, fotoDespues }: Paso):
     ),
   ).toEqual([]);
 
-  // Inv. 21: ningún período con asignaciones cambia de fechas (no hay vigencias nuevas en la ola 1).
+  // Inv. 21: ningún período con asignaciones cambia de fechas, tampoco con una vigencia nueva (OP-19).
   const inicios = new Set(antes.hechos.asignaciones.map((a) => a.periodoInicio));
   for (const inicio of inicios)
     expect(periodoDe(despues.ciclo, inicio)).toEqual(periodoDe(antes.ciclo, inicio));

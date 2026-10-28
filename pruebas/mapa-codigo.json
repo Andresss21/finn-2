@@ -9,6 +9,7 @@
   { "patron": "packages/aplicacion/src/index.ts", "fts": "marco" },
   { "patron": "packages/aplicacion/src/contratos/**", "fts": "marco" },
   { "patron": "packages/aplicacion/src/errores/**", "fts": "marco" },
+  { "patron": "packages/aplicacion/src/errores-de-base*", "fts": "marco" },
   { "patron": "packages/dominio/src/**", "fts": [] },
   { "patron": "packages/db/src/**", "fts": [] },
   { "patron": "packages/conciliacion/src/**", "fts": [] },

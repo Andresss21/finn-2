@@ -1,0 +1,5 @@
+// regla: prisma
+// suscripciones_push tiene dos columnas de CT-02: nombrar solo creadaEn no alcanza.
+type Tx = { suscripcionPush: { createMany: (a: unknown) => Promise<unknown> } };
+export const suscribir = (tx: Tx, ahora: Date, filas: object[]) =>
+  tx.suscripcionPush.createMany({ data: filas.map((f) => ({ ...f, creadaEn: ahora })) });

@@ -8,7 +8,7 @@
   },
   "scripts": {
     "typecheck": "pnpm -r --if-present run typecheck",
-    "lint": "eslint . && node tools/ci/verificar-dependencias.mjs && node tools/ci/lecturas-interactivas.mjs && node tools/lint/bloqueos-sesion.mjs && stylelint \"apps/web/**/*.css\" --allow-empty-input && depcruise --config .dependency-cruiser.cjs apps packages",
+    "lint": "eslint . && node tools/ci/verificar-dependencias.mjs && node tools/ci/lecturas-interactivas.mjs && node tools/lint/bloqueos-sesion.mjs && node tools/lint/l21.mjs && stylelint \"apps/web/**/*.css\" --allow-empty-input && depcruise --config .dependency-cruiser.cjs apps packages",
     "depcruise": "depcruise --config .dependency-cruiser.cjs apps packages",
     "formato": "prettier --write .",
     "formato:comprobar": "prettier --check .",

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { calcular } from '../calculo/calcular';
+import { evaluarMeta } from '../calculo/metas';
+import { periodoDe } from '../calculo/periodos';
 import type {
   Asignacion,
   Categoria,
@@ -11,10 +13,12 @@ import type {
   Meta,
   ResultadoAplicar,
   Uuid,
+  VarianteAsignacionRapida,
 } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { aplicar } from './aplicar';
+import { asignacionRapida } from './op-16';
 
 const c = (n: number) => Centavos.desdeEntero(n * 100);
 const f = (t: string) => FechaLocal.desdeTexto(t);
@@ -469,5 +473,226 @@ describe('PRU-DOM-PRES-101: aplicar, presupuesto y metas (01 §5.3, 04 §3.3)', 
       { tipo: 'eliminar', tabla: 'metas', id: 'meta-VIEJA' },
     ]);
     expect(codigo(eliminar('nada'), h)).toEqual(['no_encontrado']);
+  });
+});
+
+// ── TA-136: OP-16 y OP-19 (01 §5.3, §4.2 punto 9, CF-17, CF-25; 04 §3.3, §6.14.4).
+const op16 = (x: string, p: FechaLocal, variante: VarianteAsignacionRapida): ComandoDominio => ({
+  operacion: 'OP-16',
+  categoriaId: id(x),
+  periodoInicio: p,
+  variante,
+  ids: contador(),
+});
+const op19 = (diaInicio: number): ComandoDominio => ({
+  operacion: 'OP-19',
+  diaInicio,
+  ids: contador(),
+});
+/** Un gasto en efectivo de E hacia la categoría x, registrado con OP-20. */
+function gasto(h: Hechos, x: string, fecha: FechaLocal, monto: Centavos, hoy: FechaLocal) {
+  const ids = contador();
+  const comando: ComandoDominio = {
+    operacion: 'OP-20',
+    id: ids.siguiente(),
+    instante: '2027-01-01T12:00:00.000Z' as Instante,
+    ids,
+    fecha,
+    total: monto,
+    cuentaId: id('E'),
+    lineas: [{ monto, destino: { categoriaId: id(x) } }],
+  };
+  return exito(ejecutar(h, comando, hoy)).hechosNuevos;
+}
+const rapida = (h: Hechos, x: string, p: FechaLocal, hoy = HOY) => {
+  const i = calcular(h, hoy);
+  return asignacionRapida(i, id(x), periodoDe(i.ciclo, p));
+};
+
+/** ESC-45: hoy 10 nov 2027 (período 21 oct – 20 nov), ciclo 21, Super(fut) 100 en 21 nov – 20 dic. */
+const HOY45 = f('2027-11-10');
+const [NOV21, DIC21, ENE21] = [f('2027-11-21'), f('2027-12-21'), f('2028-01-21')];
+const vigencia = (diaInicio: number, rigeDesde: FechaLocal | null) => ({
+  id: id(`v-${diaInicio}-${rigeDesde}`),
+  diaInicio,
+  rigeDesde,
+  revision: null,
+});
+const esc45 = (
+  asignaciones: readonly Asignacion[] = [],
+  vigencias: Hechos['vigencias_ciclo'] = [],
+): Hechos => ({
+  ...base(),
+  vigencias_ciclo: [vigencia(21, null), ...vigencias],
+  asignaciones: [asignacion('SUPER', NOV21, 100), ...asignaciones],
+});
+const insertadas = (r: ResultadoAplicar) =>
+  exito(r).cambios.flatMap((x) =>
+    x.tipo === 'insertar' && x.tabla === 'vigencias_ciclo'
+      ? [{ diaInicio: x.fila.diaInicio, rigeDesde: x.fila.rigeDesde }]
+      : [],
+  );
+const eliminadas = (r: ResultadoAplicar) =>
+  exito(r).cambios.flatMap((x) =>
+    x.tipo === 'eliminar' && x.tabla === 'vigencias_ciclo' ? [x.id] : [],
+  );
+const periodoNuevo = (r: ResultadoAplicar, fecha: string) =>
+  periodoDe(calcular(exito(r).hechosNuevos, HOY45).ciclo, f(fecha));
+const enero = { inicio: f('2028-01-01'), fin: f('2028-01-31'), transicion: false };
+
+describe('PRU-DOM-PRES-103: aplicar, asignación rápida y cambiar el ciclo (01 §5.3, 04 §3.3)', () => {
+  it('PRU-DOM-PRES-103 [AV-11] OP-16 "lo que falta para la meta" y "lo mismo que el período pasado": el valor de Asig con las reglas de OP-14', () => {
+    const h = base([asignacion('MASC', MAR, 20), asignacion('SUPER', FEB, 600)]);
+    // Falta(MASC, MAR) = 50 − 20: Asig queda en 50; en abril, la meta entera.
+    expect(rapida(h, 'MASC', MAR)).toEqual({ faltaMeta: c(50), igualPeriodoAnterior: c(0) });
+    const marzo = exito(ejecutar(h, op16('MASC', MAR, 'falta_meta')));
+    expect(asig(marzo.hechosNuevos, 'MASC', MAR)).toBe(c(50));
+    const abril = exito(ejecutar(h, op16('MASC', ABR, 'falta_meta')));
+    expect(asig(abril.hechosNuevos, 'MASC', ABR)).toBe(c(50));
+    // Sin meta, la variante no se ofrece (04 §6.14.4).
+    expect(rapida(h, 'GAS', MAR).faltaMeta).toBeUndefined();
+    expect(() => ejecutar(h, op16('GAS', MAR, 'falta_meta'))).toThrow(TypeError);
+    // Asig(SUPER, MAR) = Asig(SUPER, FEB) = 600 > LPA 380: en el activo, con AV-11 (OP-14).
+    const activo = ejecutar(h, op16('SUPER', MAR, 'igual_periodo_anterior'));
+    expect(asig(exito(activo).hechosNuevos, 'SUPER', MAR)).toBe(c(600));
+    expect(aviso(activo, 'AV-11')?.datos).toEqual({ lpa: c(-220) });
+    // En un futuro, el mismo valor se rechaza (I1); en un cerrado, también (inv. 18).
+    const conMarzo = base([asignacion('SUPER', MAR, 600)]);
+    expect(rechazos(ejecutar(conMarzo, op16('SUPER', ABR, 'igual_periodo_anterior')))).toEqual([
+      { codigo: 'lpa_negativo_en_futuro', datos: { faltante: c(200) } },
+    ]);
+    expect(rechazos(ejecutar(h, op16('SUPER', FEB, 'igual_periodo_anterior')))).toEqual([
+      { codigo: 'periodo_cerrado', datos: { periodoInicio: FEB } },
+    ]);
+  });
+
+  it('PRU-DOM-PRES-103 OP-16 "el promedio de gasto" con CF-17: los últimos 3 períodos cerrados en que existía la categoría, o los que haya, con la mitad hacia arriba', () => {
+    const MAY = f('2027-05-01');
+    const hoy = f('2027-05-15');
+    // Sin ningún período cerrado en que existiera, la variante no se ofrece.
+    expect(rapida(base(), 'GAS', MAY, hoy).promedioGasto).toBeUndefined();
+    expect(() => ejecutar(base(), op16('GAS', MAY, 'promedio_gasto'), hoy)).toThrow(TypeError);
+    // Un período: enero, 40.
+    const uno = gasto(base(), 'GAS', ENE, c(40), hoy);
+    expect(rapida(uno, 'GAS', MAY, hoy).promedioGasto).toEqual({ monto: c(40), periodos: 1 });
+    // Dos períodos: (10.01 + 10.00) / 2 = 10.005 → 10.01.
+    const dos = gasto(
+      gasto(base(), 'SAL', ENE, Centavos.desdeEntero(1001), hoy),
+      'SAL',
+      MAR,
+      c(10),
+      hoy,
+    );
+    const promedioDos = { monto: Centavos.desdeEntero(1001), periodos: 2 };
+    expect(rapida(dos, 'SAL', MAY, hoy).promedioGasto).toEqual(promedioDos);
+    // Cuatro períodos en que existía: enero (90), febrero (solo Asig ≠ 0, gastado 0), marzo (30) y
+    // abril (33). Van los 3 últimos: (0 + 30 + 33) / 3 = 21, y Asig(GAS, MAY) queda en 21.
+    let h = base([asignacion('GAS', FEB, 5)]);
+    for (const [fecha, monto] of [
+      [ENE, 90],
+      [MAR, 30],
+      [ABR, 33],
+    ] as const)
+      h = gasto(h, 'GAS', fecha, c(monto), hoy);
+    expect(rapida(h, 'GAS', MAY, hoy).promedioGasto).toEqual({ monto: c(21), periodos: 3 });
+    const r = exito(ejecutar(h, op16('GAS', MAY, 'promedio_gasto'), hoy));
+    expect(asig(r.hechosNuevos, 'GAS', MAY)).toBe(c(21));
+  });
+
+  it('PRU-DOM-PRES-103 OP-16 "cubrir el sobregiro" de CF-25: Asig + máx(0, −Disp), solo si Disp < 0', () => {
+    const h = gasto(base([asignacion('SUPER', MAR, 10)]), 'SUPER', f('2027-03-05'), c(25), HOY);
+    // Disp(SUPER, MAR) = 10 − 25 = −15: Asig queda en 25 y Disp en 0.
+    expect(rapida(h, 'SUPER', MAR).cubrirSobregiro).toBe(c(25));
+    const r = exito(ejecutar(h, op16('SUPER', MAR, 'cubrir_sobregiro')));
+    expect(asig(r.hechosNuevos, 'SUPER', MAR)).toBe(c(25));
+    const celdas = calcular(r.hechosNuevos, HOY).presupuesto.celdas;
+    const celda = celdas.find((x) => x.categoriaId === 'SUPER' && x.periodo.inicio === MAR);
+    expect(celda?.disponible).toBe(c(0));
+    // Sin sobregiro no se ofrece.
+    expect(rapida(r.hechosNuevos, 'SUPER', MAR).cubrirSobregiro).toBeUndefined();
+    const otra = () => ejecutar(r.hechosNuevos, op16('SUPER', MAR, 'cubrir_sobregiro'));
+    expect(otra).toThrow(TypeError);
+  });
+
+  it('PRU-DOM-PRES-103 [ESC-45, AV-12] OP-19: R es el período siguiente al último con asignaciones, con el período de transición de Q5', () => {
+    const h = esc45();
+    const r = ejecutar(h, op19(1), HOY45);
+    expect(insertadas(r)).toEqual([{ diaInicio: 1, rigeDesde: DIC21 }]);
+    expect(eliminadas(r)).toEqual([]);
+    expect(aviso(r, 'AV-12')).toEqual({
+      codigo: 'AV-12',
+      momento: 'antes',
+      requiereConfirmacion: true,
+      datos: {
+        diaInicio: 1,
+        rigeDesde: DIC21,
+        transicionInicio: DIC21,
+        transicionFin: f('2027-12-31'),
+      },
+    });
+    // 21 nov – 20 dic sin cambio; 21 – 31 dic (11 días, transición); 1 – 31 ene.
+    const noviembre = { inicio: NOV21, fin: f('2027-12-20'), transicion: false };
+    expect(periodoNuevo(r, '2027-12-01')).toEqual(noviembre);
+    const transicion = { inicio: DIC21, fin: f('2027-12-31'), transicion: true };
+    expect(periodoNuevo(r, '2027-12-25')).toEqual(transicion);
+    expect(periodoNuevo(r, '2028-01-15')).toEqual(enero);
+    // Sin cambios de dinero: LPA igual.
+    expect(lpa(exito(r).hechosNuevos, HOY45)).toBe(lpa(h, HOY45));
+    // Paso 2: metas en la transición; semanal de 50 → 78.57, mensual de 200 → 200.
+    const despues = calcular(exito(r).hechosNuevos, HOY45);
+    const p = periodoDe(despues.ciclo, DIC21);
+    const cat = { id: id('SUPER'), archivada: false };
+    const montoDe = (m: Meta) =>
+      evaluarMeta(m, cat, despues.presupuesto, despues.ciclo, HOY45, p)?.montoDelPeriodo;
+    expect(montoDe(meta('SUPER', 50, { tipo: 'semanal' }))).toBe(Centavos.desdeEntero(7857));
+    expect(montoDe(meta('SUPER', 200))).toBe(c(200));
+    // Paso 1′: si 21 dic – 20 ene también tuviera asignaciones, R = 21 ene (transición 21 – 31 ene).
+    const r1 = ejecutar(esc45([asignacion('GAS', DIC21, 10)]), op19(1), HOY45);
+    expect(insertadas(r1)).toEqual([{ diaInicio: 1, rigeDesde: ENE21 }]);
+    expect(aviso(r1, 'AV-12')?.datos).toMatchObject({ transicionFin: f('2028-01-31') });
+    // El día vigente se rechaza.
+    expect(rechazos(ejecutar(h, op19(21), HOY45))).toEqual([
+      { codigo: 'ciclo_sin_cambio', datos: { dia: 21 } },
+    ]);
+  });
+
+  it('PRU-DOM-PRES-103 [CB-12, AV-12] OP-19: con asignaciones lejanas R siempre existe; sin asignaciones futuras es el primer período futuro', () => {
+    // CB-12: una asignación en 21 mar 2028 deja R = 21 abr 2028.
+    const lejos = ejecutar(esc45([asignacion('GAS', f('2028-03-21'), 10)]), op19(5), HOY45);
+    expect(insertadas(lejos)).toEqual([{ diaInicio: 5, rigeDesde: f('2028-04-21') }]);
+    // Solo el activo con asignaciones: R es el primer período futuro, 21 nov.
+    const soloActivo = { ...esc45(), asignaciones: [asignacion('SUPER', f('2027-10-21'), 100)] };
+    const r = ejecutar(soloActivo, op19(1), HOY45);
+    expect(insertadas(r)).toEqual([{ diaInicio: 1, rigeDesde: NOV21 }]);
+    expect(aviso(r, 'AV-12')?.datos).toMatchObject({ transicionFin: f('2027-11-30') });
+    // Sin transición: del día 31 al 30, R = 30 abr 2027 ya es IM(abr, 30).
+    const del31 = { ...base(), asignaciones: [], vigencias_ciclo: [vigencia(31, null)] };
+    const sin = ejecutar(del31, op19(30), f('2027-04-10'));
+    expect(insertadas(sin)).toEqual([{ diaInicio: 30, rigeDesde: f('2027-04-30') }]);
+    expect(aviso(sin, 'AV-12')?.datos).toEqual({ diaInicio: 30, rigeDesde: f('2027-04-30') });
+  });
+
+  it('PRU-DOM-PRES-103 [CB-12, AV-12] OP-19: una vigencia futura que aún no rige se reemplaza, salvo que ya tenga períodos con asignaciones', () => {
+    const pendiente = vigencia(1, DIC21);
+    // Reemplazo: (1, 21 dic) se elimina y entra (15, 21 dic); transición 21 dic – 14 ene.
+    const r = ejecutar(esc45([], [pendiente]), op19(15), HOY45);
+    expect(eliminadas(r)).toEqual([pendiente.id]);
+    expect(insertadas(r)).toEqual([{ diaInicio: 15, rigeDesde: DIC21 }]);
+    expect(aviso(r, 'AV-12')?.datos).toMatchObject({ transicionFin: f('2028-01-14') });
+    // El día de la vigencia que regirá no cambia nada (ya aplicada, 04 OP-19).
+    expect(exito(ejecutar(esc45([], [pendiente]), op19(1), HOY45)).cambios).toEqual([]);
+    // Con una asignación en 1 ene (un período de la pendiente), esa vigencia queda y R = 1 feb.
+    const enEnero = asignacion('GAS', f('2028-01-01'), 10);
+    const r2 = ejecutar(esc45([enEnero], [pendiente]), op19(15), HOY45);
+    expect(eliminadas(r2)).toEqual([]);
+    expect(insertadas(r2)).toEqual([{ diaInicio: 15, rigeDesde: f('2028-02-01') }]);
+    expect(periodoNuevo(r2, '2028-01-15')).toEqual(enero);
+    // Volver al día de la pendiente con asignaciones: solo se elimina la posterior (15, 1 feb).
+    const posterior = vigencia(15, f('2028-02-01'));
+    const r3 = ejecutar(esc45([enEnero], [pendiente, posterior]), op19(1), HOY45);
+    expect(eliminadas(r3)).toEqual([posterior.id]);
+    expect(insertadas(r3)).toEqual([]);
+    expect(periodoNuevo(r3, '2028-02-15').inicio).toBe(f('2028-02-01'));
+    expect(periodoNuevo(r3, '2028-01-15')).toEqual(enero);
   });
 });
