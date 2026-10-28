@@ -42,17 +42,26 @@ export type ResultadoSesion =
 export const MENSAJE_NO_AUTORIZADO = 'Tu sesión terminó. Ingresá de nuevo para seguir.';
 
 export function errorNoAutorizado(aal: AalRechazo): ErrorFinn {
-  return { categoria: 'NO_AUTORIZADO', codigo: 'no_autorizado', mensaje: MENSAJE_NO_AUTORIZADO, datos: { aal } };
+  return {
+    categoria: 'NO_AUTORIZADO',
+    codigo: 'no_autorizado',
+    mensaje: MENSAJE_NO_AUTORIZADO,
+    datos: { aal },
+  };
 }
 
-const rechazo = (aal: AalRechazo): ResultadoSesion => ({ ok: false, error: errorNoAutorizado(aal) });
+const rechazo = (aal: AalRechazo): ResultadoSesion => ({
+  ok: false,
+  error: errorNoAutorizado(aal),
+});
 
 /**
  * Verificaciones comunes sobre las claims: `sub = FINN_USUARIO_ID` y `aal = 'aal2'`. Otro usuario es `'ninguna'`
  * aunque tenga AAL1: el segundo factor que pediría `/ingresar/verificar` no es de Finn.
  */
 function verificarClaims(claims: ClaimsSesion | null, usuarioPermitido: string): ResultadoSesion {
-  if (claims === null || usuarioPermitido === '' || claims.sub !== usuarioPermitido) return rechazo('ninguna');
+  if (claims === null || usuarioPermitido === '' || claims.sub !== usuarioPermitido)
+    return rechazo('ninguna');
   if (claims.aal === 'aal1') return rechazo('aal1');
   if (claims.aal !== 'aal2') return rechazo('ninguna');
   return { ok: true, sesion: { usuarioId: usuarioPermitido, aal: 'aal2' } };
@@ -64,7 +73,10 @@ function verificarClaims(claims: ClaimsSesion | null, usuarioPermitido: string):
  *
  * @param usuarioPermitido `FINN_USUARIO_ID`, ya validado por la configuración.
  */
-export async function exigirSesionLectura(sesion: SesionServidor, usuarioPermitido: string): Promise<ResultadoSesion> {
+export async function exigirSesionLectura(
+  sesion: SesionServidor,
+  usuarioPermitido: string,
+): Promise<ResultadoSesion> {
   return verificarClaims(await sesion.obtenerClaims(), usuarioPermitido);
 }
 

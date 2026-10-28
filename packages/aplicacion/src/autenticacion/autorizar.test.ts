@@ -15,7 +15,10 @@ interface SesionFalsa extends SesionServidor {
 }
 
 /** `usuario` es lo que devolvería `getUser()`; por defecto, el mismo `sub` de las claims (sesión no revocada). */
-function sesionFalsa(claims: ClaimsSesion | null, usuario: string | null = claims?.sub ?? null): SesionFalsa {
+function sesionFalsa(
+  claims: ClaimsSesion | null,
+  usuario: string | null = claims?.sub ?? null,
+): SesionFalsa {
   const llamadas = { claims: 0, usuario: 0 };
   return {
     llamadas,
@@ -49,29 +52,39 @@ describe('PRU-SEG-ACCESO', () => {
   it('PRU-SEG-ACCESO-101 BE-07, BE-55, CH-29: solo AAL2 de FINN_USUARIO_ID pasa; getClaims() al leer y getUser() al escribir', async () => {
     for (const [nombre, exigir] of exigencias) {
       // Sin sesión.
-      expect(await exigir(sesionFalsa(null), FINN), `${nombre}: sin sesión`).toEqual(NO_AUTORIZADO('ninguna'));
+      expect(await exigir(sesionFalsa(null), FINN), `${nombre}: sin sesión`).toEqual(
+        NO_AUTORIZADO('ninguna'),
+      );
       // Sesión AAL2 de otro usuario.
-      expect(await exigir(sesionFalsa({ sub: OTRO, aal: 'aal2' }), FINN), `${nombre}: otro usuario`).toEqual(
-        NO_AUTORIZADO('ninguna'),
-      );
+      expect(
+        await exigir(sesionFalsa({ sub: OTRO, aal: 'aal2' }), FINN),
+        `${nombre}: otro usuario`,
+      ).toEqual(NO_AUTORIZADO('ninguna'));
       // Otro usuario con AAL1: no se lo manda a verificar un factor que no es de Finn.
-      expect(await exigir(sesionFalsa({ sub: OTRO, aal: 'aal1' }), FINN), `${nombre}: otro, AAL1`).toEqual(
-        NO_AUTORIZADO('ninguna'),
-      );
+      expect(
+        await exigir(sesionFalsa({ sub: OTRO, aal: 'aal1' }), FINN),
+        `${nombre}: otro, AAL1`,
+      ).toEqual(NO_AUTORIZADO('ninguna'));
       // Sesión AAL1 del usuario de Finn.
-      expect(await exigir(sesionFalsa({ sub: FINN, aal: 'aal1' }), FINN), `${nombre}: AAL1`).toEqual(
-        NO_AUTORIZADO('aal1'),
-      );
+      expect(
+        await exigir(sesionFalsa({ sub: FINN, aal: 'aal1' }), FINN),
+        `${nombre}: AAL1`,
+      ).toEqual(NO_AUTORIZADO('aal1'));
       // Un `aal` desconocido no cuenta como AAL2.
-      expect(await exigir(sesionFalsa({ sub: FINN, aal: 'aal3' }), FINN), `${nombre}: aal raro`).toEqual(
-        NO_AUTORIZADO('ninguna'),
-      );
+      expect(
+        await exigir(sesionFalsa({ sub: FINN, aal: 'aal3' }), FINN),
+        `${nombre}: aal raro`,
+      ).toEqual(NO_AUTORIZADO('ninguna'));
       // Sin FINN_USUARIO_ID configurado nadie pasa.
-      expect(await exigir(sesionFalsa({ sub: '', aal: 'aal2' }), ''), `${nombre}: id vacío`).toEqual(
-        NO_AUTORIZADO('ninguna'),
-      );
+      expect(
+        await exigir(sesionFalsa({ sub: '', aal: 'aal2' }), ''),
+        `${nombre}: id vacío`,
+      ).toEqual(NO_AUTORIZADO('ninguna'));
       // AAL2 del usuario de Finn.
-      expect(await exigir(sesionFalsa({ sub: FINN, aal: 'aal2' }), FINN), `${nombre}: AAL2`).toEqual({
+      expect(
+        await exigir(sesionFalsa({ sub: FINN, aal: 'aal2' }), FINN),
+        `${nombre}: AAL2`,
+      ).toEqual({
         ok: true,
         sesion: { usuarioId: FINN, aal: 'aal2' },
       });
@@ -84,13 +97,15 @@ describe('PRU-SEG-ACCESO', () => {
 
     // Escritura: getUser() detecta la revocación.
     const revocadaEscribiendo = sesionFalsa({ sub: FINN, aal: 'aal2' }, null);
-    expect(await exigirSesionEscritura(revocadaEscribiendo, FINN)).toEqual(NO_AUTORIZADO('ninguna'));
+    expect(await exigirSesionEscritura(revocadaEscribiendo, FINN)).toEqual(
+      NO_AUTORIZADO('ninguna'),
+    );
     expect(revocadaEscribiendo.llamadas.usuario).toBe(1);
 
     // Escritura: el usuario de getUser() tiene que ser el de las claims y el de Finn.
-    expect(await exigirSesionEscritura(sesionFalsa({ sub: FINN, aal: 'aal2' }, OTRO), FINN)).toEqual(
-      NO_AUTORIZADO('ninguna'),
-    );
+    expect(
+      await exigirSesionEscritura(sesionFalsa({ sub: FINN, aal: 'aal2' }, OTRO), FINN),
+    ).toEqual(NO_AUTORIZADO('ninguna'));
     const escritura = sesionFalsa({ sub: FINN, aal: 'aal2' });
     expect((await exigirSesionEscritura(escritura, FINN)).ok).toBe(true);
     expect(escritura.llamadas).toEqual({ claims: 1, usuario: 1 });
