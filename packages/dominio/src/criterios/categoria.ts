@@ -2,6 +2,7 @@
 // más largo contenido en el comercio, sin mayúsculas, ignorando las de categorías archivadas; si
 // ninguna aplica, la categoría de la línea única más reciente de una transacción aprobada con el
 // mismo comercio (sin mayúsculas ni espacios repetidos) y una categoría activa.
+import { destinos } from '../calculo/destino';
 import type { Hechos, ReglaComercio, Uuid } from '../hechos';
 
 /** Sin mayúsculas, sin espacios repetidos ni en los extremos. */
@@ -37,8 +38,11 @@ export function categoriaPorHistorial(
 ): Uuid | undefined {
   const [ok, buscado] = [activas(h), normalizarComercio(comercio)];
   const lineas = new Map<Uuid, Uuid[]>();
-  for (const l of h.lineas)
-    lineas.set(l.transaccionId, [...(lineas.get(l.transaccionId) ?? []), l.categoriaId as Uuid]);
+  const destino = destinos(h.lineas);
+  for (const l of h.lineas) {
+    const categoriaId = destino(l).categoriaId as Uuid;
+    lineas.set(l.transaccionId, [...(lineas.get(l.transaccionId) ?? []), categoriaId]);
+  }
   const [elegida] = h.transacciones
     .filter((t) => t.comercio !== null && normalizarComercio(t.comercio) === buscado)
     .flatMap((t) => {

@@ -618,7 +618,7 @@ const devolver = (h: Hechos, monto: number, fecha = MAR) =>
     lineas: [
       {
         ...{ id: id('DV.1'), transaccionId: id('DV'), orden: 1, monto: c(monto) },
-        ...{ categoriaId: id('SUPER'), deudorId: null, lineaOriginalId: L1, revision: null },
+        ...{ categoriaId: null, deudorId: null, lineaOriginalId: L1, revision: null },
       },
     ],
   });
@@ -890,11 +890,12 @@ describe('PRU-DOM-TX-102: aplicar, editar, eliminar y estado bancario (01 §5.4,
       'conciliada',
     );
     expect(exito(k).avisos).toContainEqual(av16());
-    // Con una devolución, la línea conserva su fila y la devolución la sigue.
+    // Con una devolución, la línea conserva su fila y la devolución la sigue sin escribirse (DB-05).
     expect(deTabla(aplicarEn(devolver(conG, 20), x), 'lineas')).toEqual([
       { tipo: 'actualizar', tabla: 'lineas', id: L1, campos: { categoriaId: OCIO } },
-      { tipo: 'actualizar', tabla: 'lineas', id: 'DV.1', campos: { categoriaId: OCIO } },
     ]);
+    const conDev = exito(aplicarEn(devolver(conG, 20), x)).hechosNuevos;
+    expect([disp(conDev, id('SUPER')), disp(conDev, OCIO)]).toEqual([c(300), c(-40)]);
     const a = (categoriaId: Uuid) =>
       editar(G, { lineas: lineas([L1, 60, { categoriaId }], [L2, 40]) });
     expect(rechazos(aplicarEn(conG, a(PAGO_T)))).toEqual(['categoria_de_pago_no_permitida']);

@@ -3,6 +3,7 @@
 // `cuenta`, `movimiento` y `meta`; ola 2, TA-140: `cobrar`, `condonar` y `devolver`; faltan
 // `fusionar`, `programada`, `regla`, `formato`, `conciliar` y `verificar_saldo`).
 // No calcula: cada número sale de la instantánea o de un selector. Las tablas [H] llegan como parámetro.
+import { destinos } from '../calculo/destino';
 import { desgloseAlPagar } from '../calculo/patrimonio';
 import type { Periodo } from '../calculo/periodos';
 import { evaluarMeta } from '../calculo/metas';
@@ -748,9 +749,11 @@ export function formulario<P extends ParametrosFormulario>(
   if (p.operacion === 'editar_transaccion' && tx === undefined)
     throw new RangeError(`la transacción ${p.transaccionId} no existe`);
   const usadas = h.efectos.filter((e) => e.transaccionId === tx?.id).map((e) => e.cuentaId);
-  const categoriasUsadas = h.lineas.flatMap((l) =>
-    l.transaccionId === tx?.id && l.categoriaId !== null ? [l.categoriaId] : [],
-  );
+  const destino = destinos(h.lineas);
+  const categoriasUsadas = h.lineas.flatMap((l) => {
+    const { categoriaId } = destino(l);
+    return l.transaccionId === tx?.id && categoriaId !== null ? [categoriaId] : [];
+  });
   const opciones: Opciones = {
     periodo: periodoPedido(i, p.operacion === 'asignar' ? p.periodoInicio : undefined),
     conAsignado: p.operacion === 'asignar',

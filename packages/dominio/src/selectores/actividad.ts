@@ -10,6 +10,7 @@ import type {
   Transaccion,
   Uuid,
 } from '../hechos';
+import { destinoDe as destinoDeLinea } from '../calculo/destino';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
 import { nombres, type Ref } from './comunes';
@@ -119,13 +120,11 @@ function presentado(t: Transaccion, efectos: readonly Efecto[]): Centavos {
   return t.total;
 }
 
-/** Destino de una línea; la de una devolución sin destino propio sigue a su línea original. */
+/** Destino de una línea; la de una devolución vinculada sigue a su línea original (DB-05). */
 function destinoDe(i: Instantanea, l: Linea): TransaccionFila['lineas'][number]['destino'] {
-  const propio = l.categoriaId !== null || l.deudorId !== null;
-  const origen = l.lineaOriginalId === null ? undefined : indice(i).linea.get(l.lineaOriginalId);
-  const o = propio ? l : origen;
-  if (o?.categoriaId != null) return { ...nombres(i).categoria(o.categoriaId), tipo: 'categoria' };
-  const d = i.hechos.deudores.find((x) => x.id === o?.deudorId);
+  const o = destinoDeLinea(l, indice(i).linea);
+  if (o.categoriaId !== null) return { ...nombres(i).categoria(o.categoriaId), tipo: 'categoria' };
+  const d = i.hechos.deudores.find((x) => x.id === o.deudorId);
   if (d === undefined) throw new RangeError(`la línea ${l.id} no tiene destino`);
   return { id: d.id, nombre: d.nombre, tipo: 'deudor' };
 }
@@ -147,7 +146,7 @@ export function filaDe(i: Instantanea, t: Transaccion): TransaccionFila {
     estadoBancario: t.estadoBancario,
     origen: t.origen,
     marcas: {
-      porCobrar: lineas.some((l) => l.deudorId !== null),
+      porCobrar: lineas.some((l) => destinoDeLinea(l, x.linea).deudorId !== null),
       conDevoluciones: x.conDevoluciones.has(t.id),
       conciliada: t.estadoBancario === 'conciliada',
       programada: t.origen === 'programada',
@@ -189,7 +188,9 @@ export function actividad(i: Instantanea, f: FiltroDeActividad = {}): ActividadD
         (f.cuentaId === undefined ||
           (x.efectos.get(t.id) ?? []).some((e) => e.cuentaId === f.cuentaId)) &&
         (f.categoriaId === undefined ||
-          (x.lineas.get(t.id) ?? []).some((l) => l.categoriaId === f.categoriaId)),
+          (x.lineas.get(t.id) ?? []).some(
+            (l) => destinoDeLinea(l, x.linea).categoriaId === f.categoriaId,
+          )),
     )
     .map((t) => ({ t }));
   const { pagina, siguienteCursor } = paginar(candidatas, f.cursor, f.limite);

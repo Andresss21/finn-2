@@ -10,6 +10,7 @@ import type {
   ResultadoAplicar,
   Uuid,
 } from '../hechos';
+import { verificarInvariantes } from '../invariantes';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { aplicar } from './aplicar';
@@ -242,8 +243,9 @@ describe('PRU-DOM-DEV-102: aplicar, condonar, devolver y eliminar evento (01 §4
       },
     });
     expect(cambios[1]).toMatchObject({ fila: { cuentaId: id('E'), monto: c(25) } });
+    // DB-05: la línea guarda solo `lineaOriginalId`; SUPER sale de la original.
     expect(lineaNueva(r)).toEqual([
-      expect.objectContaining({ orden: 1, monto: c(25), categoriaId: id('SUPER'), deudorId: null }),
+      expect.objectContaining({ orden: 1, monto: c(25), categoriaId: null, deudorId: null }),
     ]);
     expect(lineaNueva(r)[0]?.lineaOriginalId).toBe(L60);
     expect(saldo(h, id('E'))).toBe(Centavos.sumar(saldo(H0, id('E')), c(25)));
@@ -252,6 +254,27 @@ describe('PRU-DOM-DEV-102: aplicar, condonar, devolver y eliminar evento (01 §4
     const [d] = lineaNueva(r);
     expect(aporteDe(h, d?.id as Uuid)).toBeUndefined();
     expect(calc(h).presupuesto.aportes.length).toBe(calc(H0).presupuesto.aportes.length);
+  });
+
+  it('PRU-DOM-DEV-102 [INV-08] OP-33a DB-05: cada línea de una devolución vinculada tiene exactamente uno de los tres destinos, su `lineaOriginalId`; la categoría o el deudor salen de la línea original', () => {
+    const r = devolver(H0, 'GE', [
+      [L60, 15],
+      [LD, 10],
+    ]);
+    const h = exito(r).hechosNuevos;
+    const nuevas = lineaNueva(r);
+    expect(nuevas.map((l) => [l.lineaOriginalId, l.monto])).toEqual([
+      [L60, c(15)],
+      [LD, c(10)],
+    ]);
+    for (const l of nuevas) {
+      const destinos = [l.categoriaId, l.deudorId, l.lineaOriginalId].filter((x) => x !== null);
+      expect(destinos).toEqual([l.lineaOriginalId]);
+    }
+    // El destino derivado: D-1 netea SUPER y la parte por cobrar baja el saldo abierto de LD.
+    expect(delta(H0, h, 'SUPER')).toBe(c(15));
+    expect(linea(h, LD)).toMatchObject({ abierto: c(30), devuelto: c(10) });
+    expect(verificarInvariantes(calc(h))).toEqual([]);
   });
 
   it('PRU-DOM-DEV-102 [AV-01] OP-33a D-2, D-3 y D-4: en efectivo sin ser D-1 aporta +X; en la misma tarjeta en un período posterior a = mín(X, U_L − A_L) solo baja la deuda y r va a la categoría y sale de pago(t); en una tarjeta que no es la de L aporta +X y −X a pago(t)', () => {
@@ -323,7 +346,7 @@ describe('PRU-DOM-DEV-102: aplicar, condonar, devolver y eliminar evento (01 §4
 
   it('PRU-DOM-DEV-102 [AV-14, INV-20] OP-33a ajuste 1: la línea de devolución va a la categoría de la original aunque esté archivada, con AV-14 si le queda Disponible positivo', () => {
     const r = devolver(H0, 'GV', [[LV, 20]]);
-    expect(lineaNueva(r)[0]).toMatchObject({ categoriaId: id('VIEJA'), lineaOriginalId: LV });
+    expect(lineaNueva(r)[0]).toMatchObject({ categoriaId: null, lineaOriginalId: LV });
     expect(disp(exito(r).hechosNuevos, 'VIEJA')).toBe(c(20));
     expect(codigos(r)).toContain('AV-14');
   });
@@ -333,7 +356,7 @@ describe('PRU-DOM-DEV-102: aplicar, condonar, devolver y eliminar evento (01 §4
     const h = exito(r).hechosNuevos;
     expect(lineaNueva(r)[0]).toMatchObject({
       categoriaId: null,
-      deudorId: id('Ana'),
+      deudorId: null,
       lineaOriginalId: LD,
     });
     expect(linea(h, LD)).toMatchObject({ abierto: c(0), devuelto: c(40) });

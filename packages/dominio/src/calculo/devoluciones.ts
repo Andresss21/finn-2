@@ -4,6 +4,7 @@
 import type { BigintTexto, Hechos, Instante, Linea, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
+import { destinos } from './destino';
 import { type Ciclo, periodoDe } from './periodos';
 
 export type HechosDeConsumo = Pick<
@@ -109,8 +110,10 @@ function indice(h: HechosDeConsumo) {
 /** Las devoluciones a categoría con su caso D-1 a D-4, en orden cronológico. */
 export function clasificar(h: HechosDeConsumo, c: Ciclo): Devolucion[] {
   const ix = indice(h);
+  const destino = destinos(h.lineas);
   const devoluciones = h.lineas.flatMap((e) => {
-    if (e.categoriaId === null || ix.tx(e.transaccionId).tipo !== 'devolucion') return [];
+    const { categoriaId } = destino(e);
+    if (categoriaId === null || ix.tx(e.transaccionId).tipo !== 'devolucion') return [];
     const m = ix.momento(e);
     const k = ix.medio(e.transaccionId);
     const q = periodoDe(c, m.fecha).inicio;
@@ -131,7 +134,7 @@ export function clasificar(h: HechosDeConsumo, c: Ciclo): Devolucion[] {
         ...m,
         ...k,
         lineaId: e.id,
-        categoriaId: e.categoriaId,
+        categoriaId,
         monto: e.monto,
         periodo: q,
         lineaOriginalId: L?.id ?? null,

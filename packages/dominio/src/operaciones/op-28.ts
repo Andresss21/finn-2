@@ -230,11 +230,8 @@ export function op28(antes: H.Instantanea, x: H.ComandoOp28): Efecto | R {
       return { codigo: 'linea_menor_que_eventos', datos: { lineaId: l.id, resuelto } };
     if ((o.categoriaId === null) !== (l.categoriaId === null) || o.deudorId !== l.deudorId)
       return { codigo: 'linea_con_eventos_cambio_destino', datos: { lineaId: l.id } };
+    // DB-05: sus devoluciones vinculadas no guardan destino; siguen a la línea sin escribirse.
     lineas.push({ tipo: 'actualizar', tabla: 'lineas', id: l.id, campos: campos ?? {} });
-    const categoriaId = campos?.categoriaId;
-    if (categoriaId)
-      for (const y of devoluciones.filter((z) => z.categoriaId !== null))
-        lineas.push({ tipo: 'actualizar', tabla: 'lineas', id: y.id, campos: { categoriaId } });
   }
   lineas.push(...objetivo.filter((o) => o.linea === undefined).map(insertar));
 
