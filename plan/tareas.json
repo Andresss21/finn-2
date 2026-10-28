@@ -95,7 +95,7 @@
 
   "TA-121": { "estado": "terminada", "pr": 78 },
 
-  "TA-122": { "estado": "pendiente" },
+  "TA-122": { "estado": "en_curso", "rama": "ta-122-aplicar-bandeja" },
 
   "TA-123": { "estado": "terminada", "pr": 76 },
 

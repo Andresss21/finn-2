@@ -435,6 +435,44 @@ export type ComandoOp40 = MovimientoConLineas & { readonly operacion: 'OP-40' } 
     | { readonly decision: 'es_legitimo' | 'es_duplicado' }
   );
 
+// ── TA-122: descartar, reglas, reprocesar y crear a mano (04 §3.6). OP-38 es un lote (`op38`).
+/** OP-39; para restaurar, la bandeja y el texto del SMS (pasos 7 y 8 de OP-35, §4.17). */
+export type ComandoOp39 = { readonly operacion: 'OP-39'; readonly movimiento: Movimiento } & (
+  | { readonly accion: 'descartar' }
+  | {
+      readonly accion: 'restaurar';
+      readonly texto: string;
+      readonly movimientos: readonly MovimientoConTexto[];
+    }
+);
+/** OP-41; `reglas` son las actuales, que la aplicación lee bajo el bloqueo (7.4). */
+export type ComandoOp41 = {
+  readonly operacion: 'OP-41';
+  readonly reglas: readonly ReglaComercio[];
+} & (
+  | {
+      readonly accion: 'crear';
+      readonly id: Uuid;
+      readonly patron: string;
+      readonly categoriaId: Uuid;
+    }
+  | {
+      readonly accion: 'editar';
+      readonly reglaId: Uuid;
+      readonly patron?: string;
+      readonly categoriaId?: Uuid;
+    }
+  | { readonly accion: 'eliminar'; readonly reglaId: Uuid }
+);
+/** OP-49: OP-35 sobre el mismo SMS, con su instante de recepción original (N-02), y su movimiento. */
+export interface ComandoOp49 extends Omit<ComandoOp35, 'operacion' | 'id'>, MovimientoConLineas {
+  readonly operacion: 'OP-49';
+}
+/** OP-50: OP-37 sobre un movimiento en `error` (N-02 punto 3), sin la variante de CF-21. */
+export interface ComandoOp50 extends MovimientoConLineas, AprobacionMovimiento {
+  readonly operacion: 'OP-50';
+}
+
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
 export type ComandoDominio =
   | ComandoOp01
@@ -479,6 +517,11 @@ export type ComandoDominio =
   | ComandoOp36
   | ComandoOp37
   | ComandoOp40
+  // TA-122
+  | ComandoOp39
+  | ComandoOp41
+  | ComandoOp49
+  | ComandoOp50
   // TA-137
   | ComandoOp25
   | ComandoOp26;
