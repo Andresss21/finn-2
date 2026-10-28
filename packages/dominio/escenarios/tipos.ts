@@ -53,7 +53,18 @@ type OpBase =
   | { op: 'OP-21'; monto: number; cuenta?: string; fecha?: string; registrado?: string }
   | { op: 'OP-28'; etiqueta: string; cuenta?: string; fecha?: string } // cambiar la cuenta (el medio) o la fecha de la transacción
   | { op: 'OP-29'; etiqueta: string } // eliminar la transacción
-  | { op: 'OP-31'; cobro: string; monto: number; cuenta?: string } // cobrar el por cobrar de la transacción `cobro`
+  | { op: 'OP-31'; cobro: string; monto: number; cuenta?: string; fecha?: string } // cobrar el por cobrar de la transacción `cobro`
+  | { op: 'OP-32'; cobro: string; categoria: string; monto: number; fecha?: string } // condonar el por cobrar de `cobro` hacia una categoría
+  | {
+      op: 'OP-33'; // devolver: vinculada (`compra` = etiqueta de la compra) o sin compra original (`categoria`, `cuenta`)
+      monto: number;
+      compra?: string;
+      /** Vinculada: reparto por línea de la compra (`linea` desde 1, en el orden de su OP-20); por defecto, la línea 1 por el total. */
+      reparto?: { linea: number; monto: number }[];
+      categoria?: string;
+      cuenta?: string; // vinculada: por defecto, la de la compra; sin compra, obligatoria
+      fecha?: string;
+    }
   | {
       op: 'OP-27';
       modalidad: 'avance' | 'entrada' | 'transferencia_deuda';
