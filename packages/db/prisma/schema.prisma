@@ -690,6 +690,8 @@ model Programada {
   registroAutomatico Boolean        @default(false) @map("registro_automatico")
   activa             Boolean        @default(true)
   revision           BigInt         @default(0)
+  /// CF-20: OP-42 la fija en hoy al reactivar; sin valor por defecto
+  reactivadaDesde    DateTime?      @map("reactivada_desde") @db.Date
 
   cuenta         Cuenta               @relation("ProgramadaCuentaOrigen", fields: [cuentaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_programadas_cuenta")
   cuentaDestino  Cuenta?              @relation("ProgramadaCuentaDestino", fields: [cuentaDestinoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_programadas_cuenta_destino")

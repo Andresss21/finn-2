@@ -1,6 +1,9 @@
 // Esquema migrado en la plantilla (TA-051): privilegios de finn_app (V-12), purga de EN-2 (V-28) y siembra
 // de 03 §9. Cada prueba tiene su base, clonada de finn_plantilla en el describe que la envuelve: ninguna
 // depende de lo que otra escribió.
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { describe, expect, it } from 'vitest';
 import { c5 } from '../../../tools/db/plantilla.ts';
@@ -176,6 +179,57 @@ describe('PRU-INT-ESQ', () => {
           { modo: 'estado_cuenta', n: 1 },
           { modo: 'saldo', n: 1 },
         ]);
+      });
+    });
+  });
+
+  describe('reactivación de programadas', () => {
+    const base = crearBasePrueba();
+    it('PRU-INT-ESQ-104 [CF-20] MIG-11: programadas.reactivada_desde es date nulo sin valor por defecto; una fila existente queda en nulo', async () => {
+      const columna = async (c: pg.Client): Promise<unknown[]> =>
+        (
+          await c.query<Record<string, unknown>>(
+            `SELECT data_type, is_nullable, column_default FROM information_schema.columns
+             WHERE table_schema = 'finn' AND table_name = 'programadas' AND column_name = 'reactivada_desde'`,
+          )
+        ).rows;
+      const reactivada = async (c: pg.Client): Promise<unknown[]> =>
+        (
+          await c.query<Record<string, unknown>>(
+            "SELECT reactivada_desde FROM finn.programadas WHERE comercio = 'Luz'",
+          )
+        ).rows;
+      const SIN_DEFAULT = [{ data_type: 'date', is_nullable: 'YES', column_default: null }];
+      // Una programada válida (gasto con una línea), como finn_app con bloqueo; los diferidos corren al COMMIT
+      await con(base.url, async (app) => {
+        await app.query(`BEGIN; SELECT finn.tomar_bloqueo();
+          INSERT INTO finn.cuentas (tipo, nombre, fecha_apertura) VALUES ('efectivo', 'Caja', finn.hoy());
+          INSERT INTO finn.grupos (nombre) VALUES ('Casa');
+          INSERT INTO finn.categorias (grupo_id, nombre) SELECT id, 'Luz' FROM finn.grupos WHERE nombre = 'Casa';
+          INSERT INTO finn.programadas (tipo, cuenta_id, comercio, monto, frecuencia, primera_fecha)
+            SELECT 'gasto', id, 'Luz', 2500, 'mensual', finn.hoy() FROM finn.cuentas WHERE nombre = 'Caja';
+          INSERT INTO finn.programada_lineas (programada_id, orden, monto, categoria_id)
+            SELECT p.id, 1, 2500, c.id FROM finn.programadas p, finn.categorias c WHERE c.nombre = 'Luz';
+          COMMIT;`);
+        expect(await columna(app)).toEqual(SIN_DEFAULT);
+        expect(await reactivada(app)).toEqual([{ reactivada_desde: null }]);
+      });
+      // La fila ya existe antes de la columna: se quita y se vuelve a aplicar el SQL de la migración, tal
+      // cual está en disco, en una transacción que se deshace (la base queda como la plantilla)
+      const dir = fileURLToPath(new URL('../prisma/migrations/', import.meta.url));
+      const carpeta = readdirSync(dir).filter((d) => d.endsWith('_g_programadas_reactivada'));
+      expect(carpeta).toHaveLength(1);
+      const sql = readFileSync(join(dir, carpeta[0] ?? '', 'migration.sql'), 'utf8');
+      await con(base.urlMigraciones, async (mig) => {
+        await mig.query('BEGIN; ALTER TABLE finn.programadas DROP COLUMN reactivada_desde');
+        try {
+          expect(await columna(mig)).toEqual([]);
+          await mig.query(sql);
+          expect(await columna(mig)).toEqual(SIN_DEFAULT);
+          expect(await reactivada(mig)).toEqual([{ reactivada_desde: null }]);
+        } finally {
+          await mig.query('ROLLBACK');
+        }
       });
     });
   });
