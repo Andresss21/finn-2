@@ -146,7 +146,10 @@ describe('PRU-INT-ESQ', () => {
         const porDefecto = await app.query<{ modo: string }>(insertar(''));
         const saldo = await app.query<{ modo: string }>(insertar('saldo'));
         await app.query('COMMIT');
-        expect([porDefecto.rows, saldo.rows]).toEqual([[{ modo: 'estado_cuenta' }], [{ modo: 'saldo' }]]);
+        expect([porDefecto.rows, saldo.rows]).toEqual([
+          [{ modo: 'estado_cuenta' }],
+          [{ modo: 'saldo' }],
+        ]);
         // Fuera del enum: 22P02; finn_app no tiene UPDATE sobre la tabla (solo inserción)
         await app.query('BEGIN; SELECT finn.tomar_bloqueo();');
         expect(await codigo(app, insertar('otro'))).toBe('22P02');
