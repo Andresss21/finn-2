@@ -7,7 +7,9 @@
     ".": "./src/index.ts",
     "./autenticacion": "./src/autenticacion/index.ts",
     "./contratos": "./src/contratos/index.ts",
-    "./errores": "./src/errores/index.ts"
+    "./config": "./src/config/index.ts",
+    "./errores": "./src/errores/index.ts",
+    "./tiempo": "./src/tiempo/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json"
