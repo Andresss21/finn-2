@@ -135,7 +135,10 @@ async function comoAdmin(sql: string): Promise<void> {
 
 /** `tools/pruebas/reloj-simulado.sql` como finn_migraciones; falla si la base no tiene la marca (CT-02). */
 export const instalarRelojSimulado = async (base: BasePrueba): Promise<void> => {
-  await consultar(base.urlMigraciones, readFileSync(raiz('tools/pruebas/reloj-simulado.sql'), 'utf8'));
+  await consultar(
+    base.urlMigraciones,
+    readFileSync(raiz('tools/pruebas/reloj-simulado.sql'), 'utf8'),
+  );
 };
 
 /** El texto de R15 (`tools/db/regla-r15.sql`), para correrla sola. */

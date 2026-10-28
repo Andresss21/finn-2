@@ -44,9 +44,9 @@ describe('PRU-ESQ-RELOJ', () => {
 
   it('PRU-ESQ-RELOJ-003 [C5, C6, R15] MIG-12, CT-02 (V7-02 P1, P4, P5, P10; partes 1, 2 y 4, CH-24): R15 da 0 filas en la plantilla, detecta el reloj simulado y 2 violaciones sembradas', async () => {
     expect(await r15(plantilla.urlMigraciones)).toEqual([]);
-    expect((await c5(plantilla.urlMigraciones, consultar)).filter((l) => l.startsWith('R15'))).toEqual(
-      [],
-    );
+    expect(
+      (await c5(plantilla.urlMigraciones, consultar)).filter((l) => l.startsWith('R15')),
+    ).toEqual([]);
     // La base de prueba: R15 ve los tres reemplazos y C6 difiere exactamente en ahora, instante y desfase
     expect((await r15(prueba.urlMigraciones)).sort()).toEqual([
       'R15 cuerpo de ahora(): SELECT now() + finn.desfase()',
@@ -68,9 +68,9 @@ describe('PRU-ESQ-RELOJ', () => {
     ];
     expect((await r15(sembrada.urlMigraciones)).sort()).toEqual(violaciones);
     // R15 corre dentro de C5: el gancho de la plantilla cortaría
-    expect((await c5(sembrada.urlMigraciones, consultar)).filter((l) => l.startsWith('R15')).sort()).toEqual(
-      violaciones,
-    );
+    expect(
+      (await c5(sembrada.urlMigraciones, consultar)).filter((l) => l.startsWith('R15')).sort(),
+    ).toEqual(violaciones);
   }, 60_000);
 
   it('PRU-ESQ-RELOJ-004 [R15] CT-02 (V7-02 P2, P3): en la plantilla, un desfase de un año se ignora y reloj-simulado.sql se niega a correr', async () => {
@@ -112,7 +112,7 @@ describe('PRU-ESQ-RELOJ', () => {
     const error = await con(plantilla.url, (c) =>
       c.query(`ALTER DATABASE ${plantilla.nombre} SET finn.reloj_simulado = on`).then(
         () => 'ok',
-        (e: { code?: string }) => e.code,
+        (e: unknown) => (e as { code?: string }).code,
       ),
     );
     expect(error).toBe('42501');
