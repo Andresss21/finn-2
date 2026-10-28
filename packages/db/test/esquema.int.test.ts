@@ -70,7 +70,7 @@ describe('PRU-SEG-ESQ', () => {
 describe('PRU-INT-ESQ', () => {
   describe('purga', () => {
     const base = crearBasePrueba();
-    it('PRU-INT-ESQ-012 [V-28] purgar_eliminaciones borra solo lo de más de 30 días, fija máx + 1, devuelve 0 la segunda vez y nunca baja el valor', async () => {
+    it('PRU-INT-ESQ-012 [V-28, R14] purgar_eliminaciones borra solo lo de más de 30 días, fija máx + 1, devuelve 0 la segunda vez y nunca baja el valor', async () => {
       await con(base.urlAdmin, async (admin) => {
         // 04-backend-verificacion.zip, sql/04_prueba_purga.sql: 3 viejas (5, 9, 7) y 2 recientes (20, 21)
         await admin.query(`BEGIN; SELECT finn.tomar_bloqueo();
@@ -132,7 +132,7 @@ describe('PRU-INT-ESQ', () => {
 
   describe('siembra', () => {
     const base = crearBasePrueba();
-    it('PRU-INT-ESQ-102 la siembra deja exactamente las filas de 03 §9.1 a §9.5, con los formatos de m_formatos_bac', async () => {
+    it('PRU-INT-ESQ-102 [CF-14] la siembra deja exactamente las filas de 03 §9.1 a §9.5, con los formatos de m_formatos_bac', async () => {
       const F2 = String.raw`\((?<ultimos4>\d{4})\).*?USD\s*(?<monto>[\d,]+\.?\d*)\s+en el comercio:?\s+(?<comercio>.+?)\s+(?<fecha>\d{4}\/\d{2}\/\d{2}|\d{8})`;
       const F3 = String.raw`Titular\s+(?<ultimos4>\d{4})\s+por\s+USD(?<monto>[\d,]+\.?\d*)\s+en\s+(?<comercio>.+?)\s+el\s+(?<fecha>\d{4}-\d{2}-\d{2})`;
       // F-1 reescrito por 20261025000000_m_formatos_bac (TA-181, DT-12); F-2 y F-3 inactivos
