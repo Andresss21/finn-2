@@ -1,0 +1,233 @@
+// Esquema migrado en la plantilla (TA-051): privilegios de finn_app (V-12), purga de EN-2 (V-28) y siembra
+// de 03 §9. Cada prueba tiene su base, clonada de finn_plantilla en el describe que la envuelve: ninguna
+// depende de lo que otra escribió.
+import pg from 'pg';
+import { describe, expect, it } from 'vitest';
+import { c5 } from '../../../tools/db/plantilla.ts';
+import { consultar, crearBasePrueba, type BasePrueba } from './ayudantes/base.ts';
+
+/** Una conexión para `fn`, cerrada al terminar. */
+async function con<T>(url: string, fn: (c: pg.Client) => Promise<T>): Promise<T> {
+  const c = new pg.Client({ connectionString: url });
+  await c.connect();
+  try {
+    return await fn(c);
+  } finally {
+    await c.end();
+  }
+}
+
+/** El código SQLSTATE con que falla `sql`, o `ok`. */
+async function codigo(c: pg.Client, sql: string): Promise<string> {
+  try {
+    await c.query(sql);
+    return 'ok';
+  } catch (e) {
+    return (e as { code?: string }).code ?? String(e);
+  }
+}
+
+/** Las filas de R14 de C5 (reglas-catalogo.sql completo, como lo corre la plantilla). */
+const r14 = async (base: BasePrueba): Promise<string[]> =>
+  (await c5(base.urlAdmin, consultar)).filter((l) => l.startsWith('R14'));
+
+describe('PRU-SEG-ESQ', () => {
+  const base = crearBasePrueba();
+  it('PRU-SEG-ESQ-001 [V-12] finn_app no trunca, no deshabilita triggers ni ejecuta finn.operacion(); un rol sin BYPASSRLS ve 0 filas', async () => {
+    await con(base.url, async (app) => {
+      expect(await codigo(app, 'TRUNCATE finn.grupos')).toBe('42501');
+      expect(await codigo(app, 'ALTER TABLE finn.grupos DISABLE TRIGGER a_exigir_bloqueo')).toBe(
+        '42501',
+      );
+      expect(await codigo(app, 'SELECT finn.operacion()')).toBe('42501');
+      // Solo puede fijar el parámetro
+      expect(await codigo(app, "SELECT set_config('finn.operacion', 'OP-01', false)")).toBe('ok');
+      // Un UPDATE sin bloqueo que no afecta filas también falla (trigger por sentencia)
+      expect(await codigo(app, 'UPDATE finn.grupos SET orden = orden WHERE false')).toBe('FN001');
+      const { rows } = await app.query<{ n: string }>('SELECT count(*) AS n FROM finn.grupos');
+      expect(rows).toEqual([{ n: '1' }]);
+    });
+    // `authenticated` (roles-supabase.sql) no tiene BYPASSRLS: con SELECT prestado en una transacción que
+    // se deshace, RLS sin políticas le muestra 0 filas
+    await con(base.urlAdmin, async (admin) => {
+      await admin.query('BEGIN');
+      try {
+        await admin.query('GRANT USAGE ON SCHEMA finn TO authenticated');
+        await admin.query('GRANT SELECT ON finn.grupos TO authenticated');
+        await admin.query('SET LOCAL ROLE authenticated');
+        const { rows } = await admin.query<{ n: string; bypass: boolean }>(
+          `SELECT count(*) AS n, (SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user) AS bypass
+           FROM finn.grupos`,
+        );
+        expect(rows).toEqual([{ n: '0', bypass: false }]);
+      } finally {
+        await admin.query('ROLLBACK');
+      }
+    });
+  });
+});
+
+describe('PRU-INT-ESQ', () => {
+  describe('purga', () => {
+    const base = crearBasePrueba();
+    it('PRU-INT-ESQ-012 [V-28] purgar_eliminaciones borra solo lo de más de 30 días, fija máx + 1, devuelve 0 la segunda vez y nunca baja el valor', async () => {
+      await con(base.urlAdmin, async (admin) => {
+        // 04-backend-verificacion.zip, sql/04_prueba_purga.sql: 3 viejas (5, 9, 7) y 2 recientes (20, 21)
+        await admin.query(`BEGIN; SELECT finn.tomar_bloqueo();
+        DELETE FROM finn.eliminaciones;
+        INSERT INTO finn.eliminaciones (tabla, fila_id, revision, eliminada_en) VALUES
+          ('asignaciones', gen_random_uuid(), 5,  now() - interval '45 days'),
+          ('asignaciones', gen_random_uuid(), 9,  now() - interval '31 days'),
+          ('asignaciones', gen_random_uuid(), 7,  now() - interval '30 days 1 minute'),
+          ('asignaciones', gen_random_uuid(), 20, now() - interval '29 days'),
+          ('asignaciones', gen_random_uuid(), 21, now());
+        UPDATE finn.revision SET revision_minima_incremental = 0 WHERE id = 1;
+        COMMIT;`);
+        const estado = async (): Promise<string> => {
+          const { rows } = await admin.query<{ e: string }>(
+            `SELECT coalesce(string_agg(revision::text, ',' ORDER BY revision), '') || ' / ' ||
+                  (SELECT revision_minima_incremental FROM finn.revision) AS e FROM finn.eliminaciones`,
+          );
+          return rows[0]?.e ?? '';
+        };
+        await con(base.url, async (app) => {
+          expect(await codigo(app, 'DELETE FROM finn.eliminaciones')).toBe('42501');
+          expect(
+            await codigo(app, 'UPDATE finn.revision SET revision_minima_incremental = 0'),
+          ).toBe('42501');
+          const purgar = async (): Promise<number> =>
+            (await app.query<{ n: number }>('SELECT finn.purgar_eliminaciones() AS n')).rows[0]
+              ?.n ?? -1;
+          expect(await purgar()).toBe(3);
+          expect(await estado()).toBe('20,21 / 10');
+          expect(await purgar()).toBe(0);
+          // Nunca baja: fijado en 50, purgar una revisión 3 lo deja en 50
+          await admin.query(`UPDATE finn.revision SET revision_minima_incremental = 50;
+          INSERT INTO finn.eliminaciones (tabla, fila_id, revision, eliminada_en)
+          VALUES ('asignaciones', gen_random_uuid(), 3, now() - interval '40 days')`);
+          expect(await purgar()).toBe(1);
+          expect(await estado()).toBe('20,21 / 50');
+        });
+        // Un rol sin EXECUTE recibe 42501
+        await admin.query('BEGIN');
+        try {
+          await admin.query('GRANT USAGE ON SCHEMA finn TO authenticated');
+          await admin.query('SET LOCAL ROLE authenticated');
+          expect(await codigo(admin, 'SELECT finn.purgar_eliminaciones()')).toBe('42501');
+        } finally {
+          await admin.query('ROLLBACK');
+        }
+        // R14 (C5): 0 filas; detecta EXECUTE a PUBLIC y SECURITY INVOKER
+        expect(await r14(base)).toEqual([]);
+        await admin.query('GRANT EXECUTE ON FUNCTION finn.purgar_eliminaciones() TO PUBLIC');
+        expect(await r14(base)).toEqual(['R14|EXECUTE de PUBLIC']);
+        await admin.query('REVOKE EXECUTE ON FUNCTION finn.purgar_eliminaciones() FROM PUBLIC');
+        await admin.query('ALTER FUNCTION finn.purgar_eliminaciones() SECURITY INVOKER');
+        expect(await r14(base)).toEqual(['R14|debe ser SECURITY DEFINER']);
+        await admin.query('ALTER FUNCTION finn.purgar_eliminaciones() SECURITY DEFINER');
+        expect(await r14(base)).toEqual([]);
+      });
+    });
+  });
+
+  describe('siembra', () => {
+    const base = crearBasePrueba();
+    it('PRU-INT-ESQ-102 la siembra deja exactamente las filas de 03 §9.1 a §9.5, con los formatos de m_formatos_bac', async () => {
+      const F2 = String.raw`\((?<ultimos4>\d{4})\).*?USD\s*(?<monto>[\d,]+\.?\d*)\s+en el comercio:?\s+(?<comercio>.+?)\s+(?<fecha>\d{4}\/\d{2}\/\d{2}|\d{8})`;
+      const F3 = String.raw`Titular\s+(?<ultimos4>\d{4})\s+por\s+USD(?<monto>[\d,]+\.?\d*)\s+en\s+(?<comercio>.+?)\s+el\s+(?<fecha>\d{4}-\d{2}-\d{2})`;
+      // F-1 reescrito por 20261025000000_m_formatos_bac (TA-181, DT-12); F-2 y F-3 inactivos
+      const F1 = String.raw`(?:MASTERCARD|VISA)\s+(?<ultimos4>\d{4}):\s+has realizado una compra por USD\s*(?<monto>\d[\d,]*(?:\.\d{1,2})?)\s+en el comercio:?\s+(?<comercio>\S+(?:\s+\S+)*?)\s+(?<fecha>\d{4}\/\d{2}\/\d{2}|\d{8})(?!\S)`;
+      await con(base.urlAdmin, async (admin) => {
+        const q = async (sql: string): Promise<unknown[]> => (await admin.query(sql)).rows;
+        // 9.1: revision se inserta en 0; la siembra es una transacción sobre tablas [M] y la sube a 1 (5.3)
+        expect(await q('SELECT id, valor, revision_minima_incremental FROM finn.revision')).toEqual(
+          [{ id: 1, valor: '1', revision_minima_incremental: '0' }],
+        );
+        expect(await q('SELECT * FROM finn.estado_respaldo')).toEqual([
+          {
+            id: 1,
+            ultimo_respaldo_en: null,
+            ultimo_respaldo_objeto: null,
+            ultima_restauracion_en: null,
+          },
+        ]);
+        expect(await q('SELECT count(*)::int AS n FROM finn.token_webhook')).toEqual([{ n: 0 }]);
+        // 9.2 y 9.3
+        expect(await q('SELECT dia_inicio, rige_desde FROM finn.vigencias_ciclo')).toEqual([
+          { dia_inicio: 21, rige_desde: null },
+        ]);
+        expect(await q('SELECT nombre, clave_sistema, orden, archivado FROM finn.grupos')).toEqual([
+          {
+            nombre: 'Pagos de tarjeta',
+            clave_sistema: 'pagos_tarjeta',
+            orden: 0,
+            archivado: false,
+          },
+        ]);
+        // 9.4 y 9.5
+        expect(await q('SELECT nombre FROM finn.instituciones ORDER BY nombre')).toEqual([
+          { nombre: 'BAC' },
+          { nombre: 'Banco Agrícola' },
+          { nombre: 'Cuscatlán' },
+        ]);
+        expect(
+          await q(`SELECT i.nombre AS institucion, f.nombre, f.tipo_movimiento, f.patron, f.banderas,
+                        f.monto_separador_miles AS miles, f.monto_separador_decimal AS decimal,
+                        f.formatos_fecha::text AS fechas, f.activo
+                 FROM finn.formatos_bancarios f JOIN finn.instituciones i ON i.id = f.institucion_id
+                 ORDER BY f.nombre`),
+        ).toEqual([
+          {
+            institucion: 'BAC',
+            nombre: 'BAC compra',
+            tipo_movimiento: 'compra',
+            patron: F1,
+            banderas: 'i',
+            miles: ',',
+            decimal: '.',
+            fechas: '{AAAA/MM/DD,AAAAMMDD}',
+            activo: true,
+          },
+          {
+            institucion: 'Banco Agrícola',
+            nombre: 'Banco Agrícola compra',
+            tipo_movimiento: 'compra',
+            patron: F2,
+            banderas: 'i',
+            miles: ',',
+            decimal: '.',
+            fechas: '{AAAA/MM/DD,AAAAMMDD}',
+            activo: false,
+          },
+          {
+            institucion: 'Cuscatlán',
+            nombre: 'Cuscatlán compra',
+            tipo_movimiento: 'compra',
+            patron: F3,
+            banderas: 'i',
+            miles: ',',
+            decimal: '.',
+            fechas: '{AAAA-MM-DD}',
+            activo: false,
+          },
+        ]);
+        // Ninguna otra tabla de finn tiene filas (salvo el registro de Prisma); CF-14: nada de Finn 1.0
+        const { rows: tablas } = await admin.query<{ t: string }>(
+          `SELECT relname AS t FROM pg_class WHERE relnamespace = 'finn'::regnamespace AND relkind = 'r'
+           AND relname NOT IN ('revision', 'estado_respaldo', 'vigencias_ciclo', 'grupos', 'instituciones',
+                               'formatos_bancarios', '_prisma_migrations')
+         ORDER BY relname`,
+        );
+        expect(tablas).toHaveLength(27);
+        const con_filas: string[] = [];
+        for (const { t } of tablas) {
+          const { rows } = await admin.query<{ n: number }>(
+            `SELECT count(*)::int AS n FROM finn.${t}`,
+          );
+          if (rows[0]?.n !== 0) con_filas.push(t);
+        }
+        expect(con_filas).toEqual([]);
+      });
+    });
+  });
+});

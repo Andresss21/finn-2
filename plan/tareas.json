@@ -31,7 +31,7 @@
 
   "TA-050": { "estado": "terminada", "pr": 82 },
 
-  "TA-051": { "estado": "pendiente" },
+  "TA-051": { "estado": "en_curso", "rama": "ta-051-esquema-migraciones" },
 
   "TA-052": { "estado": "pendiente" },
 

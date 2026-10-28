@@ -38,7 +38,8 @@ export async function c3(url: string, consultar: Consultar): Promise<void> {
     hijo.on('error', error);
     hijo.on('exit', fin);
   });
-  if (codigo !== 0) throw new Error(`C3: prisma migrate deploy salió con ${codigo}\n${salida.join('')}`);
+  if (codigo !== 0)
+    throw new Error(`C3: prisma migrate deploy salió con ${codigo}\n${salida.join('')}`);
   const carpetas = readdirSync(migraciones, { withFileTypes: true })
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
@@ -58,7 +59,13 @@ export const c5 = (url: string, consultar: Consultar): Promise<string[]> =>
 
 /** C6: diferencias entre `catalogo.sql` y la instantánea (`-` falta en la base, `+` sobra). */
 export async function c6(url: string, consultar: Consultar): Promise<string[]> {
-  const actual = await consultar(url, leer('tools/db/catalogo.sql'));
+  // `::regclass` depende del search_path, y finn_migraciones tiene `finn` (bootstrap): sin él, los nombres
+  // salen calificados como en la instantánea, que se genera como administrador (03 §11.5, paso 5).
+  // El script va en una sola consulta simple, es decir en una transacción implícita: SET LOCAL alcanza.
+  const actual = await consultar(
+    url,
+    `SET LOCAL search_path = pg_catalog;\n${leer('tools/db/catalogo.sql')}`,
+  );
   const esperado = leer('packages/db/prisma/catalogo-esperado.txt')
     .split('\n')
     .filter((l) => l !== '');

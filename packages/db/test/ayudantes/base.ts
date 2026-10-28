@@ -8,7 +8,10 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { afterAll, beforeAll, inject } from 'vitest';
 import type { TestProject } from 'vitest/node';
-import { prepararPlantilla as controlarPlantilla, type Consultar } from '../../../../tools/db/plantilla.ts';
+import {
+  prepararPlantilla as controlarPlantilla,
+  type Consultar,
+} from '../../../../tools/db/plantilla.ts';
 
 export type Rol = 'admin' | 'migraciones' | 'app';
 export type ConexionArnes = { host: string; puerto: number; claves: Record<Rol, string> };

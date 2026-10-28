@@ -7,12 +7,18 @@
 -- Las muestras del BAC no traen otros tipos de movimiento (la transferencia no es ninguno de los
 -- cuatro tipos), así que no se agregan filas. F-2 y F-3 no tienen muestras: se desactivan, no se
 -- eliminan (DB-17).
-SELECT finn.tomar_bloqueo();
+-- [CH-23] El bloqueo y las escrituras van en un mismo DO: `prisma migrate deploy` (7.10) no aplica la
+-- carpeta en una sola transacción, y el bloqueo de transacción de una sentencia suelta ya no existe
+-- cuando llega el UPDATE (FN001). Nunca se aplicó en ninguna base antes de este cambio.
+DO $$
+BEGIN
+  PERFORM finn.tomar_bloqueo();
 
-UPDATE finn.formatos_bancarios
-SET patron = '(?:MASTERCARD|VISA)\s+(?<ultimos4>\d{4}):\s+has realizado una compra por USD\s*(?<monto>\d[\d,]*(?:\.\d{1,2})?)\s+en el comercio:?\s+(?<comercio>\S+(?:\s+\S+)*?)\s+(?<fecha>\d{4}\/\d{2}\/\d{2}|\d{8})(?!\S)'
-WHERE nombre = 'BAC compra';
+  UPDATE finn.formatos_bancarios
+  SET patron = '(?:MASTERCARD|VISA)\s+(?<ultimos4>\d{4}):\s+has realizado una compra por USD\s*(?<monto>\d[\d,]*(?:\.\d{1,2})?)\s+en el comercio:?\s+(?<comercio>\S+(?:\s+\S+)*?)\s+(?<fecha>\d{4}\/\d{2}\/\d{2}|\d{8})(?!\S)'
+  WHERE nombre = 'BAC compra';
 
-UPDATE finn.formatos_bancarios
-SET activo = false
-WHERE nombre IN ('Banco Agrícola compra', 'Cuscatlán compra');
+  UPDATE finn.formatos_bancarios
+  SET activo = false
+  WHERE nombre IN ('Banco Agrícola compra', 'Cuscatlán compra');
+END $$;

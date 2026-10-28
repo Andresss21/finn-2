@@ -4028,7 +4028,7 @@ END $$;
 - Prisma ORM 7.10.0 (`schema.prisma` validado y migración de tablas generada por su motor de esquemas).
 - `@prisma/adapter-pg` 7.10.
 
-Los binarios nativos del motor de Prisma no se pudieron descargar en el entorno de prueba, así que se usó el motor WebAssembly oficial de la misma versión (`@prisma/schema-engine-wasm` 7.10.0-7). Para que ese motor leyera el catálogo mediante el driver adapter hubo que mapear el tipo interno `"char"` en el adaptador de la prueba; es un ajuste del arnés de prueba, no del diseño. Las migraciones se aplicaron con `psql`, archivo por archivo y en una transacción, igual que hace la CLI.
+Los binarios nativos del motor de Prisma no se pudieron descargar en el entorno de prueba, así que se usó el motor WebAssembly oficial de la misma versión (`@prisma/schema-engine-wasm` 7.10.0-7). Para que ese motor leyera el catálogo mediante el driver adapter hubo que mapear el tipo interno `"char"` en el adaptador de la prueba; es un ajuste del arnés de prueba, no del diseño. Las migraciones se aplicaron con `psql`, archivo por archivo y en una transacción. **[CH-23]** La CLI no hace lo mismo: `prisma migrate deploy` 7.10 (motor nativo) no aplica cada carpeta en una sola transacción, y un `SELECT finn.tomar_bloqueo();` suelto deja de valer en la sentencia siguiente (FN001, comprobado en TA-051; ver 11.3).
 
 **Resultados**
 
@@ -4055,7 +4055,7 @@ Los binarios nativos del motor de Prisma no se pudieron descargar en el entorno 
 | 5 | Ejecutado mediante un driver adapter, el motor de migraciones divide el script en `;` y rompe los cuerpos `$$…$$` | Hoy no aplica, porque `migrate deploy` usa el motor nativo. Riesgo RK-19 (11.8) |
 
 **Pendiente para la prueba de humo de la Fase 4** (RK-06):
-- repetir `migrate deploy` y `migrate diff` con la CLI nativa;
+- repetir `migrate deploy` y `migrate diff` con la CLI nativa; **[CH-23]** `migrate deploy` hecho en TA-051: aplica las carpetas en orden, pero no cada una en una transacción (11.3);
 - usar la versión mayor real de PostgreSQL del proyecto;
 - ejecutar contra el pooler de Supabase;
 - ejecutar el bootstrap con el rol `postgres` de Supabase, que no es superusuario (13.5).
@@ -4098,7 +4098,7 @@ La documentación de Prisma 7 no promete este comportamiento: marca CHECK e índ
 ### 11.3 Orden de aplicación
 
 1. **Una vez por base:** `tools/db/bootstrap.sql` como administrador (10.4.1).
-2. **Cada despliegue:** `prisma migrate deploy` como `finn_migraciones` con `DIRECT_URL`. Aplica las carpetas pendientes en orden de nombre, cada una en una transacción.
+2. **Cada despliegue:** `prisma migrate deploy` como `finn_migraciones` con `DIRECT_URL`. Aplica las carpetas pendientes en orden de nombre. **[CH-23]** No aplica cada carpeta en una sola transacción (Prisma 7.10, motor nativo; comprobado en TA-051, RK-06): toda migración `_m_` que escribe datos toma el bloqueo y escribe en el mismo bloque `DO` (`PERFORM finn.tomar_bloqueo();` antes de la primera escritura) o en una sola sentencia. C1 acepta solo la forma con `DO` (11.6).
 3. La primera vez, el orden de 10.1 garantiza que existan:
    - la secuencia, antes de las tablas;
    - las tablas, antes de sus restricciones;
@@ -4147,7 +4147,7 @@ Seis controles, en el job de integración de cada PR (ADR-21), sobre un Postgres
 
 | # | Control | Qué detecta | Falla si |
 |---|---|---|---|
-| C1 | **Lint** (`verificar-migraciones.mjs`) sobre las migraciones nuevas del PR | Una `_g_` que nombra un objeto protegido (cualquier CHECK, índice de expresión, trigger, función o secuencia de la instantánea); que toca RLS, políticas, privilegios, dueños, triggers, funciones, secuencias, `nextval` o comentarios; o que es destructiva sin `-- finn:contraer`. Una `_m_` sin `-- finn:manual`, o que escribe hechos sin el bloqueo. Nombres de carpeta inválidos | Cualquier hallazgo |
+| C1 | **Lint** (`verificar-migraciones.mjs`) sobre las migraciones nuevas del PR | Una `_g_` que nombra un objeto protegido (cualquier CHECK, índice de expresión, trigger, función o secuencia de la instantánea); que toca RLS, políticas, privilegios, dueños, triggers, funciones, secuencias, `nextval` o comentarios; o que es destructiva sin `-- finn:contraer`. Una `_m_` sin `-- finn:manual`, o que escribe hechos sin el bloqueo, o **[CH-23]** fuera de un `DO` que tome antes el bloqueo. Nombres de carpeta inválidos | Cualquier hallazgo |
 | C2 | **Inmutabilidad**: `git diff --diff-filter=MDR origin/main -- packages/db/prisma/migrations` | Una migración ya aplicada que se editó, renombró o borró | Salida no vacía |
 | C3 | **Aplicación desde cero**: bootstrap + `prisma migrate deploy` como `finn_migraciones` | Migraciones que no aplican en orden o que dependen de privilegios que el rol no tiene | Error |
 | C4 | **Diff de Prisma**: `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code` | `schema.prisma` que no corresponde a las migraciones, o un objeto manual que Prisma intentaría borrar en la próxima migración (como pasó con la secuencia) | Exit 2 |

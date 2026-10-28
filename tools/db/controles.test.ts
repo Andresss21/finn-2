@@ -1,7 +1,7 @@
 // Controles C1 (lint de migraciones) y C2 (inmutabilidad) de 03 §11.6: cada uno pasa sobre el
 // repositorio y falla con su caso. Las migraciones de control viven en tools/lint/controles/migraciones/.
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -48,6 +48,22 @@ describe('C1 verificar-migraciones (03 §11.6)', () => {
     const r = c1(join(controles, 'm-escribe-sin-bloqueo'));
     expect(r.codigo).toBe(1);
     expect(r.texto).toContain('20261101000000_m_rellenar_nota: escribe en tablas de hechos');
+  });
+
+  it('C1 rechaza una _m_ con finn.tomar_bloqueo() como sentencia suelta (CH-23)', () => {
+    const r = c1(join(controles, 'm-bloqueo-suelto'));
+    expect(r.codigo).toBe(1);
+    expect(r.texto).toContain(
+      '20261101000000_m_rellenar_nota: escribe en tablas de hechos fuera de un DO que tome antes finn.tomar_bloqueo() (CH-23)',
+    );
+  });
+
+  it('C1 rechaza una _m_ que toma el bloqueo dentro del DO después de escribir (CH-23)', () => {
+    const r = c1(join(controles, 'm-bloqueo-tarde'));
+    expect(r.codigo).toBe(1);
+    expect(r.texto).toContain(
+      '20261101000000_m_rellenar_nota: escribe en tablas de hechos fuera de un DO',
+    );
   });
 
   it('C1 rechaza un nombre de carpeta inválido', () => {
@@ -178,6 +194,56 @@ describe('C2 inmutabilidad (03 §11.6)', () => {
     const r = c2();
     expect(r.codigo).toBe(1);
     expect(r.texto).toMatch(/^R\d*\t/m);
+  });
+
+  // CH-23: la única modificación permitida es m_formatos_bac con la huella fijada en el script.
+  const BAC = '20261025000000_m_formatos_bac';
+  const bacFijado = readFileSync(
+    join(raiz, 'packages', 'db', 'prisma', 'migrations', BAC, 'migration.sql'),
+  );
+  function prepararConBac(): void {
+    preparar();
+    mkdirSync(join(migraciones(), BAC));
+    writeFileSync(sql(BAC), '-- finn:manual\nSELECT finn.tomar_bloqueo();\n');
+    git('add', '.');
+    git('commit', '-q', '-m', 'bac');
+    git('update-ref', 'refs/remotes/origin/main', 'HEAD');
+  }
+
+  it('C2 pasa con m_formatos_bac modificada al contenido fijado de CH-23', () => {
+    prepararConBac();
+    writeFileSync(sql(BAC), bacFijado);
+    const r = c2();
+    expect(r.texto).toContain('ninguna migración de main cambió');
+    expect(r.codigo).toBe(0);
+  });
+
+  it('C2 falla con m_formatos_bac modificada a otro contenido', () => {
+    prepararConBac();
+    writeFileSync(sql(BAC), Buffer.concat([bacFijado, Buffer.from('-- otra línea\n')]));
+    const r = c2();
+    expect(r.codigo).toBe(1);
+    expect(r.texto).toContain(`M\tpackages/db/prisma/migrations/${BAC}/migration.sql`);
+  });
+
+  it('C2 falla si otra carpeta cambia aunque m_formatos_bac tenga el contenido fijado', () => {
+    prepararConBac();
+    writeFileSync(sql(BAC), bacFijado);
+    writeFileSync(sql('20261101000000_g_tablas'), bacFijado);
+    const r = c2();
+    expect(r.codigo).toBe(1);
+    expect(r.texto).toContain(
+      'M\tpackages/db/prisma/migrations/20261101000000_g_tablas/migration.sql',
+    );
+    expect(r.texto).not.toContain(`${BAC}/migration.sql`);
+  });
+
+  it('C2 falla con m_formatos_bac borrada', () => {
+    prepararConBac();
+    rmSync(join(migraciones(), BAC), { recursive: true });
+    const r = c2();
+    expect(r.codigo).toBe(1);
+    expect(r.texto).toContain(`D\tpackages/db/prisma/migrations/${BAC}/migration.sql`);
   });
 
   it('C2 falla con una migración de main borrada', () => {
