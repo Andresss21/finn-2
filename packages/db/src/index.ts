@@ -13,3 +13,4 @@ export {
   type TrabajoEscritura,
   type TrabajoLectura,
 } from './transacciones.ts';
+export { cargarHechos, COLUMNAS_CARGADAS, COLUMNAS_NO_CARGADAS } from './hechos/cargar.ts';

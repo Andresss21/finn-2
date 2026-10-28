@@ -8,6 +8,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -116,6 +117,27 @@ describe('controles de lint (fronteras de paquetes)', () => {
     const tmp = mkdtempSync(join(tmpdir(), 'finn-depcruise-'));
     try {
       cpSync(join(raiz, '.dependency-cruiser.cjs'), join(tmp, '.dependency-cruiser.cjs'));
+      // CH-28: el espacio de trabajo mínimo para que depcruise resuelva @finn/dominio como lo hace en el repositorio
+      // (si no, no distingue `import type` de un import de valor)
+      writeFileSync(
+        join(tmp, 'tsconfig.json'),
+        JSON.stringify({ compilerOptions: { module: 'ESNext', moduleResolution: 'Bundler' } }),
+      );
+      mkdirSync(join(tmp, 'packages', 'dominio', 'src'), { recursive: true });
+      writeFileSync(
+        join(tmp, 'packages', 'dominio', 'package.json'),
+        JSON.stringify({ name: '@finn/dominio', exports: { '.': './src/index.ts' } }),
+      );
+      writeFileSync(
+        join(tmp, 'packages', 'dominio', 'src', 'index.ts'),
+        'export const calcular = 0;\nexport type Hechos = object;\n',
+      );
+      mkdirSync(join(tmp, 'node_modules', '@finn'), { recursive: true });
+      symlinkSync(
+        join(tmp, 'packages', 'dominio'),
+        join(tmp, 'node_modules', '@finn', 'dominio'),
+        'junction',
+      );
       for (const c of controles) {
         const destino = join(tmp, dirname(c.ruta), `${c.nombre}.ts`);
         mkdirSync(dirname(destino), { recursive: true });

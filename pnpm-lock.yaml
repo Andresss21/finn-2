@@ -55,6 +55,13 @@ importers:
         version: 1.56.1
 
   packages/aplicacion:
+    dependencies:
+      '@finn/db':
+        specifier: workspace:*
+        version: link:../db
+      '@finn/dominio':
+        specifier: workspace:*
+        version: link:../dominio
     devDependencies:
       '@finn/config':
         specifier: workspace:*
