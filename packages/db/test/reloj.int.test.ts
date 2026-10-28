@@ -42,7 +42,7 @@ describe('PRU-ESQ-RELOJ', () => {
   const prueba = crearBasePrueba();
   const sembrada = crearBasePrueba({ reloj: false });
 
-  it('PRU-ESQ-RELOJ-003 [C5, C6, R15] MIG-12, CT-02 (V7-02 P1, P4, P5, P10; partes 1, 2 y 4, CH-24): R15 da 0 filas en la plantilla, detecta el reloj simulado y 2 violaciones sembradas', async () => {
+  it('PRU-ESQ-RELOJ-003 [C5, C6, R15] MIG-12, CT-02, P7-12 (V7-02 P1, P4, P5, P10; partes 1 a 4, CH-24): R15 da 0 filas en la plantilla, detecta el reloj simulado y 3 violaciones sembradas', async () => {
     expect(await r15(plantilla.urlMigraciones)).toEqual([]);
     expect(
       (await c5(plantilla.urlMigraciones, consultar)).filter((l) => l.startsWith('R15')),
@@ -55,14 +55,17 @@ describe('PRU-ESQ-RELOJ', () => {
     ]);
     const objetos = (await c6(prueba.urlMigraciones, consultar)).map((l) => l.split('|')[1]);
     expect([...new Set(objetos)].sort()).toEqual(['ahora()', 'desfase()', 'instante()']);
-    // Control negativo: una función nueva con now() y el cuerpo de finn.ahora() alterado
+    // Control negativo: una función nueva con now(), el cuerpo de finn.ahora() alterado y un DEFAULT con
+    // CURRENT_TIMESTAMP (parte 3, V7-02 P10) en una columna que no es de las 9 que exceptúa P7-12 b)
     await con(sembrada.urlMigraciones, (c) =>
       c.query(`CREATE FUNCTION finn.x_mala() RETURNS timestamptz LANGUAGE sql SECURITY DEFINER
                  SET search_path = finn, pg_catalog AS 'SELECT now()';
                CREATE OR REPLACE FUNCTION finn.ahora() RETURNS timestamptz LANGUAGE sql STABLE SECURITY DEFINER
-                 SET search_path = finn, pg_catalog AS $$ SELECT now() + interval '1 day' $$;`),
+                 SET search_path = finn, pg_catalog AS $$ SELECT now() + interval '1 day' $$;
+               ALTER TABLE finn.notificaciones ALTER COLUMN leida_en SET DEFAULT CURRENT_TIMESTAMP;`),
     );
     const violaciones = [
+      'R15 DEFAULT con reloj directo: notificaciones.leida_en = CURRENT_TIMESTAMP',
       "R15 cuerpo de ahora(): SELECT now() + interval '1 day'",
       'R15 reloj directo en x_mala()',
     ];
