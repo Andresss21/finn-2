@@ -161,7 +161,7 @@
 
   "TA-147": { "estado": "pendiente" },
 
-  "TA-150": { "estado": "pendiente" },
+  "TA-150": { "estado": "en_curso", "rama": "ta-150-transacciones" },
 
   "TA-151": { "estado": "pendiente" },
 
