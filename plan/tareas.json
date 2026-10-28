@@ -99,7 +99,7 @@
 
   "TA-123": { "estado": "terminada", "pr": 76 },
 
-  "TA-124": { "estado": "pendiente" },
+  "TA-124": { "estado": "en_curso", "rama": "ta-124-operaciones-arb" },
 
   "TA-125": { "estado": "terminada", "pr": 46 },
 
