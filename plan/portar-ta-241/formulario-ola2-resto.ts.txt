@@ -1,0 +1,142 @@
+// Código recortado de TA-140 (#115) para TA-241 (CH-30). NO se compila: es el punto de partida a portar.
+// Va en packages/dominio/src/selectores/formulario.ts (y programadas.ts para proximasOcurrencias).
+//
+// 1) ParametrosFormulario: agregar
+//   | { readonly operacion: 'fusionar'; readonly categoriaId: Uuid }
+//   | { readonly operacion: 'programada'; readonly programadaId?: Uuid; readonly fechaEsperada?: FechaLocal }
+//   | { readonly operacion: 'regla'; readonly reglaId?: Uuid }
+// 2) AuxiliaresDeFormulario: `readonly referencias?: ReferenciasDeProgramadas;` ([H], calendarioEditable).
+// 3) pide(): 'fusionar' y 'regla' -> ['categorias']; 'programada' -> ['cuentas', 'categorias', 'comercios'].
+// 4) Contextos: fusionar, programada y regla = ReturnType<typeof contextoX>; y los tres case de contextoDe.
+// 5) Imports: esOcurrencia (../calculo/ocurrencias), calendarioEditable y proximasOcurrencias (./programadas).
+//
+// 6) En programadas.ts (usa `ocurrencias` de ../calculo/ocurrencias; CF-20 ya lo respeta):
+//
+// export const PROXIMAS_EN_FORMULARIO = 5;
+// export function proximasOcurrencias(i: Instantanea, p: Programada, n: number): FechaLocal[] {
+//   const resueltas = new Set(
+//     i.hechos.ocurrencias_resueltas.filter((o) => o.programadaId === p.id).map((o) => o.fechaEsperada),
+//   );
+//   return ocurrencias(p, FechaLocal.sumarAnios(i.hoy, 5))
+//     .filter((f) => f >= i.hoy && !resueltas.has(f))
+//     .slice(0, n);
+// }
+//
+// 7) Pruebas (PRU-DOM-COBRO-103), sobre el estado de por-cobrar.test.ts (hoy 2027-04-15; programadas
+//    pg mensual con 3 resueltas, pg2 semanal reactivada el 2027-04-10, pg3 cuota sin modelo, pg4 inactiva):
+//  - fusionar super: destinosValidos [Ropa, Viajes]; resumen {periodosConAsignacion: 2, transacciones: 3,
+//    condonaciones: 1, programadas: 3, reglas: 1} con reglas [{r1, 'cena', super}]; pago-vi -> RangeError.
+//  - regla sin id -> {}; reglaId r1 -> {regla: {id, patron, categoria, esperado: {patron, categoriaId}}};
+//    reglaId inexistente -> RangeError.
+//  - programada crear -> {prestamosConModelo: []}; editar pg2 -> proximas = 04-15, 04-22, 04-29, 05-06,
+//    05-13 y calendarioEditable true; con fechaEsperada 04-22 -> ocurrencia pendiente; pg 02-20 ->
+//    registrada con transaccionId g3 y calendarioEditable false; 04-23 -> RangeError.
+//
+function contextoFusionar(i: Instantanea, categoriaId: Uuid, aux: AuxiliaresDeFormulario) {
+  const h = i.hechos;
+  const c = h.categorias.find((x) => x.id === categoriaId);
+  if (c === undefined || c.clase !== 'normal')
+    throw new RangeError(`la categoría ${categoriaId} no existe o no es normal`);
+  const n = nombres(i);
+  const grupos = new Map(h.grupos.map((g) => [g.id, g]));
+  const delOrigen = <T extends { readonly categoriaId: Uuid | null }>(xs: readonly T[]) =>
+    xs.filter((x) => x.categoriaId === c.id);
+  const meta = h.metas.find((m) => m.categoriaId === c.id);
+  return {
+    origen: n.categoria(c.id),
+    destinosValidos: h.categorias
+      .filter((x) => x.clase === 'normal' && !x.archivada && x.id !== c.id)
+      .sort(
+        (a, b) =>
+          porOrden(grupos.get(a.grupoId) ?? a, grupos.get(b.grupoId) ?? b) || porOrden(a, b),
+      )
+      .map((x) => n.categoria(x.id)),
+    resumen: {
+      periodosConAsignacion: delOrigen(h.asignaciones).length,
+      transacciones: new Set(delOrigen(h.lineas).map((l) => l.transaccionId)).size,
+      condonaciones: delOrigen(h.condonaciones).length,
+      programadas: new Set(delOrigen(h.programada_lineas).map((l) => l.programadaId)).size,
+      reglas: delOrigen(aux.reglas ?? []).length,
+      ...(meta === undefined ? {} : { meta: { tipo: meta.tipo, monto: meta.monto } }),
+    },
+  };
+}
+
+function contextoProgramada(
+  i: Instantanea,
+  p: Extract<ParametrosFormulario, { operacion: 'programada' }>,
+  aux: AuxiliaresDeFormulario,
+) {
+  const h = i.hechos;
+  const base = {
+    prestamosConModelo: h.prestamos.filter((x) => x.modeloCalculo !== null).map((x) => x.cuentaId),
+  };
+  if (p.programadaId === undefined) return base;
+  const q = h.programadas.find((x) => x.id === p.programadaId);
+  if (q === undefined) throw new RangeError(`la programada ${p.programadaId} no existe`);
+  const n = nombres(i);
+  const lineas = h.programada_lineas
+    .filter((l) => l.programadaId === q.id)
+    .sort((a, b) => a.orden - b.orden)
+    .map((l) => ({ categoria: n.categoria(l.categoriaId), monto: l.monto }));
+  const campos = {
+    tipo: q.tipo,
+    cuentaId: q.cuentaId,
+    cuentaDestinoId: q.cuentaDestinoId,
+    comercio: q.comercio,
+    monto: q.monto,
+    tolerancia: q.tolerancia,
+    frecuencia: q.frecuencia,
+    frecuenciaDias: q.frecuenciaDias,
+    primeraFecha: q.primeraFecha,
+    fechaFin: q.fechaFin,
+    registroAutomatico: q.registroAutomatico,
+    lineas: lineas.map((l) => ({ categoriaId: l.categoria.id, monto: l.monto })),
+  };
+  const resuelta = h.ocurrencias_resueltas.find(
+    (o) => o.programadaId === q.id && o.fechaEsperada === p.fechaEsperada,
+  );
+  if (p.fechaEsperada !== undefined && resuelta === undefined && !esOcurrencia(q, p.fechaEsperada))
+    throw new RangeError(`el ${p.fechaEsperada} no es una ocurrencia de la programada ${q.id}`);
+  const desglose =
+    p.fechaEsperada !== undefined && q.tipo === 'cuota_prestamo' && q.cuentaDestinoId !== null
+      ? desglosePropuesto(i, q.cuentaDestinoId)
+      : null;
+  return {
+    ...base,
+    programada: {
+      programada: { id: q.id, nombre: q.comercio },
+      activa: q.activa,
+      ...campos,
+      esperado: campos,
+      calendarioEditable: calendarioEditable(i, q.id, aux.referencias),
+      proximas: proximasOcurrencias(i, q, 5),
+    },
+    ...(p.fechaEsperada === undefined
+      ? {}
+      : {
+          ocurrencia: {
+            fechaEsperada: p.fechaEsperada,
+            estado: resuelta?.estado ?? ('pendiente' as const),
+            ...(resuelta?.transaccionId == null ? {} : { transaccionId: resuelta.transaccionId }),
+            monto: q.monto,
+            cuenta: n.cuenta(q.cuentaId),
+            lineas,
+            ...(desglose === null ? {} : { desglosePropuesto: desglose }),
+          },
+        }),
+  };
+}
+
+function contextoRegla(
+  i: Instantanea,
+  p: Extract<ParametrosFormulario, { operacion: 'regla' }>,
+  aux: AuxiliaresDeFormulario,
+) {
+  if (p.reglaId === undefined) return {};
+  const r = (aux.reglas ?? []).find((x) => x.id === p.reglaId);
+  if (r === undefined) throw new RangeError(`la regla ${p.reglaId} no existe`);
+  const regla = { id: r.id, patron: r.patron, categoria: nombres(i).categoria(r.categoriaId) };
+  return { regla: { ...regla, esperado: { patron: r.patron, categoriaId: r.categoriaId } } };
+}
+
