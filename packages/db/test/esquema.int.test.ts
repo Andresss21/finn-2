@@ -130,6 +130,56 @@ describe('PRU-INT-ESQ', () => {
     });
   });
 
+  describe('modo de conciliación', () => {
+    const base = crearBasePrueba();
+    it('PRU-INT-ESQ-103 [CF-01] MIG-09: conciliaciones.modo vale estado_cuenta por defecto, admite saldo y es inmutable (e_solo_insercion)', async () => {
+      // 06 §3.2.3: OP-47 deja el valor por defecto y OP-53 escribe `saldo`; la fila no se modifica después
+      const insertar = (modo: string): string =>
+        `INSERT INTO finn.conciliaciones
+           (cuenta_id, fecha_estado, saldo_estado, terminada_en, diferencia_aceptada${modo ? ', modo' : ''})
+         SELECT id, finn.hoy(), 1000, '2026-01-01T12:00:00Z', 0${modo ? `, '${modo}'` : ''}
+         FROM finn.cuentas WHERE nombre = 'Caja'
+         RETURNING modo::text AS modo`;
+      await con(base.url, async (app) => {
+        await app.query(`BEGIN; SELECT finn.tomar_bloqueo();
+          INSERT INTO finn.cuentas (tipo, nombre, fecha_apertura) VALUES ('efectivo', 'Caja', finn.hoy());`);
+        const porDefecto = await app.query<{ modo: string }>(insertar(''));
+        const saldo = await app.query<{ modo: string }>(insertar('saldo'));
+        await app.query('COMMIT');
+        expect([porDefecto.rows, saldo.rows]).toEqual([
+          [{ modo: 'estado_cuenta' }],
+          [{ modo: 'saldo' }],
+        ]);
+        // Fuera del enum: 22P02; finn_app no tiene UPDATE sobre la tabla (solo inserción)
+        await app.query('BEGIN; SELECT finn.tomar_bloqueo();');
+        expect(await codigo(app, insertar('otro'))).toBe('22P02');
+        await app.query('ROLLBACK; BEGIN; SELECT finn.tomar_bloqueo();');
+        expect(await codigo(app, "UPDATE finn.conciliaciones SET modo = 'saldo'")).toBe('42501');
+        await app.query('ROLLBACK');
+      });
+      // Con privilegio y bloqueo, e_solo_insercion rechaza cambiar `modo` en las dos direcciones
+      await con(base.urlMigraciones, async (mig) => {
+        for (const [de, a] of [
+          ['estado_cuenta', 'saldo'],
+          ['saldo', 'estado_cuenta'],
+        ]) {
+          await mig.query('BEGIN; SELECT finn.tomar_bloqueo();');
+          expect(
+            await codigo(mig, `UPDATE finn.conciliaciones SET modo = '${a}' WHERE modo = '${de}'`),
+          ).toBe('FN008');
+          await mig.query('ROLLBACK');
+        }
+        const { rows } = await mig.query<{ modo: string; n: number }>(
+          'SELECT modo::text AS modo, count(*)::int AS n FROM finn.conciliaciones GROUP BY modo ORDER BY modo',
+        );
+        expect(rows).toEqual([
+          { modo: 'estado_cuenta', n: 1 },
+          { modo: 'saldo', n: 1 },
+        ]);
+      });
+    });
+  });
+
   describe('siembra', () => {
     const base = crearBasePrueba();
     it('PRU-INT-ESQ-102 [CF-14] la siembra deja exactamente las filas de 03 §9.1 a §9.5, con los formatos de m_formatos_bac', async () => {
