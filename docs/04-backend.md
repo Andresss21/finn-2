@@ -2570,7 +2570,7 @@ interface PresupuestoDto extends Encabezado {
   }[];
   pagosTarjeta: FilaPagoTarjeta[];                 // grupo del sistema "Pagos de tarjeta"
   archivadasConDinero: FilaCategoria[];            // solo el activo: archivadas con Disp(c, A) ≠ 0 (AV-14, N5)
-  totales: { asignado: Centavos; gastado: Centavos; disponible: Centavos };
+  totales: { asignado: Centavos; gastado: Centavos; disponible: Centavos };  // [CH-32] Σ de grupos[].totales: ver abajo
 }
 interface FilaCategoria {
   categoria: Ref; orden: number;
@@ -2594,6 +2594,7 @@ interface FilaPagoTarjeta {
 - **Períodos cerrados:** se muestran con los mismos campos y sin acciones de asignación (inv. 18). Incluyen las categorías archivadas que tuvieron asignación o actividad en ese período (producto §7, R4).
 - **Períodos futuros:** Disp proyectado con actividad cero (§4.6); `faltaReservar` y `reservaExcedente` solo se calculan en el activo (S y RE usan Disp(pago(t), A), inv. 2).
 - **Categorías archivadas** no aparecen en `grupos` del período activo ni de los futuros (R4); si tienen Disp ≠ 0 en el activo, aparecen en `archivadasConDinero`.
+- **`totales`** **[CH-32]**: Σ de asignado, gastado y Disponible de las categorías normales que el período muestra en `grupos` (con las archivadas que R4 muestra en un período cerrado), sin aplicar `filtro`: es la suma de `grupos[].totales` con `todas`. No incluye `pagosTarjeta` (franja propia, 06-identidad-visual §5) ni `archivadasConDinero`.
 
 **BE-39. Filtros de Presupuesto.** El producto (§7) pide "todas, sin fondos suficientes, sobregiradas o cubiertas" sin definirlos. Definición [Propio], excluyente y completa:
 - `sobregirada`: Disp(c, p) < 0.
