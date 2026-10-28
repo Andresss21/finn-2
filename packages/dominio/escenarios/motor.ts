@@ -131,7 +131,7 @@ function comando(s: Estado, op: Op): ComandoDominio {
           : tipo === 'tarjeta'
             ? {
                 tipo,
-                limiteCredito: c(5000),
+                limiteCredito: c(op.limite ?? 5000),
                 tasaAnualMillonesimas: null,
                 diaCorte: op.diaCorte ?? 15,
               }
@@ -157,7 +157,9 @@ function comando(s: Estado, op: Op): ComandoDominio {
         ids,
         saldo: c(op.saldo ?? 0),
         cuenta: { ...cuenta, fechaApertura: fecha(op.apertura ?? '2027-01-21') },
-        ...(subtipo && { subtipo: { diaPago: 5, red: null, color: null, ...subtipo } }),
+        ...(subtipo && {
+          subtipo: { diaPago: op.diaPago ?? 5, red: null, color: null, ...subtipo },
+        }),
       } as ComandoDominio;
     }
     case 'OP-07':
@@ -253,6 +255,21 @@ function comando(s: Estado, op: Op): ComandoDominio {
         ...(op.fecha && { fecha: fecha(op.fecha) }),
         ...(op.monto !== undefined && { total: c(op.monto) }),
       };
+    case 'OP-30': {
+      // 'saldo-inicial:Cuenta': la transacción del saldo inicial de esa cuenta (OP-01 no le da etiqueta).
+      const [clave, nombre = ''] = op.etiqueta.split(':');
+      const cuenta = clave === 'saldo-inicial' ? cuentaId(s, nombre) : null;
+      const inicial = s.hechos.efectos.find(
+        (e) =>
+          e.cuentaId === cuenta &&
+          s.hechos.transacciones.some(
+            (t) => t.id === e.transaccionId && t.tipo === 'saldo_inicial',
+          ),
+      );
+      const transaccionId = cuenta ? inicial?.transaccionId : id(`t-${op.etiqueta}`);
+      if (!transaccionId) throw new Error(`OP-30: ${op.etiqueta} no existe`);
+      return { operacion: 'OP-30', transaccionId, estadoNuevo: op.estado };
+    }
     case 'OP-29':
       return {
         operacion: 'OP-29',
@@ -344,7 +361,7 @@ function comando(s: Estado, op: Op): ComandoDominio {
     case 'OP-23':
       return {
         operacion: 'OP-23',
-        id: id(`t${++s.contador}`),
+        id: id(op.etiqueta ? `t-${op.etiqueta}` : `t${++s.contador}`),
         instante: hora(),
         ids,
         fecha: fecha(op.fecha),
@@ -513,7 +530,7 @@ function comando(s: Estado, op: Op): ComandoDominio {
     case 'OP-21':
       return {
         operacion: 'OP-21',
-        id: id(`t${++s.contador}`),
+        id: id(op.etiqueta ? `t-${op.etiqueta}` : `t${++s.contador}`),
         instante: hora(op.registrado),
         ids,
         fecha: fecha(op.fecha),
