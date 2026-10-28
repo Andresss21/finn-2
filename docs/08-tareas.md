@@ -1999,7 +1999,7 @@ revision: obligatoria
 paralelo: no
 tamano: prod=60 archivos=2 ca=0 migraciones=1 total=300
 cubre: MIG-13, CT-02-defaults, P7-12-a
-pru: PRU-INT-RELOJ-101
+pru: —
 compartido: —
 ```
 
