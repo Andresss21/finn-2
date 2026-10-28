@@ -167,7 +167,7 @@
 
   "TA-146": { "estado": "pendiente" },
 
-  "TA-147": { "estado": "pendiente" },
+  "TA-147": { "estado": "en_curso", "rama": "ta-147-semilla-a7" },
 
   "TA-150": { "estado": "terminada", "pr": 94 },
 

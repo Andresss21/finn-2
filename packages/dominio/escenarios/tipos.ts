@@ -25,6 +25,8 @@ type OpBase =
       saldo?: number; // tarjeta: la deuda; préstamo: el capital pendiente
       apertura?: string; // por defecto 2027-01-21 (DP-16)
       diaCorte?: number; // tarjeta: 15 por defecto
+      diaPago?: number; // tarjeta: 5 por defecto
+      limite?: number; // tarjeta: $5,000 por defecto
       ultimos4?: string; // con él la cuenta tiene institución, y un SMS la encuentra (OP-35)
       prestamo?: DatosPrestamo;
     }
@@ -51,7 +53,15 @@ type OpBase =
       fecha?: string;
       registrado?: string;
     }
-  | { op: 'OP-21'; monto: number; cuenta?: string; fecha?: string; registrado?: string }
+  | {
+      op: 'OP-21';
+      monto: number;
+      cuenta?: string;
+      fecha?: string;
+      registrado?: string;
+      etiqueta?: string;
+    }
+  | { op: 'OP-30'; etiqueta: string; estado: 'pendiente' | 'confirmada' } // estado bancario de la transacción `etiqueta`
   | { op: 'OP-28'; etiqueta: string; cuenta?: string; fecha?: string; monto?: number } // cambiar la cuenta (el medio), la fecha o el total
   | { op: 'OP-29'; etiqueta: string } // eliminar la transacción
   | { op: 'OP-31'; cobro: string; monto: number; cuenta?: string; fecha?: string } // cobrar el por cobrar de la transacción `cobro`
@@ -74,7 +84,14 @@ type OpBase =
       cuenta?: string; // avance: el efectivo que recibe
       destino?: string; // transferencia: la tarjeta que toma la deuda
     }
-  | { op: 'OP-23'; tarjeta: string; monto: number; origen?: string; fecha?: string }
+  | {
+      op: 'OP-23';
+      tarjeta: string;
+      monto: number;
+      origen?: string;
+      fecha?: string;
+      etiqueta?: string;
+    }
   | { op: 'OP-06'; cuenta: string } // eliminar la cuenta
   | {
       op: 'OP-09'; // archivar: `destino` = 'LPA' o una categoría
