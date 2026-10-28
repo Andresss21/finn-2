@@ -2,8 +2,8 @@
 // - `escribir()`: el protocolo de 04 §4.2 (BE-12): READ COMMITTED, el bloqueo global como primera sentencia,
 //   la zona y el reloj de la transacción (BE-33, BE-30, CT-01) y la primera lectura con revisión, hoy e instante
 //   (BE-27, CT-02). `finn.operacion` solo con `set_config(…, true)` y su lista cerrada (04 §4.4, BE-14).
-// - `leer()`: 04 §5.1 (BE-20): REPEATABLE READ, `SET TRANSACTION READ ONLY` como primera sentencia, la zona y el
-//   reloj, y la primera lectura con revisión y hoy, que toma la instantánea.
+// - `leer()`: 04 §5.1 (BE-20): REPEATABLE READ, solo lectura como primera sentencia (`transaction_read_only` local,
+//   CH-25), la zona y el reloj, y la primera lectura con revisión y hoy, que toma la instantánea.
 // Las operaciones solo ven `LectorTx` y `EscritorTx`; el cliente de la transacción queda dentro de @finn/db.
 import { cliente, type Cliente } from './cliente.ts';
 import { Prisma } from './generado/prisma/client.ts';
@@ -123,7 +123,7 @@ export function transaccionesSobre(c: Cliente) {
   async function leer<T>(trabajo: TrabajoLectura<T>, opciones: OpcionesTx = {}): Promise<T> {
     return c.$transaction(async (tx) => {
       // Paso 2: sentencia de control, no toma la instantánea (V-07)
-      await tx.$executeRaw`SET TRANSACTION READ ONLY`;
+      await tx.$executeRaw`SET LOCAL transaction_read_only = on`;
       await fijarSesion(tx, opciones.reloj);
       // Paso 4: primera lectura; toma la instantánea de la revisión, los hechos y las filas [H]
       const f = unaFila(

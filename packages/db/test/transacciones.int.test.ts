@@ -196,7 +196,7 @@ describe('PRU-INT-ESQ', () => {
     expect(await deudores('ESQ-002 c')).toBe(0);
   });
 
-  it('PRU-INT-ESQ-006 [V-07] BE-20, BE-30, BE-33: leer() empieza con SET TRANSACTION READ ONLY, queda en repeatable read y solo lectura con la zona y el hoy de prueba, y una escritura dentro falla con 25006', async () => {
+  it('PRU-INT-ESQ-006 [V-07] BE-20, BE-30, BE-33: leer() empieza con SET LOCAL transaction_read_only = on (CH-25), queda en repeatable read y solo lectura con la zona y el hoy de prueba, y una escritura dentro falla con 25006', async () => {
     sentencias = [];
     const r = await tx.leer(
       async (t) => {
@@ -210,7 +210,7 @@ describe('PRU-INT-ESQ', () => {
     const nuestras = sentencias.filter(
       (q) => !/^(BEGIN|COMMIT|SET TRANSACTION ISOLATION)/i.test(q),
     );
-    expect(nuestras[0]).toBe('SET TRANSACTION READ ONLY');
+    expect(nuestras[0]).toBe('SET LOCAL transaction_read_only = on');
     expect(nuestras[1]).toMatch(/^SELECT set_config\('TimeZone', 'UTC', true\)/);
     expect(nuestras[2]).toMatch(/^SELECT valor::text AS revision, finn.hoy\(\)::text AS hoy/);
     expect(r.sesion).toEqual({ iso: 'repeatable read', ro: 'on', zona: 'UTC' });
