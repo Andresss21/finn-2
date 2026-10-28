@@ -177,6 +177,8 @@ export interface Programada {
   readonly fechaFin: FechaLocal | null;
   readonly registroAutomatico: boolean;
   readonly activa: boolean;
+  /** Fecha de la última reactivación (CF-20): las ocurrencias pendientes empiezan ahí. */
+  readonly reactivadaDesde: FechaLocal | null;
   readonly revision: Revision;
 }
 

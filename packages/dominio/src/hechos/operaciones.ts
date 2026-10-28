@@ -9,6 +9,8 @@ import type {
   Movimiento,
   MovimientoLinea,
   Prestamo,
+  Programada,
+  ProgramadaLinea,
   ReglaComercio,
   Tarjeta,
 } from './filas';
@@ -524,6 +526,62 @@ export interface ComandoOp50 extends MovimientoConLineas, AprobacionMovimiento {
   readonly operacion: 'OP-50';
 }
 
+// ── TA-139: transacciones programadas (04 §3.7). `esperado` de editar lo compara la aplicación (4.6.2).
+/** Una línea de una programada (03 §3.24): solo a categorías normales y activas. */
+export type LineaProgramada = Pick<ProgramadaLinea, 'monto' | 'categoriaId'>;
+/** Los campos de una programada que trae la entrada (sin id, estado, reactivación ni revisión). */
+export type CamposProgramada = Omit<Programada, 'id' | 'activa' | 'reactivadaDesde' | 'revision'>;
+/**
+ * OP-42; editar trae solo los campos que cambian y, si cambian, la lista completa de líneas.
+ * `coincidencias`: movimientos y SMS procesados con esta programada como esperada, [H] (BE-10).
+ */
+export type ComandoOp42 = { readonly operacion: 'OP-42' } & (
+  | ({
+      readonly accion: 'crear';
+      readonly id: Uuid;
+      readonly ids: GeneradorIds;
+    } & CamposProgramada & {
+        readonly lineas: readonly LineaProgramada[];
+      })
+  | {
+      readonly accion: 'editar';
+      readonly programadaId: Uuid;
+      readonly ids: GeneradorIds;
+      readonly campos?: Partial<Omit<CamposProgramada, 'tipo'>>;
+      readonly lineas?: readonly LineaProgramada[];
+      readonly coincidencias: number;
+    }
+  | { readonly accion: 'activar'; readonly programadaId: Uuid; readonly activa: boolean }
+);
+/** OP-43 de un toque; sin campos editables, los de la programada (el automático, `op43Automatico`). */
+export interface ComandoOp43 {
+  readonly operacion: 'OP-43';
+  readonly programadaId: Uuid;
+  readonly fechaEsperada: FechaLocal;
+  readonly id: Uuid; // de la transacción
+  readonly instante: Instante;
+  readonly ids: GeneradorIds;
+  readonly monto?: Centavos;
+  readonly lineas?: readonly LineaProgramada[]; // solo en un gasto
+  readonly desglose?: {
+    readonly capital: Centavos;
+    readonly interes: Centavos;
+    readonly seguro: Centavos;
+  };
+}
+export interface ComandoOp44 {
+  readonly operacion: 'OP-44';
+  readonly id: Uuid; // de la resolución
+  readonly programadaId: Uuid;
+  readonly fechaEsperada: FechaLocal;
+}
+/** OP-51; `referencias`: filas de `movimientos` y `sms_procesamientos` que la apuntan, [H] (BE-10). */
+export interface ComandoOp51 {
+  readonly operacion: 'OP-51';
+  readonly programadaId: Uuid;
+  readonly referencias: number;
+}
+
 /** Comando que entiende `aplicar`. Cada OP agrega su variante al implementarse. */
 export type ComandoDominio =
   | ComandoOp01
@@ -582,7 +640,12 @@ export type ComandoDominio =
   // TA-138
   | ComandoOp32
   | ComandoOp33
-  | ComandoOp34;
+  | ComandoOp34
+  // TA-139
+  | ComandoOp42
+  | ComandoOp43
+  | ComandoOp44
+  | ComandoOp51;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =

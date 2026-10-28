@@ -88,6 +88,7 @@ const programada = (p: string): Programada => ({
   fechaFin: null,
   registroAutomatico: false,
   activa: true,
+  reactivadaDesde: null,
   revision: null,
 });
 const linea = (p: string, cat: string) => ({

@@ -688,6 +688,7 @@ describe('PRU-DOM-CTA-102: aplicar, operaciones de cuentas (01 §5.1, 04 §3.1)'
       fechaFin: null,
       registroAutomatico: false,
       activa: false,
+      reactivadaDesde: null,
       revision: null,
     };
     const conQ = { ...base(), programadas: [programada] };

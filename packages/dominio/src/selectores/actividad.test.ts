@@ -157,6 +157,7 @@ function estado(ajustar: (h: Hechos) => Hechos = (h) => h) {
         fechaFin: null,
         registroAutomatico: true,
         activa: true,
+        reactivadaDesde: null,
         revision: null,
       },
     ],

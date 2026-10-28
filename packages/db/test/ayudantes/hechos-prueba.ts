@@ -279,6 +279,7 @@ function escritos(
         fechaFin: null,
         registroAutomatico: true,
         activa: true,
+        reactivadaDesde: null,
       },
       {
         id: PG2,
@@ -294,6 +295,7 @@ function escritos(
         fechaFin: fecha('2027-12-31'),
         registroAutomatico: false,
         activa: false,
+        reactivadaDesde: fecha('2027-03-01'), // reactivada y desactivada otra vez (CF-20)
       },
     ],
     programada_lineas: [
