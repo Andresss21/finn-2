@@ -51,10 +51,14 @@ import { op31 } from './op-31';
 import { op35 } from './op-35';
 import { op36 } from './op-36';
 import { op37 } from './op-37';
+import { op39 } from './op-39';
 import { op40 } from './op-40';
+import { op41 } from './op-41';
 import { op46 } from './op-46';
 import { op47 } from './op-47';
 import { op48 } from './op-48';
+import { op49 } from './op-49';
+import { op50 } from './op-50';
 import { op52 } from './op-52';
 import { op53 } from './op-53';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
@@ -122,6 +126,11 @@ const OPERACIONES: {
   'OP-36': op36,
   'OP-37': op37,
   'OP-40': op40,
+  // TA-122: descartar, reglas, reprocesar y crear a mano (OP-38 es un lote: `op38`).
+  'OP-39': op39,
+  'OP-41': op41,
+  'OP-49': op49,
+  'OP-50': op50,
   // TA-137: inversiones y desembolso.
   'OP-25': op25,
   'OP-26': op26,

@@ -17,6 +17,7 @@ import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { aplicar } from './aplicar';
 import { pagoDe } from './op-01';
+import { type ElementoOp38, op38 } from './op-38';
 
 // ── PRU-DOM-BAND-102: editar, aprobar y resolver movimientos (OP-36, OP-37, OP-40) ──
 
@@ -464,5 +465,273 @@ describe('PRU-DOM-BAND-102: aplicar, editar, aprobar y resolver movimientos (01 
       [mov('aprobado'), 'rechazar_coincidencia'],
     ] as const)
       expect(codigo(resolver(m, decision, rechazar))).toBe('movimiento_estado_no_valido');
+  });
+});
+
+// ── PRU-DOM-BAND-103: aprobar todos, descartar, reglas, reprocesar y crear a mano ──
+
+const lote = (h: Hechos, elementos: object[]) =>
+  op38(h, { elementos: elementos as ElementoOp38[] }, HOY);
+const elemento = (m: Movimiento, lineas: MovimientoLinea[], tx: string) => ({
+  ...{ movimiento: m, lineas, id: id(tx), instante: INSTANTE, recibidoEn: RECIBIDO },
+  ids: contador(),
+});
+const motivoDe = (s: ResultadoAplicar) => (s.ok ? 'aprobado' : s.rechazos[0]?.codigo);
+const SMS = 'BANCO: compra por 40,00 en SUPER UNO tarjeta 1234';
+
+describe('PRU-DOM-BAND-103: aprobar todos, descartar, reglas, reprocesar y crear a mano (01 §5.6, §7.1; 02 N-02; 04 §3.6)', () => {
+  it('PRU-DOM-BAND-103 [AV-19, INV-15] OP-38 aprueba cada Pendiente elegible como aprobación independiente sobre los hechos del anterior; los que no cumplen OP-37, los pagos de tarjeta, los retroactivos y los que no están en Pendiente quedan sin cambios y AV-19 los lista con su motivo', () => {
+    const m = (n: string, extra: Partial<Movimiento> = {}) =>
+      mov('pendiente', { id: id(n), smsId: id(`S${n}`), ...extra });
+    const r = lote(H0, [
+      elemento(m('M1'), [linea(40)], 'TX1'),
+      elemento(m('M2', { tipoPropuesto: 'pago_tarjeta', cuentaId: id('T') }), [], 'TX2'),
+      elemento(m('M3', { fecha: f('2027-02-10') }), [linea(40)], 'TX3'),
+      elemento(m('M4', { estado: 'con_coincidencia' }), [linea(40)], 'TX4'),
+      elemento(m('M5'), [linea(40, { categoriaId: null })], 'TX5'),
+      elemento(m('M1'), [linea(40)], 'TX1b'), // el mismo movimiento dos veces (inv. 15)
+      elemento(m('M6', { tipoPropuesto: 'ingreso', comercio: null }), [], 'TX6'),
+    ]);
+    expect(r.resultados.map((x) => [x.movimientoId, motivoDe(x.salida)])).toEqual([
+      ['M1', 'aprobado'],
+      ['M2', 'pago_sin_origen'],
+      ['M3', 'requiere_revision_individual'],
+      ['M4', 'movimiento_estado_no_valido'],
+      ['M5', 'linea_sin_destino'],
+      ['M1', 'movimiento_estado_no_valido'],
+      ['M6', 'aprobado'],
+    ]);
+    // El repetido ya está aprobado con su transacción: la aplicación responde ya_aplicada.
+    expect(rechazo(r.resultados[5]?.salida as ResultadoAplicar)).toEqual({
+      codigo: 'movimiento_estado_no_valido',
+      datos: { movimientoId: 'M1', estado: 'aprobado', transaccionId: 'TX1' },
+    });
+    // Cada aprobación es un OP-37 completo; la siguiente parte de los hechos que dejó la anterior.
+    const aprobada = r.resultados[0]?.salida as ResultadoAplicar;
+    expect(en(aprobada, 'movimientos')[0]).toMatchObject({
+      campos: { estado: 'aprobado', transaccionId: 'TX1' },
+    });
+    const nuevas = r.hechos.transacciones.filter((t) => !H0.transacciones.includes(t));
+    expect(nuevas.map((t) => [t.id, t.origen, t.horaRegistro])).toEqual([
+      ['TX1', 'sms', RECIBIDO],
+      ['TX6', 'sms', RECIBIDO],
+    ]);
+    expect(disp(r.hechos, 'SUPER')).toBe(c(300 - 50 - 40));
+    // AV-19, después y sin confirmación: cada no aprobado con el código de su motivo.
+    expect(r.avisos).toEqual([
+      {
+        ...{ codigo: 'AV-19', momento: 'despues', requiereConfirmacion: false },
+        datos: {
+          M2: 'pago_sin_origen',
+          M3: 'requiere_revision_individual',
+          M4: 'movimiento_estado_no_valido',
+          M5: 'linea_sin_destino',
+        },
+      },
+    ]);
+    // Todos aprobados: sin AV-19.
+    expect(lote(H0, [elemento(m('M1'), [linea(40)], 'TX1')]).avisos).toEqual([]);
+    expect(lote(H0, []).resultados).toEqual([]);
+  });
+
+  it('PRU-DOM-BAND-103 OP-39 descarta desde Pendiente, Posible duplicado, No reconocido o error; restaura desde Descartado o Autodescartado reevaluando coincidencia y duplicados (pasos 7 y 8 de OP-35) con los datos actuales', () => {
+    const op = (m: Movimiento, accion: string, extra: object = {}) =>
+      ap(H0, { operacion: 'OP-39', movimiento: m, accion, ...extra });
+    for (const estado of ['pendiente', 'posible_duplicado', 'no_reconocido', 'error'] as const)
+      expect(PM(op(mov(estado), 'descartar'))).toEqual([
+        { tipo: 'actualizar', tabla: 'movimientos', id: 'M', campos: { estado: 'descartado' } },
+      ]);
+    for (const estado of ['con_coincidencia', 'aprobado', 'descartado', 'autodescartado'] as const)
+      expect(codigo(op(mov(estado), 'descartar'))).toBe('movimiento_estado_no_valido');
+
+    const restaurar = (m: Movimiento, movimientos: MovimientoConTexto[] = []) =>
+      PM(op(m, 'restaurar', { texto: SMS, movimientos }))[0];
+    const sin = { esperadaProgramadaId: null, esperadaFecha: null };
+    const sinDup = { duplicadoTransaccionId: null, duplicadoMovimientoId: null };
+    // 40 el 10 mar: ninguna esperada (tolerancia 5) ni duplicado → Pendiente.
+    expect(restaurar(mov('descartado'))).toEqual({
+      ...{ tipo: 'actualizar', tabla: 'movimientos', id: 'M' },
+      campos: { estado: 'pendiente', ...sin, ...sinDup },
+    });
+    // Otro pendiente de 40 en E el 11 mar, con texto distinto → Posible duplicado.
+    const otro = { ...mov('pendiente', { id: id('M9'), fecha: f('2027-03-11') }), texto: 'otro' };
+    const propio = { ...mov('descartado'), texto: 'distinto' }; // el propio no cuenta
+    expect(restaurar(mov('autodescartado'), [propio, otro])).toMatchObject({
+      campos: { estado: 'posible_duplicado', ...sin, duplicadoMovimientoId: 'M9' },
+    });
+    // 50 el 12 mar: la esperada de Q se evalúa primero → Con coincidencia.
+    expect(restaurar(mov('descartado', { monto: c(50), fecha: f('2027-03-12') }))).toEqual({
+      ...{ tipo: 'actualizar', tabla: 'movimientos', id: 'M' },
+      campos: {
+        ...{ estado: 'con_coincidencia', esperadaProgramadaId: 'Q' },
+        ...{ esperadaFecha: f('2027-03-12'), ...sinDup },
+      },
+    });
+    // Sin cuenta (un No reconocido descartado): vuelve a Pendiente sin candidatas.
+    expect(restaurar(mov('descartado', { cuentaId: null }))).toMatchObject({
+      campos: { estado: 'pendiente', ...sin, ...sinDup },
+    });
+    for (const estado of ['pendiente', 'aprobado', 'error'] as const)
+      expect(codigo(op(mov(estado), 'restaurar', { texto: SMS, movimientos: [] }))).toBe(
+        'movimiento_estado_no_valido',
+      );
+  });
+
+  it('PRU-DOM-BAND-103 OP-41 crea, edita y elimina reglas de comercio: patrón no vacío y único sin mayúsculas (patron_repetido), categoría normal y activa; sin efecto en el cálculo', () => {
+    const reglas = [
+      { id: id('RG1'), patron: 'Super Uno', categoriaId: id('SUPER') },
+      { id: id('RG2'), patron: 'Farmacia', categoriaId: id('CASA') },
+    ];
+    const op = (x: object) => ap(H0, { operacion: 'OP-41', reglas, ...x });
+    const crear = (patron: string, categoriaId = id('CASA')) =>
+      op({ accion: 'crear', id: id('RG3'), patron, categoriaId });
+    const r = crear('Gasolinera');
+    expect(exito(r).cambios).toEqual([
+      {
+        ...{ tipo: 'insertar', tabla: 'reglas_comercio' },
+        fila: { id: 'RG3', patron: 'Gasolinera', categoriaId: 'CASA' },
+      },
+    ]);
+    expect(calcular(exito(r).hechosNuevos, HOY).lpa).toEqual(calcular(H0, HOY).lpa);
+    expect(rechazo(crear('SUPER UNO'))).toEqual({
+      codigo: 'patron_repetido',
+      datos: { patron: 'SUPER UNO' },
+    });
+    expect(codigo(crear('Gasolinera', id('VIEJA')))).toBe('categoria_archivada');
+    expect(codigo(crear('Gasolinera', PAGO_T))).toBe('categoria_de_pago_no_permitida');
+    expect(codigo(crear('Gasolinera', id('nada')))).toBe('no_encontrado');
+    expect(() => crear('  ')).toThrow(TypeError);
+
+    const editar = (x: object) => op({ accion: 'editar', reglaId: id('RG1'), ...x });
+    expect(exito(editar({ categoriaId: id('CASA') })).cambios).toEqual([
+      { tipo: 'actualizar', tabla: 'reglas_comercio', id: 'RG1', campos: { categoriaId: 'CASA' } },
+    ]);
+    // Su propio patrón con otras mayúsculas no se repite.
+    expect(exito(editar({ patron: 'SUPER UNO' })).cambios).toEqual([
+      { tipo: 'actualizar', tabla: 'reglas_comercio', id: 'RG1', campos: { patron: 'SUPER UNO' } },
+    ]);
+    expect(exito(editar({ patron: 'Super Uno' })).cambios).toEqual([]);
+    expect(codigo(editar({ patron: 'farmacia' }))).toBe('patron_repetido');
+    expect(codigo(editar({ categoriaId: id('VIEJA') }))).toBe('categoria_archivada');
+    expect(codigo(op({ accion: 'editar', reglaId: id('nada'), patron: 'x' }))).toBe(
+      'no_encontrado',
+    );
+    expect(exito(op({ accion: 'eliminar', reglaId: id('RG2') })).cambios).toEqual([
+      { tipo: 'eliminar', tabla: 'reglas_comercio', id: 'RG2' },
+    ]);
+    expect(codigo(op({ accion: 'eliminar', reglaId: id('nada') }))).toBe('no_encontrado');
+  });
+
+  it('PRU-DOM-BAND-103 [AV-23] OP-49 reprocesa un SMS con error: pasos 2 a 11 de OP-35 con el instante de recepción original (ventana del autodescarte y fecha por defecto, N-02), actualiza el mismo movimiento y reemplaza sus líneas con orden nuevo (BE-16)', () => {
+    const hb: Hechos = {
+      ...H0,
+      cuentas: H0.cuentas.map((k) =>
+        k.id === 'E' ? { ...k, institucionId: id('BANCO'), ultimos4: '1234' } : k,
+      ),
+    };
+    const vacio = { cuentaId: null, fecha: null, monto: null, comercio: null, tipoPropuesto: null };
+    const enError = mov('error', vacio);
+    const sms = { id: id('S'), texto: SMS, recibidoEn: RECIBIDO, fechaRecepcion: MAR10 };
+    const interpretacion = {
+      ...{ resultado: 'reconocido', institucionId: id('BANCO'), tipoMovimiento: 'compra' },
+      ...{ ultimos4: '1234', monto: c(40), comercio: 'SUPER UNO', fecha: null },
+    };
+    const reprocesar = (m: Movimiento, extra: object = {}) =>
+      aplicar(
+        hb,
+        {
+          ...{ operacion: 'OP-49', movimiento: m, lineas: [linea(40, { categoriaId: null })] },
+          ...{ ids: contador(), sms, interpretacion, anteriores: [], reglas: [] },
+          movimientos: [{ ...m, texto: SMS }],
+          ...extra,
+        } as ComandoDominio,
+        HOY,
+      );
+    const reglas = [{ id: id('RG'), patron: 'super', categoriaId: id('CASA') }];
+    const r = reprocesar(enError, { reglas });
+    expect(PM(r)).toEqual([
+      {
+        ...{ tipo: 'actualizar', tabla: 'movimientos', id: 'M' },
+        campos: {
+          ...{ smsId: 'S', estado: 'pendiente', cuentaId: 'E', fecha: MAR10, monto: c(40) },
+          ...{ comercio: 'SUPER UNO', tipoPropuesto: 'gasto', nota: null, transaccionId: null },
+          ...{ duplicadoTransaccionId: null, duplicadoMovimientoId: null },
+          ...{ esperadaProgramadaId: null, esperadaFecha: null },
+        },
+      },
+    ]);
+    expect(en(r, 'movimiento_lineas')).toMatchObject([
+      { tipo: 'eliminar', id: 'ML1' },
+      {
+        tipo: 'insertar',
+        fila: { movimientoId: 'M', orden: 2, monto: c(40), categoriaId: 'CASA' },
+      },
+    ]);
+    expect(exito(r).avisos).toMatchObject([
+      { codigo: 'AV-23', momento: 'despues', datos: { movimientoId: 'M', motivo: 'nuevo' } },
+    ]);
+    expect(calcular(exito(r).hechosNuevos, HOY).lpa).toEqual(calcular(hb, HOY).lpa);
+
+    // La ventana de 10 minutos se cuenta desde la recepción original, no desde el reproceso.
+    const antes5 = { id: id('S0'), texto: SMS, recibidoEn: '2027-03-10T13:40:00.000Z' as Instante };
+    const despues5 = {
+      ...antes5,
+      id: id('S2'),
+      recibidoEn: '2027-03-10T13:50:00.000Z' as Instante,
+    };
+    const auto = reprocesar(enError, { anteriores: [antes5, sms] });
+    expect(PM(auto)[0]).toMatchObject({ campos: { estado: 'autodescartado', fecha: MAR10 } });
+    expect(exito(auto).avisos).toEqual([]);
+    const noAuto = reprocesar(enError, { anteriores: [despues5, sms] });
+    expect(PM(noAuto)[0]).toMatchObject({ campos: { estado: 'pendiente' } });
+
+    // Sigue sin reconocerse: No reconocido, sin campos ni líneas, con AV-23.
+    const nr = reprocesar(enError, { interpretacion: { resultado: 'no_reconocido' } });
+    expect(PM(nr)[0]).toMatchObject({ campos: { estado: 'no_reconocido', ...vacio } });
+    expect(en(nr, 'movimiento_lineas')).toEqual([
+      { tipo: 'eliminar', tabla: 'movimiento_lineas', id: 'ML1' },
+    ]);
+    expect(exito(nr).avisos[0]).toMatchObject({ datos: { motivo: 'no_reconocido' } });
+
+    for (const estado of ['pendiente', 'no_reconocido', 'aprobado', 'descartado'] as const)
+      expect(rechazo(reprocesar(mov(estado)))).toEqual({
+        codigo: 'sms_no_reprocesable',
+        datos: { smsId: 'S' },
+      });
+  });
+
+  it('PRU-DOM-BAND-103 [INV-15] OP-50 crea a mano la transacción desde un SMS con error (OP-37 sobre error, vinculada al SMS); un movimiento aprobado produce una sola transacción y una esperada se resuelve una sola vez', () => {
+    const crear = (m: Movimiento) => ap(H0, { ...aprobar(m, [linea(40)]), operacion: 'OP-50' });
+    const r = crear(mov('error', { nota: 'a mano' }));
+    expect(en(r, 'transacciones')[0]).toMatchObject({
+      fila: { id: 'TX', origen: 'sms', horaRegistro: RECIBIDO, total: c(40), nota: 'a mano' },
+    });
+    expect(PM(r)).toEqual([
+      {
+        ...{ tipo: 'actualizar', tabla: 'movimientos', id: 'M' },
+        campos: { estado: 'aprobado', transaccionId: 'TX' },
+      },
+    ]);
+    for (const estado of ['pendiente', 'no_reconocido', 'con_coincidencia', 'aprobado'] as const)
+      expect(codigo(crear(mov(estado)))).toBe('movimiento_estado_no_valido');
+    expect(codigo(crear(mov('error', { cuentaId: null })))).toBe('movimiento_sin_cuenta');
+
+    // inv. 15: dos SMS con coincidencia sobre la misma esperada de Q. El primero la empareja; el
+    // segundo ya no puede, y el aprobado no vuelve a producir otra transacción.
+    const sobreQ = { esperadaProgramadaId: id('Q'), esperadaFecha: f('2027-03-12') };
+    const primero = mov('con_coincidencia', sobreQ);
+    const h1 = exito(ap(H0, aprobar(primero, [linea(40)]))).hechosNuevos;
+    const segundo = mov('con_coincidencia', { ...sobreQ, id: id('M2'), smsId: id('S2') });
+    expect(rechazo(ap(h1, aprobar(segundo, [linea(40)], { id: id('TX2') })))).toEqual({
+      codigo: 'conflicto_desactualizado',
+      campo: 'esperada',
+    });
+    const ya = { ...primero, estado: 'aprobado' as const, transaccionId: id('TX') };
+    expect(rechazo(ap(h1, aprobar(ya, [linea(40)])))).toMatchObject({
+      datos: { estado: 'aprobado', transaccionId: 'TX' },
+    });
+    expect(h1.transacciones.filter((t) => t.id === 'TX')).toHaveLength(1);
+    const deQ = h1.ocurrencias_resueltas.filter((o) => o.programadaId === 'Q');
+    expect(deQ).toMatchObject([{ fechaEsperada: f('2027-03-12'), estado: 'emparejada' }]);
   });
 });
