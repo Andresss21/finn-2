@@ -13,7 +13,23 @@ import type {
 import type { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { nombres, type Ref } from './comunes';
+import { ocurrencias } from '../calculo/ocurrencias';
 import type { OcurrenciaDto } from './inicio';
+
+/** Cuántas ocurrencias próximas muestra el formulario de una programada (04 §6.14.4). */
+export const PROXIMAS_EN_FORMULARIO = 5;
+
+/** Las próximas `n` ocurrencias desde hoy, sin las ya resueltas; respeta `reactivadaDesde` (CF-20). */
+export function proximasOcurrencias(i: Instantanea, p: Programada, n: number): FechaLocal[] {
+  const resueltas = new Set(
+    i.hechos.ocurrencias_resueltas
+      .filter((o) => o.programadaId === p.id)
+      .map((o) => o.fechaEsperada),
+  );
+  return ocurrencias(p, FechaLocal.sumarAnios(i.hoy, 5))
+    .filter((f) => f >= i.hoy && !resueltas.has(f))
+    .slice(0, n);
+}
 
 /** Horizonte por defecto en Programadas: 30 días (BE-37); es también el que calcula el motor. */
 export const HORIZONTE_PROGRAMADAS = 30;

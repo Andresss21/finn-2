@@ -147,7 +147,7 @@
 
   "TA-140": { "estado": "terminada", "pr": 117 },
 
-  "TA-241": { "estado": "pendiente" },
+  "TA-241": { "estado": "en_curso", "rama": "ta-241-formulario-ola2" },
 
   "TA-141": { "estado": "terminada", "pr": 39 },
 
