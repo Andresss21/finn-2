@@ -1,0 +1,4 @@
+// regla: marca-a-mano
+// Poner la marca de CT-06 a mano falsifica finn.tiene_bloqueo() (P7-21): solo finn.tomar_bloqueo() la pone.
+export const marcar = (tx: { $executeRaw: (s: TemplateStringsArray) => Promise<number> }) =>
+  tx.$executeRaw`SELECT set_config('finn.bloqueo_xact', pg_current_xact_id()::text, true)`;

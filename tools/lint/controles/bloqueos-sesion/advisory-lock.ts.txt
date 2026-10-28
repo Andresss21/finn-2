@@ -1,0 +1,4 @@
+// regla: advisory-lock
+// Un bloqueo asesor de sesión sobrevive a la transacción: detrás del pooler, otro cliente lo hereda (07 §5.3).
+export const tomar = (tx: { $executeRaw: (s: TemplateStringsArray) => Promise<number> }) =>
+  tx.$executeRaw`SELECT pg_advisory_lock(1179209294)`;
