@@ -45,7 +45,7 @@
 
   "TA-057": { "estado": "terminada", "pr": 90 },
 
-  "TA-058": { "estado": "pendiente" },
+  "TA-058": { "estado": "en_curso", "rama": "ta-058-bloqueo-marca" },
 
   "TA-059": { "estado": "pendiente" },
 

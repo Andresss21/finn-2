@@ -134,8 +134,8 @@ funcion|tg_x_eliminacion_cuenta()|definer=t|config=search_path=finn, pg_catalog|
 funcion|tg_x_limites()|definer=t|config=search_path=finn, pg_catalog|cuerpo=badc97041a5c64354f838778080699e0
 funcion|tg_x_programada()|definer=t|config=search_path=finn, pg_catalog|cuerpo=6e062ab2fe649784d78c6eefe4813b3c
 funcion|tg_x_transaccion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=9abd4c236cb7a05d7939d73a27c09e95
-funcion|tiene_bloqueo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=ef8387f9dda34086a392cd4d5dae03a5
-funcion|tomar_bloqueo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=cec4a403a17acf488e77b010f0165e50
+funcion|tiene_bloqueo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=64bfe005638d9ee50434a97f90aff422
+funcion|tomar_bloqueo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=dc65381085e5b2463ca1928bb54d0da4
 funcion|verificar_categoria(p_categoria uuid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=203f763fab65517034407c9a4ff0e841
 funcion|verificar_conciliacion(p_tx uuid, p_estado_ant finn.estado_bancario, p_conc_ant uuid, p_sensible boolean)|definer=t|config=search_path=finn, pg_catalog|cuerpo=143579d025bc52ee12b839994ed5a200
 funcion|verificar_cuenta(p_cuenta uuid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=4992b8626db60b5ba75ddf26a52fb35c

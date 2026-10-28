@@ -1,0 +1,4 @@
+// regla: set-sin-local
+// Un ajuste de sesión, sin LOCAL, queda en la conexión del pooler y lo ve el siguiente cliente (POOL-03).
+export const fijar = (tx: { $executeRawUnsafe: (s: string) => Promise<number> }) =>
+  tx.$executeRawUnsafe("SET finn.hoy = '2026-01-01'");

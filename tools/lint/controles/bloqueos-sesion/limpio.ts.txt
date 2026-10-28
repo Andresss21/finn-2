@@ -1,0 +1,15 @@
+// regla: ninguna
+// Lo permitido: el bloqueo de la transacción, ajustes locales y la cláusula de columnas de un UPDATE.
+type Tx = { $executeRaw: (s: TemplateStringsArray, ...v: unknown[]) => Promise<number> };
+export async function escribir(tx: Tx, id: string): Promise<void> {
+  await tx.$executeRaw`SELECT finn.tomar_bloqueo()`;
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(1179209294)`;
+  await tx.$executeRaw`SET LOCAL lock_timeout = '10s'`;
+  await tx.$executeRaw`SELECT set_config('finn.hoy', '2026-01-01', true)`;
+  await tx.$executeRaw`UPDATE finn.deudores
+    SET nombre = 'x' WHERE id = ${id}::uuid`;
+  await tx.$executeRaw`INSERT INTO finn.deudores (id, nombre) VALUES (${id}::uuid, 'y')
+    ON CONFLICT (id) DO UPDATE SET nombre = excluded.nombre`;
+  const conjunto = new Set<string>();
+  conjunto.add(id);
+}

@@ -1,0 +1,4 @@
+// regla: try-advisory-lock
+// La variante "try" de sesión tiene el mismo problema que la de bloqueo directo, según 07 §19.5.
+export const intentar = (tx: { $queryRaw: (s: TemplateStringsArray) => Promise<unknown> }) =>
+  tx.$queryRaw`SELECT pg_try_advisory_lock(1179209294)`;
