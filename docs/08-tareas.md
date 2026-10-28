@@ -392,8 +392,8 @@ tu: TU-03, TU-06
 ### HT-2 Motor con todos los escenarios
 
 ```hito
-despues: TA-239
-requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235, TA-236, TA-237, TA-238, TA-239, TA-232, TA-233, TA-240
+despues: TA-241
+requiere: TA-100, TA-101, TA-102, TA-103, TA-104, TA-105, TA-106, TA-107, TA-108, TA-109, TA-110, TA-111, TA-112, TA-113, TA-114, TA-115, TA-116, TA-117, TA-118, TA-119, TA-120, TA-121, TA-122, TA-123, TA-124, TA-125, TA-126, TA-127, TA-128, TA-129, TA-130, TA-131, TA-132, TA-133, TA-134, TA-135, TA-136, TA-137, TA-138, TA-139, TA-140, TA-141, TA-142, TA-143, TA-144, TA-145, TA-146, TA-147, TA-230, TA-231, TA-234, TA-235, TA-236, TA-237, TA-238, TA-239, TA-232, TA-233, TA-240, TA-241
 tu: —
 ```
 
@@ -1492,6 +1492,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-27** | Devolución de un por cobrar en otra cuenta. 01 §5.5 OP-33a toma "la cuenta (por defecto, la de la compra)" con la sola precondición "Cuenta abierta", y 04 §3.5 dice "`cuentaId?` (por defecto, la de la compra)"; pero 01 §4.10 ("Efectos de cada evento, según el medio de pago de la compra de L y la cuenta del evento") define la fila de la devolución solo por el medio de la compra (débito: "Efectivo +X. Abierto −X, así que LPA +X"; tarjeta t: "Deuda(t) −X y S(t) −X"), sin distinguir la cuenta del evento como en el cobro. Una parte por cobrar devuelta en una cuenta de otro medio no tiene efecto definido y rompe la identidad de saldo (inv. 1): `aplicar` la rechazaba como `invariante_violada` (INTERNO). Resolución (opción A): OP-33a agrega la precondición "si el reparto tiene una parte sobre una línea por cobrar, la cuenta es la de la compra", con el rechazo `devolucion_por_cobrar_otra_cuenta`; las partes a categoría siguen admitiendo cualquier cuenta (D-2, D-4). El motor y §4.10 no cambian. Consecuencia: el catálogo pasa de 77 a 78 rechazos, y la salida de `t17.py` que registra 07 §35 y espera PRU-SEG-OPER-102 se actualiza | 01 §5.5 (OP-33a); 04 §3.5 (OP-33), §3.0.6; 07 §35; 08 TA-138; `tools/ci/docs.test.ts` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-27]** en TA-138 |
 | **CH-28** | La regla de dependency-cruiser no reconoce `import type`. 04 §1.3 dice: "`@finn/db` → `dominio` (API): solo tipos"; pero `.dependency-cruiser.cjs` (`db-dominio-solo-tipos`, con `dependencyTypesNot: ['type-only']`) no resuelve los paquetes del workspace (`@finn/dominio` con `exports` a `.ts`), les asigna el tipo `unknown` y marca también un `import type { Hechos } from '@finn/dominio'` (comprobado en TA-152). Además, TA-152 pedía que una prueba de `packages/db/test` llamara a `calcular`, un valor de dominio que 04 §1.3 prohíbe a `@finn/db`. Resolución: (1) `.dependency-cruiser.cjs` resuelve los paquetes del workspace (`tsConfig`, `enhancedResolveOptions` con `exportsFields` y `conditionNames`) y usa `tsPreCompilationDeps: 'specify'`, de modo que un `import type` cuenta como `type-only` en todas las reglas "solo tipos" (db, sms, conciliación y web); la regla sigue igual de estricta para los valores y no hay excepciones por ruta; (2) controles `db-valor-de-dominio` (falla con `db-dominio-solo-tipos`) y `db-tipo-de-dominio` (limpio), con el espacio de trabajo mínimo en `tools/lint/controles.test.ts`; (3) PRU-INT-MOTOR-101 pasa a `packages/aplicacion/test/cargar.int.test.ts`, que sí puede importar `calcular`; los hechos los escribe un ayudante de `packages/db/test/ayudantes`, porque aplicación no ve Prisma; (4) `@finn/db` exporta `cargarHechos`. 04 §1.3 no cambia | 04 §1.3, §1.5; 08 TA-152 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-28]** en TA-152 |
 | **CH-29** | Código del rechazo de autorización. 08 §TA-161 pide que `autorizar()` rechace una sesión AAL1, una de otro usuario y una sin sesión "con `credenciales_invalidas`", pero 04 §12.3, que tiene precedencia, dice que `accion()` llama a `exigirSesionEscritura()` y las consultas a `exigirSesionLectura()` y que "si falla: `NO_AUTORIZADO` (7.2)", con `datos.aal` (`'ninguna'` o `'aal1'`, 04 §2.3.2 [F5]) para elegir entre `/ingresar` y `/ingresar/verificar`; 05 §9.7 reserva `credenciales_invalidas` (categoría `DOMINIO`) para las funciones de ingreso (CP-11). Además 04 §2.2.5 nombra `exigirSesionAal2()`, que §12.3 reemplaza [R4]. Resolución: PRU-SEG-ACCESO-101 prueba `exigirSesionLectura()` y `exigirSesionEscritura()` en `autenticacion/autorizar.ts`: sin sesión, con otro usuario y con AAL1 dan `NO_AUTORIZADO`, código `no_autorizado` y `datos.aal` = `'ninguna'` / `'ninguna'` / `'aal1'`; solo pasa AAL2 con `sub = FINN_USUARIO_ID`; escritura con `getUser()` más `aal` y `sub` sobre las claims, lectura solo con `getClaims()`. `credenciales_invalidas` queda solo para `ingresar` y CP-11. Como ningún documento daba el texto de `no_autorizado`, 04 §7.7 y §3.0.7 lo fijan ("Tu sesión terminó. Ingresá de nuevo para seguir."; la interfaz redirige y no lo muestra, 05 §7.5) | 08 TA-161; 04 §2.2.5, §3.0.7, §7.7, §12.3; 05 §9.7 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-29]** en TA-161 |
+| **CH-30** | Partición de TA-140 por tamaño (DT-02) y ventana de las candidatas de devolución. El alcance completo de TA-140 midió prod≈652 contra una estimación de 260: pasa el +30 % aceptado de DT-01 (520). Lo que queda en TA-140 mide prod=514, que la ficha declara en 400 (tope de DT-01). Se parte: TA-140 conserva `por-cobrar.ts`, `programadas.ts` y los contextos `cobrar`, `condonar` y `devolver` (con las `candidatas` de devolución en `movimiento`); TA-241, nueva, lleva los contextos `fusionar`, `programada`, `regla`, `conciliar` y `verificar_saldo` de `formulario.ts`. TA-198 pasa a depender de TA-241. Además, 04 §6.14.4 dice que las `candidatas` de `movimiento` se filtran "por cuenta, monto y fechas cercanas" sin fijar la ventana: queda misma cuenta, `restante` ≥ monto del movimiento, fecha de la compra ≤ fecha del movimiento, más recientes primero y máximo 20. El código recortado queda en la rama `ta-140-ola2-resto` (carpeta `plan/portar-ta-241/`) | 08 TA-140, TA-241, TA-198, HT-2; 04 §6.14.4 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-30]** en TA-140 y 04 §6.14.4 |
 
 ---
 
@@ -1717,12 +1718,13 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 195 | TA-253 | B5 | — | HT-4 | obligatoria | Prueba de humo: H-09 (carga desde `iad1`) y H-10 (Auth) | 300 | 0 |
 | 600 | TA-136 | B2 | 2 | HT-2 | obligatoria | `aplicar`: asignación rápida y cambiar el ciclo (OP-16, OP-19) | 260 | 0 |
 | 601 | TA-137 | B2 | 2 | HT-2 | obligatoria | `aplicar`: inversiones y desembolso (OP-25, OP-26) | 180 | 0 |
-| 604 | TA-140 | B2 | 2 | HT-2 | normal | Selectores de por cobrar, programadas y contextos de formulario (ola 2) | 260 | 0 |
+| 604 | TA-140 | B2 | 2 | HT-2 | normal | Selectores de por cobrar, programadas y contextos de formulario: cobrar, condonar y devolver (ola 2, parte 1) | 400 | 0 |
 | 605 | TA-141 | B2 | 2 | HT-2 | normal | Reportes base (04 §6.9.2, §6.9.3; parte 1) | 396 | 0 |
 | 606 | TA-230 | B2 | 2 | HT-2 | normal | Reportes: top de comercios y gasto semanal (parte 2 de TA-141) | 287 | 0 |
 | 607 | TA-142 | B2 | 2 | HT-2 | normal | Reportes accionables: realidad y clave de agrupación (CF-04; parte 1) | 334 | 0 |
 | 613 | TA-238 | B2 | 2 | HT-2 | normal | Reporte de gastos hormiga (parte 2 de TA-142) | 260 | 0 |
 | 614 | TA-239 | B2 | 2 | HT-2 | normal | Reporte de suscripciones (parte 3 de TA-142) | 250 | 0 |
+| 615 | TA-241 | B2 | 2 | HT-2 | normal | Contextos de formulario de la ola 2: fusionar, programada, regla, conciliar y verificar_saldo (parte 2 de TA-140) | 300 | 0 |
 | 608 | TA-143 | B2 | 2 | HT-2 | normal | Reportes de tarjetas, hallazgos y flujo de efectivo (CF-02, CF-04) | 300 | 0 |
 | 609 | TA-144 | B2 | 2 | HT-2 | normal | `datos_base` y sus pares con los selectores (CF-09) | 160 | 0 |
 | 610 | TA-145 | B2 | 2 | HT-2 | normal | Escenarios en el motor: ESC-21, ESC-23, ESC-25, ESC-26, ESC-27, ESC-28, ESC-29, ESC-30 | 20 | 0 |
@@ -3691,7 +3693,7 @@ compartido: GEN-operaciones (agrega OP-25 y OP-26)
 
 **Terminada cuando.** La prueba pasa.
 
-#### TA-140 Selectores de por cobrar, programadas y contextos de formulario (ola 2)
+#### TA-140 Selectores de por cobrar, programadas y contextos de formulario: cobrar, condonar y devolver (ola 2, parte 1)
 
 ```tarea
 orden: 604
@@ -3701,24 +3703,59 @@ depende: TA-240, TA-138, TA-139
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=260 archivos=3 ca=0 migraciones=0 total=620
+tamano: prod=400 archivos=3 ca=0 migraciones=0 total=1010
 cubre: SEL-porCobrar, SEL-programadas
 pru: PRU-DOM-COBRO-102
 compartido: SEL-formulario (los contextos de la ola 2)
 ```
 
 **Qué construir.**
-- `selectores/por-cobrar.ts`, `programadas.ts` y los contextos restantes de `formulario.ts` (04 §6.12.1, §6.12.3, §6.14.4).
+- `selectores/por-cobrar.ts`, `programadas.ts` y, en `formulario.ts`, los contextos `cobrar`, `condonar` y `devolver` más las `candidatas` de devolución de `movimiento` (04 §6.12.1, §6.12.3, §6.14.4). Los demás contextos de la ola 2 son TA-241 **[CH-30]**.
 
 **Leer.** 04 §6.12.1, §6.12.3, §6.14.4.
 
 **Archivos.** `packages/dominio/src/selectores/{por-cobrar,programadas,formulario}.ts`.
 
 **Pruebas primero.**
-- **PRU-DOM-COBRO-102** (nueva, DT-17): por cobrar por deudor con su estado y dinero en camino; programadas con próximos pagos a 30 días (BE-37); contextos de formulario de la ola 2.
+- **PRU-DOM-COBRO-102** (nueva, DT-17): por cobrar por deudor con su estado y dinero en camino; programadas con próximos pagos a 30 días (BE-37); contextos de formulario `cobrar`, `condonar`, `devolver` y las candidatas de `movimiento`.
 - La prueba nueva.
 
 **Comandos.** `pnpm test:unidad -t "PRU-DOM-COBRO-102"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
+
+#### TA-241 Contextos de formulario de la ola 2: fusionar, programada, regla, conciliar y verificar_saldo (parte 2 de TA-140)
+
+Parte 2 de TA-140 (DT-02, 08 §1.2, CH-30). **Portar desde la rama `ta-140-selectores-cobrar-programadas` (#115)**, que tiene todo el código; `fusionar`, `programada` y `regla` (con `proximasOcurrencias` de `programadas.ts`) están ya escritos en `plan/portar-ta-241/formulario-ola2-resto.ts.txt` de la rama `ta-140-ola2-resto`. `conciliar` y `verificar_saldo` son nuevos. El contexto `formato` no entra: no hay una OP de formatos en `main` y llega con la tarea que la crea (OPT-05, TA-195).
+
+```tarea
+orden: 615
+bloque: B2
+hito: HT-2
+depende: TA-140
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=300 archivos=2 ca=0 migraciones=0 total=620
+cubre: —
+pru: PRU-DOM-COBRO-103
+compartido: SEL-formulario (los contextos de la ola 2)
+```
+
+**Qué construir.**
+- `fusionar` (`destinosValidos` y `resumen`, OP-12), `programada` (crear: `prestamosConModelo`; editar: campos con `esperado`, `calendarioEditable`, próximas 5 ocurrencias, y la `ocurrencia` de CP-10b) y `regla` (CP-10c, OP-41), en `formulario.ts` (04 §6.14.4, §6.14.4.1).
+- `conciliar` (CP-16, OP-46) y `verificar_saldo` (CF-01, OP-53) en `formulario.ts`.
+
+**Leer.** 04 §6.14.4, §6.14.4.1, §6.12.1; 01 OP-12, OP-41, OP-42, OP-46, OP-53.
+
+**Archivos.** `packages/dominio/src/selectores/{formulario,programadas}.ts`.
+
+**Pruebas primero.**
+- **PRU-DOM-COBRO-103** (nueva, DT-17): los cinco contextos de formulario con su catálogo y sus rechazos.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-COBRO-103"`; `pnpm ci:local`.
 
 **Terminada cuando.** La prueba pasa.
 
@@ -5586,7 +5623,7 @@ compartido: —
 orden: 627
 bloque: B3
 hito: HT-3
-depende: TA-174, TA-140, TA-141, TA-142, TA-143, TA-144
+depende: TA-174, TA-241, TA-141, TA-142, TA-143, TA-144
 tu: —
 revision: normal
 paralelo: libre
