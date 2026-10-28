@@ -1,19 +1,31 @@
 // Formularios (04 §6.14, BE-42): catálogos comunes y el contexto propio de cada operación (ola 1:
 // `registrar`, `pagar_tarjeta`, `cuota_prestamo`, `editar_transaccion`, `asignar`, `archivar_categoria`,
-// `cuenta`, `movimiento` y `meta`; ola 2, TA-140: `cobrar`, `condonar` y `devolver`; faltan
-// `fusionar`, `programada`, `regla`, `formato`, `conciliar` y `verificar_saldo`).
+// `cuenta`, `movimiento` y `meta`; ola 2, TA-140: `cobrar`, `condonar` y `devolver`; TA-241:
+// `fusionar`, `programada`, `regla`, `conciliar` y `verificar_saldo`; falta `formato`, que llega con TA-195).
 // No calcula: cada número sale de la instantánea o de un selector. Las tablas [H] llegan como parámetro.
 import { destinos } from '../calculo/destino';
+import { esOcurrencia } from '../calculo/ocurrencias';
 import { desgloseAlPagar } from '../calculo/patrimonio';
 import type { Periodo } from '../calculo/periodos';
 import { evaluarMeta } from '../calculo/metas';
-import type { Instantanea, Institucion, Linea, ReglaComercio, TipoCuenta, Uuid } from '../hechos';
+import { saldoAl, saldoConfirmado } from '../calculo/saldos';
+import type {
+  Instantanea,
+  Institucion,
+  Linea,
+  ReglaComercio,
+  TipoCuenta,
+  TipoTransaccion,
+  Transaccion,
+  Uuid,
+} from '../hechos';
 import { asignacionRapida } from '../operaciones/op-16';
 import { desglosePropuesto } from '../operaciones/op-24';
 import { eventosDe } from '../operaciones/op-28';
 import { propuestaCondonacion } from '../operaciones/op-32';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
+import { filaDe } from './actividad';
 import { type DatosDeBandeja, movimientoDeBandeja, origenPropuestoPagoTarjeta } from './bandeja';
 import { nombres, type Ref, sobregiroDe } from './comunes';
 import { amortizacionDe, type Auxiliares } from './detalle-cuenta';
@@ -21,6 +33,13 @@ import { type DatosDeOrigen, detalleTransaccion } from './detalle-transaccion';
 import { porOrden } from './estructura';
 import { metas } from './metas';
 import { lineasPorCobrar, menor } from './por-cobrar';
+import {
+  calendarioEditable,
+  PROXIMAS_EN_FORMULARIO,
+  proximasOcurrencias,
+  type ReferenciasDeProgramadas,
+} from './programadas';
+import { candidatasDeConciliacion } from './conciliacion';
 import { comerciosRecientes } from './sugerencia';
 
 export type ParametrosFormulario =
@@ -68,7 +87,16 @@ export type ParametrosFormulario =
       readonly operacion: 'devolver';
       readonly transaccionOriginalId?: Uuid;
       readonly busqueda?: string;
-    };
+    }
+  | { readonly operacion: 'fusionar'; readonly categoriaId: Uuid }
+  | {
+      readonly operacion: 'programada';
+      readonly programadaId?: Uuid;
+      readonly fechaEsperada?: FechaLocal;
+    }
+  | { readonly operacion: 'regla'; readonly reglaId?: Uuid }
+  | { readonly operacion: 'conciliar'; readonly cuentaId: Uuid }
+  | { readonly operacion: 'verificar_saldo'; readonly cuentaId: Uuid; readonly fecha?: FechaLocal };
 
 /** Lo que no está en los hechos del motor: tablas [H] e [I]. */
 export interface AuxiliaresDeFormulario extends Auxiliares, DatosDeOrigen {
@@ -76,6 +104,8 @@ export interface AuxiliaresDeFormulario extends Auxiliares, DatosDeOrigen {
   readonly reglas?: readonly ReglaComercio[];
   /** Obligatorio para `movimiento`. */
   readonly bandeja?: DatosDeBandeja;
+  /** Para `calendarioEditable` de `programada` ([H], 6.12.1). */
+  readonly referencias?: ReferenciasDeProgramadas;
 }
 
 type Pide = 'cuentas' | 'categorias' | 'categoriasPago' | 'deudores' | 'comercios' | 'lpa';
@@ -109,7 +139,15 @@ function pide(p: ParametrosFormulario, esPago: boolean): readonly Pide[] {
       return ['cuentas', 'categorias', 'deudores', 'comercios'];
     case 'meta':
     case 'condonar':
+    case 'fusionar':
+    case 'regla':
       return ['categorias'];
+    case 'programada':
+      return ['cuentas', 'categorias', 'comercios'];
+    case 'conciliar':
+      return ['cuentas', 'categorias', 'categoriasPago', 'deudores', 'comercios'];
+    case 'verificar_saldo':
+      return [];
     case 'cobrar':
       return ['cuentas', 'categoriasPago', 'deudores'];
     case 'devolver':
@@ -704,6 +742,241 @@ interface Contextos {
   readonly cobrar: ReturnType<typeof contextoCobrar>;
   readonly condonar: ReturnType<typeof contextoCondonar>;
   readonly devolver: ReturnType<typeof contextoDevolver>;
+  readonly fusionar: ReturnType<typeof contextoFusionar>;
+  readonly programada: ReturnType<typeof contextoProgramada>;
+  readonly regla: ReturnType<typeof contextoRegla>;
+  readonly conciliar: ReturnType<typeof contextoConciliar>;
+  readonly verificar_saldo: ReturnType<typeof contextoVerificar>;
+}
+
+// ───────────── ola 2, resto (TA-241, CH-30) ─────────────
+
+function contextoFusionar(i: Instantanea, categoriaId: Uuid, aux: AuxiliaresDeFormulario) {
+  const h = i.hechos;
+  const c = h.categorias.find((x) => x.id === categoriaId);
+  if (c === undefined || c.clase !== 'normal')
+    throw new RangeError(`la categoría ${categoriaId} no existe o no es normal`);
+  const n = nombres(i);
+  const grupos = new Map(h.grupos.map((g) => [g.id, g]));
+  const delOrigen = <T extends { readonly categoriaId: Uuid | null }>(xs: readonly T[]) =>
+    xs.filter((x) => x.categoriaId === c.id);
+  const meta = h.metas.find((m) => m.categoriaId === c.id);
+  return {
+    origen: n.categoria(c.id),
+    destinosValidos: h.categorias
+      .filter((x) => x.clase === 'normal' && !x.archivada && x.id !== c.id)
+      .sort(
+        (a, b) =>
+          porOrden(grupos.get(a.grupoId) ?? a, grupos.get(b.grupoId) ?? b) || porOrden(a, b),
+      )
+      .map((x) => n.categoria(x.id)),
+    resumen: {
+      periodosConAsignacion: delOrigen(h.asignaciones).length,
+      transacciones: new Set(delOrigen(h.lineas).map((l) => l.transaccionId)).size,
+      condonaciones: delOrigen(h.condonaciones).length,
+      programadas: new Set(delOrigen(h.programada_lineas).map((l) => l.programadaId)).size,
+      reglas: delOrigen(aux.reglas ?? []).length,
+      ...(meta === undefined ? {} : { meta: { tipo: meta.tipo, monto: meta.monto } }),
+    },
+  };
+}
+
+function contextoProgramada(
+  i: Instantanea,
+  p: Extract<ParametrosFormulario, { operacion: 'programada' }>,
+  aux: AuxiliaresDeFormulario,
+) {
+  const h = i.hechos;
+  const base = {
+    prestamosConModelo: h.prestamos.filter((x) => x.modeloCalculo !== null).map((x) => x.cuentaId),
+  };
+  if (p.programadaId === undefined) return base;
+  const q = h.programadas.find((x) => x.id === p.programadaId);
+  if (q === undefined) throw new RangeError(`la programada ${p.programadaId} no existe`);
+  const n = nombres(i);
+  const lineas = h.programada_lineas
+    .filter((l) => l.programadaId === q.id)
+    .sort((a, b) => a.orden - b.orden)
+    .map((l) => ({ categoria: n.categoria(l.categoriaId), monto: l.monto }));
+  const campos = {
+    tipo: q.tipo,
+    cuentaId: q.cuentaId,
+    cuentaDestinoId: q.cuentaDestinoId,
+    comercio: q.comercio,
+    monto: q.monto,
+    tolerancia: q.tolerancia,
+    frecuencia: q.frecuencia,
+    frecuenciaDias: q.frecuenciaDias,
+    primeraFecha: q.primeraFecha,
+    fechaFin: q.fechaFin,
+    registroAutomatico: q.registroAutomatico,
+    lineas: lineas.map((l) => ({ categoriaId: l.categoria.id, monto: l.monto })),
+  };
+  const resuelta = h.ocurrencias_resueltas.find(
+    (o) => o.programadaId === q.id && o.fechaEsperada === p.fechaEsperada,
+  );
+  if (p.fechaEsperada !== undefined && resuelta === undefined && !esOcurrencia(q, p.fechaEsperada))
+    throw new RangeError(`el ${p.fechaEsperada} no es una ocurrencia de la programada ${q.id}`);
+  const desglose =
+    p.fechaEsperada !== undefined && q.tipo === 'cuota_prestamo' && q.cuentaDestinoId !== null
+      ? desglosePropuesto(i, q.cuentaDestinoId)
+      : null;
+  return {
+    ...base,
+    programada: {
+      programada: { id: q.id, nombre: q.comercio },
+      activa: q.activa,
+      ...campos,
+      esperado: campos,
+      calendarioEditable: calendarioEditable(i, q.id, aux.referencias),
+      proximas: proximasOcurrencias(i, q, PROXIMAS_EN_FORMULARIO),
+    },
+    ...(p.fechaEsperada === undefined
+      ? {}
+      : {
+          ocurrencia: {
+            fechaEsperada: p.fechaEsperada,
+            estado: resuelta?.estado ?? ('pendiente' as const),
+            ...(resuelta?.transaccionId == null ? {} : { transaccionId: resuelta.transaccionId }),
+            monto: q.monto,
+            cuenta: n.cuenta(q.cuentaId),
+            lineas,
+            ...(desglose === null ? {} : { desglosePropuesto: desglose }),
+          },
+        }),
+  };
+}
+
+function contextoRegla(
+  i: Instantanea,
+  p: Extract<ParametrosFormulario, { operacion: 'regla' }>,
+  aux: AuxiliaresDeFormulario,
+) {
+  if (p.reglaId === undefined) return {};
+  const r = (aux.reglas ?? []).find((x) => x.id === p.reglaId);
+  if (r === undefined) throw new RangeError(`la regla ${p.reglaId} no existe`);
+  const regla = { id: r.id, patron: r.patron, categoria: nombres(i).categoria(r.categoriaId) };
+  return { regla: { ...regla, esperado: { patron: r.patron, categoriaId: r.categoriaId } } };
+}
+
+/** Conciliar y verificar saldo solo admiten efectivo y tarjeta (OP-45, OP-53). */
+function cuentaConciliable(i: Instantanea, cuentaId: Uuid) {
+  const k = i.hechos.cuentas.find((x) => x.id === cuentaId);
+  if (k === undefined || (k.tipo !== 'efectivo' && k.tipo !== 'tarjeta') || k.archivada)
+    throw new RangeError(`la cuenta ${cuentaId} no existe o no se puede conciliar`);
+  return { id: k.id, tipo: k.tipo };
+}
+
+/**
+ * Los tipos de alta que admite un movimiento del estado según el tipo de la cuenta y el signo del
+ * efecto (03 §4.5.1): cargo = efecto negativo, abono = efecto positivo.
+ */
+const TIPOS_DE_ALTA: Record<
+  'efectivo' | 'tarjeta',
+  { readonly cargo: readonly TipoTransaccion[]; readonly abono: readonly TipoTransaccion[] }
+> = {
+  efectivo: {
+    cargo: ['gasto', 'transferencia', 'pago_tarjeta', 'cuota_prestamo', 'abono_capital'],
+    abono: ['ingreso', 'transferencia', 'cobro', 'devolucion'],
+  },
+  tarjeta: {
+    cargo: ['gasto', 'avance_efectivo', 'transferencia_tarjetas'],
+    abono: ['pago_tarjeta', 'entrada_tarjeta', 'devolucion', 'transferencia_tarjetas'],
+  },
+};
+
+function ultimaConciliacion(i: Instantanea, cuentaId: Uuid) {
+  const [u] = i.hechos.conciliaciones
+    .filter((x) => x.cuentaId === cuentaId)
+    .sort((a, b) =>
+      a.fechaEstado === b.fechaEstado
+        ? menor(b.terminadaEn, a.terminadaEn)
+        : menor(b.fechaEstado, a.fechaEstado),
+    );
+  return u === undefined
+    ? undefined
+    : {
+        fechaEstado: u.fechaEstado,
+        saldoEstado: u.saldoEstado,
+        modo: u.modo,
+        diferenciaActual: Centavos.restar(
+          u.saldoEstado,
+          saldoAl(i.hechos, cuentaId, u.fechaEstado),
+        ),
+      };
+}
+
+function contextoConciliar(i: Instantanea, cuentaId: Uuid) {
+  const k = cuentaConciliable(i, cuentaId);
+  const origen = k.tipo === 'tarjeta' ? origenPropuestoPagoTarjeta(i, k.id) : undefined;
+  const n = nombres(i);
+  const u = ultimaConciliacion(i, k.id);
+  return {
+    cuenta: {
+      cuenta: n.cuenta(k.id),
+      tipo: k.tipo,
+      saldo: saldoAl(i.hechos, k.id, i.hoy),
+      saldoConfirmado: saldoConfirmado(i.hechos, k.id),
+      ...(u === undefined
+        ? {}
+        : {
+            ultimaConciliacion: {
+              fechaEstado: u.fechaEstado,
+              saldoEstado: u.saldoEstado,
+              diferenciaActual: u.diferenciaActual,
+            },
+          }),
+    },
+    tiposAlta: TIPOS_DE_ALTA[k.tipo],
+    ...(origen === undefined ? {} : { origenPropuestoPago: origen }),
+    prestamos: [...i.hechos.cuentas]
+      .sort(porOrden)
+      .filter((x) => !x.archivada)
+      .flatMap((x) => i.hechos.prestamos.filter((p) => p.cuentaId === x.id))
+      .map((p) => {
+        const categoria = categoriaUltimaCuota(i, p.cuentaId);
+        return {
+          cuenta: n.cuenta(p.cuentaId),
+          tieneModelo: p.modeloCalculo !== null,
+          ...(categoria === undefined ? {} : { categoriaPropuesta: categoria }),
+        };
+      }),
+    porCobrarAbiertos: lineasPorCobrar(i)
+      .filter((x) => x.abierto > 0)
+      .sort((a, b) => menor(a.fechaOrigen, b.fechaOrigen) || menor(a.lineaId, b.lineaId))
+      .map((x) => ({
+        lineaId: x.lineaId,
+        transaccionId: x.transaccionId,
+        deudor: x.deudor,
+        fechaOrigen: x.fechaOrigen,
+        comercio: x.comercio,
+        abierto: x.abierto,
+        medio: x.medio,
+      })),
+  };
+}
+
+const MAX_VERIFICACION = 200;
+
+function contextoVerificar(i: Instantanea, cuentaId: Uuid, fecha?: FechaLocal) {
+  const k = cuentaConciliable(i, cuentaId);
+  const al = fecha ?? i.hoy;
+  if (al > i.hoy) throw new RangeError(`la fecha ${al} es posterior a hoy`);
+  const candidatas = candidatasDeConciliacion(i.hechos, k.id, al);
+  const porId = new Map(i.hechos.transacciones.map((t) => [t.id, t]));
+  const u = ultimaConciliacion(i, k.id);
+  return {
+    cuenta: { ...nombres(i).cuenta(k.id), tipo: k.tipo },
+    fecha: al,
+    candidatas: {
+      cantidad: candidatas.length,
+      recientes: candidatas
+        .slice(-MAX_VERIFICACION)
+        .reverse()
+        .map((c) => filaDe(i, porId.get(c.id as Uuid) as Transaccion)),
+    },
+    ...(u === undefined ? {} : { ultimaConciliacion: u }),
+  };
 }
 
 function contextoDe(i: Instantanea, p: ParametrosFormulario, aux: AuxiliaresDeFormulario) {
@@ -732,6 +1005,16 @@ function contextoDe(i: Instantanea, p: ParametrosFormulario, aux: AuxiliaresDeFo
       return contextoCondonar(i, p.lineaId);
     case 'devolver':
       return contextoDevolver(i, p);
+    case 'fusionar':
+      return contextoFusionar(i, p.categoriaId, aux);
+    case 'programada':
+      return contextoProgramada(i, p, aux);
+    case 'regla':
+      return contextoRegla(i, p, aux);
+    case 'conciliar':
+      return contextoConciliar(i, p.cuentaId);
+    case 'verificar_saldo':
+      return contextoVerificar(i, p.cuentaId, p.fecha);
   }
 }
 
