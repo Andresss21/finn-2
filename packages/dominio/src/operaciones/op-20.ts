@@ -16,7 +16,8 @@ export interface Parte {
   readonly interes?: Centavos;
   readonly seguro?: Centavos;
 }
-export type LineaNueva = Pick<H.Linea, 'monto' | 'categoriaId' | 'deudorId'>;
+export type LineaNueva = Pick<H.Linea, 'monto' | 'categoriaId' | 'deudorId'> &
+  Partial<Pick<H.Linea, 'lineaOriginalId'>>; // solo en una devolución vinculada (OP-33a)
 
 /** La cuenta `id` si existe y su tipo es uno de `tipos`; si no, `no_encontrado` o `cuenta_tipo_no_valido`. */
 export function cuentaDe(h: H.Hechos, id: H.Uuid, ...tipos: H.TipoCuenta[]): H.Cuenta | R {
@@ -68,7 +69,7 @@ export function alta(
       return { tipo: 'insertar', tabla: 'efectos', fila: efecto };
     }),
     ...lineas.map((l, n): H.Cambio => {
-      const linea = { id: x.ids.siguiente(), orden: n + 1, ...l, lineaOriginalId: null };
+      const linea = { id: x.ids.siguiente(), orden: n + 1, lineaOriginalId: null, ...l };
       return { tipo: 'insertar', tabla: 'lineas', fila: { ...linea, ...comunes } };
     }),
   ];

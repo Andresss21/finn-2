@@ -11,6 +11,7 @@ import { op20 } from './op-20';
 import { op21 } from './op-21';
 import { op23 } from './op-23';
 import { op28 } from './op-28';
+import { op33 } from './op-33';
 import { categoriaActiva, estadoNoValido } from './op-36';
 import { esRechazo, rechazo } from './rechazos';
 
@@ -77,8 +78,28 @@ function ejecutarTipo(
         origenId: x.origenId,
         tarjetaId: cuentaId,
       });
+    case 'devolucion': {
+      // OP-33a si las líneas traen `lineaOriginalId` (todas de la misma compra); si no, OP-33b.
+      const [l, ...resto] = lineas;
+      const original = antes.hechos.lineas.find((y) => y.id === l?.lineaOriginalId);
+      if (original === undefined) {
+        if (l?.categoriaId == null || resto.length > 0)
+          return { codigo: 'linea_sin_destino', datos: { lineaId: (resto[0] ?? l)?.id ?? v.id } };
+        return op33(antes, { operacion: 'OP-33', ...comun, cuentaId, categoriaId: l.categoriaId });
+      }
+      const sin = lineas.find((y) => y.lineaOriginalId === null);
+      if (sin !== undefined) return { codigo: 'linea_sin_destino', datos: { lineaId: sin.id } };
+      const reparto = lineas.map((y) => ({ lineaId: y.lineaOriginalId as H.Uuid, monto: y.monto }));
+      const transaccionOriginalId = original.transaccionId;
+      return op33(antes, {
+        operacion: 'OP-33',
+        ...comun,
+        cuentaId,
+        transaccionOriginalId,
+        reparto,
+      });
+    }
     default:
-      // `devolucion` ejecuta OP-33a u OP-33b, que todavía no existen (TA-138).
       throw new TypeError(`OP-37 ${v.id}: tipo ${v.tipoPropuesto} sin operación`);
   }
 }
