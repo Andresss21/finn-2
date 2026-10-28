@@ -122,4 +122,3 @@ describe('PRU-ESQ-RELOJ', () => {
     expect(await hoy(plantilla.url, false)).toEqual({ simulado: false, real: true });
   }, 60_000);
 });
-
