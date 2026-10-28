@@ -165,7 +165,7 @@
 
   "TA-151": { "estado": "terminada", "pr": 98 },
 
-  "TA-152": { "estado": "en_curso", "rama": "ta-152-cargar-hechos" },
+  "TA-152": { "estado": "terminada", "pr": 101 },
 
   "TA-153": { "estado": "pendiente" },
 
