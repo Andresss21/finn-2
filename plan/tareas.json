@@ -47,7 +47,7 @@
 
   "TA-058": { "estado": "terminada", "pr": 91 },
 
-  "TA-059": { "estado": "pendiente" },
+  "TA-059": { "estado": "en_curso", "rama": "ta-059-pooler" },
 
   "TA-100": { "estado": "terminada", "pr": 6 },
 
