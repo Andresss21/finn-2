@@ -1898,7 +1898,7 @@ El ensayo es la primera comprobación.
 
 | Script | Antes | Después |
 |---|---|---|
-| 04 `t17.py` (T1 a T7) | Pasa: 50 escenarios, 24 avisos, 62 operaciones, 44 consultas, 77 rechazos | **Igual**. **[CH-27]** Desde CH-27, 78 rechazos (`devolucion_por_cobrar_otra_cuenta`); PRU-SEG-OPER-102 espera la salida vigente |
+| 04 `t17.py` (T1 a T7) | Pasa: 50 escenarios, 24 avisos, 62 operaciones, 44 consultas, 77 rechazos | **Igual**. **[CH-27]** Desde CH-27, 78 rechazos (`devolucion_por_cobrar_otra_cuenta`); la prueba de `tools/ci/docs.test.ts` espera la salida vigente |
 | 05 `trazabilidad.py --comprobar` | Falla: las tablas 15.1 y 15.2 de 05 no coinciden con las generadas | **Pasa** con CT-08: 18/18 consultas, 61/62 operaciones con pantalla (sin pantalla: OP-35, el webhook), 51 flujos, 0 carpetas repetidas |
 | 05 `cobertura.py` | Falla: no conoce las rutas de CF-01 y CF-08 ni la variante `verificar_saldo` | **Pasa** con CT-08: T1 a T9; 74 rutas en el árbol, 78 filas en el mapa, 18/18 variantes, 24/24 avisos |
 | 06 `trazabilidad.py` (T1 a T8) | Pasa: 77 fichas, 62 operaciones, 19 consultas, 15 reportes, 15 formularios, 78 rutas, 50 ESC, 24 AV, 25 CF, 45 pasos | **Pasa**, igual salvo 79 rutas: la de la plantilla ya está en el mapa (CT-08) |
