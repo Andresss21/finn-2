@@ -115,7 +115,7 @@
 
   "TA-237": { "estado": "terminada", "pr": 51 },
 
-  "TA-232": { "estado": "pendiente" },
+  "TA-232": { "estado": "terminada", "pr": 105 },
 
   "TA-233": { "estado": "pendiente" },
 
@@ -171,7 +171,7 @@
 
   "TA-151": { "estado": "terminada", "pr": 98 },
 
-  "TA-152": { "estado": "pendiente" },
+  "TA-152": { "estado": "terminada", "pr": 103 },
 
   "TA-153": { "estado": "pendiente" },
 

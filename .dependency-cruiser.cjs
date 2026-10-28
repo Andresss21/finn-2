@@ -97,7 +97,13 @@ module.exports = {
   options: {
     doNotFollow: { path: 'node_modules' },
     exclude: { path: '(^|/)(node_modules|generado|\\.next|dist)/' },
-    tsPreCompilationDeps: true,
+    tsPreCompilationDeps: 'specify',
+    tsConfig: { fileName: 'tsconfig.json' },
+    enhancedResolveOptions: {
+      exportsFields: ['exports'],
+      conditionNames: ['import', 'require', 'node', 'default'],
+      extensions: ['.ts', '.tsx', '.js', '.mjs', '.cjs', '.json'],
+    },
     moduleSystems: ['es6', 'cjs'],
   },
 };
