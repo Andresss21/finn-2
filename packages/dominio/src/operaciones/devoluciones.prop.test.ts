@@ -81,7 +81,7 @@ function inv10y11(h: Hechos) {
 }
 
 describe('PRU-PROP-DEV', () => {
-  it('PRU-PROP-DEV-101 [INV-10, INV-11, CB-02] inv. 10 y 11 OP-33: después de toda devolución aceptada, Σ devoluciones de cada línea de categoría ≤ su monto y de cada transacción ≤ su total; la que los superaría se rechaza y no escribe nada', () => {
+  it('PRU-PROP-DEV-101 [INV-10, INV-11, CB-02] inv. 10 y 11 OP-33 CH-27: después de toda devolución aceptada, Σ devoluciones de cada línea de categoría ≤ su monto y de cada transacción ≤ su total; la que los superaría se rechaza y no escribe nada, y ningún rechazo es una invariante violada', () => {
     fc.assert(
       fc.property(casoArb, ({ h, medio, compra, categoriaId, devoluciones }) => {
         const lineas = compra.lineas.map(({ monto, aCategoria }) => ({
@@ -144,7 +144,11 @@ describe('PRU-PROP-DEV', () => {
             expect(JSON.stringify(actual)).toBe(foto);
             return;
           }
-          if (!r.ok) return; // otra precondición: fecha, cuenta o inv. 9 en el momento del evento
+          // Una devolución que pasa las precondiciones de OP-33 nunca rompe una invariante (CH-27).
+          if (!r.ok) {
+            expect(r.rechazos.map((y) => y.codigo)).not.toContain('invariante_violada');
+            return; // otra precondición: fecha o cuenta
+          }
           inv10y11(r.hechosNuevos);
           actual = r.hechosNuevos;
         });

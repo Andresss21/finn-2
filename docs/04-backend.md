@@ -1729,6 +1729,7 @@ Cada código es un `CodigoRechazo` (7.5). Categoría `DOMINIO` salvo que se indi
 | `devolucion_mayor_que_total` | Σ devoluciones > total | "Las devoluciones superarían el total de la compra ({total})." | inv. 11 |
 | `reparto_devolucion_distinto` | Σ X_i ≠ X | "El reparto suma {suma} y la devolución es de {total}." | OP-33a |
 | `devolucion_de_no_gasto` | Devolución vinculada a algo que no es un gasto | "Solo las compras admiten devoluciones vinculadas." | C-3, CB-31 |
+| `devolucion_por_cobrar_otra_cuenta` **[CH-27]** | Devolución con una parte por cobrar en una cuenta distinta de la de la compra | "La parte por cobrar se devuelve en la cuenta de la compra ({cuenta})." | OP-33a, §4.10, inv. 1 |
 | `evento_anterior_a_original` | Fecha del evento < fecha de la transacción original | "El evento no puede ser anterior a la compra ({fecha})." | inv. 12 |
 | `eliminar_evento_rompe_limites` | Eliminar el evento dejaría lo resuelto por encima del monto | "No se puede eliminar: otros eventos dependen de este." | OP-34 |
 
@@ -2142,7 +2143,7 @@ Reglas comunes de 3.4 y 3.5:
 
 **a) Vinculada a una compra**
 - **Entrada:** `id`; `transaccionOriginalId`; `fecha`; `cuentaId?` (por defecto, la de la compra); `total: MontoTexto`; `reparto: { lineaId, monto: MontoTexto }[]`.
-- **Precondiciones:** la original es un `gasto` (`devolucion_de_no_gasto`); Σ reparto = total (`reparto_devolucion_distinto`); cada monto ≤ la capacidad de su línea (`devolucion_mayor_que_linea`); total ≤ total de la compra − devoluciones previas (`devolucion_mayor_que_total`); fecha ≥ la de la compra (`evento_anterior_a_original`); cuenta abierta.
+- **Precondiciones:** la original es un `gasto` (`devolucion_de_no_gasto`); Σ reparto = total (`reparto_devolucion_distinto`); cada monto ≤ la capacidad de su línea (`devolucion_mayor_que_linea`); total ≤ total de la compra − devoluciones previas (`devolucion_mayor_que_total`); fecha ≥ la de la compra (`evento_anterior_a_original`); cuenta abierta; si el reparto tiene una parte sobre una línea por cobrar, la cuenta es la de la compra (`devolucion_por_cobrar_otra_cuenta`) **[CH-27]**.
 - **Hechos:** PT con `tipo = 'devolucion'`, efecto `+total` en la cuenta, una línea por entrada del reparto con `linea_original_id` (su destino es el de la línea original, aunque esa categoría esté archivada, ajuste 1).
 - **Avisos:** estado: AV-06 o AV-08 según el efecto en pago(t); AV-14 si una categoría archivada queda con Disponible; AV-01.
 

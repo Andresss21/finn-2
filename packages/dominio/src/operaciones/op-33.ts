@@ -40,6 +40,13 @@ function vinculada(antes: H.Instantanea, x: H.ComandoOp33a): Efecto | R {
     if (esRechazo(l)) return l;
     pedido.set(l, Centavos.sumar(pedido.get(l) ?? Centavos.cero, monto));
   }
+  // CH-27: una parte por cobrar solo se devuelve en la cuenta de la compra (01 §4.10, inv. 1).
+  const porCobrar = [...pedido.keys()].find((l) => l.deudorId !== null);
+  if (porCobrar !== undefined && k.id !== deLaCompra)
+    return {
+      codigo: 'devolucion_por_cobrar_otra_cuenta',
+      datos: { lineaId: porCobrar.id, cuentaId: deLaCompra as H.Uuid },
+    };
   // Inv. 11: el total frente a lo que queda de la compra.
   const devuelto = suma(propias.flatMap((l) => eventosDe(h, l).devoluciones.map((y) => y.monto)));
   if (x.total > Centavos.restar(t.total, devuelto))

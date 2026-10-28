@@ -328,7 +328,7 @@ describe('PRU-DOM-DEV-102: aplicar, condonar, devolver y eliminar evento (01 §4
     expect(codigos(r)).toContain('AV-14');
   });
 
-  it('PRU-DOM-DEV-102 [INV-09] OP-33a I5: sobre una línea por cobrar baja el saldo abierto (con débito, LPA +X; con tarjeta, deuda −X) y su capacidad es el saldo abierto', () => {
+  it('PRU-DOM-DEV-102 [INV-09, INV-01] OP-33a I5 CH-27: sobre una línea por cobrar baja el saldo abierto (con débito, LPA +X; con tarjeta, deuda −X), su capacidad es el saldo abierto y solo se devuelve en la cuenta de la compra', () => {
     const r = devolver(H0, 'GE', [[LD, 40]]);
     const h = exito(r).hechosNuevos;
     expect(lineaNueva(r)[0]).toMatchObject({
@@ -342,6 +342,26 @@ describe('PRU-DOM-DEV-102: aplicar, condonar, devolver y eliminar evento (01 §4
     expect(linea(t, LTD)).toMatchObject({ abierto: c(30), devuelto: c(20) });
     expect(deuda(t, 'T')).toBe(Centavos.restar(deuda(H0, 'T') ?? Centavos.cero, c(20)));
     expect(lpa(t)).toBe(lpa(H0));
+    // CH-27: la parte por cobrar va a la cuenta de la compra; las partes a categoría, a cualquiera.
+    expect(
+      rechazos(
+        devolver(
+          H0,
+          'GE',
+          [
+            [L60, 5],
+            [LD, 10],
+          ],
+          { cuentaId: id('T') },
+        ),
+      ),
+    ).toEqual([
+      { codigo: 'devolucion_por_cobrar_otra_cuenta', datos: { lineaId: LD, cuentaId: id('E') } },
+    ]);
+    expect(rechazos(devolver(H0, 'GT', [[LTD, 10]], { cuentaId: id('E') }))).toEqual([
+      { codigo: 'devolucion_por_cobrar_otra_cuenta', datos: { lineaId: LTD, cuentaId: id('T') } },
+    ]);
+    expect(exito(devolver(H0, 'GE', [[L60, 5]], { cuentaId: id('T') })).ok).toBe(true);
     // ESC-29: con 15 cobrados quedan 25 abiertos; 40 al por cobrar se rechaza; 25 + 25 a SUPER no.
     const cobro = op({
       operacion: 'OP-31',
