@@ -129,7 +129,11 @@ export function verificarComunes(
       ...despues.lineas.filter((x) => lineas.has(x.id)),
       ...despues.condonaciones.filter((x) => condonaciones.has(x.id)),
     ]
-      .filter((x) => destino.get(x.id) !== x.categoriaId)
+      // Inv. 20, ajuste 1: una devolución vinculada va a la categoría de su línea original.
+      .filter((x) => {
+        const original = 'lineaOriginalId' in x ? x.lineaOriginalId : null;
+        return (destino.get(x.id) ?? destino.get(original ?? '')) !== x.categoriaId;
+      })
       .map((x) => String(x.categoriaId)),
   ]);
   for (const c of [...categorias].sort())

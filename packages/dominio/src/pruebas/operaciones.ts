@@ -319,6 +319,57 @@ const ESPECIES = [
       };
     },
   }),
+  // TA-138: condonar, devolver (vinculada a un gasto o sin compra) y eliminar evento.
+  especie({
+    nombre: 'OP-32',
+    sel: fc.record({ l: indice, c: indice, monto: montoArb() }),
+    armar: (i, x, s) => {
+      const [l, c] = [pick(i.porCobrar, x.l), pick(normales(i), x.c)];
+      if (l === undefined || c === undefined) return undefined;
+      const id = s.ids().siguiente();
+      const base = { operacion: 'OP-32', id, instante: INSTANTE, lineaId: l.lineaId } as const;
+      return { ...base, monto: x.monto, fecha: i.hoy, categoriaId: c.id };
+    },
+  }),
+  especie({
+    nombre: 'OP-33',
+    sel: fc.record({ t: indice, k: indice, c: indice, monto: montoArb(), sin: bandera }),
+    armar: (i, x, s) => {
+      const k = pick(i.hechos.cuentas, x.k);
+      const comun = { operacion: 'OP-33', id: s.ids().siguiente(), instante: INSTANTE } as const;
+      const alta = { ...comun, ids: s.ids(), fecha: i.hoy, total: x.monto };
+      const c = pick(normales(i), x.c);
+      if (x.sin) return k && c && { ...alta, cuentaId: k.id, categoriaId: c.id };
+      const t = pick(
+        i.hechos.transacciones.filter((y) => y.tipo === 'gasto'),
+        x.t,
+      );
+      const l = t && i.hechos.lineas.find((y) => y.transaccionId === t.id);
+      if (t === undefined || l === undefined) return undefined;
+      const reparto = [{ lineaId: l.id, monto: x.monto }];
+      return { ...alta, transaccionOriginalId: t.id, reparto };
+    },
+  }),
+  especie({
+    nombre: 'OP-34',
+    sel: fc.record({ e: indice }),
+    armar: (i, x, s) => {
+      const e = pick(
+        i.porCobrar.flatMap((y) => y.eventos),
+        x.e,
+      );
+      if (e === undefined) return undefined;
+      const comun = {
+        operacion: 'OP-34',
+        instante: INSTANTE,
+        ids: s.ids(),
+        movimientos: [],
+      } as const;
+      if (e.tipo === 'condonacion') return { ...comun, tipo: e.tipo, condonacionId: e.id };
+      const t = i.hechos.lineas.find((y) => y.id === e.id)?.transaccionId ?? e.id;
+      return { ...comun, tipo: e.tipo, transaccionId: t };
+    },
+  }),
 ];
 
 /** Un comando de `fc.commands`: arma el `ComandoDominio` contra los hechos del paso y lo aplica. */

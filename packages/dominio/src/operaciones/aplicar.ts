@@ -50,6 +50,9 @@ import { op28 } from './op-28';
 import { op29 } from './op-29';
 import { op30 } from './op-30';
 import { op31 } from './op-31';
+import { op32 } from './op-32';
+import { op33 } from './op-33';
+import { op34 } from './op-34';
 import { op35 } from './op-35';
 import { op36 } from './op-36';
 import { op37 } from './op-37';
@@ -139,6 +142,10 @@ const OPERACIONES: {
   // TA-136: asignación rápida y cambiar el ciclo.
   'OP-16': op16,
   'OP-19': op19,
+  // TA-138: condonar, devolver y eliminar evento.
+  'OP-32': op32,
+  'OP-33': op33,
+  'OP-34': op34,
 };
 
 /** AV-01 (§5.0.3): impacto retroactivo, antes y después de confirmar. */
