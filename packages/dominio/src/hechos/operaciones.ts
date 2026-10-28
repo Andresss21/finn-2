@@ -170,6 +170,24 @@ export type ComandoOp18 = { readonly operacion: 'OP-18' } & (
   | ({ readonly accion: 'editar'; readonly metaId: Uuid } & CamposMeta)
   | { readonly accion: 'eliminar'; readonly metaId: Uuid }
 );
+// ── TA-136: asignación rápida y cambiar el ciclo (04 §3.3).
+/** Variantes de 01 OP-16; `cubrir_sobregiro` es la de CF-25. */
+export type VarianteAsignacionRapida =
+  'falta_meta' | 'igual_periodo_anterior' | 'promedio_gasto' | 'cubrir_sobregiro';
+/** OP-16: el dominio calcula el valor y lo aplica con OP-14. */
+export interface ComandoOp16 {
+  readonly operacion: 'OP-16';
+  readonly categoriaId: Uuid;
+  readonly periodoInicio: FechaLocal;
+  readonly variante: VarianteAsignacionRapida;
+  readonly ids: GeneradorIds;
+}
+/** OP-19: nuevo día de inicio (1 a 31); R lo calcula el dominio (01 §4.2 punto 9). */
+export interface ComandoOp19 {
+  readonly operacion: 'OP-19';
+  readonly diaInicio: number;
+  readonly ids: GeneradorIds;
+}
 
 // ── TA-120: OP-35 Recibir SMS, pasos 2 a 11 (01 §5.6, 04 §3.6 y §8.4 c) ──
 /** Un SMS ya guardado en `sms_recibidos` (03 §3.17), con lo que miran los criterios de §4.17. */
@@ -524,7 +542,10 @@ export type ComandoDominio =
   | ComandoOp50
   // TA-137
   | ComandoOp25
-  | ComandoOp26;
+  | ComandoOp26
+  // TA-136
+  | ComandoOp16
+  | ComandoOp19;
 
 /** Cambio que consume el traductor de 04 §4.5; fila y campos se tipan según la tabla. */
 export type Cambio =
