@@ -14,3 +14,4 @@ export {
   type TrabajoLectura,
 } from './transacciones.ts';
 export { sqlstateDe, type SqlstateDe } from './errores.ts';
+export * from './repositorios/index.ts';

@@ -177,7 +177,7 @@
 
   "TA-154": { "estado": "pendiente" },
 
-  "TA-155": { "estado": "pendiente" },
+  "TA-155": { "estado": "en_curso", "rama": "ta-155-repositorios-eventos" },
 
   "TA-156": { "estado": "pendiente" },
 
