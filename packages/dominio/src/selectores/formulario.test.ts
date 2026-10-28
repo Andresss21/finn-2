@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { calcular } from '../calculo/calcular';
 import type {
   Asignacion,
+  Instante,
+  Movimiento,
+  MovimientoLinea,
   Categoria,
   Cuenta,
   Efecto,
@@ -15,6 +18,7 @@ import type {
 } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
+import { bandeja, type DatosDeBandeja } from './bandeja';
 import { cuentas as cuentasSel } from './cuentas';
 import { formulario } from './formulario';
 
@@ -104,7 +108,7 @@ function armar(conGastos: boolean) {
     tipo: Transaccion['tipo'],
     fecha: string,
     mueve: readonly (readonly [string, number])[],
-    linea?: { cat: string; monto: number },
+    linea?: { cat: string; monto: number; original?: string },
     comercio: string | null = null,
   ) => {
     const instante = `${fecha}T12:00:00.000Z`;
@@ -140,7 +144,7 @@ function armar(conGastos: boolean) {
         monto: c(linea.monto),
         categoriaId: id(linea.cat),
         deudorId: null,
-        lineaOriginalId: null,
+        lineaOriginalId: linea.original === undefined ? null : id(linea.original),
       } as Linea);
   };
   mov('si', 'saldo_inicial', '2027-01-05', [['ef', 5000]]);
@@ -191,6 +195,11 @@ function armar(conGastos: boolean) {
     mov('g2', 'gasto', '2027-04-11', [['vi', -20]], { cat: 'super', monto: 20 }, 'super selectos');
     mov('g3', 'gasto', '2027-04-12', [['ef', -10]], { cat: 'super', monto: 10 }, 'Super Selectos');
     mov('g4', 'gasto', '2027-04-13', [['bn', -25]], { cat: 'ropa', monto: 25 }, 'Ropa Moda');
+    mov('d1', 'devolucion', '2027-04-14', [['ef', 5]], {
+      cat: 'super',
+      monto: 5,
+      original: 'g1-0',
+    });
     mov('g5', 'gasto', '2026-12-01', [['ef', -15]], { cat: 'viajes', monto: 15 }, 'Hotel');
   }
   const hechos = {
@@ -335,6 +344,203 @@ describe('PRU-DOM-BAND-108: contextos de formulario de registrar, pagar tarjeta 
     expect(Object.keys(q.catalogos).sort()).toEqual(['categorias', 'cuentas']);
     expect(() =>
       formulario(i, { operacion: 'cuota_prestamo', prestamoId: id('nada'), modalidad: 'abono' }),
+    ).toThrow(RangeError);
+  });
+});
+
+// ── movimientos de la bandeja para el contexto `movimiento` ──
+const datos: DatosDeBandeja = {
+  movimientos: [
+    {
+      movimiento: {
+        id: id('m2'),
+        smsId: id('sms-m2'),
+        estado: 'pendiente',
+        cuentaId: id('vi'),
+        fecha: f('2027-04-14'),
+        monto: c(50),
+        comercio: null,
+        tipoPropuesto: 'pago_tarjeta',
+        nota: null,
+        duplicadoTransaccionId: null,
+        duplicadoMovimientoId: null,
+        esperadaProgramadaId: null,
+        esperadaFecha: null,
+        transaccionId: null,
+      } as Movimiento,
+      lineas: [] as MovimientoLinea[],
+    },
+  ],
+  sms: [
+    {
+      id: id('sms-m2'),
+      texto: 'SMS m2',
+      remitente: 'Banco',
+      recibidoEn: '2027-04-14T10:00:00.000Z' as Instante,
+    },
+  ],
+  procesamientos: [],
+  formatos: [],
+  reglas,
+};
+
+describe('PRU-DOM-BAND-109: contextos de editar, asignar, archivar, cuenta, movimiento y meta', () => {
+  it('PRU-DOM-BAND-109 SEL-formulario editar_transaccion: el detalle, las archivadas que ya usa marcadas, los catálogos del pago de tarjeta y la capacidad de devolución', () => {
+    const e = formulario(
+      i,
+      { operacion: 'editar_transaccion', transaccionId: id('p2') },
+      { reglas },
+    );
+    expect(e.contexto.transaccion.id).toBe('p2');
+    expect(e.contexto.cuentasArchivadas).toEqual([
+      { id: 'vieja', nombre: 'Vieja', archivada: true },
+    ]);
+    expect(e.contexto.categoriasArchivadas).toEqual([]);
+    expect(e.catalogos.cuentas?.efectivo.map((x) => x.cuenta.nombre)).toEqual([
+      'Efectivo',
+      'Banco',
+      'Vieja',
+    ]);
+    expect(Object.keys(e.catalogos).sort()).toEqual([
+      'categorias',
+      'categoriasPago',
+      'comercios',
+      'cuentas',
+      'deudores',
+    ]);
+    expect('capacidadDevolucion' in e.contexto).toBe(false);
+    const g1 = formulario(i, { operacion: 'editar_transaccion', transaccionId: id('g1') });
+    expect(Object.keys(g1.catalogos)).not.toContain('categoriasPago');
+    // Con una devolución, la capacidad es monto − devuelto (la misma de OP-33, inv. 9 e inv. 10).
+    expect(g1.contexto.capacidadDevolucion).toEqual([
+      { lineaId: 'g1-0', monto: c(30), devuelto: c(5), capacidad: c(25) },
+    ]);
+    expect(() =>
+      formulario(i, { operacion: 'editar_transaccion', transaccionId: id('nada') }),
+    ).toThrow(RangeError);
+  });
+
+  it('PRU-DOM-BAND-109 SEL-formulario asignar: asignado y disponible del período pedido, meta y variantes de asignación rápida', () => {
+    const a = formulario(i, { operacion: 'asignar', categoriaId: id('super') });
+    const celda = i.presupuesto.celdas.find(
+      (x) => x.categoriaId === 'super' && x.periodo.inicio === i.presupuesto.activo.inicio,
+    );
+    expect(a.contexto).toMatchObject({
+      categoria: { id: 'super' },
+      periodo: '2027-04-01',
+      asignado: c(80),
+      asignadoEsperado: c(80),
+      disponible: celda?.disponible,
+    });
+    expect(a.contexto.rapida.igualPeriodoAnterior).toBe(c(100));
+    expect(a.contexto.rapida.cubrirSobregiro).toBeUndefined();
+    expect(Object.keys(a.catalogos).sort()).toEqual(['categorias', 'categoriasPago', 'lpa']);
+    expect(a.catalogos.lpa).toEqual({ lpa: i.lpa.total, enCamino: i.lpa.dineroEnCamino });
+    // CP-10a: el catálogo trae Asig del período pedido.
+    const mayo = formulario(i, {
+      operacion: 'asignar',
+      categoriaId: id('super'),
+      periodoInicio: f('2027-05-01'),
+    });
+    expect(mayo.contexto).toMatchObject({ periodo: '2027-05-01', asignado: c(7) });
+    expect(mayo.catalogos.categorias?.grupos[0]?.categorias[0]).toMatchObject({ asignado: c(7) });
+    const ropa = formulario(i, { operacion: 'asignar', categoriaId: id('ropa') });
+    const falta = ropa.contexto.meta?.falta ?? Centavos.cero;
+    expect(falta).toBeGreaterThan(0);
+    expect(ropa.contexto.rapida.faltaMeta).toBe(Centavos.sumar(c(10), falta));
+    expect(() =>
+      formulario(i, {
+        operacion: 'asignar',
+        categoriaId: id('super'),
+        periodoInicio: f('2030-01-01'),
+      }),
+    ).toThrow(RangeError);
+  });
+
+  it('PRU-DOM-BAND-109 SEL-formulario archivar_categoria: disponible, asignaciones futuras, programadas activas y meta', () => {
+    const cine = formulario(i, { operacion: 'archivar_categoria', categoriaId: id('cine') });
+    expect(cine.contexto).toMatchObject({
+      categoria: { id: 'cine' },
+      asignacionesFuturas: [{ periodo: '2027-05-01', monto: c(5) }],
+      programadasActivas: [
+        {
+          programada: { id: 'pg', nombre: 'Netflix' },
+          monto: c(10),
+          montoHaciaCategoria: c(10),
+          frecuencia: 'mensual',
+        },
+      ],
+    });
+    const ropa = formulario(i, { operacion: 'archivar_categoria', categoriaId: id('ropa') });
+    expect(ropa.contexto.meta).toEqual({ id: 'm-ropa', nombre: 'Ropa' });
+    expect(ropa.contexto.asignadoEsperado).toBe(c(10));
+    expect(Object.keys(ropa.catalogos).sort()).toEqual(['categorias', 'lpa']);
+  });
+
+  it('PRU-DOM-BAND-109 SEL-formulario cuenta: al crear trae instituciones y nombres de tarjeta usados; al editar, la cuenta con su esperado y su fecha máxima', () => {
+    const nueva = formulario(
+      i,
+      { operacion: 'cuenta', tipo: 'tarjeta' },
+      { instituciones: [{ id: id('ins'), nombre: 'Banco' }] },
+    );
+    expect(nueva.catalogos).toEqual({});
+    expect(nueva.contexto).toEqual({
+      instituciones: [{ id: 'ins', nombre: 'Banco' }],
+      modelosPrestamo: ['banco_agricola'],
+      nombresTarjetaUsados: [
+        { nombre: 'Visa', archivada: false },
+        { nombre: 'Master', archivada: false },
+      ],
+    });
+    const editar = formulario(i, { operacion: 'cuenta', cuentaId: id('vi') });
+    expect(editar.contexto).toMatchObject({
+      cuenta: {
+        cuenta: { id: 'vi' },
+        tipo: 'tarjeta',
+        diaCorte: 10,
+        limiteCredito: c(1000),
+        esperado: { diaPago: 28 },
+      },
+      fechaAperturaMaxima: '2027-03-10',
+    });
+    expect(() => formulario(i, { operacion: 'cuenta', cuentaId: id('nada') })).toThrow(RangeError);
+  });
+
+  it('PRU-DOM-BAND-109 SEL-formulario meta: la meta pedida y las categorías sin meta', () => {
+    const meta = formulario(i, { operacion: 'meta', categoriaId: id('ropa') });
+    expect(meta.contexto.meta).toMatchObject({
+      id: 'm-ropa',
+      categoria: { id: 'ropa' },
+      tipo: 'mensual',
+    });
+    expect(meta.contexto.categoriasSinMeta.map((x) => x.nombre)).toEqual([
+      'Super',
+      'Cuota',
+      'Viajes',
+    ]);
+    expect(Object.keys(meta.catalogos)).toEqual(['categorias']);
+    expect(formulario(i, { operacion: 'meta' }).contexto.meta).toBeUndefined();
+  });
+
+  it('PRU-DOM-BAND-109 SEL-formulario movimiento: el MovimientoDto de la bandeja con catálogos de cuentas, categorías, deudores y comercios', () => {
+    const x = formulario(
+      i,
+      { operacion: 'movimiento', movimientoId: id('m2') },
+      { bandeja: datos, reglas },
+    );
+    expect(x.contexto.movimiento).toEqual(bandeja(i, datos).movimientos.find((y) => y.id === 'm2'));
+    expect(x.contexto.movimiento.origenPropuesto).toEqual({ id: 'bn', nombre: 'Banco' });
+    expect(Object.keys(x.catalogos).sort()).toEqual([
+      'categorias',
+      'comercios',
+      'cuentas',
+      'deudores',
+    ]);
+    expect(() => formulario(i, { operacion: 'movimiento', movimientoId: id('m2') })).toThrow(
+      TypeError,
+    );
+    expect(() =>
+      formulario(i, { operacion: 'movimiento', movimientoId: id('nada') }, { bandeja: datos }),
     ).toThrow(RangeError);
   });
 });

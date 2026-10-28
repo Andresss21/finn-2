@@ -1,18 +1,27 @@
-// Formularios (04 §6.14, BE-42): catálogos comunes y el contexto propio de cada operación. Esta parte
-// cubre `registrar`, `pagar_tarjeta` y `cuota_prestamo`; el resto (`editar_transaccion`, `asignar`,
-// `archivar_categoria`, `cuenta`, `movimiento`, `meta`) lo agrega TA-240 en `ParametrosFormulario`,
-// `pide`, `Contextos` y `contextoDe`, sin tocar los catálogos.
-// No calcula: cada número sale de la instantánea o de un selector.
+// Formularios (04 §6.14, BE-42): catálogos comunes y el contexto propio de cada operación (ola 1:
+// `registrar`, `pagar_tarjeta`, `cuota_prestamo`, `editar_transaccion`, `asignar`, `archivar_categoria`,
+// `cuenta`, `movimiento` y `meta`; el resto llega con la ola 2, TA-140).
+// No calcula: cada número sale de la instantánea o de un selector. Las tablas [H] llegan como parámetro.
 import { desgloseAlPagar } from '../calculo/patrimonio';
 import type { Periodo } from '../calculo/periodos';
-import type { Instantanea, ReglaComercio, TipoCuenta, Uuid } from '../hechos';
+import { evaluarMeta } from '../calculo/metas';
+import type { Instantanea, Institucion, Linea, ReglaComercio, TipoCuenta, Uuid } from '../hechos';
+import { asignacionRapida } from '../operaciones/op-16';
 import { desglosePropuesto } from '../operaciones/op-24';
+import { eventosDe } from '../operaciones/op-28';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import { origenPropuestoPagoTarjeta } from './bandeja';
+import {
+  type DatosDeBandeja,
+  type MovimientoDto,
+  movimientoDeBandeja,
+  origenPropuestoPagoTarjeta,
+} from './bandeja';
 import { nombres, type Ref, sobregiroDe } from './comunes';
-import { amortizacionDe } from './detalle-cuenta';
+import { amortizacionDe, type Auxiliares } from './detalle-cuenta';
+import { type DatosDeOrigen, detalleTransaccion } from './detalle-transaccion';
 import { porOrden } from './estructura';
+import { metas } from './metas';
 import { comerciosRecientes } from './sugerencia';
 
 export type ParametrosFormulario =
@@ -38,17 +47,30 @@ export type ParametrosFormulario =
       readonly prestamoId: Uuid;
       readonly modalidad: 'cuota' | 'abono';
       readonly fecha?: FechaLocal;
-    };
+    }
+  | { readonly operacion: 'editar_transaccion'; readonly transaccionId: Uuid }
+  | {
+      readonly operacion: 'asignar';
+      readonly categoriaId: Uuid;
+      readonly periodoInicio?: FechaLocal;
+    }
+  | { readonly operacion: 'archivar_categoria'; readonly categoriaId: Uuid }
+  | { readonly operacion: 'cuenta'; readonly cuentaId?: Uuid; readonly tipo?: TipoCuenta }
+  | { readonly operacion: 'movimiento'; readonly movimientoId: Uuid }
+  | { readonly operacion: 'meta'; readonly categoriaId?: Uuid; readonly metaId?: Uuid };
 
 /** Lo que no está en los hechos del motor: tablas [H] e [I]. */
-export interface AuxiliaresDeFormulario {
+export interface AuxiliaresDeFormulario extends Auxiliares, DatosDeOrigen {
+  readonly instituciones?: readonly Institucion[];
   readonly reglas?: readonly ReglaComercio[];
+  /** Obligatorio para `movimiento`. */
+  readonly bandeja?: DatosDeBandeja;
 }
 
 type Pide = 'cuentas' | 'categorias' | 'categoriasPago' | 'deudores' | 'comercios' | 'lpa';
 
 /** La tabla de 6.14.2: qué catálogos pide cada operación. */
-function pide(p: ParametrosFormulario): readonly Pide[] {
+function pide(p: ParametrosFormulario, esPago: boolean): readonly Pide[] {
   switch (p.operacion) {
     case 'registrar':
       if (p.tipo === 'gasto') return ['cuentas', 'categorias', 'deudores', 'comercios'];
@@ -58,10 +80,35 @@ function pide(p: ParametrosFormulario): readonly Pide[] {
       return ['cuentas', 'categoriasPago'];
     case 'cuota_prestamo':
       return ['cuentas', 'categorias'];
+    case 'editar_transaccion':
+      return [
+        'cuentas',
+        'categorias',
+        ...(esPago ? (['categoriasPago'] as const) : []),
+        'deudores',
+        'comercios',
+      ];
+    case 'asignar':
+      return ['categorias', 'categoriasPago', 'lpa'];
+    case 'archivar_categoria':
+      return ['categorias', 'lpa'];
+    case 'cuenta':
+      return [];
+    case 'movimiento':
+      return ['cuentas', 'categorias', 'deudores', 'comercios'];
+    case 'meta':
+      return ['categorias'];
   }
 }
 
 const suma = (xs: readonly Centavos[]) => xs.reduce(Centavos.sumar, Centavos.cero);
+
+function periodoPedido(i: Instantanea, inicio?: FechaLocal): Periodo {
+  if (inicio === undefined) return i.presupuesto.activo;
+  const p = i.presupuesto.periodos.find((x) => x.inicio === inicio);
+  if (p === undefined) throw new RangeError(`el período que empieza el ${inicio} no existe`);
+  return p;
+}
 
 interface Opciones {
   readonly periodo: Periodo;
@@ -302,14 +349,179 @@ function contextoCuotaPrestamo(
   };
 }
 
+function contextoEditar(i: Instantanea, transaccionId: Uuid, aux: AuxiliaresDeFormulario) {
+  const h = i.hechos;
+  const detalle = detalleTransaccion(i, transaccionId, aux);
+  const cuentasArchivadas = detalle.efectos
+    .map((e) => e.cuenta)
+    .filter((c) => c.archivada === true);
+  const categoriasArchivadas = detalle.lineas.flatMap((l) =>
+    'categoria' in l.destino && l.destino.categoria.archivada === true ? [l.destino.categoria] : [],
+  );
+  const conDevoluciones = detalle.lineas.some((l) => l.devoluciones.length > 0);
+  return {
+    ...detalle,
+    cuentasArchivadas,
+    categoriasArchivadas,
+    ...(conDevoluciones
+      ? {
+          capacidadDevolucion: detalle.lineas.map((l) => {
+            // La misma capacidad que OP-33 (inv. 9 e inv. 10): lo abierto por cobrar, o monto − devuelto.
+            const devuelto = suma(
+              eventosDe(h, h.lineas.find((x) => x.id === l.id) as Linea).devoluciones.map(
+                (d) => d.monto,
+              ),
+            );
+            return {
+              lineaId: l.id,
+              monto: l.monto,
+              devuelto,
+              capacidad:
+                i.porCobrar.find((q) => q.lineaId === l.id)?.abierto ??
+                Centavos.restar(l.monto, devuelto),
+            };
+          }),
+        }
+      : {}),
+  };
+}
+
+function contextoAsignar(
+  i: Instantanea,
+  p: Extract<ParametrosFormulario, { operacion: 'asignar' }>,
+) {
+  const h = i.hechos;
+  const c = h.categorias.find((x) => x.id === p.categoriaId);
+  if (c === undefined) throw new RangeError(`la categoría ${p.categoriaId} no existe`);
+  const periodo = periodoPedido(i, p.periodoInicio);
+  const celda = celdaDe(i, c.id, periodo);
+  const asignado = celda?.asignado ?? Centavos.cero;
+  const disponible = celda?.disponible ?? Centavos.cero;
+  const m = h.metas.find((x) => x.categoriaId === c.id);
+  const ev =
+    m === undefined || periodo.inicio < i.presupuesto.activo.inicio
+      ? null
+      : evaluarMeta(m, c, i.presupuesto, i.ciclo, i.hoy, periodo);
+  return {
+    categoria: nombres(i).categoria(c.id),
+    periodo: periodo.inicio,
+    asignado,
+    disponible,
+    asignadoEsperado: asignado,
+    ...(ev === null ? {} : { meta: { pedido: ev.pedido, falta: ev.falta } }),
+    rapida: asignacionRapida(i, c.id, periodo),
+  };
+}
+
+function contextoArchivar(i: Instantanea, categoriaId: Uuid) {
+  const h = i.hechos;
+  const c = h.categorias.find((x) => x.id === categoriaId);
+  if (c === undefined) throw new RangeError(`la categoría ${categoriaId} no existe`);
+  const activo = i.presupuesto.activo;
+  const celda = celdaDe(i, c.id, activo);
+  const meta = h.metas.find((m) => m.categoriaId === c.id);
+  return {
+    categoria: nombres(i).categoria(c.id),
+    disponible: celda?.disponible ?? Centavos.cero,
+    sobregiro: celda === undefined ? null : sobregiroDe(celda),
+    asignacionesFuturas: h.asignaciones
+      .filter((a) => a.categoriaId === c.id && a.periodoInicio > activo.inicio && a.monto !== 0)
+      .sort((a, b) => (a.periodoInicio < b.periodoInicio ? -1 : 1))
+      .map((a) => ({ periodo: a.periodoInicio, monto: a.monto })),
+    programadasActivas: h.programadas
+      .filter((q) => q.activa)
+      .flatMap((q) => {
+        const suyas = h.programada_lineas.filter(
+          (l) => l.programadaId === q.id && l.categoriaId === c.id,
+        );
+        return suyas.length === 0
+          ? []
+          : [
+              {
+                programada: { id: q.id, nombre: q.comercio },
+                comercio: q.comercio,
+                monto: q.monto,
+                montoHaciaCategoria: suma(suyas.map((l) => l.monto)),
+                frecuencia: q.frecuencia,
+              },
+            ];
+      }),
+    ...(meta === undefined ? {} : { meta: { id: meta.id, nombre: c.nombre } }),
+    asignadoEsperado: celda?.asignado ?? Centavos.cero,
+  };
+}
+
+function contextoCuenta(
+  i: Instantanea,
+  p: Extract<ParametrosFormulario, { operacion: 'cuenta' }>,
+  aux: AuxiliaresDeFormulario,
+) {
+  const h = i.hechos;
+  const instituciones = (aux.instituciones ?? []).map((x) => ({ id: x.id, nombre: x.nombre }));
+  const base = {
+    instituciones,
+    nombresTarjetaUsados: [...h.cuentas]
+      .sort(porOrden)
+      .filter((k) => k.tipo === 'tarjeta')
+      .map((k) => ({ nombre: k.nombre, archivada: k.archivada })),
+    modelosPrestamo: ['banco_agricola'] as const,
+  };
+  if (p.cuentaId === undefined) return base;
+  const k = h.cuentas.find((x) => x.id === p.cuentaId);
+  if (k === undefined) throw new RangeError(`la cuenta ${p.cuentaId} no existe`);
+  const subtipo = [...h.tarjetas, ...h.prestamos, ...h.inversiones].find(
+    (x) => x.cuentaId === k.id,
+  );
+  const camposDeSubtipo = Object.fromEntries(
+    Object.entries(subtipo ?? {}).filter(
+      ([clave]) => !['cuentaId', 'tipo', 'revision'].includes(clave),
+    ),
+  );
+  const campos = {
+    tipo: k.tipo,
+    nombre: k.nombre,
+    institucion: instituciones.find((x) => x.id === k.institucionId) ?? null,
+    ultimos4: k.ultimos4,
+    fechaApertura: k.fechaApertura,
+    ...camposDeSubtipo,
+  };
+  const efectos = new Set(h.efectos.filter((e) => e.cuentaId === k.id).map((e) => e.transaccionId));
+  const [primera] = h.transacciones
+    .filter((t) => t.tipo !== 'saldo_inicial' && efectos.has(t.id))
+    .map((t) => t.fecha)
+    .sort();
+  return {
+    ...base,
+    cuenta: { cuenta: nombres(i).cuenta(k.id), ...campos, esperado: campos },
+    ...(primera === undefined ? {} : { fechaAperturaMaxima: primera }),
+  };
+}
+
+function contextoMeta(i: Instantanea, p: Extract<ParametrosFormulario, { operacion: 'meta' }>) {
+  const { metas: lista, categoriasSinMeta } = metas(i);
+  const meta = lista.find((m) =>
+    p.metaId !== undefined
+      ? m.id === p.metaId
+      : p.categoriaId !== undefined && m.categoria.id === p.categoriaId,
+  );
+  return { ...(meta === undefined ? {} : { meta }), categoriasSinMeta };
+}
+
 /** El contexto de cada operación (6.14.4), con la forma que devuelve su función. */
 interface Contextos {
   readonly registrar: ReturnType<typeof contextoRegistrar>;
   readonly pagar_tarjeta: ReturnType<typeof contextoPagarTarjeta>;
   readonly cuota_prestamo: ReturnType<typeof contextoCuotaPrestamo>;
+  readonly editar_transaccion: ReturnType<typeof contextoEditar>;
+  readonly asignar: ReturnType<typeof contextoAsignar>;
+  readonly archivar_categoria: ReturnType<typeof contextoArchivar>;
+  readonly cuenta: ReturnType<typeof contextoCuenta>;
+  /** Sin `candidatas` de devolución: llegan con `devolver` en TA-140. */
+  readonly movimiento: { readonly movimiento: MovimientoDto };
+  readonly meta: ReturnType<typeof contextoMeta>;
 }
 
-function contextoDe(i: Instantanea, p: ParametrosFormulario) {
+function contextoDe(i: Instantanea, p: ParametrosFormulario, aux: AuxiliaresDeFormulario) {
   switch (p.operacion) {
     case 'registrar':
       return contextoRegistrar(i, p);
@@ -317,6 +529,23 @@ function contextoDe(i: Instantanea, p: ParametrosFormulario) {
       return contextoPagarTarjeta(i, p.tarjetaId);
     case 'cuota_prestamo':
       return contextoCuotaPrestamo(i, p);
+    case 'editar_transaccion':
+      return contextoEditar(i, p.transaccionId, aux);
+    case 'asignar':
+      return contextoAsignar(i, p);
+    case 'archivar_categoria':
+      return contextoArchivar(i, p.categoriaId);
+    case 'cuenta':
+      return contextoCuenta(i, p, aux);
+    case 'movimiento': {
+      if (aux.bandeja === undefined)
+        throw new TypeError('formulario(movimiento): faltan los datos de la bandeja');
+      const x = aux.bandeja.movimientos.find((y) => y.movimiento.id === p.movimientoId);
+      if (x === undefined) throw new RangeError(`el movimiento ${p.movimientoId} no existe`);
+      return { movimiento: movimientoDeBandeja(i, aux.bandeja, x.movimiento, x.lineas) };
+    }
+    case 'meta':
+      return contextoMeta(i, p);
   }
 }
 
@@ -326,14 +555,23 @@ export function formulario<P extends ParametrosFormulario>(
   p: P,
   aux: AuxiliaresDeFormulario = {},
 ): { readonly catalogos: Catalogos; readonly contexto: Contextos[P['operacion']] } {
+  const h = i.hechos;
+  const tx =
+    p.operacion === 'editar_transaccion'
+      ? h.transacciones.find((t) => t.id === p.transaccionId)
+      : undefined;
+  if (p.operacion === 'editar_transaccion' && tx === undefined)
+    throw new RangeError(`la transacción ${p.transaccionId} no existe`);
+  const usadas = h.efectos.filter((e) => e.transaccionId === tx?.id).map((e) => e.cuentaId);
+  const categoriasUsadas = h.lineas.flatMap((l) =>
+    l.transaccionId === tx?.id && l.categoriaId !== null ? [l.categoriaId] : [],
+  );
   const opciones: Opciones = {
-    periodo: i.presupuesto.activo,
-    conAsignado: false,
-    cuentasExtra: new Set(),
-    categoriasExtra: new Set(),
+    periodo: periodoPedido(i, p.operacion === 'asignar' ? p.periodoInicio : undefined),
+    conAsignado: p.operacion === 'asignar',
+    cuentasExtra: new Set(usadas),
+    categoriasExtra: new Set(categoriasUsadas),
   };
-  return {
-    catalogos: catalogos(i, pide(p), aux, opciones),
-    contexto: contextoDe(i, p) as Contextos[P['operacion']],
-  };
+  const catalogo = catalogos(i, pide(p, tx?.tipo === 'pago_tarjeta'), aux, opciones);
+  return { catalogos: catalogo, contexto: contextoDe(i, p, aux) as Contextos[P['operacion']] };
 }
