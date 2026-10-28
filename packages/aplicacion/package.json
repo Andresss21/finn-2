@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./autenticacion": "./src/autenticacion/index.ts",
     "./contratos": "./src/contratos/index.ts",
     "./errores": "./src/errores/index.ts"
   },

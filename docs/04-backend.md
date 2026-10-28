@@ -1281,6 +1281,7 @@ interface Rechazo {
 | `CONFLICTO` (`conflicto_desactualizado`) | "Este valor cambió mientras lo editabas. Ahora es $1,180.00." |
 | `CONFLICTO` (`conflicto_id`) | "Ya existe un registro con este identificador y datos distintos. No se guardó nada." |
 | `NO_ENCONTRADO` | "Esto ya no existe." |
+| `NO_AUTORIZADO` (`no_autorizado`) **[CH-29]** | "Tu sesión terminó. Ingresá de nuevo para seguir." La interfaz no lo muestra: redirige según `datos.aal` (05 §7.5) |
 | `OCUPADO` | "Finn está terminando otra operación. Intentá de nuevo en unos segundos." |
 | `INCIERTO` | "No pudimos confirmar si se guardó. Volvé a intentarlo; no se duplicará." |
 | `INTERNO` | "Algo salió mal y no se guardó nada. Referencia: E-7K2QPX." |
@@ -1760,7 +1761,7 @@ Una prueba exige que todo código de esta tabla tenga mensaje y pase el control 
 
 #### 3.0.7 Errores comunes a todas las operaciones
 
-No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5), `NO_ENCONTRADO` (código `no_encontrado`, con `datos.entidad`, cuando un id de la entrada no existe; mensaje "Esto ya no existe."), `REQUIERE_CONFIRMACION` (4.3), `CONFLICTO` (`conflicto_id`, `conflicto_desactualizado`; 4.6), `OCUPADO`, `INCIERTO` e `INTERNO` (4.7, 7.4).
+No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; código `no_autorizado`, con `datos.aal`, 12.3 **[CH-29]**), `NO_ENCONTRADO` (código `no_encontrado`, con `datos.entidad`, cuando un id de la entrada no existe; mensaje "Esto ya no existe."), `REQUIERE_CONFIRMACION` (4.3), `CONFLICTO` (`conflicto_id`, `conflicto_desactualizado`; 4.6), `OCUPADO`, `INCIERTO` e `INTERNO` (4.7, 7.4).
 
 #### 3.0.8 Índice
 
