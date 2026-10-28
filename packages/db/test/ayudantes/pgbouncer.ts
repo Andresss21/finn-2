@@ -75,9 +75,16 @@ export async function asegurarImagen(): Promise<string> {
  */
 function ipDelArnes(puertoPublicado: number): string {
   const id = docker('ps', '-q', '--filter', `publish=${puertoPublicado}`).salida.trim();
-  const ip = docker('inspect', '-f', '{{.NetworkSettings.Networks.bridge.IPAddress}}', id).salida.trim();
+  const ip = docker(
+    'inspect',
+    '-f',
+    '{{.NetworkSettings.Networks.bridge.IPAddress}}',
+    id,
+  ).salida.trim();
   if (!/^\d+\.\d+\.\d+\.\d+$/.test(ip))
-    throw new Error(`No se encontró el PostgreSQL del arnés en el puerto ${puertoPublicado}: ${id} ${ip}`);
+    throw new Error(
+      `No se encontró el PostgreSQL del arnés en el puerto ${puertoPublicado}: ${id} ${ip}`,
+    );
   return ip;
 }
 
@@ -169,7 +176,8 @@ function generarCliente(): void {
     encoding: 'utf8',
     env: { ...process.env, DIRECT_URL: 'postgresql://sin-uso@localhost/sin-uso' },
   });
-  if (r.status !== 0) throw new Error(`prisma generate salió con ${r.status}:\n${r.stdout}${r.stderr}`);
+  if (r.status !== 0)
+    throw new Error(`prisma generate salió con ${r.status}:\n${r.stdout}${r.stderr}`);
 }
 
 /** Prisma 7 + `@prisma/adapter-pg` sobre el pooler, como en 04 §4.2 (`max: 3`, `pgbouncer=true`). */
@@ -195,8 +203,15 @@ export async function conCliente<T>(url: string, fn: (c: pg.Client) => Promise<T
   }
 }
 
+/** La primera fila; falla si no hay ninguna. */
+export function una<T>(filas: readonly T[]): T {
+  const [f] = filas;
+  if (f === undefined) throw new Error('la consulta no devolvió filas');
+  return f;
+}
+
 export const pidDe = async (c: pg.ClientBase): Promise<number> =>
-  (await c.query<{ pid: number }>('SELECT pg_backend_pid() AS pid')).rows[0]!.pid;
+  una((await c.query<{ pid: number }>('SELECT pg_backend_pid() AS pid')).rows).pid;
 
 /**
  * Retiene las dos conexiones de servidor del pool en dos transacciones abiertas, suelta la que `elegir`
@@ -216,14 +231,25 @@ export async function conLibre<T>(
       await c.query('BEGIN');
       pids.push(await pidDe(c));
     }
-    const libre = pids.findIndex(elegir);
-    if (new Set(pids).size !== 2 || libre < 0 || pids.filter(elegir).length !== 1)
-      throw new Error(`conLibre: conexiones de servidor ${pids.join(',')}, ninguna o dos elegibles`);
-    await h[libre]!.query('COMMIT');
+    const [p0, p1] = pids;
+    const [h0, h1] = h;
+    if (
+      p0 === undefined ||
+      p1 === undefined ||
+      !h0 ||
+      !h1 ||
+      p0 === p1 ||
+      elegir(p0) === elegir(p1)
+    )
+      throw new Error(
+        `conLibre: conexiones de servidor ${pids.join(',')}, ninguna o dos elegibles`,
+      );
+    const [libre, retenida, pid] = elegir(p0) ? [h0, h1, p0] : [h1, h0, p1];
+    await libre.query('COMMIT');
     try {
-      return await fn(pids[libre]!);
+      return await fn(pid);
     } finally {
-      await h[1 - libre]!.query('COMMIT');
+      await retenida.query('COMMIT');
     }
   } finally {
     await Promise.all(h.map((c) => c.end()));

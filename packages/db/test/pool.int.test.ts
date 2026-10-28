@@ -12,6 +12,7 @@ import {
   conLibre,
   levantarPgBouncer,
   type ClientePrisma,
+  una,
   type Tx,
 } from './ayudantes/pgbouncer.ts';
 
@@ -20,7 +21,14 @@ const HOY = '2027-02-05';
 const ZONA = 'America/El_Salvador';
 const RC = { isolationLevel: 'ReadCommitted', timeout: 20_000, maxWait: 5_000 };
 
-type Estado = { pid: number; bloqueo: boolean; marca: boolean; zona: string; hoy: string; op: string };
+type Estado = {
+  pid: number;
+  bloqueo: boolean;
+  marca: boolean;
+  zona: string;
+  hoy: string;
+  op: string;
+};
 
 /** SQLSTATE de un error de `pg` o de Prisma (P2039 lo lleva en meta.driverAdapterError.cause, 04 V-01). */
 const sqlstate = (e: unknown): string | undefined => {
@@ -57,15 +65,15 @@ describe('PRU-INT-POOL', () => {
 
   /** El estado de la conexión de servidor en la transacción en curso. */
   const estado = async (tx: Tx): Promise<Estado> =>
-    (
+    una(
       await tx.$queryRaw<Estado[]>`SELECT pg_backend_pid() AS pid,
         EXISTS (SELECT 1 FROM pg_locks WHERE locktype = 'advisory' AND pid = pg_backend_pid()
           AND objid::text = ${clave} AND granted) AS bloqueo,
         coalesce(current_setting('finn.bloqueo_xact', true), '') = pg_current_xact_id()::text AS marca,
         current_setting('TimeZone') AS zona,
         coalesce(current_setting('finn.hoy', true), '') AS hoy,
-        coalesce(current_setting('finn.operacion', true), '') AS op`
-    )[0]!;
+        coalesce(current_setting('finn.operacion', true), '') AS op`,
+    );
 
   /** El patrón de escritura de 04 §4.2: READ COMMITTED, bloqueo primero y ajustes locales de la transacción. */
   const escribir = <T>(fn: (tx: Tx) => Promise<T>): Promise<T> =>
@@ -77,11 +85,11 @@ describe('PRU-INT-POOL', () => {
 
   it('PRU-INT-POOL-001 P7-2, CH-05 (V7-05, POOL-01): 50 escrituras seguidas con Prisma 7, adapter-pg y pgbouncer=true, cada una con bloqueo, set_config local y escritura, sin errores y con la revisión +50', async () => {
     const revision = async (): Promise<bigint> =>
-      (
-        await db.$transaction((tx) =>
-          tx.$queryRaw<{ valor: bigint }[]>`SELECT valor FROM finn.revision WHERE id = 1`,
-        )
-      )[0]!.valor;
+      una(
+        await db.$transaction(
+          (tx) => tx.$queryRaw<{ valor: bigint }[]>`SELECT valor FROM finn.revision WHERE id = 1`,
+        ),
+      ).valor;
     const antes = await revision();
     const vistos: Estado[] = [];
     for (let i = 0; i < 50; i++)
@@ -142,7 +150,7 @@ describe('PRU-INT-POOL', () => {
       const r = (await c1.query(
         "SET finn.operacion = 'fusion'; SELECT pg_backend_pid() AS pid",
       )) as unknown as pg.QueryResult<{ pid: number }>[];
-      return r[1]!.rows[0]!.pid;
+      return una(r[1]?.rows ?? []).pid;
     });
     const { visto, limpio } = await conLibre(
       pool.url,
@@ -150,11 +158,13 @@ describe('PRU-INT-POOL', () => {
       () =>
         conCliente(pool.url, async (c2) => {
           const leer = async (): Promise<{ pid: number; op: string }> =>
-            (
-              await c2.query<{ pid: number; op: string }>(
-                "SELECT pg_backend_pid() AS pid, coalesce(current_setting('finn.operacion', true), '') AS op",
-              )
-            ).rows[0]!;
+            una(
+              (
+                await c2.query<{ pid: number; op: string }>(
+                  "SELECT pg_backend_pid() AS pid, coalesce(current_setting('finn.operacion', true), '') AS op",
+                )
+              ).rows,
+            );
           const v = await leer();
           await c2.query('RESET finn.operacion');
           return { visto: v, limpio: await leer() };
@@ -178,7 +188,7 @@ describe('PRU-INT-POOL', () => {
         'SELECT pg_advisory_lock($1::bigint), pg_backend_pid() AS pid',
         [clave004],
       );
-      return r.rows[0]!.pid;
+      return una(r.rows).pid;
     });
     const r = await conLibre(
       pool004,
@@ -188,7 +198,7 @@ describe('PRU-INT-POOL', () => {
           const intentar = async (marca: string): Promise<{ leido: Leido; error: unknown }> => {
             await b.query('BEGIN');
             if (marca) await b.query("SELECT set_config('finn.bloqueo_xact', $1, true)", [marca]);
-            const leido = (await b.query<Leido>(leer)).rows[0]!;
+            const leido = una((await b.query<Leido>(leer)).rows);
             const e = await error(
               b.query("INSERT INTO finn.deudores (nombre) VALUES ('POOL-004 sin tomar_bloqueo')"),
             );
@@ -204,7 +214,7 @@ describe('PRU-INT-POOL', () => {
           await b.query('COMMIT');
           // Limpieza: se suelta el bloqueo olvidado
           await b.query('SELECT pg_advisory_unlock_all()');
-          const alFinal = (await b.query<Leido>(leer)).rows[0]!;
+          const alFinal = una((await b.query<Leido>(leer)).rows);
           return { sinMarca, marcaFalsa, alFinal };
         }),
     );
@@ -222,11 +232,11 @@ describe('PRU-INT-POOL', () => {
     await conCliente(pool.url, async (a) => {
       const q = { name: 'pool_005', text: 'SELECT pg_backend_pid() AS pid' };
       // Primera vez: Parse con nombre en la conexión de servidor `pid`
-      const pid = (await a.query<{ pid: number }>(q)).rows[0]!.pid;
+      const pid = una((await a.query<{ pid: number }>(q)).rows).pid;
       const misma = await conLibre(
         pool.url,
         (p) => p === pid,
-        async () => (await a.query<{ pid: number }>(q)).rows[0]!.pid,
+        async () => una((await a.query<{ pid: number }>(q)).rows).pid,
       );
       expect(misma).toBe(pid);
       // `pg` ya no manda el Parse; en la otra conexión de servidor la sentencia no existe
@@ -242,11 +252,15 @@ describe('PRU-INT-POOL', () => {
   it('PRU-INT-POOL-006 [V-05] P7-2, CH-05, BE-14: set_config(finn.operacion, fusion, true) habilita la excepción de inv. 18 dentro de la transacción y no se filtra a las 6 transacciones siguientes de la misma conexión de servidor', async () => {
     const periodo = (d: string): Date => new Date(`${d}T00:00:00Z`);
     const categoriaId = await escribir(async (tx) => {
-      const [g] = await tx.$queryRaw<{ id: string }[]>`
-        INSERT INTO finn.grupos (nombre) VALUES ('POOL-006') RETURNING id::text`;
-      const [c] = await tx.$queryRaw<{ id: string }[]>`
-        INSERT INTO finn.categorias (grupo_id, nombre) VALUES (${g!.id}::uuid, 'POOL-006') RETURNING id::text`;
-      return c!.id;
+      const g = una(
+        await tx.$queryRaw<{ id: string }[]>`
+          INSERT INTO finn.grupos (nombre) VALUES ('POOL-006') RETURNING id::text`,
+      );
+      const c = una(
+        await tx.$queryRaw<{ id: string }[]>`
+          INSERT INTO finn.categorias (grupo_id, nombre) VALUES (${g.id}::uuid, 'POOL-006') RETURNING id::text`,
+      );
+      return c.id;
     });
     const asignar = (tx: Tx, d: string) =>
       tx.asignacion.create({ data: { categoriaId, periodoInicio: periodo(d), monto: 10 } });
