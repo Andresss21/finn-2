@@ -6,6 +6,7 @@
 // tienen fecha por tipo), 13 a 16 (revisión, programadas y conciliación no entran en ningún
 // derivado; 14 a 16 son de tablas [H]), 18 a 21 (comparan antes y después de una operación: los
 // valida `aplicar`, 5.0) y 26 y 27 (propiedades del motor, con su prueba).
+import { destinoDe } from './calculo/destino';
 import type { Hechos, Instantanea, TipoTransaccion, Uuid, Violacion } from './hechos';
 import { Centavos } from './valores/centavos';
 import { FechaLocal } from './valores/fecha-local';
@@ -149,12 +150,14 @@ export function verificarInvariantes(i: Instantanea): readonly Violacion[] {
       falla(6, { transaccion: t.id });
     const tarjetasDeT = new Set(suyos.map((e) => e.cuentaId));
     for (const l of propias) {
-      const x = l.categoriaId === null ? undefined : categorias.get(l.categoriaId);
+      // DB-05: una devolución vinculada tiene el destino de su línea original.
+      const { categoriaId, deudorId } = destinoDe(l, lineas);
+      const x = categoriaId === null ? undefined : categorias.get(categoriaId);
       const ok =
         t.tipo === 'pago_tarjeta'
           ? x?.clase === 'pago' && x.tarjetaId !== null && tarjetasDeT.has(x.tarjetaId)
           : x === undefined
-            ? l.categoriaId === null && l.deudorId !== null
+            ? categoriaId === null && deudorId !== null
             : x.clase === 'normal';
       if (!ok) falla(8, { linea: l.id });
       if (l.categoriaId !== null && (devuelto.get(l.id) ?? cero) > l.monto)

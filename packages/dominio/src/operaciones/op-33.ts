@@ -59,10 +59,13 @@ function vinculada(antes: H.Instantanea, x: H.ComandoOp33a): Efecto | R {
     if (monto > capacidad)
       return { codigo: 'devolucion_mayor_que_linea', datos: { lineaId: l.id, capacidad } };
   }
-  const lineas = x.reparto.map(({ lineaId, monto }) => {
-    const o = propias.find((l) => l.id === lineaId) as H.Linea;
-    return { monto, categoriaId: o.categoriaId, deudorId: o.deudorId, lineaOriginalId: o.id };
-  });
+  // DB-05, inv. 8: la línea solo lleva `lineaOriginalId`; su destino es el de la original.
+  const lineas = x.reparto.map(({ lineaId, monto }) => ({
+    monto,
+    categoriaId: null,
+    deudorId: null,
+    lineaOriginalId: lineaId,
+  }));
   return devolucion(x, k.id, lineas);
 }
 

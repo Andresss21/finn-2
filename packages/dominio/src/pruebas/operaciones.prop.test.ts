@@ -90,6 +90,12 @@ function comprobar({ comando, antes, resultado, fotoAntes, fotoDespues }: Paso):
     ),
   ).toEqual([]);
 
+  // 03 `ck_lineas_destino` (DB-05): cada línea nueva tiene exactamente uno de los tres destinos.
+  for (const l of resultado.hechosNuevos.lineas.filter((x) => !previas.has(x.id)))
+    expect([l.categoriaId, l.deudorId, l.lineaOriginalId].filter((x) => x !== null)).toHaveLength(
+      1,
+    );
+
   // Inv. 21: ningún período con asignaciones cambia de fechas, tampoco con una vigencia nueva (OP-19).
   const inicios = new Set(antes.hechos.asignaciones.map((a) => a.periodoInicio));
   for (const inicio of inicios)

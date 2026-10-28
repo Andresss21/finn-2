@@ -129,11 +129,10 @@ export function verificarComunes(
       ...despues.lineas.filter((x) => lineas.has(x.id)),
       ...despues.condonaciones.filter((x) => condonaciones.has(x.id)),
     ]
-      // Inv. 20, ajuste 1: una devolución vinculada va a la categoría de su línea original.
-      .filter((x) => {
-        const original = 'lineaOriginalId' in x ? x.lineaOriginalId : null;
-        return (destino.get(x.id) ?? destino.get(original ?? '')) !== x.categoriaId;
-      })
+      // Inv. 20, ajuste 1: una devolución vinculada no tiene destino propio; sigue a su línea
+      // original aunque esté archivada (DB-05), así que no lleva una categoría nueva.
+      .filter((x) => !('lineaOriginalId' in x && x.lineaOriginalId !== null))
+      .filter((x) => destino.get(x.id) !== x.categoriaId)
       .map((x) => String(x.categoriaId)),
   ]);
   for (const c of [...categorias].sort())
