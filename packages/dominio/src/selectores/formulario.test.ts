@@ -5,7 +5,6 @@ import { calcular } from '../calculo/calcular';
 import type {
   Asignacion,
   Instante,
-  Movimiento,
   MovimientoLinea,
   Categoria,
   Cuenta,
@@ -367,7 +366,7 @@ const datos: DatosDeBandeja = {
         esperadaProgramadaId: null,
         esperadaFecha: null,
         transaccionId: null,
-      } as Movimiento,
+      },
       lineas: [] as MovimientoLinea[],
     },
   ],
