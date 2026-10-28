@@ -176,7 +176,7 @@ Cada decisión se desarrolla, con su justificación y alternativas descartadas, 
 | V-04 | Regla inmediata de un trigger | `FN002` como `P2039`, igual forma que V-01 |
 | V-05 | `set_config('finn.operacion', 'fusion', true)` | Habilita la excepción dentro de la transacción y no se filtra a las siguientes seis transacciones del pool |
 | V-06 | Inserción con un id ya existente enviado por el cliente | `P2002` con `meta.driverAdapterError.cause` = `UniqueConstraintViolation`, índice `transacciones_pkey` y tabla `transacciones` |
-| V-07 | Lectura con `isolationLevel: RepeatableRead` + `SET TRANSACTION READ ONLY` como primera sentencia | `transaction_isolation = repeatable read`, `transaction_read_only = on`; un intento de escritura falla con `25006` |
+| V-07 | Lectura con `isolationLevel: RepeatableRead` + `SET LOCAL transaction_read_only = on` como primera sentencia **[CH-25]** | `transaction_isolation = repeatable read`, `transaction_read_only = on`; un intento de escritura falla con `25006` |
 | V-08 | Dos escritores con el patrón aprobado (`READ COMMITTED`, bloqueo primero) | El segundo espera ~1,3 s y, después del bloqueo, ve la fila confirmada por el primero |
 | V-09 | Contraste: `REPEATABLE READ` en la escritura | Con una lectura antes del bloqueo, ve datos viejos. **Con el bloqueo como primera sentencia, también ve datos viejos** (la instantánea se toma en esa sentencia). Confirma la decisión de ADR-06 |
 | V-10 | `lock_timeout` de 10 s de `finn.tomar_bloqueo()` | Falla a los 10,04 s con `55P03`, como `P2010` |
@@ -999,7 +999,7 @@ V-01 a V-12 (0.7). En particular:
 | Paso | Qué hace | SQL o llamada |
 |---|---|---|
 | 1 | Abre la transacción | Prisma: `BEGIN` + `SET TRANSACTION ISOLATION LEVEL REPEATABLE READ` (V-11) |
-| 2 | La marca como de solo lectura. Es una sentencia de control: no toma la instantánea | `SET TRANSACTION READ ONLY` |
+| 2 | La marca como de solo lectura. Es una sentencia de control: no toma la instantánea | `SET LOCAL transaction_read_only = on` **[CH-25]** |
 | 3 | **[R1]** Zona de la sesión en UTC (BE-33) y, solo en pruebas, reloj simulado (BE-30) | `SELECT set_config('TimeZone', 'UTC', true)` y `SELECT set_config('finn.hoy', $1, true)` |
 | 4 | **Primera lectura**: toma la instantánea y lee la revisión y hoy | `SELECT valor::text AS revision, finn.hoy()::text AS hoy FROM finn.revision WHERE id = 1` |
 | 5 | Obtiene la instantánea calculada de la memoria (5.3) o carga los hechos (5.2) y ejecuta `calcular(hechos, hoy)` | — |
