@@ -182,7 +182,7 @@ describe('PRU-DOM-MOTOR', () => {
       ['ropa', 0],
     ]);
     expect(junio.pagosTarjeta[0]).toMatchObject({ disponible: c(40), faltaReservar: 0 });
-    expect(junio.totales).toEqual({ asignado: 0, gastado: 0, disponible: c(70) });
+    expect(junio.totales).toEqual({ asignado: 0, gastado: 0, disponible: c(30) }); // [CH-32] sin pago-vi
     expect(() => seleccionarPresupuesto(i, f('2027-07-01'))).toThrow(RangeError);
 
     // Sin asignaciones futuras, el último con datos es el activo y la proyección es mayo.
