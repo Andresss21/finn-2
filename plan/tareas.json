@@ -181,7 +181,7 @@
 
   "TA-159": { "estado": "pendiente" },
 
-  "TA-160": { "estado": "pendiente" },
+  "TA-160": { "estado": "en_curso", "rama": "ta-160-tiempo-config-reloj" },
 
   "TA-161": { "estado": "pendiente" },
 
