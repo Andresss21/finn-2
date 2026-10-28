@@ -1,5 +1,5 @@
 {
   "extends": "@finn/config/tsconfig.base.json",
-  "compilerOptions": { "allowImportingTsExtensions": true },
-  "include": ["src"]
+  "compilerOptions": { "types": ["node"], "allowImportingTsExtensions": true },
+  "include": ["src", "test"]
 }
