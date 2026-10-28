@@ -1,6 +1,7 @@
-// tools/db/plantilla.ts — C3, C5 y C6 de 03 §11.6 sobre finn_plantilla (TA-051, CH-21; 07 §5.2, paso 4).
+// tools/db/plantilla.ts — C3 a C6 de 03 §11.6 sobre finn_plantilla (TA-051, TA-052, CH-21; 07 §5.2, paso 4).
 // El arnés (packages/db/test/ayudantes/base.ts) ya corrió el bootstrap; aquí, como finn_migraciones:
 //   C3 `prisma migrate deploy` desde cero, y todas las carpetas quedan aplicadas;
+//   C4 `node tools/db/c4.mjs` (`prisma migrate diff … --exit-code`) sale con 0;
 //   C5 `reglas-catalogo.sql` (R1–R14) sin filas;
 //   C6 `catalogo.sql` igual a `packages/db/prisma/catalogo-esperado.txt`.
 // En ese orden; el primero que falla lanza un error y Vitest termina sin correr pruebas.
@@ -53,6 +54,21 @@ export async function c3(url: string, consultar: Consultar): Promise<void> {
   if (faltan.length) throw new Error(`C3: migraciones sin aplicar: ${faltan.join(', ')}`);
 }
 
+/** C4: `tools/db/c4.mjs` sobre `url`; con código 2, su informe trae el diff y, si corresponde, P7-12. */
+export async function c4(url: string): Promise<void> {
+  const salida: string[] = [];
+  const codigo = await new Promise<number | null>((fin, error) => {
+    const hijo = spawn(process.execPath, [join(raiz, 'tools', 'db', 'c4.mjs')], {
+      env: { ...process.env, DIRECT_URL: url },
+    });
+    hijo.stdout.on('data', (d: Buffer) => salida.push(d.toString()));
+    hijo.stderr.on('data', (d: Buffer) => salida.push(d.toString()));
+    hijo.on('error', error);
+    hijo.on('exit', fin);
+  });
+  if (codigo !== 0) throw new Error(salida.join(''));
+}
+
 /** C5: las violaciones de R1–R14; vacío si el esquema cumple. */
 export const c5 = (url: string, consultar: Consultar): Promise<string[]> =>
   consultar(url, leer('tools/db/reglas-catalogo.sql'));
@@ -77,9 +93,10 @@ export async function c6(url: string, consultar: Consultar): Promise<string[]> {
   ];
 }
 
-/** El gancho de la plantilla: C3, C5 y C6, en ese orden; el primero que falla corta. */
+/** El gancho de la plantilla: C3, C4, C5 y C6, en ese orden; el primero que falla corta. */
 export async function prepararPlantilla(url: string, consultar: Consultar): Promise<void> {
   await c3(url, consultar);
+  await c4(url);
   const reglas = await c5(url, consultar);
   if (reglas.length) throw new Error(`C5: reglas de catálogo violadas:\n${reglas.join('\n')}`);
   const diferencias = await c6(url, consultar);
