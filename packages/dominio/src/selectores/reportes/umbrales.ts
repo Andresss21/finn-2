@@ -23,6 +23,3 @@ export const SUSC_MONTO_PCT = [10, 100] as const;
 export const SUSC_DIAS = 5;
 /** Reporte Hallazgos: cantidad máxima (06 §3.5.11). */
 export const HALLAZGOS_MAX = 5;
-/** Destinos de arrastre de la bandeja (CF-22): cantidad máxima de frecuentes y días de historial. */
-export const ARRASTRE_FRECUENTES_MAX = 6;
-export const ARRASTRE_FRECUENTES_DIAS = 90;
