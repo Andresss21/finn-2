@@ -292,7 +292,7 @@ function filas(i: Instantanea): Fila[] {
   return out;
 }
 
-it('PRU-DOM-MOTOR-903 [REC-4.2, CA-62.1, CA-62.2, CA-63.3, CA-14.9] SEM-A7 (CT-07, DP-27, V6-01, V7-16): 86 números de A.7 iguales a 07 §28, 68 sin cambio y 18 con su valor nuevo', async () => {
+it('PRU-DOM-MOTOR-903 [V6-01, REC-4.2, CA-62.1, CA-62.2, CA-63.3, CA-14.9] SEM-A7 (CT-07, DP-27, V7-16): 86 números de A.7 iguales a 07 §28, 68 sin cambio y 18 con su valor nuevo', async () => {
   const s = await sembrar(estadoA7, [paso3SuperSelectos]); // A.7 es el estado después del paso 3 de 4.2
   const i = calcular(s.hechos, s.hoy);
   const todas = filas(i);
