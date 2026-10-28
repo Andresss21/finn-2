@@ -181,7 +181,7 @@
 
   "TA-156": { "estado": "pendiente" },
 
-  "TA-157": { "estado": "pendiente" },
+  "TA-157": { "estado": "terminada", "pr": 96 },
 
   "TA-158": { "estado": "terminada", "pr": 100 },
 

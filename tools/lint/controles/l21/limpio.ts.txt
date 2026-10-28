@@ -1,0 +1,15 @@
+// regla: ninguna
+// Lo permitido: conAhora() o la columna nombrada, INSERT con la columna, otras tablas y actualizaciones.
+declare function conAhora<F extends object>(modelo: string, fila: F, ahora: Date): F;
+type D = { [k: string]: (a: unknown) => Promise<unknown> };
+type Tx = Record<string, D> & { $executeRaw: (s: TemplateStringsArray, ...v: unknown[]) => Promise<number> };
+export async function bien(tx: Tx, ahora: Date, modelo: string, filas: object[]) {
+  await tx.notificacion.create({ data: conAhora('notificacion', { motivo: 'm', titulo: 't', cuerpo: 'c' }, ahora) });
+  await tx.suscripcionPush.upsert({ create: { endpoint: 'https://x', creadaEn: ahora, renovadaEn: ahora } });
+  await tx[modelo].createMany({ data: filas.map((f) => conAhora(modelo, f, ahora)) });
+  await tx.cuenta.create({ data: { tipo: 'efectivo', nombre: 'Caja' } });
+  await tx.notificacion.update({ where: { id: 'x' }, data: { leidaEn: ahora } });
+  await tx.$executeRaw`INSERT INTO finn.eventos_sistema (nivel, origen, mensaje, ocurrido_en)
+    VALUES ('info', 'app', 'x', finn.ahora())`;
+  await tx.$executeRaw`INSERT INTO finn.cuentas (tipo, nombre, fecha_apertura) VALUES ('efectivo', 'Caja', finn.hoy())`;
+}

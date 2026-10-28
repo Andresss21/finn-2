@@ -1,0 +1,5 @@
+// regla: sql
+// Un INSERT a mano con lista de columnas sin recibido_en.
+type Tx = { $executeRaw: (s: TemplateStringsArray, ...v: unknown[]) => Promise<number> };
+export const recibir = (tx: Tx, texto: string) =>
+  tx.$executeRaw`INSERT INTO finn.sms_recibidos (texto, remitente) VALUES (${texto}, 'BAC')`;
