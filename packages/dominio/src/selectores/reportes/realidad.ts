@@ -73,7 +73,7 @@ export interface RealidadSel {
 const valorAbsoluto = (x: Centavos): Centavos => Centavos.max(x, Centavos.negar(x));
 
 /** Promedio de `n` montos al centavo, mitad hacia arriba (simétrico en negativos). */
-function promedio(xs: readonly Centavos[]): Centavos {
+export function promedio(xs: readonly Centavos[]): Centavos {
   const total = suma(xs);
   const p = Centavos.proporcionMitadArriba(valorAbsoluto(total), 1, xs.length);
   return total < 0 ? Centavos.negar(p) : p;
