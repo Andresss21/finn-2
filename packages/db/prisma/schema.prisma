@@ -826,7 +826,7 @@ model SuscripcionPush {
 model Notificacion {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   creadaEn      DateTime  @default(now()) @map("creada_en") @db.Timestamptz(6)
-  aviso         String
+  aviso         String?
   motivo        String
   titulo        String
   cuerpo        String
