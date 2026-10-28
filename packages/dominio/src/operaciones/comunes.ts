@@ -135,6 +135,14 @@ export function verificarComunes(
       .filter((x) => destino.get(x.id) !== x.categoriaId)
       .map((x) => String(x.categoriaId)),
   ]);
+  // H10 y 03 §4.5.3 regla 3: ninguna asignación cambia en un período futuro de una categoría que ya
+  // estaba archivada, salvo en OP-12 y OP-06. OP-09 sí devuelve las futuras de la que archiva: la base
+  // las escribe antes de archivarla (04 §4.5.2, F4) [CH-31].
+  const yaArchivadas = new Set(h.categorias.filter((x) => x.archivada).map((x) => x.id));
+  const A = antes.presupuesto.activo.inicio;
+  if (operacion !== 'OP-12' && operacion !== 'OP-06')
+    for (const x of diferencias(h, despues, (p, c) => p > A && yaArchivadas.has(c)))
+      categorias.add(x.categoriaId);
   for (const c of [...categorias].sort())
     if (archivadas.has(c)) r.push(rechazo('categoria_archivada', { categoriaId: c }));
 
