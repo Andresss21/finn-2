@@ -4,7 +4,7 @@
 // del orden de entrada (inv. 26). Fechas: `date` ya sale como 'AAAA-MM-DD' (una `FechaLocal`, sin `Date`);
 // instantes: ISO UTC con milisegundos (04 §13.1); montos: números JSON; `bigint` (secuencia, revisión): texto.
 import { Centavos, FechaLocal } from '@finn/dominio/valores';
-import type { BigintTexto, FilasPorTabla, Hechos, Instante, TablaMotor } from '@finn/dominio';
+import type { FilasPorTabla, Hechos, TablaMotor } from '@finn/dominio';
 import { Prisma } from '../generado/prisma/client.ts';
 import { txPrisma, type LectorTx } from '../transacciones.ts';
 
@@ -250,9 +250,9 @@ function convertir(clase: Clase, v: unknown, ubicacion: string): unknown {
     case 'fecha':
       return typeof v === 'string' ? FechaLocal.desdeTexto(v) : mal();
     case 'instante':
-      return typeof v === 'string' && INSTANTE.test(v) ? (v as Instante) : mal();
+      return typeof v === 'string' && INSTANTE.test(v) ? v : mal();
     case 'bigint':
-      return typeof v === 'string' && ENTERO_SIN_SIGNO.test(v) ? (v as BigintTexto) : mal();
+      return typeof v === 'string' && ENTERO_SIN_SIGNO.test(v) ? v : mal();
   }
 }
 

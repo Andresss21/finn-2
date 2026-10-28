@@ -26,7 +26,7 @@ describe('PRU-INT-MOTOR', () => {
     cargados = await leer((t) => cargarHechos(t), RELOJ);
   });
 
-  it('PRU-INT-MOTOR-101 [BE-21, inv. 26] cargarHechos devuelve campo por campo lo escrito, con secuencia y revisión, y calcular da la misma instantánea', () => {
+  it('PRU-INT-MOTOR-101 [inv. 26] BE-21: cargarHechos devuelve campo por campo lo escrito, con secuencia y revisión, y calcular da la misma instantánea', () => {
     const tablas = Object.keys(escritos.escritas) as TablaMotor[];
     const memoria: Record<string, object[]> = {};
     let comparadas = 0;
@@ -50,11 +50,9 @@ describe('PRU-INT-MOTOR', () => {
     }
     expect(comparadas).toBeGreaterThan(50);
     // monto_original se escribió y no se carga (04 §5.2); la secuencia viaja como texto
-    expect(cargados.transacciones.find((x) => x.id === escritos.txMonedaOriginal)).toMatchObject({
-      montoOriginal: null,
-      monedaOriginal: 'EUR',
-      secuencia: expect.stringMatching(/^\d+$/),
-    });
+    const conMoneda = cargados.transacciones.find((x) => x.id === escritos.txMonedaOriginal);
+    expect(conMoneda).toMatchObject({ montoOriginal: null, monedaOriginal: 'EUR' });
+    expect(conMoneda?.secuencia).toMatch(/^\d+$/);
 
     // cada columna de las tablas [M] se carga, salvo las que 04 §5.2 y 03 §3.12 excluyen
     for (const tabla of tablas) {

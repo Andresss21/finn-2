@@ -35,7 +35,6 @@ const tx = (n: number): Uuid => uuid(100 + n);
 const ef = (n: number): Uuid => uuid(200 + n);
 const li = (n: number): Uuid => uuid(300 + n);
 
-type Filas = { [T in TablaMotor]: FilasPorTabla[T][] };
 type SinSello<T> = Omit<T, 'revision' | 'secuencia'> & { revision?: null; secuencia?: null };
 
 /** Los hechos que la prueba escribe (sin revisión ni secuencia: las fija la base). */
@@ -383,9 +382,6 @@ export async function escribirHechosDePrueba(base: BasePrueba): Promise<Escritos
       await admin.query<{ id: Uuid }>(
         `SELECT id FROM finn.instituciones WHERE lower(nombre) = 'bac'`,
       )
-    ).rows as [{ id: Uuid }];
-    const [{ id: vigencia }] = (
-      await admin.query<{ id: Uuid }>(`SELECT id FROM finn.vigencias_ciclo`)
     ).rows as [{ id: Uuid }];
     const esperados = escritos(grupoPagos, institucion);
     // El grupo del sistema y la vigencia inicial los siembra la migración (03 §9): ya existen
