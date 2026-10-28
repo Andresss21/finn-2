@@ -175,7 +175,7 @@
 
   "TA-156": { "estado": "pendiente" },
 
-  "TA-157": { "estado": "en_curso", "rama": "ta-157-ahora-db" },
+  "TA-157": { "estado": "terminada", "pr": 96 },
 
   "TA-158": { "estado": "pendiente" },
 
