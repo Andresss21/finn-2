@@ -3,7 +3,17 @@
 // Convenciones de completado (DP-16): hoy del paso, fecha de la transacción = hoy, hora de registro hoy 12:00 más un
 // minuto por operación, apertura 21/01/2027, tarjetas con límite $5,000 y corte 15, grupo "Gastos", saldo inicial 0.
 import { aplicar, avisosDeEstado, calcular } from '../src/index';
-import type { ComandoDominio, Hechos, Instantanea, Instante, Uuid } from '../src/index';
+import type {
+  Cambio,
+  ComandoDominio,
+  Hechos,
+  Instantanea,
+  Instante,
+  Movimiento,
+  MovimientoLinea,
+  Uuid,
+} from '../src/index';
+import { diferenciaActual } from '../src/selectores/detalle-cuenta';
 import { desgloseAlPagar } from '../src/calculo/patrimonio';
 import { Centavos, FechaLocal } from '../src/valores/index';
 import type { Ejecutor } from './ejecutar';
@@ -22,12 +32,19 @@ export interface Estado {
   hoy: FechaLocal;
   contador: number; // ids de filas nuevas, deterministas
   reloj: number; // operaciones aplicadas: da el minuto de registro (orden D2)
+  bandeja: Bandeja[]; // los movimientos [H] que dejó OP-35: `Hechos` no los lleva (BE-10)
+}
+interface Bandeja {
+  movimiento: Movimiento;
+  lineas: MovimientoLinea[];
+  recibidoEn: Instante;
 }
 
 const id = (t: string) => t as Uuid;
 const c = (dolares: number) => Centavos.desdeEntero(usd(dolares));
 const pad = (n: number) => String(n).padStart(2, '0');
 const GASTOS = id('grupo-gastos');
+const BANCO = id('institucion-banco');
 
 /** 'AAAA-MM-DDThh:mm' local (UTC−6, sin horario de verano) a instante UTC. */
 function instante(local: string): Instante {
@@ -68,7 +85,7 @@ export function sembrar(hoy: string): Estado {
     ocurrencias_resueltas: [],
     conciliaciones: [],
   };
-  return { hechos, hoy: FechaLocal.desdeTexto(hoy), contador: 0, reloj: 0 };
+  return { hechos, hoy: FechaLocal.desdeTexto(hoy), contador: 0, reloj: 0, bandeja: [] };
 }
 
 const cuentaId = (s: Estado, nombre: string) => {
@@ -88,6 +105,10 @@ const categoriaId = (s: Estado, nombre: string) => {
   for (const [k, v] of nombresDeCategorias(s.hechos)) if (v === nombre) return k;
   throw new Error(`el dato nombra una categoría que no existe: ${nombre}`);
 };
+
+/** Destino del dinero que se saca o se archiva: 'LPA' o una categoría. */
+const destino = (s: Estado, nombre: string) =>
+  nombre === 'LPA' ? ('lpa' as const) : { categoriaId: categoriaId(s, nombre) };
 
 /** Comando de dominio de una operación del dato; avanza el reloj y el contador del estado. */
 function comando(s: Estado, op: Op): ComandoDominio {
@@ -123,7 +144,8 @@ function comando(s: Estado, op: Op): ComandoDominio {
               plazoCuotas: p.plazoCuotas,
               cuotasPagadasAlCrear: p.cuotasPagadas,
             };
-      const cuenta = { tipo, nombre: op.cuenta, institucionId: null, ultimos4: null };
+      const [institucionId, ultimos4] = op.ultimos4 ? [BANCO, op.ultimos4] : [null, null];
+      const cuenta = { tipo, nombre: op.cuenta, institucionId, ultimos4 };
       return {
         operacion: 'OP-01',
         id: id(`cuenta-${op.cuenta}`),
@@ -181,14 +203,14 @@ function comando(s: Estado, op: Op): ComandoDominio {
           ...(op.monto !== undefined && { monto: c(op.monto) }),
           ...fechaObjetivo,
         };
-      const paraFecha = op.tipo === 'para_fecha';
+      const porPeriodo = (op.tipo ?? 'mensual') === 'mensual' || op.tipo === 'semanal';
       return {
         operacion: 'OP-18',
         accion: 'crear',
         id: id(`meta-${op.categoria}`),
         categoriaId: categoriaId(s, op.categoria),
         tipo: op.tipo ?? 'mensual',
-        ...(!paraFecha && { modo: op.modo ?? ('acumular' as const) }),
+        ...(porPeriodo && { modo: op.modo ?? ('acumular' as const) }),
         monto: c(op.monto ?? 0),
         ...fechaObjetivo,
       };
@@ -223,6 +245,7 @@ function comando(s: Estado, op: Op): ComandoDominio {
         ids,
         ...(op.cuenta && { cuentaId: cuentaId(s, op.cuenta) }),
         ...(op.fecha && { fecha: fecha(op.fecha) }),
+        ...(op.monto !== undefined && { total: c(op.monto) }),
       };
     case 'OP-29':
       return {
@@ -323,6 +346,125 @@ function comando(s: Estado, op: Op): ComandoDominio {
         origenId: cuentaId(s, op.origen ?? 'Ahorro'),
         tarjetaId: cuentaId(s, op.tarjeta),
       };
+    case 'OP-06':
+      return { operacion: 'OP-06', cuentaId: cuentaId(s, op.cuenta) };
+    case 'OP-09':
+      return {
+        operacion: 'OP-09',
+        categoriaId: categoriaId(s, op.categoria),
+        ids,
+        ...(op.destino && { destinoDisponible: destino(s, op.destino) }),
+        ...(op.devolverFuturas && { devolverAsignacionesFuturas: true }),
+        programadas: (op.desactivar ?? []).map((e) => ({
+          programadaId: id(`programada-${e}`),
+          accion: 'desactivar' as const,
+        })),
+      };
+    case 'OP-11':
+      return {
+        operacion: 'OP-11',
+        categoriaId: categoriaId(s, op.categoria),
+        ids,
+        monto: c(op.monto),
+        destino: destino(s, op.destino),
+      };
+    case 'OP-12':
+      return {
+        operacion: 'OP-12',
+        origenId: categoriaId(s, op.origen),
+        destinoId: categoriaId(s, op.destino),
+        ids,
+        reglas: [],
+        movimientoLineas: [],
+      };
+    case 'OP-24':
+      return {
+        operacion: 'OP-24',
+        modalidad: 'cuota',
+        id: id(`t${++s.contador}`),
+        instante: hora(),
+        ids,
+        fecha: fecha(),
+        total: c(op.capital + op.interes + op.seguro),
+        origenId: cuentaId(s, op.origen ?? 'Ahorro'),
+        prestamoId: cuentaId(s, op.prestamo),
+        categoriaId: categoriaId(s, op.categoria),
+        capital: c(op.capital),
+        interes: c(op.interes),
+        seguro: c(op.seguro),
+      };
+    case 'OP-42':
+      return {
+        operacion: 'OP-42',
+        accion: 'crear',
+        id: id(`programada-${op.etiqueta}`),
+        ids,
+        tipo: 'gasto',
+        cuentaId: cuentaId(s, op.cuenta),
+        cuentaDestinoId: null,
+        comercio: op.comercio,
+        monto: c(op.monto),
+        tolerancia: Centavos.cero,
+        frecuencia: 'mensual',
+        frecuenciaDias: null,
+        primeraFecha: fecha(op.primeraFecha),
+        fechaFin: null,
+        registroAutomatico: false,
+        lineas: [{ monto: c(op.monto), categoriaId: categoriaId(s, op.categoria) }],
+      };
+    case 'OP-35': {
+      const recibidoEn = instante(op.recibido);
+      const ultimos4 = s.hechos.cuentas.find((k) => k.id === cuentaId(s, op.cuenta))?.ultimos4;
+      return {
+        operacion: 'OP-35',
+        id: id(`m-${op.etiqueta}`),
+        ids,
+        sms: {
+          id: id(`sms-${op.etiqueta}`),
+          texto: `Compra ${op.comercio} ${op.monto}`,
+          recibidoEn,
+          fechaRecepcion: fecha(op.recibido.slice(0, 10)),
+        },
+        interpretacion: {
+          ...{ resultado: 'reconocido', institucionId: BANCO, tipoMovimiento: 'compra' },
+          ...{ ultimos4: ultimos4 as string, monto: c(op.monto), comercio: op.comercio },
+          fecha: fecha(op.fecha),
+        },
+        anteriores: [],
+        movimientos: [],
+        reglas: [],
+      };
+    }
+    case 'OP-37': {
+      const b = s.bandeja.find((x) => x.movimiento.id === id(`m-${op.etiqueta}`));
+      if (!b) throw new Error(`OP-37: no hay un movimiento ${op.etiqueta}`);
+      return {
+        operacion: 'OP-37',
+        movimiento: b.movimiento,
+        lineas: b.lineas,
+        id: id(`t-${op.etiqueta}`),
+        instante: instante(op.aprobado),
+        recibidoEn: b.recibidoEn,
+        ids,
+        categoriaId: categoriaId(s, op.categoria),
+      };
+    }
+    case 'OP-47': {
+      const movimientos = op.movimientos.map((m) => ({
+        ...{ indice: m.indice, fecha: fecha(m.fecha), monto: c(m.monto) },
+      }));
+      return {
+        operacion: 'OP-47',
+        id: id(`conciliacion-${++s.contador}`),
+        instante: hora(),
+        cuentaId: cuentaId(s, op.cuenta),
+        estado: { fechaEstado: fecha(op.fecha), saldoFinal: c(op.saldo), movimientos },
+        coincidencias: op.coincidencias.map((x) => ({
+          transaccionId: id(`t-${x.etiqueta}`),
+          movimientoIndice: x.indice,
+        })),
+      };
+    }
     case 'OP-21':
       return {
         operacion: 'OP-21',
@@ -354,6 +496,11 @@ function evaluacionDeMeta(i: Instantanea, nombre: string) {
   return m;
 }
 
+const cuentaDe = (i: Instantanea, nombre: string) =>
+  i.hechos.cuentas.find((k) => k.nombre === nombre);
+const ultimaConciliacion = (i: Instantanea, nombre: string) =>
+  i.hechos.conciliaciones.filter((x) => x.cuentaId === cuentaDe(i, nombre)?.id).at(-1);
+
 /** Columnas fuera de la instantánea (regla 9) que `motor` evalúa; el argumento va después de ':'. */
 const EXTRAS: Record<string, (i: Instantanea, arg: string) => number> = {
   patrimonio: (i) => i.patrimonio.total,
@@ -374,6 +521,16 @@ const EXTRAS: Record<string, (i: Instantanea, arg: string) => number> = {
         clase === 'excedente' ? x.clase === 'ingreso' && cobro.has(x.id) : x.clase === clase,
       )
       .reduce((a, x) => a + x.monto, 0);
+  },
+  // Préstamos (H6): capital pendiente de `P` y costo financiero (interés + seguro) de todas las cuotas.
+  capitalPrestamo: (i, p) => i.cuentas.find((x) => x.cuentaId === cuentaDe(i, p)?.id)?.saldo ?? 0,
+  costoFinanciero: (i) =>
+    i.clasificacion.costosFinancieros.reduce((a, x) => a + x.interes + x.seguro, 0),
+  // Conciliación de la tarjeta/cuenta `T` (DM-8): la diferencia que se aceptó al terminar y la de hoy.
+  difAceptada: (i, t) => ultimaConciliacion(i, t)?.diferenciaAceptada ?? 0,
+  difActual: (i, t) => {
+    const k = ultimaConciliacion(i, t);
+    return k ? diferenciaActual(i, k) : 0;
   },
   // Saldo a favor de la tarjeta (Q4): lo pagado de más, el saldo positivo de la cuenta.
   aFavor: (i, t) => {
@@ -434,6 +591,15 @@ function observar(
   return { ef, lpa, disp, fut, sobta, tarjetas, avisos: [...avisos].sort(), extra };
 }
 
+/** El movimiento y las líneas que insertó OP-35 (tablas [H]): OP-37 los recibe del llamador. */
+function guardarMovimiento(s: Estado, recibidoEn: Instante, cambios: readonly Cambio[]) {
+  const filas = <T>(tabla: string) =>
+    cambios.flatMap((x) => (x.tipo === 'insertar' && x.tabla === tabla ? [x.fila as T] : []));
+  const movimiento = filas<Movimiento>('movimientos')[0] as Movimiento;
+  const lineas = filas<MovimientoLinea>('movimiento_lineas');
+  s.bandeja = [...s.bandeja, { movimiento, lineas, recibidoEn }];
+}
+
 /** Forma canónica de la instantánea completa, para comprobar que un rechazo no cambia nada (regla 7). */
 const huella = (s: Estado) => JSON.stringify(calcular(s.hechos, s.hoy));
 
@@ -467,13 +633,15 @@ export const ejecutorMotor: Ejecutor<Estado> = {
     for (const op of p.ops) {
       const hoyDelPaso = s.hoy;
       if (op.hoy) s.hoy = FechaLocal.desdeTexto(op.hoy);
-      const r = aplicar(s.hechos, comando(s, op), s.hoy);
+      const cmd = comando(s, op);
+      const r = aplicar(s.hechos, cmd, s.hoy);
       s.hoy = hoyDelPaso;
       if (!r.ok) {
         rechazo = r.rechazos[0]?.codigo ?? 'sin_codigo';
         break;
       }
       s.hechos = r.hechosNuevos;
+      if (cmd.operacion === 'OP-35') guardarMovimiento(s, cmd.sms.recibidoEn, r.cambios);
       for (const a of r.avisos) avisos.add(a.codigo);
     }
     if (rechazo !== undefined) Object.assign(s, antes); // atomicidad: la fila entera se descarta (01 §5.0.1)
