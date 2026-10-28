@@ -13,6 +13,7 @@
   { "patron": "packages/aplicacion/src/config/**", "fts": "marco" },
   { "patron": "packages/aplicacion/src/tiempo/**", "fts": "marco" },
   { "patron": "packages/aplicacion/src/reloj-prueba*", "fts": "marco" },
+  { "patron": "packages/aplicacion/src/autenticacion/**", "fts": "marco" },
   { "patron": "packages/dominio/src/**", "fts": [] },
   { "patron": "packages/db/src/**", "fts": [] },
   { "patron": "packages/conciliacion/src/**", "fts": [] },
