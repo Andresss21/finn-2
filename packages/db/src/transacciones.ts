@@ -5,7 +5,9 @@
 // - `leer()`: 04 §5.1 (BE-20): REPEATABLE READ, solo lectura como primera sentencia (`transaction_read_only` local,
 //   CH-25), la zona y el reloj, y la primera lectura con revisión y hoy, que toma la instantánea.
 // Las operaciones solo ven `LectorTx` y `EscritorTx`; el cliente de la transacción queda dentro de @finn/db.
+import type { Cambio } from '@finn/dominio';
 import { cliente, type Cliente } from './cliente.ts';
+import { aplicarCambios, type ValoresDeLaBase } from './hechos/traductor.ts';
 import { Prisma } from './generado/prisma/client.ts';
 
 type TxPrisma = Prisma.TransactionClient;
@@ -34,6 +36,8 @@ export interface EscritorTx {
   readonly estado: EstadoEscritura;
   /** Paso 10 de 04 §4.2: `set_config('finn.operacion', op, true)`, solo con un valor de la lista cerrada. */
   declararOperacion(op: OperacionDeclarada): Promise<void>;
+  /** Paso 11 de 04 §4.2: los cambios en el orden de 04 §4.5 y lo que fijó la base (BE-15, BE-32). */
+  aplicarCambios(cambios: readonly Cambio[]): Promise<ValoresDeLaBase>;
   /** Paso 13 de 04 §4.2: la revisión después de las escrituras de la transacción. */
   revisionActual(): Promise<string>;
 }
@@ -107,6 +111,7 @@ export function transaccionesSobre(c: Cliente) {
             throw new Error(`finn.operacion no admite ${JSON.stringify(op)}`);
           await tx.$executeRaw`SELECT set_config('finn.operacion', ${op}, true)`;
         },
+        aplicarCambios: (cambios) => aplicarCambios(escritor, cambios),
         async revisionActual() {
           const [r] = await tx.$queryRaw<
             { revision: string }[]
