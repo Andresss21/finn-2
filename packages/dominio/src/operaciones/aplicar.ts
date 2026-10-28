@@ -59,11 +59,15 @@ import { op37 } from './op-37';
 import { op39 } from './op-39';
 import { op40 } from './op-40';
 import { op41 } from './op-41';
+import { op42 } from './op-42';
+import { op43 } from './op-43';
+import { op44 } from './op-44';
 import { op46 } from './op-46';
 import { op47 } from './op-47';
 import { op48 } from './op-48';
 import { op49 } from './op-49';
 import { op50 } from './op-50';
+import { op51 } from './op-51';
 import { op52 } from './op-52';
 import { op53 } from './op-53';
 import { esRechazo, porInvariantes, rechazo } from './rechazos';
@@ -146,6 +150,11 @@ const OPERACIONES: {
   'OP-32': op32,
   'OP-33': op33,
   'OP-34': op34,
+  // TA-139: transacciones programadas (el registro automático es un lote: `op43Automatico`).
+  'OP-42': op42,
+  'OP-43': op43,
+  'OP-44': op44,
+  'OP-51': op51,
 };
 
 /** AV-01 (§5.0.3): impacto retroactivo, antes y después de confirmar. */

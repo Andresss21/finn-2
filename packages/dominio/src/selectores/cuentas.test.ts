@@ -276,6 +276,7 @@ function estado() {
         fechaFin: null,
         registroAutomatico: false,
         activa: true,
+        reactivadaDesde: null,
         revision: null,
       },
       {
@@ -292,6 +293,7 @@ function estado() {
         fechaFin: null,
         registroAutomatico: false,
         activa: false,
+        reactivadaDesde: null,
         revision: null,
       },
     ] as Hechos['programadas'],

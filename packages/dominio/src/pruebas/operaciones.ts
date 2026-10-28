@@ -370,6 +370,50 @@ const ESPECIES = [
       return { ...comun, tipo: e.tipo, transaccionId: t };
     },
   }),
+  // TA-139: programadas (crear, activar o desactivar), registrar u omitir una ocurrencia y eliminar.
+  especie({
+    nombre: 'OP-42',
+    sel: fc.record({ k: indice, c: indice, monto: montoArb(), atras: fc.nat(60), auto: bandera }),
+    armar: (i, x, s) => {
+      const k = pick(
+        i.hechos.cuentas.filter((y) => y.tipo === 'efectivo' || y.tipo === 'tarjeta'),
+        x.k,
+      );
+      const c = pick(normales(i), x.c);
+      if (k === undefined || c === undefined) return undefined;
+      return {
+        ...{ operacion: 'OP-42', accion: 'crear', id: s.ids().siguiente(), ids: s.ids() },
+        ...{ tipo: 'gasto', cuentaId: k.id, cuentaDestinoId: null, comercio: 'Programada' },
+        ...{
+          monto: x.monto,
+          tolerancia: Centavos.cero,
+          frecuencia: 'semanal',
+          frecuenciaDias: null,
+        },
+        ...{ primeraFecha: FechaLocal.sumarDias(i.hoy, -x.atras), fechaFin: null },
+        ...{ registroAutomatico: x.auto, lineas: [{ monto: x.monto, categoriaId: c.id }] },
+      };
+    },
+  }),
+  especie({
+    nombre: 'OP-43',
+    sel: fc.record({ o: indice, omitir: bandera, eliminar: bandera, activar: bandera }),
+    armar: (i, x, s): ComandoDominio | undefined => {
+      const o = pick(i.ocurrencias, x.o);
+      if (x.eliminar || x.activar) {
+        const p = pick(i.hechos.programadas, x.o);
+        if (p === undefined) return undefined;
+        if (x.activar)
+          return { operacion: 'OP-42', accion: 'activar', programadaId: p.id, activa: !p.activa };
+        return { operacion: 'OP-51', programadaId: p.id, referencias: 0 };
+      }
+      if (o === undefined) return undefined;
+      const ocurrencia = { programadaId: o.programadaId, fechaEsperada: o.fecha };
+      if (x.omitir) return { operacion: 'OP-44', id: s.ids().siguiente(), ...ocurrencia };
+      const alta = { id: s.ids().siguiente(), instante: INSTANTE, ids: s.ids() };
+      return { operacion: 'OP-43', ...ocurrencia, ...alta };
+    },
+  }),
 ];
 
 /** Un comando de `fc.commands`: arma el `ComandoDominio` contra los hechos del paso y lo aplica. */

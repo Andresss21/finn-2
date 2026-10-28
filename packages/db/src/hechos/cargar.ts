@@ -25,8 +25,8 @@ const REV = ['revision', 'bigint'] as const;
 
 /**
  * Columnas que usa el motor por tabla, con el nombre del campo del modelo (03 §10.3); la columna SQL es el mismo
- * nombre en snake_case. Fuera de aquí quedan `transacciones.monto_original` (informativo, 03 §3.12) y
- * `programadas.reactivada_desde` (`COLUMNAS_NO_CARGADAS`).
+ * nombre en snake_case. Fuera de aquí queda `transacciones.monto_original` (informativo, 03 §3.12;
+ * `COLUMNAS_NO_CARGADAS`).
  */
 const ESPECIFICACION: Especificacion = {
   vigencias_ciclo: [['id', 'texto'], ['diaInicio', 'entero'], ['rigeDesde', 'fecha'], REV],
@@ -171,6 +171,7 @@ const ESPECIFICACION: Especificacion = {
     ['fechaFin', 'fecha'],
     ['registroAutomatico', 'logico'],
     ['activa', 'logico'],
+    ['reactivadaDesde', 'fecha'],
     REV,
   ],
   programada_lineas: [
@@ -204,7 +205,6 @@ const ESPECIFICACION: Especificacion = {
 /** Columnas de una tabla [M] que `cargarHechos` no lee a propósito (04 §5.2; 03 §3.12). */
 export const COLUMNAS_NO_CARGADAS: Readonly<Partial<Record<TablaMotor, readonly string[]>>> = {
   transacciones: ['monto_original'],
-  programadas: ['reactivada_desde'],
 };
 
 const snake = (campo: string): string => campo.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);

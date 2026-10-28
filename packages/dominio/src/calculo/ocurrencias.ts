@@ -1,6 +1,6 @@
 // Ocurrencias de las transacciones programadas (01 §4.16; P17, M2, A-6). Que una ocurrencia exista
-// es derivado; su resolución (emparejada, registrada u omitida) es un hecho. La reactivación de
-// CF-20 llega con TA-139: aquí una programada inactiva no genera ninguna ocurrencia.
+// es derivado; su resolución (emparejada, registrada u omitida) es un hecho. Una programada inactiva
+// no genera ninguna; reactivada, solo las de fecha ≥ `reactivadaDesde` (CF-20).
 import type { Hechos, Programada, Uuid } from '../hechos';
 import { FechaLocal } from '../valores/fecha-local';
 
@@ -36,18 +36,26 @@ export function fechaDeOcurrencia(p: ReglaDeOcurrencia, k: number): FechaLocal {
     : FechaLocal.sumarAnios(p.primeraFecha, k);
 }
 
-/** Las fechas de las ocurrencias ≤ hasta, solo si está activa y hasta su fecha de fin. */
+/**
+ * Las fechas de las ocurrencias ≤ hasta, solo si está activa, hasta su fecha de fin y, si se
+ * reactivó, desde esa fecha (CF-20: las del tramo inactivo no se generan).
+ */
 export function ocurrencias(
-  p: ReglaDeOcurrencia & Pick<Programada, 'fechaFin' | 'activa'>,
+  p: ReglaDeOcurrencia & Pick<Programada, 'fechaFin' | 'activa' | 'reactivadaDesde'>,
   hasta: FechaLocal,
 ): FechaLocal[] {
   if (!p.activa) return [];
   const tope = p.fechaFin !== null && p.fechaFin < hasta ? p.fechaFin : hasta;
+  const desde = p.reactivadaDesde;
   const fechas: FechaLocal[] = [];
   for (let k = 0, f = p.primeraFecha; f <= tope; k += 1, f = fechaDeOcurrencia(p, k))
-    fechas.push(f);
+    if (desde === null || !(f < desde)) fechas.push(f);
   return fechas;
 }
+
+/** `fecha` es una ocurrencia que la programada genera en su estado actual (§4.16, CF-20). */
+export const esOcurrencia = (p: Programada, fecha: FechaLocal): boolean =>
+  ocurrencias(p, fecha).at(-1) === fecha;
 
 /** Fecha y programada: una sola ocurrencia por par, así que dos claves nunca son iguales. */
 const clave = (x: OcurrenciaPendiente) => `${x.fecha}|${x.programadaId}`;

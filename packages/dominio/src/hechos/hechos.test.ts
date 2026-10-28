@@ -158,6 +158,7 @@ const COLUMNAS: { readonly [T in TablaEscribible]: Record<keyof FilasPorTabla[T]
     fechaFin: true,
     registroAutomatico: true,
     activa: true,
+    reactivadaDesde: true,
     revision: true,
   },
   programada_lineas: {
@@ -369,6 +370,10 @@ describe('PRU-DOM-MOTOR', () => {
       | 'OP-32'
       | 'OP-33'
       | 'OP-34'
+      | 'OP-42'
+      | 'OP-43'
+      | 'OP-44'
+      | 'OP-51'
     >();
     expectTypeOf<GeneradorIds['siguiente']>().toEqualTypeOf<() => Uuid>();
   });

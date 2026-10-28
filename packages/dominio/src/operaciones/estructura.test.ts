@@ -172,6 +172,7 @@ function base(): Hechos {
         fechaFin: null,
         registroAutomatico: false,
         activa: true,
+        reactivadaDesde: null,
         revision: null,
       },
     ],
