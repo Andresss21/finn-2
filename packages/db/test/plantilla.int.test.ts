@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { c5, c6, prepararPlantilla } from '../../../tools/db/plantilla.ts';
 import { consultar, crearBasePrueba } from './ayudantes/base.ts';
 
-// Dos copias, para que ninguna prueba dependa del orden de la otra
-const sana = crearBasePrueba();
+// Dos copias, para que ninguna prueba dependa del orden de la otra; la sana, sin reloj simulado (CT-02)
+const sana = crearBasePrueba({ reloj: false });
 const copia = crearBasePrueba();
 
 async function comoAdmin(sql: string): Promise<void> {

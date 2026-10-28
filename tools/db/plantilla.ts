@@ -2,7 +2,7 @@
 // El arnés (packages/db/test/ayudantes/base.ts) ya corrió el bootstrap; aquí, como finn_migraciones:
 //   C3 `prisma migrate deploy` desde cero, y todas las carpetas quedan aplicadas;
 //   C4 `node tools/db/c4.mjs` (`prisma migrate diff … --exit-code`) sale con 0;
-//   C5 `reglas-catalogo.sql` (R1–R14) sin filas;
+//   C5 `reglas-catalogo.sql` (R1–R14) y `regla-r15.sql` (R15, TA-056) sin filas;
 //   C6 `catalogo.sql` igual a `packages/db/prisma/catalogo-esperado.txt`.
 // En ese orden; el primero que falla lanza un error y Vitest termina sin correr pruebas.
 // Las consultas llegan por `Consultar` (el paquete `pg` vive en @finn/db, no en la raíz).
@@ -69,9 +69,11 @@ export async function c4(url: string): Promise<void> {
   if (codigo !== 0) throw new Error(salida.join(''));
 }
 
-/** C5: las violaciones de R1–R14; vacío si el esquema cumple. */
-export const c5 = (url: string, consultar: Consultar): Promise<string[]> =>
-  consultar(url, leer('tools/db/reglas-catalogo.sql'));
+/** C5: las violaciones de R1–R15; vacío si el esquema cumple. */
+export const c5 = async (url: string, consultar: Consultar): Promise<string[]> => [
+  ...(await consultar(url, leer('tools/db/reglas-catalogo.sql'))),
+  ...(await consultar(url, leer('tools/db/regla-r15.sql'))),
+];
 
 /** C6: diferencias entre `catalogo.sql` y la instantánea (`-` falta en la base, `+` sobra). */
 export async function c6(url: string, consultar: Consultar): Promise<string[]> {

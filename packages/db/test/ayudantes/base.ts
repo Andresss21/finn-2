@@ -1,7 +1,9 @@
 // Arnés de PostgreSQL de las pruebas de integración (TA-050; 07 §5.2, §5.3; DP-05, DP-07; CH-21).
 // - `setup` (globalSetup del proyecto `integracion`): contenedor de PG_MAYOR desde ECR; bootstrap.sql y
 //   roles-supabase.sql como superusuario sobre finn_plantilla; el gancho prepararPlantilla (C3, C5, C6).
-// - `crearBasePrueba()`: la base de un archivo, clonada de la plantilla y borrada al terminar el archivo.
+// - `crearBasePrueba()`: la base de un archivo, clonada de la plantilla y borrada al terminar el archivo, con
+//   la marca `finn.reloj_simulado` y `tools/pruebas/reloj-simulado.sql` (07 §5.2, paso 5; TA-056, CT-02).
+// - `fijarReloj(c, { hoy, desfaseMs })`: el reloj de la base para la transacción en curso (07 §4.1).
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -131,6 +133,28 @@ async function comoAdmin(sql: string): Promise<void> {
   }
 }
 
+/** `tools/pruebas/reloj-simulado.sql` como finn_migraciones; falla si la base no tiene la marca (CT-02). */
+export const instalarRelojSimulado = async (base: BasePrueba): Promise<void> => {
+  await consultar(base.urlMigraciones, readFileSync(raiz('tools/pruebas/reloj-simulado.sql'), 'utf8'));
+};
+
+/** El texto de R15 (`tools/db/regla-r15.sql`), para correrla sola. */
+export const leerRegla15 = (): string => readFileSync(raiz('tools/db/regla-r15.sql'), 'utf8');
+
+/**
+ * El reloj de la base para la transacción abierta en `c` (`set_config(…, true)`, 07 §4.1): `hoy` para
+ * `finn.hoy()` y `desfaseMs` para `finn.ahora()` y `finn.instante()`. Solo tienen efecto en una base de
+ * prueba; en una copia de la plantilla la base los ignora (barreras 3 y 4 de 07 §4.3).
+ */
+export async function fijarReloj(
+  c: pg.ClientBase,
+  { hoy, desfaseMs }: { hoy?: string; desfaseMs?: number | bigint },
+): Promise<void> {
+  if (hoy !== undefined) await c.query("SELECT set_config('finn.hoy', $1, true)", [hoy]);
+  if (desfaseMs !== undefined)
+    await c.query("SELECT set_config('finn.desfase_ms', $1, true)", [String(desfaseMs)]);
+}
+
 /** Una base del contenedor por su nombre; las URL se leen en las pruebas, no al recolectar. */
 export const baseLlamada = (nombre: string): BasePrueba => ({
   nombre,
@@ -147,15 +171,20 @@ export const baseLlamada = (nombre: string): BasePrueba => ({
 
 /**
  * La base de este archivo: `CREATE DATABASE … TEMPLATE finn_plantilla`, marcada con
- * `finn.reloj_simulado = on`, en un `beforeAll`; un `afterAll` la borra al terminar el archivo. Se llama
- * al cargar el archivo (fuera de una prueba o un hook); recolectar no toca la base.
+ * `finn.reloj_simulado = on` y con `reloj-simulado.sql` instalado (07 §5.2, paso 5), en un `beforeAll`; un
+ * `afterAll` la borra al terminar el archivo. Con `reloj: false` es una copia de la plantilla tal cual, sin
+ * marca ni reloj simulado: el esquema de producción, para C5, C6 y las barreras de 07 §4.3. Se llama al
+ * cargar el archivo (fuera de una prueba o un hook); recolectar no toca la base.
  */
-export function crearBasePrueba(): BasePrueba {
+export function crearBasePrueba({ reloj = true }: { reloj?: boolean } = {}): BasePrueba {
   const nombre = `finn_p_${randomUUID().replaceAll('-', '')}`;
+  const base = baseLlamada(nombre);
   beforeAll(async () => {
     await comoAdmin(`CREATE DATABASE ${nombre} TEMPLATE ${PLANTILLA}`);
+    if (!reloj) return;
     await comoAdmin(`ALTER DATABASE ${nombre} SET finn.reloj_simulado = on`);
+    await instalarRelojSimulado(base);
   });
   afterAll(() => comoAdmin(`DROP DATABASE IF EXISTS ${nombre} WITH (FORCE)`));
-  return baseLlamada(nombre);
+  return base;
 }

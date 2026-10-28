@@ -98,6 +98,7 @@ check|finn.transacciones|ck_transacciones_moneda|CHECK ((moneda_original ~ '^[A-
 check|finn.transacciones|ck_transacciones_monto_original|CHECK ((monto_original > (0)::numeric))
 check|finn.transacciones|ck_transacciones_total|CHECK ((total > 0))
 check|finn.vigencias_ciclo|ck_vigencias_dia|CHECK (((dia_inicio >= 1) AND (dia_inicio <= 31)))
+funcion|ahora()|definer=t|config=search_path=finn, pg_catalog|cuerpo=4e775579db6ffb2dfbe107403277ca9f
 funcion|clave_bloqueo()|definer=t|config=search_path=finn, pg_catalog|cuerpo=b92cbc720968323c4eb562dbc94f9667
 funcion|eliminar_conciliaciones_de_cuenta(p_cuenta uuid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=09c9dc737ad4b6e9877b5aaf19b037c4
 funcion|es_de_esta_transaccion(p_xmin xid)|definer=t|config=search_path=finn, pg_catalog|cuerpo=f7240230b93e46f36c34de64f614a18a
@@ -105,8 +106,9 @@ funcion|es_inicio_de_periodo(f date, ignorar_desde date)|definer=t|config=search
 funcion|hay_efecto(p_tx uuid, p_tipos finn.tipo_cuenta[], p_monto bigint)|definer=t|config=search_path=finn, pg_catalog|cuerpo=934c5286ef11966c3e07a54acf2b3b79
 funcion|hoy()|definer=t|config=search_path=finn, pg_catalog|cuerpo=9c6ed2eb352ff711be455500e56b9cf8
 funcion|inicio_del_periodo(f date)|definer=t|config=search_path=finn, pg_catalog|cuerpo=1a26e8369fe18ec0546026299301a82f
+funcion|instante()|definer=t|config=search_path=finn, pg_catalog|cuerpo=78551f305092d2d66be8d8fc127a2b9a
 funcion|operacion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=4f986aac82996d80261b81232f4d46cc
-funcion|purgar_eliminaciones()|definer=t|config=search_path=finn, pg_catalog|cuerpo=83caa82b5ffcdde7f508348d143829ca
+funcion|purgar_eliminaciones()|definer=t|config=search_path=finn, pg_catalog|cuerpo=73eca03c7297b6a4053d6092e8962b46
 funcion|rechazar(p_codigo text, p_mensaje text)|definer=t|config=search_path=finn, pg_catalog|cuerpo=152da7abe8273fa1acc3b2e2674c7310
 funcion|tg_asignacion()|definer=t|config=search_path=finn, pg_catalog|cuerpo=c765f910735c389573d1b65b875a210e
 funcion|tg_asignar_secuencia()|definer=t|config=search_path=finn, pg_catalog|cuerpo=a0aaa802106934bbb208c11adcdca7b8
@@ -150,6 +152,7 @@ indice|CREATE UNIQUE INDEX ux_grupos_nombre ON finn.grupos USING btree (lower(no
 indice|CREATE UNIQUE INDEX ux_instituciones_nombre ON finn.instituciones USING btree (lower(nombre))
 indice|CREATE UNIQUE INDEX ux_reglas_patron ON finn.reglas_comercio USING btree (lower(patron))
 privilegio|_prisma_migrations|finn_respaldo|SELECT
+privilegio|ahora()|finn_app|EXECUTE
 privilegio|asignaciones|finn_app|DELETE
 privilegio|asignaciones|finn_app|INSERT
 privilegio|asignaciones|finn_app|SELECT
@@ -215,6 +218,7 @@ privilegio|grupos|finn_app|SELECT
 privilegio|grupos|finn_app|UPDATE
 privilegio|grupos|finn_respaldo|SELECT
 privilegio|hoy()|finn_app|EXECUTE
+privilegio|instante()|finn_app|EXECUTE
 privilegio|instituciones|finn_app|DELETE
 privilegio|instituciones|finn_app|INSERT
 privilegio|instituciones|finn_app|SELECT
