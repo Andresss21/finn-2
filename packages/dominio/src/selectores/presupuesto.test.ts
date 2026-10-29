@@ -30,7 +30,7 @@ const id = (t: string) => t as Uuid;
  * en efectivo con 150 de fondo (sobregiro de débito 50) y `cine` gasta 40 con la tarjeta sin fondo
  * (sobregiro con tarjeta 40). `vieja` (archivada) conserva 30; `ahorro` tiene una meta anual de 1000.
  */
-function estado() {
+function estado(extra: readonly Asignacion[] = []) {
   const cuentas = [
     { id: id('ef'), tipo: 'efectivo', nombre: 'Efectivo', archivada: false },
     { id: id('vi'), tipo: 'tarjeta', nombre: 'Visa', archivada: false },
@@ -80,6 +80,7 @@ function estado() {
     asig('super', '2027-04-01', 50),
     asig('ropa', '2027-04-01', 10),
     asig('ahorro', '2027-04-01', 250),
+    ...extra,
   ];
   const transacciones: Transaccion[] = [];
   const efectos: Efecto[] = [];
@@ -263,7 +264,8 @@ describe('selectores de Inicio, Presupuesto y detalle de LPA', () => {
       tipoExcedente: null,
       metaBp: 2500,
     });
-    expect(p.totales).toEqual({ asignado: c(310), gastado: c(240), disponible: c(260) });
+    // [CH-32] Solo normales visibles: sin `pago-vi` (Disp 60) ni `vieja` (archivada, Disp 30).
+    expect(p.totales).toEqual({ asignado: c(310), gastado: c(240), disponible: c(170) });
     expect(p.pagosTarjeta).toEqual([
       {
         tarjeta: { id: 'vi', nombre: 'Visa' },
@@ -290,6 +292,33 @@ describe('selectores de Inicio, Presupuesto y detalle de LPA', () => {
     expect(nombresEn('cubiertas')).toEqual(['ropa', 'ahorro']);
     expect(nombresEn('todas')).toEqual(['super', 'ropa', 'cine', 'viaje', 'ahorro']);
     expect(presupuesto(i, undefined, 'sin_fondos').totales).toEqual(presupuesto(i).totales);
+  });
+
+  it('PRU-DOM-PRES-102 [AV-14] los totales suman solo las categorías normales visibles, como grupos[].totales (CH-32)', () => {
+    // `pago-vi` con Asig(abril) = 25: asignado 25 y Disp 85 en la franja de Pagos de tarjeta, fuera de los totales.
+    const conPago = estado([
+      {
+        id: id('a-pago-vi-2027-04-01'),
+        categoriaId: id('pago-vi'),
+        periodoInicio: f('2027-04-01'),
+        monto: c(25),
+      } as Asignacion,
+    ]);
+    const sumaDeGrupos = (x: ReturnType<typeof presupuesto>) => ({
+      asignado: x.grupos.reduce((a, g) => a + g.totales.asignado, 0),
+      gastado: x.grupos.reduce((a, g) => a + g.totales.gastado, 0),
+      disponible: x.grupos.reduce((a, g) => a + g.totales.disponible, 0),
+    });
+    const abril = presupuesto(conPago);
+    expect(abril.pagosTarjeta[0]).toMatchObject({ asignado: c(25), disponible: c(85) });
+    expect(abril.archivadasConDinero.map((x) => x.disponible)).toEqual([c(30)]);
+    expect(abril.totales).toEqual({ asignado: c(310), gastado: c(240), disponible: c(170) });
+    expect(abril.totales).toEqual(sumaDeGrupos(abril));
+    expect(presupuesto(conPago, undefined, 'sobregiradas').totales).toEqual(abril.totales);
+    // Cerrado: la archivada visible (`vieja`, R4) está en su grupo y entra en los totales.
+    const marzo = presupuesto(conPago, f('2027-03-01'));
+    expect(marzo.totales).toEqual(sumaDeGrupos(marzo));
+    expect(marzo.totales.asignado).toBe(c(190));
   });
 
   it('PRU-DOM-PRES-102 un período cerrado muestra las archivadas con actividad y sin faltaReservar; fuera del rango lanza', () => {

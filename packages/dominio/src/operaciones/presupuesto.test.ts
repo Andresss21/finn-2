@@ -274,6 +274,10 @@ describe('PRU-DOM-PRES-101: aplicar, presupuesto y metas (01 §5.3, 04 §3.3)', 
     expect(asig(exito(ejecutar(base(), op14('VIEJA', MAR, 10))).hechosNuevos, 'VIEJA', MAR)).toBe(
       c(10),
     );
+    // H10 [CH-31]: en un período futuro, una archivada no cambia ni para entregar (03 §4.5.3, regla 3).
+    expect(rechazos(ejecutar(base(), op14('VIEJA', ABR, -1)))).toEqual([
+      { codigo: 'categoria_archivada', datos: { categoriaId: 'VIEJA' } },
+    ]);
     // El período: un inicio, activo o futuro; la categoría existe.
     const codigo = (x: ComandoDominio) => rechazos(ejecutar(base(), x)).map((r) => r.codigo);
     expect(codigo(op14('GAS', f('2027-03-02'), 10))).toEqual(['periodo_no_valido']);
