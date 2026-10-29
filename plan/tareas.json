@@ -225,7 +225,7 @@
 
   "TA-176": { "estado": "terminada", "pr": 19 },
 
-  "TA-177": { "estado": "en_curso", "rama": "ta-177-recibir-sms" },
+  "TA-177": { "estado": "terminada", "pr": 150 },
 
   "TA-178": { "estado": "pendiente" },
 
