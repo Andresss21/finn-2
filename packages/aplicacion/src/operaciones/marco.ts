@@ -1,7 +1,7 @@
 // Marco de operaciones (04 §2.3, §4.2 a §4.9): `previsualizar` y `confirmar` construidos con la `DefinicionOperacion`
 // de cada OP/OPT. Aquí viven, una sola vez, el comando resuelto (BE-10), la huella y la confirmación (BE-13), la
 // idempotencia por clase (BE-17), los reintentos (BE-18), los efectos posteriores (BE-19) y los ids (BE-31).
-// Nada de este módulo habla con Prisma: solo `escribir()`/`leer()` de @finn/db y sus `EscritorTx`/`LectorTx`.
+// Solo ve `escribir()`/`leer()` de @finn/db y sus `EscritorTx`/`LectorTx`.
 import { createHash, randomBytes } from 'node:crypto';
 import type { z } from 'zod';
 import { aplicar as aplicarDominio, formaCanonicaDelImpacto } from '@finn/dominio';
@@ -9,7 +9,6 @@ import type {
   AvisoOperacion,
   ComandoDominio,
   GeneradorIds,
-  Hechos,
   Impacto,
   Instante,
   OperacionDeclarada,
@@ -38,7 +37,6 @@ import {
   errorDeValidacion,
   mensajeDeRechazo,
   mensajeInterno,
-  type AvisoMostrado,
   type ErrorFinn,
   type ResultadoAccion,
 } from '../errores/index.ts';
@@ -50,11 +48,8 @@ export type ClaseIdempotencia = 'creacion' | 'valor_absoluto' | 'eliminacion' | 
 /** Lo que la comprobación de idempotencia decide, bajo el bloqueo (paso 5 de 04 §4.2). */
 export type Veredicto<Salida> =
   | { readonly tipo: 'aplicar' }
-  /** La operación ya estaba aplicada: se responde con la salida que habría tenido, sin escribir. */
-  | { readonly tipo: 'ya_aplicada'; readonly salida: Salida }
-  /** Creación: el id existe con datos distintos (4.6.1). */
-  | { readonly tipo: 'conflicto_id' }
-  /** Valor absoluto: el valor actual no es ni el esperado ni el nuevo (4.6.2). */
+  | { readonly tipo: 'ya_aplicada'; readonly salida: Salida } // misma salida que habría tenido
+  | { readonly tipo: 'conflicto_id' } // creación: el id existe con datos distintos (4.6.1)
   | {
       readonly tipo: 'conflicto_desactualizado';
       readonly actuales: Readonly<Record<string, unknown>>;
@@ -79,10 +74,7 @@ export interface DefinicionOperacion<Entrada, Resuelto, Salida> {
   readonly exigeConfirmacion?: boolean;
   /** El id del hecho principal que envía el cliente (4.6.1): con él, los ids secundarios son UUIDv5 (BE-31). */
   idPrincipal?(entrada: Entrada): Uuid;
-  /**
-   * Paso 5 de 04 §4.2: compara la entrada con lo que hay (por clase, 4.6) con lecturas puntuales por id. Sin ella la
-   * operación siempre sigue y la unicidad de la base y el dominio rechazan lo demás.
-   */
+  /** Paso 5: compara la entrada con lo que hay, según la clase (4.6). Sin ella la operación siempre sigue. */
   comprobarIdempotencia?(lector: LectorTx, entrada: Entrada): Promise<Veredicto<Salida>>;
   /** Paso 6: carga lo que `comando()` necesita y no está en los hechos [M] (BE-10). */
   resolver(lector: LectorTx, entrada: Entrada): Promise<Resuelto>;
@@ -106,13 +98,9 @@ export interface DepsMarco {
   readonly instante?: () => Instante;
   readonly pausar?: (ms: number) => Promise<void>;
   readonly azar?: () => number;
-  readonly cronometro?: () => number;
   readonly nuevoIdError?: () => string;
-  readonly generadorAleatorio?: () => GeneradorIds;
   /** Registro de `eventos_sistema`; por omisión, en una transacción propia de `escribir()` (ver el PR). */
   readonly registrar?: (evento: NuevoEvento) => Promise<void>;
-  /** Texto de un aviso (catálogo de 04 §3.0.5); por omisión, su código. */
-  readonly mensajeDeAviso?: (aviso: AvisoOperacion) => string;
   /** `after()` de Next (4.9); por omisión los efectos se esperan antes de responder. */
   readonly despues?: (tarea: () => Promise<void>) => void;
 }
@@ -126,19 +114,13 @@ export interface ResultadoPrevisualizar {
   readonly rechazos: readonly Rechazo[];
 }
 
-/** Lo que `confirmar` acepta además de la entrada de la operación (4.3). */
-export type ConfirmacionOpcional = { revisionVista?: string; huellaImpacto?: string };
-
-const ESPERA_MINIMA_MS = 300;
-const ESPERA_VARIABLE_MS = 300;
-const TOPE_REINTENTO_MS = 15_000;
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 export const MENSAJE_INCIERTO =
   'No pudimos confirmar si se guardó. Volvé a intentarlo; no se duplicará.';
-const MENSAJE_CONFIRMAR = 'Revisá el impacto antes de confirmar.';
+const TOPE_REINTENTO_MS = 15_000;
 
 /** `E-` y 6 caracteres de Crockford base32 (04 §7.8). */
-export const nuevoIdErrorAleatorio = (): string =>
+const idErrorAleatorio = (): string =>
   `E-${[...randomBytes(6)].map((b) => CROCKFORD[b % 32]).join('')}`;
 
 /** La huella de 04 §4.3: SHA-256 hexadecimal de la forma canónica del impacto y los avisos (ids nuevos como `@nueva#k`). */
@@ -152,37 +134,21 @@ class SinEscribir<T> extends Error {
   }
 }
 
+/** Una conexión perdida (BE-18): la base no dio SQLSTATE y el error habla de la conexión. */
 const esConexion = (e: unknown): boolean => {
   const o = (typeof e === 'object' && e !== null ? e : {}) as { code?: unknown; message?: unknown };
-  const texto = `${typeof o.code === 'string' ? o.code : ''} ${typeof o.message === 'string' ? o.message : ''}`;
+  const t = `${typeof o.code === 'string' ? o.code : ''} ${typeof o.message === 'string' ? o.message : ''}`;
   return /\b(P1001|P1002|P1008|P1017|ECONNRESET|ECONNREFUSED|EPIPE|ETIMEDOUT)\b|Connection terminated|connection (?:closed|lost)/i.test(
-    texto,
+    t,
   );
 };
 
-const dep = <K extends keyof DepsMarco>(d: DepsMarco, k: K, por: NonNullable<DepsMarco[K]>) =>
-  d[k] ?? por;
 const opcionesDe = (d: DepsMarco): OpcionesTx => d.opciones?.() ?? {};
-
-/** Separa `revisionVista` y `huellaImpacto` de la entrada de la operación. */
-function separar(cruda: unknown): { entrada: unknown; confirmacion: ConfirmacionOpcional } {
-  if (typeof cruda !== 'object' || cruda === null || Array.isArray(cruda))
-    return { entrada: cruda, confirmacion: {} };
-  const { revisionVista, huellaImpacto, ...entrada } = cruda as Record<string, unknown>;
-  return {
-    entrada,
-    confirmacion: {
-      ...(typeof revisionVista === 'string' ? { revisionVista } : {}),
-      ...(typeof huellaImpacto === 'string' ? { huellaImpacto } : {}),
-    },
-  };
-}
-
-function idsDe<E, R, S>(def: DefinicionOperacion<E, R, S>, entrada: E, d: DepsMarco): GeneradorIds {
-  return def.idPrincipal
-    ? generadorDerivado(def.idPrincipal(entrada))
-    : dep(d, 'generadorAleatorio', generadorAleatorio)();
-}
+const errorDe = (
+  codigo: string,
+  categoria: ErrorFinn['categoria'],
+  extra: Partial<ErrorFinn> = {},
+) => ({ categoria, codigo, mensaje: mensajeDeRechazo({ codigo }) ?? codigo, ...extra });
 
 /** Pasos 4 a 7 de 04 §4.2 (3 a 6 de 4.3): hechos, comando resuelto y `aplicar`. */
 async function aplicarEn<E, R, S>(
@@ -192,34 +158,26 @@ async function aplicarEn<E, R, S>(
   instante: Instante,
   d: DepsMarco,
 ): Promise<{ resuelto: R; resultado: ResultadoAplicar }> {
-  const hechos: Hechos = await d.memoria.hechos(tx.estado.revision, () => cargarHechos(tx));
+  const hechos = await d.memoria.hechos(tx.estado.revision, () => cargarHechos(tx));
   const resuelto = await def.resolver(tx, entrada);
-  const comando = def.comando(resuelto, instante, idsDe(def, entrada, d));
+  const ids = def.idPrincipal ? generadorDerivado(def.idPrincipal(entrada)) : generadorAleatorio();
+  const comando = def.comando(resuelto, instante, ids);
   const hoy = FechaLocal.desdeTexto(tx.estado.hoy);
-  return { resuelto, resultado: dep(d, 'aplicar', aplicarDominio)(hechos, comando, hoy) };
+  return { resuelto, resultado: (d.aplicar ?? aplicarDominio)(hechos, comando, hoy) };
 }
 
-const mostrar = (d: DepsMarco, a: AvisoOperacion): AvisoMostrado => ({
-  codigo: a.codigo,
-  mensaje: d.mensajeDeAviso ? d.mensajeDeAviso(a) : a.codigo,
+const interno = (codigo: string, idError: string): ErrorFinn => ({
+  categoria: 'INTERNO',
+  codigo,
+  mensaje: mensajeInterno(idError),
+  idError,
 });
-
-const errorDe = (
-  codigo: string,
-  categoria: ErrorFinn['categoria'],
-  extra: Partial<ErrorFinn> = {},
-) => ({ categoria, codigo, mensaje: mensajeDeRechazo({ codigo }) ?? codigo, ...extra });
 
 /** Un rechazo del dominio como `ErrorFinn` (7.5). `invariante_violada` es un error interno. */
 function errorDeRechazos(rechazos: readonly Rechazo[], idError: string): ErrorFinn {
   const primero = rechazos[0];
   if (primero === undefined || primero.codigo === 'invariante_violada')
-    return {
-      categoria: 'INTERNO',
-      codigo: 'invariante_violada',
-      mensaje: mensajeInterno(idError),
-      idError,
-    };
+    return interno('invariante_violada', idError);
   const texto = (r: Rechazo): string => mensajeDeRechazo(r) ?? r.codigo;
   const campos: Record<string, string> = {};
   for (const r of rechazos)
@@ -232,16 +190,19 @@ function errorDeRechazos(rechazos: readonly Rechazo[], idError: string): ErrorFi
   };
 }
 
+type Contexto = { operacion: string; idError: string; inicio: number; revision?: string };
+const contexto = (operacion: string, d: DepsMarco): Contexto => ({
+  operacion,
+  idError: (d.nuevoIdError ?? idErrorAleatorio)(),
+  inicio: performance.now(),
+});
+
 /** Registro best-effort de un evento: nunca cambia la respuesta (4.9, 7.8). */
 async function registrar(d: DepsMarco, evento: NuevoEvento): Promise<void> {
   try {
     if (d.registrar) await d.registrar(evento);
     else
-      await dep(
-        d,
-        'escribir',
-        escribirDb,
-      )(async (tx) => {
+      await (d.escribir ?? escribirDb)(async (tx) => {
         await registrarEvento(tx, evento);
       }, opcionesDe(d));
   } catch {
@@ -249,45 +210,42 @@ async function registrar(d: DepsMarco, evento: NuevoEvento): Promise<void> {
   }
 }
 
-type Contexto = { operacion: string; idError: string; inicio: number; revision?: string };
+const evento = (
+  d: DepsMarco,
+  c: Contexto,
+  nivel: NuevoEvento['nivel'],
+  mensaje: string,
+  datos: DatosEvento = {},
+) =>
+  registrar(d, {
+    nivel,
+    origen: 'app',
+    mensaje,
+    datos: { idError: c.idError, operacion: c.operacion, ...datos },
+  });
 
 /** Traduce un error de la base o del código a `ErrorFinn` y lo registra (7.2, 7.4, 7.8). */
-async function errorDeExcepcion(
-  e: unknown,
-  confirmado: boolean,
-  c: Contexto,
-  d: DepsMarco,
-): Promise<ErrorFinn> {
+async function errorDeExcepcion(e: unknown, confirmado: boolean, c: Contexto, d: DepsMarco) {
   const s = sqlstateDe(e);
-  const interno: ErrorFinn = {
-    categoria: 'INTERNO',
-    codigo: 'interno',
-    mensaje: mensajeInterno(c.idError),
-    idError: c.idError,
-  };
+  const { idError } = c;
   const error: ErrorFinn =
     s === null && esConexion(e) && confirmado
-      ? { categoria: 'INCIERTO', codigo: 'incierto', mensaje: MENSAJE_INCIERTO, idError: c.idError }
-      : (errorDeBase(e, c.idError) ?? interno);
-  const datos: DatosEvento = {
-    idError: c.idError,
-    operacion: c.operacion,
-    categoria: error.categoria,
-    codigo: error.codigo,
-    duracionMs: Math.round(dep(d, 'cronometro', () => performance.now())() - c.inicio),
-    mensajeSaneado: sanearMensaje(e instanceof Error ? e.message : ''),
-    ...(s?.sqlstate ? { sqlstate: s.sqlstate } : {}),
-    ...(s?.restriccion ? { restriccion: s.restriccion } : {}),
-    ...(s?.tabla ? { tabla: s.tabla } : {}),
-    ...(s?.codigoPrisma ? { codigoPrisma: s.codigoPrisma } : {}),
-    ...(c.revision ? { revision: c.revision } : {}),
-  };
-  await registrar(d, {
-    nivel: error.categoria === 'OCUPADO' ? 'aviso' : 'error',
-    origen: 'app',
-    mensaje: `${error.categoria} ${error.codigo} ${c.operacion}`,
-    datos,
-  });
+      ? { categoria: 'INCIERTO', codigo: 'incierto', mensaje: MENSAJE_INCIERTO, idError }
+      : (errorDeBase(e, idError) ?? interno('interno', idError));
+  await evento(
+    d,
+    c,
+    error.categoria === 'OCUPADO' ? 'aviso' : 'error',
+    `${error.categoria} ${error.codigo} ${c.operacion}`,
+    {
+      categoria: error.categoria,
+      codigo: error.codigo,
+      duracionMs: Math.round(performance.now() - c.inicio),
+      mensajeSaneado: sanearMensaje(e instanceof Error ? e.message : ''),
+      ...s,
+      ...(c.revision === undefined ? {} : { revision: c.revision }),
+    },
+  );
   return error;
 }
 
@@ -301,30 +259,23 @@ async function conReintentos<T>(
   c: Contexto,
   d: DepsMarco,
 ): Promise<{ ok: true; valor: T } | { ok: false; error: unknown }> {
-  const cronometro = dep(d, 'cronometro', () => performance.now());
   for (let n = 0; ; n++) {
     try {
       return { ok: true, valor: await intento() };
     } catch (e) {
       if (e instanceof SinEscribir) return { ok: true, valor: e.fin as T };
       const s = sqlstateDe(e);
-      const bloqueo = s?.sqlstate === '55P03' || s?.sqlstate === '40P01';
-      const perdida = s === null && esConexion(e) && !confirmado();
-      if (n === 0 && (bloqueo || perdida) && cronometro() - c.inicio < TOPE_REINTENTO_MS) {
-        const ms = ESPERA_MINIMA_MS + dep(d, 'azar', Math.random)() * ESPERA_VARIABLE_MS;
-        await dep(d, 'pausar', (t: number) => new Promise<void>((r) => setTimeout(r, t)))(ms);
-        continue;
-      }
-      return { ok: false, error: e };
+      const reintentable =
+        s?.sqlstate === '55P03' ||
+        s?.sqlstate === '40P01' ||
+        (s === null && esConexion(e) && !confirmado());
+      if (n > 0 || !reintentable || performance.now() - c.inicio >= TOPE_REINTENTO_MS)
+        return { ok: false, error: e };
+      const ms = 300 + (d.azar ?? Math.random)() * 300;
+      await (d.pausar ?? ((t) => new Promise<void>((r) => setTimeout(r, t))))(ms);
     }
   }
 }
-
-const contexto = (operacion: string, d: DepsMarco): Contexto => ({
-  operacion,
-  idError: dep(d, 'nuevoIdError', nuevoIdErrorAleatorio)(),
-  inicio: dep(d, 'cronometro', () => performance.now())(),
-});
 
 /** 04 §4.3, `previsualizar(entrada)`: en `leer()`, sin bloqueo, sin persistir. */
 export async function previsualizar<E, R, S>(
@@ -332,31 +283,26 @@ export async function previsualizar<E, R, S>(
   cruda: unknown,
   d: DepsMarco,
 ): Promise<ResultadoAccion<ResultadoPrevisualizar>> {
-  const analizada = def.contrato.safeParse(separar(cruda).entrada);
+  const analizada = def.contrato.safeParse(cruda);
   if (!analizada.success) return { ok: false, error: errorDeValidacion(analizada.error.issues) };
+  if (!d.instante) throw new Error('previsualizar necesita DepsMarco.instante');
   const instante = d.instante;
-  if (!instante) throw new Error('previsualizar necesita DepsMarco.instante');
   const c = contexto(def.id, d);
   const r = await conReintentos(
     () =>
-      dep(
-        d,
-        'leer',
-        leerDb,
-      )(async (tx): Promise<ResultadoPrevisualizar> => {
+      (d.leer ?? leerDb)(async (tx): Promise<ResultadoPrevisualizar> => {
         c.revision = tx.estado.revision;
         const { resultado } = await aplicarEn(def, analizada.data, tx, instante(), d);
-        const revisionVista = tx.estado.revision;
+        const vista = { revisionVista: tx.estado.revision, rechazos: [] };
         return resultado.ok
           ? {
-              revisionVista,
+              ...vista,
               huellaImpacto: huellaDe(resultado),
               impacto: resultado.impacto,
               avisos: resultado.avisos,
-              rechazos: [],
             }
           : {
-              revisionVista,
+              ...vista,
               huellaImpacto: null,
               impacto: null,
               avisos: [],
@@ -368,12 +314,7 @@ export async function previsualizar<E, R, S>(
     d,
   );
   if (!r.ok) return { ok: false, error: await errorDeExcepcion(r.error, false, c, d) };
-  return {
-    ok: true,
-    valor: r.valor,
-    yaAplicada: false,
-    avisos: r.valor.avisos.map((a) => mostrar(d, a)),
-  };
+  return { ok: true, valor: r.valor, yaAplicada: false, avisos: [] };
 }
 
 type Fin<S> =
@@ -394,13 +335,15 @@ export async function confirmar<E, R, S>(
   cruda: unknown,
   d: DepsMarco,
 ): Promise<ResultadoAccion<S>> {
-  const { entrada: sinConfirmacion, confirmacion } = separar(cruda);
+  const { revisionVista, huellaImpacto, ...sinConfirmacion } = (cruda ?? {}) as Record<
+    string,
+    unknown
+  >;
   const analizada = def.contrato.safeParse(sinConfirmacion);
   if (!analizada.success) return { ok: false, error: errorDeValidacion(analizada.error.issues) };
   const entrada = analizada.data;
   const c = contexto(def.id, d);
   let confirmado = false; // `callbackTerminado` de 04 §4.7: el COMMIT pudo haberse aplicado
-
   const terminar = (fin: Fin<S>): never => {
     throw new SinEscribir<Fin<S>>(fin);
   };
@@ -428,8 +371,13 @@ export async function confirmar<E, R, S>(
       return terminar({ tipo: 'error', error: errorDe('no_encontrado', 'NO_ENCONTRADO') });
 
     // Pasos 4, 6 y 7; paso 8: un rechazo termina sin escribir
-    const instante = tx.estado.instante as Instante;
-    const { resuelto, resultado } = await aplicarEn(def, entrada, tx, instante, d);
+    const { resuelto, resultado } = await aplicarEn(
+      def,
+      entrada,
+      tx,
+      tx.estado.instante as Instante,
+      d,
+    );
     if (!resultado.ok)
       return terminar({ tipo: 'error', error: errorDeRechazos(resultado.rechazos, c.idError) });
 
@@ -437,14 +385,11 @@ export async function confirmar<E, R, S>(
     const huella = huellaDe(resultado);
     const pide =
       def.exigeConfirmacion === true || resultado.avisos.some((a) => a.requiereConfirmacion);
-    if (pide && confirmacion.huellaImpacto !== huella) {
-      const vista = confirmacion.revisionVista;
+    if (pide && huellaImpacto !== huella)
       return terminar({
         tipo: 'error',
-        error: {
-          categoria: 'REQUIERE_CONFIRMACION',
-          codigo: 'requiere_confirmacion',
-          mensaje: MENSAJE_CONFIRMAR,
+        error: errorDe('requiere_confirmacion', 'REQUIERE_CONFIRMACION', {
+          mensaje: 'Revisá el impacto antes de confirmar.',
           previsualizacion: {
             revisionVista: tx.estado.revision,
             huellaImpacto: huella,
@@ -452,12 +397,11 @@ export async function confirmar<E, R, S>(
             avisos: resultado.avisos,
             rechazos: [],
           },
-          ...(vista !== undefined && vista !== tx.estado.revision
-            ? { datos: { revisionVista: vista, revisionActual: tx.estado.revision } }
+          ...(typeof revisionVista === 'string' && revisionVista !== tx.estado.revision
+            ? { datos: { revisionVista, revisionActual: tx.estado.revision } }
             : {}),
-        },
+        }),
       });
-    }
 
     // Pasos 10 a 13
     const declarada = def.operacionDeclarada ?? resultado.operacionDeclarada;
@@ -478,7 +422,7 @@ export async function confirmar<E, R, S>(
 
   const opciones = opcionesDe(d);
   const corrida = await conReintentos(
-    () => dep(d, 'escribir', escribirDb)(cuerpo, opciones),
+    () => (d.escribir ?? escribirDb)(cuerpo, opciones),
     () => confirmado,
     c,
     d,
@@ -488,42 +432,27 @@ export async function confirmar<E, R, S>(
   else {
     d.memoria.vaciar(); // ante un error la memoria no puede asegurar su revisión
     const s = sqlstateDe(corrida.error);
-    // Defensa de 4.6.1: la PK del hecho principal se repitió a pesar del bloqueo; se vuelve a leer y se compara
-    if (
+    const defensa =
       def.idempotencia === 'creacion' &&
-      def.comprobarIdempotencia &&
       s?.sqlstate === '23505' &&
-      s.restriccion?.endsWith('_pkey')
-    ) {
-      await registrar(d, {
-        nivel: 'aviso',
-        origen: 'app',
-        mensaje: `23505 ${s.restriccion} ${def.id}`,
-        datos: { idError: c.idError, operacion: def.id, restriccion: s.restriccion },
-      });
-      const comprobar = def.comprobarIdempotencia.bind(def);
-      const nueva = await dep(
-        d,
-        'leer',
-        leerDb,
-      )((tx) => comprobar(tx, entrada), opciones).catch(() => null);
-      if (nueva?.tipo === 'ya_aplicada') fin = { tipo: 'ya_aplicada', salida: nueva.salida };
-      else if (nueva?.tipo === 'conflicto_id')
-        fin = { tipo: 'error', conflictoId: true, error: errorDe('conflicto_id', 'CONFLICTO') };
-      else fin = { tipo: 'error', error: await errorDeExcepcion(corrida.error, confirmado, c, d) };
-    } else fin = { tipo: 'error', error: await errorDeExcepcion(corrida.error, confirmado, c, d) };
+      s.restriccion?.endsWith('_pkey');
+    // Defensa de 4.6.1: la PK del hecho principal se repitió a pesar del bloqueo; se relee y se compara
+    const comprobar = def.comprobarIdempotencia?.bind(def);
+    const nueva =
+      defensa && comprobar
+        ? await (d.leer ?? leerDb)((tx) => comprobar(tx, entrada), opciones).catch(() => null)
+        : null;
+    if (defensa) await evento(d, c, 'aviso', `23505 ${s.restriccion ?? ''} ${def.id}`);
+    if (nueva?.tipo === 'ya_aplicada') fin = { tipo: 'ya_aplicada', salida: nueva.salida };
+    else if (nueva?.tipo === 'conflicto_id')
+      fin = { tipo: 'error', conflictoId: true, error: errorDe('conflicto_id', 'CONFLICTO') };
+    else fin = { tipo: 'error', error: await errorDeExcepcion(corrida.error, confirmado, c, d) };
   }
 
   if (fin.tipo === 'ya_aplicada')
     return { ok: true, valor: fin.salida, yaAplicada: true, avisos: [] };
   if (fin.tipo === 'error') {
-    if (fin.conflictoId)
-      await registrar(d, {
-        nivel: 'aviso',
-        origen: 'app',
-        mensaje: `CONFLICTO conflicto_id ${def.id}`,
-        datos: { idError: c.idError, operacion: def.id },
-      });
+    if (fin.conflictoId) await evento(d, c, 'aviso', `CONFLICTO conflicto_id ${def.id}`);
     return { ok: false, error: fin.error };
   }
 
@@ -535,25 +464,14 @@ export async function confirmar<E, R, S>(
       try {
         await efecto.ejecutar();
       } catch (e) {
-        await registrar(d, {
-          nivel: 'error',
-          origen: 'app',
-          mensaje: `EFECTO ${efecto.nombre} ${def.id}`,
-          datos: {
-            idError: c.idError,
-            operacion: def.id,
-            mensajeSaneado: sanearMensaje(e instanceof Error ? e.message : ''),
-          },
-        });
+        const mensajeSaneado = sanearMensaje(e instanceof Error ? e.message : '');
+        await evento(d, c, 'error', `EFECTO ${efecto.nombre} ${def.id}`, { mensajeSaneado });
       }
     };
     if (d.despues) d.despues(tarea);
     else await tarea();
   }
-  return {
-    ok: true,
-    valor: fin.salida,
-    yaAplicada: false,
-    avisos: fin.resultado.avisos.map((a) => mostrar(d, a)),
-  };
+  // El texto de cada aviso (catálogo de 04 §3.0.5) lo pone la interfaz con el código; el marco no lo inventa
+  const avisos = fin.resultado.avisos.map((a) => ({ codigo: a.codigo, mensaje: a.codigo }));
+  return { ok: true, valor: fin.salida, yaAplicada: false, avisos };
 }
