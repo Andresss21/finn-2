@@ -3,12 +3,17 @@
 import { ahoraDb, conAhora } from '../ahora.ts';
 import { txPrisma, type EscritorTx, type LectorTx } from '../transacciones.ts';
 
+export type ValorDatoNotificacion =
+  string | number | boolean | null | readonly ValorDatoNotificacion[] | DatosNotificacion;
+export type DatosNotificacion = { readonly [clave: string]: ValorDatoNotificacion };
+
 export type NuevaNotificacion = {
-  aviso: string;
+  /** Nulo para los motivos que no son un aviso del dominio (CF-16, 03 §3.28). */
+  aviso: string | null;
   motivo: string;
   titulo: string;
   cuerpo: string;
-  datos?: Record<string, string | number | boolean | null>;
+  datos?: DatosNotificacion;
 };
 
 export async function crearNotificacion(tx: EscritorTx, n: NuevaNotificacion) {
@@ -32,6 +37,18 @@ export async function noLeidasDeAviso(tx: LectorTx, aviso: string, limite = 50) 
     orderBy: { creadaEn: 'desc' },
     take: limite,
   });
+}
+
+/** Marca como leídas las no leídas de `ids`, o todas; las ya leídas conservan su `leida_en` (natural). Devuelve cuántas. */
+export async function marcarLeidas(
+  tx: EscritorTx,
+  quien: { readonly ids: readonly string[] } | { readonly todas: true },
+): Promise<number> {
+  const r = await txPrisma(tx).notificacion.updateMany({
+    where: { leidaEn: null, ...('ids' in quien ? { id: { in: [...quien.ids] } } : {}) },
+    data: { leidaEn: await ahoraDb(tx) },
+  });
+  return r.count;
 }
 
 export async function marcarLeida(tx: EscritorTx, id: string): Promise<void> {
