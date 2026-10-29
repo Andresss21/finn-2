@@ -4,6 +4,13 @@ import type { Instantanea } from '../hechos';
 import { type PeriodoDto, periodoDto } from './comunes';
 export { actividad, type TransaccionFila } from './actividad';
 export { type PeriodoDto, type Ref, type SobregiroDto } from './comunes';
+export {
+  bandeja,
+  type DatosDeBandeja,
+  type MovimientoDto,
+  type OpcionesDeBandeja,
+} from './bandeja';
+export { sugerencia, type Sugerencia } from './sugerencia';
 export { detalleCategoria, type DetalleCategoria } from './detalle-categoria';
 export { detallePagoTarjeta, type DetallePagoTarjeta } from './detalle-pago-tarjeta';
 export { estructura, type GrupoDeEstructura } from './estructura';
