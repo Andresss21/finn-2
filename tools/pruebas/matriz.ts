@@ -118,6 +118,11 @@ function consultasDe06(d06: string): string[] {
   return [...t.matchAll(/^\| `(\w+)\(\)` \|/gm)].map((m) => `Q-${m[1]}`);
 }
 
+// Las FORM-<operacion> de las operaciones de formulario() de 06 (CH-37), como las deriva plan:verificar
+function formulariosDe06(d06: string): string[] {
+  return [...d06.matchAll(/^\| `formulario\('(\w+)'\)` \|/gm)].map((m) => `FORM-${m[1]}`);
+}
+
 // ---------------------------------------------------------------- reglas
 export function verificar(e: Entradas) {
   const { lista, errores } = pruebas(e);
@@ -127,6 +132,7 @@ export function verificar(e: Entradas) {
     ...cambiosFuturos(e.d06),
     ...fs.map((f) => f.ft),
     ...consultasDe06(e.d06),
+    ...formulariosDe06(e.d06),
   ]);
   const cob = cobertura(e, lista, ids);
   const { cubre, obj } = cob;

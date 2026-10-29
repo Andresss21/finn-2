@@ -164,6 +164,12 @@ describe('matriz: mutaciones (V7-09)', () => {
     expect(reglas(e)).toEqual(['M7']);
   });
 
+  it('M7: FORM-<operacion> se acepta [CH-37]; FORM-, form-registrar y FORM-Registrar no', () => {
+    expect(REF.test('FORM-pagar_tarjeta')).toBe(true);
+    for (const mal of ['FORM-', 'form-registrar', 'FORM-Registrar'])
+      expect(REF.test(mal)).toBe(false);
+  });
+
   it('M7: Q-<consulta> se acepta [CH-34]; Q-, q-inicio y Q-1 no', () => {
     expect(REF.test('Q-inicio')).toBe(true);
     expect(REF.test('Q-detalleLpa')).toBe(true);
