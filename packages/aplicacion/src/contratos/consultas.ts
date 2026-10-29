@@ -44,6 +44,21 @@ export const parametrosDetalleCategoria = z.object({
   periodoInicio: fechaLocal.optional(),
 });
 
+/** `consultas.bandeja({ vista?, cursor? })`: por defecto, los activos (04 §6.8). */
+export const parametrosBandeja = z.object({
+  vista: z.enum(['activos', 'descartados']).optional(),
+  cursor: z.string().min(1, { error: 'El cursor no es válido.' }).optional(),
+});
+
+/** `consultas.sugerencia({ comercio })`: texto libre del usuario (04 §6.14.3). */
+export const parametrosSugerencia = z.object({
+  comercio: z
+    .string({ error: 'Ingresá un comercio.' })
+    .trim()
+    .min(1, { error: 'Ingresá un comercio.' })
+    .max(200, { error: 'El comercio es demasiado largo.' }),
+});
+
 export type ParametrosDetalleCategoria = z.output<typeof parametrosDetalleCategoria>;
 export type ParametrosPresupuesto = z.output<typeof parametrosPresupuesto>;
 export type ParametrosDetalleLpa = z.output<typeof parametrosDetalleLpa>;

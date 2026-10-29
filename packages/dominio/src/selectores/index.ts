@@ -7,6 +7,13 @@ export { type PeriodoDto, type Ref, type SobregiroDto } from './comunes';
 export { cuentas } from './cuentas';
 export { detalleCuenta } from './detalle-cuenta';
 export { detalleTransaccion } from './detalle-transaccion';
+export {
+  bandeja,
+  type DatosDeBandeja,
+  type MovimientoDto,
+  type OpcionesDeBandeja,
+} from './bandeja';
+export { sugerencia, type Sugerencia } from './sugerencia';
 export { detalleCategoria, type DetalleCategoria } from './detalle-categoria';
 export { detallePagoTarjeta, type DetallePagoTarjeta } from './detalle-pago-tarjeta';
 export { estructura, type GrupoDeEstructura } from './estructura';
