@@ -18,6 +18,7 @@
     "./sms/*": "./src/sms/*.ts",
     "./operaciones/categorias": "./src/operaciones/categorias/index.ts",
     "./operaciones/presupuesto": "./src/operaciones/presupuesto/index.ts",
+    "./operaciones/transacciones": "./src/operaciones/transacciones/index.ts",
     "./tiempo": "./src/tiempo/index.ts"
   },
   "scripts": {
