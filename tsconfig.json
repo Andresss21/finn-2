@@ -10,6 +10,8 @@
     "packages/dominio/bench/*.ts",
     "tools/pruebas/oraculo/*.ts",
     "tools/db/*.ts",
-    "tools/ci/*.ts"
+    "tools/ci/*.ts",
+    "tools/respaldo/*.ts",
+    "tools/respaldo/test/*.ts"
   ]
 }
