@@ -187,7 +187,7 @@
 
   "TA-158": { "estado": "terminada", "pr": 100 },
 
-  "TA-159": { "estado": "pendiente" },
+  "TA-159": { "estado": "en_curso", "rama": "ta-159-marco-operaciones" },
 
   "TA-160": { "estado": "terminada", "pr": 104 },
 
