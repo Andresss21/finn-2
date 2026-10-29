@@ -1,18 +1,69 @@
 // Repositorios de las tablas [I] `sms_recibidos` y `sms_procesamientos` (03 §3.17, §3.18; solo inserción, 4.5.6).
 // El texto del SMS solo se guarda aquí (ADR-09); nunca en eventos_sistema ni en la consola (04 §15.3).
+import type { Instante, SmsRecibido, Uuid } from '@finn/dominio';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { ahoraDb, conAhora } from '../ahora.ts';
-import { dateDeFechaLocal } from '../mapeo/fechas.ts';
-import { txPrisma, type EscritorTx, type LectorTx } from '../transacciones.ts';
+import { dateDeFechaLocal, instanteDeDate } from '../mapeo/fechas.ts';
+import {
+  txPrisma,
+  txPrismaSinBloqueo,
+  type EscritorSmsTx,
+  type EscritorTx,
+  type LectorTx,
+} from '../transacciones.ts';
 
 export type SmsGuardado = { id: string; texto: string; remitente: string; recibidoEn: Date };
 
+/** OP-35 paso 1: con `escribirSms()`, sin el bloqueo global (03 §5.1); `recibido_en` es `finn.ahora()`. */
 export async function guardarSms(
-  tx: EscritorTx,
+  tx: EscritorSmsTx | EscritorTx,
   sms: { texto: string; remitente: string },
 ): Promise<SmsGuardado> {
   const ahora = await ahoraDb(tx);
-  return txPrisma(tx).smsRecibido.create({ data: conAhora('smsRecibido', sms, ahora) });
+  return txPrismaSinBloqueo(tx).smsRecibido.create({
+    data: conAhora('smsRecibido', sms, ahora),
+  });
+}
+
+const VENTANA_AUTODESCARTE_MS = 10 * 60_000; // H12: [t − 10 min, t)
+const smsDeDominio = (s: { id: string; texto: string; recibidoEn: Date }): SmsRecibido => ({
+  id: s.id as Uuid,
+  texto: s.texto,
+  recibidoEn: instanteDeDate(s.recibidoEn) as Instante,
+});
+
+/**
+ * Lo que OP-35 mira del SMS (04 §8.4 a y c): el SMS, los recibidos en los 10 minutos anteriores (autodescarte),
+ * cuántos intentos tiene (N-02) y su movimiento, si ya tiene uno. `null` si el SMS no existe.
+ */
+export async function leerSmsParaProcesar(tx: LectorTx, smsId: string) {
+  const p = txPrisma(tx);
+  const s = await p.smsRecibido.findUnique({ where: { id: smsId } });
+  if (s === null) return null;
+  const desde = new Date(s.recibidoEn.getTime() - VENTANA_AUTODESCARTE_MS);
+  const anteriores = await p.smsRecibido.findMany({
+    where: { recibidoEn: { gte: desde, lt: s.recibidoEn } },
+    orderBy: [{ recibidoEn: 'asc' }, { id: 'asc' }],
+  });
+  const intentos = await p.smsProcesamiento.count({ where: { smsId } });
+  const movimiento = await p.movimiento.findUnique({ where: { smsId }, select: { id: true } });
+  return {
+    sms: smsDeDominio(s),
+    anteriores: anteriores.map(smsDeDominio),
+    intentos,
+    movimientoId: movimiento?.id ?? null,
+  };
+}
+
+/** 04 §8.6: SMS sin ningún intento y con `recibido_en < finn.ahora() − 2 min`, en orden de llegada. */
+export async function smsSinResultado(tx: LectorTx, limite: number): Promise<string[]> {
+  const filas = await txPrisma(tx).$queryRaw<{ id: string }[]>`
+    SELECT s.id::text AS id FROM finn.sms_recibidos s
+    WHERE NOT EXISTS (SELECT 1 FROM finn.sms_procesamientos p WHERE p.sms_id = s.id)
+      AND s.recibido_en < finn.ahora() - interval '2 minutes'
+    ORDER BY s.recibido_en, s.id
+    LIMIT ${limite}`;
+  return filas.map((f) => f.id);
 }
 
 export function smsPorId(tx: LectorTx, id: string): Promise<SmsGuardado | null> {
