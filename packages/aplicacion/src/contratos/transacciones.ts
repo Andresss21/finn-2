@@ -126,6 +126,97 @@ export const op27 = z.discriminatedUnion('modalidad', [
 ]);
 export type EntradaOp27 = z.output<typeof op27>;
 
+const nulable = <T extends z.ZodType>(t: T) => t.nullable().optional();
+const desglose = z.object({ capital: parte, interes: parte, seguro: parte });
+const lineaEditada = z.object({
+  lineaId: uuid.optional(),
+  monto: montoPositivo,
+  destino: destino.optional(),
+});
+
+/** Los valores que vio la interfaz de cada campo que cambia (4.6.2); las claves son las del cambio. */
+const esperadoOp28 = z.object({
+  fecha: fechaLocal,
+  total: montoTexto,
+  cuentaId: uuid,
+  origenId: uuid,
+  destinoId: uuid,
+  lineas: z.array(z.object({ monto: montoTexto, destino })),
+  comercio: z.string().nullable(),
+  nota: z.string().nullable(),
+  monedaOriginal: z.string().nullable(),
+  montoOriginal: z.string().nullable(),
+  desglose,
+});
+
+/** Los campos que OP-28 puede cambiar; cada uno trae su valor esperado en `esperado`. */
+export const CAMPOS_OP28 = [
+  'fecha',
+  'total',
+  'cuentaId',
+  'origenId',
+  'destinoId',
+  'lineas',
+  'comercio',
+  'nota',
+  'monedaOriginal',
+  'montoOriginal',
+  'desglose',
+] as const;
+
+/**
+ * OP-28 Editar transacción (04 §3.4): solo los campos que cambian, cada uno con su valor esperado; `lineas` es la lista
+ * completa. `comercio` y `nota` aceptan `null` para quitarlos; la moneda original y su monto van juntos (M4).
+ */
+export const op28 = z
+  .object({
+    transaccionId: uuid,
+    fecha: fechaLocal.optional(),
+    total: montoPositivo.optional(),
+    cuentaId: uuid.optional(),
+    origenId: uuid.optional(),
+    destinoId: uuid.optional(),
+    lineas: z
+      .array(lineaEditada)
+      .min(1, { error: 'Agregá al menos una parte.' })
+      .max(20)
+      .optional(),
+    comercio: nulable(textoLimpio),
+    nota: nulable(z.string().max(500, { error: 'La nota no puede pasar de 500 caracteres.' })),
+    // Sin `null`: quitar la moneda original no se puede expresar contra los hechos, que no cargan `monto_original`
+    monedaOriginal: COMUNES.monedaOriginal,
+    montoOriginal: COMUNES.montoOriginal,
+    desglose: desglose.optional(),
+    esperado: esperadoOp28.partial(),
+  })
+  .superRefine((e, ctx) => {
+    const cambios = CAMPOS_OP28.filter((k) => e[k] !== undefined);
+    if (cambios.length === 0) ctx.addIssue({ code: 'custom', message: 'No hay nada que cambiar.' });
+    for (const k of cambios)
+      if (e.esperado[k] === undefined)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['esperado', k],
+          message: 'Falta el valor que viste.',
+        });
+    juntos(e, ctx);
+  });
+export type EntradaOp28 = z.output<typeof op28>;
+
+/** OP-29 Eliminar transacción. */
+export const op29 = z.object({ transaccionId: uuid });
+export type EntradaOp29 = z.output<typeof op29>;
+
+const estado = z.enum(['pendiente', 'confirmada', 'conciliada']);
+
+/** OP-30 Cambiar estado bancario: a mano solo `pendiente` y `confirmada`; `conciliada` la fija OP-47. */
+export const op30 = z.object({
+  transaccionId: uuid,
+  estadoNuevo: z.enum(['pendiente', 'confirmada']),
+  esperado: z.object({ estado }),
+});
+export type EntradaOp30 = z.output<typeof op30>;
+
 /** Salida común (04 §3.0.3): el `id` de la transacción creada. */
 export interface SalidaTransaccion {
   readonly id?: Uuid;
