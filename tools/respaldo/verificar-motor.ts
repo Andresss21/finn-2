@@ -1,5 +1,5 @@
-// tools/respaldo/motor.ts — paso 9 de la prueba de restauración (03 §12.2; 04 §16.4; ADR-22, decisión 4).
-// Uso: node tools/respaldo/motor.ts <URL de la base restaurada> <hoy AAAA-MM-DD, la fecha del volcado>
+// tools/respaldo/verificar-motor.ts — paso 9 de la prueba de restauración (03 §12.2; 04 §16.4; ADR-22, decisión 4).
+// Uso: node tools/respaldo/verificar-motor.ts <URL de la base restaurada> <hoy AAAA-MM-DD, la fecha del volcado>
 // Carga los hechos restaurados con `cargarHechos` de @finn/db (el mismo de la app, 04 §5.2), calcula con
 // `calcular(hechos, hoy)` y verifica los invariantes de 01 §6 con `verificarInvariantes` de @finn/dominio.
 // Sale con 1 si hay violaciones; imprime solo cuántas hay por invariante, nunca filas ni montos (el log del job).
@@ -27,7 +27,7 @@ registerHooks({
 
 const [url = '', hoyTexto = ''] = process.argv.slice(2);
 if (!url || !hoyTexto) {
-  console.error('uso: node tools/respaldo/motor.ts <URL> <hoy AAAA-MM-DD>');
+  console.error('uso: node tools/respaldo/verificar-motor.ts <URL> <hoy AAAA-MM-DD>');
   process.exit(2);
 }
 process.env['DATABASE_URL'] = url;

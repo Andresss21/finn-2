@@ -2,7 +2,7 @@
 # tools/respaldo/restaurar.sh — prueba de restauración (03-base-de-datos.md, 12.2).
 # Requiere: PGHOST, PGPORT, PGUSER (superusuario del Postgres efímero), psql, pg_restore, node.
 # Uso: tools/respaldo/restaurar.sh <volcado.dump> <manifiesto.json> <catalogo-esperado.txt> [base_destino] [hoy]
-# Portado de la Fase 3 (TA-251). Cambios: el paso 9 llama al motor (motor.ts, 04 §16.4) con `hoy` = la fecha del
+# Portado de la Fase 3 (TA-251). Cambios: el paso 9 llama al motor (verificar-motor.ts, 04 §16.4) con `hoy` = la fecha del
 # volcado (AAAA-MM-DD), y FINN_PG_EXEC antepone un comando a psql y pg_restore (la prueba RES los corre en un
 # contenedor, 07 §19.6). Los pasos 1 (descargar y descifrar) y 11 (endpoint) son del workflow (TA-263).
 set -euo pipefail
@@ -53,7 +53,7 @@ if (mal || String(rev) !== String(m.revision)) process.exit(1);
 EOF
 
 echo "9. Motor sobre los hechos restaurados (@finn/dominio)"
-node "$RAIZ/tools/respaldo/motor.ts" "postgresql://$PGUSER:${PGPASSWORD:-}@${PGHOST:-localhost}:${PGPORT:-5432}/$BASE" "$HOY"
+node "$RAIZ/tools/respaldo/verificar-motor.ts" "postgresql://$PGUSER:${PGPASSWORD:-}@${PGHOST:-localhost}:${PGPORT:-5432}/$BASE" "$HOY"
 
 echo "10. Triggers activos tras restaurar"
 if PGPASSWORD="$APP_CLAVE" $PGX psql -X -At -U finn_app -d "$BASE" -c "INSERT INTO finn.deudores (nombre) VALUES ('restauracion')" 2>/dev/null; then
