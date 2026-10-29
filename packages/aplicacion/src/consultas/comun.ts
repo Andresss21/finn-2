@@ -24,6 +24,7 @@ import { errorDeBase } from '../errores-de-base.ts';
 import {
   errorDeValidacion,
   ExcepcionFinn,
+  mensajeDeRechazo,
   mensajeInterno,
   type ErrorFinn,
 } from '../errores/index.ts';
@@ -63,6 +64,14 @@ export interface ContextoConsulta {
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const idErrorAleatorio = (): string =>
   `E-${Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => CROCKFORD[b % 32]).join('')}`;
+
+/** `NO_ENCONTRADO` con el mensaje común (04 §7). */
+export const noEncontrado = (): ExcepcionFinn =>
+  new ExcepcionFinn({
+    categoria: 'NO_ENCONTRADO',
+    codigo: 'no_encontrado',
+    mensaje: mensajeDeRechazo({ codigo: 'no_encontrado' }) ?? 'no_encontrado',
+  });
 
 /** Un error inesperado: se registra con su `idError` antes de lanzar (7.8) y la respuesta no lleva el mensaje. */
 async function errorInterno(e: unknown, consulta: string, d: DepsConsulta): Promise<ErrorFinn> {

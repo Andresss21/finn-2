@@ -132,3 +132,49 @@ export const parametrosActividad = z.object({
 
 /** `consultas.detalleTransaccion({ transaccionId })` (04 §6.7.2). */
 export const parametrosDetalleTransaccion = z.object({ transaccionId: uuid });
+
+const tipoCuenta = z.enum(['efectivo', 'tarjeta', 'prestamo', 'inversion'], {
+  error: 'El tipo de cuenta no es válido.',
+});
+const tipoRegistro = z.enum(
+  [
+    'gasto',
+    'ingreso',
+    'transferencia',
+    'devolucion_sin_compra',
+    'aporte_inversion',
+    'retiro_inversion',
+    'ajuste_inversion',
+    'desembolso',
+    'avance',
+    'entrada_tarjeta',
+    'transferencia_deuda',
+  ],
+  { error: 'El tipo de registro no es válido.' },
+);
+
+/**
+ * `consultas.formulario(parametros)` (04 §6.14.1), con las operaciones de registro y edición: registrar,
+ * pagar_tarjeta, cuota_prestamo, editar_transaccion y cuenta. Las demás suman su caso con su tarea.
+ */
+export const parametrosFormulario = z.discriminatedUnion(
+  'operacion',
+  [
+    z.object({ operacion: z.literal('registrar'), tipo: tipoRegistro, cuentaId: uuid.optional() }),
+    z.object({ operacion: z.literal('pagar_tarjeta'), tarjetaId: uuid.optional() }),
+    z.object({
+      operacion: z.literal('cuota_prestamo'),
+      prestamoId: uuid,
+      modalidad: z.enum(['cuota', 'abono'], { error: 'La modalidad no es válida.' }),
+      fecha: fechaLocal.optional(),
+    }),
+    z.object({ operacion: z.literal('editar_transaccion'), transaccionId: uuid }),
+    z.object({
+      operacion: z.literal('cuenta'),
+      cuentaId: uuid.optional(),
+      tipo: tipoCuenta.optional(),
+    }),
+  ],
+  { error: 'La operación del formulario no es válida.' },
+);
+export type ParametrosFormulario = z.output<typeof parametrosFormulario>;

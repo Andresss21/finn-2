@@ -14,6 +14,7 @@ export {
   type OpcionesDeBandeja,
 } from './bandeja';
 export { sugerencia, type Sugerencia } from './sugerencia';
+export { formulario, type AuxiliaresDeFormulario, type ParametrosFormulario } from './formulario';
 export { detalleCategoria, type DetalleCategoria } from './detalle-categoria';
 export { detallePagoTarjeta, type DetallePagoTarjeta } from './detalle-pago-tarjeta';
 export { estructura, type GrupoDeEstructura } from './estructura';
