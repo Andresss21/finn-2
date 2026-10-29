@@ -207,7 +207,7 @@
 
   "TA-168": { "estado": "pendiente" },
 
-  "TA-169": { "estado": "pendiente" },
+  "TA-169": { "estado": "en_curso", "rama": "ta-169-consultas-inicio-presupuesto" },
 
   "TA-170": { "estado": "pendiente" },
 

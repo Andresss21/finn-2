@@ -5,6 +5,7 @@ export {
   formatearMonto,
   MENOS,
 } from './formato.ts';
+export { ExcepcionFinn } from './excepcion.ts';
 export { MENSAJES_RECHAZO, mensajeDeRechazo, rellenar } from './mensajes.ts';
 export {
   errorDeValidacion,

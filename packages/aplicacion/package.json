@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./autenticacion": "./src/autenticacion/index.ts",
-    "./contratos": "./src/contratos/index.ts",
+    "./consultas/*": "./src/consultas/*.ts",
+    "./contratos":"./src/contratos/index.ts",
     "./config": "./src/config/index.ts",
     "./errores": "./src/errores/index.ts",
     "./ids": "./src/ids.ts",

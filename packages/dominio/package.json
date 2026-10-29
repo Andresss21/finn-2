@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./valores": "./src/valores/index.ts",
+    "./selectores": "./src/selectores/index.ts",
+    "./valores":"./src/valores/index.ts",
     "./pruebas": "./src/pruebas/index.ts",
     "./escenarios": "./escenarios/index.ts"
   },

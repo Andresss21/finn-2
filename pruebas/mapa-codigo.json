@@ -16,6 +16,7 @@
   { "patron": "packages/aplicacion/src/autenticacion/**", "fts": "marco" },
   { "patron": "packages/aplicacion/src/ids.ts", "fts": "marco" },
   { "patron": "packages/aplicacion/src/operaciones/marco.ts", "fts": "marco" },
+  { "patron": "packages/aplicacion/src/consultas/comun.ts", "fts": "marco" },
   { "patron": "packages/dominio/src/**", "fts": [] },
   { "patron": "packages/db/src/**", "fts": [] },
   { "patron": "packages/conciliacion/src/**", "fts": [] },
