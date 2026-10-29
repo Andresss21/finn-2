@@ -16,6 +16,7 @@
     "./operaciones/notificaciones": "./src/operaciones/notificaciones/index.ts",
     "./push/*": "./src/push/*.ts",
     "./operaciones/categorias": "./src/operaciones/categorias/index.ts",
+    "./operaciones/presupuesto": "./src/operaciones/presupuesto/index.ts",
     "./tiempo": "./src/tiempo/index.ts"
   },
   "scripts": {
