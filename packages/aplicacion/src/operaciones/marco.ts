@@ -9,6 +9,7 @@ import type {
   AvisoOperacion,
   ComandoDominio,
   GeneradorIds,
+  Hechos,
   Impacto,
   Instante,
   OperacionDeclarada,
@@ -74,10 +75,17 @@ export interface DefinicionOperacion<Entrada, Resuelto, Salida> {
   readonly exigeConfirmacion?: boolean;
   /** El id del hecho principal que envía el cliente (4.6.1): con él, los ids secundarios son UUIDv5 (BE-31). */
   idPrincipal?(entrada: Entrada): Uuid;
-  /** Paso 5: compara la entrada con lo que hay, según la clase (4.6). Sin ella la operación siempre sigue. */
-  comprobarIdempotencia?(lector: LectorTx, entrada: Entrada): Promise<Veredicto<Salida>>;
-  /** Paso 6: carga lo que `comando()` necesita y no está en los hechos [M] (BE-10). */
-  resolver(lector: LectorTx, entrada: Entrada): Promise<Resuelto>;
+  /**
+   * Paso 5: compara la entrada con lo que hay, según la clase (4.6). Sin ella la operación siempre sigue. `hechos` son
+   * los [M] que el marco ya tiene para esta transacción (de la `Memoria` o de su carga): la definición no los recarga.
+   */
+  comprobarIdempotencia?(
+    lector: LectorTx,
+    entrada: Entrada,
+    hechos: Hechos,
+  ): Veredicto<Salida> | Promise<Veredicto<Salida>>;
+  /** Paso 6: carga lo que `comando()` necesita y no está en los hechos [M] (BE-10); recibe los mismos `hechos`. */
+  resolver(lector: LectorTx, entrada: Entrada, hechos: Hechos): Promise<Resuelto>;
   comando(resuelto: Resuelto, instante: Instante, ids: GeneradorIds): ComandoDominio;
   /** Paso 12: escrituras en tablas que el motor no modela. */
   extra?(escritor: EscritorTx, resuelto: Resuelto, resultado: Exito): Promise<void>;
@@ -92,6 +100,8 @@ export interface DepsMarco {
   readonly escribir?: typeof escribirDb;
   readonly leer?: typeof leerDb;
   readonly aplicar?: typeof aplicarDominio;
+  /** La carga de los hechos [M] cuando la memoria no los tiene (04 §5.2). */
+  readonly cargar?: typeof cargarHechos;
   /** El reloj de prueba de la petición (CT-01); vacío en producción. */
   readonly opciones?: () => OpcionesTx;
   /** El instante de `previsualizar`: `leer()` no lo da (el de `confirmar` es `finn.instante()`, BE-27). */
@@ -150,20 +160,59 @@ const errorDe = (
   extra: Partial<ErrorFinn> = {},
 ) => ({ categoria, codigo, mensaje: mensajeDeRechazo({ codigo }) ?? codigo, ...extra });
 
-/** Pasos 4 a 7 de 04 §4.2 (3 a 6 de 4.3): hechos, comando resuelto y `aplicar`. */
+/** Paso 4 de 04 §4.2: los hechos [M] de la revisión de `tx`, de la memoria o de una sola carga. */
+const hechosDe = (tx: LectorTx, d: DepsMarco): Promise<Hechos> =>
+  d.memoria.hechos(tx.estado.revision, () => (d.cargar ?? cargarHechos)(tx));
+
+/** Dato `*Id` de un rechazo → el dato con el nombre que usan los mensajes (04 §3.0.6) y la tabla [M] que lo tiene. */
+const NOMBRADOS = {
+  cuentaId: ['cuenta', 'cuentas'],
+  categoriaId: ['categoria', 'categorias'],
+  grupoId: ['grupo', 'grupos'],
+  deudorId: ['deudor', 'deudores'],
+} as const;
+
+/**
+ * Los rechazos con el nombre de cada `*Id` reconocido agregado a `datos` (04 §3.0.6: el texto entre llaves es un dato
+ * del rechazo). El dominio entrega ids; el nombre sale de los hechos que el marco ya cargó. Un dato que el dominio ya
+ * puso no se pisa.
+ */
+function conNombres(rechazos: readonly Rechazo[], hechos: Hechos): readonly Rechazo[] {
+  return rechazos.map((r) => {
+    const datos = r.datos;
+    if (datos === undefined) return r;
+    const nombres: Record<string, string> = {};
+    for (const [clave, [dato, tabla]] of Object.entries(NOMBRADOS)) {
+      const id = datos[clave];
+      if (id === undefined || dato in datos) continue;
+      const filas: readonly { readonly id: string; readonly nombre: string }[] = hechos[tabla];
+      const fila = filas.find((f) => f.id === id);
+      if (fila !== undefined) nombres[dato] = fila.nombre;
+    }
+    return Object.keys(nombres).length === 0 ? r : { ...r, datos: { ...datos, ...nombres } };
+  });
+}
+
+/** Pasos 6 y 7 de 04 §4.2 (5 y 6 de 4.3): comando resuelto y `aplicar` sobre los hechos del paso 4. */
 async function aplicarEn<E, R, S>(
   def: DefinicionOperacion<E, R, S>,
   entrada: E,
   tx: LectorTx,
+  hechos: Hechos,
   instante: Instante,
   d: DepsMarco,
 ): Promise<{ resuelto: R; resultado: ResultadoAplicar }> {
-  const hechos = await d.memoria.hechos(tx.estado.revision, () => cargarHechos(tx));
-  const resuelto = await def.resolver(tx, entrada);
+  const resuelto = await def.resolver(tx, entrada, hechos);
   const ids = def.idPrincipal ? generadorDerivado(def.idPrincipal(entrada)) : generadorAleatorio();
   const comando = def.comando(resuelto, instante, ids);
   const hoy = FechaLocal.desdeTexto(tx.estado.hoy);
-  return { resuelto, resultado: (d.aplicar ?? aplicarDominio)(hechos, comando, hoy) };
+  const resultado = (d.aplicar ?? aplicarDominio)(hechos, comando, hoy);
+  return {
+    resuelto,
+    resultado: resultado.ok
+      ? resultado
+      : { ...resultado, rechazos: conNombres(resultado.rechazos, hechos) },
+  };
 }
 
 const interno = (codigo: string, idError: string): ErrorFinn => ({
@@ -292,7 +341,8 @@ export async function previsualizar<E, R, S>(
     () =>
       (d.leer ?? leerDb)(async (tx): Promise<ResultadoPrevisualizar> => {
         c.revision = tx.estado.revision;
-        const { resultado } = await aplicarEn(def, analizada.data, tx, instante(), d);
+        const hechos = await hechosDe(tx, d);
+        const { resultado } = await aplicarEn(def, analizada.data, tx, hechos, instante(), d);
         const vista = { revisionVista: tx.estado.revision, rechazos: [] };
         return resultado.ok
           ? {
@@ -351,8 +401,12 @@ export async function confirmar<E, R, S>(
   const cuerpo = async (tx: EscritorTx): Promise<Fin<S>> => {
     confirmado = false;
     c.revision = tx.estado.revision;
+    // Paso 4: una sola carga de hechos por intento, que comparten la comprobación, `resolver` y `aplicar`
+    const hechos = await hechosDe(tx, d);
     // Paso 5: idempotencia por clase (4.6)
-    const v = (await def.comprobarIdempotencia?.(tx, entrada)) ?? { tipo: 'aplicar' as const };
+    const v = (await def.comprobarIdempotencia?.(tx, entrada, hechos)) ?? {
+      tipo: 'aplicar' as const,
+    };
     if (v.tipo === 'ya_aplicada') return terminar({ tipo: 'ya_aplicada', salida: v.salida });
     if (v.tipo === 'conflicto_id')
       return terminar({
@@ -370,11 +424,12 @@ export async function confirmar<E, R, S>(
     if (v.tipo === 'no_encontrado')
       return terminar({ tipo: 'error', error: errorDe('no_encontrado', 'NO_ENCONTRADO') });
 
-    // Pasos 4, 6 y 7; paso 8: un rechazo termina sin escribir
+    // Pasos 6 y 7; paso 8: un rechazo termina sin escribir
     const { resuelto, resultado } = await aplicarEn(
       def,
       entrada,
       tx,
+      hechos,
       tx.estado.instante as Instante,
       d,
     );
@@ -440,7 +495,10 @@ export async function confirmar<E, R, S>(
     const comprobar = def.comprobarIdempotencia?.bind(def);
     const nueva =
       defensa && comprobar
-        ? await (d.leer ?? leerDb)((tx) => comprobar(tx, entrada), opciones).catch(() => null)
+        ? await (d.leer ?? leerDb)(
+            async (tx) => comprobar(tx, entrada, await hechosDe(tx, d)),
+            opciones,
+          ).catch(() => null)
         : null;
     if (defensa) await evento(d, c, 'aviso', `23505 ${s.restriccion ?? ''} ${def.id}`);
     if (nueva?.tipo === 'ya_aplicada') fin = { tipo: 'ya_aplicada', salida: nueva.salida };

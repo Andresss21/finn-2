@@ -1,20 +1,9 @@
-// Piezas que comparten OP-01 a OP-06 (04 §3.1, §4.6): los hechos de la transacción y las comparaciones de la
-// idempotencia. Las demás áreas de operaciones copian esta forma.
-import { cargarHechos, type LectorTx } from '@finn/db';
+// Piezas que comparten OP-01 a OP-06 (04 §3.1, §4.6): las comparaciones de la idempotencia y los nombres del
+// contrato frente a las columnas del dominio. Los hechos los entrega el marco (una sola carga por transacción).
 import type { Cuenta, Hechos, Uuid } from '@finn/dominio';
 
-const cargados = new WeakMap<LectorTx, Promise<Hechos>>();
-
-/** Los hechos [M] vistos por esta transacción: la comprobación y el `resolver` comparten una sola carga. */
-export function hechosDe(tx: LectorTx): Promise<Hechos> {
-  let hechos = cargados.get(tx);
-  if (hechos === undefined) cargados.set(tx, (hechos = cargarHechos(tx)));
-  return hechos;
-}
-
-export async function cuentaDe(tx: LectorTx, id: Uuid): Promise<Cuenta | undefined> {
-  return (await hechosDe(tx)).cuentas.find((c) => c.id === id);
-}
+export const cuentaDe = (h: Hechos, id: Uuid): Cuenta | undefined =>
+  h.cuentas.find((c) => c.id === id);
 
 /** Cada clave de `esperado` vale lo mismo en `fila`. */
 export const coincide = (fila: object, esperado: object): boolean =>
@@ -26,9 +15,17 @@ const COLUMNA: Readonly<Record<string, string>> = {
   tasaNominalAnual: 'tasaNominalAnualMillonesimas',
   rendimientoAnualEsperado: 'rendimientoAnualEsperadoMillonesimas',
 };
+const CAMPO: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(COLUMNA).map(([campo, columna]) => [columna, campo]),
+);
+
+const renombrar = (objeto: object, nombres: Readonly<Record<string, string>>) =>
+  Object.fromEntries(
+    Object.entries(objeto).flatMap(([k, v]) => (v === undefined ? [] : [[nombres[k] ?? k, v]])),
+  ) as Record<string, unknown>;
 
 /** Los campos definidos de `objeto`, con los nombres del dominio. */
-export const aDominio = (objeto: object): Record<string, unknown> =>
-  Object.fromEntries(
-    Object.entries(objeto).flatMap(([k, v]) => (v === undefined ? [] : [[COLUMNA[k] ?? k, v]])),
-  );
+export const aDominio = (objeto: object): Record<string, unknown> => renombrar(objeto, COLUMNA);
+
+/** El inverso de `aDominio`: columnas del dominio con los nombres del contrato (`actuales` de 4.6.2). */
+export const aContrato = (objeto: object): Record<string, unknown> => renombrar(objeto, CAMPO);

@@ -351,6 +351,35 @@ describe('PRU-INT-CTA', () => {
     expect((await hechos()).cuentas.find((c) => c.id === T1)?.archivada).toBe(false);
   });
 
+  it('PRU-INT-CTA-101 [INV-24] OP-04 y OP-02: los rechazos nombran la cuenta sin huecos y conflicto_desactualizado trae las claves del contrato', async () => {
+    const h = await hechos();
+    const nombre = (id: Uuid) => h.cuentas.find((c) => c.id === id)?.nombre ?? '?';
+    const deuda = await ejecutar(OP04, { cuentaId: T1 });
+    expect(deuda).toMatchObject({
+      ok: false,
+      error: { mensaje: `${nombre(T1)} todavía tiene una deuda de $20.00.` },
+    });
+    const saldo = await ejecutar(OP04, { cuentaId: E1 });
+    expect(saldo).toMatchObject({
+      ok: false,
+      error: { mensaje: contiene(`Para archivar ${nombre(E1)}, su saldo`) },
+    });
+    expect(await preparar(OP04, { cuentaId: T1 })).toMatchObject({
+      ok: true,
+      valor: { rechazos: [{ codigo: 'tarjeta_con_deuda', datos: { cuenta: nombre(T1) } }] },
+    });
+
+    await ejecutar(OP01, tarjeta(955, { tasaAnual: '24.5' }));
+    const viejo = await ejecutar(OP02, {
+      cuentaId: uuid(955),
+      tasaAnual: '30',
+      esperado: { tasaAnual: '20' },
+    });
+    if (viejo.ok || viejo.error.datos === undefined) throw new Error('debía ser un conflicto');
+    expect(viejo.error).toMatchObject({ codigo: 'conflicto_desactualizado' });
+    expect(viejo.error.datos['actuales']).toEqual({ tasaAnual: 245000 });
+  });
+
   it('PRU-INT-CTA-101 [AV-15] OP-06: elimina una cuenta solo con la huella de su previsualización y la repetición es ya aplicada', async () => {
     await ejecutar(OP01, efectivo(980, { saldo: '10.00' }));
     await ejecutar(OP01, tarjeta(981));

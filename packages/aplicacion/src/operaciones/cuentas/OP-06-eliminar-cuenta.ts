@@ -12,8 +12,8 @@ export const OP06: DefinicionOperacion<EntradaCuenta, EntradaCuenta, SalidaCuent
   idempotencia: 'eliminacion',
   exigeConfirmacion: true,
   operacionDeclarada: 'eliminar_cuenta',
-  async comprobarIdempotencia(tx, e) {
-    if ((await cuentaDe(tx, e.cuentaId)) !== undefined) return { tipo: 'aplicar' };
+  async comprobarIdempotencia(tx, e, h) {
+    if (cuentaDe(h, e.cuentaId) !== undefined) return { tipo: 'aplicar' };
     return (await fueEliminada(tx, 'cuentas', e.cuentaId))
       ? { tipo: 'ya_aplicada', salida: {} }
       : { tipo: 'no_encontrado' };

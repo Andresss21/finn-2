@@ -9,7 +9,7 @@ import {
   type SalidaCuenta,
 } from '../../contratos/cuentas.ts';
 import type { DefinicionOperacion } from '../marco.ts';
-import { aDominio, hechosDe } from './comunes.ts';
+import { aContrato, aDominio } from './comunes.ts';
 
 type Resuelto = {
   readonly entrada: EntradaOp02;
@@ -36,8 +36,7 @@ export const OP02: DefinicionOperacion<EntradaOp02, Resuelto, SalidaCuenta> = {
   id: 'OP-02',
   contrato: op02,
   idempotencia: 'valor_absoluto',
-  async comprobarIdempotencia(tx, e) {
-    const h = await hechosDe(tx);
+  comprobarIdempotencia(_tx, e, h) {
     const cuenta = h.cuentas.find((c) => c.id === e.cuentaId);
     if (cuenta === undefined) return { tipo: 'no_encontrado' };
     const sub =
@@ -53,7 +52,8 @@ export const OP02: DefinicionOperacion<EntradaOp02, Resuelto, SalidaCuenta> = {
       throw new TypeError(`OP-02: ${ajeno} no es un campo de una cuenta ${cuenta.tipo}`);
     if (claves.every((k) => actual[k] === nuevo[k])) return { tipo: 'ya_aplicada', salida: {} };
     if (claves.every((k) => actual[k] === visto[k])) return { tipo: 'aplicar' };
-    const actuales = Object.fromEntries(claves.map((k) => [k, actual[k]]));
+    // `actuales` con los nombres del contrato, los mismos que la interfaz envió (04 §4.6.2)
+    const actuales = aContrato(Object.fromEntries(claves.map((k) => [k, actual[k]])));
     return { tipo: 'conflicto_desactualizado', actuales };
   },
   resolver: (_tx, e) => Promise.resolve(repartir(e)),

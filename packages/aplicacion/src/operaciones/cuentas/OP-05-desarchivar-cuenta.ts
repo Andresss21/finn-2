@@ -8,8 +8,8 @@ export const OP05: DefinicionOperacion<EntradaCuenta, EntradaCuenta, SalidaCuent
   id: 'OP-05',
   contrato: op05,
   idempotencia: 'natural',
-  async comprobarIdempotencia(tx, e) {
-    const cuenta = await cuentaDe(tx, e.cuentaId);
+  comprobarIdempotencia(_tx, e, h) {
+    const cuenta = cuentaDe(h, e.cuentaId);
     if (cuenta === undefined) return { tipo: 'no_encontrado' };
     return cuenta.archivada ? { tipo: 'aplicar' } : { tipo: 'ya_aplicada', salida: {} };
   },
