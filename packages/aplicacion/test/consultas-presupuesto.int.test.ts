@@ -48,7 +48,7 @@ describe('PRU-INT-PRES', () => {
     await sembrarBandejaYNotificaciones(base); // tablas [H] y [T]: la memoria sigue valiendo
   });
 
-  it('PRU-INT-PRES-102 [inv. 27, error 11] inicio(), presupuesto() y detalleLpa() dan el encabezado común y los números de los selectores, y la misma categoría tiene los mismos números en las tres', async () => {
+  it('PRU-INT-PRES-102 [inv. 27, error 11, Q-inicio, Q-presupuesto, Q-detalleLpa] inicio(), presupuesto() y detalleLpa() dan el encabezado común y los números de los selectores, y la misma categoría tiene los mismos números en las tres', async () => {
     const deps: DepsConsulta = {
       memoria: new Memoria(),
       sesion: sesionDe({ sub: USUARIO, aal: 'aal2' }),
