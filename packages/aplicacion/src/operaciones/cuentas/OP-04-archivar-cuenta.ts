@@ -9,8 +9,8 @@ export const OP04: DefinicionOperacion<EntradaOp04, EntradaOp04, SalidaCuenta> =
   id: 'OP-04',
   contrato: op04,
   idempotencia: 'natural',
-  async comprobarIdempotencia(tx, e) {
-    const cuenta = await cuentaDe(tx, e.cuentaId);
+  comprobarIdempotencia(_tx, e, h) {
+    const cuenta = cuentaDe(h, e.cuentaId);
     if (cuenta === undefined) return { tipo: 'no_encontrado' };
     return cuenta.archivada ? { tipo: 'ya_aplicada', salida: {} } : { tipo: 'aplicar' };
   },

@@ -2,14 +2,13 @@
 // no trae exactamente las cuentas abiertas, `conflicto_desactualizado` con el orden vigente (4.6.2).
 import { op03, type EntradaOp03, type SalidaCuenta } from '../../contratos/cuentas.ts';
 import type { DefinicionOperacion } from '../marco.ts';
-import { hechosDe } from './comunes.ts';
 
 export const OP03: DefinicionOperacion<EntradaOp03, EntradaOp03, SalidaCuenta> = {
   id: 'OP-03',
   contrato: op03,
   idempotencia: 'valor_absoluto',
-  async comprobarIdempotencia(tx, e) {
-    const abiertas = (await hechosDe(tx)).cuentas
+  comprobarIdempotencia(_tx, e, h) {
+    const abiertas = h.cuentas
       .filter((c) => !c.archivada)
       .sort((a, b) => a.orden - b.orden || (a.id < b.id ? -1 : 1))
       .map((c) => c.id);

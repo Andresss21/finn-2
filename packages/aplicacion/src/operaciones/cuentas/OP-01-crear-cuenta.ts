@@ -5,7 +5,7 @@ import type { SubtipoCuenta } from '@finn/dominio';
 import { Centavos } from '@finn/dominio/valores';
 import { op01, type EntradaOp01, type SalidaCuenta } from '../../contratos/cuentas.ts';
 import type { DefinicionOperacion } from '../marco.ts';
-import { coincide, hechosDe } from './comunes.ts';
+import { coincide } from './comunes.ts';
 
 const TABLA = { tarjeta: 'tarjetas', prestamo: 'prestamos', inversion: 'inversiones' } as const;
 
@@ -66,8 +66,7 @@ export const OP01: DefinicionOperacion<EntradaOp01, EntradaOp01, SalidaCuenta> =
   contrato: op01,
   idempotencia: 'creacion',
   idPrincipal: (e) => e.id,
-  async comprobarIdempotencia(tx, e) {
-    const h = await hechosDe(tx);
+  comprobarIdempotencia(_tx, e, h) {
     const cuenta = h.cuentas.find((c) => c.id === e.id);
     if (cuenta === undefined) return { tipo: 'aplicar' };
     const sub = subtipoDe(e);

@@ -1,6 +1,6 @@
 // Marco de operaciones (TA-159; 04 §4.3, §4.6 a §4.9; BE-13, BE-17, BE-18, BE-19) sin base de datos: `escribir()` y
 // `leer()` son dobles que ejecutan el trabajo contra una transacción falsa, y `aplicar` devuelve lo que cada caso necesita.
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { Memoria, type EscritorTx, type NuevoEvento } from '@finn/db';
 import type { Hechos, Uuid } from '@finn/dominio';
@@ -189,6 +189,55 @@ describe('PRU-DOM-VAL', () => {
     expect(await confirmar(definicion(), {}, m2.deps)).toMatchObject({
       ok: false,
       error: { categoria: 'VALIDACION' },
+    });
+  });
+
+  it('PRU-DOM-VAL-156 BE-17: una confirmación carga los hechos una sola vez y los entrega a la comprobación y al resolver; los rechazos llegan con el nombre de cada id reconocido', async () => {
+    const CUENTA = '00000000-0000-4000-8000-000000000003' as Uuid;
+    const hechos = {
+      cuentas: [{ id: CUENTA, nombre: 'Visa Oro' }],
+      categorias: [{ id: ID, nombre: 'Comida' }],
+      grupos: [],
+      deudores: [],
+    } as unknown as Hechos;
+    const m = mundo({
+      aplicado: () => ({
+        ok: false,
+        rechazos: [
+          { codigo: 'tarjeta_con_deuda', datos: { cuentaId: CUENTA, deuda: 2000 } },
+          { codigo: 'categoria_archivada', campo: 'categoriaId', datos: { categoriaId: ID } },
+        ],
+      }),
+    });
+    const cargar = vi.fn(() => Promise.resolve(hechos));
+    const vistos: unknown[] = [];
+    const deps: DepsMarco = { ...m.deps, memoria: new Memoria(), cargar };
+    const def = definicion({
+      comprobarIdempotencia: (_tx, _e, h) => (vistos.push(h), { tipo: 'aplicar' }),
+      resolver: (_tx, _e, h) => (vistos.push(h), Promise.resolve(null)),
+    });
+    const r = await confirmar(def, { id: ID }, deps);
+    expect(cargar).toHaveBeenCalledTimes(1);
+    expect(vistos).toEqual([hechos, hechos]);
+    expect(r).toMatchObject({
+      ok: false,
+      error: {
+        codigo: 'tarjeta_con_deuda',
+        mensaje: 'Visa Oro todavía tiene una deuda de $20.00.',
+        campos: { categoriaId: 'Comida está archivada. Elegí una categoría activa.' },
+      },
+    });
+    // previsualizar entrega los mismos rechazos con el nombre en `datos`, sin volver a cargar (misma revisión)
+    const vista = await previsualizar(def, { id: ID }, deps);
+    expect(cargar).toHaveBeenCalledTimes(1);
+    expect(vista).toMatchObject({
+      ok: true,
+      valor: {
+        rechazos: [
+          { datos: { cuentaId: CUENTA, cuenta: 'Visa Oro', deuda: 2000 } },
+          { datos: { categoriaId: ID, categoria: 'Comida' } },
+        ],
+      },
     });
   });
 
