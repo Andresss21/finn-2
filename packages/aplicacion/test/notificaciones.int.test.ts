@@ -46,7 +46,7 @@ describe('PRU-INT-NOTIF', () => {
     process.env['DATABASE_URL'] = base.url; // el cliente del proceso (04 §2.5)
   });
 
-  it('PRU-INT-NOTIF-002 [CF-16] cada motivo de MOTIVOS entra como finn_app con su aviso (nulo si no es un aviso del dominio) y un destino válido; AV-1 sigue rechazado', async () => {
+  it('PRU-INT-NOTIF-002 [CF-16] NOTIF-catalogo: cada motivo de MOTIVOS entra como finn_app con su aviso (nulo si no es un aviso del dominio) y un destino válido; AV-1 sigue rechazado', async () => {
     expect(motivos).toHaveLength(18);
     expect(motivos.filter((m) => MOTIVOS[m].aviso === null)).toEqual(
       expect.arrayContaining(['cierre_periodo', 'pago_tarjeta_proximo', 'cuota_proxima']),
@@ -75,7 +75,7 @@ describe('PRU-INT-NOTIF', () => {
     expect(await malo).toBe('23514');
   });
 
-  it('PRU-INT-NOTIF-002 [CF-16] la política de 04 §11.2: sin push solo cambio_retroactivo; sms_coincidencia con acciones; avisos y etiquetas', () => {
+  it('PRU-INT-NOTIF-002 [CF-16] NOTIF-catalogo: la política de 04 §11.2: sin push solo cambio_retroactivo; sms_coincidencia con acciones; avisos y etiquetas', () => {
     expect(motivos.filter((m) => !MOTIVOS[m].push.enviar)).toEqual(['cambio_retroactivo']);
     expect(MOTIVOS.sms_coincidencia.push).toMatchObject({ acciones: ['confirmar', 'rechazar'] });
     expect(MOTIVOS.pago_tarjeta_proximo.push).toMatchObject({
@@ -87,7 +87,7 @@ describe('PRU-INT-NOTIF', () => {
     expect(esMotivo('inventado')).toBe(false);
   });
 
-  it('PRU-INT-NOTIF-002 [CF-16] BE-38 y OPT-04: AV-01 se registra sin push, aparece como no leído y se marca como leído por ids o todas', async () => {
+  it('PRU-INT-NOTIF-002 [CF-16] BE-38, OPT-04: AV-01 se registra sin push, aparece como no leído y se marca como leído por ids o todas', async () => {
     const retro = await escribir(
       (tx) => registrarCambioRetroactivo(tx, { titulo: 'Cambio retroactivo', cuerpo: 'Resumen' }),
       RELOJ,
@@ -124,7 +124,7 @@ describe('PRU-INT-NOTIF', () => {
     expect(await leer((tx) => contarNoLeidas(tx), RELOJ)).toBe(0);
   });
 
-  it('PRU-INT-NOTIF-002 [CF-16] OPT-04 rechaza una entrada vacía, mezclada o con ids inválidos', async () => {
+  it('PRU-INT-NOTIF-002 [CF-16] OPT-04: rechaza una entrada vacía, mezclada o con ids inválidos', async () => {
     for (const mala of [
       {},
       { ids: [] },
