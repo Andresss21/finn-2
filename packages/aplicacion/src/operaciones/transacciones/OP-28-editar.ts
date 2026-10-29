@@ -3,7 +3,8 @@
 // `conflicto_desactualizado` con los valores actuales. Las líneas se comparan como conjunto de `(monto, destino)`: una
 // línea sin eventos que cambia se reemplaza con otro id (BE-16), así que el `lineaId` no sirve para reconocerla.
 import { montoOriginalDe, type LectorTx } from '@finn/db';
-import type { ComandoOp28, DecimalTexto, Hechos, Transaccion, Uuid } from '@finn/dominio';
+import { Centavos } from '@finn/dominio/valores';
+import type { DecimalTexto, Hechos, Transaccion, Uuid } from '@finn/dominio';
 import { CAMPOS_OP28, op28, type EntradaOp28 } from '../../contratos/transacciones.ts';
 import type { DefinicionOperacion } from '../marco.ts';
 import { decimal, destinoIds, forma, type DestinoEsperado } from './comunes.ts';
@@ -57,7 +58,11 @@ async function actualesDe(
     desglose:
       fijo === undefined
         ? undefined
-        : { capital: -fijo.monto, interes: fijo.interes ?? 0, seguro: fijo.seguro ?? 0 },
+        : {
+            capital: Centavos.negar(fijo.monto),
+            interes: fijo.interes ?? Centavos.cero,
+            seguro: fijo.seguro ?? Centavos.cero,
+          },
   };
   // `monto_original` no está en los hechos [M] (03 §3.12): solo se lee de la fila si se pide
   if (claves.includes('montoOriginal')) todos.montoOriginal = await montoOriginalDe(tx, t.id);
@@ -131,8 +136,14 @@ export const OP28: DefinicionOperacion<EntradaOp28, EntradaOp28, { id: Uuid }> =
       ? e
       : { ...e, monedaOriginal: t.monedaOriginal, montoOriginal: monto as DecimalTexto };
   },
-  comando: ({ transaccionId, esperado: _visto, ...cambios }, instante, ids) =>
+  comando: (e, instante, ids) =>
     // lo que el contrato no trae no es una clave (Zod): el comando solo lleva los campos que cambian
-    ({ operacion: 'OP-28', transaccionId, instante, ids, ...cambios }) as ComandoOp28,
+    ({
+      operacion: 'OP-28',
+      transaccionId: e.transaccionId,
+      instante,
+      ids,
+      ...Object.fromEntries(CAMPOS_OP28.filter((k) => e[k] !== undefined).map((k) => [k, e[k]])),
+    }),
   salida: (_r, e) => ({ id: e.transaccionId }),
 };
