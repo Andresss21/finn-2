@@ -13,6 +13,7 @@
     "./ids": "./src/ids.ts",
     "./operaciones": "./src/operaciones/marco.ts",
     "./operaciones/cuentas": "./src/operaciones/cuentas/index.ts",
+    "./operaciones/categorias": "./src/operaciones/categorias/index.ts",
     "./tiempo": "./src/tiempo/index.ts"
   },
   "scripts": {

@@ -7,3 +7,4 @@ export {
   type RevisionSalida,
 } from './comunes.ts';
 export * from './cuentas.ts';
+export * from './categorias.ts';

@@ -195,7 +195,7 @@
 
   "TA-162": { "estado": "terminada", "pr": 131 },
 
-  "TA-163": { "estado": "pendiente" },
+  "TA-163": { "estado": "en_curso", "rama": "ta-163-grupos-categorias" },
 
   "TA-164": { "estado": "pendiente" },
 
