@@ -7,6 +7,8 @@
 // - `escribirTecnico()`: la transacción corta de las tablas [T] (03 §5.1, §7.1; 04 §3.10, §7.8): READ COMMITTED,
 //   **sin** `finn.tomar_bloqueo()`, con la zona y el reloj. Su `EscritorTecnicoTx` no es un `LectorTx` ni un
 //   `EscritorTx`: solo lo aceptan los repositorios [T]; `txPrisma()` lo rechaza y `a_exigir_bloqueo` también.
+// - `escribirSms()`: la de guardar el SMS (03 §5.1, fila propia; 04 §8.2 paso 4, §13.6 decisión 2): igual que la
+//   técnica, pero su `EscritorSmsTx` solo lo acepta `guardarSms()` ([I]), no los repositorios [T].
 // Las operaciones solo ven `LectorTx`, `EscritorTx` y `EscritorTecnicoTx`; el cliente queda dentro de @finn/db.
 import type { Cambio } from '@finn/dominio';
 import { cliente, type Cliente } from './cliente.ts';
@@ -51,11 +53,16 @@ export interface EscritorTx {
 export interface EscritorTecnicoTx {
   readonly clase: 'T';
 }
+/** La transacción de guardar el SMS (03 §5.1, "Guardar SMS"): sin bloqueo, solo para `sms_recibidos` [I]. */
+export interface EscritorSmsTx {
+  readonly clase: 'I';
+}
 /** Lo que aceptan los repositorios que escriben tablas [T]: la transacción técnica o una de `escribir()`. */
 export type EscritorTablasT = EscritorTx | EscritorTecnicoTx;
 export type TrabajoLectura<T> = (tx: LectorTx) => Promise<T>;
 export type TrabajoEscritura<T> = (tx: EscritorTx) => Promise<T>;
 export type TrabajoTecnico<T> = (tx: EscritorTecnicoTx) => Promise<T>;
+export type TrabajoSms<T> = (tx: EscritorSmsTx) => Promise<T>;
 
 // ADR-06 y 04 §4.2: `timeout` ≥ 20 s porque la espera del bloqueo puede durar hasta 10 s; 04 §5.1 para leer
 export const OPCIONES_ESCRITURA = {
@@ -78,7 +85,7 @@ export const OPCIONES_TECNICA = {
 // El cliente de cada transacción abierta, para los repositorios y el traductor de @finn/db (no sale de index.ts)
 const prismaDe = new WeakMap<LectorTx, TxPrisma>();
 // Aparte: una transacción técnica nunca sale de `txPrisma()`, ni con un `as` (04 §3.10)
-const prismaTecnicoDe = new WeakMap<EscritorTecnicoTx, TxPrisma>();
+const prismaTecnicoDe = new WeakMap<EscritorTecnicoTx | EscritorSmsTx, TxPrisma>();
 
 /** El cliente de Prisma de la transacción de `tx`. Solo para el código y las pruebas de @finn/db. */
 export function txPrisma(tx: LectorTx): TxPrisma {
@@ -89,8 +96,16 @@ export function txPrisma(tx: LectorTx): TxPrisma {
 
 /** Como `txPrisma()`, también para la transacción técnica: solo lo usan los repositorios [T] y `ahoraDb()`. */
 export function txPrismaT(tx: LectorTx | EscritorTecnicoTx): TxPrisma {
+  return txPrismaSinBloqueo(tx);
+}
+
+/** Como `txPrismaT()`, para cualquier transacción sin bloqueo: solo `ahoraDb()` y `guardarSms()`. */
+export function txPrismaSinBloqueo(tx: LectorTx | EscritorTecnicoTx | EscritorSmsTx): TxPrisma {
   const p = prismaTecnicoDe.get(tx as EscritorTecnicoTx) ?? prismaDe.get(tx as LectorTx);
-  if (!p) throw new Error('La transacción no es de escribir(), leer() ni escribirTecnico()');
+  if (!p)
+    throw new Error(
+      'La transacción no es de escribir(), leer(), escribirTecnico() ni escribirSms()',
+    );
   return p;
 }
 
@@ -170,20 +185,24 @@ export function transaccionesSobre(c: Cliente) {
     }, OPCIONES_LECTURA);
   }
 
-  async function escribirTecnico<T>(
-    trabajo: TrabajoTecnico<T>,
-    opciones: OpcionesTx = {},
+  async function sinBloqueo<X extends EscritorTecnicoTx | EscritorSmsTx, T>(
+    escritor: X,
+    trabajo: (tx: X) => Promise<T>,
+    opciones: OpcionesTx,
   ): Promise<T> {
     return c.$transaction(async (tx) => {
       // Sin `finn.tomar_bloqueo()` (03 §5.1): la primera sentencia es la zona y el reloj (paso 2 de 04 §4.2)
       await fijarSesion(tx, opciones.reloj);
-      const tecnico: EscritorTecnicoTx = Object.freeze({ clase: 'T' as const });
-      prismaTecnicoDe.set(tecnico, tx);
-      return trabajo(tecnico);
+      prismaTecnicoDe.set(escritor, tx);
+      return trabajo(escritor);
     }, OPCIONES_TECNICA);
   }
+  const escribirTecnico = <T>(trabajo: TrabajoTecnico<T>, opciones: OpcionesTx = {}) =>
+    sinBloqueo(Object.freeze({ clase: 'T' as const }), trabajo, opciones);
+  const escribirSms = <T>(trabajo: TrabajoSms<T>, opciones: OpcionesTx = {}) =>
+    sinBloqueo(Object.freeze({ clase: 'I' as const }), trabajo, opciones);
 
-  return { escribir, leer, escribirTecnico };
+  return { escribir, leer, escribirTecnico, escribirSms };
 }
 
 /** Toda escritura de hechos (04 §4.1, §4.2). */
@@ -197,3 +216,7 @@ export const leer = <T>(trabajo: TrabajoLectura<T>, opciones?: OpcionesTx): Prom
 /** Toda escritura de tablas [T] fuera de `escribir()`: notificaciones, eventos, push (03 §5.1; 04 §3.10, §7.8). */
 export const escribirTecnico = <T>(trabajo: TrabajoTecnico<T>, opciones?: OpcionesTx): Promise<T> =>
   transaccionesSobre(cliente()).escribirTecnico(trabajo, opciones);
+
+/** Guardar el SMS (OP-35 paso 1; 03 §5.1; 04 §8.2 paso 4): en su propia transacción, sin el bloqueo global. */
+export const escribirSms = <T>(trabajo: TrabajoSms<T>, opciones?: OpcionesTx): Promise<T> =>
+  transaccionesSobre(cliente()).escribirSms(trabajo, opciones);

@@ -139,6 +139,19 @@ export default defineConfig({
         extends: false,
         test: {
           ...comun,
+          // RES (07 §1.1, §19.6; TA-251): el nocturno, con `pnpm test:respaldo`; el mismo arnés de PostgreSQL
+          name: 'respaldo',
+          include: ['tools/respaldo/test/**/*.test.ts'],
+          exclude: excluidos,
+          globalSetup: ['packages/db/test/ayudantes/base.ts'],
+          testTimeout: 600_000,
+          hookTimeout: 1_800_000,
+        },
+      },
+      {
+        extends: false,
+        test: {
+          ...comun,
           name: 'componentes',
           include: ['apps/web/src/**/*.cmp.test.tsx'],
           exclude: excluidos,

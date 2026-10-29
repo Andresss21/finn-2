@@ -145,7 +145,7 @@ export const MENSAJE_INCIERTO =
 const TOPE_REINTENTO_MS = 15_000;
 
 /** `E-` y 6 caracteres de Crockford base32 (04 §7.8). */
-const idErrorAleatorio = (): string =>
+export const idErrorAleatorio = (): string =>
   `E-${[...randomBytes(6)].map((b) => CROCKFORD[b % 32]).join('')}`;
 
 /** La huella de 04 §4.3: SHA-256 hexadecimal de la forma canónica del impacto y los avisos (ids nuevos como `@nueva#k`). */

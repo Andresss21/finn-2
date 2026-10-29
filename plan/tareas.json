@@ -149,6 +149,8 @@
 
   "TA-241": { "estado": "terminada", "pr": 121 },
 
+  "TA-242": { "estado": "pendiente" },
+
   "TA-141": { "estado": "terminada", "pr": 39 },
 
   "TA-230": { "estado": "terminada", "pr": 41 },
@@ -223,7 +225,7 @@
 
   "TA-176": { "estado": "terminada", "pr": 19 },
 
-  "TA-177": { "estado": "pendiente" },
+  "TA-177": { "estado": "terminada", "pr": 150 },
 
   "TA-178": { "estado": "pendiente" },
 
@@ -321,7 +323,7 @@
 
   "TA-250": { "estado": "pendiente" },
 
-  "TA-251": { "estado": "pendiente" },
+  "TA-251": { "estado": "terminada", "pr": 149 },
 
   "TA-252": { "estado": "terminada", "pr": 34 },
 

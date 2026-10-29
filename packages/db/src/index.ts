@@ -1,9 +1,11 @@
 // Contrato público de @finn/db (04 §2.5). Sin tipos de Prisma: el cliente y `txPrisma` quedan dentro del paquete.
 export {
   escribir,
+  escribirSms,
   escribirTecnico,
   leer,
   OPERACIONES_DECLARADAS,
+  type EscritorSmsTx,
   type EscritorTablasT,
   type EscritorTecnicoTx,
   type EscritorTx,
@@ -15,6 +17,7 @@ export {
   type RelojTx,
   type TrabajoEscritura,
   type TrabajoLectura,
+  type TrabajoSms,
   type TrabajoTecnico,
 } from './transacciones.ts';
 export { cargarHechos, COLUMNAS_CARGADAS, COLUMNAS_NO_CARGADAS } from './hechos/cargar.ts';

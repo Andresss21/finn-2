@@ -403,7 +403,7 @@ tu: —
 
 ```hito
 despues: TA-199
-requiere: TA-150, TA-151, TA-152, TA-153, TA-154, TA-155, TA-156, TA-158, TA-159, TA-160, TA-161, TA-162, TA-163, TA-164, TA-165, TA-166, TA-167, TA-168, TA-169, TA-170, TA-171, TA-172, TA-173, TA-174, TA-175, TA-176, TA-177, TA-178, TA-179, TA-180, TA-181, TA-182, TA-183, TA-184, TA-185, TA-186, TA-187, TA-188, TA-189, TA-190, TA-191, TA-192, TA-193, TA-194, TA-195, TA-196, TA-197, TA-198, TA-199
+requiere: TA-150, TA-151, TA-152, TA-153, TA-154, TA-155, TA-156, TA-158, TA-159, TA-160, TA-161, TA-162, TA-163, TA-164, TA-165, TA-166, TA-167, TA-168, TA-169, TA-170, TA-171, TA-172, TA-173, TA-174, TA-175, TA-176, TA-177, TA-242, TA-178, TA-179, TA-180, TA-181, TA-182, TA-183, TA-184, TA-185, TA-186, TA-187, TA-188, TA-189, TA-190, TA-191, TA-192, TA-193, TA-194, TA-195, TA-196, TA-197, TA-198, TA-199
 tu: TU-13
 ```
 
@@ -1497,6 +1497,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-32** | Totales del Presupuesto. 04 §6.2 define `PresupuestoDto.totales` sin decir qué suma; el selector de TA-125 sumaba asignado y Disponible de todas las celdas del período (con las categorías de pago de tarjeta y las archivadas no visibles) y gastado solo de las normales. 07 §28.2 #8 da $997.84 · $647.95 · $1,784.51 ("Suman Farmacia y Cuota del préstamo") y 06-identidad-visual §5 los muestra aparte de la franja de Pagos de tarjeta; con A.7 el selector daba un Disponible de $2,407.94 ($1,784.51 + $623.43 de Pago Visa Oro), y PRU-DOM-MOTOR-903 (TA-147) sumaba `grupos[].totales` para esquivarlo. Resolución: `totales` es la Σ de asignado, gastado y Disponible de las categorías normales que el período muestra en `grupos`, con las archivadas que R4 muestra en un período cerrado y sin aplicar `filtro` (la suma de `grupos[].totales` con `todas`); no incluye `pagosTarjeta` ni `archivadasConDinero`. PRU-DOM-MOTOR-903 lee `presupuesto().totales` con los mismos esperados de §28.2; en PRU-DOM-PRES-102, el Disponible total del estado conocido pasa de 260 a 170 (sin `pago-vi`, 60, ni `vieja`, 30) | 04 §6.2; 07 §28.2 #8; 06-identidad-visual §5 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-32]** en TA-125 (corrección) y 04 §6.2 |
 | **CH-33** | Ubicación de las pruebas REN que miden contra la base. 07 §2.3 ubicaba `REN` (motor) solo en los `.bench.ts` de dominio (puro, sin E/S) y la matriz (M8) lo imponía, pero PRU-REN-MOTOR-001 (V-13, carga con `json_agg`) y PRU-REN-ESQ-001 (V-30) necesitan una base real. Resolución: las pruebas REN de carga viven en `packages/db/test/*.int.test.ts` y corren con `pnpm test:integracion -t PRU-REN`; `ARCHIVO_DE.REN` de la matriz acepta `.int.test.ts` | 07 §2.3, §20.1 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-33]** en 07 §2.3 y `tools/pruebas/matriz.ts` |
 | **CH-34** | Referencias `Q-<consulta>` en M7. Las fichas de consultas de 08 tienen `cubre: Q-inicio, Q-presupuesto, …`, y el resumen exige que una prueba los cite entre corchetes, pero M7 solo aceptaba `CA`, `ESC`, `AV`, `INV`, `CB`, `REC`, `V`, `V5`, `V6`, `H`, `CF` y `FT`: `Q-inicio` daba «formato desconocido» y quedaba «sin prueba». Resolución: el formato de las referencias y M7 aceptan `Q-<nombre>`, con `<nombre>` igual al de la consulta (camelCase, `Q-detalleLpa`), y existen si están en 06 §6.3 | 07 §2.1, §13.1 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-34]** en 07 §2.1, §13.1 y `tools/pruebas/reglas.ts` |
+| **CH-35** | Partición de TA-177 por tamaño (DT-02). El alcance completo de TA-177 midió prod=561 contra una estimación de 360: pasa el tope de DT-01 (400) y no es una tarea normal (el +30 % no aplica). Se parte: TA-177 conserva el contrato del cuerpo, el token y OPT-01, `recibir()` con los códigos 401, 413, 503 y 200 y el guardado sin bloqueo (`escribirSms()` de `@finn/db`, 03 §5.1, fila "Guardar SMS"), y cubre OPT-01, BE-44, BE-59, BE-60 y BE-61; TA-242, nueva, lleva el procesamiento de OP-35 en el marco, los intentos sin sobrescribir y el barrido de 5 (OP-35, BE-45, BE-62, N-02-intentos) con PRU-INT-BAND-105. TA-216 pasa a depender también de TA-242, y TA-191 pasa al orden 196 (libre) y a depender de TA-242, que toma el 192 y va antes que ESC-46@int (E13); TA-186 sigue dependiendo de TA-177, porque no hay un orden libre antes del suyo (185): su paso 2 (SMS sin resultado) usa `procesar()` de TA-242. El código completo queda en la rama `ta-177-sms-completo` | 08 TA-177, TA-242, TA-216, TA-191, HT-3 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-35]** en 08 TA-177, TA-242 y HT-3 |
 | **CH-36** | Propuesta de la previsualización (OP-24, OP-46, OP-53). 04 §4.3, paso 3, cerraba lo que devuelve `previsualizar` en `{ revisionVista, huellaImpacto, impacto, avisos, rechazos }`, pero OP-24 y OP-46 (§3.4, §3.8) dicen que la previsualización devuelve el desglose del modelo del préstamo, CP-16 se apoya en eso para el desglose de una cuota al conciliar y OP-53 devuelve `saldoFinn` y `diferencia`: no había lugar para esos datos. Además, el selector `desglosePropuesto` tomaba la primera cuota no pagada e ignoraba la fecha. Resolución: el paso 3 agrega `propuesta?`, propio de cada operación, de solo lectura y fuera de `huellaImpacto`; para OP-24 en modalidad cuota y OP-46 con tipo `cuota_prestamo` tiene la forma del contexto `cuota_prestamo` de 6.14.4 (`desglosePropuesto?`, `cuotaEmparejada?`), con la cuota emparejada por `numeroCuota` si se indicó y, si no, con la no pagada a ±10 días o menos de la fecha, la más cercana (01 Anexo A.2, puntos 7 y 8); `numeroCuota` no se guarda. Para OP-53 es `{ saldoFinn; diferencia; … }`. Ningún número de escenarios cambia | 04 §4.3, §3.4 (OP-24), §3.8 (OP-46, OP-53), §6.14.4 (CP-16); 01 Anexo A.2 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-36]** en 04 §4.3, §3.4 y §3.8 |
 
 ---
@@ -1701,7 +1702,7 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 173 | TA-174 | B3 | 1 | HT-3 | normal | Contextos de formulario de presupuesto y bandeja, y `reporte()` | 280 | 0 |
 | 174 | TA-175 | B3 | 1 | HT-3 | normal | `@finn/sms`: intérprete y normalizadores | 260 | 0 |
 | 175 | TA-176 | B3 | 1 | HT-3 | obligatoria | Política de patrones (BE-46) y `ci:politica-patrones` | 200 | 0 |
-| 176 | TA-177 | B3 | 1 | HT-3 | obligatoria | Recibir SMS: guardar, procesar e intentos (OP-35, OPT-01) | 360 | 0 |
+| 176 | TA-177 | B3 | 1 | HT-3 | obligatoria | Recibir SMS: guardar, procesar e intentos (OP-35, OPT-01) | 300 | 0 |
 | 177 | TA-178 | B3 | 1 | HT-3 | normal | Bandeja I: editar, aprobar y resolver (OP-36, OP-37, OP-39, OP-40) | 340 | 0 |
 | 178 | TA-179 | B3 | 1 | HT-3 | normal | Bandeja II: aprobar todos, reglas, reprocesar y crear a mano (OP-38, OP-41, OP-49, OP-50) | 280 | 0 |
 | 179 | TA-180 | B3 | 1 | HT-3 | obligatoria | Anonimización de muestras (07 §23, CH-03) | 220 | 0 |
@@ -1717,10 +1718,11 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 189 | TA-190 | B3 | 1 | HT-3 | normal | Escenarios contra PostgreSQL: ESC-22, ESC-24, ESC-31, ESC-32, ESC-33, ESC-34, ESC-35, ESC-36 | 40 | 0 |
 | 190 | TA-193 | B3 | 1 | HT-3 | normal | Condonar, devolver y eliminar evento (OP-32 a OP-34) | 280 | 0 |
 | 191 | TA-194 | B3 | 1 | HT-3 | normal | Programadas y registro automático (OP-42 a OP-44, OP-51) | 340 | 0 |
-| 192 | TA-191 | B3 | 1 | HT-3 | normal | Escenarios contra PostgreSQL: ESC-37, ESC-38, ESC-39, ESC-42, ESC-43, ESC-44, ESC-46, ESC-47, ESC-48, ESC-49 | 40 | 0 |
+| 192 | TA-242 | B3 | 1 | HT-3 | obligatoria | Procesar SMS: OP-35 en el marco, intentos y barrido (parte 2 de TA-177) | 265 | 0 |
 | 193 | TA-251 | B5 | — | HT-4 | obligatoria | Respaldo y restauración: scripts y prueba `RES` | 330 | 0 |
 | 194 | TA-250 | B5 | — | HT-4 | obligatoria | Prueba de humo: `humo.sh` con H-01 a H-08, H-11 y H-12 | 360 | 0 |
 | 195 | TA-253 | B5 | — | HT-4 | obligatoria | Prueba de humo: H-09 (carga desde `iad1`) y H-10 (Auth) | 300 | 0 |
+| 196 | TA-191 | B3 | 1 | HT-3 | normal | Escenarios contra PostgreSQL: ESC-37, ESC-38, ESC-39, ESC-42, ESC-43, ESC-44, ESC-46, ESC-47, ESC-48, ESC-49 | 40 | 0 |
 | 600 | TA-136 | B2 | 2 | HT-2 | obligatoria | `aplicar`: asignación rápida y cambiar el ciclo (OP-16, OP-19) | 260 | 0 |
 | 601 | TA-137 | B2 | 2 | HT-2 | obligatoria | `aplicar`: inversiones y desembolso (OP-25, OP-26) | 180 | 0 |
 | 604 | TA-140 | B2 | 2 | HT-2 | normal | Selectores de por cobrar, programadas y contextos de formulario: cobrar, condonar y devolver (ola 2, parte 1) | 400 | 0 |
@@ -3764,6 +3766,40 @@ compartido: SEL-formulario (los contextos de la ola 2)
 
 **Terminada cuando.** La prueba pasa.
 
+#### TA-242 Procesar SMS: OP-35 en el marco, intentos y barrido (parte 2 de TA-177)
+
+Parte 2 de TA-177 (DT-02, 08 §1.2, CH-35). **Portar desde la rama `ta-177-sms-completo`**, que tiene todo el código: `sms/procesar.ts`, las lecturas `leerSmsParaProcesar` y `smsSinResultado` de `repositorios/sms.ts` y los pasos 6 y 7 de `despues` en `sms/recibir.ts`.
+
+```tarea
+orden: 192
+bloque: B3
+hito: HT-3
+depende: TA-177
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=265 archivos=4 ca=0 migraciones=0 total=600
+cubre: OP-35, BE-45, BE-62, N-02-intentos
+pru: PRU-INT-BAND-105
+compartido: —
+```
+
+**Qué construir.**
+- `sms/procesar.ts`: lectura sin bloqueo e interpretación fuera del bloqueo (BE-45), OP-35 con `confirmar()` del marco y `escribir()`, que vuelve a comprobar bajo el bloqueo que el SMS siga sin resultado; el paso d con el intento `error` y el movimiento en `error` (N-02); intentos sin sobrescribir.
+- Barrido de hasta 5 SMS sin resultado por petición, con el tope de 20 s (BE-62), y el evento `cuerpo_invalido` (15.2), conectados en el `despues` de `sms/recibir.ts`.
+
+**Leer.** 04 §8.2, §8.4, §8.6, §15.2; 02 ADR-09, N-02; 03 §3.18, §5.1.
+
+**Archivos.** `packages/aplicacion/src/sms/{procesar,recibir}.ts`, `packages/db/src/repositorios/sms.ts`, `packages/aplicacion/package.json`.
+
+**Pruebas primero.**
+- **PRU-INT-BAND-105** (nueva, DT-17): los 12 cuerpos de V-27 dan su resultado (`no_reconocido`, o `error` con `cuerpo_invalido: <detalle>`); un SMS reconocido con su intento 1 y su movimiento; reprocesar no agrega intentos (N-02); el barrido toma 5 de 6 sin resultado y no barre pasado el tope.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:integracion -t "PRU-INT-BAND-105"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
 #### TA-141 Reportes base (04 §6.9.2, §6.9.3; parte 1)
 
 Partida en dos por tamaño (DT-02, 08 §1.2): esta parte tiene los reportes base y `existiaEn`; el top de comercios y el gasto semanal son TA-230.
@@ -4937,22 +4973,22 @@ depende: TA-159, TA-175, TA-120, TA-155
 tu: —
 revision: obligatoria
 paralelo: libre
-tamano: prod=360 archivos=7 ca=0 migraciones=0 total=900
-cubre: OP-35, OPT-01, BE-44, BE-45, BE-59, BE-60, BE-61, BE-62, N-02-intentos
+tamano: prod=300 archivos=9 ca=0 migraciones=0 total=660
+cubre: OPT-01, BE-44, BE-59, BE-60, BE-61
 pru: PRU-INT-BAND-001, PRU-CTR-BAND-001
 compartido: —
 ```
 
 **Qué construir.**
-- `sms/recibir.ts`: token en tiempo constante contra el hash (OPT-01 lo rota y lo muestra una vez), contrato del cuerpo en sus dos variantes (BE-59, BE-61) con el cuerpo inválido guardado crudo (BE-60), guardado sin bloqueo, interpretación fuera del bloqueo (BE-45) y procesamiento con `escribir()`; intentos sin sobrescribir (N-02) y barrido de hasta 5 SMS sin resultado por petición (BE-62).
-- Devuelve el código HTTP que corresponde (401, 5xx, 200) para que el Route Handler de la Parte C solo lo traduzca (BE-44).
+- `sms/recibir.ts`: token en tiempo constante contra el hash (OPT-01 lo rota y lo muestra una vez), contrato del cuerpo en sus dos variantes (BE-59, BE-61) con el cuerpo inválido guardado crudo (BE-60) y guardado sin bloqueo con `escribirSms()` de `@finn/db` (03 §5.1, fila "Guardar SMS").
+- Devuelve el código HTTP que corresponde (401, 413, 503, 200) y un `despues` para `after()`, para que el Route Handler de la Parte C solo lo traduzca (BE-44). Procesar, intentos y barrido (pasos 6 y 7 de 04 §8.2) son TA-242 **[CH-35]**.
 
-**Leer.** 04 §8.1, §8.1.1, §8.2, §8.4, §8.6, §3.10 (OPT-01); 02 ADR-09, N-01, N-02; 03 §3.17, §3.18.
+**Leer.** 04 §8.1, §8.1.1, §8.2, §3.10 (OPT-01); 02 ADR-09, N-01; 03 §3.17, §5.1.
 
-**Archivos.** `packages/aplicacion/src/sms/{recibir,procesar,token}.ts`, `packages/aplicacion/src/contratos/webhook.ts`.
+**Archivos.** `packages/aplicacion/src/sms/{recibir,token}.ts`, `packages/aplicacion/src/contratos/webhook.ts`, `packages/db/src/{transacciones,ahora,index}.ts`, `packages/db/src/repositorios/sms.ts`.
 
 **Pruebas primero.**
-- PRU-CTR-BAND-001 y PRU-INT-BAND-001 (V-27): los 12 cuerpos contra las `CHECK` de 03 §3.17.
+- PRU-CTR-BAND-001 y PRU-INT-BAND-001 (V-27): los 12 cuerpos contra las `CHECK` de 03 §3.17; 401, 413 y 503 sin guardar; el guardado no espera el bloqueo global.
 
 **Comandos.** `pnpm test:contratos -t "PRU-CTR-BAND-001"`; `pnpm test:integracion -t "PRU-INT-BAND-001"`; `pnpm ci:local`.
 
@@ -5435,10 +5471,10 @@ compartido: —
 #### TA-191 Escenarios contra PostgreSQL: ESC-37, ESC-38, ESC-39, ESC-42, ESC-43, ESC-44, ESC-46, ESC-47, ESC-48, ESC-49
 
 ```tarea
-orden: 192
+orden: 196
 bloque: B3
 hito: HT-3
-depende: TA-188, TA-163, TA-167, TA-170, TA-178, TA-184, TA-134, TA-193, TA-194
+depende: TA-188, TA-163, TA-167, TA-170, TA-178, TA-184, TA-134, TA-193, TA-194, TA-242
 tu: —
 revision: normal
 paralelo: libre
@@ -6386,7 +6422,7 @@ compartido: —
 orden: 310
 bloque: B4
 hito: HT-5
-depende: TA-200, TA-177, TA-186
+depende: TA-200, TA-177, TA-242, TA-186
 tu: —
 revision: obligatoria
 paralelo: libre

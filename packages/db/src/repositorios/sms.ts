@@ -3,16 +3,25 @@
 import type { FechaLocal } from '@finn/dominio/valores';
 import { ahoraDb, conAhora } from '../ahora.ts';
 import { dateDeFechaLocal } from '../mapeo/fechas.ts';
-import { txPrisma, type EscritorTx, type LectorTx } from '../transacciones.ts';
+import {
+  txPrisma,
+  txPrismaSinBloqueo,
+  type EscritorSmsTx,
+  type EscritorTx,
+  type LectorTx,
+} from '../transacciones.ts';
 
 export type SmsGuardado = { id: string; texto: string; remitente: string; recibidoEn: Date };
 
+/** OP-35 paso 1: con `escribirSms()`, sin el bloqueo global (03 §5.1); `recibido_en` es `finn.ahora()`. */
 export async function guardarSms(
-  tx: EscritorTx,
+  tx: EscritorSmsTx | EscritorTx,
   sms: { texto: string; remitente: string },
 ): Promise<SmsGuardado> {
   const ahora = await ahoraDb(tx);
-  return txPrisma(tx).smsRecibido.create({ data: conAhora('smsRecibido', sms, ahora) });
+  return txPrismaSinBloqueo(tx).smsRecibido.create({
+    data: conAhora('smsRecibido', sms, ahora),
+  });
 }
 
 export function smsPorId(tx: LectorTx, id: string): Promise<SmsGuardado | null> {

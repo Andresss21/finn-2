@@ -42,7 +42,7 @@
     "ci:cierre": "pnpm pruebas:listar && node tools/pruebas/matriz.ts verificar --resultados test-results/informes",
     "ci:local": "node tools/ci/afecta.mjs local",
     "ci:politica-patrones": "node tools/ci/politica-patrones.ts",
-    "test:respaldo": "node --test --test-reporter=spec \"tools/respaldo/test/**/*.test.*\"",
+    "test:respaldo": "vitest run --project respaldo --coverage.enabled=false --passWithNoTests",
     "docs:comprobar": "node tools/docs/comprobar.mjs"
   },
   "prettier": "@finn/config/prettier",
@@ -51,6 +51,7 @@
     "@types/node": "24.19.2",
     "@vitest/browser-playwright": "4.1.12",
     "@vitest/coverage-v8": "4.1.12",
+    "age-encryption": "0.3.1",
     "dependency-cruiser": "18.7.0",
     "eslint": "10.13.0",
     "fast-check": "4.10.2",
