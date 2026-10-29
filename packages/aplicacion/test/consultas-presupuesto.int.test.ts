@@ -117,7 +117,9 @@ describe('PRU-INT-PRES', () => {
     expect(enInicio).toBeDefined();
     expect(enInicio?.sobregiro).toEqual(fila?.sobregiro);
     expect(enInicio?.categoria).toEqual(fila?.categoria);
-    const enLpa = lpa.reduccionProyectadaAlCierre.categorias.find((c) => c.categoria.id === PRESTAMO);
+    const enLpa = lpa.reduccionProyectadaAlCierre.categorias.find(
+      (c) => c.categoria.id === PRESTAMO,
+    );
     expect(enLpa).toBeDefined();
     expect(enLpa?.monto).toBe(fila?.sobregiro?.parteDebito);
     expect(pre.lpa).toBe(ini.lpa);
@@ -127,14 +129,14 @@ describe('PRU-INT-PRES', () => {
 
     // 4. Parámetros y sesión (6.0.1, CH-29): se lanzan como ExcepcionFinn
     const invalido = await lanzado(presupuesto(deps, { filtro: 'otra' }));
-    expect(invalido).toMatchObject({ categoria: 'VALIDACION', campos: { filtro: expect.any(String) } });
+    expect(invalido.categoria).toBe('VALIDACION');
+    expect(Object.keys(invalido.campos ?? {})).toEqual(['filtro']);
     expect(await lanzado(detalleLpa(deps, { periodos: 61 }))).toMatchObject({
       categoria: 'VALIDACION',
     });
-    expect(await lanzado(presupuesto(deps, { periodoInicio: '2020-01-01' }))).toMatchObject({
-      categoria: 'VALIDACION',
-      campos: { periodoInicio: expect.any(String) },
-    });
+    const fueraDeRango = await lanzado(presupuesto(deps, { periodoInicio: '2020-01-01' }));
+    expect(fueraDeRango.categoria).toBe('VALIDACION');
+    expect(Object.keys(fueraDeRango.campos ?? {})).toEqual(['periodoInicio']);
     const sinSesion = { ...deps, sesion: sesionDe(null) };
     expect(await lanzado(inicio(sinSesion))).toMatchObject({
       categoria: 'NO_AUTORIZADO',

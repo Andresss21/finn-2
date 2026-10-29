@@ -14,7 +14,10 @@ export function presupuesto(d: DepsConsulta, parametros: unknown = {}): Promise<
     { nombre: 'presupuesto', contrato: parametrosPresupuesto, parametros },
     ({ i, encabezado }, p) => {
       // Un inicio que no abre un período del rango calculado es un parámetro inválido, no un error interno
-      if (p.periodoInicio !== undefined && !i.presupuesto.periodos.some((q) => q.inicio === p.periodoInicio))
+      if (
+        p.periodoInicio !== undefined &&
+        !i.presupuesto.periodos.some((q) => q.inicio === p.periodoInicio)
+      )
         throw new ExcepcionFinn({
           categoria: 'VALIDACION',
           codigo: 'validacion',

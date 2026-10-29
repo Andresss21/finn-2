@@ -98,7 +98,11 @@ async function errorInterno(e: unknown, consulta: string, d: DepsConsulta): Prom
  */
 export async function consultar<P, T>(
   d: DepsConsulta,
-  consulta: { readonly nombre: string; readonly contrato: z.ZodType<P>; readonly parametros: unknown },
+  consulta: {
+    readonly nombre: string;
+    readonly contrato: z.ZodType<P>;
+    readonly parametros: unknown;
+  },
   trabajo: (c: ContextoConsulta, parametros: P) => T | Promise<T>,
 ): Promise<Awaited<T>> {
   const sesion = await exigirSesionLectura(d.sesion, d.usuarioPermitido);
@@ -111,7 +115,9 @@ export async function consultar<P, T>(
       const hoy = FechaLocal.desdeTexto(hoyTexto);
       const hechos = await d.memoria.hechos(revision, () => cargarHechos(tx));
       // La memoria es la de la instancia y no sabe de tipos: solo esta función guarda instantáneas en ella
-      const i = d.memoria.instantanea(revision, hoyTexto, () => calcular(hechos, hoy)) as Instantanea;
+      const i = d.memoria.instantanea(revision, hoyTexto, () =>
+        calcular(hechos, hoy),
+      ) as Instantanea;
       const bandeja = await contarBandeja(tx);
       const encabezado: Encabezado = {
         revision,
