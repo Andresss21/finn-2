@@ -239,7 +239,7 @@
 
   "TA-184": { "estado": "pendiente" },
 
-  "TA-185": { "estado": "pendiente" },
+  "TA-185": { "estado": "en_curso", "rama": "ta-185-notificaciones-catalogo" },
 
   "TA-186": { "estado": "pendiente" },
 
