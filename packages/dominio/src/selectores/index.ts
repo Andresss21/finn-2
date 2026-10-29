@@ -22,6 +22,13 @@ export { detallePagoTarjeta, type DetallePagoTarjeta } from './detalle-pago-tarj
 export { estructura, type GrupoDeEstructura } from './estructura';
 export { metas, type Metas } from './metas';
 export { detalleLpa, PERIODOS_DE_HISTORIAL, type DetalleLpaSel } from './detalle-lpa';
+export { porCobrar, type EstadoPorCobrar, type PorCobrarSel } from './por-cobrar';
+export {
+  HORIZONTE_PROGRAMADAS,
+  programadas,
+  type ProgramadasSel,
+  type ReferenciasDeProgramadas,
+} from './programadas';
 export { inicio, type InicioSel, type OcurrenciaDto } from './inicio';
 export { ritmo, type RitmoSel } from './reportes/ritmo';
 export { presupuesto, type FiltroPresupuesto, type PresupuestoSel } from './presupuesto';

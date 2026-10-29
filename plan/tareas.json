@@ -265,7 +265,7 @@
 
   "TA-196": { "estado": "pendiente" },
 
-  "TA-197": { "estado": "pendiente" },
+  "TA-197": { "estado": "en_curso", "rama": "ta-197-consultas-cobro" },
 
   "TA-198": { "estado": "pendiente" },
 
