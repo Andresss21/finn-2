@@ -4,8 +4,8 @@
 // categorías y deudor son los de los hechos de prueba (efectivo 1 y 2, Visa 3, préstamo 4, categoría 11, pago 13,
 // deudor 14); la línea por cobrar de Ana es la 303 (compra de $20 con $15 a Ana: cobrado $10, condonado $3, abierto $2).
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Cambio, Hechos, Instante, Uuid } from '@finn/dominio';
-import { cargarHechos, escribir, leer, Memoria } from '@finn/db';
+import type { Hechos, Instante, Uuid } from '@finn/dominio';
+import { cargarHechos, leer, Memoria } from '@finn/db';
 import { crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY, RELOJ } from '../../db/test/ayudantes/hechos-prueba.ts';
 import {
@@ -45,8 +45,6 @@ describe('PRU-INT-COBRO', () => {
     confirmar(def, entrada, deps());
   const preparar = <E, R, S>(def: DefinicionOperacion<E, R, S>, entrada: unknown) =>
     previsualizar(def, entrada, deps());
-  const escribirCambios = (cambios: Cambio[]) =>
-    escribir((tx) => tx.aplicarCambios(cambios), RELOJ);
   const cobro = async (id: Uuid) => {
     const h = await hechos();
     return {
@@ -118,7 +116,7 @@ describe('PRU-INT-COBRO', () => {
     expect((await cobro(otro.id)).tx).toBeUndefined();
   });
 
-  it('PRU-INT-COBRO-101 [BE-36, AV-22] OP-31: el cobro de un por cobrar con tarjeta que entra en efectivo propone asignar a pago(t) y, con la casilla, lo asigna en la misma operación', async () => {
+  it('PRU-INT-COBRO-101 [AV-22] BE-36 OP-31: el cobro de un por cobrar con tarjeta que entra en efectivo propone asignar a pago(t) y, con la casilla, lo asigna en la misma operación', async () => {
     const compra = {
       id: uuid(1110),
       cuentaId: T1,

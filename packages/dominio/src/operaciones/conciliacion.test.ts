@@ -419,10 +419,8 @@ describe('PRU-DOM-CONC-101: conciliación y verificar saldo (01 §5.8; 04 §3.8,
     const igual = en(H0, verificar('Ef', 100, { ids: [id('I')] }));
     expect(av21(igual)).toBeUndefined();
     // La propuesta de la previsualización (04 §3.8 [CH-36]): saldo de Finn, diferencia con la deuda positiva y cuántas marca
-    const pedido = (cuenta: string, saldo: number, marcar: object) => {
-      const { operacion: _o, id: _i, instante: _t, ...resto } = verificar(cuenta, saldo, marcar);
-      return resto as Parameters<typeof propuestaDeVerificacion>[1];
-    };
+    const pedido = (cuenta: string, saldo: number, marcar: object) =>
+      verificar(cuenta, saldo, marcar) as Parameters<typeof propuestaDeVerificacion>[1];
     expect(propuestaDeVerificacion(H0, pedido('T', 75, { todas: true }))).toEqual({
       saldoFinn: c(-77),
       diferencia: c(2),
