@@ -201,7 +201,7 @@
 
   "TA-165": { "estado": "terminada", "pr": 147 },
 
-  "TA-166": { "estado": "pendiente" },
+  "TA-166": { "estado": "en_curso", "rama": "ta-166-editar-eliminar-estado" },
 
   "TA-167": { "estado": "pendiente" },
 
