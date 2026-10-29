@@ -35,6 +35,24 @@ export function saldo(
   return total;
 }
 
+/** saldo(k) y saldo(k, { confirmado: true }) en una sola pasada por los efectos [BE-23]. */
+export function saldoYConfirmado(
+  h: HechosDeSaldo,
+  cuentaId: Uuid,
+  transacciones: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
+): { readonly saldo: Centavos; readonly confirmado: Centavos } {
+  let total = Centavos.cero;
+  let confirmado = Centavos.cero;
+  for (const e of h.efectos) {
+    if (e.cuentaId !== cuentaId) continue;
+    const t = transacciones.get(e.transaccionId);
+    if (t === undefined) throw new RangeError(`efecto ${e.id} sin su transacción`);
+    total = Centavos.sumar(total, e.monto);
+    if (t.estadoBancario !== 'pendiente') confirmado = Centavos.sumar(confirmado, e.monto);
+  }
+  return { saldo: total, confirmado };
+}
+
 /** saldo(k, f): solo los efectos de transacciones con fecha ≤ f. */
 export const saldoAl = (h: HechosDeSaldo, cuentaId: Uuid, f: FechaLocal): Centavos =>
   saldo(h, cuentaId, { hasta: f });

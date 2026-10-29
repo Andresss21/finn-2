@@ -6,7 +6,7 @@
 import type { Hechos, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import { cronologico, type Medio, type Momento, porId } from './devoluciones';
+import { cronologico, type Medio, mediosDe, type Momento, porId } from './devoluciones';
 import type { PagoImplicito } from './disponible';
 
 export type HechosDePorCobrar = Pick<
@@ -54,14 +54,8 @@ const momento = (x: Omit<Momento, 'orden'>, orden: number): Momento => ({
   orden,
 });
 
-function medios(h: HechosDePorCobrar) {
-  const cuentas = new Map(h.cuentas.map((k) => [k.id, k]));
-  const m = new Map<Uuid, Medio>();
-  for (const e of h.efectos) {
-    const k = cuentas.get(e.cuentaId);
-    if (k?.tipo === 'efectivo' || k?.tipo === 'tarjeta')
-      m.set(e.transaccionId, { cuentaId: k.id, tarjetaId: k.tipo === 'tarjeta' ? k.id : null });
-  }
+/** `medio(id)` con los medios de `mediosDe`: falla si la transacción no tiene uno. */
+function buscador(m: ReadonlyMap<Uuid, Medio>) {
   return (transaccionId: Uuid): Medio => {
     const x = m.get(transaccionId);
     if (x === undefined)
@@ -79,8 +73,9 @@ export function porCobrar(
   h: HechosDePorCobrar,
   hasta?: FechaLocal,
   txs: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
+  medios: ReadonlyMap<Uuid, Medio> = mediosDe(h),
 ): PorCobrar[] {
-  const medio = medios(h);
+  const medio = buscador(medios);
   const vale = (fecha: FechaLocal) => hasta === undefined || fecha <= hasta;
   const pendientes = new Map<Uuid, Pendiente[]>();
   const agregar = (lineaId: Uuid, e: Pendiente) => {
@@ -104,8 +99,9 @@ export function porCobrar(
       cuenta: null,
     });
   for (const l of h.lineas) {
+    if (l.lineaOriginalId === null) continue;
     const t = txs.get(l.transaccionId);
-    if (t?.tipo === 'devolucion' && l.lineaOriginalId !== null)
+    if (t?.tipo === 'devolucion')
       agregar(l.lineaOriginalId, {
         ...momento(t, l.orden),
         id: l.id,
@@ -116,8 +112,9 @@ export function porCobrar(
   }
 
   return h.lineas.flatMap((l): PorCobrar[] => {
+    if (l.deudorId === null) return [];
     const t = txs.get(l.transaccionId);
-    if (l.deudorId === null || t?.tipo !== 'gasto' || !vale(t.fecha)) return [];
+    if (t?.tipo !== 'gasto' || !vale(t.fecha)) return [];
     let abierto = l.monto;
     const eventos = cronologico(pendientes.get(l.id) ?? []).map((e): EventoDePorCobrar => {
       let restituido = Centavos.cero;
