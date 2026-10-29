@@ -1,9 +1,9 @@
 // OPT-04 Marcar notificaciones como leídas (04 §3.10, §11): `ids` o `todas: true` → `notificaciones.leida_en`.
 // No escribe hechos del motor, así que no pasa por `aplicar` del marco: valida el contrato y escribe en una
-// transacción corta de `escribir()` (el único servicio que abre transacciones, 04 §4.1). Natural (04 §4.6): lo ya
+// transacción corta sin bloqueo de `escribirTecnico()` (tabla [T]: 04 §3.10, 03 §5.1). Natural (04 §4.6): lo ya
 // leído conserva su `leida_en`; repetirla marca 0.
 import * as z from 'zod';
-import { escribir, marcarLeidas, type OpcionesTx } from '@finn/db';
+import { escribirTecnico, marcarLeidas, type OpcionesTx } from '@finn/db';
 import { uuid } from '../../contratos/comunes.ts';
 import { errorDeValidacion, type ResultadoAccion } from '../../errores/index.ts';
 
@@ -29,6 +29,6 @@ export async function marcarNotificacionesLeidas(
 ): Promise<ResultadoAccion<SalidaLeidas>> {
   const analizada = optLeidas.safeParse(cruda);
   if (!analizada.success) return { ok: false, error: errorDeValidacion(analizada.error.issues) };
-  const marcadas = await escribir((tx) => marcarLeidas(tx, analizada.data), opciones?.());
+  const marcadas = await escribirTecnico((tx) => marcarLeidas(tx, analizada.data), opciones?.());
   return { ok: true, valor: { marcadas }, yaAplicada: marcadas === 0, avisos: [] };
 }

@@ -3,7 +3,7 @@
 // las escribe siempre con `finn.ahora()`: así el reloj simulado de las bases de prueba (07 §4.1) llega también
 // a ellas. La regla L21 (tools/lint/l21.mjs) rechaza en @finn/db una inserción en esas tablas sin la columna.
 // `eliminaciones.eliminada_en` la escribe el trigger `tg_registrar_eliminacion` (m_eliminaciones_ahora).
-import { txPrisma, type LectorTx } from './transacciones.ts';
+import { txPrismaT, type EscritorTecnicoTx, type LectorTx } from './transacciones.ts';
 
 /** Modelo de Prisma → sus columnas de instante técnico (03 §3.17–§3.28; las 9 de CT-02). */
 export const COLUMNAS_AHORA = {
@@ -20,16 +20,16 @@ export const COLUMNAS_AHORA = {
 export type ModeloConAhora = keyof typeof COLUMNAS_AHORA;
 
 // Un valor por transacción: `finn.ahora()` es STABLE (now() + desfase), igual en toda la transacción
-const deTransaccion = new WeakMap<LectorTx, Promise<Date>>();
+const deTransaccion = new WeakMap<LectorTx | EscritorTecnicoTx, Promise<Date>>();
 
 /**
  * `finn.ahora()` de la transacción de `tx`, truncado al milisegundo: el `Date` de JavaScript no tiene
  * microsegundos, y así lo que se escribe es exactamente el valor leído (como el `instante` de 04 §4.2).
  */
-export function ahoraDb(tx: LectorTx): Promise<Date> {
+export function ahoraDb(tx: LectorTx | EscritorTecnicoTx): Promise<Date> {
   let ahora = deTransaccion.get(tx);
   if (!ahora) {
-    ahora = txPrisma(tx).$queryRaw<
+    ahora = txPrismaT(tx).$queryRaw<
       { ahora: Date }[]
     >`SELECT date_trunc('milliseconds', finn.ahora()) AS ahora`.then(([f]) => {
       if (!(f?.ahora instanceof Date)) throw new Error('finn.ahora() no devolvió un instante');
