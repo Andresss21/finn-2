@@ -28,7 +28,7 @@ import type { FechaLocal } from '../valores/fecha-local';
 import { filaDe } from './actividad';
 import { type DatosDeBandeja, movimientoDeBandeja, origenPropuestoPagoTarjeta } from './bandeja';
 import { nombres, type Ref, sobregiroDe } from './comunes';
-import { amortizacionDe, type Auxiliares } from './detalle-cuenta';
+import type { Auxiliares } from './detalle-cuenta';
 import { type DatosDeOrigen, detalleTransaccion } from './detalle-transaccion';
 import { porOrden } from './estructura';
 import { metas } from './metas';
@@ -374,31 +374,16 @@ function contextoCuotaPrestamo(
   const pr = h.prestamos.find((x) => x.cuentaId === p.prestamoId);
   if (pr === undefined) throw new RangeError(`el préstamo ${p.prestamoId} no existe`);
   const n = nombres(i);
-  const propuesto = p.modalidad === 'cuota' ? desglosePropuesto(i, p.prestamoId) : null;
-  const cuota =
-    propuesto === null
-      ? undefined
-      : amortizacionDe(i, pr)?.find((q) => q.numero === propuesto.numero);
+  // Anexo A.2 puntos 7 y 8: la cuota emparejada con un pago en `fecha ?? hoy`
+  const propuesta =
+    p.modalidad === 'cuota' ? desglosePropuesto(i, p.prestamoId, p.fecha ?? i.hoy) : null;
   const categoria = categoriaUltimaCuota(i, p.prestamoId);
   return {
     prestamo: n.cuenta(p.prestamoId),
     capitalPendiente: i.cuentas.find((s) => s.cuentaId === p.prestamoId)?.saldo ?? Centavos.cero,
     cuotaPactada: pr.cuotaPactada,
     tieneModelo: pr.modeloCalculo !== null,
-    ...(propuesto === null
-      ? {}
-      : {
-          desglosePropuesto: {
-            capital: propuesto.capital,
-            interes: propuesto.interes,
-            seguro: propuesto.seguro,
-            total: suma([propuesto.capital, propuesto.interes, propuesto.seguro]),
-            numeroCuota: propuesto.numero,
-          },
-        }),
-    ...(cuota === undefined
-      ? {}
-      : { cuotaEmparejada: { numero: cuota.numero, fecha: cuota.fecha, estado: cuota.estado } }),
+    ...propuesta,
     ...(categoria === undefined ? {} : { categoriaPropuesta: categoria }),
   };
 }
@@ -819,7 +804,7 @@ function contextoProgramada(
     throw new RangeError(`el ${p.fechaEsperada} no es una ocurrencia de la programada ${q.id}`);
   const desglose =
     p.fechaEsperada !== undefined && q.tipo === 'cuota_prestamo' && q.cuentaDestinoId !== null
-      ? desglosePropuesto(i, q.cuentaDestinoId)
+      ? (desglosePropuesto(i, q.cuentaDestinoId, p.fechaEsperada)?.desglosePropuesto ?? null)
       : null;
   return {
     ...base,

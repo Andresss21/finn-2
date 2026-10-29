@@ -5,30 +5,66 @@
 import { capitalPendiente } from '../calculo/saldos';
 import type * as H from '../hechos';
 import { bancoAgricola, condicionesAgricola } from '../prestamos/agricola';
-import type { DesgloseCuota } from '../prestamos/contrato';
-import { amortizacionDe } from '../selectores/detalle-cuenta';
+import type { DesgloseCuota, EstadoCuota, PagoPrestamo } from '../prestamos/contrato';
+import { amortizacionDe, pagosDe } from '../selectores/detalle-cuenta';
 import { Centavos } from '../valores/centavos';
+import type { FechaLocal } from '../valores/fecha-local';
 import type { Efecto } from './aplicar';
 import { alta, categoriaNormal, cuentaDe } from './op-20';
 import { esRechazo } from './rechazos';
 
+/** El desglose del modelo y la cuota emparejada, con la forma del contexto `cuota_prestamo` (04 §6.14.4, §4.3 [CH-36]). */
+export interface PropuestaCuota {
+  readonly desglosePropuesto: DesgloseCuota & {
+    readonly total: Centavos;
+    readonly numeroCuota: number;
+  };
+  readonly cuotaEmparejada: {
+    readonly numero: number;
+    readonly fecha: FechaLocal;
+    readonly estado: EstadoCuota;
+  };
+}
+
+/** El pago que se propone: después de los registrados del mismo día (`emparejar` ordena por fecha e id; `~` > hex). */
+const PROPUESTO = '~propuesto' as H.Uuid;
+
 /**
- * Desglose propuesto de la cuota `numero` (por defecto, la primera que no está pagada) con el
- * capital pendiente registrado, o `null` si el préstamo no tiene modelo (04 §3.4, previsualización).
+ * Desglose propuesto para un pago en `fecha` (Anexo A.2 puntos 7 y 8): la cuota de `numeroCuota`, si se indicó, o la
+ * no pagada a ±10 días o menos de `fecha`, la más cercana (`bancoAgricola.emparejar`), con su desglose sobre el capital
+ * pendiente registrado. `null` si el préstamo no tiene modelo o ninguna cuota empareja.
  */
 export function desglosePropuesto(
   antes: H.Instantanea,
   prestamoId: H.Uuid,
-  numero?: number,
-): (DesgloseCuota & { readonly numero: number }) | null {
+  fecha: FechaLocal,
+  numeroCuota?: number,
+): PropuestaCuota | null {
   const { hechos: h } = antes;
   const p = h.prestamos.find((x) => x.cuentaId === prestamoId);
   const apertura = h.cuentas.find((k) => k.id === prestamoId)?.fechaApertura;
   const c = p === undefined || apertura === undefined ? null : condicionesAgricola(p, apertura);
   if (p === undefined || c === null) return null;
-  const n = numero ?? amortizacionDe(antes, p)?.find((q) => q.estado !== 'pagada')?.numero;
-  if (n === undefined) return null;
-  return { numero: n, ...bancoAgricola.desglosePropuesto(c, n, capitalPendiente(h, prestamoId)) };
+  const cero = Centavos.cero;
+  const pago: PagoPrestamo = {
+    id: PROPUESTO,
+    tipo: 'cuota',
+    fecha,
+    capital: cero,
+    interes: cero,
+    seguro: cero,
+    numeroCuota: numeroCuota ?? null,
+  };
+  const pagos = [...pagosDe(antes, prestamoId), pago];
+  const n = bancoAgricola.emparejar(c, pagos).find((e) => e.pagoId === PROPUESTO)?.numero;
+  const q = n == null ? undefined : amortizacionDe(antes, p)?.find((x) => x.numero === n);
+  if (q === undefined) return null;
+  const d = bancoAgricola.desglosePropuesto(c, q.numero, capitalPendiente(h, prestamoId));
+  const total = Centavos.sumar(Centavos.sumar(d.capital, d.interes), d.seguro);
+  return {
+    desglosePropuesto: { ...d, total, numeroCuota: q.numero },
+    cuotaEmparejada: { numero: q.numero, fecha: q.fecha, estado: q.estado },
+  };
 }
 
 export function op24(antes: H.Instantanea, x: H.ComandoOp24): Efecto | H.Rechazo {

@@ -88,6 +88,11 @@ export interface DefinicionOperacion<Entrada, Resuelto, Salida> {
   /** Paso 6: carga lo que `comando()` necesita y no está en los hechos [M] (BE-10); recibe los mismos `hechos`. */
   resolver(lector: LectorTx, entrada: Entrada, hechos: Hechos): Promise<Resuelto>;
   comando(resuelto: Resuelto, instante: Instante, ids: GeneradorIds): ComandoDominio;
+  /**
+   * La `propuesta` de `previsualizar` (04 §4.3, paso 3 [CH-36]): datos de solo lectura de la operación, como el desglose
+   * del modelo de una cuota (OP-24, OP-46) o el saldo de Finn (OP-53). No entra en la huella; `confirmar` no la usa.
+   */
+  proponer?(lector: LectorTx, entrada: Entrada, hechos: Hechos): Propuesta | undefined;
   /** Paso 12: escrituras en tablas que el motor no modela. */
   extra?(escritor: EscritorTx, resuelto: Resuelto, resultado: Exito): Promise<void>;
   posteriores?(resultado: Exito): readonly EfectoPosterior[];
@@ -118,13 +123,20 @@ export interface DepsMarco {
   readonly despues?: (tarea: () => Promise<void>) => void;
 }
 
-/** Resultado de `previsualizar` (04 §4.3). `huellaImpacto` es `null` si el dominio rechazó la operación. */
+/** Lo propio de una operación en su previsualización (04 §4.3 [CH-36]); su forma la fija cada operación. */
+export type Propuesta = Readonly<Record<string, unknown>>;
+
+/**
+ * Resultado de `previsualizar` (04 §4.3). `huellaImpacto` es `null` si el dominio rechazó la operación. `propuesta`
+ * está también con un rechazo: el usuario puede estar completando justo lo que propone (un desglose que no cuadra).
+ */
 export interface ResultadoPrevisualizar {
   readonly revisionVista: string;
   readonly huellaImpacto: string | null;
   readonly impacto: Impacto | null;
   readonly avisos: readonly AvisoOperacion[];
   readonly rechazos: readonly Rechazo[];
+  readonly propuesta?: Propuesta;
 }
 
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -349,7 +361,12 @@ export async function previsualizar<E, R, S>(
         c.revision = tx.estado.revision;
         const hechos = await hechosDe(tx, d);
         const { resultado } = await aplicarEn(def, analizada.data, tx, hechos, instante(), d);
-        const vista = { revisionVista: tx.estado.revision, rechazos: [] };
+        const propuesta = def.proponer?.(tx, analizada.data, hechos);
+        const vista = {
+          revisionVista: tx.estado.revision,
+          rechazos: [],
+          ...(propuesta === undefined ? {} : { propuesta }),
+        };
         return resultado.ok
           ? {
               ...vista,

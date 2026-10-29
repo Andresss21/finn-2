@@ -391,12 +391,18 @@ describe('PRU-DOM-TX-101: aplicar, registrar transacciones (01 §5.4, 04 §3.4)'
 
   it('PRU-DOM-TX-101 [CB-07, INV-06] OP-24: la cuota usa el desglose propuesto del modelo, confirmado por el usuario; con tarjeta es un consumo con tarjeta en la categoría (D2 y traslado); el abono baja el capital por el total', () => {
     const i = calcular(H0, HOY);
-    const propuesto = desglosePropuesto(i, id('L'));
+    const propuesto = desglosePropuesto(i, id('L'), f('2027-02-01'));
     // Cuota 1 (Anexo A.2): interés 10.000 × 12 % × 31/365 = 101,92; seguro 10; capital 500 − 111,92.
-    expect(propuesto).toEqual({ numero: 1, interes: c(101.92), seguro: c(10), capital: c(388.08) });
-    expect(desglosePropuesto(i, id('L'), 2)?.numero).toBe(2);
-    expect(desglosePropuesto(i, id('M'))).toBeNull();
-    expect(desglosePropuesto(i, id('X'))).toBeNull();
+    expect(propuesto?.desglosePropuesto).toEqual({
+      numeroCuota: 1,
+      interes: c(101.92),
+      seguro: c(10),
+      capital: c(388.08),
+      total: c(500),
+    });
+    expect(desglosePropuesto(i, id('L'), f('2027-02-01'), 2)?.cuotaEmparejada.numero).toBe(2);
+    expect(desglosePropuesto(i, id('M'), f('2027-02-01'))).toBeNull();
+    expect(desglosePropuesto(i, id('X'), f('2027-02-01'))).toBeNull();
 
     const r = exito(aplicarEn(H0, cuota('E', [388.08, 101.92, 10])));
     expect(r.cambios.map((x) => (x.tipo === 'insertar' ? x.fila : x))).toEqual([
@@ -413,7 +419,8 @@ describe('PRU-DOM-TX-101: aplicar, registrar transacciones (01 §5.4, 04 §3.4)'
     expect(capitalPendiente(r.hechosNuevos, id('L'))).toBe(c(9611.92));
     // Pagada el 2 feb (cuota 1 vence el 1 feb, regla 7), la propuesta pasa a la cuota 2.
     const feb = hechos(H0, cuota('E', [388.08, 101.92, 10], { fecha: f('2027-02-02') }));
-    expect(desglosePropuesto(calcular(feb, HOY), id('L'))?.numero).toBe(2);
+    const marzo = desglosePropuesto(calcular(feb, HOY), id('L'), f('2027-03-01'));
+    expect(marzo?.cuotaEmparejada.numero).toBe(2);
 
     // CB-07: con T, la cuota de 500 consume SUPER (300 cubiertos) y traslada lo cubierto a pago(T).
     const t = exito(aplicarEn(H0, cuota('T', [388.08, 101.92, 10])));
@@ -427,6 +434,43 @@ describe('PRU-DOM-TX-101: aplicar, registrar transacciones (01 §5.4, 04 §3.4)'
       fila: { cuentaId: 'L', monto: c(-1000), interes: null, seguro: null },
     });
     expect(capitalPendiente(abono.hechosNuevos, id('L'))).toBe(c(9000));
+  });
+
+  it('PRU-DOM-TX-101 OP-24: el desglose propuesto empareja la cuota por número si se indicó y, si no, con la no pagada a ±10 días o menos de la fecha (Anexo A.2 puntos 7 y 8)', () => {
+    const i = calcular(H0, HOY);
+    const numero = (fecha: string, n?: number) =>
+      desglosePropuesto(i, id('L'), f(fecha), n)?.cuotaEmparejada.numero ?? null;
+    // Cuotas de L: la 1 el 1 feb, la 2 el 1 mar, la 3 el 1 abr.
+    expect(numero('2027-01-25')).toBe(1);
+    expect(numero('2027-02-11')).toBe(1); // 10 días: todavía empareja
+    expect(numero('2027-02-12')).toBeNull(); // 11 días de la 1 y 17 de la 2
+    expect(numero('2027-02-19')).toBe(2); // 18 de la 1, 10 de la 2: la más cercana
+    expect(numero('2027-02-12', 3)).toBe(3); // el número manda sobre la fecha
+    expect(numero('2027-02-12', 30)).toBeNull(); // no existe esa cuota
+    const dos = desglosePropuesto(i, id('L'), f('2027-02-27'));
+    expect(dos?.cuotaEmparejada).toEqual({ numero: 2, fecha: f('2027-03-01'), estado: 'atrasada' });
+    expect(dos?.desglosePropuesto.numeroCuota).toBe(2);
+    expect(dos?.desglosePropuesto.total).toBe(c(500));
+    // Con la 1 pagada el 2 feb, una fecha cerca de ella ya no la empareja. El comando lleva sus propios ids: los
+    // contadores compartidos del archivo no se mueven.
+    let k = 0;
+    const pagada = {
+      ...{
+        operacion: 'OP-24',
+        id: id('pagada'),
+        modalidad: 'cuota',
+        origenId: 'E',
+        prestamoId: 'L',
+      },
+      ...{ categoriaId: 'SUPER', total: c(500), capital: c(388.08), interes: c(101.92) },
+      ...{ seguro: c(10), instante: INSTANTE, fecha: f('2027-02-02') },
+      ids: { siguiente: () => id(`pagada.${++k}`) },
+    } as unknown as ComandoDominio;
+    const feb = calcular(exito(aplicarEn(H0, pagada)).hechosNuevos, HOY);
+    expect(desglosePropuesto(feb, id('L'), f('2027-02-05'))).toBeNull();
+    expect(desglosePropuesto(feb, id('L'), f('2027-02-05'), 1)?.cuotaEmparejada.estado).toBe(
+      'pagada',
+    );
   });
 
   it('PRU-DOM-TX-101 [INV-08] OP-24: rechaza un desglose que no cuadra, capital mayor que el pendiente, una categoría de pago, un préstamo que no lo es y un origen que no es efectivo ni tarjeta', () => {

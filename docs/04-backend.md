@@ -766,10 +766,13 @@ Cada operación expone dos funciones (P4-7):
 **`previsualizar(entrada)`**
 1. Se ejecuta con `leer()` (sin bloqueo, `REPEATABLE READ`, §5).
 2. Resuelve el comando, ejecuta `aplicar` y **no persiste**.
-3. Devuelve `{ revisionVista, huellaImpacto, impacto, avisos, rechazos }`.
+3. Devuelve `{ revisionVista, huellaImpacto, impacto, avisos, rechazos, propuesta? }` **[CH-36]**.
    - `revisionVista`: la revisión leída.
    - `huellaImpacto`: SHA-256 en hexadecimal de la serialización canónica de `impacto` y `avisos` (claves ordenadas, montos como enteros).
    - **[R2] Sin ids de filas nuevas (ajuste 1 b).** Antes de serializar, todo valor igual al id de una fila que la operación inserta (los de los cambios `insertar`) se reemplaza por la marca `@nueva#k`, con `k` = orden de la fila en la lista de cambios. Así la huella no depende de cómo se generaron esos ids (V-20). Los ids de filas existentes sí entran: si cambia la categoría o la tarjeta afectada, el impacto cambió.
+   - **`propuesta?` [CH-36]:** datos de solo lectura propios de la operación, que el usuario confirma o corrige en la entrada. **No entra en `huellaImpacto`** y `confirmar` no la usa. Se devuelve también cuando el dominio rechaza (por ejemplo, un desglose que no cuadra). La calcula la definición de la operación con un gancho opcional, fuera del cálculo de la huella.
+     - OP-24 en modalidad cuota y OP-46 con tipo `cuota_prestamo`: `{ desglosePropuesto?: { capital; interes; seguro; total; numeroCuota }; cuotaEmparejada?: { numero; fecha; estado } }`, la misma forma del contexto `cuota_prestamo` de 6.14.4, con el selector `desglosePropuesto(prestamo, fecha)` y el `numeroCuota` de la entrada si se indicó (01 Anexo A.2, puntos 7 y 8). Sin modelo o sin cuota emparejada, los dos campos se omiten.
+     - OP-53: `{ saldoFinn; diferencia; … }`, lo que dice OP-53.
 
 **`confirmar(entrada & { revisionVista?, huellaImpacto? })`**
 1. Ejecuta la secuencia de 4.2 hasta el paso 8.
@@ -2061,7 +2064,7 @@ Reglas comunes de 3.4 y 3.5:
 #### OP-24 Pagar cuota de préstamo o abonar a capital
 
 - **Entrada:** `id`; `modalidad: 'cuota' | 'abono'`; `origenId` (efectivo o tarjeta, C-1); `prestamoId`; `fecha`; `total`; `categoriaId`; cuota: `capital`, `interes`, `seguro` (`MontoTexto` o `"0"`), `numeroCuota?`.
-- **Desglose propuesto:** la previsualización devuelve el desglose del modelo del préstamo (Anexo A de 01), si tiene modelo; el usuario lo confirma o lo corrige en la entrada.
+- **Desglose propuesto [CH-36]:** la previsualización devuelve en `propuesta` (4.3) el desglose del modelo del préstamo (Anexo A de 01), si tiene modelo, y la cuota emparejada con la `fecha` de la entrada, o con `numeroCuota` si se indicó (Anexo A.2, puntos 7 y 8). El usuario lo confirma o lo corrige en la entrada. `numeroCuota` solo elige esa cuota: 03 no tiene una columna para guardarlo.
 - **Precondiciones:** capital + interés + seguro = total (`desglose_no_cuadra`); capital ≤ capital pendiente (`capital_mayor_que_pendiente`); categoría normal y activa.
 - **Hechos:** PT con `tipo = 'cuota_prestamo'` (efectos: `−total` en el origen; en el préstamo `monto = −capital`, `interes`, `seguro`) o `'abono_capital'` (efectos: `−total` y `−total`); una línea a la categoría por el total.
 - **Avisos:** estado: AV-02 o AV-03 si la categoría queda sobregirada (con tarjeta, D2 con traslado).
@@ -2339,7 +2342,7 @@ El flujo completo (decodificación, adaptadores, firma) está en §9 (Parte C).
 - **Precondiciones:** firma válida y vigente (`firma_no_valida`, `firma_vencida`); el movimiento pertenece a la carga; las de la operación.
 - **Hechos:** PT por la operación elegida, con `origen = 'importada'` (estado inicial `confirmada`), la fecha y el monto del estado.
 - **Nota.** La conciliación nunca crea transacciones sola (inv. 14): cada alta es una acción explícita.
-- **[F5] Previsualización (CP-16).** Es la de la operación que ejecuta: con tipo `cuota_prestamo`, devuelve el desglose del modelo a la fecha del movimiento, como OP-24. Los datos del formulario los entrega `formulario({ operacion: 'conciliar' })` (6.14).
+- **[F5] Previsualización (CP-16).** Es la de la operación que ejecuta: con tipo `cuota_prestamo`, devuelve en `propuesta` (4.3) **[CH-36]** el desglose del modelo a la fecha del movimiento, como OP-24. Los datos del formulario los entrega `formulario({ operacion: 'conciliar' })` (6.14).
 
 #### OP-47 Terminar conciliación
 
@@ -2358,7 +2361,7 @@ Conciliación sin CSV: el usuario escribe la fecha y el saldo que muestra su ban
 
 - **Entrada:** `id` (de la conciliación); `cuentaId`; `fechaEstado: FechaLocal`; `saldoEstado: MontoTextoConSigno` (en una tarjeta, positivo = deuda, como en OP-01; el dominio lo convierte a la convención de 01 §0.4); `marcar: { todas: true } | { ids: Uuid[] }`; `revisionVista?`, `huellaImpacto?`.
 - **Idempotencia:** creación (`conciliaciones.id`).
-- **Confirmación:** siempre; previsualizar primero (05 FE-07). La previsualización devuelve `saldoFinn` = saldo(cuenta, fechaEstado), `diferencia` = saldoEstado − saldoFinn (convención de ESC-47) y la cantidad de transacciones que marcaría.
+- **Confirmación:** siempre; previsualizar primero (05 FE-07). La previsualización devuelve en `propuesta` (4.3) **[CH-36]** `saldoFinn` = saldo(cuenta, fechaEstado), `diferencia` = saldoEstado − saldoFinn (convención de ESC-47) y la cantidad de transacciones que marcaría.
 - **Precondiciones:** cuenta de efectivo o tarjeta (`cuenta_tipo_no_valido`), abierta (`cuenta_archivada`); `fechaEstado ≤ hoy` (`fecha_posterior_a_hoy`) y ≥ apertura (`fecha_anterior_a_apertura`); cada transacción marcada tiene un efecto en la cuenta, fecha ≤ `fechaEstado` (`transaccion_fuera_de_verificacion`) y no está conciliada (`transaccion_ya_conciliada`). Con `{ todas: true }` se marcan las transacciones de la cuenta con fecha ≤ `fechaEstado` en estado pendiente o confirmada.
 - **Hechos:** F3 `conciliaciones` (`cuenta_id`, `fecha_estado`, `saldo_estado`, `terminada_en` = instante, `diferencia_aceptada` = saldoEstado − saldo(cuenta, fechaEstado), `modo = 'saldo'`); F4 `transacciones` marcadas: `estado_bancario = 'conciliada'`, `conciliacion_id` (orden F3 → F4, como OP-47).
 - **Avisos:** después y estado: AV-21 si la diferencia ≠ 0, con la propuesta de ajuste de OP-47.
