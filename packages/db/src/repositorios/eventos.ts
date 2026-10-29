@@ -2,7 +2,7 @@
 // El registro de un error no guarda entrada del usuario, textos de SMS, contenido de CSV, tokens ni el mensaje
 // original de la base: `sanearMensaje()` y `sanearDatos()` son lo único que escribe `datos`.
 import { ahoraDb, conAhora } from '../ahora.ts';
-import { txPrisma, type EscritorTx, type LectorTx } from '../transacciones.ts';
+import { txPrisma, txPrismaT, type EscritorTablasT, type LectorTx } from '../transacciones.ts';
 
 const UUID = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
 // Un texto entre comillas, un UUID (se conserva) o un número con separadores decimales
@@ -86,7 +86,7 @@ export type NuevoEvento = {
  * Inserta una fila. El llamador la hace en una transacción propia, sin bloqueo y después del `ROLLBACK`
  * (04 §7.8); si falla, queda solo la línea de la consola.
  */
-export async function registrarEvento(tx: EscritorTx, e: NuevoEvento): Promise<bigint> {
+export async function registrarEvento(tx: EscritorTablasT, e: NuevoEvento): Promise<bigint> {
   const ahora = await ahoraDb(tx);
   const fila = {
     nivel: e.nivel,
@@ -94,7 +94,7 @@ export async function registrarEvento(tx: EscritorTx, e: NuevoEvento): Promise<b
     mensaje: e.mensaje,
     ...(e.datos ? { datos: sanearDatos(e.datos) as never } : {}),
   };
-  const creada = await txPrisma(tx).eventoSistema.create({
+  const creada = await txPrismaT(tx).eventoSistema.create({
     data: conAhora('eventoSistema', fila, ahora),
     select: { id: true },
   });
@@ -118,8 +118,8 @@ export function eventoPorIdError(tx: LectorTx, idError: string) {
 }
 
 /** Retención de 90 días (04 §15.1): borra lo anterior a `antesDe`, salvo la auditoría de formatos (EN-1). */
-export async function purgarEventos(tx: EscritorTx, antesDe: Date): Promise<number> {
-  const r = await txPrisma(tx).eventoSistema.deleteMany({
+export async function purgarEventos(tx: EscritorTablasT, antesDe: Date): Promise<number> {
+  const r = await txPrismaT(tx).eventoSistema.deleteMany({
     where: { ocurridoEn: { lt: antesDe }, NOT: { mensaje: { startsWith: 'auditoria_formato' } } },
   });
   return r.count;

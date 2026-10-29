@@ -9,7 +9,7 @@ import {
   cargarHechos,
   contarBandeja,
   contarNoLeidas,
-  escribir,
+  escribirTecnico,
   leer as leerDb,
   registrarEvento,
   sanearMensaje,
@@ -49,7 +49,7 @@ export interface DepsConsulta {
   readonly leer?: typeof leerDb;
   /** El reloj de prueba de la petición (CT-01); vacío en producción. */
   readonly opciones?: () => OpcionesTx;
-  /** Registro de `eventos_sistema`; por omisión, en una transacción propia de `escribir()`. */
+  /** Registro de `eventos_sistema`; por omisión, en una transacción propia de `escribirTecnico()`, sin bloqueo (7.8). */
   readonly registrar?: (evento: NuevoEvento) => Promise<void>;
   readonly nuevoIdError?: () => string;
 }
@@ -94,7 +94,7 @@ async function errorInterno(e: unknown, consulta: string, d: DepsConsulta): Prom
   };
   try {
     if (d.registrar) await d.registrar(evento);
-    else await escribir((tx) => registrarEvento(tx, evento), d.opciones?.() ?? {});
+    else await escribirTecnico((tx) => registrarEvento(tx, evento), d.opciones?.() ?? {});
   } catch {
     // queda solo la excepción
   }

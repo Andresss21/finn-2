@@ -4,7 +4,10 @@
 //   (BE-27, CT-02). `finn.operacion` solo con `set_config(…, true)` y su lista cerrada (04 §4.4, BE-14).
 // - `leer()`: 04 §5.1 (BE-20): REPEATABLE READ, solo lectura como primera sentencia (`transaction_read_only` local,
 //   CH-25), la zona y el reloj, y la primera lectura con revisión y hoy, que toma la instantánea.
-// Las operaciones solo ven `LectorTx` y `EscritorTx`; el cliente de la transacción queda dentro de @finn/db.
+// - `escribirTecnico()`: la transacción corta de las tablas [T] (03 §5.1, §7.1; 04 §3.10, §7.8): READ COMMITTED,
+//   **sin** `finn.tomar_bloqueo()`, con la zona y el reloj. Su `EscritorTecnicoTx` no es un `LectorTx` ni un
+//   `EscritorTx`: solo lo aceptan los repositorios [T]; `txPrisma()` lo rechaza y `a_exigir_bloqueo` también.
+// Las operaciones solo ven `LectorTx`, `EscritorTx` y `EscritorTecnicoTx`; el cliente queda dentro de @finn/db.
 import type { Cambio } from '@finn/dominio';
 import { cliente, type Cliente } from './cliente.ts';
 import { aplicarCambios, type ValoresDeLaBase } from './hechos/traductor.ts';
@@ -41,8 +44,18 @@ export interface EscritorTx {
   /** Paso 13 de 04 §4.2: la revisión después de las escrituras de la transacción. */
   revisionActual(): Promise<string>;
 }
+/**
+ * La transacción técnica (03 §5.1, fila "Técnicas"): sin bloqueo, solo para las tablas [T]. Sin `estado`: no ve la
+ * revisión ni los hechos, y no se puede pasar donde se espera un `LectorTx` o un `EscritorTx`.
+ */
+export interface EscritorTecnicoTx {
+  readonly clase: 'T';
+}
+/** Lo que aceptan los repositorios que escriben tablas [T]: la transacción técnica o una de `escribir()`. */
+export type EscritorTablasT = EscritorTx | EscritorTecnicoTx;
 export type TrabajoLectura<T> = (tx: LectorTx) => Promise<T>;
 export type TrabajoEscritura<T> = (tx: EscritorTx) => Promise<T>;
+export type TrabajoTecnico<T> = (tx: EscritorTecnicoTx) => Promise<T>;
 
 // ADR-06 y 04 §4.2: `timeout` ≥ 20 s porque la espera del bloqueo puede durar hasta 10 s; 04 §5.1 para leer
 export const OPCIONES_ESCRITURA = {
@@ -55,14 +68,29 @@ export const OPCIONES_LECTURA = {
   timeout: 10_000,
   maxWait: 5_000,
 } as const;
+// 03 §5.1: READ COMMITTED; corta, porque no espera ningún bloqueo
+export const OPCIONES_TECNICA = {
+  isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+  timeout: 5_000,
+  maxWait: 5_000,
+} as const;
 
 // El cliente de cada transacción abierta, para los repositorios y el traductor de @finn/db (no sale de index.ts)
 const prismaDe = new WeakMap<LectorTx, TxPrisma>();
+// Aparte: una transacción técnica nunca sale de `txPrisma()`, ni con un `as` (04 §3.10)
+const prismaTecnicoDe = new WeakMap<EscritorTecnicoTx, TxPrisma>();
 
 /** El cliente de Prisma de la transacción de `tx`. Solo para el código y las pruebas de @finn/db. */
 export function txPrisma(tx: LectorTx): TxPrisma {
   const p = prismaDe.get(tx);
   if (!p) throw new Error('La transacción no es de escribir() ni de leer()');
+  return p;
+}
+
+/** Como `txPrisma()`, también para la transacción técnica: solo lo usan los repositorios [T] y `ahoraDb()`. */
+export function txPrismaT(tx: LectorTx | EscritorTecnicoTx): TxPrisma {
+  const p = prismaTecnicoDe.get(tx as EscritorTecnicoTx) ?? prismaDe.get(tx as LectorTx);
+  if (!p) throw new Error('La transacción no es de escribir(), leer() ni escribirTecnico()');
   return p;
 }
 
@@ -142,7 +170,20 @@ export function transaccionesSobre(c: Cliente) {
     }, OPCIONES_LECTURA);
   }
 
-  return { escribir, leer };
+  async function escribirTecnico<T>(
+    trabajo: TrabajoTecnico<T>,
+    opciones: OpcionesTx = {},
+  ): Promise<T> {
+    return c.$transaction(async (tx) => {
+      // Sin `finn.tomar_bloqueo()` (03 §5.1): la primera sentencia es la zona y el reloj (paso 2 de 04 §4.2)
+      await fijarSesion(tx, opciones.reloj);
+      const tecnico: EscritorTecnicoTx = Object.freeze({ clase: 'T' as const });
+      prismaTecnicoDe.set(tecnico, tx);
+      return trabajo(tecnico);
+    }, OPCIONES_TECNICA);
+  }
+
+  return { escribir, leer, escribirTecnico };
 }
 
 /** Toda escritura de hechos (04 §4.1, §4.2). */
@@ -152,3 +193,7 @@ export const escribir = <T>(trabajo: TrabajoEscritura<T>, opciones?: OpcionesTx)
 /** Toda lectura del motor (04 §5.1). */
 export const leer = <T>(trabajo: TrabajoLectura<T>, opciones?: OpcionesTx): Promise<T> =>
   transaccionesSobre(cliente()).leer(trabajo, opciones);
+
+/** Toda escritura de tablas [T] fuera de `escribir()`: notificaciones, eventos, push (03 §5.1; 04 §3.10, §7.8). */
+export const escribirTecnico = <T>(trabajo: TrabajoTecnico<T>, opciones?: OpcionesTx): Promise<T> =>
+  transaccionesSobre(cliente()).escribirTecnico(trabajo, opciones);
