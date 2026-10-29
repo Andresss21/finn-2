@@ -22,7 +22,8 @@ describe('PRU-CTR-BAND', () => {
       }
     }
     // BE-60: el crudo se guarda decodificado sin NUL, con U+FFFD por los bytes inválidos y recortado a 2.000
-    const crudo = (i: number) => leerCuerpo(CUERPOS_V27[i]![2], JSON_CT, null, 'json').texto;
+    const crudo = (i: number) =>
+      leerCuerpo(CUERPOS_V27[i]?.[2] ?? new Uint8Array(0), JSON_CT, null, 'json').texto;
     expect(crudo(3)).toBe('(cuerpo vacío)');
     expect(Array.from(crudo(4))).toHaveLength(2000);
     expect(crudo(5)).toBe('{"texto":"ab"');
