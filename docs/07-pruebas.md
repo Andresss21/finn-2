@@ -798,7 +798,7 @@ export default {
 
 Los conteos los dio el script sobre los documentos, con 01 completo (V7-09 y V7-11): 77 fichas (31 [I], 38 [M], 8 [P], 1 diferida), 492 CA, 50 ESC, 24 AV, 28 invariantes y 34 CB. La puerta de salida (P7-8) exige los **465** CA [I] y [M]; FT-49 aparece como "diferida" en el informe, no como falta.
 
-**Formato de las referencias** dentro de los corchetes del título: `CA-nn.m`, `ESC-nn`, `AV-nn`, `INV-nn`, `CB-nn`, `REC-4.n`, `V-nn`, `V5-nn`, `V6-nn`, `H-nn`, `CF-nn` y `FT-nn`. Las decisiones de 00 y 01 (`C1`, `H3`, `Q2a`…) se aceptan como contexto, pero no cuentan como cobertura. Cualquier otra forma es un error (M7).
+**Formato de las referencias** dentro de los corchetes del título: `CA-nn.m`, `ESC-nn`, `AV-nn`, `INV-nn`, `CB-nn`, `REC-4.n`, `V-nn`, `V5-nn`, `V6-nn`, `H-nn`, `CF-nn`, `FT-nn` y `Q-<consulta>` **[CH-34]** (el nombre de la consulta de 04 §6 en camelCase, por ejemplo `Q-detalleLpa`). Las decisiones de 00 y 01 (`C1`, `H3`, `Q2a`…) se aceptan como contexto, pero no cuentan como cobertura. Cualquier otra forma es un error (M7).
 
 ### 13.2 Entradas
 
@@ -845,7 +845,7 @@ El script exige **Disparador**, **Pasos** numerados y **Resultado esperado** (M1
 | M4 | Cada invariante tiene una prueba `PROP`, `DOM`, `INT` o `ESQ` | Desde la primera ficha terminada (el motor ya existe) |
 | M5 | Cada recorrido tiene su E2E | Cuando todas las fichas que cita están exigidas |
 | M6 | Las 92 verificaciones previas están en el JSON, con destino existente o con motivo | Siempre que estén en el JSON; el destino, en modo puerta |
-| M7 | Toda referencia citada existe en los documentos | Siempre |
+| M7 | Toda referencia citada existe en los documentos (incluidas las `Q-<consulta>` de 06 §6.3, **[CH-34]**) | Siempre |
 | M8 | Identificador bien formado, con nivel y área de las tablas 1.1 y 2.2; único; nivel coherente con el archivo (§2.3); todo archivo de prueba lleva identificador | Siempre |
 | M9 | La cuarentena no cuenta como cobertura; una entrada vencida falla; la cuarentena no cita pruebas inexistentes | Siempre |
 | M10 | Cada `PRU-MAN` tiene disparador, pasos y resultado esperado | Siempre |

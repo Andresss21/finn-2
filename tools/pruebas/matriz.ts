@@ -112,6 +112,12 @@ export function pruebas(e: Entradas): { lista: Prueba[]; errores: string[] } {
   return { lista, errores };
 }
 
+// Las Q-<consulta> de 06 §6.3 (CH-34), como las deriva plan:verificar
+function consultasDe06(d06: string): string[] {
+  const t = d06.split('### 6.3 Consultas')[1]?.split('### 6.4')[0] ?? '';
+  return [...t.matchAll(/^\| `(\w+)\(\)` \|/gm)].map((m) => `Q-${m[1]}`);
+}
+
 // ---------------------------------------------------------------- reglas
 export function verificar(e: Entradas) {
   const { lista, errores } = pruebas(e);
@@ -120,6 +126,7 @@ export function verificar(e: Entradas) {
     ...objetivos(e).map((o) => o.id),
     ...cambiosFuturos(e.d06),
     ...fs.map((f) => f.ft),
+    ...consultasDe06(e.d06),
   ]);
   const cob = cobertura(e, lista, ids);
   const { cubre, obj } = cob;
