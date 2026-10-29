@@ -4,3 +4,4 @@ export * from './notificaciones.ts';
 export * from './tecnicas.ts';
 export * from './eventos.ts';
 export * from './reglas.ts';
+export * from './consultas-cuentas.ts';
