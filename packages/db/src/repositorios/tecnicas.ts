@@ -1,4 +1,4 @@
-// Repositorios de las filas únicas y de las suscripciones [T] (03 §3.28): `estado_respaldo`, `token_webhook`
+// Repositorios de las filas únicas, las suscripciones y la lectura de `eliminaciones` [T] (03 §3.28): `estado_respaldo`, `token_webhook`
 // (id = 1) y `suscripciones_push` (única por `endpoint`). El token nunca se guarda en claro: solo su SHA-256.
 import { ahoraDb, conAhora } from '../ahora.ts';
 import { txPrisma, type EscritorTx, type LectorTx } from '../transacciones.ts';
@@ -66,4 +66,13 @@ export function listarSuscripciones(tx: LectorTx) {
 export async function eliminarSuscripcion(tx: EscritorTx, endpoint: string): Promise<number> {
   const r = await txPrisma(tx).suscripcionPush.deleteMany({ where: { endpoint } });
   return r.count;
+}
+
+/** ¿`eliminaciones` registra esta fila? Es la prueba de una eliminación ya hecha (04 §4.6.3; 30 días, 03 §5.3). */
+export async function fueEliminada(tx: LectorTx, tabla: string, filaId: string): Promise<boolean> {
+  const f = await txPrisma(tx).eliminacion.findFirst({
+    where: { tabla, filaId },
+    select: { id: true },
+  });
+  return f !== null;
 }
