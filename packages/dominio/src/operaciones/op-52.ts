@@ -11,7 +11,7 @@ export function op52(antes: H.Instantanea, x: H.ComandoOp52): Efecto | H.Rechazo
   if (esRechazo(d)) return d;
   const nombre = x.nombre.toLowerCase();
   if (deudores.some((y) => y.id !== d.id && y.nombre.toLowerCase() === nombre))
-    return { codigo: 'nombre_repetido', campo: 'nombre', datos: { nombre: x.nombre } };
+    return { codigo: 'nombre_repetido', campo: 'nombre', datos: { nombre: x.nombre, deudorId: d.id } };
   if (d.nombre === x.nombre) return { cambios: [] };
   const campos = { nombre: x.nombre };
   return { cambios: [{ tipo: 'actualizar', tabla: 'deudores', id: d.id, campos }] };

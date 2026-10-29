@@ -206,6 +206,7 @@ describe('PRU-DOM-VAL', () => {
         rechazos: [
           { codigo: 'tarjeta_con_deuda', datos: { cuentaId: CUENTA, deuda: 2000 } },
           { codigo: 'categoria_archivada', campo: 'categoriaId', datos: { categoriaId: ID } },
+          { codigo: 'cuenta_archivada', campo: 'prestamoId', datos: { prestamoId: CUENTA } },
         ],
       }),
     });
@@ -224,7 +225,10 @@ describe('PRU-DOM-VAL', () => {
       error: {
         codigo: 'tarjeta_con_deuda',
         mensaje: 'Visa Oro todavía tiene una deuda de $20.00.',
-        campos: { categoriaId: 'Comida está archivada. Elegí una categoría activa.' },
+        campos: {
+          categoriaId: 'Comida está archivada. Elegí una categoría activa.',
+          prestamoId: 'Visa Oro está archivada. Desarchivala para registrar o cambiar movimientos.',
+        },
       },
     });
     // previsualizar entrega los mismos rechazos con el nombre en `datos`, sin volver a cargar (misma revisión)
@@ -236,6 +240,7 @@ describe('PRU-DOM-VAL', () => {
         rechazos: [
           { datos: { cuentaId: CUENTA, cuenta: 'Visa Oro', deuda: 2000 } },
           { datos: { categoriaId: ID, categoria: 'Comida' } },
+          { datos: { prestamoId: CUENTA, cuenta: 'Visa Oro' } },
         ],
       },
     });
