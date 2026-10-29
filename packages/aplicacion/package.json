@@ -30,7 +30,6 @@
   "dependencies": {
     "@finn/db": "workspace:*",
     "@finn/dominio": "workspace:*",
-    "@finn/sms": "workspace:*",
     "zod": "4.6.5"
   }
 }
