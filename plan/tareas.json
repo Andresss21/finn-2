@@ -209,7 +209,7 @@
 
   "TA-169": { "estado": "terminada", "pr": 130 },
 
-  "TA-170": { "estado": "pendiente" },
+  "TA-170": { "estado": "en_curso", "rama": "ta-170-detalle-metas-estructura" },
 
   "TA-171": { "estado": "pendiente" },
 
