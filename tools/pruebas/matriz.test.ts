@@ -14,6 +14,7 @@ import {
   verificar,
 } from './matriz.ts';
 import { afectadas, fichasPorPiezas, piezas } from './afectadas.ts';
+import { REF } from './reglas.ts';
 import type { Previa } from './reglas.ts';
 import { fichas, objetivos } from './documentos.ts';
 import type { Documentos } from './documentos.ts';
@@ -161,6 +162,12 @@ describe('matriz: mutaciones (V7-09)', () => {
     const e = base();
     fila(e, 0).titulo = fila(e, 0).titulo.replace('CA-30.4,', 'CA-30,');
     expect(reglas(e)).toEqual(['M7']);
+  });
+
+  it('M7: Q-<consulta> se acepta [CH-34]; Q-, q-inicio y Q-1 no', () => {
+    expect(REF.test('Q-inicio')).toBe(true);
+    expect(REF.test('Q-detalleLpa')).toBe(true);
+    for (const mal of ['Q-', 'q-inicio', 'Q-1', 'Q-inicio2']) expect(REF.test(mal)).toBe(false);
   });
 
   it('M8: identificador mal formado, nivel o área desconocidos', () => {

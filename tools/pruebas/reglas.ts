@@ -21,9 +21,9 @@ export interface Cuarentena {
   vence: string;
 }
 
-// Referencias válidas entre corchetes (07 §13.1); las decisiones de 00 y 01 (P1, H3, C1, Q2a…) son contexto
+// Referencias válidas entre corchetes (07 §13.1; Q-<consulta> CH-34); las decisiones de 00 y 01 (P1, H3, C1, Q2a…) son contexto
 export const REF =
-  /^(CA-\d{2}\.\d{1,2}|ESC-\d{2}|AV-\d{2}|INV-\d{2}|CB-\d{2}|REC-4\.[1-6]|V-\d{2}|V5-\d{2}|V6-\d{2}|H-\d{2}|CF-\d{2}|FT-\d{2})$/;
+  /^(CA-\d{2}\.\d{1,2}|ESC-\d{2}|AV-\d{2}|INV-\d{2}|CB-\d{2}|REC-4\.[1-6]|V-\d{2}|V5-\d{2}|V6-\d{2}|H-\d{2}|CF-\d{2}|FT-\d{2}|Q-[a-z][A-Za-z]*)$/;
 // Dónde vive el código que se resuelve por las Piezas de 06 (07 §13.6 punto 1, CH-01)
 export const PATRON_OP = /^packages\/aplicacion\/src\/operaciones\/(?:.*\/)?OP-(\d{2})-[^/]*\.ts$/;
 export const PATRON_CONSULTA = /^packages\/aplicacion\/src\/consultas\/([^/]+)\.ts$/;
