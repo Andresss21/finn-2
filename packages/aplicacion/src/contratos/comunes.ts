@@ -2,7 +2,8 @@
 // decimal (la interfaz no hace aritmética) y la revisión una cadena. Salida: el monto en centavos enteros y la
 // revisión como cadena. Los textos están en voseo (7.6, 7.10); el signo de entrada es siempre el guion ASCII (CF-15).
 import * as z from 'zod';
-import { Centavos } from '@finn/dominio/valores';
+import type { Uuid } from '@finn/dominio';
+import { Centavos, FechaLocal } from '@finn/dominio/valores';
 
 /** Máximo de una columna `integer` en centavos: `21474836.47` (ADR-05). */
 export const MAXIMO_CENTAVOS = 2_147_483_647;
@@ -32,6 +33,27 @@ export const montoTextoConSigno = monto(MONTO_CON_SIGNO);
 export const revision = z
   .string({ error: 'La revisión no es válida.' })
   .regex(REVISION, { error: 'La revisión no es válida.' });
+
+/** Id de una fila: UUID de cualquier versión (RFC 9562, P4-8). */
+export const uuid = z.uuid({ error: 'El identificador no es válido.' }).transform((t) => t as Uuid);
+
+/** `AAAA-MM-DD` con día existente (13.2). */
+export const fechaLocal = z
+  .string({ error: 'Ingresá una fecha.' })
+  .regex(/^\d{4}-\d{2}-\d{2}$/, { error: 'La fecha no es válida.' })
+  .transform((t, ctx) => {
+    try {
+      return FechaLocal.desdeTexto(t);
+    } catch {
+      ctx.issues.push({ code: 'custom', message: 'La fecha no es válida.', input: t });
+      return z.NEVER;
+    }
+  });
+
+/** Texto limpio de 03 §0.4: sin espacios en los extremos y no vacío. */
+export const textoLimpio = z
+  .string({ error: 'Ingresá un texto.' })
+  .refine((t) => t === t.trim() && t !== '', { error: 'Ingresá un texto sin espacios sobrantes.' });
 
 /** Salida hacia la interfaz: centavos enteros (la interfaz los divide solo para presentar) y revisión como texto. */
 export type MontoSalida = Centavos;

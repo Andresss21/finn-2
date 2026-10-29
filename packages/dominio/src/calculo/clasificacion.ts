@@ -67,10 +67,32 @@ export function clasificacion(
     const clase = POR_TOTAL[t.tipo];
     if (clase !== undefined) agregar(t, clase, t.total);
   }
-  // El saldo inicial, con el signo de su cuenta: el efecto de la transacción.
+  // La categoría de la cuota es la de su línea (OP-24 registra una sola): la primera línea de
+  // cada transacción, como `h.lineas.find`, armada una vez y solo si hay cuotas [BE-23].
+  let primera: Map<Uuid, Uuid | null> | undefined;
+  const categoriaDe = (transaccionId: Uuid): Uuid | null => {
+    if (primera === undefined) {
+      primera = new Map();
+      for (const l of h.lineas)
+        if (!primera.has(l.transaccionId)) primera.set(l.transaccionId, l.categoriaId);
+    }
+    return primera.get(transaccionId) ?? null;
+  };
+  // Una pasada por los efectos: el saldo inicial, con el signo de su cuenta (el efecto de la
+  // transacción), y los costos financieros de las cuotas, cada uno en su lista y en su orden.
+  const costosFinancieros: CostoFinanciero[] = [];
   for (const e of h.efectos) {
     const t = txs.get(e.transaccionId);
     if (t?.tipo === 'saldo_inicial') agregar(t, 'saldo_inicial', e.monto);
+    else if (t?.tipo === 'cuota_prestamo' && (e.interes !== null || e.seguro !== null))
+      costosFinancieros.push({
+        transaccionId: t.id,
+        fecha: t.fecha,
+        prestamoId: e.cuentaId,
+        categoriaId: categoriaDe(t.id),
+        interes: e.interes ?? Centavos.cero,
+        seguro: e.seguro ?? Centavos.cero,
+      });
   }
   // Restitución y excedente de cada cobro, en cualquier medio y cuenta [D1, O1, N9].
   for (const e of cobros.flatMap((x) => x.eventos.filter((y) => y.tipo === 'cobro'))) {
@@ -83,19 +105,5 @@ export function clasificacion(
     if (d.caso !== 'D-1')
       agregar({ id: d.lineaId, fecha: d.fecha }, 'gasto', Centavos.negar(d.monto), d.categoriaId);
 
-  // La categoría de la cuota es la de su línea (OP-24 registra una sola).
-  const costosFinancieros: CostoFinanciero[] = [];
-  for (const e of h.efectos) {
-    const t = txs.get(e.transaccionId);
-    if (t?.tipo !== 'cuota_prestamo' || (e.interes === null && e.seguro === null)) continue;
-    costosFinancieros.push({
-      transaccionId: t.id,
-      fecha: t.fecha,
-      prestamoId: e.cuentaId,
-      categoriaId: h.lineas.find((l) => l.transaccionId === t.id)?.categoriaId ?? null,
-      interes: e.interes ?? Centavos.cero,
-      seguro: e.seguro ?? Centavos.cero,
-    });
-  }
   return { partidas, costosFinancieros };
 }

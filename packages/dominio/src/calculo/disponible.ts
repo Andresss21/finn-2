@@ -3,7 +3,7 @@
 // reparto D2 de las categorías normales, su Disponible, el de las categorías de pago (que reciben los
 // traslados del reparto) y el arrastre al período siguiente. Una categoría archivada sigue las
 // mismas reglas (N5): no se filtra en ningún paso.
-import type { Asignacion, Categoria, Hechos, Transaccion, Uuid } from '../hechos';
+import type { Categoria, Hechos, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { actividadDePago, actividadNormal } from './actividad';
@@ -126,15 +126,17 @@ function rango(
   implicitos: readonly PagoImplicito[],
   proyectados: number,
 ) {
-  const fechas = [
-    hoy,
-    ...h.transacciones.map((t) => t.fecha),
-    ...h.condonaciones.map((x) => x.fecha),
-    ...h.asignaciones.map((a: Asignacion) => a.periodoInicio),
-    ...implicitos.map((x) => x.fecha),
-  ];
-  const desde = fechas.reduce((a, b) => (b < a ? b : a));
-  let hasta = fechas.reduce((a, b) => (b > a ? b : a));
+  // La menor y la mayor de hoy y las fechas de los hechos, sin juntarlas en un arreglo.
+  let desde = hoy;
+  let hasta = hoy;
+  const ver = (f: FechaLocal) => {
+    if (f < desde) desde = f;
+    if (f > hasta) hasta = f;
+  };
+  for (const t of h.transacciones) ver(t.fecha);
+  for (const x of h.condonaciones) ver(x.fecha);
+  for (const a of h.asignaciones) ver(a.periodoInicio);
+  for (const x of implicitos) ver(x.fecha);
   for (let k = 0; k < proyectados; k++) hasta = FechaLocal.sumarDias(periodoDe(c, hasta).fin, 1);
   return periodosEntre(c, periodoDe(c, desde).inicio, hasta);
 }

@@ -183,6 +183,7 @@ function inestables() {
 
 /** Las suites del nocturno que ya existen (07 §6.1): PROP con FC_RUNS=10000 (lo fija nocturno.yml); con tantos casos el timeout de 5 s no alcanza, así que sube solo acá. */
 function nocturno() {
+  if (process.env.FINN_NOCTURNO === 'ren') return ren();
   const prop = correr([
     [
       'PROP',
@@ -190,6 +191,19 @@ function nocturno() {
     ],
   ]);
   return mutantes() && prop;
+}
+
+/** Job `ren` (TA-156; 07 §6.6): carga y verificaciones diferidas, `calcular` y el registro de las medianas; los tiempos no fallan, el registro avisa. */
+function ren() {
+  process.env.FINN_REN = '1';
+  const carga = correr([
+    ['REN carga', 'pnpm test:integracion packages/db/test/carga-volumen.int.test.ts'],
+  ]);
+  const calcular = correr([
+    ['REN calcular', 'pnpm bench --outputJson test-results/ren/bench.json'],
+  ]);
+  const registro = correr([['REN registro', 'node tools/pruebas/volumen/registrar.ts']]);
+  return carga && calcular && registro;
 }
 
 // Mutantes del motor (07 §19.4, DP-26; TA-112): vitest.config.ts compila FINN_MUTANTE en @finn/dominio.
