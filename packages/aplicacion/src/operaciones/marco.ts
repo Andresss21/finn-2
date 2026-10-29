@@ -185,7 +185,6 @@ const NOMBRADOS = {
   categoriaId: ['categoria', 'categorias'],
   grupoId: ['grupo', 'grupos'],
   deudorId: ['deudor', 'deudores'],
-  prestamoId: ['cuenta', 'cuentas'],
 } as const;
 
 /**

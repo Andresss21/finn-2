@@ -16,7 +16,7 @@ import {
 } from '../src/operaciones/marco.ts';
 import { OP48 } from '../src/operaciones/cuentas/index.ts';
 import { OP31, OP52 } from '../src/operaciones/eventos/index.ts';
-import { OP53 } from '../src/operaciones/conciliacion/index.ts';
+import { OP53 } from '../src/operaciones/conciliacion/OP-53-verificar-saldo.ts';
 import { OP20 } from '../src/operaciones/transacciones/index.ts';
 
 const uuid = (n: number): Uuid => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}` as Uuid;
