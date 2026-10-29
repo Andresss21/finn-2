@@ -6,3 +6,4 @@ export {
   type MontoSalida,
   type RevisionSalida,
 } from './comunes.ts';
+export * from './cuentas.ts';
