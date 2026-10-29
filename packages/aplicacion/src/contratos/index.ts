@@ -8,3 +8,4 @@ export {
 } from './comunes.ts';
 export * from './cuentas.ts';
 export * from './categorias.ts';
+export * from './presupuesto.ts';
