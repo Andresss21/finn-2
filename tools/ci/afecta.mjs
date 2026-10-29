@@ -184,6 +184,8 @@ function inestables() {
 /** Las suites del nocturno que ya existen (07 §6.1): PROP con FC_RUNS=10000 (lo fija nocturno.yml); con tantos casos el timeout de 5 s no alcanza, así que sube solo acá. */
 function nocturno() {
   if (process.env.FINN_NOCTURNO === 'ren') return ren();
+  // Job `respaldo` (TA-251; 07 §19.6, nivel RES): volcado, cifrado con age y restauración sin `auth`
+  if (process.env.FINN_NOCTURNO === 'respaldo') return correr([['RES', 'pnpm test:respaldo']]);
   const prop = correr([
     [
       'PROP',
