@@ -57,6 +57,29 @@ const CLASE: Partial<Record<TipoTransaccion, 'ingreso' | 'otras' | 'saldoInicial
   avance_efectivo: 'otras',
 };
 
+/** Un efecto que es entrada de §4.9, con la fecha y la clase de su transacción. */
+export interface EntradaDeEfecto {
+  readonly fecha: FechaLocal;
+  readonly clase: 'ingreso' | 'otras' | 'saldoInicial';
+  readonly monto: Centavos;
+}
+
+/** Los efectos en cuentas de efectivo de transacciones con clase, en su orden: una pasada [BE-23]. */
+export function entradasDeEfectos(
+  h: Pick<Hechos, 'cuentas' | 'efectos'>,
+  txs: ReadonlyMap<Uuid, Transaccion>,
+): EntradaDeEfecto[] {
+  const efectivo = new Set(h.cuentas.filter((k) => k.tipo === 'efectivo').map((k) => k.id));
+  const r: EntradaDeEfecto[] = [];
+  for (const e of h.efectos) {
+    const t = txs.get(e.transaccionId);
+    const clase = t === undefined ? undefined : CLASE[t.tipo];
+    if (t !== undefined && clase !== undefined && efectivo.has(e.cuentaId))
+      r.push({ fecha: t.fecha, clase, monto: e.monto });
+  }
+  return r;
+}
+
 /**
  * Entradas de §4.9 con fecha ≤ hasta (todas sin `hasta`). No son entradas las entradas a una tarjeta
  * (Q3), los cobros depositados en una tarjeta (Q3, Q7) ni los saldos iniciales de tarjetas,
@@ -67,8 +90,8 @@ export function entradas(
   cobros: readonly PorCobrar[],
   hasta?: FechaLocal,
   txs: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
+  deEfectos: readonly EntradaDeEfecto[] = entradasDeEfectos(h, txs),
 ): EntradasPorClase {
-  const efectivo = new Set(h.cuentas.filter((k) => k.tipo === 'efectivo').map((k) => k.id));
   const vale = (fecha: FechaLocal) => hasta === undefined || fecha <= hasta;
   const por = {
     ingreso: Centavos.cero,
@@ -76,13 +99,8 @@ export function entradas(
     restitucion: Centavos.cero,
     saldoInicial: Centavos.cero,
   };
-  for (const e of h.efectos) {
-    const t = txs.get(e.transaccionId);
-    const clase = t === undefined ? undefined : CLASE[t.tipo];
-    if (t === undefined || clase === undefined || !efectivo.has(e.cuentaId) || !vale(t.fecha))
-      continue;
-    por[clase] = Centavos.sumar(por[clase], e.monto);
-  }
+  for (const x of deEfectos)
+    if (vale(x.fecha)) por[x.clase] = Centavos.sumar(por[x.clase], x.monto);
   for (const x of entradasDeCobros(cobros))
     if (vale(x.fecha)) por[x.clase] = Centavos.sumar(por[x.clase], x.monto);
   return { ...por, total: suma(Object.values(por)) };
@@ -103,6 +121,7 @@ export function listoParaAsignar(
   b: Presupuesto,
   cobros: readonly PorCobrar[],
   txs: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
+  deEfectos: readonly EntradaDeEfecto[] = entradasDeEfectos(h, txs),
 ): DetalleLpa {
   const a = b.activo.inicio;
   // Mutante 'cierre' (07 §19.4): el activo reduce LPA como si ya hubiera cerrado.
@@ -110,7 +129,7 @@ export function listoParaAsignar(
     (x) => x.estado === 'cerrado' || (mutante('cierre') && x.estado === 'activo'),
   );
   const detalle = {
-    entradas: entradas(h, cobros, undefined, txs),
+    entradas: entradas(h, cobros, undefined, txs, deEfectos),
     asignadoCerrados: asignadoSi(h, (p) => p < a),
     asignadoActivo: asignadoSi(h, (p) => p === a),
     asignadoFuturos: asignadoSi(h, (p) => p > a),
@@ -149,7 +168,7 @@ export function lpaAlCierre(h: HechosDeLpa, b: Presupuesto, p: Periodo): Centavo
 
 /** Σ de los montos con clave ≤ hasta, por sumas acumuladas sobre las claves ordenadas. */
 function acumulado(pares: readonly (readonly [FechaLocal, Centavos])[]) {
-  const xs = [...pares].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  const xs = [...pares].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
   const sumas: Centavos[] = [];
   for (const [, m] of xs) sumas.push(Centavos.sumar(sumas.at(-1) ?? Centavos.cero, m));
   return (hasta: FechaLocal): Centavos => {
@@ -178,13 +197,9 @@ export function historialLpa(
   b: Presupuesto,
   cobros: readonly PorCobrar[],
   txs: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
+  efectos: readonly EntradaDeEfecto[] = entradasDeEfectos(h, txs),
 ): { readonly periodo: Periodo; readonly lpa: Centavos }[] {
-  const efectivo = new Set(h.cuentas.filter((k) => k.tipo === 'efectivo').map((k) => k.id));
-  const deEfectos = h.efectos.flatMap((e): [FechaLocal, Centavos][] => {
-    const t = txs.get(e.transaccionId);
-    if (t === undefined || CLASE[t.tipo] === undefined || !efectivo.has(e.cuentaId)) return [];
-    return [[t.fecha, e.monto]];
-  });
+  const deEfectos = efectos.map((x): [FechaLocal, Centavos] => [x.fecha, x.monto]);
   const deCobros = cobros.flatMap((x) =>
     entradasDeCobros([x]).map((e): [FechaLocal, Centavos] => [despues(x.fecha, e.fecha), e.monto]),
   );

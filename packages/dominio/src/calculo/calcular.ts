@@ -15,15 +15,15 @@ import type { Cuenta, Hechos, Instantanea, TablaMotor, Uuid } from '../hechos';
 import type { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
 import { type Clasificacion, clasificacion } from './clasificacion';
-import { movimientos, porId } from './devoluciones';
+import { mediosDe, movimientos, porId } from './devoluciones';
 import { agrupar, type Presupuesto, presupuesto } from './disponible';
-import { type DetalleLpa, historialLpa, listoParaAsignar } from './lpa';
+import { type DetalleLpa, entradasDeEfectos, historialLpa, listoParaAsignar } from './lpa';
 import { type EvaluacionDeMeta, evaluarMeta } from './metas';
 import { type OcurrenciaPendiente, pendientes } from './ocurrencias';
 import { type PatrimonioNeto, patrimonioNeto } from './patrimonio';
 import { type Ciclo, ciclo, type Periodo } from './periodos';
 import { pagosImplicitos, type PorCobrar, porCobrar } from './por-cobrar';
-import { saldo } from './saldos';
+import { saldo, saldoYConfirmado } from './saldos';
 import { reduccionProyectada, sobregiroConTarjetaDelActivo } from './sobregiros';
 import { type EstadoDeTarjeta, estadoDeTarjeta } from './tarjetas';
 
@@ -85,12 +85,19 @@ const clave = (x: object): string =>
 
 /** Tablas y filas ordenadas por nombre e id: la forma canónica de unos hechos (inv. 26). */
 function canonicos(h: Hechos): Hechos {
-  // La clave de cada fila se calcula una vez, no en cada comparación.
-  const ordenar = (xs: readonly object[]) =>
-    xs
-      .map((x) => [clave(x), x] as const)
+  // La clave de cada fila se calcula una vez, no en cada comparación. Si ya están en orden (los
+  // hechos de una instantánea anterior), el orden estable las deja igual: basta copiarlas.
+  const ordenar = (xs: readonly object[]) => {
+    const ks = xs.map(clave);
+    let enOrden = true;
+    for (let i = 1; enOrden && i < ks.length; i++)
+      enOrden = (ks[i - 1] as string) <= (ks[i] as string);
+    if (enOrden) return [...xs];
+    return xs
+      .map((x, i) => [ks[i] as string, x] as const)
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
       .map(([, x]) => x);
+  };
   const tablas = (Object.keys(h) as TablaMotor[]).sort();
   return Object.fromEntries(tablas.map((t) => [t, ordenar(h[t])])) as unknown as Hechos;
 }
@@ -99,9 +106,18 @@ function canonicos(h: Hechos): Hechos {
 function congelar<T>(x: T): T {
   if (typeof x !== 'object' || x === null || Object.isFrozen(x)) return x;
   Object.freeze(x);
-  // Como recorrer `Object.values(x)`, sin copiar cada objeto en un arreglo.
-  if (Array.isArray(x)) for (const v of x) congelar(v);
-  else for (const k in x) if (Object.hasOwn(x, k)) congelar((x as Record<string, unknown>)[k]);
+  // Como recorrer `Object.values(x)` (las propiedades propias enumerables), sin copiarlas en un
+  // arreglo; un valor que no es objeto no se visita.
+  if (Array.isArray(x))
+    for (let i = 0; i < x.length; i++) {
+      const v: unknown = x[i];
+      if (typeof v === 'object' && v !== null) congelar(v);
+    }
+  else
+    for (const k in x) {
+      const v: unknown = x[k];
+      if (typeof v === 'object' && v !== null && Object.hasOwn(x, k)) congelar(v);
+    }
   return x;
 }
 
@@ -113,24 +129,33 @@ export function calcular(hechos: Hechos, hoy: FechaLocal): Instantanea {
   const txs = porId(h.transacciones);
   // saldo(k) con solo los efectos de k y las transacciones por id: lo mismo que saldo(h, k).
   const efectosDe = agrupar(h.efectos, (e) => e.cuentaId);
-  const saldoDe = (k: Uuid, filtro = {}) =>
-    saldo({ transacciones: [], efectos: efectosDe.get(k) ?? [] }, k, filtro, txs);
-  const cuentas = h.cuentas.map((k) => ({
-    cuentaId: k.id,
-    tipo: k.tipo,
-    saldo: saldoDe(k.id),
-    confirmado: saldoDe(k.id, { confirmado: true }),
-  }));
+  const deK = (k: Uuid) => ({ transacciones: [], efectos: efectosDe.get(k) ?? [] });
+  // saldo(k) se pide en cuentas, tarjetas y patrimonio: se suma una vez por cuenta y llamada.
+  const saldos = new Map<Uuid, Centavos>();
+  const saldoDe = (k: Uuid): Centavos => {
+    let s = saldos.get(k);
+    if (s === undefined) saldos.set(k, (s = saldo(deK(k), k, {}, txs)));
+    return s;
+  };
+  const cuentas = h.cuentas.map((k) => {
+    const s = saldoYConfirmado(deK(k.id), k.id, txs);
+    if (!saldos.has(k.id)) saldos.set(k.id, s.saldo);
+    return { cuentaId: k.id, tipo: k.tipo, saldo: s.saldo, confirmado: s.confirmado };
+  });
   // §4.10 antes que §4.6: los pagos implícitos de los cobros entran en Disp(pago(t)).
-  const cobros = porCobrar(h, undefined, txs);
+  // El medio de cada transacción, uno para por cobrar y para los consumos.
+  const medios = mediosDe(h);
+  const cobros = porCobrar(h, undefined, txs, medios);
   // §4.4 a §4.6 en el orden de §4.1 conv. 4: D2, normales, pago y arrastre, período a período,
   // con la proyección al final.
   // Consumos y devoluciones clasificadas, una vez para §4.4 a §4.6 y para §4.13.
-  const m = movimientos(h, c, txs);
+  const m = movimientos(h, c, txs, medios);
   const b = presupuesto(h, c, hoy, pagosImplicitos(cobros), PERIODOS_PROYECTADOS, m);
   const tarjetas = h.cuentas
     .filter((k) => k.tipo === 'tarjeta')
     .map((k) => estadoDeTarjeta(h, b, k.id, saldoDe));
+  // Los efectos que son entradas de §4.9, una vez para LPA y su historial.
+  const deEfectos = entradasDeEfectos(h, txs);
   const categorias = new Map(h.categorias.map((x) => [x.id, x]));
   const metas = h.metas.map((m) => {
     const x = categorias.get(m.categoriaId);
@@ -147,8 +172,8 @@ export function calcular(hechos: Hechos, hoy: FechaLocal): Instantanea {
     sobregiroConTarjeta: sobregiroConTarjetaDelActivo(b),
     reduccionProyectada: reduccionProyectada(b),
     tarjetas,
-    lpa: listoParaAsignar(h, b, cobros, txs),
-    historialLpa: historialLpa(h, b, cobros, txs),
+    lpa: listoParaAsignar(h, b, cobros, txs, deEfectos),
+    historialLpa: historialLpa(h, b, cobros, txs, deEfectos),
     metas,
     clasificacion: clasificacion(h, c, cobros, m, txs),
     patrimonio: patrimonioNeto(h, cobros, saldoDe),
