@@ -1,7 +1,7 @@
 // Registro de notificaciones (04 §11.1: el registro es la fuente de verdad y va antes del push; BE-38).
 // El `aviso` sale siempre del catálogo, nunca del llamador (CF-16). Solo escribe; el envío del push es de otra pieza.
 import { crearNotificacion, type DatosNotificacion as DatosJson, type EscritorTx } from '@finn/db';
-import { MOTIVOS, type MotivoNotificacion } from './catalogo.ts';
+import { MOTIVOS, type MotivoNotificacion } from './motivos.ts';
 
 export interface DatosNotificacion {
   readonly titulo: string;

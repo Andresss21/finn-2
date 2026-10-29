@@ -1,4 +1,4 @@
-// Catálogo de motivos de notificación (04 §11.1, §11.2, §11.4; CF-16, CF-07, CF-24): un registro por motivo con su
+// Catálogo de motivos de notificación (`push/motivos.ts`, 04 §11.1) (04 §11.1, §11.2, §11.4; CF-16, CF-07, CF-24): un registro por motivo con su
 // aviso (o `null` si no es un aviso del dominio, 06 §3.13.1), la política del push y la pantalla de destino. La
 // tabla de 04 §11.2 y la prueba de catálogo (PRU-INT-NOTIF-002) salen de esta constante.
 

@@ -12,7 +12,7 @@ import {
 } from '@finn/db';
 import { crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { RELOJ } from '../../db/test/ayudantes/hechos-prueba.ts';
-import { MOTIVOS, esMotivo, type MotivoNotificacion } from '../src/push/catalogo.ts';
+import { MOTIVOS, esMotivo, type MotivoNotificacion } from '../src/push/motivos.ts';
 import { registrarCambioRetroactivo, registrarNotificacion } from '../src/push/registro.ts';
 import { marcarNotificacionesLeidas } from '../src/operaciones/notificaciones/index.ts';
 
