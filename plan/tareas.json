@@ -247,7 +247,7 @@
 
   "TA-187": { "estado": "pendiente" },
 
-  "TA-188": { "estado": "pendiente" },
+  "TA-188": { "estado": "en_curso", "rama": "ta-188-escenarios-int" },
 
   "TA-189": { "estado": "pendiente" },
 
