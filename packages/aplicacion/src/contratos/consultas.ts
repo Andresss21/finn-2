@@ -154,8 +154,9 @@ const tipoRegistro = z.enum(
 );
 
 /**
- * `consultas.formulario(parametros)` (04 §6.14.1), con las operaciones de registro y edición: registrar,
- * pagar_tarjeta, cuota_prestamo, editar_transaccion y cuenta. Las demás suman su caso con su tarea.
+ * `consultas.formulario(parametros)` (04 §6.14.1), con las operaciones de registro y edición (registrar,
+ * pagar_tarjeta, cuota_prestamo, editar_transaccion y cuenta) y las de presupuesto y bandeja (asignar,
+ * archivar_categoria, movimiento y meta). Las demás suman su caso con su tarea.
  */
 export const parametrosFormulario = z.discriminatedUnion(
   'operacion',
@@ -174,7 +175,30 @@ export const parametrosFormulario = z.discriminatedUnion(
       cuentaId: uuid.optional(),
       tipo: tipoCuenta.optional(),
     }),
+    z.object({
+      operacion: z.literal('asignar'),
+      categoriaId: uuid,
+      periodoInicio: fechaLocal.optional(),
+    }),
+    z.object({ operacion: z.literal('archivar_categoria'), categoriaId: uuid }),
+    z.object({ operacion: z.literal('movimiento'), movimientoId: uuid }),
+    z.object({
+      operacion: z.literal('meta'),
+      categoriaId: uuid.optional(),
+      metaId: uuid.optional(),
+    }),
   ],
   { error: 'La operación del formulario no es válida.' },
 );
 export type ParametrosFormulario = z.output<typeof parametrosFormulario>;
+
+/**
+ * `consultas.reporte({ tipo, ... })` (04 §6.9): un tipo por llamada. Por ahora `ritmo` (período activo, 6.9.7);
+ * los demás suman su caso con su tarea.
+ */
+export const parametrosReporte = z.discriminatedUnion(
+  'tipo',
+  [z.object({ tipo: z.literal('ritmo') })],
+  { error: 'El tipo de reporte no es válido.' },
+);
+export type ParametrosReporte = z.output<typeof parametrosReporte>;

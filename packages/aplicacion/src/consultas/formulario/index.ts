@@ -1,12 +1,16 @@
 // `consultas.formulario(parametros)` (04 §6.14, BE-42): una sola consulta con parámetros discriminados por operación,
-// catálogos comunes y un contexto propio. TA-173 despacha las cinco operaciones de registro y edición; las demás de
+// catálogos comunes y un contexto propio. TA-173 despacha las cinco operaciones de registro y edición, TA-174 las de presupuesto y bandeja; las demás de
 // 6.14.1 suman su caso en `parametrosFormulario` y en el `switch` de aquí. Todo sale de `formulario()` del dominio
 // (inv. 27): la consulta solo lee lo [H] e [I] en la misma instantánea.
 import { parametrosFormulario } from '../../contratos/consultas.ts';
 import { consultar, type DepsConsulta, type Encabezado } from '../comun.ts';
+import { archivar } from './archivar.ts';
+import { asignar } from './asignar.ts';
 import { cuenta } from './cuenta.ts';
 import { cuota } from './cuota.ts';
 import { editar } from './editar.ts';
+import { meta } from './meta.ts';
+import { movimiento } from './movimiento.ts';
 import { pagarTarjeta } from './pagar-tarjeta.ts';
 import { registrar } from './registrar.ts';
 
@@ -17,6 +21,10 @@ interface Cuerpos {
   readonly cuota_prestamo: Awaited<ReturnType<typeof cuota>>;
   readonly editar_transaccion: Awaited<ReturnType<typeof editar>>;
   readonly cuenta: Awaited<ReturnType<typeof cuenta>>;
+  readonly asignar: Awaited<ReturnType<typeof asignar>>;
+  readonly archivar_categoria: Awaited<ReturnType<typeof archivar>>;
+  readonly movimiento: Awaited<ReturnType<typeof movimiento>>;
+  readonly meta: Awaited<ReturnType<typeof meta>>;
 }
 
 export type FormularioDto = Encabezado & Cuerpos[keyof Cuerpos];
@@ -45,6 +53,14 @@ export function formulario(d: DepsConsulta, parametros: unknown): Promise<Formul
             return editar(c, p);
           case 'cuenta':
             return cuenta(c, p);
+          case 'asignar':
+            return asignar(c, p);
+          case 'archivar_categoria':
+            return archivar(c, p);
+          case 'movimiento':
+            return movimiento(c, p);
+          case 'meta':
+            return meta(c, p);
         }
       })();
       return { ...c.encabezado, ...cuerpo };

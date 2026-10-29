@@ -114,3 +114,18 @@ export async function fijarRespaldo(
                                       ultima_restauracion_en = EXCLUDED.ultima_restauracion_en;`,
   );
 }
+
+/** El movimiento pendiente que propone una devolución (CH-30): Efectivo, 2027-02-05, 100 centavos, "Super". */
+export const MOVIMIENTO_DEVOLUCION = '00000000-0000-4000-8000-000000000990';
+
+export async function sembrarMovimientoDeDevolucion(base: BasePrueba): Promise<void> {
+  const sms = '00000000-0000-4000-8000-000000000991';
+  await comoAdmin(
+    base,
+    `INSERT INTO finn.sms_recibidos (id, texto, remitente, recibido_en)
+       VALUES ('${sms}', 'devolucion super', 'banco', timestamptz '2027-02-05T10:00:00Z');
+     INSERT INTO finn.movimientos (id, sms_id, estado, cuenta_id, fecha, monto, comercio, tipo_propuesto)
+       VALUES ('${MOVIMIENTO_DEVOLUCION}', '${sms}', 'pendiente', '00000000-0000-4000-8000-000000000001',
+               date '2027-02-05', 100, 'Super', 'devolucion');`,
+  );
+}
