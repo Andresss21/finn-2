@@ -23,6 +23,7 @@ export { estructura, type GrupoDeEstructura } from './estructura';
 export { metas, type Metas } from './metas';
 export { detalleLpa, PERIODOS_DE_HISTORIAL, type DetalleLpaSel } from './detalle-lpa';
 export { inicio, type InicioSel, type OcurrenciaDto } from './inicio';
+export { ritmo, type RitmoSel } from './reportes/ritmo';
 export { presupuesto, type FiltroPresupuesto, type PresupuestoSel } from './presupuesto';
 
 /** El período activo de la instantánea (04 §6.0.2, `periodoActivo` del encabezado común). */
