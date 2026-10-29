@@ -1,7 +1,7 @@
 // Marco de operaciones (04 §2.3, §4.2 a §4.9): `previsualizar` y `confirmar` construidos con la `DefinicionOperacion`
 // de cada OP/OPT. Aquí viven, una sola vez, el comando resuelto (BE-10), la huella y la confirmación (BE-13), la
 // idempotencia por clase (BE-17), los reintentos (BE-18), los efectos posteriores (BE-19) y los ids (BE-31).
-// Solo ve `escribir()`/`leer()` de @finn/db y sus `EscritorTx`/`LectorTx`.
+// Solo ve `escribir()`/`leer()`/`escribirTecnico()` de @finn/db y sus `EscritorTx`/`LectorTx`/`EscritorTecnicoTx`.
 import { createHash, randomBytes } from 'node:crypto';
 import type { z } from 'zod';
 import { aplicar as aplicarDominio, formaCanonicaDelImpacto } from '@finn/dominio';
@@ -21,6 +21,7 @@ import { FechaLocal } from '@finn/dominio/valores';
 import {
   cargarHechos,
   escribir as escribirDb,
+  escribirTecnico as escribirTecnicoDb,
   leer as leerDb,
   registrarEvento,
   sanearMensaje,
@@ -98,6 +99,8 @@ export interface DepsMarco {
   /** La memoria de la instancia (04 §5.3). */
   readonly memoria: Memoria;
   readonly escribir?: typeof escribirDb;
+  /** La transacción sin bloqueo de las tablas [T] (03 §5.1), para el registro de `eventos_sistema` (7.8). */
+  readonly escribirTecnico?: typeof escribirTecnicoDb;
   readonly leer?: typeof leerDb;
   readonly aplicar?: typeof aplicarDominio;
   /** La carga de los hechos [M] cuando la memoria no los tiene (04 §5.2). */
@@ -109,7 +112,7 @@ export interface DepsMarco {
   readonly pausar?: (ms: number) => Promise<void>;
   readonly azar?: () => number;
   readonly nuevoIdError?: () => string;
-  /** Registro de `eventos_sistema`; por omisión, en una transacción propia de `escribir()` (ver el PR). */
+  /** Registro de `eventos_sistema`; por omisión, en una transacción propia de `escribirTecnico()` (7.8). */
   readonly registrar?: (evento: NuevoEvento) => Promise<void>;
   /** `after()` de Next (4.9); por omisión los efectos se esperan antes de responder. */
   readonly despues?: (tarea: () => Promise<void>) => void;
@@ -246,12 +249,15 @@ const contexto = (operacion: string, d: DepsMarco): Contexto => ({
   inicio: performance.now(),
 });
 
-/** Registro best-effort de un evento: nunca cambia la respuesta (4.9, 7.8). */
+/**
+ * Registro best-effort de un evento: nunca cambia la respuesta (4.9, 7.8). Va en una transacción propia, sin bloqueo
+ * (tabla [T]) y, para un error, después del ROLLBACK: quien llama ya salió de `escribir()`.
+ */
 async function registrar(d: DepsMarco, evento: NuevoEvento): Promise<void> {
   try {
     if (d.registrar) await d.registrar(evento);
     else
-      await (d.escribir ?? escribirDb)(async (tx) => {
+      await (d.escribirTecnico ?? escribirTecnicoDb)(async (tx) => {
         await registrarEvento(tx, evento);
       }, opcionesDe(d));
   } catch {
