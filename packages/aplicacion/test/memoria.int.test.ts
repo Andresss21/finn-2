@@ -53,55 +53,66 @@ describe('PRU-INT-MOTOR', () => {
   const cargaNueva = (): Promise<{ revision: string; hechos: Hechos }> =>
     leer(async (t) => ({ revision: t.estado.revision, hechos: await cargarHechos(t) }), RELOJ);
 
-  it('PRU-INT-MOTOR-001 [V-16] después de cada operación, la memoria de la instancia que escribe es igual a una carga nueva', async () => {
+  /** Corre una secuencia contra la base y compara la memoria con una carga nueva después de cada escritura; devuelve cuántas hubo. */
+  async function verificar(comandos: Iterable<fc.Command<object, Sistema>>): Promise<number> {
     const hoy = FechaLocal.desdeTexto(HOY);
-    let corrida = 0;
     let escrituras = 0;
+    const corrida = ++corridas;
+    const memoria = new Memoria<Instantanea>();
+    const inicial = await cargaNueva();
+    const cargado = await memoria.hechos(inicial.revision, () => Promise.resolve(inicial.hechos));
+    const sistema = new SistemaDeCorrida(cargado, hoy, corrida);
+    for (const comando of comandos) {
+      const antes = sistema.pasos.length;
+      comando.run({}, sistema);
+      for (const paso of sistema.pasos.slice(antes)) {
+        if (!paso.resultado.ok) continue; // un rechazo no escribe y deja los hechos como estaban
+        const { cambios, hechosNuevos, operacionDeclarada } = paso.resultado;
+        const escrito = await escribir(async (tx) => {
+          if (operacionDeclarada) await tx.declararOperacion(operacionDeclarada);
+          const valores = await tx.aplicarCambios(cambios);
+          return { valores, revision: await tx.revisionActual() };
+        }, RELOJ);
+        escrituras++;
+        const apta = memoria.registrarEscritura(escrito.revision, hechosNuevos, escrito.valores);
+        expect(apta, 'la base completó todos los valores (BE-32)').toBe(true);
+        const nueva = await cargaNueva();
+        expect(memoria.revision).toBe(nueva.revision);
+        // la instancia que escribió no recarga: lee su memoria
+        const enMemoria = await memoria.hechos(escrito.revision, () => {
+          throw new Error('la memoria debía tener la revisión');
+        });
+        expect(canonicos(enMemoria)).toEqual(canonicos(nueva.hechos));
+        expect(memoria.instantanea(escrito.revision, HOY, () => calcular(enMemoria, hoy))).toEqual(
+          calcular(nueva.hechos, hoy),
+        );
+        sistema.hechos = enMemoria; // el sistema sigue con lo que tiene la memoria
+      }
+    }
+    return escrituras;
+  }
+  let corridas = 0;
+
+  it('PRU-INT-MOTOR-001 [V-16] después de cada operación, la memoria de la instancia que escribe es igual a una carga nueva', async () => {
     await fc.assert(
       fc.asyncProperty(operacionesArb(), async (comandos) => {
-        const memoria = new Memoria<Instantanea>();
-        const inicial = await cargaNueva();
-        const cargado = await memoria.hechos(inicial.revision, () =>
-          Promise.resolve(inicial.hechos),
-        );
-        const sistema = new SistemaDeCorrida(cargado, hoy, ++corrida);
-        for (const comando of comandos) {
-          const antes = sistema.pasos.length;
-          comando.run({}, sistema);
-          for (const paso of sistema.pasos.slice(antes)) {
-            if (!paso.resultado.ok) continue; // un rechazo no escribe y deja los hechos como estaban
-            const { cambios, hechosNuevos, operacionDeclarada } = paso.resultado;
-            const escrito = await escribir(async (tx) => {
-              if (operacionDeclarada) await tx.declararOperacion(operacionDeclarada);
-              const valores = await tx.aplicarCambios(cambios);
-              return { valores, revision: await tx.revisionActual() };
-            }, RELOJ);
-            escrituras++;
-            const apta = memoria.registrarEscritura(
-              escrito.revision,
-              hechosNuevos,
-              escrito.valores,
-            );
-            expect(apta, 'la base completó todos los valores (BE-32)').toBe(true);
-            const nueva = await cargaNueva();
-            expect(memoria.revision).toBe(nueva.revision);
-            // la instancia que escribió no recarga: lee su memoria
-            const enMemoria = await memoria.hechos(escrito.revision, () => {
-              throw new Error('la memoria debía tener la revisión');
-            });
-            expect(canonicos(enMemoria)).toEqual(canonicos(nueva.hechos));
-            expect(
-              memoria.instantanea(escrito.revision, HOY, () => calcular(enMemoria, hoy)),
-            ).toEqual(calcular(nueva.hechos, hoy));
-            sistema.hechos = enMemoria; // el sistema sigue con lo que tiene la memoria
-          }
-        }
+        await verificar(comandos as Iterable<fc.Command<object, Sistema>>);
       }),
       {
         numRuns: CASOS,
         ...(process.env['FC_SEED'] ? { seed: Number(process.env['FC_SEED']) } : {}),
       },
     );
+  }, 600_000);
+
+  // Con pocas corridas puede ocurrir que ninguna secuencia escriba (FC_SEED=740175474, 4 casos): la prueba no puede
+  // exigirlo al azar. Un caso fijo (semilla propia) garantiza que la comparación ve al menos una escritura real.
+  it('PRU-INT-MOTOR-001 [V-16] caso fijo: una secuencia con semilla propia escribe y la memoria coincide con la carga nueva', async () => {
+    let escrituras = 0;
+    for (const comandos of fc.sample(operacionesArb(), { seed: 1, numRuns: 30 })) {
+      escrituras += await verificar(comandos as Iterable<fc.Command<object, Sistema>>);
+      if (escrituras > 0) break;
+    }
     expect(escrituras).toBeGreaterThan(0);
   }, 600_000);
 
