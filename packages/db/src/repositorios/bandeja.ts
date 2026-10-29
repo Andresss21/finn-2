@@ -10,6 +10,39 @@ const uuid = (t: string): Uuid => t as Uuid;
 const uuidONulo = (t: string | null): Uuid | null => (t === null ? null : uuid(t));
 const fecha = (d: Date | null) => (d === null ? null : fechaLocalDeDate(d));
 
+type FilaMovimiento = Awaited<
+  ReturnType<ReturnType<typeof txPrisma>['movimiento']['findMany']>
+>[number];
+
+const aMovimiento = (m: FilaMovimiento): Movimiento => ({
+  id: uuid(m.id),
+  smsId: uuid(m.smsId),
+  estado: m.estado,
+  cuentaId: uuidONulo(m.cuentaId),
+  fecha: fecha(m.fecha),
+  monto: m.monto as Movimiento['monto'],
+  comercio: m.comercio,
+  tipoPropuesto: m.tipoPropuesto,
+  nota: m.nota,
+  duplicadoTransaccionId: uuidONulo(m.duplicadoTransaccionId),
+  duplicadoMovimientoId: uuidONulo(m.duplicadoMovimientoId),
+  esperadaProgramadaId: uuidONulo(m.esperadaProgramadaId),
+  esperadaFecha: fecha(m.esperadaFecha),
+  transaccionId: uuidONulo(m.transaccionId),
+});
+
+/** Los movimientos [H] que resultaron en la transacción (`transaccion_id`): OP-29 los pasa a descartado (03 §4.6.1). */
+export async function leerMovimientosDeTransaccion(
+  tx: LectorTx,
+  transaccionId: Uuid,
+): Promise<Movimiento[]> {
+  const filas = await txPrisma(tx).movimiento.findMany({
+    where: { transaccionId },
+    orderBy: { id: 'asc' },
+  });
+  return filas.map(aMovimiento);
+}
+
 /** Lo que el selector `bandeja` recibe como parámetro. */
 export async function leerDatosDeBandeja(tx: LectorTx) {
   const p = txPrisma(tx);
@@ -31,22 +64,7 @@ export async function leerDatosDeBandeja(tx: LectorTx) {
   const reglas = await leerReglasComercio(tx);
   return {
     movimientos: movimientos.map((m) => ({
-      movimiento: {
-        id: uuid(m.id),
-        smsId: uuid(m.smsId),
-        estado: m.estado,
-        cuentaId: uuidONulo(m.cuentaId),
-        fecha: fecha(m.fecha),
-        monto: m.monto as Movimiento['monto'],
-        comercio: m.comercio,
-        tipoPropuesto: m.tipoPropuesto,
-        nota: m.nota,
-        duplicadoTransaccionId: uuidONulo(m.duplicadoTransaccionId),
-        duplicadoMovimientoId: uuidONulo(m.duplicadoMovimientoId),
-        esperadaProgramadaId: uuidONulo(m.esperadaProgramadaId),
-        esperadaFecha: fecha(m.esperadaFecha),
-        transaccionId: uuidONulo(m.transaccionId),
-      } satisfies Movimiento,
+      movimiento: aMovimiento(m),
       lineas: lineas
         .filter((l) => l.movimientoId === m.id)
         .map(

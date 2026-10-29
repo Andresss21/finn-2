@@ -53,11 +53,19 @@ export interface HuellaCreacion {
 }
 
 /** `"12.5000"` y `"12.5"` son el mismo decimal. */
-const decimal = (t: string | null | undefined): string | null =>
+export const decimal = (t: string | null | undefined): string | null =>
   t == null ? null : t.includes('.') ? t.replace(/0+$/, '').replace(/\.$/, '') : t;
 
+/** Una línea ya guardada o pedida: el par `[categoriaId, deudorId]` de su destino (el deudor nuevo, por nombre). */
+export function destinoIds(h: Hechos, d: DestinoEsperado): readonly [Uuid | null, Uuid | null] {
+  if ('categoriaId' in d) return [d.categoriaId, null];
+  if ('deudorId' in d) return [null, d.deudorId];
+  const nombre = d.deudorNuevo.toLowerCase();
+  return [null, h.deudores.find((x) => x.nombre.toLowerCase() === nombre)?.id ?? null];
+}
+
 /** Forma comparable: el mismo texto si y solo si los datos coinciden. */
-const forma = (v: unknown): string => JSON.stringify(v);
+export const forma = (v: unknown): string => JSON.stringify(v);
 
 /**
  * 04 §4.6.1: sin transacción con ese id, se aplica; con los mismos datos, `ya_aplicada` con el id; con otros,
@@ -79,12 +87,6 @@ export async function creacion(
     .filter((l) => l.transaccionId === id)
     .sort((a, b) => a.orden - b.orden)
     .map((l) => [l.monto, l.categoriaId, l.deudorId] as const);
-  const deudor = (nombre: string): Uuid | null =>
-    h.deudores.find((d) => d.nombre.toLowerCase() === nombre.toLowerCase())?.id ?? null;
-  const destino = (d: DestinoEsperado) =>
-    'categoriaId' in d
-      ? ([d.categoriaId, null] as const)
-      : ([null, 'deudorId' in d ? d.deudorId : deudor(d.deudorNuevo)] as const);
   const propios = {
     tipo: t.tipo,
     fecha: t.fecha,
@@ -110,7 +112,7 @@ export async function creacion(
     efectos: esperada.efectos
       .map((f) => ({ c: f.cuentaId, m: f.monto, i: f.interes ?? null, s: f.seguro ?? null }))
       .sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : a.m - b.m)),
-    lineas: (esperada.lineas ?? []).map((l) => [l.monto, ...destino(l.destino)] as const),
+    lineas: (esperada.lineas ?? []).map((l) => [l.monto, ...destinoIds(h, l.destino)] as const),
   };
   return forma(propios) === forma(pedidos)
     ? { tipo: 'ya_aplicada', salida: { id } }
