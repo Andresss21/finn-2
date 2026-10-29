@@ -57,9 +57,6 @@ export function periodoDto(i: Instantanea, p: Periodo): PeriodoDto {
     : base;
 }
 
-/** El período activo de la instantánea (04 §6.0.2, `periodoActivo` del encabezado común). */
-export const periodoActivo = (i: Instantanea): PeriodoDto => periodoDto(i, i.presupuesto.activo);
-
 interface Fila {
   readonly id: Uuid;
   readonly nombre: string;
