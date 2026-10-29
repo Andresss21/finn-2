@@ -321,7 +321,7 @@
 
   "TA-250": { "estado": "pendiente" },
 
-  "TA-251": { "estado": "en_curso", "rama": "ta-251-respaldo" },
+  "TA-251": { "estado": "terminada", "pr": 149 },
 
   "TA-252": { "estado": "terminada", "pr": 34 },
 
