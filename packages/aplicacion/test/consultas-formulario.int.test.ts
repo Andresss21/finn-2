@@ -48,7 +48,7 @@ describe('PRU-INT-TX', () => {
     await sembrarOrigenYCambios(base, TX_SMS, CONCILIACION);
   });
 
-  it('PRU-INT-TX-103 [inv. 27, Q-formulario] formulario() da el encabezado común, los catálogos de 6.14.2 y el contexto de registrar, pagar_tarjeta, cuota_prestamo, editar_transaccion y cuenta, con NO_ENCONTRADO, VALIDACION y sesión', async () => {
+  it('PRU-INT-TX-103 [inv. 27, Q-formulario, FORM-registrar, FORM-pagar_tarjeta, FORM-cuota_prestamo, FORM-editar_transaccion, FORM-cuenta] formulario() da el encabezado común, los catálogos de 6.14.2 y el contexto de registrar, pagar_tarjeta, cuota_prestamo, editar_transaccion y cuenta, con NO_ENCONTRADO, VALIDACION y sesión', async () => {
     const deps: DepsConsulta = {
       memoria: new Memoria(),
       sesion: sesionDe({ sub: USUARIO, aal: 'aal2' }),

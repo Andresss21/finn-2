@@ -52,7 +52,7 @@ describe('PRU-INT-REP', () => {
     await sembrarMovimientoDeDevolucion(base);
   });
 
-  it('PRU-INT-REP-101 [Q-reporte, Q-formulario, inv. 27] formulario() con asignar, archivar_categoria, movimiento (con las candidatas de devolución) y meta, y reporte(ritmo) con un tipo desconocido rechazado; FORM-asignar, FORM-archivar_categoria, FORM-movimiento y FORM-meta', async () => {
+  it('PRU-INT-REP-101 [Q-reporte, Q-formulario, FORM-asignar, FORM-archivar_categoria, FORM-movimiento, FORM-meta, inv. 27] formulario() con asignar, archivar_categoria, movimiento (con las candidatas de devolución) y meta, y reporte(ritmo) con un tipo desconocido rechazado', async () => {
     const deps: DepsConsulta = {
       memoria: new Memoria(),
       sesion: sesionDe({ sub: USUARIO, aal: 'aal2' }),
