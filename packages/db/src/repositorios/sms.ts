@@ -71,3 +71,24 @@ export async function proximoIntento(tx: LectorTx, smsId: string): Promise<numbe
   });
   return (v._max.intento ?? 0) + 1;
 }
+
+export type ContadoresDeBandeja = {
+  readonly pendientes: number;
+  readonly conCoincidencia: number;
+  readonly posiblesDuplicados: number;
+  readonly noReconocidos: number;
+  readonly errores: number;
+};
+
+/** Los contadores de la bandeja (`movimientos` [H], 04 §6.0.2, §6.1): un `count` por estado, con `ix_movimientos_estado`. */
+export async function contarBandeja(tx: LectorTx): Promise<ContadoresDeBandeja> {
+  const filas = await txPrisma(tx).movimiento.groupBy({ by: ['estado'], _count: { _all: true } });
+  const de = (estado: string): number => filas.find((f) => f.estado === estado)?._count._all ?? 0;
+  return {
+    pendientes: de('pendiente'),
+    conCoincidencia: de('con_coincidencia'),
+    posiblesDuplicados: de('posible_duplicado'),
+    noReconocidos: de('no_reconocido'),
+    errores: de('error'),
+  };
+}

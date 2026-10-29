@@ -20,6 +20,20 @@ export function notificacionesRecientes(tx: LectorTx, limite = 50) {
   return txPrisma(tx).notificacion.findMany({ orderBy: { creadaEn: 'desc' }, take: limite });
 }
 
+/** Cuántas notificaciones no leídas hay (`notificacionesNoLeidas` del encabezado, 04 §6.0.2). */
+export function contarNoLeidas(tx: LectorTx): Promise<number> {
+  return txPrisma(tx).notificacion.count({ where: { leidaEn: null } });
+}
+
+/** Las no leídas de un aviso, de la más nueva a la más vieja (AV-01 en Inicio, BE-38). */
+export async function noLeidasDeAviso(tx: LectorTx, aviso: string, limite = 50) {
+  return txPrisma(tx).notificacion.findMany({
+    where: { aviso, leidaEn: null },
+    orderBy: { creadaEn: 'desc' },
+    take: limite,
+  });
+}
+
 export async function marcarLeida(tx: EscritorTx, id: string): Promise<void> {
   await txPrisma(tx).notificacion.update({ where: { id }, data: { leidaEn: await ahoraDb(tx) } });
 }
