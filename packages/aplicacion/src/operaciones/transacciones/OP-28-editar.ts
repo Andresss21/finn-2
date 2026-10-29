@@ -4,7 +4,7 @@
 // línea sin eventos que cambia se reemplaza con otro id (BE-16), así que el `lineaId` no sirve para reconocerla.
 import { montoOriginalDe, type LectorTx } from '@finn/db';
 import { Centavos } from '@finn/dominio/valores';
-import type { DecimalTexto, Hechos, Transaccion, Uuid } from '@finn/dominio';
+import type { Hechos, Transaccion, Uuid } from '@finn/dominio';
 import { CAMPOS_OP28, op28, type EntradaOp28 } from '../../contratos/transacciones.ts';
 import type { DefinicionOperacion } from '../marco.ts';
 import { decimal, destinoIds, forma, type DestinoEsperado } from './comunes.ts';
@@ -124,18 +124,8 @@ export const OP28: DefinicionOperacion<EntradaOp28, EntradaOp28, { id: Uuid }> =
     if (claves.every((k) => mismo(k, e.esperado[k]))) return { tipo: 'aplicar' };
     return { tipo: 'conflicto_desactualizado', actuales: actual };
   },
-  /**
-   * `monto_original` no está en los hechos (03 §3.12) y el dominio exige la moneda y su monto juntos (M4): si la
-   * transacción tiene moneda original y la edición no la toca, se completa con el monto de la fila.
-   */
-  async resolver(tx, e, h) {
-    const t = h.transacciones.find((x) => x.id === e.transaccionId);
-    if (t?.monedaOriginal == null || e.monedaOriginal !== undefined) return e;
-    const monto = await montoOriginalDe(tx, t.id);
-    return monto === null
-      ? e
-      : { ...e, monedaOriginal: t.monedaOriginal, montoOriginal: monto as DecimalTexto };
-  },
+  // `monto_original` no se carga (04 §5.2): la moneda y su monto llegan al dominio solo como el par del comando
+  resolver: (_tx, e) => Promise.resolve(e),
   comando: (e, instante, ids) =>
     // lo que el contrato no trae no es una clave (Zod): el comando solo lleva los campos que cambian
     ({

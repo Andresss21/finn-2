@@ -91,9 +91,10 @@ export function op28(antes: H.Instantanea, x: H.ComandoOp28): Efecto | R {
   const total = x.total ?? t.total;
   const mal = (que: string) => new TypeError(`OP-28 ${t.id}: ${que}`);
   if (total <= 0) throw mal('total no positivo (CB-28)');
-  const moneda = x.monedaOriginal === undefined ? t.monedaOriginal : x.monedaOriginal;
-  const original = x.montoOriginal === undefined ? t.montoOriginal : x.montoOriginal;
-  if ((moneda === null) !== (original === null)) throw mal('moneda y monto original juntos (M4)');
+  // M4 sobre el comando: `monto_original` no se carga (04 §5.2), así que el de la fila no se puede combinar
+  const clase = (v: unknown) => (v === undefined ? 0 : v === null ? 1 : 2);
+  if (clase(x.monedaOriginal) !== clase(x.montoOriginal))
+    throw mal('moneda y monto original juntos (M4)');
   const actuales = h.lineas
     .filter((l) => l.transaccionId === t.id)
     .sort((a, b) => a.orden - b.orden);
@@ -242,8 +243,11 @@ export function op28(antes: H.Instantanea, x: H.ComandoOp28): Efecto | R {
     return campos ? [{ tipo: 'actualizar', tabla: 'efectos', id: e.id, campos }] : [];
   });
   const { fecha, comercio, nota, monedaOriginal, montoOriginal } = x;
+  // La moneda y su monto, como el par que trae el comando: si una parte difiere, se escriben las dos
+  const par = { monedaOriginal, montoOriginal };
   const tx: Partial<Record<keyof H.Transaccion, unknown>> = {
-    ...distintos(t, { fecha, total: x.total, comercio, nota, monedaOriginal, montoOriginal }),
+    ...distintos(t, { fecha, total: x.total, comercio, nota }),
+    ...(distintos(t, par) && par),
   };
   if (tx.fecha !== undefined) tx.claveOrden = claveOrdenEditada(x.instante, t.claveOrden);
   const cuentaConciliada = h.conciliaciones.find((y) => y.id === t.conciliacionId)?.cuentaId;

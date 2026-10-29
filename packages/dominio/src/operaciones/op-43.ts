@@ -66,7 +66,7 @@ function registrar(antes: H.Instantanea, p: H.Programada, x: H.ComandoOp43): Efe
     }
     case 'cuota_prestamo': {
       // Sin desglose del usuario, el del modelo (Anexo A); sin modelo, queda pendiente (QB-1).
-      const d = x.desglose ?? desglosePropuesto(antes, destino);
+      const d = x.desglose ?? desglosePropuesto(antes, destino, fecha)?.desglosePropuesto ?? null;
       if (d === null)
         return { codigo: 'registro_automatico_sin_modelo', datos: { programadaId: p.id } };
       const { capital, interes, seguro } = d;

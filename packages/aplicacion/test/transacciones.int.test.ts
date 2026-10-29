@@ -384,6 +384,91 @@ describe('PRU-INT-TX', () => {
     );
   });
 
+  it('PRU-INT-TX-101 OP-24: la previsualización de una cuota trae la propuesta del modelo (desglose y cuota emparejada por fecha o por número) fuera de la huella', async () => {
+    // Banco Agrícola mensual abierto el 15 dic: cuota 1 el 15 ene y cuota 2 el 15 feb (Anexo A.2, regla 1)
+    const P2 = uuid(1080);
+    const prestamo = {
+      id: P2,
+      tipo: 'prestamo',
+      nombre: 'Con modelo',
+      saldo: '10000.00',
+      fechaApertura: '2026-12-15',
+      contraparte: 'Banco',
+      montoOriginal: '10000.00',
+      tasaNominalAnual: '12',
+      tipoTasa: 'fija',
+      seguroPrimerMes: '10.00',
+      frecuencia: 'mensual',
+      cuotaPactada: '500.00',
+      plazoCuotas: 24,
+      modeloCalculo: 'banco_agricola',
+      cuotasPagadasAlCrear: 0,
+    };
+    // La apertura cae en un período cerrado (AV-01): se confirma con la huella de la previsualización
+    const vista = await preparar(OP01, prestamo);
+    const huella = vista.ok ? vista.valor.huellaImpacto : null;
+    expect(await ejecutar(OP01, { ...prestamo, huellaImpacto: huella })).toMatchObject({
+      ok: true,
+    });
+    const cuota = {
+      id: uuid(1081),
+      modalidad: 'cuota',
+      origenId: E1,
+      prestamoId: P2,
+      fecha: '2027-01-22',
+      total: '500.00',
+      categoriaId: C2,
+      capital: '388.08',
+      interes: '101.92',
+      seguro: '10.00',
+    };
+    const propuestaDe = async (e: object) => {
+      const r = await preparar(OP24, e);
+      if (!r.ok) throw new Error(JSON.stringify(r.error));
+      return r.valor;
+    };
+    // 22 ene (el efectivo abre el 21): a 7 días de la cuota 1. Interés 10.000 × 12 % × 31/365 = 101,92; seguro 10; capital 388,08.
+    const enero = await propuestaDe(cuota);
+    expect(enero.propuesta).toEqual({
+      desglosePropuesto: {
+        capital: 38808,
+        interes: 10192,
+        seguro: 1000,
+        total: 50000,
+        numeroCuota: 1,
+      },
+      cuotaEmparejada: { numero: 1, fecha: '2027-01-15', estado: 'atrasada' },
+    });
+    // 5 feb: a 21 días de la 1 y a 10 de la 2, que es la emparejada.
+    const febrero = await propuestaDe({ ...cuota, fecha: HOY });
+    expect(febrero.propuesta).toMatchObject({
+      desglosePropuesto: { numeroCuota: 2 },
+      cuotaEmparejada: { numero: 2, fecha: '2027-02-15', estado: 'pendiente' },
+    });
+    // `numeroCuota` fija la cuota sin cambiar el impacto: la huella es la misma.
+    const fijada = await propuestaDe({ ...cuota, numeroCuota: 2 });
+    expect(fijada.propuesta).toMatchObject({ cuotaEmparejada: { numero: 2 } });
+    expect(fijada.huellaImpacto).toBe(enero.huellaImpacto);
+    expect(enero.huellaImpacto).not.toBeNull();
+    // Con un desglose que no cuadra, el dominio rechaza y la propuesta sigue ahí para corregirlo.
+    const mal = await propuestaDe({ ...cuota, capital: '400.00' });
+    expect(mal).toMatchObject({
+      huellaImpacto: null,
+      propuesta: { cuotaEmparejada: { numero: 1 } },
+    });
+    expect(mal.rechazos.map((r) => r.codigo)).toEqual(['desglose_no_cuadra']);
+    // Sin modelo (el préstamo 4 es quincenal) la propuesta está vacía; un abono no la trae.
+    expect((await propuestaDe({ ...cuota, prestamoId: P1 })).propuesta).toEqual({});
+    const abono = { ...cuota, modalidad: 'abono', capital: undefined };
+    expect(
+      await propuestaDe({ ...abono, interes: undefined, seguro: undefined }),
+    ).not.toHaveProperty('propuesta');
+    expect(await ejecutar(OP24, { ...cuota, huellaImpacto: enero.huellaImpacto })).toMatchObject({
+      ok: true,
+      yaAplicada: false,
+    });
+  });
+
   it('PRU-INT-TX-101 [AV-24] OP-27: registra un avance, una entrada y una transferencia de deuda; repetirlas es ya aplicada y la misma tarjeta se rechaza', async () => {
     const avance = {
       id: uuid(1060),

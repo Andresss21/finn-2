@@ -53,7 +53,7 @@ export const diferenciaActual = (
 ): Centavos => Centavos.restar(c.saldoEstado, saldoAl(i.hechos, c.cuentaId, c.fechaEstado));
 
 /** Las cuotas y abonos registrados del préstamo, con su desglose (Anexo A.1). */
-function pagosDe(i: Instantanea, cuentaId: Uuid): PagoPrestamo[] {
+export function pagosDe(i: Instantanea, cuentaId: Uuid): PagoPrestamo[] {
   const tx = new Map(i.hechos.transacciones.map((t) => [t.id, t]));
   return i.hechos.efectos.flatMap((e): PagoPrestamo[] => {
     const t = tx.get(e.transaccionId);

@@ -209,6 +209,38 @@ describe('PRU-INT-TX', () => {
     ).toMatchObject({ ok: false, error: { categoria: 'VALIDACION' } });
   });
 
+  it('PRU-INT-TX-102 OP-28: editar otro campo no pierde el monto original de la fila y null en la moneda y su monto la quita', async () => {
+    const id = await crear(2011, { monedaOriginal: 'USD', montoOriginal: '12.5' });
+    const fila = () =>
+      consultar(
+        base.urlAdmin,
+        `select coalesce(moneda_original, '-'), coalesce(monto_original::text, '-')
+           from finn.transacciones where id = '${id}'`,
+      );
+    // `monto_original` no se carga (04 §5.2): la edición no lo lee ni lo vuelve a escribir
+    const comercio = { transaccionId: id, comercio: 'Tienda', esperado: { comercio: null } };
+    expect(await ejecutar(OP28, comercio)).toMatchObject({ ok: true, yaAplicada: false });
+    expect(await fila()).toEqual(['USD|12.5000']);
+    const quitar = {
+      transaccionId: id,
+      monedaOriginal: null,
+      montoOriginal: null,
+      esperado: { monedaOriginal: 'USD', montoOriginal: '12.5' },
+    };
+    expect(await ejecutar(OP28, quitar)).toMatchObject({ ok: true, yaAplicada: false });
+    expect(await fila()).toEqual(['-|-']); // ck_transacciones_moneda_par se cumple
+    expect((await releer(id)).tx).toMatchObject({ comercio: 'Tienda', monedaOriginal: null });
+    expect(await ejecutar(OP28, quitar)).toMatchObject({ ok: true, yaAplicada: true });
+    expect(
+      await ejecutar(OP28, {
+        transaccionId: id,
+        monedaOriginal: null,
+        montoOriginal: '3',
+        esperado: { monedaOriginal: null, montoOriginal: null },
+      }),
+    ).toMatchObject({ ok: false, error: { categoria: 'VALIDACION' } });
+  });
+
   it('PRU-INT-TX-102 OP-28: la categoría de una línea con devoluciones cambia sin tocar la devolución; la cuenta no', async () => {
     // la devolución vinculada (TX7) lleva solo `lineaOriginalId` y sigue a su línea (DB-05, `ck_lineas_destino`)
     const cuenta = {

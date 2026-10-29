@@ -32,10 +32,11 @@ const COMUNES = {
 
 /** M4: la moneda original y su monto van juntos o ninguno. */
 function juntos(
-  e: { monedaOriginal?: string | undefined; montoOriginal?: string | undefined },
+  e: { monedaOriginal?: string | null | undefined; montoOriginal?: string | null | undefined },
   ctx: z.RefinementCtx,
 ): void {
-  if ((e.monedaOriginal === undefined) !== (e.montoOriginal === undefined))
+  const clase = (v: unknown) => (v === undefined ? 0 : v === null ? 1 : 2);
+  if (clase(e.monedaOriginal) !== clase(e.montoOriginal))
     ctx.addIssue({
       code: 'custom',
       path: [e.monedaOriginal === undefined ? 'monedaOriginal' : 'montoOriginal'],
@@ -166,7 +167,7 @@ export const CAMPOS_OP28 = [
 
 /**
  * OP-28 Editar transacción (04 §3.4): solo los campos que cambian, cada uno con su valor esperado; `lineas` es la lista
- * completa. `comercio` y `nota` aceptan `null` para quitarlos; la moneda original y su monto van juntos (M4).
+ * completa. `comercio`, `nota` y la moneda original aceptan `null` para quitarlos; la moneda original y su monto van juntos (M4).
  */
 export const op28 = z
   .object({
@@ -183,9 +184,9 @@ export const op28 = z
       .optional(),
     comercio: nulable(textoLimpio),
     nota: nulable(z.string().max(500, { error: 'La nota no puede pasar de 500 caracteres.' })),
-    // Sin `null`: quitar la moneda original no se puede expresar contra los hechos, que no cargan `monto_original`
-    monedaOriginal: COMUNES.monedaOriginal,
-    montoOriginal: COMUNES.montoOriginal,
+    // `null` en las dos quita la moneda original (01 OP-28: sin efectos de cálculo)
+    monedaOriginal: COMUNES.monedaOriginal.nullable(),
+    montoOriginal: COMUNES.montoOriginal.nullable(),
     desglose: desglose.optional(),
     esperado: esperadoOp28.partial(),
   })
