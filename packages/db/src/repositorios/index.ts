@@ -3,3 +3,4 @@ export * from './sms.ts';
 export * from './notificaciones.ts';
 export * from './tecnicas.ts';
 export * from './eventos.ts';
+export * from './reglas.ts';

@@ -37,5 +37,12 @@ export const parametrosDetalleLpa = z.object({
     .optional(),
 });
 
+/** `consultas.detalleCategoria({ categoriaId, periodoInicio? })`: por defecto, el período activo (04 §6.3). */
+export const parametrosDetalleCategoria = z.object({
+  categoriaId: z.uuid({ error: 'La categoría no es válida.' }),
+  periodoInicio: fechaLocal.optional(),
+});
+
+export type ParametrosDetalleCategoria = z.output<typeof parametrosDetalleCategoria>;
 export type ParametrosPresupuesto = z.output<typeof parametrosPresupuesto>;
 export type ParametrosDetalleLpa = z.output<typeof parametrosDetalleLpa>;
