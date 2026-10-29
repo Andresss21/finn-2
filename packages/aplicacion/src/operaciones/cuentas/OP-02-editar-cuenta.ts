@@ -1,17 +1,15 @@
 // OP-02 Editar cuenta (04 §3.1): valor absoluto (4.6.2). Cada campo que cambia trae el valor que vio la
 // interfaz; bajo el bloqueo, todos en el valor nuevo es `ya_aplicada`, todos en el visto se aplica y cualquier
 // otra mezcla es `conflicto_desactualizado` con los valores actuales.
-import type { Cuenta } from '@finn/dominio';
 import {
   CLAVES_EDITABLES,
   CLAVES_GENERALES,
-  CLAVES_SUBTIPO,
   op02,
   type EntradaOp02,
   type SalidaCuenta,
 } from '../../contratos/cuentas.ts';
 import type { DefinicionOperacion } from '../marco.ts';
-import { aDominio, columnasDe, cuentaDe, hechosDe } from './comunes.ts';
+import { aDominio, hechosDe } from './comunes.ts';
 
 type Resuelto = {
   readonly entrada: EntradaOp02;
@@ -25,18 +23,12 @@ const TABLA = { tarjeta: 'tarjetas', prestamo: 'prestamos', inversion: 'inversio
 const nuevos = (e: EntradaOp02): Record<string, unknown> =>
   aDominio(Object.fromEntries(CLAVES_EDITABLES.map((k) => [k, (e as Record<string, unknown>)[k]])));
 
-/** Reparte los campos entre la cuenta y su subtipo; uno que no es del tipo de la cuenta es un error de quien llama. */
-function repartir(e: EntradaOp02, cuenta: Cuenta | undefined): Resuelto {
-  const todos = nuevos(e);
+/** Reparte los campos entre la cuenta y su subtipo (uno ajeno al tipo lo rechaza la comprobación de 4.6.2). */
+function repartir(e: EntradaOp02): Resuelto {
+  const todos = Object.entries(nuevos(e));
   const generales = new Set(CLAVES_GENERALES);
-  const campos = Object.fromEntries(Object.entries(todos).filter(([k]) => generales.has(k)));
-  const subtipo = Object.fromEntries(Object.entries(todos).filter(([k]) => !generales.has(k)));
-  if (cuenta !== undefined) {
-    const propias = cuenta.tipo === 'efectivo' ? [] : columnasDe(CLAVES_SUBTIPO[cuenta.tipo]);
-    const ajenos = Object.keys(subtipo).filter((k) => !propias.includes(k));
-    if (ajenos.length > 0)
-      throw new TypeError(`OP-02: ${ajenos.join(', ')} no son campos de una cuenta ${cuenta.tipo}`);
-  }
+  const campos = Object.fromEntries(todos.filter(([k]) => generales.has(k)));
+  const subtipo = Object.fromEntries(todos.filter(([k]) => !generales.has(k)));
   return { entrada: e, campos, subtipo };
 }
 
@@ -64,9 +56,7 @@ export const OP02: DefinicionOperacion<EntradaOp02, Resuelto, SalidaCuenta> = {
     const actuales = Object.fromEntries(claves.map((k) => [k, actual[k]]));
     return { tipo: 'conflicto_desactualizado', actuales };
   },
-  async resolver(tx, e) {
-    return repartir(e, await cuentaDe(tx, e.cuentaId));
-  },
+  resolver: (_tx, e) => Promise.resolve(repartir(e)),
   comando: ({ entrada, campos, subtipo }, instante, ids) => ({
     operacion: 'OP-02',
     cuentaId: entrada.cuentaId,

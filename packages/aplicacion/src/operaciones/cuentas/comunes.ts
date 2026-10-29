@@ -27,9 +27,6 @@ const COLUMNA: Readonly<Record<string, string>> = {
   rendimientoAnualEsperado: 'rendimientoAnualEsperadoMillonesimas',
 };
 
-export const columnasDe = (claves: readonly string[]): string[] =>
-  claves.map((k) => COLUMNA[k] ?? k);
-
 /** Los campos definidos de `objeto`, con los nombres del dominio. */
 export const aDominio = (objeto: object): Record<string, unknown> =>
   Object.fromEntries(

@@ -166,11 +166,5 @@ export interface SalidaCuenta {
   readonly id?: Uuid;
 }
 
-/** Claves de cada subtipo, con el nombre del contrato. */
-export const CLAVES_SUBTIPO = {
-  tarjeta: Object.keys(TARJETA),
-  prestamo: Object.keys(PRESTAMO),
-  inversion: Object.keys(INVERSION),
-} as const;
 export const CLAVES_GENERALES = Object.keys(GENERALES);
 export const CLAVES_EDITABLES = Object.keys(EDITABLES);
