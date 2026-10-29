@@ -81,6 +81,8 @@ jobs:
     if: needs.minutos.outputs.correr == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    env:
+      FINN_NOCTURNO: ren
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
@@ -94,16 +96,7 @@ jobs:
           path: test-results/ci-modo
           key: ci-modo-ren-${{ github.run_id }}
           restore-keys: ci-modo-
-      - name: Carga del volumen alto a 10 años y medición (PRU-REN-MOTOR-001, PRU-REN-ESQ-001)
-        run: pnpm test:integracion packages/db/test/carga-volumen.int.test.ts
-        env:
-          FINN_REN: '1'
-      - name: calcular sobre el volumen alto (PRU-REN-MOTOR-101)
-        if: always()
-        run: pnpm bench --outputJson test-results/ren/bench.json
-      - name: Registro, aviso y FINN_REN_ROJO
-        if: always()
-        run: node tools/pruebas/volumen/registrar.ts
+      - run: pnpm ci:nocturno
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: always()
         with:
