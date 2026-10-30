@@ -259,7 +259,7 @@
 
   "TA-192": { "estado": "pendiente" },
 
-  "TA-193": { "estado": "pendiente" },
+  "TA-193": { "estado": "en_curso", "rama": "ta-193-condonar-devolver-eliminar" },
 
   "TA-194": { "estado": "pendiente" },
 
