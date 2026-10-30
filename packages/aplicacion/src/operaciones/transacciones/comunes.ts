@@ -42,7 +42,10 @@ export interface EfectoEsperado {
 
 /** El destino de una línea esperada; `deudorNuevo` se compara por nombre sin mayúsculas (04 §3.0.2). */
 export type DestinoEsperado =
-  { readonly categoriaId: Uuid } | { readonly deudorId: Uuid } | { readonly deudorNuevo: string };
+  | { readonly categoriaId: Uuid }
+  | { readonly deudorId: Uuid }
+  | { readonly deudorNuevo: string }
+  | { readonly sinDestino: true }; // la línea de una devolución vinculada: solo `lineaOriginalId` (DB-05)
 
 /** Lo que la solicitud determina de la transacción (4.6.1); el sistema pone el resto y no se compara. */
 export interface HuellaCreacion {
@@ -58,6 +61,7 @@ export const decimal = (t: string | null | undefined): string | null =>
 
 /** Una línea ya guardada o pedida: el par `[categoriaId, deudorId]` de su destino (el deudor nuevo, por nombre). */
 export function destinoIds(h: Hechos, d: DestinoEsperado): readonly [Uuid | null, Uuid | null] {
+  if ('sinDestino' in d) return [null, null];
   if ('categoriaId' in d) return [d.categoriaId, null];
   if ('deudorId' in d) return [null, d.deudorId];
   const nombre = d.deudorNuevo.toLowerCase();
