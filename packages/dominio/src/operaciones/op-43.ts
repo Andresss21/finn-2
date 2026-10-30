@@ -144,11 +144,3 @@ export function op43Automatico(
   });
   return { resultados, hechos: h, avisos };
 }
-
-/** Las ocurrencias que el registro automático intenta (04 §10.2 paso 1), en orden cronológico; la aplicación corre cada una en su `escribir()`. */
-export function ocurrenciasAutomaticas(hechos: H.Hechos, hoy: FechaLocal) {
-  const auto = new Set(hechos.programadas.filter((p) => p.registroAutomatico).map((p) => p.id));
-  return pendientes(hechos, hoy, 0)
-    .filter((o) => auto.has(o.programadaId))
-    .map(({ programadaId, fecha: fechaEsperada }) => ({ programadaId, fechaEsperada }));
-}

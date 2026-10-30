@@ -24,7 +24,8 @@ export {
 // `desglosePropuesto(prestamo, fecha)` de 04 (Anexo A.2 punto 8): también la `propuesta` de la previsualización de OP-24 (04 §4.3 [CH-36])
 export { desglosePropuesto, type PropuestaCuota } from '../operaciones/op-24';
 // TA-194: el registro automático (04 §10.2 paso 1) corre una ocurrencia por `escribir()`, con `registrarAutomatica`
-export { ocurrenciasAutomaticas, registrarAutomatica } from '../operaciones/op-43';
+export { ocurrenciasAutomaticas } from './registro-automatico';
+export { registrarAutomatica } from '../operaciones/op-43';
 export { formulario, type AuxiliaresDeFormulario, type ParametrosFormulario } from './formulario';
 export { detalleCategoria, type DetalleCategoria } from './detalle-categoria';
 export { detallePagoTarjeta, type DetallePagoTarjeta } from './detalle-pago-tarjeta';
