@@ -14,6 +14,7 @@
     "tools/respaldo/*.ts",
     "tools/respaldo/test/*.ts",
     "tools/humo/*.ts",
-    "tools/humo/test/*.ts"
+    "tools/humo/test/*.ts",
+    "tools/humo/funcion-carga/*.ts"
   ]
 }

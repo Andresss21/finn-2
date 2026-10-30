@@ -12,7 +12,7 @@ set +x
 #                          generan para esta ejecución, y después se rotan con tools/db/bootstrap.sql
 #   HUMO_CLAVE_DESTINO     secreta, la del PostgreSQL local de restauración (H-08); si falta, se genera
 #   HUMO_PUERTO_TX, HUMO_PUERTO_SESION: los puertos del pooler (6543 y 5432)
-#   HUMO_PASOS             solo esos pasos, p. ej. "H-01 H-07"
+#   HUMO_PASOS             solo esos pasos, p. ej. "H-01 H-07"; después del paso 6 de TU-07, "H-10" ([CH-42])
 # Salida: una línea JSON por paso, { paso, resultado: pasa | falla | omitido, medido, detalle }. Todo lo que un paso
 # escribe (también los errores de psql, Prisma o Docker) pasa por el filtro de `emitir`, que tapa con *** el valor
 # de cada variable secreta y la contraseña de cualquier URL. Nada más llega a la terminal. Nunca `set -x`.
@@ -29,6 +29,10 @@ export HUMO_CLAVE_RESPALDO="${HUMO_CLAVE_RESPALDO:-$(clave)}"
 export HUMO_CLAVE_DESTINO="${HUMO_CLAVE_DESTINO:-$(clave)}"
 export HUMO_PUERTO_TX="${HUMO_PUERTO_TX:-6543}" HUMO_PUERTO_SESION="${HUMO_PUERTO_SESION:-5432}"
 export HUMO_REF="${HUMO_REF:-}" HUMO_POOLER_HOST="${HUMO_POOLER_HOST:-}"
+# Los ids de lo que crean H-09 y H-10 (proyecto de Vercel, usuarios de Auth), para que H-12 borre por id lo que quede
+HUMO_ESTADO=$(mktemp -d)
+export HUMO_ESTADO
+trap 'rm -rf "$HUMO_ESTADO"' EXIT
 
 # El filtro y la línea JSON. Los secretos llegan por el entorno, nunca por argumentos ni por la salida.
 EMITIR='
@@ -100,8 +104,8 @@ paso H-05 h05-migraciones.sh
 paso H-06 base.sh
 paso H-07 base.sh
 paso H-08 h08-respaldo.sh
-paso H-09 - 'omitido hasta TA-253: carga del motor desde iad1 (BE-58)'
-paso H-10 - 'omitido hasta TA-253: Auth, claves asimétricas, TOTP y recuperación'
+paso H-09 h09.sh
+paso H-10 h10.sh
 paso H-11 base.sh
 paso H-12 base.sh
 [ "$FALLAS" = 0 ]

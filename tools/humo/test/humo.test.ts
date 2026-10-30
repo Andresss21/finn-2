@@ -12,6 +12,7 @@ import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { pgMayor } from '../../../packages/db/test/ayudantes/base.ts';
+import { conteo, generarHechos } from '../../pruebas/volumen/generar.ts';
 
 const raiz = fileURLToPath(new URL('../../../', import.meta.url)).replaceAll('\\', '/');
 // Valores de prueba: existen solo en este contenedor efímero y en esta prueba
@@ -155,9 +156,12 @@ const sinSecretos = (texto: string): void => {
     expect(texto, nombre).not.toContain(valor);
 };
 
-// Una sola ejecución completa, que comparten las pruebas que la miran: cada una la pide y ninguna depende del orden
+// Una sola ejecución completa, que comparten las pruebas que la miran: cada una la pide y ninguna depende del orden.
+// H-09 corre la función de carga en este proceso (FINN_HUMO_FUNCION_LOCAL, sin Vercel); H-10 queda omitido sin la
+// clave de servicio (lo prueba PRU-SEG-ACCESO-102 contra la pila local de Supabase)
 let completa: ReturnType<typeof humo> | undefined;
-const humoCompleto = (): ReturnType<typeof humo> => (completa ??= humo({}));
+const humoCompleto = (): ReturnType<typeof humo> =>
+  (completa ??= humo({ FINN_HUMO_FUNCION_LOCAL: '1', SUPABASE_SERVICE_ROLE: '' }));
 
 /** SQL como `postgres` dentro del contenedor; con el bloqueo de Finn cuando escribe en una tabla [M]. */
 const sql = (consulta: string): string => {
@@ -183,7 +187,7 @@ const sql = (consulta: string): string => {
 };
 
 describe('PRU-SEG-OPER', () => {
-  it('PRU-SEG-OPER-103 HUMO-base: humo.sh contra una base local con el bootstrap: cada paso de H-01 a H-12 emite una línea JSON { paso, resultado, medido, detalle }, H-01 a H-05, H-07, H-08, H-11 y H-12 pasan (H-06 tiene su propia prueba, TA-243), H-09 y H-10 (TA-253) quedan omitidos, y ninguna línea de stdout ni de stderr contiene el valor de una variable secreta; control: un error de psql que nombra un secreto sale tapado', async () => {
+  it('PRU-SEG-OPER-103 HUMO-base: humo.sh contra una base local con el bootstrap: cada paso de H-01 a H-12 emite una línea JSON { paso, resultado, medido, detalle }, H-01 a H-05, H-07, H-08, H-11 y H-12 pasan (H-06 tiene su propia prueba, TA-243), H-09 con la función de carga local mide 10 cargas de las filas del generador en el esquema humo y lo borra (pasa, o falla solo por el presupuesto de 500 ms), H-10 sin SUPABASE_SERVICE_ROLE queda omitido, y ninguna línea de stdout ni de stderr contiene el valor de una variable secreta; control: un error de psql que nombra un secreto sale tapado', async () => {
     const r = await humoCompleto();
     const salida = `${r.stdout}\n${r.stderr}`;
     sinSecretos(salida);
@@ -198,14 +202,31 @@ describe('PRU-SEG-OPER', () => {
     // H-06 ya no queda omitido: lo mira la prueba de TA-243
     for (const p of PASOS.filter((x) => !['H-06', 'H-09', 'H-10'].includes(x)))
       expect(resultado[p], p).toMatch(/^pasa /);
-    expect(resultado['H-09']).toMatch(/^omitido .*TA-253/);
-    expect(resultado['H-10']).toMatch(/^omitido .*TA-253/);
+    expect(resultado['H-10']).toMatch(/^omitido falta SUPABASE_SERVICE_ROLE/);
     const medido = Object.fromEntries(ls.map((l) => [l.paso, l.medido]));
+    // H-09: en una base local el presupuesto de iad1 puede no cumplirse por la carga de la máquina; nada más falla
+    const h09 = medido['H-09'] ?? {};
+    const h09pasa = resultado['H-09']?.startsWith('pasa ') ?? false;
+    if (!h09pasa)
+      expect(resultado['H-09']).toMatch(
+        /^falla p95 \d+ ms > 500 ms: registrar el riesgo \(RK-02\)/,
+      );
+    expect(h09).toMatchObject({
+      region: 'local',
+      cargas: '10',
+      semilla: '18 tablas',
+      // El volumen de preparar.ts (VOLUMEN): alto a 10 años, semilla 253
+      filas: String(conteo(generarHechos({ nivel: 'alto', anios: 10, semilla: 253 })).total),
+    });
+    expect(Number(h09['bytes_por_carga'])).toBeGreaterThan(10_000_000);
+    expect(Number(h09['p95_ms'])).toBeGreaterThan(0);
+    expect(sql("SELECT count(*) FROM pg_namespace WHERE nspname = 'humo'")).toBe('0');
+    expect(medido['H-12']).toMatchObject({ esquema_humo: '0', pendientes_h09_h10: '0' });
     expect(medido['H-01']).toMatchObject({ mayor: pgMayor() });
     expect(String(medido['H-08']?.['conteos'])).toMatch(/ 0 diferencias$/);
     expect(medido['H-07']).toMatchObject({ transaccion: 'UTC' });
     expect(r.stderr).toBe('');
-    expect(r.codigo).toBe(0);
+    expect(r.codigo).toBe(h09pasa ? 0 : 1);
 
     // Control: la base inexistente se llama como la clave de servicio; psql la nombra en su error
     const c = await humo({

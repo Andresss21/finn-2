@@ -17,6 +17,14 @@ project_id = "finn"
 [db]
 port = 54322
 major_version = ${v.PG_MAYOR}
+
+# Auth como en producción (04 §12.1): sin registro de usuarios nuevos, TOTP con inscripción y verificación
+[auth]
+enable_signup = false
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
 `;
 mkdirSync(join(raiz, 'supabase'), { recursive: true });
 writeFileSync(join(raiz, 'supabase', 'config.toml'), toml);

@@ -101,16 +101,26 @@ h11() {
   esac
 }
 
-# H-12: limpieza. El esquema `humo` (H-09) y las filas `humo-%` de H-06 (patron.ts las borra); el usuario de prueba y el despliegue son de TA-253
+# H-12: limpieza. El esquema `humo` (H-09, de finn_migraciones), las filas `humo-%` de H-06 (patron.ts las borra) y,
+# por su id en $HUMO_ESTADO, lo que H-09 y H-10 crearon y no llegaron a borrar: el proyecto temporal de Vercel y los
+# usuarios de prueba de Auth. Nunca por prefijo.
 h12() {
-  local esquema filas
-  q "$HUMO_ADMIN_URL" 'DROP SCHEMA IF EXISTS humo CASCADE' >/dev/null
+  local esquema filas id quedan=0
+  q "$(url finn_migraciones "$HUMO_PUERTO_SESION")" 'DROP SCHEMA IF EXISTS humo CASCADE' >/dev/null
   esquema=$(q "$HUMO_ADMIN_URL" "SELECT count(*) FROM pg_namespace WHERE nspname = 'humo'")
   filas=$(q "$(url finn_app "$HUMO_PUERTO_SESION")" "SELECT count(*) FROM finn.deudores WHERE nombre LIKE 'humo-%'")
+  for id in $(cat "${HUMO_ESTADO:-/nonexistent}/h09-proyectos" 2>/dev/null); do
+    vercel_api DELETE "/v9/projects/$id" >/dev/null || quedan=$((quedan + 1))
+  done
+  for id in $(cat "${HUMO_ESTADO:-/nonexistent}/h10-usuarios" 2>/dev/null); do
+    curl -sf -X DELETE -H "apikey: ${SUPABASE_SERVICE_ROLE:-}" -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE:-}" \
+      "${SUPABASE_URL%/}/auth/v1/admin/users/$id" >/dev/null || quedan=$((quedan + 1))
+  done
   echo "medido esquema_humo $esquema"
   echo "medido filas_humo $filas"
-  echo "detalle usuario de prueba y despliegue temporal: los limpia TA-253 (H-09, H-10)"
-  [ "$esquema" = 0 ] && [ "$filas" = 0 ]
+  echo "medido pendientes_h09_h10 $quedan"
+  [ "$quedan" = 0 ] || echo "detalle quedan $quedan objetos de H-09 o H-10: borrarlos a mano por su id"
+  [ "$esquema" = 0 ] && [ "$filas" = 0 ] && [ "$quedan" = 0 ]
 }
 
 case ${1:-} in
