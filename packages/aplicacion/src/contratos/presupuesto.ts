@@ -27,6 +27,18 @@ export const op15 = z.object({
 });
 export type EntradaOp15 = z.output<typeof op15>;
 
+/**
+ * OP-16 Asignación rápida: el dominio calcula el valor de la variante; `esperado.monto` es Asig(c, p) que vio la
+ * interfaz (04 §3.3). Su idempotencia es la de OP-14.
+ */
+export const op16 = z.object({
+  categoriaId: uuid,
+  periodoInicio: fechaLocal,
+  variante: z.enum(['falta_meta', 'igual_periodo_anterior', 'promedio_gasto', 'cubrir_sobregiro']),
+  esperado: z.object({ monto: montoTextoConSigno }),
+});
+export type EntradaOp16 = z.output<typeof op16>;
+
 /** OP-17 Auto-asignar: el resultado depende de todo el estado, así que lo esperado es la revisión vista. */
 export const op17 = z.object({
   periodoInicio: fechaLocal,

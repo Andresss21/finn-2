@@ -3,7 +3,7 @@
 // el marco antes de validar. Todo monto de una alta es mayor que cero (CB-28), salvo el desglose de una cuota.
 import * as z from 'zod';
 import type { DecimalTexto, DestinoLinea, Uuid } from '@finn/dominio';
-import { fechaLocal, montoTexto, textoLimpio, uuid } from './comunes.ts';
+import { fechaLocal, montoTexto, montoTextoConSigno, textoLimpio, uuid } from './comunes.ts';
 
 const POSITIVO = 'Ingresá un monto mayor que cero.';
 /** `MontoTexto` de 04 §3.0.2: mayor que cero. */
@@ -109,6 +109,40 @@ export const op24 = z.discriminatedUnion('modalidad', [
     .superRefine(juntos),
 ]);
 export type EntradaOp24 = z.output<typeof op24>;
+
+/**
+ * OP-25 Aportar, retirar o ajustar una inversión. El ajuste lleva el total con signo y distinto de cero (el dominio
+ * guarda |total| y el signo va en el efecto); no tiene cuenta de efectivo.
+ */
+export const op25 = z.discriminatedUnion('modalidad', [
+  z
+    .object({
+      ...BASE,
+      modalidad: z.literal('aporte'),
+      inversionId: uuid,
+      cuentaId: uuid,
+      categoriaId: uuid,
+    })
+    .superRefine(juntos),
+  z
+    .object({ ...BASE, modalidad: z.literal('retiro'), inversionId: uuid, cuentaId: uuid })
+    .superRefine(juntos),
+  z
+    .object({
+      ...BASE,
+      total: montoTextoConSigno.refine((c) => c !== 0, {
+        error: 'Ingresá un ajuste distinto de cero.',
+      }),
+      modalidad: z.literal('ajuste'),
+      inversionId: uuid,
+    })
+    .superRefine(juntos),
+]);
+export type EntradaOp25 = z.output<typeof op25>;
+
+/** OP-26 Registrar desembolso de préstamo. */
+export const op26 = z.object({ ...BASE, prestamoId: uuid, cuentaId: uuid }).superRefine(juntos);
+export type EntradaOp26 = z.output<typeof op26>;
 
 /** OP-27 Movimientos de tarjeta sin compra: avance, entrada o transferencia de deuda. */
 export const op27 = z.discriminatedUnion('modalidad', [
