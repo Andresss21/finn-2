@@ -56,7 +56,7 @@ const hechos = (() => {
 })();
 
 describe('PRU-CTR-AJUS', () => {
-  it('PRU-CTR-AJUS-101 [V5-02] la exportación JSON pasa su contrato con la versión de formato y el CSV de transacciones muestra -45.00 con el signo ASCII', () => {
+  it('PRU-CTR-AJUS-101 [V5-02] OPT-08: la exportación JSON pasa su contrato con la versión de formato y el CSV de transacciones muestra -45.00 con el signo ASCII', () => {
     const json = armarJson(hechos, '42', '2026-10-29');
     const cuerpo = exportacionJson.parse(JSON.parse(json.contenido));
     expect(cuerpo.versionFormato).toBe(VERSION_FORMATO);
