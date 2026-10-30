@@ -1,7 +1,7 @@
 // Prueba de humo contra un PostgreSQL local (TA-250; 04 §17.1 a §17.3; 07 §19.1, nivel SEG). Un contenedor de
 // PG_MAYOR vacío con los roles que trae Supabase (tools/pruebas/roles-supabase.sql) hace de proyecto: `humo.sh`
-// corre ahí el bootstrap (H-02), las migraciones (H-05) y el respaldo con su
-// restauración en otro contenedor (H-08). Los dos puertos del pooler son el del contenedor (sin Supavisor ni
+// corre ahí el bootstrap (H-02), las migraciones (H-05), el patrón transaccional de patron.ts (H-06, TA-243) y el
+// respaldo con su restauración en otro contenedor (H-08). Los dos puertos del pooler son el del contenedor (sin Supavisor ni
 // `<rol>.<ref>`) y la Data API es un servidor HTTP local que responde 404 (H-11). Todas las variables secretas
 // llevan valores de prueba reconocibles, que se buscan en stdout y stderr. psql y pg_dump corren dentro de los
 // contenedores con `tools/respaldo/test/pg-docker.mjs`, como en PRU-RES-RESP-101.
@@ -155,9 +155,36 @@ const sinSecretos = (texto: string): void => {
     expect(texto, nombre).not.toContain(valor);
 };
 
+// Una sola ejecución completa, que comparten las pruebas que la miran: cada una la pide y ninguna depende del orden
+let completa: ReturnType<typeof humo> | undefined;
+const humoCompleto = (): ReturnType<typeof humo> => (completa ??= humo({}));
+
+/** SQL como `postgres` dentro del contenedor; con el bloqueo de Finn cuando escribe en una tabla [M]. */
+const sql = (consulta: string): string => {
+  const r = spawnSync(
+    'docker',
+    [
+      'exec',
+      '-i',
+      contenedor,
+      'psql',
+      '-U',
+      'postgres',
+      '-X',
+      '-q',
+      '-At',
+      '-v',
+      'ON_ERROR_STOP=1',
+    ],
+    { input: consulta, encoding: 'utf8' },
+  );
+  if (r.status !== 0) throw new Error(`psql: ${r.stderr}`);
+  return r.stdout.trim();
+};
+
 describe('PRU-SEG-OPER', () => {
-  it('PRU-SEG-OPER-103 HUMO-base: humo.sh contra una base local con el bootstrap: cada paso de H-01 a H-12 emite una línea JSON { paso, resultado, medido, detalle }, H-01 a H-05, H-07, H-08, H-11 y H-12 pasan, H-06 (TA-243), H-09 y H-10 (TA-253) quedan omitidos, y ninguna línea de stdout ni de stderr contiene el valor de una variable secreta; control: un error de psql que nombra un secreto sale tapado', async () => {
-    const r = await humo({});
+  it('PRU-SEG-OPER-103 HUMO-base: humo.sh contra una base local con el bootstrap: cada paso de H-01 a H-12 emite una línea JSON { paso, resultado, medido, detalle }, H-01 a H-05, H-07, H-08, H-11 y H-12 pasan (H-06 tiene su propia prueba, TA-243), H-09 y H-10 (TA-253) quedan omitidos, y ninguna línea de stdout ni de stderr contiene el valor de una variable secreta; control: un error de psql que nombra un secreto sale tapado', async () => {
+    const r = await humoCompleto();
     const salida = `${r.stdout}\n${r.stderr}`;
     sinSecretos(salida);
     const ls = lineas(r.stdout);
@@ -168,13 +195,13 @@ describe('PRU-SEG-OPER', () => {
       expect(typeof l.medido.ms, l.paso).toBe('number');
     }
     const resultado = Object.fromEntries(ls.map((l) => [l.paso, `${l.resultado} ${l.detalle}`]));
+    // H-06 ya no queda omitido: lo mira la prueba de TA-243
     for (const p of PASOS.filter((x) => !['H-06', 'H-09', 'H-10'].includes(x)))
       expect(resultado[p], p).toMatch(/^pasa /);
     expect(resultado['H-09']).toMatch(/^omitido .*TA-253/);
     expect(resultado['H-10']).toMatch(/^omitido .*TA-253/);
     const medido = Object.fromEntries(ls.map((l) => [l.paso, l.medido]));
     expect(medido['H-01']).toMatchObject({ mayor: pgMayor() });
-    expect(resultado['H-06']).toMatch(/^omitido .*TA-243/);
     expect(String(medido['H-08']?.['conteos'])).toMatch(/ 0 diferencias$/);
     expect(medido['H-07']).toMatchObject({ transaccion: 'UTC' });
     expect(r.stderr).toBe('');
@@ -191,5 +218,44 @@ describe('PRU-SEG-OPER', () => {
     expect(h01).toMatchObject({ paso: 'H-01', resultado: 'falla' });
     expect(h01?.detalle).toContain('***');
     expect(c.codigo).toBe(1);
+  }, 900_000);
+
+  it('PRU-SEG-OPER-106 [HUMO-patron] humo.sh contra el contenedor local: H-06 (patron.ts por el puerto de transacción con pgbouncer=true) pasa, con el resultado de V-01, V-02, V-05 a V-08, V-10, V-11, las 50 escrituras y la limpieza en medido; la limpieza borra exactamente las 56 filas que escribió (una fila humo-patron ajena queda) y la salida sigue sin secretos', async () => {
+    const r = await humoCompleto();
+    sinSecretos(`${r.stdout}\n${r.stderr}`);
+    expect(r.stderr).toBe('');
+    const h06 = lineas(r.stdout).find((l) => l.paso === 'H-06');
+    expect(h06, JSON.stringify(h06)).toMatchObject({ resultado: 'pasa', detalle: '' });
+    const m = h06?.medido ?? {};
+    expect(m).toMatchObject({
+      'V-01': 'P2039 FN001',
+      'V-02': 'revision +1',
+      'V-06': 'P2002 23505 deudores_pkey',
+      'V-07': 'repeatable read, read only, 25006',
+      'V-11': 'sin SAVEPOINT, read committed',
+      escrituras: '50',
+      limpieza: '56 filas, 56 marcas en finn.eliminaciones',
+    });
+    expect(String(m['V-05'])).toMatch(/^sin filtrar \(\d+ lecturas\)$/);
+    expect(String(m['V-08'])).toMatch(/^vio lo confirmado tras \d+ ms$/);
+    // lock_timeout de finn.tomar_bloqueo(): una duración medida, no una espera de la prueba
+    const v10 = /^P2010 55P03 a los (\d+) ms$/.exec(String(m['V-10']));
+    expect(Number(v10?.[1])).toBeGreaterThanOrEqual(9_500);
+    expect(sql("SELECT count(*) FROM finn.deudores WHERE nombre LIKE 'humo-%'")).toBe('0');
+
+    // Control: una fila con el mismo prefijo que patron.ts no escribió sigue ahí después de otra ejecución de H-06
+    const ajena = sql(`BEGIN; SELECT finn.tomar_bloqueo();
+      INSERT INTO finn.deudores (nombre) VALUES ('humo-patron ajena') RETURNING id; COMMIT;`);
+    const otra = await humo({ HUMO_PASOS: 'H-06' });
+    sinSecretos(`${otra.stdout}\n${otra.stderr}`);
+    const [h06b, ...resto] = lineas(otra.stdout);
+    expect(resto).toEqual([]);
+    expect(h06b?.medido).toMatchObject({ limpieza: '56 filas, 56 marcas en finn.eliminaciones' });
+    expect(
+      sql("SELECT string_agg(id::text, ',') FROM finn.deudores WHERE nombre LIKE 'humo-%'"),
+    ).toBe(ajena);
+    sql(`BEGIN; SELECT finn.tomar_bloqueo();
+      DELETE FROM finn.deudores WHERE id = '${ajena}'; COMMIT;`);
+    expect(otra.codigo).toBe(0);
   }, 900_000);
 });
