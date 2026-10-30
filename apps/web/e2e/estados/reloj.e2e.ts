@@ -1,6 +1,6 @@
 // PRU-E2E-RELOJ-001 y 003 (TA-219; 07 §4.1, CT-01, P7-10; portadas del prototipo de V7-04 y V7-07).
 // El reloj del servidor se observa en /api/pruebas/reloj, que solo responde con el reloj de prueba permitido.
-import { expect, test } from '../configuracion/prueba.ts';
+import { expect, test } from '../configuracion/semilla.ts';
 import { relojDeLaBase } from '../../../../tools/pruebas/e2e/pila.ts';
 import { alinearRelojes, fijarRelojServidor } from '../../../../tools/pruebas/e2e/reloj.ts';
 
@@ -8,7 +8,7 @@ const RUTA = '/api/pruebas/reloj';
 const UN_MINUTO = 60_000;
 
 test.describe('PRU-E2E-RELOJ', () => {
-  test('PRU-E2E-RELOJ-001 [V7-04, V7-07] el servidor sigue el archivo en cada petición, sin reiniciar, y los tres relojes dicen lo mismo', async ({
+  test('PRU-E2E-RELOJ-001 el servidor sigue el archivo en cada petición, sin reiniciar, y los tres relojes dicen lo mismo', async ({
     page,
     request,
   }) => {
@@ -35,7 +35,7 @@ test.describe('PRU-E2E-RELOJ', () => {
     expect(Math.abs(navegador - esperado)).toBeLessThan(UN_MINUTO);
   });
 
-  test('PRU-E2E-RELOJ-003 [V7-04] next start corre con NODE_ENV=production y aun así el reloj de prueba está activo', async ({
+  test('PRU-E2E-RELOJ-003 next start corre con NODE_ENV=production y aun así el reloj de prueba está activo', async ({
     request,
   }) => {
     fijarRelojServidor('2027-02-20T12:00:00-06:00');

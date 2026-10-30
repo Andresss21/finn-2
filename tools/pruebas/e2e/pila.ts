@@ -47,7 +47,7 @@ function supabase(...args: string[]): { ok: boolean; salida: string } {
     shell: process.platform === 'win32',
     maxBuffer: 16 * 1024 * 1024,
   });
-  return { ok: r.status === 0, salida: `${r.stdout ?? ''}\n${r.stderr ?? ''}` };
+  return { ok: r.status === 0, salida: `${r.stdout}\n${r.stderr}` };
 }
 
 /** psql dentro del contenedor (la PC no lo tiene instalado); filas como `-A -t`, columnas unidas con `|`. */

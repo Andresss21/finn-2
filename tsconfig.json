@@ -5,6 +5,7 @@
     "*.ts",
     "apps/web/*.ts",
     "tools/pruebas/*.ts",
+    "tools/pruebas/e2e/*.ts",
     "tools/pruebas/test/*.ts",
     "tools/pruebas/volumen/*.ts",
     "packages/dominio/bench/*.ts",

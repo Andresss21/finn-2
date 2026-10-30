@@ -13,7 +13,9 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'finn-candado-'));
   ruta = join(dir, 'e2e.lock');
 });
-afterEach(() => rmSync(dir, { recursive: true, force: true }));
+afterEach(() => {
+  rmSync(dir, { recursive: true, force: true });
+});
 
 const modulo = pathToFileURL(join(import.meta.dirname, 'candado.ts')).href;
 const duenoActual = () => (JSON.parse(readFileSync(ruta, 'utf8')) as DuenoCandado).pid;
@@ -28,17 +30,21 @@ function otraCorrida(): Promise<{ soltar: () => Promise<void>; pid: number | und
   const hijo = spawn(process.execPath, ['--input-type=module', '-e', codigo], {
     stdio: ['pipe', 'pipe', 'inherit'],
   });
-  const fin = new Promise<void>((r) => hijo.on('exit', () => r()));
+  const fin = new Promise<void>((r) => {
+    hijo.on('exit', () => {
+      r();
+    });
+  });
   return new Promise((listo) => {
-    hijo.stdout.once('data', () =>
+    hijo.stdout.once('data', () => {
       listo({
         pid: hijo.pid,
         soltar: () => {
           hijo.stdin.end();
           return fin;
         },
-      }),
-    );
+      });
+    });
   });
 }
 
@@ -46,20 +52,23 @@ describe('candado de la E2E local (DT-22)', () => {
   it('candado: dos corridas simultáneas; la segunda espera, informa quién lo tiene y sigue cuando la primera suelta', async () => {
     const primera = await otraCorrida();
     const eventos: string[] = [];
-    const dueno = Promise.withResolvers<DuenoCandado>();
+    let avisar: (d: DuenoCandado) => void = () => undefined;
+    const dueno = new Promise<DuenoCandado>((r) => {
+      avisar = r;
+    });
     const segunda = tomarCandado({
       ruta,
       intervaloMs: 5,
       alEsperar: (d) => {
         eventos.push('espera');
-        dueno.resolve(d);
+        avisar(d);
       },
     }).then((soltar) => {
       eventos.push('tomado');
       return soltar;
     });
 
-    expect((await dueno.promise).pid).toBe(primera.pid);
+    expect((await dueno).pid).toBe(primera.pid);
     expect(eventos).toEqual(['espera']); // sigue esperando: la primera no soltó
 
     await primera.soltar();
