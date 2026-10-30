@@ -265,6 +265,11 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     expect(d).toMatchObject({ afecta_db: true, integracion: true, e2e: false });
   });
 
+  it('workflows: PR en borrador que solo toca tools/humo corre integracion (PRU-SEG-OPER-103 y 106 viven ahí), no e2e', () => {
+    const d = decidir('pull_request', 'true', ['tools/humo/patron.ts']);
+    expect(d).toMatchObject({ afecta_db: true, integracion: true, e2e: false });
+  });
+
   it('workflows: PR listo corre integracion siempre y e2e solo con afecta_web', () => {
     expect(decidir('pull_request', 'false', ['docs/x.md'])).toMatchObject({
       integracion: true,
