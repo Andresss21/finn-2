@@ -1,7 +1,7 @@
 // `consultas.reporte({ tipo, ... })` (04 §6.9, BE-40): un tipo por llamada, con el encabezado común. Cada tipo es un
 // selector puro del dominio (inv. 27); la consulta solo despacha y lee las reglas de comercio [H] donde el selector
 // las pide. Los reportes que son listas van bajo un nombre (`periodos`, `filas`, `comercios`).
-// `patrimonio` NO se despacha: su DTO `{ hoy, serie }` choca con `hoy` del Encabezado (contradicción, ver el informe de TA-198).
+// `patrimonio` renombra `hoy` del selector a `posicionHoy` (CH-39): `hoy` es la fecha del Encabezado.
 // PENDIENTE DE DOMINIO: 6.9 pide `filtros: { cuentas, grupos, categorias }` (CP-12) y ningún selector lo entrega; no se
 // calcula aquí (inv. 27).
 import type { Instantanea, Uuid } from '@finn/dominio';
@@ -35,6 +35,10 @@ const cuerpos = {
   hallazgos: async ({ i, tx }: Ctx) => reportes.hallazgos(i, await leerReglasComercio(tx)),
   tarjetas: ({ i }: Ctx, p: De<'tarjetas'>) => reportes.tarjetas(i, filtro(p)),
   flujo_efectivo: ({ i }: Ctx, p: De<'flujo_efectivo'>) => reportes.flujoEfectivo(i, filtro(p)),
+  patrimonio: ({ i }: Ctx, p: De<'patrimonio'>) => {
+    const { hoy, serie } = reportes.patrimonio(i, filtro(p));
+    return { posicionHoy: hoy, serie };
+  },
   datos_base: ({ i }: Ctx, p: De<'datos_base'>) => datosBase(i, filtro(p)),
   categorias: ({ i }: Ctx, p: De<'categorias'>) =>
     reportes.categorias(i, { ...filtro(p), ...sinIndefinidos({ grupoId: p.grupoId }) }),
