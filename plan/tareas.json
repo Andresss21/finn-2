@@ -229,7 +229,7 @@
 
   "TA-177": { "estado": "terminada", "pr": 150 },
 
-  "TA-178": { "estado": "pendiente" },
+  "TA-178": { "estado": "en_curso", "rama": "ta-178-bandeja-editar-aprobar" },
 
   "TA-179": { "estado": "pendiente" },
 
