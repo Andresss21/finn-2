@@ -241,7 +241,7 @@
 
   "TA-183": { "estado": "terminada", "pr": 21 },
 
-  "TA-184": { "estado": "pendiente" },
+  "TA-184": { "estado": "en_curso", "rama": "ta-184-conciliar" },
 
   "TA-185": { "estado": "terminada", "pr": 142 },
 
