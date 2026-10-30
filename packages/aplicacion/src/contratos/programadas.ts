@@ -45,17 +45,17 @@ export function erroresDeForma(e: {
     [
       (e.frecuencia === 'cada_n_dias') !== (e.frecuenciaDias != null),
       'frecuenciaDias',
-      'Indicá cada cuántos días, solo si se repite cada N días.',
+      'Indicá los días, solo si se repite cada N días.',
     ],
     [
       e.fechaFin != null && e.fechaFin < e.primeraFecha,
       'fechaFin',
-      'La fecha de fin no puede ser anterior a la primera fecha.',
+      'La fecha de fin no puede ser anterior al inicio.',
     ],
     [
       (e.tipo === 'gasto') !== (e.cuentaDestinoId == null),
       'cuentaDestinoId',
-      'Elegí la cuenta de destino, salvo en un gasto.',
+      'Elegí la cuenta de destino (salvo en un gasto).',
     ],
     [!partes, 'lineas', 'Las partes no corresponden al tipo de transacción.'],
   ];
