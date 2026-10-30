@@ -18,8 +18,10 @@ import type { ClaimsSesion, SesionServidor } from '../../src/autenticacion/autor
 import { sinParametros } from '../../src/contratos/consultas.ts';
 import { consultar, type DepsConsulta } from '../../src/consultas/comun.ts';
 import { detalleCategoria } from '../../src/consultas/detalle-categoria.ts';
+import { cuentas } from '../../src/consultas/cuentas.ts';
 import { detalleLpa } from '../../src/consultas/detalle-lpa.ts';
 import { inicio } from '../../src/consultas/inicio.ts';
+import { reporte } from '../../src/consultas/reporte.ts';
 import { OP01 } from '../../src/operaciones/cuentas/index.ts';
 import { OP07 } from '../../src/operaciones/categorias/index.ts';
 import {
@@ -27,8 +29,9 @@ import {
   type DefinicionOperacion,
   type DepsMarco,
 } from '../../src/operaciones/marco.ts';
-import { OP14, OP17, OP18 } from '../../src/operaciones/presupuesto/index.ts';
-import { OP20, OP21, OP23 } from '../../src/operaciones/transacciones/index.ts';
+import { OP14, OP15, OP17, OP18 } from '../../src/operaciones/presupuesto/index.ts';
+import { OP31 } from '../../src/operaciones/eventos/index.ts';
+import { OP20, OP21, OP23, OP27, OP28, OP29 } from '../../src/operaciones/transacciones/index.ts';
 import type { Ejecutor } from '../../../dominio/escenarios/ejecutar';
 import {
   type Escenario,
@@ -55,6 +58,7 @@ export interface Estado {
   hoy: string;
   reloj: number; // operaciones aplicadas: da el minuto de registro (orden D2, DP-16)
   contador: number; // ids de filas nuevas
+  etiquetas: Map<string, Uuid>; // etiqueta del dato → id de la transacción (OP-28 y OP-31 la citan)
   esc: Escenario;
 }
 type Def = DefinicionOperacion<never, unknown, unknown>;
@@ -101,7 +105,17 @@ const nuevoEstado = (
   hoy: string,
   reloj: number,
   contador: number,
-): Estado => ({ base, ...abrir(base), memoria: new Memoria(), hoy, reloj, contador, esc });
+  etiquetas = new Map<string, Uuid>(),
+): Estado => ({
+  base,
+  ...abrir(base),
+  memoria: new Memoria(),
+  hoy,
+  reloj,
+  contador,
+  etiquetas,
+  esc,
+});
 
 // ── Lectura: la consulta ─────────────────────────────────────────────────────────────────────────────────────────
 const opcionesDe = (hoy: string, desfaseMs = 0): OpcionesTx => ({ reloj: { hoy, desfaseMs } });
@@ -165,7 +179,17 @@ async function desfaseHacia(s: Estado, hoy: string, local: string): Promise<numb
 /** La entrada (04 §3) de una operación del dato, con los ids de la base. */
 async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; entrada: object }> {
   const { i, revision } = await leerI(s, hoy);
-  const nuevo = () => uuid(++s.contador);
+  const nuevo = (etiqueta?: string) => {
+    const id = uuid(++s.contador);
+    if (etiqueta) s.etiquetas.set(etiqueta, id);
+    return id;
+  };
+  const deEtiqueta = (etiqueta: string) =>
+    buscar(s.etiquetas.get(etiqueta), `la transacción ${etiqueta}`);
+  const asignacion = (categoria: Uuid, periodoInicio: string) =>
+    i.hechos.asignaciones.find(
+      (a) => a.categoriaId === categoria && a.periodoInicio === periodoInicio,
+    )?.monto ?? 0;
   const fecha = (f?: string) => f ?? hoy;
   const activo = i.presupuesto.activo.inicio;
   const como = <E, R, S>(def: DefinicionOperacion<E, R, S>, entrada: object) => ({
@@ -217,15 +241,26 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
     case 'OP-14': {
       const periodoInicio = op.desde ?? (op.periodo ? PERIODOS[op.periodo] : activo);
       const categoria = categoriaId(i, op.categoria);
-      const actual =
-        i.hechos.asignaciones.find(
-          (a) => a.categoriaId === categoria && a.periodoInicio === periodoInicio,
-        )?.monto ?? 0;
+      const actual = asignacion(categoria, periodoInicio);
       return como(OP14, {
         categoriaId: categoria,
         periodoInicio,
         montoNuevo: texto(actual + usd(op.monto)),
         esperado: { monto: texto(actual) },
+      });
+    }
+    case 'OP-15': {
+      const periodoInicio = op.periodo ? PERIODOS[op.periodo] : activo;
+      const [origenId, destinoId] = [categoriaId(i, op.origen), categoriaId(i, op.destino)];
+      return como(OP15, {
+        origenId,
+        destinoId,
+        periodoInicio,
+        monto: dolares(op.monto),
+        esperado: {
+          asignacionOrigen: texto(asignacion(origenId, periodoInicio)),
+          asignacionDestino: texto(asignacion(destinoId, periodoInicio)),
+        },
       });
     }
     case 'OP-17':
@@ -267,7 +302,7 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
         { monto: op.monto, ...(op.categoria && { categoria: op.categoria }) },
       ];
       return como(OP20, {
-        id: nuevo(),
+        id: nuevo(op.etiqueta),
         fecha: fecha(op.fecha),
         total: dolares(op.monto),
         cuentaId: cuentaId(i, op.cuenta),
@@ -281,21 +316,75 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
     }
     case 'OP-21':
       return como(OP21, {
-        id: nuevo(),
+        id: nuevo(op.etiqueta),
         fecha: fecha(op.fecha),
         total: dolares(op.monto),
         cuentaId: cuentaId(i, op.cuenta ?? 'Ahorro'),
       });
     case 'OP-23':
       return como(OP23, {
-        id: nuevo(),
+        id: nuevo(op.etiqueta),
         fecha: fecha(op.fecha),
         total: dolares(op.monto),
         origenId: cuentaId(i, op.origen ?? 'Ahorro'),
         tarjetaId: cuentaId(i, op.tarjeta),
       });
+    case 'OP-27': {
+      const comun = {
+        id: nuevo(),
+        fecha: fecha(),
+        total: dolares(op.monto),
+        tarjetaId: cuentaId(i, op.tarjeta),
+        modalidad: op.modalidad,
+      };
+      if (op.modalidad === 'avance')
+        return como(OP27, { ...comun, cuentaId: cuentaId(i, op.cuenta ?? 'Ahorro') });
+      if (op.modalidad === 'entrada') return como(OP27, comun);
+      return como(OP27, {
+        ...comun,
+        tarjetaDestinoId: cuentaId(i, buscar(op.destino, 'la tarjeta destino')),
+      });
+    }
+    case 'OP-28': {
+      const transaccionId = deEtiqueta(op.etiqueta);
+      const t = buscar(
+        i.hechos.transacciones.find((x) => x.id === transaccionId),
+        op.etiqueta,
+      );
+      const efecto = buscar(
+        i.hechos.efectos.find((e) => e.transaccionId === transaccionId),
+        `los efectos de ${op.etiqueta}`,
+      );
+      return como(OP28, {
+        transaccionId,
+        ...(op.cuenta && { cuentaId: cuentaId(i, op.cuenta) }),
+        ...(op.fecha && { fecha: op.fecha }),
+        ...(op.monto !== undefined && { total: dolares(op.monto) }),
+        esperado: {
+          ...(op.cuenta && { cuentaId: efecto.cuentaId }),
+          ...(op.fecha && { fecha: t.fecha }),
+          ...(op.monto !== undefined && { total: texto(t.total) }),
+        },
+      });
+    }
+    case 'OP-29':
+      return como(OP29, { transaccionId: deEtiqueta(op.etiqueta) });
+    case 'OP-31': {
+      const transaccionId = deEtiqueta(op.cobro);
+      const linea = buscar(
+        i.hechos.lineas.find((l) => l.transaccionId === transaccionId && l.deudorId !== null),
+        `una línea por cobrar en ${op.cobro}`,
+      );
+      return como(OP31, {
+        id: nuevo(),
+        lineaId: linea.id,
+        cuentaId: cuentaId(i, op.cuenta ?? 'Ahorro'),
+        fecha: fecha(op.fecha),
+        total: dolares(op.monto),
+      });
+    }
     default:
-      throw new Error(`ejecutor int: ${op.op} no está en el lote de TA-188`);
+      throw new Error(`ejecutor int: ${op.op} no está en el lote de TA-188, TA-189 ni TA-190`);
   }
 }
 
@@ -303,7 +392,10 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
 async function aplicarOp(s: Estado, op: Op, avisos: Set<string>): Promise<Rechazo | undefined> {
   const hoy = op.hoy ?? s.hoy;
   const minutos = 12 * 60 + ++s.reloj;
-  const local = `${hoy}T${pad(Math.floor(minutos / 60))}:${pad(minutos % 60)}`;
+  const local =
+    'registrado' in op && op.registrado
+      ? op.registrado
+      : `${hoy}T${pad(Math.floor(minutos / 60))}:${pad(minutos % 60)}`;
   const desfaseMs = await desfaseHacia(s, hoy, local);
   const deps: DepsMarco = {
     memoria: s.memoria,
@@ -344,7 +436,52 @@ const desglose: Extra = async (s, i, arg) => {
   if (!('desgloseAlPagar' in d)) throw new Error(`desglose:${arg}: no es una categoría de pago`);
   return (d.desgloseAlPagar as unknown as Record<string, number>)[campo] as number;
 };
+/** `reporte:<clase>`: la partida del período activo por `ingresos_gastos`; `excedente` = ingreso que viene de cobros. */
+const reporteClase: Extra = async (s, i, clase) => {
+  if (clase === 'excedente') {
+    const cobro = new Set(
+      i.hechos.transacciones.filter((t) => t.tipo === 'cobro').map((t) => t.id),
+    );
+    return i.clasificacion.partidas
+      .filter((x) => x.clase === 'ingreso' && cobro.has(x.id))
+      .reduce((a, x) => a + x.monto, 0);
+  }
+  const campos: Record<string, 'ingresos' | 'otrasEntradas' | 'restituciones' | undefined> = {
+    ingreso: 'ingresos',
+    otras_entradas: 'otrasEntradas',
+    restitucion: 'restituciones',
+  };
+  const campo = campos[clase];
+  if (!campo) throw new Error(`reporte:${clase}: clase sin columna en ingresos_gastos`);
+  const r = await reporte(depsConsulta(s), { tipo: 'ingresos_gastos' });
+  return r.periodos.reduce((a, p) => a + p[campo], 0);
+};
+/** `Meta:<categoría>`: la evaluación de la meta de la categoría en el período activo (04 §4.12), de la misma instantánea. */
+const evaluacionDeMeta = (i: Instantanea, nombre: string) => {
+  const cat = buscar(
+    i.hechos.categorias.find((x) => x.nombre === nombre),
+    `una categoría (${nombre})`,
+  );
+  return buscar(
+    i.metas.find((x) => x.categoriaId === cat.id)?.evaluacion ?? undefined,
+    `la evaluación de la meta de ${nombre}`,
+  );
+};
 const EXTRAS: Record<string, Extra> = {
+  metaPedido: (_s, i, c) => evaluacionDeMeta(i, c).pedido,
+  metaFalta: (_s, i, c) => evaluacionDeMeta(i, c).falta,
+  metaPeriodo: (_s, i, c) => evaluacionDeMeta(i, c).montoDelPeriodo ?? 0,
+  reporte: reporteClase,
+  enCamino: async (s) => (await detalleLpa(depsConsulta(s))).descomposicion.enCamino,
+  reduccionesDebito: async (s) =>
+    (await detalleLpa(depsConsulta(s))).descomposicion.reduccionesSobregiroDebito,
+  aFavor: async (s, _i, t) => {
+    const c = await cuentas(depsConsulta(s));
+    return buscar(
+      c.tarjetas.find((x) => x.cuenta.nombre === t),
+      `una tarjeta (${t})`,
+    ).saldoAFavor;
+  },
   patrimonio: async (s) => (await inicio(depsConsulta(s))).patrimonio.neto,
   reduccionProyectada: async (s) =>
     (await detalleLpa(depsConsulta(s))).reduccionProyectadaAlCierre.total,
@@ -429,7 +566,7 @@ export const ejecutorInt: Ejecutor<Estado> = {
     await s.cliente.$disconnect(); // CREATE DATABASE … TEMPLATE exige que nadie esté conectado a la fuente
     const base = await crearBaseDe(s.base.nombre, false);
     Object.assign(s, abrir(s.base)); // la línea principal sigue: una conexión nueva a su base
-    return nuevoEstado(base, s.esc, s.hoy, s.reloj, s.contador);
+    return nuevoEstado(base, s.esc, s.hoy, s.reloj, s.contador, new Map(s.etiquetas));
   },
   async paso(s: Estado, p: Paso) {
     if (p.hoy) s.hoy = p.hoy;

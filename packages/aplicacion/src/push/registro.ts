@@ -1,6 +1,10 @@
 // Registro de notificaciones (04 §11.1: el registro es la fuente de verdad y va antes del push; BE-38).
 // El `aviso` sale siempre del catálogo, nunca del llamador (CF-16). Solo escribe; el envío del push es de otra pieza.
-import { crearNotificacion, type DatosNotificacion as DatosJson, type EscritorTx } from '@finn/db';
+import {
+  crearNotificacion,
+  type DatosNotificacion as DatosJson,
+  type EscritorTablasT,
+} from '@finn/db';
 import { MOTIVOS, type MotivoNotificacion } from './motivos.ts';
 
 export interface DatosNotificacion {
@@ -18,7 +22,7 @@ export interface NotificacionRegistrada {
 
 /** Inserta la notificación del motivo con el aviso del catálogo (`null` si no es un aviso del dominio). */
 export async function registrarNotificacion(
-  tx: EscritorTx,
+  tx: EscritorTablasT,
   motivo: MotivoNotificacion,
   d: DatosNotificacion,
 ): Promise<NotificacionRegistrada> {
@@ -38,7 +42,7 @@ export async function registrarNotificacion(
  * marque como leído (OPT-04). Lo llama `posteriores()` de la operación que produjo el aviso (04 §4.9).
  */
 export const registrarCambioRetroactivo = (
-  tx: EscritorTx,
+  tx: EscritorTablasT,
   resumen: { readonly titulo: string; readonly cuerpo: string },
 ): Promise<NotificacionRegistrada> =>
   registrarNotificacion(tx, 'cambio_retroactivo', {

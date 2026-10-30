@@ -117,10 +117,14 @@ export function eventoPorIdError(tx: LectorTx, idError: string) {
   });
 }
 
-/** Retención de 90 días (04 §15.1): borra lo anterior a `antesDe`, salvo la auditoría de formatos (EN-1). */
-export async function purgarEventos(tx: EscritorTablasT, antesDe: Date): Promise<number> {
-  const r = await txPrismaT(tx).eventoSistema.deleteMany({
-    where: { ocurridoEn: { lt: antesDe }, NOT: { mensaje: { startsWith: 'auditoria_formato' } } },
-  });
-  return r.count;
+/**
+ * Retención de 90 días (04 §15.1): borra lo anterior a `antesDe`, salvo la auditoría de formatos (EN-1:
+ * `datos->>'tipo' = 'auditoria_formato'`; también el `mensaje` `auditoria_formato <accion>` del catálogo, 15.2).
+ */
+export function purgarEventos(tx: EscritorTablasT, antesDe: Date): Promise<number> {
+  return txPrismaT(tx).$executeRaw`
+    DELETE FROM finn.eventos_sistema
+    WHERE ocurrido_en < ${antesDe}
+      AND NOT starts_with(mensaje, 'auditoria_formato')
+      AND COALESCE(datos ->> 'tipo', '') <> 'auditoria_formato'`;
 }
