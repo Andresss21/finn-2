@@ -10,6 +10,7 @@
     "./contratos": "./src/contratos/index.ts",
     "./config": "./src/config/index.ts",
     "./errores": "./src/errores/index.ts",
+    "./exportacion": "./src/exportacion/index.ts",
     "./ids": "./src/ids.ts",
     "./operaciones": "./src/operaciones/marco.ts",
     "./operaciones/cuentas": "./src/operaciones/cuentas/index.ts",
