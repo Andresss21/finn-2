@@ -115,6 +115,11 @@ export const MENSAJES_RECHAZO: Readonly<Record<string, string | ((d: Datos) => s
   formato_ambiguo:
     'El archivo coincide con más de un formato y no sabemos de qué banco es. Revisá que sea el estado de cuenta correcto.',
   archivo_pdf: 'Finn lee el estado de cuenta en CSV, no en PDF.',
+  // [CH-44] Los de `leerEstado` que el catálogo no tenía
+  fila_invalida:
+    'No pudimos leer la fila {fila} del archivo. Descargá de nuevo el estado de cuenta en CSV desde el portal del banco.',
+  formato_excluido: 'Finn no lee los estados de cuenta de este banco.',
+  formato_no_disponible: 'Todavía no podemos leer este formato de estado de cuenta.',
   firma_no_valida: 'El estado de cuenta cambió o no es válido. Volvé a subirlo.',
   firma_vencida: 'Pasaron más de 24 horas. Volvé a subir el estado de cuenta.',
   coincidencia_no_valida: 'Ese movimiento no coincide con la transacción elegida.',

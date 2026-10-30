@@ -391,6 +391,30 @@ async function conReintentos<T>(
   }
 }
 
+/**
+ * Una lectura que no pasa por `previsualizar` (OP-45): los mismos reintentos y la misma traducción de errores. `trabajo`
+ * anota la revisión que leyó en lo que recibe, para el evento. El mensaje de la excepción va al evento (saneado): quien
+ * maneja datos del usuario lanza un error sin ellos.
+ */
+export async function enLectura<T>(
+  operacion: string,
+  d: DepsMarco,
+  trabajo: (c: { revision?: string }) => Promise<T>,
+): Promise<{ ok: true; valor: T } | { ok: false; error: ErrorFinn }> {
+  const c = contexto(operacion, d);
+  const r = await conReintentos(
+    () => trabajo(c),
+    () => false,
+    c,
+    d,
+  );
+  if (r.ok) return r;
+  return {
+    ok: false,
+    error: esperado(r.error) ?? (await errorDeExcepcion(r.error, false, c, d)),
+  };
+}
+
 /** 04 §4.3, `previsualizar(entrada)`: en `leer()`, sin bloqueo, sin persistir. */
 export async function previsualizar<E, R, S>(
   def: DefinicionOperacion<E, R, S>,

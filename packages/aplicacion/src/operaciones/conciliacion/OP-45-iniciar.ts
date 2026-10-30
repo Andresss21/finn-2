@@ -15,7 +15,7 @@ import {
   type ErrorFinn,
   type ResultadoAccion,
 } from '../../errores/index.ts';
-import type { DepsMarco } from '../marco.ts';
+import { enLectura, type DepsMarco } from '../marco.ts';
 
 /** La clasificación (§4.17) junto al estado leído y su carga firmada, que la interfaz guarda en el componente. */
 export type SalidaOp45 = EstadoNormalizado & {
@@ -30,6 +30,18 @@ const rechazo = (r: Rechazo): ErrorFinn => ({
   ...(r.datos === undefined ? {} : { datos: r.datos }),
 });
 
+/**
+ * El mensaje de una excepción va al evento y `sanearMensaje` no quita un texto sin comillas: lo que maneja el contenido
+ * del archivo falla con su etapa y la clase del error, nunca con el mensaje original (9.7).
+ */
+function sinDatosDelArchivo<T>(etapa: string, paso: () => T): T {
+  try {
+    return paso();
+  } catch (e) {
+    throw new Error(`${etapa}: ${e instanceof Error ? e.name : 'error'}`);
+  }
+}
+
 export async function iniciarConciliacion(
   cruda: unknown,
   d: DepsMarco & DepsConciliacion,
@@ -37,25 +49,38 @@ export async function iniciarConciliacion(
   const analizada = op45.safeParse(cruda);
   if (!analizada.success) return { ok: false, error: errorDeValidacion(analizada.error.issues) };
   const { cuentaId, archivo }: EntradaOp45 = analizada.data;
-  const estado = leerEstado(archivo);
-  if ('error' in estado) {
-    const { error: codigo, ...datos } = estado;
-    return { ok: false, error: rechazo({ codigo, datos }) };
-  }
-  const r = await (d.leer ?? leerDb)(async (tx): Promise<ErrorFinn | Clasificacion> => {
-    const { revision, hoy } = tx.estado;
-    const hechos = await d.memoria.hechos(revision, () => (d.cargar ?? cargarHechos)(tx));
-    const i = d.memoria.instantanea(revision, hoy, () =>
-      calcular(hechos, FechaLocal.desdeTexto(hoy)),
-    ) as Instantanea;
-    const cuenta = hechos.cuentas.find((k) => k.id === cuentaId);
-    if (cuenta === undefined) return rechazo({ codigo: 'no_encontrado' });
-    // Los formatos son de efectivo o de tarjeta: el tipo de la cuenta tiene que ser el del formato (9.2)
-    if (ADAPTADORES[estado.formato]?.tipoCuenta !== cuenta.tipo)
-      return rechazo({ codigo: 'cuenta_tipo_no_valido', datos: { tipo: cuenta.tipo } });
-    return clasificarConciliacion(i, cuentaId, estado);
-  }, d.opciones?.() ?? {});
-  if ('categoria' in r) return { ok: false, error: r };
-  const carga = firmarCarga(d.claves, cuentaId, estado, d.ahoraMs() + VIGENCIA_MS);
-  return { ok: true, valor: { ...estado, clasificacion: r, carga }, yaAplicada: false, avisos: [] };
+  const r = await enLectura('OP-45', d, async (c): Promise<ErrorFinn | SalidaOp45> => {
+    const estado = sinDatosDelArchivo('leerEstado', () => leerEstado(archivo));
+    if ('error' in estado) {
+      const { error: codigo, ...datos } = estado;
+      return rechazo({ codigo, ...(Object.keys(datos).length > 0 ? { datos } : {}) });
+    }
+    const clasificacion = await (d.leer ?? leerDb)(
+      async (tx): Promise<ErrorFinn | Clasificacion> => {
+        const { revision, hoy } = tx.estado;
+        c.revision = revision;
+        const hechos = await d.memoria.hechos(revision, () => (d.cargar ?? cargarHechos)(tx));
+        const i = d.memoria.instantanea(revision, hoy, () =>
+          calcular(hechos, FechaLocal.desdeTexto(hoy)),
+        ) as Instantanea;
+        const cuenta = hechos.cuentas.find((k) => k.id === cuentaId);
+        if (cuenta === undefined) return rechazo({ codigo: 'no_encontrado' });
+        // Los formatos son de efectivo o de tarjeta: el tipo de la cuenta tiene que ser el del formato (9.2)
+        if (ADAPTADORES[estado.formato]?.tipoCuenta !== cuenta.tipo)
+          return rechazo({ codigo: 'cuenta_tipo_no_valido', datos: { tipo: cuenta.tipo } });
+        return sinDatosDelArchivo('clasificar', () =>
+          clasificarConciliacion(i, cuentaId, estado),
+        );
+      },
+      d.opciones?.() ?? {},
+    );
+    if ('categoria' in clasificacion) return clasificacion;
+    const carga = sinDatosDelArchivo('firmar', () =>
+      firmarCarga(d.claves, cuentaId, estado, d.ahoraMs() + VIGENCIA_MS),
+    );
+    return { ...estado, clasificacion, carga };
+  });
+  if (!r.ok) return r;
+  if ('categoria' in r.valor) return { ok: false, error: r.valor };
+  return { ok: true, valor: r.valor, yaAplicada: false, avisos: [] };
 }
