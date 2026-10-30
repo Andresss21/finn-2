@@ -98,6 +98,9 @@ export const MENSAJES_RECHAZO: Readonly<Record<string, string | ((d: Datos) => s
   movimiento_estado_no_valido: 'Este movimiento ya está {estado}.',
   movimiento_sin_cuenta: 'Elegí la cuenta de este movimiento.',
   movimiento_incompleto: 'Completá {campos} antes de aprobar.',
+  // OP-38: motivos de AV-19 que el dominio y el selector de la bandeja nombran con estos códigos
+  pago_sin_origen: 'Elegí de qué cuenta salió el pago.',
+  requiere_revision_individual: 'Requiere revisión individual (afecta un período cerrado).',
   ocurrencia_ya_resuelta: 'Ese pago programado ya está registrado.',
   ocurrencia_no_valida: 'Esa fecha no corresponde a la programada.',
   sms_no_reprocesable: 'Este SMS no tiene un error que reprocesar.',

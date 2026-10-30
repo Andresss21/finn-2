@@ -122,3 +122,88 @@ export type SalidaMovimiento = {
   readonly movimientoId: Uuid;
   readonly estado: string;
 } & Partial<SalidaAprobacion>;
+
+// ── OP-38, OP-41, OP-49 y OP-50 (04 §3.6)
+/** OP-38 Aprobar todos: los movimientos que la lista mostró como elegibles y un id de transacción por cada uno. */
+export const op38 = z
+  .object({
+    movimientoIds: z.array(uuid).min(1, { error: 'Elegí al menos un movimiento.' }).max(200),
+    ids: z.record(z.uuid(), uuid),
+  })
+  .superRefine((e, ctx) => {
+    for (const id of e.movimientoIds)
+      if (e.ids[id] === undefined)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['ids', id],
+          message: 'Falta el id de la transacción.',
+        });
+  });
+export type EntradaOp38 = z.output<typeof op38>;
+
+/** Un movimiento del lote (una escritura por elemento, RT-03): su movimiento y el id de su transacción. */
+export const elementoOp38 = z.object({ movimientoId: uuid, id: uuid });
+export type ElementoOp38 = z.output<typeof elementoOp38>;
+
+/** Por qué un movimiento no se aprobó en lote (AV-19): el código y el mensaje de su rechazo (04 §3.0.6). */
+export interface NoAprobado {
+  readonly codigo: string;
+  readonly mensaje: string;
+}
+export interface SalidaOp38 {
+  readonly elementos: readonly {
+    readonly movimientoId: Uuid;
+    readonly resultado: 'aprobado' | 'ya_aplicada' | NoAprobado;
+  }[];
+}
+/** La previsualización del lote: lo que cada movimiento haría, sin escribir. */
+export interface VistaOp38 {
+  readonly elementos: readonly {
+    readonly movimientoId: Uuid;
+    readonly aprobable: boolean;
+    readonly motivo?: NoAprobado;
+  }[];
+}
+
+export const CAMPOS_OP41 = ['patron', 'categoriaId'] as const;
+const patronRegla = textoLimpio.max(100, { error: 'El patrón no puede pasar de 100 caracteres.' });
+
+/** OP-41 Reglas de comercio: crear, editar (con lo que vio la interfaz en `esperado`) o eliminar. */
+export const op41 = z.discriminatedUnion('accion', [
+  z.object({ accion: z.literal('crear'), id: uuid, patron: patronRegla, categoriaId: uuid }),
+  z
+    .object({
+      accion: z.literal('editar'),
+      reglaId: uuid,
+      patron: patronRegla.optional(),
+      categoriaId: uuid.optional(),
+      esperado: z.object({ patron: z.string().optional(), categoriaId: uuid.optional() }),
+    })
+    .superRefine((e, ctx) => {
+      const cambios = CAMPOS_OP41.filter((k) => e[k] !== undefined);
+      if (cambios.length === 0)
+        ctx.addIssue({ code: 'custom', message: 'No hay nada que cambiar.' });
+      for (const k of cambios)
+        if (e.esperado[k] === undefined)
+          ctx.addIssue({ code: 'custom', path: ['esperado', k], message: FALTA });
+    }),
+  z.object({ accion: z.literal('eliminar'), reglaId: uuid }),
+]);
+export type EntradaOp41 = z.output<typeof op41>;
+export interface SalidaOp41 {
+  readonly reglaId: Uuid;
+}
+
+/** OP-49 Reprocesar un SMS con error: `intentoVisto` es el último intento que vio la interfaz. */
+export const op49 = z.object({ smsId: uuid, intentoVisto: z.number().int().min(0) });
+export type EntradaOp49 = z.output<typeof op49>;
+export interface SalidaOp49 {
+  readonly smsId: Uuid;
+  readonly movimientoId: Uuid;
+  readonly estado: string;
+  readonly intento: number;
+}
+
+/** OP-50 Crear la transacción a mano desde un SMS con error: la entrada de OP-37, sin la variante de CF-21. */
+export const op50 = z.object(APROBACION);
+export type EntradaOp50 = z.output<typeof op50>;
