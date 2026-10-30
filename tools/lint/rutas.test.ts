@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { carpetaDeFlujo, verificarRutas } from './rutas.mjs';
+import { carpetaDeFlujo, verificarRutas } from './rutas.ts';
 
 const raizReal = fileURLToPath(new URL('../..', import.meta.url));
 const temporales: string[] = [];

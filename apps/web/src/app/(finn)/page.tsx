@@ -2,7 +2,9 @@
 // Mientras no exista `proxy.ts` (TA-214), la exigencia de sesión de esta página es la única barrera de `/`.
 import { redirect } from 'next/navigation';
 import { exigirSesionAal2Lectura } from '../../servidor/sesion.ts';
-import { TITULO_INICIO_PROVISIONAL } from '../../textos/inicio-provisional.ts';
+
+// Texto provisional: el catálogo de §12 lo absorbe cuando FT-08 reemplace la página.
+const TITULO_INICIO_PROVISIONAL = 'Inicio vacío';
 
 export default async function InicioProvisional() {
   const sesion = await exigirSesionAal2Lectura();

@@ -1,30 +1,30 @@
 // FE-03 y FE-59 como regla de lint (TA-200; 05 §1.3, §15.5): las rutas de `apps/web/src/app/(finn)/` y las
 // carpetas de `apps/web/src/flujos/` salen del árbol de 05 §1.3. Una página que no está en el árbol, o una carpeta de
 // flujo que no se deriva de una ruta [L] o [C], falla: cada ruta la crea su tarea dueña (DT-23), no se inventa.
-// Uso: node tools/lint/rutas.mjs [raíz]
+// Uso: node tools/lint/rutas.ts [raíz]
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const kebab = (s) => s.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+const kebab = (s: string): string => s.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 
 /** FE-59: segmentos sin ids; si la ruta termina en un parámetro, se agrega su nombre sin «Id». */
-export function carpetaDeFlujo(ruta) {
+export function carpetaDeFlujo(ruta: string): string {
   const segmentos = ruta.split('/').filter(Boolean);
   return segmentos
     .flatMap((s, i) => {
       const param = /^\[(\w+)\]$/.exec(s);
       if (!param) return [s];
-      return i === segmentos.length - 1 ? [kebab(param[1].replace(/Id$/, ''))] : [];
+      return i === segmentos.length - 1 ? [kebab((param[1] ?? '').replace(/Id$/, ''))] : [];
     })
     .join('-');
 }
 
 /** Las rutas del bloque de 05 §1.3: `{ ruta, clase }`, con la ruta sin `/page.tsx` ni barra final. */
-export function rutasDelArbol(markdown) {
+export function rutasDelArbol(markdown: string): { ruta: string; clase: string }[] {
   const desde = markdown.indexOf('### 1.3 Árbol de rutas');
   const bloque = /```\n([\s\S]*?)```/.exec(markdown.slice(desde))?.[1] ?? '';
-  const rutas = [];
+  const rutas: { ruta: string; clase: string }[] = [];
   for (const linea of bloque.split('\n')) {
     const clase = /\[([PSDLC])\]/.exec(linea)?.[1] ?? '';
     for (const trozo of linea.trim().split(/\s{2,}/)) {
@@ -42,15 +42,15 @@ const ARCHIVOS_TOP =
   /^(layout|manifest|not-found|global-error|error|icon|apple-icon|favicon)\.|^globals\.css$/;
 const PAGINA = /^(page\.tsx|route\.ts)$/;
 
-function* paginas(dir, prefijo = []) {
+function* paginas(dir: string, prefijo: string[] = []): Generator<string[]> {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     if (e.isDirectory()) yield* paginas(join(dir, e.name), [...prefijo, e.name]);
     else if (PAGINA.test(e.name)) yield prefijo;
   }
 }
 
-export function verificarRutas(raiz) {
-  const fallos = [];
+export function verificarRutas(raiz: string): string[] {
+  const fallos: string[] = [];
   const arbol = rutasDelArbol(readFileSync(join(raiz, 'docs', '05-frontend.md'), 'utf8'));
   const rutas = new Set(arbol.map((r) => r.ruta));
   const app = join(raiz, 'apps', 'web', 'src', 'app');
@@ -74,7 +74,7 @@ export function verificarRutas(raiz) {
       }
   }
   const flujos = join(raiz, 'apps', 'web', 'src', 'flujos');
-  const nombres = new Map();
+  const nombres = new Map<string, string>();
   for (const { ruta, clase } of arbol) {
     if (clase !== 'L' && clase !== 'C') continue;
     const carpeta = carpetaDeFlujo(ruta);
