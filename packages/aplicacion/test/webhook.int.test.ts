@@ -27,6 +27,7 @@ describe('PRU-INT-BAND', () => {
     memoria: new Memoria(),
     opciones: () => RELOJ,
     formato: 'json',
+    transcurridoMs: () => 0,
     ...extra,
   });
   const peticion = (p: Partial<PeticionWebhook>): PeticionWebhook => ({
