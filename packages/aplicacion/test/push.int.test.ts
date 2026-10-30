@@ -6,6 +6,7 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import webpush from 'web-push';
 import {
+  escribir,
   escribirSms,
   escribirTecnico,
   guardarSms,
@@ -13,6 +14,7 @@ import {
   Memoria,
   type NuevoEvento,
 } from '@finn/db';
+import { FechaLocal } from '@finn/dominio/valores';
 import { consultar, crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY } from '../../db/test/ayudantes/hechos-prueba.ts';
 import { ejecutarAccionDeNotificacion, type PeticionAccion } from '../src/push/accion.ts';
@@ -25,6 +27,13 @@ import {
 import { MOTIVOS, esMotivo, type MotivoNotificacion } from '../src/push/motivos.ts';
 import { peticionDe } from '../src/push/politica.ts';
 import { procesar } from '../src/sms/procesar.ts';
+import {
+  ejecutarDiaria,
+  pasoAvisos,
+  pasoCierre,
+  pasoCuotaProxima,
+  type PasoTarea,
+} from '../src/tareas/diaria.ts';
 import type { DepsMarco } from '../src/operaciones/marco.ts';
 
 const HORA = 3_600;
@@ -84,9 +93,9 @@ describe('PRU-INT-NOTIF', () => {
   let origen = '';
 
   /** Dependencias con el `hoy` de la base fijado (CT-01). */
-  const deps = (): DepsMarco & DepsEnvio => ({
+  const deps = (hoy: string = HOY): DepsMarco & DepsEnvio => ({
     memoria: new Memoria(),
-    opciones: () => ({ reloj: { hoy: HOY, desfaseMs: 0 } }),
+    opciones: () => ({ reloj: { hoy, desfaseMs: 0 } }),
     vapid: () => vapid,
     // 03 exige https en `endpoint` (ck_suscripciones_endpoint): el dominio de prueba se apunta al receptor local
     red: (url, init) =>
@@ -133,7 +142,9 @@ describe('PRU-INT-NOTIF', () => {
   afterAll(() => new Promise((fin) => servidor.close(fin)));
   beforeEach(async () => {
     recibidos.length = 0;
-    await sql('DELETE FROM finn.suscripciones_push; DELETE FROM finn.notificaciones');
+    await sql(
+      'DELETE FROM finn.suscripciones_push; DELETE FROM finn.notificaciones; DELETE FROM finn.eventos_sistema; DELETE FROM finn.estado_respaldo',
+    );
   });
 
   it('PRU-INT-NOTIF-101 [CF-07, CF-24, AV-23, AV-17] política de 04 §11.2: urgencia, TTL, tema, etiqueta y acciones llegan al receptor por motivo; cambio_retroactivo no envía nada', async () => {
@@ -456,5 +467,318 @@ describe('PRU-INT-NOTIF', () => {
     expect(
       await correr({ cuerpo: { notificacionId: ID, movimientoId: ID, decision: 'rechazar' } }),
     ).toBe(422);
+  });
+
+  it('PRU-INT-NOTIF-102 BE-51, TAREA-pasos3y4 (paso 3): un solo push de cierre, del último período cerrado; los anteriores quedan en eventos_sistema y una segunda corrida no repite', async () => {
+    await suscribir('ok');
+    const cierres = () =>
+      sql(
+        `SELECT (datos->>'clave') || '|' || (aviso IS NULL) FROM finn.notificaciones WHERE motivo = 'cierre_periodo'`,
+      );
+    const sinPush = () =>
+      sql(
+        `SELECT datos->>'periodoInicio' FROM finn.eventos_sistema WHERE mensaje = 'cierre_sin_push' ORDER BY id`,
+      );
+    // Sin período cerrado no hay nada que avisar: el primero de los hechos sigue activo el 05/02
+    expect((await pasoCierre.ejecutar(deps())).cantidad).toBe(0);
+    expect(recibidos).toEqual([]);
+
+    // El 05/05 ya cerraron varios períodos. La vigencia del día 15 rige desde el 21/04: el activo empezó ahí
+    const hoy = '2027-05-05';
+    expect((await pasoCierre.ejecutar(deps(hoy))).cantidad).toBe(1);
+    expect(await cierres()).toEqual(['cierre:2027-03-21|true']);
+    expect(recibidos).toHaveLength(1);
+    const [r] = recibidos as [Recibido];
+    expect(r.carga['cuerpo']).toMatch(/^Cerró el período del 21\/03 al 20\/04\./);
+    expect(r.carga['destino']).toEqual({ pantalla: 'presupuesto', periodoInicio: '2027-03-21' });
+    expect(r.topic).toBe('cierre');
+    expect(r.urgencia).toBe('normal');
+    expect(r.ttl).toBe(7 * DIA);
+    const anteriores = await sinPush();
+    expect(anteriores[0]).toBe('2027-02-21');
+    expect(anteriores).not.toContain('2027-03-21');
+
+    // Idempotente (10.3): la misma clave no vuelve a enviar ni a registrar
+    expect((await pasoCierre.ejecutar(deps(hoy))).cantidad).toBe(0);
+    expect(await cierres()).toHaveLength(1);
+    expect(recibidos).toHaveLength(1);
+    expect(await sinPush()).toEqual(anteriores);
+  });
+
+  it('PRU-INT-NOTIF-102 [CF-07, CF-24] TAREA-pasos3y4 (paso 4): pago_tarjeta_proximo y cuota_proxima una vez por clave; la cuota también con pasoCuotaProxima, el paso que agrega la puesta al día; quedan fuera las automáticas, las inactivas y las del tramo inactivo', async () => {
+    await suscribir('ok');
+    const [cuentaId] = await sql(`SELECT cuenta_id FROM finn.programadas WHERE tipo = 'gasto'`);
+    const [prestamoId] = await sql('SELECT cuenta_id FROM finn.prestamos');
+    const [categoriaId] = await sql(
+      `SELECT id FROM finn.categorias WHERE clase = 'normal' LIMIT 1`,
+    );
+    const IDS = ['f01', 'f03', 'f05', 'f07'].map((n) => `00000000-0000-4000-8000-000000000${n}`);
+    const cuota = (n: number, comercio: string, extra: Record<string, unknown>) => {
+      const id = IDS[n] as string;
+      return [
+        {
+          tipo: 'insertar' as const,
+          tabla: 'programadas' as const,
+          fila: {
+            id,
+            tipo: 'cuota_prestamo',
+            cuentaId,
+            cuentaDestinoId: prestamoId,
+            comercio,
+            monto: 12345,
+            tolerancia: 0,
+            frecuencia: 'mensual',
+            frecuenciaDias: null,
+            primeraFecha: FechaLocal.desdeTexto('2027-02-06'),
+            fechaFin: null,
+            registroAutomatico: false,
+            activa: true,
+            reactivadaDesde: null,
+            ...extra,
+          } as never,
+        },
+        {
+          tipo: 'insertar' as const,
+          tabla: 'programada_lineas' as const,
+          fila: {
+            id: id.replace('000f0', '000e0'),
+            programadaId: id,
+            orden: 1,
+            monto: 12345,
+            categoriaId,
+          } as never,
+        },
+      ];
+    };
+    await escribir(
+      (tx) =>
+        tx.aplicarCambios([
+          ...cuota(0, 'Banco Hipotecario', {}),
+          ...cuota(1, 'Automatica', { registroAutomatico: true }),
+          ...cuota(2, 'Inactiva', { activa: false }),
+          ...cuota(3, 'Reactivada', { reactivadaDesde: FechaLocal.desdeTexto('2027-03-20') }),
+        ]),
+      { reloj: { hoy: HOY, desfaseMs: 0 } },
+    );
+    const de = (motivo: string) =>
+      sql(
+        `SELECT cuerpo || '|' || (datos->>'clave') || '|' || (aviso IS NULL) FROM finn.notificaciones WHERE motivo = '${motivo}'`,
+      );
+
+    // Faltan 3 días: el aviso sale una vez y la tarea no lo repite, sin las otras tres (06 §3.16)
+    await pasoAvisos.ejecutar(deps('2027-02-03'));
+    await pasoAvisos.ejecutar(deps('2027-02-03'));
+    await pasoAvisos.ejecutar(deps('2027-02-05'));
+    expect(await de('cuota_proxima')).toEqual([
+      expect.stringMatching(
+        /^Cuota de Banco Hipotecario por \$123\.45 el 06\/02\. Registrala cuando la pagues\.\|cuota:.+:2027-02-06\|true$/,
+      ),
+    ]);
+    const aviso = recibidos.find((r) => r.carga['titulo'] === 'Cuota próxima') as Recibido;
+    expect(aviso.topic).toBe('programadas');
+    expect(aviso.urgencia).toBe('normal');
+    expect(aviso.carga['destino']).toEqual({
+      pantalla: 'programada',
+      programadaId: IDS[0],
+      fechaEsperada: '2027-02-06',
+    });
+
+    // Fuera de la ventana: la de marzo a 5 días todavía no; a 3 días, sí, y la puesta al día ya basta (`pasoCuotaProxima`)
+    await pasoAvisos.ejecutar(deps('2027-03-01'));
+    expect(await de('cuota_proxima')).toHaveLength(1);
+    const puesta = await pasoCuotaProxima.ejecutar(deps('2027-03-03'));
+    expect(puesta.cantidad).toBe(1);
+    expect(await de('cuota_proxima')).toHaveLength(2);
+    await pasoAvisos.ejecutar(deps('2027-03-03'));
+    expect(await de('cuota_proxima')).toHaveLength(2);
+
+    // La deuda del ciclo que cortó el 15/02 se paga el 05/03: una por tarjeta y fp, sin monto (FD-31)
+    await pasoAvisos.ejecutar(deps('2027-03-04'));
+    await pasoAvisos.ejecutar(deps('2027-03-05'));
+    const tarjeta = await de('pago_tarjeta_proximo');
+    expect(tarjeta).toHaveLength(1);
+    expect(tarjeta[0]).toMatch(
+      /^Visa: tu fecha de pago es el 05\/03\. Revisá cuánto pagar para no generar intereses\.\|pago_tarjeta:.+:2027-03-05\|true$/,
+    );
+    expect(tarjeta[0]).not.toContain('$');
+    const push = recibidos.find((r) => r.carga['etiqueta'] === 'tarjetas') as Recibido;
+    expect(push.carga['destino']).toMatchObject({ pantalla: 'cuenta' });
+    expect(JSON.stringify(push.carga)).not.toContain('$');
+
+    // Sin dejar programadas para los demás casos (el orden es aleatorio, 07 §7.1)
+    await escribir(
+      (tx) =>
+        tx.aplicarCambios(
+          IDS.flatMap((id) => [
+            {
+              tipo: 'eliminar' as const,
+              tabla: 'programada_lineas' as const,
+              id: id.replace('000f0', '000e0'),
+            },
+            { tipo: 'eliminar' as const, tabla: 'programadas' as const, id },
+          ]) as never,
+        ),
+      { reloj: { hoy: HOY, desfaseMs: 0 } },
+    );
+  });
+
+  it('PRU-INT-NOTIF-102 TAREA-pasos3y4 (avisos de sistema): respaldo de más de 36 h, restauración de más de 35 días, deriva informada y el disparador por egreso, una vez por clave; recientes o nulos no avisan', async () => {
+    const motivos = () =>
+      sql(`SELECT motivo FROM finn.notificaciones WHERE motivo IN
+        ('respaldo_atrasado', 'restauracion_atrasada', 'deriva_catalogo', 'carga_incremental') ORDER BY motivo`);
+    const respaldo = (horas: number, dias: number) =>
+      sql(`INSERT INTO finn.estado_respaldo (id, ultimo_respaldo_en, ultima_restauracion_en)
+        VALUES (1, now() - interval '${horas} hours', now() - interval '${dias} days')
+        ON CONFLICT (id) DO UPDATE SET ultimo_respaldo_en = EXCLUDED.ultimo_respaldo_en, ultima_restauracion_en = EXCLUDED.ultima_restauracion_en`);
+
+    // Sin fila, y con las dos columnas nulas: nada que medir (03 §7.5 solo dice "más de"; CH-47 propuesto en el informe)
+    await pasoAvisos.ejecutar(deps());
+    await sql(`INSERT INTO finn.estado_respaldo (id) VALUES (1)`);
+    await pasoAvisos.ejecutar(deps());
+    expect(await motivos()).toEqual([]);
+
+    await respaldo(35, 34);
+    await pasoAvisos.ejecutar(deps());
+    expect(await motivos()).toEqual([]);
+
+    await respaldo(37, 36);
+    await sql(`INSERT INTO finn.eventos_sistema (nivel, origen, mensaje, datos)
+      VALUES ('error', 'respaldo', 'deriva', '{"control": "C5", "filas": 1}'),
+             ('info', 'motor', 'carga_completa', '{"bytes": 700000000, "ms": 80}')`);
+    await suscribir('ok');
+    await pasoAvisos.ejecutar(deps());
+    expect(await motivos()).toEqual([
+      'carga_incremental',
+      'deriva_catalogo',
+      'respaldo_atrasado',
+      'restauracion_atrasada',
+    ]);
+    const sistema = recibidos.filter((r) => r.topic === 'sistema');
+    expect(sistema).toHaveLength(4);
+    for (const r of sistema) {
+      expect(r.ttl).toBe(3 * DIA);
+      expect(r.carga['destino']).toEqual({ pantalla: 'diagnostico' });
+    }
+    await pasoAvisos.ejecutar(deps());
+    expect(await motivos()).toHaveLength(4);
+    expect(recibidos.filter((r) => r.topic === 'sistema')).toHaveLength(4);
+    expect(
+      await cuenta(
+        `SELECT count(*) FROM finn.eventos_sistema WHERE nivel = 'aviso' AND mensaje = 'carga_incremental'`,
+      ),
+    ).toBe(1);
+  });
+
+  it('PRU-INT-NOTIF-102 5.6: el disparador por latencia pide p95 de más de 500 ms en cada uno de los 7 días', async () => {
+    const cargas = (ms: readonly number[]) =>
+      sql(
+        `DELETE FROM finn.eventos_sistema WHERE origen = 'motor';` +
+          ms
+            .map(
+              (
+                v,
+                n,
+              ) => `INSERT INTO finn.eventos_sistema (ocurrido_en, nivel, origen, mensaje, datos)
+                VALUES (now() - interval '${n} days', 'info', 'motor', 'carga_completa', '{"bytes": 1000, "ms": ${v}}')`,
+            )
+            .join(';'),
+      );
+    const avisos = () =>
+      cuenta(`SELECT count(*) FROM finn.notificaciones WHERE motivo = 'carga_incremental'`);
+    await cargas([600, 600, 600, 600, 600, 600]); // solo 6 días
+    await pasoAvisos.ejecutar(deps());
+    expect(await avisos()).toBe(0);
+    await cargas([600, 600, 600, 500, 600, 600, 600]); // un día en 500 no supera
+    await pasoAvisos.ejecutar(deps());
+    expect(await avisos()).toBe(0);
+    await cargas([600, 600, 600, 600, 600, 600, 600]);
+    await pasoAvisos.ejecutar(deps());
+    expect(await avisos()).toBe(1);
+  });
+
+  it('PRU-INT-NOTIF-102 [AV-17] paso 4: la meta vencida avisa una vez por meta y fecha objetivo, sin monto', async () => {
+    await suscribir('ok');
+    const [grupoId] = await sql(
+      `SELECT grupo_id FROM finn.categorias WHERE clase = 'normal' LIMIT 1`,
+    );
+    const categoriaId = '00000000-0000-4000-8000-000000000f10';
+    const META = '00000000-0000-4000-8000-000000000f11';
+    await escribir(
+      (tx) =>
+        tx.aplicarCambios([
+          {
+            tipo: 'insertar',
+            tabla: 'categorias',
+            fila: {
+              id: categoriaId,
+              grupoId,
+              nombre: 'Viaje de prueba',
+              orden: 99,
+              clase: 'normal',
+              tarjetaId: null,
+              archivada: false,
+            } as never,
+          },
+          {
+            tipo: 'insertar',
+            tabla: 'metas',
+            fila: {
+              id: META,
+              categoriaId,
+              tipo: 'para_fecha',
+              modo: null,
+              monto: 99999999,
+              fechaObjetivo: FechaLocal.desdeTexto('2027-02-10'),
+              fechaCreacion: FechaLocal.desdeTexto('2027-01-21'),
+            } as never,
+          },
+        ]),
+      { reloj: { hoy: HOY, desfaseMs: 0 } },
+    );
+    await pasoAvisos.ejecutar(deps());
+    expect(recibidos).toEqual([]); // todavía no vence
+    await pasoAvisos.ejecutar(deps('2027-02-11'));
+    await pasoAvisos.ejecutar(deps('2027-02-12'));
+    const filas = await sql(
+      `SELECT aviso || '|' || (datos->>'clave') FROM finn.notificaciones WHERE datos->>'clave' LIKE '%${META}%'`,
+    );
+    expect(filas).toEqual([`AV-17|av17:${META}:2027-02-10`]);
+    const r = recibidos.find(
+      (x) =>
+        (x.carga['destino'] as { categoriaId?: string } | undefined)?.categoriaId === categoriaId,
+    ) as Recibido;
+    expect(r.urgencia).toBe('low');
+    expect(r.carga['destino']).toEqual({ pantalla: 'categoria', categoriaId });
+    expect(r.carga['cuerpo']).not.toContain('$');
+    await escribir(
+      (tx) =>
+        tx.aplicarCambios([
+          { tipo: 'eliminar', tabla: 'metas', id: META },
+          { tipo: 'eliminar', tabla: 'categorias', id: categoriaId },
+        ] as never),
+      { reloj: { hoy: HOY, desfaseMs: 0 } },
+    );
+  });
+
+  it('PRU-INT-NOTIF-102 10.3: si un paso falla sale un push tarea_fallida, una vez por día; sin suscripciones la notificación queda registrada', async () => {
+    const roto: PasoTarea = { n: 4, ejecutar: () => Promise.reject(new Error('x')) };
+    const de = () =>
+      sql(
+        `SELECT coalesce(push_error, '-') || '|' || (push_enviada_en IS NOT NULL) FROM finn.notificaciones WHERE motivo = 'tarea_fallida'`,
+      );
+    await ejecutarDiaria(deps(), [roto]);
+    expect(await de()).toEqual(['sin_suscripciones|false']);
+
+    await sql('DELETE FROM finn.notificaciones');
+    await suscribir('ok');
+    await ejecutarDiaria(deps(), [roto]);
+    await ejecutarDiaria(deps(), [roto]);
+    expect(await de()).toEqual(['-|true']);
+    expect(recibidos).toHaveLength(1);
+    const [r] = recibidos as [Recibido];
+    expect(r.carga['titulo']).toBe('La tarea diaria tuvo un error');
+    expect(r.carga['cuerpo']).toBe('Revisá Diagnóstico.');
+    expect(r.carga['destino']).toEqual({ pantalla: 'diagnostico' });
+    expect(r.topic).toBe('sistema');
   });
 });

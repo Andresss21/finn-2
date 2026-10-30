@@ -88,6 +88,15 @@ export async function cargasCompletasRecientes(
   });
 }
 
+/** 04 §10.2 paso 4 y §16: la última deriva de catálogo que informó el respaldo en los últimos 2 días. */
+export async function ultimaDerivaInformada(tx: LectorTx): Promise<Date | null> {
+  const f = await txPrisma(tx).eventoSistema.findFirst({
+    where: { origen: 'respaldo', mensaje: 'deriva', ocurridoEn: { gte: await haceDias(tx, 2) } },
+    orderBy: { id: 'desc' },
+  });
+  return f?.ocurridoEn ?? null;
+}
+
 /** BE-38: ¿hay una notificación con esta `datos.clave`? (una vez por día, por período…). */
 export async function existeNotificacionConClave(tx: LectorTx, clave: string): Promise<boolean> {
   const f = await txPrisma(tx).notificacion.findFirst({

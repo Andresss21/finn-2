@@ -4,6 +4,7 @@ import type { Instantanea } from '../hechos';
 import { type PeriodoDto, periodoDto } from './comunes';
 export { actividad, type TransaccionFila } from './actividad';
 export { type PeriodoDto, type Ref, type SobregiroDto } from './comunes';
+export { ultimoCierre, type UltimoCierre } from './cierre';
 export { cuentas } from './cuentas';
 export { detalleCuenta } from './detalle-cuenta';
 export { detalleTransaccion } from './detalle-transaccion';
