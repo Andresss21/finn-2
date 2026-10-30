@@ -3,12 +3,13 @@
 // de commit), que gitleaks esté fijado por versión y suma, y las decisiones de tools/ci/afecta.mjs. Control: el secreto
 // falso de tools/lint/controles/secreto.txt hace fallar gitleaks con la configuración por defecto.
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { ESTADO, type Recorte } from './minutos.ts';
 
 type Paso = {
   id?: string;
@@ -236,18 +237,52 @@ describe('workflows: nocturno.yml (07 §6.1, §6.5; CH-02)', () => {
 });
 
 describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
-  const decidir = (evento: string, borrador: string, archivos: string[]) => {
+  // Herméticas: afecta.mjs lee ESTADO relativo al cwd, así que corre en un directorio vacío y no ve el modo real del
+  // mes que `rapido` restauró de la caché; su `new Date()` queda fijo en el mes de estas pruebas (07 §7.1).
+  const RELOJ = `data:text/javascript,${encodeURIComponent(
+    `const D = Date; globalThis.Date = class extends D { constructor(...a) { super(...(a.length ? a : ['2026-10-19T12:00:00Z'])); } };`,
+  )}`;
+  let cwd = '';
+  beforeEach(() => {
+    cwd = mkdtempSync(join(tmpdir(), 'finn-afecta-'));
+  });
+  afterEach(() => {
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  const decidir = (
+    evento: string,
+    borrador: string,
+    archivos: string[],
+    accion = 'synchronize',
+  ) => {
     const r = spawnSync(
       process.execPath,
-      [join(raiz, 'tools', 'ci', 'afecta.mjs'), '--archivos', archivos.join(',')],
+      [
+        `--import=${RELOJ}`,
+        join(raiz, 'tools', 'ci', 'afecta.mjs'),
+        '--archivos',
+        archivos.join(','),
+      ],
       {
-        cwd: raiz,
+        cwd,
         encoding: 'utf8',
-        env: { ...process.env, FINN_EVENTO: evento, FINN_BORRADOR: borrador, GITHUB_OUTPUT: '' },
+        env: {
+          ...process.env,
+          FINN_EVENTO: evento,
+          FINN_BORRADOR: borrador,
+          FINN_ACCION: accion,
+          GITHUB_OUTPUT: '',
+        },
       },
     );
     expect(r.status, r.stderr).toBe(0);
     return JSON.parse(r.stdout) as Record<string, boolean>;
+  };
+  const conModo = (mes: string, recortes: Recorte[]): void => {
+    const f = join(cwd, ESTADO);
+    mkdirSync(dirname(f), { recursive: true });
+    writeFileSync(f, JSON.stringify({ mes, modo: 'ahorro', recortes }));
   };
 
   it('workflows: PR en borrador que solo toca docs no corre integracion ni e2e (M1, M2)', () => {
@@ -279,6 +314,25 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
       afecta_web: true,
       e2e: true,
     });
+  });
+
+  it('workflows: en ahorro, un PR listo corre e2e al pasar a listo y no en synchronize (M4, 07 §6.5)', () => {
+    conModo('202610', ['e2e-pr-al-pasar-a-listo', 'nocturno-semanal']);
+    const web = ['apps/web/src/x.tsx'];
+    expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({
+      integracion: true,
+      e2e: false,
+    });
+    expect(decidir('pull_request', 'false', web, 'ready_for_review')).toMatchObject({ e2e: true });
+    expect(decidir('push', '', web, '')).toMatchObject({ e2e: true });
+  });
+
+  it('workflows: con e2e de PR suspendido, ni al pasar a listo; el modo de otro mes no cuenta (M4)', () => {
+    const web = ['apps/web/src/x.tsx'];
+    conModo('202610', ['e2e-pr-al-pasar-a-listo', 'e2e-pr-suspendido']);
+    expect(decidir('pull_request', 'false', web, 'ready_for_review')).toMatchObject({ e2e: false });
+    conModo('202609', ['e2e-pr-al-pasar-a-listo', 'e2e-pr-suspendido']);
+    expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({ e2e: true });
   });
 
   it('workflows: en main corren integracion, e2e y cierre siempre', () => {
