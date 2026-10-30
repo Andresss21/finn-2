@@ -46,7 +46,7 @@ const soloJson = (s: string): string => s.slice(s.search(/[[{]/));
 
 if (import.meta.main) {
   const raiz = process.cwd();
-  const vitest = ejecutar('pnpm exec vitest list --json --silent', raiz);
+  const vitest = ejecutar('pnpm exec vitest list --json --silent --coverage.enabled=false', raiz);
   if (vitest.status !== 0)
     throw new Error(`vitest list terminó con ${vitest.status}: ${vitest.stderr}`);
   // Sin pruebas, `playwright --list` sale con 1 y "No tests found": es una lista vacía, no un fallo.
