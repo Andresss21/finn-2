@@ -31,6 +31,8 @@ export {
 } from './programadas';
 export { inicio, type InicioSel, type OcurrenciaDto } from './inicio';
 export { ritmo, type RitmoSel } from './reportes/ritmo';
+export * as reportes from './reportes/index';
+export { datosBase, type DatosBaseSel } from './reportes/datos-base';
 export { presupuesto, type FiltroPresupuesto, type PresupuestoSel } from './presupuesto';
 
 /** El período activo de la instantánea (04 §6.0.2, `periodoActivo` del encabezado común). */

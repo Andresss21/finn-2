@@ -206,18 +206,70 @@ export const parametrosFormulario = z.discriminatedUnion(
       categoriaId: uuid.optional(),
       metaId: uuid.optional(),
     }),
+    z.object({
+      operacion: z.literal('cobrar'),
+      lineaId: uuid.optional(),
+      deudorId: uuid.optional(),
+      fecha: fechaLocal.optional(),
+    }),
+    z.object({ operacion: z.literal('condonar'), lineaId: uuid }),
+    z.object({
+      operacion: z.literal('devolver'),
+      transaccionOriginalId: uuid.optional(),
+      busqueda: z.string({ error: 'La búsqueda no es válida.' }).max(200).optional(),
+    }),
+    z.object({ operacion: z.literal('fusionar'), categoriaId: uuid }),
+    z.object({
+      operacion: z.literal('programada'),
+      programadaId: uuid.optional(),
+      fechaEsperada: fechaLocal.optional(),
+    }),
   ],
   { error: 'La operación del formulario no es válida.' },
 );
 export type ParametrosFormulario = z.output<typeof parametrosFormulario>;
 
+const ventana = z
+  .enum(['actual', 'ultimos_1', 'ultimos_3', 'ultimos_6', 'ultimos_12'], {
+    error: 'La ventana no es válida.',
+  })
+  .optional();
+const cuentaIds = z.array(uuid, { error: 'Las cuentas no son válidas.' }).optional();
+const filtro = { ventana, cuentaIds };
+const reporteConFiltro = <T extends string>(tipo: T) =>
+  z.object({ tipo: z.literal(tipo), ...filtro });
+
 /**
- * `consultas.reporte({ tipo, ... })` (04 §6.9): un tipo por llamada. Por ahora `ritmo` (período activo, 6.9.7);
- * los demás suman su caso con su tarea.
+ * `consultas.reporte({ tipo, ... })` (04 §6.9): un tipo por llamada, con `ventana` y `cuentaIds` donde el selector
+ * los admite (6.9.1).
  */
 export const parametrosReporte = z.discriminatedUnion(
   'tipo',
-  [z.object({ tipo: z.literal('ritmo') })],
+  [
+    z.object({ tipo: z.literal('ritmo') }),
+    z.object({ tipo: z.literal('realidad') }),
+    z.object({ tipo: z.literal('suscripciones') }),
+    z.object({ tipo: z.literal('hallazgos') }),
+    z.object({ tipo: z.literal('hormiga'), periodo: fechaLocal.optional(), cuentaIds }),
+    z.object({ tipo: z.literal('categorias'), grupoId: uuid.optional(), ...filtro }),
+    z.object({
+      tipo: z.literal('top_comercios'),
+      limite: z.number({ error: 'El límite no es válido.' }).int().min(1).max(100).optional(),
+      ...filtro,
+    }),
+    z.object({
+      tipo: z.literal('gasto_semanal'),
+      periodoInicio: fechaLocal.optional(),
+      categoriaIds: z.array(uuid).optional(),
+    }),
+    reporteConFiltro('tendencia'),
+    reporteConFiltro('ingresos_gastos'),
+    reporteConFiltro('remanente'),
+    reporteConFiltro('cumplimiento'),
+    reporteConFiltro('datos_base'),
+    reporteConFiltro('tarjetas'),
+    reporteConFiltro('flujo_efectivo'),
+  ],
   { error: 'El tipo de reporte no es válido.' },
 );
 export type ParametrosReporte = z.output<typeof parametrosReporte>;
