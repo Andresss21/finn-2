@@ -269,6 +269,7 @@ export const parametrosReporte = z.discriminatedUnion(
     reporteConFiltro('datos_base'),
     reporteConFiltro('tarjetas'),
     reporteConFiltro('flujo_efectivo'),
+    reporteConFiltro('patrimonio'),
   ],
   { error: 'El tipo de reporte no es válido.' },
 );
