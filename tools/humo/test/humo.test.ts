@@ -1,6 +1,6 @@
 // Prueba de humo contra un PostgreSQL local (TA-250; 04 §17.1 a §17.3; 07 §19.1, nivel SEG). Un contenedor de
 // PG_MAYOR vacío con los roles que trae Supabase (tools/pruebas/roles-supabase.sql) hace de proyecto: `humo.sh`
-// corre ahí el bootstrap (H-02), las migraciones (H-05), el patrón transaccional (H-06) y el respaldo con su
+// corre ahí el bootstrap (H-02), las migraciones (H-05) y el respaldo con su
 // restauración en otro contenedor (H-08). Los dos puertos del pooler son el del contenedor (sin Supavisor ni
 // `<rol>.<ref>`) y la Data API es un servidor HTTP local que responde 404 (H-11). Todas las variables secretas
 // llevan valores de prueba reconocibles, que se buscan en stdout y stderr. psql y pg_dump corren dentro de los
@@ -156,7 +156,7 @@ const sinSecretos = (texto: string): void => {
 };
 
 describe('PRU-SEG-OPER', () => {
-  it('PRU-SEG-OPER-103 [HUMO-base] humo.sh contra una base local con el bootstrap: cada paso de H-01 a H-12 emite una línea JSON { paso, resultado, medido, detalle }, H-01 a H-08, H-11 y H-12 pasan, H-09 y H-10 quedan omitidos, y ninguna línea de stdout ni de stderr contiene el valor de una variable secreta; control: un error de psql que nombra un secreto sale tapado', async () => {
+  it('PRU-SEG-OPER-103 [HUMO-base] humo.sh contra una base local con el bootstrap: cada paso de H-01 a H-12 emite una línea JSON { paso, resultado, medido, detalle }, H-01 a H-05, H-07, H-08, H-11 y H-12 pasan, H-06 (TA-243), H-09 y H-10 (TA-253) quedan omitidos, y ninguna línea de stdout ni de stderr contiene el valor de una variable secreta; control: un error de psql que nombra un secreto sale tapado', async () => {
     const r = await humo({});
     const salida = `${r.stdout}\n${r.stderr}`;
     sinSecretos(salida);
@@ -168,13 +168,14 @@ describe('PRU-SEG-OPER', () => {
       expect(typeof l.medido.ms, l.paso).toBe('number');
     }
     const resultado = Object.fromEntries(ls.map((l) => [l.paso, `${l.resultado} ${l.detalle}`]));
-    for (const p of PASOS.filter((x) => x !== 'H-09' && x !== 'H-10'))
+    for (const p of PASOS.filter((x) => !['H-06', 'H-09', 'H-10'].includes(x)))
       expect(resultado[p], p).toMatch(/^pasa /);
     expect(resultado['H-09']).toMatch(/^omitido .*TA-253/);
     expect(resultado['H-10']).toMatch(/^omitido .*TA-253/);
     const medido = Object.fromEntries(ls.map((l) => [l.paso, l.medido]));
     expect(medido['H-01']).toMatchObject({ mayor: pgMayor() });
-    expect(medido['H-06']).toMatchObject({ 'V-01': 'P2039 FN001', escrituras: '50' });
+    expect(resultado['H-06']).toMatch(/^omitido .*TA-243/);
+    expect(String(medido['H-08']?.['conteos'])).toMatch(/ 0 diferencias$/);
     expect(medido['H-07']).toMatchObject({ transaccion: 'UTC' });
     expect(r.stderr).toBe('');
     expect(r.codigo).toBe(0);

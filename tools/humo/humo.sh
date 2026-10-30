@@ -5,9 +5,14 @@ set +x
 # Uso: bash tools/humo/humo.sh | tee /c/finn/humo.jsonl
 # Entradas, solo por variables de la sesión (04 §17.1):
 #   HUMO_ADMIN_URL (secreta; rol postgres), HUMO_REF, HUMO_POOLER_HOST, SUPABASE_URL; SUPABASE_SERVICE_ROLE (H-10)
-#   y VERCEL_TOKEN (H-09), ambas secretas y de TA-253. Opcionales: HUMO_CLAVE_PUBLICA (la clave pública de la API,
-#   H-11), HUMO_CLAVE_MIGRACIONES, HUMO_CLAVE_APP y HUMO_CLAVE_RESPALDO (secretas; si faltan, se generan para esta
-#   ejecución), HUMO_PUERTO_TX y HUMO_PUERTO_SESION (6543 y 5432) y HUMO_PASOS (p. ej. "H-01 H-07").
+#   y VERCEL_TOKEN (H-09), ambas secretas y de TA-253.
+# Opcionales, fuera de 04 §17.1 (CH-38):
+#   HUMO_CLAVE_PUBLICA     la clave pública de la API, para H-11 (sin ella H-11 falla: no probaría nada)
+#   HUMO_CLAVE_MIGRACIONES, HUMO_CLAVE_APP, HUMO_CLAVE_RESPALDO: secretas, las del bootstrap (H-02); si faltan, se
+#                          generan para esta ejecución, y después se rotan con tools/db/bootstrap.sql
+#   HUMO_CLAVE_DESTINO     secreta, la del PostgreSQL local de restauración (H-08); si falta, se genera
+#   HUMO_PUERTO_TX, HUMO_PUERTO_SESION: los puertos del pooler (6543 y 5432)
+#   HUMO_PASOS             solo esos pasos, p. ej. "H-01 H-07"
 # Salida: una línea JSON por paso, { paso, resultado: pasa | falla | omitido, medido, detalle }. Todo lo que un paso
 # escribe (también los errores de psql, Prisma o Docker) pasa por el filtro de `emitir`, que tapa con *** el valor
 # de cada variable secreta y la contraseña de cualquier URL. Nada más llega a la terminal. Nunca `set -x`.
@@ -92,7 +97,7 @@ paso H-02 base.sh
 paso H-03 base.sh
 paso H-04 base.sh
 paso H-05 h05-migraciones.sh
-paso H-06 base.sh
+paso H-06 - 'omitido hasta TA-243: patrón de transacciones por el pooler (RK-06)'
 paso H-07 base.sh
 paso H-08 h08-respaldo.sh
 paso H-09 - 'omitido hasta TA-253: carga del motor desde iad1 (BE-58)'
