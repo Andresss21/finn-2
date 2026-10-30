@@ -14,8 +14,13 @@ export {
   type OpcionesDeBandeja,
 } from './bandeja';
 export { sugerencia, type Sugerencia } from './sugerencia';
-// La `propuesta` de la previsualización de OP-53 (04 §3.8 [CH-36])
-export { propuestaDeVerificacion, type PropuestaDeVerificacion } from './conciliacion';
+// La `propuesta` de la previsualización de OP-53 (04 §3.8 [CH-36]) y la clasificación de OP-45 (04 §9.5, BE-48)
+export {
+  clasificarConciliacion,
+  propuestaDeVerificacion,
+  type Clasificacion,
+  type PropuestaDeVerificacion,
+} from './conciliacion';
 // `desglosePropuesto(prestamo, fecha)` de 04 (Anexo A.2 punto 8): también la `propuesta` de la previsualización de OP-24 (04 §4.3 [CH-36])
 export { desglosePropuesto, type PropuestaCuota } from '../operaciones/op-24';
 // TA-194: el registro automático (04 §10.2 paso 1) corre una ocurrencia por `escribir()`, con `registrarAutomatica`
