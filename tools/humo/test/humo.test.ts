@@ -156,7 +156,7 @@ const sinSecretos = (texto: string): void => {
 };
 
 describe('PRU-SEG-OPER', () => {
-  it('PRU-SEG-OPER-103 [HUMO-base] humo.sh contra una base local con el bootstrap: cada paso de H-01 a H-12 emite una línea JSON { paso, resultado, medido, detalle }, H-01 a H-05, H-07, H-08, H-11 y H-12 pasan, H-06 (TA-243), H-09 y H-10 (TA-253) quedan omitidos, y ninguna línea de stdout ni de stderr contiene el valor de una variable secreta; control: un error de psql que nombra un secreto sale tapado', async () => {
+  it('PRU-SEG-OPER-103 HUMO-base: humo.sh contra una base local con el bootstrap: cada paso de H-01 a H-12 emite una línea JSON { paso, resultado, medido, detalle }, H-01 a H-05, H-07, H-08, H-11 y H-12 pasan, H-06 (TA-243), H-09 y H-10 (TA-253) quedan omitidos, y ninguna línea de stdout ni de stderr contiene el valor de una variable secreta; control: un error de psql que nombra un secreto sale tapado', async () => {
     const r = await humo({});
     const salida = `${r.stdout}\n${r.stderr}`;
     sinSecretos(salida);
