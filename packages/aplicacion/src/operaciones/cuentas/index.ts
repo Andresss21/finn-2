@@ -5,3 +5,4 @@ export { OP03 } from './OP-03-reordenar-cuentas.ts';
 export { OP04 } from './OP-04-archivar-cuenta.ts';
 export { OP05 } from './OP-05-desarchivar-cuenta.ts';
 export { OP06 } from './OP-06-eliminar-cuenta.ts';
+export { OP48 } from './OP-48-condiciones-prestamo.ts';

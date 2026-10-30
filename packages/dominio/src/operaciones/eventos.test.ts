@@ -306,7 +306,11 @@ describe('PRU-DOM-COBRO-101: aplicar, cobrar y renombrar deudor (01 §4.10, §5.
     expect(exito(renombrar('Ana', 'ANA')).cambios).toHaveLength(1);
     expect(exito(renombrar('Ana', 'Ana')).cambios).toEqual([]);
     expect(rechazos(renombrar('Ana', 'beto'))).toEqual([
-      { codigo: 'nombre_repetido', campo: 'nombre', datos: { nombre: 'beto' } },
+      {
+        codigo: 'nombre_repetido',
+        campo: 'nombre',
+        datos: { nombre: 'beto', deudorId: id('Ana') },
+      },
     ]);
     expect(rechazos(renombrar('nadie', 'Carla'))[0]?.codigo).toBe('no_encontrado');
   });

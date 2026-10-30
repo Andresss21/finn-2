@@ -10,7 +10,7 @@ import type {
   ResultadoAplicar,
   Uuid,
 } from '../hechos';
-import { clasificarConciliacion } from '../selectores/conciliacion';
+import { clasificarConciliacion, propuestaDeVerificacion } from '../selectores/conciliacion';
 import { diferenciaActual } from '../selectores/detalle-cuenta';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
@@ -418,6 +418,20 @@ describe('PRU-DOM-CONC-101: conciliación y verificar saldo (01 §5.8; 04 §3.8,
     expect(mas).not.toHaveProperty('modalidad');
     const igual = en(H0, verificar('Ef', 100, { ids: [id('I')] }));
     expect(av21(igual)).toBeUndefined();
+    // La propuesta de la previsualización (04 §3.8 [CH-36]): saldo de Finn, diferencia con la deuda positiva y cuántas marca
+    const pedido = (cuenta: string, saldo: number, marcar: object) =>
+      verificar(cuenta, saldo, marcar) as Parameters<typeof propuestaDeVerificacion>[1];
+    expect(propuestaDeVerificacion(H0, pedido('T', 75, { todas: true }))).toEqual({
+      saldoFinn: c(-77),
+      diferencia: c(2),
+      marcaria: 3,
+    });
+    expect(propuestaDeVerificacion(H0, pedido('Ef', 90, { ids: [id('I'), id('I')] }))).toEqual({
+      saldoFinn: c(100),
+      diferencia: c(-10),
+      marcaria: 1,
+    });
+    expect(propuestaDeVerificacion(H0, pedido('nadie', 90, { todas: true }))).toBeUndefined();
     expect(tabla(igual, 'transacciones')).toHaveLength(1);
     // Con ids: solo las elegidas; una posterior a la fecha, de otra cuenta o ya conciliada se rechaza.
     expect(

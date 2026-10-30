@@ -37,9 +37,11 @@ export const MENSAJES_RECHAZO: Readonly<Record<string, string | ((d: Datos) => s
   cuenta_no_archivada: '{cuenta} no está archivada.',
   // Categorías y grupos
   nombre_repetido: (d) =>
-    d['tarjeta'] === undefined
-      ? 'Ya existe {nombre} en {grupo}.'
-      : 'El nombre {nombre} lo usa la tarjeta archivada {tarjeta}. Elegí otro o desarchivala.',
+    d['deudorId'] !== undefined
+      ? 'Ya existe un deudor llamado {nombre}.' // OP-52 (R2)
+      : d['tarjeta'] === undefined
+        ? 'Ya existe {nombre} en {grupo}.'
+        : 'El nombre {nombre} lo usa la tarjeta archivada {tarjeta}. Elegí otro o desarchivala.',
   grupo_archivado: '{grupo} está archivado.',
   grupo_del_sistema: 'El grupo Pagos de tarjeta lo administra Finn.',
   categoria_ya_archivada: '{categoria} ya está archivada.',

@@ -96,3 +96,35 @@ export function clasificarConciliacion(
     diferencia: Centavos.restar(estado.saldoFinal, saldoFinn),
   };
 }
+
+/** Lo que OP-53 propone al previsualizar (04 §3.8 [CH-36]): el saldo de Finn, la diferencia y cuántas marcaría. */
+export type PropuestaDeVerificacion = {
+  readonly saldoFinn: Centavos;
+  readonly diferencia: Centavos;
+  readonly marcaria: number;
+};
+
+/**
+ * `saldoFinn` = saldo(cuenta, fechaEstado) y `diferencia` = saldo del banco − `saldoFinn`, ambos en la convención de
+ * 01 §0.4 (en una tarjeta la deuda es negativa; el usuario la escribe en positivo). `undefined` si la cuenta no es de
+ * efectivo ni tarjeta: el rechazo lo da `aplicar`.
+ */
+export function propuestaDeVerificacion(
+  h: Hechos,
+  x: {
+    readonly cuentaId: Uuid;
+    readonly fechaEstado: FechaLocal;
+    readonly saldoEstado: Centavos;
+    readonly marcar: { readonly todas: true } | { readonly ids: readonly Uuid[] };
+  },
+): PropuestaDeVerificacion | undefined {
+  const k = h.cuentas.find((c) => c.id === x.cuentaId);
+  if (k === undefined || (k.tipo !== 'efectivo' && k.tipo !== 'tarjeta')) return undefined;
+  const saldoFinn = saldoAl(h, k.id, x.fechaEstado);
+  const banco = k.tipo === 'tarjeta' ? Centavos.negar(x.saldoEstado) : x.saldoEstado;
+  const marcaria =
+    'todas' in x.marcar
+      ? candidatasDeConciliacion(h, k.id, x.fechaEstado).length
+      : new Set(x.marcar.ids).size;
+  return { saldoFinn, diferencia: Centavos.restar(banco, saldoFinn), marcaria };
+}
