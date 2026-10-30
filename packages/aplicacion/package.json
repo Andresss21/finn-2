@@ -20,7 +20,7 @@
     "./sms/*": "./src/sms/*.ts",
     "./tareas/*": "./src/tareas/*.ts",
     "./operaciones/categorias": "./src/operaciones/categorias/index.ts",
-    "./operaciones/conciliacion": "./src/operaciones/conciliacion/OP-53-verificar-saldo.ts",
+    "./operaciones/conciliacion": "./src/operaciones/conciliacion/index.ts",
     "./operaciones/formatos": "./src/operaciones/formatos/index.ts",
     "./operaciones/eventos": "./src/operaciones/eventos/index.ts",
     "./operaciones/presupuesto": "./src/operaciones/presupuesto/index.ts",
@@ -36,6 +36,7 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
+    "@finn/conciliacion": "workspace:*",
     "@finn/db": "workspace:*",
     "@finn/dominio": "workspace:*",
     "@finn/sms": "workspace:*",
