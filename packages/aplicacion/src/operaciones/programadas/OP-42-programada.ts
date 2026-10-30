@@ -15,7 +15,6 @@ import {
 } from '../../contratos/programadas.ts';
 import { ErrorValidacion, type DefinicionOperacion, type Veredicto } from '../marco.ts';
 
-type Crear = Extract<EntradaOp42, { accion: 'crear' }>;
 type Editar = Extract<EntradaOp42, { accion: 'editar' }>;
 type Linea = { readonly monto: Centavos; readonly categoriaId: Uuid };
 type Resuelto = { readonly entrada: EntradaOp42; readonly coincidencias: number };
