@@ -8,9 +8,9 @@ import {
   cargasCompletasRecientes,
   escribirTecnico as escribirTecnicoDb,
   existeNotificacionConClave,
-  hayPrimerHecho,
   leer as leerDb,
   leerEstadoRespaldo,
+  primerHecho,
   registrarEvento,
   smsSinResultado,
   ultimaDerivaInformada,
@@ -290,7 +290,7 @@ function pideCargaIncremental(cargas: readonly CargaCompleta[]): boolean {
   return m.egresoProyectadoBytes > EGRESO_MAXIMO_BYTES || latencia;
 }
 
-/** 03 §7.5, 04 §16, 5.6: los avisos de sistema de hoy. [CH-47] Un respaldo o una restauración sin registrar cuentan como atrasados desde el primer hecho. */
+/** 03 §7.5, 04 §16, 5.6: los avisos de sistema de hoy. [CH-47] Un respaldo o una restauración sin registrar miden el mismo plazo desde el primer hecho. */
 async function avisosDeSistema(tx: LectorTx): Promise<Candidato[]> {
   const hoy = tx.estado.hoy;
   const ahora = (await ahoraDb(tx)).getTime();
@@ -298,9 +298,11 @@ async function avisosDeSistema(tx: LectorTx): Promise<Candidato[]> {
   const salida: Candidato[] = [];
   const respaldo = estado?.ultimoRespaldoEn ?? null;
   const restauracion = estado?.ultimaRestauracionEn ?? null;
-  const conHechos = (respaldo === null || restauracion === null) && (await hayPrimerHecho(tx));
-  const atrasado = (marca: Date | null, limiteMs: number): boolean =>
-    marca === null ? conHechos : ahora - marca.getTime() > limiteMs;
+  const primero = respaldo === null || restauracion === null ? await primerHecho(tx) : null;
+  const atrasado = (marca: Date | null, limiteMs: number): boolean => {
+    const desde = marca ?? primero;
+    return desde !== null && ahora - desde.getTime() > limiteMs;
+  };
   if (atrasado(respaldo, HORAS_RESPALDO * 3_600_000))
     salida.push(
       deSistema(

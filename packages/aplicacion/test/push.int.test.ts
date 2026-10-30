@@ -97,9 +97,9 @@ describe('PRU-INT-NOTIF', () => {
   let origen = '';
 
   /** Dependencias con el `hoy` de la base fijado (CT-01). */
-  const deps = (hoy: string = HOY): DepsMarco & DepsEnvio => ({
+  const deps = (hoy: string = HOY, desfaseMs = 0): DepsMarco & DepsEnvio => ({
     memoria: new Memoria(),
-    opciones: () => ({ reloj: { hoy, desfaseMs: 0 } }),
+    opciones: () => ({ reloj: { hoy, desfaseMs } }),
     vapid: () => vapid,
     // 03 exige https en `endpoint` (ck_suscripciones_endpoint): el dominio de prueba se apunta al receptor local
     red: (url, init) =>
@@ -627,7 +627,7 @@ describe('PRU-INT-NOTIF', () => {
     );
   });
 
-  it('PRU-INT-NOTIF-102 TAREA-pasos3y4 (avisos de sistema): respaldo de más de 36 h, restauración de más de 35 días, deriva informada y el disparador por egreso, una vez por clave; recientes no avisan y, con hechos, un nulo o la falta de fila cuentan como atrasados (CH-47)', async () => {
+  it('PRU-INT-NOTIF-102 TAREA-pasos3y4 (avisos de sistema): respaldo de más de 36 h, restauración de más de 35 días, deriva informada y el disparador por egreso, una vez por clave; recientes no avisan; un nulo o la falta de fila miden el mismo plazo desde el primer hecho (CH-47)', async () => {
     const motivos = () =>
       sql(`SELECT motivo FROM finn.notificaciones WHERE motivo IN
         ('respaldo_atrasado', 'restauracion_atrasada', 'deriva_catalogo', 'carga_incremental') ORDER BY motivo`);
@@ -636,13 +636,34 @@ describe('PRU-INT-NOTIF', () => {
         VALUES (1, now() - interval '${horas} hours', now() - interval '${dias} days')
         ON CONFLICT (id) DO UPDATE SET ultimo_respaldo_en = EXCLUDED.ultimo_respaldo_en, ultima_restauracion_en = EXCLUDED.ultima_restauracion_en`);
 
-    // [CH-47] Esta base tiene hechos: sin fila, y con las dos columnas nulas, los dos atrasados con su misma clave
-    const atrasados = ['respaldo_atrasado', 'restauracion_atrasada'];
+    // [CH-47] Sin marca, cada plazo se mide desde el primer hecho. El desfase lleva el reloj simulado a `minutos` después
+    // de la `fecha_apertura` más antigua, a medianoche local: si fuera la de UTC, los casos "dentro" ya avisarían.
+    const tras = async (minutos: number) =>
+      deps(
+        HOY,
+        Number(
+          (
+            await sql(`SELECT round(extract(epoch FROM (
+              (SELECT min(fecha_apertura) FROM finn.cuentas)::timestamp AT TIME ZONE 'America/El_Salvador'
+              + interval '${minutos} minutes' - now())) * 1000)`)
+          )[0],
+        ),
+      );
+    const H36 = 36 * 60;
+    const D35 = 35 * 24 * 60;
     await sql(`DELETE FROM finn.estado_respaldo`);
-    await pasoAvisos.ejecutar(deps());
-    expect(await motivos()).toEqual(atrasados);
+    await pasoAvisos.ejecutar(await tras(H36 - 1));
+    expect(await motivos()).toEqual([]);
+    await pasoAvisos.ejecutar(await tras(H36 + 1));
+    await pasoAvisos.ejecutar(await tras(H36 + 1));
+    expect(await motivos()).toEqual(['respaldo_atrasado']);
+    // La fila con las columnas nulas es lo mismo que no tener fila, y la clave no se repite
     await sql(`INSERT INTO finn.estado_respaldo (id) VALUES (1)`);
-    await pasoAvisos.ejecutar(deps());
+    await pasoAvisos.ejecutar(await tras(D35 - 1));
+    expect(await motivos()).toEqual(['respaldo_atrasado']);
+    const atrasados = ['respaldo_atrasado', 'restauracion_atrasada'];
+    await pasoAvisos.ejecutar(await tras(D35 + 1));
+    await pasoAvisos.ejecutar(await tras(D35 + 1));
     expect(await motivos()).toEqual(atrasados);
     expect(
       await sql(`SELECT datos->>'clave', cuerpo FROM finn.notificaciones
@@ -651,11 +672,21 @@ describe('PRU-INT-NOTIF', () => {
       `respaldo:${HOY}|Todavía no hay ningún respaldo registrado. Revisá Diagnóstico.`,
       `restauracion:${HOY}|Todavía no hay ninguna prueba de restauración registrada. Revisá Diagnóstico.`,
     ]);
-    // Cada columna cuenta por su lado
+    // Cuenta el menor de los dos hechos: un carga_completa 100 horas anterior a la apertura adelanta el plazo
+    await sql(`DELETE FROM finn.notificaciones;
+      INSERT INTO finn.eventos_sistema (nivel, origen, mensaje, datos, ocurrido_en)
+      VALUES ('info', 'motor', 'carga_completa', '{"bytes": 1000, "ms": 80}',
+        (SELECT min(fecha_apertura) FROM finn.cuentas)::timestamp AT TIME ZONE 'America/El_Salvador' - interval '100 hours')`);
+    await pasoAvisos.ejecutar(await tras(H36 - 100 * 60 + 1));
+    expect(await motivos()).toEqual(['respaldo_atrasado']);
+    await sql(`DELETE FROM finn.eventos_sistema`);
+    // Cada columna cuenta por su lado: con el respaldo al día en el reloj simulado, solo la restauración
     await sql(`DELETE FROM finn.notificaciones`);
-    await respaldo(35, 34);
-    await sql(`UPDATE finn.estado_respaldo SET ultima_restauracion_en = NULL`);
-    await pasoAvisos.ejecutar(deps());
+    const tarde = await tras(D35 + 1);
+    const desfase = tarde.opciones?.().reloj?.desfaseMs ?? 0;
+    await sql(`UPDATE finn.estado_respaldo
+      SET ultimo_respaldo_en = now() + ${desfase} * interval '1 millisecond', ultima_restauracion_en = NULL`);
+    await pasoAvisos.ejecutar(tarde);
     expect(await motivos()).toEqual(['restauracion_atrasada']);
     await sql(`DELETE FROM finn.notificaciones`);
 
