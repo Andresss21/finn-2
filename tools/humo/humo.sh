@@ -97,7 +97,7 @@ paso H-02 base.sh
 paso H-03 base.sh
 paso H-04 base.sh
 paso H-05 h05-migraciones.sh
-paso H-06 - 'omitido hasta TA-243: patrón de transacciones por el pooler (RK-06)'
+paso H-06 base.sh
 paso H-07 base.sh
 paso H-08 h08-respaldo.sh
 paso H-09 - 'omitido hasta TA-253: carga del motor desde iad1 (BE-58)'
