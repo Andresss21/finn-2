@@ -1,6 +1,8 @@
 // Política de push por motivo (04 §11.2, §11.3, §11.4; BE-53; CP-1, CP-18; FD-31): de una notificación ya registrada a
 // lo que viaja al servicio de push. Pura: el `ahora` y el conteo de SMS los pone quien la llama (`enviar.ts`).
+import type { Movimiento } from '@finn/dominio';
 import type { CargaPush, DestinoNotificacion } from '../contratos/notificaciones.ts';
+import { formatearMonto } from '../errores/index.ts';
 import { MOTIVOS, type MotivoNotificacion, type TtlPush, type Urgencia } from './motivos.ts';
 
 /** 11.3: con más de estos `sms_*` en 5 minutos, el push es el texto agregado. */
@@ -67,4 +69,45 @@ export function peticionDe(motivo: MotivoNotificacion, c: ContextoPush): Peticio
     ...(etiqueta === undefined ? {} : { topic: etiqueta }),
     carga,
   };
+}
+
+const MOTIVO_DE_ESTADO: Partial<Record<Movimiento['estado'], MotivoNotificacion>> = {
+  pendiente: 'sms_nuevo',
+  con_coincidencia: 'sms_coincidencia',
+  posible_duplicado: 'sms_posible_duplicado',
+  no_reconocido: 'sms_no_reconocido',
+  error: 'sms_error',
+};
+
+const QUE_ES: Partial<Record<NonNullable<Movimiento['tipoPropuesto']>, string>> = {
+  gasto: 'Compra',
+  ingreso: 'Depósito',
+  pago_tarjeta: 'Pago de tarjeta',
+  devolucion: 'Devolución',
+};
+/** La concordancia del cierre del texto (11.4, voseo de 7.10). */
+const FEMENINOS = new Set(['Compra', 'Devolución']);
+
+/** AV-23 de un movimiento recién escrito (8.4 e), o `null` si no notifica (autodescartado). Nunca el texto del SMS. */
+export function avisoDeMovimiento(
+  m: Pick<Movimiento, 'id' | 'estado' | 'comercio' | 'monto' | 'tipoPropuesto'>,
+) {
+  const motivo = MOTIVO_DE_ESTADO[m.estado];
+  if (motivo === undefined) return null;
+  const que = (m.tipoPropuesto && QUE_ES[m.tipoPropuesto]) ?? 'Movimiento';
+  const donde = m.comercio === null ? '' : ` en ${m.comercio}`;
+  const cuanto = m.monto === null ? '' : ` por ${formatearMonto(m.monto)}`;
+  const cierre = FEMENINOS.has(que) ? 'Revisala' : 'Revisalo';
+  const cuerpo =
+    donde === '' && cuanto === ''
+      ? 'Llegó un SMS que no pudimos leer. Revisalo en la bandeja.'
+      : `${que}${donde}${cuanto}. ${cierre} en la bandeja.`;
+  return {
+    motivo,
+    aviso: {
+      titulo: 'Movimiento nuevo',
+      cuerpo,
+      datos: { destino: { pantalla: 'movimiento', movimientoId: m.id } },
+    },
+  } as const;
 }
