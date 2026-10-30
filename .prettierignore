@@ -11,3 +11,6 @@ supabase/config.toml
 tools/plan/verificar.ts
 tools/plan/encargo.ts
 tools/plan/anexos.ts
+# TA-201: entrega del diseño sin cambios (DT-14) y CSS generado desde tokens.json.
+apps/web/src/app/tokens.css
+apps/web/tailwind.css
