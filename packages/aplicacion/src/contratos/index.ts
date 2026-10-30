@@ -17,3 +17,4 @@ export * from './notificaciones.ts';
 export * from './bandeja.ts';
 export * from './exportacion.ts';
 export * from './formatos.ts';
+export * from './programadas.ts';

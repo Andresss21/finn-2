@@ -1,5 +1,4 @@
-// La puesta al día (04 §10.1, BE-50): la llama el layout autenticado con `after()`. Corre los pasos 1 y 2 de 10.2 (hoy,
-// el 2; el 1 llega con TA-194) salvo que ya haya una de hoy terminada o una en curso de menos de 5 minutos. La
+// La puesta al día (04 §10.1, BE-50): la llama el layout autenticado con `after()`. Corre los pasos 1 y 2 de 10.2 salvo que ya haya una de hoy terminada o una en curso de menos de 5 minutos. La
 // verificación y el inicio no son atómicos: dos peticiones simultáneas pueden ejecutarla dos veces y es inocuo (10.3).
 import { randomUUID } from 'node:crypto';
 import { eventosDeTareaDeHoy, leer as leerDb, type EventoDeTarea } from '@finn/db';

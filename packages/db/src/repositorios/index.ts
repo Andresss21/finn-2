@@ -10,3 +10,4 @@ export * from './ajustes.ts';
 export * from './consultas-cobro.ts';
 export * from './tarea-diaria.ts';
 export * from './formatos.ts';
+export * from './programadas.ts';

@@ -1,4 +1,4 @@
-// Tarea diaria (pasos 2, 5, 6 y 7) y puesta al día (TA-186; 04 §10.1 a §10.3; BE-50, BE-52, EN-1, EN-2) contra
+// Tarea diaria (pasos 1, 2, 5, 6 y 7) y puesta al día (TA-186; 04 §10.1 a §10.3; BE-50, BE-52, EN-1, EN-2) contra
 // PostgreSQL como `finn_app`. Sin `sleep` ni reloj de pared (07 §7.1): la edad de cada fila se fija con `now() − intervalo`
 // al sembrarla y el paso del tiempo es el `desfaseMs` de `finn.ahora()` (CT-02); `ms` sale de un cronómetro inyectado.
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -57,7 +57,7 @@ describe('PRU-INT-PROG', () => {
     );
   });
 
-  it('PRU-INT-PROG-101 10.2 pasos 2, 6 y 7: la tarea diaria corre dos veces el mismo día sin efectos nuevos; procesa los SMS sin resultado y registra un evento diaria con sus pasos', async () => {
+  it('PRU-INT-PROG-101 10.2 pasos 1, 2, 6 y 7: la tarea diaria corre dos veces el mismo día sin efectos nuevos; procesa los SMS sin resultado y registra un evento diaria con sus pasos', async () => {
     for (const texto of ['hola', RECONOCIDO])
       await escribirSms((tx) => guardarSms(tx, { texto, remitente: 'BAC' }), reloj(0));
     const total = () =>
@@ -73,6 +73,7 @@ describe('PRU-INT-PROG', () => {
     expect(
       primera.pasos.map(({ paso, resultado, cantidad, ms }) => ({ paso, resultado, cantidad, ms })),
     ).toEqual([
+      { paso: 1, resultado: 'ok', cantidad: 0, ms: 5 },
       { paso: 2, resultado: 'ok', cantidad: 2, ms: 5 },
       { paso: 5, resultado: 'ok', cantidad: 0, ms: 5 },
       { paso: 6, resultado: 'ok', cantidad: 0, ms: 5 },
@@ -86,6 +87,7 @@ describe('PRU-INT-PROG', () => {
     // La segunda vez no hay nada nuevo que hacer: los mismos intentos, movimientos y avisos
     const segunda = await ejecutarDiaria(deps(10));
     expect(segunda.pasos.map((p) => [p.paso, p.resultado, p.cantidad])).toEqual([
+      [1, 'ok', 0],
       [2, 'ok', 0],
       [5, 'ok', 0],
       [6, 'ok', 0],
@@ -98,6 +100,7 @@ describe('PRU-INT-PROG', () => {
     expect(datosDe(registros[0])).toEqual({
       hoy: HOY,
       pasos: [
+        { paso: 1, resultado: 'ok', cantidad: 0, ms: 5 },
         { paso: 2, resultado: 'ok', cantidad: 2, ms: 5 },
         { paso: 5, resultado: 'ok', cantidad: 0, ms: 5 },
         { paso: 6, resultado: 'ok', cantidad: 0, ms: 5 },
@@ -232,7 +235,7 @@ describe('PRU-INT-PROG', () => {
     // 1. Sin eventos de hoy: corre, con el inicio antes y el fin después, con la misma `ejecucion` y solo el paso 2
     const primera = await ponerAlDia(deps(10));
     expect(primera).toMatchObject({ ejecutada: true });
-    expect(primera.pasos.map((p) => p.paso)).toEqual([2]);
+    expect(primera.pasos.map((p) => p.paso)).toEqual([1, 2]);
     const [inicio] = await eventos('puesta_al_dia_inicio');
     expect(datosDe(inicio)).toEqual({ hoy: HOY, ejecucion: 'EJ-1' });
     const [fin] = await eventos('puesta_al_dia');
