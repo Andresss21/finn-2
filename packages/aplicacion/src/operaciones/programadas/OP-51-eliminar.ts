@@ -1,6 +1,5 @@
-// OP-51 Eliminar una programada sin historial (04 §3.7; HZ-1): eliminación (4.6.3). Una programada que ya no existe
-// pero consta en `eliminaciones` es `ya_aplicada`. `resolver` cuenta las referencias [H]/[I] desde `movimientos` y
-// `sms_procesamientos`; con alguna, o con resoluciones, el dominio rechaza con `programada_con_historial`.
+// OP-51 Eliminar una programada sin historial (04 §3.7; HZ-1): eliminación (4.6.3). `resolver` cuenta las referencias
+// desde `movimientos` y `sms_procesamientos`; con alguna, o con resoluciones, el dominio rechaza (`programada_con_historial`).
 import { contarReferenciasDeProgramada, fueEliminada } from '@finn/db';
 import { op51, type EntradaOp51, type SalidaProgramada } from '../../contratos/programadas.ts';
 import type { DefinicionOperacion } from '../marco.ts';

@@ -1,5 +1,4 @@
-// Lo que OP-42 y OP-51 necesitan de `movimientos` y `sms_procesamientos` ([H] e [I], fuera de los hechos del motor;
-// 04 §3.7, 03 §3.23): cuántos apuntan a una programada como la esperada (BE-10).
+// Lo que OP-42 y OP-51 necesitan de `movimientos` y `sms_procesamientos` (fuera de los hechos del motor; BE-10, 04 §3.7).
 import type { Uuid } from '@finn/dominio';
 import { txPrisma, type LectorTx } from '../transacciones.ts';
 

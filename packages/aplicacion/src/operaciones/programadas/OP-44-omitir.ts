@@ -1,5 +1,5 @@
-// OP-44 Omitir una ocurrencia (04 §3.7; A-6): natural. La ocurrencia ya omitida es `ya_aplicada`; una registrada o una
-// fecha que no es ocurrencia las rechaza el dominio. El id de la resolución lo pone la aplicación (BE-31).
+// OP-44 Omitir una ocurrencia (04 §3.7; A-6): natural. Ya omitida es `ya_aplicada`; una registrada o una fecha que no
+// es ocurrencia las rechaza el dominio. El id de la resolución lo pone la aplicación (BE-31).
 import { op44, type EntradaOp44, type SalidaProgramada } from '../../contratos/programadas.ts';
 import type { DefinicionOperacion } from '../marco.ts';
 
