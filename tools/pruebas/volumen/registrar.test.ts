@@ -45,6 +45,20 @@ describe('registro de presupuestos de tiempo', () => {
     expect(nuevoRojo('2026-10-30', false, '2026-11-02')).toBeNull();
   });
 
+  it('las medidas de la web cuentan para el rojo y el CLS se escribe sin ms (TA-222)', () => {
+    const cls = {
+      id: 'PRU-REN-PWA-003',
+      nombre: 'CLS',
+      medianaMs: 0.2,
+      presupuestoMs: 0.1,
+      unidad: '',
+    };
+    const es = medidas({}, null, [cls]).map(evaluar);
+    expect(es[0]?.superado).toBe(true);
+    expect(resumen(es)).toContain('| 0.2 | ≤ 0.1 | SUPERADO');
+    expect(avisos(es)[0]).toContain('mediana 0.2, presupuesto 0.1. FINN_REN_ROJO');
+  });
+
   it('el resumen lista cada prueba con su estado', () => {
     const t = resumen(medidas(int, bench(9000)).map(evaluar));
     expect(t).toContain('| PRU-REN-MOTOR-101 |');

@@ -321,7 +321,7 @@
 
   "TA-221": { "estado": "pendiente" },
 
-  "TA-222": { "estado": "pendiente" },
+  "TA-222": { "estado": "en_curso", "rama": "ta-222-presupuestos-rendimiento" },
 
   "TA-223": { "estado": "pendiente" },
 
