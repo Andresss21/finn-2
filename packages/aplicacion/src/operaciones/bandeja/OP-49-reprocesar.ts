@@ -70,7 +70,7 @@ export const OP49 = (
     await guardarProcesamiento(tx, intentoDe(r, i, res));
   },
   salida: (res, r) => ({
-    smsId: r.sms.id as Uuid,
+    smsId: r.sms.id,
     movimientoId: r.movimiento.id,
     estado: camposDeMovimiento(res.cambios, r.movimiento.id).estado ?? r.movimiento.estado,
     intento: r.intentos + 1,
