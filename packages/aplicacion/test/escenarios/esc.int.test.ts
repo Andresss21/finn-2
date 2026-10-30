@@ -92,3 +92,44 @@ it(
   () => verificar('ESC-20'),
   TOPE,
 );
+
+it(
+  'PRU-ESC-22@int [ESC-22, O1, D1] Compartido con tarjeta: cobro y propuesta de asignar a la categoría de pago',
+  () => verificar('ESC-22'),
+  TOPE,
+);
+it(
+  'PRU-ESC-24@int [ESC-24, P10] Split y compartido en la misma compra',
+  () => verificar('ESC-24'),
+  TOPE,
+);
+it(
+  'PRU-ESC-31@int [ESC-31, C3, P4] Transacción olvidada con débito en un período cerrado, con efecto en cascada',
+  () => verificar('ESC-31'),
+  TOPE,
+);
+it(
+  'PRU-ESC-32@int [ESC-32, C3, C1] Transacción olvidada con tarjeta en un período cerrado',
+  () => verificar('ESC-32'),
+  TOPE,
+);
+it(
+  'PRU-ESC-33@int [ESC-33, P4, inv. 26] Eliminación en un período cerrado que elimina un sobregiro',
+  () => verificar('ESC-33'),
+  TOPE,
+);
+it(
+  'PRU-ESC-34@int [ESC-34, I6] Cambio de fecha que mueve la transacción de período',
+  () => verificar('ESC-34'),
+  TOPE,
+);
+it(
+  'PRU-ESC-35@int [ESC-35, P6] Meta mensual: acumular frente a rellenar hasta',
+  () => verificar('ESC-35'),
+  TOPE,
+);
+it(
+  'PRU-ESC-36@int [ESC-36, H11] Meta semanal en períodos de distinta duración',
+  () => verificar('ESC-36'),
+  TOPE,
+);
