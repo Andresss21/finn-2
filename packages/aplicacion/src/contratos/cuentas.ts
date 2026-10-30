@@ -145,6 +145,32 @@ export const op02 = z
   });
 export type EntradaOp02 = z.output<typeof op02>;
 
+type CamposPrestamo = typeof PRESTAMO;
+
+/** OP-48 Condiciones de un préstamo (04 §3.9): como OP-02, pero solo los campos de `prestamos` (4.6.2). */
+export const op48 = z
+  .object({
+    prestamoId: uuid,
+    ...(opcionales(PRESTAMO, false) as {
+      [K in keyof CamposPrestamo]: z.ZodOptional<CamposPrestamo[K]>;
+    }),
+    esperado: z.object(
+      opcionales(PRESTAMO, true) as {
+        [K in keyof CamposPrestamo]: z.ZodOptional<z.ZodNullable<CamposPrestamo[K]>>;
+      },
+    ),
+  })
+  .superRefine((e, ctx) => {
+    for (const [k, v] of Object.entries(e))
+      if (k in PRESTAMO && v !== undefined && e.esperado[k as keyof CamposPrestamo] === undefined)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['esperado', k],
+          message: 'Falta el valor que viste.',
+        });
+  });
+export type EntradaOp48 = z.output<typeof op48>;
+
 /** OP-03 Reordenar cuentas: todas las abiertas, en el orden nuevo. */
 export const op03 = z.object({ orden: z.array(uuid) });
 export type EntradaOp03 = z.output<typeof op03>;
@@ -168,3 +194,4 @@ export interface SalidaCuenta {
 
 export const CLAVES_GENERALES = Object.keys(GENERALES);
 export const CLAVES_EDITABLES = Object.keys(EDITABLES);
+export const CLAVES_PRESTAMO = Object.keys(PRESTAMO);
