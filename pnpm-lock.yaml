@@ -65,6 +65,9 @@ importers:
       '@finn/dominio':
         specifier: workspace:*
         version: link:../dominio
+      '@finn/sms':
+        specifier: workspace:*
+        version: link:../sms
       zod:
         specifier: 4.6.5
         version: 4.6.5

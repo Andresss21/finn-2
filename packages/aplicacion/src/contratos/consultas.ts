@@ -130,6 +130,25 @@ export const parametrosActividad = z.object({
   limite: limite.optional(),
 });
 
+/** `consultas.porCobrar({ incluirCerrados? })` (04 §6.12.3). */
+export const parametrosPorCobrar = z.object({ incluirCerrados: z.boolean().optional() });
+
+/** `consultas.programadas({ horizonteDias? })`: por defecto 30, que es también el máximo que calcula el motor (BE-37). */
+export const parametrosProgramadas = z.object({
+  horizonteDias: z
+    .number({ error: 'El horizonte debe ser un número.' })
+    .int({ error: 'El horizonte debe ser un entero.' })
+    .min(0, { error: 'El horizonte no puede ser negativo.' })
+    .max(30, { error: 'El horizonte puede ser de hasta 30 días.' })
+    .optional(),
+});
+
+/** `consultas.notificaciones({ cursor?, soloNoLeidas? })` (04 §6.12.5). */
+export const parametrosNotificaciones = z.object({
+  cursor: z.uuid({ error: 'El cursor no es válido.' }).optional(),
+  soloNoLeidas: z.boolean().optional(),
+});
+
 /** `consultas.detalleTransaccion({ transaccionId })` (04 §6.7.2). */
 export const parametrosDetalleTransaccion = z.object({ transaccionId: uuid });
 

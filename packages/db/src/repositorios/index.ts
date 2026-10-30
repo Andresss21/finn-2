@@ -7,3 +7,4 @@ export * from './reglas.ts';
 export * from './consultas-cuentas.ts';
 export * from './bandeja.ts';
 export * from './ajustes.ts';
+export * from './consultas-cobro.ts';
