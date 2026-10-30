@@ -18,8 +18,7 @@ import type { MotivoNotificacion } from '../push/motivos.ts';
 import { registrarNotificacion } from '../push/registro.ts';
 import type { DepsTarea, PasoTarea } from './diaria.ts';
 
-/** 10.2 paso 1: máximo de ocurrencias por ejecución; el resto, en la siguiente. */
-export const LIMITE_REGISTRO = 200;
+export const LIMITE_REGISTRO = 200; // 10.2 paso 1: máximo por ejecución; el resto, en la siguiente
 const ESPACIO_REGISTRO = '4b1c9a52-7e0d-4f63-9a18-3d5e8c2f7b46'; // ids de las transacciones del registro (BE-31)
 
 const aplicarAutomatico: typeof aplicar = (hechos, comando, hoy) =>
