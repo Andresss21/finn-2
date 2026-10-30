@@ -5,12 +5,15 @@
 import { interpretar, type FormatoSms, type Interpretacion } from '@finn/sms';
 import {
   escribir as escribirDb,
+  escribirTecnico as escribirTecnicoDb,
   guardarProcesamiento,
   leer as leerDb,
   leerDatosDeBandeja,
   leerSmsParaProcesar,
+  registrarEvento,
   sanearMensaje,
   smsSinResultado,
+  type NuevoEvento,
   type NuevoProcesamiento,
 } from '@finn/db';
 import type { InterpretacionSms, Movimiento, MovimientoLinea, Uuid } from '@finn/dominio';
@@ -22,6 +25,8 @@ import {
   type DepsMarco,
   type Exito,
 } from '../operaciones/marco.ts';
+import { notificar, type DepsEnvio } from '../push/enviar.ts';
+import { avisoDeMovimiento } from '../push/politica.ts';
 import { fechaLocalDeInstante } from '../tiempo/index.ts';
 
 /** BE-62: SMS sin resultado por petición, y el tope de tiempo de la función (`maxDuration` = 30 s). */
@@ -82,8 +87,19 @@ export function intentoDe(
   };
 }
 
+type DepsProcesar = DepsMarco & DepsEnvio;
+
+/** 8.4 e: AV-23 con push; solo después del COMMIT. Sin aviso en `autodescartado`, y nunca con el texto del SMS (11.4). */
+async function avisar(m: Parameters<typeof avisoDeMovimiento>[0], d: DepsProcesar): Promise<void> {
+  const av = avisoDeMovimiento(m);
+  if (av !== null) await notificar(d, av.motivo, av.aviso);
+}
+
 /** OP-35 en el marco, con la interpretación hecha fuera del bloqueo (BE-45) y el SMS como id principal (BE-31). */
-const op35 = (i: Interpretacion): DefinicionOperacion<EntradaOp35, Resuelto, null> => ({
+const op35 = (
+  i: Interpretacion,
+  d: DepsProcesar,
+): DefinicionOperacion<EntradaOp35, Resuelto, null> => ({
   id: 'OP-35',
   contrato: entradaOp35,
   idempotencia: 'natural',
@@ -118,6 +134,13 @@ const op35 = (i: Interpretacion): DefinicionOperacion<EntradaOp35, Resuelto, nul
   async extra(tx, r, res) {
     await guardarProcesamiento(tx, intentoDe(r, i, res));
   },
+  // El marco los corre tras el COMMIT; si uno falla, deja un evento y el movimiento sigue (4.9)
+  posteriores: (res) =>
+    res.cambios.flatMap((c) =>
+      c.tipo === 'insertar' && c.tabla === 'movimientos'
+        ? [{ nombre: 'AV-23', ejecutar: () => avisar(c.fila, d) }]
+        : [],
+    ),
   salida: () => null,
 });
 
@@ -139,21 +162,40 @@ const MOVIMIENTO_VACIO = {
  * Paso d (03 §5.1, nota; N-02): con el bloqueo, el intento `error` y el movimiento en `error` (el mismo id que le daría
  * OP-35). Si el SMS ya tiene resultado, no hace nada; si no obtiene el bloqueo, el SMS queda sin resultado (8.6).
  */
-async function registrarError(smsId: string, detalle: string, d: DepsMarco): Promise<void> {
-  await (d.escribir ?? escribirDb)(async (tx) => {
+async function registrarError(smsId: string, detalle: string, d: DepsProcesar): Promise<void> {
+  const escrito = await (d.escribir ?? escribirDb)(async (tx) => {
     const s = await leerSmsParaProcesar(tx, smsId);
-    if (s === null || s.intentos > 0) return;
+    if (s === null || s.intentos > 0) return null;
     await guardarProcesamiento(tx, {
       smsId,
       intento: 1,
       resultado: 'error',
       errorDetalle: detalle,
     });
-    if (s.movimientoId !== null) return;
+    if (s.movimientoId !== null) return null;
     const id = uuidv5('1', smsId);
     const fila = { id, smsId: s.sms.id, estado: 'error', ...MOVIMIENTO_VACIO } as const;
     await tx.aplicarCambios([{ tipo: 'insertar', tabla: 'movimientos', fila }]);
+    return fila;
   }, d.opciones?.());
+  if (escrito === null) return;
+  // 8.4 e: ya pasó el COMMIT. Como en el marco (4.9): si falla, un evento, y ni revierte ni deja el SMS sin resultado
+  try {
+    await avisar(escrito, d);
+  } catch (e) {
+    const evento: NuevoEvento = {
+      nivel: 'error',
+      origen: 'app',
+      mensaje: 'EFECTO AV-23 OP-35',
+      datos: { mensajeSaneado: sanearMensaje(e instanceof Error ? e.message : '') },
+    };
+    const guardar = d.registrar
+      ? d.registrar(evento)
+      : (d.escribirTecnico ?? escribirTecnicoDb)(async (tx) => {
+          await registrarEvento(tx, evento);
+        }, d.opciones?.());
+    await guardar.catch(() => undefined);
+  }
 }
 
 /**
@@ -163,7 +205,7 @@ async function registrarError(smsId: string, detalle: string, d: DepsMarco): Pro
  */
 export async function procesar(
   smsId: string,
-  d: DepsMarco,
+  d: DepsProcesar,
   cuerpoInvalido?: string,
 ): Promise<unknown> {
   let detalle = `cuerpo_invalido: ${cuerpoInvalido ?? ''}`;
@@ -177,7 +219,7 @@ export async function procesar(
         }),
         d.opciones?.(),
       );
-      const r = await confirmar(op35(interpretar(texto, formatos)), { smsId }, d);
+      const r = await confirmar(op35(interpretar(texto, formatos), d), { smsId }, d);
       if (r.ok) return undefined;
       detalle = `${r.error.categoria} ${r.error.codigo}${r.error.idError ? ` ${r.error.idError}` : ''}`;
     }
@@ -194,7 +236,7 @@ export async function procesar(
 
 /** BE-62 (04 §8.6): hasta 5 SMS sin resultado, en orden de llegada, uno por uno, mientras la función tenga tiempo. */
 export async function barrer(
-  d: DepsMarco,
+  d: DepsProcesar,
   transcurridoMs: () => number,
   alFallar: (smsId: string, e: unknown) => Promise<void>,
 ): Promise<number> {

@@ -5,7 +5,14 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import webpush from 'web-push';
-import { escribirSms, escribirTecnico, guardarSms, guardarSuscripcion, Memoria } from '@finn/db';
+import {
+  escribirSms,
+  escribirTecnico,
+  guardarSms,
+  guardarSuscripcion,
+  Memoria,
+  type NuevoEvento,
+} from '@finn/db';
 import { consultar, crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY } from '../../db/test/ayudantes/hechos-prueba.ts';
 import { ejecutarAccionDeNotificacion, type PeticionAccion } from '../src/push/accion.ts';
@@ -279,6 +286,104 @@ describe('PRU-INT-NOTIF', () => {
     expect(ultimo.carga['acciones']).toBeUndefined();
     expect(ultimo.topic).toBe('sms');
     expect(await cuenta('SELECT count(*) FROM finn.notificaciones')).toBe(4);
+  });
+
+  it('PRU-INT-NOTIF-103 [AV-23] 8.4 e: procesar un SMS registra AV-23 con push después del COMMIT, con comercio y monto y sin el texto del SMS; el autodescartado no notifica; el paso d también avisa; un fallo no toca el movimiento', async () => {
+    const guardar = (texto: string) =>
+      escribirSms((tx) => guardarSms(tx, { texto, remitente: 'BAC' }), {
+        reloj: { hoy: HOY, desfaseMs: 0 },
+      });
+    const estado = async (smsId: string) =>
+      (await sql(`SELECT estado FROM finn.movimientos WHERE sms_id = '${smsId}'`))[0];
+    const intentos = (smsId: string) =>
+      cuenta(`SELECT count(*) FROM finn.sms_procesamientos WHERE sms_id = '${smsId}'`);
+    const notificaciones = () =>
+      sql(`SELECT motivo || '|' || aviso || '|' || (push_enviada_en IS NOT NULL) || '|' ||
+             (datos->'destino'->>'pantalla') FROM finn.notificaciones`);
+    /** Lo registrado, sin el texto del SMS: ni en la notificación ni en los eventos. */
+    const textoEnRegistros = () =>
+      cuenta(`SELECT (SELECT count(*) FROM finn.notificaciones n WHERE n::text LIKE '%VISA 1234%')
+                   + (SELECT count(*) FROM finn.eventos_sistema e WHERE e::text LIKE '%VISA 1234%')`);
+    await suscribir('ok');
+
+    // Con el movimiento ya visible desde otra conexión al llegar el push: el envío va después del COMMIT
+    const texto = `${RECONOCIDO} 103`;
+    const { id } = await guardar(texto);
+    const d = deps();
+    const alEnviar: unknown[] = [];
+    const conCommit: typeof fetch = async (url, init) => {
+      alEnviar.push(await estado(id));
+      return (d.red as typeof fetch)(url, init);
+    };
+    expect(await procesar(id, { ...d, red: conCommit })).toBeUndefined();
+    expect(alEnviar).toHaveLength(1);
+    expect(alEnviar[0]).toBeDefined();
+    expect(alEnviar[0]).toBe(await estado(id));
+    expect(await notificaciones()).toEqual([
+      expect.stringMatching(/^sms_\w+\|AV-23\|true\|movimiento$/),
+    ]);
+    const [r] = recibidos as [Recibido];
+    expect(r.carga['cuerpo']).toContain('SUPER SELECTOS');
+    expect(r.carga['cuerpo']).toContain('$12.30');
+    expect(JSON.stringify(r.carga)).not.toContain('VISA 1234');
+    expect(JSON.stringify(r.carga)).not.toContain('has realizado');
+    expect(await textoEnRegistros()).toBe(0);
+
+    // Mismo texto antes de 10 minutos: autodescartado (01 OP-35), sin notificación ni push
+    recibidos.length = 0;
+    const repetido = await guardar(texto);
+    expect(await procesar(repetido.id, deps())).toBeUndefined();
+    expect(await estado(repetido.id)).toBe('autodescartado');
+    expect(await cuenta('SELECT count(*) FROM finn.notificaciones')).toBe(1);
+    expect(recibidos).toEqual([]);
+
+    // Paso d: el `error` avisa, sin el detalle ni el texto
+    const malo = await guardar(`${RECONOCIDO} 103 paso d`);
+    expect(await procesar(malo.id, deps(), 'detalle-del-cuerpo')).toBeUndefined();
+    expect(await estado(malo.id)).toBe('error');
+    expect(recibidos).toHaveLength(1);
+    const [e] = recibidos as [Recibido];
+    expect(e.carga['cuerpo']).toBe('Llegó un SMS que no pudimos leer. Revisalo en la bandeja.');
+    expect(JSON.stringify(e.carga)).not.toContain('detalle-del-cuerpo');
+    expect(JSON.stringify(e.carga)).not.toContain('VISA 1234');
+    expect(await textoEnRegistros()).toBe(0);
+
+    // El push falla (red caída): el movimiento queda, un solo intento, y `push_error` en la notificación
+    await sql('DELETE FROM finn.suscripciones_push');
+    await escribirTecnico((tx) =>
+      guardarSuscripcion(tx, {
+        endpoint: 'https://push.invalid/caido',
+        claveP256dh: nav.p256dh,
+        claveAuth: nav.auth,
+      }),
+    );
+    const caido = await guardar(`${RECONOCIDO} 103 red`);
+    expect(await procesar(caido.id, deps())).toBeUndefined();
+    expect(await estado(caido.id)).not.toBe('error');
+    expect(await intentos(caido.id)).toBe(1);
+    expect(
+      await cuenta(`SELECT count(*) FROM finn.notificaciones WHERE push_error = 'push_red'`),
+    ).toBe(1);
+
+    // Tampoco se pudo registrar la notificación: en c y en d, un evento y el movimiento intacto
+    const eventos: NuevoEvento[] = [];
+    const sinRegistro = (): DepsMarco & DepsEnvio => ({
+      ...deps(),
+      escribirTecnico: () => Promise.reject(new Error('sin registro')),
+      registrar: (ev) => {
+        eventos.push(ev);
+        return Promise.resolve();
+      },
+    });
+    const enC = await guardar(`${RECONOCIDO} 103 c`);
+    expect(await procesar(enC.id, sinRegistro())).toBeUndefined();
+    expect(await estado(enC.id)).not.toBe('error');
+    const enD = await guardar(`${RECONOCIDO} 103 d`);
+    expect(await procesar(enD.id, sinRegistro(), 'x')).toBeUndefined();
+    expect(await estado(enD.id)).toBe('error');
+    expect(await intentos(enD.id)).toBe(1);
+    expect(eventos.map((ev) => ev.mensaje)).toEqual(['EFECTO AV-23 OP-35', 'EFECTO AV-23 OP-35']);
+    expect(JSON.stringify(eventos)).not.toContain('VISA 1234');
   });
 
   it('PRU-INT-NOTIF-101 [AV-23] OPT-02 inserta o renueva por endpoint y solo acepta https; OPT-03 elimina y repetirla no falla', async () => {
