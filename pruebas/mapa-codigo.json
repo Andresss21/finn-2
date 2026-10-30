@@ -11,6 +11,7 @@
   { "patron": "apps/web/src/servidor/accion.ts", "fts": "marco" },
   { "patron": "apps/web/src/servidor/sesion.ts", "fts": "marco" },
   { "patron": "apps/web/src/navegacion/**", "fts": "marco" },
+  { "patron": "apps/web/src/textos/**", "fts": "marco" },
   { "patron": "apps/web/src/sw/**", "fts": "marco" },
   { "patron": "apps/web/src/instrumentation.ts", "fts": "marco" },
   { "patron": "apps/web/src/middleware.ts", "fts": "marco" },
