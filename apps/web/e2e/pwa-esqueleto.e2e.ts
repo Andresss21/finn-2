@@ -23,4 +23,50 @@ test.describe('PRU-E2E-PWA', () => {
     expect(experimental['cacheComponents']).toBeUndefined();
     expect((config as Record<string, unknown>)['cacheComponents']).toBeUndefined();
   });
+
+  // PRU-E2E-PWA-102 (TA-203; 05 §8.2, §10.11): el manifiesto responde sin sesión con los campos de 05 §8.2 y sus
+  // íconos existen; el maskable mide 512 × 512 (ancho y alto, bytes 16 a 23 del PNG).
+  test('PRU-E2E-PWA-102 /manifest.webmanifest tiene los campos de 05 §8.2 y sus íconos responden 200', async ({
+    request,
+  }) => {
+    const respuesta = await request.get('/manifest.webmanifest', { maxRedirects: 0 });
+    expect(respuesta.status()).toBe(200);
+    const m = (await respuesta.json()) as Record<string, unknown> & {
+      icons: { src: string; sizes: string; purpose: string }[];
+      shortcuts: { name: string; url: string }[];
+    };
+    expect(m).toMatchObject({
+      id: '/',
+      start_url: '/',
+      scope: '/',
+      name: 'Finn',
+      short_name: 'Finn',
+      description: 'Tu presupuesto base cero.',
+      lang: 'es-SV',
+      dir: 'ltr',
+      display: 'standalone',
+      background_color: '#101418',
+      theme_color: '#101418',
+    });
+    expect(m['orientation']).toBeUndefined();
+    expect(m.shortcuts.map((s) => [s.name, s.url])).toEqual([
+      ['Registrar gasto', '/registrar/gasto'],
+      ['Bandeja', '/bandeja'],
+    ]);
+    expect(m.icons.map((i) => `${i.sizes} ${i.purpose}`)).toEqual([
+      '192x192 any',
+      '512x512 any',
+      '512x512 maskable',
+    ]);
+    for (const icono of m.icons) {
+      const png = await request.get(icono.src, { maxRedirects: 0 });
+      expect(png.status(), icono.src).toBe(200);
+      const cuerpo = await png.body();
+      const [ancho, alto] = icono.sizes.split('x').map(Number);
+      if (icono.purpose === 'maskable') {
+        expect([cuerpo.readUInt32BE(16), cuerpo.readUInt32BE(20)]).toEqual([512, 512]);
+      }
+      expect([cuerpo.readUInt32BE(16), cuerpo.readUInt32BE(20)]).toEqual([ancho, alto]);
+    }
+  });
 });
