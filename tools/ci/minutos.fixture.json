@@ -30,14 +30,14 @@
     "hoy": "2026-10-12T08:15:00Z",
     "usados": 700,
     "proyeccion": 1808,
-    "modo": "ahorro"
+    "modo": "normal"
   },
   "normal": { "hoy": "2026-10-12T08:15:00Z", "usados": 500, "proyeccion": 1292, "modo": "normal" },
   "reserva": {
     "hoy": "2026-10-20T08:15:00Z",
     "cron_restauracion": "0 9 * * 0",
     "pendiente": 38,
-    "amenazada": { "usados": 1280, "recortes": ["e2e-pr-al-pasar-a-listo", "nocturno-semanal"] },
-    "agotada": { "usados": 1500, "aviso": 167 }
+    "amenazada": { "usados": 1280 },
+    "agotada": { "usados": 1500 }
   }
 }

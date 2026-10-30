@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ESTADO, type Recorte } from './minutos.ts';
+import { ESTADO, decidir as decidirModo, type Estado, type Recorte } from './minutos.ts';
 
 type Paso = {
   id?: string;
@@ -332,6 +332,20 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     conModo('202610', ['e2e-pr-al-pasar-a-listo', 'e2e-pr-suspendido']);
     expect(decidir('pull_request', 'false', web, 'ready_for_review')).toMatchObject({ e2e: false });
     conModo('202609', ['e2e-pr-al-pasar-a-listo', 'e2e-pr-suspendido']);
+    expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({ e2e: true });
+  });
+
+  it('workflows: el estado que minutos escribe en el mes en curso pisa los recortes guardados (CH-46)', () => {
+    const web = ['apps/web/src/x.tsx'];
+    conModo('202610', ['e2e-pr-al-pasar-a-listo', 'e2e-pr-suspendido']);
+    const f = join(cwd, ESTADO);
+    const nuevo = decidirModo(
+      1954,
+      new Date('2026-10-19T08:15:00Z'),
+      0,
+      JSON.parse(readFileSync(f, 'utf8')) as Partial<Estado>,
+    );
+    writeFileSync(f, JSON.stringify(nuevo));
     expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({ e2e: true });
   });
 

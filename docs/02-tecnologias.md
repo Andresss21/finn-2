@@ -551,7 +551,7 @@ docs/                 copia de los documentos de fase e instrucciones para agent
   - fuera de los módulos de dinero y fechas: prohibido usar `parseFloat`, `toFixed` y `/` sobre valores `Centavos` (regla de sintaxis restringida y revisión de tipos).
 - **Decisión — formato:** Prettier.
 - **Alternativa descartada:** Biome. Es más rápido y unifica lint y formato, pero no tiene el equivalente de las reglas con información de tipos que se necesitan para las fronteras, y los agentes conocen mejor ESLint.
-- **Decisión — CI (GitHub Actions, repositorio privado):**
+- **Decisión — CI (GitHub Actions, repositorio ~~privado~~ público **[CH-46]**; los runners estándar son gratis y los minutos no limitan):**
   1. En cada push y PR: instalación con caché, `typecheck`, lint, formato, unidad + escenarios + propiedades, integración con Testcontainers, benchmark.
   2. En PR marcados como listos y en `main`: E2E con Playwright y la pila local de Supabase.
   3. En `main`, si todo pasa: `prisma migrate deploy` y `vercel deploy --prod` (ADR-10).
@@ -650,7 +650,7 @@ Ninguna regla de `01-dominio.md` resultó inviable con este stack. Estos puntos 
 | Vercel | Hobby | $0 | 1.000.000 invocaciones; 4 h de CPU activa; 360 GB-h de memoria; 100 GB de transferencia; cron una vez al día; funciones de hasta 300 s; uso personal no comercial | Unos miles de invocaciones al mes; CPU muy por debajo del límite |
 | Supabase | Free | $0 | 500 MB de base; 5 GB de egreso; 50.000 MAU; sin respaldos automáticos; pausa tras una semana de inactividad; 2 proyectos activos | < 100 MB en 10 años; egreso ver RK-02 |
 | Cloudflare R2 | Nivel gratuito (con medio de pago registrado y alerta de facturación en $0 o el mínimo) | $0 | 10 GB-mes; 1 M operaciones clase A; 10 M clase B; egreso gratis | Unos 42 respaldos de pocos MB (< 0,5 GB); ~60 operaciones de escritura al mes |
-| GitHub | Free, repositorio privado | $0 | 2.000 minutos de Actions al mes; 500 MB de artefactos | ~60 pushes × 10–15 min + respaldos (~60 min) + restauración ≈ 1.000 min |
+| GitHub | Free, repositorio ~~privado~~ público **[CH-46]** | $0 | ~~2.000 minutos de Actions al mes~~ runners estándar sin cuota **[CH-46]**; 500 MB de artefactos | ~60 pushes × 10–15 min + respaldos (~60 min) + restauración ≈ 1.000 min, que se miden pero no se cobran **[CH-46]** |
 | Web Push | Servicios de push de los navegadores | $0 | — | — |
 | Dominio propio | Opcional | No incluido | — | Se usa `*.vercel.app` |
 | **Total** | | **$0 al mes** | | |

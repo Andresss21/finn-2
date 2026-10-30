@@ -29,8 +29,8 @@ type Fixture = {
     hoy: string;
     cron_restauracion: string;
     pendiente: number;
-    amenazada: { usados: number; recortes: string[] };
-    agotada: { usados: number; aviso: number };
+    amenazada: { usados: number };
+    agotada: { usados: number };
   };
 };
 const fx = JSON.parse(
@@ -46,29 +46,22 @@ type Wf = {
   jobs: Record<string, { needs?: string; if?: string; steps: Paso[] }>;
 };
 const nocturno = load(workflow('nocturno') ?? '') as Wf;
-const PROTEGIDOS = /respaldo|restauracion/;
 
 describe('PRU-SEG-OPER', () => {
-  it('PRU-SEG-OPER-002 [M4] reserva fija (DP-36, DP-12, M4-ahorro, WF-nocturno; 07 §32.3): con la reserva amenazada M4 se activa, los recortes nunca tocan respaldo ni restauracion y sus workflows no leen el modo', () => {
+  it('PRU-SEG-OPER-002 [M4] reserva fija (DP-36, DP-12, M4-ahorro, WF-nocturno; 07 §32.3, CH-46): la reserva se sigue midiendo, con cualquier uso no hay recortes ni aviso, y respaldo y restauracion no leen el modo', () => {
     const r = fx.reserva;
     const hoy = new Date(r.hoy);
     expect(reservaPendiente(hoy, true, r.cron_restauracion)).toBe(r.pendiente);
-    const amenazada = decidir(r.amenazada.usados, hoy, r.pendiente, null);
-    expect(amenazada).toMatchObject({ modo: 'ahorro', amenazada: true, aviso_reserva: null });
-    expect(amenazada.recortes).toEqual(r.amenazada.recortes);
-    // Sin la reserva, la misma cuenta no la ve amenazada: la activa la proyección, no la reserva
-    expect(decidir(r.amenazada.usados, hoy, 0, null).amenazada).toBe(false);
-    const agotada = decidir(r.agotada.usados, hoy, r.pendiente, null);
-    expect(agotada.recortes).toEqual([
-      'e2e-pr-al-pasar-a-listo',
-      'nocturno-semanal',
-      'e2e-pr-suspendido',
-      'nocturno-suspendido',
-    ]);
-    expect(agotada.aviso_reserva).toBe(r.agotada.aviso);
-    for (const e of [amenazada, agotada])
-      for (const x of e.recortes)
-        expect(x, 'recorte sobre la reserva fija').not.toMatch(PROTEGIDOS);
+    // CH-46: los usos que antes amenazaban o agotaban la reserva, y uno sobre la vieja cuota, no recortan nada
+    for (const usados of [r.amenazada.usados, r.agotada.usados, 5000])
+      expect(decidir(usados, hoy, r.pendiente, null)).toMatchObject({
+        modo: 'normal',
+        recortes: [],
+        amenazada: false,
+        aviso_reserva: null,
+        usados,
+        reserva_pendiente: r.pendiente,
+      });
     // respaldo.yml y restauracion.yml (B5) no restauran ni leen el modo de M4
     for (const n of ['respaldo', 'restauracion'])
       expect(workflow(n) ?? '', n).not.toMatch(/ci-modo|ahorro|minutos\.ts|recortes/);
@@ -93,13 +86,37 @@ describe('minutos: suma, proyección y modo (07 §6.5)', () => {
     expect(minutosCobrados(jobs.map((j) => ({ ...j, labels: ['self-hosted'] })))).toBe(0);
   });
 
-  it('minutos: 700 minutos al día 12 proyectan 1.808 y activan ahorro; 500 quedan en normal', () => {
+  it('minutos: 700 minutos al día 12 proyectan 1.808 y 500 proyectan 1.292; los dos quedan en normal (CH-46)', () => {
     for (const c of [fx.proyeccion, fx.normal]) {
       const e = decidir(c.usados, new Date(c.hoy), 0, null);
       expect(e).toMatchObject({ mes: '202610', proyeccion: c.proyeccion, modo: c.modo });
       expect(e.proyeccion_sin_m5).toEqual([c.proyeccion + 60, c.proyeccion + 90]);
     }
     expect(decidir(500, new Date(fx.normal.hoy), 0, null).recortes).toEqual([]);
+  });
+
+  it('minutos: el estado del mes en curso pisa los recortes de la caché y conserva lo demás (CH-46)', () => {
+    const lunes = new Date('2026-10-19T08:15:00Z');
+    const anterior: Estado = {
+      ...decidir(700, new Date(fx.proyeccion.hoy), 0, null),
+      modo: 'ahorro',
+      recortes: ['e2e-pr-al-pasar-a-listo', 'nocturno-semanal', 'nocturno-suspendido'],
+      amenazada: true,
+      aviso_reserva: 167,
+      nocturno_ultimo: '2026-10-16T08:15:00Z',
+      ren_rojo_desde: '2026-10-14T08:15:00Z',
+    };
+    const e = decidir(1954, lunes, 0, anterior);
+    expect(e).toMatchObject({
+      modo: 'normal',
+      recortes: [],
+      amenazada: false,
+      aviso_reserva: null,
+      nocturno_ultimo: anterior.nocturno_ultimo,
+      ren_rojo_desde: anterior.ren_rojo_desde,
+    });
+    expect(recortesVigentes(e, lunes)).toEqual([]);
+    expect(correrNocturno(e, lunes, false, true)).toBe(true);
   });
 
   it('minutos: sumarMes recorre las corridas del mes con la API y deja el uso por job (CH-02)', async () => {
@@ -132,8 +149,11 @@ describe('minutos: suma, proyección y modo (07 §6.5)', () => {
 });
 
 describe('minutos: qué lee cada workflow del modo', () => {
+  // CH-46: decidir ya no produce recortes; estas funciones siguen respetándolos si vienen en el estado
   const estado = (e: Partial<Estado>): Estado => ({
     ...decidir(700, new Date('2026-10-12T08:15:00Z'), 0, null),
+    modo: 'ahorro',
+    recortes: ['e2e-pr-al-pasar-a-listo', 'nocturno-semanal'],
     ...e,
   });
   const lunes = new Date('2026-10-19T08:15:00Z');
