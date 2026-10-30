@@ -222,3 +222,5 @@ export type EntradaOp30 = z.output<typeof op30>;
 export interface SalidaTransaccion {
   readonly id?: Uuid;
 }
+
+export { destino as destinoLinea };
