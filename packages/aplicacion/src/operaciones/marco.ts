@@ -38,6 +38,7 @@ import {
 import { errorDeBase } from '../errores-de-base.ts';
 import {
   errorDeValidacion,
+  ExcepcionFinn,
   mensajeDeRechazo,
   mensajeInterno,
   type ErrorFinn,
@@ -170,6 +171,13 @@ export class ErrorValidacion extends Error {
 
 const validacion = (e: ErrorValidacion): ErrorFinn =>
   errorDeValidacion([{ path: [e.campo], message: e.message }]);
+
+/**
+ * Un error esperado que `resolver` o `comprobarIdempotencia` lanzan antes de escribir: `ErrorValidacion` o una
+ * `ExcepcionFinn` con su categoría y su código (la carga firmada de OP-46 y OP-47, BE-49). Nada se escribió.
+ */
+const esperado = (e: unknown): ErrorFinn | null =>
+  e instanceof ErrorValidacion ? validacion(e) : e instanceof ExcepcionFinn ? e.error : null;
 
 /** Termina la operación sin escribir: se lanza dentro de `escribir()` para que la transacción acabe en ROLLBACK. */
 class SinEscribir<T> extends Error {
@@ -428,10 +436,7 @@ export async function previsualizar<E, R, S>(
   if (!r.ok)
     return {
       ok: false,
-      error:
-        r.error instanceof ErrorValidacion
-          ? validacion(r.error)
-          : await errorDeExcepcion(r.error, false, c, d),
+      error: esperado(r.error) ?? (await errorDeExcepcion(r.error, false, c, d)),
     };
   return { ok: true, valor: r.valor, yaAplicada: false, avisos: [] };
 }
@@ -553,8 +558,8 @@ export async function confirmar<E, R, S>(
   );
   let fin: Fin<S>;
   if (corrida.ok) fin = corrida.valor;
-  else if (corrida.error instanceof ErrorValidacion)
-    fin = { tipo: 'error', error: validacion(corrida.error) }; // nada se escribió: la memoria sigue valiendo
+  else if (esperado(corrida.error) !== null)
+    fin = { tipo: 'error', error: esperado(corrida.error) as ErrorFinn }; // nada se escribió: la memoria sigue valiendo
   else {
     d.memoria.vaciar(); // ante un error la memoria no puede asegurar su revisión
     const s = sqlstateDe(corrida.error);
