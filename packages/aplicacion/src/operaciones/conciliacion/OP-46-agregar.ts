@@ -2,6 +2,7 @@
 // fecha del movimiento y `origen = 'importada'` (estado `confirmada`); el dominio reclasifica y exige que el alta deje
 // en la cuenta el monto del movimiento (§9.5). Todo lo demás es la definición del alta (OP-20 a OP-24, OP-27, OP-31):
 // su idempotencia de creación, su `resolver`, su comando y su `propuesta` (la de OP-24 en una cuota, CH-36).
+import type { EstadoNormalizado } from '@finn/conciliacion';
 import type { AltaDesdeEstado, Hechos, Uuid } from '@finn/dominio';
 import { abrirCarga, movimientoDe, type DepsConciliacion } from '../../conciliacion/carga.ts';
 import { op46, type EntradaOp46 } from '../../contratos/conciliacion.ts';
@@ -11,20 +12,12 @@ import type { DefinicionOperacion } from '../marco.ts';
 import { OP20, OP21, OP22, OP23, OP24, OP27 } from '../transacciones/index.ts';
 
 type Alta = DefinicionOperacion<unknown, unknown, SalidaTransaccion>;
-const ALTAS: Readonly<Record<EntradaOp46['operacion'], unknown>> = {
-  'OP-20': OP20,
-  'OP-21': OP21,
-  'OP-22': OP22,
-  'OP-23': OP23,
-  'OP-24': OP24,
-  'OP-27': OP27,
-  'OP-31': OP31,
-};
-const altaDe = (e: EntradaOp46): Alta => ALTAS[e.operacion] as Alta;
+const ALTAS = [OP20, OP21, OP22, OP23, OP24, OP27, OP31] as readonly unknown[] as readonly Alta[];
+const altaDe = (e: EntradaOp46): Alta => ALTAS.find((x) => x.id === e.operacion) as Alta;
 
 type Resuelto = {
   readonly e: EntradaOp46;
-  readonly estado: ReturnType<typeof abrirCarga>;
+  readonly estado: EstadoNormalizado;
   readonly alta: unknown;
 };
 

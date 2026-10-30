@@ -9,7 +9,6 @@ import { crearOP47 } from './OP-47-terminar.ts';
 export { OP53 } from './OP-53-verificar-saldo.ts';
 export type { SalidaOp45 } from './OP-45-iniciar.ts';
 export type { ClavesConciliacion, DepsConciliacion } from '../../conciliacion/carga.ts';
-export { iniciarConciliacion, crearOP46, crearOP47 };
 
 export const crearConciliacion = (d: DepsConciliacion) => ({
   /** OP-45: de lectura, fuera de `previsualizar`/`confirmar`. */

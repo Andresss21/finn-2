@@ -5,14 +5,12 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { EstadoNormalizado } from '@finn/conciliacion';
 import type { Uuid } from '@finn/dominio';
+import type { Configuracion } from '../config/index.ts';
 import { ExcepcionFinn, mensajeDeRechazo } from '../errores/index.ts';
 import { ErrorValidacion } from '../operaciones/marco.ts';
 
-/** `conciliacion` de la configuración (04 §14.2): la versión activa y las claves en base64 por versión. */
-export interface ClavesConciliacion {
-  readonly activa: string;
-  readonly claves: Readonly<Record<string, string>>;
-}
+/** La de la configuración (04 §14.2): la versión activa y las claves en base64 por versión. */
+export type ClavesConciliacion = Configuracion['conciliacion'];
 
 /** Lo que OP-45 a OP-47 reciben del servidor: las claves y su reloj (control técnico, no fecha de negocio; L20). */
 export interface DepsConciliacion {
@@ -55,8 +53,6 @@ export function firmarCarga(
   return `${version}.${cuerpo}.${macDe(clave, version, cuerpo).toString('base64url')}`;
 }
 
-export type CodigoFirma = 'firma_no_valida' | 'firma_vencida';
-
 /**
  * Verifica la carga para `cuentaId`. Con `ahoraMs` en `null` no mira el vencimiento (la comprobación de idempotencia:
  * una repetición después de 24 h devuelve lo ya aplicado).
@@ -66,30 +62,27 @@ export function verificarCarga(
   carga: string,
   cuentaId: Uuid,
   ahoraMs: number | null,
-):
-  | { readonly ok: true; readonly estado: EstadoNormalizado }
-  | { readonly ok: false; readonly codigo: CodigoFirma } {
-  const no = { ok: false, codigo: 'firma_no_valida' } as const;
+): EstadoNormalizado | 'firma_no_valida' | 'firma_vencida' {
   const partes = carga.split('.');
   const [version = '', cuerpo = '', mac = ''] = partes;
-  if (partes.length !== 3 || !Object.hasOwn(claves.claves, version)) return no;
-  const clave = claves.claves[version];
-  if (clave === undefined) return no;
+  const clave = Object.hasOwn(claves.claves, version) ? claves.claves[version] : undefined;
+  if (partes.length !== 3 || clave === undefined) return 'firma_no_valida';
   const esperado = macDe(clave, version, cuerpo);
   const recibido = Buffer.from(mac, 'base64url');
   // Con otra longitud se rechaza antes: `timingSafeEqual` exige buffers del mismo tamaño
-  if (recibido.length !== esperado.length || !timingSafeEqual(recibido, esperado)) return no;
+  if (recibido.length !== esperado.length || !timingSafeEqual(recibido, esperado))
+    return 'firma_no_valida';
   let datos: { v?: unknown; cuentaId?: unknown; vence?: unknown } & EstadoNormalizado;
   try {
     datos = JSON.parse(Buffer.from(cuerpo, 'base64url').toString('utf8')) as typeof datos;
   } catch {
-    return no;
+    return 'firma_no_valida';
   }
   if (datos.v !== version || datos.cuentaId !== cuentaId || typeof datos.vence !== 'number')
-    return no;
-  if (ahoraMs !== null && datos.vence < ahoraMs) return { ok: false, codigo: 'firma_vencida' };
+    return 'firma_no_valida';
+  if (ahoraMs !== null && datos.vence < ahoraMs) return 'firma_vencida';
   const { formato, fechaEstado, saldoFinal, movimientos } = datos;
-  return { ok: true, estado: { formato, fechaEstado, saldoFinal, movimientos } };
+  return { formato, fechaEstado, saldoFinal, movimientos };
 }
 
 /** `verificarCarga` para OP-46 y OP-47: un fallo es el rechazo `DOMINIO` con su código y su mensaje (7.5). */
@@ -100,9 +93,9 @@ export function abrirCarga(
   conVencimiento: boolean,
 ): EstadoNormalizado {
   const r = verificarCarga(d.claves, carga, cuentaId, conVencimiento ? d.ahoraMs() : null);
-  if (r.ok) return r.estado;
-  const mensaje = mensajeDeRechazo({ codigo: r.codigo }) ?? r.codigo;
-  throw new ExcepcionFinn({ categoria: 'DOMINIO', codigo: r.codigo, mensaje });
+  if (typeof r !== 'string') return r;
+  const mensaje = mensajeDeRechazo({ codigo: r }) ?? r;
+  throw new ExcepcionFinn({ categoria: 'DOMINIO', codigo: r, mensaje });
 }
 
 /** El movimiento de la carga con ese índice (04 §3.8: "el movimiento pertenece a la carga"). */
