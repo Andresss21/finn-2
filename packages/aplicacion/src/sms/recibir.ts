@@ -1,7 +1,6 @@
 // `POST /api/sms` sin HTTP (04 §8.1, §8.2; ADR-09, N-01; BE-44, BE-59, BE-60, BE-61). Autentica, lee el cuerpo,
 // guarda el SMS sin el bloqueo global y devuelve el código; el Route Handler solo lo traduce y pasa `despues` a
-// `after()` de Next. Ni el token ni el cuerpo se registran. Procesar el SMS y barrer los que quedaron sin resultado
-// (pasos 6 y 7, 04 §8.4, §8.6) es de TA-242 [CH-35]: hasta entonces `despues` no hace nada.
+// `after()` de Next (procesar el SMS y barrer hasta 5 sin resultado). Ni el token ni el cuerpo se registran.
 import {
   escribirSms as escribirSmsDb,
   escribirTecnico as escribirTecnicoDb,
@@ -12,6 +11,7 @@ import {
 } from '@finn/db';
 import { leerCuerpo, LIMITE_CUERPO_BYTES, type FormatoWebhook } from '../contratos/webhook.ts';
 import { idErrorAleatorio, type DepsMarco } from '../operaciones/marco.ts';
+import { barrer, procesar } from './procesar.ts';
 import { autenticar } from './token.ts';
 
 export interface PeticionWebhook {
@@ -26,7 +26,7 @@ export type RespuestaWebhook =
   | {
       readonly estado: 200;
       readonly cuerpo: { readonly recibido: true; readonly id: string };
-      /** Para `after()`: pasos 6 y 7 de 04 §8.2 (TA-242). Nunca lanza. */
+      /** Para `after()`: pasos 6 y 7 de 04 §8.2. Nunca lanza. */
       readonly despues: () => Promise<void>;
     }
   | { readonly estado: 401 | 413 }
@@ -36,6 +36,8 @@ export interface DepsWebhook extends DepsMarco {
   /** `FINN_WEBHOOK_FORMATO` (BE-61): la única variante que se acepta. */
   readonly formato: FormatoWebhook;
   readonly escribirSms?: typeof escribirSmsDb;
+  /** Milisegundos desde que empezó la función, para el tope del barrido (BE-62). */
+  readonly transcurridoMs: () => number;
 }
 
 /** 04 §15.2: best-effort, en su propia transacción [T]; nunca cambia la respuesta. */
@@ -52,12 +54,16 @@ async function anotar(d: DepsWebhook, e: NuevoEvento): Promise<void> {
   }
 }
 
-const fallido = (d: DepsWebhook, mensaje: string, e: unknown): Promise<void> =>
+const fallido = (d: DepsWebhook, mensaje: string, e: unknown, smsId?: string): Promise<void> =>
   anotar(d, {
     nivel: 'error',
     origen: 'webhook',
     mensaje,
-    datos: { ...sqlstateDe(e), idError: (d.nuevoIdError ?? idErrorAleatorio)() },
+    datos: {
+      ...(smsId === undefined ? {} : { smsId }),
+      ...sqlstateDe(e),
+      idError: (d.nuevoIdError ?? idErrorAleatorio)(),
+    },
   });
 
 export async function recibir(p: PeticionWebhook, d: DepsWebhook): Promise<RespuestaWebhook> {
@@ -84,7 +90,25 @@ export async function recibir(p: PeticionWebhook, d: DepsWebhook): Promise<Respu
     await fallido(d, 'guardar_fallido', e);
     return { estado: 503, reintentarEn: 30 };
   }
-  const despues = (): Promise<void> => Promise.resolve();
+  const detalle = leido.valido ? undefined : leido.detalle;
+  const despues = async (): Promise<void> => {
+    if (detalle !== undefined)
+      await anotar(d, {
+        nivel: 'aviso',
+        origen: 'webhook',
+        mensaje: 'cuerpo_invalido',
+        datos: { smsId: id, detalle },
+      });
+    // Paso 6 (8.4) y paso 7 (8.6, BE-62); lo que no se pudo registrar queda sin resultado y deja un evento (15.2)
+    const alFallar = (smsId: string, e: unknown) => fallido(d, 'procesar_fallido', e, smsId);
+    const e = await procesar(id, d, detalle);
+    if (e !== undefined) await alFallar(id, e);
+    try {
+      await barrer(d, d.transcurridoMs, alFallar);
+    } catch (x) {
+      await fallido(d, 'procesar_fallido', x); // la lectura de los SMS sin resultado
+    }
+  };
   // Paso 5 (N-01 punto 3): guardado, siempre 200
   return { estado: 200, cuerpo: { recibido: true, id }, despues };
 }

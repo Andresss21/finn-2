@@ -14,7 +14,7 @@ type FilaMovimiento = Awaited<
   ReturnType<ReturnType<typeof txPrisma>['movimiento']['findMany']>
 >[number];
 
-const aMovimiento = (m: FilaMovimiento): Movimiento => ({
+export const aMovimiento = (m: FilaMovimiento): Movimiento => ({
   id: uuid(m.id),
   smsId: uuid(m.smsId),
   estado: m.estado,
