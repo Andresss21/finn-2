@@ -8,7 +8,11 @@ import './globals.css';
 import { ProveedorTema } from '../componentes/marco/proveedor-tema';
 import tokens from './tokens.json' with { type: 'json' };
 
-export const metadata: Metadata = { title: 'Finn' };
+// El ícono de Apple (05 §10.11); `icon.svg`, `favicon.ico` y el manifiesto los toma Next de `app/`.
+export const metadata: Metadata = {
+  title: 'Finn',
+  icons: { apple: '/marca/apple-touch-icon.png' },
+};
 
 // `fondo` de los dos temas (tokens.json), por preferencia del sistema (05 §10.6).
 export const viewport: Viewport = {

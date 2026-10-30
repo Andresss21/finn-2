@@ -283,7 +283,7 @@
 
   "TA-202": { "estado": "pendiente" },
 
-  "TA-203": { "estado": "pendiente" },
+  "TA-203": { "estado": "terminada", "pr": 201 },
 
   "TA-204": { "estado": "pendiente" },
 
