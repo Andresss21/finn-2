@@ -307,9 +307,9 @@
 
   "TA-214": { "estado": "pendiente" },
 
-  "TA-215": { "estado": "pendiente" },
+  "TA-215": { "estado": "terminada", "pr": 198 },
 
-  "TA-216": { "estado": "pendiente" },
+  "TA-216": { "estado": "terminada", "pr": 199 },
 
   "TA-217": { "estado": "pendiente" },
 

@@ -1,0 +1,8 @@
+{
+  "regions": ["iad1"],
+  "crons": [{ "path": "/api/tareas/diaria", "schedule": "5 6 * * *" }],
+  "functions": {
+    "src/app/api/tareas/diaria/route.ts": { "maxDuration": 300 },
+    "src/app/api/sms/route.ts": { "maxDuration": 30 }
+  }
+}
