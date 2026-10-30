@@ -8,7 +8,7 @@ const TUTEO = /(^|[.!?¡¿,;:]\s*)(revisa|intenta|vuelve|puedes|tienes|elige|asi
 function* textos(nodo: unknown, ruta: string): Generator<[string, string]> {
   if (typeof nodo === 'string') yield [ruta, nodo];
   else if (typeof nodo === 'function') {
-    yield [ruta, String((nodo as (...a: string[]) => string)('X', 'Y'))];
+    yield [ruta, (nodo as (...a: string[]) => string)('X', 'Y')];
   } else if (nodo !== null && typeof nodo === 'object') {
     for (const [k, v] of Object.entries(nodo)) yield* textos(v, `${ruta}.${k}`);
   }
