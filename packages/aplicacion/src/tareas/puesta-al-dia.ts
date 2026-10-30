@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { eventosDeTareaDeHoy, leer as leerDb, type EventoDeTarea } from '@finn/db';
 import {
   correrPasos,
+  pasoCuotaProxima,
   PASOS_DIARIA,
   pasosParaEvento,
   registrarDeTarea,
@@ -45,10 +46,8 @@ export async function ponerAlDia(
     mensaje: 'puesta_al_dia_inicio',
     datos: { hoy, ejecucion },
   });
-  const pasos = await correrPasos(
-    PASOS_DIARIA.filter((p) => p.n <= 2),
-    d,
-  );
+  // CF-24 (06 §3.16): la puesta al día agrega el aviso de cuota próxima a los pasos 1 y 2
+  const pasos = await correrPasos([...PASOS_DIARIA.filter((p) => p.n <= 2), pasoCuotaProxima], d);
   await registrarDeTarea(d, {
     nivel: 'info',
     origen: 'tarea_diaria',

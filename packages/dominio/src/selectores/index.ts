@@ -24,6 +24,7 @@ export { detallePagoTarjeta, type DetallePagoTarjeta } from './detalle-pago-tarj
 export { estructura, type GrupoDeEstructura } from './estructura';
 export { metas, type Metas } from './metas';
 export { detalleLpa, PERIODOS_DE_HISTORIAL, type DetalleLpaSel } from './detalle-lpa';
+export { ultimoCierre, type UltimoCierre } from './cierre';
 export { porCobrar, type EstadoPorCobrar, type PorCobrarSel } from './por-cobrar';
 export {
   HORIZONTE_PROGRAMADAS,
