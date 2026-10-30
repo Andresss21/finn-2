@@ -155,7 +155,7 @@
 
   "TA-244": { "estado": "pendiente" },
 
-  "TA-245": { "estado": "en_curso", "rama": "ta-245-push-av23" },
+  "TA-245": { "estado": "terminada", "pr": 185 },
 
   "TA-141": { "estado": "terminada", "pr": 39 },
 
