@@ -29,6 +29,7 @@
   { "patron": "packages/aplicacion/src/operaciones/formatos/**", "fts": ["FT-73"] },
   { "patron": "packages/aplicacion/src/exportacion/**", "fts": ["FT-75"] },
   { "patron": "packages/aplicacion/src/push/**", "fts": ["FT-69"] },
+  { "patron": "packages/aplicacion/src/respaldo/**", "fts": ["FT-76"] },
   { "patron": "packages/aplicacion/src/sms/token.ts", "fts": ["FT-03"] },
   { "patron": "packages/aplicacion/src/sms/**", "fts": ["FT-34"] },
   { "patron": "packages/aplicacion/src/tareas/**", "fts": [] },
