@@ -1,7 +1,6 @@
 // Contextos de formulario y tipos de reporte de la ola 2 (TA-198; 04 §6.9, §6.14.4; PRU-INT-REP-102). Sobre la base de
 // prueba de @finn/db (TA-152): cada contexto y cada reporte es el del selector del dominio sobre la misma base, con el
-// encabezado común. FORM-formato queda fuera: no hay OP de formatos hasta TA-195. `patrimonio` queda fuera: su DTO
-// `{ hoy, serie }` choca con `hoy` del Encabezado (contradicción informada).
+// encabezado común. FORM-formato queda fuera: no hay OP de formatos hasta TA-195. `patrimonio` entrega `posicionHoy` (CH-39).
 import { beforeAll, describe, expect, it } from 'vitest';
 import { calcular } from '@finn/dominio';
 import { datosBase, formulario as selFormulario, reportes, ritmo } from '@finn/dominio/selectores';
@@ -158,6 +157,10 @@ describe('PRU-INT-REP', () => {
     await igual('tarjetas', reportes.tarjetas(i));
     await igual('flujo_efectivo', reportes.flujoEfectivo(i));
     await igual('datos_base', datosBase(i));
+    const pat = reportes.patrimonio(i);
+    await igual('patrimonio', { posicionHoy: pat.hoy, serie: pat.serie });
+    expect(pat.serie.length).toBeGreaterThan(0);
+    expect(await reporte(deps, { tipo: 'patrimonio' })).not.toHaveProperty('patrimonio');
     await igual('categorias', reportes.categorias(i));
     await igual('gasto_semanal', reportes.gastoSemanal(i));
     await igual('tendencia', { periodos: reportes.tendencia(i) });
