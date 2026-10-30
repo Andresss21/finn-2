@@ -12,6 +12,7 @@
     "./errores": "./src/errores/index.ts",
     "./exportacion": "./src/exportacion/index.ts",
     "./ids": "./src/ids.ts",
+    "./memoria": "./src/memoria.ts",
     "./operaciones": "./src/operaciones/marco.ts",
     "./operaciones/cuentas": "./src/operaciones/cuentas/index.ts",
     "./operaciones/notificaciones": "./src/operaciones/notificaciones/index.ts",
