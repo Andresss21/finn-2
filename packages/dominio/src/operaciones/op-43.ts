@@ -116,19 +116,9 @@ export function registrarAutomatica(
   return aplicar(hechos, { operacion: 'OP-43', ...o }, hoy);
 }
 
-/** Las ocurrencias que el registro automático intenta (04 §10.2 paso 1): pendientes de programadas con registro automático, en orden cronológico. */
-export function ocurrenciasAutomaticas(hechos: H.Hechos, hoy: FechaLocal) {
-  const automaticas = new Set(
-    hechos.programadas.filter((p) => p.registroAutomatico).map((p) => p.id),
-  );
-  return pendientes(hechos, hoy, 0)
-    .filter((o) => automaticas.has(o.programadaId))
-    .map(({ programadaId, fecha: fechaEsperada }) => ({ programadaId, fechaEsperada }));
-}
-
 /**
- * Registro automático (04 §10.2 paso 1) en memoria: cada una sobre los hechos que dejó la anterior. La aplicación
- * usa `ocurrenciasAutomaticas` y `registrarAutomatica`, una por `escribir()` (RT-03).
+ * Registro automático (04 §10.2 paso 1): las pendientes con fecha ≤ hoy de las programadas activas
+ * con registro automático, en orden cronológico; cada una sobre los hechos que dejó la anterior.
  */
 export function op43Automatico(
   hechos: H.Hechos,
@@ -136,18 +126,29 @@ export function op43Automatico(
   ids: H.GeneradorIds,
   instante: H.Instante,
 ) {
+  const automaticas = new Set(
+    hechos.programadas.filter((p) => p.registroAutomatico).map((p) => p.id),
+  );
   let h = hechos;
-  const resultados = ocurrenciasAutomaticas(hechos, hoy).map(
-    ({ programadaId, fechaEsperada }): ResultadoOp43Automatico => {
+  const resultados = pendientes(hechos, hoy, 0)
+    .filter((o) => automaticas.has(o.programadaId))
+    .map(({ programadaId, fecha: fechaEsperada }): ResultadoOp43Automatico => {
       const alta = { programadaId, fechaEsperada, id: ids.siguiente(), instante, ids };
       const salida = registrarAutomatica(h, alta, hoy);
       if (salida.ok) h = salida.hechosNuevos;
       return { programadaId, fechaEsperada, salida };
-    },
-  );
+    });
   const avisos: H.AvisoOperacion[] = resultados.map(({ programadaId, fechaEsperada, salida }) => {
     const resultado = salida.ok ? 'registrada' : (salida.rechazos[0]?.codigo ?? '');
     return { ...AV23, datos: { programadaId, fechaEsperada, resultado } };
   });
   return { resultados, hechos: h, avisos };
+}
+
+/** Las ocurrencias que el registro automático intenta (04 §10.2 paso 1), en orden cronológico; la aplicación corre cada una en su `escribir()`. */
+export function ocurrenciasAutomaticas(hechos: H.Hechos, hoy: FechaLocal) {
+  const auto = new Set(hechos.programadas.filter((p) => p.registroAutomatico).map((p) => p.id));
+  return pendientes(hechos, hoy, 0)
+    .filter((o) => auto.has(o.programadaId))
+    .map(({ programadaId, fecha: fechaEsperada }) => ({ programadaId, fechaEsperada }));
 }
