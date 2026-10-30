@@ -15,6 +15,7 @@
     "./operaciones/cuentas": "./src/operaciones/cuentas/index.ts",
     "./operaciones/notificaciones": "./src/operaciones/notificaciones/index.ts",
     "./push/*": "./src/push/*.ts",
+    "./respaldo/*": "./src/respaldo/*.ts",
     "./sms/*": "./src/sms/*.ts",
     "./tareas/*": "./src/tareas/*.ts",
     "./operaciones/categorias": "./src/operaciones/categorias/index.ts",
