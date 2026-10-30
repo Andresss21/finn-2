@@ -243,7 +243,7 @@
 
   "TA-185": { "estado": "terminada", "pr": 142 },
 
-  "TA-186": { "estado": "pendiente" },
+  "TA-186": { "estado": "en_curso", "rama": "ta-186-tarea-diaria" },
 
   "TA-187": { "estado": "pendiente" },
 

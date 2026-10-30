@@ -26,6 +26,7 @@
   { "patron": "packages/aplicacion/src/push/**", "fts": ["FT-69"] },
   { "patron": "packages/aplicacion/src/sms/token.ts", "fts": ["FT-03"] },
   { "patron": "packages/aplicacion/src/sms/**", "fts": ["FT-34"] },
+  { "patron": "packages/aplicacion/src/tareas/**", "fts": [] },
   { "patron": "packages/dominio/src/**", "fts": [] },
   { "patron": "packages/db/src/**", "fts": [] },
   { "patron": "packages/conciliacion/src/**", "fts": [] },
