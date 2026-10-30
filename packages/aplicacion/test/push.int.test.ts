@@ -469,7 +469,7 @@ describe('PRU-INT-NOTIF', () => {
     ).toBe(422);
   });
 
-  it('PRU-INT-NOTIF-102 [CF-16] BE-51, TAREA-pasos3y4 (paso 3): un solo push de cierre, del último período cerrado; los anteriores quedan en eventos_sistema y una segunda corrida no repite', async () => {
+  it('PRU-INT-NOTIF-102 BE-51, TAREA-pasos3y4 (paso 3): un solo push de cierre, del último período cerrado; los anteriores quedan en eventos_sistema y una segunda corrida no repite', async () => {
     await suscribir('ok');
     const cierres = () =>
       sql(
@@ -505,7 +505,7 @@ describe('PRU-INT-NOTIF', () => {
     expect(await sinPush()).toEqual(anteriores);
   });
 
-  it('PRU-INT-NOTIF-102 [CF-07, CF-24] TAREA-pasos3y4 (paso 4): pago_tarjeta_proximo y cuota_proxima una vez por clave; la cuota también en la puesta al día; quedan fuera las automáticas, las inactivas y las del tramo inactivo', async () => {
+  it('PRU-INT-NOTIF-102 [CF-07, CF-24] TAREA-pasos3y4 (paso 4): pago_tarjeta_proximo y cuota_proxima una vez por clave; la cuota también con pasoCuotaProxima, el paso que agrega la puesta al día; quedan fuera las automáticas, las inactivas y las del tramo inactivo', async () => {
     await suscribir('ok');
     const [cuentaId] = await sql(`SELECT cuenta_id FROM finn.programadas WHERE tipo = 'gasto'`);
     const [prestamoId] = await sql('SELECT cuenta_id FROM finn.prestamos');
@@ -622,7 +622,7 @@ describe('PRU-INT-NOTIF', () => {
     );
   });
 
-  it('PRU-INT-NOTIF-102 [CF-16] TAREA-pasos3y4 (avisos de sistema): respaldo de más de 36 h, restauración de más de 35 días, deriva informada y el disparador por egreso, una vez por clave; recientes o nulos no avisan', async () => {
+  it('PRU-INT-NOTIF-102 TAREA-pasos3y4 (avisos de sistema): respaldo de más de 36 h, restauración de más de 35 días, deriva informada y el disparador por egreso, una vez por clave; recientes o nulos no avisan', async () => {
     const motivos = () =>
       sql(`SELECT motivo FROM finn.notificaciones WHERE motivo IN
         ('respaldo_atrasado', 'restauracion_atrasada', 'deriva_catalogo', 'carga_incremental') ORDER BY motivo`);
@@ -669,7 +669,7 @@ describe('PRU-INT-NOTIF', () => {
     ).toBe(1);
   });
 
-  it('PRU-INT-NOTIF-102 [CF-16] 5.6: el disparador por latencia pide p95 de más de 500 ms en cada uno de los 7 días', async () => {
+  it('PRU-INT-NOTIF-102 5.6: el disparador por latencia pide p95 de más de 500 ms en cada uno de los 7 días', async () => {
     const cargas = (ms: readonly number[]) =>
       sql(
         `DELETE FROM finn.eventos_sistema WHERE origen = 'motor';` +
@@ -760,7 +760,7 @@ describe('PRU-INT-NOTIF', () => {
     );
   });
 
-  it('PRU-INT-NOTIF-102 [CF-16] 10.3: si un paso falla sale un push tarea_fallida, una vez por día; sin suscripciones la notificación queda registrada', async () => {
+  it('PRU-INT-NOTIF-102 10.3: si un paso falla sale un push tarea_fallida, una vez por día; sin suscripciones la notificación queda registrada', async () => {
     const roto: PasoTarea = { n: 4, ejecutar: () => Promise.reject(new Error('x')) };
     const de = () =>
       sql(

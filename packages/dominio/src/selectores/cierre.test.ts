@@ -106,7 +106,7 @@ describe('ultimoCierre', () => {
     });
   });
 
-  it('PRU-DOM-PRES-105 [AV-17] con varios períodos atrasados toma el más reciente; ahí no hay reducción ni metas', () => {
+  it('PRU-DOM-PRES-105 con varios períodos atrasados toma el más reciente; ahí no hay reducción ni metas', () => {
     expect(ultimoCierre(calcular(hechos(), f('2027-05-15')))).toEqual({
       inicio: '2027-04-01',
       fin: '2027-04-30',
