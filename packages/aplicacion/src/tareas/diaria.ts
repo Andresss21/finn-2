@@ -1,4 +1,4 @@
-// La tarea diaria (04 §10.2): pasos 2, 5, 6 y 7. Los pasos 1, 3 y 4 llegan en la ola 2 (TA-194, TA-196) y entran a
+// La tarea diaria (04 §10.2): pasos 1, 2, 5, 6 y 7. Los pasos 3 y 4 llegan en la ola 2 (TA-196) y entran a
 // `PASOS_DIARIA`. Un paso que falla no detiene a los demás (10.3): deja un evento `paso_fallido` y la tarea sigue.
 // "Hoy" es el `finn.hoy()` de la transacción (P4-9); el tiempo de cada paso lo mide `cronometro` (inyectable).
 import {
@@ -17,6 +17,7 @@ import { registrarNotificacion } from '../push/registro.ts';
 import { procesar } from '../sms/procesar.ts';
 import { fechaLocalDeInstante } from '../tiempo/index.ts';
 import { purgar, type ResultadoDePaso } from './purgas.ts';
+import { pasoRegistro } from './registro-automatico.ts';
 
 /** 10.2 paso 2: máximo de SMS sin resultado por ejecución. */
 export const LIMITE_SMS = 200;
@@ -102,7 +103,7 @@ export const pasoMetricas: PasoTarea = {
 export const pasoPurgas: PasoTarea = { n: 5, ejecutar: purgar };
 
 /** Los pasos implementados, en orden (10.2). */
-export const PASOS_DIARIA: readonly PasoTarea[] = [pasoSms, pasoPurgas, pasoMetricas];
+export const PASOS_DIARIA: readonly PasoTarea[] = [pasoRegistro, pasoSms, pasoPurgas, pasoMetricas];
 
 /** Corre los pasos en orden; el que falla deja `paso_fallido` (10.3) y no detiene a los demás. */
 export async function correrPasos(

@@ -265,7 +265,7 @@
 
   "TA-193": { "estado": "terminada", "pr": 174 },
 
-  "TA-194": { "estado": "pendiente" },
+  "TA-194": { "estado": "en_curso", "rama": "ta-194-programadas-2" },
 
   "TA-195": { "estado": "terminada", "pr": 176 },
 
