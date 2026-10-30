@@ -138,7 +138,9 @@ function humo(
     h.stdout.on('data', (d: Buffer) => o.push(d.toString()));
     h.stderr.on('data', (d: Buffer) => e.push(d.toString()));
     h.on('error', falla);
-    h.on('close', (codigo) => { fin({ codigo, stdout: o.join(''), stderr: e.join('') }); });
+    h.on('close', (codigo) => {
+      fin({ codigo, stdout: o.join(''), stderr: e.join('') });
+    });
   });
 }
 
@@ -157,7 +159,6 @@ describe('PRU-SEG-OPER', () => {
   it('PRU-SEG-OPER-103 [HUMO-base] humo.sh contra una base local con el bootstrap: cada paso de H-01 a H-12 emite una línea JSON { paso, resultado, medido, detalle }, H-01 a H-08, H-11 y H-12 pasan, H-09 y H-10 quedan omitidos, y ninguna línea de stdout ni de stderr contiene el valor de una variable secreta; control: un error de psql que nombra un secreto sale tapado', async () => {
     const r = await humo({});
     const salida = `${r.stdout}\n${r.stderr}`;
-    console.log(salida);
     sinSecretos(salida);
     const ls = lineas(r.stdout);
     expect(ls.map((l) => l.paso)).toEqual(PASOS);
