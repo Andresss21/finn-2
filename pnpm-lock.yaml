@@ -99,6 +99,9 @@ importers:
       '@types/react-dom':
         specifier: 19.2.3
         version: 19.2.3(@types/react@19.3.0)
+      axe-core:
+        specifier: 4.14.0
+        version: 4.14.0
       otpauth:
         specifier: 9.5.2
         version: 9.5.2
