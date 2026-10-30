@@ -57,6 +57,12 @@ test.describe('PRU-E2E-ACCESO', () => {
     await page.goto(PROTEGIDA);
     expect(destinoDe(page.url())).toBe(AL_INGRESAR);
 
+    // El matcher tal como lo compila Next: los recursos públicos nunca redirigen.
+    for (const recurso of ['/icon.svg', '/favicon.ico', '/marca/simbolo.svg', '/sin-conexion']) {
+      const r = await page.request.get(recurso, { maxRedirects: 0 });
+      expect(r.headers()['location'], recurso).toBeUndefined();
+    }
+
     // Cookie ilegible
     const url = baseURL ?? '';
     await context.addCookies([{ name: nombreCookie(), value: 'base64-no-es-json', url }]);

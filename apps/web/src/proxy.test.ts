@@ -91,7 +91,15 @@ describe('PRU-SEG-ACCESO', () => {
     expect(cerrada.headers.get('set-cookie')).toContain('sb-127-auth-token=;');
 
     const matcher = new RegExp(`^${config.matcher[0] ?? ''}$`);
-    for (const ruta of ['/', '/cuentas', '/ingresar', '/apuntes', '/sin-conexion-otra'])
+    for (const ruta of [
+      '/',
+      '/cuentas',
+      '/ingresar',
+      '/apuntes',
+      '/sin-conexion-otra',
+      '/icon.svg/x',
+      '/marcas',
+    ])
       expect(matcher.test(ruta), ruta).toBe(true);
     for (const ruta of [
       '/api/sms',
@@ -102,7 +110,9 @@ describe('PRU-SEG-ACCESO', () => {
       '/serwist/sw.js',
       '/sin-conexion',
       '/manifest.webmanifest',
-      '/iconos/icono-192.png',
+      '/marca/icono-192.png',
+      '/marca/apple-touch-icon.png',
+      '/icon.svg',
       '/favicon.ico',
     ])
       expect(matcher.test(ruta), ruta).toBe(false);

@@ -54,6 +54,6 @@ export async function proxy(peticion: NextRequest): Promise<NextResponse> {
 // Consecuencia: `@supabase/ssr` no refresca cookies en `/api/`; lo hace el cliente de servidor de cada handler.
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|iconos/|favicon\\.ico|manifest\\.webmanifest|serwist/|sin-conexion(?:/|$)|api/).*)',
+    '/((?!_next/static|_next/image|marca/|icon\\.svg$|favicon\\.ico|manifest\\.webmanifest|serwist/|sin-conexion(?:/|$)|api/).*)',
   ],
 };
