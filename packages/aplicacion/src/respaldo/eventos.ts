@@ -76,7 +76,7 @@ function leerCuerpo(evento: Evento, texto: string): DatosEvento | null {
     return null;
   }
   const r = CUERPOS[evento].safeParse(crudo);
-  return r.success ? (r.data as DatosEvento) : null;
+  return r.success ? r.data : null;
 }
 
 /** 15.2: `respaldo` y `restauracion` son `info`; `deriva`, `error`. La restauración no lleva datos. */
@@ -86,7 +86,8 @@ function evento(e: Evento, datos: DatosEvento): NuevoEvento {
 }
 
 async function escribirEvento(tx: EscritorTecnicoTx, e: Evento, datos: DatosEvento): Promise<void> {
-  if (e === 'respaldo') await registrarRespaldo(tx, String(datos['objeto']));
+  const objeto = datos['objeto'];
+  if (e === 'respaldo' && typeof objeto === 'string') await registrarRespaldo(tx, objeto);
   if (e === 'restauracion') await registrarRestauracion(tx);
   await registrarEvento(tx, evento(e, datos));
 }
