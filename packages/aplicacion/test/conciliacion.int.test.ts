@@ -607,7 +607,10 @@ describe('PRU-SEG-CONC-001', () => {
       },
     });
     const iniciar = (idError: string, extra: Partial<DepsMarco> = {}, conc = c) =>
-      conc.iniciar({ cuentaId: E1, archivo: CSV }, { ...deps(), nuevoIdError: () => idError, ...extra });
+      conc.iniciar(
+        { cuentaId: E1, archivo: CSV },
+        { ...deps(), nuevoIdError: () => idError, ...extra },
+      );
     const eventoDe = (idError: string) => leer((t) => eventoPorIdError(t, idError), RELOJ);
     const DEL_EVENTO = {
       nivel: 'error',

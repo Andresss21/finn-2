@@ -68,9 +68,7 @@ export async function iniciarConciliacion(
         // Los formatos son de efectivo o de tarjeta: el tipo de la cuenta tiene que ser el del formato (9.2)
         if (ADAPTADORES[estado.formato]?.tipoCuenta !== cuenta.tipo)
           return rechazo({ codigo: 'cuenta_tipo_no_valido', datos: { tipo: cuenta.tipo } });
-        return sinDatosDelArchivo('clasificar', () =>
-          clasificarConciliacion(i, cuentaId, estado),
-        );
+        return sinDatosDelArchivo('clasificar', () => clasificarConciliacion(i, cuentaId, estado));
       },
       d.opciones?.() ?? {},
     );
