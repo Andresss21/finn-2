@@ -31,7 +31,7 @@ import {
 } from '../../src/operaciones/marco.ts';
 import { OP14, OP15, OP17, OP18 } from '../../src/operaciones/presupuesto/index.ts';
 import { OP31 } from '../../src/operaciones/eventos/index.ts';
-import { OP20, OP21, OP23, OP27, OP28 } from '../../src/operaciones/transacciones/index.ts';
+import { OP20, OP21, OP23, OP27, OP28, OP29 } from '../../src/operaciones/transacciones/index.ts';
 import type { Ejecutor } from '../../../dominio/escenarios/ejecutar';
 import {
   type Escenario,
@@ -367,6 +367,8 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
         },
       });
     }
+    case 'OP-29':
+      return como(OP29, { transaccionId: deEtiqueta(op.etiqueta) });
     case 'OP-31': {
       const transaccionId = deEtiqueta(op.cobro);
       const linea = buscar(
@@ -382,7 +384,7 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
       });
     }
     default:
-      throw new Error(`ejecutor int: ${op.op} no está en el lote de TA-188 ni de TA-189`);
+      throw new Error(`ejecutor int: ${op.op} no está en el lote de TA-188, TA-189 ni TA-190`);
   }
 }
 
@@ -454,7 +456,21 @@ const reporteClase: Extra = async (s, i, clase) => {
   const r = await reporte(depsConsulta(s), { tipo: 'ingresos_gastos' });
   return r.periodos.reduce((a, p) => a + p[campo], 0);
 };
+/** `Meta:<categoría>`: la evaluación de la meta de la categoría en el período activo (04 §4.12), de la misma instantánea. */
+const evaluacionDeMeta = (i: Instantanea, nombre: string) => {
+  const cat = buscar(
+    i.hechos.categorias.find((x) => x.nombre === nombre),
+    `una categoría (${nombre})`,
+  );
+  return buscar(
+    i.metas.find((x) => x.categoriaId === cat.id)?.evaluacion ?? undefined,
+    `la evaluación de la meta de ${nombre}`,
+  );
+};
 const EXTRAS: Record<string, Extra> = {
+  metaPedido: (_s, i, c) => evaluacionDeMeta(i, c).pedido,
+  metaFalta: (_s, i, c) => evaluacionDeMeta(i, c).falta,
+  metaPeriodo: (_s, i, c) => evaluacionDeMeta(i, c).montoDelPeriodo ?? 0,
   reporte: reporteClase,
   enCamino: async (s) => (await detalleLpa(depsConsulta(s))).descomposicion.enCamino,
   reduccionesDebito: async (s) =>
