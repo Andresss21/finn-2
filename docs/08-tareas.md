@@ -412,12 +412,12 @@ tu: TU-13
 ### HT-4 Infraestructura real verificada (P8-7)
 
 ```hito
-despues: TA-253
-requiere: TA-250, TA-251, TA-253
+despues: TA-243
+requiere: TA-250, TA-251, TA-253, TA-243
 tu: TU-06, TU-07
 ```
 
-**Criterio:** `tools/humo/humo.sh` contra el proyecto real con H-01 a H-12 en `pasa` (o con su alternativa de 04 §17.2 registrada); `PRU-MAN-ESQ-001` con resultado `pasa` firmado; `PG_MAYOR` de `versiones.env` igual a H-01; disparador de P7-12 resuelto (07 §32.1). **[A2]** Tareas: TA-251 (respaldo, que H-08 usa), TA-250 y TA-253 (§15), y TU-06, TU-07.
+**Criterio:** `tools/humo/humo.sh` contra el proyecto real con H-01 a H-12 en `pasa` (o con su alternativa de 04 §17.2 registrada); `PRU-MAN-ESQ-001` con resultado `pasa` firmado; `PG_MAYOR` de `versiones.env` igual a H-01; disparador de P7-12 resuelto (07 §32.1). **[A2]** Tareas: TA-251 (respaldo, que H-08 usa), TA-250, TA-243 (H-06, **[CH-38]**) y TA-253 (§15), y TU-06, TU-07.
 
 ### HT-5 Primer despliegue desde CI (P8-7)
 
@@ -1500,6 +1500,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-35** | Partición de TA-177 por tamaño (DT-02). El alcance completo de TA-177 midió prod=561 contra una estimación de 360: pasa el tope de DT-01 (400) y no es una tarea normal (el +30 % no aplica). Se parte: TA-177 conserva el contrato del cuerpo, el token y OPT-01, `recibir()` con los códigos 401, 413, 503 y 200 y el guardado sin bloqueo (`escribirSms()` de `@finn/db`, 03 §5.1, fila "Guardar SMS"), y cubre OPT-01, BE-44, BE-59, BE-60 y BE-61; TA-242, nueva, lleva el procesamiento de OP-35 en el marco, los intentos sin sobrescribir y el barrido de 5 (OP-35, BE-45, BE-62, N-02-intentos) con PRU-INT-BAND-105. TA-216 pasa a depender también de TA-242, y TA-191 pasa al orden 196 (libre) y a depender de TA-242, que toma el 192 y va antes que ESC-46@int (E13); TA-186 sigue dependiendo de TA-177, porque no hay un orden libre antes del suyo (185): su paso 2 (SMS sin resultado) usa `procesar()` de TA-242. El código completo queda en la rama `ta-177-sms-completo` | 08 TA-177, TA-242, TA-216, TA-191, HT-3 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-35]** en 08 TA-177, TA-242 y HT-3 |
 | **CH-36** | Propuesta de la previsualización (OP-24, OP-46, OP-53). 04 §4.3, paso 3, cerraba lo que devuelve `previsualizar` en `{ revisionVista, huellaImpacto, impacto, avisos, rechazos }`, pero OP-24 y OP-46 (§3.4, §3.8) dicen que la previsualización devuelve el desglose del modelo del préstamo, CP-16 se apoya en eso para el desglose de una cuota al conciliar y OP-53 devuelve `saldoFinn` y `diferencia`: no había lugar para esos datos. Además, el selector `desglosePropuesto` tomaba la primera cuota no pagada e ignoraba la fecha. Resolución: el paso 3 agrega `propuesta?`, propio de cada operación, de solo lectura y fuera de `huellaImpacto`; para OP-24 en modalidad cuota y OP-46 con tipo `cuota_prestamo` tiene la forma del contexto `cuota_prestamo` de 6.14.4 (`desglosePropuesto?`, `cuotaEmparejada?`), con la cuota emparejada por `numeroCuota` si se indicó y, si no, con la no pagada a ±10 días o menos de la fecha, la más cercana (01 Anexo A.2, puntos 7 y 8); `numeroCuota` no se guarda. Para OP-53 es `{ saldoFinn; diferencia; … }`. Ningún número de escenarios cambia | 04 §4.3, §3.4 (OP-24), §3.8 (OP-46, OP-53), §6.14.4 (CP-16); 01 Anexo A.2 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-36]** en 04 §4.3, §3.4 y §3.8 |
 | **CH-37** | Referencias `FORM-<operacion>` en M7. Las fichas de 08 (TA-173, TA-174 y otras) tienen `cubre: FORM-registrar, FORM-asignar, …`, y el resumen exige que una prueba los cite entre corchetes, pero M7 solo aceptaba `CA`, `ESC`, `AV`, `INV`, `CB`, `REC`, `V`, `V5`, `V6`, `H`, `CF`, `FT` y `Q-<consulta>`: `FORM-registrar` daba «formato desconocido» y quedaba «sin prueba». Resolución: el formato de las referencias y M7 aceptan `FORM-<operacion>`, con `<operacion>` igual a la clave de operación de `formulario()` (snake_case, `FORM-pagar_tarjeta`), y existen si están entre las operaciones de `formulario()` de 06 | 07 §2.1, §13.1; 04 §6.14 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-37]** en 07 §2.1, §13.1 y `tools/pruebas/reglas.ts` |
+| **CH-38** | Partición de TA-250 por tamaño (DT-02). El alcance completo de TA-250 midió prod=583 contra una estimación de 360: pasa el tope de DT-01 (400) y no es una tarea normal (el +30 % no aplica). Se parte: TA-250 conserva `humo.sh` con H-01 a H-05, H-07, H-08, H-11 y H-12, con H-06 en `omitido` hasta TA-243 (H-09 y H-10, hasta TA-253), y cubre HUMO-base; TA-243, nueva (orden 197, libre), lleva H-06, el patrón de transacciones por el pooler (`tools/humo/patron.ts`, RK-06), y cubre HUMO-patron, objetivo nuevo del catálogo (`plan/objetivos.txt`). HT-4 requiere también TA-243 y termina en ella (`despues`). `humo.sh` acepta además entradas opcionales fuera de 04 §17.1: `HUMO_CLAVE_PUBLICA` (H-11), `HUMO_CLAVE_MIGRACIONES`, `HUMO_CLAVE_APP` y `HUMO_CLAVE_RESPALDO` (las del bootstrap; si faltan, se generan), `HUMO_PUERTO_TX`, `HUMO_PUERTO_SESION` y `HUMO_PASOS`. El código completo queda en la rama `ta-250-humo-completo` | 08 TA-250, TA-243, HT-4; 04 §17.1 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-38]** en 08 TA-250, TA-243 y HT-4 |
 
 ---
 
@@ -1721,9 +1722,10 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 191 | TA-194 | B3 | 1 | HT-3 | normal | Programadas y registro automático (OP-42 a OP-44, OP-51) | 340 | 0 |
 | 192 | TA-242 | B3 | 1 | HT-3 | obligatoria | Procesar SMS: OP-35 en el marco, intentos y barrido (parte 2 de TA-177) | 265 | 0 |
 | 193 | TA-251 | B5 | — | HT-4 | obligatoria | Respaldo y restauración: scripts y prueba `RES` | 330 | 0 |
-| 194 | TA-250 | B5 | — | HT-4 | obligatoria | Prueba de humo: `humo.sh` con H-01 a H-08, H-11 y H-12 | 360 | 0 |
+| 194 | TA-250 | B5 | — | HT-4 | obligatoria | Prueba de humo: `humo.sh` con H-01 a H-08, H-11 y H-12 | 330 | 0 |
 | 195 | TA-253 | B5 | — | HT-4 | obligatoria | Prueba de humo: H-09 (carga desde `iad1`) y H-10 (Auth) | 300 | 0 |
 | 196 | TA-191 | B3 | 1 | HT-3 | normal | Escenarios contra PostgreSQL: ESC-37, ESC-38, ESC-39, ESC-42, ESC-43, ESC-44, ESC-46, ESC-47, ESC-48, ESC-49 | 40 | 0 |
+| 197 | TA-243 | B5 | — | HT-4 | obligatoria | Prueba de humo: H-06, el patrón de transacciones por el pooler (parte 2 de TA-250) | 260 | 0 |
 | 600 | TA-136 | B2 | 2 | HT-2 | obligatoria | `aplicar`: asignación rápida y cambiar el ciclo (OP-16, OP-19) | 260 | 0 |
 | 601 | TA-137 | B2 | 2 | HT-2 | obligatoria | `aplicar`: inversiones y desembolso (OP-25, OP-26) | 180 | 0 |
 | 604 | TA-140 | B2 | 2 | HT-2 | normal | Selectores de por cobrar, programadas y contextos de formulario: cobrar, condonar y devolver (ola 2, parte 1) | 400 | 0 |
@@ -3801,6 +3803,40 @@ compartido: —
 
 **Terminada cuando.** La prueba pasa.
 
+#### TA-243 Prueba de humo: H-06, el patrón de transacciones por el pooler (parte 2 de TA-250)
+
+Parte 2 de TA-250 (DT-02, 08 §1.2, CH-38). **Portar desde la rama `ta-250-humo-completo`**, que tiene todo el código: `tools/humo/patron.ts` y el paso H-06 de `tools/humo/pasos/base.sh`.
+
+```tarea
+orden: 197
+bloque: B5
+hito: HT-4
+depende: TA-250
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=260 archivos=2 ca=0 migraciones=0 total=280
+cubre: HUMO-patron
+pru: PRU-SEG-OPER-106
+compartido: —
+```
+
+**Qué construir.**
+- `tools/humo/patron.ts`: H-06 de 04 §17.2 (RK-06), que repite V-01, V-02, V-05 a V-08, V-10 y V-11 de 04 §0.7 con `escribir()` y `leer()` de TA-150 por el pooler en modo transacción (`DATABASE_URL` con `pgbouncer=true`), más 50 escrituras seguidas en el mismo pool; al terminar borra las filas que escribió.
+- H-06 en `tools/humo/pasos/base.sh` lanza `patron.ts` en lugar del `omitido` de TA-250.
+
+**Leer.** 04 §17.1 a §17.3, §0.7 (V-01 a V-11), §4.2, §5.1; TU-07 de este documento.
+
+**Archivos.** `tools/humo/patron.ts`, `tools/humo/pasos/base.sh`, `tools/humo/test/humo.test.ts`.
+
+**Pruebas primero.**
+- **PRU-SEG-OPER-106** (nueva, DT-17): `humo.sh` contra el contenedor local: H-06 pasa, con el resultado de cada V en `medido`, y la salida sigue sin secretos.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:integracion -t "PRU-SEG-OPER-106"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa.
+
 #### TA-141 Reportes base (04 §6.9.2, §6.9.3; parte 1)
 
 Partida en dos por tamaño (DT-02, 08 §1.2): esta parte tiene los reportes base y `existiaEn`; el top de comercios y el gasto semanal son TA-230.
@@ -5803,26 +5839,26 @@ depende: TA-059, TA-251, TA-150
 tu: —
 revision: obligatoria
 paralelo: libre
-tamano: prod=360 archivos=6 ca=0 migraciones=0 total=700
+tamano: prod=330 archivos=8 ca=0 migraciones=0 total=530
 cubre: HUMO-base
 pru: PRU-SEG-OPER-103
 compartido: —
 ```
 
 **Qué construir.**
-- `tools/humo/humo.sh` (bash, Git Bash y Ubuntu) con los pasos de 04 §17.2 H-01 a H-08, H-11 y H-12, cada uno independiente; los pasos H-09 y H-10 quedan como `omitido` hasta TA-253.
-- H-05 usa C3 a C6 de B1; H-06 es `tools/humo/patron.ts`, que repite V-01, V-02, V-05 a V-08, V-10 y V-11 con `escribir()` y `leer()` de TA-150 por el pooler real; H-08 usa `respaldar.mjs` y `restaurar.sh` de TA-251.
+- `tools/humo/humo.sh` (bash, Git Bash y Ubuntu) con los pasos de 04 §17.2 H-01 a H-05, H-07, H-08, H-11 y H-12, cada uno independiente; los pasos H-09 y H-10 quedan como `omitido` hasta TA-253, y H-06 como `omitido` hasta TA-243 **[CH-38]**.
+- H-05 usa C3 a C6 de B1; H-08 usa `respaldar.mjs` y `restaurar.sh` de TA-251. H-06 (`tools/humo/patron.ts`) es TA-243 **[CH-38]**.
 - Entradas solo por variables de la sesión (04 §17.1); la salida nunca imprime secretos.
 
 **Leer.** 04 §17.1 a §17.3 completos; TU-07 de este documento.
 
-**Archivos.** `tools/humo/humo.sh`, `tools/humo/patron.ts`, `tools/humo/pasos/*.sh`, `tools/humo/test/humo.test.sh`.
+**Archivos.** `tools/humo/humo.sh`, `tools/humo/pasos/{comun,base,h05-migraciones,h08-respaldo}.sh`, `tools/humo/test/humo.test.ts`, `tsconfig.json`, `vitest.config.ts` **[CH-38]**.
 
 **Pruebas primero.**
 - **PRU-SEG-OPER-103** (nueva, DT-17): `humo.sh` contra una base local con el bootstrap: cada paso emite una línea JSON `{ paso, resultado, medido, detalle }` y ninguna línea contiene el valor de una variable secreta.
 - La prueba nueva contra el contenedor local, con variables secretas de prueba cuyo valor se busca en la salida.
 
-**Comandos.** `bash tools/humo/test/humo.test.sh`; `pnpm ci:local`.
+**Comandos.** `pnpm test:integracion -t "PRU-SEG-OPER-103"`; `pnpm ci:local`.
 
 **Terminada cuando.** La prueba pasa; la salida es JSON por línea y sin secretos.
 

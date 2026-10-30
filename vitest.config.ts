@@ -127,6 +127,8 @@ export default defineConfig({
             'packages/aplicacion/test/**/*.int.test.ts',
             'packages/db/test/**/*.int.test.ts',
             'apps/web/src/app/api/**/*.rh.test.ts',
+            // PRU-SEG-OPER-103 (TA-250): humo.sh contra su propio contenedor; el arnés no lo usa
+            'tools/humo/test/**/*.test.ts',
           ],
           exclude: excluidos,
           // Arnés de PostgreSQL (TA-050, 07 §5.2): contenedor, bootstrap y plantilla antes de las suites
