@@ -5,7 +5,13 @@
 // Una base por escenario (clonada de la plantilla) y una más por cada fila de contraste (clonada del estado anterior).
 import { randomUUID } from 'node:crypto';
 import { avisosDeEstado, type Instantanea, type Uuid } from '@finn/dominio';
-import { Memoria, registrarEvento, type OpcionesTx } from '@finn/db';
+import {
+  guardarSms,
+  leerDatosDeBandeja,
+  Memoria,
+  registrarEvento,
+  type OpcionesTx,
+} from '@finn/db';
 import { crearCliente, type Cliente } from '../../../db/src/cliente.ts';
 import { transaccionesSobre, txPrisma } from '../../../db/src/transacciones.ts';
 import {
@@ -18,12 +24,18 @@ import type { ClaimsSesion, SesionServidor } from '../../src/autenticacion/autor
 import { sinParametros } from '../../src/contratos/consultas.ts';
 import { consultar, type DepsConsulta } from '../../src/consultas/comun.ts';
 import { detalleCategoria } from '../../src/consultas/detalle-categoria.ts';
+import { detalleCuenta } from '../../src/consultas/detalle-cuenta.ts';
 import { cuentas } from '../../src/consultas/cuentas.ts';
 import { detalleLpa } from '../../src/consultas/detalle-lpa.ts';
 import { inicio } from '../../src/consultas/inicio.ts';
 import { reporte } from '../../src/consultas/reporte.ts';
-import { OP01 } from '../../src/operaciones/cuentas/index.ts';
-import { OP07 } from '../../src/operaciones/categorias/index.ts';
+import { OP01, OP06 } from '../../src/operaciones/cuentas/index.ts';
+import { OP07, OP09, OP11, OP12 } from '../../src/operaciones/categorias/index.ts';
+import { OP37 } from '../../src/operaciones/bandeja/index.ts';
+import { lineasVistas } from '../../src/operaciones/bandeja/comunes.ts';
+import { crearConciliacion } from '../../src/operaciones/conciliacion/index.ts';
+import { firmarCarga } from '../../src/conciliacion/carga.ts';
+import { procesar } from '../../src/sms/procesar.ts';
 import {
   confirmar,
   type DefinicionOperacion,
@@ -38,6 +50,7 @@ import {
   OP20,
   OP21,
   OP23,
+  OP24,
   OP25,
   OP26,
   OP27,
@@ -66,6 +79,9 @@ const SESION: SesionServidor = {
   obtenerClaims: () => Promise.resolve({ sub: USUARIO, aal: 'aal2' } as ClaimsSesion),
   obtenerUsuario: () => Promise.resolve({ id: USUARIO }),
 };
+
+/** Claves de prueba de la carga firmada (bytes repetidos, no secretos): OP-47 la exige (BE-49). */
+const CLAVES_CARGA = { activa: 'k1', claves: { k1: Buffer.alloc(32, 7).toString('base64') } };
 
 type Transacciones = ReturnType<typeof transaccionesSobre>;
 export interface Estado {
@@ -216,9 +232,21 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
   });
   switch (op.op) {
     case 'OP-01': {
-      if (op.ultimos4 !== undefined) throw new Error('OP-01 con institución: no está en el lote');
       const tipo = op.tipo ?? 'efectivo';
-      const comun = { id: nuevo(), nombre: op.cuenta, fechaApertura: op.apertura ?? '2027-01-21' };
+      // la institución del dato es BAC (formato de SMS de la semilla, 03 §9.5): con ella un SMS encuentra la cuenta
+      const bac =
+        op.ultimos4 === undefined
+          ? undefined
+          : await s.tx.leer(
+              (t) => txPrisma(t).institucion.findFirstOrThrow({ where: { nombre: 'BAC' } }),
+              opcionesDe(hoy),
+            );
+      const comun = {
+        id: nuevo(),
+        nombre: op.cuenta,
+        fechaApertura: op.apertura ?? '2027-01-21',
+        ...(bac && { institucionId: bac.id, ultimos4: op.ultimos4 }),
+      };
       const saldo = dolares(op.saldo ?? 0);
       if (tipo === 'efectivo' || tipo === 'inversion') return como(OP01, { ...comun, tipo, saldo });
       if (tipo === 'tarjeta')
@@ -485,6 +513,92 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
         fechaEsperada: op.fecha,
       });
     }
+    case 'OP-06':
+      return como(OP06, { cuentaId: cuentaId(i, op.cuenta) });
+    case 'OP-09': {
+      const destinoDe = (d: string) => (d === 'LPA' ? 'lpa' : { categoriaId: categoriaId(i, d) });
+      return como(OP09, {
+        categoriaId: categoriaId(i, op.categoria),
+        ...(op.destino && { destinoDisponible: destinoDe(op.destino) }),
+        ...(op.devolverFuturas && { devolverAsignacionesFuturas: true }),
+        ...(op.desactivar && {
+          programadas: op.desactivar.map((e) => ({
+            programadaId: deEtiqueta(`programada:${e}`),
+            accion: 'desactivar',
+          })),
+        }),
+      });
+    }
+    case 'OP-11': {
+      const origen = categoriaId(i, op.categoria);
+      const hacia = op.destino === 'LPA' ? undefined : categoriaId(i, op.destino);
+      return como(OP11, {
+        categoriaId: origen,
+        monto: dolares(op.monto),
+        destino: hacia === undefined ? 'lpa' : { categoriaId: hacia },
+        esperado: {
+          asignacionOrigen: texto(asignacion(origen, activo)),
+          ...(hacia && { asignacionDestino: texto(asignacion(hacia, activo)) }),
+        },
+      });
+    }
+    case 'OP-12':
+      return como(OP12, {
+        origenId: categoriaId(i, op.origen),
+        destinoId: categoriaId(i, op.destino),
+      });
+    case 'OP-24':
+      return como(OP24, {
+        modalidad: 'cuota',
+        id: nuevo(),
+        fecha: fecha(),
+        total: dolares(op.capital + op.interes + op.seguro),
+        origenId: cuentaId(i, op.origen ?? 'Ahorro'),
+        prestamoId: cuentaId(i, op.prestamo),
+        categoriaId: categoriaId(i, op.categoria),
+        capital: dolares(op.capital),
+        interes: dolares(op.interes),
+        seguro: dolares(op.seguro),
+      });
+    case 'OP-37': {
+      const smsId = buscar(s.etiquetas.get(op.etiqueta), `el SMS ${op.etiqueta}`);
+      const m = buscar(
+        (await s.tx.leer((t) => leerDatosDeBandeja(t), opcionesDe(hoy))).movimientos.find(
+          (x) => x.movimiento.smsId === smsId,
+        ),
+        `el movimiento del SMS ${op.etiqueta}`,
+      );
+      return como(OP37, {
+        movimientoId: m.movimiento.id,
+        id: nuevo(),
+        categoriaId: categoriaId(i, op.categoria),
+        esperado: { lineas: lineasVistas([...m.lineas].sort((a, b) => a.orden - b.orden)) },
+      });
+    }
+    case 'OP-47': {
+      const cuenta = cuentaId(i, op.cuenta);
+      const estado = {
+        formato: 'bac_tarjeta' as const,
+        fechaEstado: FechaLocal.desdeTexto(op.fecha),
+        saldoFinal: usd(op.saldo),
+        movimientos: op.movimientos.map((x) => ({
+          indice: x.indice,
+          fecha: FechaLocal.desdeTexto(x.fecha),
+          monto: usd(x.monto),
+          descripcion: `MOVIMIENTO ${x.indice}`,
+        })),
+      };
+      const conciliacion = crearConciliacion({ claves: CLAVES_CARGA, ahoraMs: () => 0 });
+      return como(conciliacion.OP47, {
+        id: nuevo(),
+        cuentaId: cuenta,
+        carga: firmarCarga(CLAVES_CARGA, cuenta, estado as never, 1),
+        coincidencias: op.coincidencias.map((c) => ({
+          transaccionId: deEtiqueta(c.etiqueta),
+          movimientoIndice: c.indice,
+        })),
+      });
+    }
     default:
       throw new Error(`ejecutor int: ${op.op} no está en el lote de los escenarios`);
   }
@@ -494,10 +608,15 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
 async function aplicarOp(s: Estado, op: Op, avisos: Set<string>): Promise<Rechazo | undefined> {
   const hoy = op.hoy ?? s.hoy;
   const minutos = 12 * 60 + ++s.reloj;
-  const local =
+  const explicito =
     'registrado' in op && op.registrado
       ? op.registrado
-      : `${hoy}T${pad(Math.floor(minutos / 60))}:${pad(minutos % 60)}`;
+      : op.op === 'OP-35'
+        ? op.recibido
+        : op.op === 'OP-37'
+          ? op.aprobado
+          : undefined;
+  const local = explicito ?? `${hoy}T${pad(Math.floor(minutos / 60))}:${pad(minutos % 60)}`;
   const desfaseMs = await desfaseHacia(s, hoy, local);
   const deps: DepsMarco = {
     memoria: s.memoria,
@@ -510,6 +629,24 @@ async function aplicarOp(s: Estado, op: Op, avisos: Set<string>): Promise<Rechaz
     // 04 §10.2 paso 1: la tarea real; lo que queda pendiente avisa (AV-23)
     const t = await pasoRegistro.ejecutar(deps);
     if ((t.detalle?.['sinRegistrar'] ?? 0) > 0) avisos.add('AV-23');
+    return undefined;
+  }
+  if (op.op === 'OP-35') {
+    // 04 §8.2 paso 4 y §8.4: el SMS se guarda a la hora de recepción (`finn.ahora()`) y lo procesa la función real
+    const { i } = await leerI(s, hoy);
+    const ultimos4 = buscar(
+      i.hechos.cuentas.find((k) => k.id === cuentaId(i, op.cuenta))?.ultimos4 ?? undefined,
+      `los últimos cuatro dígitos de ${op.cuenta}`,
+    );
+    const texto = `VISA ${ultimos4}: has realizado una compra por USD ${dolares(op.monto)} en el comercio ${op.comercio} ${op.fecha.replaceAll('-', '/')}`;
+    const sms = await s.tx.escribirSms(
+      (tx) => guardarSms(tx, { texto, remitente: 'BAC' }),
+      opcionesDe(hoy, desfaseMs),
+    );
+    s.etiquetas.set(op.etiqueta, sms.id as Uuid);
+    const fallo = await procesar(sms.id, deps);
+    if (fallo !== undefined)
+      throw new Error(`OP-35: ${fallo instanceof Error ? fallo.message : 'paso d sin bloqueo'}`);
     return undefined;
   }
   const { def, entrada } = await entradaDe(s, op, hoy);
@@ -577,7 +714,19 @@ const evaluacionDeMeta = (i: Instantanea, nombre: string) => {
 };
 const cuentaPorNombre = (i: Instantanea, nombre: string) =>
   i.cuentas.find((x) => x.cuentaId === cuentaId(i, nombre));
+/** `difAceptada:<cuenta>` y `difActual:<cuenta>`: la última conciliación del detalle de la cuenta (04 §6.6, DM-8). */
+const conciliacion =
+  (campo: 'diferenciaAceptada' | 'diferenciaActual'): Extra =>
+  async (s, i, nombre) => {
+    const d = await detalleCuenta(depsConsulta(s), { cuentaId: cuentaId(i, nombre) });
+    return (d.conciliaciones[0]?.[campo] as number | undefined) ?? 0;
+  };
 const EXTRAS: Record<string, Extra> = {
+  difAceptada: conciliacion('diferenciaAceptada'),
+  difActual: conciliacion('diferenciaActual'),
+  // interés + seguro de las cuotas pagadas (H6), de la misma instantánea que el resto
+  costoFinanciero: (_s, i) =>
+    i.clasificacion.costosFinancieros.reduce((a, x) => a + x.interes + x.seguro, 0),
   valorInversion: (_s, i, n) => cuentaPorNombre(i, n)?.saldo ?? 0,
   capitalPrestamo: (_s, i, n) => cuentaPorNombre(i, n)?.saldo ?? 0,
   diasPeriodo: (_s, i, f) =>
@@ -704,15 +853,21 @@ export const ejecutorInt: Ejecutor<Estado> = {
     }
     const avisos = new Set<string>();
     let rechazo: string | undefined;
-    for (const [n, op] of p.ops.entries()) {
-      const r = await aplicarOp(s, op, avisos);
+    // Una fila con varias operaciones y un rechazo esperado se descarta entera (01 §5.0.1): se corre en una copia
+    // de la base y, si se rechaza, la copia se tira y la línea principal queda como estaba.
+    const enCopia = p.espera.rechazo !== undefined && p.ops.length > 1;
+    const trabajo = enCopia ? await ejecutorInt.bifurcar(s) : s;
+    for (const op of p.ops) {
+      const r = await aplicarOp(trabajo, op, avisos);
       if (!r) continue;
-      if (n > 0)
-        throw new Error(
-          `paso ${p.n}: un rechazo tras operaciones ya confirmadas no se puede descartar entero`,
-        );
       rechazo = r.codigo;
       break;
+    }
+    if (enCopia) {
+      if (rechazo === undefined) {
+        await ejecutorInt.terminar(s);
+        Object.assign(s, trabajo); // sin rechazo la fila se aplicó: la copia es la línea principal
+      } else await ejecutorInt.terminar(trabajo);
     }
     const { obs, i } = await observar(s, claves, avisos, previas);
     return rechazo === undefined ? obs : { ...obs, rechazo, intacto: JSON.stringify(i) === previa };
