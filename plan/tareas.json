@@ -249,7 +249,7 @@
 
   "TA-188": { "estado": "terminada", "pr": 154 },
 
-  "TA-189": { "estado": "pendiente" },
+  "TA-189": { "estado": "en_curso", "rama": "ta-189-escenarios-int" },
 
   "TA-190": { "estado": "pendiente" },
 
