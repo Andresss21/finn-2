@@ -1,4 +1,5 @@
-// tools/ci/minutos.ts — M4 sin token personal (TA-013; 07 §6.5, §6.6, §32.2, §32.3; DP-12, DP-36, P7-14, CH-02).
+// tools/ci/minutos.ts — M4 sin token personal (TA-013; 07 §6.5, §6.6, §32.2, §32.3; DP-12, DP-36, P7-14, CH-02, CH-46).
+// CH-46: el repositorio es público y los runners estándar son gratis; mide y publica el uso, pero la cuota no decide.
 // Portado de docs/anexos/07-pruebas-verificacion/07-pruebas-verificacion/matriz/tools/ci/minutos.ts (V7-07), con la
 // reserva fija, la proyección sin M5, el uso por job y el estado que restauran ci.yml y nocturno.yml.
 //   node tools/ci/minutos.ts calcular  primer paso del nocturno: suma los jobs del mes con el GITHUB_TOKEN del job
@@ -35,9 +36,7 @@ export type Api = (ruta: string) => Promise<unknown>;
 
 export const ESTADO = 'test-results/ci-modo/ci-modo.json';
 const USO = 'test-results/minutos';
-const [CUOTA, UMBRAL, DIA] = [2000, 1700, 86_400_000];
-// 6.4 y 6.5: M4 ahorra ≈ 280 al mes; suspender e2e de PR y el nocturno ahorra lo que les queda (194 + 80)
-const [AHORRO_M4, AHORRO_SUSPENDER] = [280, 274];
+const DIA = 86_400_000;
 const [M5_MIN, M5_MAX] = [60, 90]; // 32.2: sin M5, un arranque más por corrida
 
 const mesDe = (hoy: Date): string => hoy.toISOString().slice(0, 7).replace('-', '');
@@ -66,35 +65,24 @@ export function reservaPendiente(hoy: Date, produccion: boolean, cron: string | 
   return (dias - dia) * 3 + restauraciones * 5;
 }
 
-/** M4 (6.5) y la reserva fija (§32.3): proyección lineal, amenaza y recortes en su orden. */
+/** Proyección lineal y reserva pendiente (6.5, §32.3). CH-46: siempre normal; lo que traiga `anterior` no se hereda. */
 export function decidir(
   usados: number,
   hoy: Date,
   reserva: number,
   anterior: Partial<Estado> | null,
 ): Estado {
-  const [dia, dias] = [hoy.getUTCDate(), diasDelMes(hoy)];
-  const proyeccion = Math.round((usados * dias) / dia);
-  const resto = (dias - dia) / dias;
-  // Amenazada: quedan menos minutos que la reserva pendiente más la proyección del resto del mes
-  const deficit = (ahorro: number): number =>
-    reserva + (proyeccion - usados) - ahorro * resto - (CUOTA - usados);
-  const amenazada = deficit(0) > 0;
-  const recortes: Recorte[] = [];
-  if (amenazada || proyeccion > UMBRAL)
-    recortes.push('e2e-pr-al-pasar-a-listo', 'nocturno-semanal');
-  if (deficit(AHORRO_M4) > 0) recortes.push('e2e-pr-suspendido', 'nocturno-suspendido');
-  const falta = Math.ceil(deficit(AHORRO_M4 + AHORRO_SUSPENDER));
+  const proyeccion = Math.round((usados * diasDelMes(hoy)) / hoy.getUTCDate());
   return {
     mes: mesDe(hoy),
-    modo: recortes.length ? 'ahorro' : 'normal',
-    recortes,
-    amenazada,
+    modo: 'normal',
+    recortes: [],
+    amenazada: false,
     usados,
     proyeccion,
     proyeccion_sin_m5: [proyeccion + M5_MIN, proyeccion + M5_MAX],
     reserva_pendiente: reserva,
-    aviso_reserva: falta > 0 ? falta : null,
+    aviso_reserva: null,
     nocturno_ultimo: anterior?.nocturno_ultimo ?? null,
     ren_rojo_desde: anterior?.ren_rojo_desde ?? null,
   };

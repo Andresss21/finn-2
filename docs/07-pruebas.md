@@ -51,7 +51,7 @@ Textos de este documento en español neutro; voseo solo en lo que ve el usuario.
 | P7-3 | Reloj cambiable en ejecución, con las salvaguardas de BE-30, imposible en producción y con una prueba que lo demuestre; `finn.ahora()` igual a `now()` en las migraciones de producción y simulable solo en bases de prueba; contar los usos de `now()` | §4, CT-01, CT-02, V7-02, V7-04 |
 | P7-4 | `retries: 1` solo en E2E; cero en los demás niveles; aviso y cuarentena con fecha límite | §7 |
 | P7-5 | Mediana de N corridas en el runner de GitHub; con menos de 30 % de margen, CT, no aflojar; los presupuestos deterministas bloquean siempre | §6.6 |
-| P7-6 | 60 a 150 pushes al mes; E2E completo en `main` y en el nocturno; en el PR, las suites afectadas; cálculo con 150 y margen dentro de los 2.000 min; repositorio privado | §6.4, §6.5, P7-14 |
+| P7-6 | 60 a 150 pushes al mes; E2E completo en `main` y en el nocturno; en el PR, las suites afectadas; cálculo con 150 y margen dentro de los 2.000 min; repositorio privado. **[CH-46]** El repositorio es público: la cuota no limita y las palancas quedan sin efecto mientras lo sea | §6.4, §6.5, P7-14 |
 | P7-7 | Umbral de ramas solo en `@finn/dominio`, con el número que mida V7 | DP-09, V7-03 |
 | P7-8 | Una sola puerta de salida; plan para un error de dinero en las primeras semanas | Parte D (anticipado en DP-11) |
 | P7-9 | Android y Windows (NVDA); iOS y VoiceOver como riesgo aceptado; Playwright con WebKit como cobertura parcial; CT con esa precisión | DP-08, CT-03 (detalle en la Parte C) |
@@ -456,6 +456,8 @@ Lo que solo existe en el proyecto real queda en la prueba de humo de 04 §17, si
 
 ### 6.4 Minutos al mes con 150 pushes (P7-6)
 
+**[CH-46]** El repositorio es público y los runners estándar no se cobran: este modelo describe el uso, no un límite. Los márgenes contra 2.000 quedan sin efecto mientras sea público.
+
 **Supuestos de volumen.**
 - 150 pushes a ramas de PR al mes, en unos 40 PR (3,75 pushes por PR).
 - 40 merges a `main`, que con la concurrencia de 6.1 dan unas 25 corridas.
@@ -501,6 +503,8 @@ Con 60 pushes al mes (el piso de P7-6: unos 16 PR y 12 corridas de `main`), el m
 **Proyecto real.** Ni Vercel ni Supabase se usan en CI, salvo `desplegar` y el respaldo nocturno, que ya estaban en el costo de 02 §6.
 
 ### 6.5 Palancas para no pasar los 2.000 (DP-12)
+
+**[CH-46]** Mientras el repositorio sea público, M4 y el recorte permanente quedan sin efecto: `minutos.ts` sigue midiendo y publicando el uso por job, pero `decidir` devuelve siempre `normal`, sin recortes ni aviso. M1, M2, M3 y M5 ya están en los workflows y no cambian.
 
 | # | Palanca | Ahorro estimado | Cuándo se activa |
 |---|---|---|---|
@@ -1767,6 +1771,8 @@ El ensayo es la primera comprobación.
 
 ## 32. Disparadores pendientes y minutos
 
+**[CH-46]** Los umbrales de 2.000, 1.700 y 1.600 de §32.2 y la protección de la reserva de §32.3 quedan sin efecto mientras el repositorio sea público; la prueba PRU-SEG-OPER-002 comprueba que, con cualquier uso, no hay recortes ni aviso, y que `respaldo.yml` y `restauracion.yml` no leen el modo. Si el repositorio vuelve a ser privado, se reabre con un CH. La consecuencia de seguridad está en §32.4.
+
 ### 32.1 P7-12: cuándo se pasa al respaldo b)
 
 - **Qué prueba lo dispara:**
@@ -1837,6 +1843,11 @@ El ensayo es la primera comprobación.
 - **Prueba.** PRU-SEG-OPER-002, en `rapido`, con datos fijos de `minutos.fixture.json`:
   - con la reserva amenazada, M4 se activa y la lista de recortes nunca incluye `respaldo` ni `restauracion`;
   - los workflows `respaldo.yml` y `restauracion.yml` no leen el modo de M4: la prueba revisa que su YAML no tenga la condición `if:` de ahorro.
+
+### 32.4 Repositorio público: logs y artefactos **[CH-46]**
+
+Por ser público, los logs y los artefactos de Actions son visibles para cualquiera. **Ningún job puede escribir datos reales en ellos**: ni en la salida, ni en `test-results`, ni en `apps/web/test-results`, que son lo único que se publica. Los workflows no usan `pull_request_target`. Los respaldos ya van cifrados a R2 (ADR-22) y no cambian.
+
 ---
 
 ## 33. Riesgos de salida
@@ -1849,7 +1860,7 @@ El ensayo es la primera comprobación.
 | RS7-04 | Supavisor real distinto de PgBouncer | Baja | Alto | H-04 y H-06; CT-06 quita el caso de POOL-04 aunque el pooler difiera |
 | RS7-05 | iOS, Safari en iPhone y VoiceOver sin probar | — | Medio | **Aceptado** (P7-9); WebKit parcial en el nocturno |
 | RS7-06 | Las muestras de SP-01 tardan y bloquean la puerta | Media | Alto | RS-03 de 04: la Fase 8 decide si desactiva F-1 a F-3; la puerta no se abre sin SP-01 (P7-8) |
-| RS7-07 | El margen de minutos es del 8 al 10 % con M5 activo | Media | Medio | M5 activo desde el inicio y los escalones siguientes con su orden fijado (§32.2). Al pasar los 2.000 minutos se detienen los workflows, sin costo, pero también `desplegar`, el respaldo y el control de dinero. La reserva fija (§32.3) hace que se recorten antes `e2e` y el nocturno; si aun así se agotan, quedan §31.5 y la exportación manual de FT-75 |
+| RS7-07 | **[CH-46]** Sin efecto mientras el repositorio sea público. El margen de minutos es del 8 al 10 % con M5 activo | Media | Medio | M5 activo desde el inicio y los escalones siguientes con su orden fijado (§32.2). Al pasar los 2.000 minutos se detienen los workflows, sin costo, pero también `desplegar`, el respaldo y el control de dinero. La reserva fija (§32.3) hace que se recorten antes `e2e` y el nocturno; si aun así se agotan, quedan §31.5 y la exportación manual de FT-75 |
 | RS7-08 | La firma SSH desde Windows no funciona en la práctica | Media | Medio | Se avisa antes de buscar otra alternativa (P7-20); mientras tanto, la puerta queda cerrada por M16 y M17, sin un camino débil |
 | RS7-09 | Un agente "arregla" una prueba roja cambiando la expectativa en lugar del código | Media | Alto | Los números esperados salen de documentos y semillas (12.1, DP-27); `pr:mergear` lista las pruebas cuyo título o archivo de datos cambió, para revisarlas; los mutantes del nocturno detectan pruebas que dejaron de proteger (19.4) |
 | RS7-10 | El motor real difiere del núcleo y del motor mínimo de los prototipos | Media | Medio | El diferencial con el oráculo (P7-11) y los 50 escenarios en `ESC@motor` e `int`; A.7 y los recorridos con su semilla |
