@@ -133,3 +133,71 @@ it(
   () => verificar('ESC-36'),
   TOPE,
 );
+
+it(
+  'PRU-ESC-21@int [ESC-21, I4] Compartido con débito: condonación a una categoría sin Disponible',
+  () => verificar('ESC-21'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-23@int [ESC-23, H8, I4] Compartido con tarjeta: cobro parcial y condonación',
+  () => verificar('ESC-23'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-25@int [ESC-25, H7] Devolución total con débito en un período posterior',
+  () => verificar('ESC-25'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-26@int [ESC-26, N2, D-1] Devolución parcial con tarjeta en el mismo período, compra parcialmente cubierta',
+  () => verificar('ESC-26'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-27@int [ESC-27, Q2a, H3] Devolución con tarjeta en el mismo período que cubre otra compra',
+  () => verificar('ESC-27'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-28@int [ESC-28, Q2b, N2, Q4, AV-06, AV-08] Devolución con tarjeta en un período posterior y saldo a favor',
+  () => verificar('ESC-28'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-29@int [ESC-29, I5, inv. 9] Devolución sobre una línea por cobrar y excedente repartido',
+  () => verificar('ESC-29'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-30@int [ESC-30, P10, D-4, D-2] Devolución sin compra original',
+  () => verificar('ESC-30'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-40@int [ESC-40, H13] Desembolso de préstamo y retiro de inversión',
+  () => verificar('ESC-40'),
+  TOPE,
+);
+
+it('PRU-ESC-41@int [ESC-41, P3] Aporte a inversión', () => verificar('ESC-41'), TOPE);
+
+it(
+  'PRU-ESC-45@int [ESC-45, M5, Q5, B-2] Cambio de ciclo con período de transición',
+  () => verificar('ESC-45'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-50@int [ESC-50, P17, B-12, inv. 15] Registro automático atrasado e idempotente',
+  () => verificar('ESC-50'),
+  TOPE,
+);

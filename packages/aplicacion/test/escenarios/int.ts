@@ -30,8 +30,26 @@ import {
   type DepsMarco,
 } from '../../src/operaciones/marco.ts';
 import { OP14, OP15, OP17, OP18 } from '../../src/operaciones/presupuesto/index.ts';
-import { OP31 } from '../../src/operaciones/eventos/index.ts';
-import { OP20, OP21, OP23, OP27, OP28, OP29 } from '../../src/operaciones/transacciones/index.ts';
+import { OP19 } from '../../src/operaciones/ajustes/index.ts';
+import { OP31, OP32, OP33 } from '../../src/operaciones/eventos/index.ts';
+import { OP42, OP43 } from '../../src/operaciones/programadas/index.ts';
+import { pasoRegistro } from '../../src/tareas/registro-automatico.ts';
+import {
+  OP20,
+  OP21,
+  OP23,
+  OP25,
+  OP26,
+  OP27,
+  OP28,
+  OP29,
+} from '../../src/operaciones/transacciones/index.ts';
+import {
+  ciclo,
+  duracion,
+  periodoDe as periodoQueContiene,
+} from '../../../dominio/src/calculo/periodos';
+import { FechaLocal } from '../../../dominio/src/valores/index';
 import type { Ejecutor } from '../../../dominio/escenarios/ejecutar';
 import {
   type Escenario,
@@ -383,8 +401,92 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
         total: dolares(op.monto),
       });
     }
+    case 'OP-32': {
+      const linea = buscar(
+        i.hechos.lineas.find(
+          (l) => l.transaccionId === deEtiqueta(op.cobro) && l.deudorId !== null,
+        ),
+        `una línea por cobrar en ${op.cobro}`,
+      );
+      return como(OP32, {
+        id: nuevo(),
+        lineaId: linea.id,
+        monto: dolares(op.monto),
+        fecha: fecha(op.fecha),
+        categoriaId: categoriaId(i, op.categoria),
+      });
+    }
+    case 'OP-33': {
+      const comun = { id: nuevo(), fecha: fecha(op.fecha), total: dolares(op.monto) };
+      if (op.compra === undefined)
+        return como(OP33, {
+          ...comun,
+          cuentaId: cuentaId(i, buscar(op.cuenta, 'la cuenta de la devolución')),
+          categoriaId: categoriaId(i, buscar(op.categoria, 'la categoría de la devolución')),
+        });
+      const compraId = deEtiqueta(op.compra);
+      const originales = i.hechos.lineas
+        .filter((l) => l.transaccionId === compraId)
+        .sort((a, b) => a.orden - b.orden);
+      return como(OP33, {
+        ...comun,
+        transaccionOriginalId: compraId,
+        ...(op.cuenta && { cuentaId: cuentaId(i, op.cuenta) }),
+        reparto: (op.reparto ?? [{ linea: 1, monto: op.monto }]).map((r) => ({
+          lineaId: buscar(originales[r.linea - 1], `la línea ${r.linea} de ${op.compra}`).id,
+          monto: dolares(r.monto),
+        })),
+      });
+    }
+    case 'OP-19':
+      return como(OP19, { diaInicio: op.diaInicio });
+    case 'OP-25': {
+      const comun = {
+        id: nuevo(),
+        fecha: fecha(),
+        total: dolares(op.monto),
+        inversionId: cuentaId(i, op.inversion),
+        cuentaId: cuentaId(i, op.cuenta ?? 'Ahorro'),
+      };
+      if (op.modalidad === 'retiro') return como(OP25, { ...comun, modalidad: 'retiro' });
+      return como(OP25, {
+        ...comun,
+        modalidad: 'aporte',
+        categoriaId: categoriaId(i, buscar(op.categoria, 'la categoría del aporte')),
+      });
+    }
+    case 'OP-26':
+      return como(OP26, {
+        id: nuevo(),
+        fecha: fecha(),
+        total: dolares(op.monto),
+        prestamoId: cuentaId(i, op.prestamo),
+        cuentaId: cuentaId(i, op.cuenta ?? 'Ahorro'),
+      });
+    case 'OP-42':
+      return como(OP42, {
+        accion: 'crear',
+        id: nuevo(`programada:${op.etiqueta}`),
+        tipo: 'gasto',
+        cuentaId: cuentaId(i, op.cuenta),
+        comercio: op.comercio,
+        monto: dolares(op.monto),
+        frecuencia: 'mensual',
+        primeraFecha: op.primeraFecha,
+        registroAutomatico: op.automatico === true,
+        lineas: [{ monto: dolares(op.monto), categoriaId: categoriaId(i, op.categoria) }],
+      });
+    case 'OP-43': {
+      if (op.modo === 'automatico')
+        throw new Error('OP-43 automático: lo corre la tarea, no una entrada');
+      return como(OP43, {
+        id: nuevo(),
+        programadaId: deEtiqueta(`programada:${op.programada}`),
+        fechaEsperada: op.fecha,
+      });
+    }
     default:
-      throw new Error(`ejecutor int: ${op.op} no está en el lote de TA-188, TA-189 ni TA-190`);
+      throw new Error(`ejecutor int: ${op.op} no está en el lote de los escenarios`);
   }
 }
 
@@ -404,6 +506,12 @@ async function aplicarOp(s: Estado, op: Op, avisos: Set<string>): Promise<Rechaz
     escribirTecnico: s.tx.escribirTecnico,
     opciones: () => opcionesDe(hoy, desfaseMs),
   };
+  if (op.op === 'OP-43' && op.modo === 'automatico') {
+    // 04 §10.2 paso 1: la tarea real; lo que queda pendiente avisa (AV-23)
+    const t = await pasoRegistro.ejecutar(deps);
+    if ((t.detalle?.['sinRegistrar'] ?? 0) > 0) avisos.add('AV-23');
+    return undefined;
+  }
   const { def, entrada } = await entradaDe(s, op, hoy);
   let r = await confirmar(def, entrada, deps);
   if (!r.ok && r.error.codigo === 'requiere_confirmacion' && r.error.previsualizacion) {
@@ -467,7 +575,22 @@ const evaluacionDeMeta = (i: Instantanea, nombre: string) => {
     `la evaluación de la meta de ${nombre}`,
   );
 };
+const cuentaPorNombre = (i: Instantanea, nombre: string) =>
+  i.cuentas.find((x) => x.cuentaId === cuentaId(i, nombre));
 const EXTRAS: Record<string, Extra> = {
+  valorInversion: (_s, i, n) => cuentaPorNombre(i, n)?.saldo ?? 0,
+  capitalPrestamo: (_s, i, n) => cuentaPorNombre(i, n)?.saldo ?? 0,
+  diasPeriodo: (_s, i, f) =>
+    duracion(periodoQueContiene(ciclo(i.hechos.vigencias_ciclo), FechaLocal.desdeTexto(f))) * 100,
+  // la partida que dejó la última transacción registrada (la de la fila)
+  reporteFila: (_s, i, clase) => {
+    const ultima = i.hechos.transacciones.reduce((a, t) =>
+      t.horaRegistro > a.horaRegistro ? t : a,
+    );
+    return i.clasificacion.partidas
+      .filter((x) => x.id === ultima.id && x.clase === clase)
+      .reduce((a, x) => a + x.monto, 0);
+  },
   metaPedido: (_s, i, c) => evaluacionDeMeta(i, c).pedido,
   metaFalta: (_s, i, c) => evaluacionDeMeta(i, c).falta,
   metaPeriodo: (_s, i, c) => evaluacionDeMeta(i, c).montoDelPeriodo ?? 0,
