@@ -323,7 +323,7 @@
 
   "TA-224": { "estado": "pendiente" },
 
-  "TA-250": { "estado": "en_curso", "rama": "ta-250-humo" },
+  "TA-250": { "estado": "terminada", "pr": 160 },
 
   "TA-251": { "estado": "terminada", "pr": 149 },
 
