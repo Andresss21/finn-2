@@ -153,6 +153,10 @@
 
   "TA-243": { "estado": "terminada", "pr": 165 },
 
+  "TA-244": { "estado": "pendiente" },
+
+  "TA-245": { "estado": "pendiente" },
+
   "TA-141": { "estado": "terminada", "pr": 39 },
 
   "TA-230": { "estado": "terminada", "pr": 41 },
@@ -265,7 +269,7 @@
 
   "TA-195": { "estado": "terminada", "pr": 176 },
 
-  "TA-196": { "estado": "pendiente" },
+  "TA-196": { "estado": "en_curso", "rama": "ta-196-envio-push-2" },
 
   "TA-197": { "estado": "terminada", "pr": 156 },
 

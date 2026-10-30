@@ -402,8 +402,8 @@ tu: —
 ### HT-3 Aplicación sobre PostgreSQL
 
 ```hito
-despues: TA-199
-requiere: TA-150, TA-151, TA-152, TA-153, TA-154, TA-155, TA-156, TA-158, TA-159, TA-160, TA-161, TA-162, TA-163, TA-164, TA-165, TA-166, TA-167, TA-168, TA-169, TA-170, TA-171, TA-172, TA-173, TA-174, TA-175, TA-176, TA-177, TA-242, TA-178, TA-179, TA-180, TA-181, TA-182, TA-183, TA-184, TA-185, TA-186, TA-187, TA-188, TA-189, TA-190, TA-191, TA-192, TA-193, TA-194, TA-195, TA-196, TA-197, TA-198, TA-199
+despues: TA-245
+requiere: TA-150, TA-151, TA-152, TA-153, TA-154, TA-155, TA-156, TA-158, TA-159, TA-160, TA-161, TA-162, TA-163, TA-164, TA-165, TA-166, TA-167, TA-168, TA-169, TA-170, TA-171, TA-172, TA-173, TA-174, TA-175, TA-176, TA-177, TA-242, TA-178, TA-179, TA-180, TA-181, TA-182, TA-183, TA-184, TA-185, TA-186, TA-187, TA-188, TA-189, TA-190, TA-191, TA-192, TA-193, TA-194, TA-195, TA-196, TA-197, TA-198, TA-199, TA-244, TA-245
 tu: TU-13
 ```
 
@@ -1505,6 +1505,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-40** | Mensaje de un grupo repetido. `nombre_repetido` de un grupo (OP-07, OP-08) producía "Ya existe gastos en .": la plantilla de 3.0.6, "Ya existe {nombre} en {grupo}.", es la de una categoría y el rechazo de un grupo no trae `{grupo}` (observación de #139). Resolución: 04 §7.10 agrega la plantilla "Ya existe un grupo llamado {nombre}." para ese caso, y `errores/mensajes.ts` la elige con los datos del rechazo, como ya elige la de la tarjeta archivada y la del deudor | 04 §3.0.6, §7.10 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-40]** en 04 §7.10 |
 | **CH-41** | Ruta de `borrar-factores.mjs`. 04 §12.6, paso 2, dice `tools/recuperacion/borrar-factores.mjs`; 08 TA-253 decía `tools/humo/borrar-factores.mjs`, y en "Comandos" `bash tools/humo/test/humo.test.sh`, que no existe. Resolución: rige 04, porque es un procedimiento permanente de recuperación en producción y no una herramienta de humo; H-10 lo invoca por esa ruta, y el comando de la prueba es `pnpm test:integracion -t "PRU-SEG-ACCESO-102"` | 04 §12.6; 08 TA-253 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-41]** en 08 TA-253 |
 | **CH-42** | Recuperación que no cierra las sesiones. 04 §12.6 decía que borrar un factor verificado cierra todas las sesiones, y PRU-SEG-ACCESO-102 lo exige; medido en la pila local (GoTrue v2.197.0), `deleteFactor` de la API de administración deja vivas las sesiones AAL1 y AAL2, y fijar la contraseña con `updateUserById` las cierra todas. Resolución: el paso 2 recibe `FINN_CLAVE_NUEVA` por el entorno, borra los factores, fija esa contraseña y comprueba que quedan 0 factores; el paso 3 ingresa con la contraseña nueva; el riesgo aceptado se achica; H-10 se repite con `HUMO_PASOS=H-10` después del paso 6 de TU-07 para ver `signup_disabled` | 04 §12.6, §17.2; 08 TU-07, TA-253 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-42]** en 04 §12.6 y 08 TU-07, TA-253 |
+| **CH-43** | Partición de TA-196 por tamaño (DT-02). El alcance completo de TA-196 midió prod=822 contra una estimación de 340: pasa el tope de DT-01 (400) y es de revisión obligatoria (el +30 % no aplica). Se parte: TA-196 conserva el envío, la política de BE-53, OPT-02, OPT-03 y la acción de BE-54; TA-244, nueva (orden 629, libre), lleva los pasos 3 y 4 de la tarea diaria (BE-51, CF-07, CF-24, TAREA-pasos3y4) con PRU-INT-NOTIF-102; TA-245, nueva (orden 630, libre), lleva el push de AV-23 de 04 §8.4 paso e, que nunca se cableó, con PRU-INT-NOTIF-103, y cubre TAREA-pushAV23, objetivo nuevo del catálogo (`plan/objetivos.txt`). HT-3 requiere también TA-244 y TA-245. El envío usa `generateRequestDetails` de `web-push` y `fetch` inyectable (`sendNotification` solo habla https y la prueba usa un receptor local, 07 §7.1). El código completo queda en la rama `ta-196-push-completo` | 08 TA-196, TA-244, TA-245, HT-3; 04 §8.4, §10.2, §11 | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-43]** en 08 TA-196, TA-244, TA-245 y HT-3 |
 
 ---
 
@@ -1747,10 +1748,12 @@ Los archivos `route.ts`, sus pruebas `RH`, PRU-SEG-BAND-001, `proxy.ts`, `instru
 | 620 | TA-168 | B3 | 2 | HT-3 | normal | Exportar en JSON y CSV (OPT-08) | 240 | 0 |
 | 621 | TA-192 | B3 | 2 | HT-3 | normal | Asignación rápida, ciclo, inversiones y desembolso (OP-16, OP-19, OP-25, OP-26) | 280 | 0 |
 | 624 | TA-195 | B3 | 2 | HT-3 | normal | Formatos bancarios e instituciones (OPT-05 a OPT-07, BE-47) | 260 | 0 |
-| 625 | TA-196 | B3 | 2 | HT-3 | obligatoria | Envío de push, suscripciones y pasos de push de la tarea diaria | 340 | 0 |
+| 625 | TA-196 | B3 | 2 | HT-3 | obligatoria | Envío de push, suscripciones y acción de la notificación | 390 | 0 |
 | 626 | TA-197 | B3 | 2 | HT-3 | normal | Consultas de por cobrar, programadas, reglas y notificaciones | 280 | 0 |
 | 627 | TA-198 | B3 | 2 | HT-3 | normal | Contextos de formulario y tipos de reporte de la ola 2 | 240 | 0 |
 | 628 | TA-199 | B3 | 2 | HT-3 | normal | Escenarios contra PostgreSQL: ESC-21, ESC-23, ESC-25, ESC-26, ESC-27, ESC-28, ESC-29, ESC-30, ESC-40, ESC-41, ESC-45, ESC-50 | 40 | 0 |
+| 629 | TA-244 | B3 | 2 | HT-3 | obligatoria | Pasos 3 y 4 de la tarea diaria | 350 | 0 |
+| 630 | TA-245 | B3 | 2 | HT-3 | obligatoria | Push de AV-23 después del COMMIT | 85 | 0 |
 
 ---
 
@@ -5304,7 +5307,7 @@ compartido: —
 ```
 
 **Qué construir.**
-- `tareas/diaria.ts` con los pasos 2, 5, 6 y 7 de 04 §10.2; los pasos 1, 3 y 4 llegan en la ola 2 (TA-194, TA-196).
+- `tareas/diaria.ts` con los pasos 2, 5, 6 y 7 de 04 §10.2; los pasos 1, 3 y 4 llegan en la ola 2 (TA-194, TA-244 **[CH-43]**).
 - `tareas/puesta-al-dia.ts` (BE-50) que el layout de la Parte C llama con `after()`. El Route Handler `/api/tareas/diaria` es de la Parte C.
 
 **Leer.** 04 §10.1 a §10.5; 03 "Enmiendas posteriores" (EN-1, EN-2).
@@ -5636,7 +5639,7 @@ compartido: —
 
 **Terminada cuando.** La prueba pasa.
 
-#### TA-196 Envío de push, suscripciones y pasos de push de la tarea diaria
+#### TA-196 Envío de push, suscripciones y acción de la notificación
 
 ```tarea
 orden: 625
@@ -5646,27 +5649,93 @@ depende: TA-185, TA-186
 tu: —
 revision: obligatoria
 paralelo: libre
-tamano: prod=340 archivos=6 ca=0 migraciones=0 total=820
-cubre: OPT-02, OPT-03, BE-51, BE-53, BE-54, CF-07, CF-24, TAREA-pasos3y4
+tamano: prod=390 archivos=7 ca=0 migraciones=0 total=800
+cubre: OPT-02, OPT-03, BE-53, BE-54
 pru: PRU-INT-NOTIF-101
 compartido: —
 ```
 
 **Qué construir.**
-- `push/enviar.ts` con `web-push` y VAPID, OPT-02 y OPT-03, la política de BE-53 y la ejecución de la acción de una notificación (OP-40, BE-54) que el Route Handler de la Parte C llama.
-- Pasos 3 y 4 de la tarea diaria.
+- `push/enviar.ts` con `web-push` y VAPID (`generateRequestDetails` y `fetch` inyectable **[CH-43]**), OPT-02 y OPT-03, la política de BE-53 y la ejecución de la acción de una notificación (OP-40, BE-54) que el Route Handler de la Parte C llama. Los pasos de la tarea diaria son TA-244 y el push de AV-23, TA-245 **[CH-43]**.
 
-**Leer.** 04 §11 completo, §10.2 (pasos 3 y 4), §3.10 (OPT-02, OPT-03); 06 §3.8 (CF-07), §3.16 (CF-24).
+**Leer.** 04 §11 completo, §3.10 (OPT-02, OPT-03).
 
-**Archivos.** `packages/aplicacion/src/push/{enviar,politica,accion}.ts`, `packages/aplicacion/src/tareas/diaria.ts`, `packages/aplicacion/test/push.int.test.ts`.
+**Archivos.** `packages/aplicacion/src/push/{enviar,politica,accion}.ts`, `packages/aplicacion/src/contratos/notificaciones.ts`, `packages/db/src/repositorios/notificaciones.ts`, `packages/db/src/index.ts`, `packages/aplicacion/package.json`, `packages/aplicacion/test/push.int.test.ts`.
 
 **Pruebas primero.**
-- **PRU-INT-NOTIF-101** (nueva, DT-17): política de push por motivo (urgencia, TTL, agrupación y acciones), errores del servicio (404 y 410 eliminan la suscripción), push de cierre solo del último período (BE-51), `pago_tarjeta_proximo` y `cuota_proxima` una vez por clave, contra un receptor local.
+- **PRU-INT-NOTIF-101** (nueva, DT-17): política de push por motivo (urgencia, TTL, agrupación y acciones), errores del servicio (404 y 410 eliminan la suscripción), OPT-02, OPT-03 y BE-54, contra un receptor local **[CH-43]**.
 - La prueba nueva, con el receptor local de 07 §7.1.
 
 **Comandos.** `pnpm test:integracion -t "PRU-INT-NOTIF-101"`; `pnpm ci:local`.
 
-**Terminada cuando.** La prueba pasa.
+#### TA-244 Pasos 3 y 4 de la tarea diaria
+
+Parte 2 de TA-196 (DT-02, 08 §1.2, CH-43). **Portar desde la rama `ta-196-push-completo`**, que tiene el código: `tareas/diaria.ts`, `tareas/puesta-al-dia.ts`, `ultimaDerivaInformada`, el selector `ultimoCierre` y los `it` correspondientes de `push.int.test.ts`.
+
+```tarea
+orden: 629
+bloque: B3
+hito: HT-3
+depende: TA-196
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=350 archivos=6 ca=0 migraciones=0 total=600
+cubre: BE-51, CF-07, CF-24, TAREA-pasos3y4
+pru: PRU-INT-NOTIF-102
+compartido: —
+```
+
+**Qué construir.**
+- Pasos 3 y 4 de la tarea diaria, la cuota próxima en la puesta al día (06 §3.16) y el push de `tarea_fallida`.
+- El selector `ultimoCierre` de `@finn/dominio`, con su prueba de dominio.
+- El ajuste de PRU-INT-PROG-101 a los pasos que manda 04 §10.2.
+
+**Decisiones de la partición (CH-43).**
+- TTL de CF-07: hasta el final del día local de fp.
+- `cierre_sin_push` (evento de los períodos anteriores, con tope de 12 por cierre) y `sin_suscripciones` (`push_error`) son nombres de esta implementación.
+- **A evaluar de nuevo:** la rama no avisa con `ultimo_respaldo_en` o `ultima_restauracion_en` nulos, y un sistema que nunca respaldó no debería quedar en silencio. Si 03 §7.5 no lo resuelve, se informa como CH.
+
+**Leer.** 04 §10.2 (pasos 3 y 4), §10.3, §11.4, §5.6; 03 §7.5; 06 §3.8 (CF-07), §3.16 (CF-24).
+
+**Archivos.** `packages/aplicacion/src/tareas/{diaria,puesta-al-dia}.ts`, `packages/dominio/src/selectores/{cierre,index}.ts`, `packages/db/src/repositorios/tarea-diaria.ts`, `packages/aplicacion/test/{push,tareas}.int.test.ts`.
+
+**Pruebas primero.**
+- **PRU-INT-NOTIF-102** (nueva, DT-17): push de cierre solo del último período (BE-51), `pago_tarjeta_proximo` y `cuota_proxima` una vez por clave, avisos de sistema, contra un receptor local.
+- La prueba nueva y la de dominio del selector.
+
+**Comandos.** `pnpm test:integracion -t "PRU-INT-NOTIF-102"`; `pnpm ci:local`.
+
+#### TA-245 Push de AV-23 después del COMMIT
+
+Parte 3 de TA-196 (DT-02, 08 §1.2, CH-43). **Portar desde la rama `ta-196-push-completo`**: `avisoDeMovimiento` de `push/politica.ts` y `sms/procesar.ts`.
+
+```tarea
+orden: 630
+bloque: B3
+hito: HT-3
+depende: TA-196
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=85 archivos=2 ca=0 migraciones=0 total=150
+cubre: TAREA-pushAV23
+pru: PRU-INT-NOTIF-103
+compartido: —
+```
+
+**Qué construir.**
+- 04 §8.4 paso e: AV-23 con push después del `COMMIT` de OP-35 y del paso d, nunca en `autodescartado`. El contenido sigue 04 §11.4: nunca el texto del SMS.
+
+**Leer.** 04 §8.4, §11.2 a §11.4.
+
+**Archivos.** `packages/aplicacion/src/push/politica.ts`, `packages/aplicacion/src/sms/procesar.ts`, `packages/aplicacion/test/push.int.test.ts`.
+
+**Pruebas primero.**
+- **PRU-INT-NOTIF-103** (nueva, DT-17): procesar un SMS registra AV-23 con push después del COMMIT, con comercio y monto y sin el texto del SMS; el autodescartado no notifica, contra un receptor local.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:integracion -t "PRU-INT-NOTIF-103"`; `pnpm ci:local`.
 
 #### TA-197 Consultas de por cobrar, programadas, reglas y notificaciones
 
