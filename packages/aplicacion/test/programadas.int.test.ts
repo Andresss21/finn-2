@@ -14,6 +14,7 @@ import {
   type DefinicionOperacion,
   type DepsMarco,
 } from '../src/operaciones/marco.ts';
+import { OP01 } from '../src/operaciones/cuentas/index.ts';
 import { OP42, OP43, OP44, OP51 } from '../src/operaciones/programadas/index.ts';
 import { pasoRegistro } from '../src/tareas/registro-automatico.ts';
 import type { DepsTarea } from '../src/tareas/diaria.ts';
@@ -265,5 +266,57 @@ describe('PRU-INT-PROG', () => {
     expect(await ejecutar(OP51, { programadaId: PG1 })).toMatchObject(
       rechazo('programada_con_historial', 'Esta programada tiene historial. Podés desactivarla.'),
     );
+  });
+
+  it('PRU-INT-PROG-102 OP-43 CH-45 y QB-1: una cuota con modelo y fecha sin cuota se rechaza con su mensaje; el registro automático la deja pendiente y avisa una vez', async () => {
+    // Banco Agrícola abierto el 15 dic: cuotas el 15 ene y el 15 feb; el 31 ene queda a 16 y 15 días (Anexo A.2)
+    const LM = uuid(9200);
+    const CUOTA = uuid(9201);
+    const alta = {
+      id: LM,
+      tipo: 'prestamo',
+      nombre: 'Con modelo',
+      saldo: '10000.00',
+      fechaApertura: '2026-12-15',
+      contraparte: 'Banco',
+      montoOriginal: '10000.00',
+      tasaNominalAnual: '12',
+      tipoTasa: 'fija',
+      seguroPrimerMes: '10.00',
+      frecuencia: 'mensual',
+      cuotaPactada: '500.00',
+      plazoCuotas: 24,
+      modeloCalculo: 'banco_agricola',
+      cuotasPagadasAlCrear: 0,
+    };
+    const huella = await vista(OP01, alta);
+    expect(await ejecutar(OP01, { ...alta, huellaImpacto: huella.huellaImpacto })).toMatchObject({
+      ok: true,
+    });
+    expect(
+      await ejecutar(
+        OP42,
+        gasto(CUOTA, {
+          tipo: 'cuota_prestamo',
+          cuentaDestinoId: LM,
+          comercio: 'Cuota',
+          primeraFecha: '2027-01-31',
+          registroAutomatico: true,
+        }),
+      ),
+    ).toMatchObject({ ok: true });
+    const mensaje =
+      'Esa fecha no corresponde a ninguna cuota del préstamo. Ingresá el desglose a mano.';
+    const uno = { id: uuid(9202), programadaId: CUOTA, fechaEsperada: '2027-01-31' };
+    expect(await ejecutar(OP43, uno)).toMatchObject(rechazo('cuota_sin_coincidencia', mensaje));
+
+    await pasoRegistro.ejecutar(tarea());
+    await pasoRegistro.ejecutar(tarea());
+    expect(await resolucion(CUOTA, '2027-01-31')).toBeUndefined();
+    expect(
+      await sql(
+        `SELECT cuerpo FROM finn.notificaciones WHERE datos->>'clave' = 'registro_automatico_fallido:${CUOTA}:2027-01-31'`,
+      ),
+    ).toEqual([mensaje]);
   });
 });

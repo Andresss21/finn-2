@@ -97,6 +97,19 @@ export async function ultimaDerivaInformada(tx: LectorTx): Promise<Date | null> 
   return f?.ocurridoEn ?? null;
 }
 
+/**
+ * [CH-47] El instante del primer hecho: la `fecha_apertura` más antigua (el inicio de ese día local) o el primer
+ * evento `carga_completa`, el menor; `null` en una base sin hechos (`LEAST` ignora los nulos).
+ */
+export async function primerHecho(tx: LectorTx): Promise<Date | null> {
+  const [f] = await txPrisma(tx).$queryRaw<{ primero: Date | null }[]>`
+    SELECT LEAST(
+      (SELECT min(fecha_apertura)::timestamp AT TIME ZONE 'America/El_Salvador' FROM finn.cuentas),
+      (SELECT min(ocurrido_en) FROM finn.eventos_sistema WHERE origen = 'motor' AND mensaje = 'carga_completa')
+    ) AS primero`;
+  return f?.primero ?? null;
+}
+
 /** BE-38: ¿hay una notificación con esta `datos.clave`? (una vez por día, por período…). */
 export async function existeNotificacionConClave(tx: LectorTx, clave: string): Promise<boolean> {
   const f = await txPrisma(tx).notificacion.findFirst({

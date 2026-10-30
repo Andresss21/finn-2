@@ -1346,6 +1346,8 @@ Aplican a todo texto dirigido al usuario que produzca el servidor: errores, rech
 
 **[CH-40]** **Grupo repetido.** `nombre_repetido` de un grupo (OP-07, OP-08) no trae `{grupo}`: la plantilla "Ya existe {nombre} en {grupo}." de 3.0.6 es la de una categoría. Para un grupo, el mensaje es "Ya existe un grupo llamado {nombre}.". `errores/mensajes.ts` elige el texto con los datos del rechazo, como elige el de la tarjeta archivada (R2) y el del deudor (OP-52).
 
+**[CH-45]** **Cuota sin coincidencia.** `cuota_sin_coincidencia` (OP-43, 3.0.6): "Esa fecha no corresponde a ninguna cuota del préstamo. Ingresá el desglose a mano.". Es distinto de `registro_automatico_sin_modelo`: ahí el préstamo no tiene modelo; aquí lo tiene y la fecha no empareja ninguna cuota.
+
 **[CH-44]** **Errores de lectura del estado de cuenta.** Los códigos de `leerEstado` (9.2) que el catálogo no tenía usan estos textos: `fila_invalida`: "No pudimos leer la fila {fila} del archivo. Descargá de nuevo el estado de cuenta en CSV desde el portal del banco."; `formato_excluido`: "Finn no lee los estados de cuenta de este banco."; `formato_no_disponible`: "Todavía no podemos leer este formato de estado de cuenta.".
 
 **Formato verificado (V-18).** En Node 24.21 (ICU 78.3), la configuración regional `es-SV` produce exactamente estos formatos:
@@ -1756,6 +1758,7 @@ Cada código es un `CodigoRechazo` (7.5). Categoría `DOMINIO` salvo que se indi
 | `calendario_con_historial` | Cambiar primera fecha o frecuencia con resoluciones o con una coincidencia propuesta | "Esta programada ya tiene pagos registrados. Terminala y creá otra con el calendario nuevo." | P3-6b, HZ-3 |
 | `programada_con_historial` | Eliminar una programada con historial | "Esta programada tiene historial. Podés desactivarla." | HZ-1 |
 | `registro_automatico_sin_modelo` | Registro automático de una cuota sin modelo de cálculo | "Para registrar sola una cuota, el préstamo necesita un modelo de cálculo." | QB-1 **[R2]** |
+| `cuota_sin_coincidencia` | OP-43 de una cuota con modelo cuya fecha no empareja ninguna cuota (Anexo A.2) y sin desglose del usuario | "Esa fecha no corresponde a ninguna cuota del préstamo. Ingresá el desglose a mano." | **[CH-45]** |
 | `formato_no_reconocido` | El CSV no coincide con ningún formato | "No reconocimos el formato. Descargá el estado de cuenta en CSV desde el portal del banco." | OP-45 |
 | `formato_ambiguo` | Coinciden varios formatos | "El archivo coincide con más de un formato y no sabemos de qué banco es. Revisá que sea el estado de cuenta correcto." | ADR-17 |
 | `archivo_pdf` | El archivo es PDF | "Finn lee el estado de cuenta en CSV, no en PDF." | ADR-17 |
@@ -2311,7 +2314,7 @@ El flujo HTTP completo (autenticación, códigos 401/5xx/200, configuración de 
 - **Idempotencia:** natural: `UNIQUE (programada_id, fecha_esperada)` en `ocurrencias_resueltas`; una ocurrencia resuelta nunca se vuelve a registrar (inv. 15).
 - **Precondiciones:** la fecha es una ocurrencia de la programada (`ocurrencia_no_valida`) y no está resuelta (`ocurrencia_ya_resuelta`); las de la operación de su tipo.
 - **Hechos:** PT por la operación de su tipo (OP-20, OP-23, OP-24 o OP-25) con `origen = 'programada'` y `fecha` = **fecha esperada** (B-12); F3 `ocurrencias_resueltas` (`estado = 'registrada'`, `transaccion_id`).
-- **Cuota con registro automático:** desglose del modelo de cálculo (Anexo A). Si el préstamo ya no tiene modelo (se quitó después de crear la programada): la ocurrencia queda pendiente y se notifica (QB-1 **[R2]**).
+- **Cuota con registro automático:** desglose del modelo de cálculo (Anexo A). Si el préstamo ya no tiene modelo (se quitó después de crear la programada): la ocurrencia queda pendiente y se notifica (QB-1 **[R2]**). Si tiene modelo y la fecha no empareja ninguna cuota: `cuota_sin_coincidencia`, en el registro automático también queda pendiente y se notifica **[CH-45]**.
 - **[R2] Período cerrado (ajuste 2).** El registro **automático** no registra una ocurrencia cuya fecha esperada está en un período cerrado (por ejemplo, el cron falló el día 20 y corre el 21). La deja pendiente y notifica una sola vez por ocurrencia (AV-23, motivo `ocurrencia_en_periodo_cerrado`, con push): "Pago programado pendiente en un período cerrado; revisalo." Es el mismo criterio que OP-38: nada retroactivo sin confirmación del usuario. El registro de **un toque** sí puede hacerlo, con la confirmación de AV-01.
 - **Avisos:** un toque: AV-01 antes de confirmar si la fecha esperada está en un período cerrado. Automático: AV-23 (registro automático, su fallo y la ocurrencia pendiente en un período cerrado) **[R2]**.
 
@@ -3638,7 +3641,7 @@ El archivo y su contenido no se guardan ni se registran (7.8): solo quedan los h
 **Cuándo corre la puesta al día (BE-50, [R4] ajuste 2).** Con una lectura corta de `eventos_sistema` (`origen = 'tarea_diaria'`, `datos->>'hoy'` = hoy):
 1. Si hay un evento de fin de hoy (`mensaje` `puesta_al_dia` o `diaria`): no corre.
 2. Si hay un evento `puesta_al_dia_inicio` de hoy con `ocurrido_en > now() − 5 min` **y** sin evento de fin con su mismo `datos.ejecucion`: otra ejecución está en curso; no corre.
-3. Si no: inserta `puesta_al_dia_inicio` con `datos = { hoy, ejecucion: <uuid aleatorio> }`, ejecuta los pasos 1 y 2 de 10.2 y al terminar registra el evento de fin (`puesta_al_dia`) con el mismo `ejecucion`.
+3. Si no: inserta `puesta_al_dia_inicio` con `datos = { hoy, ejecucion: <uuid aleatorio> }`, ejecuta los pasos 1 y 2 de 10.2 y el aviso `cuota_proxima` del paso 4 (la tabla de arriba, 06 §3.16) **[CH-47]** y al terminar registra el evento de fin (`puesta_al_dia`) con el mismo `ejecucion`.
 
 Un inicio de más de 5 minutos sin fin se considera una ejecución interrumpida (los pasos 1 y 2 tienen tope de 200 elementos cada uno y una ejecución normal dura segundos), y la siguiente visita la vuelve a lanzar. La verificación y el registro del inicio no son atómicos: dos peticiones que llegan en el mismo instante todavía pueden ejecutarla dos veces, y sigue siendo **inocuo**, porque cada paso es idempotente (10.3). El evento de inicio solo evita el caso frecuente (varias pestañas o navegaciones seguidas). La purga de 90 días de `eventos_sistema` (paso 5) los elimina como al resto. La tarea diaria del cron no consulta este evento: corre siempre (es la autoridad del día).
 

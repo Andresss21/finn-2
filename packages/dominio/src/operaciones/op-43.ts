@@ -13,7 +13,7 @@ import { aplicar, type Efecto } from './aplicar';
 import { buscar } from './op-07';
 import { op20 } from './op-20';
 import { op23 } from './op-23';
-import { desglosePropuesto, op24 } from './op-24';
+import { condicionesDelModelo, desglosePropuesto, op24 } from './op-24';
 import { op25 } from './op-25';
 import { esRechazo } from './rechazos';
 
@@ -65,10 +65,16 @@ function registrar(antes: H.Instantanea, p: H.Programada, x: H.ComandoOp43): Efe
       return op25(antes, { ...base, ...aporte, total, cuentaId: p.cuentaId, categoriaId });
     }
     case 'cuota_prestamo': {
-      // Sin desglose del usuario, el del modelo (Anexo A); sin modelo, queda pendiente (QB-1).
+      // Sin desglose del usuario, el del modelo (Anexo A). Sin modelo (QB-1) o con una fecha que no empareja ninguna
+      // cuota [CH-45], queda pendiente.
       const d = x.desglose ?? desglosePropuesto(antes, destino, fecha)?.desglosePropuesto ?? null;
       if (d === null)
-        return { codigo: 'registro_automatico_sin_modelo', datos: { programadaId: p.id } };
+        return condicionesDelModelo(antes.hechos, destino) === null
+          ? { codigo: 'registro_automatico_sin_modelo', datos: { programadaId: p.id } }
+          : {
+              codigo: 'cuota_sin_coincidencia',
+              datos: { programadaId: p.id, fechaEsperada: fecha },
+            };
       const { capital, interes, seguro } = d;
       const suma = Centavos.sumar(Centavos.sumar(capital, interes), seguro);
       const cuota = { operacion: 'OP-24', modalidad: 'cuota', prestamoId: destino } as const;

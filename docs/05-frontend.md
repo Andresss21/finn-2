@@ -495,7 +495,7 @@ app/
     error.tsx, not-found.tsx §7 (Parte B)
     @superpuesto/            slot de los flujos cortos interceptados (FE-04)
       default.tsx            null
-      [...todo]/page.tsx     null: cierra el slot al navegar a cualquier otra ruta
+      [...todo]/page.tsx     null: cierra el slot al navegar a cualquier otra ruta; lo crea la primera tarea con ruta interceptada [CH-49]
       (.)<ruta de cada flujo corto>/page.tsx
     …rutas de 1.3
   api/                       lista cerrada de 04 §2.2.1 (sin cambios)

@@ -385,6 +385,44 @@ describe('PRU-DOM-PROG-101: aplicar, transacciones programadas (01 §5.7, §4.16
     expect(codigos(en(h, toque('NO', '2027-02-25')))).toEqual(['no_encontrado']);
   });
 
+  it('PRU-DOM-PROG-101 OP-43 CH-45 y QB-1: una cuota con modelo y fecha sin cuota a ±10 días es cuota_sin_coincidencia, sin modelo sigue siendo registro_automatico_sin_modelo, y el desglose a mano la registra', () => {
+    const alta = cuenta('LM', 'prestamo', 10000, { ...prestamo, modeloCalculo: 'banco_agricola' });
+    // Apertura 1 ene: cuotas el 1 feb y el 1 mar. El 15 feb queda a 14 días de las dos; el 2 mar empareja la del 1 mar.
+    const cuota = (pid: string, primeraFecha: string) =>
+      crear(pid, {
+        tipo: 'cuota_prestamo',
+        cuentaId: id('AHORRO'),
+        cuentaDestinoId: id('LM'),
+        monto: c(20),
+        primeraFecha: f(primeraFecha),
+        registroAutomatico: false,
+        lineas: [{ monto: c(20), categoriaId: id('OTRA') }],
+      });
+    const h = hechos(H0, HOY, alta, cuota('LEJOS', '2027-02-15'), cuota('CERCA', '2027-03-02'));
+    expect(en(h, toque('LEJOS', '2027-02-15'))).toMatchObject({
+      ok: false,
+      rechazos: [
+        {
+          codigo: 'cuota_sin_coincidencia',
+          datos: { programadaId: 'LEJOS', fechaEsperada: '2027-02-15' },
+        },
+      ],
+    });
+    expect(codigos(en(h, toque('CERCA', '2027-03-02')))).toEqual([]);
+    const desglose = { capital: c(15), interes: c(4), seguro: c(1) };
+    expect(codigos(en(h, toque('LEJOS', '2027-02-15', { desglose })))).toEqual([]);
+    // El modelo se quitó: es el caso de QB-1, no el de CH-45.
+    const sinModelo = {
+      ...h,
+      prestamos: h.prestamos.map((p) =>
+        p.cuentaId === id('LM') ? { ...p, modeloCalculo: null } : p,
+      ),
+    };
+    expect(codigos(en(sinModelo, toque('LEJOS', '2027-02-15')))).toEqual([
+      'registro_automatico_sin_modelo',
+    ]);
+  });
+
   it('PRU-DOM-PROG-101 OP-42 CF-20: crear sin efecto presupuestario, precondiciones de cuentas y líneas, editar con calendario fijo si hay historial, desactivar y reactivar desde hoy', () => {
     // Crear: sin efecto en LPA ni en Disponibles (inv. 13).
     const r = exito(en(H0, crear('N', { registroAutomatico: false })));

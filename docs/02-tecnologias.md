@@ -578,7 +578,7 @@ docs/                 copia de los documentos de fase e instrucciones para agent
   3. Comprueba en el catálogo (`pg_constraint`) que ninguna clave foránea de los esquemas de la app apunte fuera de ellos.
   4. Ejecuta el motor sobre los datos restaurados y verifica invariantes (identidad de saldo y reglas de §6) y conteos por tabla.
   5. Si algo falla, el job falla de forma visible y la tarea diaria envía un push (ADR-11).
-- **Claves.** La clave privada de `age` se guarda en el gestor de contraseñas del usuario y también en los secretos de GitHub (la prueba de restauración la necesita). Es un compromiso aceptado: los secretos de GitHub están cifrados y el repositorio es privado.
+- **Claves.** La clave privada de `age` se guarda en el gestor de contraseñas del usuario y también en los secretos de GitHub (la prueba de restauración la necesita). Es un compromiso aceptado: los secretos de GitHub están cifrados y `pull_request` no se los entrega a los forks **[CH-47]**.
 - **Decisión — exportación en la app:**
   - **JSON completo de hechos**, con versión de formato: restaurable y legible sin la base.
   - **CSV de transacciones** con sus líneas, para hojas de cálculo.

@@ -1237,6 +1237,7 @@ Fuente de verdad del centro de notificaciones (ADR-12). `datos` guarda referenci
 
 - `estado_respaldo.ultimo_respaldo_en`: la tarea diaria envía un push si tiene más de 36 horas (ADR-11, ADR-22).
 - `estado_respaldo.ultima_restauracion_en`: la tarea diaria envía un push si tiene más de 35 días (prueba mensual de ADR-22).
+- **[CH-47]** Un `ultimo_respaldo_en` o `ultima_restauracion_en` nulo, o la falta de fila en `estado_respaldo`, mide el mismo plazo desde el primer hecho (el menor entre la `fecha_apertura` más antigua y el primer evento `carga_completa`): avisa cuando pasaron más de 36 horas (respaldo) o más de 35 días (restauración) desde ese hecho, no de inmediato, con la misma clave `respaldo:<día>` / `restauracion:<día>`. Una base sin hechos no avisa.
 - `token_webhook.hash_sha256`: SHA-256 en hexadecimal del token. Basta un hash rápido porque el token es aleatorio y largo (ADR-08); la comparación en tiempo constante la hace la app. La rotación reemplaza la fila.
 
 ### 7.6 Formatos bancarios como datos (ADR-09, RT-14)
