@@ -329,7 +329,7 @@
 
   "TA-252": { "estado": "terminada", "pr": 34 },
 
-  "TA-253": { "estado": "pendiente" },
+  "TA-253": { "estado": "en_curso", "rama": "ta-253-humo-carga-auth" },
 
   "TA-260": { "estado": "pendiente" },
 

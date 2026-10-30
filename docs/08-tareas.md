@@ -1304,7 +1304,7 @@ Registro: las TU con procedimiento `PRU-MAN` se registran en `pruebas/manuales/r
   3. `bash tools/humo/humo.sh | tee /c/finn/humo.jsonl`. La salida no tiene secretos (04 §17.1).
   4. Pegar la salida en la conversación.
   5. Cerrar la ventana. Revocar el token de Vercel. Rotar la `service_role` en el panel si dudás de dónde estuvo.
-  6. Después de H-10: Authentication → Sign In / Providers → **desactivar** "Allow new users to sign up"; crear el usuario único (Authentication → Users → Add user) y anotar su `id` (`FINN_USUARIO_ID`).
+  6. Después de H-10: Authentication → Sign In / Providers → **desactivar** "Allow new users to sign up"; crear el usuario único (Authentication → Users → Add user) y anotar su `id` (`FINN_USUARIO_ID`). Después, en la misma ventana, `HUMO_PASOS=H-10 bash tools/humo/humo.sh | tee -a /c/finn/humo.jsonl`: H-10 pasa solo con el registro cerrado (`registro cerrado`, el alta falla con `signup_disabled`) **[CH-42]**.
 - **Registro:** PRU-MAN-ESQ-001 en `resultados.md`, firmado, con la versión mayor y las alternativas aplicadas en la nota.
 
 ### TU-08 Reservada
@@ -1503,6 +1503,8 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-38** | Partición de TA-250 por tamaño (DT-02). El alcance completo de TA-250 midió prod=583 contra una estimación de 360: pasa el tope de DT-01 (400) y no es una tarea normal (el +30 % no aplica). Se parte: TA-250 conserva `humo.sh` con H-01 a H-05, H-07, H-08, H-11 y H-12, con H-06 en `omitido` hasta TA-243 (H-09 y H-10, hasta TA-253), y cubre HUMO-base; TA-243, nueva (orden 197, libre), lleva H-06, el patrón de transacciones por el pooler (`tools/humo/patron.ts`, RK-06), y cubre HUMO-patron, objetivo nuevo del catálogo (`plan/objetivos.txt`). HT-4 requiere también TA-243 y termina en ella (`despues`). `humo.sh` acepta además entradas opcionales fuera de 04 §17.1: `HUMO_CLAVE_PUBLICA` (H-11), `HUMO_CLAVE_MIGRACIONES`, `HUMO_CLAVE_APP` y `HUMO_CLAVE_RESPALDO` (las del bootstrap; si faltan, se generan), `HUMO_PUERTO_TX`, `HUMO_PUERTO_SESION` y `HUMO_PASOS`. El código completo queda en la rama `ta-250-humo-completo` | 08 TA-250, TA-243, HT-4; 04 §17.1 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-38]** en 08 TA-250, TA-243 y HT-4 |
 | **CH-39** | Campo `hoy` de `reporte('patrimonio')`. 04 §6.9.2 definía el DTO como `{ hoy: posicionNeta, serie }`, y `hoy` choca con `Encabezado.hoy`, la fecha de hoy que lleva todo DTO; por eso TA-198 no despachó `patrimonio`. Resolución: el campo pasa a llamarse `posicionHoy` (`{ posicionHoy: posicionNeta (6.5), serie }`) y `reporte()` despacha `patrimonio` | 04 §6.9.2 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-39]** en 04 §6.9.2 |
 | **CH-40** | Mensaje de un grupo repetido. `nombre_repetido` de un grupo (OP-07, OP-08) producía "Ya existe gastos en .": la plantilla de 3.0.6, "Ya existe {nombre} en {grupo}.", es la de una categoría y el rechazo de un grupo no trae `{grupo}` (observación de #139). Resolución: 04 §7.10 agrega la plantilla "Ya existe un grupo llamado {nombre}." para ese caso, y `errores/mensajes.ts` la elige con los datos del rechazo, como ya elige la de la tarjeta archivada y la del deudor | 04 §3.0.6, §7.10 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-40]** en 04 §7.10 |
+| **CH-41** | Ruta de `borrar-factores.mjs`. 04 §12.6, paso 2, dice `tools/recuperacion/borrar-factores.mjs`; 08 TA-253 decía `tools/humo/borrar-factores.mjs`, y en "Comandos" `bash tools/humo/test/humo.test.sh`, que no existe. Resolución: rige 04, porque es un procedimiento permanente de recuperación en producción y no una herramienta de humo; H-10 lo invoca por esa ruta, y el comando de la prueba es `pnpm test:integracion -t "PRU-SEG-ACCESO-102"` | 04 §12.6; 08 TA-253 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-41]** en 08 TA-253 |
+| **CH-42** | Recuperación que no cierra las sesiones. 04 §12.6 decía que borrar un factor verificado cierra todas las sesiones, y PRU-SEG-ACCESO-102 lo exige; medido en la pila local (GoTrue v2.197.0), `deleteFactor` de la API de administración deja vivas las sesiones AAL1 y AAL2, y fijar la contraseña con `updateUserById` las cierra todas. Resolución: el paso 2 recibe `FINN_CLAVE_NUEVA` por el entorno, borra los factores, fija esa contraseña y comprueba que quedan 0 factores; el paso 3 ingresa con la contraseña nueva; el riesgo aceptado se achica; H-10 se repite con `HUMO_PASOS=H-10` después del paso 6 de TU-07 para ver `signup_disabled` | 04 §12.6, §17.2; 08 TU-07, TA-253 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-42]** en 04 §12.6 y 08 TU-07, TA-253 |
 
 ---
 
@@ -5882,18 +5884,18 @@ compartido: —
 
 **Qué construir.**
 - H-09 (BE-58): esquema temporal `humo` con ~200.000 filas del generador de volumen (TA-156), función temporal `tools/humo/funcion-carga` desplegada en `iad1` con el token de vida corta de TU-07, que ejecuta las consultas de 04 §5.2 y devuelve tiempos; el paso la borra al terminar.
-- H-10: `tools/humo/borrar-factores.mjs` (BE-56, 04 §12.6) y los pasos de 04 §17.2 con un usuario de prueba.
+- H-10: `tools/recuperacion/borrar-factores.mjs` **[CH-41]** (BE-56, 04 §12.6) y los pasos de 04 §17.2 con un usuario de prueba.
 - H-12 limpia también lo de H-09 y H-10.
 
 **Leer.** 04 §17.2 (H-09, H-10, H-12), §12.6, §5.2, §5.6; TU-07.
 
-**Archivos.** `tools/humo/pasos/h09.sh`, `tools/humo/funcion-carga/**`, `tools/humo/pasos/h10.sh`, `tools/humo/borrar-factores.mjs`.
+**Archivos.** `tools/humo/pasos/h09.sh`, `tools/humo/funcion-carga/**`, `tools/humo/pasos/h10.sh`, `tools/recuperacion/borrar-factores.mjs` **[CH-41]**.
 
 **Pruebas primero.**
-- **PRU-SEG-ACCESO-102** (nueva, DT-17): `borrar-factores.mjs` contra la pila local de Supabase: borra los factores del usuario indicado, cierra sus sesiones y no imprime la clave.
+- **PRU-SEG-ACCESO-102** (nueva, DT-17): `borrar-factores.mjs` contra la pila local de Supabase: borra los factores, rota la contraseña, cierra sus sesiones (los refresh token previos fallan) y no imprime ni la clave ni la contraseña **[CH-42]**.
 - La prueba nueva contra la pila local (`supabase start -x …` de 07 §5.3).
 
-**Comandos.** `bash tools/humo/test/humo.test.sh`; `pnpm ci:local`.
+**Comandos.** `pnpm test:integracion -t "PRU-SEG-ACCESO-102"` **[CH-41]**; `pnpm ci:local`.
 
 **Terminada cuando.** La prueba pasa en local; después del merge corrés TU-07 y registrás PRU-MAN-ESQ-001; HT-4 se cumple con H-01 a H-12 en `pasa` o con su alternativa registrada.
 

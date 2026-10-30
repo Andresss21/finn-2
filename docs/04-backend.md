@@ -3933,13 +3933,13 @@ Cada 401 se registra como evento `aviso` sin datos de la petición; Ajustes > Di
 Procedimiento manual, fuera de la app, con la clave `service_role` (que nunca se guarda en Vercel, GitHub ni el repositorio):
 
 1. En el panel de Supabase, copiar la clave `service_role` del proyecto (Settings > API).
-2. En la computadora del usuario, ejecutar `tools/recuperacion/borrar-factores.mjs` con `SUPABASE_URL`, la clave y `FINN_USUARIO_ID` como variables de entorno de esa sola ejecución. El script llama a `auth.admin.mfa.listFactors({ userId })` y a `auth.admin.mfa.deleteFactor({ id, userId })` por cada factor. Supabase documenta que borrar un factor verificado cierra todas las sesiones del usuario.
-3. Ingresar con email y contraseña (AAL1, cero factores) → la app lleva a `/ingresar/inscribir` → inscribir un factor nuevo y, después, el de respaldo.
+2. En la computadora del usuario, generar en el gestor una contraseña nueva y ejecutar `tools/recuperacion/borrar-factores.mjs` con `SUPABASE_URL`, la clave, `FINN_USUARIO_ID` y esa contraseña en `FINN_CLAVE_NUEVA`, como variables de entorno de esa sola ejecución (nunca en un argumento ni en un archivo; el script no las escribe). El script llama a `auth.admin.mfa.listFactors({ userId })` y a `auth.admin.mfa.deleteFactor({ id, userId })` por cada factor, después a `auth.admin.updateUserById(userId, { password })`, que cierra todas las sesiones del usuario (también las del dispositivo perdido; borrar el factor desde la API de administración no las cierra), y al final comprueba que quedan 0 factores **[CH-42]**.
+3. Ingresar con email y la contraseña nueva **[CH-42]** (AAL1, cero factores) → la app lleva a `/ingresar/inscribir` → inscribir un factor nuevo y, después, el de respaldo.
 4. Si además se perdió la contraseña: "Send password recovery" para el usuario desde el panel de Supabase (Authentication > Users).
 5. Rotar la clave `service_role` si se copió a un lugar inseguro.
 6. Registrar en Diagnóstico (evento manual) que se hizo la recuperación.
 
-⚠ La prueba de humo (H-10) ejecuta el script contra un usuario de prueba antes de deshabilitar el registro, para confirmar el procedimiento. Riesgo aceptado: entre los pasos 2 y 3, alguien con la contraseña podría inscribir su propio factor; la ventana dura minutos y exige la contraseña.
+⚠ La prueba de humo (H-10) ejecuta el script contra un usuario de prueba antes de deshabilitar el registro, para confirmar el procedimiento. Riesgo aceptado **[CH-42]**: entre los pasos 2 y 3, alguien que ya conociera la contraseña nueva podría inscribir su propio factor; la contraseña vieja deja de servir en el paso 2, la nueva solo está en el gestor y la ventana dura minutos.
 
 ---
 

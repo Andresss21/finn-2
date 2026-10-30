@@ -16,3 +16,5 @@ playwright-report/
 _privado/
 _aprobaciones/
 pruebas/inventario.json
+supabase/.branches/
+supabase/.temp/
