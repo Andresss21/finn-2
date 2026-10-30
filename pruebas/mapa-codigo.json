@@ -2,6 +2,7 @@
   { "patron": "apps/web/src/app/layout.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/globals.css", "fts": "marco" },
   { "patron": "apps/web/src/app/tokens.css", "fts": "marco" },
+  { "patron": "apps/web/src/app/manifest.ts", "fts": "marco" },
   { "patron": "apps/web/src/componentes/marco/proveedor-tema.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/(finn)/layout.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/(finn)/@superpuesto/**", "fts": "marco" },
