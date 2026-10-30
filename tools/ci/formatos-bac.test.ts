@@ -4,10 +4,37 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { interpretar } from '../../packages/sms/src/interpretar.ts';
 import { TIEMPO_ANALISIS_MS, validarFormato } from '../../packages/sms/src/validar-formato.ts';
 import { aplicarMigraciones, formatosDeLaSiembra, leerFormatos } from './formatos-activos.ts';
+
+// `recheck` mide con reloj: un ataque que pasa `attackTimeout` (1 s) cuenta como éxito, y la cadena de
+// grado 3 del patrón del BAC (grado 2 real: exponente 2,00 en V8) tarda justo cerca de ese segundo. Por
+// eso el mismo patrón da 2 o 3 según la CPU, sin agotar nunca los 10 s (run 41119144798: falló a los 2,7 s).
+// Aquí, y solo aquí, el análisis se decide por pasos: sin relojes y con un límite que se alcanza. El código
+// de producción no cambia, y la prueba comprueba qué le pide a `recheck` y que los controles inseguros
+// se siguen rechazando. `pnpm ci:politica-patrones` sigue con la configuración de 04 §8.5 sin tocar.
+const pedidos = vi.hoisted((): Record<string, unknown>[] => []);
+vi.mock('../../packages/sms/node_modules/recheck/index.js', async (importarReal) => {
+  const real = await importarReal<{
+    checkSync: (patron: string, banderas: string, parametros: object) => unknown;
+  }>();
+  return {
+    ...real,
+    checkSync: (patron: string, banderas: string, parametros: Record<string, unknown>) => {
+      pedidos.push(parametros);
+      return real.checkSync(patron, banderas, {
+        ...parametros,
+        timeout: null,
+        attackTimeout: null,
+        incubationTimeout: null,
+        seedingTimeout: null,
+        attackLimit: 50_000_000,
+      });
+    },
+  };
+});
 
 const raiz = fileURLToPath(new URL('../..', import.meta.url));
 const leer = (ruta: string): string => readFileSync(join(raiz, ruta), 'utf8');
@@ -103,12 +130,36 @@ describe('PRU-DOM-BAND', () => {
           monto,
         ).toBe('no_reconocido');
 
-      // Política de 04 §8.5 sobre cada formato activo, dentro del tiempo de recheck.
+      // Política de 04 §8.5 sobre cada formato activo, decidida por pasos (ver el vi.mock de arriba).
       for (const f of activos) {
         const v = validarFormato(f);
         expect(v, f.nombre).toMatchObject({ valido: true });
         if (v.valido) expect(v.grado ?? 0).toBeLessThanOrEqual(2);
       }
+      // Producción sigue pidiendo lo que fija 04 §8.5.
+      expect(pedidos.at(-1)).toEqual({ checker: 'auto', timeout: TIEMPO_ANALISIS_MS });
+
+      // Sin relojes, el análisis no se vuelve permisivo: lo inseguro se rechaza con su grado.
+      const base = activos[0];
+      if (base === undefined) throw new Error('sin formato activo');
+      const control = (patron: string) => validarFormato({ ...base, patron, formatosFecha: [] });
+      expect(control(String.raw`^(?<ultimos4>\d{4}) (?<monto>\d*)\d*\d*x$`)).toMatchObject({
+        valido: false,
+        error: 'patron_lento',
+        grado: 3,
+      });
+      expect(control(String.raw`^(?<ultimos4>\d{4}) (?<monto>(?:\d+)+)$`)).toMatchObject({
+        valido: false,
+        error: 'patron_lento',
+        grado: 'exponencial',
+      });
+      const sembradoBac = sembrado.find((f) => f.nombre === BAC_COMPRA);
+      if (sembradoBac === undefined) throw new Error('sin F-1 en la siembra');
+      expect(validarFormato(sembradoBac), 'F-1 de 03 §9.5').toMatchObject({
+        valido: false,
+        error: 'patron_lento',
+        grado: 3,
+      });
 
       // La lectura falla cerrada: una sentencia sobre formatos_bancarios que no entiende no se ignora.
       expect(() =>
