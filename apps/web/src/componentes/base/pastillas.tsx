@@ -1,6 +1,6 @@
 'use client';
 // Pastillas de filtro (06-identidad-visual 2.3): botones con `aria-pressed`; lo activo se distingue por fondo invertido y peso, no por color.
-import './base.css';
+import { Button } from '../../components/ui/button';
 
 export interface OpcionPastilla {
   readonly valor: string;
@@ -17,19 +17,18 @@ export interface PropsPastillas {
 
 export function Pastillas({ etiqueta, opciones, valor, alCambiar }: PropsPastillas) {
   return (
-    <div role="group" aria-label={etiqueta} className="f-pastillas">
+    <div role="group" aria-label={etiqueta} className="flex gap-2 overflow-x-auto p-1">
       {opciones.map((o) => (
-        <button
+        <Button
           key={o.valor}
-          type="button"
-          className="f-pastilla"
+          variant="filter"
           aria-pressed={o.valor === valor}
           onClick={() => {
             alCambiar(o.valor);
           }}
         >
           {o.etiqueta}
-        </button>
+        </Button>
       ))}
     </div>
   );

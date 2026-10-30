@@ -1,8 +1,18 @@
 // Botón de Finn (05 §10.7). `<button>` nativo; deshabilitado con motivo visible; enviando sin perder el foco (4.3).
 import { useId, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import { Button, type VarianteBoton } from '../../components/ui/button';
+import { Button } from '../../components/ui/button';
 import { base } from '../../textos/base';
-import './base.css';
+
+type VarianteBoton = 'principal' | 'secundaria' | 'peligro' | 'discreta' | 'pastilla';
+
+// Variantes de Finn (05 §10.7) sobre las de shadcn.
+const VARIANTES = {
+  principal: 'default',
+  secundaria: 'tonal',
+  peligro: 'destructive',
+  discreta: 'ghost',
+  pastilla: 'pill',
+} as const;
 
 export interface PropsBoton extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -34,7 +44,7 @@ export function Boton({
   const boton = (
     <Button
       {...resto}
-      variante={variante}
+      variant={VARIANTES[variante]}
       type={tipo}
       disabled={deshabilitado}
       aria-disabled={enviando ? true : undefined}
@@ -50,7 +60,10 @@ export function Boton({
     >
       {enviando ? (
         <>
-          <span className="f-giro" aria-hidden="true" />
+          <span
+            className="size-4 animate-spin rounded-pastilla border-2 border-current border-e-transparent"
+            aria-hidden="true"
+          />
           {textoEnviando}
         </>
       ) : (
@@ -62,7 +75,7 @@ export function Boton({
   return (
     <span>
       {boton}
-      <span id={idMotivo} className="f-boton-motivo">
+      <span id={idMotivo} className="mt-1 block text-sm text-texto-secundario">
         {motivoDeshabilitado}
       </span>
     </span>

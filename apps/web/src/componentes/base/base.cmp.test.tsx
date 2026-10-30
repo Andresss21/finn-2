@@ -3,7 +3,7 @@ import { act, useState, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
-import '../../app/tokens.css';
+import '../../app/globals.css';
 import { Boton } from './boton';
 import { EntradaTexto } from './campo';
 import { Pastillas } from './pastillas';
@@ -98,7 +98,7 @@ const temas = ['claro', 'oscuro'] as const;
 function objetivos(raiz: HTMLElement): HTMLElement[] {
   return [
     ...raiz.querySelectorAll<HTMLElement>(
-      'button, input:not([type=radio]), select, label.f-opcion, label.f-segmento',
+      'button:not([role=radio]), input, label:has([role=radio]), [aria-label=Vista] [role=radio]',
     ),
   ];
 }
@@ -131,22 +131,20 @@ describe('PRU-CMP-VAL-102 botones, campos, selección, pastillas y selector segm
 
   it('PRU-CMP-VAL-102 cada control tiene nombre accesible y el foco se ve', () => {
     const raiz = montar(<Galeria />);
-    for (const el of raiz.querySelectorAll<HTMLElement>('button, input, select')) {
+    for (const el of raiz.querySelectorAll<HTMLElement>('button, input')) {
       const etiquetas = (el as HTMLInputElement).labels;
       const nombre =
         el.textContent.trim() || el.getAttribute('aria-label') || etiquetas?.[0]?.textContent;
       expect(nombre, el.outerHTML).toBeTruthy();
-      if (el.matches(':disabled') || el.matches('input[type=radio]')) continue;
-      el.focus();
+      if (el.matches(':disabled')) continue;
+      act(() => {
+        el.focus();
+      });
       const estilo = getComputedStyle(el);
       expect(el.matches(':focus-visible'), el.outerHTML).toBe(true);
       expect(estilo.outlineStyle, el.outerHTML).toBe('solid');
       expect(Number(estilo.outlineWidth.slice(0, -2))).toBeGreaterThanOrEqual(2);
     }
-    // Los radios muestran el foco en su etiqueta.
-    const radio = raiz.querySelector<HTMLInputElement>('.f-segmento input');
-    radio?.focus();
-    expect(getComputedStyle(radio?.closest('label') as HTMLElement).outlineStyle).toBe('solid');
   });
 
   it('PRU-CMP-VAL-102 deshabilitado muestra el motivo en texto asociado; enviando no pierde el foco ni envía', () => {
@@ -204,18 +202,28 @@ describe('PRU-CMP-VAL-102 botones, campos, selección, pastillas y selector segm
     ).toContain('Escribí un monto mayor a cero');
   });
 
-  it('PRU-CMP-VAL-102 la selección muestra opciones visibles hasta 7 y una lista con más', () => {
+  it('PRU-CMP-VAL-102 la selección muestra opciones visibles hasta 7 y una lista con más', async () => {
     const raiz = montar(
       <>
         <Seleccion etiqueta="Tipo" opciones={sieteOpciones} valor="a" alCambiar={() => {}} />
         <Seleccion etiqueta="Cuenta" opciones={diezOpciones} valor="3" alCambiar={() => {}} />
       </>,
     );
-    expect(raiz.querySelectorAll('input[type=radio]')).toHaveLength(2);
-    expect(raiz.querySelector('input[type=radio]:checked')?.getAttribute('value')).toBe('a');
-    const lista = raiz.querySelector('select') as HTMLSelectElement;
-    expect(lista.options).toHaveLength(10);
+    expect(raiz.querySelectorAll('[role=radio]')).toHaveLength(2);
+    expect(raiz.querySelector('[role=radio][aria-checked=true]')?.getAttribute('value')).toBe('a');
+    expect(raiz.querySelector('[role=radiogroup]')?.getAttribute('aria-labelledby')).toBeTruthy();
+    const lista = raiz.querySelector('button[role=combobox]') as HTMLButtonElement;
     expect(lista.labels[0]?.textContent).toContain('Cuenta');
+    expect(lista.textContent).toBe('Cuenta 3');
+    // Radix abre con el puntero, fuera de `act`.
+    const entorno = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
+    entorno.IS_REACT_ACT_ENVIRONMENT = false;
+    await userEvent.click(lista);
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[role=option]')).toHaveLength(10);
+    });
+    await userEvent.keyboard('{Escape}');
+    entorno.IS_REACT_ACT_ENVIRONMENT = true;
   });
 
   it('PRU-CMP-VAL-102 el buscador es un combobox que anuncia la cantidad de resultados', async () => {
@@ -254,16 +262,16 @@ describe('PRU-CMP-VAL-102 botones, campos, selección, pastillas y selector segm
 
   it('PRU-CMP-VAL-102 pastillas y segmentado marcan lo activo con atributo y peso, no solo color', () => {
     const raiz = montar(<Galeria />);
-    const activa = raiz.querySelector('.f-pastilla[aria-pressed=true]') as HTMLElement;
-    const inactiva = raiz.querySelector('.f-pastilla[aria-pressed=false]') as HTMLElement;
+    const activa = raiz.querySelector('[aria-pressed=true]') as HTMLElement;
+    const inactiva = raiz.querySelector('[aria-pressed=false]') as HTMLElement;
     expect(getComputedStyle(activa).fontWeight).toBe('700');
     expect(getComputedStyle(inactiva).fontWeight).not.toBe('700');
-    expect(raiz.querySelector('[role=radiogroup]')?.getAttribute('aria-label')).toBe('Vista');
-    const marcado = raiz.querySelector('.f-segmento:has(input:checked)') as HTMLElement;
+    expect(raiz.querySelector('[aria-label=Vista]')?.getAttribute('role')).toBe('radiogroup');
+    const marcado = raiz.querySelector('[aria-label=Vista] [aria-checked=true]') as HTMLElement;
     expect(getComputedStyle(marcado).fontWeight).toBe('700');
     act(() => {
-      (raiz.querySelectorAll<HTMLInputElement>('.f-segmento input')[1] as HTMLInputElement).click();
+      raiz.querySelectorAll<HTMLElement>('[aria-label=Vista] [role=radio]')[1]?.click();
     });
-    expect(raiz.querySelector('.f-segmento:has(input:checked)')?.textContent).toBe('Tabla');
+    expect(raiz.querySelector('[aria-label=Vista] [aria-checked=true]')?.textContent).toBe('Tabla');
   });
 });

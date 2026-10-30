@@ -1,3 +1,6 @@
-// Une nombres de clase omitiendo los vacíos (equivalente mínimo del `cn` de shadcn).
-export const cn = (...clases: readonly (string | false | null | undefined)[]): string =>
-  clases.filter(Boolean).join(' ');
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...entradas: ClassValue[]): string {
+  return twMerge(clsx(entradas));
+}

@@ -115,7 +115,11 @@ export function configurarWeb({ archivos, paths, patrones }) {
       files: [src('formularios'), src('componentes/formularios')],
       rules: importaciones(base, { router: true, valores: true }),
     },
-    { files: [src('componentes/base')], rules: importaciones(base, { ui: true }) },
+    // `components/ui/` es el código de shadcn (Radix debajo, 10.7): importa de `@radix-ui/*`; L16 vale para quien lo usa.
+    {
+      files: [src('componentes/base'), src('components/ui')],
+      rules: importaciones(base, { ui: true }),
+    },
     {
       files: PRUEBAS,
       rules: importaciones(base, { router: true, valores: true, link: true, ui: true }),

@@ -2,11 +2,17 @@
 // Selección y buscador (05 §10.7). Hasta 7 opciones se ven todas (radio); con más, lista desplegable.
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { Input } from '../../components/ui/input';
-import { Select } from '../../components/ui/select';
+import { Label } from '../../components/ui/label';
+import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
 import { base } from '../../textos/base';
-import { Campo } from './campo';
-import { Icono } from './icono';
-import './base.css';
+import { Campo, MensajeError } from './campo';
 
 export interface Opcion {
   readonly valor: string;
@@ -15,6 +21,10 @@ export interface Opcion {
 }
 
 const MAXIMO_VISIBLES = 7;
+
+// Fuera del JSX por L15: el estado deshabilitado lo da `has-disabled:` del radio que la etiqueta contiene.
+const CLASES_OPCION =
+  'flex min-h-11 cursor-pointer items-center gap-3 rounded-control bg-superficie px-3 text-base has-data-[state=checked]:font-semibold has-disabled:cursor-not-allowed has-disabled:bg-superficie-hundida has-disabled:text-texto-deshabilitado';
 
 export interface PropsSeleccion {
   readonly etiqueta: string;
@@ -35,7 +45,7 @@ export function Seleccion({
   error,
   deshabilitada = false,
 }: PropsSeleccion) {
-  const nombre = useId();
+  const idEtiqueta = useId();
   if (opciones.length > MAXIMO_VISIBLES) {
     return (
       <Campo
@@ -44,53 +54,48 @@ export function Seleccion({
         {...(descripcion === undefined ? {} : { descripcion })}
         {...(error === undefined ? {} : { error })}
       >
-        <Select
-          value={valor}
-          disabled={deshabilitada}
-          onChange={(e) => {
-            alCambiar(e.target.value);
-          }}
-        >
-          {opciones.map((o) => (
-            <option key={o.valor} value={o.valor}>
-              {o.etiqueta}
-            </option>
-          ))}
-        </Select>
+        {(control) => (
+          <Select value={valor} disabled={deshabilitada} onValueChange={alCambiar}>
+            <SelectTrigger {...control}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {opciones.map((o) => (
+                <SelectItem key={o.valor} value={o.valor}>
+                  {o.etiqueta}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </Campo>
     );
   }
   return (
-    <fieldset
-      className="f-grupo"
-      disabled={deshabilitada}
-      aria-invalid={error === undefined ? undefined : true}
-    >
-      <legend className="f-etiqueta">{etiqueta}</legend>
-      {opciones.map((o) => (
-        <label key={o.valor} className="f-opcion">
-          <input
-            type="radio"
-            name={nombre}
-            value={o.valor}
-            checked={o.valor === valor}
-            onChange={() => {
-              alCambiar(o.valor);
-            }}
-          />
-          <span className="f-opcion-texto">
-            {o.etiqueta}
-            {o.descripcion === undefined ? null : <small>{o.descripcion}</small>}
-          </span>
-        </label>
-      ))}
-      {error === undefined ? null : (
-        <p className="f-error">
-          <Icono nombre="problema" tamano={16} />
-          {error}
-        </p>
-      )}
-    </fieldset>
+    <div className="flex flex-col gap-1">
+      <Label id={idEtiqueta}>{etiqueta}</Label>
+      <RadioGroup
+        aria-labelledby={idEtiqueta}
+        value={valor}
+        disabled={deshabilitada}
+        onValueChange={alCambiar}
+      >
+        {opciones.map((o) => (
+          <Label key={o.valor} className={CLASES_OPCION}>
+            <RadioGroupItem value={o.valor} />
+            <span>
+              {o.etiqueta}
+              {o.descripcion === undefined ? null : (
+                <small className="block text-sm font-normal text-texto-secundario">
+                  {o.descripcion}
+                </small>
+              )}
+            </span>
+          </Label>
+        ))}
+      </RadioGroup>
+      {error === undefined ? null : <MensajeError>{error}</MensajeError>}
+    </div>
   );
 }
 
@@ -164,7 +169,7 @@ export function Buscador({ etiqueta, buscar, valor, alCambiar }: PropsBuscador) 
             : base.resultados(String(resultados.length))
           : '';
   return (
-    <div className="f-buscador">
+    <div className="relative">
       <Campo etiqueta={etiqueta} requerido>
         <Input
           role="combobox"
@@ -184,7 +189,7 @@ export function Buscador({ etiqueta, buscar, valor, alCambiar }: PropsBuscador) 
         id={`${id}-lista`}
         role="listbox"
         aria-label={etiqueta}
-        className="f-resultados"
+        className="absolute inset-x-0 z-40 mt-1 rounded-contenedor bg-superficie-elevada shadow-elevacion-2"
         hidden={!lista}
       >
         {resultados.map((o, i) => (
@@ -194,7 +199,7 @@ export function Buscador({ etiqueta, buscar, valor, alCambiar }: PropsBuscador) 
             id={`${id}-o${i}`}
             role="option"
             aria-selected={i === activa}
-            className="f-resultado"
+            className="flex min-h-11 cursor-pointer items-center gap-2 px-3 aria-selected:bg-superficie-hundida aria-selected:font-semibold"
             onMouseDown={(e) => {
               e.preventDefault();
               elegir(o);
@@ -205,7 +210,7 @@ export function Buscador({ etiqueta, buscar, valor, alCambiar }: PropsBuscador) 
           </li>
         ))}
       </ul>
-      <p role="status" className={anuncio === '' ? 'f-visualmente-oculto' : 'f-estado-busqueda'}>
+      <p role="status" className={anuncio === '' ? 'sr-only' : 'p-3 text-sm text-texto-secundario'}>
         {anuncio}
       </p>
     </div>
