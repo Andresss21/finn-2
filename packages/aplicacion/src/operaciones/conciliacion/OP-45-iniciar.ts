@@ -3,7 +3,8 @@
 // hechos actuales (BE-48, en el dominio) y firma el estado con la clave activa y un vencimiento de 24 h (BE-49). Ni
 // el archivo ni la carga se guardan (9.7).
 import { ADAPTADORES, leerEstado, type EstadoNormalizado } from '@finn/conciliacion';
-import { calcular, op45 as clasificar, type Instantanea, type Rechazo } from '@finn/dominio';
+import { calcular, type Instantanea, type Rechazo } from '@finn/dominio';
+import { clasificarConciliacion, type Clasificacion } from '@finn/dominio/selectores';
 import { FechaLocal } from '@finn/dominio/valores';
 import { cargarHechos, leer as leerDb } from '@finn/db';
 import { firmarCarga, VIGENCIA_MS, type DepsConciliacion } from '../../conciliacion/carga.ts';
@@ -15,8 +16,6 @@ import {
   type ResultadoAccion,
 } from '../../errores/index.ts';
 import type { DepsMarco } from '../marco.ts';
-
-type Clasificacion = Exclude<ReturnType<typeof clasificar>, Rechazo>;
 
 /** La clasificación (§4.17) junto al estado leído y su carga firmada, que la interfaz guarda en el componente. */
 export type SalidaOp45 = EstadoNormalizado & {
@@ -50,11 +49,11 @@ export async function iniciarConciliacion(
       calcular(hechos, FechaLocal.desdeTexto(hoy)),
     ) as Instantanea;
     const cuenta = hechos.cuentas.find((k) => k.id === cuentaId);
-    const tipo = ADAPTADORES[estado.formato]?.tipoCuenta;
-    if (cuenta !== undefined && tipo !== cuenta.tipo)
+    if (cuenta === undefined) return rechazo({ codigo: 'no_encontrado' });
+    // Los formatos son de efectivo o de tarjeta: el tipo de la cuenta tiene que ser el del formato (9.2)
+    if (ADAPTADORES[estado.formato]?.tipoCuenta !== cuenta.tipo)
       return rechazo({ codigo: 'cuenta_tipo_no_valido', datos: { tipo: cuenta.tipo } });
-    const c = clasificar(i, { cuentaId, estado });
-    return 'codigo' in c ? rechazo(c) : c;
+    return clasificarConciliacion(i, cuentaId, estado);
   }, d.opciones?.() ?? {});
   if ('categoria' in r) return { ok: false, error: r };
   const carga = firmarCarga(d.claves, cuentaId, estado, d.ahoraMs() + VIGENCIA_MS);
