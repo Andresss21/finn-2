@@ -74,6 +74,9 @@ describe('PRU-DOM-VAL', () => {
     expect(
       mensajeDeRechazo({ codigo: 'nombre_repetido', datos: { nombre: 'Beto', deudorId: 'x' } }),
     ).toBe('Ya existe un deudor llamado Beto.');
+    expect(mensajeDeRechazo({ codigo: 'nombre_repetido', datos: { nombre: 'Gastos' } })).toBe(
+      'Ya existe un grupo llamado Gastos.', // CH-40
+    );
     expect(rellenar('El ciclo ya empieza el día {dia}.', { dia: 15 })).toBe(
       'El ciclo ya empieza el día 15.',
     );

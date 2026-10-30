@@ -157,6 +157,28 @@ describe('PRU-INT-COBRO', () => {
     });
     const despues = (await hechos()).asignaciones.filter((a) => a.categoriaId === CP);
     expect(despues.map((a) => a.monto)).toEqual([2000]);
+
+    // la casilla sin propuesta AV-22 (una compra en efectivo) es VALIDACION, no INTERNO, y no escribe
+    const enEfectivo = { ...compra, id: uuid(1112), cuentaId: E1 };
+    expect(await ejecutar(OP20, enEfectivo)).toMatchObject({ ok: true });
+    const otraLinea = (await hechos()).lineas.find((l) => l.transaccionId === enEfectivo.id)?.id;
+    const sinPropuesta = {
+      ...entrada,
+      id: uuid(1113),
+      lineaId: otraLinea,
+      asignarAPagoTarjeta: true,
+    };
+    expect(await preparar(OP31, { ...sinPropuesta, asignarAPagoTarjeta: false })).toMatchObject({
+      ok: true,
+      valor: { rechazos: [], avisos: [] }, // sin la casilla el cobro es válido y no hay AV-22
+    });
+    const invalida = {
+      ok: false,
+      error: { categoria: 'VALIDACION', campos: { asignarAPagoTarjeta: contiene('efectivo') } },
+    };
+    expect(await ejecutar(OP31, sinPropuesta)).toMatchObject(invalida);
+    expect(await preparar(OP31, sinPropuesta)).toMatchObject(invalida);
+    expect((await cobro(sinPropuesta.id)).tx).toBeUndefined();
   });
 
   it('PRU-INT-COBRO-101 OP-52: renombra al deudor con el nombre que vio la interfaz; repetirlo es ya aplicada, un nombre ya cambiado es conflicto_desactualizado y uno repetido se rechaza', async () => {
@@ -223,10 +245,12 @@ describe('PRU-INT-COBRO', () => {
         datos: { actuales: { cuotaPactada: 5500, tasaNominalAnual: 135000 } },
       },
     });
-    expect(await ejecutar(OP48, { ...entrada, prestamoId: E1 })).toMatchObject({
-      ok: false,
-      error: { categoria: 'DOMINIO', codigo: 'cuenta_tipo_no_valido' },
-    });
+    expect(await ejecutar(OP48, { ...entrada, prestamoId: E1 })).toMatchObject(
+      rechazo(
+        'cuenta_tipo_no_valido',
+        'Esta operación no se puede hacer con una cuenta de tipo efectivo.',
+      ),
+    );
     expect(await ejecutar(OP48, { ...entrada, prestamoId: uuid(9999) })).toMatchObject({
       ok: false,
       error: { categoria: 'NO_ENCONTRADO' },

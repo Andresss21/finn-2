@@ -11,6 +11,15 @@ export async function leerInstituciones(tx: LectorTx): Promise<Institucion[]> {
   return filas.map((f) => ({ id: f.id as Uuid, nombre: f.nombre }));
 }
 
+/** El nombre de una institución [H] (03 §3.3), o `null` si no existe: lo usa el marco para los rechazos (04 §3.0.6). */
+export async function nombreDeInstitucion(tx: LectorTx, id: string): Promise<string | null> {
+  const fila = await txPrisma(tx).institucion.findUnique({
+    where: { id },
+    select: { nombre: true },
+  });
+  return fila?.nombre ?? null;
+}
+
 /** `cambios_posteriores` [H] (03 §3.27), en orden estable. */
 export async function leerCambiosPosteriores(tx: LectorTx): Promise<CambioPosterior[]> {
   const filas = await txPrisma(tx).cambioPosterior.findMany({

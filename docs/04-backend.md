@@ -1344,6 +1344,8 @@ Aplican a todo texto dirigido al usuario que produzca el servidor: errores, rech
 
 **[F6]** **CF-04.** Los textos de los hallazgos (06 §3.5.4 a §3.5.11) y de las propuestas de CF-05 son mensajes de este catálogo, con las mismas reglas.
 
+**[CH-40]** **Grupo repetido.** `nombre_repetido` de un grupo (OP-07, OP-08) no trae `{grupo}`: la plantilla "Ya existe {nombre} en {grupo}." de 3.0.6 es la de una categoría. Para un grupo, el mensaje es "Ya existe un grupo llamado {nombre}.". `errores/mensajes.ts` elige el texto con los datos del rechazo, como elige el de la tarjeta archivada (R2) y el del deudor (OP-52).
+
 **Formato verificado (V-18).** En Node 24.21 (ICU 78.3), la configuración regional `es-SV` produce exactamente estos formatos:
 
 ```ts

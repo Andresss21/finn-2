@@ -6,6 +6,7 @@ import { Memoria, type EscritorTx, type NuevoEvento } from '@finn/db';
 import type { Hechos, Uuid } from '@finn/dominio';
 import {
   confirmar,
+  ErrorValidacion,
   previsualizar,
   type DefinicionOperacion,
   type DepsMarco,
@@ -239,6 +240,44 @@ describe('PRU-DOM-VAL', () => {
         ],
       },
     });
+  });
+
+  it('PRU-DOM-VAL-156 BE-17: un ErrorValidacion de resolver o de la comprobación es VALIDACION con su campo, sin escribir ni registrar; cualquier otra excepción sigue siendo INTERNO', async () => {
+    const imposible = new ErrorValidacion('asignarAPagoTarjeta', 'No hay propuesta.');
+    const esperado = {
+      ok: false,
+      error: {
+        categoria: 'VALIDACION',
+        codigo: 'validacion',
+        mensaje: 'Revisá los campos marcados.',
+        campos: { asignarAPagoTarjeta: 'No hay propuesta.' },
+      },
+    };
+    const enResolver = definicion({ resolver: () => Promise.reject(imposible) });
+    const m = mundo();
+    expect(await confirmar(enResolver, { id: ID }, m.deps)).toEqual(esperado);
+    expect(await previsualizar(enResolver, { id: ID }, m.deps)).toEqual(esperado);
+    const enComprobacion = definicion({
+      comprobarIdempotencia: () => {
+        throw imposible;
+      },
+    });
+    expect(await confirmar(enComprobacion, { id: ID }, m.deps)).toEqual(esperado);
+    expect(m.registro).toEqual([]);
+    expect(m.eventos).toEqual([]); // 7.2: VALIDACION no se registra
+    expect(m.deps.memoria.revision).toBe('5'); // y la memoria no se vacía
+
+    const inesperado = definicion({ resolver: () => Promise.reject(new TypeError('x')) });
+    const m2 = mundo();
+    for (const r of [
+      await confirmar(inesperado, { id: ID }, m2.deps),
+      await previsualizar(inesperado, { id: ID }, m2.deps),
+    ])
+      expect(r).toMatchObject({
+        ok: false,
+        error: { categoria: 'INTERNO', codigo: 'interno', idError: 'E-TEST01' },
+      });
+    expect(m2.eventos).toMatchObject([{ nivel: 'error' }, { nivel: 'error' }]);
   });
 
   it('PRU-DOM-VAL-157 BE-18: un bloqueo ocupado se reintenta una vez tras 300 a 600 ms; si persiste es OCUPADO; una conexión perdida antes del COMMIT se reintenta y después del COMMIT es INCIERTO sin reintento', async () => {

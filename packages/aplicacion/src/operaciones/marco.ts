@@ -23,6 +23,7 @@ import {
   escribir as escribirDb,
   escribirTecnico as escribirTecnicoDb,
   leer as leerDb,
+  nombreDeInstitucion,
   registrarEvento,
   sanearMensaje,
   sqlstateDe,
@@ -152,6 +153,24 @@ export const idErrorAleatorio = (): string =>
 export const huellaDe = (r: Pick<Exito, 'cambios' | 'impacto' | 'avisos'>): string =>
   createHash('sha256').update(formaCanonicaDelImpacto(r)).digest('hex');
 
+/**
+ * Una entrada que cumple el contrato pero no tiene sentido con los hechos (por ejemplo, la casilla de AV-22 de OP-31
+ * sin propuesta): `resolver` o `comprobarIdempotencia` la lanzan y el marco responde `VALIDACION` con `campo` →
+ * `message` (04 §7.6). Cualquier otra excepción sigue siendo `INTERNO` (7.2).
+ */
+export class ErrorValidacion extends Error {
+  constructor(
+    readonly campo: string,
+    mensaje: string,
+  ) {
+    super(mensaje);
+    this.name = 'ErrorValidacion';
+  }
+}
+
+const validacion = (e: ErrorValidacion): ErrorFinn =>
+  errorDeValidacion([{ path: [e.campo], message: e.message }]);
+
 /** Termina la operación sin escribir: se lanza dentro de `escribir()` para que la transacción acabe en ROLLBACK. */
 class SinEscribir<T> extends Error {
   constructor(readonly fin: T) {
@@ -190,12 +209,21 @@ const NOMBRADOS = {
 /**
  * Los rechazos con el nombre de cada `*Id` reconocido agregado a `datos` (04 §3.0.6: el texto entre llaves es un dato
  * del rechazo). El dominio entrega ids; el nombre sale de los hechos que el marco ya cargó. Un dato que el dominio ya
- * puso no se pisa.
+ * puso no se pisa. `institucionId` no está en los hechos ([H]): su nombre se lee en la misma transacción, solo si un
+ * rechazo lo trae. El `{tipo}` de `cuenta_tipo_no_valido` sale de la cuenta (`cuentaId`, o `prestamoId` en OP-48).
  */
-function conNombres(rechazos: readonly Rechazo[], hechos: Hechos): readonly Rechazo[] {
-  return rechazos.map((r) => {
+async function conNombres(
+  rechazos: readonly Rechazo[],
+  hechos: Hechos,
+  tx: LectorTx,
+): Promise<readonly Rechazo[]> {
+  const salida: Rechazo[] = [];
+  for (const r of rechazos) {
     const datos = r.datos;
-    if (datos === undefined) return r;
+    if (datos === undefined) {
+      salida.push(r);
+      continue;
+    }
     const nombres: Record<string, string> = {};
     for (const [clave, [dato, tabla]] of Object.entries(NOMBRADOS)) {
       const id = datos[clave];
@@ -204,8 +232,19 @@ function conNombres(rechazos: readonly Rechazo[], hechos: Hechos): readonly Rech
       const fila = filas.find((f) => f.id === id);
       if (fila !== undefined) nombres[dato] = fila.nombre;
     }
-    return Object.keys(nombres).length === 0 ? r : { ...r, datos: { ...datos, ...nombres } };
-  });
+    const institucionId = datos['institucionId'];
+    if (typeof institucionId === 'string' && !('institucion' in datos)) {
+      const nombre = await nombreDeInstitucion(tx, institucionId);
+      if (nombre !== null) nombres['institucion'] = nombre;
+    }
+    if (r.codigo === 'cuenta_tipo_no_valido' && !('tipo' in datos)) {
+      const id = datos['cuentaId'] ?? datos['prestamoId'];
+      const cuenta = hechos.cuentas.find((k) => k.id === id);
+      if (cuenta !== undefined) nombres['tipo'] = cuenta.tipo;
+    }
+    salida.push(Object.keys(nombres).length === 0 ? r : { ...r, datos: { ...datos, ...nombres } });
+  }
+  return salida;
 }
 
 /** Pasos 6 y 7 de 04 §4.2 (5 y 6 de 4.3): comando resuelto y `aplicar` sobre los hechos del paso 4. */
@@ -226,7 +265,7 @@ async function aplicarEn<E, R, S>(
     resuelto,
     resultado: resultado.ok
       ? resultado
-      : { ...resultado, rechazos: conNombres(resultado.rechazos, hechos) },
+      : { ...resultado, rechazos: await conNombres(resultado.rechazos, hechos, tx) },
   };
 }
 
@@ -386,7 +425,14 @@ export async function previsualizar<E, R, S>(
     c,
     d,
   );
-  if (!r.ok) return { ok: false, error: await errorDeExcepcion(r.error, false, c, d) };
+  if (!r.ok)
+    return {
+      ok: false,
+      error:
+        r.error instanceof ErrorValidacion
+          ? validacion(r.error)
+          : await errorDeExcepcion(r.error, false, c, d),
+    };
   return { ok: true, valor: r.valor, yaAplicada: false, avisos: [] };
 }
 
@@ -507,6 +553,8 @@ export async function confirmar<E, R, S>(
   );
   let fin: Fin<S>;
   if (corrida.ok) fin = corrida.valor;
+  else if (corrida.error instanceof ErrorValidacion)
+    fin = { tipo: 'error', error: validacion(corrida.error) }; // nada se escribió: la memoria sigue valiendo
   else {
     d.memoria.vaciar(); // ante un error la memoria no puede asegurar su revisión
     const s = sqlstateDe(corrida.error);

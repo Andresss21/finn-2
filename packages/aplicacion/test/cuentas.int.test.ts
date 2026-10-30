@@ -2,7 +2,7 @@
 // 01 inv. 22 y 24). Cada caso crea sus propias cuentas (ids 900+) y no depende de otro: lee lo que necesita de la base.
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Hechos, Instante, Uuid } from '@finn/dominio';
-import { cargarHechos, escribir, leer, Memoria, sqlstateDe } from '@finn/db';
+import { cargarHechos, escribir, leer, leerInstituciones, Memoria, sqlstateDe } from '@finn/db';
 import { crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY, RELOJ } from '../../db/test/ayudantes/hechos-prueba.ts';
 import {
@@ -378,6 +378,24 @@ describe('PRU-INT-CTA', () => {
     if (viejo.ok || viejo.error.datos === undefined) throw new Error('debía ser un conflicto');
     expect(viejo.error).toMatchObject({ codigo: 'conflicto_desactualizado' });
     expect(viejo.error.datos['actuales']).toEqual({ tasaAnual: 245000 });
+
+    // `instituciones` es [H]: el marco lee su nombre en la misma transacción (ultimos4_repetidos)
+    const institucionId = h.cuentas.find((c) => c.id === E1)?.institucionId;
+    const instituciones = await leer((t) => leerInstituciones(t), RELOJ);
+    const institucion = instituciones.find((i) => i.id === institucionId)?.nombre ?? '?';
+    expect(institucion.length).toBeGreaterThan(1);
+    const repetida = efectivo(956, { institucionId, ultimos4: '1234', nombre: 'Débito 2' });
+    expect(await ejecutar(OP01, repetida)).toMatchObject({
+      ok: false,
+      error: {
+        codigo: 'ultimos4_repetidos',
+        mensaje: `Ya tenés una cuenta de ${institucion} terminada en 1234.`,
+      },
+    });
+    expect(await preparar(OP01, repetida)).toMatchObject({
+      ok: true,
+      valor: { rechazos: [{ codigo: 'ultimos4_repetidos', datos: { institucion } }] },
+    });
   });
 
   it('PRU-INT-CTA-101 [AV-15] OP-06: elimina una cuenta solo con la huella de su previsualización y la repetición es ya aplicada', async () => {
