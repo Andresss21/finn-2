@@ -14,6 +14,8 @@ import { idErrorAleatorio, type DepsMarco } from '../operaciones/marco.ts';
 import { barrer, procesar } from './procesar.ts';
 import { autenticar } from './token.ts';
 
+export { LIMITE_CUERPO_BYTES };
+
 export interface PeticionWebhook {
   readonly autorizacion: string | null;
   readonly contentType: string | null;
