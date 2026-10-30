@@ -1,0 +1,154 @@
+/* Generado por tools/pruebas/tokens-tailwind.mjs desde tokens.json. No editar a mano (CF-11, CF-12). */
+@custom-variant dark (&:where([data-theme=oscuro], [data-theme=oscuro] *));
+
+@theme inline {
+  --spacing: var(--espacio-1);
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-superficie-elevada: var(--superficie-elevada);
+  --color-superficie-hundida: var(--superficie-hundida);
+  --color-borde-sutil: var(--borde-sutil);
+  --color-borde-control: var(--borde-control);
+  --color-foco: var(--foco);
+  --color-velo: var(--velo);
+  --color-texto: var(--texto);
+  --color-texto-secundario: var(--texto-secundario);
+  --color-texto-terciario: var(--texto-terciario);
+  --color-texto-deshabilitado: var(--texto-deshabilitado);
+  --color-enlace: var(--enlace);
+  --color-accion: var(--accion);
+  --color-accion-hover: var(--accion-hover);
+  --color-accion-presionada: var(--accion-presionada);
+  --color-texto-sobre-accion: var(--texto-sobre-accion);
+  --color-accion-secundaria: var(--accion-secundaria);
+  --color-peligro: var(--peligro);
+  --color-texto-sobre-peligro: var(--texto-sobre-peligro);
+  --color-marca: var(--marca);
+  --color-texto-sobre-marca: var(--texto-sobre-marca);
+  --color-positivo-texto: var(--positivo-texto);
+  --color-positivo-fondo: var(--positivo-fondo);
+  --color-positivo-borde: var(--positivo-borde);
+  --color-cero-texto: var(--cero-texto);
+  --color-cero-fondo: var(--cero-fondo);
+  --color-cero-borde: var(--cero-borde);
+  --color-advertencia-texto: var(--advertencia-texto);
+  --color-advertencia-fondo: var(--advertencia-fondo);
+  --color-advertencia-borde: var(--advertencia-borde);
+  --color-problema-texto: var(--problema-texto);
+  --color-problema-fondo: var(--problema-fondo);
+  --color-problema-borde: var(--problema-borde);
+  --color-deuda-texto: var(--deuda-texto);
+  --color-deuda-fondo: var(--deuda-fondo);
+  --color-deuda-borde: var(--deuda-borde);
+  --color-deuda-sin-respaldo-texto: var(--deuda-sin-respaldo-texto);
+  --color-deuda-sin-respaldo-fondo: var(--deuda-sin-respaldo-fondo);
+  --color-deuda-sin-respaldo-borde: var(--deuda-sin-respaldo-borde);
+  --color-informacion-texto: var(--informacion-texto);
+  --color-informacion-fondo: var(--informacion-fondo);
+  --color-informacion-borde: var(--informacion-borde);
+  --color-grafico-serie-1: var(--grafico-serie-1);
+  --color-grafico-serie-2: var(--grafico-serie-2);
+  --color-grafico-serie-3: var(--grafico-serie-3);
+  --color-grafico-serie-4: var(--grafico-serie-4);
+  --color-grafico-serie-5: var(--grafico-serie-5);
+  --color-grafico-serie-6: var(--grafico-serie-6);
+  --color-grafico-serie-7: var(--grafico-serie-7);
+  --color-grafico-serie-8: var(--grafico-serie-8);
+  --color-grafico-referencia: var(--grafico-referencia);
+  --color-grafico-rejilla: var(--grafico-rejilla);
+  --color-marca-icono-fondo: var(--marca-icono-fondo);
+  --color-marca-icono-figura: var(--marca-icono-figura);
+  --color-accion-tonal: var(--accion-tonal);
+  --color-grafico-tinta: var(--grafico-tinta);
+  --color-grafico-otras: var(--grafico-otras);
+  --color-marca-grabado: var(--marca-grabado);
+  --color-cuenta-banco: var(--cuenta-banco);
+  --color-cuenta-ahorro: var(--cuenta-ahorro);
+  --color-cuenta-prestamo: var(--cuenta-prestamo);
+  --color-cuenta-inversion: var(--cuenta-inversion);
+  --color-cuenta-motivo: var(--cuenta-motivo);
+  --color-cuenta-disco: var(--cuenta-disco);
+  --color-tarjeta-oro-texto: var(--tarjeta-oro-texto);
+  --color-tarjeta-plata-texto: var(--tarjeta-plata-texto);
+  --radius-control: var(--radio-control);
+  --radius-contenedor: var(--radio-contenedor);
+  --radius-pastilla: var(--radio-pastilla);
+  --radius-superpuesto: var(--radio-superpuesto);
+  --radius-identidad: var(--radio-identidad);
+  --radius-tarjeta: var(--radio-tarjeta);
+  --shadow-elevacion-1: var(--elevacion-1);
+  --shadow-elevacion-2: var(--elevacion-2);
+  --shadow-elevacion-3: var(--elevacion-3);
+  --ease-estandar: var(--curva-estandar);
+  --ease-entrada: var(--curva-entrada);
+  --ease-salida: var(--curva-salida);
+  --ease-enfasis: var(--curva-enfasis);
+  --font-titulo: var(--fuente-titulo);
+  --font-cuerpo: var(--fuente-cuerpo);
+}
+
+@utility text-cifra-principal {
+  font-family: var(--fuente-cuerpo);
+  font-size: 2.75rem;
+  line-height: 1.05;
+  font-weight: 800;
+  font-stretch: 72%;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility text-cifra {
+  font-family: var(--fuente-cuerpo);
+  font-size: 1.25rem;
+  line-height: 1.25;
+  font-weight: 700;
+  font-stretch: 80%;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility text-titulo-pantalla {
+  font-family: var(--fuente-titulo);
+  font-size: 2rem;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+}
+
+@utility text-titulo-seccion {
+  font-family: var(--fuente-titulo);
+  font-size: 1.375rem;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+}
+
+@utility text-cuerpo {
+  font-family: var(--fuente-cuerpo);
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+@utility text-cuerpo-pequeno {
+  font-family: var(--fuente-cuerpo);
+  font-size: .875rem;
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+@utility text-etiqueta {
+  font-family: var(--fuente-cuerpo);
+  font-size: .875rem;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+@utility text-rotulo {
+  font-family: var(--fuente-cuerpo);
+  font-size: .75rem;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}

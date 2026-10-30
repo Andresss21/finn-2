@@ -1,0 +1,27 @@
+/* Puente con Tailwind (05 §10.1, CF-10 a CF-12): los valores son de tokens.css; las utilidades, de tailwind.css. */
+@import 'tailwindcss';
+@import './tokens.css';
+@import '../../tailwind.css';
+
+/* next/font da a cada familia un nombre propio: se antepone al de la entrega para que las fuentes autohospedadas
+   sean las que se usan. El resto de la pila (la de tokens.css) queda de reserva. */
+:root {
+  --fuente-titulo: var(--tipo-titulo), 'Big Shoulders Display', 'Archivo', system-ui, sans-serif;
+  --fuente-cuerpo: var(--tipo-cuerpo), 'Archivo', system-ui, sans-serif;
+}
+
+body {
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--fuente-cuerpo);
+}
+
+/* Movimiento reducido (11.6): la regla vive solo aquí. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

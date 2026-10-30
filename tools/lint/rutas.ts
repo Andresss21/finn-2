@@ -39,7 +39,7 @@ export function rutasDelArbol(markdown: string): { ruta: string; clase: string }
 
 const TOP = new Set(['(finn)', 'ingresar', 'sin-conexion', 'api', 'serwist']);
 const ARCHIVOS_TOP =
-  /^(layout|manifest|not-found|global-error|error|icon|apple-icon|favicon)\.|^globals\.css$/;
+  /^(layout|manifest|not-found|global-error|error|icon|apple-icon|favicon)\.|^globals\.css$|^tokens\.(css|json)$/;
 const PAGINA = /^(page\.tsx|route\.ts)$/;
 
 function* paginas(dir: string, prefijo: string[] = []): Generator<string[]> {
