@@ -19,7 +19,7 @@ import {
   instalarRelojSimulado,
   urlDe,
   type BasePrueba,
-} from '../../../db/test/ayudantes/base.ts';
+} from '../../../db/test/ayudantes/conexion.ts';
 import type { ClaimsSesion, SesionServidor } from '../../src/autenticacion/autorizar.ts';
 import { sinParametros } from '../../src/contratos/consultas.ts';
 import { consultar, type DepsConsulta } from '../../src/consultas/comun.ts';
@@ -807,6 +807,14 @@ async function observar(
   const ef = i.cuentas.filter((k) => k.tipo === 'efectivo').reduce((a, k) => a + k.saldo, 0);
   const [lpa, fut, sobta] = [i.lpa.total, i.lpa.asignadoFuturos, i.sobregiroConTarjeta];
   return { obs: { ef, lpa, disp, fut, sobta, tarjetas, avisos: [...avisos].sort(), extra }, i };
+}
+
+/** `sembrar` de la E2E (TA-219): reemplaza `destino` por una copia de este estado, marcada como base de prueba. */
+export async function copiarEstadoA(s: Estado, destino: string): Promise<void> {
+  await s.cliente.$disconnect(); // CREATE DATABASE … TEMPLATE exige que nadie esté conectado a la fuente
+  await comoAdmin(`DROP DATABASE IF EXISTS ${destino} WITH (FORCE)`);
+  await comoAdmin(`CREATE DATABASE ${destino} TEMPLATE ${s.base.nombre}`);
+  await comoAdmin(`ALTER DATABASE ${destino} SET finn.reloj_simulado = on`);
 }
 
 export const ejecutorInt: Ejecutor<Estado> = {

@@ -10,14 +10,31 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { afterAll, beforeAll, inject } from 'vitest';
 import type { TestProject } from 'vitest/node';
+import { prepararPlantilla as controlarPlantilla } from '../../../../tools/db/plantilla.ts';
 import {
-  prepararPlantilla as controlarPlantilla,
-  type Consultar,
-} from '../../../../tools/db/plantilla.ts';
+  baseLlamada,
+  consultar,
+  instalarRelojSimulado,
+  url,
+  urlDe,
+  usarConexion,
+  type BasePrueba,
+  type ConexionArnes,
+  type Rol,
+} from './conexion.ts';
 
-export type Rol = 'admin' | 'migraciones' | 'app';
-export type ConexionArnes = { host: string; puerto: number; claves: Record<Rol, string> };
-export type BasePrueba = { nombre: string; url: string; urlMigraciones: string; urlAdmin: string };
+export {
+  baseLlamada,
+  consultar,
+  instalarRelojSimulado,
+  urlDe,
+  type BasePrueba,
+  type ConexionArnes,
+  type Rol,
+};
+
+// En Vitest la conexión la provee `setup`; la E2E, que no carga este archivo, la lee del entorno (conexion.ts)
+usarConexion(() => inject('finnPg'));
 
 declare module 'vitest' {
   export interface ProvidedContext {
@@ -45,31 +62,6 @@ export function pgMayor(): string {
   if (!m?.[1]) throw new Error('infra/versiones.env no tiene PG_MAYOR');
   return m[1];
 }
-
-const url = (c: ConexionArnes, base: string, rol: Rol): string =>
-  `postgresql://${USUARIO[rol]}:${c.claves[rol]}@${c.host}:${c.puerto}/${base}`;
-
-/** URL de `base` con `rol`, en el contenedor que preparó `setup`. */
-export const urlDe = (base: string, rol: Rol): string => url(inject('finnPg'), base, rol);
-
-/** Un script SQL en una conexión propia, cerrada al terminar; filas como psql `-A -t` (columnas con `|`). */
-export const consultar: Consultar = async (urlBase, sql) => {
-  const c = new pg.Client({ connectionString: urlBase });
-  await c.connect();
-  try {
-    // Un script con varias sentencias devuelve un resultado por sentencia (protocolo simple)
-    const r = (await c.query({ text: sql, rowMode: 'array' })) as unknown as
-      pg.QueryArrayResult | pg.QueryArrayResult[];
-    const resultados: pg.QueryArrayResult[] = Array.isArray(r) ? r : [r];
-    return resultados.flatMap((x) =>
-      (x.rows as unknown[][]).map((f) =>
-        f.map((v) => (v === null ? '' : String(v as string | number | boolean))).join('|'),
-      ),
-    );
-  } finally {
-    await c.end();
-  }
-};
 
 /**
  * Gancho de la plantilla, como finn_migraciones, antes de clonar: `prisma migrate deploy` y C3, C5 y C6
@@ -133,14 +125,6 @@ async function comoAdmin(sql: string): Promise<void> {
   }
 }
 
-/** `tools/pruebas/reloj-simulado.sql` como finn_migraciones; falla si la base no tiene la marca (CT-02). */
-export const instalarRelojSimulado = async (base: BasePrueba): Promise<void> => {
-  await consultar(
-    base.urlMigraciones,
-    readFileSync(raiz('tools/pruebas/reloj-simulado.sql'), 'utf8'),
-  );
-};
-
 /** El texto de R15 (`tools/db/regla-r15.sql`), para correrla sola. */
 export const leerRegla15 = (): string => readFileSync(raiz('tools/db/regla-r15.sql'), 'utf8');
 
@@ -157,20 +141,6 @@ export async function fijarReloj(
   if (desfaseMs !== undefined)
     await c.query("SELECT set_config('finn.desfase_ms', $1, true)", [String(desfaseMs)]);
 }
-
-/** Una base del contenedor por su nombre; las URL se leen en las pruebas, no al recolectar. */
-export const baseLlamada = (nombre: string): BasePrueba => ({
-  nombre,
-  get url() {
-    return urlDe(nombre, 'app');
-  },
-  get urlMigraciones() {
-    return urlDe(nombre, 'migraciones');
-  },
-  get urlAdmin() {
-    return urlDe(nombre, 'admin');
-  },
-});
 
 /**
  * La base de este archivo: `CREATE DATABASE … TEMPLATE finn_plantilla`, marcada con

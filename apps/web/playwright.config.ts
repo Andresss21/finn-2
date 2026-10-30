@@ -1,5 +1,7 @@
 // Proyectos de Playwright de 07 §3.2 (DP-08). Los resultados de `webkit-parcial` no bloquean (§7.3).
+// La pila local y el usuario de prueba los levanta `pnpm test:e2e` (tools/pruebas/e2e.mjs, TA-219).
 import { defineConfig, devices } from '@playwright/test';
+import { ARCHIVO_RELOJ } from '../../tools/pruebas/e2e/reloj.ts';
 
 const enCI = process.env['CI'] !== undefined && process.env['CI'] !== '';
 const PUERTO = 3100;
@@ -25,16 +27,29 @@ export default defineConfig({
     command: `pnpm exec next build && pnpm exec next start -p ${PUERTO}`,
     // Por puerto: sin sesión `/` redirige a /ingresar, que aún no tiene página (404), y una URL así nunca da «listo».
     port: PUERTO,
-    reuseExistingServer: !enCI,
+    // Nunca uno ajeno: tiene que ser este, con el reloj de prueba (CT-01, P7-10)
+    reuseExistingServer: false,
     timeout: 300_000,
+    env: {
+      FINN_ENTORNO: 'pruebas',
+      FINN_RELOJ_ARCHIVO: ARCHIVO_RELOJ,
+      NEXT_TELEMETRY_DISABLED: '1',
+    },
   },
   projects: [
+    // La sesión AAL2 (05 §14.1). Es dependencia de los demás desde que exista /ingresar (DT-23).
+    { name: 'configuracion', testMatch: '**/*.setup.ts', use: { ...devices['Desktop Chrome'] } },
     { name: 'movil', use: { ...devices['Pixel 7'] } },
     {
       name: 'escritorio',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
     },
-    { name: 'zona-distinta', use: { ...devices['Desktop Chrome'], timezoneId: 'Asia/Tokyo' } },
+    // 05 §14.1: solo `pantallas/` con fechas
+    {
+      name: 'zona-distinta',
+      testMatch: 'pantallas/**/*.e2e.ts',
+      use: { ...devices['Desktop Chrome'], timezoneId: 'Asia/Tokyo' },
+    },
     { name: 'webkit-parcial', use: { ...devices['iPhone 13'] } },
   ],
 });
