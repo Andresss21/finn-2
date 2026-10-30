@@ -55,28 +55,23 @@ export const pasoRegistro: PasoTarea = {
         (d.cargar ?? cargarHechos)(tx),
       );
       for (const p of hechos.programadas) comercios.set(p.id, p.comercio);
-      return ocurrenciasAutomaticas(hechos, FechaLocal.desdeTexto(tx.estado.hoy)).slice(
-        0,
-        LIMITE_REGISTRO,
-      );
+      const hoy = FechaLocal.desdeTexto(tx.estado.hoy);
+      return ocurrenciasAutomaticas(hechos, hoy).slice(0, LIMITE_REGISTRO);
     }, d.opciones?.());
 
+    const dep = { ...d, aplicar: aplicarAutomatico };
     let registradas = 0;
     let sinRegistrar = 0;
     for (const { programadaId, fechaEsperada } of ocurrencias) {
       const comercio = comercios.get(programadaId) ?? '';
       const id = uuidv5(`${programadaId}|${fechaEsperada}`, ESPACIO_REGISTRO);
       const clave = `${programadaId}:${fechaEsperada}`;
-      const r = await confirmar(
-        OP43,
-        { id, programadaId, fechaEsperada },
-        { ...d, aplicar: aplicarAutomatico },
-      );
+      const r = await confirmar(OP43, { id, programadaId, fechaEsperada }, dep);
       if (r.ok) {
         registradas++;
         const texto = [
           `Se registró ${comercio}`,
-          `Pago programado registrado con su fecha esperada, ${fechaEsperada}.`,
+          'Pago programado registrado con su fecha esperada.',
         ];
         if (!r.yaAplicada)
           await avisar(d, 'registro_automatico', `registro_automatico:${clave}`, texto, {

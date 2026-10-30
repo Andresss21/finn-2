@@ -123,7 +123,5 @@ export type EntradaOp44 = z.output<typeof op44>;
 export const op51 = z.object({ programadaId: uuid });
 export type EntradaOp51 = z.output<typeof op51>;
 
-/** Salida de las operaciones de programadas: el id de lo que se creó (la programada), si lo hay. */
-export interface SalidaProgramada {
-  readonly id?: Uuid;
-}
+/** Salida de las operaciones de programadas: el id de la programada que se creó, si lo hay. */
+export type SalidaProgramada = { readonly id?: Uuid };
