@@ -123,6 +123,11 @@ describe('PRU-INT-CATEG', () => {
         mensaje: 'Ya existe COMIDA en Gastos.',
       },
     });
+    // un grupo repetido no tiene {grupo}: su propio texto [CH-40]
+    expect(await ejecutar(OP07, grupo(805, 'gastos'))).toMatchObject({
+      ok: false,
+      error: { codigo: 'nombre_repetido', mensaje: 'Ya existe un grupo llamado gastos.' },
+    });
     const sistema = antes.grupos.find((x) => x.claveSistema === 'pagos_tarjeta');
     expect(await ejecutar(OP07, categoria(803, 'Libre', sistema?.id as Uuid))).toMatchObject({
       ok: false,
