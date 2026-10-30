@@ -34,20 +34,16 @@ const destinoDe = (url: string): string => {
 
 function frascoDeSesion() {
   const frasco = new Map<string, string>();
-  const cliente = createServerClient(
-    URL_AUTH(),
-    variable('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'),
-    {
-      cookies: {
-        getAll: () => [...frasco].map(([name, value]) => ({ name, value })),
-        setAll(a) {
-          for (const { name, value } of a)
-            if (value === '') frasco.delete(name);
-            else frasco.set(name, value);
-        },
+  const cliente = createServerClient(URL_AUTH(), variable('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'), {
+    cookies: {
+      getAll: () => [...frasco].map(([name, value]) => ({ name, value })),
+      setAll(a) {
+        for (const { name, value } of a)
+          if (value === '') frasco.delete(name);
+          else frasco.set(name, value);
       },
     },
-  );
+  });
   return { frasco, auth: cliente.auth };
 }
 
@@ -68,7 +64,9 @@ test.describe('PRU-E2E-ACCESO', () => {
     expect(destinoDe(page.url())).toBe(AL_INGRESAR);
 
     // Sesión vencida: JWT vencido y refresh token que Auth rechaza; la cookie se limpia en la redirección.
-    const carga = base64url(JSON.stringify({ sub: variable('FINN_USUARIO_ID'), aal: 'aal2', exp: 1 }));
+    const carga = base64url(
+      JSON.stringify({ sub: variable('FINN_USUARIO_ID'), aal: 'aal2', exp: 1 }),
+    );
     const vencida = {
       access_token: `${base64url('{"alg":"ES256","typ":"JWT"}')}.${carga}.firma`,
       refresh_token: 'rechazado',
@@ -86,7 +84,7 @@ test.describe('PRU-E2E-ACCESO', () => {
     expect(cookies.filter((c) => c.name.startsWith(nombreCookie()))).toEqual([]);
   });
 
-  test('PRU-E2E-ACCESO-101 [AUTH-funciones] las funciones de 04 §12.2 con Auth real: AAL1 pide el factor, AAL2 entra, respaldo se inscribe y salir cierra', async ({
+  test('PRU-E2E-ACCESO-101 AUTH-funciones: las funciones de 04 §12.2 con Auth real: AAL1 pide el factor, AAL2 entra, respaldo se inscribe y salir cierra', async ({
     page,
     context,
     baseURL,

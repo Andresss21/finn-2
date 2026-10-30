@@ -39,11 +39,7 @@ export interface ClienteAuth {
   mfa: {
     listFactors(): Promise<Respuesta<{ all: readonly FactorAuth[] } | null>>;
     challenge(p: { factorId: string }): Promise<Respuesta<{ id: string } | null>>;
-    verify(p: {
-      factorId: string;
-      challengeId: string;
-      code: string;
-    }): Promise<Respuesta<unknown>>;
+    verify(p: { factorId: string; challengeId: string; code: string }): Promise<Respuesta<unknown>>;
     enroll(p: {
       factorType: 'totp';
       friendlyName: string;
@@ -221,8 +217,7 @@ export async function verificarFactor(
   const primero = lista.verificados[0];
   if (primero === undefined) return falla(errorNoAutorizado('aal1')); // sin factores: la tabla lleva a inscribir
   const { factorId = primero.id, codigo } = entrada.data;
-  if (!lista.verificados.some((f) => f.id === factorId))
-    return falla(propio('codigo_incorrecto'));
+  if (!lista.verificados.some((f) => f.id === factorId)) return falla(propio('codigo_incorrecto'));
   return retarYVerificar(auth, factorId, codigo);
 }
 

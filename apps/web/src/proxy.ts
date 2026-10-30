@@ -33,7 +33,7 @@ export async function proxy(peticion: NextRequest): Promise<NextResponse> {
           respuesta = seguir();
           for (const { name, value, options } of aFijar)
             respuesta.cookies.set(name, value, options);
-          for (const [nombre, valor] of Object.entries(cabecerasDeCache ?? {}))
+          for (const [nombre, valor] of Object.entries(cabecerasDeCache))
             respuesta.headers.set(nombre, valor);
         },
       },

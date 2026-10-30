@@ -7,7 +7,11 @@ const NINGUNA: EstadoParaDestino = {
   usuarioPermitido: false,
   factoresVerificados: [],
 };
-const OTRO: EstadoParaDestino = { sesion: 'aal1', usuarioPermitido: false, factoresVerificados: [] };
+const OTRO: EstadoParaDestino = {
+  sesion: 'aal1',
+  usuarioPermitido: false,
+  factoresVerificados: [],
+};
 const CON_FACTOR: EstadoParaDestino = {
   sesion: 'aal1',
   usuarioPermitido: true,

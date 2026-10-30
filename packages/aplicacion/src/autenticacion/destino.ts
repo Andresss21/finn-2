@@ -41,5 +41,7 @@ export function destinoAcceso(
   if (!estado.usuarioPermitido) return paso('/ingresar', true);
   if (estado.sesion === 'aal2')
     return { accion: 'redirigir', destino: saneado, cerrarSesion: false };
-  return paso(estado.factoresVerificados.length > 0 ? '/ingresar/verificar' : '/ingresar/inscribir');
+  return paso(
+    estado.factoresVerificados.length > 0 ? '/ingresar/verificar' : '/ingresar/inscribir',
+  );
 }

@@ -69,7 +69,7 @@ const codigoDe = (r: { ok: boolean; error?: { codigo: string } }) =>
   r.ok ? 'ok' : r.error?.codigo;
 
 describe('PRU-SEG-ACCESO', () => {
-  it('PRU-SEG-ACCESO-105 [AUTH-funciones] estadoAcceso e ingresar: niveles, usuario no permitido y errores sin revelar cuál falló', async () => {
+  it('PRU-SEG-ACCESO-105 AUTH-funciones: estadoAcceso e ingresar: niveles, usuario no permitido y errores sin revelar cuál falló', async () => {
     expect(await estadoAcceso(falso({ aal: null }).auth, FINN)).toEqual({
       sesion: 'ninguna',
       usuarioPermitido: false,
@@ -120,7 +120,7 @@ describe('PRU-SEG-ACCESO', () => {
     });
   });
 
-  it('PRU-SEG-ACCESO-106 [AUTH-funciones] verificarFactor exige sesión del permitido, solo acepta factores verificados y traduce los códigos', async () => {
+  it('PRU-SEG-ACCESO-106 AUTH-funciones: verificarFactor exige sesión del permitido, solo acepta factores verificados y traduce los códigos', async () => {
     const base = { factores: [verificado, colgado] };
     const bien = falso(base);
     expect(await verificarFactor(bien.auth, FINN, { codigo: CODIGO })).toMatchObject({ ok: true });
@@ -165,7 +165,7 @@ describe('PRU-SEG-ACCESO', () => {
     expect(await conVerify({ status: 500 })).toBe('interno');
   });
 
-  it('PRU-SEG-ACCESO-107 [AUTH-funciones] inscripción: se niega con AAL1 y factor verificado, limpia los colgados y salir cierra local', async () => {
+  it('PRU-SEG-ACCESO-107 AUTH-funciones: inscripción: se niega con AAL1 y factor verificado, limpia los colgados y salir cierra local', async () => {
     const limpio = falso({ factores: [colgado] });
     const inicio = await iniciarInscripcion(limpio.auth, FINN, {});
     expect(inicio).toMatchObject({
@@ -200,7 +200,11 @@ describe('PRU-SEG-ACCESO', () => {
       codigoDe(await completarInscripcion(falso({ factores: [verificado] }).auth, FINN, entrada)),
     ).toBe('inscripcion_no_permitida');
     expect(
-      await completarInscripcion(falso({ aal: 'aal2', factores: [verificado] }).auth, FINN, entrada),
+      await completarInscripcion(
+        falso({ aal: 'aal2', factores: [verificado] }).auth,
+        FINN,
+        entrada,
+      ),
     ).toMatchObject({ ok: true });
 
     const fuera = falso({});
