@@ -19,7 +19,7 @@ import {
   instalarRelojSimulado,
   urlDe,
   type BasePrueba,
-} from '../../../db/test/ayudantes/base.ts';
+} from '../../../db/test/ayudantes/conexion.ts';
 import type { ClaimsSesion, SesionServidor } from '../../src/autenticacion/autorizar.ts';
 import { sinParametros } from '../../src/contratos/consultas.ts';
 import { consultar, type DepsConsulta } from '../../src/consultas/comun.ts';

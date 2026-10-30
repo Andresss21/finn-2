@@ -2,6 +2,7 @@
 // @finn/aplicacion contra PostgreSQL como `finn_app`, una prueba por escenario y una aserción por fila (títulos literales:
 // los lee la matriz). Cada escenario tiene su base clonada de la plantilla y cada fila de contraste, la suya.
 import { expect, it } from 'vitest';
+import '../../../db/test/ayudantes/base.ts'; // la conexión de `int` (conexion.ts) viene del arnés de Vitest
 import { correr } from '../../../dominio/escenarios/ejecutar';
 import { ESCENARIOS } from '../../../dominio/escenarios/todos';
 import { ejecutorInt } from './int.ts';

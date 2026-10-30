@@ -21,11 +21,13 @@
     "tailwindcss": "4.3.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@finn/config": "workspace:*",
     "@playwright/test": "1.56.1",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.2.3",
+    "otpauth": "9.5.2",
     "typescript": "5.9.3"
   }
 }

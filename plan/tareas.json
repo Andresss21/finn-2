@@ -315,7 +315,7 @@
 
   "TA-218": { "estado": "pendiente" },
 
-  "TA-219": { "estado": "pendiente" },
+  "TA-219": { "estado": "en_curso", "rama": "ta-219-arnes-e2e" },
 
   "TA-220": { "estado": "pendiente" },
 
