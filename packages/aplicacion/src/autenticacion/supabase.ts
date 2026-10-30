@@ -1,6 +1,5 @@
-// Funciones de autenticación que llama la interfaz (04 §12.2, CP-11; 05 §9.7; CH-50). Solo `apps/web` importa
-// `@supabase/ssr` (04 §1.3): aquí llega el cliente por `ClienteAuth`, la parte de `supabase.auth` que se usa, como
-// `SesionServidor` de autorizar.ts. No crean hechos de Finn: sin idempotencia por id.
+// Funciones de autenticación de la interfaz (04 §12.2, CP-11; 05 §9.7; CH-50). Solo `apps/web` importa `@supabase/ssr`
+// (04 §1.3): el cliente llega por `ClienteAuth`, como `SesionServidor`. Sin idempotencia: no crean hechos de Finn.
 import * as z from 'zod';
 import {
   errorDeValidacion,
@@ -20,6 +19,8 @@ interface Respuesta<T> {
   readonly data: T;
   readonly error: ErrorAuth | null;
 }
+type ConUsuario = { readonly user: { id: string } | null };
+type Inscrito = { readonly id: string; totp: { qr_code: string; secret: string; uri: string } };
 interface FactorAuth {
   readonly id: string;
   readonly friendly_name?: string | undefined;
@@ -29,23 +30,15 @@ interface FactorAuth {
 
 /** Lo que estas funciones usan de `supabase.auth`; el cliente real la cumple sin adaptador. */
 export interface ClienteAuth {
-  signInWithPassword(c: {
-    email: string;
-    password: string;
-  }): Promise<Respuesta<{ user: { id: string } | null }>>;
+  signInWithPassword(c: { email: string; password: string }): Promise<Respuesta<ConUsuario>>;
   signOut(o: { scope: 'local' }): Promise<{ error: ErrorAuth | null }>;
   getClaims(): Promise<Respuesta<{ claims: { sub?: string; aal?: unknown } } | null>>;
-  getUser(): Promise<Respuesta<{ user: { id: string } | null }>>;
+  getUser(): Promise<Respuesta<ConUsuario>>;
   mfa: {
     listFactors(): Promise<Respuesta<{ all: readonly FactorAuth[] } | null>>;
     challenge(p: { factorId: string }): Promise<Respuesta<{ id: string } | null>>;
     verify(p: { factorId: string; challengeId: string; code: string }): Promise<Respuesta<unknown>>;
-    enroll(p: {
-      factorType: 'totp';
-      friendlyName: string;
-    }): Promise<
-      Respuesta<{ id: string; totp: { qr_code: string; secret: string; uri: string } } | null>
-    >;
+    enroll(p: { factorType: 'totp'; friendlyName: string }): Promise<Respuesta<Inscrito | null>>;
     unenroll(p: { factorId: string }): Promise<Respuesta<unknown>>;
   };
 }
@@ -65,14 +58,7 @@ export function sesionDeCliente(auth: ClienteAuth): SesionServidor {
   };
 }
 
-type CodigoAuth =
-  | 'credenciales_invalidas'
-  | 'demasiados_intentos'
-  | 'codigo_incorrecto'
-  | 'codigo_vencido'
-  | 'inscripcion_no_permitida';
-
-const propio = (codigo: CodigoAuth): ErrorFinn => ({
+const propio = (codigo: string): ErrorFinn => ({
   categoria: 'DOMINIO',
   codigo,
   mensaje: mensajeDeRechazo({ codigo }) ?? codigo,
@@ -86,6 +72,7 @@ function interno(): ErrorFinn {
   return { categoria: 'INTERNO', codigo: 'interno', mensaje: mensajeInterno(idError), idError };
 }
 
+type Vacio = Record<string, never>;
 const ok = <T>(valor: T): ResultadoAccion<T> => ({
   ok: true,
   valor,
@@ -95,10 +82,8 @@ const ok = <T>(valor: T): ResultadoAccion<T> => ({
 const falla = (error: ErrorFinn): { ok: false; error: ErrorFinn } => ({ ok: false, error });
 
 /** Auth caído (sin estado o 5xx) no es un dato mal escrito: nunca se presenta como "contraseña incorrecta". */
-const esFallaDeAuth = (e: ErrorAuth): boolean =>
-  e.status === undefined || e.status === 0 || e.status >= 500;
-const esLimite = (e: ErrorAuth): boolean =>
-  e.status === 429 || e.code === 'over_request_rate_limit';
+const esFallaDeAuth = (e: ErrorAuth): boolean => !e.status || e.status >= 500;
+const esLimite = (e: ErrorAuth): boolean => e.status === 429;
 
 function errorDeCodigo(e: ErrorAuth): ErrorFinn {
   if (esLimite(e)) return propio('demasiados_intentos');
@@ -106,9 +91,9 @@ function errorDeCodigo(e: ErrorAuth): ErrorFinn {
   return propio(e.code === 'mfa_challenge_expired' ? 'codigo_vencido' : 'codigo_incorrecto');
 }
 
-async function factores(
-  auth: ClienteAuth,
-): Promise<{ verificados: FactorAuth[]; sinVerificar: FactorAuth[] } | null> {
+type Factores = Record<'verificados' | 'sinVerificar', FactorAuth[]>;
+
+async function factores(auth: ClienteAuth): Promise<Factores | null> {
   const { data, error } = await auth.mfa.listFactors();
   if (error !== null || data === null) return null;
   const totp = data.all.filter((f) => f.factor_type === 'totp');
@@ -118,21 +103,29 @@ async function factores(
   };
 }
 
-/** `sesion`: nivel del usuario permitido según `exigirSesionEscritura` (`getUser` y claims), con AAL1 también válido. */
-async function exigirUsuario(
-  auth: ClienteAuth,
-  usuarioPermitido: string,
-): Promise<{ ok: true; sesion: 'aal1' | 'aal2' } | { ok: false; error: ErrorFinn }> {
-  const r = await exigirSesionEscritura(sesionDeCliente(auth), usuarioPermitido);
-  if (r.ok) return { ok: true, sesion: 'aal2' };
-  return r.error.datos?.['aal'] === 'aal1' ? { ok: true, sesion: 'aal1' } : falla(r.error);
-}
+type Contexto<E> = { entrada: E; sesion: 'aal1' | 'aal2'; lista: Factores };
+
+/** Lo común de MFA: contrato, usuario permitido (`getUser` y claims; AAL1 también vale, 04 §12.2) y sus factores. */
+const conUsuario =
+  <E, T>(
+    contrato: z.ZodType<E>,
+    cuerpo: (auth: ClienteAuth, c: Contexto<E>) => Promise<ResultadoAccion<T>>,
+  ) =>
+  async (auth: ClienteAuth, permitido: string, cruda: unknown): Promise<ResultadoAccion<T>> => {
+    const entrada = contrato.safeParse(cruda);
+    if (!entrada.success) return falla(errorDeValidacion(entrada.error.issues));
+    const r = await exigirSesionEscritura(sesionDeCliente(auth), permitido);
+    if (!r.ok && r.error.datos?.['aal'] !== 'aal1') return falla(r.error);
+    const lista = await factores(auth);
+    if (lista === null) return falla(interno());
+    return cuerpo(auth, { entrada: entrada.data, sesion: r.ok ? 'aal2' : 'aal1', lista });
+  };
 
 async function retarYVerificar(
   auth: ClienteAuth,
   factorId: string,
   codigo: string,
-): Promise<ResultadoAccion<Record<string, never>>> {
+): Promise<ResultadoAccion<Vacio>> {
   const reto = await auth.mfa.challenge({ factorId });
   if (reto.error !== null || reto.data === null)
     return falla(reto.error === null ? interno() : errorDeCodigo(reto.error));
@@ -145,9 +138,6 @@ const ENTRADA_INGRESAR = z.object({
   contrasena: z.string().min(1, { error: 'Escribí tu contraseña.' }),
 });
 const CODIGO = z.string().regex(/^\d{6}$/, { error: 'Escribí los 6 dígitos del código.' });
-const ENTRADA_VERIFICAR = z.object({ factorId: z.string().min(1).optional(), codigo: CODIGO });
-const ENTRADA_INICIAR = z.object({ nombre: z.string().trim().min(1).optional() });
-const ENTRADA_COMPLETAR = z.object({ factorId: z.string().min(1), codigo: CODIGO });
 
 export interface EstadoAcceso {
   readonly sesion: 'ninguna' | 'aal1' | 'aal2';
@@ -156,25 +146,16 @@ export interface EstadoAcceso {
 }
 
 /** Sin exigir AAL2: la usan las rutas de `ingresar`. Solo lista los factores del usuario permitido. */
-export async function estadoAcceso(
-  auth: ClienteAuth,
-  usuarioPermitido: string,
-): Promise<EstadoAcceso> {
+export async function estadoAcceso(auth: ClienteAuth, permitido: string): Promise<EstadoAcceso> {
   const claims = await sesionDeCliente(auth).obtenerClaims();
   if (claims === null || (claims.aal !== 'aal1' && claims.aal !== 'aal2'))
     return { sesion: 'ninguna', usuarioPermitido: false, factoresVerificados: [] };
-  if (usuarioPermitido === '' || claims.sub !== usuarioPermitido)
+  if (permitido === '' || claims.sub !== permitido)
     return { sesion: claims.aal, usuarioPermitido: false, factoresVerificados: [] };
   const lista = await factores(auth);
   if (lista === null) throw new Error('estadoAcceso: Auth no devolvió los factores');
-  return {
-    sesion: claims.aal,
-    usuarioPermitido: true,
-    factoresVerificados: lista.verificados.map((f) => ({
-      id: f.id,
-      nombre: f.friendly_name ?? null,
-    })),
-  };
+  const verificados = lista.verificados.map((f) => ({ id: f.id, nombre: f.friendly_name ?? null }));
+  return { sesion: claims.aal, usuarioPermitido: true, factoresVerificados: verificados };
 }
 
 /** No exige sesión. Un usuario distinto del permitido recibe el mismo error que una contraseña mala (05 §9.3). */
@@ -201,83 +182,51 @@ export async function ingresar(
   return ok({ siguiente: lista.verificados.length > 0 ? 'verificar' : 'inscribir' });
 }
 
-/** Exige AAL1 del usuario permitido. Solo acepta un factor ya verificado: uno sin verificar no da AAL2 por esta vía. */
-export async function verificarFactor(
-  auth: ClienteAuth,
-  usuarioPermitido: string,
-  cruda: unknown,
-): Promise<ResultadoAccion<Record<string, never>>> {
-  const entrada = ENTRADA_VERIFICAR.safeParse(cruda);
-  if (!entrada.success) return falla(errorDeValidacion(entrada.error.issues));
-  const usuario = await exigirUsuario(auth, usuarioPermitido);
-  if (!usuario.ok) return falla(usuario.error);
+/** Solo acepta un factor ya verificado: uno sin verificar no da AAL2 por esta vía. */
+export const verificarFactor = conUsuario(
+  z.object({ factorId: z.string().min(1).optional(), codigo: CODIGO }),
+  async (auth, { entrada, lista }) => {
+    const primero = lista.verificados[0];
+    if (primero === undefined) return falla(errorNoAutorizado('aal1')); // sin factores: la tabla lleva a inscribir
+    const factorId = entrada.factorId ?? primero.id;
+    if (!lista.verificados.some((f) => f.id === factorId))
+      return falla(propio('codigo_incorrecto'));
+    return retarYVerificar(auth, factorId, entrada.codigo);
+  },
+);
 
-  const lista = await factores(auth);
-  if (lista === null) return falla(interno());
-  const primero = lista.verificados[0];
-  if (primero === undefined) return falla(errorNoAutorizado('aal1')); // sin factores: la tabla lleva a inscribir
-  const { factorId = primero.id, codigo } = entrada.data;
-  if (!lista.verificados.some((f) => f.id === factorId)) return falla(propio('codigo_incorrecto'));
-  return retarYVerificar(auth, factorId, codigo);
-}
-
-/**
- * Con AAL1 se niega si ya hay un factor verificado (04 §12.2); con AAL2 es el factor de respaldo. Quita antes los
- * factores sin verificar de intentos anteriores (05 §9.5). El secreto solo viaja en la respuesta.
- */
-export async function iniciarInscripcion(
-  auth: ClienteAuth,
-  usuarioPermitido: string,
-  cruda: unknown,
-): Promise<ResultadoAccion<{ factorId: string; qrSvg: string; secreto: string; uri: string }>> {
-  const entrada = ENTRADA_INICIAR.safeParse(cruda);
-  if (!entrada.success) return falla(errorDeValidacion(entrada.error.issues));
-  const usuario = await exigirUsuario(auth, usuarioPermitido);
-  if (!usuario.ok) return falla(usuario.error);
-
-  const lista = await factores(auth);
-  if (lista === null) return falla(interno());
-  const hayFactor = lista.verificados.length > 0;
-  if (usuario.sesion === 'aal1' && hayFactor) return falla(propio('inscripcion_no_permitida'));
-
-  for (const { id } of lista.sinVerificar) {
-    const { error } = await auth.mfa.unenroll({ factorId: id });
-    if (error !== null) return falla(interno());
-  }
-  const { data, error } = await auth.mfa.enroll({
-    factorType: 'totp',
-    friendlyName: entrada.data.nombre ?? (hayFactor ? 'Respaldo' : 'Autenticador'),
-  });
-  if (error !== null || data === null) return falla(interno());
-  return ok({
-    factorId: data.id,
-    qrSvg: data.totp.qr_code,
-    secreto: data.totp.secret,
-    uri: data.totp.uri,
-  });
-}
+/** Con AAL1 se niega si hay un factor verificado (04 §12.2); con AAL2 es el respaldo. Quita los colgados (05 §9.5). */
+export const iniciarInscripcion = conUsuario(
+  z.object({ nombre: z.string().trim().min(1).optional() }),
+  async (auth, { entrada, sesion, lista }) => {
+    const hayFactor = lista.verificados.length > 0;
+    if (sesion === 'aal1' && hayFactor) return falla(propio('inscripcion_no_permitida'));
+    for (const { id } of lista.sinVerificar) {
+      const { error } = await auth.mfa.unenroll({ factorId: id });
+      if (error !== null) return falla(interno());
+    }
+    const { data, error } = await auth.mfa.enroll({
+      factorType: 'totp',
+      friendlyName: entrada.nombre ?? (hayFactor ? 'Respaldo' : 'Autenticador'),
+    });
+    if (error !== null || data === null) return falla(interno());
+    const { qr_code: qrSvg, secret: secreto, uri } = data.totp;
+    return ok({ factorId: data.id, qrSvg, secreto, uri });
+  },
+);
 
 /** Mismas condiciones que `iniciarInscripcion`; con éxito, la sesión es AAL2. */
-export async function completarInscripcion(
-  auth: ClienteAuth,
-  usuarioPermitido: string,
-  cruda: unknown,
-): Promise<ResultadoAccion<Record<string, never>>> {
-  const entrada = ENTRADA_COMPLETAR.safeParse(cruda);
-  if (!entrada.success) return falla(errorDeValidacion(entrada.error.issues));
-  const usuario = await exigirUsuario(auth, usuarioPermitido);
-  if (!usuario.ok) return falla(usuario.error);
-
-  if (usuario.sesion === 'aal1') {
-    const lista = await factores(auth);
-    if (lista === null) return falla(interno());
-    if (lista.verificados.length > 0) return falla(propio('inscripcion_no_permitida'));
-  }
-  return retarYVerificar(auth, entrada.data.factorId, entrada.data.codigo);
-}
+export const completarInscripcion = conUsuario(
+  z.object({ factorId: z.string().min(1), codigo: CODIGO }),
+  async (auth, { entrada, sesion, lista }) => {
+    if (sesion === 'aal1' && lista.verificados.length > 0)
+      return falla(propio('inscripcion_no_permitida'));
+    return retarYVerificar(auth, entrada.factorId, entrada.codigo);
+  },
+);
 
 /** `signOut({ scope: 'local' })`. Sin sesión ya es el estado pedido. */
-export async function salir(auth: ClienteAuth): Promise<ResultadoAccion<Record<string, never>>> {
+export async function salir(auth: ClienteAuth): Promise<ResultadoAccion<Vacio>> {
   const { error } = await auth.signOut({ scope: 'local' });
   return error === null || error.name === 'AuthSessionMissingError' ? ok({}) : falla(interno());
 }

@@ -4,12 +4,6 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { exigirSesionLectura, sesionDeCliente } from '@finn/aplicacion/autenticacion';
 
-const esRutaDeIngresar = (ruta: string): boolean =>
-  ruta === '/ingresar' || ruta.startsWith('/ingresar/');
-
-/** Solo una navegación redirige: una Server Action es un POST y responde `NO_AUTORIZADO` (05 §7.5). */
-const esNavegacion = (metodo: string): boolean => metodo === 'GET' || metodo === 'HEAD';
-
 export async function proxy(peticion: NextRequest): Promise<NextResponse> {
   const { pathname, search } = peticion.nextUrl;
   const ruta = pathname + search;
@@ -44,7 +38,10 @@ export async function proxy(peticion: NextRequest): Promise<NextResponse> {
     sesionDeCliente(supabase.auth),
     process.env['FINN_USUARIO_ID'] ?? '',
   );
-  if (sesion.ok || esRutaDeIngresar(pathname) || !esNavegacion(peticion.method)) return respuesta;
+  // Solo una navegación redirige: una Server Action es un POST y responde `NO_AUTORIZADO` (05 §7.5).
+  const navega = peticion.method === 'GET' || peticion.method === 'HEAD';
+  const enIngresar = pathname === '/ingresar' || pathname.startsWith('/ingresar/');
+  if (sesion.ok || enIngresar || !navega) return respuesta;
 
   const paso = sesion.error.datos?.['aal'] === 'aal1' ? '/ingresar/verificar' : '/ingresar';
   const destino = new URL(`${paso}?volver=${encodeURIComponent(ruta)}`, peticion.url);

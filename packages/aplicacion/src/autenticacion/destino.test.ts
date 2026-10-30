@@ -15,7 +15,7 @@ const OTRO: EstadoParaDestino = {
 const CON_FACTOR: EstadoParaDestino = {
   sesion: 'aal1',
   usuarioPermitido: true,
-  factoresVerificados: [{ id: 'f' }],
+  factoresVerificados: [{ id: 'f', nombre: null }],
 };
 const SIN_FACTOR: EstadoParaDestino = {
   sesion: 'aal1',
@@ -25,7 +25,7 @@ const SIN_FACTOR: EstadoParaDestino = {
 const AAL2: EstadoParaDestino = {
   sesion: 'aal2',
   usuarioPermitido: true,
-  factoresVerificados: [{ id: 'f' }],
+  factoresVerificados: [{ id: 'f', nombre: null }],
 };
 
 const INGRESAR: RutaAcceso = '/ingresar';

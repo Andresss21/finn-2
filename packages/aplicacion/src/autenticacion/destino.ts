@@ -1,13 +1,11 @@
 // Tabla de redirecciones de las rutas de `ingresar` (05 §9.2, FE-36; CH-50): función pura que llaman sus páginas.
 // `proxy.ts` no redirige estas rutas (CP-14): esta tabla es la única lógica.
 
+import type { EstadoAcceso } from './supabase.ts';
+
 export type RutaAcceso = '/ingresar' | '/ingresar/verificar' | '/ingresar/inscribir';
 
-export interface EstadoParaDestino {
-  readonly sesion: 'ninguna' | 'aal1' | 'aal2';
-  readonly usuarioPermitido: boolean;
-  readonly factoresVerificados: readonly unknown[];
-}
+export type EstadoParaDestino = EstadoAcceso;
 
 /** `cerrarSesion`: la página cierra la sesión del usuario no permitido antes de seguir (`/ingresar` muestra el mensaje). */
 export type DestinoAcceso =
