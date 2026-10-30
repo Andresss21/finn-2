@@ -6,12 +6,17 @@ import { parametrosFormulario } from '../../contratos/consultas.ts';
 import { consultar, type DepsConsulta, type Encabezado } from '../comun.ts';
 import { archivar } from './archivar.ts';
 import { asignar } from './asignar.ts';
+import { cobrar } from './cobrar.ts';
+import { condonar } from './condonar.ts';
 import { cuenta } from './cuenta.ts';
 import { cuota } from './cuota.ts';
+import { devolver } from './devolver.ts';
 import { editar } from './editar.ts';
+import { fusionar } from './fusionar.ts';
 import { meta } from './meta.ts';
 import { movimiento } from './movimiento.ts';
 import { pagarTarjeta } from './pagar-tarjeta.ts';
+import { programada } from './programada.ts';
 import { registrar } from './registrar.ts';
 
 /** El cuerpo de cada operación: lo que devuelve su módulo. */
@@ -25,6 +30,11 @@ interface Cuerpos {
   readonly archivar_categoria: Awaited<ReturnType<typeof archivar>>;
   readonly movimiento: Awaited<ReturnType<typeof movimiento>>;
   readonly meta: Awaited<ReturnType<typeof meta>>;
+  readonly cobrar: Awaited<ReturnType<typeof cobrar>>;
+  readonly condonar: Awaited<ReturnType<typeof condonar>>;
+  readonly devolver: Awaited<ReturnType<typeof devolver>>;
+  readonly fusionar: Awaited<ReturnType<typeof fusionar>>;
+  readonly programada: Awaited<ReturnType<typeof programada>>;
 }
 
 export type FormularioDto = Encabezado & Cuerpos[keyof Cuerpos];
@@ -61,6 +71,16 @@ export function formulario(d: DepsConsulta, parametros: unknown): Promise<Formul
             return movimiento(c, p);
           case 'meta':
             return meta(c, p);
+          case 'cobrar':
+            return cobrar(c, p);
+          case 'condonar':
+            return condonar(c, p);
+          case 'devolver':
+            return devolver(c, p);
+          case 'fusionar':
+            return fusionar(c, p);
+          case 'programada':
+            return programada(c, p);
         }
       })();
       return { ...c.encabezado, ...cuerpo };
