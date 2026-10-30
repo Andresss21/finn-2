@@ -59,6 +59,9 @@ importers:
 
   packages/aplicacion:
     dependencies:
+      '@finn/conciliacion':
+        specifier: workspace:*
+        version: link:../conciliacion
       '@finn/db':
         specifier: workspace:*
         version: link:../db
