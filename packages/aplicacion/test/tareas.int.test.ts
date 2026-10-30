@@ -53,7 +53,9 @@ describe('PRU-INT-PROG', () => {
   beforeEach(async () => {
     // Cada caso parte sin eventos, avisos, suscripciones ni eliminaciones (el orden de los casos es aleatorio, 07 §7.1)
     await sql(
-      'DELETE FROM finn.eventos_sistema; DELETE FROM finn.notificaciones; DELETE FROM finn.suscripciones_push; DELETE FROM finn.eliminaciones',
+      `DELETE FROM finn.eventos_sistema; DELETE FROM finn.notificaciones; DELETE FROM finn.suscripciones_push; DELETE FROM finn.eliminaciones;
+       INSERT INTO finn.estado_respaldo (id, ultimo_respaldo_en, ultima_restauracion_en) VALUES (1, now(), now())
+         ON CONFLICT (id) DO UPDATE SET ultimo_respaldo_en = now(), ultima_restauracion_en = now()`, // al día: CH-47 no es de estos casos
     );
   });
 

@@ -14,6 +14,7 @@ import {
   Memoria,
   type NuevoEvento,
 } from '@finn/db';
+import type { Instante } from '@finn/dominio';
 import { FechaLocal } from '@finn/dominio/valores';
 import { consultar, crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY } from '../../db/test/ayudantes/hechos-prueba.ts';
@@ -34,7 +35,10 @@ import {
   pasoCuotaProxima,
   type PasoTarea,
 } from '../src/tareas/diaria.ts';
-import type { DepsMarco } from '../src/operaciones/marco.ts';
+import { OP01 } from '../src/operaciones/cuentas/index.ts';
+import { confirmar, previsualizar, type DepsMarco } from '../src/operaciones/marco.ts';
+import { OP42 } from '../src/operaciones/programadas/index.ts';
+import { pasoRegistro } from '../src/tareas/registro-automatico.ts';
 
 const HORA = 3_600;
 const DIA = 24 * HORA;
@@ -143,7 +147,8 @@ describe('PRU-INT-NOTIF', () => {
   beforeEach(async () => {
     recibidos.length = 0;
     await sql(
-      'DELETE FROM finn.suscripciones_push; DELETE FROM finn.notificaciones; DELETE FROM finn.eventos_sistema; DELETE FROM finn.estado_respaldo',
+      `DELETE FROM finn.suscripciones_push; DELETE FROM finn.notificaciones; DELETE FROM finn.eventos_sistema; DELETE FROM finn.estado_respaldo;
+       INSERT INTO finn.estado_respaldo (id, ultimo_respaldo_en, ultima_restauracion_en) VALUES (1, now(), now())`,
     );
   });
 
@@ -214,7 +219,7 @@ describe('PRU-INT-NOTIF', () => {
     ).toBe(0);
   });
 
-  it('PRU-INT-NOTIF-101 [AV-23] 11.6: 201 fija push_enviada_en; 404 y 410 eliminan la suscripción con push_error; 413 deja además un evento error; 500 y la red caída solo push_error, sin reintento', async () => {
+  it('PRU-INT-NOTIF-101 11.6: 201 fija push_enviada_en; 404 y 410 eliminan la suscripción con push_error; 413 deja además un evento error; 500 y la red caída solo push_error, sin reintento', async () => {
     const enviar = (cuerpo = 'C') =>
       notificar(deps(), 'tarea_fallida', { titulo: 'T', cuerpo, datos: {} });
     const fila = async (id: string) =>
@@ -397,7 +402,7 @@ describe('PRU-INT-NOTIF', () => {
     expect(JSON.stringify(eventos)).not.toContain('VISA 1234');
   });
 
-  it('PRU-INT-NOTIF-101 [AV-23] OPT-02 inserta o renueva por endpoint y solo acepta https; OPT-03 elimina y repetirla no falla', async () => {
+  it('PRU-INT-NOTIF-101 OPT-02 inserta o renueva por endpoint y solo acepta https; OPT-03 elimina y repetirla no falla', async () => {
     const entrada = {
       endpoint: 'https://push.example/s1',
       claves: { p256dh: nav.p256dh, auth: nav.auth },
@@ -427,7 +432,7 @@ describe('PRU-INT-NOTIF', () => {
     });
   });
 
-  it('PRU-INT-NOTIF-101 [AV-23] BE-54: la acción exige Origin, X-Finn-Accion y AAL2 antes de tocar nada; ejecuta OP-40 y traduce 200, 401, 403 y 422', async () => {
+  it('PRU-INT-NOTIF-101 BE-54: la acción exige Origin, X-Finn-Accion y AAL2 antes de tocar nada; ejecuta OP-40 y traduce 200, 401, 403 y 422', async () => {
     const sesion = (aal: string | null) => ({
       obtenerClaims: () => Promise.resolve(aal === null ? null : { sub: USUARIO, aal }),
       obtenerUsuario: () => Promise.resolve(aal === null ? null : { id: USUARIO }),
@@ -622,7 +627,7 @@ describe('PRU-INT-NOTIF', () => {
     );
   });
 
-  it('PRU-INT-NOTIF-102 TAREA-pasos3y4 (avisos de sistema): respaldo de más de 36 h, restauración de más de 35 días, deriva informada y el disparador por egreso, una vez por clave; recientes o nulos no avisan', async () => {
+  it('PRU-INT-NOTIF-102 TAREA-pasos3y4 (avisos de sistema): respaldo de más de 36 h, restauración de más de 35 días, deriva informada y el disparador por egreso, una vez por clave; recientes no avisan y, con hechos, un nulo o la falta de fila cuentan como atrasados (CH-47)', async () => {
     const motivos = () =>
       sql(`SELECT motivo FROM finn.notificaciones WHERE motivo IN
         ('respaldo_atrasado', 'restauracion_atrasada', 'deriva_catalogo', 'carga_incremental') ORDER BY motivo`);
@@ -631,11 +636,28 @@ describe('PRU-INT-NOTIF', () => {
         VALUES (1, now() - interval '${horas} hours', now() - interval '${dias} days')
         ON CONFLICT (id) DO UPDATE SET ultimo_respaldo_en = EXCLUDED.ultimo_respaldo_en, ultima_restauracion_en = EXCLUDED.ultima_restauracion_en`);
 
-    // Sin fila, y con las dos columnas nulas: nada que medir (03 §7.5 solo dice "más de"; CH-47 propuesto en el informe)
+    // [CH-47] Esta base tiene hechos: sin fila, y con las dos columnas nulas, los dos atrasados con su misma clave
+    const atrasados = ['respaldo_atrasado', 'restauracion_atrasada'];
+    await sql(`DELETE FROM finn.estado_respaldo`);
     await pasoAvisos.ejecutar(deps());
+    expect(await motivos()).toEqual(atrasados);
     await sql(`INSERT INTO finn.estado_respaldo (id) VALUES (1)`);
     await pasoAvisos.ejecutar(deps());
-    expect(await motivos()).toEqual([]);
+    expect(await motivos()).toEqual(atrasados);
+    expect(
+      await sql(`SELECT datos->>'clave', cuerpo FROM finn.notificaciones
+        WHERE motivo IN ('respaldo_atrasado', 'restauracion_atrasada') ORDER BY motivo`),
+    ).toEqual([
+      `respaldo:${HOY}|Todavía no hay ningún respaldo registrado. Revisá Diagnóstico.`,
+      `restauracion:${HOY}|Todavía no hay ninguna prueba de restauración registrada. Revisá Diagnóstico.`,
+    ]);
+    // Cada columna cuenta por su lado
+    await sql(`DELETE FROM finn.notificaciones`);
+    await respaldo(35, 34);
+    await sql(`UPDATE finn.estado_respaldo SET ultima_restauracion_en = NULL`);
+    await pasoAvisos.ejecutar(deps());
+    expect(await motivos()).toEqual(['restauracion_atrasada']);
+    await sql(`DELETE FROM finn.notificaciones`);
 
     await respaldo(35, 34);
     await pasoAvisos.ejecutar(deps());
@@ -780,5 +802,101 @@ describe('PRU-INT-NOTIF', () => {
     expect(r.carga['cuerpo']).toBe('Revisá Diagnóstico.');
     expect(r.carga['destino']).toEqual({ pantalla: 'diagnostico' });
     expect(r.topic).toBe('sistema');
+  });
+
+  it('PRU-INT-NOTIF-102 [AV-23] paso 1 (CH-47): registro_automatico, registro_automatico_fallido y ocurrencia_en_periodo_cerrado envían su push después de registrar, una vez por clave', async () => {
+    await suscribir('ok');
+    const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+    const E1 = uuid(1);
+    const C1 = uuid(11);
+    const LM = uuid(9300);
+    const programada = (id: string, comercio: string, primeraFecha: string, x: object = {}) => ({
+      accion: 'crear',
+      id,
+      tipo: 'gasto',
+      cuentaId: E1,
+      comercio,
+      monto: '10.00',
+      frecuencia: 'mensual',
+      primeraFecha,
+      registroAutomatico: true,
+      lineas: [{ monto: '10.00', categoriaId: C1 }],
+      ...x,
+    });
+    // Abierto el 15 dic: cuotas el 15 ene y el 15 feb; el 31 ene no coincide con ninguna, y el registro falla
+    const alta = {
+      id: LM,
+      tipo: 'prestamo',
+      nombre: 'Con modelo',
+      saldo: '10000.00',
+      fechaApertura: '2026-12-15',
+      contraparte: 'Banco',
+      montoOriginal: '10000.00',
+      tasaNominalAnual: '12',
+      tipoTasa: 'fija',
+      seguroPrimerMes: '10.00',
+      frecuencia: 'mensual',
+      cuotaPactada: '500.00',
+      plazoCuotas: 24,
+      modeloCalculo: 'banco_agricola',
+      cuotasPagadasAlCrear: 0,
+    };
+    const vista = await previsualizar(OP01, alta, {
+      ...deps(),
+      instante: () => `${HOY}T12:00:00.000Z` as Instante,
+    });
+    expect(
+      await confirmar(
+        OP01,
+        { ...alta, huellaImpacto: vista.ok ? vista.valor.huellaImpacto : null },
+        deps(),
+      ),
+    ).toMatchObject({ ok: true });
+    const CERRADA = uuid(9302);
+    const FALLA = uuid(9303);
+    for (const p of [
+      programada(uuid(9301), 'Gimnasio', '2027-01-22'),
+      programada(CERRADA, 'Club', '2027-01-10'),
+      programada(FALLA, 'Cuota', '2027-01-31', { tipo: 'cuota_prestamo', cuentaDestinoId: LM }),
+    ])
+      expect(await confirmar(OP42, p, deps())).toMatchObject({ ok: true });
+
+    const tarea = { ...deps(), nuevoIdError: () => 'E-PRUEBA' };
+    await pasoRegistro.ejecutar(tarea);
+    await pasoRegistro.ejecutar(tarea);
+
+    const de = (titulo: string) => recibidos.filter((r) => r.carga['titulo'] === titulo);
+    const [hecho] = de('Se registró Gimnasio') as [Recibido];
+    expect(de('Se registró Gimnasio')).toHaveLength(1);
+    expect([hecho.urgencia, hecho.ttl, hecho.topic]).toEqual(['normal', DIA, 'programadas']);
+    expect(hecho.carga['destino']).toMatchObject({ pantalla: 'transaccion' });
+
+    const [cerrada] = de('Club quedó pendiente') as [Recibido];
+    expect(de('Club quedó pendiente')).toHaveLength(1);
+    expect([cerrada.urgencia, cerrada.ttl, cerrada.topic]).toEqual(['normal', 7 * DIA, undefined]);
+    expect(cerrada.carga['destino']).toEqual({
+      pantalla: 'programada',
+      programadaId: CERRADA,
+      fechaEsperada: '2027-01-10',
+    });
+
+    const [fallida] = de('No pudimos registrar Cuota') as [Recibido];
+    expect(de('No pudimos registrar Cuota')).toHaveLength(1);
+    expect([fallida.urgencia, fallida.ttl, fallida.topic]).toEqual([
+      'normal',
+      3 * DIA,
+      'programadas',
+    ]);
+    expect(fallida.carga['destino']).toEqual({
+      pantalla: 'programada',
+      programadaId: FALLA,
+      fechaEsperada: '2027-01-31',
+    });
+    // Cada notificación queda con su envío: el registro va primero, y el push la marca después
+    expect(
+      await cuenta(
+        `SELECT count(*) FROM finn.notificaciones WHERE motivo IN ('registro_automatico', 'registro_automatico_fallido', 'ocurrencia_en_periodo_cerrado') AND push_enviada_en IS NULL`,
+      ),
+    ).toBe(0);
   });
 });

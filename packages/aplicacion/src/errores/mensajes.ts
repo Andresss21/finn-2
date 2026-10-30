@@ -110,6 +110,9 @@ export const MENSAJES_RECHAZO: Readonly<Record<string, string | ((d: Datos) => s
   programada_con_historial: 'Esta programada tiene historial. Podés desactivarla.',
   registro_automatico_sin_modelo:
     'Para registrar sola una cuota, el préstamo necesita un modelo de cálculo.',
+  // [CH-45]
+  cuota_sin_coincidencia:
+    'Esa fecha no corresponde a ninguna cuota del préstamo. Ingresá el desglose a mano.',
   formato_no_reconocido:
     'No reconocimos el formato. Descargá el estado de cuenta en CSV desde el portal del banco.',
   formato_ambiguo:

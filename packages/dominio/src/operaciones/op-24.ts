@@ -29,6 +29,13 @@ export interface PropuestaCuota {
 /** El pago que se propone: después de los registrados del mismo día (`emparejar` ordena por fecha e id; `~` > hex). */
 const PROPUESTO = '~propuesto' as H.Uuid;
 
+/** Las condiciones del modelo de cálculo del préstamo; `null` si no tiene modelo que calcule (QB-1). */
+export function condicionesDelModelo(h: H.Hechos, prestamoId: H.Uuid) {
+  const p = h.prestamos.find((x) => x.cuentaId === prestamoId);
+  const apertura = h.cuentas.find((k) => k.id === prestamoId)?.fechaApertura;
+  return p === undefined || apertura === undefined ? null : condicionesAgricola(p, apertura);
+}
+
 /**
  * Desglose propuesto para un pago en `fecha` (Anexo A.2 puntos 7 y 8): la cuota de `numeroCuota`, si se indicó, o la
  * no pagada a ±10 días o menos de `fecha`, la más cercana (`bancoAgricola.emparejar`), con su desglose sobre el capital
@@ -42,8 +49,7 @@ export function desglosePropuesto(
 ): PropuestaCuota | null {
   const { hechos: h } = antes;
   const p = h.prestamos.find((x) => x.cuentaId === prestamoId);
-  const apertura = h.cuentas.find((k) => k.id === prestamoId)?.fechaApertura;
-  const c = p === undefined || apertura === undefined ? null : condicionesAgricola(p, apertura);
+  const c = condicionesDelModelo(h, prestamoId);
   if (p === undefined || c === null) return null;
   const cero = Centavos.cero;
   const pago: PagoPrestamo = {

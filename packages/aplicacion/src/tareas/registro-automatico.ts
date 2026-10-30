@@ -2,20 +2,15 @@
 // `escribir()` por ocurrencia, en orden cronológico, con la fecha esperada y un id derivado de la ocurrencia (repetir
 // la tarea no cambia nada, inv. 15). El `aplicar` es `registrarAutomatica`: no registra un período cerrado ([R2]).
 // Lo que no se registra (período cerrado, cuenta archivada, cuota sin modelo) queda pendiente y avisa una vez (AV-23).
-import {
-  cargarHechos,
-  escribirTecnico as escribirTecnicoDb,
-  existeNotificacionConClave,
-  leer as leerDb,
-} from '@finn/db';
+import { cargarHechos, existeNotificacionConClave, leer as leerDb } from '@finn/db';
 import { aplicar } from '@finn/dominio';
 import { ocurrenciasAutomaticas, registrarAutomatica } from '@finn/dominio/selectores';
 import { FechaLocal } from '@finn/dominio/valores';
 import { uuidv5 } from '../ids.ts';
 import { confirmar } from '../operaciones/marco.ts';
 import { OP43 } from '../operaciones/programadas/index.ts';
+import { notificar } from '../push/enviar.ts';
 import type { MotivoNotificacion } from '../push/motivos.ts';
-import { registrarNotificacion } from '../push/registro.ts';
 import type { DepsTarea, PasoTarea } from './diaria.ts';
 
 export const LIMITE_REGISTRO = 200; // 10.2 paso 1: máximo por ejecución; el resto, en la siguiente
@@ -26,7 +21,7 @@ const aplicarAutomatico: typeof aplicar = (hechos, comando, hoy) =>
     ? registrarAutomatica(hechos, comando, hoy)
     : aplicar(hechos, comando, hoy);
 
-/** Un aviso por clave (AV-23): la ocurrencia que sigue pendiente no avisa cada día. */
+/** Un aviso por clave (AV-23): la ocurrencia que sigue pendiente no avisa cada día. Push después del COMMIT (04 §11.2). */
 async function avisar(
   d: DepsTarea,
   motivo: MotivoNotificacion,
@@ -39,10 +34,7 @@ async function avisar(
     (tx) => existeNotificacionConClave(tx, clave),
     d.opciones?.(),
   );
-  if (!ya)
-    await (d.escribirTecnico ?? escribirTecnicoDb)(async (tx) => {
-      await registrarNotificacion(tx, motivo, { titulo, cuerpo, datos: { clave, destino } });
-    }, d.opciones?.());
+  if (!ya) await notificar(d, motivo, { titulo, cuerpo, datos: { clave, destino } });
 }
 
 export const pasoRegistro: PasoTarea = {

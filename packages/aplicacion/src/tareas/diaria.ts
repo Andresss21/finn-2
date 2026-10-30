@@ -8,6 +8,7 @@ import {
   cargasCompletasRecientes,
   escribirTecnico as escribirTecnicoDb,
   existeNotificacionConClave,
+  hayPrimerHecho,
   leer as leerDb,
   leerEstadoRespaldo,
   registrarEvento,
@@ -289,30 +290,37 @@ function pideCargaIncremental(cargas: readonly CargaCompleta[]): boolean {
   return m.egresoProyectadoBytes > EGRESO_MAXIMO_BYTES || latencia;
 }
 
-/** 03 §7.5, 04 §16, 5.6: los avisos de sistema de hoy. Sin un respaldo o una restauración registrados no hay atraso que medir. */
+/** 03 §7.5, 04 §16, 5.6: los avisos de sistema de hoy. [CH-47] Un respaldo o una restauración sin registrar cuentan como atrasados desde el primer hecho. */
 async function avisosDeSistema(tx: LectorTx): Promise<Candidato[]> {
   const hoy = tx.estado.hoy;
   const ahora = (await ahoraDb(tx)).getTime();
   const estado = await leerEstadoRespaldo(tx);
   const salida: Candidato[] = [];
-  const respaldo = estado?.ultimoRespaldoEn?.getTime();
-  if (respaldo !== undefined && ahora - respaldo > HORAS_RESPALDO * 3_600_000)
+  const respaldo = estado?.ultimoRespaldoEn ?? null;
+  const restauracion = estado?.ultimaRestauracionEn ?? null;
+  const conHechos = (respaldo === null || restauracion === null) && (await hayPrimerHecho(tx));
+  const atrasado = (marca: Date | null, limiteMs: number): boolean =>
+    marca === null ? conHechos : ahora - marca.getTime() > limiteMs;
+  if (atrasado(respaldo, HORAS_RESPALDO * 3_600_000))
     salida.push(
       deSistema(
         'respaldo_atrasado',
         `respaldo:${hoy}`,
         'Respaldo atrasado',
-        'El último respaldo tiene más de 36 horas. Revisá Diagnóstico.',
+        respaldo === null
+          ? 'Todavía no hay ningún respaldo registrado. Revisá Diagnóstico.'
+          : 'El último respaldo tiene más de 36 horas. Revisá Diagnóstico.',
       ),
     );
-  const restauracion = estado?.ultimaRestauracionEn?.getTime();
-  if (restauracion !== undefined && ahora - restauracion > DIAS_RESTAURACION * 86_400_000)
+  if (atrasado(restauracion, DIAS_RESTAURACION * 86_400_000))
     salida.push(
       deSistema(
         'restauracion_atrasada',
         `restauracion:${hoy}`,
         'Restauración atrasada',
-        'La última prueba de restauración tiene más de 35 días. Revisá Diagnóstico.',
+        restauracion === null
+          ? 'Todavía no hay ninguna prueba de restauración registrada. Revisá Diagnóstico.'
+          : 'La última prueba de restauración tiene más de 35 días. Revisá Diagnóstico.',
       ),
     );
   const deriva = await ultimaDerivaInformada(tx);

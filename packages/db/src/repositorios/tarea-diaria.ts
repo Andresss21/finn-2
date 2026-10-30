@@ -97,6 +97,18 @@ export async function ultimaDerivaInformada(tx: LectorTx): Promise<Date | null> 
   return f?.ocurridoEn ?? null;
 }
 
+/** [CH-47] ¿Ya hay datos que respaldar? Una cuenta (`fecha_apertura`) o un evento `carga_completa`. */
+export async function hayPrimerHecho(tx: LectorTx): Promise<boolean> {
+  const p = txPrisma(tx);
+  const cuenta = await p.cuenta.findFirst({ select: { id: true } });
+  if (cuenta !== null) return true;
+  const carga = await p.eventoSistema.findFirst({
+    where: { origen: 'motor', mensaje: 'carga_completa' },
+    select: { id: true },
+  });
+  return carga !== null;
+}
+
 /** BE-38: ¿hay una notificación con esta `datos.clave`? (una vez por día, por período…). */
 export async function existeNotificacionConClave(tx: LectorTx, clave: string): Promise<boolean> {
   const f = await txPrisma(tx).notificacion.findFirst({
