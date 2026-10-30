@@ -68,6 +68,7 @@ export default defineConfig({
           testTimeout: plazoMotor,
           include: [
             'packages/*/src/**/*.test.ts',
+            'apps/web/src/**/*.test.ts',
             'tools/ci/**/*.test.ts',
             'tools/db/**/*.test.ts',
             'tools/lint/**/*.test.ts',
