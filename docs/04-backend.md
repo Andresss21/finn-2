@@ -1346,6 +1346,8 @@ Aplican a todo texto dirigido al usuario que produzca el servidor: errores, rech
 
 **[CH-40]** **Grupo repetido.** `nombre_repetido` de un grupo (OP-07, OP-08) no trae `{grupo}`: la plantilla "Ya existe {nombre} en {grupo}." de 3.0.6 es la de una categoría. Para un grupo, el mensaje es "Ya existe un grupo llamado {nombre}.". `errores/mensajes.ts` elige el texto con los datos del rechazo, como elige el de la tarjeta archivada (R2) y el del deudor (OP-52).
 
+**[CH-44]** **Errores de lectura del estado de cuenta.** Los códigos de `leerEstado` (9.2) que el catálogo no tenía usan estos textos: `fila_invalida`: "No pudimos leer la fila {fila} del archivo. Descargá de nuevo el estado de cuenta en CSV desde el portal del banco."; `formato_excluido`: "Finn no lee los estados de cuenta de este banco."; `formato_no_disponible`: "Todavía no podemos leer este formato de estado de cuenta.".
+
 **Formato verificado (V-18).** En Node 24.21 (ICU 78.3), la configuración regional `es-SV` produce exactamente estos formatos:
 
 ```ts
