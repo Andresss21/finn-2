@@ -1,6 +1,6 @@
 #!/bin/bash
 set +x
-# tools/humo/pasos/base.sh <paso> — los pasos cortos de 04 §17.2: H-01 a H-04, H-07, H-11
+# tools/humo/pasos/base.sh <paso> — los pasos cortos de 04 §17.2: H-01 a H-04, H-06 (lanza patron.ts), H-07, H-11
 # y H-12. Cada uno escribe `medido …` y `detalle …` y sale con 0 (pasa), 1 (falla) o 3 (omitido).
 . "$(dirname "$0")/comun.sh"
 
@@ -65,6 +65,12 @@ h04() {
   [ "$mal" = 0 ] || { echo "detalle alternativa: 03 §13.5 (conexión directa) o RK-06"; return 1; }
 }
 
+# H-06 (RK-06): el patrón transaccional por el pooler en modo transacción, con Prisma 7 (tools/humo/patron.ts).
+# La URL lleva la clave de finn_app: llega a Node solo por el entorno, y su salida pasa por `emitir` (humo.sh).
+h06() {
+  DATABASE_URL="$(url finn_app "$HUMO_PUERTO_TX" pgbouncer=true)" node tools/humo/patron.ts
+}
+
 # H-07 (BE-33): la zona de la sesión por el puerto de transacción, en sus tres casos
 h07() {
   local sin con tx
@@ -95,7 +101,7 @@ h11() {
   esac
 }
 
-# H-12: limpieza. El esquema `humo` (H-09) y las filas `humo-%` de H-06 (TA-243); el usuario de prueba y el despliegue son de TA-253
+# H-12: limpieza. El esquema `humo` (H-09) y las filas `humo-%` de H-06 (patron.ts las borra); el usuario de prueba y el despliegue son de TA-253
 h12() {
   local esquema filas
   q "$HUMO_ADMIN_URL" 'DROP SCHEMA IF EXISTS humo CASCADE' >/dev/null
@@ -108,6 +114,6 @@ h12() {
 }
 
 case ${1:-} in
-  H-01) h01 ;; H-02) h02 ;; H-03) h03 ;; H-04) h04 ;; H-07) h07 ;; H-11) h11 ;; H-12) h12 ;;
+  H-01) h01 ;; H-02) h02 ;; H-03) h03 ;; H-04) h04 ;; H-06) h06 ;; H-07) h07 ;; H-11) h11 ;; H-12) h12 ;;
   *) echo "detalle paso desconocido: ${1:-}"; exit 1 ;;
 esac
