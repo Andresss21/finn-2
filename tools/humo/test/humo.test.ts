@@ -220,7 +220,7 @@ describe('PRU-SEG-OPER', () => {
     expect(c.codigo).toBe(1);
   }, 900_000);
 
-  it('PRU-SEG-OPER-106 [HUMO-patron] humo.sh contra el contenedor local: H-06 (patron.ts por el puerto de transacción con pgbouncer=true) pasa, con el resultado de V-01, V-02, V-05 a V-08, V-10, V-11, las 50 escrituras y la limpieza en medido; la limpieza borra exactamente las 56 filas que escribió (una fila humo-patron ajena queda) y la salida sigue sin secretos', async () => {
+  it('PRU-SEG-OPER-106 HUMO-patron: humo.sh contra el contenedor local: H-06 (patron.ts por el puerto de transacción con pgbouncer=true) pasa, con el resultado de V-01, V-02, V-05 a V-08, V-10, V-11, las 50 escrituras y la limpieza en medido; la limpieza borra exactamente las 56 filas que escribió (una fila humo-patron ajena queda) y la salida sigue sin secretos', async () => {
     const r = await humoCompleto();
     sinSecretos(`${r.stdout}\n${r.stderr}`);
     expect(r.stderr).toBe('');
