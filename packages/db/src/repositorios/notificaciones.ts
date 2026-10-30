@@ -39,6 +39,14 @@ export async function noLeidasDeAviso(tx: LectorTx, aviso: string, limite = 50) 
   });
 }
 
+/** 04 §11.3: las `sms_*` creadas en los últimos 5 minutos de `finn.ahora()`. */
+export async function contarSmsRecientes(tx: LectorTx): Promise<number> {
+  const desde = new Date((await ahoraDb(tx)).getTime() - 5 * 60_000);
+  return txPrisma(tx).notificacion.count({
+    where: { motivo: { startsWith: 'sms_' }, creadaEn: { gte: desde } },
+  });
+}
+
 /** Marca como leídas las no leídas de `ids`, o todas; las ya leídas conservan su `leida_en` (natural). Devuelve cuántas. */
 export async function marcarLeidas(
   tx: EscritorTablasT,

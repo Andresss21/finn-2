@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@finn/config": "workspace:*",
+    "@types/web-push": "3.6.4",
     "typescript": "5.9.3"
   },
   "dependencies": {
@@ -40,6 +41,7 @@
     "@finn/db": "workspace:*",
     "@finn/dominio": "workspace:*",
     "@finn/sms": "workspace:*",
+    "web-push": "3.6.7",
     "zod": "4.6.5"
   }
 }

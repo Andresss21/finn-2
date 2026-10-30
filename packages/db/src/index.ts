@@ -25,3 +25,4 @@ export { Memoria } from './hechos/memoria.ts';
 export { ErrorTraductor, type ValorDeLaBase, type ValoresDeLaBase } from './hechos/traductor.ts';
 export { sqlstateDe, type SqlstateDe } from './errores.ts';
 export * from './repositorios/index.ts';
+export { ahoraDb } from './ahora.ts';
