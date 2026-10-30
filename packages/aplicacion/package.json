@@ -16,6 +16,7 @@
     "./operaciones/notificaciones": "./src/operaciones/notificaciones/index.ts",
     "./push/*": "./src/push/*.ts",
     "./sms/*": "./src/sms/*.ts",
+    "./tareas/*": "./src/tareas/*.ts",
     "./operaciones/categorias": "./src/operaciones/categorias/index.ts",
     "./operaciones/conciliacion": "./src/operaciones/conciliacion/OP-53-verificar-saldo.ts",
     "./operaciones/eventos": "./src/operaciones/eventos/index.ts",
