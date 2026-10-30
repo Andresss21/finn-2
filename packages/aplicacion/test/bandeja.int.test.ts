@@ -317,7 +317,7 @@ describe('PRU-INT-BAND', () => {
     ).toMatchObject({ ok: false, error: { categoria: 'VALIDACION' } });
   });
 
-  it('PRU-INT-BAND-102 OP-37: "recordar esta categoría para este comercio" crea la regla con el comercio del movimiento', async () => {
+  it('PRU-INT-BAND-102 [INV-13] OP-37: recordar la categoría para el comercio crea la regla con el comercio del movimiento', async () => {
     expect(await leer((t) => leerReglasComercio(t), RELOJ)).toEqual([]);
     expect(
       await aprobar(OP37, { movimientoId: MB, id: uuid(3020), recordarRegla: true }),
@@ -394,7 +394,7 @@ describe('PRU-INT-BAND', () => {
     );
   });
 
-  it('PRU-INT-BAND-102 [INV-13] OP-40: confirmar una coincidencia sobre una registrada la vincula y le da el monto del SMS; rechazarla, "es legítimo" y "es duplicado" cambian el estado sin mover los hechos [M]; cada decisión repetida es ya aplicada', async () => {
+  it('PRU-INT-BAND-102 [INV-13] OP-40: confirmar una coincidencia sobre una registrada la vincula y le da el monto del SMS; rechazarla, es legítimo y es duplicado cambian el estado sin mover los hechos [M]; cada decisión repetida es ya aplicada', async () => {
     const antes = await estado();
     // rechazar: la propuesta se quita y, sin duplicados, queda pendiente
     const rechazar = { movimientoId: MG, decision: 'rechazar_coincidencia' };
