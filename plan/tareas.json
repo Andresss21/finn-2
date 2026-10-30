@@ -247,7 +247,7 @@
 
   "TA-186": { "estado": "terminada", "pr": 161 },
 
-  "TA-187": { "estado": "pendiente" },
+  "TA-187": { "estado": "en_curso", "rama": "ta-187-eventos-respaldo" },
 
   "TA-188": { "estado": "terminada", "pr": 154 },
 
