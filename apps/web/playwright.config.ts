@@ -2,6 +2,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const enCI = process.env['CI'] !== undefined && process.env['CI'] !== '';
+const PUERTO = 3100;
 
 export default defineConfig({
   testDir: './e2e',
@@ -13,7 +14,20 @@ export default defineConfig({
   forbidOnly: enCI,
   reporter: enCI ? [['list'], ['json', { outputFile: 'test-results/informe.json' }]] : 'list',
   // 07 §7.1: el navegador usa America/El_Salvador, salvo el proyecto zona-distinta.
-  use: { trace: 'on-first-retry', timezoneId: 'America/El_Salvador', locale: 'es-SV' },
+  use: {
+    baseURL: `http://localhost:${PUERTO}`,
+    trace: 'on-first-retry',
+    timezoneId: 'America/El_Salvador',
+    locale: 'es-SV',
+  },
+  // 05 §14.1 (FE-50): la E2E corre contra la compilación de producción, no contra `next dev`.
+  webServer: {
+    command: `pnpm exec next build && pnpm exec next start -p ${PUERTO}`,
+    // Por puerto: sin sesión `/` redirige a /ingresar, que aún no tiene página (404), y una URL así nunca da «listo».
+    port: PUERTO,
+    reuseExistingServer: !enCI,
+    timeout: 300_000,
+  },
   projects: [
     { name: 'movil', use: { ...devices['Pixel 7'] } },
     {

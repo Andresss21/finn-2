@@ -3,7 +3,25 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@finn/aplicacion": "workspace:*",
+    "@finn/dominio": "workspace:*",
+    "next": "16.4.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
   "devDependencies": {
-    "@playwright/test": "1.56.1"
+    "@finn/config": "workspace:*",
+    "@playwright/test": "1.56.1",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.2.3",
+    "typescript": "5.9.3"
   }
 }
