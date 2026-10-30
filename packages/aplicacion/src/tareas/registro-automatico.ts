@@ -33,7 +33,7 @@ async function avisar(
   motivo: MotivoNotificacion,
   clave: string,
   texto: string[],
-  destino: object,
+  destino: Readonly<Record<string, string>>,
 ) {
   const [titulo = '', cuerpo = ''] = texto;
   const ya = await (d.leer ?? leerDb)(

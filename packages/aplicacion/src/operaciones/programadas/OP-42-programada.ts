@@ -36,35 +36,27 @@ const mismas = (a: readonly Linea[], b: readonly Linea[]): boolean =>
   a.length === b.length &&
   a.every((l, i) => l.monto === b.at(i)?.monto && l.categoriaId === b.at(i)?.categoriaId);
 
-const igualACrear = (p: Programada, lineas: readonly Linea[], e: Crear): boolean =>
-  p.tipo === e.tipo &&
-  p.cuentaId === e.cuentaId &&
-  p.cuentaDestinoId === (e.cuentaDestinoId ?? null) &&
-  p.comercio === e.comercio &&
-  p.monto === e.monto &&
-  p.tolerancia === (e.tolerancia ?? Centavos.cero) &&
-  p.frecuencia === e.frecuencia &&
-  p.frecuenciaDias === (e.frecuenciaDias ?? null) &&
-  p.primeraFecha === e.primeraFecha &&
-  p.fechaFin === (e.fechaFin ?? null) &&
-  p.registroAutomatico === e.registroAutomatico &&
-  mismas(lineas, e.lineas ?? []);
+/** Cada campo pedido vale lo mismo en la programada (las líneas, en su orden); lo ausente es nulo. */
+const coincide = (
+  p: Programada,
+  lineas: readonly Linea[],
+  v: Registro,
+  claves: readonly string[],
+) =>
+  claves.every((k) =>
+    k === 'lineas'
+      ? mismas(lineas, (v[k] as readonly Linea[] | undefined) ?? [])
+      : (p as unknown as Registro)[k] === (v[k] ?? null),
+  );
 
 function editar(p: Programada, lineas: readonly Linea[], e: Editar): Veredicto<SalidaProgramada> {
-  const nuevo: Registro = e;
-  const visto: Registro = e.esperado;
-  const actual = (k: string): unknown => (k === 'lineas' ? lineas : (p as unknown as Registro)[k]);
-  const coincide = (k: string, valor: unknown): boolean =>
-    k === 'lineas'
-      ? mismas(actual(k) as readonly Linea[], valor as readonly Linea[])
-      : actual(k) === valor;
-  const pedidos = CAMPOS_EDITABLES.filter((k) => nuevo[k] !== undefined);
-  if (pedidos.every((k) => coincide(k, nuevo[k]))) return { tipo: 'ya_aplicada', salida: {} };
-  if (pedidos.every((k) => coincide(k, visto[k]))) return { tipo: 'aplicar' };
-  return {
-    tipo: 'conflicto_desactualizado',
-    actuales: Object.fromEntries(pedidos.map((k) => [k, actual(k)])),
-  };
+  const pedidos = CAMPOS_EDITABLES.filter((k) => (e as Registro)[k] !== undefined);
+  if (coincide(p, lineas, e, pedidos)) return { tipo: 'ya_aplicada', salida: {} };
+  if (coincide(p, lineas, e.esperado, pedidos)) return { tipo: 'aplicar' };
+  const actuales = Object.fromEntries(
+    pedidos.map((k) => [k, k === 'lineas' ? lineas : (p as unknown as Registro)[k]]),
+  );
+  return { tipo: 'conflicto_desactualizado', actuales };
 }
 
 /** Lo que el contrato no ve de una edición: la forma de la programada resultante (03 §4.5.4, DB-16). */
@@ -93,7 +85,9 @@ export const OP42: DefinicionOperacion<EntradaOp42, Resuelto, SalidaProgramada> 
     if (e.accion === 'crear') {
       const p = programadaDe(h, e.id);
       if (p === undefined) return { tipo: 'aplicar' };
-      return igualACrear(p, lineasDe(h, p.id), e)
+      const tolerancia = e.tolerancia ?? Centavos.cero;
+      return p.tipo === e.tipo &&
+        coincide(p, lineasDe(h, p.id), { ...e, tolerancia }, CAMPOS_EDITABLES)
         ? { tipo: 'ya_aplicada', salida: { id: e.id } }
         : { tipo: 'conflicto_id' };
     }
