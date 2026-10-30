@@ -12,6 +12,8 @@
     "tools/db/*.ts",
     "tools/ci/*.ts",
     "tools/respaldo/*.ts",
-    "tools/respaldo/test/*.ts"
+    "tools/respaldo/test/*.ts",
+    "tools/humo/*.ts",
+    "tools/humo/test/*.ts"
   ]
 }
