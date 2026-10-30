@@ -19,6 +19,7 @@
     "./respaldo/*": "./src/respaldo/*.ts",
     "./sms/*": "./src/sms/*.ts",
     "./tareas/*": "./src/tareas/*.ts",
+    "./operaciones/ajustes": "./src/operaciones/ajustes/index.ts",
     "./operaciones/categorias": "./src/operaciones/categorias/index.ts",
     "./operaciones/conciliacion": "./src/operaciones/conciliacion/index.ts",
     "./operaciones/formatos": "./src/operaciones/formatos/index.ts",
