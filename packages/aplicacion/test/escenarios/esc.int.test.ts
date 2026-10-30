@@ -197,6 +197,66 @@ it(
 );
 
 it(
+  'PRU-ESC-37@int [ESC-37, N8, F2, O5, B-3] Meta anual: reparto y renovación con dinero no gastado',
+  () => verificar('ESC-37'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-38@int [ESC-38, O5, A-4] Meta para una fecha: cumplida antes, vencida y extendida',
+  () => verificar('ESC-38'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-39@int [ESC-39, H6, P3] Cuota de préstamo con desglose',
+  () => verificar('ESC-39'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-42@int [ESC-42, O4, N4] Fusión que afecta sobregiros de períodos cerrados',
+  () => verificar('ESC-42'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-43@int [ESC-43, O3, F1] Eliminación de una tarjeta con asignaciones en un período cerrado',
+  () => verificar('ESC-43'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-44@int [ESC-44, H10, M3, N5] Archivar una categoría y devolución posterior hacia ella',
+  () => verificar('ESC-44'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-46@int [ESC-46, P5, P18] SMS de las 7 pm del día 20 aprobado el día 21',
+  () => verificar('ESC-46'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-47@int [ESC-47, P12, N6] Conciliación con diferencia y edición posterior',
+  () => verificar('ESC-47'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-48@int [ESC-48, Q7, Q3, N9] Cobro de un por cobrar con débito depositado en la tarjeta',
+  () => verificar('ESC-48'),
+  TOPE,
+);
+
+it(
+  'PRU-ESC-49@int [ESC-49, Q1, C1, C3] Tres períodos seguidos con asignaciones futuras',
+  () => verificar('ESC-49'),
+  TOPE,
+);
+
+it(
   'PRU-ESC-50@int [ESC-50, P17, B-12, inv. 15] Registro automático atrasado e idempotente',
   () => verificar('ESC-50'),
   TOPE,
