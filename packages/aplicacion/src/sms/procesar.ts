@@ -35,7 +35,7 @@ type Resuelto = Leido &
   };
 
 /** Lo que el dominio usa de la interpretación (el dominio no importa `@finn/sms`). */
-const paraDominio = (i: Interpretacion): InterpretacionSms =>
+export const paraDominio = (i: Interpretacion): InterpretacionSms =>
   i.resultado === 'reconocido'
     ? {
         resultado: 'reconocido',
@@ -46,12 +46,18 @@ const paraDominio = (i: Interpretacion): InterpretacionSms =>
     : { resultado: 'no_reconocido' };
 
 /** La fila del intento (03 §3.18) con la interpretación de b y el movimiento que escribió el dominio. */
-function intentoDe(r: Resuelto, i: Interpretacion, res: Exito): NuevoProcesamiento {
+export function intentoDe(
+  r: Pick<Leido, 'sms' | 'intentos'>,
+  i: Interpretacion,
+  res: Exito,
+): NuevoProcesamiento {
   const fila = (tabla: string): unknown => {
     const c = res.cambios.find((x) => x.tipo === 'insertar' && x.tabla === tabla);
     return c?.tipo === 'insertar' ? c.fila : undefined;
   };
-  const m = fila('movimientos') as Movimiento;
+  // OP-49 reprocesa el mismo movimiento: el dominio lo actualiza (F4) en vez de insertarlo
+  const cambio = res.cambios.find((x) => x.tipo === 'actualizar' && x.tabla === 'movimientos');
+  const m = (cambio?.tipo === 'actualizar' ? cambio.campos : fila('movimientos')) as Movimiento;
   const linea = fila('movimiento_lineas') as MovimientoLinea | undefined;
   const rec = i.resultado === 'reconocido' ? i : null;
   return {
