@@ -39,7 +39,7 @@
     "ci:integracion": "node tools/ci/publicar-resultados.mjs integracion -- pnpm test:integracion --reporter=default --reporter=json --outputFile.json=test-results/informes/integracion.json",
     "ci:e2e": "node tools/ci/afecta.mjs e2e",
     "ci:nocturno": "node tools/ci/afecta.mjs nocturno",
-    "ci:cierre": "pnpm pruebas:listar && node tools/pruebas/matriz.ts verificar --resultados test-results/informes",
+    "ci:cierre": "pnpm exec playwright install --with-deps chromium && pnpm pruebas:listar && node tools/pruebas/matriz.ts verificar --resultados test-results/informes",
     "ci:local": "node tools/ci/afecta.mjs local",
     "ci:politica-patrones": "node tools/ci/politica-patrones.ts",
     "test:respaldo": "vitest run --project respaldo --coverage.enabled=false --passWithNoTests",
