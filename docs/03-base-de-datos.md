@@ -2410,9 +2410,19 @@ GRANT CREATE ON DATABASE :"base" TO finn_migraciones;
 -- esquema lo crea el propio volcado.
 \if :{?solo_roles}
 \else
+-- [CH-53] Desde PG16, quien crea un rol sin ser superusuario (`postgres` en Supabase) recibe ADMIN, pero no SET ni
+-- INHERIT, y CREATE SCHEMA AUTHORIZATION exige SET. Se concede solo aquí, en una transacción: ni un error a medias
+-- deja la membresía. El REVOKE final quita esta concesión y conserva el ADMIN, que es de otro otorgante.
+BEGIN;
+GRANT finn_migraciones TO CURRENT_USER WITH SET TRUE, INHERIT FALSE;
 CREATE SCHEMA IF NOT EXISTS finn AUTHORIZATION finn_migraciones;
 ALTER SCHEMA finn OWNER TO finn_migraciones;
+-- El REVOKE sobre el esquema es del dueño, y sin INHERIT hay que actuar como él
+SET LOCAL ROLE finn_migraciones;
 REVOKE ALL ON SCHEMA finn FROM PUBLIC;
+RESET ROLE;
+REVOKE finn_migraciones FROM CURRENT_USER;
+COMMIT;
 \endif
 ```
 
@@ -4314,7 +4324,7 @@ El paso 9 (motor) se agrega cuando exista `@finn/dominio` (Fase 4).
 
 ### 13.5 Prueba de humo del bootstrap en Supabase (Fase 4)
 
-El bootstrap (10.4.1) se probó con un superusuario. En Supabase, el rol `postgres` no lo es. Antes de construir sobre él, la prueba de humo de la Fase 4 verifica en el proyecto real:
+El bootstrap (10.4.1) se probó con un superusuario. En Supabase, el rol `postgres` no lo es. **[CH-53]** Desde PG16, ese rol recibe `ADMIN` pero no `SET` sobre los roles que crea; el bootstrap se concede `SET` sobre `finn_migraciones` solo mientras crea el esquema (PRU-INT-ESQ-108). Antes de construir sobre él, la prueba de humo de la Fase 4 verifica en el proyecto real:
 
 | # | Verificación | Pasa si |
 |---|---|---|
