@@ -527,5 +527,5 @@
 
   "TA-552": { "estado": "terminada", "rama": "ta-552-navegacion", "pr": 223 },
 
-  "TA-553": { "estado": "en_curso", "rama": "ta-553-bandeja-graficos" }
+  "TA-553": { "estado": "terminada", "rama": "ta-553-bandeja-graficos", "pr": 241 }
 }
