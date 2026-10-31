@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { clasificar, mediana, rutasDeFinn, tabla, urlDe, type Presupuestos } from './clasificar.ts';
+import {
+  cargaBibliotecaDeFormularios,
+  clasificar,
+  mediana,
+  rutasDeFinn,
+  tabla,
+  urlDe,
+  type Presupuestos,
+} from './clasificar.ts';
 
 const P: Presupuestos = {
   compartidoKb: 170,
@@ -30,6 +38,22 @@ const medidas = [
 ];
 
 describe('rendimiento: clasificar (05 §13.4)', () => {
+  it('una ruta tiene formulario si carga la biblioteca, no por cómo se llama (CH-60)', () => {
+    expect(cargaBibliotecaDeFormularios(['a', 'x={shouldUnregister:!1}'])).toBe(true);
+    expect(cargaBibliotecaDeFormularios(['PaginaFlujo', 'flujos'])).toBe(false);
+    // Como en #227: la biblioteca es de la ruta con formulario y no entra en el compartido
+    const c = clasificar(
+      [
+        { ruta: '/', formulario: false, scripts: { 'marco.js': base } },
+        { ruta: '/flujo', formulario: false, scripts: { 'marco.js': base, 'corto.js': 680 } },
+        { ruta: '/eco', formulario: true, scripts: { 'marco.js': base, 'rhf.js': 46_920 } },
+      ],
+      P,
+    );
+    expect([c.compartidoKb, c.formulariosKb]).toEqual([139, 46.92]);
+    expect(c.rutas.map((r) => r.kb)).toEqual([0, 0.68, 0]);
+  });
+
   it('separa compartido, biblioteca de formularios y por ruta; lo parcial cuenta en cada ruta', () => {
     const c = clasificar(medidas, P);
     expect(c.compartidoKb).toBe(139);

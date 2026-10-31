@@ -13,7 +13,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { afectadas } from '../pruebas/afectadas.ts';
-import { ESTADO, e2eDePr, recortesVigentes } from './minutos.ts';
+import { ESTADO, e2eDePr, recortesAplicables } from './minutos.ts';
 import { cargarEntradas, verificar } from '../pruebas/matriz.ts';
 import { cambiosDeEstado } from '../pruebas/resumen.ts';
 
@@ -57,36 +57,41 @@ function cambiados(b) {
   return [...new Set(`${r.salida}\n${nuevos}`.split('\n').filter(Boolean))];
 }
 
-/** Alguna ficha pasa a `terminada` en pruebas/features.json respecto de la base (07 §22.2). */
+/** Las fichas que pasan a `terminada` en pruebas/features.json respecto de la base (07 §22.2). */
 function aTerminada(b) {
   const antes = git('show', `${b}:pruebas/features.json`);
   const f = 'pruebas/features.json';
   const ahora = JSON.parse(existsSync(f) ? readFileSync(f, 'utf8') : '{}');
   const cambios = cambiosDeEstado(JSON.parse(antes.ok ? antes.salida : '{}'), ahora);
-  return cambios.some((c) => c.endsWith('→ terminada'));
+  return cambios.filter((c) => c.endsWith('→ terminada')).map((c) => c.split(':')[0]);
 }
 
 /** M4: en ahorro, e2e de PR solo al pasar a listo (07 §6.5, §32.3). Sin estado del mes, normal. */
 function e2eSegunModo() {
   const estado = existsSync(ESTADO) ? JSON.parse(readFileSync(ESTADO, 'utf8')) : null;
   return (
-    evento !== 'pull_request' || e2eDePr(recortesVigentes(estado, new Date()), env('FINN_ACCION'))
+    evento !== 'pull_request' || e2eDePr(recortesAplicables(estado, new Date()), env('FINN_ACCION'))
   );
 }
 
 /** M1: integracion con afecta_db o PR listo. M2: e2e en PR listo con afecta_web. En main, todo (07 §6.1).
+ * El PR que pasa una ficha a `terminada` corre e2e aunque no esté listo (07 §13.2, paso 4; M15 lo exige en `cierre`).
  * afecta_docs: el diff toca docs/ o tools/docs/ y `rapido` corre docs:comprobar (07 §13.7). */
 function decidir(archivos, b) {
   const db = archivos.some((a) => CI.test(a) || DB.test(a));
   const web = archivos.some((a) => CI.test(a) || WEB.test(a));
   const enMain = evento === 'push';
   const listo = evento === 'pull_request' && env('FINN_BORRADOR') !== 'true';
+  const cierra = aTerminada(b).length > 0;
   return {
     afecta_db: db,
     afecta_web: web,
     integracion: enMain || listo || db,
-    e2e: enMain || ((listo || evento === '') && web && e2eSegunModo()),
-    cierre: enMain || aTerminada(b),
+    e2e:
+      enMain ||
+      (evento === 'pull_request' && cierra) ||
+      ((listo || evento === '') && web && e2eSegunModo()),
+    cierre: enMain || cierra,
     afecta_docs: archivos.some((a) => DOCS.test(a)),
   };
 }
@@ -128,15 +133,15 @@ function secretos(b) {
   return [];
 }
 
-/** Filtro `-g` de las E2E afectadas (07 §6.1): `todas`, `^$` (ninguna) o los identificadores. */
+/** Filtro `-g` de las E2E afectadas (07 §6.1), más las de las fichas que se cierran: `todas`, `^$` o los identificadores. */
 function grepE2E(archivos) {
   const e = cargarEntradas();
-  return afectadas(e, verificar(e), archivos).grepE2E ?? 'todas';
+  return afectadas(e, verificar(e), archivos, aTerminada(b)).grepE2E ?? 'todas';
 }
 
 function rapido(archivos, b, d) {
-  // CMP solo si cambió la web (07 §6.1); su Chromium sale de la caché de Playwright
-  const cmp = d.afecta_web ? ' --project componentes' : '';
+  // CMP si cambió la web (07 §6.1) o si corre `cierre`, que necesita su resultado (M15, CH-60); Chromium: paso navegadores
+  const cmp = d.afecta_web || d.cierre ? ' --project componentes' : '';
   const informe =
     '--reporter=default --reporter=json --outputFile.json=test-results/informes/rapido.json';
   const ok = correr([
