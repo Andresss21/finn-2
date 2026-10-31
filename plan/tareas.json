@@ -299,7 +299,7 @@
 
   "TA-208": { "estado": "terminada", "pr": 218 },
 
-  "TA-209": { "estado": "pendiente" },
+  "TA-209": { "estado": "en_curso", "rama": "ta-209-cuentas-bandeja-graficos" },
 
   "TA-210": { "estado": "terminada", "rama": "ta-210-escritura", "pr": 224 },
 
