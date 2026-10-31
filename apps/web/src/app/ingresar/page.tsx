@@ -3,9 +3,9 @@ import type { Metadata } from 'next';
 import { resolverAcceso } from './acceso';
 import { FormularioIngresar } from './formulario-ingresar';
 import { ingresar, salir } from '../../servidor/acciones/autenticacion';
-import { autenticacion } from '../../textos/autenticacion';
+import { ingreso } from '../../textos/ingreso';
 
-export const metadata: Metadata = { title: autenticacion.tituloIngresar };
+export const metadata: Metadata = { title: ingreso.tituloIngresar };
 
 export default async function PaginaIngresar({
   searchParams,

@@ -7,7 +7,8 @@ import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
-import { autenticacion as t } from '../../textos/autenticacion';
+import { autenticacion } from '../../textos/autenticacion';
+import { ingreso as t } from '../../textos/ingreso';
 import type { RutasAcceso } from './acceso';
 
 const CONTRATO = z.object({
@@ -66,7 +67,8 @@ export function FormularioIngresar({
   const errorEmail = formState.errors.email?.message;
   const errorContrasena = formState.errors.contrasena?.message;
   const mensaje =
-    operacion.error?.mensaje ?? (usuarioNoPermitido ? t.credenciales_invalidas : undefined);
+    operacion.error?.mensaje ??
+    (usuarioNoPermitido ? autenticacion.credenciales_invalidas : undefined);
   return (
     <form
       onSubmit={(e) => {

@@ -4,7 +4,8 @@ import { expect, test } from '../../configuracion/semilla.ts';
 import { esperarHidratacion } from '../../ayudas/esperas.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { codigoTotp } from '../../ayudas/totp.ts';
-import { autenticacion as t } from '../../../src/textos/autenticacion.ts';
+import { autenticacion } from '../../../src/textos/autenticacion.ts';
+import { ingreso as t } from '../../../src/textos/ingreso.ts';
 import type { Page } from '@playwright/test';
 
 const variable = (n: string): string => {
@@ -66,9 +67,9 @@ test.describe('PRU-E2E-ACCESO', () => {
       const respuesta = page.waitForResponse((r) => r.request().method() === 'POST');
       await completarContrasena(page, email, clave);
       await respuesta;
-      await expect(page.getByText(t.credenciales_invalidas)).toBeVisible();
+      await expect(page.getByText(autenticacion.credenciales_invalidas)).toBeVisible();
       await expect(page).toHaveURL(/\/ingresar$/);
-      await expect(page.getByText(t.credenciales_invalidas)).toHaveCount(1);
+      await expect(page.getByText(autenticacion.credenciales_invalidas)).toHaveCount(1);
     }
   });
 

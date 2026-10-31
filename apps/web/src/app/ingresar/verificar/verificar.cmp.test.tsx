@@ -7,6 +7,7 @@ import { userEvent } from 'vitest/browser';
 import type { ResultadoAccion } from '@finn/aplicacion/errores';
 import '../../../app/globals.css';
 import { autenticacion } from '../../../textos/autenticacion';
+import { ingreso } from '../../../textos/ingreso';
 import { FormularioVerificar } from './formulario-verificar';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -57,7 +58,7 @@ function pantalla(accion: Accion) {
   const campo = nodo.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]');
   if (campo === null) throw new Error('falta el campo de código');
   const boton = [...nodo.querySelectorAll('button')].find(
-    (b) => b.textContent === autenticacion.verificar,
+    (b) => b.textContent === ingreso.verificar,
   );
   if (boton === undefined) throw new Error('falta el botón Verificar');
   return { nodo, campo, boton };

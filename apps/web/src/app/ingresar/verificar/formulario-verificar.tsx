@@ -9,7 +9,7 @@ import { EntradaTexto } from '../../../componentes/base/campo';
 import { Seleccion } from '../../../componentes/base/seleccion';
 import { useFormularioFinn } from '../../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../../formularios/use-operacion';
-import { autenticacion as t } from '../../../textos/autenticacion';
+import { ingreso as t } from '../../../textos/ingreso';
 import type { RutasAcceso } from '../acceso';
 import { normalizarCodigo } from '../codigo';
 

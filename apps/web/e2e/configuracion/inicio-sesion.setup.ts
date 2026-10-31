@@ -3,7 +3,7 @@
 import { test as preparar } from '@playwright/test';
 import { codigoTotp } from '../ayudas/totp.ts';
 import { esperarHidratacion } from '../ayudas/esperas.ts';
-import { autenticacion as t } from '../../src/textos/autenticacion.ts';
+import { ingreso as t } from '../../src/textos/ingreso.ts';
 
 export const ARCHIVO_SESION = 'test-results/sesion.json';
 
