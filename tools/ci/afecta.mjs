@@ -206,8 +206,13 @@ function ren() {
   const calcular = correr([
     ['REN calcular', 'pnpm bench --outputJson test-results/ren/bench.json'],
   ]);
+  // LCP, CLS e INP (05 §13.4; TA-222): en este job para que FINN_REN_ROJO sea uno solo
+  const web = correr([
+    ['navegadores', NAVEGADORES],
+    ['REN web', 'node tools/pruebas/e2e.mjs --project=movil -g PRU-REN-(PWA-00[34]|TX-001)'],
+  ]);
   const registro = correr([['REN registro', 'node tools/pruebas/volumen/registrar.ts']]);
-  return carga && calcular && registro;
+  return carga && calcular && web && registro;
 }
 
 // Mutantes del motor (07 §19.4, DP-26; TA-112): vitest.config.ts compila FINN_MUTANTE en @finn/dominio.

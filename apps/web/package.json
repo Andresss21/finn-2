@@ -12,6 +12,7 @@
   "dependencies": {
     "@finn/aplicacion": "workspace:*",
     "@finn/dominio": "workspace:*",
+    "@radix-ui/react-dialog": "1.1.15",
     "@radix-ui/react-label": "2.1.17",
     "@radix-ui/react-radio-group": "1.5.1",
     "@radix-ui/react-select": "2.4.1",
@@ -32,12 +33,14 @@
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
     "@finn/config": "workspace:*",
+    "@lhci/cli": "0.15.1",
     "@playwright/test": "1.56.1",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.2.3",
     "axe-core": "4.14.0",
     "otpauth": "9.5.2",
+    "puppeteer-core": "24.43.1",
     "typescript": "5.9.3"
   }
 }

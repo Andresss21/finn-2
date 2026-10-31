@@ -163,6 +163,7 @@ export default defineConfig({
             'class-variance-authority',
             'clsx',
             'tailwind-merge',
+            '@radix-ui/react-dialog',
             '@radix-ui/react-label',
             '@radix-ui/react-radio-group',
             '@radix-ui/react-select',

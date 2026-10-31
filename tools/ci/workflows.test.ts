@@ -150,7 +150,9 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(
       Object.values(wf.jobs)
         .flatMap((j) => j.steps)
-        .some((p) => /cache\/save@/.test(p.uses ?? '')),
+        .some(
+          (p) => /cache\/save@/.test(p.uses ?? '') && p.with?.['path'] === 'test-results/ci-modo',
+        ),
     ).toBe(false);
     expect(wf.env?.['FINN_ACCION']).toBe('${{ github.event.action }}');
   });

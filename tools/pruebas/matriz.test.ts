@@ -830,6 +830,14 @@ describe('afectadas (07 §13.6, DP-19, CH-01)', () => {
     expect(a).toMatchObject({ todo: false, fts: [], grepE2E: '^$', total: 0 });
   });
 
+  it('punto 4: una REN web cambiada corre con Playwright, no con bench (TA-222)', () => {
+    const archivo = 'apps/web/e2e/rendimiento/tamano.e2e.ts';
+    const ren = { id: 'PRU-REN-PWA-002', nivel: 'REN', area: 'PWA', refs: [], archivo };
+    const a = afectadas(e, { ...r, activas: [...r.activas, ren] }, [archivo]);
+    expect(a.grepE2E).toBe('PRU-REN-PWA-002');
+    expect(a.comandos).toEqual([]);
+  });
+
   it('punto 4: las pruebas de un archivo de prueba cambiado se agregan siempre', () => {
     const a = quien('packages/dominio/src/tx.test.ts');
     expect(a.total).toBeGreaterThan(0);

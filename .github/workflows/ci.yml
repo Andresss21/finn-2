@@ -156,9 +156,20 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
+      # TA-222 (05 §13.4): la última medida de `main`, para comparar en el resumen del job
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: test-results/tamanos-main
+          key: tamanos-main-${{ github.run_id }}
+          restore-keys: tamanos-main-
       - env:
           GITHUB_TOKEN: ${{ github.token }}
         run: pnpm ci:e2e
+      - if: ${{ github.event_name == 'push' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: test-results/tamanos-main
+          key: tamanos-main-${{ github.run_id }}
       # El informe JSON para cierre; las trazas solo existen si una prueba falló (07 §6.4: 3 días)
       - if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

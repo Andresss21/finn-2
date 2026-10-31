@@ -14,6 +14,8 @@ export interface Medida {
   readonly medianaMs: number;
   /** `null`: se registra, sin tope (V-30 fue indicativa, 04 RS-10). */
   readonly presupuestoMs: number | null;
+  /** Lo que se escribe tras el número; sin indicarla, ` ms`. El CLS no tiene unidad. */
+  readonly unidad?: string;
 }
 export interface Evaluacion extends Medida {
   readonly superado: boolean;
@@ -36,8 +38,12 @@ interface SalidaBench {
 }
 
 /** Las tres medidas del job `ren`, de lo que escribieron la prueba de integración y `vitest bench`. */
-export function medidas(int: SalidaInt, bench: SalidaBench | null): Medida[] {
-  const lista: Medida[] = [];
+export function medidas(
+  int: SalidaInt,
+  bench: SalidaBench | null,
+  web: readonly Medida[] = [],
+): Medida[] {
+  const lista: Medida[] = [...web]; // apps/web/e2e/rendimiento/tiempos.e2e.ts (05 §13.4; TA-222)
   const calcular = bench?.files
     .flatMap((f) => f.groups.flatMap((g) => g.benchmarks))
     .find((b) => b.name.startsWith('PRU-REN-MOTOR-101'));
@@ -84,11 +90,12 @@ export const nuevoRojo = (
 /** Una línea por medida, para el resumen del job. */
 export function resumen(es: Evaluacion[]): string {
   const filas = es.map((e) => {
-    const tope = e.presupuestoMs === null ? 'sin tope' : `≤ ${e.presupuestoMs} ms`;
+    const u = e.unidad ?? ' ms';
+    const tope = e.presupuestoMs === null ? 'sin tope' : `≤ ${e.presupuestoMs}${u}`;
     const estado =
       e.presupuestoMs === null ? 'registrada' : e.superado ? 'SUPERADO' : 'en presupuesto';
     const margen = e.margen === null ? '' : ` (margen ${Math.round(e.margen * 100)} %)`;
-    return `| ${e.id} | ${e.nombre} | ${Math.round(e.medianaMs * 100) / 100} ms | ${tope} | ${estado}${margen} |`;
+    return `| ${e.id} | ${e.nombre} | ${Math.round(e.medianaMs * 100) / 100}${u} | ${tope} | ${estado}${margen} |`;
   });
   return [
     '### Presupuestos de tiempo (mediana de 5, 07 §6.6)',
@@ -103,9 +110,10 @@ export function resumen(es: Evaluacion[]): string {
 /** Los avisos del job: uno por presupuesto superado y uno por el que queda con poco margen (P7-5). */
 export function avisos(es: Evaluacion[]): string[] {
   return es.flatMap((e) => {
+    const u = e.unidad ?? ' ms';
     if (e.superado)
       return [
-        `::warning title=${e.id}::${e.nombre}: mediana ${Math.round(e.medianaMs)} ms, presupuesto ${e.presupuestoMs} ms. FINN_REN_ROJO activo (07 §6.6)`,
+        `::warning title=${e.id}::${e.nombre}: mediana ${Math.round(e.medianaMs * 100) / 100}${u}, presupuesto ${e.presupuestoMs}${u}. FINN_REN_ROJO activo (07 §6.6)`,
       ];
     if (e.margen !== null && e.margen < MARGEN_MINIMO)
       return [
@@ -121,8 +129,9 @@ const leerJson = (f: string): unknown =>
 if (import.meta.main) {
   const int = (leerJson(`${RESULTADOS}/int.json`) as SalidaInt | null) ?? {};
   const bench = leerJson(`${RESULTADOS}/bench.json`) as SalidaBench | null;
-  const es = medidas(int, bench).map(evaluar);
-  const esperadas = 3;
+  const web = (leerJson(`${RESULTADOS}/web.json`) as Medida[] | null) ?? [];
+  const es = medidas(int, bench, web).map(evaluar);
+  const esperadas = 3 + web.length; // las de la web son opcionales hasta que existan sus pantallas
   if (es.length < esperadas)
     console.log(
       `::warning title=REN::Solo ${es.length} de ${esperadas} medidas: falta int.json o bench.json`,
