@@ -1,0 +1,18 @@
+{
+  "ci": {
+    "collect": {
+      "numberOfRuns": 3,
+      "url": [
+        "http://localhost:3100/",
+        "http://localhost:3100/presupuesto",
+        "http://localhost:3100/actividad",
+        "http://localhost:3100/bandeja",
+        "http://localhost:3100/registrar/gasto",
+        "http://localhost:3100/reportes/tendencia"
+      ],
+      "puppeteerScript": "e2e/rendimiento/lhci-sesion.cjs",
+      "puppeteerLaunchOptions": { "args": ["--no-sandbox"] },
+      "settings": { "chromeFlags": "--no-sandbox" }
+    }
+  }
+}
