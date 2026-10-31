@@ -18,6 +18,20 @@ export type ValidacionFormato =
 /** 04 §8.5: `checker: 'auto'`, `timeout: 10 s`. */
 export const TIEMPO_ANALISIS_MS = 10_000;
 
+/**
+ * 04 §8.5 más CH-48: el grado se decide por pasos, no por reloj. Con los subtiempos por defecto, un
+ * ataque que pasa 1 s cuenta como éxito y, con la CPU ocupada, un patrón de grado 2 da grado 3. El
+ * único reloj es `timeout`, y agotarlo da `unknown`, que se rechaza.
+ */
+export const PARAMETROS_ANALISIS = {
+  checker: 'auto',
+  timeout: TIEMPO_ANALISIS_MS,
+  attackTimeout: null,
+  incubationTimeout: null,
+  seedingTimeout: null,
+  attackLimit: 10_000_000,
+} as const;
+
 const BANDERAS = /^i?m?s?u?$/; // 03 §3.21
 
 /** Nombres de los grupos con nombre del patrón, sin analizar su texto a mano. */
@@ -48,7 +62,7 @@ export function validarFormato(
     return { valido: false, error: 'grupos_obligatorios' };
 
   const r = checkSync(patron, banderas, {
-    checker: 'auto',
+    ...PARAMETROS_ANALISIS,
     timeout: opciones?.timeoutMs ?? TIEMPO_ANALISIS_MS,
   });
   if (r.status === 'safe') {
