@@ -2,6 +2,9 @@
 // `router.push` (05 §1.4); `next/link` queda para `enlace-finn.tsx` (L11). Los textos son de prueba, fuera del catálogo.
 import { soloEnPruebas } from '../solo-pruebas.ts';
 
+// Sin prerender: `soloEnPruebas()` decide en cada petición, no con el entorno de la compilación (PRU-SEG-ACCESO-002).
+export const dynamic = 'force-dynamic';
+
 export default function OrigenDePrueba() {
   soloEnPruebas();
   return (

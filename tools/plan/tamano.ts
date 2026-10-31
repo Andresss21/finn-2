@@ -39,7 +39,7 @@ const AREAS: [string, RegExp][] = [
   ['motor', /^packages\/dominio\/src\/(calculo|operaciones|valores)\//],
   [
     'seguridad',
-    /(^|\/)(proxy\.ts$|api\/)|^tools\/pruebas\/firmas\.sh$|autoriz|aal2|firma|token(?!s?\.(css|json)$)/i,
+    /(^|\/)(proxy\.ts$|api\/)|servidor\/acciones\/indice\.ts$|^tools\/pruebas\/firmas\.sh$|autoriz|aal2|firma|token(?!s?\.(css|json)$)/i,
   ],
   ['reloj', /reloj|(^|\/)instrumentation\.ts$/i],
   ['CI y workflows', /^(\.github\/|tools\/ci\/)/],

@@ -565,7 +565,7 @@ const config: NextConfig = {
 #### 2.2.5 Autorización (BE-07)
 
 - `proxy.ts` hace una comprobación **optimista**: si no hay cookie de sesión, redirige a `/ingresar`. No es una barrera de seguridad: Next documenta que una Server Function queda fuera del `proxy` si cambia el `matcher` o la ruta.
-- **Cada** Server Action (en `accion()`), cada Server Component con datos (en la consulta) y cada Route Handler para el usuario ejecutan `exigirSesionAal2()`: obtiene el usuario con `supabase.auth.getUser()` (verificado contra Supabase, no solo la cookie), exige `aal = 'aal2'` y que el id sea `FINN_USUARIO_ID` (ADR-08). El detalle está en §12 (Parte C).
+- **Cada** Server Action (en `accion()`), salvo la lista cerrada de acceso previo a AAL2 de 05 §9 **[CH-56]**, cada Server Component con datos (en la consulta) y cada Route Handler para el usuario ejecutan `exigirSesionAal2()`: obtiene el usuario con `supabase.auth.getUser()` (verificado contra Supabase, no solo la cookie), exige `aal = 'aal2'` y que el id sea `FINN_USUARIO_ID` (ADR-08). El detalle está en §12 (Parte C).
 - El webhook, el cron y el respaldo no usan sesión: cada uno tiene su secreto (§8, §10, §16).
 - **[R1]** §12 (Parte C) evaluará si para las lecturas basta `getClaims()` (JWT verificado localmente con las claves asimétricas del proyecto), dejando `getUser()` para escrituras y acciones sensibles, según latencia y riesgo de sesión revocada. **[R4]** Resuelto en §12: `getClaims()` para lecturas y `getUser()` para escrituras y acciones sensibles (BE-55).
 

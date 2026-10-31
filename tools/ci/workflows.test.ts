@@ -355,6 +355,11 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     expect(d).toMatchObject({ afecta_db: true, integracion: true, e2e: false });
   });
 
+  it('workflows: un cambio en servidor/ corre integracion: PRU-SEG-ACCESO-001 es la barrera de las acciones de cada ficha', () => {
+    const d = decidir('pull_request', 'true', ['apps/web/src/servidor/acciones/compras.ts']);
+    expect(d).toMatchObject({ afecta_db: true, integracion: true });
+  });
+
   it('workflows: PR en borrador que solo toca tools/humo corre integracion (PRU-SEG-OPER-103 y 106 viven ahí), no e2e', () => {
     const d = decidir('pull_request', 'true', ['tools/humo/patron.ts']);
     expect(d).toMatchObject({ afecta_db: true, integracion: true, e2e: false });

@@ -22,7 +22,7 @@ import { cambiosDeEstado } from '../pruebas/resumen.ts';
 // tools/respaldo/: un cambio solo en restaurar.sh también tiene que correr sus controles (CH-58).
 const CI = /^(\.github\/|tools\/ci\/|pnpm-lock\.yaml$|infra\/|supabase\/)/;
 const DB =
-  /^(packages\/(db|aplicacion)\/|tools\/(db|humo|respaldo)\/|apps\/web\/src\/app\/api\/|vitest\.config\.ts$)/;
+  /^(packages\/(db|aplicacion)\/|tools\/(db|humo|respaldo)\/|apps\/web\/src\/(?:app\/api|servidor)\/|vitest\.config\.ts$)/;
 const WEB = /^(apps\/web\/|packages\/(?!.*\.test\.ts$))/;
 // Los documentos y los scripts de las fases anteriores (07 §13.7, TA-252): docs:comprobar solo si cambian
 const DOCS = /^(docs\/|tools\/docs\/)/;
