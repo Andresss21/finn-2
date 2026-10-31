@@ -87,7 +87,7 @@ describe('minutos: suma, proyección y modo (07 §6.5)', () => {
     expect(minutosCobrados(jobs.map((j) => ({ ...j, labels: ['self-hosted'] })))).toBe(0);
   });
 
-  it('minutos: un estado viejo no recorta mientras la cuota no recorte; si vuelve a recortar, vale (CH-60)', () => {
+  it('minutos: un estado viejo no recorta mientras la cuota no recorte; si vuelve a recortar, vale (CH-61)', () => {
     const viejo = decidir(0, new Date('2026-10-30T15:00:00Z'), 0, null);
     viejo.recortes = ['e2e-pr-al-pasar-a-listo', 'nocturno-semanal'];
     const hoy = new Date('2026-10-31T13:00:00Z');

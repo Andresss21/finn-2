@@ -140,7 +140,7 @@ function grepE2E(archivos) {
 }
 
 function rapido(archivos, b, d) {
-  // CMP si cambió la web (07 §6.1) o si corre `cierre`, que necesita su resultado (M15, CH-60); Chromium: paso navegadores
+  // CMP si cambió la web (07 §6.1) o si corre `cierre`, que necesita su resultado (M15, CH-61); Chromium: paso navegadores
   const cmp = d.afecta_web || d.cierre ? ' --project componentes' : '';
   const informe =
     '--reporter=default --reporter=json --outputFile.json=test-results/informes/rapido.json';

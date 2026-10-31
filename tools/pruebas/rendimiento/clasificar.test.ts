@@ -38,7 +38,7 @@ const medidas = [
 ];
 
 describe('rendimiento: clasificar (05 §13.4)', () => {
-  it('una ruta tiene formulario si carga la biblioteca, no por cómo se llama (CH-60)', () => {
+  it('una ruta tiene formulario si carga la biblioteca, no por cómo se llama (CH-61)', () => {
     expect(cargaBibliotecaDeFormularios(['a', 'x={shouldUnregister:!1}'])).toBe(true);
     expect(cargaBibliotecaDeFormularios(['PaginaFlujo', 'flujos'])).toBe(false);
     // Como en #227: la biblioteca es de la ruta con formulario y no entra en el compartido

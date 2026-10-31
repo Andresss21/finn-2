@@ -381,7 +381,7 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     });
   });
 
-  it('workflows: los recortes de un estado guardado antes de CH-46 no se aplican, ni en synchronize (CH-60)', () => {
+  it('workflows: los recortes de un estado guardado antes de CH-46 no se aplican, ni en synchronize (CH-61)', () => {
     conModo('202610', ['e2e-pr-al-pasar-a-listo', 'nocturno-semanal']);
     const web = ['apps/web/src/x.tsx'];
     expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({ e2e: true });

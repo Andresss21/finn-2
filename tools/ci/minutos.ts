@@ -95,7 +95,7 @@ export const recortesVigentes = (e: Estado | null, hoy: Date): Recorte[] =>
 /** CH-46: con el repositorio público la cuota no decide. Si vuelve a ser privado, se reabre con un CH (07 §32.3). */
 export const CUOTA_RECORTA = false;
 
-/** Lo que se aplica de verdad (CH-60): un estado guardado antes de CH-46 no recorta aunque sea del mes en curso. */
+/** Lo que se aplica de verdad (CH-61): un estado guardado antes de CH-46 no recorta aunque sea del mes en curso. */
 export const recortesAplicables = (
   e: Estado | null,
   hoy: Date,
