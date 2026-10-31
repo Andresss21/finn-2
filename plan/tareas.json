@@ -525,5 +525,5 @@
 
   "TA-551": { "estado": "pendiente" },
 
-  "TA-552": { "estado": "pendiente" }
+  "TA-552": { "estado": "en_curso", "rama": "ta-552-navegacion" }
 }
