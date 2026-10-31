@@ -15,13 +15,13 @@ describe('agenda de medianoche', () => {
     vi.useRealTimers();
   });
 
-  it('PRU-DOM-RELOJ-001 [V5-10, FE-21] el objetivo es hoy + 1 día a las 00:00 de El Salvador (06:00 UTC) más 5 s', () => {
+  it('PRU-DOM-RELOJ-001 [V5-10] el objetivo es hoy + 1 día a las 00:00 de El Salvador (06:00 UTC) más 5 s', () => {
     expect(objetivoMedianoche('2027-03-05')).toBe(Date.UTC(2027, 2, 6, 6, 0, 5));
     expect(objetivoMedianoche('2027-12-31')).toBe(Date.UTC(2028, 0, 1, 6, 0, 5));
     expect(MARGEN_MS).toBe(5000);
   });
 
-  it('PRU-DOM-RELOJ-001 [V5-10, FE-21] refresca una sola vez al llegar al objetivo', () => {
+  it('PRU-DOM-RELOJ-001 [V5-10] refresca una sola vez al llegar al objetivo', () => {
     const refrescar = vi.fn();
     const agenda = crearAgendaMedianoche(refrescar);
     agenda.programar('2027-03-05');
@@ -32,7 +32,7 @@ describe('agenda de medianoche', () => {
     agenda.cancelar();
   });
 
-  it('PRU-DOM-RELOJ-001 [V5-10, FE-21] un Encabezado con el día nuevo reprograma la agenda y no repite el reintento', () => {
+  it('PRU-DOM-RELOJ-001 [V5-10] un Encabezado con el día nuevo reprograma la agenda y no repite el reintento', () => {
     const refrescar = vi.fn();
     const agenda = crearAgendaMedianoche(refrescar);
     agenda.programar('2027-03-05');
@@ -46,7 +46,7 @@ describe('agenda de medianoche', () => {
     agenda.cancelar();
   });
 
-  it('PRU-DOM-RELOJ-001 [V5-10, FE-21] si el servidor sigue en el mismo día, reintenta al minuto y no en bucle', () => {
+  it('PRU-DOM-RELOJ-001 [V5-10] si el servidor sigue en el mismo día, reintenta al minuto y no en bucle', () => {
     const refrescar = vi.fn();
     const agenda = crearAgendaMedianoche(refrescar);
     agenda.programar('2027-03-05');
@@ -61,7 +61,7 @@ describe('agenda de medianoche', () => {
     agenda.cancelar();
   });
 
-  it('PRU-DOM-RELOJ-001 [V5-10, FE-21] con la espera ya vencida (reloj adelantado) refresca de inmediato, una vez por valor de hoy', () => {
+  it('PRU-DOM-RELOJ-001 [V5-10] con la espera ya vencida (reloj adelantado) refresca de inmediato, una vez por valor de hoy', () => {
     const refrescar = vi.fn();
     const agenda = crearAgendaMedianoche(refrescar);
     vi.setSystemTime(Date.UTC(2027, 2, 6, 7, 0, 0));
@@ -72,7 +72,7 @@ describe('agenda de medianoche', () => {
     agenda.cancelar();
   });
 
-  it('PRU-DOM-RELOJ-001 [V5-10, FE-21] con la pestaña oculta el temporizador se retrasa; al volver a estar visible se comprueba el objetivo', () => {
+  it('PRU-DOM-RELOJ-001 [V5-10] con la pestaña oculta el temporizador se retrasa; al volver a estar visible se comprueba el objetivo', () => {
     const refrescar = vi.fn();
     const agenda = crearAgendaMedianoche(refrescar);
     agenda.programar('2027-03-05');
@@ -84,7 +84,7 @@ describe('agenda de medianoche', () => {
     agenda.cancelar();
   });
 
-  it('PRU-DOM-RELOJ-001 [V5-10, FE-21] una espera mayor al tope de un temporizador de JavaScript se parte en tramos', () => {
+  it('PRU-DOM-RELOJ-001 [V5-10] una espera mayor al tope de un temporizador de JavaScript se parte en tramos', () => {
     const refrescar = vi.fn();
     const agenda = crearAgendaMedianoche(refrescar);
     const lejos = '2027-05-05'; // ~60 días: más que 2^31 - 1 ms

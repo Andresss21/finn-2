@@ -16,7 +16,7 @@ test.describe('PRU-E2E-RELOJ', () => {
     borrarRelojServidor();
   });
 
-  test('PRU-E2E-RELOJ-002 [V5-10, FE-21, FE-35] la pantalla abierta pasa al día siguiente a medianoche sin recargar y avisa cuando no hay conexión', async ({
+  test('PRU-E2E-RELOJ-002 [V5-10] la pantalla abierta pasa al día siguiente a medianoche sin recargar y avisa cuando no hay conexión', async ({
     page,
     context,
     baseURL,
