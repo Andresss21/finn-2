@@ -2,6 +2,7 @@
 // `playwright test --list --reporter=json` en pruebas/inventario.json, sin ejecutar ninguna prueba.
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { stripVTControlCharacters } from 'node:util';
 
 export interface PruebaListada {
   titulo: string;
@@ -41,10 +42,25 @@ export function sinRepetir(xs: PruebaListada[]): PruebaListada[] {
 
 const ejecutar = (comando: string, cwd: string) =>
   spawnSync(comando, { cwd, encoding: 'utf8', shell: true, maxBuffer: 256 * 1024 * 1024 });
-// La salida puede traer líneas de aviso antes del JSON
-const soloJson = (s: string): string => {
-  const i = s.search(/[[{]/);
-  return i < 0 ? '' : s.slice(i);
+/**
+ * La salida puede traer avisos antes del JSON, con códigos de color o como `[vite] …`: el JSON es el primer tramo que
+ * empieza en una línea con `[` o `{` y se puede leer. Si ninguno se puede, el primero, para que falle quien lo lea.
+ */
+const soloJson = (salida: string): string => {
+  const s = stripVTControlCharacters(salida);
+  const tramos = [...s.matchAll(/^[[{]/gm)].map((m) => s.slice(m.index));
+  return (
+    tramos.find((t) => {
+      try {
+        JSON.parse(t);
+        return true;
+      } catch {
+        return false;
+      }
+    }) ??
+    tramos[0] ??
+    ''
+  );
 };
 
 /**

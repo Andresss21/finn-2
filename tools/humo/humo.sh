@@ -12,7 +12,7 @@ set +x
 #                          generan para esta ejecución, y después se rotan con tools/db/bootstrap.sql
 #   HUMO_CLAVE_DESTINO     secreta, la del PostgreSQL local de restauración (H-08); si falta, se genera
 #   HUMO_PUERTO_TX, HUMO_PUERTO_SESION: los puertos del pooler (6543 y 5432)
-#   HUMO_PASOS             solo esos pasos, p. ej. "H-01 H-07"; después del paso 6 de TU-07, "H-10" ([CH-42])
+#   HUMO_PASOS             solo esos pasos, p. ej. "H-01 H-07"; después del paso 5 de TU-07, "H-10" ([CH-42], [CH-54])
 # Salida: una línea JSON por paso, { paso, resultado: pasa | falla | omitido, medido, detalle }. Todo lo que un paso
 # escribe (también los errores de psql, Prisma o Docker) pasa por el filtro de `emitir`, que tapa con *** el valor
 # de cada variable secreta y la contraseña de cualquier URL. Nada más llega a la terminal. Nunca `set -x`.
@@ -41,11 +41,22 @@ const e = process.env;
 const nombres = ["HUMO_ADMIN_URL", "SUPABASE_SERVICE_ROLE", "VERCEL_TOKEN", "HUMO_CLAVE_MIGRACIONES",
   "HUMO_CLAVE_APP", "HUMO_CLAVE_RESPALDO", "HUMO_CLAVE_DESTINO", "HUMO_CLAVE_PUBLICA"];
 const secretos = new Set();
+const hosts = new Set();
 for (const n of nombres) {
   const v = e[n] ?? "";
   if (v.length < 4) continue;
   secretos.add(v);
   try { secretos.add(encodeURIComponent(v)); } catch {}
+  // Una URL mal formada: la contraseña va hasta la última arroba y psql nombra sus pedazos en el error ([CH-54])
+  const resto = v.includes("://") ? v.slice(v.indexOf("://") + 3) : "";
+  if (resto) {
+    const arroba = resto.lastIndexOf("@");
+    const credencial = arroba < 0 ? resto : resto.slice(0, arroba);
+    const clave = credencial.slice(credencial.indexOf(":") + 1);
+    for (const f of [clave, ...clave.split(/[\/?&=@#]/)]) if (f.length >= 3) secretos.add(f);
+    const h = arroba < 0 ? null : /^[^:\/?#]+/.exec(resto.slice(arroba + 1));
+    if (h) hosts.add(h[0]);
+  }
   try {
     const u = new URL(v);
     for (const p of [u.password]) if (p.length >= 4) {
@@ -57,7 +68,9 @@ const lista = [...secretos].sort((a, b) => b.length - a.length);
 const tapar = (t) => {
   let s = String(t);
   for (const v of lista) s = s.split(v).join("***");
-  return s.replace(/(\/\/[^:@\/\s]*):[^@\/\s]*@/g, "$1:***@");
+  s = s.replace(/(\/\/[^:@\/\s]*):[^@\/\s]*@/g, "$1:***@");
+  return s.replace(/[^\s"\x27]*@([^\s"\x27@]*)/g, (t, h) =>
+    [...hosts].some((x) => h.startsWith(x)) ? "***@" + h : t);
 };
 const texto = fs.readFileSync(0, "utf8");
 const medido = { ms: Number(e.HUMO_MS) };

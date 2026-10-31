@@ -88,13 +88,19 @@ violaciones AS (
   WHERE a.grantee = 0
      OR a.grantee IN (SELECT oid FROM pg_roles WHERE rolname IN ('anon', 'authenticated', 'service_role'))
   UNION ALL
-  -- R12 sin DEFAULT nextval() sobre secuencias no propias de la columna (lección de 11.3)
+  -- R12 sin DEFAULT nextval() sobre secuencias no propias de la columna (lección de 11.3). La propiedad se lee de
+  -- pg_depend, como hace por dentro pg_get_serial_sequence(): esa función resuelve el nombre de la tabla, exige USAGE
+  -- sobre su esquema y el planificador la evalúa antes de filtrar por finn, así que tocaba auth.refresh_tokens [CH-54]
   SELECT 'R12 DEFAULT nextval de secuencia compartida: ' || ad.adrelid::regclass || '.' || a.attname
   FROM pg_attrdef ad JOIN pg_attribute a ON a.attrelid = ad.adrelid AND a.attnum = ad.adnum
   JOIN pg_class t ON t.oid = ad.adrelid
   WHERE t.relnamespace = (SELECT oid FROM finn)
     AND pg_get_expr(ad.adbin, ad.adrelid) LIKE 'nextval(%'
-    AND pg_get_serial_sequence(ad.adrelid::regclass::text, a.attname) IS NULL
+    AND NOT EXISTS (
+      SELECT 1 FROM pg_depend dep JOIN pg_class s ON s.oid = dep.objid AND s.relkind = 'S'
+      WHERE dep.classid = 'pg_class'::regclass AND dep.refclassid = 'pg_class'::regclass
+        AND dep.refobjid = ad.adrelid AND dep.refobjsubid = ad.adnum AND dep.deptype IN ('a', 'i')
+    )
   UNION ALL
   -- R13 un solo dueño para todo el esquema
   SELECT 'R13 dueño distinto: ' || relname FROM pg_class
