@@ -45,6 +45,7 @@ export function crearAgendaMedianoche(refrescar: () => void): AgendaMedianoche {
   };
 
   const programar = (hoy: string): void => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(hoy)) return; // sin un `hoy` válido no hay medianoche que agendar
     if (reintentando && hoy === hoyActual) return; // ya hay un reintento en curso para este `hoy`
     limpiar();
     hoyActual = hoy;

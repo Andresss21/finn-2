@@ -95,4 +95,14 @@ describe('agenda de medianoche', () => {
     expect(refrescar).toHaveBeenCalledTimes(1);
     agenda.cancelar();
   });
+
+  it('PRU-DOM-RELOJ-001 [V5-10] un hoy vacío o mal formado no agenda ni refresca', () => {
+    const refrescar = vi.fn();
+    const agenda = crearAgendaMedianoche(refrescar);
+    agenda.programar('');
+    agenda.programar('ayer');
+    vi.advanceTimersByTime(5 * MINUTO);
+    expect(refrescar).not.toHaveBeenCalled();
+    agenda.cancelar();
+  });
 });
