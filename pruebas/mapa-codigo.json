@@ -4,7 +4,7 @@
   { "patron": "apps/web/src/app/tokens.css", "fts": "marco" },
   { "patron": "apps/web/src/app/manifest.ts", "fts": "marco" },
   { "patron": "apps/web/src/componentes/marco/*.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/componentes/navegacion/flujo-de-ruta.tsx", "fts": "marco" },
+  { "patron": "apps/web/src/componentes/navegacion/*", "fts": "marco" },
   { "patron": "apps/web/src/app/(finn)/pruebas/**", "fts": "marco" },
   { "patron": "apps/web/src/app/(finn)/layout.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/(finn)/@superpuesto/**", "fts": "marco" },

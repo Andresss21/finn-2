@@ -432,8 +432,8 @@ tu: TU-09, TU-12, TU-13
 ### HT-6 Uso diario mínimo
 
 ```hito
-despues: TA-551
-requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-209, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301
+despues: TA-552
+requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-552, TA-209, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301
 fichas: FT-01, FT-02, FT-03, FT-04, FT-08, FT-09, FT-10, FT-14, FT-18, FT-21, FT-29, FT-34, FT-35, FT-37, FT-38, FT-50
 pruebas: INV-01, INV-02, INV-03, INV-04, INV-05, INV-26, INV-27, INV-28, MOT-diferencial
 tu: TU-11, TU-12, TU-15
@@ -1534,6 +1534,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-53** | Bootstrap con `postgres` no superusuario (H-02). (1) Desde PG16, quien crea un rol sin ser superusuario recibe `ADMIN`, pero no `SET` ni `INHERIT`, y `CREATE SCHEMA … AUTHORIZATION finn_migraciones` falla con `must be able to SET ROLE`. Reproducido con `postgres` en la imagen local de Supabase (17.11; `CREATEROLE`, `CREATEDB`, `REPLICATION` y `BYPASSRLS`, sin `SUPERUSER`). Resolución: `bootstrap.sql` se concede `SET` en una transacción, solo para crear el esquema, y lo revoca al terminar. `BYPASSRLS` no cambia: `postgres` lo tiene, y un rol sin él falla al crear `finn_app`. `WITH SET` exige PG16 o posterior, y `PG_MAYOR` es 17. PRU-INT-ESQ-108 lo ejecuta en `integracion` con un rol equivalente. (2) TU-07 no nombraba `HUMO_CLAVE_MIGRACIONES`, `HUMO_CLAVE_APP`, `HUMO_CLAVE_RESPALDO` ni `HUMO_CLAVE_PUBLICA` (sin ella, H-11 falla), ni avisaba que cada ejecución de H-02 cambia las contraseñas de los roles reales: las generadas se perdían antes de TU-09 y TU-12. Resolución: TU-07 las define, dice de dónde salen y qué pasa al repetir | 03 §10.4.1, §13.5; 08 TU-07; `tools/db/bootstrap.sql`; `pruebas/manuales.md` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-53]** en 03 §10.4.1, §13.5, 08 TU-07, `tools/db/bootstrap.sql` y `pruebas/manuales.md` |
 | **CH-54** | Requisitos de TU-07 y hallazgos de su primera corrida real. (1) TU-07 no decía los requisitos (Docker, `pnpm install`, cliente de PostgreSQL 17), el formato de las variables, el `read -rs` de a una línea, el alcance de `VERCEL_TOKEN` ni qué revisar tras un corte, y cerraba la ventana antes de repetir H-10: se agregan y se invierten los pasos 5 y 6. (2) El filtro de `humo.sh` no cubría una URL mal formada: `psql` mostró `…1]@host`. Tapa ahora los pedazos de la contraseña y lo que va delante de `@host`. (3) **C5** falló en Supabase con `permission denied for schema auth`: R12 llamaba a `pg_get_serial_sequence()`, que exige USAGE sobre el esquema de la tabla, y el planificador la evaluaba sobre `auth.refresh_tokens` antes de filtrar por `finn`. R12 lee ahora la propiedad de `pg_depend`, con el mismo criterio; PRU-INT-ESQ-109 la corre sin USAGE sobre `auth`. (4) **H-08** pedía `finn.hoy()` con `postgres`, que no es superusuario y no tiene EXECUTE: la pide `finn_app`; si `psql` no responde, falla con mensaje claro (PRU-SEG-OPER-107 y 108). (5) **H-09** midió p95 943 ms > 500 ms, con 177.423 filas y 28 MB por carga. Sin cambiar el umbral, H-09 queda en `falla` con la alternativa de 04 §17.2 registrada: riesgo RK-02 y carga incremental **inactiva** (04 §5.7), porque es el volumen de 10 años, la memoria evita la recarga por instancia y activarla exige una migración; se revisa con el aviso de egreso o de latencia de la tarea diaria. Se anota en la nota de PRU-MAN-ESQ-001 | 02 RK-02; 08 TU-07; `tools/db/reglas-catalogo.sql`; `tools/humo/`; `tools/respaldo/restaurar.sh` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-54]** en 02 RK-02, 08 TU-07, `tools/db/reglas-catalogo.sql`, `tools/humo/humo.sh`, `tools/humo/pasos/h08-respaldo.sh`, `tools/humo/pasos/h10.sh` y `tools/respaldo/restaurar.sh` |
 | **CH-55** | Partición de TA-208 por tamaño (DT-02). El alcance completo de TA-208 midió prod=541, 8 archivos y total=885 contra una estimación de 380, 7 y 900: pasa el +30 % de las tareas normales (520). Se parte: TA-208 conserva `BarraGastado`, `FilaCategoria`, `FilaPagoTarjeta` y `FilaTransaccion` con sus textos y PRU-CMP-PRES-101; TA-551, nueva (orden 633), lleva `Billete` y `SelectorPeriodo` con PRU-CMP-PRES-102. FE-31 pasa a TA-551 (E8: un solo dueño); TA-208 conserva CF-13 y TA-551 lleva `cubre: —` en CF-13 y lo completa con su prueba. HT-6 requiere también TA-551 y su `despues` pasa a TA-551 (E7). **Además:** (1) `SelectorPeriodo` va en `componentes/navegacion/`, como dice 05 §10.8 (05 tiene precedencia sobre 08): se corrige el campo `archivos`. (2) **Enlaces:** `EnlaceFinn` lo crea TA-212 y la regla L11 prohíbe `next/link` en otro lado; hasta entonces las filas usan `<a href>`, que navega por documento (el service worker responde `/sin-conexion` sin red, FE-56) y no rompe nada, pero pierde la navegación del cliente y el indicador de FE-39. Las fichas que dependen de TA-208 y de TA-212 cambian a `EnlaceFinn` al integrar la fila en su pantalla; TA-551 lo usa desde el principio, porque depende de TA-212. (3) **`meta.estado`:** 05 §10.3 no fija los literales de `EstadoMeta`. Decisión: `vencida` → `advertencia` "Meta vencida"; `cumplida` y `completada` → `positivo` "Meta cumplida" / "Meta completada"; en otro caso `falta === 0` → `positivo` "Meta cubierta" y `falta > 0` → `advertencia` "Falta para la meta". Los literales se revisan al definir el DTO (TA-136). (4) **Excedente `mixto` de `BarraGastado`:** 06 §5.4 pide solo el rayado `patron-sin-reservar` "en la parte con tarjeta" y el DTO trae un único `excedenteBp`, sin separar tarjeta y débito. Decisión: el segmento de excedente se dibuja con dos franjas, la superior de `problema-borde` (débito) y la inferior rayada (tarjeta), para que el mixto se distinga sin color; los montos de cada parte no se dibujan (PF-2). Si el diseño necesita proporciones por parte, es un cambio de CF-25. (5) `orden` es entero (E1) y las pantallas que consumen `Billete` y `SelectorPeriodo` tienen orden menor que 633, así que no pueden declarar `depende: TA-551` (E5): el orquestador programa TA-551 antes de las fichas de Inicio y Presupuesto, y HT-6 la exige. (6) Las capturas K3 (claro y oscuro) se compararon a mano: ver el informe de TA-208. El código completo queda en la rama `ta-208-completo` | 08 TA-208, TA-551, HT-6; 05 §10.3, §10.8; 06 §5.4 | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-55]** en 08 TA-208, TA-551 y HT-6 |
+| **CH-57** | Partición de TA-212 por tamaño (DT-02) y corrección de 05 §11.2. El alcance completo de TA-212 midió prod=669 y 12 archivos contra una estimación de 380 y 10: pasa el +30 % de las tareas normales (520). Se parte: TA-212 conserva el `Marco` (barra superior con la marca de `public/marca/`, Registrar y campana con contador; «Saltar al contenido»; indicador global de navegación; `data-hidratado`), `ProveedorEncabezado`, `PublicarEncabezado` y `EnlaceFinn`, con el layout `(finn)` (`<Marco>` y `after(ponerAlDia)`), las rutas de prueba `/pruebas/navegacion*` y PRU-E2E-PWA-005 y -009; TA-552, nueva (orden 634, HT-6), lleva `NavegacionApp` (barra inferior con la Bandeja al centro, barra lateral y hoja «Más secciones»), `VolverA`, `seccionDeRuta` y su cableado en el marco, con PRU-E2E-NAV-001. FE-29 y FE-30 pasan a TA-552 (E8: un solo dueño); TA-212 conserva FE-06 y FE-39. HT-6 requiere también TA-552 y su `despues` pasa a TA-552 (E7). **Corrección de 05 §11.2 [CH-57]:** la prueba PRU-E2E-PWA-009 midió en Next 16.4.1 y Chromium dos cosas distintas de lo escrito: (1) el anunciador de rutas lee `document.title` y, si en ese momento está vacío (los metadatos llegan por streaming), el `h1`; (2) tras navegar con un enlace el foco queda en `body`, pero el siguiente Tab sigue desde el punto donde estaba el enlace, no desde «Saltar al contenido». Ese enlace sigue existiendo y se alcanza con Tab al cargar la página (cubierto por PRU-E2E-PWA-009). **Además:** (1) `after(ponerAlDia)` del layout viene de 05 §1.2; corre después de pintar y no demora la respuesta. (2) Diferencias con las capturas K1, para TA-552: ícono de Presupuesto `grid`, de Cuentas `wallet` y de Por cobrar `user`; el contador de la barra lateral va a la derecha de la fila en `marca`, no sobre el ícono; la Bandeja activa lleva el aro `accion`; en computadora el título de cada página va en su encabezado (2.5 rem) con la campana a la derecha. El código completo queda en la rama `ta-212-completo` | 08 TA-212, TA-552, HT-6; 05 §11.2 | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-57]** en 08 TA-212, TA-552 y HT-6 y en 05 §11.2 |
 
 ---
 
@@ -6761,7 +6762,9 @@ compartido: —
 
 **Terminada cuando.** Las tres pruebas pasan (la del desfase, en el nocturno).
 
-#### TA-212 Marco y navegación
+#### TA-212 Marco y navegación **[CH-57]**
+
+Parte 1 de 2 de la TA-212 original (DT-02, 08 §1.2, CH-57). **Portar desde la rama `ta-212-completo`**, que tiene el código completo de las dos partes.
 
 ```tarea
 orden: 314
@@ -6771,22 +6774,23 @@ depende: TA-205, TA-203, TA-219
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=380 archivos=10 ca=0 migraciones=0 total=900
-cubre: FE-06, FE-29, FE-30, FE-39
+tamano: prod=350 archivos=12 ca=0 migraciones=0 total=480
+cubre: FE-06, FE-39
 pru: PRU-E2E-PWA-005, PRU-E2E-PWA-009
 compartido: —
 ```
 
 **Qué construir.**
-- Barra superior, barra inferior con la Bandeja al centro, barra lateral en computadora, hoja "Más secciones" y campana con contador (06-identidad-visual §3.1, §3.2), con los requisitos N1 a N8 (FE-29) y la sección activa por prefijo (FE-30).
+- `Marco` con la barra superior (marca de `public/marca/`, Registrar con `rutaRegistrar` de N1 y campana con contador, N7), «Saltar al contenido», indicador global de navegación y `data-hidratado`; el layout `(finn)` con `<Marco>` y `after(ponerAlDia)` (05 §1.2: corre después de pintar y no demora la respuesta).
 - `ProveedorEncabezado` y `PublicarEncabezado` (FE-06), `EnlaceFinn` con `useLinkStatus` (FE-39), anunciador de rutas y foco.
+- La barra inferior, la lateral, la hoja «Más secciones», `VolverA` y la sección activa son de TA-552 (CH-57).
 
 **Leer.** 05 §1.6, §3.1 a §3.3, §6.4, §7.1 (FE-39); 06-identidad-visual §3 (3.1, 3.2, 11).
 
-**Archivos.** `apps/web/src/componentes/marco/*`, `apps/web/src/componentes/navegacion/*`.
+**Archivos.** `apps/web/src/componentes/marco/*`, `apps/web/src/componentes/navegacion/{enlace-finn,acceso-registrar,contador}.tsx`, `apps/web/src/textos/navegacion.ts`.
 
 **Pruebas primero.**
-- PRU-E2E-PWA-005 (V5-21) y PRU-E2E-PWA-009 (V5-28).
+- PRU-E2E-PWA-005 (V5-21) y PRU-E2E-PWA-009 (V5-28): el anunciador lee el título o, si no está, el `h1`; el foco queda en `body`; y «Saltar al contenido» se alcanza con Tab al cargar [CH-57].
 
 **Comandos.** `pnpm test:e2e -- -g "PRU-E2E-PWA-00[59]"`; `pnpm ci:local`.
 
@@ -6924,6 +6928,40 @@ compartido: —
 **Comandos.** `pnpm test:componentes -t "PRU-CMP-PRES-102"`; `pnpm ci:local`.
 
 **Terminada cuando.** La prueba pasa en los dos temas.
+
+#### TA-552 Navegación entre secciones: barra inferior, lateral y «Más secciones» **[CH-57]**
+
+Parte 2 de 2 de la TA-212 original (DT-02, 08 §1.2, CH-57). **Portar desde la rama `ta-212-completo`**: `componentes/navegacion/navegacion-app.tsx` y `secciones.ts`, y su cableado en `componentes/marco/marco.tsx`.
+
+```tarea
+orden: 634
+bloque: B4
+hito: HT-6
+depende: TA-212
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=320 archivos=4 ca=0 migraciones=0 total=420
+cubre: FE-29, FE-30
+pru: PRU-E2E-NAV-001
+compartido: —
+```
+
+**Qué construir.**
+- `NavegacionApp` (05 §3.3): barra inferior con la Bandeja al centro en teléfono, barra lateral en computadora y hoja «Más secciones» (N5), con los nombres accesibles «Bandeja, 3 por revisar» y «Notificaciones, 2 sin leer» (N2, N7); `VolverA` (N8); `seccionDeRuta` por prefijo con `aria-current` (N4, FE-30).
+- Cableado en el marco: la marca pasa a la barra lateral en computadora, el contenido deja el margen de las barras (`md:pl-62` y el `pb` de la barra inferior) y `scroll-padding-bottom` (05 §11.2, foco no tapado).
+- Diferencias con las capturas K1 que se resuelven acá (CH-57): ícono de Presupuesto `grid`, de Cuentas `wallet` y de Por cobrar `user`; el contador de la barra lateral a la derecha de la fila, en `marca`; la Bandeja activa con aro `accion`; en computadora, Registrar a todo el ancho de la barra lateral.
+
+**Leer.** 05 §3.1 a §3.3, §11.2; 06-identidad-visual §3 (3.1, 3.2, 11).
+
+**Archivos.** `apps/web/src/componentes/navegacion/{navegacion-app.tsx,secciones.ts}`, `apps/web/src/componentes/marco/marco.tsx`, `apps/web/src/componentes/navegacion/acceso-registrar.tsx`.
+
+**Pruebas primero.**
+- **PRU-E2E-NAV-001** (nueva, DT-17): con el `Encabezado` de prueba, la Bandeja y Notificaciones llevan su contador en el nombre; la sección activa tiene `aria-current="page"` y `seccionDeRuta` elige el prefijo más largo; las secundarias se alcanzan en dos interacciones en teléfono (botón y enlace) y están a la vista en computadora; ninguna pantalla existe en un solo tamaño (N6).
+
+**Comandos.** `pnpm test:e2e -- -g "PRU-E2E-NAV-001"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa en los proyectos `movil` y `escritorio`.
 
 #### TA-209 Componentes de dominio II: cuentas, bandeja y gráficos
 
@@ -8666,7 +8704,7 @@ pendiente: CA-54.5>FT-55
 | 311 | TA-219 | B4 | HT-5 | obligatoria | Arnés E2E: pila local, usuario, semillas, tres relojes y candado | 380 |
 | 312 | TA-210 | B4 | HT-5 | normal | Patrón de escritura: envío, resultado y doble envío | 360 |
 | 313 | TA-211 | B4 | HT-5 | normal | Borradores, lecturas interactivas, un toque y versión nueva | 320 |
-| 314 | TA-212 | B4 | HT-5 | normal | Marco y navegación | 380 |
+| 314 | TA-212 | B4 | HT-5 | normal | Marco y navegación **[CH-57]** | 350 |
 | 315 | TA-213 | B4 | HT-5 | normal | Estados de pantalla, caché y parámetros | 300 |
 | 316 | TA-224 | B4 | HT-5 | normal | Catálogo de textos de la interfaz | 260 |
 | 317 | TA-260 | B5 | HT-5 | obligatoria | Job `desplegar` con barrera 1b y política de patrones | 220 |
@@ -8720,6 +8758,7 @@ pendiente: CA-54.5>FT-55
 | 631 | TA-246 | B4 | HT-5 | normal | Componentes base I (parte 2): selección y buscador **[CH-52]** | 330 |
 | 632 | TA-247 | B4 | HT-5 | normal | Componentes base I (parte 3): pastillas y selector segmentado **[CH-52]** | 80 |
 | 633 | TA-551 | B4 | HT-6 | normal | Componentes de dominio I (parte 2): billete y selector de período **[CH-55]** | 200 |
+| 634 | TA-552 | B4 | HT-6 | normal | Navegación entre secciones: barra inferior, lateral y «Más secciones» **[CH-57]** | 320 |
 
 ---
 
