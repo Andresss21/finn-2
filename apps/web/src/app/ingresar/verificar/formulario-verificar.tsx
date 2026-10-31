@@ -3,15 +3,15 @@
 // envía con el botón o con Enter. Con varios factores se elige por su nombre, con el primero preseleccionado.
 import { useEffect } from 'react';
 import * as z from 'zod';
-import { AvisoEnLinea } from '../../componentes/base/aviso';
-import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
-import { Seleccion } from '../../componentes/base/seleccion';
-import { useFormularioFinn } from '../../formularios/use-formulario-finn';
-import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
-import { autenticacion as t } from '../../textos/autenticacion';
-import type { RutasAcceso } from './acceso';
-import { normalizarCodigo } from './codigo';
+import { AvisoEnLinea } from '../../../componentes/base/aviso';
+import { Boton } from '../../../componentes/base/boton';
+import { EntradaTexto } from '../../../componentes/base/campo';
+import { Seleccion } from '../../../componentes/base/seleccion';
+import { useFormularioFinn } from '../../../formularios/use-formulario-finn';
+import { useOperacion, type AccionEscritura } from '../../../formularios/use-operacion';
+import { autenticacion as t } from '../../../textos/autenticacion';
+import type { RutasAcceso } from '../acceso';
+import { normalizarCodigo } from '../codigo';
 
 const CONTRATO = z.object({
   factorId: z.string().min(1),

@@ -1,7 +1,7 @@
 // `/ingresar` (05 §9.3, FT-01): decide en el servidor con la tabla de 05 §9.2 y muestra email y contraseña.
 import type { Metadata } from 'next';
-import { resolverAcceso } from '../../flujos/ingresar/acceso';
-import { FormularioIngresar } from '../../flujos/ingresar/formulario-ingresar';
+import { resolverAcceso } from './acceso';
+import { FormularioIngresar } from './formulario-ingresar';
 import { ingresar, salir } from '../../servidor/acciones/autenticacion';
 import { autenticacion } from '../../textos/autenticacion';
 

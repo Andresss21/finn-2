@@ -5,8 +5,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import type { ResultadoAccion } from '@finn/aplicacion/errores';
-import '../../app/globals.css';
-import { autenticacion } from '../../textos/autenticacion';
+import '../../../app/globals.css';
+import { autenticacion } from '../../../textos/autenticacion';
 import { FormularioVerificar } from './formulario-verificar';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
