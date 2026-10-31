@@ -16,6 +16,8 @@ const buttonVariants = cva(
         destructive:
           'min-h-12 bg-peligro text-texto-sobre-peligro hover:opacity-90 active:opacity-80',
         ghost: 'bg-transparent px-3 text-enlace hover:underline active:bg-superficie-hundida',
+        filter:
+          'rounded-pastilla bg-superficie-hundida px-4 text-base font-normal text-texto hover:bg-borde-sutil active:bg-borde-control aria-pressed:bg-texto aria-pressed:font-bold aria-pressed:text-fondo',
         pill: 'rounded-pastilla bg-accion px-4 text-sm font-bold text-texto-sobre-accion hover:bg-accion-hover active:bg-accion-presionada',
       },
     },
