@@ -4,6 +4,9 @@ import { soloEnPruebas } from '../../solo-pruebas.ts';
 
 export const metadata: Metadata = { title: 'Destino de navegación · Finn' };
 
+// Sin prerender: `soloEnPruebas()` decide en cada petición, no con el entorno de la compilación (PRU-SEG-ACCESO-002).
+export const dynamic = 'force-dynamic';
+
 export default function DestinoDeNavegacion() {
   soloEnPruebas();
   return (
