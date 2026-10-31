@@ -34,6 +34,7 @@
   { "patron": "apps/web/src/formularios/**", "fts": "marco" },
   { "patron": "apps/web/src/componentes/formularios/**", "fts": "marco" },
   { "patron": "apps/web/src/componentes/dominio/**", "fts": "marco" },
+  { "patron": "apps/web/src/componentes/graficos/**", "fts": "marco" },
   { "patron": "apps/web/src/sw/**", "fts": "marco" },
   { "patron": "apps/web/src/instrumentation.ts", "fts": "marco" },
   { "patron": "apps/web/src/app/api/pruebas/**", "fts": "marco" },

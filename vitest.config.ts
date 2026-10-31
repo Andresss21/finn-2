@@ -162,6 +162,8 @@ export default defineConfig({
           include: [
             'react-dom/client',
             'axe-core',
+            'd3-scale',
+            'd3-shape',
             'class-variance-authority',
             'clsx',
             'tailwind-merge',
