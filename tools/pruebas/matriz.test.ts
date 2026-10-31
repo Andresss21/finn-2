@@ -300,6 +300,24 @@ describe('inventario: unión de las listas de Vitest y Playwright', () => {
     const json = listaDeVitest({ status: 0, stdout: SEMILLA + lista, stderr: '' });
     expect(deVitest(json, '/r')).toEqual([{ titulo: 'PRU-X-1 y', archivo: 'a.cmp.test.tsx' }]);
   });
+
+  // TA-222 y TA-204: Vite avisa antes del JSON, con códigos de color que traen un `[`, o con `[vite]` al inicio
+  it.each([
+    [
+      'con color',
+      '\u001b[2m12:00:00\u001b[22m \u001b[36m[vite]\u001b[39m Re-optimizing dependencies\n',
+    ],
+    ['sin color, con [ al inicio de la línea', '[vite] Re-optimizing dependencies\n'],
+  ])('una línea de Vite delante del JSON (%s) no rompe la lista', (_caso, linea) => {
+    const lista = JSON.stringify([{ name: 'PRU-X-1 y', file: '/r/a.cmp.test.tsx' }]);
+    const json = listaDeVitest({ status: 0, stdout: SEMILLA + linea + lista, stderr: '' });
+    expect(deVitest(json, '/r')).toEqual([{ titulo: 'PRU-X-1 y', archivo: 'a.cmp.test.tsx' }]);
+  });
+
+  it('solo la línea de Vite, sin JSON: falla con mensaje claro', () => {
+    const stdout = '\u001b[36m[vite]\u001b[39m Re-optimizing dependencies\n[vite] listo\n';
+    expect(() => listaDeVitest({ status: 0, stdout, stderr: '' })).toThrow(/no dio JSON/);
+  });
 });
 
 // ---------------------------------------------------------------- cobertura completa sintética (V7-09, V7-11)

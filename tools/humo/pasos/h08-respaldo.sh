@@ -5,8 +5,10 @@ set +x
 # La lista de catálogo esperada es catalogo-esperado.txt del commit actual; `hoy` es finn.hoy() del proyecto.
 . "$(dirname "$0")/comun.sh"
 command -v docker >/dev/null || { echo "detalle falta Docker para el contenedor de restauración"; exit 1; }
-mayor=$(($(q "$HUMO_ADMIN_URL" 'SHOW server_version_num') / 10000))
-hoy=$(q "$HUMO_ADMIN_URL" 'SELECT finn.hoy()')
+num=$(q "$HUMO_ADMIN_URL" 'SHOW server_version_num') || { echo "detalle psql no respondió con HUMO_ADMIN_URL"; exit 1; }
+mayor=$((num / 10000))
+# finn.hoy() es de finn_app (m_seguridad): en Supabase, `postgres` no es superusuario y no tiene EXECUTE ([CH-54])
+hoy=$(q "$(url finn_app "$HUMO_PUERTO_SESION")" 'SELECT finn.hoy()')
 trabajo=$(mktemp -d)
 destino=$(docker run -d --rm -e POSTGRES_PASSWORD="$HUMO_CLAVE_DESTINO" -p 127.0.0.1::5432 \
   --add-host host.docker.internal:host-gateway "public.ecr.aws/docker/library/postgres:$mayor")

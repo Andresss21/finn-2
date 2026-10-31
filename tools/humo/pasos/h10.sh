@@ -4,7 +4,7 @@ set +x
 # con la API de administración, con un TOTP inscrito y verificado (AAL2); `tools/recuperacion/borrar-factores.mjs`
 # ([CH-41] [CH-42]) le borra el factor y le rota la contraseña; se comprueba que quedan 0 factores, que sus dos
 # sesiones (AAL1 y AAL2) se cerraron y que entra con la contraseña nueva; se registra el vencimiento del JWT; el
-# usuario se borra por su id; y un alta pública tiene que fallar con `signup_disabled` (TU-07, paso 6, [CH-42]).
+# usuario se borra por su id; y un alta pública tiene que fallar con `signup_disabled` (TU-07, paso 5, [CH-42]).
 # El id del usuario queda en $HUMO_ESTADO hasta borrarlo: si este paso no llega a hacerlo, lo borra H-12.
 # Sin SUPABASE_SERVICE_ROLE, omitido. La clave pública (HUMO_CLAVE_PUBLICA) va en `apikey` si está; si no, la de servicio.
 . "$(dirname "$0")/comun.sh"
@@ -112,6 +112,6 @@ if (creado) {
 }
 const cerrado = alta.b.error_code === 'signup_disabled';
 medido('registro', cerrado ? 'cerrado' : `abierto (HTTP ${alta.s})`);
-if (!cerrado) falla('registro abierto: deshabilitarlo (TU-07, paso 6) y repetir con HUMO_PASOS=H-10');
+if (!cerrado) falla('registro abierto: deshabilitarlo (TU-07, paso 5) y repetir con HUMO_PASOS=H-10');
 process.exit(fallas ? 1 : 0);
 JS
