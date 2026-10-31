@@ -73,7 +73,7 @@ test.describe('PRU-E2E-PWA', () => {
       const animados = await page.evaluate(() =>
         [...document.querySelectorAll('*')].flatMap((n) => {
           const e = getComputedStyle(n);
-          const dura = (v: string): boolean => v.split(',').some((t) => parseFloat(t) > 0);
+          const dura = (v: string): boolean => /[1-9]/.test(v); // «0s, 0s» no dura; «.15s» sí
           return e.animationName !== 'none' || dura(e.transitionDuration)
             ? [`${n.tagName.toLowerCase()} ${e.animationName} ${e.transitionDuration}`]
             : [];
