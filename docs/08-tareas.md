@@ -432,8 +432,8 @@ tu: TU-09, TU-10, TU-12, TU-13
 ### HT-6 Uso diario mínimo
 
 ```hito
-despues: TA-552
-requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-552, TA-209, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301
+despues: TA-553
+requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-552, TA-209, TA-553, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301
 fichas: FT-01, FT-02, FT-03, FT-04, FT-08, FT-09, FT-10, FT-14, FT-18, FT-21, FT-29, FT-34, FT-35, FT-37, FT-38, FT-50
 pruebas: INV-01, INV-02, INV-03, INV-04, INV-05, INV-26, INV-27, INV-28, MOT-diferencial
 tu: TU-11, TU-12, TU-15
@@ -1542,6 +1542,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-59** | PRU-E2E-PWA-001 (V5-09) en una sola compilación. 08 TA-211 y 07 §20.2 piden "nocturno con dos compilaciones", pero no existe la infraestructura de dos compilaciones. Resolución: PRU-E2E-PWA-001 corre en la E2E normal con una sola: la pestaña manda un id de Server Action bien formado e inexistente y el servidor real responde con la misma rama que una compilación nueva sin esa acción (`Failed to find Server Action`, 409), de modo que el cliente real lanza el error que `useOperacion` reconoce como `version_nueva`. Lo que se cubre: el reconocimiento por el mensaje, el texto y el botón "Recargar", y que no haya reintento. Lo que no: que un id real de la compilación anterior deje de existir tras un despliegue (V5-09 observó que los ids son estables si no cambia el archivo ni el nombre exportado) ni la transición entre dos `.next`. Esa verificación con dos compilaciones queda para cuando exista la infraestructura en el nocturno; la toma TA-550, la tarea nocturna más cercana (propuesta, a confirmar al planificarla) | 07 §20.2; 08 TA-211; 05 §4.10 | **Aprobado por el usuario** (delegado en el orquestador) |
 | **CH-61** | `cierre` y M15 con los resultados reales de la corrida. (1) `resultadosCorrida` buscaba el id en `fullName` partiéndolo por " > ", pero Vitest lo une con espacios: las pruebas dentro de un `describe` llegaban a `cierre` sin resultado, y una que fallara tampoco se contaba. Ahora el id sale del título. (2) 07 §6.1 corre `CMP` solo si cambió `apps/web`, y M15 exige su resultado en cada `cierre`, también en `main`: `CMP` corre además cuando corre `cierre`. (3) 07 §13.2, paso 4, pide las suites de la ficha que se cierra, E2E incluida, aunque el PR no esté listo, y `afecta.mjs` no lo hacía: ahora corre `e2e` con las suites de esa ficha, sin depender del borrador, del diff ni del modo. (4) Un estado de M4 guardado antes de CH-46 seguía recortando hasta fin de mes: `recortesAplicables` no aplica recortes mientras la cuota no decida. (5) 05 §13.4 reconocía las rutas con formulario por el texto de la página: `/pruebas/flujo-corto` contaba sin formulario real (0,68 KB de "biblioteca") y `/pruebas/eco`, con él, no (46,92 KB como JS de ruta). Ahora se reconocen por cargar React Hook Form. Ningún presupuesto cambia. (6) Medición, con TA-211 y TA-280 mergeadas localmente: JS compartido 167,28 KB (tope 170, margen 2,72 KB) y biblioteca de formularios 49,66 KB (tope 50, margen 0,34 KB; mientras haya una sola ruta con formulario, su código propio cuenta como biblioteca). Los +29,41 KB del compartido contra `main` no los causa TA-280: `main` medía `/` sin sesión, y con sesión se mide por primera vez una ruta de `(finn)`. Son 11,44 KB de Radix Dialog (`navegacion-app.tsx` → `Superpuesto` → `base/dialogo.tsx`), 11,25 KB del mapa de íconos (`base/icono.tsx`) y 6,71 KB del marco y la navegación. Propuesta, sin aplicar: cargar «Más secciones» con `import()` al abrirla (05 §13.3: el marco no importa bibliotecas de terceros salvo next-themes), unos -11 KB estimados; e importar los íconos de a uno o usar un sprite, hasta -11 KB estimados. Ninguna tarea toma esta reducción: se hace antes de TA-280 si es necesario para que #227 pase, o al sumar la siguiente ficha con formulario. (7) **Aplicado (TA-552, reducción):** «Más secciones» se carga con `import()` al abrirla (`navegacion/hoja-diferida.tsx`; se pide antes del toque con el puntero o el foco sobre ☰ y a los 2 s de hidratar). Medido con TA-280 mergeada localmente y la misma corrida antes y después: JS compartido 170,38 → 159,05 KB (-11,33 KB; margen 10,95 KB); biblioteca de formularios 49,93 KB, sin cambio. Los íconos no se tocaron: el registro pesa 1,87 KB gzip (de los 11,25 KB del fragmento, el resto es código del marco y la navegación que comparte ese fragmento), y a lo sumo se ahorrarían 1,4 KB con un cambio de API de `Icono`; no se justifica. Ningún presupuesto cambia. |
 | **CH-64** | Aviso de `desplegar` cuando C5 o C6 fallan, y etiqueta del despliegue. 03 §11.7 decía "Se envía un push mediante el endpoint de eventos del sistema"; 07 §6.3, con CH-02, dice "no hay push ni evento". Resolución: 03 §11.7 queda en que el job falla y no despliega, GitHub envía el correo de workflow fallido (CH-02), `desplegar` no escribe eventos, y el respaldo diario vuelve a correr C5 y C6, registra la deriva con `POST /api/respaldo/deriva` y la tarea diaria envía el push (04 §16.3, paso 5). **Limitación:** hasta TA-261 y TU-11 el único aviso es el correo. TU-10 ("Bloquea: el primer despliegue") se agrega al campo `tu` de TA-260 y de HT-5. La etiqueta que pide 04 §16.3, paso 5, la crea `desplegar` por la API, después de `vercel deploy --prod`: `desplegado-<número de corrida>-<intento>`, inmutable; la vigente es la mayor con `git tag --sort=-v:refname --list 'desplegado-*'`. Si la etiqueta falla, el job falla con el código ya desplegado | 03 §11.7; 07 §6.3; 04 §16.3; 08 TA-260, HT-5 | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-64]** en 03 §11.7 y 08 TA-260, HT-5 |
+| **CH-62** | Partición de TA-209 por tamaño (DT-02). El alcance completo de TA-209 midió prod=971 y total=1.423 contra una estimación de 380 y 900: pasa el +30 % de las tareas normales (520). Se parte: TA-209 conserva `BilleteraTarjetas`, `IdentidadCuenta` y `PosicionNeta` con sus textos y PRU-CMP-CTA-101; TA-553, nueva (orden 635), lleva `MovimientoBandeja`, los gráficos de barras con su tabla equivalente y el selector Gráfico / Tabla, con PRU-CMP-CTA-102, y las dependencias `d3-scale` y `d3-shape`. FE-44 pasa a TA-553 (E8: un solo dueño) y TA-209 queda con `cubre: —`. HT-6 requiere también TA-553 y su `despues` pasa a TA-553 (E7). **Además:** (1) el «séptimo estado» de la fila de la Bandeja (`descartado`) lo agregó el código por su cuenta: 06 §2.12 lista seis filas; se confirma contra 06 y 05 en TA-553. (2) Las pantallas que consumen estos componentes tienen orden menor que 635 y no pueden declarar `depende: TA-553` (E5): el orquestador programa TA-553 antes de ellas, y HT-6 la exige. El código completo queda en la rama `ta-209-completo` | 08 TA-209, TA-553, HT-6; 05 §10.8; 06 §2.12 | Delegado por el orquestador; **aplicado [CH-62]** en 08 TA-209, TA-553 y HT-6 |
 
 ---
 
@@ -6936,6 +6937,42 @@ compartido: —
 
 **Terminada cuando.** La prueba pasa en los dos temas.
 
+
+#### TA-553 Componentes de dominio II (parte 2): bandeja y gráficos **[CH-62]**
+
+Parte 2 de 2 de la TA-209 original (DT-02, 08 §1.2, CH-62). **Portar desde la rama `origin/ta-209-completo`**: `movimiento-bandeja.tsx`, `componentes/graficos/{grafico-barras,tabla-equivalente,vista-grafico}.tsx`, los textos que quitó la parte 1 (áreas `bandeja` y `grafico` de `textos/cuentas.ts`), las pruebas correspondientes, las dependencias `d3-scale` y `d3-shape` (con sus `@types`), `d3-scale` y `d3-shape` en `optimizeDeps` de `vitest.config.ts` y el patrón `graficos/**` en `pruebas/mapa-codigo.json`.
+
+```tarea
+orden: 635
+bloque: B4
+hito: HT-6
+depende: TA-209
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=8 ca=0 migraciones=0 total=700
+cubre: FE-44
+pru: PRU-CMP-CTA-102
+compartido: —
+```
+
+**Qué construir.**
+- Fila compacta de la Bandeja (06-identidad-visual 2.12) con sus estados y acciones de un toque.
+- Gráficos como Server Components con d3-scale y d3-shape, nunca d3 en el cliente (FE-44), con `role="img"` y tabla equivalente; selector Gráfico / Tabla (único JS de cliente).
+- **A confirmar antes de implementar:** el «séptimo estado» de la fila. 06 §2.12 lista seis filas (listo, falta la categoría, con coincidencia, posible duplicado, no reconocido, con error); el código de la rama de respaldo agrega `descartado` como séptimo por su cuenta. Hay que confirmarlo contra 06 (FT) y 05 §10.8 antes de conservarlo; si no consta, se quita y se informa.
+
+**Leer.** 05 §10.8 (gráficos y `MovimientoBandeja`), §11.3; 06-identidad-visual §3 (2.12, 2.18).
+
+**Archivos.** `apps/web/src/componentes/dominio/movimiento-bandeja.tsx`, `apps/web/src/componentes/graficos/*`, `apps/web/src/textos/cuentas.ts`.
+
+**Pruebas primero.**
+- **PRU-CMP-CTA-102** (nueva, DT-17): fila compacta de la bandeja en sus estados, gráfico de barras e historial con su tabla equivalente y el selector Gráfico / Tabla; axe sin violaciones en los dos temas.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-CTA-102"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa en los dos temas.
+
 #### TA-552 Navegación entre secciones: barra inferior, lateral y «Más secciones» **[CH-57]**
 
 Parte 2 de 2 de la TA-212 original (DT-02, 08 §1.2, CH-57). **Portar desde la rama `ta-212-completo`**: `componentes/navegacion/navegacion-app.tsx` y `secciones.ts`, y su cableado en `componentes/marco/marco.tsx`.
@@ -6970,7 +7007,9 @@ compartido: —
 
 **Terminada cuando.** La prueba pasa en los proyectos `movil` y `escritorio`.
 
-#### TA-209 Componentes de dominio II: cuentas, bandeja y gráficos
+#### TA-209 Componentes de dominio II: cuentas **[CH-62]**
+
+Parte 1 de 2 de la TA-209 original (DT-02, 08 §1.2, CH-62). **Portar desde la rama `ta-209-completo`**: `billetera.tsx`, `identidad-cuenta.tsx` y `posicion-neta.tsx`, sus textos (`textos/cuentas.ts`, áreas `tarjeta`, `cuenta` y `posicion`) y la parte de `PRU-CMP-CTA-101` que los prueba.
 
 ```tarea
 orden: 321
@@ -6980,22 +7019,21 @@ depende: TA-206
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=380 archivos=8 ca=0 migraciones=0 total=900
-cubre: FE-44
+tamano: prod=400 archivos=4 ca=0 migraciones=0 total=560
+cubre: —
 pru: PRU-CMP-CTA-101
 compartido: —
 ```
 
 **Qué construir.**
-- Componentes de 06-identidad-visual §3 (2.9 a 2.12, 2.18): billetera con su botón alternativo al toque (sin gesto obligatorio), identidad de cuenta, posición neta, fila de la bandeja.
-- Gráficos como Server Components con d3-scale y d3-shape, nunca d3 en el cliente (FE-44), con `role="img"` y tabla equivalente.
+- Componentes de 06-identidad-visual §3 (2.9 a 2.11): billetera con su botón alternativo al toque (sin gesto obligatorio), identidad de cuenta y posición neta.
 
-**Leer.** 05 §10.8 (gráficos), §11.3; 06-identidad-visual §3 (2.9 a 2.12, 2.18).
+**Leer.** 05 §10.8.1, §11.3; 06-identidad-visual §3 (2.9 a 2.11).
 
-**Archivos.** `apps/web/src/componentes/dominio/{billetera,identidad-cuenta,posicion-neta,movimiento-bandeja}.tsx`, `apps/web/src/componentes/graficos/*`.
+**Archivos.** `apps/web/src/componentes/dominio/{billetera,identidad-cuenta,posicion-neta}.tsx`, `apps/web/src/textos/cuentas.ts`.
 
 **Pruebas primero.**
-- **PRU-CMP-CTA-101** (nueva, DT-17): tarjeta de crédito y billetera, identidad por tipo de cuenta, posición neta, fila compacta de la bandeja con sus siete estados, gráfico de barras e historial con su tabla equivalente y el selector Gráfico / Tabla.
+- **PRU-CMP-CTA-101** (nueva, DT-17): tarjeta de crédito y billetera, identidad por tipo de cuenta y posición neta, con axe sin violaciones en los dos temas.
 - La prueba nueva.
 
 **Comandos.** `pnpm test:componentes -t "PRU-CMP-CTA-101"`; `pnpm ci:local`.
@@ -8721,7 +8759,7 @@ pendiente: CA-54.5>FT-55
 | 318 | TA-280 | B6 | HT-5 | normal | FT-01 Ingresar con contraseña y TOTP | 360 |
 | 319 | TA-281 | B6 | HT-5 | normal | FT-02 Inscribir el primer factor TOTP | 360 |
 | 320 | TA-208 | B4 | HT-6 | normal | Componentes de dominio I: filas de categoría, pago y transacción **[CH-55]** | 340 |
-| 321 | TA-209 | B4 | HT-6 | normal | Componentes de dominio II: cuentas, bandeja y gráficos | 380 |
+| 321 | TA-209 | B4 | HT-6 | normal | Componentes de dominio II: cuentas **[CH-62]** | 400 |
 | 322 | TA-217 | B4 | HT-6 | obligatoria | Route Handlers del respaldo, la exportación y las acciones de notificación | 180 |
 | 323 | TA-218 | B4 | HT-6 | obligatoria | AAL2 en toda acción y ruta (DP-22) | 140 |
 | 324 | TA-220 | B4 | HT-6 | normal | Refresco automático y agenda de medianoche | 200 |
@@ -8769,6 +8807,7 @@ pendiente: CA-54.5>FT-55
 | 632 | TA-247 | B4 | HT-5 | normal | Componentes base I (parte 3): pastillas y selector segmentado **[CH-52]** | 80 |
 | 633 | TA-551 | B4 | HT-6 | normal | Componentes de dominio I (parte 2): billete y selector de período **[CH-55]** | 200 |
 | 634 | TA-552 | B4 | HT-6 | normal | Navegación entre secciones: barra inferior, lateral y «Más secciones» **[CH-57]** | 320 |
+| 635 | TA-553 | B4 | HT-6 | normal | Componentes de dominio II (parte 2): bandeja y gráficos **[CH-62]** | 400 |
 
 ---
 

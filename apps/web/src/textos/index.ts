@@ -2,6 +2,7 @@
 // Cada ficha agrega su área acá; ningún texto literal va en JSX fuera de `src/textos/` (L8).
 import { autenticacion } from './autenticacion.ts';
 import { base } from './base.ts';
+import { cuentas } from './cuentas.ts';
 import { dominio } from './dominio.ts';
 import { estados } from './estados.ts';
 import { formularios } from './formularios.ts';
@@ -13,6 +14,7 @@ export {
   autenticacion,
   alcanceReserva,
   base,
+  cuentas,
   dominio,
   estados,
   formularios,
@@ -25,6 +27,7 @@ export {
 export const areas = [
   ['autenticacion', autenticacion],
   ['base', base],
+  ['cuentas', cuentas],
   ['dominio', dominio],
   ['estados', estados],
   ['formularios', formularios],
