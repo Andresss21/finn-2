@@ -432,8 +432,8 @@ tu: TU-09, TU-12, TU-13
 ### HT-6 Uso diario mínimo
 
 ```hito
-despues: TA-301
-requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-209, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301
+despues: TA-551
+requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-209, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301
 fichas: FT-01, FT-02, FT-03, FT-04, FT-08, FT-09, FT-10, FT-14, FT-18, FT-21, FT-29, FT-34, FT-35, FT-37, FT-38, FT-50
 pruebas: INV-01, INV-02, INV-03, INV-04, INV-05, INV-26, INV-27, INV-28, MOT-diferencial
 tu: TU-11, TU-12, TU-15
@@ -1519,6 +1519,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-52** | Partición de TA-204 por tamaño (DT-02). El alcance completo de TA-204 midió prod=680, 16 archivos y total=1.710 contra una estimación de 380, 10 y 900: pasa el tope de DT-01 aun con el +30 % de las tareas normales (520, 15 y 1.560). La causa es que los estilos son utilidades de Tailwind sobre código generado por shadcn con Radix (05 §10.1, §10.7), que pesa más que el CSS propio que se había probado primero. Se parte: TA-204 conserva `Boton` y `Campo` (con `EntradaTexto`) y la infraestructura común; TA-246, nueva (orden 631), lleva `Seleccion` y `Buscador` con PRU-CMP-VAL-104; TA-247, nueva (orden 632), lleva `Pastillas` y `SelectorSegmentado` con PRU-CMP-VAL-105. HT-5 requiere también TA-246 y TA-247, y su `despues` pasa a TA-247 (E7 pide que las tareas de un hito no pasen del orden de `despues`). FE-43 y FE-47 las cubre solo TA-204 (E8 no admite varios dueños); TA-246 y TA-247 llevan `cubre: —` y completan esos objetivos con sus pruebas. PRU-CMP-VAL-102 queda en TA-204 con su subconjunto (M8 no admite el mismo identificador en archivos distintos). **Además:** (1) L16 se ajusta para que `components/ui` pueda importar `@radix-ui/*`, como exige 05 §10.7 ("Radix debajo"); sigue prohibido desde las pantallas y desde todo lo que no sea `componentes/base`. (2) Las diferencias con las capturas K2 quedan para las fichas que usen estos componentes: el prefijo `$` de los campos de monto, la selección de pocas opciones como selector segmentado y la matriz de estados de cada variante. L15 no se cambia: no reconoce `disabled:` y las clases viven en constantes. El código completo queda en la rama `ta-204-completo` | 08 TA-204, TA-246, TA-247, HT-5; 05 §10.1, §10.7, L15, L16 | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-52]** en 08 TA-204, TA-246, TA-247 y HT-5 |
 | **CH-50** | Autenticación web: `matcher`, nombre, FE-36 y `@supabase/ssr`. (1) 04 §12.4 excluía del `matcher` solo `/api/sms`, `/api/tareas/*` y `/api/respaldo/*`; 08 TA-214 excluye todo `/api/`. Rige todo `/api/`: 04 §11.5 pide que `/api/notificaciones/accion` responda 401 y una redirección del proxy lo impediría (lo mismo `/api/exportar/*` y `/api/pruebas/reloj`), y no baja la seguridad porque el proxy "No es una barrera de seguridad" (04 §2.2.5). Consecuencia: `@supabase/ssr` no refresca cookies en `/api/`; queda a cargo del cliente de servidor de cada handler. (2) `verificarInscripcion` de 08 TA-214 pasa a `completarInscripcion`, como dicen 04 §12.2, 05 CP-11 y 06. (3) 05 §9.2 dice que `proxy.ts` no redirige las rutas de `ingresar`: TA-214 entrega la tabla FE-36 como función pura `destinoAcceso(estado, ruta, volver)` en `@finn/aplicacion/autenticacion` y las páginas la llaman (DT-23). (4) Solo `apps/web` importa `@supabase/ssr` (04 §1.3): `aplicacion` recibe el cliente por una interfaz inyectada, como `SesionServidor`; el proxy redirige con `?volver=` usando la misma ruta y búsqueda de `x-finn-ruta`, y el saneado de V5-16b y c queda con `parametros.ts` | 04 §12.4; 05 §9.2; 08 TA-214 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-50]** en 04 §12.4 y 08 TA-214 |
 | **CH-53** | Bootstrap con `postgres` no superusuario (H-02). (1) Desde PG16, quien crea un rol sin ser superusuario recibe `ADMIN`, pero no `SET` ni `INHERIT`, y `CREATE SCHEMA … AUTHORIZATION finn_migraciones` falla con `must be able to SET ROLE`. Reproducido con `postgres` en la imagen local de Supabase (17.11; `CREATEROLE`, `CREATEDB`, `REPLICATION` y `BYPASSRLS`, sin `SUPERUSER`). Resolución: `bootstrap.sql` se concede `SET` en una transacción, solo para crear el esquema, y lo revoca al terminar. `BYPASSRLS` no cambia: `postgres` lo tiene, y un rol sin él falla al crear `finn_app`. `WITH SET` exige PG16 o posterior, y `PG_MAYOR` es 17. PRU-INT-ESQ-108 lo ejecuta en `integracion` con un rol equivalente. (2) TU-07 no nombraba `HUMO_CLAVE_MIGRACIONES`, `HUMO_CLAVE_APP`, `HUMO_CLAVE_RESPALDO` ni `HUMO_CLAVE_PUBLICA` (sin ella, H-11 falla), ni avisaba que cada ejecución de H-02 cambia las contraseñas de los roles reales: las generadas se perdían antes de TU-09 y TU-12. Resolución: TU-07 las define, dice de dónde salen y qué pasa al repetir | 03 §10.4.1, §13.5; 08 TU-07; `tools/db/bootstrap.sql`; `pruebas/manuales.md` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-53]** en 03 §10.4.1, §13.5, 08 TU-07, `tools/db/bootstrap.sql` y `pruebas/manuales.md` |
+| **CH-55** | Partición de TA-208 por tamaño (DT-02). El alcance completo de TA-208 midió prod=541, 8 archivos y total=885 contra una estimación de 380, 7 y 900: pasa el +30 % de las tareas normales (520). Se parte: TA-208 conserva `BarraGastado`, `FilaCategoria`, `FilaPagoTarjeta` y `FilaTransaccion` con sus textos y PRU-CMP-PRES-101; TA-551, nueva (orden 633), lleva `Billete` y `SelectorPeriodo` con PRU-CMP-PRES-102. FE-31 pasa a TA-551 (E8: un solo dueño); TA-208 conserva CF-13 y TA-551 lleva `cubre: —` en CF-13 y lo completa con su prueba. HT-6 requiere también TA-551 y su `despues` pasa a TA-551 (E7). **Además:** (1) `SelectorPeriodo` va en `componentes/navegacion/`, como dice 05 §10.8 (05 tiene precedencia sobre 08): se corrige el campo `archivos`. (2) **Enlaces:** `EnlaceFinn` lo crea TA-212 y la regla L11 prohíbe `next/link` en otro lado; hasta entonces las filas usan `<a href>`, que navega por documento (el service worker responde `/sin-conexion` sin red, FE-56) y no rompe nada, pero pierde la navegación del cliente y el indicador de FE-39. Las fichas que dependen de TA-208 y de TA-212 cambian a `EnlaceFinn` al integrar la fila en su pantalla; TA-551 lo usa desde el principio, porque depende de TA-212. (3) **`meta.estado`:** 05 §10.3 no fija los literales de `EstadoMeta`. Decisión: `vencida` → `advertencia` "Meta vencida"; `cumplida` y `completada` → `positivo` "Meta cumplida" / "Meta completada"; en otro caso `falta === 0` → `positivo` "Meta cubierta" y `falta > 0` → `advertencia` "Falta para la meta". Los literales se revisan al definir el DTO (TA-136). (4) **Excedente `mixto` de `BarraGastado`:** 06 §5.4 pide solo el rayado `patron-sin-reservar` "en la parte con tarjeta" y el DTO trae un único `excedenteBp`, sin separar tarjeta y débito. Decisión: el segmento de excedente se dibuja con dos franjas, la superior de `problema-borde` (débito) y la inferior rayada (tarjeta), para que el mixto se distinga sin color; los montos de cada parte no se dibujan (PF-2). Si el diseño necesita proporciones por parte, es un cambio de CF-25. (5) `orden` es entero (E1) y las pantallas que consumen `Billete` y `SelectorPeriodo` tienen orden menor que 633, así que no pueden declarar `depende: TA-551` (E5): el orquestador programa TA-551 antes de las fichas de Inicio y Presupuesto, y HT-6 la exige. (6) Las capturas K3 (claro y oscuro) se compararon a mano: ver el informe de TA-208. El código completo queda en la rama `ta-208-completo` | 08 TA-208, TA-551, HT-6; 05 §10.3, §10.8; 06 §5.4 | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-55]** en 08 TA-208, TA-551 y HT-6 |
 
 ---
 
@@ -6839,7 +6840,9 @@ compartido: —
 
 **Terminada cuando.** La prueba pasa.
 
-#### TA-208 Componentes de dominio I: billete, filas y selector de período
+#### TA-208 Componentes de dominio I: filas de categoría, pago y transacción **[CH-55]**
+
+Parte 1 de 2 de la TA-208 original (DT-02, 08 §1.2, CH-55). **Portar desde la rama `ta-208-completo`**: las cuatro filas, sus textos y sus pruebas.
 
 ```tarea
 orden: 320
@@ -6849,25 +6852,62 @@ depende: TA-206
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=380 archivos=7 ca=0 migraciones=0 total=900
-cubre: FE-31, CF-13
+tamano: prod=340 archivos=6 ca=0 migraciones=0 total=620
+cubre: CF-13
 pru: PRU-CMP-PRES-101
 compartido: CF-25 (proporciones de las barras; dueño TA-136)
 ```
 
 **Qué construir.**
-- Billete "Listo para asignar" y su franja, FilaCategoria, FilaPagoTarjeta, BarraGastado, FilaTransaccion, SelectorPeriodo con enlaces y el período activo sin parámetro (FE-31), registrados en 05 §10.8 (CF-13).
+- `BarraGastado`, `FilaCategoria`, `FilaPagoTarjeta` y `FilaTransaccion`, registrados en 05 §10.8 y §10.8.1 (CF-13).
 - Los datos de proporciones salen del servidor (CF-25); el componente no calcula montos (PF-3).
+- Enlaces con `<a href>` hasta que exista `EnlaceFinn` (TA-212): ver CH-55.
 
-**Leer.** 05 §3.4, §10.8; 06-identidad-visual §3 (2.5 a 2.8, 2.15, 2.16); 06 §5.4, §5.8.
+**Leer.** 05 §10.3, §10.8; 06-identidad-visual §3 (2.5 a 2.7, 2.16); 06 §5.4, §5.8.
 
-**Archivos.** `apps/web/src/componentes/dominio/{billete,fila-categoria,fila-pago,barra-gastado,fila-transaccion,selector-periodo}.tsx`.
+**Archivos.** `apps/web/src/componentes/dominio/{barra-gastado,fila-categoria,fila-pago,fila-transaccion}.tsx`, `apps/web/src/textos/{dominio,index}.ts`.
 
 **Pruebas primero.**
-- **PRU-CMP-PRES-101** (nueva, DT-17): billete de LPA en sus tres estados, fila de categoría con barra de gastado sobre asignado y sus indicadores, fila de pago de tarjeta, fila de transacción y selector de período con sus cuatro estados.
+- **PRU-CMP-PRES-101** (nueva, DT-17): fila de categoría con barra de gastado sobre asignado, sus indicadores y los estados de meta; fila de pago de tarjeta; fila de transacción; axe sin violaciones en los dos temas.
 - La prueba nueva.
 
 **Comandos.** `pnpm test:componentes -t "PRU-CMP-PRES-101"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa en los dos temas.
+
+#### TA-551 Componentes de dominio I (parte 2): billete y selector de período **[CH-55]**
+
+Parte 2 de 2 de la TA-208 original (DT-02, 08 §1.2, CH-55). **Portar desde la rama `ta-208-completo`**: `billete.tsx` y `selector-periodo.tsx` (este pasa a `componentes/navegacion/`) con sus pruebas y los textos que quitó la parte 1 (`listoParaAsignar`, `todoAsignado`, `asignasteDeMas`, `enCamino`, `periodo*`, `estadoPeriodo`, `diasTranscurridos`, `diasRestantes`, `irAlPeriodoActual`).
+
+```tarea
+orden: 633
+bloque: B4
+hito: HT-6
+depende: TA-208, TA-212
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=200 archivos=3 ca=0 migraciones=0 total=330
+cubre: FE-31
+pru: PRU-CMP-PRES-102
+compartido: —
+```
+
+**Qué construir.**
+- `Billete` "Listo para asignar" y su franja (05 §10.8.1, `ResumenListoParaAsignar`), en sus tres estados.
+- `SelectorPeriodo` (05 §3.4, FE-31) con enlaces `EnlaceFinn`, el período activo sin parámetro y los cuatro estados.
+- Las animaciones que 06-identidad-visual 2.8 pide para el billete y la parte 1 no hizo: guilloché de dos `repeating-radial-gradient` que se desplaza muy lento (40 s), cifras que ruedan una vez al entrar (1,4 s, 90 ms entre dígitos), resplandor de `--accion` que respira (6 s) y brillo que cruza cada 7 s; todas decorativas y sin animación con movimiento reducido (05 §11.6).
+- Con `EnlaceFinn` (TA-212) en lugar de `<a href>`; las filas de TA-208 se cambian cuando se integren en su pantalla (CH-55).
+
+**Leer.** 05 §3.4, §10.8, §10.8.1; 06-identidad-visual §3 (2.8, 2.15); 06 §5.4.
+
+**Archivos.** `apps/web/src/componentes/dominio/billete.tsx`, `apps/web/src/componentes/navegacion/selector-periodo.tsx`, `apps/web/src/textos/dominio.ts`.
+
+**Pruebas primero.**
+- **PRU-CMP-PRES-102** (nueva, DT-17): billete de LPA en sus tres estados y su franja; selector de período con sus cuatro estados y sus enlaces; axe sin violaciones en los dos temas.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-PRES-102"`; `pnpm ci:local`.
 
 **Terminada cuando.** La prueba pasa en los dos temas.
 
@@ -8618,7 +8658,7 @@ pendiente: CA-54.5>FT-55
 | 317 | TA-260 | B5 | HT-5 | obligatoria | Job `desplegar` con barrera 1b y política de patrones | 220 |
 | 318 | TA-280 | B6 | HT-5 | normal | FT-01 Ingresar con contraseña y TOTP | 360 |
 | 319 | TA-281 | B6 | HT-5 | normal | FT-02 Inscribir el primer factor TOTP | 360 |
-| 320 | TA-208 | B4 | HT-6 | normal | Componentes de dominio I: billete, filas y selector de período | 380 |
+| 320 | TA-208 | B4 | HT-6 | normal | Componentes de dominio I: filas de categoría, pago y transacción **[CH-55]** | 340 |
 | 321 | TA-209 | B4 | HT-6 | normal | Componentes de dominio II: cuentas, bandeja y gráficos | 380 |
 | 322 | TA-217 | B4 | HT-6 | obligatoria | Route Handlers del respaldo, la exportación y las acciones de notificación | 180 |
 | 323 | TA-218 | B4 | HT-6 | obligatoria | AAL2 en toda acción y ruta (DP-22) | 140 |
@@ -8665,6 +8705,7 @@ pendiente: CA-54.5>FT-55
 | 364 | TA-315 | B6 | HT-7 | normal | FT-54 Pagar cuota o abonar a capital | 360 |
 | 631 | TA-246 | B4 | HT-5 | normal | Componentes base I (parte 2): selección y buscador **[CH-52]** | 330 |
 | 632 | TA-247 | B4 | HT-5 | normal | Componentes base I (parte 3): pastillas y selector segmentado **[CH-52]** | 80 |
+| 633 | TA-551 | B4 | HT-6 | normal | Componentes de dominio I (parte 2): billete y selector de período **[CH-55]** | 200 |
 
 ---
 
