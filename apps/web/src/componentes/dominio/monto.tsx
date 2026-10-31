@@ -18,13 +18,18 @@ interface PropsMonto {
   readonly presentacion?: 'con-signo' | 'absoluto';
 }
 
-export function Monto({ centavos, rol = 'cuerpo', estado, presentacion = 'con-signo' }: PropsMonto) {
+export function Monto({
+  centavos,
+  rol = 'cuerpo',
+  estado,
+  presentacion = 'con-signo',
+}: PropsMonto) {
   const mostrado = presentacion === 'absoluto' ? (Math.abs(centavos) as Centavos) : centavos;
   const color = estado === undefined ? '' : COLOR_TEXTO[estado];
   return (
     <span
       data-centavos={centavos}
-      className={`whitespace-nowrap tabular-nums ${ROL[rol]} ${color}`}
+      className={['whitespace-nowrap tabular-nums', ROL[rol], color].join(' ')}
     >
       <span aria-hidden="true">{formatearMonto(mostrado)}</span>
       <span className="sr-only">{formatearMontoAccesible(mostrado)}</span>

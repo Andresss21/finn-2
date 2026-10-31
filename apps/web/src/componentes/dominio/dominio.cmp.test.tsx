@@ -77,18 +77,23 @@ describe('PRU-CMP-VAL-005 Monto e IndicadorEstado en el árbol de accesibilidad 
     expect(abs?.className).toContain('text-problema-texto');
   });
 
-  it.each(ESTADOS)('PRU-CMP-VAL-005 IndicadorEstado %s aporta su etiqueta y un glifo oculto', (estado, etiqueta) => {
-    const raiz = montar(<IndicadorEstado estado={estado} etiqueta={etiqueta} />);
-    const el = raiz.querySelector('[data-estado]');
-    expect(el?.getAttribute('data-estado')).toBe(estado);
-    expect(textoAccesible(raiz)).toBe(etiqueta);
-    const glifo = el?.querySelector('svg');
-    expect(glifo?.getAttribute('aria-hidden')).toBe('true');
-    expect(glifo?.querySelector('path, circle, rect')).not.toBeNull();
-  });
+  it.each(ESTADOS)(
+    'PRU-CMP-VAL-005 IndicadorEstado %s aporta su etiqueta y un glifo oculto',
+    (estado, etiqueta) => {
+      const raiz = montar(<IndicadorEstado estado={estado} etiqueta={etiqueta} />);
+      const el = raiz.querySelector('[data-estado]');
+      expect(el?.getAttribute('data-estado')).toBe(estado);
+      expect(textoAccesible(raiz)).toBe(etiqueta);
+      const glifo = el?.querySelector('svg');
+      expect(glifo?.getAttribute('aria-hidden')).toBe('true');
+      expect(glifo?.querySelector('path, circle, rect')).not.toBeNull();
+    },
+  );
 
   it('PRU-CMP-VAL-005 con visible=false el nombre queda solo para lectores y el glifo sigue', () => {
-    const raiz = montar(<IndicadorEstado estado="deuda" etiqueta="Deuda de tarjeta" visible={false} />);
+    const raiz = montar(
+      <IndicadorEstado estado="deuda" etiqueta="Deuda de tarjeta" visible={false} />,
+    );
     expect(textoAccesible(raiz)).toBe('Deuda de tarjeta');
     expect(raiz.querySelector('.sr-only')?.textContent).toBe('Deuda de tarjeta');
     expect(raiz.querySelector('svg')).not.toBeNull();

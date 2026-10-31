@@ -2,13 +2,7 @@
 import { Icono } from '../base/icono';
 
 export type EstadoFinanciero =
-  | 'positivo'
-  | 'cero'
-  | 'problema'
-  | 'advertencia'
-  | 'deuda'
-  | 'deuda-sin-respaldo'
-  | 'informacion';
+  'positivo' | 'cero' | 'problema' | 'advertencia' | 'deuda' | 'deuda-sin-respaldo' | 'informacion';
 
 // Clases literales por estado: Tailwind solo genera las que encuentra escritas (L13).
 export const COLOR_TEXTO: Readonly<Record<EstadoFinanciero, string>> = {
@@ -44,7 +38,10 @@ export function IndicadorEstado({ estado, etiqueta, visible = true }: PropsIndic
   return (
     <span
       data-estado={estado}
-      className={`inline-flex items-center gap-1.5 rounded-pastilla border px-2 py-0.5 text-etiqueta ${COLOR_PASTILLA[estado]}`}
+      className={[
+        'inline-flex items-center gap-1.5 rounded-pastilla border px-2 py-0.5 text-etiqueta',
+        COLOR_PASTILLA[estado],
+      ].join(' ')}
     >
       <Icono nombre={estado} tamano={16} />
       <span className={visible ? '' : 'sr-only'}>{etiqueta}</span>

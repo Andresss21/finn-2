@@ -23,7 +23,7 @@ function referencia(n: number): string {
   let agrupado = '';
   for (let i = 0; i < enteros.length; i++) {
     if (i > 0 && (enteros.length - i) % 3 === 0) agrupado += ',';
-    agrupado += enteros[i];
+    agrupado += enteros.charAt(i);
   }
   return `${n < 0 ? '−' : ''}$${agrupado}.${abs.slice(-2)}`;
 }
