@@ -323,7 +323,7 @@
 
   "TA-220": { "estado": "pendiente" },
 
-  "TA-221": { "estado": "pendiente" },
+  "TA-221": { "estado": "terminada", "rama": "ta-221-accesibilidad-rutas", "pr": 234 },
 
   "TA-222": { "estado": "terminada", "pr": 205 },
 

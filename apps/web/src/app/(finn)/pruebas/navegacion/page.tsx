@@ -25,7 +25,11 @@ export default function OrigenDeNavegacion() {
     <main>
       <PublicarEncabezado encabezado={ENCABEZADO} />
       <h1>{'Origen de navegación'}</h1>
-      <EnlaceFinn href="/pruebas/navegacion/destino" prefetch={false}>
+      <EnlaceFinn
+        href="/pruebas/navegacion/destino"
+        prefetch={false}
+        className="inline-flex min-h-11 items-center"
+      >
         {'Ir al destino de navegación'}
       </EnlaceFinn>
     </main>
