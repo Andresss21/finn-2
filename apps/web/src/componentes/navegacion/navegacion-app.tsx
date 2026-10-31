@@ -3,13 +3,13 @@
 // al centro en teléfono, barra lateral en computadora y hoja «Más secciones» (N5: botón y enlace, dos interacciones).
 // Los contadores van dentro del nombre accesible del enlace y no se anuncian al cambiar (11.3).
 import { usePathname } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { navegacion } from '../../textos/navegacion';
 import { Icono, type NombreIcono } from '../base/icono';
-import { Superpuesto } from '../marco/superpuesto';
 import { Marca } from '../marco/marca';
 import { Contador } from './contador';
 import { EnlaceFinn } from './enlace-finn';
+import { precargar, SuperpuestoDiferido } from './hoja-diferida';
 import type { IdSeccion, Seccion } from './secciones';
 
 export interface Contadores {
@@ -201,6 +201,13 @@ export function MasSecciones({ secciones, seccionActiva, contadores }: PropsNave
   const pathname = usePathname();
   const [abiertaEn, setAbiertaEn] = useState<string | null>(null);
   const abierta = abiertaEn === pathname;
+  useEffect(() => {
+    // Un momento después de hidratar (tope de 2 s, como la Bandeja, 05 §13.3): la primera apertura ya tiene el módulo
+    const id = setTimeout(precargar, 2000);
+    return () => {
+      clearTimeout(id);
+    };
+  }, []);
   return (
     <>
       <button
@@ -208,6 +215,9 @@ export function MasSecciones({ secciones, seccionActiva, contadores }: PropsNave
         aria-label={navegacion.secundarias}
         aria-haspopup="dialog"
         aria-expanded={abierta}
+        onPointerEnter={precargar}
+        onPointerDown={precargar}
+        onFocus={precargar}
         onClick={() => {
           setAbiertaEn(pathname);
         }}
@@ -216,7 +226,7 @@ export function MasSecciones({ secciones, seccionActiva, contadores }: PropsNave
         <Icono nombre="menu" tamano={24} />
       </button>
       {abierta ? (
-        <Superpuesto
+        <SuperpuestoDiferido
           titulo={navegacion.secundarias}
           desde="abajo"
           alCerrar={() => {
@@ -246,7 +256,7 @@ export function MasSecciones({ secciones, seccionActiva, contadores }: PropsNave
                 );
               })}
           </ul>
-        </Superpuesto>
+        </SuperpuestoDiferido>
       ) : null}
     </>
   );
