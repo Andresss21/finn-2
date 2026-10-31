@@ -20,4 +20,23 @@ export const ingreso = {
   verificando: 'Verificando…',
   usarOtraCuenta: 'Usar otra cuenta',
   saliendo: 'Saliendo…',
+  tituloInscribir: 'Protegé tu cuenta',
+  tituloRespaldo: 'Agregá un factor de respaldo',
+  introInscribir:
+    'Escaneá el código QR con tu app de autenticación. También podés copiar el secreto y guardarlo en tu gestor de contraseñas.',
+  preparando: 'Preparando tu código…',
+  altQr: 'Código QR para tu app de autenticación',
+  secreto: 'Secreto',
+  copiar: 'Copiar',
+  copiado: 'Copiado',
+  confirmar: 'Confirmar',
+  confirmando: 'Confirmando…',
+  intentarDeNuevo: 'Intentar de nuevo',
+  tituloListo: 'Tu cuenta quedó protegida',
+  recomendarRespaldo:
+    'Te recomendamos agregar un factor de respaldo: si perdés tu teléfono, lo vas a necesitar para entrar.',
+  agregarRespaldo: 'Agregar un factor de respaldo',
+  seguir: 'Seguir',
+  tituloRespaldoListo: 'Factor de respaldo agregado',
+  volverASeguridad: 'Volver a Seguridad',
 } as const;
