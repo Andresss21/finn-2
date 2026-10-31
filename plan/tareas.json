@@ -293,7 +293,7 @@
 
   "TA-205": { "estado": "pendiente" },
 
-  "TA-206": { "estado": "en_curso", "rama": "ta-206-formato-monto" },
+  "TA-206": { "estado": "terminada", "pr": 213 },
 
   "TA-207": { "estado": "pendiente" },
 
