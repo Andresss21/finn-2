@@ -1,0 +1,11 @@
+{
+  "compartidoKb": 170,
+  "formulariosKb": 50,
+  "precacheKb": 1500,
+  "porRutaKb": 50,
+  "reportesKb": 120,
+  "lcpMs": 2500,
+  "cls": 0.1,
+  "inpMs": 200,
+  "ejemplosDeRuta": {}
+}

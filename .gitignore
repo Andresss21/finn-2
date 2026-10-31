@@ -9,6 +9,7 @@ dist/
 coverage/
 test-results/
 playwright-report/
+.lighthouseci/
 *.tsbuildinfo
 .vercel/
 .claude/settings.local.json

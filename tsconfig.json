@@ -8,6 +8,7 @@
     "tools/pruebas/e2e/*.ts",
     "tools/pruebas/test/*.ts",
     "tools/pruebas/volumen/*.ts",
+    "tools/pruebas/rendimiento/*.ts",
     "packages/dominio/bench/*.ts",
     "tools/pruebas/oraculo/*.ts",
     "tools/db/*.ts",

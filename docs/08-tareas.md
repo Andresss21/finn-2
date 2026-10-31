@@ -473,8 +473,8 @@ tu: —
 ### HT-9 Puerta de salida
 
 ```hito
-despues: TA-470
-requiere: TA-470
+despues: TA-550
+requiere: TA-470, TA-550
 hitos: HT-4, HT-5, HT-6, HT-7, HT-8
 fichas: FT-01, FT-02, FT-03, FT-04, FT-05, FT-06, FT-08, FT-09, FT-10, FT-11, FT-12, FT-13, FT-14, FT-15, FT-16, FT-17, FT-18, FT-19, FT-20, FT-21, FT-22, FT-23, FT-24, FT-25, FT-26, FT-27, FT-28, FT-29, FT-30, FT-31, FT-32, FT-33, FT-34, FT-35, FT-36, FT-37, FT-38, FT-39, FT-40, FT-41, FT-42, FT-43, FT-44, FT-45, FT-46, FT-47, FT-48, FT-50, FT-51, FT-52, FT-53, FT-54, FT-55, FT-57, FT-60, FT-61, FT-62, FT-63, FT-66, FT-67, FT-69, FT-70, FT-71, FT-72, FT-73, FT-74, FT-75, FT-76, FT-78
 sin_pendientes: si
@@ -1515,6 +1515,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-45** | OP-43 con una fecha que no coincide con ninguna cuota. Un préstamo con modelo cuya cuota no empareja a ±10 días (Anexo A.2) se rechazaba con `registro_automatico_sin_modelo`, cuyo mensaje dice que falta el modelo. Código nuevo `cuota_sin_coincidencia`: "Esa fecha no corresponde a ninguna cuota del préstamo. Ingresá el desglose a mano." El dominio distingue los dos casos | 04 §3.0.6, §3.7 (OP-43), §7.10; 07 §35; `op-43.ts`, `errores/mensajes.ts`, `tools/ci/docs.test.ts` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-45]** en 04 §3.0.6, §3.7 y §7.10, y 07 §35 (79 rechazos) |
 | **CH-47** | Respaldo o restauración nulos. 03 §7.5 no decía qué pasa con un nulo, y un sistema que nunca respaldó quedaba en silencio. Un `ultimo_respaldo_en` o `ultima_restauracion_en` nulo, o la falta de fila en `estado_respaldo`, mide el mismo plazo desde el primer hecho (el menor entre la `fecha_apertura` más antigua y el primer evento `carga_completa`): avisa cuando pasaron más de 36 horas (respaldo) o más de 35 días (restauración) desde ese hecho, no de inmediato, con la misma clave `respaldo:<día>` / `restauracion:<día>`. Una base sin hechos no avisa. Tres ajustes más: (1) `registro_automatico`, `registro_automatico_fallido` y `ocurrencia_en_periodo_cerrado` envían el push que manda 04 §11.2, después del COMMIT; (2) 04 §10.1, regla 3 de BE-50, se alinea con su tabla y 06 §3.16, que agregan `cuota_proxima`; (3) 02 §Claves: la clave privada de `age` sigue en los secretos de GitHub, con la justificación "los secretos están cifrados y `pull_request` no se los entrega a los forks" | 03 §7.5; 04 §10.1; 02 §Claves; `tareas/diaria.ts`, `tareas/registro-automatico.ts` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-47]** en 03 §7.5, 04 §10.1 y 02 §Claves |
 | **CH-49** | Slot `@superpuesto`. 05 §1.2 pedía `@superpuesto/[...todo]/page.tsx` en el esqueleto, pero con Next 16.4 la build falla ("Unmatched app pages") hasta que haya una ruta que lo emparente. Lo crea la primera tarea con ruta interceptada; TA-200 dejó `default.tsx`. CH-48 queda reservado | 05 §1.2 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-49]** en 05 §1.2 |
+| **CH-51** | Pruebas de rendimiento que necesitan pantallas. TA-222 dependía solo de TA-219, pero PRU-REN-PWA-001 necesita rutas con formulario, PRU-REN-PWA-003 las seis rutas de 05 §13.4 con sesión, y PRU-REN-PWA-004 y PRU-REN-TX-001 pantallas donde interactuar. Resolución: TA-222 queda con la infraestructura de 05 §13.4, FE-48, FE-49 y PRU-REN-PWA-002; la tarea nueva TA-550 es dueña de las otras cuatro pruebas. Depende de `/ingresar`, Registrar y las dueñas de las demás rutas de Lighthouse, por lo que va al final de la ola (`/reportes/tendencia` es de TA-421, HT-8). No hay `orden` libre dentro de HT-8, así que TA-550 va en HT-9 con `orden` 743 y `despues` de HT-9 pasa de TA-470 a TA-550: la puerta de salida exige estos presupuestos medidos, y HT-8 no cambia. Ningún presupuesto cambia. TA-222 agrega `puppeteer-core` a sus dependencias: `@lhci/cli` lo necesita para el `puppeteerScript` de 05 §13.4 | 08 TA-222, TA-550, HT-9 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-51]** en 08 |
 | **CH-52** | Partición de TA-204 por tamaño (DT-02). El alcance completo de TA-204 midió prod=680, 16 archivos y total=1.710 contra una estimación de 380, 10 y 900: pasa el tope de DT-01 aun con el +30 % de las tareas normales (520, 15 y 1.560). La causa es que los estilos son utilidades de Tailwind sobre código generado por shadcn con Radix (05 §10.1, §10.7), que pesa más que el CSS propio que se había probado primero. Se parte: TA-204 conserva `Boton` y `Campo` (con `EntradaTexto`) y la infraestructura común; TA-246, nueva (orden 631), lleva `Seleccion` y `Buscador` con PRU-CMP-VAL-104; TA-247, nueva (orden 632), lleva `Pastillas` y `SelectorSegmentado` con PRU-CMP-VAL-105. HT-5 requiere también TA-246 y TA-247, y su `despues` pasa a TA-247 (E7 pide que las tareas de un hito no pasen del orden de `despues`). FE-43 y FE-47 las cubre solo TA-204 (E8 no admite varios dueños); TA-246 y TA-247 llevan `cubre: —` y completan esos objetivos con sus pruebas. PRU-CMP-VAL-102 queda en TA-204 con su subconjunto (M8 no admite el mismo identificador en archivos distintos). **Además:** (1) L16 se ajusta para que `components/ui` pueda importar `@radix-ui/*`, como exige 05 §10.7 ("Radix debajo"); sigue prohibido desde las pantallas y desde todo lo que no sea `componentes/base`. (2) Las diferencias con las capturas K2 quedan para las fichas que usen estos componentes: el prefijo `$` de los campos de monto, la selección de pocas opciones como selector segmentado y la matriz de estados de cada variante. L15 no se cambia: no reconoce `disabled:` y las clases viven en constantes. El código completo queda en la rama `ta-204-completo` | 08 TA-204, TA-246, TA-247, HT-5; 05 §10.1, §10.7, L15, L16 | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-52]** en 08 TA-204, TA-246, TA-247 y HT-5 |
 | **CH-50** | Autenticación web: `matcher`, nombre, FE-36 y `@supabase/ssr`. (1) 04 §12.4 excluía del `matcher` solo `/api/sms`, `/api/tareas/*` y `/api/respaldo/*`; 08 TA-214 excluye todo `/api/`. Rige todo `/api/`: 04 §11.5 pide que `/api/notificaciones/accion` responda 401 y una redirección del proxy lo impediría (lo mismo `/api/exportar/*` y `/api/pruebas/reloj`), y no baja la seguridad porque el proxy "No es una barrera de seguridad" (04 §2.2.5). Consecuencia: `@supabase/ssr` no refresca cookies en `/api/`; queda a cargo del cliente de servidor de cada handler. (2) `verificarInscripcion` de 08 TA-214 pasa a `completarInscripcion`, como dicen 04 §12.2, 05 CP-11 y 06. (3) 05 §9.2 dice que `proxy.ts` no redirige las rutas de `ingresar`: TA-214 entrega la tabla FE-36 como función pura `destinoAcceso(estado, ruta, volver)` en `@finn/aplicacion/autenticacion` y las páginas la llaman (DT-23). (4) Solo `apps/web` importa `@supabase/ssr` (04 §1.3): `aplicacion` recibe el cliente por una interfaz inyectada, como `SesionServidor`; el proxy redirige con `?volver=` usando la misma ruta y búsqueda de `x-finn-ruta`, y el saneado de V5-16b y c queda con `parametros.ts` | 04 §12.4; 05 §9.2; 08 TA-214 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-50]** en 04 §12.4 y 08 TA-214 |
 | **CH-53** | Bootstrap con `postgres` no superusuario (H-02). (1) Desde PG16, quien crea un rol sin ser superusuario recibe `ADMIN`, pero no `SET` ni `INHERIT`, y `CREATE SCHEMA … AUTHORIZATION finn_migraciones` falla con `must be able to SET ROLE`. Reproducido con `postgres` en la imagen local de Supabase (17.11; `CREATEROLE`, `CREATEDB`, `REPLICATION` y `BYPASSRLS`, sin `SUPERUSER`). Resolución: `bootstrap.sql` se concede `SET` en una transacción, solo para crear el esquema, y lo revoca al terminar. `BYPASSRLS` no cambia: `postgres` lo tiene, y un rol sin él falla al crear `finn_app`. `WITH SET` exige PG16 o posterior, y `PG_MAYOR` es 17. PRU-INT-ESQ-108 lo ejecuta en `integracion` con un rol equivalente. (2) TU-07 no nombraba `HUMO_CLAVE_MIGRACIONES`, `HUMO_CLAVE_APP`, `HUMO_CLAVE_RESPALDO` ni `HUMO_CLAVE_PUBLICA` (sin ella, H-11 falla), ni avisaba que cada ejecución de H-02 cambia las contraseñas de los roles reales: las generadas se perdían antes de TU-09 y TU-12. Resolución: TU-07 las define, dice de dónde salen y qué pasa al repetir | 03 §10.4.1, §13.5; 08 TU-07; `tools/db/bootstrap.sql`; `pruebas/manuales.md` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-53]** en 03 §10.4.1, §13.5, 08 TU-07, `tools/db/bootstrap.sql` y `pruebas/manuales.md` |
@@ -7034,7 +7035,7 @@ revision: obligatoria
 paralelo: libre
 tamano: prod=200 archivos=5 ca=0 migraciones=0 total=560
 cubre: FE-48, FE-49
-pru: PRU-REN-PWA-001, PRU-REN-PWA-002, PRU-REN-PWA-003, PRU-REN-PWA-004, PRU-REN-TX-001
+pru: PRU-REN-PWA-002
 compartido: —
 ```
 
@@ -7046,11 +7047,43 @@ compartido: —
 **Archivos.** `apps/web/e2e/rendimiento/*`, `lighthouserc.json`, `.github/workflows/{ci,nocturno}.yml`.
 
 **Pruebas primero.**
-- PRU-REN-PWA-001 (V5-13, V5-35), 002 (V5-20, V5-34), 003 (V5-26), 004 (V5-27) y PRU-REN-TX-001 (V5-11).
+- PRU-REN-PWA-002 (V5-20, V5-34). **[CH-51]** PRU-REN-PWA-001, 003, 004 y PRU-REN-TX-001 quedan como esqueleto y son de TA-550.
 
 **Comandos.** `pnpm test:e2e -- -g "PRU-REN-PWA-00[12]"`; `pnpm ci:local`.
 
-**Terminada cuando.** Las pruebas de bytes pasan en `main`; las de tiempo corren en el nocturno.
+**Terminada cuando.** **[CH-51]** PRU-REN-PWA-002 pasa en `e2e` de `main`; el job `ren` del nocturno incluye las pruebas de tiempo, que se omiten hasta TA-550.
+
+#### TA-550 Presupuestos de rendimiento sobre las pantallas reales **[CH-51]**
+
+```tarea
+orden: 743
+bloque: B6
+hito: HT-9
+depende: TA-222, TA-280, TA-292, TA-293, TA-287, TA-294, TA-298, TA-308, TA-421
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=150 archivos=3 ca=0 migraciones=0 total=500
+cubre: —
+pru: PRU-REN-PWA-001, PRU-REN-PWA-003, PRU-REN-PWA-004, PRU-REN-TX-001
+compartido: —
+```
+
+**Qué construir.**
+- Los escenarios de INP de 05 §13.4 y la medida de V5-11, sobre las pantallas reales, con sesión AAL2 y la regla de persistencia de 07 §6.6.
+- Cambiar la condición provisional de `/registrar/gasto` en `tiempos.e2e.ts` por la condición real de cada prueba; ninguna queda omitida en el nocturno.
+- Verificar con sesión el recorrido de rutas de `tamano.e2e.ts`, la biblioteca de formularios y `lhci-sesion.cjs`. Ningún presupuesto de `apps/web/presupuestos.json` baja ni sube.
+
+**Leer.** 05 §13; 07 §6.6.
+
+**Archivos.** `apps/web/e2e/rendimiento/*`, `apps/web/presupuestos.json` (solo `ejemplosDeRuta`), `lighthouserc.json`.
+
+**Pruebas primero.**
+- PRU-REN-PWA-001 (V5-13, V5-35), 003 (V5-26), 004 (V5-27) y PRU-REN-TX-001 (V5-11).
+
+**Comandos.** `pnpm test:e2e -- -g "PRU-REN-PWA-001"`; `FINN_REN=1 pnpm test:e2e -- -g "PRU-REN-PWA-00[34]"`; `pnpm ci:local`.
+
+**Terminada cuando.** PRU-REN-PWA-001 pasa en `e2e` de `main`; las de tiempo miden de verdad en una corrida del nocturno, sin omitirse.
 
 #### TA-223 Service worker, `/sin-conexion` e instalación
 
@@ -10716,7 +10749,7 @@ La tabla de pares de §1.8 queda así para todo el plan:
 | Mismo archivo de producción | Las declaradas en `paralelo: con` (B0 y TA-176, TA-181, TA-182) | Como dice cada ficha |
 | Server Actions de un área | Dos tareas de fichas que agregan acciones al mismo `servidor/acciones/<area>.ts` | Pueden ir en paralelo: cada acción es una línea nueva; el segundo PR rebasa |
 
-**Dependencias npm de cada tarea del grupo:** TA-200: next, react, react-dom; TA-201: tailwindcss, next-themes; TA-204: primitivos de shadcn/ui (`@radix-ui/react-label`, `@radix-ui/react-slot`, cva, clsx, tailwind-merge; `axe-core` de desarrollo **[CH-52]**); TA-246: `@radix-ui/react-select`, `@radix-ui/react-radio-group` **[CH-52]**; TA-209: d3-scale, d3-shape; TA-210: react-hook-form, @hookform/resolvers; TA-214: @supabase/ssr; TA-219: @playwright/test, otpauth; TA-222: @lhci/cli; TA-223: @serwist/turbopack; TA-438: @dnd-kit/core (carga diferida, V6-08).
+**Dependencias npm de cada tarea del grupo:** TA-200: next, react, react-dom; TA-201: tailwindcss, next-themes; TA-204: primitivos de shadcn/ui (`@radix-ui/react-label`, `@radix-ui/react-slot`, cva, clsx, tailwind-merge; `axe-core` de desarrollo **[CH-52]**); TA-246: `@radix-ui/react-select`, `@radix-ui/react-radio-group` **[CH-52]**; TA-209: d3-scale, d3-shape; TA-210: react-hook-form, @hookform/resolvers; TA-214: @supabase/ssr; TA-219: @playwright/test, otpauth; TA-222: @lhci/cli, puppeteer-core **[CH-51]**; TA-223: @serwist/turbopack; TA-438: @dnd-kit/core (carga diferida, V6-08).
 
 Con 2 agentes (P8-5), `pnpm plan:siguiente` ofrece la siguiente tarea disponible que no choca con la que está en curso según esta tabla.
 
@@ -10802,6 +10835,7 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 740 | TA-446 | B7 | HT-8 | normal | Recorridos de 06 §4.1, §4.2, §4.3 de punta a punta | 40 | 0 |
 | 741 | TA-447 | B7 | HT-8 | normal | Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta | 40 | 0 |
 | 742 | TA-470 | B7 | HT-9 | obligatoria | Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03) | 80 | 1 |
+| 743 | TA-550 | B6 | HT-9 | obligatoria | Presupuestos de rendimiento sobre las pantallas reales **[CH-51]** | 150 |
 | 900 | TA-500 | B8 | — | normal | FT-56 Desembolso de préstamo | 360 | 0 |
 | 901 | TA-501 | B8 | — | normal | FT-58 Modelos de préstamo de otros bancos | 360 | 0 |
 | 902 | TA-502 | B8 | — | normal | FT-59 Proyección de inversiones | 360 | 0 |
