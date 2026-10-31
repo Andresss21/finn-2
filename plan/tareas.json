@@ -349,7 +349,7 @@
 
   "TA-280": { "estado": "terminada", "rama": "ta-280-ingresar-2", "pr": 233 },
 
-  "TA-281": { "estado": "en_curso", "rama": "ta-281-inscribir-totp" },
+  "TA-281": { "estado": "terminada", "rama": "ta-281-inscribir-totp", "pr": 237 },
 
   "TA-282": { "estado": "pendiente" },
 
