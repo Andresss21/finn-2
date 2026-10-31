@@ -95,7 +95,9 @@ export default async function EstadoDePrueba({
       return (
         <main>
           <h1>{'Origen de carga'}</h1>
-          <EnlaceFinn href={`${BASE}/carga`}>{'Ir a la página lenta'}</EnlaceFinn>
+          <EnlaceFinn href={`${BASE}/carga`} className="inline-flex min-h-11 items-center">
+            {'Ir a la página lenta'}
+          </EnlaceFinn>
         </main>
       );
     case 'cache':
@@ -103,8 +105,12 @@ export default async function EstadoDePrueba({
         <main>
           <h1>{'Caché del enrutador'}</h1>
           <p data-testid="render">{String((renders += 1))}</p>
-          <EnlaceFinn href={`${BASE}/carga`}>{'Ir a otra página'}</EnlaceFinn>
-          <EnlaceFinn href={`${BASE}/cache`}>{'Esta misma página'}</EnlaceFinn>
+          <EnlaceFinn href={`${BASE}/carga`} className="inline-flex min-h-11 items-center">
+            {'Ir a otra página'}
+          </EnlaceFinn>
+          <EnlaceFinn href={`${BASE}/cache`} className="inline-flex min-h-11 items-center">
+            {'Esta misma página'}
+          </EnlaceFinn>
         </main>
       );
     default:
