@@ -6,7 +6,7 @@
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { almacen } from '../cliente/almacen';
-import { instanteActual } from '../cliente/reloj';
+import { instanteActual } from '../formato/instante';
 import type { Operacion } from './use-operacion';
 
 export const PREFIJO_BORRADOR = 'finn:borrador:';
