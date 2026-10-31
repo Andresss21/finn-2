@@ -39,9 +39,9 @@ const orden = { shuffle: true, seed: semilla } as const;
 // (60 s, 120 s y los 600 s de PRU-PROP-MOTOR-106) son mayores y siguen mandando.
 const plazoMotor = 30_000;
 
-// Pruebas que ejecutan `recheck` (04 §8.5). Su fuzzer usa subtiempos de reloj (ataque, incubación,
-// siembra) y con la CPU ocupada estima mal el grado (devuelve 3 para un patrón de grado 2). Por eso
-// viven en su propio proyecto, que `tools/pruebas/vitest.mjs` corre después del resto y de a un archivo.
+// Pruebas que ejecutan `recheck` (04 §8.5). El grado ya no depende del reloj (CH-48), pero el análisis
+// sigue teniendo su tope de 10 s y cada uno ocupa una CPU varios segundos. Por eso viven en su propio
+// proyecto, que `tools/pruebas/vitest.mjs` corre después del resto y de a un archivo.
 const PRUEBAS_RECHECK = [
   'packages/sms/src/validar-formato.test.ts',
   'tools/ci/formatos-bac.test.ts',

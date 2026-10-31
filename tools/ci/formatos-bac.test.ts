@@ -4,37 +4,14 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { interpretar } from '../../packages/sms/src/interpretar.ts';
-import { TIEMPO_ANALISIS_MS, validarFormato } from '../../packages/sms/src/validar-formato.ts';
+import {
+  PARAMETROS_ANALISIS,
+  TIEMPO_ANALISIS_MS,
+  validarFormato,
+} from '../../packages/sms/src/validar-formato.ts';
 import { aplicarMigraciones, formatosDeLaSiembra, leerFormatos } from './formatos-activos.ts';
-
-// `recheck` mide con reloj: un ataque que pasa `attackTimeout` (1 s) cuenta como éxito, y la cadena de
-// grado 3 del patrón del BAC (grado 2 real: exponente 2,00 en V8) tarda justo cerca de ese segundo. Por
-// eso el mismo patrón da 2 o 3 según la CPU, sin agotar nunca los 10 s (run 41119144798: falló a los 2,7 s).
-// Aquí, y solo aquí, el análisis se decide por pasos: sin relojes y con un límite que se alcanza. El código
-// de producción no cambia, y la prueba comprueba qué le pide a `recheck` y que los controles inseguros
-// se siguen rechazando. `pnpm ci:politica-patrones` sigue con la configuración de 04 §8.5 sin tocar.
-const pedidos = vi.hoisted((): Record<string, unknown>[] => []);
-vi.mock('../../packages/sms/node_modules/recheck/index.js', async (importarReal) => {
-  const real = await importarReal<{
-    checkSync: (patron: string, banderas: string, parametros: object) => unknown;
-  }>();
-  return {
-    ...real,
-    checkSync: (patron: string, banderas: string, parametros: Record<string, unknown>) => {
-      pedidos.push(parametros);
-      return real.checkSync(patron, banderas, {
-        ...parametros,
-        timeout: null,
-        attackTimeout: null,
-        incubationTimeout: null,
-        seedingTimeout: null,
-        attackLimit: 50_000_000,
-      });
-    },
-  };
-});
 
 const raiz = fileURLToPath(new URL('../..', import.meta.url));
 const leer = (ruta: string): string => readFileSync(join(raiz, ruta), 'utf8');
@@ -130,16 +107,14 @@ describe('PRU-DOM-BAND', () => {
           monto,
         ).toBe('no_reconocido');
 
-      // Política de 04 §8.5 sobre cada formato activo, decidida por pasos (ver el vi.mock de arriba).
+      // Política de 04 §8.5 sobre cada formato activo.
       for (const f of activos) {
         const v = validarFormato(f);
         expect(v, f.nombre).toMatchObject({ valido: true });
         if (v.valido) expect(v.grado ?? 0).toBeLessThanOrEqual(2);
       }
-      // Producción sigue pidiendo lo que fija 04 §8.5.
-      expect(pedidos.at(-1)).toEqual({ checker: 'auto', timeout: TIEMPO_ANALISIS_MS });
 
-      // Sin relojes, el análisis no se vuelve permisivo: lo inseguro se rechaza con su grado.
+      // El análisis por pasos (CH-48) no se vuelve permisivo: lo inseguro se rechaza con su grado.
       const base = activos[0];
       if (base === undefined) throw new Error('sin formato activo');
       const control = (patron: string) => validarFormato({ ...base, patron, formatosFecha: [] });
@@ -178,6 +153,43 @@ describe('PRU-DOM-BAND', () => {
           },
         ]),
       ).toThrow(/x_m_sin_fila/);
+    },
+    6 * TIEMPO_ANALISIS_MS,
+  );
+
+  it(
+    'PRU-DOM-BAND-110 [V-24] BE-46, CH-48: el grado de recheck no depende del reloj: sin subtiempos, el mismo veredicto y la misma cadena en cada análisis, y un análisis sin terminar se rechaza',
+    () => {
+      // Lo que fija 04 §8.5, y ningún otro plazo que pueda decidir el grado. `recallTimeout` queda
+      // en su valor por defecto, negativo: esa validación no corre.
+      expect(PARAMETROS_ANALISIS).toEqual({
+        checker: 'auto',
+        timeout: TIEMPO_ANALISIS_MS,
+        attackTimeout: null,
+        incubationTimeout: null,
+        seedingTimeout: null,
+        attackLimit: 10_000_000,
+      });
+
+      const activo = leerFormatos(raiz).formatos.find((f) => f.activo);
+      const f1 = formatosDeLaSiembra(leer('docs/03-base-de-datos.md')).find(
+        (f) => f.nombre === BAC_COMPRA,
+      );
+      if (activo === undefined || f1 === undefined) throw new Error('faltan formatos');
+
+      // El patrón que fallaba con la CPU ocupada (grado 2 real) y uno de grado 3 que debe seguir fuera.
+      expect(validarFormato(activo)).toEqual({ valido: true, grado: 2 });
+      const rechazo = validarFormato(f1);
+      expect(rechazo).toMatchObject({ valido: false, error: 'patron_lento', grado: 3 });
+      expect(validarFormato(f1)).toEqual(rechazo);
+
+      // Plazo cero: el análisis no llega a terminar, y eso nunca cuenta como éxito.
+      expect(validarFormato(activo, { timeoutMs: 0 })).toEqual({
+        valido: false,
+        error: 'patron_lento',
+        grado: null,
+        ataque: '',
+      });
     },
     6 * TIEMPO_ANALISIS_MS,
   );
