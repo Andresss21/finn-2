@@ -139,4 +139,118 @@ test.describe('PRU-E2E-TX', () => {
     expect(new Set(ocupados).size).toBe(1);
     expect(ocupados[0]).not.toBe(enviados[0]);
   });
+
+  test('PRU-E2E-TX-004 [V5-07] router.refresh() conserva lo escrito y el borrador sobrevive a la recarga', async ({
+    page,
+  }) => {
+    const clave = 'finn:borrador:v1:/pruebas/eco:';
+    const guardado = (): Promise<string | null> =>
+      page.evaluate((k) => window.sessionStorage.getItem(k), clave);
+    await abrir(page);
+    await page.getByLabel('Texto').fill('a medio escribir');
+    // FE-14: se guarda 500 ms después del último cambio, en el sessionStorage de la pestaña
+    await expect.poll(guardado).toContain('a medio escribir');
+    const refresco = page.waitForResponse((r) => r.url().includes('_rsc'));
+    await page.evaluate(() => {
+      (window as unknown as { next: { router: { refresh: () => void } } }).next.router.refresh();
+    });
+    await refresco;
+    await expect(page.getByLabel('Texto')).toHaveValue('a medio escribir');
+    expect(await marca(page)).toBe('sin-recargar');
+
+    // Recargar la página: el borrador se restaura y se avisa.
+    await page.reload();
+    await page.waitForFunction(() => 'next' in window && 'router' in (window.next as object));
+    await expect(page.getByText('Recuperamos lo que estabas escribiendo')).toBeVisible();
+    await expect(page.getByLabel('Texto')).toHaveValue('a medio escribir');
+
+    // "Descartar borrador" lo borra y deja el formulario como estaba al abrir.
+    await page.getByRole('button', { name: 'Descartar borrador' }).click();
+    await expect(page.getByLabel('Texto')).toHaveValue('');
+    await expect(page.getByText('Recuperamos lo que estabas escribiendo')).toBeHidden();
+    expect(await guardado()).toBeNull();
+
+    // Terminar con ok: true borra el borrador.
+    const guardados = (await servidor(page)).guardados;
+    await page.getByLabel('Texto').fill('terminado');
+    await expect.poll(guardado).toContain('terminado');
+    await page.getByRole('button', { name: 'Guardar' }).click();
+    await expect(page.getByText(`Guardados: ${guardados + 1}`)).toBeVisible();
+    await expect.poll(guardado).toBeNull();
+  });
+
+  test('PRU-E2E-TX-005 [V5-08] la lectura interactiva descarta la respuesta vieja: "ab" lenta y "abc" son dos consultas y gana "abc"', async ({
+    page,
+  }) => {
+    await abrir(page);
+    let soltar = (): void => undefined;
+    const retenida = new Promise<void>((listo) => {
+      soltar = listo;
+    });
+    const cuerpos: string[] = [];
+    await page.route(`**${ECO}`, async (ruta) => {
+      if (ruta.request().method() !== 'POST') return ruta.fallback();
+      const cuerpo = ruta.request().postData() ?? '';
+      cuerpos.push(cuerpo);
+      if (cuerpo.includes('"ab"')) await retenida; // la consulta "ab" tarda
+      return ruta.fallback();
+    });
+    // Todo lo que muestra el párrafo de la lectura, en orden.
+    await page.evaluate(() => {
+      const w = window as unknown as { vistos: string[] };
+      w.vistos = [];
+      const parrafo = [...document.querySelectorAll('p')].find((p) =>
+        p.textContent.startsWith('Lectura:'),
+      );
+      new MutationObserver(() => w.vistos.push(parrafo?.textContent ?? '')).observe(
+        parrafo as Node,
+        { childList: true, characterData: true, subtree: true },
+      );
+    });
+    // FE-15: menos de 2 caracteres no consulta
+    await page.getByLabel('Buscar').pressSequentially('a');
+    await page.getByLabel('Buscar').pressSequentially('b');
+    await expect.poll(() => cuerpos.length).toBe(1); // 300 ms después de la última pulsación
+    await page.getByLabel('Buscar').pressSequentially('c'); // con "ab" todavía en vuelo
+    soltar();
+    await expect(page.getByText('Lectura: abc')).toBeVisible();
+    expect(cuerpos).toHaveLength(2);
+    expect(cuerpos[0]).toContain('"ab"');
+    expect(cuerpos[1]).toContain('"abc"');
+    const vistos = await page.evaluate(() => (window as unknown as { vistos: string[] }).vistos);
+    expect(vistos).not.toContain('Lectura: ab');
+  });
+});
+
+test.describe('PRU-E2E-PWA', () => {
+  test.beforeEach(async ({ context, baseURL }) => {
+    await entrarAal2(context, baseURL ?? '');
+  });
+
+  test('PRU-E2E-PWA-001 [V5-09] una pestaña con la versión anterior recibe "Hay una versión nueva", sin reintentar y con "Recargar"', async ({
+    page,
+  }) => {
+    await abrir(page);
+    // La pestaña vieja manda el id de una acción que la compilación nueva ya no tiene (409 de Next).
+    await page.route(`**${ECO}`, async (ruta) => {
+      if (ruta.request().method() !== 'POST') return ruta.fallback();
+      return ruta.continue({
+        headers: {
+          ...ruta.request().headers(),
+          'next-action': '400000000000000000000000000000000000000000',
+        },
+      });
+    });
+    await page.getByLabel('Texto').fill('desde la pestaña vieja');
+    await page.getByRole('button', { name: 'Guardar' }).click();
+    await expect(
+      page.getByText('Hay una versión nueva de Finn. Recargá para continuar.'),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Intentar de nuevo' })).toBeHidden();
+    await page.getByRole('button', { name: 'Recargar' }).click();
+    await page.waitForFunction(
+      () => (window as unknown as { marca?: string }).marca === undefined && 'next' in window,
+    );
+    await expect(page.getByLabel('Texto')).toBeVisible();
+  });
 });

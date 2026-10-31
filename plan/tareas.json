@@ -303,7 +303,7 @@
 
   "TA-210": { "estado": "terminada", "rama": "ta-210-escritura", "pr": 224 },
 
-  "TA-211": { "estado": "pendiente" },
+  "TA-211": { "estado": "terminada", "rama": "ta-211-borradores-2", "pr": 227 },
 
   "TA-212": { "estado": "terminada", "rama": "ta-212-marco-navegacion", "pr": 221 },
 

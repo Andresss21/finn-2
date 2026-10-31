@@ -257,10 +257,7 @@ const LIMPIOS: [string, string][] = [
     'apps/web/src/formato/m.ts',
     "export const f = new Intl.NumberFormat('es-CL');\nexport const h = (d: Date): string => d.toLocaleString();\n",
   ],
-  [
-    'apps/web/src/cliente/almacen.ts',
-    "export const l = (): string | null => sessionStorage.getItem('k');\n",
-  ],
+  // `cliente/almacen.ts` (L6) ya no es virtual: existe desde TA-211 y `eslint .` lo lintea.
   ['apps/web/src/cliente/reloj.ts', 'export const a = (): number => new Date(0).getTime();\n'],
   ['apps/web/src/textos/t.tsx', 'export const T = () => <p>Hola</p>;\n'],
   [
