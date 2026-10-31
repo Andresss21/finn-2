@@ -307,7 +307,7 @@
 
   "TA-212": { "estado": "terminada", "rama": "ta-212-marco-navegacion", "pr": 221 },
 
-  "TA-213": { "estado": "pendiente" },
+  "TA-213": { "estado": "terminada", "rama": "ta-213-estados-pantalla", "pr": 229 },
 
   "TA-214": { "estado": "terminada", "pr": 204 },
 
