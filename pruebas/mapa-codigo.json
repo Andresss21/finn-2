@@ -20,6 +20,8 @@
   { "patron": "apps/web/src/componentes/base/*.tsx", "fts": "marco" },
   { "patron": "apps/web/src/components/ui/**", "fts": "marco" },
   { "patron": "apps/web/src/formato/**", "fts": "marco" },
+  { "patron": "apps/web/src/formularios/**", "fts": "marco" },
+  { "patron": "apps/web/src/componentes/formularios/**", "fts": "marco" },
   { "patron": "apps/web/src/componentes/dominio/**", "fts": "marco" },
   { "patron": "apps/web/src/sw/**", "fts": "marco" },
   { "patron": "apps/web/src/instrumentation.ts", "fts": "marco" },
