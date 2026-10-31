@@ -30,3 +30,35 @@ body {
     transition: none !important;
   }
 }
+
+/* Billete "Listo para asignar" (06-identidad-visual 2.8): todo decorativo; con movimiento reducido no se anima. */
+@keyframes finn-guilloche {
+  to {
+    transform: translate3d(-24px, -24px, 0);
+  }
+}
+@keyframes finn-cifra-rueda {
+  from {
+    opacity: 0;
+    transform: translateY(0.6em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes finn-resplandor {
+  50% {
+    opacity: 0.45;
+    transform: scale(1.15);
+  }
+}
+@keyframes finn-brillo {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  14%,
+  100% {
+    transform: translateX(520%) skewX(-20deg);
+  }
+}

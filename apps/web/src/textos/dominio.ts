@@ -32,4 +32,22 @@ export const dominio = {
     conciliada: glosario.conciliada,
   },
   sinComercio: 'Sin comercio',
+  billete: {
+    rotulo: glosario.listoParaAsignar,
+    todoAsignado: 'Todo asignado',
+    asignasteDeMas: 'Asignaste más de lo que tenés',
+    enCamino: glosario.enCamino,
+  },
+  periodo: {
+    navegacion: 'Período',
+    anterior: 'Período anterior',
+    siguiente: 'Período siguiente',
+    irAlActual: 'Ir al período actual',
+    activo: 'Actual',
+    cerrado: 'Cerrado',
+    futuro: 'Futuro',
+    transicion: 'De transición',
+    transcurridos: (n: number) => `${n} ${n === 1 ? 'día transcurrido' : 'días transcurridos'}`,
+    quedan: (n: number) => `${n === 1 ? 'queda' : 'quedan'} ${n}`,
+  },
 } as const;
