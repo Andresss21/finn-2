@@ -42,17 +42,46 @@ export function sinRepetir(xs: PruebaListada[]): PruebaListada[] {
 const ejecutar = (comando: string, cwd: string) =>
   spawnSync(comando, { cwd, encoding: 'utf8', shell: true, maxBuffer: 256 * 1024 * 1024 });
 // La salida puede traer líneas de aviso antes del JSON
-const soloJson = (s: string): string => s.slice(s.search(/[[{]/));
+const soloJson = (s: string): string => {
+  const i = s.search(/[[{]/);
+  return i < 0 ? '' : s.slice(i);
+};
+
+/**
+ * El JSON de `vitest list --json`, o un error con su stdout y su stderr. Salir con 0 no basta: si el proyecto
+ * `componentes` no puede abrir Chromium, Vitest registra errores sin manejar, sale con 0 y no imprime la lista.
+ */
+export function listaDeVitest(s: {
+  status: number | null;
+  stdout: string;
+  stderr: string;
+}): string {
+  const falla = (motivo: string): Error =>
+    new Error(
+      `vitest list ${motivo} (¿falta Chromium? pnpm exec playwright install chromium)\n` +
+        `--- stdout ---\n${s.stdout}\n--- stderr ---\n${s.stderr}`,
+    );
+  if (s.status !== 0) throw falla(`terminó con ${s.status}`);
+  if (/unhandled errors/i.test(s.stderr)) throw falla('tuvo errores sin manejar al recolectar');
+  const json = soloJson(s.stdout);
+  let lista: unknown;
+  try {
+    lista = JSON.parse(json);
+  } catch {
+    throw falla('no dio JSON');
+  }
+  if (!Array.isArray(lista)) throw falla('no dio JSON con una lista');
+  return json;
+}
 
 if (import.meta.main) {
   const raiz = process.cwd();
   const vitest = ejecutar('pnpm exec vitest list --json --silent --coverage.enabled=false', raiz);
-  if (vitest.status !== 0)
-    throw new Error(`vitest list terminó con ${vitest.status}: ${vitest.stderr}`);
+  const listaVitest = listaDeVitest(vitest);
   // Sin pruebas, `playwright --list` sale con 1 y "No tests found": es una lista vacía, no un fallo.
   const pw = ejecutar('pnpm exec playwright test --list --reporter=json', `${raiz}/apps/web`);
   const inventario = sinRepetir([
-    ...deVitest(soloJson(vitest.stdout), raiz),
+    ...deVitest(listaVitest, raiz),
     ...(/^\s*\{/.test(pw.stdout) ? dePlaywright(soloJson(pw.stdout)) : []),
   ]).sort((x, y) => x.archivo.localeCompare(y.archivo) || x.titulo.localeCompare(y.titulo));
   mkdirSync('pruebas', { recursive: true });
