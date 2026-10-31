@@ -523,7 +523,7 @@
 
   "TA-550": { "estado": "pendiente" },
 
-  "TA-551": { "estado": "pendiente" },
+  "TA-551": { "estado": "terminada", "rama": "ta-551-billete-selector-periodo", "pr": 231 },
 
   "TA-552": { "estado": "terminada", "rama": "ta-552-navegacion", "pr": 223 }
 }
