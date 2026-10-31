@@ -4,6 +4,7 @@
 import { entrarAal2 } from '../ayudas/sesion.ts';
 import { esperarHidratacion } from '../ayudas/esperas.ts';
 import { expect, test } from '../configuracion/semilla.ts';
+import { navegacion } from '../../src/textos/index.ts';
 import {
   alinearRelojes,
   borrarRelojServidor,
@@ -15,7 +16,7 @@ test.describe('PRU-E2E-RELOJ', () => {
     borrarRelojServidor();
   });
 
-  test('PRU-E2E-RELOJ-002 [V5-10] la pantalla abierta pasa al día siguiente a medianoche sin recargar', async ({
+  test('PRU-E2E-RELOJ-002 [V5-10, FE-21, FE-35] la pantalla abierta pasa al día siguiente a medianoche sin recargar y avisa cuando no hay conexión', async ({
     page,
     context,
     baseURL,
@@ -42,5 +43,14 @@ test.describe('PRU-E2E-RELOJ', () => {
       () => (window as unknown as Record<string, unknown>)['__sinRecarga'],
     );
     expect(marca).toBe(true);
+
+    // FE-35: sin conexión el aviso persiste y la pantalla sigue como estaba; al volver, el aviso desaparece y se refresca.
+    const aviso = page.getByRole('status').filter({ hasText: navegacion.sinConexion });
+    await context.setOffline(true);
+    await expect(aviso).toBeVisible();
+    await expect(page.getByText('Hoy es 2027-03-06')).toBeVisible();
+    fijarRelojServidor('2027-03-06T12:00:00-06:00');
+    await context.setOffline(false);
+    await expect(aviso).toBeHidden();
   });
 });
