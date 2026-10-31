@@ -13,6 +13,8 @@
     "@finn/aplicacion": "workspace:*",
     "@finn/dominio": "workspace:*",
     "@radix-ui/react-label": "2.1.17",
+    "@radix-ui/react-radio-group": "1.5.1",
+    "@radix-ui/react-select": "2.4.1",
     "@radix-ui/react-slot": "1.5.0",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.114.0",

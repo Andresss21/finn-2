@@ -164,6 +164,8 @@ export default defineConfig({
             'clsx',
             'tailwind-merge',
             '@radix-ui/react-label',
+            '@radix-ui/react-radio-group',
+            '@radix-ui/react-select',
             '@radix-ui/react-slot',
           ],
         },
