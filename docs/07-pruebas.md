@@ -1230,7 +1230,7 @@ Es el contenido de `pruebas/verificaciones-previas.json` (M6). Las que quedan **
 | V5-16 | Sesión vencida redirige con `volver` | PRU-E2E-ACCESO-001 |
 | V5-17 | `NO_ENCONTRADO` → pantalla «Esto ya no existe.» con su enlace y `noindex` (estado HTTP 200 con `loading.tsx`, **[CH-59]**) | PRU-E2E-PWA-003 |
 | V5-18 | Cobertura del mapa de pantallas (`cobertura.py`) | **Sin prueba permanente:** verifica el documento; en el código lo reemplazan M12 y PRU-SEG-ACCESO-002, que recorren las rutas reales |
-| V5-19 | Señal de carga: la respuesta de prefetch trae el `loading.tsx` y al navegar aparece la señal de `EnlaceFinn`; pintar el `loading.tsx` en navegación es una limitación conocida (**[CH-59]**) | PRU-E2E-PWA-004 |
+| V5-19 | Señal de carga: el prefetch del enlace termina y al navegar aparece la señal de `EnlaceFinn`; pintar el `loading.tsx` en navegación es una limitación conocida (**[CH-59]**) | PRU-E2E-PWA-004 |
 | V5-20 | JS por ruta | PRU-REN-PWA-002 |
 | V5-21 | `useLinkStatus` da la señal | PRU-E2E-PWA-005 |
 | V5-22 | Caché del enrutador | PRU-E2E-PWA-006 |

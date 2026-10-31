@@ -98,26 +98,20 @@ test.describe('PRU-E2E-PWA', () => {
     await expect(page).toHaveURL(`${BASE}/vacios?otro=1`);
   });
 
-  test('PRU-E2E-PWA-004 [V5-19] la respuesta de prefetch trae el loading.tsx y al navegar a la página lenta aparece la señal de EnlaceFinn [CH-59]', async ({
+  test('PRU-E2E-PWA-004 [V5-19] el prefetch del enlace termina y al navegar a la página lenta aparece la señal de EnlaceFinn [CH-59]', async ({
     page,
   }) => {
     // El prefetch del enlace visible (producción) tiene que terminar antes de tocarlo (FE-39, V5-19).
-    // El cuerpo se lee al llegar la respuesta: después de navegar el navegador ya no lo conserva.
-    const cuerpo = new Promise<string>((resolver) => {
-      page.on('response', (r) => {
-        const cab = r.request().headers();
-        if (
-          new URL(r.url()).pathname === `${BASE}/carga` &&
-          cab['next-router-prefetch'] === '1' &&
-          cab['next-router-segment-prefetch'] === '/_tree'
-        )
-          r.text().then(resolver, () => undefined);
-      });
-    });
+    const prefetch = page.waitForResponse(
+      (r) =>
+        new URL(r.url()).pathname === `${BASE}/carga` &&
+        r.request().headers()['next-router-segment-prefetch'] === '/_tree',
+    );
     await page.goto(`${BASE}/origen`);
     await esperarHidratacion(page);
-    // Lo que sí se mide (CH-59): el loading.tsx del segmento viaja en la respuesta de prefetch.
-    expect(await cuerpo).toContain(estados.cargando);
+    // Lo que se mide (CH-59): el prefetch del enlace visible termina bien. Su respuesta trae el árbol del segmento y no
+    // el contenido del loading.tsx, que llega con la respuesta de la navegación.
+    expect((await prefetch).status()).toBe(200);
 
     let liberar: () => void = () => undefined;
     const compuerta = new Promise<void>((resolver) => {
