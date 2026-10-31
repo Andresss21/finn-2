@@ -3,12 +3,12 @@
 import { headers } from 'next/headers';
 import { Vacio } from '../../componentes/base/vacio';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
-import { sanearVolver } from '../../componentes/navegacion/parametros';
+import { rutaInterna } from '@finn/aplicacion/autenticacion';
 import { SECCIONES, seccionDeRuta } from '../../componentes/navegacion/secciones';
 import { estados } from '../../textos/estados';
 
 export default async function NoExiste() {
-  const ruta = sanearVolver((await headers()).get('x-finn-ruta')).split('?')[0] ?? '/';
+  const ruta = rutaInterna((await headers()).get('x-finn-ruta')).split('?')[0] ?? '/';
   const id = seccionDeRuta(ruta) ?? 'inicio';
   const seccion = SECCIONES.find((s) => s.id === id);
   return (

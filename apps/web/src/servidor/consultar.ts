@@ -3,7 +3,8 @@
 import { ExcepcionFinn, type ErrorFinn } from '@finn/aplicacion/errores';
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { rutaSinParametros, sanearVolver } from '../componentes/navegacion/parametros.ts';
+import { rutaInterna } from '@finn/aplicacion/autenticacion';
+import { rutaSinParametros } from './parametros.ts';
 
 export interface OpcionesConsultar {
   /** `VALIDACION` de un segmento dinámico (un id que no es UUID): es `notFound()`, no una redirección (7.3). */
@@ -19,7 +20,7 @@ function errorParaLaPantalla(error: ErrorFinn): Error {
 
 async function rutaActual(): Promise<string> {
   // La reemplaza `proxy.ts` en cada petición (04 §12.4): nunca viene del cliente. Se sanea igual que `?volver=`.
-  return sanearVolver((await headers()).get('x-finn-ruta'));
+  return rutaInterna((await headers()).get('x-finn-ruta'));
 }
 
 async function traducir(error: ErrorFinn, opciones: OpcionesConsultar): Promise<never> {

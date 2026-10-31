@@ -1,5 +1,5 @@
-// Parámetros de búsqueda (05 §2.2, FE-27): la conversión mecánica de la URL a los parámetros de la consulta y el saneado de
-// `?volver=` (3.6, V5-16b y c). Funciones puras, sin Next: las usan `consultar()` y las páginas.
+// Parámetros de búsqueda (05 §2.2, FE-27): la conversión mecánica de la URL a los parámetros de la consulta. El saneado de
+// `?volver=` es `rutaInterna` de `@finn/aplicacion/autenticacion` (05 §3.6). Funciones puras, sin Next.
 
 /** Lo que Next entrega como `searchParams` ya resuelto. */
 export type BusquedaDePagina = Readonly<Record<string, string | readonly string[] | undefined>>;
@@ -76,13 +76,4 @@ export function rutaSinParametros(ruta: string, campos: readonly string[]): stri
   if (quitados === 0) return null;
   const resto = quedan.toString();
   return resto === '' ? camino : `${camino}?${resto}`;
-}
-
-/** 3.6: solo una ruta interna (empieza con `/`, no con `//` ni `/\`); si no, `/` (V5-16b y c). */
-export function sanearVolver(volver: string | null | undefined): string {
-  if (typeof volver !== 'string') return '/';
-  if (!volver.startsWith('/') || volver.startsWith('//') || volver.startsWith('/\\')) return '/';
-  // El navegador descarta tabuladores y saltos de línea al resolver: `/<tab>/x` sería `//x`.
-  if (/[\u0000-\u001f\u007f]/.test(volver)) return '/';
-  return volver;
 }

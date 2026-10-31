@@ -5,10 +5,7 @@ import { ExcepcionFinn, type ErrorFinn } from '@finn/aplicacion/errores';
 import { notFound } from 'next/navigation';
 import { VacioPrimerUso, VacioSinResultados } from '../../../../../componentes/navegacion/vacios';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
-import {
-  aParametrosDeConsulta,
-  type BusquedaDePagina,
-} from '../../../../../componentes/navegacion/parametros';
+import { aParametrosDeConsulta, type BusquedaDePagina } from '../../../../../servidor/parametros';
 import { consultar } from '../../../../../servidor/consultar';
 import { soloEnPruebas } from '../../solo-pruebas';
 

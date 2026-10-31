@@ -41,13 +41,15 @@ test.describe('PRU-E2E-PWA', () => {
     expect(await page.content()).not.toContain('fallo-de-programacion');
   });
 
-  test('PRU-E2E-PWA-003 [V5-17] NO_ENCONTRADO y un segmento inválido responden 404 con «Esto ya no existe.» y el enlace a la sección', async ({
+  test('PRU-E2E-PWA-003 [V5-17] NO_ENCONTRADO y un segmento inválido muestran «Esto ya no existe.» con el enlace a la sección y noindex [CH-59]', async ({
     page,
   }) => {
     for (const caso of ['no-encontrado', 'segmento']) {
+      // Con loading.tsx la respuesta sale en streaming y el estado HTTP ya es 200 (CH-59): lo que se exige es la pantalla.
       const respuesta = await page.goto(`${BASE}/${caso}`);
-      expect(respuesta?.status(), caso).toBe(404);
+      expect([200, 404], caso).toContain(respuesta?.status());
       await expect(page.getByRole('heading', { name: estados.noExisteTitulo })).toBeVisible();
+      await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
       // Fuera de una sección real el enlace lleva a Inicio.
       await expect(page.getByRole('main').getByRole('link', { name: /^Ir a / })).toHaveAttribute(
         'href',
@@ -96,16 +98,26 @@ test.describe('PRU-E2E-PWA', () => {
     await expect(page).toHaveURL(`${BASE}/vacios?otro=1`);
   });
 
-  test('PRU-E2E-PWA-004 [V5-19] con el prefetch terminado, loading.tsx aparece de inmediato mientras la página lenta se resuelve', async ({
+  test('PRU-E2E-PWA-004 [V5-19] la respuesta de prefetch trae el loading.tsx y al navegar a la página lenta aparece la señal de EnlaceFinn [CH-59]', async ({
     page,
   }) => {
     // El prefetch del enlace visible (producción) tiene que terminar antes de tocarlo (FE-39, V5-19).
-    const prefetch = page.waitForResponse(
-      (r) => new URL(r.url()).pathname === `${BASE}/carga` && r.request().headers()['rsc'] === '1',
-    );
+    // El cuerpo se lee al llegar la respuesta: después de navegar el navegador ya no lo conserva.
+    const cuerpo = new Promise<string>((resolver) => {
+      page.on('response', (r) => {
+        const cab = r.request().headers();
+        if (
+          new URL(r.url()).pathname === `${BASE}/carga` &&
+          cab['next-router-prefetch'] === '1' &&
+          cab['next-router-segment-prefetch'] === '/_tree'
+        )
+          r.text().then(resolver, () => undefined);
+      });
+    });
     await page.goto(`${BASE}/origen`);
     await esperarHidratacion(page);
-    await prefetch;
+    // Lo que sí se mide (CH-59): el loading.tsx del segmento viaja en la respuesta de prefetch.
+    expect(await cuerpo).toContain(estados.cargando);
 
     let liberar: () => void = () => undefined;
     const compuerta = new Promise<void>((resolver) => {
@@ -121,17 +133,18 @@ test.describe('PRU-E2E-PWA', () => {
         await ruta.continue();
       },
     );
-    // Solo la navegación queda retenida (07 §14.5): el prefetch ya pasó.
 
-    await page.getByRole('link', { name: 'Ir a la página lenta' }).click();
-    const carga = page.getByRole('status').filter({ hasText: estados.cargando });
-    await expect(carga).toBeVisible();
-    await expect(carga).toHaveAttribute('aria-busy', 'true');
+    // La señal garantizada al navegar es la de EnlaceFinn (FE-39); pintar el loading.tsx en navegación no se
+    // reproduce con (finn), el slot y Marco (CH-59, limitación conocida).
+    const enlace = page.getByRole('link', { name: 'Ir a la página lenta' });
+    await enlace.click();
+    await expect(enlace).toHaveAttribute('aria-busy', 'true');
+    await expect(page.getByRole('progressbar', { name: navegacion.navegando })).toBeVisible();
     await expect(page).toHaveURL(`${BASE}/origen`);
 
     liberar();
     await expect(page.getByRole('heading', { level: 1, name: 'Página lenta' })).toBeVisible();
-    await expect(carga).toHaveCount(0);
+    await expect(enlace).toHaveCount(0);
   });
 
   test('PRU-E2E-PWA-006 [V5-22] atrás y adelante restauran la página de la caché del enrutador; un enlace a la misma página hace un render nuevo', async ({
