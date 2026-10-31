@@ -248,10 +248,7 @@ const LIMPIOS: [string, string][] = [
     'apps/web/src/componentes/dominio/f.ts',
     "import type { Centavos } from '@finn/dominio/valores';\nexport type T = Centavos;\n",
   ],
-  [
-    'apps/web/src/componentes/navegacion/enlace-finn.tsx',
-    "import Link from 'next/link';\nexport const E = Link;\n",
-  ],
+  // `componentes/navegacion/enlace-finn.tsx` (L11) ya no es virtual: existe desde TA-212 y `eslint .` lo lintea de verdad.
   [
     'apps/web/src/componentes/base/b.tsx',
     "import * as D from '@radix-ui/react-dialog';\nexport const B = D;\n",

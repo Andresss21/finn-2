@@ -10,6 +10,11 @@
   --fuente-cuerpo: var(--tipo-cuerpo), 'Archivo', system-ui, sans-serif;
 }
 
+/* Foco no tapado (11.2, WCAG 2.4.11): las barras fijas del marco miden 3.75 rem arriba y 5 rem abajo en teléfono. */
+html {
+  scroll-padding-block: 4.5rem 7rem;
+}
+
 body {
   background: var(--fondo);
   color: var(--texto);
