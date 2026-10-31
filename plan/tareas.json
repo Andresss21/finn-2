@@ -291,7 +291,7 @@
 
   "TA-247": { "estado": "terminada", "pr": 212 },
 
-  "TA-205": { "estado": "pendiente" },
+  "TA-205": { "estado": "terminada", "rama": "ta-205-superpuestos", "pr": 214 },
 
   "TA-206": { "estado": "pendiente" },
 

@@ -67,6 +67,9 @@ export function verificarRutas(raiz: string): string[] {
           .filter((s) => s !== '@superpuesto')
           .map((s) => s.replace(/^\(\.\)/, ''))
           .join('/');
+        // Rutas del arnés E2E (TA-205, PRU-E2E-PRES-001): `pruebas/…` responde 404 salvo con FINN_ENTORNO=pruebas
+        // (`(finn)/pruebas/solo-pruebas.ts`). Las retira el primer flujo corto real.
+        if (ruta.startsWith('pruebas/')) continue;
         if (!rutas.has(ruta))
           fallos.push(
             `apps/web/src/app/(finn)/${segmentos.join('/')}: la ruta «${ruta}» no está en 05 §1.3`,
