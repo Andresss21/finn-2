@@ -3,16 +3,18 @@
 import { autenticacion } from './autenticacion.ts';
 import { base } from './base.ts';
 import { dominio } from './dominio.ts';
+import { formularios } from './formularios.ts';
 import { alcanceReserva, glosario } from './glosario.ts';
 import { navegacion } from './navegacion.ts';
 
-export { autenticacion, alcanceReserva, base, dominio, glosario, navegacion };
+export { autenticacion, alcanceReserva, base, dominio, formularios, glosario, navegacion };
 
 /** Áreas registradas, en un arreglo para que una prueba detecte nombres repetidos. */
 export const areas = [
   ['autenticacion', autenticacion],
   ['base', base],
   ['dominio', dominio],
+  ['formularios', formularios],
   ['glosario', glosario],
   ['alcanceReserva', alcanceReserva],
   ['navegacion', navegacion],
