@@ -31,7 +31,7 @@ VIOLACIONES=$($P -d "$BASE" -At -f "$RAIZ/tools/db/reglas-catalogo.sql")
 if [ -n "$VIOLACIONES" ]; then echo "$VIOLACIONES"; exit 1; fi
 
 echo "7. Instantánea de catálogo"
-$P -d "$BASE" -At -f "$RAIZ/tools/db/catalogo.sql" > /tmp/catalogo-restaurado.txt
+$P -d "$BASE" -At -f "$RAIZ/tools/db/catalogo.sql" | tr -d '\r' > /tmp/catalogo-restaurado.txt # psql nativo de Windows (H-08)
 diff "$ESPERADO" /tmp/catalogo-restaurado.txt
 
 echo "8. Conteos y revisión frente al manifiesto"

@@ -133,6 +133,39 @@ describe('PRU-INT-ESQ', () => {
     });
   });
 
+  describe('reglas de catálogo sin USAGE sobre auth', () => {
+    const base = crearBasePrueba();
+    it('PRU-INT-ESQ-109 [R8, R12] C5 corre como finn_respaldo, sin USAGE sobre un esquema auth con una tabla con nextval (como auth.refresh_tokens en Supabase), y sigue detectando una dependencia hacia auth y un nextval de secuencia ajena; control: una columna serial propia no es violación', async () => {
+      const reglas = readFileSync(
+        fileURLToPath(new URL('../../../tools/db/reglas-catalogo.sql', import.meta.url)),
+        'utf8',
+      );
+      const comoRespaldo = (): Promise<string[]> =>
+        consultar(base.urlAdmin, `SET LOCAL ROLE finn_respaldo;\n${reglas}`);
+      const de = (filas: string[], regla: string): string[] =>
+        filas.filter((f) => f.startsWith(regla));
+      await con(base.urlAdmin, (c) =>
+        c.query(`CREATE SCHEMA auth;
+          CREATE TABLE auth.refresh_tokens (id bigserial PRIMARY KEY);
+          CREATE TYPE auth.nivel AS ENUM ('a');
+          CREATE TABLE finn.zz_propia (id bigserial PRIMARY KEY);`),
+      );
+      const limpias = await comoRespaldo();
+      expect(de(limpias, 'R8')).toEqual([]);
+      expect(de(limpias, 'R12')).toEqual([]);
+
+      await con(base.urlAdmin, (c) =>
+        c.query(`CREATE TABLE finn.zz_depende (n auth.nivel);
+          CREATE TABLE finn.zz_ajena (id bigint DEFAULT nextval('finn.zz_propia_id_seq'));`),
+      );
+      const filas = await comoRespaldo();
+      expect(de(filas, 'R8').join('\n')).toMatch(/zz_depende.*→ .*auth\.nivel/);
+      expect(de(filas, 'R12')).toEqual([
+        'R12 DEFAULT nextval de secuencia compartida: finn.zz_ajena.id',
+      ]);
+    });
+  });
+
   describe('modo de conciliación', () => {
     const base = crearBasePrueba();
     it('PRU-INT-ESQ-103 [CF-01] MIG-09: conciliaciones.modo vale estado_cuenta por defecto, admite saldo y es inmutable (e_solo_insercion)', async () => {

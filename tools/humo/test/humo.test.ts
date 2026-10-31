@@ -279,4 +279,48 @@ describe('PRU-SEG-OPER', () => {
       DELETE FROM finn.deudores WHERE id = '${ajena}'; COMMIT;`);
     expect(otra.codigo).toBe(0);
   }, 900_000);
+
+  it('PRU-SEG-OPER-107 HUMO-url-rota: con una HUMO_ADMIN_URL mal formada, psql nombra pedazos de la contraseña en su error (arroba, barra o % en la contraseña) y la salida no muestra ninguno; H-08 sin respuesta de psql falla con mensaje claro, sin error de aritmética', async () => {
+    const casos = [
+      { clave: 'ZqRota81@1]', pedazos: ['ZqRota81', '1]@'] },
+      { clave: 'ZqRota82@cd1]', pedazos: ['ZqRota82', 'cd1]'] },
+      { clave: '[ZqRota83/cd1]', pedazos: ['ZqRota83', 'cd1]'] },
+      { clave: 'ZqRota%zz84]', pedazos: ['ZqRota', 'zz84'] },
+    ];
+    for (const { clave, pedazos } of casos) {
+      const r = await humo({
+        HUMO_PASOS: 'H-01',
+        HUMO_ADMIN_URL: `postgresql://postgres:${clave}@otra.invalid:5432/postgres`,
+      });
+      const salida = `${r.stdout}\n${r.stderr}`;
+      for (const p of pedazos) expect(salida, clave).not.toContain(p);
+      const [h01] = lineas(r.stdout);
+      expect(h01, clave).toMatchObject({ paso: 'H-01', resultado: 'falla' });
+      expect(h01?.detalle, clave).toContain('***');
+    }
+
+    const h08 = await humo({
+      HUMO_PASOS: 'H-08',
+      HUMO_ADMIN_URL: 'postgresql://postgres:ZqRota85@otra.invalid:5432/postgres',
+    });
+    const [l08] = lineas(h08.stdout);
+    expect(l08).toMatchObject({ paso: 'H-08', resultado: 'falla' });
+    expect(l08?.detalle).toContain('psql no respondió');
+    expect(l08?.detalle).not.toContain('operand expected');
+    expect(h08.stdout).not.toContain('ZqRota85');
+  }, 300_000);
+
+  it('PRU-SEG-OPER-108 HUMO-respaldo-admin: H-08 corre completo con un administrador que no es superusuario y no tiene EXECUTE sobre finn.hoy(), como `postgres` en Supabase', async () => {
+    await humoCompleto();
+    sql("CREATE ROLE humo_admin_zq LOGIN PASSWORD 'humoAdminZq89' NOSUPERUSER");
+    const r = await humo({
+      HUMO_PASOS: 'H-08',
+      HUMO_ADMIN_URL: `postgresql://humo_admin_zq:humoAdminZq89@localhost:${puerto}/postgres`,
+    });
+    const [h08, ...resto] = lineas(r.stdout);
+    expect(resto).toEqual([]);
+    expect(h08, JSON.stringify(h08)).toMatchObject({ paso: 'H-08', resultado: 'pasa' });
+    expect(String(h08?.medido['conteos'])).toMatch(/ 0 diferencias$/);
+    expect(r.stdout).not.toContain('humoAdminZq89');
+  }, 900_000);
 });
