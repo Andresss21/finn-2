@@ -1062,7 +1062,7 @@ Cada fila lista las suites principales. Una suite es `PRU-<NIVEL>-<ÁREA>` (§2.
 
 | Prueba | Qué comprueba | Nivel y job |
 |---|---|---|
-| PRU-SEG-ACCESO-001 | **Toda** Server Action y todo Route Handler exige AAL2 o su token. La prueba no lista las rutas a mano: recorre el registro de acciones de `apps/web` y el árbol de `app/api`, y falla si aparece una entrada sin su comprobación. Así, una ruta nueva entra sola en la prueba | `INT`/`RH`, `integracion` |
+| PRU-SEG-ACCESO-001 | **Toda** Server Action y todo Route Handler exige AAL2 o su token, salvo la lista cerrada de 05 §9 (acceso previo a AAL2), declarada en `servidor/acciones/indice.ts` **[CH-56]**. Una exportación fuera de la lista sin AAL2 hace fallar la prueba, y una entrada de la lista que no exista también. La prueba no lista las rutas a mano: recorre el registro de acciones de `apps/web` y el árbol de `app/api`, y falla si aparece una entrada sin su comprobación. Así, una ruta nueva entra sola en la prueba | `INT`/`RH`, `integracion` |
 | PRU-SEG-ACCESO-002 | Cada ruta de 05 §1.3 sin sesión, con AAL1 y con AAL2: redirige, pide el segundo factor o muestra la página | `E2E`, `e2e` |
 | PRU-SEG-BAND-001 | `/api/sms` sin token, con token viejo, con token de otra longitud: 401 sin guardar nada (OP-35, precondición) | `RH` |
 | PRU-SEG-NOTIF-001 | Acción de notificación sin `Origin` de la app, sin `X-Finn-Accion` o sin AAL2: rechazada (BE-54) **[F8]** (CH-06) | `RH` |
