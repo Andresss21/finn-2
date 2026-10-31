@@ -114,6 +114,24 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(pkg.scripts['ci:integracion']).toContain('publicar-resultados.mjs integracion');
   });
 
+  // El proyecto `componentes` recolecta en Chromium: sin él `vitest list` sale con 0 y sin JSON (corrida 41143522674)
+  it('workflows: todo job que lista las pruebas tiene Chromium antes de listar', () => {
+    const instalar = 'pnpm exec playwright install --with-deps chromium';
+    const cierre = pkg.scripts['ci:cierre'] ?? '';
+    expect(cierre.startsWith(`${instalar} && pnpm pruebas:listar && `)).toBe(true);
+    for (const n of ['rapido', 'cierre']) {
+      const pasos = job(n).steps;
+      const cache = pasos.findIndex((p) => p.with?.['path'] === '~/.cache/ms-playwright');
+      expect(cache, n).toBeGreaterThanOrEqual(0);
+      expect(cache, n).toBeLessThan(pasos.findIndex((p) => p.run === `pnpm ci:${n}`));
+    }
+    // En `rapido`, sin depender de si cambió la web y antes del inventario
+    const afecta = readFileSync(join(raiz, 'tools', 'ci', 'afecta.mjs'), 'utf8');
+    expect(afecta).toMatch(
+      /\.\.\.\(enCi \? \[\['navegadores', NAVEGADORES\]\] : \[\]\),\s+\['inventario', 'pnpm pruebas:listar'\]/,
+    );
+  });
+
   it('workflows: permisos mínimos; rapido agrega statuses: write (CH-16) y e2e issues: write (07 §7.3)', () => {
     expect(wf.permissions).toEqual(LECTURA);
     expect(job('rapido').permissions).toEqual({ ...LECTURA, statuses: 'write' });
