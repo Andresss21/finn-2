@@ -13,7 +13,7 @@ export type DestinoAcceso =
   | { readonly accion: 'redirigir'; readonly destino: string; readonly cerrarSesion: boolean };
 
 /** 05 §3.6: solo una ruta interna; empieza con `/` y no con `//` ni `/\`. Si no, `/`. */
-const rutaInterna = (volver: string | null): string =>
+export const rutaInterna = (volver: string | null): string =>
   volver !== null && /^\/(?![/\\])/.test(volver) ? volver : '/';
 
 /**
