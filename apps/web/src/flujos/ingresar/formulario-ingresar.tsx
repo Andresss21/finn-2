@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Campo, EntradaTexto } from '../../componentes/base/campo';
-import { Input } from '../../components/ui/input';
+import { EntradaTexto } from '../../componentes/base/campo';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { autenticacion as t } from '../../textos/autenticacion';
@@ -69,7 +68,13 @@ export function FormularioIngresar({
   const mensaje =
     operacion.error?.mensaje ?? (usuarioNoPermitido ? t.credenciales_invalidas : undefined);
   return (
-    <form onSubmit={formulario.enviar} noValidate className="flex flex-col gap-5">
+    <form
+      onSubmit={(e) => {
+        void formulario.enviar(e);
+      }}
+      noValidate
+      className="flex flex-col gap-5"
+    >
       <h1 className="text-titulo-pantalla">{t.tituloIngresar}</h1>
       {mensaje === undefined ? null : (
         <AvisoEnLinea estado="problema" aparecioDespues={operacion.error !== undefined}>
@@ -84,31 +89,23 @@ export function FormularioIngresar({
         {...(errorEmail === undefined ? {} : { error: errorEmail })}
         {...register('email')}
       />
-      <Campo
+      <EntradaTexto
         etiqueta={t.contrasena}
         requerido
+        type={visible ? 'text' : 'password'}
+        autoComplete="current-password"
         {...(errorContrasena === undefined ? {} : { error: errorContrasena })}
+        {...register('contrasena')}
+      />
+      <Boton
+        variante="discreta"
+        aria-pressed={visible}
+        onClick={() => {
+          setVisible((v) => !v);
+        }}
       >
-        {(control) => (
-          <div className="flex items-start gap-2">
-            <Input
-              {...control}
-              type={visible ? 'text' : 'password'}
-              autoComplete="current-password"
-              {...register('contrasena')}
-            />
-            <Boton
-              variante="discreta"
-              aria-pressed={visible}
-              onClick={() => {
-                setVisible((v) => !v);
-              }}
-            >
-              {visible ? t.ocultarContrasena : t.mostrarContrasena}
-            </Boton>
-          </div>
-        )}
-      </Campo>
+        {visible ? t.ocultarContrasena : t.mostrarContrasena}
+      </Boton>
       <Boton
         tipo="submit"
         enviando={estado === 'enviando' || estado === 'listo'}

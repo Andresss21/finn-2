@@ -32,6 +32,7 @@ function montar(ui: ReactNode): HTMLElement {
   return nodo;
 }
 
+type Accion = (entrada: unknown) => Promise<ResultadoAccion<unknown>>;
 const RUTAS = { ingresar: '/ingresar', verificar: '/x', inscribir: '/y', destino: '/' };
 const FACTORES = [{ id: 'f-1', nombre: 'Autenticador' }];
 // Un objeto nuevo por respuesta, como las que deserializa la Server Action
@@ -44,7 +45,7 @@ const codigoIncorrecto = (): ResultadoAccion<unknown> => ({
   },
 });
 
-function pantalla(accion: (entrada: unknown) => Promise<ResultadoAccion<unknown>>) {
+function pantalla(accion: Accion) {
   const nodo = montar(
     <FormularioVerificar
       accion={accion}
@@ -64,7 +65,7 @@ function pantalla(accion: (entrada: unknown) => Promise<ResultadoAccion<unknown>
 
 describe('PRU-CMP-ACCESO', () => {
   it('PRU-CMP-ACCESO-101 [CA-01.3] un código incorrecto muestra su mensaje y deja el campo vacío y con el foco', async () => {
-    const accion = vi.fn((_entrada: unknown) => Promise.resolve(codigoIncorrecto()));
+    const accion = vi.fn<Accion>(() => Promise.resolve(codigoIncorrecto()));
     const { nodo, campo } = pantalla(accion);
     await userEvent.click(campo);
     await userEvent.keyboard('123456');
@@ -82,7 +83,7 @@ describe('PRU-CMP-ACCESO', () => {
   });
 
   it('PRU-CMP-ACCESO-102 [CA-01.4] con los 6 dígitos escritos no se envía nada hasta tocar Verificar o Enter', async () => {
-    const accion = vi.fn((_entrada: unknown) => Promise.resolve(codigoIncorrecto()));
+    const accion = vi.fn<Accion>(() => Promise.resolve(codigoIncorrecto()));
     const { campo, boton } = pantalla(accion);
     await userEvent.click(campo);
     await userEvent.keyboard('123456');
@@ -98,7 +99,7 @@ describe('PRU-CMP-ACCESO', () => {
   });
 
   it('PRU-CMP-ACCESO-103 [CA-01.7] el código pegado como "123 456" o "123-456" se envía como 123456', async () => {
-    const accion = vi.fn((_entrada: unknown) => Promise.resolve(codigoIncorrecto()));
+    const accion = vi.fn<Accion>(() => Promise.resolve(codigoIncorrecto()));
     const { campo } = pantalla(accion);
     for (const [vez, pegado] of ['123 456', '123-456'].entries()) {
       await userEvent.fill(campo, pegado); // de una vez, como un pegado

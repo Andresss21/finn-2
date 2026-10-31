@@ -5,9 +5,8 @@ import { useEffect } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Campo } from '../../componentes/base/campo';
+import { EntradaTexto } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
-import { Input } from '../../components/ui/input';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { autenticacion as t } from '../../textos/autenticacion';
@@ -75,7 +74,13 @@ export function FormularioVerificar({
     etiqueta: f.nombre ?? `${t.factor} ${i + 1}`,
   }));
   return (
-    <form onSubmit={formulario.enviar} noValidate className="flex flex-col gap-5">
+    <form
+      onSubmit={(e) => {
+        void formulario.enviar(e);
+      }}
+      noValidate
+      className="flex flex-col gap-5"
+    >
       <h1 className="text-titulo-pantalla">{t.tituloVerificar}</h1>
       <p className="text-cuerpo-pequeno text-texto-secundario">{t.introVerificar}</p>
       {error === undefined ? null : (
@@ -93,26 +98,20 @@ export function FormularioVerificar({
           }}
         />
       ) : null}
-      <Campo
+      <EntradaTexto
         etiqueta={t.codigo}
         requerido
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        pattern="\d{6}"
         {...(errorCodigo === undefined ? {} : { error: errorCodigo })}
-      >
-        {(control) => (
-          <Input
-            {...control}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="\d{6}"
-            {...register('codigo', {
-              setValueAs: normalizarCodigo,
-              onChange: (e: { target: HTMLInputElement }) => {
-                e.target.value = normalizarCodigo(e.target.value);
-              },
-            })}
-          />
-        )}
-      </Campo>
+        {...register('codigo', {
+          setValueAs: normalizarCodigo,
+          onChange: (e: { target: HTMLInputElement }) => {
+            e.target.value = normalizarCodigo(e.target.value);
+          },
+        })}
+      />
       <Boton tipo="submit" enviando={pendiente} textoEnviando={t.verificando}>
         {t.verificar}
       </Boton>
