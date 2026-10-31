@@ -92,6 +92,16 @@ export function decidir(
 export const recortesVigentes = (e: Estado | null, hoy: Date): Recorte[] =>
   e && e.mes === mesDe(hoy) ? e.recortes : [];
 
+/** CH-46: con el repositorio público la cuota no decide. Si vuelve a ser privado, se reabre con un CH (07 §32.3). */
+export const CUOTA_RECORTA = false;
+
+/** Lo que se aplica de verdad (CH-61): un estado guardado antes de CH-46 no recorta aunque sea del mes en curso. */
+export const recortesAplicables = (
+  e: Estado | null,
+  hoy: Date,
+  cuotaRecorta: boolean = CUOTA_RECORTA,
+): Recorte[] => (cuotaRecorta ? recortesVigentes(e, hoy) : []);
+
 /** ci.yml: en ahorro, `e2e` de PR una sola vez, al pasar a listo; suspendido, nunca. `main` no pasa por aquí. */
 export const e2eDePr = (r: Recorte[], accion: string): boolean =>
   !r.includes('e2e-pr-suspendido') &&
@@ -193,7 +203,7 @@ if (import.meta.main) {
     if (env('GITHUB_OUTPUT'))
       appendFileSync(env('GITHUB_OUTPUT'), `mes=${e.mes}\nmodo=${e.modo}\ncorrer=${correr}\n`);
   } else if (cmd === 'rapido') {
-    const r = recortesVigentes(anterior, hoy);
+    const r = recortesAplicables(anterior, hoy);
     console.log(
       `minutos: modo ${r.length ? 'ahorro' : 'normal'}${r.length ? ` (${r.join(', ')})` : ''}`,
     );

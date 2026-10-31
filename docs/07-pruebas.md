@@ -426,9 +426,9 @@ Lo que solo existe en el proyecto real queda en la prueba de humo de 04 §17, si
 
 | Job | Cuándo corre | Contenido | Estimado |
 |---|---|---|---|
-| `rapido` | Siempre | Instalación con caché; `typecheck`; ESLint (fronteras, L1–L20); Prettier; `versiones.mjs`; gitleaks sobre el diff; C1 (lint de migraciones) y C2 (inmutabilidad); script de la matriz (Parte B); `DOM`, `ESC@motor`, `CTR`; `PROP` (300 casos en PR, 2.000 en `main`); diferencial contra el oráculo; cobertura de ramas de `@finn/dominio` (DP-09); `CMP` si cambió `apps/web`. Calcula y publica `afecta_db` y `afecta_web` para los jobs siguientes | 2,5–3 min |
+| `rapido` | Siempre | Instalación con caché; `typecheck`; ESLint (fronteras, L1–L20); Prettier; `versiones.mjs`; gitleaks sobre el diff; C1 (lint de migraciones) y C2 (inmutabilidad); script de la matriz (Parte B); `DOM`, `ESC@motor`, `CTR`; `PROP` (300 casos en PR, 2.000 en `main`); diferencial contra el oráculo; cobertura de ramas de `@finn/dominio` (DP-09); `CMP` si cambió `apps/web` **[CH-61]** o si corre `cierre`. Calcula y publica `afecta_db` y `afecta_web` para los jobs siguientes | 2,5–3 min |
 | `integracion` | En el PR si `afecta_db` o si el PR pasa a listo; en `main` siempre | Plantilla y controles de 5.2; `INT`, `ESC@int`, `RH`, `ESQ`, PRU-INT-POOL; prueba de catálogo de CF-16 | 3–4 min |
-| `e2e` | En el PR **listo** con `afecta_web` (suites afectadas); en `main` siempre (completo, proyecto `movil`) | `next build`; pila local mínima; usuario de prueba; Playwright; en `main`, además, tamaño de JS y de precache (deterministas, §6.6) | 6–8 min en PR; 10–11 en `main` |
+| `e2e` | En el PR **listo** con `afecta_web` (suites afectadas) **[CH-61]** y en el que pasa una ficha a `terminada`, con las suites de esa ficha (§13.2, paso 4); en `main` siempre (completo, proyecto `movil`) | `next build`; pila local mínima; usuario de prueba; Playwright; en `main`, además, tamaño de JS y de precache (deterministas, §6.6) | 6–8 min en PR; 10–11 en `main` |
 | `desplegar` | Solo `main`, si todos los anteriores pasaron en la misma corrida | `prisma migrate deploy` en producción; C5, C6 y R15 con `finn_respaldo`; `vercel deploy --prod` (ADR-10, 03 §11.7) | 2–3 min |
 | `nocturno` | Según 6.1 | E2E `escritorio`, `zona-distinta`, `webkit-parcial`; accesibilidad en los dos temas; `SW`; Lighthouse CI, INP y benchmark del motor y de la carga a 10 años (mediana de 5); `PROP` con 10.000 casos; `RES` con volumen sintético | 18–22 min |
 
@@ -1228,9 +1228,9 @@ Es el contenido de `pruebas/verificaciones-previas.json` (M6). Las que quedan **
 | V5-14 | Skew Protection solo en Pro | **Sin prueba permanente:** es un dato de la documentación de Vercel; su efecto lo cubre V5-09 |
 | V5-15 | `error.tsx` con `digest` | PRU-E2E-PWA-002 |
 | V5-16 | Sesión vencida redirige con `volver` | PRU-E2E-ACCESO-001 |
-| V5-17 | `NO_ENCONTRADO` → 404 | PRU-E2E-PWA-003 |
+| V5-17 | `NO_ENCONTRADO` → pantalla «Esto ya no existe.» con su enlace y `noindex` (estado HTTP 200 con `loading.tsx`, **[CH-60]**) | PRU-E2E-PWA-003 |
 | V5-18 | Cobertura del mapa de pantallas (`cobertura.py`) | **Sin prueba permanente:** verifica el documento; en el código lo reemplazan M12 y PRU-SEG-ACCESO-002, que recorren las rutas reales |
-| V5-19 | Señal de carga con `loading.tsx` | PRU-E2E-PWA-004 |
+| V5-19 | Señal de carga: el prefetch del enlace termina y al navegar aparece la señal de `EnlaceFinn`; pintar el `loading.tsx` en navegación es una limitación conocida (**[CH-60]**) | PRU-E2E-PWA-004 |
 | V5-20 | JS por ruta | PRU-REN-PWA-002 |
 | V5-21 | `useLinkStatus` da la señal | PRU-E2E-PWA-005 |
 | V5-22 | Caché del enrutador | PRU-E2E-PWA-006 |

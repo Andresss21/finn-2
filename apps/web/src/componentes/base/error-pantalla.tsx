@@ -6,6 +6,8 @@ import { Icono } from './icono';
 export interface PropsErrorPantalla {
   readonly titulo?: string;
   readonly texto?: string;
+  /** Lo que se busca en el diagnóstico (el `idError`, 05 §7.3), ya con su rótulo. */
+  readonly referencia?: string;
   /** Si falta, no hay botón (por ejemplo, en un error que reintentar no arregla). */
   readonly reintentar?: () => void;
 }
@@ -13,6 +15,7 @@ export interface PropsErrorPantalla {
 export function ErrorPantalla({
   titulo = base.errorTitulo,
   texto = base.errorTexto,
+  referencia,
   reintentar,
 }: PropsErrorPantalla) {
   return (
@@ -22,6 +25,9 @@ export function ErrorPantalla({
       </span>
       <h2 className="text-titulo-seccion text-texto">{titulo}</h2>
       <p className="text-cuerpo-pequeno max-w-70 text-texto-secundario">{texto}</p>
+      {referencia === undefined ? null : (
+        <p className="text-cuerpo-pequeno text-texto-secundario">{referencia}</p>
+      )}
       {reintentar === undefined ? null : (
         <Boton variante="secundaria" onClick={reintentar}>
           {base.reintentar}

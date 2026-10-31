@@ -12,9 +12,14 @@ export type DestinoAcceso =
   | { readonly accion: 'mostrar'; readonly cerrarSesion: boolean }
   | { readonly accion: 'redirigir'; readonly destino: string; readonly cerrarSesion: boolean };
 
-/** 05 §3.6: solo una ruta interna; empieza con `/` y no con `//` ni `/\`. Si no, `/`. */
+/**
+ * 05 §3.6: solo una ruta interna; empieza con `/` y no con `//` ni `/\`, y sin caracteres de control (el navegador
+ * descarta tabuladores y saltos de línea: `/<tab>/x` sería `//x`). Si no, `/`. La usa también `consultar()` (05 §7.3).
+ */
 export const rutaInterna = (volver: string | null): string =>
-  volver !== null && /^\/(?![/\\])/.test(volver) ? volver : '/';
+  volver !== null && /^\/(?![/\\])/.test(volver) && !/[\u0000-\u001f\u007f]/.test(volver)
+    ? volver
+    : '/';
 
 /**
  * @param volver el `?volver=` recibido; se conserva en cada redirección a otra ruta de `ingresar` y es el destino con

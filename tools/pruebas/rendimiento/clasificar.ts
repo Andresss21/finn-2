@@ -25,6 +25,10 @@ export interface Clasificacion {
   excesos: string[];
 }
 
+/** 05 §13.1, CH-61: una ruta tiene formulario si carga la biblioteca; React Hook Form conserva esta opción al minificar. */
+export const cargaBibliotecaDeFormularios = (cuerpos: string[]): boolean =>
+  cuerpos.some((c) => /\bshouldUnregister\b/.test(c));
+
 const kb = (bytes: number): number => Math.round(bytes / 10) / 100; // 05 §13.1: KB = 1.000 bytes
 
 const comunes = (grupo: MedidaRuta[]): Set<string> => {

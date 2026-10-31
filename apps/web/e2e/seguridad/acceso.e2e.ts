@@ -9,6 +9,7 @@ import { createServerClient } from '@supabase/ssr';
 import { expect, test, type APIRequestContext, type BrowserContext } from '@playwright/test';
 import { ingresar } from '../../../../packages/aplicacion/src/autenticacion/supabase.ts';
 import { entrarAal2 } from '../ayudas/sesion.ts';
+import { estados } from '../../src/textos/index.ts';
 
 const WEB = fileURLToPath(new URL('../../', import.meta.url));
 const NEXT = createRequire(import.meta.url).resolve('next/dist/bin/next');
@@ -151,7 +152,12 @@ test.describe('PRU-SEG-ACCESO', () => {
         const respuesta = await context.request.get(`http://localhost:${PUERTO_PREVIEW}${r.url}`, {
           maxRedirects: 0,
         });
-        expect(respuesta.status(), r.url).toBe(404);
+        // Con el `loading.tsx` de `(finn)` la respuesta sale en streaming y `notFound()` llega con 200 y `noindex`
+        // (CH-60): lo que se exige es la pantalla «Esto ya no existe.» y que no salga nada de la página de prueba.
+        expect([200, 404], r.url).toContain(respuesta.status());
+        const cuerpo = await respuesta.text();
+        expect(cuerpo, r.url).toContain(estados.noExisteTitulo);
+        expect(cuerpo, r.url).toContain('noindex');
       }
     } finally {
       proceso.kill();

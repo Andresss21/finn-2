@@ -56,9 +56,15 @@ export function fichasPorPiezas(archivo: string, ps: Piezas[]): string[] {
   return cand.filter((c) => c.largo === mayor).map((c) => c.ft);
 }
 
-export function afectadas(e: Entradas, r: Resultado, cambiados: string[]) {
+/** `terminadas`: las fichas que el PR pasa a `terminada`; corren sus suites completas (07 §13.2, paso 4). */
+export function afectadas(
+  e: Entradas,
+  r: Resultado,
+  cambiados: string[],
+  terminadas: string[] = [],
+) {
   const ps = piezas(e.d06);
-  const fts = new Set<string>();
+  const fts = new Set<string>(terminadas);
   let todo = false;
   for (const f of cambiados) {
     const deMapa = e.mapa.filter((m) => globARegex(m.patron).test(f));

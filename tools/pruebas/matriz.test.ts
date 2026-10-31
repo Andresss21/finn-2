@@ -724,6 +724,38 @@ describe('matriz: M15 y M16, cierre de fichas y manuales pendientes (P7-18, V7-1
     expect(i.puertaAbierta).toBe(true);
   });
 
+  it('M15: dentro de un describe, Vitest une fullName con espacios y el id sale del título', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'finn-resultados-'));
+    try {
+      const prueba = (id: string, status: string) => ({
+        title: `${id} [CA-01.3] a`,
+        fullName: `PRU-CMP-ACCESO ${id} [CA-01.3] a`,
+        status,
+      });
+      writeFileSync(
+        join(dir, 'rapido.json'),
+        JSON.stringify({
+          testResults: [
+            {
+              assertionResults: [
+                prueba('PRU-CMP-ACCESO-101', 'passed'),
+                prueba('PRU-CMP-ACCESO-102', 'failed'),
+                { title: 'un caso', fullName: 'PRU-CMP-ACCESO-103 un caso', status: 'passed' },
+              ],
+            },
+          ],
+        }),
+      );
+      expect(resultadosCorrida(dir)).toMatchObject({
+        'PRU-CMP-ACCESO-101': 'pasada',
+        'PRU-CMP-ACCESO-102': 'fallida',
+        'PRU-CMP-ACCESO-103': 'pasada',
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('M15: lee los informes JSON de Vitest y de Playwright de --resultados', () => {
     const dir = mkdtempSync(join(tmpdir(), 'finn-resultados-'));
     try {
@@ -799,6 +831,15 @@ describe('afectadas (07 §13.6, DP-19, CH-01)', () => {
   ];
   const r = verificar(e);
   const quien = (...archivos: string[]) => afectadas(e, r, archivos);
+
+  it('afectadas: una ficha que pasa a terminada agrega sus suites aunque el diff no las toque (07 §13.2)', () => {
+    const sin = afectadas(e, r, ['pruebas/features.json']);
+    const con = afectadas(e, r, ['pruebas/features.json'], ['FT-30']);
+    expect(sin.fts).toEqual([]);
+    expect(sin.grepE2E).toBe('^$');
+    expect(con.fts).toEqual(['FT-30']);
+    expect(con.total).toBeGreaterThan(0);
+  });
 
   it('punto 1: una operación se resuelve por OP-nn-*.ts, en cualquier subcarpeta', () => {
     const a = quien('packages/aplicacion/src/operaciones/tarjetas/OP-23-pagar-tarjeta.ts');
