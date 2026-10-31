@@ -65,7 +65,7 @@ function CuerpoDelMarco({
     <ContextoNavegacionPendiente value={marcar}>
       <a
         href="#contenido"
-        className="text-etiqueta sr-only z-50 rounded-control bg-superficie-elevada px-4 py-3 text-texto focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+        className="text-etiqueta sr-only z-50 rounded-control bg-superficie-elevada px-4 py-3 text-texto focus:not-sr-only focus:inline-flex focus:min-h-11 focus:items-center focus:px-4 focus:py-3 focus:fixed focus:top-2 focus:left-2"
       >
         {navegacion.saltar}
       </a>

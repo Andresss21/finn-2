@@ -18,7 +18,12 @@ export default async function NoExiste() {
         texto={estados.noExisteTexto}
         accion={
           seccion === undefined ? undefined : (
-            <EnlaceFinn href={seccion.ruta}>{estados.irA(seccion.etiqueta)}</EnlaceFinn>
+            <EnlaceFinn
+              href={seccion.ruta}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center"
+            >
+              {estados.irA(seccion.etiqueta)}
+            </EnlaceFinn>
           )
         }
       />
