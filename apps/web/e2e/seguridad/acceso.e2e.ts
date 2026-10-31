@@ -153,7 +153,7 @@ test.describe('PRU-SEG-ACCESO', () => {
           maxRedirects: 0,
         });
         // Con el `loading.tsx` de `(finn)` la respuesta sale en streaming y `notFound()` llega con 200 y `noindex`
-        // (CH-59): lo que se exige es la pantalla «Esto ya no existe.» y que no salga nada de la página de prueba.
+        // (CH-60): lo que se exige es la pantalla «Esto ya no existe.» y que no salga nada de la página de prueba.
         expect([200, 404], r.url).toContain(respuesta.status());
         const cuerpo = await respuesta.text();
         expect(cuerpo, r.url).toContain(estados.noExisteTitulo);

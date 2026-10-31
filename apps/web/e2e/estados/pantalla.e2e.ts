@@ -41,11 +41,11 @@ test.describe('PRU-E2E-PWA', () => {
     expect(await page.content()).not.toContain('fallo-de-programacion');
   });
 
-  test('PRU-E2E-PWA-003 [V5-17] NO_ENCONTRADO y un segmento inválido muestran «Esto ya no existe.» con el enlace a la sección y noindex [CH-59]', async ({
+  test('PRU-E2E-PWA-003 [V5-17] NO_ENCONTRADO y un segmento inválido muestran «Esto ya no existe.» con el enlace a la sección y noindex [CH-60]', async ({
     page,
   }) => {
     for (const caso of ['no-encontrado', 'segmento']) {
-      // Con loading.tsx la respuesta sale en streaming y el estado HTTP ya es 200 (CH-59): lo que se exige es la pantalla.
+      // Con loading.tsx la respuesta sale en streaming y el estado HTTP ya es 200 (CH-60): lo que se exige es la pantalla.
       const respuesta = await page.goto(`${BASE}/${caso}`);
       expect([200, 404], caso).toContain(respuesta?.status());
       await expect(page.getByRole('heading', { name: estados.noExisteTitulo })).toBeVisible();
@@ -98,7 +98,7 @@ test.describe('PRU-E2E-PWA', () => {
     await expect(page).toHaveURL(`${BASE}/vacios?otro=1`);
   });
 
-  test('PRU-E2E-PWA-004 [V5-19] el prefetch del enlace termina y al navegar a la página lenta aparece la señal de EnlaceFinn [CH-59]', async ({
+  test('PRU-E2E-PWA-004 [V5-19] el prefetch del enlace termina y al navegar a la página lenta aparece la señal de EnlaceFinn [CH-60]', async ({
     page,
   }) => {
     // El prefetch del enlace visible (producción) tiene que terminar antes de tocarlo (FE-39, V5-19).
@@ -109,7 +109,7 @@ test.describe('PRU-E2E-PWA', () => {
     );
     await page.goto(`${BASE}/origen`);
     await esperarHidratacion(page);
-    // Lo que se mide (CH-59): el prefetch del enlace visible termina bien. Su respuesta trae el árbol del segmento y no
+    // Lo que se mide (CH-60): el prefetch del enlace visible termina bien. Su respuesta trae el árbol del segmento y no
     // el contenido del loading.tsx, que llega con la respuesta de la navegación.
     expect((await prefetch).status()).toBe(200);
 
@@ -129,7 +129,7 @@ test.describe('PRU-E2E-PWA', () => {
     );
 
     // La señal garantizada al navegar es la de EnlaceFinn (FE-39); pintar el loading.tsx en navegación no se
-    // reproduce con (finn), el slot y Marco (CH-59, limitación conocida).
+    // reproduce con (finn), el slot y Marco (CH-60, limitación conocida).
     const enlace = page.getByRole('link', { name: 'Ir a la página lenta' });
     await enlace.click();
     await expect(enlace).toHaveAttribute('aria-busy', 'true');
