@@ -18,7 +18,7 @@ const clavesDe = (n: number): string[] => [
 const ARCHIVO = fileURLToPath(new URL('../../../tools/db/bootstrap.sql', import.meta.url));
 
 describe('PRU-INT-ESQ', () => {
-  it('PRU-INT-ESQ-108 [MIG-00] CH-53: bootstrap.sql corre con un administrador sin SUPERUSER, deja los atributos de 03 §8.2 y el dueño del esquema, no deja SET sobre finn_migraciones y se puede repetir', async () => {
+  it('PRU-INT-ESQ-108 MIG-00, CH-53: bootstrap.sql corre con un administrador sin SUPERUSER, deja los atributos de 03 §8.2 y el dueño del esquema, no deja SET sobre finn_migraciones y se puede repetir', async () => {
     if (process.env['CI']) process.env['TESTCONTAINERS_RYUK_DISABLED'] ??= 'true';
     const { PostgreSqlContainer } = await import('@testcontainers/postgresql');
     const contenedor = await new PostgreSqlContainer(
