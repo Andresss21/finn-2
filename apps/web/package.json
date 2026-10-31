@@ -12,6 +12,7 @@
   "dependencies": {
     "@finn/aplicacion": "workspace:*",
     "@finn/dominio": "workspace:*",
+    "@hookform/resolvers": "5.9.1",
     "@radix-ui/react-dialog": "1.1.15",
     "@radix-ui/react-label": "2.1.17",
     "@radix-ui/react-radio-group": "1.5.1",
@@ -27,8 +28,10 @@
     "postcss": "8.5.32",
     "react": "19.3.1",
     "react-dom": "19.3.1",
+    "react-hook-form": "7.90.0",
     "tailwind-merge": "3.7.0",
-    "tailwindcss": "4.3.3"
+    "tailwindcss": "4.3.3",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
