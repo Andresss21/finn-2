@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { setTimeout as esperar } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { c3, type Consultar } from '../../db/plantilla.ts';
-import { crearUsuario } from './usuario.ts';
+import { crearUsuario, crearUsuarioNoPermitido } from './usuario.ts';
 
 const raiz = fileURLToPath(new URL('../../..', import.meta.url));
 const [HOST, PUERTO_DB] = ['127.0.0.1', 54322];
@@ -117,6 +117,7 @@ export async function levantarPila(): Promise<Record<string, string>> {
   await esperarAuth(url, clavePublica);
   await prepararBase();
   const usuario = await crearUsuario({ url, clavePublica, claveServicio });
+  const otro = await crearUsuarioNoPermitido({ url, clavePublica, claveServicio });
   return {
     DATABASE_URL: urlDe(BASE_E2E, 'app'),
     NEXT_PUBLIC_SUPABASE_URL: url,
@@ -125,6 +126,8 @@ export async function levantarPila(): Promise<Record<string, string>> {
     E2E_EMAIL: usuario.email,
     E2E_CLAVE: usuario.clave,
     E2E_TOTP_SECRETO: usuario.secretoTotp,
+    E2E_OTRO_EMAIL: otro.email,
+    E2E_OTRO_CLAVE: otro.clave,
     // La conexión del ejecutor `int` (packages/db/test/ayudantes/conexion.ts), para `sembrar`
     FINN_ARNES_PG: JSON.stringify({
       host: HOST,

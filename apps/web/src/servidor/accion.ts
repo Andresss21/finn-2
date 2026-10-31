@@ -2,6 +2,7 @@
 // `servidor/acciones/<area>.ts` ('use server') exporta una línea: `export const x = accion(operaciones.OP20_…)`.
 // Este archivo NO lleva 'use server': solo los de `acciones/` exponen Server Actions.
 import { revalidatePath } from 'next/cache';
+import { errorInterno } from '@finn/aplicacion/autenticacion';
 import { errorDeValidacion, type ResultadoAccion } from '@finn/aplicacion/errores';
 import type { ResultadoPrevisualizar } from '@finn/aplicacion/operaciones';
 import { exigirSesionAal2 } from './sesion.ts';
@@ -44,5 +45,22 @@ export function accion<Salida>(definicion: OperacionAccionable<Salida>) {
     const resultado = await definicion.confirmar(resto);
     if (resultado.ok) revalidatePath('/', 'layout');
     return resultado;
+  };
+}
+
+/**
+ * Envoltorio del acceso previo a AAL2 (05 §9, CH-56): sin `exigirSesionAal2()`, porque estas acciones son justamente las que
+ * llevan a AAL2. La exigencia de cada estado la pone su función de CP-11. Devuelve `ResultadoAccion` y no lanza: lo que no se
+ * esperaba sale como `INTERNO`, sin el detalle.
+ */
+export function accionDeAcceso<Salida>(
+  funcion: (cruda: unknown) => Promise<ResultadoAccion<Salida>>,
+) {
+  return async (cruda: unknown): Promise<ResultadoAccion<Salida>> => {
+    try {
+      return await funcion(cruda);
+    } catch {
+      return { ok: false, error: errorInterno() };
+    }
   };
 }

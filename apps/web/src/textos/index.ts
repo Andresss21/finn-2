@@ -6,9 +6,20 @@ import { dominio } from './dominio.ts';
 import { estados } from './estados.ts';
 import { formularios } from './formularios.ts';
 import { alcanceReserva, glosario } from './glosario.ts';
+import { ingreso } from './ingreso.ts';
 import { navegacion } from './navegacion.ts';
 
-export { autenticacion, alcanceReserva, base, dominio, estados, formularios, glosario, navegacion };
+export {
+  autenticacion,
+  alcanceReserva,
+  base,
+  dominio,
+  estados,
+  formularios,
+  glosario,
+  ingreso,
+  navegacion,
+};
 
 /** Áreas registradas, en un arreglo para que una prueba detecte nombres repetidos. */
 export const areas = [
@@ -19,5 +30,6 @@ export const areas = [
   ['formularios', formularios],
   ['glosario', glosario],
   ['alcanceReserva', alcanceReserva],
+  ['ingreso', ingreso],
   ['navegacion', navegacion],
 ] as const;

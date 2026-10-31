@@ -62,3 +62,17 @@ export async function crearUsuario(auth: Auth): Promise<UsuarioE2E> {
   );
   return { id, email, clave, secretoTotp: factor.totp.secret };
 }
+
+/** Un segundo usuario de Auth, sin factores: no es `FINN_USUARIO_ID`, así que Finn lo trata como credenciales inválidas (07 §18). */
+export async function crearUsuarioNoPermitido(
+  auth: Auth,
+): Promise<Pick<UsuarioE2E, 'email' | 'clave'>> {
+  const email = 'otro-usuario-e2e@finn.test';
+  const clave = randomBytes(24).toString('base64url');
+  await pedir(`${auth.url}/auth/v1/admin/users`, auth.claveServicio, {
+    email,
+    password: clave,
+    email_confirm: true,
+  });
+  return { email, clave };
+}

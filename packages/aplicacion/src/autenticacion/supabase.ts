@@ -72,6 +72,9 @@ function interno(): ErrorFinn {
   return { categoria: 'INTERNO', codigo: 'interno', mensaje: mensajeInterno(idError), idError };
 }
 
+/** Para el envoltorio de acceso de la interfaz (CH-56): lo que no se esperaba, sin detalles. */
+export const errorInterno = interno;
+
 type Vacio = Record<string, never>;
 const ok = <T>(valor: T): ResultadoAccion<T> => ({
   ok: true,

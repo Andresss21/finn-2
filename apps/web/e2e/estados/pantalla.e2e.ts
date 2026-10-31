@@ -74,9 +74,13 @@ test.describe('PRU-E2E-PWA', () => {
       incluirArchivadas: true,
     });
 
+    // La sesión AAL2 del beforeEach es real y /ingresar/verificar (FT-01) la devuelve a `volver`: se observa la redirección
+    // en la petición, no la URL final.
+    const peticion = page.waitForRequest(
+      (r) => new URL(r.url()).pathname === '/ingresar/verificar',
+    );
     await page.goto(`${BASE}/sesion?x=1`);
-    await expect(page).toHaveURL(/\/ingresar\/verificar/);
-    const destino = new URL(page.url());
+    const destino = new URL((await peticion).url());
     expect(destino.pathname).toBe('/ingresar/verificar');
     expect(destino.searchParams.get('volver')).toBe(`${BASE}/sesion?x=1`);
   });

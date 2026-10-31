@@ -25,7 +25,7 @@ export default defineConfig({
   // 05 §14.1 (FE-50): la E2E corre contra la compilación de producción, no contra `next dev`.
   webServer: {
     command: `pnpm exec next build && pnpm exec next start -p ${PUERTO}`,
-    // Por puerto: sin sesión `/` redirige a /ingresar, que aún no tiene página (404), y una URL así nunca da «listo».
+    // Por puerto: sin sesión `/` redirige a /ingresar, y una URL que redirige no da «listo».
     port: PUERTO,
     // Nunca uno ajeno: tiene que ser este, con el reloj de prueba (CT-01, P7-10)
     reuseExistingServer: false,
@@ -37,19 +37,29 @@ export default defineConfig({
     },
   },
   projects: [
-    // La sesión AAL2 (05 §14.1). Es dependencia de los demás desde que exista /ingresar (DT-23).
+    // La sesión AAL2 (05 §14.1), por la pantalla real de FT-01. Es dependencia de los demás: `tamano.e2e.ts` la usa para medir.
     { name: 'configuracion', testMatch: '**/*.setup.ts', use: { ...devices['Desktop Chrome'] } },
-    { name: 'movil', use: { ...devices['Pixel 7'] } },
+    {
+      name: 'movil',
+      dependencies: ['configuracion'],
+      use: { ...devices['Pixel 7'] },
+    },
     {
       name: 'escritorio',
+      dependencies: ['configuracion'],
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
     },
     // 05 §14.1: solo `pantallas/` con fechas
     {
       name: 'zona-distinta',
+      dependencies: ['configuracion'],
       testMatch: 'pantallas/**/*.e2e.ts',
       use: { ...devices['Desktop Chrome'], timezoneId: 'Asia/Tokyo' },
     },
-    { name: 'webkit-parcial', use: { ...devices['iPhone 13'] } },
+    {
+      name: 'webkit-parcial',
+      dependencies: ['configuracion'],
+      use: { ...devices['iPhone 13'] },
+    },
   ],
 });
