@@ -8,13 +8,14 @@ import {
 } from '../../../../packages/aplicacion/src/autenticacion/supabase.ts';
 import { codigoTotp } from './totp.ts';
 
-const variable = (n: string): string => {
+export const variable = (n: string): string => {
   const v = process.env[n];
   if (!v) throw new Error(`falta ${n}: lo fija pnpm test:e2e`);
   return v;
 };
 
-export async function entrarAal2(context: BrowserContext, baseURL: string): Promise<void> {
+/** Un cliente de Auth con su frasco de cookies, como el de la petición del servidor. */
+export function clienteConFrasco() {
   const frasco = new Map<string, string>();
   const cliente = createServerClient(
     variable('NEXT_PUBLIC_SUPABASE_URL'),
@@ -30,6 +31,11 @@ export async function entrarAal2(context: BrowserContext, baseURL: string): Prom
       },
     },
   );
+  return { cliente, frasco };
+}
+
+export async function entrarAal2(context: BrowserContext, baseURL: string): Promise<void> {
+  const { cliente, frasco } = clienteConFrasco();
   const finn = variable('FINN_USUARIO_ID');
   const paso = await ingresar(cliente.auth, finn, {
     email: variable('E2E_EMAIL'),

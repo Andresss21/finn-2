@@ -153,3 +153,13 @@ export function relojDeLaBase(reloj: { hoy: string; desfaseMs: number }): {
   const [hoy = '', ahora = ''] = (filas.at(-1) ?? '').split('|');
   return { hoy, ahora };
 }
+
+/** Cuántos eventos de sistema nombran `texto` en el mensaje o en los datos (CA-02.2: el secreto no se registra). */
+export function eventosQueNombran(texto: string): number {
+  const filas = psql(
+    urlDe(BASE_E2E, 'admin'),
+    `SELECT count(*) FROM finn.eventos_sistema WHERE mensaje LIKE '%' || :'t' || '%' OR datos::text LIKE '%' || :'t' || '%';`,
+    { t: texto },
+  );
+  return Number(filas[0] ?? 'NaN');
+}
