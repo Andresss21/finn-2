@@ -19,9 +19,10 @@ import { cambiosDeEstado } from '../pruebas/resumen.ts';
 
 // La base (integracion) y la web (e2e). Un cambio de CI cuenta como los dos: así el workflow se prueba entero.
 // tools/humo/: humo.test.ts (PRU-SEG-OPER-103 y 106) vive en el proyecto `integracion` de vitest.config.ts.
+// tools/respaldo/: un cambio solo en restaurar.sh también tiene que correr sus controles (CH-58).
 const CI = /^(\.github\/|tools\/ci\/|pnpm-lock\.yaml$|infra\/|supabase\/)/;
 const DB =
-  /^(packages\/(db|aplicacion)\/|tools\/(db|humo)\/|apps\/web\/src\/app\/api\/|vitest\.config\.ts$)/;
+  /^(packages\/(db|aplicacion)\/|tools\/(db|humo|respaldo)\/|apps\/web\/src\/app\/api\/|vitest\.config\.ts$)/;
 const WEB = /^(apps\/web\/|packages\/(?!.*\.test\.ts$))/;
 // Los documentos y los scripts de las fases anteriores (07 §13.7, TA-252): docs:comprobar solo si cambian
 const DOCS = /^(docs\/|tools\/docs\/)/;

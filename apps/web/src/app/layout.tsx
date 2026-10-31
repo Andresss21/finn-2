@@ -2,7 +2,7 @@
 // dependan de ella. Suma el tema (CF-10), las fuentes autohospedadas (FE-42) y los estilos (FE-40); el manifiesto
 // lo suma TA-223.
 import type { Metadata, Viewport } from 'next';
-import { Archivo, Big_Shoulders } from 'next/font/google';
+import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { ProveedorTema } from '../componentes/marco/proveedor-tema';
@@ -22,18 +22,33 @@ export const viewport: Viewport = {
   ],
 };
 
-// Archivo variable con los ejes de peso y de ancho; Big Shoulders (el catálogo de next/font ya no lista "Display")
-// solo 700 y 800 (06-identidad-visual §1).
-const archivo = Archivo({
-  subsets: ['latin'],
-  axes: ['wdth'],
+// Archivos versionados en `src/fuentes/` (CH-58): el build no usa la red. Archivo variable, ejes `wght` 100-900 y `wdth`
+// 62-125; Big Shoulders Display solo 700 y 800 (06-identidad-visual §1). `font-stretch` va declarado para que el
+// navegador use el eje de ancho.
+const archivo = localFont({
+  src: '../fuentes/archivo-latin-wdth-normal.woff2',
+  weight: '100 900',
+  style: 'normal',
+  declarations: [{ prop: 'font-stretch', value: '62% 125%' }],
   display: 'swap',
+  preload: true,
   variable: '--tipo-cuerpo',
 });
-const titulos = Big_Shoulders({
-  subsets: ['latin'],
-  weight: ['700', '800'],
+const titulos = localFont({
+  src: [
+    {
+      path: '../fuentes/big-shoulders-display-latin-700-normal.woff2',
+      weight: '700',
+      style: 'normal',
+    },
+    {
+      path: '../fuentes/big-shoulders-display-latin-800-normal.woff2',
+      weight: '800',
+      style: 'normal',
+    },
+  ],
   display: 'swap',
+  preload: true,
   variable: '--tipo-titulo',
 });
 
