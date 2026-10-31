@@ -52,6 +52,14 @@ describe('lint de rutas y flujos (05 §1.3, §15.5)', () => {
     expect(verificarRutas(raiz)).toEqual([expect.stringContaining('«inventada» no está')]);
   });
 
+  it('rechaza una página de (finn)/pruebas que no es force-dynamic (CH-58)', () => {
+    const pagina = 'apps/web/src/app/(finn)/pruebas/x/page.tsx';
+    const raiz = proyecto([pagina]);
+    expect(verificarRutas(raiz)).toEqual([expect.stringContaining('force-dynamic')]);
+    writeFileSync(join(raiz, pagina), "export const dynamic = 'force-dynamic';\n");
+    expect(verificarRutas(raiz)).toEqual([]);
+  });
+
   it('rechaza una carpeta de flujo con nombre libre y una carpeta de primer nivel desconocida', () => {
     const raiz = proyecto([
       'apps/web/src/flujos/asignar-rapido/lector.tsx',

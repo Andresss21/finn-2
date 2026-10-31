@@ -3,7 +3,15 @@
 // de commit), que gitleaks esté fijado por versión y suma, y las decisiones de tools/ci/afecta.mjs. Control: el secreto
 // falso de tools/lint/controles/secreto.txt hace fallar gitleaks con la configuración por defecto.
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -256,6 +264,33 @@ describe('workflows: nocturno.yml (07 §6.1, §6.5; CH-02)', () => {
   });
 });
 
+describe('workflows: fuentes sin red en el build (CH-58)', () => {
+  const app = join(raiz, 'apps', 'web', 'src');
+
+  it('workflows: apps/web/src no usa next/font/google ni los hosts de Google Fonts', () => {
+    const fuentes = readdirSync(app, { recursive: true, encoding: 'utf8' }).filter((f) =>
+      /\.(tsx?|css)$/.test(f),
+    );
+    expect(fuentes.length).toBeGreaterThan(0);
+    const conRed = fuentes.filter((f) =>
+      /next\/font\/google|fonts\.(googleapis|gstatic)\.com/.test(
+        readFileSync(join(app, f), 'utf8'),
+      ),
+    );
+    expect(conRed).toEqual([]);
+  });
+
+  it('workflows: layout.tsx carga con next/font/local los woff2 versionados, con su licencia OFL al lado', () => {
+    const layout = readFileSync(join(app, 'app', 'layout.tsx'), 'utf8');
+    expect(layout).toContain("from 'next/font/local'");
+    const rutas = [...layout.matchAll(/\.\.\/fuentes\/[\w.-]+\.woff2/g)].map((m) => m[0]);
+    expect(rutas).toHaveLength(3);
+    for (const r of rutas) expect(existsSync(join(app, 'app', r))).toBe(true);
+    for (const l of ['OFL-Archivo.txt', 'OFL-Big-Shoulders-Display.txt'])
+      expect(readFileSync(join(app, 'fuentes', l), 'utf8')).toContain('SIL Open Font License');
+  });
+});
+
 describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
   // Herméticas: afecta.mjs lee ESTADO relativo al cwd, así que corre en un directorio vacío y no ve el modo real del
   // mes que `rapido` restauró de la caché; su `new Date()` queda fijo en el mes de estas pruebas (07 §7.1).
@@ -327,6 +362,11 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
 
   it('workflows: PR en borrador que solo toca tools/humo corre integracion (PRU-SEG-OPER-103 y 106 viven ahí), no e2e', () => {
     const d = decidir('pull_request', 'true', ['tools/humo/patron.ts']);
+    expect(d).toMatchObject({ afecta_db: true, integracion: true, e2e: false });
+  });
+
+  it('workflows: PR en borrador que solo toca tools/respaldo corre integracion, no e2e (CH-58)', () => {
+    const d = decidir('pull_request', 'true', ['tools/respaldo/restaurar.sh']);
     expect(d).toMatchObject({ afecta_db: true, integracion: true, e2e: false });
   });
 

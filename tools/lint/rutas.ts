@@ -69,7 +69,18 @@ export function verificarRutas(raiz: string): string[] {
           .join('/');
         // Rutas del arnés E2E (TA-205, PRU-E2E-PRES-001): `pruebas/…` responde 404 salvo con FINN_ENTORNO=pruebas
         // (`(finn)/pruebas/solo-pruebas.ts`). Las retira el primer flujo corto real.
-        if (ruta.startsWith('pruebas/')) continue;
+        // Sin `force-dynamic`, Next la prerenderiza y `soloEnPruebas()` decide con el entorno de la compilación (CH-58).
+        if (ruta.startsWith('pruebas/')) {
+          const pagina = join(finn, ...segmentos, 'page.tsx');
+          if (
+            existsSync(pagina) &&
+            !/export const dynamic = 'force-dynamic'/.test(readFileSync(pagina, 'utf8'))
+          )
+            fallos.push(
+              `apps/web/src/app/(finn)/${segmentos.join('/')}: una página de pruebas tiene que ser force-dynamic`,
+            );
+          continue;
+        }
         if (!rutas.has(ruta))
           fallos.push(
             `apps/web/src/app/(finn)/${segmentos.join('/')}: la ruta «${ruta}» no está en 05 §1.3`,
