@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { dePlaywright, deVitest, sinRepetir } from './listar.ts';
+import { dePlaywright, deVitest, listaDeVitest, sinRepetir } from './listar.ts';
 import {
   archivosDeCodigo,
   informe,
@@ -262,6 +262,43 @@ describe('inventario: unión de las listas de Vitest y Playwright', () => {
     ]);
     expect(sinRepetir([...v, ...p, ...p])).toHaveLength(2);
     expect(p[0]?.archivo).toBe('apps/web/e2e/pres.e2e.ts');
+  });
+
+  // Corridas 41143522674 y 41143549746: sin Chromium, `vitest list` sale con 0 y solo imprime FC_SEED
+  const SEMILLA = 'FC_SEED=1 (reproducir: FC_SEED=1 pnpm test:unidad -t <id>)\n';
+
+  it('sale con 0 y sin JSON: falla diciéndolo, con su stdout y su stderr', () => {
+    const s = { status: 0, stdout: SEMILLA, stderr: "Executable doesn't exist at /x/chrome" };
+    expect(() => listaDeVitest(s)).toThrow(/no dio JSON/);
+    expect(() => listaDeVitest(s)).toThrow(/FC_SEED=1/);
+    expect(() => listaDeVitest(s)).toThrow(/Executable doesn't exist/);
+    expect(() => listaDeVitest(s)).not.toThrow(/Unexpected end/);
+  });
+
+  it('JSON truncado o que no es una lista: falla con el mismo mensaje', () => {
+    for (const stdout of [`${SEMILLA}[{"name":"a"`, `${SEMILLA}{"name":"a"}`])
+      expect(() => listaDeVitest({ status: 0, stdout, stderr: '' })).toThrow(/no dio JSON/);
+  });
+
+  it('código distinto de 0: falla con el código, aunque stdout traiga JSON', () => {
+    const s = { status: 1, stdout: '[]', stderr: 'ReferenceError: document is not defined' };
+    expect(() => listaDeVitest(s)).toThrow(/terminó con 1/);
+    expect(() => listaDeVitest(s)).toThrow(/document is not defined/);
+  });
+
+  it('errores sin manejar al recolectar: falla aunque salga con 0 y dé una lista parcial', () => {
+    const s = {
+      status: 0,
+      stdout: '[]',
+      stderr: 'There were unhandled errors during test collection',
+    };
+    expect(() => listaDeVitest(s)).toThrow(/errores sin manejar/);
+  });
+
+  it('salida correcta: quita las líneas previas al JSON y la lista llega a deVitest', () => {
+    const lista = JSON.stringify([{ name: 'PRU-X-1 y', file: '/r/a.cmp.test.tsx' }]);
+    const json = listaDeVitest({ status: 0, stdout: SEMILLA + lista, stderr: '' });
+    expect(deVitest(json, '/r')).toEqual([{ titulo: 'PRU-X-1 y', archivo: 'a.cmp.test.tsx' }]);
   });
 });
 

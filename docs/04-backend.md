@@ -3918,7 +3918,7 @@ Evaluación pedida en la revisión de la Parte A:
 
 - Refresca las cookies de sesión de `@supabase/ssr` en cada navegación (`getClaims()` dentro de `createServerClient` con el adaptador de cookies), como recomienda Supabase para Next.
 - Redirige a `/ingresar` sin sesión y a `/ingresar/verificar` con AAL1 (comprobación optimista, 2.2.5).
-- `matcher`: todo salvo `_next/static`, `_next/image`, íconos, `manifest.webmanifest`, el service worker y `/api/sms`, `/api/tareas/*`, `/api/respaldo/*` (estas tienen su propio secreto). **[F5]** El service worker está en `/serwist/` (CP-17); se excluye también `/sin-conexion`.
+- `matcher`: todo salvo `_next/static`, `_next/image`, íconos, `manifest.webmanifest`, `/serwist/`, `/sin-conexion` y `/api/` (cada Route Handler exige su secreto o su sesión y responde con su código HTTP, BE-07) **[CH-50]**. Consecuencia: `@supabase/ssr` no refresca cookies en `/api/`; queda a cargo del cliente de servidor de cada handler.
 - **[F5] (CP-14)** Agrega a cada petición la cabecera `x-finn-ruta` con la ruta y la búsqueda originales, para que la interfaz arme `?volver=` al pedir la sesión. La cabecera se reemplaza siempre; nunca se toma de la petición entrante.
 - **[F5] (CP-14)** No redirige las rutas de `/ingresar`: su lógica está en las propias páginas (`estadoAcceso()`, 12.2).
 - Corre en Node.js (Next 16).

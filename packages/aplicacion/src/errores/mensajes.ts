@@ -11,6 +11,12 @@ const SIN_ARCHIVAR = 'Elegí una categoría activa.';
 
 /** Código → plantilla. Una función elige entre dos textos según los datos (`nombre_repetido`, R2). */
 export const MENSAJES_RECHAZO: Readonly<Record<string, string | ((d: Datos) => string)>> = {
+  // Autenticación (05 §9.7): las funciones de `autenticacion/supabase.ts`
+  credenciales_invalidas: 'El email o la contraseña no son correctos.',
+  demasiados_intentos: 'Hiciste demasiados intentos. Esperá unos minutos y volvé a intentar.',
+  codigo_incorrecto: 'El código no es correcto. Revisá que sea el de Finn en tu app.',
+  codigo_vencido: 'El código venció. Escribí el que muestra ahora tu app.',
+  inscripcion_no_permitida: 'Ya tenés un factor. Ingresá con tu código.',
   // Comunes
   fecha_posterior_a_hoy: 'La fecha no puede ser posterior a hoy ({hoy}).',
   fecha_anterior_a_apertura:

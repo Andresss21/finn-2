@@ -148,11 +148,12 @@ function rapido(archivos, b, d) {
     ['C1', 'node tools/db/verificar-migraciones.mjs packages/db/prisma/migrations'],
     ['C2', 'bash tools/db/inmutabilidad.sh'],
     ['firmas', 'bash tools/pruebas/firmas.sh origin/main'],
+    // Siempre y antes del inventario: `vitest list` recolecta `componentes` en Chromium
+    ...(enCi ? [['navegadores', NAVEGADORES]] : []),
     ['inventario', 'pnpm pruebas:listar'],
     ['matriz', 'pnpm pruebas:matriz'],
     ...(d.afecta_docs ? [['docs', 'pnpm docs:comprobar']] : []),
     ['minutos', 'node tools/ci/minutos.ts rapido'],
-    ...(enCi && cmp ? [['navegadores', NAVEGADORES]] : []),
     [
       'pruebas',
       `node tools/pruebas/vitest.mjs --project unidad --project escenarios-motor --project contratos${cmp} ${informe}`,

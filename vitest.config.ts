@@ -153,10 +153,26 @@ export default defineConfig({
       },
       {
         extends: false,
+        // La raíz es apps/web: así Vite resuelve sus dependencias (Radix, axe) y toma su postcss.config.mjs, que carga
+        // Tailwind y los tokens como en la aplicación (05 §10.1). Con la caché fría, el prebundle evita que Vite recargue la prueba.
+        root: join(raiz, 'apps', 'web'),
+        optimizeDeps: {
+          include: [
+            'react-dom/client',
+            'axe-core',
+            'class-variance-authority',
+            'clsx',
+            'tailwind-merge',
+            '@radix-ui/react-label',
+            '@radix-ui/react-radio-group',
+            '@radix-ui/react-select',
+            '@radix-ui/react-slot',
+          ],
+        },
         test: {
           ...comun,
           name: 'componentes',
-          include: ['apps/web/src/**/*.cmp.test.tsx'],
+          include: ['src/**/*.cmp.test.tsx'],
           exclude: excluidos,
           // CT-04: modo navegador con el Chromium de Playwright, sin servidor ni base.
           browser: {

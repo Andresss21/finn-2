@@ -422,8 +422,8 @@ tu: TU-06, TU-07
 ### HT-5 Primer despliegue desde CI (P8-7)
 
 ```hito
-despues: TA-281
-requiere: TA-200, TA-201, TA-202, TA-203, TA-204, TA-205, TA-206, TA-207, TA-214, TA-215, TA-216, TA-219, TA-210, TA-211, TA-212, TA-213, TA-224, TA-260, TA-280, TA-281
+despues: TA-247
+requiere: TA-200, TA-201, TA-202, TA-203, TA-204, TA-246, TA-247, TA-205, TA-206, TA-207, TA-214, TA-215, TA-216, TA-219, TA-210, TA-211, TA-212, TA-213, TA-224, TA-260, TA-280, TA-281
 tu: TU-09, TU-12, TU-13
 ```
 
@@ -1300,7 +1300,11 @@ Registro: las TU con procedimiento `PRU-MAN` se registran en `pruebas/manuales/r
 - **Dónde [A2]:** en **una ventana de Git Bash tuya, abierta fuera de Claude Code**, con ninguna sesión de Claude Code corriendo en ella. La clave `service_role` existe **solo en esa sesión de shell**: no se escribe en archivos, en `.env` ni en el historial, y la ventana se cierra al terminar. Ningún agente ejecuta la prueba de humo ni ve la clave.
 - **Pasos:**
   1. `cd /c/finn/repo && git pull`.
-  2. Definir las variables de esa sesión sin que queden en el historial: `read -rs HUMO_ADMIN_URL; export HUMO_ADMIN_URL` (lo mismo con `SUPABASE_SERVICE_ROLE`, copiada del panel en el momento y solo para H-10, y con `VERCEL_TOKEN`, de vida corta y solo para H-09). `HUMO_REF`, `HUMO_POOLER_HOST` y `SUPABASE_URL` no son secretos.
+  2. Definir las variables de esa sesión sin que queden en el historial: `read -rs HUMO_ADMIN_URL; export HUMO_ADMIN_URL` (lo mismo con `SUPABASE_SERVICE_ROLE`, copiada del panel en el momento y solo para H-10, y con `VERCEL_TOKEN`, de vida corta y solo para H-09). `HUMO_REF`, `HUMO_POOLER_HOST` y `SUPABASE_URL` no son secretos y salen de lo que anotaste en TU-06. **[CH-53]** Además:
+     - `HUMO_ADMIN_URL` es la cadena del pooler en modo sesión (Settings → Database → Connection string): usuario `postgres.<ref>`, puerto 5432, la contraseña de la base de TU-06 y `/postgres` al final.
+     - `HUMO_CLAVE_PUBLICA`, con `read -rs`: la clave publicable de TU-06. Sin ella, H-11 falla.
+     - `HUMO_CLAVE_MIGRACIONES`, `HUMO_CLAVE_APP` y `HUMO_CLAVE_RESPALDO`, con `read -rs`: generá las tres antes en el gestor de contraseñas, de 32 caracteres o más y solo con letras y números, porque van tal cual dentro de las URL. H-02 se las fija a `finn_migraciones`, `finn_app` y `finn_respaldo`, y son las **definitivas**: las mismas de `DATABASE_URL` (TU-09), `DIRECT_URL` y `RESPALDO_DB_URL` (TU-12). Si no las definís, `humo.sh` genera otras que no quedan en ningún lado, y antes de TU-09 hay que rotarlas con `tools/db/bootstrap.sql` (04 §14.4).
+     - **Cada ejecución que incluye H-02 cambia las contraseñas de los tres roles reales** por las de esa sesión. Si repetís la prueba completa en otra ventana, definí las mismas tres claves; si usás otras, actualizá las URL de Vercel y de GitHub. `HUMO_PASOS=H-10` (paso 6) no ejecuta H-02 y no cambia ninguna.
   3. `bash tools/humo/humo.sh | tee /c/finn/humo.jsonl`. La salida no tiene secretos (04 §17.1).
   4. Pegar la salida en la conversación.
   5. Cerrar la ventana. Revocar el token de Vercel. Rotar la `service_role` en el panel si dudás de dónde estuvo.
@@ -1511,6 +1515,9 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-45** | OP-43 con una fecha que no coincide con ninguna cuota. Un préstamo con modelo cuya cuota no empareja a ±10 días (Anexo A.2) se rechazaba con `registro_automatico_sin_modelo`, cuyo mensaje dice que falta el modelo. Código nuevo `cuota_sin_coincidencia`: "Esa fecha no corresponde a ninguna cuota del préstamo. Ingresá el desglose a mano." El dominio distingue los dos casos | 04 §3.0.6, §3.7 (OP-43), §7.10; 07 §35; `op-43.ts`, `errores/mensajes.ts`, `tools/ci/docs.test.ts` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-45]** en 04 §3.0.6, §3.7 y §7.10, y 07 §35 (79 rechazos) |
 | **CH-47** | Respaldo o restauración nulos. 03 §7.5 no decía qué pasa con un nulo, y un sistema que nunca respaldó quedaba en silencio. Un `ultimo_respaldo_en` o `ultima_restauracion_en` nulo, o la falta de fila en `estado_respaldo`, mide el mismo plazo desde el primer hecho (el menor entre la `fecha_apertura` más antigua y el primer evento `carga_completa`): avisa cuando pasaron más de 36 horas (respaldo) o más de 35 días (restauración) desde ese hecho, no de inmediato, con la misma clave `respaldo:<día>` / `restauracion:<día>`. Una base sin hechos no avisa. Tres ajustes más: (1) `registro_automatico`, `registro_automatico_fallido` y `ocurrencia_en_periodo_cerrado` envían el push que manda 04 §11.2, después del COMMIT; (2) 04 §10.1, regla 3 de BE-50, se alinea con su tabla y 06 §3.16, que agregan `cuota_proxima`; (3) 02 §Claves: la clave privada de `age` sigue en los secretos de GitHub, con la justificación "los secretos están cifrados y `pull_request` no se los entrega a los forks" | 03 §7.5; 04 §10.1; 02 §Claves; `tareas/diaria.ts`, `tareas/registro-automatico.ts` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-47]** en 03 §7.5, 04 §10.1 y 02 §Claves |
 | **CH-49** | Slot `@superpuesto`. 05 §1.2 pedía `@superpuesto/[...todo]/page.tsx` en el esqueleto, pero con Next 16.4 la build falla ("Unmatched app pages") hasta que haya una ruta que lo emparente. Lo crea la primera tarea con ruta interceptada; TA-200 dejó `default.tsx`. CH-48 queda reservado | 05 §1.2 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-49]** en 05 §1.2 |
+| **CH-52** | Partición de TA-204 por tamaño (DT-02). El alcance completo de TA-204 midió prod=680, 16 archivos y total=1.710 contra una estimación de 380, 10 y 900: pasa el tope de DT-01 aun con el +30 % de las tareas normales (520, 15 y 1.560). La causa es que los estilos son utilidades de Tailwind sobre código generado por shadcn con Radix (05 §10.1, §10.7), que pesa más que el CSS propio que se había probado primero. Se parte: TA-204 conserva `Boton` y `Campo` (con `EntradaTexto`) y la infraestructura común; TA-246, nueva (orden 631), lleva `Seleccion` y `Buscador` con PRU-CMP-VAL-104; TA-247, nueva (orden 632), lleva `Pastillas` y `SelectorSegmentado` con PRU-CMP-VAL-105. HT-5 requiere también TA-246 y TA-247, y su `despues` pasa a TA-247 (E7 pide que las tareas de un hito no pasen del orden de `despues`). FE-43 y FE-47 las cubre solo TA-204 (E8 no admite varios dueños); TA-246 y TA-247 llevan `cubre: —` y completan esos objetivos con sus pruebas. PRU-CMP-VAL-102 queda en TA-204 con su subconjunto (M8 no admite el mismo identificador en archivos distintos). **Además:** (1) L16 se ajusta para que `components/ui` pueda importar `@radix-ui/*`, como exige 05 §10.7 ("Radix debajo"); sigue prohibido desde las pantallas y desde todo lo que no sea `componentes/base`. (2) Las diferencias con las capturas K2 quedan para las fichas que usen estos componentes: el prefijo `$` de los campos de monto, la selección de pocas opciones como selector segmentado y la matriz de estados de cada variante. L15 no se cambia: no reconoce `disabled:` y las clases viven en constantes. El código completo queda en la rama `ta-204-completo` | 08 TA-204, TA-246, TA-247, HT-5; 05 §10.1, §10.7, L15, L16 | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-52]** en 08 TA-204, TA-246, TA-247 y HT-5 |
+| **CH-50** | Autenticación web: `matcher`, nombre, FE-36 y `@supabase/ssr`. (1) 04 §12.4 excluía del `matcher` solo `/api/sms`, `/api/tareas/*` y `/api/respaldo/*`; 08 TA-214 excluye todo `/api/`. Rige todo `/api/`: 04 §11.5 pide que `/api/notificaciones/accion` responda 401 y una redirección del proxy lo impediría (lo mismo `/api/exportar/*` y `/api/pruebas/reloj`), y no baja la seguridad porque el proxy "No es una barrera de seguridad" (04 §2.2.5). Consecuencia: `@supabase/ssr` no refresca cookies en `/api/`; queda a cargo del cliente de servidor de cada handler. (2) `verificarInscripcion` de 08 TA-214 pasa a `completarInscripcion`, como dicen 04 §12.2, 05 CP-11 y 06. (3) 05 §9.2 dice que `proxy.ts` no redirige las rutas de `ingresar`: TA-214 entrega la tabla FE-36 como función pura `destinoAcceso(estado, ruta, volver)` en `@finn/aplicacion/autenticacion` y las páginas la llaman (DT-23). (4) Solo `apps/web` importa `@supabase/ssr` (04 §1.3): `aplicacion` recibe el cliente por una interfaz inyectada, como `SesionServidor`; el proxy redirige con `?volver=` usando la misma ruta y búsqueda de `x-finn-ruta`, y el saneado de V5-16b y c queda con `parametros.ts` | 04 §12.4; 05 §9.2; 08 TA-214 | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-50]** en 04 §12.4 y 08 TA-214 |
+| **CH-53** | Bootstrap con `postgres` no superusuario (H-02). (1) Desde PG16, quien crea un rol sin ser superusuario recibe `ADMIN`, pero no `SET` ni `INHERIT`, y `CREATE SCHEMA … AUTHORIZATION finn_migraciones` falla con `must be able to SET ROLE`. Reproducido con `postgres` en la imagen local de Supabase (17.11; `CREATEROLE`, `CREATEDB`, `REPLICATION` y `BYPASSRLS`, sin `SUPERUSER`). Resolución: `bootstrap.sql` se concede `SET` en una transacción, solo para crear el esquema, y lo revoca al terminar. `BYPASSRLS` no cambia: `postgres` lo tiene, y un rol sin él falla al crear `finn_app`. `WITH SET` exige PG16 o posterior, y `PG_MAYOR` es 17. PRU-INT-ESQ-108 lo ejecuta en `integracion` con un rol equivalente. (2) TU-07 no nombraba `HUMO_CLAVE_MIGRACIONES`, `HUMO_CLAVE_APP`, `HUMO_CLAVE_RESPALDO` ni `HUMO_CLAVE_PUBLICA` (sin ella, H-11 falla), ni avisaba que cada ejecución de H-02 cambia las contraseñas de los roles reales: las generadas se perdían antes de TU-09 y TU-12. Resolución: TU-07 las define, dice de dónde salen y qué pasa al repetir | 03 §10.4.1, §13.5; 08 TU-07; `tools/db/bootstrap.sql`; `pruebas/manuales.md` | **Aprobado por el usuario** (delegado en el orquestador); **aplicado [CH-53]** en 03 §10.4.1, §13.5, 08 TU-07, `tools/db/bootstrap.sql` y `pruebas/manuales.md` |
 
 ---
 
@@ -6343,7 +6350,9 @@ compartido: —
 
 **Terminada cuando.** La prueba pasa; el LEEME dice si los recursos son los de la marca o los provisionales.
 
-#### TA-204 Componentes base I: botones, campos, selección y pastillas
+#### TA-204 Componentes base I: botón y campo
+
+Parte 1 de 3 de la TA-204 original (DT-02, 08 §1.2, CH-52). **Portar desde la rama `ta-204-completo`**, que tiene el código completo de las tres partes: `componentes/base/{boton,campo}.tsx`, `components/ui/{button,input,label,utils}`, `textos/base.ts`, la excepción de L16 en `packages/config/eslint/web.mjs` y el proyecto `componentes` de `vitest.config.ts` (raíz `apps/web`, Tailwind por su `postcss.config.mjs` y `optimizeDeps.include`).
 
 ```tarea
 orden: 304
@@ -6353,27 +6362,104 @@ depende: TA-202
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=380 archivos=10 ca=0 migraciones=0 total=900
+tamano: prod=290 archivos=11 ca=0 migraciones=0 total=620
 cubre: FE-43, FE-47
 pru: PRU-CMP-VAL-102
 compartido: —
 ```
 
 **Qué construir.**
-- Primitivos de shadcn/ui en `components/ui` reestilizados con los tokens y la API de Finn en `componentes/base` (FE-43): Botón (principal, tonal, peligro, discreto, pastilla), Campo, Selección, Buscador, Pastillas, SelectorSegmentado (06-identidad-visual §3, 2.1 a 2.3).
-- Tamaño táctil mínimo con `--tactil-minimo` (FE-47).
+- Primitivos de shadcn/ui en `components/ui` (button con cva y Slot, input, label con Radix) reestilizados con los tokens de Finn (utilidades de Tailwind, 10.1), y en `componentes/base` el `Boton` (principal, secundaria, peligro, discreta, pastilla) y el `Campo` con `EntradaTexto` (06-identidad-visual §3, 2.1 y 2.2) (FE-43).
+- Tamaño táctil mínimo con `--tactil-minimo` (FE-47): 44 px en todo control, también en la pastilla, que en 06 mide 38 (05 §11.5 manda sobre 06).
+- Las dependencias comunes de las tres partes (`@radix-ui/react-label`, `@radix-ui/react-slot`, `class-variance-authority`, `clsx`, `tailwind-merge`, y `axe-core` de desarrollo), la regla L16 ajustada y el proyecto de componentes con Tailwind.
 
-**Leer.** 05 §10.7, §10.9, §11.5; 06-identidad-visual §3 (PANTALLAS 2.1 a 2.3).
+**Decisiones de la partición (CH-52).**
+- L16 se ajusta para que `components/ui` pueda importar `@radix-ui/*`, como exige 05 §10.7 ("Radix debajo"); sigue prohibido desde las pantallas y desde todo lo que no sea `componentes/base`.
+- L15 (`finn/jsx-deshabilitado`) no reconoce el prefijo `disabled:`: las clases con `disabled:text-texto-deshabilitado` viven en constantes fuera del JSX. La regla no se cambia aquí.
+- Diferencias con K2 que quedan para las fichas que usen estos componentes: el prefijo `$` de los campos de monto (TA-207), la etiqueta "Solo lectura" en lugar de "Opcional" en un campo de solo lectura, y la matriz de estados de cada variante en el tablero.
+- Variante `pastilla` de `Boton`: agregada por 10.10.
 
-**Archivos.** `apps/web/src/components/ui/*`, `apps/web/src/componentes/base/{boton,campo,seleccion,pastillas,selector-segmentado}.tsx`.
+**Leer.** 05 §10.7, §10.9, §11.5; 06-identidad-visual §3 (PANTALLAS 2.1 y 2.2).
+
+**Archivos.** `apps/web/src/components/ui/{button,input,label,utils}.ts*`, `apps/web/src/componentes/base/{boton,campo}.tsx`, `apps/web/src/textos/{base,index}.ts`, `packages/config/eslint/web.mjs`, `vitest.config.ts`, `apps/web/package.json`.
 
 **Pruebas primero.**
-- **PRU-CMP-VAL-102** (nueva, DT-17): botones, campos, selección, pastillas de filtro y selector segmentado: nombre accesible, foco visible, estados deshabilitado con motivo y enviando, y objetivos de 44 × 44 px; axe sin violaciones en los dos temas.
+- **PRU-CMP-VAL-102** (nueva, DT-17): botones y campos: nombre accesible, foco visible, estados deshabilitado con motivo y enviando, y objetivos de 44 × 44 px; axe sin violaciones en los dos temas.
 - La prueba nueva.
 
 **Comandos.** `pnpm test:componentes -t "PRU-CMP-VAL-102"`; `pnpm ci:local`.
 
-**Terminada cuando.** La prueba pasa; las capturas K2 se comparan a mano en el informe.
+**Terminada cuando.** La prueba pasa; las capturas K2 de botones y campos se comparan a mano en el informe.
+
+#### TA-246 Componentes base I (parte 2): selección y buscador
+
+Parte 2 de 3 de la TA-204 original (DT-02, 08 §1.2, CH-52). **Portar desde la rama `ta-204-completo`**: `componentes/base/seleccion.tsx`, `components/ui/{select,radio-group}.tsx` y sus pruebas.
+
+```tarea
+orden: 631
+bloque: B4
+hito: HT-5
+depende: TA-204
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=330 archivos=5 ca=0 migraciones=0 total=520
+cubre: —
+pru: PRU-CMP-VAL-104
+compartido: —
+```
+
+**Qué construir.**
+- `Seleccion` (opciones visibles con `RadioGroup` de Radix hasta 7; con más, `Select` de Radix) y `Buscador` (combobox de ARIA con región `status`; descarta las respuestas tardías) (05 §10.7; 06 §3, 2.2).
+- Primitivos `components/ui/select.tsx` y `components/ui/radio-group.tsx` de shadcn.
+
+**Decisiones de la partición (CH-52).** Diferencia con K2 que se trata en la ficha que use `Seleccion`: K2 muestra la selección de pocas opciones como selector segmentado; 05 §10.7 permite los radios visibles y esta parte los usa.
+
+**Leer.** 05 §10.7; 06-identidad-visual §3 (PANTALLAS 2.2).
+
+**Archivos.** `apps/web/src/components/ui/{select,radio-group}.tsx`, `apps/web/src/componentes/base/seleccion.tsx`, `apps/web/package.json` (`@radix-ui/react-select`, `@radix-ui/react-radio-group`).
+
+**Pruebas primero.**
+- **PRU-CMP-VAL-104** (nueva, DT-17): selección con opciones visibles y con lista (apertura real), buscador como combobox con anuncio de resultados y teclado; nombre accesible, foco visible, 44 × 44 px y axe sin violaciones en los dos temas.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-VAL-104"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa; las capturas K2 de selección y buscador se comparan a mano en el informe.
+
+#### TA-247 Componentes base I (parte 3): pastillas y selector segmentado
+
+Parte 3 de 3 de la TA-204 original (DT-02, 08 §1.2, CH-52). **Portar desde la rama `ta-204-completo`**: `componentes/base/{pastillas,selector-segmentado}.tsx`, la variante `filter` de `components/ui/button.tsx` y sus pruebas.
+
+```tarea
+orden: 632
+bloque: B4
+hito: HT-5
+depende: TA-246
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=80 archivos=3 ca=0 migraciones=0 total=200
+cubre: —
+pru: PRU-CMP-VAL-105
+compartido: —
+```
+
+**Qué construir.**
+- `Pastillas` (botones con `aria-pressed`, activa con fondo invertido y peso) y `SelectorSegmentado` (`role="radiogroup"` de Radix) (06 §3, 2.3), con 44 px de alto (05 §11.5 manda sobre 40 y 36 de 06).
+- La variante `filter` del botón de shadcn.
+
+**Leer.** 05 §10.7, §10.9; 06-identidad-visual §3 (PANTALLAS 2.3).
+
+**Archivos.** `apps/web/src/components/ui/button.tsx`, `apps/web/src/componentes/base/{pastillas,selector-segmentado}.tsx`.
+
+**Pruebas primero.**
+- **PRU-CMP-VAL-105** (nueva, DT-17): pastillas y selector segmentado: nombre accesible, foco visible, activo marcado por atributo y peso, y objetivos de 44 × 44 px; axe sin violaciones en los dos temas.
+- La prueba nueva.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-VAL-105"`; `pnpm ci:local`.
+
+**Terminada cuando.** La prueba pasa; las capturas K2 de pastillas y selector segmentado se comparan a mano en el informe.
 
 #### TA-205 Componentes base II: superpuestos, avisos, resultados y vacíos
 
@@ -6487,8 +6573,8 @@ compartido: —
 ```
 
 **Qué construir.**
-- Funciones de 04 §12.2 (`estadoAcceso`, `ingresar`, `verificarFactor`, `salir`, `iniciarInscripcion`, `verificarInscripcion`) con `@supabase/ssr`, que implementan la interfaz de sesión de TA-161 (`getClaims()` para leer, `getUser()` para escribir).
-- `proxy.ts` (04 §12.4) con el `matcher` que excluye `/serwist/`, `/sin-conexion`, `/api/` y los estáticos; tabla de redirecciones de FE-36.
+- Funciones de 04 §12.2 (`estadoAcceso`, `ingresar`, `verificarFactor`, `salir`, `iniciarInscripcion`, `completarInscripcion` **[CH-50]**) con `@supabase/ssr`, que implementan la interfaz de sesión de TA-161 (`getClaims()` para leer, `getUser()` para escribir).
+- `proxy.ts` (04 §12.4) con el `matcher` que excluye `/serwist/`, `/sin-conexion`, `/api/` y los estáticos **[CH-50]**. La tabla de redirecciones de FE-36 es la función pura `destinoAcceso(estado, ruta, volver)` de `@finn/aplicacion/autenticacion`: el proxy se salta `/ingresar*` y las páginas la llaman (son de otras tareas, DT-23) **[CH-50]**.
 
 **Leer.** 04 §12.1 a §12.5; 05 §9.1, §9.2, §3.6; 02 ADR-08.
 
@@ -8483,7 +8569,7 @@ pendiente: CA-54.5>FT-55
 | 301 | TA-201 | B4 | HT-5 | normal | Tokens, temas y fuentes | 220 |
 | 302 | TA-202 | B4 | HT-5 | normal | Íconos de la interfaz y glifos de estado | 120 |
 | 303 | TA-203 | B4 | HT-5 | normal | Recursos de marca y manifiesto | 90 |
-| 304 | TA-204 | B4 | HT-5 | normal | Componentes base I: botones, campos, selección y pastillas | 380 |
+| 304 | TA-204 | B4 | HT-5 | normal | Componentes base I: botón y campo **[CH-52]** | 290 |
 | 305 | TA-205 | B4 | HT-5 | normal | Componentes base II: superpuestos, avisos, resultados y vacíos | 360 |
 | 306 | TA-206 | B4 | HT-5 | normal | Formato, `Monto` e indicador de estado | 300 |
 | 307 | TA-207 | B4 | HT-5 | normal | `EntradaMonto`, `EntradaFecha` y fechas de negocio | 260 |
@@ -8544,6 +8630,8 @@ pendiente: CA-54.5>FT-55
 | 362 | TA-313 | B6 | HT-7 | normal | FT-52 Detalle de cuenta | 360 |
 | 363 | TA-314 | B6 | HT-7 | normal | FT-53 Editar, ordenar, archivar, desarchivar y eliminar cuentas | 360 |
 | 364 | TA-315 | B6 | HT-7 | normal | FT-54 Pagar cuota o abonar a capital | 360 |
+| 631 | TA-246 | B4 | HT-5 | normal | Componentes base I (parte 2): selección y buscador **[CH-52]** | 330 |
+| 632 | TA-247 | B4 | HT-5 | normal | Componentes base I (parte 3): pastillas y selector segmentado **[CH-52]** | 80 |
 
 ---
 
@@ -10623,12 +10711,12 @@ La tabla de pares de §1.8 queda así para todo el plan:
 |---|---|---|
 | Migraciones | TA-051, TA-053, TA-054, TA-055, TA-056, TA-057, TA-058, TA-181, TA-470 | Una a la vez (C2 rechaza el orden de carpetas cruzado); además, TA-051 a TA-059 son `paralelo: no` |
 | `paralelo: no` | TA-050, TA-051, TA-052, TA-053, TA-054, TA-055, TA-056, TA-057, TA-058, TA-059, TA-200, TA-470 | Ninguna otra en paralelo |
-| Dependencias npm nuevas | TA-200, TA-201, TA-204, TA-209, TA-210, TA-214, TA-219, TA-222, TA-223, TA-438 | Una a la vez: `pnpm-lock.yaml` choca. Una tarea que no figura aquí y necesita una dependencia la agrega como desvío (§1.5) y espera a que no corra otra del grupo |
+| Dependencias npm nuevas | TA-200, TA-201, TA-204, TA-246, TA-209, TA-210, TA-214, TA-219, TA-222, TA-223, TA-438 | Una a la vez: `pnpm-lock.yaml` choca. Una tarea que no figura aquí y necesita una dependencia la agrega como desvío (§1.5) y espera a que no corra otra del grupo |
 | E2E local | Desde TA-219, todas | El candado de `pnpm test:e2e` (DT-22) ordena las corridas; las tareas van en paralelo |
 | Mismo archivo de producción | Las declaradas en `paralelo: con` (B0 y TA-176, TA-181, TA-182) | Como dice cada ficha |
 | Server Actions de un área | Dos tareas de fichas que agregan acciones al mismo `servidor/acciones/<area>.ts` | Pueden ir en paralelo: cada acción es una línea nueva; el segundo PR rebasa |
 
-**Dependencias npm de cada tarea del grupo:** TA-200: next, react, react-dom; TA-201: tailwindcss, next-themes; TA-204: primitivos de shadcn/ui (Radix); TA-209: d3-scale, d3-shape; TA-210: react-hook-form, @hookform/resolvers; TA-214: @supabase/ssr; TA-219: @playwright/test, otpauth; TA-222: @lhci/cli; TA-223: @serwist/turbopack; TA-438: @dnd-kit/core (carga diferida, V6-08).
+**Dependencias npm de cada tarea del grupo:** TA-200: next, react, react-dom; TA-201: tailwindcss, next-themes; TA-204: primitivos de shadcn/ui (`@radix-ui/react-label`, `@radix-ui/react-slot`, cva, clsx, tailwind-merge; `axe-core` de desarrollo **[CH-52]**); TA-246: `@radix-ui/react-select`, `@radix-ui/react-radio-group` **[CH-52]**; TA-209: d3-scale, d3-shape; TA-210: react-hook-form, @hookform/resolvers; TA-214: @supabase/ssr; TA-219: @playwright/test, otpauth; TA-222: @lhci/cli; TA-223: @serwist/turbopack; TA-438: @dnd-kit/core (carga diferida, V6-08).
 
 Con 2 agentes (P8-5), `pnpm plan:siguiente` ofrece la siguiente tarea disponible que no choca con la que está en curso según esta tabla.
 
