@@ -301,7 +301,7 @@
 
   "TA-209": { "estado": "pendiente" },
 
-  "TA-210": { "estado": "pendiente" },
+  "TA-210": { "estado": "en_curso", "rama": "ta-210-escritura" },
 
   "TA-211": { "estado": "pendiente" },
 
