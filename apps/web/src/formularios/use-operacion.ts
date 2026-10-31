@@ -54,6 +54,15 @@ const errorDeRed: ErrorFinn = {
   mensaje: formularios.incierto,
 };
 
+/** 05 §4.10: el servidor nuevo no conoce la acción de la pestaña vieja (409 con `Server Action "…" was not found…`). */
+const MENSAJE_ACCION_DESCONOCIDA =
+  /Server Action .* was not found on the server|Failed to find Server Action/i;
+const errorVersionNueva: ErrorFinn = {
+  categoria: 'INTERNO',
+  codigo: 'version_nueva',
+  mensaje: formularios.versionNueva,
+};
+
 function suscribirConexion(avisar: () => void): () => void {
   window.addEventListener('online', avisar);
   window.addEventListener('offline', avisar);
@@ -98,8 +107,9 @@ export function useOperacion(opciones: OpcionesOperacion) {
     async (payload: unknown): Promise<ResultadoAccion<unknown>> => {
       try {
         return await accion(payload);
-      } catch {
-        return { ok: false, error: errorDeRed };
+      } catch (e) {
+        const desfase = e instanceof Error && MENSAJE_ACCION_DESCONOCIDA.test(e.message);
+        return { ok: false, error: desfase ? errorVersionNueva : errorDeRed };
       }
     },
     [accion],
@@ -220,9 +230,30 @@ export function useOperacion(opciones: OpcionesOperacion) {
     return reintentar();
   }, [reintentar]);
 
+  /** 05 §4.10: "Recargar" tras `version_nueva`; el borrador de los flujos largos sobrevive (4.11). */
+  const recargar = useCallback((): void => {
+    window.location.reload();
+  }, []);
+
+  /** Lo que guarda el borrador (4.11): el id de creación y la copia de `esperado` de cuando se abrió. */
+  const paraBorrador = useCallback(
+    () => ({ id: idCreacion.current, esperado: esperado.current }),
+    [],
+  );
+  const restaurarBorrador = useCallback(
+    (guardado: { id: string | null; esperado: Readonly<Record<string, unknown>> | undefined }) => {
+      idCreacion.current = guardado.id;
+      esperado.current = guardado.esperado === undefined ? undefined : { ...guardado.esperado };
+    },
+    [],
+  );
+
   return {
     ...vista,
     enLinea,
+    recargar,
+    paraBorrador,
+    restaurarBorrador,
     motivoSinEnvio: enLinea ? undefined : formularios.sinConexionMotivo,
     enviar,
     confirmar,
