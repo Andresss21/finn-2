@@ -297,7 +297,7 @@
 
   "TA-207": { "estado": "terminada", "pr": 217 },
 
-  "TA-208": { "estado": "pendiente" },
+  "TA-208": { "estado": "terminada", "pr": 218 },
 
   "TA-209": { "estado": "pendiente" },
 
@@ -521,5 +521,7 @@
 
   "TA-549": { "estado": "bloqueada", "motivo": "CF-03" },
 
-  "TA-550": { "estado": "pendiente" }
+  "TA-550": { "estado": "pendiente" },
+
+  "TA-551": { "estado": "pendiente" }
 }
