@@ -519,5 +519,7 @@
 
   "TA-506": { "estado": "pendiente" },
 
-  "TA-549": { "estado": "bloqueada", "motivo": "CF-03" }
+  "TA-549": { "estado": "bloqueada", "motivo": "CF-03" },
+
+  "TA-550": { "estado": "pendiente" }
 }

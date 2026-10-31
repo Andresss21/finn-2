@@ -135,7 +135,7 @@ test.describe('PRU-REN-PWA tiempos', () => {
     ]);
   });
 
-  // Las dos que siguen necesitan pantallas de tareas posteriores. Cuando existan, fallan en el nocturno hasta que se
+  // Las dos que siguen las completa TA-550 (CH-51). Cuando existan, fallan en el nocturno hasta que se
   // escriban sus escenarios: no se quedan omitidas sin que nadie lo note.
   test('PRU-REN-PWA-004 [V5-27] INP: la interacción más lenta de cada escenario, mediana de 3, contra 05 §13.1', () => {
     test.skip(soloNocturno, NOCTURNO);
