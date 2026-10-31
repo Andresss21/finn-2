@@ -52,7 +52,7 @@ test.describe('PRU-E2E-PWA', () => {
     await expect(indicador).toHaveCount(0);
   });
 
-  test('PRU-E2E-PWA-009 [V5-28] tras navegar con un enlace el foco queda en body, el marco no lo mueve y el anunciador de rutas nombra la pantalla', async ({
+  test('PRU-E2E-PWA-009 [V5-28] tras navegar con un enlace «Saltar al contenido» es alcanzable con Tab, el foco al navegar queda en body y el anunciador de rutas nombra la pantalla', async ({
     page,
     context,
     baseURL,
@@ -61,15 +61,18 @@ test.describe('PRU-E2E-PWA', () => {
     await page.goto(ORIGEN);
     await esperarHidratacion(page);
 
-    // El marco publica el Encabezado de la página (FE-06) y el contador va en el nombre accesible del enlace (3.3).
+    // El marco publica el Encabezado de la página (FE-06) y el contador va en el nombre accesible del enlace (3.3, N7).
     await expect(page.locator('html')).toHaveAttribute('data-revision', 'revision-de-prueba');
     await expect(
-      page.getByRole('link', { name: navegacion.bandeja(3), exact: true }),
+      page.getByRole('link', { name: navegacion.notificaciones(2), exact: true }),
     ).toBeVisible();
-    // En computadora hay dos accesos a Notificaciones (la campana y la barra lateral): los dos llevan el contador (N7).
-    await expect(
-      page.getByRole('link', { name: navegacion.notificaciones(2), exact: true }).first(),
-    ).toBeVisible();
+
+    // Al cargar la página, el primer Tab llega a «Saltar al contenido» (11.1) y activarlo enfoca el contenido.
+    await page.keyboard.press('Tab');
+    const saltar = page.getByRole('link', { name: navegacion.saltar });
+    await expect(saltar).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#contenido')).toBeFocused();
 
     const enlace = page.getByRole('link', { name: ENLACE_AL_DESTINO });
     await enlace.focus();
