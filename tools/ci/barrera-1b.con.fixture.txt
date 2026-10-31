@@ -1,0 +1,7 @@
+Vercel CLI 64.0.2
+Retrieving project…
+> Environment Variables found for cuenta-ficticia/finn-2 [198ms]
+
+ name                                  value    type       environments    created
+ FINN_USUARIO_ID                       ficticio plain      Preview         3d ago
+ FINN_HOY_SIMULADO                     Hidden   encrypted  Preview         1m ago

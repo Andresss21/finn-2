@@ -65,6 +65,7 @@ const SCRIPTS: Record<string, string[]> = {
   rapido: ['ci:rapido', 'ci:integracion'],
   e2e: ['ci:e2e'],
   cierre: ['ci:cierre'],
+  desplegar: ['ci:politica-patrones', 'ci:desplegar'],
 };
 const PREPARACION = ['gitleaks', 'pg-version', 'pg-imagen'];
 
@@ -75,8 +76,8 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(Object.keys(wf.on).sort()).toEqual(['pull_request', 'push']);
   });
 
-  it('workflows: jobs rapido, e2e y cierre; sin integracion aparte (M5) ni desplegar (B5)', () => {
-    expect(Object.keys(wf.jobs).sort()).toEqual(['cierre', 'e2e', 'rapido']);
+  it('workflows: jobs rapido, e2e, cierre y desplegar; sin integracion aparte (M5)', () => {
+    expect(Object.keys(wf.jobs).sort()).toEqual(['cierre', 'desplegar', 'e2e', 'rapido']);
     for (const [n, j] of Object.entries(wf.jobs)) expect(j.name).toBe(n);
   });
 
@@ -84,6 +85,43 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(lista(job('rapido').needs)).toEqual([]);
     expect(lista(job('e2e').needs)).toEqual(['rapido']);
     expect(lista(job('cierre').needs).sort()).toEqual(['e2e', 'rapido']);
+  });
+
+  it('workflows: desplegar solo en main, con todo en verde en la misma corrida e integracion dentro de rapido (07 §6.1, M5)', () => {
+    const d = job('desplegar');
+    expect(lista(d.needs).sort()).toEqual(['cierre', 'e2e', 'rapido']);
+    expect(d.if).toContain("github.event_name == 'push'");
+    expect(d.if).toContain("github.ref == 'refs/heads/main'");
+    expect(d.if).toContain("needs.rapido.outputs.integracion == 'true'");
+    // Sin función de estado GitHub agrega success(): un need rojo o saltado no despliega
+    expect(d.if).not.toMatch(/always\(\)|cancelled\(\)|failure\(\)|success\(\)/);
+  });
+
+  it('workflows: desplegar corre politica-patrones sin secretos y da los secretos solo a ci:desplegar, sin guardia que lo saltee (TA-260)', () => {
+    const pasos = job('desplegar').steps;
+    const politica = pasos.findIndex((p) => p.run === 'pnpm ci:politica-patrones');
+    const desplegar = pasos.findIndex((p) => p.run === 'pnpm ci:desplegar');
+    expect(politica).toBeGreaterThanOrEqual(0);
+    expect(politica).toBeLessThan(desplegar);
+    for (const [i, p] of pasos.entries()) {
+      expect(p.if, p.run ?? p.uses).toBeUndefined();
+      if (i !== desplegar) expect(p.env, p.run ?? p.uses).toBeUndefined();
+    }
+    expect(Object.keys(pasos[desplegar]?.env ?? {}).sort()).toEqual([
+      'DIRECT_URL',
+      'GITHUB_TOKEN',
+      'RESPALDO_DB_URL',
+      'VERCEL_ORG_ID',
+      'VERCEL_PROJECT_ID',
+      'VERCEL_TOKEN',
+    ]);
+    expect(pkg.scripts['ci:desplegar']).toBe('node tools/ci/desplegar.mjs');
+    const fijada = (
+      JSON.parse(readFileSync(join(raiz, 'package.json'), 'utf8')) as {
+        devDependencies: Record<string, string>;
+      }
+    ).devDependencies['vercel'];
+    expect(fijada).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
   it('workflows: e2e, integracion y cierre corren según las salidas de rapido', () => {
@@ -140,11 +178,12 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     );
   });
 
-  it('workflows: permisos mínimos; rapido agrega statuses: write (CH-16) y e2e issues: write (07 §7.3)', () => {
+  it('workflows: permisos mínimos; rapido agrega statuses: write (CH-16), e2e issues: write (07 §7.3) y desplegar solo contents: write (CH-64)', () => {
     expect(wf.permissions).toEqual(LECTURA);
     expect(job('rapido').permissions).toEqual({ ...LECTURA, statuses: 'write' });
     expect(job('e2e').permissions).toEqual({ ...LECTURA, issues: 'write' });
     expect(job('cierre').permissions).toBeUndefined();
+    expect(job('desplegar').permissions).toEqual({ contents: 'write' });
   });
 
   it('workflows: rapido restaura el modo de M4 por prefijo antes de ci:rapido, sin guardarlo (07 §6.5)', () => {

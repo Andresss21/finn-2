@@ -1,0 +1,3 @@
+Vercel CLI 64.0.2
+Retrieving project…
+> No Environment Variables found for cuenta-ficticia/finn-2 [160ms]

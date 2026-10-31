@@ -1,0 +1,10 @@
+export type Listado = { status: number | null; salida: string };
+export type Entorno = Record<string, string | undefined>;
+export type CorrerVercel = (args: string[], env?: Entorno) => Listado;
+export const VARIABLES: string[];
+export const ENTORNOS: string[];
+export function enmascarar(texto: unknown, env?: Entorno): string;
+export const correrVercel: CorrerVercel;
+export function variablesEn(salida: string): string[];
+export function comprobar(listar: (entorno: string) => Listado, env?: Entorno): string[];
+export function listarConVercel(env: Entorno, correr?: CorrerVercel): (entorno: string) => Listado;
