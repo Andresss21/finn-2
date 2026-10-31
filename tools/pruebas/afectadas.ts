@@ -74,12 +74,15 @@ export function afectadas(e: Entradas, r: Resultado, cambiados: string[]) {
   // las pruebas de los archivos de prueba que cambiaron se agregan siempre
   for (const p of r.activas) if (cambiados.includes(p.archivo)) pruebas.set(p.id, p);
   const lista = [...pruebas.values()];
-  const e2e = lista.filter((p) => ['E2E', 'SW'].includes(p.nivel)).map((p) => p.id);
+  // 07 §2.3: `REN` web es una prueba de Playwright (`.e2e.ts`), no un `vitest bench` (TA-222)
+  const esE2e = (p: Prueba): boolean =>
+    ['E2E', 'SW'].includes(p.nivel) || p.archivo.endsWith('.e2e.ts');
+  const e2e = lista.filter(esE2e).map((p) => p.id);
   return {
     todo,
     fts: [...fts].sort(),
     grepE2E: todo ? null : e2e.length ? e2e.join('|') : '^$',
-    comandos: comandos(lista.filter((p) => !['E2E', 'SW'].includes(p.nivel))),
+    comandos: comandos(lista.filter((p) => !esE2e(p))),
     total: lista.length,
   };
 }
