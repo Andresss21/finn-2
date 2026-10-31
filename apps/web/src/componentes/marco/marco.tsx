@@ -5,11 +5,14 @@
 // navegación en curso (FE-39). No mueve el foco al navegar (11.2).
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useConexion } from '../../cliente/useConexion';
+import { useRefrescoAutomatico } from '../../cliente/useRefrescoAutomatico';
 import { navegacion } from '../../textos/navegacion';
 import { Icono } from '../base/icono';
 import { AccesoRegistrar, rutaRegistrar } from '../navegacion/acceso-registrar';
 import { Contador } from '../navegacion/contador';
 import { ContextoNavegacionPendiente, EnlaceFinn } from '../navegacion/enlace-finn';
+import { useRefrescar } from '../navegacion/use-refrescar';
 import { MasSecciones, NavegacionApp } from '../navegacion/navegacion-app';
 import { SECCIONES, seccionDeRuta } from '../navegacion/secciones';
 import { Marca } from './marca';
@@ -37,7 +40,10 @@ function CuerpoDelMarco({
   readonly superpuesto: ReactNode;
 }) {
   const pathname = usePathname();
-  const { encabezado } = useEncabezado();
+  const { encabezado, recibidoEn } = useEncabezado();
+  const { enLinea } = useConexion();
+  const refrescar = useRefrescar();
+  useRefrescoAutomatico({ hoy: encabezado?.hoy ?? null, recibidoEn, refrescar });
   const [pendientes, setPendientes] = useState<ReadonlySet<string>>(new Set());
   const marcar = useCallback((id: string, pendiente: boolean) => {
     setPendientes((antes) => {
@@ -69,6 +75,14 @@ function CuerpoDelMarco({
       >
         {navegacion.saltar}
       </a>
+      {enLinea ? null : (
+        <div
+          role="status"
+          className="text-etiqueta fixed inset-x-0 top-15 z-40 bg-superficie-elevada px-5 py-2 text-center text-texto md:top-16 md:left-62"
+        >
+          {navegacion.sinConexion}
+        </div>
+      )}
       {pendientes.size > 0 ? (
         <div
           role="progressbar"

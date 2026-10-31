@@ -2,8 +2,10 @@
 // `useOperacion` (05 §4.3 a §4.9): la única forma de llamar a una Server Action de escritura. Completa la entrada
 // (modo, id de creación, `esperado`, confirmación), ignora el doble envío con una referencia, aplica la tabla de §4.7
 // con un solo reintento automático y trata el fallo de red como INCIERTO. No calcula montos (PF-3).
-import { useCallback, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { ErrorFinn, ResultadoAccion } from '@finn/aplicacion/errores';
+import { operacionIniciada, operacionTerminada } from '../cliente/useRefrescoAutomatico';
+import { useConexion } from '../cliente/useConexion';
 import { formularios } from '../textos/formularios';
 
 export type EstadoOperacion = 'editando' | 'enviando' | 'confirmando' | 'listo' | 'error';
@@ -63,24 +65,6 @@ const errorVersionNueva: ErrorFinn = {
   mensaje: formularios.versionNueva,
 };
 
-function suscribirConexion(avisar: () => void): () => void {
-  window.addEventListener('online', avisar);
-  window.addEventListener('offline', avisar);
-  return () => {
-    window.removeEventListener('online', avisar);
-    window.removeEventListener('offline', avisar);
-  };
-}
-
-/** `false` solo si el navegador dice que no hay conexión (05 §4.8). En el servidor, con conexión. */
-export function useEnLinea(): boolean {
-  return useSyncExternalStore(
-    suscribirConexion,
-    () => navigator.onLine,
-    () => true,
-  );
-}
-
 interface Vista {
   readonly estado: EstadoOperacion;
   readonly exito?: Exito;
@@ -99,7 +83,7 @@ export function useOperacion(opciones: OpcionesOperacion) {
   const ultimo = useRef<Envio | null>(null);
   const confirmacion = useRef<Confirmacion | null>(null);
   const [vista, setVista] = useState<Vista>({ estado: 'editando', impactoCambio: false });
-  const enLinea = useEnLinea();
+  const { enLinea } = useConexion();
   const { accion, creacion = false, previsualizarPrimero = false } = opciones;
   const { esperarOcupado = ESPERA_OCUPADO_MS, alNoAutorizado = IR_A_INGRESAR } = opciones;
 
@@ -123,6 +107,7 @@ export function useOperacion(opciones: OpcionesOperacion) {
         return;
       }
       enVuelo.current = true;
+      operacionIniciada();
       ultimo.current = envio;
       const veniaConfirmando = envio.confirmacion !== undefined;
       setVista((v) => ({ ...v, estado: 'enviando' }));
@@ -145,6 +130,7 @@ export function useOperacion(opciones: OpcionesOperacion) {
         }
       } finally {
         enVuelo.current = false;
+        operacionTerminada();
       }
       if (resultado.ok) {
         if (envio.modo === 'previsualizar') {
