@@ -92,6 +92,12 @@ importers:
       clsx:
         specifier: 2.1.1
         version: 2.1.1
+      d3-scale:
+        specifier: 4.0.2
+        version: 4.0.2
+      d3-shape:
+        specifier: 3.2.0
+        version: 3.2.0
       next:
         specifier: 16.4.1
         version: 16.4.1(@playwright/test@1.56.1)(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -138,6 +144,12 @@ importers:
       '@playwright/test':
         specifier: 1.56.1
         version: 1.56.1
+      '@types/d3-scale':
+        specifier: 4.0.9
+        version: 4.0.9
+      '@types/d3-shape':
+        specifier: 3.1.7
+        version: 3.1.7
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
@@ -1794,6 +1806,9 @@ packages:
 
   '@types/d3-scale@4.0.2':
     resolution: {integrity: sha512-Yk4htunhPAwN0XGlIwArRomOjdoBFXC3+kCxK2Ubg7I9shQlVSJy/pG/Ht5ASN+gdMIalpk8TJ5xV74jFsetLA==}
+
+  '@types/d3-scale@4.0.9':
+    resolution: {integrity: sha512-dLmtwB8zkAeO/juAMfnV+sItKjlsw2lKdZVVy6LRr0cBmegxSABiLEpGVmSJJ8O08i4+sGR6qQtb6WtuwJdvVw==}
 
   '@types/d3-shape@3.1.7':
     resolution: {integrity: sha512-VLvUQ33C+3J+8p+Daf+nYSOsjB4GXp19/S/aGo60m9h1v6XaxjiT82lKVWJCfzhtuZ3yD7i/TPeC/fuKLLOSmg==}
@@ -6620,6 +6635,10 @@ snapshots:
   '@types/d3-path@3.1.1': {}
 
   '@types/d3-scale@4.0.2':
+    dependencies:
+      '@types/d3-time': 3.0.0
+
+  '@types/d3-scale@4.0.9':
     dependencies:
       '@types/d3-time': 3.0.0
 
