@@ -65,7 +65,7 @@ const RAYA =
 // Mapa de clases literales (L13): fila alta (principal) y baja (secundaria).
 const FILAS = {
   alta: 'group text-etiqueta relative flex h-11 items-center gap-3 rounded-control px-3 text-texto aria-[current=page]:bg-superficie-hundida aria-[current=page]:font-bold',
-  baja: 'group text-etiqueta relative flex h-10 items-center gap-3 rounded-control px-3 text-texto aria-[current=page]:bg-superficie-hundida aria-[current=page]:font-bold',
+  baja: 'group text-etiqueta relative flex min-h-11 items-center gap-3 rounded-control px-3 text-texto aria-[current=page]:bg-superficie-hundida aria-[current=page]:font-bold',
 } as const;
 
 function BarraInferior({ secciones, seccionActiva, contadores }: PropsNavegacionApp) {
