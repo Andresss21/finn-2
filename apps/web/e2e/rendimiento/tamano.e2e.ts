@@ -6,6 +6,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { dirname } from 'node:path';
 import { expect, test, type Browser } from '@playwright/test';
 import {
+  cargaBibliotecaDeFormularios,
   clasificar,
   rutasDeFinn,
   tabla,
@@ -28,7 +29,12 @@ async function medir(browser: Browser, origen: string, url: string, conSesion: b
     ...(conSesion ? { storageState: SESION } : {}),
   });
   const page = await contexto.newPage();
-  const respuestas: { path: string; origen: string; bytes: Promise<number> }[] = [];
+  const respuestas: {
+    path: string;
+    origen: string;
+    bytes: Promise<number>;
+    cuerpo: Promise<string>;
+  }[] = [];
   page.on('response', (r) => {
     if (r.request().resourceType() !== 'script') return;
     const u = new URL(r.url());
@@ -36,21 +42,26 @@ async function medir(browser: Browser, origen: string, url: string, conSesion: b
       .request()
       .sizes()
       .then((s) => s.responseBodySize);
-    respuestas.push({ path: u.pathname, origen: u.origin, bytes });
+    const cuerpo = r.text().catch(() => '');
+    respuestas.push({ path: u.pathname, origen: u.origin, bytes, cuerpo });
   });
   const principal = await page.goto(url, { waitUntil: 'load' });
   const scripts: Record<string, number> = {};
   for (const r of respuestas) scripts[r.path] = await r.bytes;
+  const formulario = cargaBibliotecaDeFormularios(
+    await Promise.all(respuestas.map((r) => r.cuerpo)),
+  );
   const final = new URL(page.url()).pathname;
   const ajenos = respuestas.filter((r) => r.origen !== origen).map((r) => r.origen);
   const estado = principal?.status() ?? 0;
   await contexto.close();
-  return { scripts, final, ajenos, estado };
+  return { scripts, final, ajenos, estado, formulario };
 }
 
 interface Recorrido {
   c: Clasificacion;
   conFormulario: number;
+  flujos: number;
   sinMedir: string[];
   ajenos: string[];
   nota: string;
@@ -62,6 +73,7 @@ async function recorrer(browser: Browser, origen: string): Promise<Recorrido> {
   const medidas: MedidaRuta[] = [];
   const sinMedir: string[] = [];
   const ajenos: string[] = [];
+  let flujos = 0;
   const conSesion = existsSync(SESION);
   if (!conSesion) {
     const m = await medir(browser, origen, '/', false);
@@ -80,11 +92,9 @@ async function recorrer(browser: Browser, origen: string): Promise<Recorrido> {
         sinMedir.push(`${ruta}: respondió ${m.estado} y terminó en ${m.final}`);
       } else if (m.final === new URL(url, origen).pathname) {
         const fuente = readFileSync(`src/app${clave}.tsx`, 'utf8');
-        medidas.push({
-          ruta,
-          formulario: /\bflujos\b|PaginaFlujo/.test(fuente), // 05 §13.4: las de `flujos/` (1.4)
-          scripts: m.scripts,
-        });
+        // 05 §1.4: las de `flujos/`. Las de /pruebas/ no cuentan: su flujo corto no tiene formulario
+        if (!ruta.startsWith('/pruebas/') && /\bflujos\b|PaginaFlujo/.test(fuente)) flujos++;
+        medidas.push({ ruta, formulario: m.formulario, scripts: m.scripts });
       } // si no, redirige a otra pantalla (reportes/page.tsx, 1.3): no tiene JS propio
     }
   }
@@ -94,6 +104,7 @@ async function recorrer(browser: Browser, origen: string): Promise<Recorrido> {
   return {
     c: clasificar(medidas, P),
     conFormulario: medidas.filter((m) => m.formulario).length,
+    flujos,
     sinMedir,
     ajenos,
     nota,
@@ -125,6 +136,10 @@ test.describe('PRU-REN-PWA tamaño', () => {
 
   test('PRU-REN-PWA-001 [V5-13, V5-35] la biblioteca de formularios no supera su presupuesto de 05 §13.1', () => {
     expect(r.sinMedir).toEqual([]);
+    // Si React Hook Form perdiera la firma, ninguna ruta tendría formulario: con flujos reales, eso falla
+    expect(r.conFormulario > 0 || r.flujos === 0, 'hay flujos y ninguno carga la biblioteca').toBe(
+      true,
+    );
     test.skip(r.conFormulario === 0, 'Ninguna ruta con formulario todavía (flujos/, 05 §1.4)');
     expect(r.c.formulariosKb).toBeGreaterThan(0);
     expect(r.c.formulariosKb).toBeLessThanOrEqual(P.formulariosKb);

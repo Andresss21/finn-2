@@ -302,8 +302,9 @@ export function resultadosCorrida(dir: string): Record<string, EstadoCorrida> {
     };
     for (const t of j.testResults ?? [])
       for (const a of t.assertionResults ?? [])
+        // Vitest une `fullName` con espacios, no con " > ": dentro de un describe, el id está en `title`
         poner(
-          a.fullName ?? a.title,
+          a.title.startsWith('PRU-') ? a.title : (a.fullName ?? a.title),
           a.status === 'passed' ? 'pasada' : a.status === 'failed' ? 'fallida' : 'omitida',
         );
     for (const s of j.suites ?? []) bajar(s);

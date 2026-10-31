@@ -10,6 +10,7 @@ import {
   decidir,
   e2eDePr,
   minutosCobrados,
+  recortesAplicables,
   recortesVigentes,
   renRojo,
   reservaPendiente,
@@ -84,6 +85,14 @@ describe('minutos: suma, proyección y modo (07 §6.5)', () => {
     const jobs = fx.v7_07.runs.flatMap((r) => r.jobs);
     expect(minutosCobrados(jobs)).toBe(fx.v7_07.minutos);
     expect(minutosCobrados(jobs.map((j) => ({ ...j, labels: ['self-hosted'] })))).toBe(0);
+  });
+
+  it('minutos: un estado viejo no recorta mientras la cuota no recorte; si vuelve a recortar, vale (CH-61)', () => {
+    const viejo = decidir(0, new Date('2026-10-30T15:00:00Z'), 0, null);
+    viejo.recortes = ['e2e-pr-al-pasar-a-listo', 'nocturno-semanal'];
+    const hoy = new Date('2026-10-31T13:00:00Z');
+    expect(recortesAplicables(viejo, hoy)).toEqual([]);
+    expect(recortesAplicables(viejo, hoy, true)).toEqual(viejo.recortes);
   });
 
   it('minutos: 700 minutos al día 12 proyectan 1.808 y 500 proyectan 1.292; los dos quedan en normal (CH-46)', () => {

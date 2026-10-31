@@ -381,23 +381,20 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     });
   });
 
-  it('workflows: en ahorro, un PR listo corre e2e al pasar a listo y no en synchronize (M4, 07 §6.5)', () => {
+  it('workflows: los recortes de un estado guardado antes de CH-46 no se aplican, ni en synchronize (CH-61)', () => {
     conModo('202610', ['e2e-pr-al-pasar-a-listo', 'nocturno-semanal']);
     const web = ['apps/web/src/x.tsx'];
-    expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({
-      integracion: true,
-      e2e: false,
-    });
+    expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({ e2e: true });
+    conModo('202610', ['e2e-pr-al-pasar-a-listo', 'e2e-pr-suspendido']);
     expect(decidir('pull_request', 'false', web, 'ready_for_review')).toMatchObject({ e2e: true });
     expect(decidir('push', '', web, '')).toMatchObject({ e2e: true });
   });
 
-  it('workflows: con e2e de PR suspendido, ni al pasar a listo; el modo de otro mes no cuenta (M4)', () => {
-    const web = ['apps/web/src/x.tsx'];
-    conModo('202610', ['e2e-pr-al-pasar-a-listo', 'e2e-pr-suspendido']);
-    expect(decidir('pull_request', 'false', web, 'ready_for_review')).toMatchObject({ e2e: false });
-    conModo('202609', ['e2e-pr-al-pasar-a-listo', 'e2e-pr-suspendido']);
-    expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({ e2e: true });
+  it('workflows: el PR que pasa una ficha a terminada corre e2e y cierre, en borrador y sin tocar la web (07 §13.2)', () => {
+    mkdirSync(join(cwd, 'pruebas'));
+    writeFileSync(join(cwd, 'pruebas', 'features.json'), JSON.stringify({ 'FT-01': 'terminada' }));
+    const d = decidir('pull_request', 'true', ['pruebas/features.json']);
+    expect(d).toMatchObject({ afecta_web: false, e2e: true, cierre: true });
   });
 
   it('workflows: el estado que minutos escribe en el mes en curso pisa los recortes guardados (CH-46)', () => {
