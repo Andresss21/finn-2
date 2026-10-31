@@ -6,6 +6,9 @@ import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-enca
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn.tsx';
 import { soloEnPruebas } from '../solo-pruebas.ts';
 
+// Sin prerender: `soloEnPruebas()` decide en cada petición, no con el entorno de la compilación (PRU-SEG-ACCESO-002).
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = { title: 'Origen de navegación · Finn' };
 
 // Solo los campos que usa el marco; el resto del `Encabezado` no se lee.
