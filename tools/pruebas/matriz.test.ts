@@ -303,7 +303,10 @@ describe('inventario: unión de las listas de Vitest y Playwright', () => {
 
   // TA-222 y TA-204: Vite avisa antes del JSON, con códigos de color que traen un `[`, o con `[vite]` al inicio
   it.each([
-    ['con color', '\u001b[2m12:00:00\u001b[22m \u001b[36m[vite]\u001b[39m Re-optimizing dependencies\n'],
+    [
+      'con color',
+      '\u001b[2m12:00:00\u001b[22m \u001b[36m[vite]\u001b[39m Re-optimizing dependencies\n',
+    ],
     ['sin color, con [ al inicio de la línea', '[vite] Re-optimizing dependencies\n'],
   ])('una línea de Vite delante del JSON (%s) no rompe la lista', (_caso, linea) => {
     const lista = JSON.stringify([{ name: 'PRU-X-1 y', file: '/r/a.cmp.test.tsx' }]);
