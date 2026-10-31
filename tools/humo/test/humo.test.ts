@@ -6,7 +6,7 @@
 // llevan valores de prueba reconocibles, que se buscan en stdout y stderr. psql y pg_dump corren dentro de los
 // contenedores con `tools/respaldo/test/pg-docker.mjs`, como en PRU-RES-RESP-101.
 import { spawn, spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
@@ -186,6 +186,18 @@ const sql = (consulta: string): string => {
   return r.stdout.trim();
 };
 
+/**
+ * Los textos que los scripts le pasan a psql con `-c` o con `q <url> <sql>` (comun.sh). En Windows, el psql nativo
+ * recibe sus argumentos en la página de códigos del sistema y el servidor rechaza un carácter no ASCII (H-08).
+ */
+const argumentosC = (script: string): string[] =>
+  [
+    ...script.matchAll(
+      /(?:\s(?:-c|--command)[\s=]+|\bq\s+"(?:\$\([^)]*\)|[^"])*"\s+)("(?:[^"\\]|\\.)*"|'[^']*')/g,
+    ),
+  ].map((m) => m[1] ?? '');
+const noAscii = (texto: string): boolean => /[^\t\n\r -~]/.test(texto);
+
 describe('PRU-SEG-OPER', () => {
   it('PRU-SEG-OPER-103 HUMO-base: humo.sh contra una base local con el bootstrap: cada paso de H-01 a H-12 emite una línea JSON { paso, resultado, medido, detalle }, H-01 a H-05, H-07, H-08, H-11 y H-12 pasan (H-06 tiene su propia prueba, TA-243), H-09 con la función de carga local mide 10 cargas de las filas del generador en el esquema humo y lo borra (pasa, o falla solo por el presupuesto de 500 ms), H-10 sin SUPABASE_SERVICE_ROLE queda omitido, y ninguna línea de stdout ni de stderr contiene el valor de una variable secreta; control: un error de psql que nombra un secreto sale tapado', async () => {
     const r = await humoCompleto();
@@ -323,4 +335,25 @@ describe('PRU-SEG-OPER', () => {
     expect(String(h08?.medido['conteos'])).toMatch(/ 0 diferencias$/);
     expect(r.stdout).not.toContain('humoAdminZq89');
   }, 900_000);
+
+  it('PRU-SEG-OPER-109 ningún argumento -c de psql en tools/respaldo/*.sh ni en tools/humo/pasos/*.sh lleva caracteres no ASCII; control: el literal con tilde que rompió H-08 con psql nativo de Windows se detecta', () => {
+    const scripts = ['tools/respaldo', 'tools/humo/pasos'].flatMap((d) =>
+      readdirSync(`${raiz}${d}`)
+        .filter((a) => a.endsWith('.sh'))
+        .map((a) => `${d}/${a}`),
+    );
+    const textos = scripts.map((s) => ({
+      script: s,
+      args: argumentosC(readFileSync(`${raiz}${s}`, 'utf8')),
+    }));
+    const de = (s: string): string[] => textos.find((t) => t.script === s)?.args ?? [];
+    expect(de('tools/respaldo/restaurar.sh').join(' ')).toContain('finn.tomar_bloqueo()');
+    expect(de('tools/humo/pasos/h08-respaldo.sh').join(' ')).toContain('SHOW server_version_num');
+    const conNoAscii = textos.flatMap((t) =>
+      t.args.filter(noAscii).map((a) => `${t.script}: ${a}`),
+    );
+    expect(conNoAscii).toEqual([]);
+    const control = argumentosC(`psql -c "SELECT 'revisión ' || valor" | grep x`);
+    expect(control.filter(noAscii)).toHaveLength(1);
+  });
 });
