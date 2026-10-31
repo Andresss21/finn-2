@@ -294,7 +294,7 @@ Los 15 procedimientos de `docs/07-pruebas.md` §22.1, con los pasos de §29.2, �
 
 **Pasos:**
 
-1. Crear el proyecto de Supabase y definir las variables de entorno de la ejecución: `HUMO_ADMIN_URL`, `HUMO_REF`, `HUMO_POOLER_HOST`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE` (solo H-10) y `VERCEL_TOKEN` (solo H-09). Nada de esto se commitea.
+1. Crear el proyecto de Supabase y definir las variables de entorno de la ejecución: `HUMO_ADMIN_URL`, `HUMO_REF`, `HUMO_POOLER_HOST`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE` (solo H-10) y `VERCEL_TOKEN` (solo H-09), más las que agrega 08 TU-07: `HUMO_CLAVE_PUBLICA` (H-11), `HUMO_CLAVE_MIGRACIONES`, `HUMO_CLAVE_APP` y `HUMO_CLAVE_RESPALDO` (H-02) **[CH-53]**. Nada de esto se commitea.
 2. Ejecutar `tools/humo/humo.sh`. Imprime una línea JSON por paso (`pasa`, `falla` u `omitido`), sin secretos.
 3. Comprobar cada paso de 04 §17.2: H-01 versión de PostgreSQL (15, 16 o 17); H-02 bootstrap con `postgres` no superusuario y atributos de roles; H-03 `CREATE` en la base para `finn_migraciones`; H-04 conexión de los tres roles por Supavisor (6543 y 5432); H-05 migraciones con la CLI nativa de Prisma 7 y `migrate diff` vacío; H-06 patrón transaccional por el pooler; H-07 zona horaria de la sesión; H-08 respaldo por el pooler en modo sesión; H-09 carga del motor desde `iad1` (p95 ≤ 500 ms); H-10 Auth (claves asimétricas, TOTP, recuperación, registro deshabilitado); H-11 Data API desactivada; H-12 limpieza.
 4. Si un paso falla, aplicar su alternativa documentada en 04 §17.2 y registrarla. Si el diff de H-05 no queda vacío por `dbgenerated("finn.ahora()")`, es el disparador de P7-12 b) (§32.1).
