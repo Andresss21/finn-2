@@ -59,6 +59,6 @@ echo "10. Triggers activos tras restaurar"
 if PGPASSWORD="$APP_CLAVE" $PGX psql -X -At -U finn_app -d "$BASE" -c "INSERT INTO finn.deudores (nombre) VALUES ('restauracion')" 2>/dev/null; then
   echo "   una escritura sin bloqueo fue aceptada"; exit 1
 fi
-PGPASSWORD="$APP_CLAVE" $PGX psql -X -At -U finn_app -d "$BASE" -v ON_ERROR_STOP=1 -c "BEGIN; SELECT finn.tomar_bloqueo(); INSERT INTO finn.deudores (nombre) VALUES ('restauracion'); SELECT 'revisión tras escribir: ' || valor FROM finn.revision; ROLLBACK;" | grep revisi
+PGPASSWORD="$APP_CLAVE" $PGX psql -X -At -U finn_app -d "$BASE" -v ON_ERROR_STOP=1 -c "BEGIN; SELECT finn.tomar_bloqueo(); INSERT INTO finn.deudores (nombre) VALUES ('restauracion'); SELECT 'revision tras escribir: ' || valor FROM finn.revision; ROLLBACK;" | grep revisi # solo ASCII en -c: psql nativo de Windows (H-08)
 
 echo "Restauración verificada."
