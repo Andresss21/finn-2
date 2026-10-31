@@ -57,6 +57,8 @@ describe('resumen-revision: DT-20 en tamano.ts', () => {
     ['CLAUDE.md', 'dato', 'instrucciones de los agentes'],
     ['.github/workflows/ci.yml', 'produccion', 'CI y workflows'],
     ['docs/anexos/fase3/schema.prisma', 'dato', undefined],
+    ['apps/web/src/servidor/acciones/indice.ts', 'produccion', 'seguridad'],
+    ['apps/web/src/servidor/acciones/compras.ts', 'produccion', undefined],
   ])('%s (%s) → %s', (ruta, clase, area) => {
     expect(areaCritica({ ruta, clase })).toBe(area);
   });

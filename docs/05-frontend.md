@@ -471,6 +471,7 @@ apps/web/
       accion.ts                  envoltorio de escritura (04 2.2.2)
       lectura.ts                 envoltorio de lecturas interactivas (CP-3)
       acciones/<area>.ts         'use server'; una línea por operación (04 2.2.2)
+      acciones/indice.ts         lista cerrada de acceso previo a AAL2 y rutas públicas (§9, CH-56); sin 'use server'
       lecturas/interactivas.ts   'use server'; solo las dos de CP-3
       sesion.ts                  04 §1.2
     sw/                          service worker (§8, Parte D)
@@ -1890,7 +1891,12 @@ Una acción deshabilitada se muestra con su motivo en texto (no solo con un esti
 
 ## 9. Autenticación en la interfaz
 
-Aplica 04 §12 (flujos, `getClaims()` y `getUser()`, recuperación) a las pantallas. Las funciones de servidor son las de CP-11; las Server Actions que las exponen viven en `apps/web/src/servidor/acciones/autenticacion.ts`, con el envoltorio de escritura (`accion()`), y la interfaz las llama con `useOperacion` (§4).
+Aplica 04 §12 (flujos, `getClaims()` y `getUser()`, recuperación) a las pantallas. Las funciones de servidor son las de CP-11; las Server Actions que las exponen viven en `apps/web/src/servidor/acciones/autenticacion.ts`, y la interfaz las llama con `useOperacion` (§4). **[CH-56]** Son dos grupos:
+
+- **Con `accion()` y `exigirSesionEscritura()`:** `quitarFactor` y `cerrarOtrasSesiones`.
+- **Acceso previo a AAL2, con el envoltorio `accionDeAcceso()`, sin AAL2:** `ingresar`, `verificarFactor`, `iniciarInscripcion`, `completarInscripcion` y `salir`. Devuelven `ResultadoAccion` y no lanzan; la exigencia de cada estado la pone su función de CP-11. Es una lista cerrada, declarada en `servidor/acciones/indice.ts`.
+
+La inscripción desde `/ajustes/seguridad/factores/nuevo` queda como en CP-11: con AAL1, `iniciarInscripcion` se niega si ya hay un factor verificado; la ruta es de `(finn)` y exige AAL2.
 
 ### 9.1 Rutas
 
