@@ -33,12 +33,13 @@ async function clienteAuth(): Promise<ClienteAuth> {
   ).auth;
 }
 
-async function sesionDeLaPeticion(): Promise<SesionServidor> {
+/** La sesión sin exigir nada todavía: para las funciones de `@finn/aplicacion` que exigen por su cuenta. */
+export async function sesionDeLaPeticion(): Promise<SesionServidor> {
   return acceso.sesionDeCliente(await clienteAuth());
 }
 
 /** `FINN_USUARIO_ID` ya validado por la configuración al arrancar (04 §14.2); vacío no autoriza a nadie. */
-const usuarioPermitido = (): string => process.env['FINN_USUARIO_ID'] ?? '';
+export const usuarioPermitido = (): string => process.env['FINN_USUARIO_ID'] ?? '';
 
 /** Server Components y consultas: `getClaims()` (04 §12.3). */
 export async function exigirSesionAal2Lectura(): Promise<ResultadoSesion> {
