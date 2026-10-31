@@ -1,8 +1,8 @@
 'use client';
 // `Marco` (05 §1.2, §1.6, FE-06; 06-identidad-visual §3): lo que rodea a toda pantalla de `(finn)`. Contiene el
-// `ProveedorEncabezado`, la barra superior (marca, Registrar y campana con contador), el enlace «Saltar al contenido» y
-// el indicador global de navegación en curso (FE-39). No mueve el foco al navegar (11.2). La navegación entre secciones
-// (barra inferior, lateral y «Más secciones») es de la ficha siguiente (CH-57).
+// `ProveedorEncabezado`, la barra superior (marca, Registrar y «Más secciones» en teléfono; campana siempre), la
+// navegación entre secciones (barra inferior y lateral), el enlace «Saltar al contenido» y el indicador global de
+// navegación en curso (FE-39). No mueve el foco al navegar (11.2).
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { navegacion } from '../../textos/navegacion';
@@ -10,6 +10,8 @@ import { Icono } from '../base/icono';
 import { AccesoRegistrar, rutaRegistrar } from '../navegacion/acceso-registrar';
 import { Contador } from '../navegacion/contador';
 import { ContextoNavegacionPendiente, EnlaceFinn } from '../navegacion/enlace-finn';
+import { MasSecciones, NavegacionApp } from '../navegacion/navegacion-app';
+import { SECCIONES, seccionDeRuta } from '../navegacion/secciones';
 import { Marca } from './marca';
 import { ProveedorEncabezado, useEncabezado } from './proveedor-encabezado';
 
@@ -52,7 +54,12 @@ function CuerpoDelMarco({
   }, []);
 
   // `null` = sin dato todavía (1.6): ningún cero inventado.
-  const notificaciones = encabezado?.notificacionesNoLeidas ?? null;
+  const contadores = {
+    bandeja: encabezado?.bandejaPorRevisar ?? null,
+    notificaciones: encabezado?.notificacionesNoLeidas ?? null,
+  };
+  const comun = { secciones: SECCIONES, seccionActiva: seccionDeRuta(pathname), contadores };
+  const ruta = rutaRegistrar(pathname);
 
   return (
     <ContextoNavegacionPendiente value={marcar}>
@@ -69,21 +76,33 @@ function CuerpoDelMarco({
           className="fixed inset-x-0 top-0 z-50 h-0.75 animate-pulse bg-accion"
         />
       ) : null}
-      <header className="fixed inset-x-0 top-0 z-30 flex h-15 items-center justify-between bg-fondo pr-2 pl-5">
-        <Marca />
+      <header className="fixed inset-x-0 top-0 z-30 flex h-15 items-center justify-between bg-fondo pr-2 pl-5 md:left-62 md:h-16 md:justify-end md:pr-12">
+        <span className="md:hidden">
+          <Marca />
+        </span>
         <div className="flex items-center gap-1">
-          <AccesoRegistrar ruta={rutaRegistrar(pathname)} />
+          <span className="md:hidden">
+            <AccesoRegistrar ruta={ruta} variante="barra" />
+          </span>
           <EnlaceFinn
             href="/notificaciones"
-            aria-label={navegacion.notificaciones(notificaciones)}
-            className="relative inline-flex size-11 items-center justify-center rounded-pastilla text-texto"
+            aria-label={navegacion.notificaciones(contadores.notificaciones)}
+            className="relative inline-flex size-11 items-center justify-center rounded-pastilla text-texto md:bg-superficie-hundida"
           >
             <Icono nombre="bell" tamano={22} />
-            <Contador valor={notificaciones} />
+            <Contador valor={contadores.notificaciones} />
           </EnlaceFinn>
+          <span className="md:hidden">
+            <MasSecciones {...comun} />
+          </span>
         </div>
       </header>
-      <div id="contenido" tabIndex={-1} className="pt-15 outline-none">
+      <NavegacionApp {...comun} registrar={<AccesoRegistrar ruta={ruta} variante="lateral" />} />
+      <div
+        id="contenido"
+        tabIndex={-1}
+        className="pt-15 pb-28 outline-none md:pt-16 md:pb-0 md:pl-62"
+      >
         {children}
       </div>
       {superpuesto}
