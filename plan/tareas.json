@@ -339,7 +339,7 @@
 
   "TA-253": { "estado": "terminada", "pr": 175 },
 
-  "TA-260": { "estado": "pendiente" },
+  "TA-260": { "estado": "terminada", "rama": "ta-260-job-desplegar", "pr": 240 },
 
   "TA-261": { "estado": "pendiente" },
 

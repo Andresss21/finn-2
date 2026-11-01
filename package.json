@@ -42,6 +42,7 @@
     "ci:cierre": "pnpm exec playwright install --with-deps chromium && pnpm pruebas:listar && node tools/pruebas/matriz.ts verificar --resultados test-results/informes",
     "ci:local": "node tools/ci/afecta.mjs local",
     "ci:politica-patrones": "node tools/ci/politica-patrones.ts",
+    "ci:desplegar": "node tools/ci/desplegar.mjs",
     "test:respaldo": "vitest run --project respaldo --coverage.enabled=false --passWithNoTests",
     "docs:comprobar": "node tools/docs/comprobar.mjs"
   },
@@ -60,6 +61,7 @@
     "prettier": "3.9.10",
     "stylelint": "17.16.0",
     "typescript": "5.9.3",
+    "vercel": "64.0.2",
     "vitest": "4.1.12"
   }
 }

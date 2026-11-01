@@ -4177,7 +4177,7 @@ Job de `main`, después de las pruebas:
 
 **Si C5 o C6 fallan después de migrar:**
 - No se despliega el código.
-- Se envía un push mediante el endpoint de eventos del sistema (ADR-23).
+- **[CH-64]** El job falla y GitHub envía el correo de workflow fallido (CH-02). `desplegar` no escribe eventos. El respaldo diario vuelve a correr C5 y C6, registra la deriva con `POST /api/respaldo/deriva` y la tarea diaria envía el push (04 §16.3, paso 5).
 - Se corrige hacia adelante con una migración nueva. La migración ya aplicada era compatible con el código anterior (11.4), así que la app sigue funcionando mientras tanto.
 
 **Deriva diaria:** el job del respaldo nocturno (ADR-22) ejecuta C5 y C6 contra producción con `finn_respaldo`. Así detecta cambios hechos fuera de las migraciones, por ejemplo un trigger deshabilitado desde el panel de Supabase, y la tarea diaria lo notifica (ADR-11).
