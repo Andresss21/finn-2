@@ -3991,6 +3991,8 @@ Todas se validan con Zod al arrancar (`@finn/aplicacion/config`, BE-08); si falt
 
 `DIRECT_URL` no se configura en Vercel: la aplicación nunca migra.
 
+**TLS verificado con la CA de Supabase [CH-65].** Las conexiones de `pg` a Supabase (`crearCliente`, `consultar` de `ci:desplegar` y `respaldar.mjs`) verifican el certificado con la CA embebida en `packages/db/src/tls.ts` (`configPg`): `ssl: { ca, rejectUnauthorized: true }`. Las URL no cambian: `sslmode=require` se conserva porque lo usan Prisma CLI y `pg_dump`, y `configPg` quita los parámetros `ssl*` solo de la copia que recibe `pg`, para que no pisen esa configuración. La CA vence el **2031-04-26** y debe renovarse antes (TU-20).
+
 **CI y respaldo (secretos de GitHub Actions)**
 
 | Secreto | Uso |

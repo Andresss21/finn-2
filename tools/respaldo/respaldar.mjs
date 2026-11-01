@@ -5,10 +5,12 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import { configPg } from '../../packages/db/src/tls.ts';
 const pg = createRequire(new URL('../../packages/db/package.json', import.meta.url))('pg');
 const [cmd, ...pre] = [...(process.env.FINN_PG_EXEC ?? '').split(' ').filter(Boolean), 'pg_dump'];
 const [url, salida] = process.argv.slice(2);
-const c = new pg.Client({ connectionString: url });
+// TLS verificado con la CA de Supabase (CH-65). pg_dump usa libpq y recibe la URL original, con su `sslmode`.
+const c = new pg.Client(configPg(url));
 await c.connect();
 await c.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
 const snap = (await c.query('SELECT pg_export_snapshot() AS s')).rows[0].s;

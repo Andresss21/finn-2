@@ -11,6 +11,7 @@ export type Pasos = {
 export type Pedir = (url: string, init: RequestInit) => Promise<{ ok: boolean; status: number }>;
 export type Log = (linea: string) => void;
 export const REQUERIDAS: string[];
+export function consultar(url: string, sql: string, Cliente?: unknown): Promise<string[]>;
 export function nombreEtiqueta(env: Entorno): string;
 export function pasosReales(env: Entorno, correr?: CorrerVercel, pedir?: Pedir, log?: Log): Pasos;
 export function desplegar(env: Entorno, pasos: Pasos, log?: Log): Promise<number>;

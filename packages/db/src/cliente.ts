@@ -2,18 +2,24 @@
 // nadie recibe el `PrismaClient` (04 §4.1, BE-11).
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from './generado/prisma/client.ts';
+import { configPg } from './tls.ts';
 
 export type Cliente = PrismaClient;
 
 /**
- * Un cliente sobre `url`: de 1 a 3 conexiones por instancia (ADR-05) y la zona UTC como segunda barrera de la
- * sesión (04 §13.6, decisión 3). Supavisor y PgBouncer pueden ignorar `options`: la barrera que cuenta es el
- * `set_config('TimeZone', 'UTC', true)` de cada transacción.
+ * Las opciones del adaptador: de 1 a 3 conexiones por instancia (ADR-05), TLS verificado con la CA de Supabase (CH-65)
+ * y la zona UTC como segunda barrera de la sesión (04 §13.6, decisión 3). Supavisor y PgBouncer pueden ignorar
+ * `options`: la barrera que cuenta es el `set_config('TimeZone', 'UTC', true)` de cada transacción.
  */
+export const opcionesAdaptador = (url: string) => ({
+  ...configPg(url),
+  options: '-c TimeZone=UTC',
+  max: 3,
+});
+
+/** Un cliente sobre `url`. */
 export const crearCliente = (url: string): Cliente =>
-  new PrismaClient({
-    adapter: new PrismaPg({ connectionString: url, options: '-c TimeZone=UTC', max: 3 }),
-  });
+  new PrismaClient({ adapter: new PrismaPg(opcionesAdaptador(url)) });
 
 const global = globalThis as typeof globalThis & { finnCliente?: Cliente };
 let delProceso: Cliente | undefined;
