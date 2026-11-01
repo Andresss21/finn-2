@@ -1,7 +1,8 @@
 // Operaciones de cuentas OP-01 a OP-06 contra PostgreSQL como `finn_app` (TA-162; 04 §3.1, §4.2, §4.3, §4.6;
 // 01 inv. 22 y 24). Cada caso crea sus propias cuentas (ids 900+) y no depende de otro: lee lo que necesita de la base.
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Hechos, Instante, Uuid } from '@finn/dominio';
+import { calcular, type Hechos, type Instante, type Uuid } from '@finn/dominio';
+import { FechaLocal } from '@finn/dominio/valores';
 import { cargarHechos, escribir, leer, leerInstituciones, Memoria, sqlstateDe } from '@finn/db';
 import { crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY, RELOJ } from '../../db/test/ayudantes/hechos-prueba.ts';
@@ -481,5 +482,96 @@ describe('PRU-INT-CTA', () => {
       ok: true,
       valor: { rechazos: [{ codigo: 'cuenta_con_movimientos' }] },
     });
+  });
+
+  // FT-50 (TA-282): las cuentas nuevas se miden contra la base de prueba con diferencias, no con valores absolutos
+  const instantanea = async () => calcular(await hechos(), FechaLocal.desdeTexto(HOY));
+
+  it('PRU-INT-CTA-103 [CA-50.1, ESC-01, AV-07] crear un ahorro con $1,000.00 sube Listo para asignar $1,000.00 y una tarjeta con deuda $300.00 queda en "te falta reservar" con AV-07, sin tocar LPA', async () => {
+    const antes = await instantanea();
+    expect(await ejecutar(OP01, efectivo(1050, { saldo: '1000.00' }))).toMatchObject({ ok: true });
+    const tras = await instantanea();
+    expect(tras.lpa.total - antes.lpa.total).toBe(100000);
+
+    const tarjetaNueva = await ejecutar(OP01, tarjeta(1051, { saldo: '300.00' }));
+    expect(tarjetaNueva).toMatchObject({ ok: true, avisos: [{ codigo: 'AV-07' }] });
+    const final = await instantanea();
+    expect(final.lpa.total).toBe(tras.lpa.total);
+    expect(final.tarjetas.find((x) => x.tarjetaId === uuid(1051))?.sinRespaldo).toBe(30000);
+  });
+
+  it('PRU-INT-CTA-103 [CA-50.3, ESC-01] un préstamo en curso con capital $5,000.00 y 10 cuotas pagadas no cambia LPA y baja el patrimonio $5,000.00', async () => {
+    const antes = await instantanea();
+    const prestamo = {
+      id: uuid(1052),
+      tipo: 'prestamo',
+      nombre: 'Préstamo en curso',
+      saldo: '5000.00',
+      contraparte: 'Banco',
+      montoOriginal: '8000.00',
+      tipoTasa: 'fija',
+      frecuencia: 'mensual',
+      cuotaPactada: '250.00',
+      plazoCuotas: 36,
+      cuotasPagadasAlCrear: 10,
+    };
+    expect(await ejecutar(OP01, prestamo)).toMatchObject({ ok: true });
+    const tras = await instantanea();
+    expect(tras.lpa.total).toBe(antes.lpa.total);
+    expect(antes.patrimonio.total - tras.patrimonio.total).toBe(500000);
+  });
+
+  it('PRU-INT-CTA-103 [CA-50.4] crear "visa oro" con una tarjeta archivada "Visa Oro" se rechaza con el mensaje de la tarjeta archivada y no escribe', async () => {
+    expect(await ejecutar(OP01, tarjeta(1053, { nombre: 'Visa Oro' }))).toMatchObject({ ok: true });
+    expect(await ejecutar(OP04, { cuentaId: uuid(1053) })).toMatchObject({ ok: true });
+    const antes = await revision();
+    const repetida = await ejecutar(OP01, tarjeta(1054, { nombre: 'visa oro' }));
+    expect(repetida).toMatchObject({
+      ok: false,
+      error: {
+        categoria: 'DOMINIO',
+        codigo: 'nombre_repetido',
+        mensaje:
+          'El nombre visa oro lo usa la tarjeta archivada Visa Oro. Elegí otro o desarchivala.',
+      },
+    });
+    expect(await revision()).toBe(antes);
+  });
+
+  it('PRU-INT-CTA-103 [CA-50.5, CB-14] una segunda cuenta de la misma institución terminada en 4821 se rechaza con ultimos4_repetidos y la de otra institución se acepta', async () => {
+    const h0 = await hechos();
+    const instituciones = await leer((t) => leerInstituciones(t), RELOJ);
+    const bac = instituciones.find((i) => i.nombre === 'BAC')?.id;
+    const agricola = instituciones.find((i) => i.nombre === 'Banco Agrícola')?.id;
+    expect(h0.cuentas.some((c) => c.ultimos4 === '4821')).toBe(false);
+    expect(
+      await ejecutar(OP01, efectivo(1055, { institucionId: bac, ultimos4: '4821' })),
+    ).toMatchObject({ ok: true });
+    expect(
+      await ejecutar(OP01, efectivo(1056, { institucionId: bac, ultimos4: '4821' })),
+    ).toMatchObject({ ok: false, error: { codigo: 'ultimos4_repetidos' } });
+    expect(
+      await ejecutar(OP01, efectivo(1057, { institucionId: agricola, ultimos4: '4821' })),
+    ).toMatchObject({ ok: true });
+  });
+
+  it('PRU-INT-CTA-103 [CA-50.6, INV-22] una tarjeta nueva tiene su categoría de pago en el grupo Pagos de tarjeta con el nombre de la tarjeta', async () => {
+    expect(await ejecutar(OP01, tarjeta(1058, { nombre: 'Visa Platino' }))).toMatchObject({
+      ok: true,
+    });
+    const h = await hechos();
+    const categoria = h.categorias.find((c) => c.tarjetaId === uuid(1058));
+    expect(categoria).toMatchObject({ nombre: 'Visa Platino', clase: 'pago' });
+    expect(h.grupos.find((g) => g.id === categoria?.grupoId)).toMatchObject({
+      nombre: 'Pagos de tarjeta',
+      claveSistema: 'pagos_tarjeta',
+    });
+  });
+
+  it('PRU-INT-CTA-103 [CA-50.7, CB-28] una cuenta con saldo $0.00 se crea sin ninguna transacción', async () => {
+    expect(await ejecutar(OP01, efectivo(1059, { saldo: '0.00' }))).toMatchObject({ ok: true });
+    const h = await hechos();
+    expect(h.cuentas.some((c) => c.id === uuid(1059))).toBe(true);
+    expect(h.efectos.filter((f) => f.cuentaId === uuid(1059))).toEqual([]);
   });
 });

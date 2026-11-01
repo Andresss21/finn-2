@@ -3,6 +3,7 @@
 import { autenticacion } from './autenticacion.ts';
 import { base } from './base.ts';
 import { cuentas } from './cuentas.ts';
+import { cuentasNueva } from './cuentas-nueva.ts';
 import { dominio } from './dominio.ts';
 import { estados } from './estados.ts';
 import { formularios } from './formularios.ts';
@@ -15,6 +16,7 @@ export {
   alcanceReserva,
   base,
   cuentas,
+  cuentasNueva,
   dominio,
   estados,
   formularios,
@@ -28,6 +30,7 @@ export const areas = [
   ['autenticacion', autenticacion],
   ['base', base],
   ['cuentas', cuentas],
+  ['cuentasNueva', cuentasNueva],
   ['dominio', dominio],
   ['estados', estados],
   ['formularios', formularios],

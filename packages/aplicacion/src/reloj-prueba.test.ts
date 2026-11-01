@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   hayVariableDeReloj,
+  instanteDeLaPeticion,
   relojDePrueba,
   relojPermitido,
   type FuentesDeReloj,
@@ -123,5 +124,15 @@ describe('PRU-SEG-RELOJ', () => {
       },
     );
     expect(leidas).toEqual([]);
+  });
+
+  it('PRU-SEG-RELOJ-002 CT-01: instanteDeLaPeticion() suma el desfase del reloj de prueba solo si está permitido', () => {
+    const permitido = { FINN_ENTORNO: 'pruebas', FINN_RELOJ_ARCHIVO: ARCHIVO };
+    // Simulado = real + (instante − fijadoEn): 5 s después de fijarlo, el instante fijado más 5 s
+    expect(instanteDeLaPeticion(permitido, valido)).toBe('2027-02-20T18:00:05.000Z');
+    // Sin la lista de permitidos, el reloj real, sin leer el archivo
+    expect(instanteDeLaPeticion({ ...permitido, VERCEL_ENV: 'preview' }, valido)).toBe(
+      new Date(FIJADO_EN + 5_000).toISOString(),
+    );
   });
 });
