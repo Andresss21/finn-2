@@ -35,3 +35,6 @@ RESULTADO: PASA
 | TU-01 | 2026-10-24 | hecho | Repositorio privado finn-2 y token de grano fino de los agentes |
 | TU-02 | 2026-10-24 | hecho | La 1.0 sin workflows activos; sin minutos consumidos |
 | TU-13 | 2026-10-26 | hecho | SMS BAC: compra (2), sin_clasificar (1); CSV: bac_debito (1), bac_tarjeta (2). Ver pruebas/muestras-cobertura.json |
+| TU-09 | 2026-11-01 | hecho | Proyecto finn-2 sin Git, Root Directory apps/web, Next.js, Node 24, 13 variables en Production; whoami: Logged out |
+| TU-10 | 2026-11-01 | hecho | Claves VAPID cargadas en Vercel |
+| TU-12 | 2026-11-01 | hecho | Grupo desplegar: DIRECT_URL, RESPALDO_DB_URL, VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID; además FINN_ULTIMOS4_REALES |
