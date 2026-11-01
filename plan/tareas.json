@@ -341,7 +341,7 @@
 
   "TA-260": { "estado": "terminada", "rama": "ta-260-job-desplegar", "pr": 240 },
 
-  "TA-261": { "estado": "en_curso", "rama": "ta-261-respaldo-yml" },
+  "TA-261": { "estado": "terminada", "rama": "ta-261-respaldo-yml", "pr": 245 },
 
   "TA-262": { "estado": "pendiente" },
 
