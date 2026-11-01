@@ -1955,7 +1955,7 @@ Lo usan `/ingresar/inscribir` (primer factor, AAL1) y `/ajustes/seguridad/factor
    - se quitan los factores **sin verificar** de intentos anteriores (`mfa.unenroll`), para que un intento abandonado no deje un factor colgado;
    - se llama a `mfa.enroll({ factorType: 'totp', friendlyName })`.
    - El nombre por defecto es "Autenticador" (primer factor) o "Respaldo" (siguiente); se puede cambiar.
-2. **Se muestran** el código QR (`qrSvg`, como imagen con texto alternativo "Código QR para tu app de autenticación") y el **secreto** en texto, agrupado de a 4 caracteres, con "Copiar", para guardarlo en el gestor de contraseñas como factor de respaldo (ADR-08).
+2. **Se muestran** el código QR (`qrSvg`, como imagen con texto alternativo "Código QR para tu app de autenticación") y el **secreto** en texto, agrupado de a 4 caracteres, con "Copiar", para guardarlo en el gestor de contraseñas como factor de respaldo (ADR-08). **[CH-67]** La imagen es un data URI armado con `encodeURIComponent(qrSvg)`, sobre fondo `--marca-icono-figura` (claro en los dos temas) y con margen `--espacio-3`, para que se pueda escanear en tema oscuro.
 3. **El usuario escribe el código** que muestra su app (mismo campo que 9.4). `completarInscripcion({ factorId, codigo })` hace `challenge` y `verify`; con éxito, la sesión es AAL2.
 4. **Al terminar el primer factor**, la pantalla recomienda inscribir uno de respaldo, con el enlace a `/ajustes/seguridad/factores/nuevo` (ADR-08), y sigue a `volver`.
 
