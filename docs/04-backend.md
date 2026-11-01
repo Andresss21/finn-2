@@ -3893,6 +3893,7 @@ function salir(): Promise<ResultadoAccion<{}>>;
 ```
 
 - `ingresar` no exige sesión; `verificarFactor`, `iniciarInscripcion` y `completarInscripcion` del primer factor exigen AAL1 del usuario permitido; el resto, `exigirSesionEscritura()` (12.3).
+- **[CH-67]** `qrSvg` es solo el elemento `<svg>`: `iniciarInscripcion` le quita a `totp.qr_code` el prefijo de data URI y el prólogo que entrega `auth-js`; sin `<svg` responde `interno`.
 - `iniciarInscripcion` quita antes los factores sin verificar de intentos anteriores (`mfa.unenroll`). Códigos propios: `credenciales_invalidas`, `demasiados_intentos`, `codigo_incorrecto`, `codigo_vencido`, `inscripcion_no_permitida`, `factor_unico` (mensajes en 05 §9.7). Sin idempotencia por id: no crean hechos de Finn.
 
 ### 12.3 Verificación en el servidor (BE-55)

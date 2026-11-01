@@ -43,7 +43,7 @@ const CODIGOS_DE_CODIGO = ['codigo_incorrecto', 'codigo_vencido'];
 const quitarEspacios = (texto: string): string => texto.replace(/[\s-]/g, '');
 /** Grupos de 4 caracteres (05 §9.5, paso 2). */
 const agrupar = (secreto: string): string => secreto.replace(/(.{4})(?=.)/g, '$1 ');
-/** El SVG de Supabase como imagen: no se inserta como HTML. */
+/** El SVG (`qrSvg`, sin prefijo: CH-67) como imagen: no se inserta como HTML. */
 const urlDeQr = (svg: string): string =>
   `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
@@ -153,7 +153,7 @@ function PasoCodigo({
         alt={t.altQr}
         width={200}
         height={200}
-        className="mx-auto size-50 rounded-control"
+        className="mx-auto size-50 rounded-control bg-marca-icono-figura p-3"
       />
       <div className="flex flex-col gap-1">
         <span className="text-sm text-texto-secundario">{t.secreto}</span>

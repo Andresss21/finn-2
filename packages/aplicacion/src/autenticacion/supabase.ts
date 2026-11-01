@@ -198,6 +198,15 @@ export const verificarFactor = conUsuario(
   },
 );
 
+/**
+ * `qr_code` llega como `data:image/svg+xml;utf-8,<?xml…?><!-- … --><svg…`, sin codificar (CH-67). `qrSvg` es solo el `<svg>`:
+ * armar el data URI, con `encodeURIComponent`, le toca a quien lo muestra. Sin `<svg` no hay QR que mostrar.
+ */
+function soloSvg(qrCode: string): string | null {
+  const inicio = qrCode.indexOf('<svg');
+  return inicio === -1 ? null : qrCode.slice(inicio);
+}
+
 /** Con AAL1 se niega si hay un factor verificado (04 §12.2); con AAL2 es el respaldo. Quita los colgados (05 §9.5). */
 export const iniciarInscripcion = conUsuario(
   z.object({ nombre: z.string().trim().min(1).optional() }),
@@ -213,7 +222,9 @@ export const iniciarInscripcion = conUsuario(
       friendlyName: entrada.nombre ?? (hayFactor ? 'Respaldo' : 'Autenticador'),
     });
     if (error !== null || data === null) return falla(interno());
-    const { qr_code: qrSvg, secret: secreto, uri } = data.totp;
+    const { qr_code: qrCode, secret: secreto, uri } = data.totp;
+    const qrSvg = soloSvg(qrCode);
+    if (qrSvg === null) return falla(interno());
     return ok({ factorId: data.id, qrSvg, secreto, uri });
   },
 );

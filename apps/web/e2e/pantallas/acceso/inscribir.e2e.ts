@@ -23,6 +23,13 @@ const secretoDe = async (page: Page): Promise<string> => {
   return texto.replace(/\s/g, '');
 };
 
+/** Visible no basta: una imagen rota también lo es, con su texto alternativo. La que decodificó tiene ancho natural. */
+async function esperarQrDecodificado(page: Page): Promise<void> {
+  await expect
+    .poll(() => page.getByAltText(t.altQr).evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
+}
+
 /** Ingresa con la contraseña y espera la pantalla de inscripción con su QR ya mostrado. */
 async function llegarAInscribir(page: Page, volver?: string): Promise<void> {
   await page.context().clearCookies();
@@ -35,6 +42,7 @@ async function llegarAInscribir(page: Page, volver?: string): Promise<void> {
   await page.getByRole('button', { name: t.ingresar }).click();
   await page.waitForURL('**/ingresar/inscribir**');
   await expect(page.getByAltText(t.altQr)).toBeVisible();
+  await esperarQrDecodificado(page);
 }
 
 test.describe('PRU-E2E-ACCESO', () => {
@@ -54,6 +62,7 @@ test.describe('PRU-E2E-ACCESO', () => {
     const primero = await secretoDe(page);
     await page.reload();
     await expect(page.getByAltText(t.altQr)).toBeVisible();
+    await esperarQrDecodificado(page);
     const segundo = await secretoDe(page);
     expect(segundo).not.toBe(primero);
     const factores = await listarFactores(await clienteAal1());
@@ -85,6 +94,39 @@ test.describe('PRU-E2E-ACCESO', () => {
     }, secreto);
     expect(enNavegador).toEqual([false, false, false]);
     expect(eventosQueNombran(secreto)).toBe(0);
+  });
+
+  test('PRU-E2E-ACCESO-112 [] en tema oscuro el QR decodifica y sus módulos oscuros quedan sobre un fondo claro con margen', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await llegarAInscribir(page);
+    await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(13, 16, 19)'); // --fondo oscuro
+    const qr = page.getByAltText(t.altQr);
+    await expect(qr).toHaveCSS('background-color', 'rgb(241, 242, 238)'); // --marca-icono-figura, igual en los dos temas
+    await expect(qr).toHaveCSS('padding-top', '12px'); // --espacio-3
+    // Se pinta como en la pantalla: el fondo del elemento y encima el SVG, que puede no traer fondo propio.
+    const pixeles = await qr.evaluate((img: HTMLImageElement) => {
+      const lienzo = document.createElement('canvas');
+      lienzo.width = 200;
+      lienzo.height = 200;
+      const ctx = lienzo.getContext('2d');
+      if (ctx === null) throw new Error('sin contexto 2d');
+      ctx.fillStyle = getComputedStyle(img).backgroundColor;
+      ctx.fillRect(0, 0, 200, 200);
+      ctx.drawImage(img, 0, 0, 200, 200);
+      const { data } = ctx.getImageData(0, 0, 200, 200);
+      let oscuros = 0;
+      let claros = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        const suma = (data[i] ?? 0) + (data[i + 1] ?? 0) + (data[i + 2] ?? 0);
+        if (suma < 150) oscuros += 1;
+        if (suma > 600) claros += 1;
+      }
+      return { oscuros, claros };
+    });
+    expect(pixeles.oscuros).toBeGreaterThan(0);
+    expect(pixeles.claros).toBeGreaterThan(0);
   });
 
   test('PRU-E2E-ACCESO-108 [CA-02.3] con un código correcto la sesión es AAL2, recomienda un respaldo y al seguir llego a volver', async ({
@@ -138,6 +180,7 @@ test.describe('PRU-E2E-ACCESO', () => {
     await page.goto('/ajustes/seguridad/factores/nuevo');
     await expect(page.getByRole('heading', { name: t.tituloRespaldo })).toBeVisible();
     await expect(page.getByAltText(t.altQr)).toBeVisible();
+    await esperarQrDecodificado(page);
     const secreto = await secretoDe(page);
     await page.getByLabel(t.codigo).fill(codigoDe(secreto));
     await page.getByRole('button', { name: t.confirmar }).click();

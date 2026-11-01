@@ -147,6 +147,7 @@ test.describe('PRU-E2E-ACCESO', () => {
     const inicio = await iniciarInscripcion(auth, finn, {});
     if (!inicio.ok) throw new Error(inicio.error.codigo);
     expect(inicio.valor.qrSvg).toContain('<svg');
+    expect(inicio.valor.qrSvg).not.toMatch(/^data:/); // auth-js lo entrega con ese prefijo: `qrSvg` es solo el SVG
     const codigo = new TOTP({ secret: inicio.valor.secreto }).generate();
     expect(
       await completarInscripcion(auth, finn, { factorId: inicio.valor.factorId, codigo }),
