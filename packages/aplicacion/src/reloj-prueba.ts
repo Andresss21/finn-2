@@ -81,3 +81,15 @@ export function relojDePrueba(
   const simulado = new Date(fuentes.ahoraMs() + desfaseMs).toISOString() as Instante;
   return { hoy: fechaLocalDeInstante(simulado), desfaseMs };
 }
+
+/**
+ * El instante de la petición para `previsualizar` (04 §4.3: `leer()` no lo da; el de `confirmar` es `finn.instante()`): el
+ * reloj real, más el desfase del reloj de prueba cuando está permitido. No se guarda en ninguna parte.
+ */
+export function instanteDeLaPeticion(
+  env: Entorno = process.env,
+  fuentes: FuentesDeReloj = FUENTES_REALES,
+): Instante {
+  const desfaseMs = relojDePrueba(env, fuentes)?.desfaseMs ?? 0;
+  return new Date(fuentes.ahoraMs() + desfaseMs).toISOString() as Instante;
+}
