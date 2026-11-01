@@ -8,6 +8,7 @@ export const navegacion = {
   registrar: 'Registrar',
   marca: 'Finn',
   navegando: 'Navegando',
+  sinConexion: 'Estás sin conexión',
   masDeNoventaYNueve: '99+',
   secciones: {
     inicio: 'Inicio',
