@@ -1,7 +1,11 @@
 // PRU-E2E-PWA-101 (TA-200; 05 §1.2, §6.1; 04 §2.2.4): la compilación real de producción (`next build` y
 // `next start`, que levanta el `webServer` de playwright.config.ts) separa lo público de lo autenticado.
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
+import { prerenderizadasDeFinn } from '../../../tools/pruebas/rendimiento/clasificar.ts';
 import config from '../next.config.ts';
+
+const leer = (f: string): unknown => JSON.parse(readFileSync(f, 'utf8'));
 
 test.describe('PRU-E2E-PWA', () => {
   test('PRU-E2E-PWA-101 [V5-22] /ingresar se sirve sin sesión, (finn)/ redirige a /ingresar?volver= y next.config.ts no cachea datos', async ({
@@ -22,6 +26,19 @@ test.describe('PRU-E2E-PWA', () => {
     expect(experimental['staleTimes']).toBeUndefined();
     expect(experimental['cacheComponents']).toBeUndefined();
     expect((config as Record<string, unknown>)['cacheComponents']).toBeUndefined();
+  });
+
+  // PRU-E2E-PWA-104 (CH-66): se lee la compilación que levantó el `webServer`; el manifiesto trae `/manifest.webmanifest`,
+  // que sí es estático, para que un cambio de formato de Next no deje la prueba en verde sin mirar nada. Que el `after()`
+  // no corra al compilar lo prueba otra barrera, `tools/pruebas/e2e/compilar.mjs`: ese caso no se ve en este manifiesto.
+  test('PRU-E2E-PWA-104 ninguna ruta de (finn), con slots e interceptaciones, queda prerenderizada en la compilación', () => {
+    const rutas = leer('.next/app-path-routes-manifest.json') as Record<string, string>;
+    const prerender = leer('.next/prerender-manifest.json') as Parameters<
+      typeof prerenderizadasDeFinn
+    >[1];
+    expect(Object.keys(rutas).some((c) => c.startsWith('/(finn)/@superpuesto/'))).toBe(true);
+    expect(Object.keys(prerender.routes)).toContain('/manifest.webmanifest');
+    expect(prerenderizadasDeFinn(rutas, prerender)).toEqual([]);
   });
 
   // PRU-E2E-PWA-102 (TA-203; 05 §8.2, §10.11): el manifiesto responde sin sesión con los campos de 05 §8.2 y sus

@@ -80,6 +80,29 @@ export function rutasDeFinn(manifiesto: Record<string, string>): { clave: string
     .map(([clave, ruta]) => ({ clave, ruta }));
 }
 
+/**
+ * Las rutas de `(finn)`, con slots e interceptaciones, que la compilación dejó prerenderizadas (CH-66), según
+ * `.next/app-path-routes-manifest.json` y `.next/prerender-manifest.json`.
+ */
+export function prerenderizadasDeFinn(
+  rutas: Record<string, string>,
+  prerender: {
+    routes: Record<string, { srcRoute?: string | null }>;
+    dynamicRoutes: Record<string, unknown>;
+  },
+): string[] {
+  const estaticas = new Set(Object.keys(prerender.dynamicRoutes));
+  for (const [ruta, { srcRoute }] of Object.entries(prerender.routes)) {
+    estaticas.add(ruta);
+    if (srcRoute) estaticas.add(srcRoute);
+  }
+  return Object.entries(rutas)
+    .filter(
+      ([c, ruta]) => c.startsWith('/(finn)/') && /\/(page|route)$/.test(c) && estaticas.has(ruta),
+    )
+    .map(([, ruta]) => ruta);
+}
+
 /** La URL con la que se mide una ruta; las de parámetros necesitan su ejemplo de la semilla, o `null`. */
 export const urlDe = (ruta: string, ejemplos: Record<string, string>): string | null =>
   ruta.includes('[') ? (ejemplos[ruta] ?? null) : ruta;
