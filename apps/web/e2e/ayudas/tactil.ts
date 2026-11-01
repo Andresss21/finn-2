@@ -1,6 +1,7 @@
 // `revisarTactil` y `revisarReflujo` (05 §14.4; 11.5, 11.8). El selector no busca un elemento de una prueba: enumera
 // todo lo tocable de la pantalla, así que FE-51 no aplica.
 import { expect, type Page } from '@playwright/test';
+import { esperarContenido } from './esperas.ts';
 
 const TOCABLES =
   'button, a:not(p a), input[type="checkbox"], [role="checkbox"], [role="button"], [data-testid^="fila-"]';
@@ -11,6 +12,7 @@ export async function revisarTactil(
   page: Page,
   excepciones: readonly string[] = [],
 ): Promise<void> {
+  await esperarContenido(page);
   const chicos = await page.locator(TOCABLES).evaluateAll(
     (nodos, { minimo, fuera }) =>
       nodos.flatMap((n) => {
@@ -27,6 +29,7 @@ export async function revisarTactil(
 
 /** A 320 px de ancho, la página no se desborda horizontalmente. */
 export async function revisarReflujo(page: Page): Promise<void> {
+  await esperarContenido(page);
   const tamano = page.viewportSize();
   await page.setViewportSize({ width: 320, height: tamano?.height ?? 800 });
   const { scrollWidth, clientWidth } = await page.evaluate(() => {
