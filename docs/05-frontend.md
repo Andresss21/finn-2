@@ -507,6 +507,7 @@ app/
 2. Lanza la puesta al día con `after(() => tareas.ponerAlDia())`, como fija 04 BE-50.
 3. Renderiza `<Marco>` (cliente), que contiene `ProveedorEncabezado` (6.4), los contratos de navegación (§3, Parte B), `useRefrescoAutomatico` (6.7) y `useConexion` (6.9).
 4. Renderiza `{children}` y `{superpuesto}`.
+5. **[CH-66]** Declara `export const dynamic = 'force-dynamic'`: ninguna página ni slot del grupo se prerenderiza, y `next build` no ejecuta el paso 2 ni necesita la base; la E2E compila con `DATABASE_URL` en un puerto cerrado para comprobarlo.
 
 **Layout raíz:** `<html lang="es">`, el proveedor de next-themes con `attribute="class"` (ADR-14) y la fuente provisional del sistema (PF-1). No lee la sesión, para que `ingresar` y `sin-conexion` no dependan de ella.
 

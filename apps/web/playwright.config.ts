@@ -24,7 +24,8 @@ export default defineConfig({
   },
   // 05 §14.1 (FE-50): la E2E corre contra la compilación de producción, no contra `next dev`.
   webServer: {
-    command: `pnpm exec next build && pnpm exec next start -p ${PUERTO}`,
+    // CH-66: la compilación corre sin base (compilar.mjs); `next start`, con la del entorno.
+    command: `node ../../tools/pruebas/e2e/compilar.mjs && pnpm exec next start -p ${PUERTO}`,
     // Por puerto: sin sesión `/` redirige a /ingresar, y una URL que redirige no da «listo».
     port: PUERTO,
     // Nunca uno ajeno: tiene que ser este, con el reloj de prueba (CT-01, P7-10)

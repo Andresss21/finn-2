@@ -3,6 +3,7 @@ import {
   cargaBibliotecaDeFormularios,
   clasificar,
   mediana,
+  prerenderizadasDeFinn,
   rutasDeFinn,
   tabla,
   urlDe,
@@ -138,5 +139,43 @@ describe('rendimiento: clasificar (05 §13.4)', () => {
     expect(tabla(c, null, 'n')).toContain('| Compartido | 139 | — |');
     const antes = { ...c, compartidoKb: 138.5 };
     expect(tabla(c, antes, 'n')).toContain('| Compartido | 139 | +0.5 |');
+  });
+});
+
+describe('prerenderizadasDeFinn (CH-66)', () => {
+  const rutas = {
+    '/(finn)/page': '/',
+    '/(finn)/ajustes/page': '/ajustes',
+    '/(finn)/metas/[metaId]/page': '/metas/[metaId]',
+    '/(finn)/temas/[tema]/page': '/temas/[tema]',
+    '/(finn)/@superpuesto/(.)flujo/page': '/(.)flujo',
+    '/(finn)/layout': '/layout-no-es-ruta',
+    '/manifest.webmanifest/route': '/manifest.webmanifest',
+    '/ingresar/page': '/ingresar',
+  };
+
+  it('nombra las estáticas, los slots y las de parámetros de (finn), y solo esas', () => {
+    expect(
+      prerenderizadasDeFinn(rutas, {
+        routes: {
+          '/ajustes': {},
+          '/(.)flujo': { srcRoute: '/(.)flujo' },
+          '/temas/uno': { srcRoute: '/temas/[tema]' },
+          '/manifest.webmanifest': { srcRoute: null },
+          '/ingresar': {},
+          '/layout-no-es-ruta': {},
+        },
+        dynamicRoutes: { '/metas/[metaId]': {} },
+      }).sort(),
+    ).toEqual(['/(.)flujo', '/ajustes', '/metas/[metaId]', '/temas/[tema]']);
+  });
+
+  it('sin rutas de (finn) en el manifiesto de prerender, ninguna', () => {
+    expect(
+      prerenderizadasDeFinn(rutas, {
+        routes: { '/manifest.webmanifest': {} },
+        dynamicRoutes: {},
+      }),
+    ).toEqual([]);
   });
 });
