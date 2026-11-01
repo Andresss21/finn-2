@@ -583,7 +583,7 @@ docs/                 copia de los documentos de fase e instrucciones para agent
   - **JSON completo de hechos**, con versión de formato: restaurable y legible sin la base.
   - **CSV de transacciones** con sus líneas, para hojas de cálculo.
   - **Supuesto para la Fase 4:** el formato exacto y si existe una importación desde el JSON.
-- **Sin medio de pago **[CH-68]**.** La cuenta de Backblaze no registra ningún medio de pago, así que no hay cobro posible y no hace falta alerta de facturación. Al llegar al límite gratuito de almacenamiento (10 GB), B2 rechaza las subidas con un 403 (`storage_cap_exceeded`) y eso se ve porque el job de respaldo falla (correo de GitHub y, a las 36 h, push de respaldo atrasado). Si el registro pidiera tarjeta, se para y se revisa esta decisión. Además, el bucket es privado y la credencial de GitHub Actions es una clave de aplicación con lectura y escritura limitada a ese bucket.
+- **Sin medio de pago.** **[CH-68]** La cuenta de Backblaze no registra ningún medio de pago, así que no hay cobro posible y no hace falta alerta de facturación. Al llegar al límite gratuito de almacenamiento (10 GB), B2 rechaza las subidas con un 403 (`storage_cap_exceeded`) y eso se ve porque el job de respaldo falla (correo de GitHub y, a las 36 h, push de respaldo atrasado). Si el registro pidiera tarjeta, se para y se revisa esta decisión. Además, el bucket es privado y la credencial de GitHub Actions es una clave de aplicación con lectura y escritura limitada a ese bucket.
 - **Consecuencias.** Costo esperado $0 (sección 6); **[CH-68]** ningún cargo es posible, y pasar el límite gratuito se manifiesta como un respaldo fallido, no como un cobro.
 
 ### ADR-23 — Observabilidad mínima propia
