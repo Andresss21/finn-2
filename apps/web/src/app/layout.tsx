@@ -1,10 +1,11 @@
 // Layout raíz (05 §1.2, FE-02): `<html lang="es">`. No lee la sesión, para que `ingresar` y `sin-conexion` no
-// dependan de ella. Suma el tema (CF-10), las fuentes autohospedadas (FE-42) y los estilos (FE-40); el manifiesto
-// lo suma TA-223.
+// dependan de ella. Suma el tema (CF-10), las fuentes autohospedadas (FE-42) y los estilos (FE-40); el registro del
+// service worker (05 §8.4) va aquí para que también valga en `/ingresar`.
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 import './globals.css';
+import { RegistroServiceWorker } from '../componentes/marco/registro-service-worker';
 import { ProveedorTema } from '../componentes/marco/proveedor-tema';
 import tokens from './tokens.json' with { type: 'json' };
 
@@ -61,6 +62,7 @@ export default function LayoutRaiz({ children }: { readonly children: ReactNode 
     >
       <body>
         <ProveedorTema>{children}</ProveedorTema>
+        <RegistroServiceWorker />
       </body>
     </html>
   );

@@ -11,6 +11,8 @@
   { "patron": "apps/web/src/app/(finn)/page.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/ingresar/layout.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/sin-conexion/layout.tsx", "fts": "marco" },
+  { "patron": "apps/web/src/app/sin-conexion/page.tsx", "fts": "marco" },
+  { "patron": "apps/web/src/app/serwist/**", "fts": "marco" },
   { "patron": "apps/web/src/servidor/accion.ts", "fts": "marco" },
   { "patron": "apps/web/src/servidor/consultar.ts", "fts": "marco" },
   { "patron": "apps/web/src/servidor/parametros.ts", "fts": "marco" },

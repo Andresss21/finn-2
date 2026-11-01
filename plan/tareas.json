@@ -327,7 +327,7 @@
 
   "TA-222": { "estado": "terminada", "pr": 205 },
 
-  "TA-223": { "estado": "pendiente" },
+  "TA-223": { "estado": "en_curso", "rama": "ta-223-service-worker" },
 
   "TA-224": { "estado": "terminada", "pr": 193 },
 
