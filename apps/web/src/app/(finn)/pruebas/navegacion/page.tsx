@@ -14,7 +14,8 @@ export const metadata: Metadata = { title: 'Origen de navegación · Finn' };
 // Solo los campos que usa el marco; el resto del `Encabezado` no se lee.
 const ENCABEZADO = {
   revision: 'revision-de-prueba',
-  hoy: '2026-10-30',
+  // Lejano a propósito (TA-220): con un día pasado la agenda de medianoche (05 §6.7) refrescaría la pantalla sin parar.
+  hoy: '2099-12-31',
   notificacionesNoLeidas: 2,
   bandejaPorRevisar: 3,
 } as unknown as Encabezado;
