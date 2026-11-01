@@ -29,6 +29,11 @@ export const cuentasNueva = {
   diaPago: 'Día de pago',
   red: 'Red',
   redes: { visa: 'Visa', mastercard: 'Mastercard', otra: 'Otra' },
+  color: 'Color de la tarjeta',
+  // Los tonos de las caras oro y plata de 06-identidad-visual (§2.9), como #RRGGBB
+  colores: { ninguno: 'Sin color', '#7E6638': 'Oro', '#5C6670': 'Plata' },
+  modelo: 'Modelo de cálculo',
+  modelos: { ninguno: 'Sin modelo', banco_agricola: 'Banco Agrícola' },
   contraparte: 'Quién te prestó',
   montoOriginal: 'Monto original',
   tipoTasa: 'Tipo de tasa',

@@ -78,7 +78,35 @@ describe('PRU-DOM-CTA', () => {
     );
   });
 
-  it('PRU-DOM-CTA-106 [CA-50.4] el formulario avisa antes de enviar si el nombre de la tarjeta ya se usa, sin distinguir mayúsculas, y distingue la archivada', () => {
+  it('PRU-DOM-CTA-107 el color de la tarjeta y el modelo del préstamo se envían como OP-01 los acepta y, sin elegir, se omiten', () => {
+    const tarjeta = con('tarjeta', {
+      nombre: 'T',
+      saldo: '0',
+      limiteCredito: '1500',
+      diaCorte: '15',
+      diaPago: '5',
+    });
+    expect(entradaDeOp01(tarjeta)).not.toHaveProperty('color');
+    const oro = entradaDeOp01({ ...tarjeta, color: '#7E6638' });
+    expect(oro).toMatchObject({ color: '#7E6638' });
+    expect(op01.safeParse({ ...oro, id: ID }).success).toBe(true);
+
+    const prestamo = con('prestamo', {
+      nombre: 'Carro',
+      saldo: '5000',
+      contraparte: 'Banco',
+      montoOriginal: '8000',
+      cuotaPactada: '250',
+      plazoCuotas: '36',
+      cuotasPagadasAlCrear: '10',
+    });
+    expect(entradaDeOp01(prestamo)).not.toHaveProperty('modeloCalculo');
+    const modelo = entradaDeOp01({ ...prestamo, modeloCalculo: 'banco_agricola' });
+    expect(modelo).toMatchObject({ modeloCalculo: 'banco_agricola' });
+    expect(op01.safeParse({ ...modelo, id: ID }).success).toBe(true);
+  });
+
+  it('PRU-DOM-CTA-106 [CA-50.4]el formulario avisa antes de enviar si el nombre de la tarjeta ya se usa, sin distinguir mayúsculas, y distingue la archivada', () => {
     const usados = [
       { nombre: 'Visa Oro', archivada: true },
       { nombre: 'Master', archivada: false },

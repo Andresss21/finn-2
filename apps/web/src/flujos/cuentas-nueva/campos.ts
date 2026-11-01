@@ -4,6 +4,8 @@ import * as z from 'zod';
 import { aplicarSigno, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { cuentasNueva as t } from '../../textos/cuentas-nueva';
 
+/** Valor de una selección opcional sin elegir: no se envía. */
+const SIN_ELEGIR = 'ninguno';
 export const TIPOS = ['efectivo', 'tarjeta', 'prestamo', 'inversion'] as const;
 export type TipoCuenta = (typeof TIPOS)[number];
 
@@ -18,6 +20,7 @@ const CLAVES = [
   'diaCorte',
   'diaPago',
   'red',
+  'color',
   'contraparte',
   'montoOriginal',
   'tasaNominalAnual',
@@ -27,6 +30,7 @@ const CLAVES = [
   'cuotaPactada',
   'plazoCuotas',
   'cuotasPagadasAlCrear',
+  'modeloCalculo',
   'rendimientoAnualEsperado',
 ] as const;
 export type Clave = (typeof CLAVES)[number];
@@ -60,6 +64,7 @@ export const CAMPOS_DE_TIPO: Readonly<Record<TipoCuenta, readonly Descriptor[]>>
     d('diaCorte', t.diaCorte, 'entero', true),
     d('diaPago', t.diaPago, 'entero', true),
     d('red', t.red, 'opciones', true, { opciones: t.redes }),
+    d('color', t.color, 'opciones', false, { opciones: t.colores }),
   ],
   prestamo: [
     d('contraparte', t.contraparte, 'texto', true),
@@ -73,6 +78,7 @@ export const CAMPOS_DE_TIPO: Readonly<Record<TipoCuenta, readonly Descriptor[]>>
     d('cuotaPactada', t.cuotaPactada, 'monto', true),
     d('plazoCuotas', t.plazoCuotas, 'entero', true),
     d('cuotasPagadasAlCrear', t.cuotasPagadas, 'entero', true),
+    d('modeloCalculo', t.modelo, 'opciones', false, { opciones: t.modelos }),
   ],
   inversion: [d('rendimientoAnualEsperado', t.rendimiento, 'porcentaje', false)],
 };
@@ -114,7 +120,7 @@ export function entradaDeOp01(c: Campos): Record<string, unknown> {
   if (c.ultimos4.trim() !== '') salida['ultimos4'] = c.ultimos4.trim();
   for (const x of CAMPOS_DE_TIPO[c.tipo]) {
     const v = c[x.n].trim();
-    if (v === '' || !visible(x, c)) continue;
+    if (v === '' || v === SIN_ELEGIR || !visible(x, c)) continue;
     salida[x.n] =
       x.clase === 'monto'
         ? monto(v)
@@ -151,6 +157,8 @@ export const valoresIniciales = (hoy: string, tipo: TipoCuenta): Campos => ({
   institucionId: 'ninguna',
   fechaApertura: hoy,
   red: 'otra',
+  color: SIN_ELEGIR,
+  modeloCalculo: SIN_ELEGIR,
   tipoTasa: 'fija',
   frecuencia: 'mensual',
 });
