@@ -6,6 +6,7 @@
 // por `enmascarar` y de C5 y C6 solo se publica el número de filas.
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
+import { configPg } from '../../packages/db/src/tls.ts';
 import { c3, c5, c6 } from '../db/plantilla.ts';
 import { comprobar, correrVercel, enmascarar, listarConVercel } from './barrera-1b.mjs';
 
@@ -22,10 +23,12 @@ export const REQUERIDAS = [
   'GITHUB_RUN_ATTEMPT',
 ];
 
-/** Como `consultar` del arnés: filas como psql `-A -t`. */
-async function consultar(url, sql) {
-  const pg = createRequire(new URL('../../packages/db/package.json', import.meta.url))('pg');
-  const c = new pg.Client({ connectionString: url });
+const clientePg = () =>
+  createRequire(new URL('../../packages/db/package.json', import.meta.url))('pg').Client;
+
+/** Como `consultar` del arnés: filas como psql `-A -t`. TLS verificado con la CA de Supabase (CH-65). */
+export async function consultar(url, sql, Cliente = clientePg()) {
+  const c = new Cliente(configPg(url));
   await c.connect();
   try {
     const r = await c.query({ text: sql, rowMode: 'array' });
