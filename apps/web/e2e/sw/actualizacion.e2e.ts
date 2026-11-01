@@ -3,14 +3,17 @@
 // intermedio cambiando los bytes de `sw.js`; el archivo que la versión nueva "ya no tiene" responde 404 (V5-33b).
 import { expect, test } from '@playwright/test';
 import { formularios } from '../../src/textos/formularios.ts';
-import { contenidoDeLasCaches, visitarControlada } from './ayudas-sw.ts';
-import { levantarServidorIntermedio } from './servidor-intermedio.ts';
+import {
+  contenidoDeLasCaches,
+  visitarControlada,
+  levantarServidorIntermedio,
+} from './ayudas-sw.ts';
 
 test.describe('PRU-SW-PWA', () => {
   test.use({ serviceWorkers: 'allow' });
   test.skip(({ browserName }) => browserName !== 'chromium', 'service worker: solo Chromium');
 
-  test('PRU-SW-PWA-004 [V5-33] con la versión 2 instalada la pestaña con la versión 1 muestra el aviso, sigue sirviendo sus archivos y "Recargar" activa la versión 2', async ({
+  test('PRU-SW-PWA-004 [V5-33, FE-55] con la versión 2 instalada la pestaña con la versión 1 muestra el aviso, sigue sirviendo sus archivos y "Recargar" activa la versión 2', async ({
     page,
     baseURL,
   }) => {

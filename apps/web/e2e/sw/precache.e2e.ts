@@ -10,7 +10,7 @@ test.describe('PRU-SW-PWA', () => {
   // WebKit en Playwright no tiene CDP ni un service worker comparable: el service worker se prueba en Chromium (07 §3.2).
   test.skip(({ browserName }) => browserName !== 'chromium', 'service worker: solo Chromium');
 
-  test('PRU-SW-PWA-001 [V5-29] /serwist/sw.js se sirve con Service-Worker-Allowed, sin mapa, y tras recorrer pantallas con sesión la caché solo guarda /_next/static, /marca y /sin-conexion', async ({
+  test('PRU-SW-PWA-001 [V5-29, FE-52, FE-53, FE-54] /serwist/sw.js se sirve con Service-Worker-Allowed, sin mapa, y tras recorrer pantallas con sesión la caché solo guarda /_next/static, /marca y /sin-conexion', async ({
     page,
     context,
     baseURL,
