@@ -765,7 +765,7 @@ Sin `UPDATE` ni `DELETE`, salvo la puesta en nulo de `transaccion_id` (4.5.6).
 |---|---|---|---|---|---|---|
 | `id` | `smallint` | `Small @id` | No | `1` | `CHECK (id = 1)` | Fila única |
 | `ultimo_respaldo_en` | `timestamptz` | `Instante?` | Sí | — | — | Último respaldo correcto (ADR-22 punto 5) |
-| `ultimo_respaldo_objeto` | `text` | `Texto?` | Sí | — | — | Clave del objeto en R2 |
+| `ultimo_respaldo_objeto` | `text` | `Texto?` | Sí | — | — | Clave del objeto en B2 [CH-68] |
 | `ultima_restauracion_en` | `timestamptz` | `Instante?` | Sí | — | — | Última prueba de restauración correcta (ADR-22) |
 
 #### `token_webhook` [T]
@@ -4209,7 +4209,7 @@ pg_dump --format=custom --schema=finn --snapshot=<id> --file=<objeto>
 
 Así el volcado y el manifiesto describen exactamente el mismo estado.
 
-4. Cifra el volcado y el manifiesto con `age` y los sube a R2 (`diarios/AAAA-MM-DD.dump.age` y `.manifiesto.json.age`). Desde ahí sigue ADR-22: copia mensual, retención y endpoint de "último respaldo correcto".
+4. Cifra el volcado y el manifiesto con `age` y los sube a Backblaze B2 **[CH-68]** (`diarios/AAAA-MM-DD.dump.age` y `.manifiesto.json.age`). Desde ahí sigue ADR-22: copia mensual, retención y endpoint de "último respaldo correcto".
 5. Ejecuta C5 y C6 contra producción (11.7).
 
 `--schema=finn` deja fuera `auth`, `storage`, `extensions` y los demás esquemas de Supabase. `finn_respaldo` tiene `BYPASSRLS` (P3-3) y `SELECT` sobre todo `finn`, que incluye `_prisma_migrations`.

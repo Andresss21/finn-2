@@ -4002,7 +4002,7 @@ Todas se validan con Zod al arrancar (`@finn/aplicacion/config`, BE-08); si falt
 | `RESPALDO_DB_URL` | `finn_respaldo` por el pooler en modo sesión (5432): respaldo y controles C5/C6 contra producción (§16) |
 | `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | `vercel deploy --prod` |
 | `AGE_PUBLIC_KEY`, `AGE_PRIVATE_KEY` | Cifrar el respaldo; descifrar en la prueba de restauración (ADR-22) |
-| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Subir y descargar respaldos; credencial limitada al bucket |
+| `B2_ENDPOINT`, `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET` **[CH-68]** | Subir y descargar respaldos; clave de aplicación limitada al bucket. `B2_ENDPOINT` es la URL https completa (`https://s3.<región>.backblazeb2.com`) y la región se deduce de ahí |
 | `FINN_URL`, `RESPALDO_SECRET` | Llamar a `/api/respaldo/*` |
 
 **Zona horaria del proceso (BE-57).** ADR-05 pide `TZ=UTC`. Las funciones de Vercel corren en UTC; en lugar de depender de una variable que la plataforma podría reservar, la aplicación **verifica al arrancar** que `Intl.DateTimeFormat().resolvedOptions().timeZone` sea `UTC` (o `Etc/UTC`) y no arranca si no lo es. Local y CI fijan `TZ=UTC` en los scripts. El código ya no depende de la zona del proceso (13.2, 13.6); la verificación es una barrera más.
@@ -4104,14 +4104,14 @@ Precisa ADR-22 y 03 §12; no cambia sus decisiones.
 ### 16.2 Herramientas del runner
 
 - Cliente de PostgreSQL de **la misma versión mayor que el servidor**, instalado desde el repositorio oficial de PostgreSQL (PGDG). El job lee la versión con `SHOW server_version_num` y falla si no coincide con la instalada.
-- `age` (cifrado) y la CLI `aws` configurada con el endpoint de R2 (`https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`).
+- `age` (cifrado) y la CLI `aws` configurada con el endpoint S3 de B2 (`B2_ENDPOINT`) **[CH-68]**.
 - Node 24 y pnpm para `respaldar.mjs` y `restaurar.sh` (03 §10.1).
 
 ### 16.3 Respaldo nocturno
 
 1. `node tools/respaldo/respaldar.mjs` con `RESPALDO_DB_URL` (03 §12.1): transacción `REPEATABLE READ READ ONLY`, `pg_export_snapshot()`, manifiesto (`revision` y conteos por tabla) y `pg_dump --format=custom --schema=finn --snapshot=<id>` con la transacción abierta.
 2. Cifra el volcado y el manifiesto con `age -r $AGE_PUBLIC_KEY`.
-3. Sube `diarios/AAAA-MM-DD.dump.age` y `.manifiesto.json.age`. El día 1 copia también a `mensuales/AAAA-MM…`. La retención la aplican las reglas de ciclo de vida de R2 (30 y 365 días).
+3. Sube `diarios/AAAA-MM-DD.dump.age` y `.manifiesto.json.age`. El día 1 copia también a `mensuales/AAAA-MM…`. La retención la aplican las reglas de ciclo de vida del bucket **[CH-68]**: se oculta a los 30 y a los 365 días, y se borra 1 día después.
 4. `POST /api/respaldo/respaldo` con `{ objeto, revision, bytes }` (OPT-09) → `estado_respaldo.ultimo_respaldo_en`.
 5. Controles C5 (`reglas-catalogo.sql`) y C6 (`catalogo.sql` frente a `catalogo-esperado.txt` del commit desplegado en producción, que el job obtiene de la etiqueta que deja el despliegue). Si alguno falla: `POST /api/respaldo/deriva` con el control y el número de filas (sin contenido); la tarea diaria envía el push.
 6. Si cualquier paso falla, el job falla (correo de GitHub) y no llama al paso 4: a las 36 h, push de respaldo atrasado.

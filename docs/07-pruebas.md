@@ -142,7 +142,7 @@ Cada prueba pertenece a un solo nivel. Una regla de frontera dice qué va en cad
 | Rendimiento | `REN` | Presupuestos de 04 §5.6 y §6.0.7 y de 05 §13.1 | Deterministas (bytes) y ruidosos (tiempos) por separado (§6.6) | `packages/dominio/bench/`, `apps/web/e2e/rendimiento/` | `e2e` en `main` (bytes), nocturno (tiempos) |
 | Seguridad | `SEG` | AAL2 en toda acción y ruta, token del webhook, `X-Finn-Accion`, secretos, RLS como `finn_app` y como rol sin `BYPASSRLS`, barreras del reloj de prueba | Se reparte en `INT`, `RH`, `E2E` y `ESQ` según qué toca; el código `SEG` marca el propósito | Junto al nivel que la ejecuta | Según el nivel |
 | Service worker | `SW` | Precache, sin conexión, actualización, eventos de push sintéticos (V5-29 a V5-33) | Sin servicio de push real | `apps/web/e2e/sw/*.e2e.ts` | nocturno; `e2e` si cambió `sw/` |
-| Respaldo | `RES` | Volcado de una base sembrada, cifrado con `age`, restauración en una base sin `auth`, `verificar_todo()` e invariantes con el motor (03 §12, 04 §16.4) | Sin R2 ni proyecto real (eso es el respaldo de producción) | `tools/respaldo/test/` | nocturno |
+| Respaldo | `RES` | Volcado de una base sembrada, cifrado con `age`, restauración en una base sin `auth`, `verificar_todo()` e invariantes con el motor (03 §12, 04 §16.4) | Sin B2 [CH-68] ni proyecto real (eso es el respaldo de producción) | `tools/respaldo/test/` | nocturno |
 | Manual | `MAN` | Lo que no se automatiza: teléfono con MacroDroid, push real, lectores de pantalla, pulsación larga, todo lo marcado ⚠ | — | Lista única de la Parte C | Según su disparador |
 
 **Justificación.** Un nivel por prueba evita que una misma regla quede "probada" en tres lugares con distinto alcance. También deja claro qué corre en cada job y qué cuesta. Las fronteras siguen las de los paquetes de ADR-20 y PR-1: lo que no tiene E/S nunca espera a una base.
@@ -1846,7 +1846,7 @@ El ensayo es la primera comprobación.
 
 ### 32.4 Repositorio público: logs y artefactos **[CH-46]**
 
-Por ser público, los logs y los artefactos de Actions son visibles para cualquiera. **Ningún job puede escribir datos reales en ellos**: ni en la salida, ni en `test-results`, ni en `apps/web/test-results`, que son lo único que se publica. Los workflows no usan `pull_request_target`. Los respaldos ya van cifrados a R2 (ADR-22) y no cambian.
+Por ser público, los logs y los artefactos de Actions son visibles para cualquiera. **Ningún job puede escribir datos reales en ellos**: ni en la salida, ni en `test-results`, ni en `apps/web/test-results`, que son lo único que se publica. Los workflows no usan `pull_request_target`. Los respaldos ya van cifrados a B2 **[CH-68]** (ADR-22) y no cambian.
 
 ---
 
