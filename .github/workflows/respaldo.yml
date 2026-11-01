@@ -1,0 +1,70 @@
+# Respaldo nocturno (TA-261; 02 ADR-22; 03 §11.7, §12.1; 04 §16.1 a §16.3; 07 §6.1, §32.3, §32.4; destino B2, CH-68). Nunca se condiciona
+# ni depende de otro workflow. Sin `if:` ni `continue-on-error`: un paso que falla corta el job, GitHub envía el correo
+# y OPT-09 no se llama; a las 36 h, la tarea diaria avisa del respaldo atrasado. C5, C6 y R15 corren al final, porque
+# una deriva no invalida el volcado ya subido. El volcado en claro no sale del runner y nunca va a los logs.
+name: respaldo
+
+on:
+  schedule:
+    - cron: '30 7 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: respaldo
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  respaldo:
+    name: respaldo
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      # Historia y etiquetas: `catalogo-desplegado` lee la última etiqueta de `desplegar`
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false, fetch-depth: 0 }
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      # 04 §16.2: la CLI `aws` ya viene en la imagen del runner; `age` y el cliente de PGDG se instalan
+      - id: herramientas
+        run: |
+          . infra/versiones.env
+          sudo apt-get update -q
+          sudo apt-get install -yq postgresql-common age
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -yq "postgresql-client-${PG_MAYOR}"
+          echo "/usr/lib/postgresql/${PG_MAYOR}/bin" >> "$GITHUB_PATH"
+          aws --version
+      - run: node tools/respaldo/subir.mjs version
+        env:
+          RESPALDO_DB_URL: ${{ secrets.RESPALDO_DB_URL }}
+      - run: node tools/respaldo/subir.mjs volcar
+        env:
+          RESPALDO_DB_URL: ${{ secrets.RESPALDO_DB_URL }}
+      - run: node tools/respaldo/subir.mjs subir
+        env:
+          AGE_PUBLIC_KEY: ${{ secrets.AGE_PUBLIC_KEY }}
+          B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+          B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
+          B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+          B2_BUCKET: ${{ secrets.B2_BUCKET }}
+      - run: node tools/respaldo/subir.mjs registrar
+        env:
+          FINN_URL: ${{ secrets.FINN_URL }}
+          RESPALDO_SECRET: ${{ secrets.RESPALDO_SECRET }}
+      # 04 §16.3, paso 5: la instantánea y las consultas del commit desplegado, no las de main, que puede ir adelante
+      - id: catalogo-desplegado
+        run: |
+          etiqueta=$(git tag --sort=-v:refname 'desplegado-*' | head -n 1)
+          test -n "$etiqueta"
+          git checkout "$etiqueta" -- packages/db/prisma/catalogo-esperado.txt tools/db/catalogo.sql tools/db/reglas-catalogo.sql tools/db/regla-r15.sql
+          echo "catálogo de $etiqueta"
+      - run: node tools/respaldo/subir.mjs controles
+        env:
+          RESPALDO_DB_URL: ${{ secrets.RESPALDO_DB_URL }}
+          FINN_URL: ${{ secrets.FINN_URL }}
+          RESPALDO_SECRET: ${{ secrets.RESPALDO_SECRET }}
