@@ -10,12 +10,12 @@ import { enmascarar } from '../ci/barrera-1b.mjs';
 import { consultar } from '../ci/desplegar.mjs';
 import { c5, c6 } from '../db/plantilla.ts';
 
-const R2 = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET'];
+const B2 = ['B2_ENDPOINT', 'B2_KEY_ID', 'B2_APPLICATION_KEY', 'B2_BUCKET'];
 const API = ['FINN_URL', 'RESPALDO_SECRET'];
 export const REQUERIDAS = {
   version: ['RESPALDO_DB_URL'],
   volcar: ['RESPALDO_DB_URL'],
-  subir: ['AGE_PUBLIC_KEY', ...R2],
+  subir: ['AGE_PUBLIC_KEY', ...B2],
   registrar: API,
   controles: ['RESPALDO_DB_URL', ...API],
 };
@@ -42,6 +42,13 @@ export const depsReales = () => ({
 export function claves(ahora) {
   const dia = ahora.toISOString().slice(0, 10);
   return [`diarios/${dia}`, ...(dia.endsWith('-01') ? [`mensuales/${dia.slice(0, 7)}`] : [])];
+}
+
+/** La región de un endpoint de B2 (CH-68): `https://s3.<región>.backblazeb2.com`. Cualquier otra forma lanza. */
+export function regionDe(endpoint) {
+  const region = /^https:\/\/s3\.([a-z0-9-]+)\.backblazeb2\.com\/?$/.exec(endpoint)?.[1];
+  if (!region) throw new Error('B2_ENDPOINT no es https://s3.<región>.backblazeb2.com');
+  return region;
 }
 
 function exigir(d, cmd, args, entorno) {
@@ -83,8 +90,10 @@ const PASOS = {
     d.log('volcado y manifiesto listos');
   },
 
-  // 04 §16.3, pasos 2 y 3. La retención la aplican las reglas de ciclo de vida de R2.
+  // 04 §16.3, pasos 2 y 3, con Backblaze B2 por su API S3 (CH-68). La retención la aplican las reglas de ciclo de vida
+  // del bucket. El endpoint se valida primero: uno mal escrito falla sin tocar el volcado.
   subir: (env, d) => {
+    const region = regionDe(env['B2_ENDPOINT']);
     const dir = dirDe(env);
     const volcado = join(dir, 'finn.dump');
     const manifiesto = `${volcado}.manifiesto.json`;
@@ -98,18 +107,18 @@ const PASOS = {
       rmSync(claro);
     }
     const aws = {
-      AWS_ACCESS_KEY_ID: env['R2_ACCESS_KEY_ID'],
-      AWS_SECRET_ACCESS_KEY: env['R2_SECRET_ACCESS_KEY'],
-      AWS_DEFAULT_REGION: 'auto',
-      // R2 no acepta todas las sumas que la CLI manda por defecto
+      AWS_ACCESS_KEY_ID: env['B2_KEY_ID'],
+      AWS_SECRET_ACCESS_KEY: env['B2_APPLICATION_KEY'],
+      AWS_DEFAULT_REGION: region,
+      // Los servicios compatibles con S3 no aceptan todas las sumas que la CLI manda por defecto
       AWS_REQUEST_CHECKSUM_CALCULATION: 'when_required',
       AWS_RESPONSE_CHECKSUM_VALIDATION: 'when_required',
     };
-    const endpoint = `https://${env['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com`;
+    const endpoint = env['B2_ENDPOINT'];
     const bases = claves(d.ahora());
     for (const base of bases)
       for (const [, cifrado, sufijo] of partes) {
-        const destino = `s3://${env['R2_BUCKET']}/${base}.${sufijo}`;
+        const destino = `s3://${env['B2_BUCKET']}/${base}.${sufijo}`;
         const args = ['s3', 'cp', cifrado, destino, '--endpoint-url', endpoint];
         exigir(d, 'aws', [...args, '--only-show-errors'], aws);
       }
@@ -139,7 +148,7 @@ const PASOS = {
 
 function ocultar(texto, env) {
   let t = enmascarar(texto, env);
-  for (const v of [...R2, 'RESPALDO_SECRET']) if (env[v]) t = t.split(env[v]).join('[oculto]');
+  for (const v of [...B2, 'RESPALDO_SECRET']) if (env[v]) t = t.split(env[v]).join('[oculto]');
   return t;
 }
 
@@ -152,7 +161,7 @@ export async function ejecutar(sub, env, d = depsReales()) {
   }
   const faltan = REQUERIDAS[sub].filter((v) => !env[v]);
   if (faltan.length > 0) {
-    avisar(`subir ${sub}: faltan ${faltan.join(', ')} (TU-11, TU-12)`);
+    avisar(`subir ${sub}: faltan ${faltan.join(', ')} (TU-11, TU-12, CH-68)`);
     return 1;
   }
   try {

@@ -11,6 +11,7 @@ export type Deps = {
 export const REQUERIDAS: Record<string, string[]>;
 export function depsReales(): Deps;
 export function claves(ahora: Date): string[];
+export function regionDe(endpoint: string): string;
 export function ejecutar(
   sub: string,
   env: Record<string, string | undefined>,

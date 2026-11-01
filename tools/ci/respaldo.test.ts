@@ -1,5 +1,5 @@
 // PRU-SEG-OPER-104 (TA-261; 02 ADR-22; 04 §16.1 a §16.3; 07 §6.1, §32.3; DT-17): lee .github/workflows/respaldo.yml, y
-// comprueba con dobles que tools/respaldo/subir.mjs no registra un respaldo que no subió. Ninguna prueba toca R2, la
+// comprueba con dobles que tools/respaldo/subir.mjs no registra un respaldo que no subió. Ninguna prueba toca B2, la
 // base ni la app.
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { claves, ejecutar, type Deps } from '../respaldo/subir.mjs';
+import { claves, ejecutar, regionDe, type Deps } from '../respaldo/subir.mjs';
 
 type Paso = {
   id?: string;
@@ -70,14 +70,14 @@ describe('PRU-SEG-OPER', () => {
     expect(secretos(paso('volcar'))).toEqual(['RESPALDO_DB_URL']);
     expect(secretos(paso('subir'))).toEqual([
       'AGE_PUBLIC_KEY',
-      'R2_ACCESS_KEY_ID',
-      'R2_ACCOUNT_ID',
-      'R2_BUCKET',
-      'R2_SECRET_ACCESS_KEY',
+      'B2_APPLICATION_KEY',
+      'B2_BUCKET',
+      'B2_ENDPOINT',
+      'B2_KEY_ID',
     ]);
     expect(secretos(paso('registrar'))).toEqual(['FINN_URL', 'RESPALDO_SECRET']);
     expect(secretos(paso('controles'))).toEqual(['FINN_URL', 'RESPALDO_DB_URL', 'RESPALDO_SECRET']);
-    expect(crudo).not.toContain('AGE_PRIVATE_KEY');
+    expect(crudo).not.toMatch(/AGE_PRIVATE_KEY|R2_/);
     for (const p of pasos.filter((x) => !x.run?.startsWith('node tools/respaldo/subir.mjs')))
       expect(p.env, p.run ?? p.uses).toBeUndefined();
     for (const p of pasos.filter((x) => x.uses !== undefined))
@@ -95,7 +95,7 @@ describe('respaldo: subir.mjs (04 §16.3)', () => {
   const SECRETO = 'clave-de-prueba-que-nunca-sale-al-log';
   let dir = '';
   let lineas: string[] = [];
-  let llamadas: { cmd: string; args: string[] }[] = [];
+  let llamadas: { cmd: string; args: string[]; entorno?: Record<string, string> }[] = [];
   let fallaEn: string | null = null;
   let pedidos: { url: string; cuerpo: unknown; autorizacion: unknown }[] = [];
   let filas: Record<string, string[]> = {};
@@ -103,18 +103,18 @@ describe('respaldo: subir.mjs (04 §16.3)', () => {
   const ENV = {
     RESPALDO_DB_URL: 'postgresql://finn_respaldo:x@host.invalid:5432/postgres',
     AGE_PUBLIC_KEY: 'age1publica',
-    R2_ACCOUNT_ID: 'cuenta-de-prueba',
-    R2_ACCESS_KEY_ID: 'llave-de-prueba',
-    R2_SECRET_ACCESS_KEY: SECRETO,
-    R2_BUCKET: 'cubeta-de-prueba',
+    B2_ENDPOINT: 'https://s3.us-west-004.backblazeb2.com',
+    B2_KEY_ID: 'llave-de-prueba',
+    B2_APPLICATION_KEY: SECRETO,
+    B2_BUCKET: 'cubeta-de-prueba',
     FINN_URL: 'https://finn.invalid/',
     RESPALDO_SECRET: SECRETO,
   };
   const deps = (ahora = '2026-11-02T07:30:00Z', respuesta = 200): Deps => ({
     ahora: () => new Date(ahora),
     log: (l) => lineas.push(l),
-    correr: (cmd, args) => {
-      llamadas.push({ cmd, args });
+    correr: (cmd, args, entorno) => {
+      llamadas.push({ cmd, args, ...(entorno ? { entorno } : {}) });
       if (fallaEn !== null && `${cmd} ${args.join(' ')}`.includes(fallaEn))
         return { status: 1, salida: `falló con ${SECRETO}` };
       // `age`: el doble escribe el destino de -o
@@ -167,6 +167,17 @@ describe('respaldo: subir.mjs (04 §16.3)', () => {
     ]);
   });
 
+  it('respaldo: la región sale del endpoint de B2; uno inválido falla sin tocar el volcado ni subir (CH-68)', async () => {
+    expect(regionDe('https://s3.eu-central-003.backblazeb2.com')).toBe('eu-central-003');
+    for (const malo of ['http://s3.us-west-004.backblazeb2.com', 'https://otro.example.com'])
+      expect(() => regionDe(malo)).toThrow();
+    conVolcado();
+    const env = { ...entorno(), B2_ENDPOINT: 'https://otro.example.com' };
+    expect(await ejecutar('subir', env, deps())).toBe(1);
+    expect(llamadas).toEqual([]);
+    expect(existsSync(join(dir, 'respaldo', 'finn.dump'))).toBe(true);
+  });
+
   it('respaldo: version falla si pg_dump no es de la versión mayor del servidor (04 §16.2)', async () => {
     expect(await ejecutar('version', entorno(), deps())).toBe(0);
     filas['version'] = ['160009'];
@@ -198,7 +209,12 @@ describe('respaldo: subir.mjs (04 §16.3)', () => {
     ]);
     for (const l of llamadas.filter((x) => x.cmd === 'aws')) {
       expect(String(l.args[2])).toMatch(/\.age$/);
-      expect(l.args).toContain('https://cuenta-de-prueba.r2.cloudflarestorage.com');
+      expect(l.args).toContain('https://s3.us-west-004.backblazeb2.com');
+      expect(l.entorno).toMatchObject({
+        AWS_ACCESS_KEY_ID: 'llave-de-prueba',
+        AWS_SECRET_ACCESS_KEY: SECRETO,
+        AWS_DEFAULT_REGION: 'us-west-004',
+      });
     }
   });
 
@@ -246,9 +262,9 @@ describe('respaldo: subir.mjs (04 §16.3)', () => {
 
   it('respaldo: sin un secreto, o con un subcomando desconocido, falla nombrando solo lo que falta', async () => {
     const sinCubeta = entorno();
-    delete sinCubeta['R2_BUCKET'];
+    delete sinCubeta['B2_BUCKET'];
     expect(await ejecutar('subir', sinCubeta, deps())).toBe(1);
-    expect(lineas.join('\n')).toContain('faltan R2_BUCKET');
+    expect(lineas.join('\n')).toContain('faltan B2_BUCKET');
     expect(await ejecutar('otro', entorno(), deps())).toBe(1);
     expect(llamadas).toEqual([]);
   });
