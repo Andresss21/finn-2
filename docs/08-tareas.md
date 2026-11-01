@@ -495,7 +495,7 @@ tu: TU-14, TU-16, TU-17
 
 - **Entra:** monorepo y paquetes de 02 (con los de 04 §1.1), `versiones.env`, `CLAUDE.md`, lint de 02 ADR-21, 04 BE-03, 05 L1–L19 y L20, arnés de pruebas, matriz de 07 §13, firmas, `pr:mergear`, controles C1 y C2, workflows `ci.yml` y `nocturno.yml` con M5 y la reserva de §32.3.
 - **Va a la Parte B, con las migraciones:** C3 a C6 y R1 a R15. Sin esquema no tienen nada que comprobar, y su caso negativo necesita la plantilla. El job `integracion` existe desde B0 (fusionado con `rapido`, M5) y empieza a ejecutarlos en la primera tarea de B1.
-- **Va a B5 (operación):** `desplegar`, `politica-patrones`, `respaldo.yml` y `restauracion.yml`. Necesitan Vercel, R2 o el esquema, y el control de dinero (07 §31.1) necesita el motor.
+- **Va a B5 (operación):** `desplegar`, `politica-patrones`, `respaldo.yml` y `restauracion.yml`. Necesitan Vercel, B2 **[CH-68]** o el esquema, y el control de dinero (07 §31.1) necesita el motor.
 - *Alternativa descartada:* escribir C3 a C6 en B0 contra un esquema de juguete (habría que reescribirlos al llegar las migraciones reales).
 
 ### 3.2 Tareas
@@ -1352,14 +1352,15 @@ Número reservado (DT-02).
 - **Cuándo:** con TU-09. **Bloquea:** el primer despliegue (la configuración las exige al arrancar, 04 §14.2).
 - **Pasos:** en Git Bash, `pnpm dlx web-push generate-vapid-keys --json`; la pública va en `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, la privada en `VAPID_PRIVATE_KEY` (secreta) y `VAPID_SUBJECT=mailto:<tu correo>`, todas en Vercel. La privada también va al gestor de contraseñas.
 
-### TU-11 Cloudflare R2 y clave de `age`
+### TU-11 Backblaze B2 y clave de `age` [CH-68]
 
 - **Cuándo:** antes de la tarea de B5 que activa `respaldo.yml` (**[C]** TA-261), después del primer despliegue. **Bloquea:** esa tarea, TA-263 y HT-6.
 - **Pasos:**
-  1. Cuenta de Cloudflare → R2 → registrar el medio de pago → Billing → **alerta en $0** (o el mínimo que permita); anotá el umbral (ADR-22).
-  2. Bucket `finn-respaldos`, privado, sin dominio `r2.dev`. Reglas de ciclo de vida: `diarios/` a los 30 días, `mensuales/` a los 365.
-  3. API token de R2 con **Object Read & Write** limitado a ese bucket.
-  4. `age` para Windows (binario oficial): `age-keygen -o finn-age.txt`; la clave privada va al gestor de contraseñas; borrá el archivo.
+  1. **[CH-68]** Cuenta de Backblaze y activá B2, **sin medio de pago** (ADR-22). Si el registro pide tarjeta, pará y avisá.
+  2. Bucket privado `finn-respaldos` (Buckets → Create a Bucket; Files in Bucket: Private). Los nombres son únicos en todo Backblaze: si está tomado, agregale algo; el nombre real va en `B2_BUCKET`. Anotá el endpoint S3 que muestra el bucket (`s3.<región>.backblazeb2.com`): con `https://` adelante va en `B2_ENDPOINT`.
+  3. Reglas de ciclo de vida del bucket (Lifecycle Settings → Use custom lifecycle rules), una por prefijo: `diarios/`, ocultar a los 30 días (`daysFromUploadingToHiding`) y borrar 1 día después (`daysFromHidingToDeleting`); `mensuales/`, a los 365 y 1.
+  4. Clave de aplicación (Application Keys → Add a New Application Key) limitada a ese bucket, con **Read and Write**. El `keyID` va en `B2_KEY_ID` y el `applicationKey` en `B2_APPLICATION_KEY`: se muestra una sola vez.
+  5. `age` para Windows (binario oficial): `age-keygen -o finn-age.txt`; la clave privada y la pública van al gestor de contraseñas; borrá el archivo.
 
 ### TU-12 Secretos de GitHub Actions
 
@@ -1368,7 +1369,7 @@ Número reservado (DT-02).
   - `DIRECT_URL`, `RESPALDO_DB_URL`;
   - `VERCEL_TOKEN` (el `finn-2-ci` de TU-09), `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`;
   - `AGE_PUBLIC_KEY`, `AGE_PRIVATE_KEY`;
-  - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`;
+  - `B2_ENDPOINT`, `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET` **[CH-68]**;
   - `FINN_URL`, `RESPALDO_SECRET`;
   - `FINN_ULTIMOS4_REALES` (07 §23: los últimos 4 dígitos reales de tus tarjetas y cuentas, separados por comas).
 - **Nunca:** la `service_role`.
@@ -1547,6 +1548,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-66** | Ninguna página de `(finn)` se prerenderiza. El `vercel deploy --prod` de la corrida 41322593731 (intento 2) falló en `next build` al prerenderizar `/ajustes/seguridad/factores/nuevo`: esa página no declara nada dinámico, así que Next intentaba prerenderizarla y el `after()` de `(finn)/layout.tsx` ejecutaba `ponerAlDia` al compilar, contra la base de las variables de Production. Con credenciales correctas habría escrito en producción desde el build. En Next 16.4.1 esa ruta termina como dinámica en la tabla de la compilación aunque el `after()` haya corrido: `.next/prerender-manifest.json` no muestra el problema. Resolución: `export const dynamic = 'force-dynamic'` en ese layout, comprobado compilando en Next 16.4.1: alcanza a las páginas hijas y al slot `@superpuesto`, también a una hija con `force-static`, con la que `await connection()` hace fallar la compilación. La compilación ya no necesita la base, y lo comprueba cada corrida de E2E: `tools/pruebas/e2e/compilar.mjs` compila con `DATABASE_URL` en un puerto cerrado y falla si algo consulta la base. Además, PRU-E2E-PWA-104 lee los manifiestos y falla si una ruta del grupo queda prerenderizada. Las credenciales de Production no son parte de este cambio. | 05 §1.2; 07 §3.2 no cambia | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-66]** en 05 §1.2 |
 | **CH-67** | QR de inscripción roto y legible en tema oscuro. En el primer ingreso real, la imagen de `/ingresar/inscribir` salió rota: `@supabase/auth-js` 2.114 entrega `totp.qr_code` como `data:image/svg+xml;utf-8,` seguido del documento sin codificar, y `inscribir-factor.tsx` lo envolvía en otro data URI. Los dobles usaban `<svg/>` y las E2E miraban solo `toBeVisible`, que una imagen rota con texto alternativo también cumple. La pila local entrega `<?xml version="1.0"?>`, un comentario y el `<svg width="219" height="219">`, de 321 KB, con módulos negros y blancos y 12 px de zona de silencio transparente. Resolución: `iniciarInscripcion` devuelve en `qrSvg` solo el `<svg>`, que la interfaz sigue codificando con `encodeURIComponent` y mostrando como imagen; sin `<svg`, responde `interno`. El contrato de CP-11 no cambia de forma. Fondo y margen del `<img>`: `bg-marca-icono-figura p-3`. No hay un token blanco que no cambie con el tema, y ese (#F1F2EE) es el único claro fijo en los dos; no se crea uno nuevo. PRU-E2E-ACCESO-106, 111 y 112 comprueban `naturalWidth > 0`; 112 además fondo, margen y píxeles en tema oscuro; PRU-SEG-ACCESO-108 cubre la normalización. | 04 §12.2; 05 §9.5 | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-67]** en 04 §12.2 y 05 §9.5 |
 | **CH-62** | Partición de TA-209 por tamaño (DT-02). El alcance completo de TA-209 midió prod=971 y total=1.423 contra una estimación de 380 y 900: pasa el +30 % de las tareas normales (520). Se parte: TA-209 conserva `BilleteraTarjetas`, `IdentidadCuenta` y `PosicionNeta` con sus textos y PRU-CMP-CTA-101; TA-553, nueva (orden 635), lleva `MovimientoBandeja`, los gráficos de barras con su tabla equivalente y el selector Gráfico / Tabla, con PRU-CMP-CTA-102, y las dependencias `d3-scale` y `d3-shape`. FE-44 pasa a TA-553 (E8: un solo dueño) y TA-209 queda con `cubre: —`. HT-6 requiere también TA-553 y su `despues` pasa a TA-553 (E7). **Además:** (1) el «séptimo estado» de la fila de la Bandeja (`descartado`) lo agregó el código por su cuenta: 06 §2.12 lista seis filas; se confirma contra 06 y 05 en TA-553. (2) Las pantallas que consumen estos componentes tienen orden menor que 635 y no pueden declarar `depende: TA-553` (E5): el orquestador programa TA-553 antes de ellas, y HT-6 la exige. El código completo queda en la rama `ta-209-completo` | 08 TA-209, TA-553, HT-6; 05 §10.8; 06 §2.12 | Delegado por el orquestador; **aplicado [CH-62]** en 08 TA-209, TA-553 y HT-6 |
+| **CH-68** | Los respaldos pasan de Cloudflare R2 a Backblaze B2. 02 ADR-22 decía "R2 puede pedir un medio de pago para activarse, aunque el uso quede dentro del nivel gratuito; el usuario lo acepta", con una alerta de facturación de Cloudflare en $0, y TU-11 pedía "registrar el medio de pago". El usuario decidió no registrar ningún medio de pago en Cloudflare. Resolución: el destino es Backblaze B2, con cuenta sin medio de pago y sin alerta: no hay cobro posible; al llegar al límite gratuito B2 rechaza las subidas con un 403 y eso se ve porque el job de respaldo falla. Secretos: `B2_ENDPOINT` (URL https completa, de la que se deduce la región), `B2_KEY_ID`, `B2_APPLICATION_KEY` y `B2_BUCKET`, en lugar de `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` y `R2_BUCKET`. Retención: B2 no elimina directamente sino que oculta y después borra, así que "se elimina a los 30 días; `mensuales/`, a los 365" queda en ocultar a los 30 y a los 365 y borrar 1 día después; las reglas corren una vez al día. RK-18 pasa de "cargo inesperado" a "las subidas se rechazan". TU-11 reescrita. El presupuesto de $0 y el resto de ADR-22 (`pg_dump` como `finn_respaldo`, `age`, 07:30 UTC, prefijos, prueba de restauración mensual) no cambian. `respaldo.yml` y `subir.mjs` están en TA-261. Secciones: 02 §0.5, §1, ADR-22, §6.1, RK-18, fuentes y registro de cambios; 03 §12.1; 04 §14.2, §16.2, §16.3; 07 §1.1, §32.4; 08 TU-11, TU-12, TA-261. |
 
 ---
 
@@ -7315,7 +7317,7 @@ compartido: —
 ```
 
 **Qué construir.**
-- `respaldo.yml` (ADR-22): `respaldar.mjs` como `finn_respaldo`, cifrado con `age`, subida a R2 (`diarios/` y el primero del mes `mensuales/`), C5, C6 y R15 contra producción y OPT-09 con `RESPALDO_SECRET`. Fuera de todo recorte (07 §32.3).
+- `respaldo.yml` (ADR-22): `respaldar.mjs` como `finn_respaldo`, cifrado con `age`, subida a B2 **[CH-68]** (`diarios/` y el primero del mes `mensuales/`), C5, C6 y R15 contra producción y OPT-09 con `RESPALDO_SECRET`. Fuera de todo recorte (07 §32.3).
 
 **Leer.** 02 ADR-22; 04 §16.1 a §16.3; 07 §6.1, §32.3.
 
@@ -7327,7 +7329,7 @@ compartido: —
 
 **Comandos.** `pnpm test:unidad -t "PRU-SEG-OPER-104"`; `pnpm ci:local`.
 
-**Terminada cuando.** La prueba pasa; una ejecución manual (`workflow_dispatch`) deja el primer respaldo en R2 y el evento en Diagnóstico.
+**Terminada cuando.** La prueba pasa; una ejecución manual (`workflow_dispatch`) deja el primer respaldo en B2 **[CH-68]** y el evento en Diagnóstico.
 
 #### TA-262 Control de dinero diario (07 §31.1)
 

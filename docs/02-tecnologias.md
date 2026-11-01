@@ -38,12 +38,12 @@ Este documento fija el stack tecnológico de Finn 2.0. Cada elección se justifi
 | 2 | Proyectos de Supabase | La 1.0 ocupa uno; la 2.0 cabe en el plan gratuito. Si no hay cupo, Neon como plan B | ADR-04 |
 | 3 | Webhook | Token inválido → 401 sin guardar; fallo al guardar → 5xx; SMS guardado → siempre 200 | ADR-09, nota N-01 |
 | 4 | Sin conexión | Solo en línea, con aviso y página de respaldo | ADR-13 |
-| 9 | Medio de pago en Cloudflare | Aceptado, con alerta de facturación en $0 (o el mínimo disponible) | ADR-22 |
+| 9 | Medio de pago en el proveedor de respaldos | ~~Aceptado, con alerta de facturación~~ Ninguno registrado **[CH-68]** | ADR-22 |
 | 10 | SMS con resultado "error" | Visible en la bandeja con su texto y AV-23; reprocesar a mano o crear la transacción a mano; sin reintento automático | ADR-09, nota N-02 |
 | 11 | Respaldo sin el esquema `auth` | Las tablas de la app no referencian `auth`; la prueba de restauración lo verifica | ADR-22, sección 8 |
 | 5 | ORM | Prisma, con verificación de cuatro puntos | ADR-05, ADR-06 |
 | 6 | Conciliación | Seis formatos CSV de la 1.0; detección de Windows-1252 | ADR-17 |
-| 7 | Respaldo | Cloudflare R2, volcado cifrado, 30 diarios y 12 mensuales, prueba de restauración | ADR-22 |
+| 7 | Respaldo | ~~Cloudflare R2~~ Backblaze B2 **[CH-68]**, volcado cifrado, 30 diarios y 12 mensuales, prueba de restauración | ADR-22 |
 | 8 | Inicio de sesión | Email y contraseña, sesión larga, TOTP en dispositivos nuevos, registro deshabilitado | ADR-08 |
 | — | Fechas | Evaluar un tipo propio frente a Temporal | ADR-16 |
 | — | Estilos | Conservar la identidad de la 1.0; shadcn/ui solo como primitivos | ADR-14 |
@@ -75,7 +75,7 @@ Este documento fija el stack tecnológico de Finn 2.0. Cada elección se justifi
 | Pruebas | Vitest (unidad, escenarios y propiedades con fast-check); integración con Testcontainers; E2E con Playwright | ADR-19 |
 | Repositorio | Monorepo con pnpm workspaces | ADR-20 |
 | Calidad y CI | TS estricto con banderas extra; ESLint con reglas de frontera; Prettier; GitHub Actions | ADR-21 |
-| Respaldo y exportación | `pg_dump` nocturno cifrado con `age` hacia R2; prueba de restauración mensual; exportación JSON y CSV en la app | ADR-22 |
+| Respaldo y exportación | `pg_dump` nocturno cifrado con `age` hacia Backblaze B2 **[CH-68]**; prueba de restauración mensual; exportación JSON y CSV en la app | ADR-22 |
 | Observabilidad | Registro propio de eventos del sistema en la base de datos; sin servicios de terceros | ADR-23 |
 | **Costo mensual** | **$0** | Sección 6 |
 
@@ -534,7 +534,7 @@ packages/
   conciliacion/       @finn/conciliacion: decodificación y adaptadores CSV
   config/             tsconfig, ESLint y Prettier compartidos
 tools/
-  respaldo/           scripts de pg_dump, cifrado, subida a R2 y restauración
+  respaldo/           scripts de pg_dump, cifrado, subida a B2 y restauración [CH-68]
 docs/                 copia de los documentos de fase e instrucciones para agentes
 ```
 
@@ -560,12 +560,12 @@ docs/                 copia de los documentos de fase e instrucciones para agent
 
 ### ADR-22 — Respaldo y exportación
 
-- **Contexto.** RT-20 y las respuestas del usuario: R2, volcado cifrado, 30 diarios y 12 mensuales, prueba de restauración. El plan gratuito de Supabase no incluye respaldos automáticos.
+- **Contexto.** RT-20 y las respuestas del usuario: ~~R2~~ Backblaze B2 **[CH-68]**, volcado cifrado, 30 diarios y 12 mensuales, prueba de restauración. El plan gratuito de Supabase no incluye respaldos automáticos.
 - **Decisión — respaldo nocturno (GitHub Actions, 07:30 UTC):**
   1. `pg_dump` en formato personalizado de los esquemas de la app, con un rol de solo lectura, a través del pooler en **modo sesión** (IPv4; la conexión directa del plan gratuito es solo IPv6 y los runners de GitHub no la alcanzan de forma fiable). Versión del cliente igual a la versión mayor del servidor.
   2. Cifrado con **`age`** usando una clave pública guardada en los secretos de GitHub.
-  3. Subida a **Cloudflare R2** con prefijo `diarios/AAAA-MM-DD.dump.age`. El primer día de cada mes se copia además a `mensuales/AAAA-MM.dump.age`.
-  4. Retención con reglas de ciclo de vida de R2: `diarios/` se elimina a los 30 días; `mensuales/`, a los 365.
+  3. Subida a **Backblaze B2** **[CH-68]** con prefijo `diarios/AAAA-MM-DD.dump.age`. El primer día de cada mes se copia además a `mensuales/AAAA-MM.dump.age`.
+  4. Retención con reglas de ciclo de vida del bucket **[CH-68]**: `diarios/` se oculta a los 30 días; `mensuales/`, a los 365; en los dos, el objeto oculto se borra 1 día después. B2 aplica estas reglas una vez al día, así que el borrado real puede llegar uno o dos días después del plazo nominal.
   5. Al terminar, el job llama a un endpoint autenticado de la app que registra "último respaldo correcto". La tarea diaria (ADR-11) envía un push si han pasado más de 36 horas.
 - **El esquema `auth` de Supabase no se respalda.** Contiene el usuario y los factores TOTP; en una restauración en otro proyecto se recrea el único usuario y se vuelve a inscribir el TOTP. Así el respaldo no contiene hashes de contraseña ni secretos TOTP.
 - **Restricción que lo hace posible: ninguna tabla de la app referencia el esquema `auth`.** Si una tabla tuviera una clave foránea o un valor que apunte a `auth.users`, el volcado no se podría restaurar en otro proyecto, porque el usuario recreado tendría otro identificador. Por eso:
@@ -583,8 +583,8 @@ docs/                 copia de los documentos de fase e instrucciones para agent
   - **JSON completo de hechos**, con versión de formato: restaurable y legible sin la base.
   - **CSV de transacciones** con sus líneas, para hojas de cálculo.
   - **Supuesto para la Fase 4:** el formato exacto y si existe una importación desde el JSON.
-- **Medio de pago y alerta de facturación.** R2 puede pedir un medio de pago para activarse, aunque el uso quede dentro del nivel gratuito; el usuario lo acepta. Como protección, al crear la cuenta se configura una **alerta de facturación de Cloudflare con umbral de $0**, o el mínimo que permita la cuenta si $0 no está disponible. El umbral efectivamente configurado se anota en las instrucciones de operación del repositorio. Además, el bucket es privado (sin acceso público ni dominio `r2.dev`) y la credencial de GitHub Actions solo tiene permiso de lectura y escritura de objetos en ese bucket.
-- **Consecuencias.** Costo esperado $0 (sección 6); cualquier cargo inesperado genera un aviso antes de acumularse.
+- **Sin medio de pago **[CH-68]**.** La cuenta de Backblaze no registra ningún medio de pago, así que no hay cobro posible y no hace falta alerta de facturación. Al llegar al límite gratuito de almacenamiento (10 GB), B2 rechaza las subidas con un 403 (`storage_cap_exceeded`) y eso se ve porque el job de respaldo falla (correo de GitHub y, a las 36 h, push de respaldo atrasado). Si el registro pidiera tarjeta, se para y se revisa esta decisión. Además, el bucket es privado y la credencial de GitHub Actions es una clave de aplicación con lectura y escritura limitada a ese bucket.
+- **Consecuencias.** Costo esperado $0 (sección 6); **[CH-68]** ningún cargo es posible, y pasar el límite gratuito se manifiesta como un respaldo fallido, no como un cobro.
 
 ### ADR-23 — Observabilidad mínima propia
 
@@ -649,7 +649,7 @@ Ninguna regla de `01-dominio.md` resultó inviable con este stack. Estos puntos 
 |---|---|---|---|---|
 | Vercel | Hobby | $0 | 1.000.000 invocaciones; 4 h de CPU activa; 360 GB-h de memoria; 100 GB de transferencia; cron una vez al día; funciones de hasta 300 s; uso personal no comercial | Unos miles de invocaciones al mes; CPU muy por debajo del límite |
 | Supabase | Free | $0 | 500 MB de base; 5 GB de egreso; 50.000 MAU; sin respaldos automáticos; pausa tras una semana de inactividad; 2 proyectos activos | < 100 MB en 10 años; egreso ver RK-02 |
-| Cloudflare R2 | Nivel gratuito (con medio de pago registrado y alerta de facturación en $0 o el mínimo) | $0 | 10 GB-mes; 1 M operaciones clase A; 10 M clase B; egreso gratis | Unos 42 respaldos de pocos MB (< 0,5 GB); ~60 operaciones de escritura al mes |
+| Backblaze B2 **[CH-68]** | Nivel gratuito, sin medio de pago | $0 | 10 GB de almacenamiento; subidas (clase A) gratis; descargas y operaciones de lectura con tope diario en una cuenta que no paga (la documentación cita 1 GB de descarga y 2.500 de clase B y de clase C al día) | Unos 42 respaldos de pocos MB (< 0,5 GB); ~60 operaciones de escritura al mes |
 | GitHub | Free, repositorio ~~privado~~ público **[CH-46]** | $0 | ~~2.000 minutos de Actions al mes~~ runners estándar sin cuota **[CH-46]**; 500 MB de artefactos | ~60 pushes × 10–15 min + respaldos (~60 min) + restauración ≈ 1.000 min, que se miden pero no se cobran **[CH-46]** |
 | Web Push | Servicios de push de los navegadores | $0 | — | — |
 | Dominio propio | Opcional | No incluido | — | Se usa `*.vercel.app` |
@@ -679,7 +679,7 @@ Ninguna regla de `01-dominio.md` resultó inviable con este stack. Estos puntos 
 | RK-08 | Notificaciones push perdidas o suscripción expirada en Android | Media | Bajo | El registro dentro de la app es la fuente de verdad; renovación de la suscripción al abrir; limpieza de suscripciones con 404/410 |
 | RK-09 | Quedar fuera de la cuenta por perder el TOTP | Baja | Alto | Dos factores registrados; secreto en el gestor de contraseñas; reinicio del factor desde el panel de Supabase |
 | RK-10 | Un respaldo que no se puede restaurar (por ejemplo, por referencias al esquema `auth`), o una clave de cifrado perdida | Baja | Muy alto | Sin referencias hacia `auth` (supuesto para la Fase 3); prueba de restauración mensual en una base sin `auth`, con comprobación de claves foráneas y de invariantes; alerta si el respaldo tiene más de 36 h; clave privada en dos lugares |
-| RK-18 | Cargo inesperado en Cloudflare tras registrar el medio de pago | Baja | Bajo | Alerta de facturación en $0 o el mínimo; bucket privado; credencial limitada al bucket; volumen muy por debajo del nivel gratuito |
+| RK-18 **[CH-68]** | Los respaldos alcanzan el límite gratuito de B2 y las subidas se rechazan | Baja | Medio | Sin medio de pago no hay cargo posible; volumen muy por debajo del nivel gratuito; el job falla de forma visible y a las 36 h hay push; bucket privado; credencial limitada al bucket |
 | RK-11 | Caché del framework que sirve números viejos (error 11 de la 1.0) | Media | Alto | Renderizado dinámico para todo dato del motor; prohibido `"use cache"` sobre derivados; invalidación tras cada operación; E2E que compara números entre pantallas |
 | RK-12 | Un agente reimplementa una fórmula en la interfaz o usa flotantes o `Date` en el dominio | Media | Alto | Reglas de lint de frontera (ADR-21); las fórmulas internas no se exportan; los 50 escenarios y las propiedades en cada push |
 | RK-13 | El rendimiento del motor crece más de lo estimado | Baja | Medio | Benchmark con presupuesto en CI; perfilar antes de optimizar; cualquier optimización mantiene la función pura |
@@ -732,7 +732,9 @@ Ninguna regla de `01-dominio.md` resultó inviable con este stack. Estos puntos 
 - Vercel, límites de funciones: https://vercel.com/docs/limits
 - Vercel, límites de cron: https://vercel.com/docs/cron-jobs/usage-and-pricing
 - Vercel, versiones de Node.js: https://vercel.com/docs/functions/runtimes/node-js/node-js-versions
-- Cloudflare R2, precios y nivel gratuito: https://developers.cloudflare.com/r2/pricing/
+- Backblaze B2, precios: https://www.backblaze.com/cloud-storage/pricing **[CH-68]**
+- Backblaze B2, reglas de ciclo de vida: https://www.backblaze.com/docs/cloud-storage-lifecycle-rules **[CH-68]**
+- Backblaze B2, respuesta 403 `storage_cap_exceeded` al subir: https://www.backblaze.com/apidocs/b2-get-upload-url **[CH-68]**
 - GitHub Actions, minutos incluidos: https://docs.github.com/en/billing/concepts/product-billing/github-actions
 - Temporal en Node.js 26 y navegadores: https://nodesource.com/blog/javascript-temporal-history-nodejs-26
 - Next.js 16, Turbopack por defecto: https://nextjs.org/docs/app/api-reference/turbopack
@@ -744,7 +746,7 @@ Ninguna regla de `01-dominio.md` resultó inviable con este stack. Estos puntos 
 
 | Cambio | Origen | Secciones afectadas |
 |---|---|---|
-| Alerta de facturación de Cloudflare en $0 (o el mínimo disponible) al registrar el medio de pago de R2 | Respuesta 1 de la revisión | 0.5, ADR-22, 6.1, RK-18 |
+| ~~Alerta de facturación de Cloudflare en $0 (o el mínimo disponible) al registrar el medio de pago de R2~~ Sin efecto **[CH-68]** | Respuesta 1 de la revisión | 0.5, ADR-22, 6.1, RK-18 |
 | SMS con resultado "error": visible en la bandeja, notificado, reprocesable a mano o convertible en transacción a mano; sin reintento automático | Respuesta 2 de la revisión | 0.5, ADR-09, 4.2, nota N-02, sección 8 |
 | Sin referencias de la app hacia el esquema `auth`; la prueba de restauración se hace en una base sin `auth` y comprueba las claves foráneas | Corrección 3 de la revisión | 0.5, ADR-08, ADR-22, RK-10, sección 8 |
 | Estado del documento: Aprobado — Fase 2 cerrada | Aprobación del usuario | Encabezado |
@@ -762,3 +764,4 @@ Aprobadas en fases posteriores. Este documento no se modifica; cada línea indic
 - **PF-3** (Fase 5, aprobada en el Paso 1 de `05-frontend.md`, P5-3). **ADR-07 (consecuencias), "La interfaz no hace aritmética con montos":** salvo sumas y restas con las funciones de `Centavos` de `@finn/dominio/valores`, solo en los componentes de formulario y solo como ayuda visual de lo que el usuario está escribiendo; el resultado nunca se envía al servidor ni reemplaza un derivado del motor, y una regla de lint limita la importación. En `04-backend.md` se aplica con CP-6 (§1.3 y §13.3). Detalle en `05-frontend.md` §0.8 y §5.1.
 - **CT-01, CT-04 y CT-05** (Fase 7, aprobados en las revisiones de las partes A y C de `07-pruebas.md`). **ADR-01:** TypeScript estricto en todo el código de la aplicación; los activos de prueba fuera de `apps/` y `packages/` pueden usar otro lenguaje (primer caso: el oráculo `tools/pruebas/oraculo/motor_min.py`). **ADR-19, "Reloj inyectable":** el reloj de prueba solo se activa con `FINN_ENTORNO === 'pruebas'` y `VERCEL_ENV` sin definir (lista de permitidos); fuera de eso, con la variable del reloj la app no arranca y la función lo ignora; `NODE_ENV` no decide. **ADR-19, niveles:** se agrega el nivel de componentes con el modo navegador de Vitest y el Chromium de Playwright. Detalle en `07-pruebas.md` §3.1, §4.3 y §10.
 - **CT-09** (Fase 7, aprobado en la revisión de la Parte D de `07-pruebas.md`). **ADR-10:** el despliegue a producción sigue siendo desde GitHub Actions; única excepción, el despliegue de emergencia desde la PC del usuario con `vercel deploy --prod` (PRU-MAN-OPER-002), solo si `desplegar` no puede correr y hay un error de dinero o de seguridad que `vercel rollback` no resuelve, con los mismos scripts de `rapido`, `integracion` y `politica-patrones` en local y **sin migraciones** (la regla de que una migración precede al código no tiene excepción). **ADR-22:** durante las primeras 8 semanas desde la apertura de la puerta, la prueba de restauración corre cada semana; después vuelve a ser mensual. Detalle en `07-pruebas.md` §31.
+- **CH-68** (posterior a la Fase 8; detalle en `08-tareas.md`, tabla de CH). **ADR-22, 0.5, §1, 6.1 y RK-18:** el destino de los respaldos pasa de Cloudflare R2 a Backblaze B2, sin medio de pago; marcado en línea con [CH-68].
