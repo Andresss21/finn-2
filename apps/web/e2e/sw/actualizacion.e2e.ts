@@ -7,6 +7,7 @@ import { contenidoDeLasCaches, visitarControlada } from './ayudas-sw.ts';
 import { levantarServidorIntermedio } from './servidor-intermedio.ts';
 
 test.describe('PRU-SW-PWA', () => {
+  test.use({ serviceWorkers: 'allow' });
   test.skip(({ browserName }) => browserName !== 'chromium', 'service worker: solo Chromium');
 
   test('PRU-SW-PWA-004 [V5-33] con la versión 2 instalada la pestaña con la versión 1 muestra el aviso, sigue sirviendo sus archivos y "Recargar" activa la versión 2', async ({

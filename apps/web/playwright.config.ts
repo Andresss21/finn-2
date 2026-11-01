@@ -21,6 +21,9 @@ export default defineConfig({
     trace: 'on-first-retry',
     timezoneId: 'America/El_Salvador',
     locale: 'es-SV',
+    // El service worker (05 §8, TA-223) solo existe en las pruebas de `e2e/sw/`: con uno activo, los pedidos de navegación
+    // pasan por él y Playwright no ve las redirecciones (PRU-E2E-PWA-003 lo notó). Allí se permite con `test.use`.
+    serviceWorkers: 'block',
   },
   // 05 §14.1 (FE-50): la E2E corre contra la compilación de producción, no contra `next dev`.
   webServer: {

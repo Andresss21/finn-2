@@ -10,6 +10,7 @@ import { visitarControlada } from './ayudas-sw.ts';
 import { levantarServidorIntermedio } from './servidor-intermedio.ts';
 
 test.describe('PRU-SW-PWA', () => {
+  test.use({ serviceWorkers: 'allow' });
   test.skip(({ browserName }) => browserName !== 'chromium', 'service worker: solo Chromium');
 
   test('PRU-SW-PWA-002 [V5-30] sin conexión navegar muestra /sin-conexion con el servidor detenido y el clic en un enlace del marco no navega, deja la pantalla intacta y avisa', async ({

@@ -6,6 +6,7 @@ import { expect, test } from '../configuracion/semilla.ts';
 import { contenidoDeLasCaches, visitarControlada } from './ayudas-sw.ts';
 
 test.describe('PRU-SW-PWA', () => {
+  test.use({ serviceWorkers: 'allow' });
   // WebKit en Playwright no tiene CDP ni un service worker comparable: el service worker se prueba en Chromium (07 §3.2).
   test.skip(({ browserName }) => browserName !== 'chromium', 'service worker: solo Chromium');
 
