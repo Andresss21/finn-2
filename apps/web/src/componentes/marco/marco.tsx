@@ -11,7 +11,11 @@ import { navegacion } from '../../textos/navegacion';
 import { Icono } from '../base/icono';
 import { AccesoRegistrar, rutaRegistrar } from '../navegacion/acceso-registrar';
 import { Contador } from '../navegacion/contador';
-import { ContextoNavegacionPendiente, EnlaceFinn } from '../navegacion/enlace-finn';
+import {
+  ContextoNavegacionPendiente,
+  EnlaceFinn,
+  EVENTO_SIN_CONEXION,
+} from '../navegacion/enlace-finn';
 import { useRefrescar } from '../navegacion/use-refrescar';
 import { MasSecciones, NavegacionApp } from '../navegacion/navegacion-app';
 import { SECCIONES, seccionDeRuta } from '../navegacion/secciones';
@@ -42,6 +46,20 @@ function CuerpoDelMarco({
   const pathname = usePathname();
   const { encabezado, recibidoEn } = useEncabezado();
   const { enLinea } = useConexion();
+  // Un clic bloqueado por falta de conexión cambia el texto del aviso, que el lector de pantalla anuncia (8.5).
+  const [bloqueada, setBloqueada] = useState(false);
+  useEffect(() => {
+    const alBloquear = (): void => {
+      setBloqueada(true);
+    };
+    window.addEventListener(EVENTO_SIN_CONEXION, alBloquear);
+    return () => {
+      window.removeEventListener(EVENTO_SIN_CONEXION, alBloquear);
+    };
+  }, []);
+  useEffect(() => {
+    if (enLinea) setBloqueada(false);
+  }, [enLinea]);
   const refrescar = useRefrescar();
   useRefrescoAutomatico({ hoy: encabezado?.hoy ?? null, recibidoEn, refrescar });
   const [pendientes, setPendientes] = useState<ReadonlySet<string>>(new Set());
@@ -80,7 +98,7 @@ function CuerpoDelMarco({
           role="status"
           className="text-etiqueta fixed inset-x-0 top-15 z-40 bg-superficie-elevada px-5 py-2 text-center text-texto md:top-16 md:left-62"
         >
-          {navegacion.sinConexion}
+          {bloqueada ? navegacion.sinConexionNavegacion : navegacion.sinConexion}
         </div>
       )}
       {pendientes.size > 0 ? (

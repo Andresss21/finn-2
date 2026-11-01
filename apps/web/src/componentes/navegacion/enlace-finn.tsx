@@ -3,7 +3,16 @@
 // (`useLinkStatus`) el propio enlace lleva `aria-busy` y avisa al marco, que muestra el indicador global. Con la página
 // sin hidratar no hay señal (V5-21b): el estado presionado de 10.9 es solo CSS y vive en el estilo del enlace.
 import Link, { useLinkStatus } from 'next/link';
-import { createContext, useContext, useEffect, useId, useRef, type ComponentProps } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  type ComponentProps,
+  type MouseEvent,
+  type MouseEventHandler,
+} from 'react';
 
 /** Lo entrega el marco: `marcar(id, true)` mientras el enlace `id` navega, `marcar(id, false)` al terminar. */
 export const ContextoNavegacionPendiente = createContext<(id: string, pendiente: boolean) => void>(
@@ -28,10 +37,25 @@ function Senal() {
   return <span ref={ancla} hidden />;
 }
 
-export function EnlaceFinn({ children, className, ...props }: ComponentProps<typeof Link>) {
+/** El enlace avisa al marco con este evento cuando no navega por falta de conexión (05 §8.5, FE-56). */
+export const EVENTO_SIN_CONEXION = 'finn:navegacion-sin-conexion';
+
+type PropsEnlaceFinn = Omit<ComponentProps<typeof Link>, 'onClick'> & {
+  readonly onClick?: MouseEventHandler<HTMLAnchorElement>;
+};
+
+export function EnlaceFinn({ children, className, onClick, ...props }: PropsEnlaceFinn) {
   return (
     <Link
       {...props}
+      onClick={(evento: MouseEvent<HTMLAnchorElement>) => {
+        onClick?.(evento);
+        // Sin conexión Next haría una navegación de documento y se perdería la pantalla actual (V5-30b).
+        if (!navigator.onLine) {
+          evento.preventDefault();
+          window.dispatchEvent(new Event(EVENTO_SIN_CONEXION));
+        }
+      }}
       className={[className, 'active:opacity-70 aria-busy:opacity-60'].filter(Boolean).join(' ')}
     >
       {children}

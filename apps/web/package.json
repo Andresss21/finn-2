@@ -18,6 +18,7 @@
     "@radix-ui/react-radio-group": "1.5.1",
     "@radix-ui/react-select": "2.4.1",
     "@radix-ui/react-slot": "1.5.0",
+    "@serwist/turbopack": "9.5.13",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.114.0",
     "@tailwindcss/postcss": "4.3.3",
@@ -31,6 +32,7 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-hook-form": "7.90.0",
+    "serwist": "9.5.13",
     "tailwind-merge": "3.7.0",
     "tailwindcss": "4.3.3",
     "zod": "4.6.5"
@@ -48,6 +50,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.2.3",
     "axe-core": "4.14.0",
+    "esbuild": "0.25.12",
     "otpauth": "9.5.2",
     "puppeteer-core": "24.43.1",
     "typescript": "5.9.3"

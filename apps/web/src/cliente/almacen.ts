@@ -37,4 +37,14 @@ export const almacen = {
       return;
     }
   },
+  /** ¿Hay alguna clave con ese prefijo? Sin leer valores (05 §8.5: `/sin-conexion` no lee montos). */
+  hayPrefijo(prefijo: string): boolean {
+    try {
+      for (let i = 0; i < window.sessionStorage.length; i += 1)
+        if (window.sessionStorage.key(i)?.startsWith(prefijo) === true) return true;
+    } catch {
+      return false;
+    }
+    return false;
+  },
 } as const;
