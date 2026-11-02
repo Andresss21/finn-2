@@ -106,7 +106,7 @@ describe('PRU-CMP-PWA', () => {
     expect(document.documentElement.dataset['theme']).toBe('oscuro');
   });
 
-  it('PRU-CMP-PWA-103[CA-77.2] con "Oscuro" ya guardado, el panel lo marca al montarse; sin violaciones de axe', async () => {
+  it('PRU-CMP-PWA-103 [CA-77.2] con "Oscuro" ya guardado, el panel lo marca al montarse; sin violaciones de axe', async () => {
     sistemaEn('light');
     window.localStorage.setItem('finn-tema', 'oscuro');
     const nodo = montar();
