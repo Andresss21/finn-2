@@ -1,5 +1,6 @@
 // Catálogo de textos de la interfaz (05 §12.1, FE-23): un objeto `as const` por área.
 // Cada ficha agrega su área acá; ningún texto literal va en JSX fuera de `src/textos/` (L8).
+import { ajustesApariencia } from './ajustes-apariencia.ts';
 import { ajustesWebhook } from './ajustes-webhook.ts';
 import { autenticacion } from './autenticacion.ts';
 import { bandeja } from './bandeja.ts';
@@ -21,6 +22,7 @@ import { primerosPasos } from './primeros-pasos.ts';
 import { registrarTipo } from './registrar-tipo.ts';
 
 export {
+  ajustesApariencia,
   ajustesWebhook,
   autenticacion,
   alcanceReserva,
@@ -45,6 +47,7 @@ export {
 
 /** Áreas registradas, en un arreglo para que una prueba detecte nombres repetidos. */
 export const areas = [
+  ['ajustesApariencia', ajustesApariencia],
   ['ajustesWebhook', ajustesWebhook],
   ['plantilla', plantilla],
   ['presupuesto', presupuesto],

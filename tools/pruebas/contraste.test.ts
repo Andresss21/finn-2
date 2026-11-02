@@ -46,7 +46,11 @@ describe('PRU-DOM-PWA-001', () => {
     expect(actual).toContain('[data-theme=oscuro]');
     const proveedor = readFileSync('apps/web/src/componentes/marco/proveedor-tema.tsx', 'utf8');
     expect(proveedor).toContain('attribute="data-theme"');
-    expect(proveedor).toContain("value={{ light: 'claro', dark: 'oscuro' }}");
+    expect(proveedor).toContain("themes={['claro', 'oscuro']}");
+    expect(proveedor).toContain(
+      "value={{ claro: 'claro', oscuro: 'oscuro', light: 'claro', dark: 'oscuro' }}",
+    );
+    expect(proveedor).toContain('enableColorScheme={false}');
     expect(readFileSync('apps/web/src/app/tokens.css', 'utf8')).toContain(
       ':root[data-theme="oscuro"]',
     );
