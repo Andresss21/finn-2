@@ -52,7 +52,7 @@ test.describe('PRU-E2E-PWA', () => {
     expect(await page.evaluate(() => window.localStorage.getItem('finn-tema'))).toBeNull();
   });
 
-  test('PRU-E2E-PWA-107 [CA-77.2] elijo "Oscuro" con el sistema en claro; al recargar <html> tiene data-theme="oscuro" desde antes de hidratar, sin destello del claro', async ({
+  test('PRU-E2E-PWA-107 [CA-77.2] elijo «Oscuro» con el sistema en claro; al recargar <html> tiene data-theme=«oscuro» desde antes de hidratar, sin destello del claro', async ({
     page,
   }) => {
     await page.emulateMedia({ colorScheme: 'light' });

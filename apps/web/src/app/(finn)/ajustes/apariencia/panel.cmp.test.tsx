@@ -64,7 +64,7 @@ afterEach(() => {
 });
 
 describe('PRU-CMP-PWA', () => {
-  it('PRU-CMP-PWA-101 [CA-77.1] sin elección guardada, "Sistema" está marcado y <html> sigue el tema del dispositivo', async () => {
+  it('PRU-CMP-PWA-101 [CA-77.1] sin elección guardada, «Sistema» está marcado y <html> sigue el tema del dispositivo', async () => {
     sistemaEn('dark');
     const nodo = montar();
     await act(() => Promise.resolve());
@@ -73,7 +73,7 @@ describe('PRU-CMP-PWA', () => {
     expect(window.localStorage.getItem('finn-tema')).toBeNull();
   });
 
-  it('PRU-CMP-PWA-102 [CA-77.2] elegir "Oscuro" lo guarda en el dispositivo y pone data-theme="oscuro"; "Claro" lo cambia; sin tocar el servidor', async () => {
+  it('PRU-CMP-PWA-102 [CA-77.2] elegir «Oscuro» lo guarda en el dispositivo y pone data-theme=«oscuro»; «Claro» lo cambia; sin tocar el servidor', async () => {
     sistemaEn('light');
     const pedidos = vi.fn();
     vi.stubGlobal('fetch', pedidos);
@@ -97,7 +97,7 @@ describe('PRU-CMP-PWA', () => {
     expect(pedidos).not.toHaveBeenCalled();
   });
 
-  it('PRU-CMP-PWA-104 [CA-77.2] un valor "dark" guardado antes de CH-74 se muestra como "Oscuro" y <html> queda en data-theme="oscuro"', async () => {
+  it('PRU-CMP-PWA-104 [CA-77.2] un valor «dark» guardado antes de CH-74 se muestra como «Oscuro» y <html> queda en data-theme=«oscuro»', async () => {
     sistemaEn('light');
     window.localStorage.setItem('finn-tema', 'dark');
     const nodo = montar();
@@ -106,7 +106,7 @@ describe('PRU-CMP-PWA', () => {
     expect(document.documentElement.dataset['theme']).toBe('oscuro');
   });
 
-  it('PRU-CMP-PWA-103 [CA-77.2] con "Oscuro" ya guardado, el panel lo marca al montarse; sin violaciones de axe', async () => {
+  it('PRU-CMP-PWA-103 [CA-77.2] con «Oscuro» ya guardado, el panel lo marca al montarse; sin violaciones de axe', async () => {
     sistemaEn('light');
     window.localStorage.setItem('finn-tema', 'oscuro');
     const nodo = montar();
