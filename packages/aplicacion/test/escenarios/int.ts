@@ -344,7 +344,7 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
         id: nuevo(),
         categoriaId: categoria,
         tipo,
-        ...((tipo === 'mensual' || tipo === 'semanal') && { modo: op.modo ?? 'acumular' }),
+        ...((tipo === 'mensual' || tipo === 'semanal') && { modoMeta: op.modo ?? 'acumular' }),
         monto: dolares(op.monto ?? 0),
         ...(op.fecha && { fechaObjetivo: op.fecha }),
       });

@@ -296,7 +296,7 @@ describe('detalle de categoría', () => {
         { id: id('r2'), patron: 'OTRO%', categoriaId: id('super') },
       ],
     });
-    expect(d.meta).toMatchObject({ tipo: 'mensual', modo: 'acumular', monto: c(50) });
+    expect(d.meta).toMatchObject({ tipo: 'mensual', modoMeta: 'acumular', monto: c(50) });
     expect(d.meta?.progresoBp).toBeUndefined();
     expect(d.programadas).toEqual([
       { programada: { id: 'netflix', nombre: 'NETFLIX' }, monto: c(15), proxima: '2027-04-20' },
@@ -337,7 +337,7 @@ describe('metas y estructura', () => {
       montoPeriodo: c(50),
       pedido: c(50),
       falta: c(50),
-      modo: 'acumular',
+      modoMeta: 'acumular',
     });
     expect(m.metas[1]?.progreso).toBeUndefined();
     expect(m.metas[1]?.grupo.nombre).toBe('Ocio');

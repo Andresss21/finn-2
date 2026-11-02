@@ -64,7 +64,7 @@ export interface DetalleCategoria {
   readonly meta: {
     readonly id: Uuid;
     readonly tipo: string;
-    readonly modo?: string;
+    readonly modoMeta?: string; // [CH-80] como en metas() (6.10)
     readonly monto: Centavos;
     readonly montoPeriodo?: Centavos;
     readonly base: Centavos;
@@ -266,7 +266,7 @@ export function detalleCategoria(
         : {
             id: meta.id,
             tipo: meta.tipo,
-            ...(meta.modo === null ? {} : { modo: meta.modo }),
+            ...(meta.modo === null ? {} : { modoMeta: meta.modo }),
             monto: meta.monto,
             ...(evaluada.montoDelPeriodo === null
               ? {}

@@ -48,9 +48,12 @@ export const op17 = z.object({
 export type EntradaOp17 = z.output<typeof op17>;
 
 const tipoMeta = z.enum(['mensual', 'semanal', 'anual', 'para_fecha']);
-const modoMeta = z.enum(['acumular', 'rellenar_hasta']);
+const modoDeMeta = z.enum(['acumular', 'rellenar_hasta']);
 
-/** OP-18 Crear, editar o eliminar una meta. La forma por tipo es la de `ck_metas_*` (03): modo en las de período. */
+/**
+ * OP-18 Crear, editar o eliminar una meta. La forma por tipo es la de `ck_metas_*` (03): modo en las de período. El modo de la
+ * meta se llama `modoMeta` porque `modo` es el modo de envío de toda Server Action (04 §2.2.2, CH-80).
+ */
 export const op18 = z.discriminatedUnion('accion', [
   z
     .object({
@@ -58,7 +61,7 @@ export const op18 = z.discriminatedUnion('accion', [
       id: uuid,
       categoriaId: uuid,
       tipo: tipoMeta,
-      modo: modoMeta.optional(),
+      modoMeta: modoDeMeta.optional(),
       monto: montoTexto,
       fechaObjetivo: fechaLocal.optional(),
     })
@@ -68,8 +71,8 @@ export const op18 = z.discriminatedUnion('accion', [
       };
       const porPeriodo = e.tipo === 'mensual' || e.tipo === 'semanal';
       if (e.monto <= 0) falla('monto', 'Ingresá un monto mayor que cero.');
-      if (porPeriodo && e.modo === undefined) falla('modo', 'Elegí un modo.');
-      if (!porPeriodo && e.modo !== undefined) falla('modo', 'Esta meta no tiene modo.');
+      if (porPeriodo && e.modoMeta === undefined) falla('modoMeta', 'Elegí un modo.');
+      if (!porPeriodo && e.modoMeta !== undefined) falla('modoMeta', 'Esta meta no tiene modo.');
       if (e.tipo === 'para_fecha' && e.fechaObjetivo === undefined)
         falla('fechaObjetivo', 'Ingresá una fecha objetivo.');
       if (porPeriodo && e.fechaObjetivo !== undefined)
@@ -80,12 +83,12 @@ export const op18 = z.discriminatedUnion('accion', [
       accion: z.literal('editar'),
       metaId: uuid,
       monto: montoTexto.optional(),
-      modo: modoMeta.optional(),
+      modoMeta: modoDeMeta.optional(),
       fechaObjetivo: fechaLocal.optional(),
       // lo que vio la interfaz de cada campo que cambia; una anual sin fecha la trae como `null`
       esperado: z.object({
         monto: montoTexto.optional(),
-        modo: modoMeta.optional(),
+        modoMeta: modoDeMeta.optional(),
         fechaObjetivo: fechaLocal.nullable().optional(),
       }),
     })
@@ -93,7 +96,7 @@ export const op18 = z.discriminatedUnion('accion', [
       const falla = (path: string[], message: string): void => {
         ctx.addIssue({ code: 'custom', path, message });
       };
-      const pedidas = (['monto', 'modo', 'fechaObjetivo'] as const).filter(
+      const pedidas = (['monto', 'modoMeta', 'fechaObjetivo'] as const).filter(
         (k) => e[k] !== undefined,
       );
       if (pedidas.length === 0) falla(['monto'], 'Indicá qué cambiar.');

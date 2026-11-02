@@ -1,6 +1,7 @@
 // OP-18 Crear, editar o eliminar una meta (04 §3.3). Crear: creación (4.6.1), el id existente con los mismos datos es
 // `ya_aplicada` y con otros `conflicto_id`. Editar: valor absoluto (4.6.2) sobre los campos que cambian. Eliminar:
-// eliminación (4.6.3), una meta que ya no existe pero consta en `eliminaciones` es `ya_aplicada`.
+// eliminación (4.6.3), una meta que ya no existe pero consta en `eliminaciones` es `ya_aplicada`. La entrada trae el modo
+// de la meta como `modoMeta` (CH-80); el hecho y el comando del dominio lo llaman `modo`.
 import { fueEliminada } from '@finn/db';
 import type { Hechos, Meta } from '@finn/dominio';
 import { op18, type EntradaOp18, type SalidaPresupuesto } from '../../contratos/presupuesto.ts';
@@ -9,22 +10,27 @@ import type { DefinicionOperacion, Veredicto } from '../marco.ts';
 type Crear = Extract<EntradaOp18, { accion: 'crear' }>;
 type Editar = Extract<EntradaOp18, { accion: 'editar' }>;
 
-const CLAVES = ['monto', 'modo', 'fechaObjetivo'] as const;
+/** Cada campo editable de la entrada y su nombre en la meta. */
+const CLAVES = [
+  ['monto', 'monto'],
+  ['modoMeta', 'modo'],
+  ['fechaObjetivo', 'fechaObjetivo'],
+] as const;
 const metaDe = (h: Hechos, id: string): Meta | undefined => h.metas.find((m) => m.id === id);
 const igual = (a: Meta, e: Crear): boolean =>
   a.categoriaId === e.categoriaId &&
   a.tipo === e.tipo &&
   a.monto === e.monto &&
-  a.modo === (e.modo ?? null) &&
+  a.modo === (e.modoMeta ?? null) &&
   a.fechaObjetivo === (e.fechaObjetivo ?? null);
 
 function editar(m: Meta, e: Editar): Veredicto<SalidaPresupuesto> {
-  const pedidas = CLAVES.filter((k) => e[k] !== undefined);
-  if (pedidas.every((k) => m[k] === e[k])) return { tipo: 'ya_aplicada', salida: {} };
-  if (pedidas.every((k) => m[k] === e.esperado[k])) return { tipo: 'aplicar' };
+  const pedidas = CLAVES.filter(([k]) => e[k] !== undefined);
+  if (pedidas.every(([k, h]) => m[h] === e[k])) return { tipo: 'ya_aplicada', salida: {} };
+  if (pedidas.every(([k, h]) => m[h] === e.esperado[k])) return { tipo: 'aplicar' };
   return {
     tipo: 'conflicto_desactualizado',
-    actuales: Object.fromEntries(pedidas.map((k) => [k, m[k]])),
+    actuales: Object.fromEntries(pedidas.map(([k, h]) => [k, m[h]])),
   };
 }
 
@@ -55,7 +61,7 @@ export const OP18: DefinicionOperacion<EntradaOp18, EntradaOp18, SalidaPresupues
         accion: 'editar',
         metaId: e.metaId,
         ...(e.monto === undefined ? {} : { monto: e.monto }),
-        ...(e.modo === undefined ? {} : { modo: e.modo }),
+        ...(e.modoMeta === undefined ? {} : { modo: e.modoMeta }),
         ...(e.fechaObjetivo === undefined ? {} : { fechaObjetivo: e.fechaObjetivo }),
       };
     return {
@@ -65,7 +71,7 @@ export const OP18: DefinicionOperacion<EntradaOp18, EntradaOp18, SalidaPresupues
       categoriaId: e.categoriaId,
       tipo: e.tipo,
       monto: e.monto,
-      ...(e.modo === undefined ? {} : { modo: e.modo }),
+      ...(e.modoMeta === undefined ? {} : { modo: e.modoMeta }),
       ...(e.fechaObjetivo === undefined ? {} : { fechaObjetivo: e.fechaObjetivo }),
     };
   },
