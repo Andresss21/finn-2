@@ -1,7 +1,7 @@
 // tools/ci/afecta.mjs — qué toca el diff y qué corre (TA-012; 07 §6.1, §6.5 M1 a M3, §32.2 M5; 08 DT-07; DP-34).
 //   node tools/ci/afecta.mjs [--archivos a,b]  JSON con afecta_db, afecta_web, integracion, e2e y cierre
 //   node tools/ci/afecta.mjs rapido            `pnpm ci:rapido`: controles fijos, matriz y suites de `rapido`
-//   node tools/ci/afecta.mjs e2e               `pnpm ci:e2e`: en main la suite completa de `movil`; si no, las afectadas
+//   node tools/ci/afecta.mjs e2e               `pnpm ci:e2e`: en main o con `cierre`, la suite completa de `movil`; si no, las afectadas
 //   node tools/ci/afecta.mjs local             `pnpm ci:local` (DT-07): rapido y, según el diff, integracion y e2e
 //   node tools/ci/afecta.mjs nocturno          `pnpm ci:nocturno` (TA-013): las suites del nocturno que ya existen
 // Entorno: FINN_EVENTO (pull_request | push; vacío en local), FINN_BORRADOR (true | false), FINN_ACCION (la acción del
@@ -75,7 +75,8 @@ function e2eSegunModo() {
 }
 
 /** M1: integracion con afecta_db o PR listo. M2: e2e en PR listo con afecta_web. En main, todo (07 §6.1).
- * El PR que pasa una ficha a `terminada` corre e2e aunque no esté listo (07 §13.2, paso 4; M15 lo exige en `cierre`).
+ * El PR que pasa una ficha a `terminada`, y `ci:local` con esa ficha, corren e2e aunque no esté listo ni toque la web
+ * (07 §13.2, paso 4; M15 lo exige en `cierre`; CH-70).
  * afecta_docs: el diff toca docs/ o tools/docs/ y `rapido` corre docs:comprobar (07 §13.7). */
 function decidir(archivos, b) {
   const db = archivos.some((a) => CI.test(a) || DB.test(a));
@@ -87,10 +88,7 @@ function decidir(archivos, b) {
     afecta_db: db,
     afecta_web: web,
     integracion: enMain || listo || db,
-    e2e:
-      enMain ||
-      (evento === 'pull_request' && cierra) ||
-      ((listo || evento === '') && web && e2eSegunModo()),
+    e2e: enMain || cierra || ((listo || evento === '') && web && e2eSegunModo()),
     cierre: enMain || cierra,
     afecta_docs: archivos.some((a) => DOCS.test(a)),
   };
@@ -133,7 +131,7 @@ function secretos(b) {
   return [];
 }
 
-/** Filtro `-g` de las E2E afectadas (07 §6.1), más las de las fichas que se cierran: `todas`, `^$` o los identificadores. */
+/** Filtro `-g` de las E2E afectadas (07 §6.1): `todas` (marco o una ficha que se cierra, CH-70), `^$` o los identificadores. */
 function grepE2E(archivos) {
   const e = cargarEntradas();
   return afectadas(e, verificar(e), archivos, aTerminada(b)).grepE2E ?? 'todas';
@@ -289,7 +287,7 @@ else if (modo === 'e2e') ok = e2e(archivos);
 else if (modo === 'local') {
   ok = rapido(archivos, b, d);
   if (ok && d.afecta_db) ok = correr([['integracion', 'pnpm ci:integracion']]);
-  if (ok && d.afecta_web) ok = e2e(archivos);
+  if (ok && d.e2e) ok = e2e(archivos);
 } else if (modo === 'nocturno') ok = nocturno();
 else if (modo !== 'decidir') {
   console.error(`afecta: modo desconocido ${modo} (decidir, rapido, e2e, local, nocturno)`);

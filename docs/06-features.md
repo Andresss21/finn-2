@@ -1455,7 +1455,7 @@ Reglas comunes a todas las fichas:
 - Con cuentas y pasos pendientes: los Primeros pasos van encima de "Necesita tu atención". Ocultos: `/ajustes` muestra "Primeros pasos: {k} de 3" y "Mostrar en Inicio". **[B1]**
 - Plantilla con todo quitado: "Crear" deshabilitado con el motivo "Elegí al menos una categoría." **(nuevo)**.
 - Aplicación cortada (red, recarga, sesión vencida): al volver, "Seguir creando la plantilla ({k} de {n} creadas)" **(nuevo)**, con los mismos ids del borrador; sin borrador, se saltan por nombre los que ya existen (3.9.1). **[B1]**
-- Con categorías normales ya creadas: `/presupuesto/estructura/plantilla` redirige a `/presupuesto/estructura` (la plantilla es solo para empezar).
+- Con categorías normales ya creadas: `/presupuesto/estructura/plantilla` redirige a `/presupuesto/estructura` (la plantilla es solo para empezar), salvo que existan categorías de la lista sugerida y falten otras: entonces ofrece seguir (CA-04.10) **[CH-70]**.
 
 **Errores y textos.** Por elemento: `nombre_repetido`, `grupo_archivado`, `grupo_del_sistema` (si el usuario agrega "Pagos de tarjeta"). Textos nuevos: los de "Estados", "Creando tu plantilla: {k} de {n}…" y "{n} creadas. {m} no se crearon:" **(nuevo)** seguido de cada nombre con su mensaje; los de 3.15 ("Hecho: {paso}", "Ocultar por ahora", "Primeros pasos: {k} de 3", "Mostrar en Inicio"). **[B1]**
 
