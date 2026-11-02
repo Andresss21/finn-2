@@ -367,7 +367,7 @@
 
   "TA-289": { "estado": "pendiente" },
 
-  "TA-290": { "estado": "en_curso", "rama": "ta-290-detalle-categoria" },
+  "TA-290": { "estado": "terminada", "rama": "ta-290-detalle-categoria", "pr": 276 },
 
   "TA-291": { "estado": "pendiente" },
 
@@ -377,7 +377,7 @@
 
   "TA-294": { "estado": "terminada", "rama": "ta-294-sms-bandeja", "pr": 254 },
 
-  "TA-295": { "estado": "pendiente" },
+  "TA-295": { "estado": "terminada", "rama": "ta-295-sms-procesamiento-2", "pr": 274 },
 
   "TA-296": { "estado": "pendiente" },
 
@@ -533,5 +533,7 @@
 
   "TA-317": { "estado": "terminada", "rama": "ta-317-acciones", "pr": 273 },
 
-  "TA-318": { "estado": "pendiente" }
+  "TA-318": { "estado": "pendiente" },
+
+  "TA-319": { "estado": "en_curso", "rama": "ta-319-detalle-categoria-2" }
 }

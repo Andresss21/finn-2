@@ -265,6 +265,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
       dto({
         numeros: { ...ceros, disponible },
         meta: {
+          id: 'meta-1',
           tipo: 'ahorro',
           monto: 300000,
           pedido: 17500,
@@ -283,6 +284,8 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     expect(sinEspacios(parcial.querySelector('[data-resumen-meta]'))).toContain(
       'Pide $175.00 este período · falta $75.00',
     );
+    // [CH-72] la meta se edita en `/metas/[metaId]` con el `id` que trae el DTO
+    expect(enlace(parcial, 'Editar la meta')?.getAttribute('href')).toBe('/metas/meta-1');
     const completa = mostrar(meta(10000, 350000));
     expect(completa.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe(
       '100',
@@ -399,6 +402,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
         historial: [hist('2027-01-21', 10000, 11000)],
         historialResumen: { promedioGastado: 11000, periodosExcedidos: 1 },
         meta: {
+          id: 'meta-1',
           tipo: 'ahorro',
           monto: 300000,
           pedido: 17500,

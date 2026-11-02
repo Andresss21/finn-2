@@ -75,7 +75,7 @@ export const categoriaDetalle = {
     desarchivar: 'Desarchivar',
     desarchivando: 'Desarchivando…',
     crearMeta: 'Crear una meta',
-    verMetas: 'Ver metas',
+    verMetas: 'Editar la meta',
     bloqueos: {
       disponible: 'No se puede archivar: tiene Disponible distinto de cero.',
       asignaciones_futuras: 'No se puede archivar: tiene asignaciones en períodos futuros.',

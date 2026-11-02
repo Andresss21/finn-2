@@ -227,7 +227,7 @@ export function PantallaDetalleCategoria({
             </>
           )}
           <EnlaceFinn
-            href={meta === null ? `/metas/nueva?categoria=${categoria.id}` : '/metas'}
+            href={meta === null ? `/metas/nueva?categoria=${categoria.id}` : `/metas/${meta.id}`}
             className={ENLACE}
           >
             {meta === null ? t.acciones.crearMeta : t.acciones.verMetas}

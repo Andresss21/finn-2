@@ -3,7 +3,18 @@
 // Cada caso arma sus hechos mínimos: una cuenta de efectivo, una categoría, sus asignaciones, sus gastos y, si hace falta, su meta.
 import { describe, expect, it } from 'vitest';
 import { calcular } from '../calculo/calcular';
-import type { Asignacion, Efecto, Hechos, Linea, Meta, Transaccion, Uuid } from '../hechos';
+import type {
+  Asignacion,
+  Categoria,
+  Cuenta,
+  Efecto,
+  Grupo,
+  Hechos,
+  Linea,
+  Meta,
+  Transaccion,
+  Uuid,
+} from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { detalleCategoria } from './detalle-categoria';
@@ -64,13 +75,13 @@ function detalle(caso: Caso) {
   });
   const hechos: Hechos = {
     vigencias_ciclo: [{ id: id('v1'), diaInicio: 1, rigeDesde: null, revision: null }],
-    cuentas: [{ id: id('ef'), tipo: 'efectivo', nombre: 'Efectivo' }] as Hechos['cuentas'],
+    cuentas: [{ id: id('ef'), tipo: 'efectivo', nombre: 'Efectivo' }] as Cuenta[],
     tarjetas: [],
     prestamos: [],
     inversiones: [],
     grupos: [
       { id: id('g'), nombre: 'Ahorro', orden: 1, archivado: false, claveSistema: null },
-    ] as Hechos['grupos'],
+    ] as Grupo[],
     categorias: [
       {
         id: id('ahorro'),
@@ -81,7 +92,7 @@ function detalle(caso: Caso) {
         tarjetaId: null,
         archivada: false,
       },
-    ] as Hechos['categorias'],
+    ] as Categoria[],
     asignaciones: caso.asignaciones.map(
       ([inicio, monto]) =>
         ({
@@ -194,6 +205,7 @@ describe('PRU-DOM-PRES-108 detalle de categoría: calendario, historial y meta',
       hoy: '2027-04-15',
     });
     expect(parcial.d.meta?.progresoBp).toBe(4500);
+    expect(parcial.d.meta?.id).toBe('m');
     expect(metas(parcial.i).metas[0]?.progreso).toBe(4500);
     const sobrada = detalle({
       asignaciones: [['2027-04-01', 3500]],
