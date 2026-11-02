@@ -4,7 +4,7 @@
 // precisión, no un cálculo (CF-25). Dibuja lo que trae el DTO: no suma ni calcula montos (PF-3).
 import type { DetalleCategoria } from '@finn/dominio/selectores';
 import { useState } from 'react';
-import { VistaGrafico } from '../../../../../componentes/graficos/vista-grafico';
+import { VistaGrafico } from './vista';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { formatearFecha, formatearMontoAccesible } from '../../../../../formato';
 import { diasDelCalendario } from '../../../../../formato/calendario';
