@@ -462,7 +462,7 @@ tu: TU-11, TU-12, TU-16
 
 ```hito
 despues: TA-447
-requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-414, TA-415, TA-416, TA-417, TA-418, TA-419, TA-420, TA-421, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
+requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-414, TA-415, TA-416, TA-417, TA-445, TA-418, TA-419, TA-420, TA-421, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
 hitos: HT-2, HT-3, HT-7
 sin_pendientes: si
 tu: —
@@ -1569,6 +1569,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-82** | Partición de TA-306 por tamaño (DT-02), con precedente en CH-72 y CH-79, y cómo se entra al flujo de archivar. (a) El alcance completo de FT-19 midió prod≈758 en 13 archivos de producción (total≈1.520) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-306 conserva `/archivar` con OP-09 y el rechazo de OP-10 (CA-19.1, CA-19.5, CA-19.7; prod≈340, 6 archivos); TA-441, nueva (orden 365), lleva `/sacar`, el interceptor y la propuesta de un toque de AV-14 en Presupuesto (CA-19.2, CA-19.3, CA-19.4, CA-19.6; medido prod≈420, se declara 400, 9 archivos), cierra la ficha y lleva los pendientes CA-19.2>FT-28 y CA-19.3>FT-47. TA-441 depende de TA-306 y de las mismas tareas; HT-7 la exige. Criterio de dependientes: TA-406 (FT-28) y TA-407 (FT-47) completan CA-19.2 y CA-19.3, que ahora son de TA-441, así que pasan de TA-306 a TA-441; TA-413 (FT-40) completa CA-19.1 y CA-19.5 y sigue en TA-306. El código completo queda en la rama local `ta-441-sacar-archivada`. (c) 06 FT-19, Flujo paso 1, decía «Detalle de categoría → archivar», pero el detalle deshabilita «Archivar» con bloqueos (06-identidad-visual §6 punto 8 y 06 S3): al flujo se entra desde Estructura → editar → «Archivar», y desde el detalle solo cuando no hay bloqueos. No se cambia código | 08 TA-306, TA-441, TA-406, TA-407, HT-7; 06 FT-19, índice y §30.1 | Delegado por el orquestador; **aplicado [CH-82]** en 06 y en 08 |
 | **CH-83** | Partición de TA-305 por tamaño (DT-02), con precedente en CH-72, CH-79 y CH-82. (a) El alcance completo de FT-17 midió prod=629 en 12 archivos de producción (total≈1.600) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-305 conserva `/metas` y `/metas/nueva` con OP-18 crear (CA-17.1, CA-17.2, CA-17.3, CA-17.5, CA-17.6, CA-17.7; prod=442 medido, se declara 400, 10 archivos); TA-442, nueva (orden 366), lleva `/metas/[metaId]` con OP-18 editar y eliminar, «Usar el valor actual» y la E2E de CA-17.4 (prod≈150, 5 archivos), cierra la ficha. TA-442 depende de TA-305, de las mismas tareas y de TA-299 (FT-08): CA-17.4 pide ver AV-17 en Inicio y no puede ser un pendiente de punta a punta hacia FT-08, cuyas tareas tienen orden menor (E5, E12), así que TA-442 lo prueba entera. HT-7 la exige. Criterio de dependientes: ninguna otra tarea depende de CA-17.4, así que ninguna cambia de TA-305 a TA-442. (c) El código de TA-442 queda en la rama local `ta-442-metas-editar`. (d) Mientras TA-442 no se mergee, los enlaces «Editar», «Extender la fecha» y «Ajustar el monto» de `/metas` y «Editar la meta» del detalle de categoría apuntan a `/metas/[metaId]`, que aún no existe | 08 TA-305, TA-442, HT-7 y §30.1 | Delegado por el orquestador; **aplicado [CH-83]** en 08 |
 | **CH-84** | Partición de TA-314 por tamaño (DT-02), con precedente en CH-72, CH-79, CH-82 y CH-83, y `cuentas()` sin ordenar por `orden`. (a) El alcance completo de FT-53 midió prod≈1.030 en 15 archivos de producción (total≈1.600) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). Las últimas fichas de pantalla midieron entre 1,7 y 2,1 veces la estimación. (b) Se parte en dos: TA-314 conserva `/cuentas/[cuentaId]/editar` con OP-02 y `/cuentas/ordenar` con OP-03 (CA-53.5, CA-53.6; prod=519 medido, se declara 400, 9 archivos); TA-443, nueva (orden 367), lleva `/archivar` con OP-04, `/eliminar` con OP-06 y «Archivar de nuevo» en el detalle (CA-53.1, CA-53.2, CA-53.3, CA-53.4, CA-53.7; prod≈490 medido, se declara 400, 12 archivos), cierra la ficha. TA-443 depende de TA-314 y de las mismas tareas; HT-7 la exige. Criterio de dependientes: ninguna otra tarea depende de TA-314 ni de CA-53.x, así que ninguna cambia de TA-314 a TA-443. (c) El código de TA-443 queda en la rama local `ta-443-cuentas-2`. (d) 04 §6.5 y §6.14.2 piden las cuentas «en el orden de OP-03», pero `cuentas()` del dominio no ordenaba por `orden`, así que «Ordenar» no tenía efecto visible: TA-314 la corrige (orden, y el id si empatan) con PRU-DOM-CTA-170. (e) TA-314 edita nombre, institución, últimos cuatro dígitos y fecha de apertura; los campos propios de una tarjeta o inversión que OP-02 también admite (límite, corte, pago, red, color, tasa, rendimiento) no tienen pantalla en 06 FT-53 y quedan sin tarea: si se quieren, es una ficha nueva. (f) Mientras TA-443 no se mergee, los enlaces «Archivar» y «Eliminar» del detalle de cuenta apuntan a rutas que aún no existen | 08 TA-314, TA-443, HT-7 y §30.1; 04 §6.5 | Delegado por el orquestador; **aplicado [CH-84]** en 08 |
+| **CH-86** | Partición de TA-417 por tamaño (DT-02), con precedente en CH-72, CH-79, CH-82 y CH-83, y una laguna de `formulario`. (a) El alcance completo de FT-44 midió prod=626 en 12 archivos de producción (total≈1.000) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-417 conserva `/cuentas/[cuentaId]/verificar-saldo` con los pasos de datos, marcar y revisar sobre OP-53, la preselección solo si la diferencia es cero y el nombre «Verificación de saldo» en el detalle (CA-44.1, CA-44.4, CA-44.5, CA-44.6; prod=506 medido, se declara 400, 11 archivos); TA-445, nueva (orden 740; TA-446, TA-447, TA-470 y TA-550 pasan a 741, 742, 743 y 744 para dejarle el lugar que E5 y E7 exigen), lleva la propuesta de ajuste de AV-21 (abrir el flujo de ingreso, gasto o entrada a la tarjeta según 06 §3.2.5) y el borrador de 05 §4.11 (CA-44.2, CA-44.3; prod≈120, 3 archivos) y cierra la ficha. TA-445 depende de TA-417 y de las mismas tareas; HT-8 la exige. Criterio de dependientes: TA-446 y TA-447 solo usan CA-44.1 y CA-44.5 (06 §4), así que siguen dependiendo de TA-417. (c) Laguna: TA-241 dejó `verificar_saldo` solo en `@finn/dominio`; el contrato `parametrosFormulario` y el despacho de `formulario()` en `@finn/aplicacion` no lo tenían, y 04 §6.14 lo pide. TA-417 lo conecta (`consultas/formulario/verificar.ts`, una línea en el contrato y otra en el despacho): una cuenta que no es de efectivo ni tarjeta, archivada, o una fecha posterior a hoy responden `no_encontrado`. (d) El código de TA-445 queda en la rama local `ta-445-verificar-saldo-2`. (e) Mientras TA-445 no se mergee, tras confirmar con diferencia distinta de cero la pantalla no muestra AV-21 ni su enlace | 08 TA-417, TA-445, TA-446, TA-447, TA-470, TA-550, HT-8 y 04 §6.14 | Delegado por el orquestador; **aplicado [CH-86]** en 08 |
 
 ---
 
@@ -7221,7 +7222,7 @@ compartido: —
 #### TA-550 Presupuestos de rendimiento sobre las pantallas reales **[CH-51]**
 
 ```tarea
-orden: 743
+orden: 744
 bloque: B6
 hito: HT-9
 depende: TA-222, TA-280, TA-292, TA-293, TA-287, TA-294, TA-298, TA-308, TA-421
@@ -9308,7 +9309,7 @@ compartido: —
 | FT-41 | M | Próximos pagos, registro de un toque y omitir | 6 | TA-414 | `/programadas/[programadaId]/ocurrencias/[fechaEsperada]` | CA-08.8, CA-26.3, CA-34.9, CA-35.5, CA-37.4, CA-37.5 |
 | FT-42 | M | Registro automático y puesta al día | 6 | TA-415 | — | CA-35.6 |
 | FT-43 | M | Conciliar con estado de cuenta CSV | 10 | TA-416 | `/cuentas/[cuentaId]/conciliar` | CA-25.4, CA-26.6, CA-52.2 |
-| FT-44 | M | Verificar saldo (conciliación manual) | 6 | TA-417 | `/cuentas/[cuentaId]/verificar-saldo` | — |
+| FT-44 | M | Verificar saldo (conciliación manual) | 6 | TA-417, TA-445 **[CH-86]** | `/cuentas/[cuentaId]/verificar-saldo` | — |
 | FT-45 | M | Por cobrar y dinero en camino | 5 | TA-408 | `/por-cobrar` | — |
 | FT-46 | M | Cobrar | 7 | TA-409 | `/por-cobrar/cobrar` | CA-25.6, CA-26.4, CA-29.4 |
 | FT-47 | M | Condonar | 4 | TA-407 | `/por-cobrar/condonar/[lineaId]` | CA-19.3 |
@@ -9939,7 +9940,7 @@ e2e: CA-25.4, CA-26.6, CA-52.2
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y, si completa pendientes, sus E2E en verde.
 
-#### TA-417 FT-44 Verificar saldo (conciliación manual)
+#### TA-417 FT-44 Verificar saldo (conciliación manual) (1 de 2) **[CH-86]**
 
 ```tarea
 orden: 717
@@ -9949,22 +9950,57 @@ depende: TA-210, TA-212, TA-219, TA-224, TA-167, TA-171, TA-173, TA-317
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=6 migraciones=0 total=1000
-cubre: CA-44.1, CA-44.2, CA-44.3, CA-44.4, CA-44.5, CA-44.6, RUTA-/cuentas/[cuentaId]/verificar-saldo
+tamano: prod=400 archivos=11 ca=4 migraciones=0 total=900
+cubre: CA-44.1, CA-44.4, CA-44.5, CA-44.6, RUTA-/cuentas/[cuentaId]/verificar-saldo
 pru: —
 compartido: —
 fichas: FT-44
 ```
 
 **Qué construir.**
-- FT-44: las pantallas y flujos de la ficha (Flujo, Piezas, Estados, Errores y textos) para CA-44.1 a CA-44.6, con las consultas y operaciones que ya existen (B2 y B3) y los componentes de B4.
+- FT-44, parte 1 **[CH-86]**: los pasos de datos, marcar y revisar sobre OP-53, con la preselección solo si la diferencia es cero y la conexión de `formulario({ operacion: 'verificar_saldo' })` en `@finn/aplicacion` (CA-44.1, CA-44.4, CA-44.5, CA-44.6). La propuesta de AV-21 y el borrador son de TA-445.
 - Server Actions de sus operaciones en `servidor/acciones/<area>.ts`; ACCESO-001 y la suite de accesibilidad las cubren solas (TA-218, TA-221).
 - Rutas que crea (dueña, DT-23): `/cuentas/[cuentaId]/verificar-saldo`.
-- Último PR de la ficha: `features.json` en `terminada` (07 §27).
+- La ficha sigue en `pendiente`: la cierra TA-445 **[CH-86]**.
+- El código de TA-445 ya está hecho en la rama local `ta-445-verificar-saldo-2` **[CH-86]**.
 
 **Leer.** 06 FT-44 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7; 04 §6 (sus consultas); 06-identidad-visual §3 si su pantalla está en las capturas.
 
-**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/<area>.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
+**Archivos.** `packages/aplicacion/src/consultas/formulario/{index,verificar}.ts`, `packages/aplicacion/src/contratos/consultas.ts`, `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/<area>.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
+
+**Pruebas primero.**
+- Una prueba por CA de este trozo en el nivel de 07 §17 (DT-21), con el CA entre corchetes.
+
+**Comandos.** `pnpm pruebas:ft FT-44` sin faltantes en este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y, si completa pendientes, sus E2E en verde.
+
+#### TA-445 FT-44 Verificar saldo: ajuste de AV-21 y borrador (2 de 2) **[CH-86]**
+
+```tarea
+orden: 740
+bloque: B7
+hito: HT-8
+depende: TA-210, TA-212, TA-219, TA-224, TA-167, TA-171, TA-173, TA-317, TA-417
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=120 archivos=3 ca=2 migraciones=0 total=400
+cubre: CA-44.2, CA-44.3
+pru: —
+compartido: —
+fichas: FT-44
+```
+
+**Qué construir.**
+- FT-44, resto **[CH-86]**: la propuesta de ajuste de AV-21 tras confirmar con diferencia distinta de cero (abre el flujo de ingreso, gasto o entrada a la tarjeta según 06 §3.2.5) y el borrador de 05 §4.11 (CA-44.2, CA-44.3).
+- Server Actions de sus operaciones en `servidor/acciones/<area>.ts`; ACCESO-001 y la suite de accesibilidad las cubren solas (TA-218, TA-221).
+- Último PR de la ficha: `features.json` en `terminada` (07 §27).
+- El código ya está hecho en la rama local `ta-445-verificar-saldo-2` **[CH-86]**.
+
+**Leer.** 06 FT-44 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7; 04 §6 (sus consultas); 06-identidad-visual §3 si su pantalla está en las capturas.
+
+**Archivos.** `packages/aplicacion/src/consultas/formulario/{index,verificar}.ts`, `packages/aplicacion/src/contratos/consultas.ts`, `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/<area>.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
 
 **Pruebas primero.**
 - Una prueba por CA de este trozo en el nivel de 07 §17 (DT-21), con el CA entre corchetes.
@@ -10761,7 +10797,7 @@ fichas: FT-78
 #### TA-446 Recorridos de 06 §4.1, §4.2, §4.3 de punta a punta
 
 ```tarea
-orden: 740
+orden: 741
 bloque: B7
 hito: HT-8
 depende: TA-400, TA-403, TA-404, TA-408, TA-415, TA-423, TA-424, TA-440, TA-428, TA-429, TA-431, TA-439
@@ -10796,7 +10832,7 @@ compartido: —
 #### TA-447 Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta
 
 ```tarea
-orden: 741
+orden: 742
 bloque: B7
 hito: HT-8
 depende: TA-400, TA-402, TA-416, TA-417, TA-418, TA-431
@@ -10831,7 +10867,7 @@ compartido: —
 #### TA-470 Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03)
 
 ```tarea
-orden: 742
+orden: 743
 bloque: B7
 hito: HT-9
 depende: TA-181, TA-176, TA-180, TA-433
@@ -11240,7 +11276,7 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 
 ## 33. Mapa de la Parte D
 
-52 tareas: TA-015, 43 de B7 y 8 de B8. **2 de revisión obligatoria** (TA-015 y TA-470). 2 pruebas nuevas con identificador (DT-17), además de las de los CA (DT-21).
+53 tareas: TA-015, 44 de B7 y 8 de B8. **2 de revisión obligatoria** (TA-015 y TA-470). 2 pruebas nuevas con identificador (DT-17), además de las de los CA (DT-21).
 
 | Orden | Tarea | Bloque | Hito | Revisión | Título | Prod. | Mig. |
 |---|---|---|---|---|---|---|---|
@@ -11262,7 +11298,7 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 714 | TA-414 | B7 | HT-8 | normal | FT-41 Próximos pagos, registro de un toque y omitir | 360 | 0 |
 | 715 | TA-415 | B7 | HT-8 | normal | FT-42 Registro automático y puesta al día | 360 | 0 |
 | 716 | TA-416 | B7 | HT-8 | normal | FT-43 Conciliar con estado de cuenta CSV | 360 | 0 |
-| 717 | TA-417 | B7 | HT-8 | normal | FT-44 Verificar saldo (conciliación manual) | 360 | 0 |
+| 717 | TA-417 | B7 | HT-8 | normal | FT-44 Verificar saldo (conciliación manual) (1 de 2) **[CH-86]** | 400 | 0 |
 | 718 | TA-418 | B7 | HT-8 | normal | FT-32 Cashback, avance y transferencia de deuda | 360 | 0 |
 | 719 | TA-419 | B7 | HT-8 | normal | FT-55 Condiciones y tabla de amortización | 360 | 0 |
 | 720 | TA-420 | B7 | HT-8 | normal | FT-57 Inversiones: aporte, retiro y ajuste | 360 | 0 |
@@ -11286,10 +11322,11 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 737 | TA-437 | B7 | HT-8 | normal | FT-05 Instalar como app y página sin conexión | 360 | 0 |
 | 738 | TA-438 | B7 | HT-8 | normal | FT-78 Arrastrar un movimiento a una categoría (1 de 2) | 360 | 0 |
 | 739 | TA-439 | B7 | HT-8 | normal | FT-78 Arrastrar un movimiento a una categoría (2 de 2) | 360 | 0 |
-| 740 | TA-446 | B7 | HT-8 | normal | Recorridos de 06 §4.1, §4.2, §4.3 de punta a punta | 40 | 0 |
-| 741 | TA-447 | B7 | HT-8 | normal | Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta | 40 | 0 |
-| 742 | TA-470 | B7 | HT-9 | obligatoria | Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03) | 80 | 1 |
-| 743 | TA-550 | B6 | HT-9 | obligatoria | Presupuestos de rendimiento sobre las pantallas reales **[CH-51]** | 150 |
+| 740 | TA-445 | B7 | HT-8 | normal | FT-44 Verificar saldo: ajuste de AV-21 y borrador (2 de 2) **[CH-86]** | 120 | 0 |
+| 741 | TA-446 | B7 | HT-8 | normal | Recorridos de 06 §4.1, §4.2, §4.3 de punta a punta | 40 | 0 |
+| 742 | TA-447 | B7 | HT-8 | normal | Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta | 40 | 0 |
+| 743 | TA-470 | B7 | HT-9 | obligatoria | Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03) | 80 | 1 |
+| 744 | TA-550 | B6 | HT-9 | obligatoria | Presupuestos de rendimiento sobre las pantallas reales **[CH-51]** | 150 |
 | 900 | TA-500 | B8 | — | normal | FT-56 Desembolso de préstamo | 360 | 0 |
 | 901 | TA-501 | B8 | — | normal | FT-58 Modelos de préstamo de otros bancos | 360 | 0 |
 | 902 | TA-502 | B8 | — | normal | FT-59 Proyección de inversiones | 360 | 0 |
