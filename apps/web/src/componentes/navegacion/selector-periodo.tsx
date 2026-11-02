@@ -11,7 +11,7 @@ export interface PeriodoDto {
   readonly dias: number;
   readonly estado: 'cerrado' | 'activo' | 'futuro';
   readonly transicion: boolean;
-  /** Solo el período activo los trae (04 §6.0.2): sin ellos, el texto es solo el estado. */
+  /** Solo en el activo (04 §6.0). */
   readonly diasTranscurridos?: number;
   readonly diasRestantes?: number;
 }
@@ -29,7 +29,7 @@ const CIRCULO =
   'inline-flex size-11 shrink-0 items-center justify-center rounded-pastilla bg-superficie-hundida text-texto hover:bg-borde-sutil focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
 function estadoVisible(p: PeriodoDto): { icono: NombreIcono; texto: string } {
-  if (p.transicion) return { icono: 'swap', texto: dominio.periodo.transicion };
+  if (p.transicion) return { icono: 'swap', texto: dominio.periodo.transicion(p.dias) };
   if (p.estado === 'cerrado') return { icono: 'lock', texto: dominio.periodo.cerrado };
   if (p.estado === 'futuro') return { icono: 'cal', texto: dominio.periodo.futuro };
   return { icono: 'clock', texto: dominio.periodo.activo };

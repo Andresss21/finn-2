@@ -14,6 +14,9 @@ import { formularios } from './formularios.ts';
 import { alcanceReserva, glosario } from './glosario.ts';
 import { ingreso } from './ingreso.ts';
 import { navegacion } from './navegacion.ts';
+import { plantilla } from './plantilla.ts';
+import { presupuesto } from './presupuesto.ts';
+import { primerosPasos } from './primeros-pasos.ts';
 import { registrarTipo } from './registrar-tipo.ts';
 
 export {
@@ -32,12 +35,18 @@ export {
   glosario,
   ingreso,
   navegacion,
+  plantilla,
+  presupuesto,
+  primerosPasos,
   registrarTipo,
 };
 
 /** Áreas registradas, en un arreglo para que una prueba detecte nombres repetidos. */
 export const areas = [
   ['ajustesWebhook', ajustesWebhook],
+  ['plantilla', plantilla],
+  ['presupuesto', presupuesto],
+  ['primerosPasos', primerosPasos],
   ['autenticacion', autenticacion],
   ['bandeja', bandeja],
   ['base', base],

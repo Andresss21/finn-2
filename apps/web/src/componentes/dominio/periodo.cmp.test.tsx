@@ -189,7 +189,7 @@ describe('PRU-CMP-PRES-102 billete y selector de período [FE-31, CF-13]', () =>
     );
     expect(actual?.getAttribute('href')).toBe('/presupuesto?vista=x');
     expect(textoAccesible(fu)).toContain('Futuro');
-    expect(textoAccesible(tr)).toContain('De transición');
+    expect(textoAccesible(tr)).toContain('Período de transición, ');
   });
 
   it.each(temas)('PRU-CMP-PRES-102 axe sin violaciones en el tema %s', async (tema) => {
