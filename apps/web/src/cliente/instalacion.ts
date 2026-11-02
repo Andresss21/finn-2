@@ -37,12 +37,12 @@ export function escucharInstalacion(): () => void {
   };
 }
 
-const instalada = (): boolean =>
+export const instalada = (): boolean =>
   window.matchMedia('(display-mode: standalone)').matches ||
   (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 /** iPhone o iPad (el iPad moderno se presenta como Mac con pantalla táctil). */
-const esIos = (): boolean =>
+export const esIos = (): boolean =>
   /iPhone|iPad|iPod/.test(navigator.userAgent) ||
   (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 

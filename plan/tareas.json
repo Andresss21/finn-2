@@ -473,7 +473,7 @@
 
   "TA-426": { "estado": "pendiente" },
 
-  "TA-427": { "estado": "pendiente" },
+  "TA-427": { "estado": "en_curso", "rama": "ta-427-notificaciones-dispositivo" },
 
   "TA-428": { "estado": "pendiente" },
 
