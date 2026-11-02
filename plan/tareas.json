@@ -421,7 +421,7 @@
 
   "TA-313": { "estado": "terminada", "rama": "ta-313-detalle-cuenta", "pr": 266 },
 
-  "TA-314": { "estado": "en_curso", "rama": "ta-314-cuentas-editar-ordenar" },
+  "TA-314": { "estado": "terminada", "rama": "ta-314-cuentas-editar-ordenar", "pr": 302 },
 
   "TA-315": { "estado": "terminada", "rama": "ta-315-pagar-cuota-4", "pr": 291 },
 
