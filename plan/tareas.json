@@ -357,7 +357,7 @@
 
   "TA-284": { "estado": "terminada", "rama": "ta-284-webhook-token", "pr": 250 },
 
-  "TA-285": { "estado": "pendiente" },
+  "TA-285": { "estado": "terminada", "rama": "ta-285-primer-uso", "pr": 260 },
 
   "TA-286": { "estado": "pendiente" },
 
@@ -529,5 +529,5 @@
 
   "TA-553": { "estado": "terminada", "rama": "ta-553-bandeja-graficos", "pr": 241 },
 
-  "TA-316": { "estado": "pendiente" }
+  "TA-316": { "estado": "terminada", "rama": "ta-316-estructura-editar", "pr": 258 }
 }
