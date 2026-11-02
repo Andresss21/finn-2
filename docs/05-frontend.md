@@ -2171,7 +2171,7 @@ Reglas que no dependen del diseño:
 
 ### 10.6 Temas claro y oscuro
 
-- **next-themes** con `attribute="data-theme"` y `value={ light: 'claro', dark: 'oscuro' }` (**[F6]** CF-10; antes `attribute="class"` y la clase `.dark`), `defaultTheme="system"`, `enableSystem`, `disableTransitionOnChange` y `storageKey="finn-tema"`. `<html>` lleva `suppressHydrationWarning` (next-themes cambia la clase antes de hidratar).
+- **next-themes** con `attribute="data-theme"` (**[F6]** CF-10; antes `attribute="class"` y la clase `.dark`), `themes={['claro', 'oscuro']}`, `value={{ claro: 'claro', oscuro: 'oscuro', light: 'claro', dark: 'oscuro' }}` y `enableColorScheme={false}` **[CH-74]** (el script previo a hidratar de next-themes 0.4.6 escribe el nombre del tema sin pasar por `value` salvo con `class`; con `light` y `dark` quedaba `data-theme="dark"` hasta hidratar y el CSS no lo reconocía, con destello del tema claro, CA-77.2; los valores guardados en `finn-tema` son `claro`, `oscuro` o `system`, y `tokens.css` ya define `color-scheme` por tema), `defaultTheme="system"`, `enableSystem`, `disableTransitionOnChange` y `storageKey="finn-tema"`. `<html>` lleva `suppressHydrationWarning` (next-themes cambia la clase antes de hidratar).
 - El selector está en `/ajustes/apariencia` (§2): Sistema, Claro y Oscuro. Se guarda por dispositivo y no escribe en el servidor.
 - Cada tema define `color-scheme` (`light` o `dark`), para que los controles nativos (selector de fecha, barras de desplazamiento) sigan el tema.
 - `<meta name="theme-color">` con los dos valores de `fondo` por `media="(prefers-color-scheme: …)"`; next-themes no cambia esa etiqueta, así que con un tema forzado distinto del sistema puede no coincidir. Se acepta: es decorativo.

@@ -6,6 +6,7 @@ import { InstalarFinn } from './instalar-finn';
 import { RecordatorioPrimerosPasos } from './recordatorio-primeros-pasos';
 import { consultar } from '../../../servidor/consultar';
 import { depsDeConsulta } from '../../../servidor/consultas';
+import { ajustesApariencia } from '../../../textos/ajustes-apariencia';
 import { ajustesWebhook } from '../../../textos/ajustes-webhook';
 import { navegacion } from '../../../textos/navegacion';
 
@@ -23,6 +24,12 @@ export default async function PaginaAjustes() {
         className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
       >
         {ajustesWebhook.titulo}
+      </EnlaceFinn>
+      <EnlaceFinn
+        href="/ajustes/apariencia"
+        className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
+      >
+        {ajustesApariencia.enlace}
       </EnlaceFinn>
     </main>
   );
