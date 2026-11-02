@@ -367,7 +367,7 @@
 
   "TA-289": { "estado": "terminada", "rama": "ta-289-asignar", "pr": 277 },
 
-  "TA-290": { "estado": "pendiente" },
+  "TA-290": { "estado": "terminada", "rama": "ta-290-detalle-categoria", "pr": 276 },
 
   "TA-291": { "estado": "pendiente" },
 
@@ -533,5 +533,7 @@
 
   "TA-317": { "estado": "terminada", "rama": "ta-317-acciones", "pr": 273 },
 
-  "TA-318": { "estado": "pendiente" }
+  "TA-318": { "estado": "terminada", "rama": "ta-318-bloques-tipo-2", "pr": 278 },
+
+  "TA-319": { "estado": "pendiente" }
 }

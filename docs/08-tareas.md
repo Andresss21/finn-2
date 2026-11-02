@@ -432,8 +432,8 @@ tu: TU-09, TU-10, TU-12, TU-13
 ### HT-6 Uso diario mínimo
 
 ```hito
-despues: TA-316
-requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-552, TA-209, TA-553, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301, TA-316
+despues: TA-319
+requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-552, TA-209, TA-553, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301, TA-316, TA-319
 fichas: FT-01, FT-02, FT-03, FT-04, FT-08, FT-09, FT-10, FT-14, FT-18, FT-21, FT-29, FT-34, FT-35, FT-37, FT-38, FT-50
 pruebas: INV-01, INV-02, INV-03, INV-04, INV-05, INV-26, INV-27, INV-28, MOT-diferencial
 tu: TU-11, TU-12, TU-15
@@ -1552,6 +1552,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-69** | Partición de TA-283 por tamaño (DT-02). El alcance completo de FT-18 midió prod=631 en 15 archivos de producción contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). Se parte: TA-283 conserva la lista de la estructura con "Subir", "Bajar" y "Deshacer", `grupos/nuevo` y `categorias/nueva` con sus páginas interceptadas y su `loading.tsx` (CA-18.1, CA-18.3, CA-18.4); TA-316, nueva (orden 636), lleva `grupos/[grupoId]` y `categorias/[categoriaId]` con sus interceptadas (OP-08 nombre y grupo, OP-13), CA-18.2, CA-18.5 y CA-18.6, y cierra la ficha. TA-316 depende de TA-283; HT-6 la exige y su `despues` pasa a TA-316 (E7). El código completo queda en la rama local `ta-316-estructura-b` | 08 TA-283, TA-316, HT-6 | Delegado por el orquestador; **aplicado [CH-69]** en 08 TA-283, TA-316 y HT-6 |
 | **CH-70** | Cuando corre `cierre`, la E2E corre completa. 07 §6.1 decía, para `e2e`, "con las suites de esa ficha", y M15 (07 §13.3) exige "**todas** las pruebas automáticas de sus CA" de cada ficha `terminada` "con los resultados de la corrida". El PR #257 (TA-295) no tocó código web, pasó FT-34 a `terminada`, corrió 7 E2E y falló en `cierre` con 23 errores de M15 ("sin resultado"); los PR anteriores pasaron porque tocaban código compartido. Resolución: M15 no cambia; si el PR pasa una ficha a `terminada`, `afectadas` da la suite completa de `movil`. Los PR que no cierran ninguna ficha siguen corriendo solo las afectadas. `pnpm ci:local` usa la misma decisión: con una ficha que se cierra corre la E2E completa aunque no toque la web. Pruebas PRU-SEG-OPER-110 y 111. **Además:** en 08 §19.7, la fila de FT-03 decía TA-294 y §30.1 asigna la E2E de CA-03.3 a TA-295: pasa a TA-295. **Punto 2, `REN` de tiempos en M15:** 07 §27 condición 3 decía "**Todas** las pruebas automáticas de sus CA pasaron en la corrida del PR", y 07 §6.6 y la fila `REN` de §1 mandan los tiempos al nocturno ("`e2e` en `main` (bytes), nocturno (tiempos)"). El PR #263 (TA-286) falló en `cierre` por PRU-REN-INICIO-001, que cita CA-04.9 y se omite sin `FINN_REN=1`; salía `fallida` porque `resultadosCorrida` leía un `skipped` de Playwright como falla. Resolución: ese `skipped` con `ok: true` se lee `omitida`, y una falla real sigue `fallida`; en M15, una `REN` de tiempos omitida o sin resultado no exige resultado en la corrida del PR ni de `main` y queda bajo el aviso del nocturno de §6.6. Una `REN` de tiempos que corrió y falló bloquea, igual que la cuarentena; las `REN` de bytes y las demás pruebas omitidas siguen exigidas. Prueba PRU-SEG-OPER-112. **Punto 3, FT-04:** 06 "Estados" decía que con categorías normales `/presupuesto/estructura/plantilla` redirige, y CA-04.6 lo repite, mientras CA-04.10 pide seguir cuando la plantilla ya creó una parte. Resolución: redirige, salvo que existan categorías de la lista sugerida y falten otras: entonces ofrece seguir | 06 FT-04 Estados; 07 §6.1, §13.2 paso 4, §13.3 M15, §27 condición 3; 08 §19.7 | Delegado por el orquestador; **aplicado [CH-70]** en 06 FT-04 Estados, en 07 §6.1, §13.2 paso 4, M15 y §27 condición 3, y en 08 §19.7 |
 | **CH-71** | Partición de TA-313 por tamaño (DT-02) y laguna de `DetalleCuentaDto`. El alcance completo de FT-52 midió prod=905 en 13 archivos de producción contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). Se parte en tres: TA-313 conserva la ruta con la cabecera, el selector de período, los filtros y los movimientos con saldo corrido (CA-52.1, CA-52.3, CA-52.5); TA-317, nueva (orden 637), lleva las acciones, el estado de cuenta archivada con "Desarchivar", las conciliaciones y las programadas (CA-52.2, CA-52.4); TA-318, nueva (orden 638), lleva los bloques de tarjeta, préstamo e inversión y cierra la ficha con la `PRU-MAN` de CA-52.1. Cada una depende de la anterior; HT-7 las exige y su `despues` pasa a TA-318 (E7); TA-416 y TA-417 pasan a depender de TA-317. Laguna: 05 §3.4 pide a `SelectorPeriodo` el `periodo: PeriodoDto` y 04 §6.6 no lo daba en `DetalleCuentaDto`; ahora trae `periodo` (el de `periodoInicio`, o el activo). El código completo queda en la rama local `ta-317-detalle-resto` | 08 TA-313, TA-317, TA-318, HT-7; 04 §6.6 | Delegado por el orquestador; **aplicado [CH-71]** en 08 TA-313, TA-317, TA-318 y HT-7, y en 04 §6.6 |
+| **CH-72** | Partición de TA-290 por tamaño (DT-02) y laguna de `DetalleCategoriaDto`. El alcance completo de FT-14 midió prod=894 en 14 archivos de producción (total=1924) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). Se parte en dos: TA-290 conserva la ruta con el héroe, los números, el desglose del sobregiro con "Cubrir" y "Reservar", los consumos con lo cubierto y lo no cubierto, las entradas, las acciones y los estados (archivada con "Sacar" y "Desarchivar", período cerrado, `no_encontrado`) (CA-14.1, CA-14.2, CA-14.3, CA-14.6, CA-14.7); TA-319, nueva (orden 639), lleva el calendario con su tabla, el historial, la meta, las programadas y las reglas, y cierra la ficha (CA-14.4, CA-14.5, CA-14.8, CA-14.9, CA-14.10; CA-14.8 sigue pendiente de punta a punta de FT-28). TA-319 depende de TA-290; HT-6 la exige y su `despues` pasa a TA-319 (E7); el CA-14.8 de FT-28 pasa a TA-319 y TA-406 pasa a depender de TA-319. Lagunas: 04 §6.3 declara `periodo: PeriodoDto` y `historial[].periodo: PeriodoDto` y el selector devolvía `Periodo`; ahora devuelve `PeriodoDto`. Además, 05 §2.3 enlaza a `/metas/[metaId]` y `meta` de 04 §6.3 no traía el id: TA-319 agrega `id: Uuid` a `detalleCategoria().meta`. La barrita de cubierto y no cubierto de 06-identidad-visual §6 no se dibuja: el DTO no trae proporciones (CF-25) y calcularlas violaría PF-3; la cobertura va en texto. El código completo queda en la rama local `ta-319-detalle-categoria-2` | 08 TA-290, TA-319, HT-6 | Delegado por el orquestador; **aplicado [CH-72]** en 08 TA-290, TA-319 y HT-6,; el `id` de la meta en 04 §6.3 lo aplica TA-319 |
 
 ---
 
@@ -7420,7 +7421,7 @@ compartido: —
 | FT-09 | Presupuesto del período: filtros, períodos cerrados y futuros | 13 | HT-6 | TA-287, TA-288 | `/presupuesto` |
 | FT-10 | Asignar y desasignar | 8 | HT-6 | TA-289 | `/presupuesto/asignar/[categoriaId]` |
 | FT-11 | Mover dinero entre categorías | 4 | HT-7 | TA-302 | `/presupuesto/mover` |
-| FT-14 | Detalle de categoría: reparto, calendario e historial | 10 | HT-6 | TA-290 | `/presupuesto/categorias/[categoriaId]` |
+| FT-14 | Detalle de categoría: reparto, calendario e historial | 10 | HT-6 | TA-290, TA-319 | `/presupuesto/categorias/[categoriaId]` |
 | FT-16 | Sobregiros y cierre automático del período | 7 | HT-7 | TA-304 | — |
 | FT-17 | Metas | 7 | HT-7 | TA-305 | `/metas`, `/metas/[metaId]`, `/metas/nueva` |
 | FT-18 | Grupos y categorías: crear, renombrar, reordenar y eliminar | 6 | HT-6 | TA-283, TA-316 | `/presupuesto/estructura`, `/presupuesto/estructura/categorias/[categoriaId]`, `/presupuesto/estructura/categorias/nueva`, `/presupuesto/estructura/grupos/[grupoId]`, `/presupuesto/estructura/grupos/nuevo` |
@@ -7444,7 +7445,7 @@ compartido: —
 | FT-53 | Editar, ordenar, archivar, desarchivar y eliminar cuentas | 7 | HT-7 | TA-314 | `/cuentas/[cuentaId]/archivar`, `/cuentas/[cuentaId]/editar`, `/cuentas/[cuentaId]/eliminar`, `/cuentas/ordenar` |
 | FT-54 | Pagar cuota o abonar a capital | 5 | HT-7 | TA-315 | `/cuentas/[cuentaId]/cuota` |
 
-39 tareas, TA-280 a TA-315 y TA-316 a TA-318, 233 CA (las 31 fichas [I]).
+40 tareas, TA-280 a TA-315 y TA-316 a TA-319, 233 CA (las 31 fichas [I]).
 
 ### 22.3 Fichas de HT-5
 
@@ -7831,7 +7832,7 @@ fichas: FT-10
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
-#### TA-290 FT-14 Detalle de categoría: reparto, calendario e historial
+#### TA-290 FT-14 Detalle de categoría: reparto, calendario e historial (1 de 2) **[CH-72]**
 
 ```tarea
 orden: 338
@@ -7841,8 +7842,44 @@ depende: TA-170, TA-209, TA-210, TA-212, TA-219, TA-224, TA-288, TA-015
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=10 migraciones=0 total=1000
-cubre: CA-14.1, CA-14.2, CA-14.3, CA-14.4, CA-14.5, CA-14.6, CA-14.7, CA-14.8, CA-14.9, CA-14.10, RUTA-/presupuesto/categorias/[categoriaId]
+tamano: prod=360 archivos=10 ca=5 migraciones=0 total=1000
+cubre: CA-14.1, CA-14.2, CA-14.3, CA-14.6, CA-14.7, RUTA-/presupuesto/categorias/[categoriaId]
+pru: —
+compartido: —
+fichas: FT-14
+```
+
+**Qué construir.**
+- FT-14: las pantallas y flujos de su ficha (Flujo, Piezas, Estados, Errores y textos) para CA-14.1, CA-14.2, CA-14.3, CA-14.6 y CA-14.7, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
+- Server Actions de las operaciones de la ficha en `servidor/acciones/<area>.ts`, una línea por operación (04 §2.2.2); `ACCESO-001` y la suite de accesibilidad las cubren solas (TA-218, TA-221).
+- Rutas que esta tarea crea (dueña): `/presupuesto/categorias/[categoriaId]`.
+- El calendario, el historial, la meta, las programadas y las reglas son de TA-319 **[CH-72]**.
+
+**Leer.** 06 FT-14 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7 (estados); 06-identidad-visual §3 en la sección de su pantalla; 04 §6 (su consulta).
+
+**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/<area>.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
+
+**Pruebas primero.**
+- Una prueba por CA de este trozo, en el nivel que fija 07 §17 (regla de nivel por tipo de CA), con el identificador nuevo de su área (DT-21) y el CA entre corchetes.
+- Las E2E de la ficha citan ESC-17, ESC-19, AV-02, AV-03, AV-14, AV-17 cuando el CA los nombra; sus pruebas de dominio e integración ya existen (B2 y B3).
+
+**Comandos.** `pnpm pruebas:ft FT-14` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** `pruebas:ft` sin CA faltantes, el resumen de `pr:mergear` con sus manuales pendientes.
+La ficha sigue en `pendiente`: la cierra TA-319.
+
+#### TA-319 FT-14 Detalle de categoría: reparto, calendario e historial (2 de 2) **[CH-72]**
+
+```tarea
+orden: 639
+bloque: B6
+hito: HT-6
+depende: TA-210, TA-212, TA-219, TA-224, TA-290
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=7 ca=5 migraciones=0 total=900
+cubre: CA-14.4, CA-14.5, CA-14.8, CA-14.9, CA-14.10
 pru: —
 compartido: —
 fichas: FT-14
@@ -7850,9 +7887,8 @@ pendiente: CA-14.8>FT-28
 ```
 
 **Qué construir.**
-- FT-14: las pantallas y flujos de su ficha (Flujo, Piezas, Estados, Errores y textos) para CA-14.1 a CA-14.10, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
-- Server Actions de las operaciones de la ficha en `servidor/acciones/<area>.ts`, una línea por operación (04 §2.2.2); `ACCESO-001` y la suite de accesibilidad las cubren solas (TA-218, TA-221).
-- Rutas que esta tarea crea (dueña): `/presupuesto/categorias/[categoriaId]`.
+- FT-14, resto del Flujo: el calendario con su tabla equivalente y el filtro por día, el historial de 6 períodos (gráfico y tabla, "Se pasó k de n" y promedio), la meta con `ResumenMeta` y su barra de progreso, las programadas y las reglas, para CA-14.4, CA-14.5, CA-14.8, CA-14.9 y CA-14.10.
+- `detalleCategoria().meta` trae `id` (el de la meta) y la pantalla enlaza a `/metas/[metaId]` **[CH-72]** (04 §6.3).
 - Último PR de la ficha: `pruebas/features.json` pasa FT-14 a `terminada` (07 §27, DT-06 condición 6).
 - **[D] Pendientes de punta a punta (DT-27):** CA-14.8 (lo completa FT-28). Se prueban con el estado sembrado por operaciones y se agregan a `pruebas/pendientes-e2e.json`.
 
@@ -7862,7 +7898,7 @@ pendiente: CA-14.8>FT-28
 
 **Pruebas primero.**
 - Una prueba por CA de este trozo, en el nivel que fija 07 §17 (regla de nivel por tipo de CA), con el identificador nuevo de su área (DT-21) y el CA entre corchetes.
-- Las E2E de la ficha citan ESC-17, ESC-19, AV-02, AV-03, AV-14, AV-17 cuando el CA los nombra; sus pruebas de dominio e integración ya existen (B2 y B3).
+- Las E2E de la ficha citan AV-17 cuando el CA lo nombra; sus pruebas de dominio e integración ya existen (B2 y B3).
 
 **Comandos.** `pnpm pruebas:ft FT-14` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
 
@@ -8879,7 +8915,7 @@ pendiente: CA-54.5>FT-55
 | 335 | TA-287 | B6 | HT-6 | normal | FT-09 Presupuesto del período: filtros, períodos cerrados y futuros (1 de 2) | 360 |
 | 336 | TA-288 | B6 | HT-6 | normal | FT-09 Presupuesto del período: filtros, períodos cerrados y futuros (2 de 2) | 360 |
 | 337 | TA-289 | B6 | HT-6 | normal | FT-10 Asignar y desasignar | 360 |
-| 338 | TA-290 | B6 | HT-6 | normal | FT-14 Detalle de categoría: reparto, calendario e historial | 360 |
+| 338 | TA-290 | B6 | HT-6 | normal | FT-14 Detalle de categoría: reparto, calendario e historial (1 de 2) **[CH-72]** | 360 |
 | 339 | TA-291 | B6 | HT-6 | normal | FT-29 Categoría de pago y "te falta reservar" | 360 |
 | 340 | TA-292 | B6 | HT-6 | normal | FT-21 Registrar gasto con división y por cobrar (1 de 2) | 360 |
 | 341 | TA-293 | B6 | HT-6 | normal | FT-21 Registrar gasto con división y por cobrar (2 de 2) | 360 |
@@ -8914,6 +8950,7 @@ pendiente: CA-54.5>FT-55
 | 636 | TA-316 | B6 | HT-6 | normal | FT-18 Grupos y categorías: crear, renombrar, reordenar y eliminar (2 de 2) **[CH-69]** | 360 |
 | 637 | TA-317 | B6 | HT-7 | normal | FT-52 Detalle de cuenta (2 de 3) **[CH-71]** | 300 |
 | 638 | TA-318 | B6 | HT-7 | normal | FT-52 Detalle de cuenta (3 de 3) **[CH-71]** | 250 |
+| 639 | TA-319 | B6 | HT-6 | normal | FT-14 Detalle de categoría: reparto, calendario e historial (2 de 2) **[CH-72]** | 400 |
 
 ---
 
@@ -9386,7 +9423,7 @@ fichas: FT-20
 orden: 706
 bloque: B7
 hito: HT-8
-depende: TA-210, TA-212, TA-219, TA-224, TA-171, TA-173, TA-193, TA-198, TA-309, TA-288, TA-290, TA-306, TA-308
+depende: TA-210, TA-212, TA-219, TA-224, TA-171, TA-173, TA-193, TA-198, TA-309, TA-288, TA-290, TA-319, TA-306, TA-308
 tu: —
 revision: normal
 paralelo: libre
@@ -10949,7 +10986,7 @@ fichas: FT-49
 | FT-27 Transacción olvidada y cambios retroactivos | I | CA-08.5 (TA-298) | 1 | TA-311 |
 | FT-30 Pagar tarjeta con desglose y pago excedente | I | CA-08.7 (TA-299) | 1 | TA-303 |
 | FT-34 Recepción y procesamiento de SMS | I | CA-03.3 (TA-284) | 1 | TA-295 |
-| FT-28 Devoluciones | M | CA-09.11 (TA-288), CA-14.8 (TA-290), CA-19.2 (TA-306), CA-24.3 (TA-308), CA-25.5 (TA-309) | 5 | TA-406 |
+| FT-28 Devoluciones | M | CA-09.11 (TA-288), CA-14.8 (TA-319), CA-19.2 (TA-306), CA-24.3 (TA-308), CA-25.5 (TA-309) | 5 | TA-406 |
 | FT-39 Reglas de comercio | M | CA-21.10 (TA-293), CA-34.10 (TA-295), CA-35.11 (TA-297) | 3 | TA-411 |
 | FT-40 Administrar programadas | M | CA-19.1 (TA-306), CA-19.5 (TA-306) | 2 | TA-413 |
 | FT-41 Próximos pagos, registro de un toque y omitir | M | CA-08.8 (TA-299), CA-26.3 (TA-310), CA-34.9 (TA-295), CA-35.5 (TA-296), CA-37.4 (TA-300), CA-37.5 (TA-300) | 6 | TA-414 |
