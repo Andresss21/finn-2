@@ -1,12 +1,17 @@
 'use client';
-// Notificaciones del dispositivo (05 §8.6, FE-57, CP-5). El permiso solo se pide tras un gesto (`activar`); Nada de esto guarda
-// datos del servidor.
+// Notificaciones del dispositivo (05 §8.6, FE-57, CP-5). El permiso solo se pide tras un gesto (`activar`); la suscripción
+// se renueva sin preguntar una vez por pestaña (`renovar`). Nada de esto guarda datos del servidor: lo único local es la
+// tarjeta descartada (`localStorage`) y la marca de «ya renovada» de la pestaña (`sessionStorage`).
 import { useEffect, useState } from 'react';
 import { endpointCorto } from '../formularios/endpoint-corto';
+import { almacen } from './almacen';
 import { instalada, esIos } from './instalacion';
 
 export type EstadoPermiso =
   'cargando' | 'sin_decidir' | 'concedido' | 'denegado' | 'no_disponible' | 'ios_sin_instalar';
+
+const CLAVE_DESCARTADA = 'finn-notificaciones-descartada';
+const CLAVE_RENOVADA = 'finn-push-renovada';
 
 export type RegistrarSuscripcion = (cruda: unknown) => Promise<{ readonly ok: boolean }>;
 
@@ -76,8 +81,20 @@ export async function activar(registrar: RegistrarSuscripcion): Promise<boolean>
   return suscribirYRegistrar(registrar);
 }
 
+/** Con el permiso concedido: renueva `renovada_en` (OPT-02) una sola vez por pestaña, sin preguntar nada. */
+export async function renovar(registrar: RegistrarSuscripcion): Promise<void> {
+  if (leerPermiso() !== 'concedido' || almacen.leer(CLAVE_RENOVADA) !== null) return;
+  almacen.escribir(CLAVE_RENOVADA, '1');
+  if (!(await suscribirYRegistrar(registrar))) almacen.borrar(CLAVE_RENOVADA);
+}
+
 /** Anula la suscripción local de este dispositivo (al quitarlo de la lista). */
 export async function anularLocal(): Promise<void> {
   const sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription();
   await sub?.unsubscribe();
 }
+
+export const tarjetaDescartada = (): boolean => almacen.leerLocal(CLAVE_DESCARTADA) !== null;
+export const descartarTarjeta = (): void => {
+  almacen.escribirLocal(CLAVE_DESCARTADA, '1');
+};
