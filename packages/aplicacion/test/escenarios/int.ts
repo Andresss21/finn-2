@@ -16,6 +16,7 @@ import { crearCliente, type Cliente } from '../../../db/src/cliente.ts';
 import { transaccionesSobre, txPrisma } from '../../../db/src/transacciones.ts';
 import {
   baseLlamada,
+  consultar as consultarSql,
   instalarRelojSimulado,
   urlDe,
   type BasePrueba,
@@ -809,9 +810,33 @@ async function observar(
   return { obs: { ef, lpa, disp, fut, sobta, tarjetas, avisos: [...avisos].sort(), extra }, i };
 }
 
-/** `sembrar` de la E2E (TA-219): reemplaza `destino` por una copia de este estado, marcada como base de prueba. */
+/** La revisión que tiene `base`, o `0` si la base aún no existe. */
+async function revisionDe(base: string): Promise<string> {
+  const existe = await consultarSql(
+    urlDe('postgres', 'admin'),
+    `SELECT 1 FROM pg_database WHERE datname = '${base}'`,
+  );
+  if (existe.length === 0) return '0';
+  const [valor = '0'] = await consultarSql(
+    urlDe(base, 'admin'),
+    'SELECT valor FROM finn.revision WHERE id = 1',
+  );
+  return valor;
+}
+
+/**
+ * `sembrar` de la E2E (TA-219): reemplaza `destino` por una copia de este estado, marcada como base de prueba.
+ * La memoria del servidor sigue a la revisión (04 §5.3) y nunca va adelante de la base: la copia queda con una revisión mayor
+ * que la que tenía `destino`, así la siguiente lectura recarga los hechos aunque otra semilla hubiera dejado la misma revisión.
+ * El contador se sube en la fuente, antes de copiar, para que ninguna conexión del servidor vea la copia sin subir.
+ */
 export async function copiarEstadoA(s: Estado, destino: string): Promise<void> {
   await s.cliente.$disconnect(); // CREATE DATABASE … TEMPLATE exige que nadie esté conectado a la fuente
+  const anterior = await revisionDe(destino);
+  await consultarSql(
+    s.base.urlAdmin,
+    `UPDATE finn.revision SET valor = greatest(valor, ${anterior}) + 1 WHERE id = 1`,
+  );
   await comoAdmin(`DROP DATABASE IF EXISTS ${destino} WITH (FORCE)`);
   await comoAdmin(`CREATE DATABASE ${destino} TEMPLATE ${s.base.nombre}`);
   await comoAdmin(`ALTER DATABASE ${destino} SET finn.reloj_simulado = on`);
