@@ -477,7 +477,7 @@
 
   "TA-427": { "estado": "terminada", "rama": "ta-427-notificaciones-dispositivo", "pr": 294 },
 
-  "TA-440": { "estado": "en_curso", "rama": "ta-440-notificaciones" },
+  "TA-440": { "estado": "terminada", "rama": "ta-440-notificaciones", "pr": 301 },
 
   "TA-428": { "estado": "pendiente" },
 
