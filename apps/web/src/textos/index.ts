@@ -7,6 +7,7 @@ import { autenticacion } from './autenticacion.ts';
 import { bandeja } from './bandeja.ts';
 import { base } from './base.ts';
 import { categoriaDetalle } from './categoria-detalle.ts';
+import { categoriasArchivar } from './categorias-archivar.ts';
 import { cuentaDetalle } from './cuenta-detalle.ts';
 import { cuentas } from './cuentas.ts';
 import { cuentasCuota } from './cuentas-cuota.ts';
@@ -36,6 +37,7 @@ export {
   bandeja,
   base,
   categoriaDetalle,
+  categoriasArchivar,
   cuentaDetalle,
   cuentas,
   cuentasCuota,
@@ -72,6 +74,7 @@ export const areas = [
   ['bandeja', bandeja],
   ['base', base],
   ['categoriaDetalle', categoriaDetalle],
+  ['categoriasArchivar', categoriasArchivar],
   ['cuentaDetalle', cuentaDetalle],
   ['cuentas', cuentas],
   ['cuentasCuota', cuentasCuota],

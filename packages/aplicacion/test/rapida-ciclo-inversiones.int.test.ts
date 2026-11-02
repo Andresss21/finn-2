@@ -65,7 +65,7 @@ describe('PRU-INT-PRES', () => {
       id: uuid(id),
       categoriaId,
       tipo: 'mensual',
-      modo: 'rellenar_hasta',
+      modoMeta: 'rellenar_hasta',
       monto,
     });
   const releer = async (id: Uuid) => {

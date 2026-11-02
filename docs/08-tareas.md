@@ -452,7 +452,7 @@ El verificador deriva los ESC y los CB de las fichas y comprueba que la tarea du
 
 ```hito
 despues: TA-318
-requiere: TA-263, TA-302, TA-303, TA-304, TA-305, TA-306, TA-307, TA-308, TA-309, TA-310, TA-311, TA-312, TA-313, TA-314, TA-315, TA-317, TA-318
+requiere: TA-263, TA-302, TA-303, TA-304, TA-305, TA-306, TA-441, TA-307, TA-308, TA-309, TA-310, TA-311, TA-312, TA-313, TA-314, TA-315, TA-317, TA-318
 tu: TU-11, TU-12, TU-16
 ```
 
@@ -1564,7 +1564,9 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-77** | Estados de FT-04 y CA-04.6. CH-70 (punto 3) corrigió Estados ("redirige, salvo que existan categorías de la lista sugerida y falten otras"), pero CA-04.6 seguía diciendo que con cualquier categoría normal la plantilla redirige, contra CA-04.10. Lo implementado y probado (`flujos/presupuesto-estructura-plantilla/plantilla.tsx` y `reanudar.ts`; PRU-CMP-INICIO-102 y 106, PRU-E2E-INICIO-106 y 109): con una aplicación a medias en el borrador se sigue con sus ids; sin borrador, se comparan los nombres con `estructura()` dentro de su grupo y se ofrece seguir si existe al menos una categoría de la lista y falta algún elemento; si ninguna categoría normal es de la lista, o la lista está completa, redirige. CA-04.6, que quedaba en minoría, pasa a "una categoría normal que no es de la lista sugerida y sin una aplicación a medias", y Estados agrega la precisión. Las pruebas no cambian: PRU-E2E-INICIO-106 siembra "Supermercado" en el grupo "Gastos", que no es de la lista | 06 FT-04 Estados y CA-04.6 | Delegado por el orquestador; **aplicado [CH-77]** en 06 FT-04 |
 | **CH-78** | Fila de FT-03 que decía que la E2E de la Bandeja la agrega TA-294, cuando §30.1 y `pruebas/pendientes-e2e.json` dan TA-295 (FT-34). La fila está en §19.7, no en §30.2, y CH-70 ya la había cambiado a TA-295; §30.2 no nombra ninguna tarea para FT-03. Sin cambios en el texto; se registra para que el número no quede sin uso | 08 §19.7, §30.1, §30.2 | Delegado por el orquestador; **sin efecto**: ya aplicado por [CH-70] en 08 §19.7 |
 | **CH-79** | Partición de TA-427 por tamaño (DT-02), con precedente en CH-72, y `endpointCorto` frente a L1. (a) El alcance completo de FT-06 midió prod=626 en 16 archivos de producción (total=1128) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). La estimación no contaba el push del service worker (`sw.ts` no tenía manejo de `push` ni de `notificationclick`) ni `destinos.ts`. (b) Se parte en dos: TA-427 conserva `/ajustes/notificaciones` con OPT-02 y OPT-03 (CA-06.2, CA-06.4, CA-06.5, CA-06.6; prod=363, 9 archivos); TA-440, nueva (orden 728; TA-428 pasa al orden libre 699 para dejarle el lugar entre TA-427 y TA-429, que E5 exige a TA-429, TA-430 y TA-446), lleva la tarjeta de Inicio, la renovación al abrir la app, `destinos.ts` y el push del service worker (CA-06.1, CA-06.3, FE-57, PRU-SW-NOTIF-001) y cierra la ficha. TA-440 depende de TA-427 y de las mismas tareas; HT-8 la exige. Criterio de dependientes: TA-429 (FT-70) y TA-430 (FT-71) envían y reciben push, así que necesitan el service worker y pasan de TA-427 a TA-440; TA-446 (recorridos) espera la ficha cerrada y también pasa a TA-440. (c) L1 (05 §1.7) solo deja importar valores de `@finn/dominio` en `apps/web/src/formularios/`, y CH-73 pide que el cliente use `endpointCorto`: el cliente lo toma por el reexport `apps/web/src/formularios/endpoint-corto.ts`, sin tocar las reglas de ESLint. El código completo queda en la rama local `ta-440-notificaciones-2` | 08 TA-427, TA-440, TA-429, TA-430, TA-446, HT-8; 05 §8.6 | Delegado por el orquestador; **aplicado [CH-79]** en 08 y en 05 §8.6 |
+| **CH-80** | El modo de la meta en OP-18 pasa a `modoMeta` (corrección previa a TA-305). 04 §3.3 daba a OP-18 un campo de entrada `modo` (`acumular` \| `rellenar_hasta`), pero `modo` ya es el modo de envío de toda Server Action (04 §2.2.2 paso 3; 05 §4.2–4.3): `accion()` lo saca de la entrada y `useOperacion` lo pisa con `previsualizar` o `confirmar`, así que ninguna meta mensual o semanal se podía crear ni editar desde la interfaz. OP-18 es la única operación con un campo `modo` propio. Decisión: el modo de la meta se llama `modoMeta` en la entrada de OP-18 (crear y editar) y en su `esperado`; el modo de envío no cambia. Criterio para las lecturas: `esperado` de `metas()` se reenvía a OP-18 y lleva `modoMeta` (solo si la meta tiene modo: el contrato no acepta `null`); los campos de solo lectura `modo?` de `metas()` (6.10), de `detalleCategoria().meta` (6.3) y, por 6.10, de `formulario('meta')` (6.14.4) también pasan a `modoMeta`, para que en la interfaz `modo` sea solo el modo de envío y el de la meta tenga un único nombre. No cambian la columna `metas.modo` (03), el tipo `Meta` ni el comando de `@finn/dominio`, ni el lenguaje de los escenarios (`{ op: 'OP-18', modo }`, que su ejecutor `int` traduce): el renombre es en el límite de entrada, sin migración. Ningún número esperado cambia | 04 §3.3, §6.3, §6.10, §6.14.4 | Delegado por el orquestador; **aplicado [CH-80]** en 04 §3.3, §6.3, §6.10 y §6.14.4 (01 OP-18 no nombra el campo); código en esta corrección |
 | **CH-81** | Presupuesto de bytes por ruta y selector Gráfico / Tabla (corrección posterior a TA-319 y TA-400). PRU-REN-PWA-002 (05 §13.1, `porRutaKb` 50 KB) deja a `/registrar/gasto` en 49,98 KB y a `/cuentas/nueva` en 49,95 KB. El desdoble del chunk compartido de formularios (+1,17 KB en todas las rutas con formulario) lo causaba el `RadioGroup` de Radix que usaba `SelectorSegmentado`, la base de `VistaGrafico`: una pantalla sin formulario que lo importaba se llevaba parte de ese chunk. Arreglo de configuración: no lo hay. Con Turbopack (Next 16.4.1, 05 §13.2) la configuración `webpack`/`splitChunks` no se aplica y `optimizePackageImports` solo reescribe importaciones de paquetes barril, que no son los `@radix-ui/react-*` sueltos: el reparto de chunks lo decide el grafo de módulos. Arreglo de componente: `SelectorSegmentado` con botones nativos `role="radio"`, flechas y foco (#281), sin Radix. Medido con `VistaGrafico` en el historial del detalle de categoría (#286) y en el de Listo para asignar (este cambio): `VistaGrafico` entra en el JS propio de cada pantalla (7,38 KB y 2,32 KB) y ninguna ruta con formulario cambia (compartido 161,9 KB, biblioteca 43,29 KB, `/registrar/gasto` 49,98 KB, `/cuentas/nueva` 49,95 KB, antes y después). `porRutaKb` no cambia. Los `lazy` de `flujos/registrar-gasto/formulario.tsx` (TA-293) se conservan: sin ellos `/registrar/gasto` pasaría los 50 KB. Lo cubre PRU-CMP-PRES-106 (el selector del historial de Listo para asignar cambia a la tabla) | 05 §10.8.1 (`SelectorVista`); 05 §13.1 sin cambios | Delegado por el orquestador; **aplicado [CH-81]** en 05 §10.8.1 |
+| **CH-82** | Partición de TA-306 por tamaño (DT-02), con precedente en CH-72 y CH-79, y cómo se entra al flujo de archivar. (a) El alcance completo de FT-19 midió prod≈758 en 13 archivos de producción (total≈1.520) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-306 conserva `/archivar` con OP-09 y el rechazo de OP-10 (CA-19.1, CA-19.5, CA-19.7; prod≈340, 6 archivos); TA-441, nueva (orden 365), lleva `/sacar`, el interceptor y la propuesta de un toque de AV-14 en Presupuesto (CA-19.2, CA-19.3, CA-19.4, CA-19.6; medido prod≈420, se declara 400, 9 archivos), cierra la ficha y lleva los pendientes CA-19.2>FT-28 y CA-19.3>FT-47. TA-441 depende de TA-306 y de las mismas tareas; HT-7 la exige. Criterio de dependientes: TA-406 (FT-28) y TA-407 (FT-47) completan CA-19.2 y CA-19.3, que ahora son de TA-441, así que pasan de TA-306 a TA-441; TA-413 (FT-40) completa CA-19.1 y CA-19.5 y sigue en TA-306. El código completo queda en la rama local `ta-441-sacar-archivada`. (c) 06 FT-19, Flujo paso 1, decía «Detalle de categoría → archivar», pero el detalle deshabilita «Archivar» con bloqueos (06-identidad-visual §6 punto 8 y 06 S3): al flujo se entra desde Estructura → editar → «Archivar», y desde el detalle solo cuando no hay bloqueos. No se cambia código | 08 TA-306, TA-441, TA-406, TA-407, HT-7; 06 FT-19, índice y §30.1 | Delegado por el orquestador; **aplicado [CH-82]** en 06 y en 08 |
 
 ---
 
@@ -7437,7 +7439,7 @@ compartido: —
 | FT-16 | Sobregiros y cierre automático del período | 7 | HT-7 | TA-304 | — |
 | FT-17 | Metas | 7 | HT-7 | TA-305 | `/metas`, `/metas/[metaId]`, `/metas/nueva` |
 | FT-18 | Grupos y categorías: crear, renombrar, reordenar y eliminar | 6 | HT-6 | TA-283, TA-316 | `/presupuesto/estructura`, `/presupuesto/estructura/categorias/[categoriaId]`, `/presupuesto/estructura/categorias/nueva`, `/presupuesto/estructura/grupos/[grupoId]`, `/presupuesto/estructura/grupos/nuevo` |
-| FT-19 | Archivar y desarchivar categorías, y sacar el dinero de una archivada | 7 | HT-7 | TA-306 | `/presupuesto/categorias/[categoriaId]/archivar`, `/presupuesto/categorias/[categoriaId]/sacar` |
+| FT-19 | Archivar y desarchivar categorías, y sacar el dinero de una archivada | 7 | HT-7 | TA-306, TA-441 **[CH-82]** | `/presupuesto/categorias/[categoriaId]/archivar`, `/presupuesto/categorias/[categoriaId]/sacar` |
 | FT-21 | Registrar gasto con división y por cobrar | 12 | HT-6 | TA-292, TA-293 | `/registrar`, `/registrar/gasto` |
 | FT-22 | Registrar ingreso | 3 | HT-7 | TA-307 | `/registrar/[tipo]` |
 | FT-23 | Transferencia entre cuentas propias | 3 | HT-7 | TA-307 | `/registrar/[tipo]` |
@@ -8455,7 +8457,7 @@ fichas: FT-17
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
-#### TA-306 FT-19 Archivar y desarchivar categorías, y sacar el dinero de una archivada
+#### TA-306 FT-19 Archivar categorías (1 de 2) **[CH-82]**
 
 ```tarea
 orden: 355
@@ -8465,20 +8467,21 @@ depende: TA-163, TA-174, TA-210, TA-212, TA-219, TA-224, TA-290, TA-283, TA-015
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=7 migraciones=0 total=1000
-cubre: CA-19.1, CA-19.2, CA-19.3, CA-19.4, CA-19.5, CA-19.6, CA-19.7, RUTA-/presupuesto/categorias/[categoriaId]/archivar, RUTA-/presupuesto/categorias/[categoriaId]/sacar
+tamano: prod=340 archivos=6 ca=3 migraciones=0 total=800
+cubre: CA-19.1, CA-19.5, CA-19.7, RUTA-/presupuesto/categorias/[categoriaId]/archivar
 pru: —
 compartido: —
 fichas: FT-19
-pendiente: CA-19.1>FT-40, CA-19.2>FT-28, CA-19.3>FT-47, CA-19.5>FT-40
+pendiente: CA-19.1>FT-40, CA-19.5>FT-40
 ```
 
 **Qué construir.**
-- FT-19: las pantallas y flujos de su ficha (Flujo, Piezas, Estados, Errores y textos) para CA-19.1 a CA-19.7, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
-- Server Actions de las operaciones de la ficha en `servidor/acciones/<area>.ts`, una línea por operación (04 §2.2.2); `ACCESO-001` y la suite de accesibilidad las cubren solas (TA-218, TA-221).
-- Rutas que esta tarea crea (dueña): `/presupuesto/categorias/[categoriaId]/archivar`, `/presupuesto/categorias/[categoriaId]/sacar`.
-- Último PR de la ficha: `pruebas/features.json` pasa FT-19 a `terminada` (07 §27, DT-06 condición 6).
-- **[D] Pendientes de punta a punta (DT-27):** CA-19.1 (lo completa FT-40), CA-19.2 (lo completa FT-28), CA-19.3 (lo completa FT-47), CA-19.5 (lo completa FT-40). Se prueban con el estado sembrado por operaciones y se agregan a `pruebas/pendientes-e2e.json`.
+- FT-19, archivar **[CH-82]**: el flujo largo `/presupuesto/categorias/[categoriaId]/archivar` con las decisiones de OP-09 (destino del Disponible, con qué se cubre un Disponible negativo, devolver las asignaciones futuras y, por cada programada activa, reasignarla o desactivarla), la previsualización y la confirmación; el rechazo `programada_sin_decision` (CA-19.5) y `grupo_archivado` al desarchivar (CA-19.7, OP-10).
+- Server Action de OP-09 en `servidor/acciones/categorias.ts`, una línea; `ACCESO-001` y la suite de accesibilidad las cubren solas (TA-218, TA-221).
+- Ruta que esta tarea crea (dueña): `/presupuesto/categorias/[categoriaId]/archivar`. Sacar el dinero y AV-14 son de TA-441 **[CH-82]**.
+- Al flujo se entra desde Estructura → editar → «Archivar»; desde el detalle de categoría, «Archivar» solo se habilita cuando no hay bloqueos **[CH-82]**.
+- La ficha sigue en `pendiente`: la cierra TA-441 **[CH-82]**.
+- **[D] Pendientes de punta a punta (DT-27):** CA-19.1 (lo completa FT-40) y CA-19.5 (lo completa FT-40). Se prueban con el estado sembrado por operaciones y se agregan a `pruebas/pendientes-e2e.json`.
 
 **Leer.** 06 FT-19 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7 (estados); 06-identidad-visual §3 en la sección de su pantalla; 04 §6 (su consulta).
 
@@ -8489,6 +8492,42 @@ pendiente: CA-19.1>FT-40, CA-19.2>FT-28, CA-19.3>FT-47, CA-19.5>FT-40
 - Las E2E de la ficha citan ESC-44, AV-14 cuando el CA los nombra; sus pruebas de dominio e integración ya existen (B2 y B3).
 
 **Comandos.** `pnpm pruebas:ft FT-19` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** `pruebas:ft` sin CA faltantes en este trozo. La ficha sigue en `pendiente` **[CH-82]**.
+
+#### TA-441 FT-19 Sacar el dinero de una archivada (2 de 2) **[CH-82]**
+
+```tarea
+orden: 365
+bloque: B6
+hito: HT-7
+depende: TA-163, TA-174, TA-210, TA-212, TA-219, TA-224, TA-290, TA-283, TA-015, TA-306
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=9 ca=4 migraciones=0 total=900
+cubre: CA-19.2, CA-19.3, CA-19.4, CA-19.6, RUTA-/presupuesto/categorias/[categoriaId]/sacar
+pru: —
+compartido: —
+fichas: FT-19
+pendiente: CA-19.2>FT-28, CA-19.3>FT-47
+```
+
+**Qué construir.**
+- FT-19, resto **[CH-82]**: el flujo corto `/presupuesto/categorias/[categoriaId]/sacar` (OP-11) con la propuesta de AV-14 y su interceptor en `@superpuesto`, y la propuesta de un toque en la sección «archivadas con dinero» de Presupuesto (CA-19.2, CA-19.3, CA-19.4); la archivada en un período cerrado en que se usó (CA-19.6).
+- Server Action de OP-11 en `servidor/acciones/categorias.ts`, una línea.
+- Ruta que crea (dueña): `/presupuesto/categorias/[categoriaId]/sacar`.
+- Último PR de la ficha: `pruebas/features.json` pasa FT-19 a `terminada` (07 §27, DT-06 condición 6).
+- **[D] Pendientes de punta a punta (DT-27):** CA-19.2 (lo completa FT-28) y CA-19.3 (lo completa FT-47); se agregan a `pruebas/pendientes-e2e.json`.
+- El código ya está hecho en la rama local `ta-441-sacar-archivada` **[CH-82]**.
+
+**Leer.** 06 FT-19 completo; 05 §2 (fila de `/sacar`), §7; 04 §6 (su consulta).
+
+**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/categorias.ts`, `apps/web/src/textos/categorias-archivar.ts`, `apps/web/e2e/flujos/<area>/*`.
+
+**Pruebas primero.** Una prueba por CA de este trozo (07 §17), con el CA entre corchetes.
+
+**Comandos.** `pnpm pruebas:ft FT-19` sin faltantes; `pnpm ci:local` con la E2E de la ficha.
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
@@ -8944,7 +8983,7 @@ pendiente: CA-54.5>FT-55
 | 352 | TA-303 | B6 | HT-7 | normal | FT-30 Pagar tarjeta con desglose y pago excedente | 360 |
 | 353 | TA-304 | B6 | HT-7 | normal | FT-16 Sobregiros y cierre automático del período | 360 |
 | 354 | TA-305 | B6 | HT-7 | normal | FT-17 Metas | 360 |
-| 355 | TA-306 | B6 | HT-7 | normal | FT-19 Archivar y desarchivar categorías, y sacar el dinero de una archivada | 360 |
+| 355 | TA-306 | B6 | HT-7 | normal | FT-19 Archivar categorías (1 de 2) **[CH-82]** | 340 |
 | 356 | TA-307 | B6 | HT-7 | normal | FT-22 Registrar ingreso y FT-23 Transferencia entre cuentas propias | 360 |
 | 357 | TA-308 | B6 | HT-7 | normal | FT-24 Actividad con búsqueda y filtros | 360 |
 | 358 | TA-309 | B6 | HT-7 | normal | FT-25 Detalle y edición completa | 360 |
@@ -8954,6 +8993,7 @@ pendiente: CA-54.5>FT-55
 | 362 | TA-313 | B6 | HT-7 | normal | FT-52 Detalle de cuenta (1 de 3) **[CH-71]** | 400 |
 | 363 | TA-314 | B6 | HT-7 | normal | FT-53 Editar, ordenar, archivar, desarchivar y eliminar cuentas | 360 |
 | 364 | TA-315 | B6 | HT-7 | normal | FT-54 Pagar cuota o abonar a capital | 360 |
+| 365 | TA-441 | B6 | HT-7 | normal | FT-19 Sacar el dinero de una archivada (2 de 2) **[CH-82]** | 400 |
 | 631 | TA-246 | B4 | HT-5 | normal | Componentes base I (parte 2): selección y buscador **[CH-52]** | 330 |
 | 632 | TA-247 | B4 | HT-5 | normal | Componentes base I (parte 3): pastillas y selector segmentado **[CH-52]** | 80 |
 | 633 | TA-551 | B4 | HT-6 | normal | Componentes de dominio I (parte 2): billete y selector de período **[CH-55]** | 200 |
@@ -9435,7 +9475,7 @@ fichas: FT-20
 orden: 706
 bloque: B7
 hito: HT-8
-depende: TA-210, TA-212, TA-219, TA-224, TA-171, TA-173, TA-193, TA-198, TA-309, TA-288, TA-290, TA-319, TA-306, TA-308
+depende: TA-210, TA-212, TA-219, TA-224, TA-171, TA-173, TA-193, TA-198, TA-309, TA-288, TA-290, TA-319, TA-441, TA-308
 tu: —
 revision: normal
 paralelo: libre
@@ -9472,7 +9512,7 @@ e2e: CA-09.11, CA-14.8, CA-19.2, CA-24.3, CA-25.5
 orden: 707
 bloque: B7
 hito: HT-8
-depende: TA-210, TA-212, TA-219, TA-224, TA-173, TA-193, TA-198, TA-306
+depende: TA-210, TA-212, TA-219, TA-224, TA-173, TA-193, TA-198, TA-441
 tu: —
 revision: normal
 paralelo: libre
@@ -11039,14 +11079,14 @@ fichas: FT-49
 | FT-27 Transacción olvidada y cambios retroactivos | I | CA-08.5 (TA-298) | 1 | TA-311 |
 | FT-30 Pagar tarjeta con desglose y pago excedente | I | CA-08.7 (TA-299) | 1 | TA-303 |
 | FT-34 Recepción y procesamiento de SMS | I | CA-03.3 (TA-284) | 1 | TA-295 |
-| FT-28 Devoluciones | M | CA-09.11 (TA-288), CA-14.8 (TA-319), CA-19.2 (TA-306), CA-24.3 (TA-308), CA-25.5 (TA-309) | 5 | TA-406 |
+| FT-28 Devoluciones | M | CA-09.11 (TA-288), CA-14.8 (TA-319), CA-19.2 (TA-441), CA-24.3 (TA-308), CA-25.5 (TA-309) | 5 | TA-406 |
 | FT-39 Reglas de comercio | M | CA-21.10 (TA-293), CA-34.10 (TA-295), CA-35.11 (TA-297) | 3 | TA-411 |
 | FT-40 Administrar programadas | M | CA-19.1 (TA-306), CA-19.5 (TA-306) | 2 | TA-413 |
 | FT-41 Próximos pagos, registro de un toque y omitir | M | CA-08.8 (TA-299), CA-26.3 (TA-310), CA-34.9 (TA-295), CA-35.5 (TA-296), CA-37.4 (TA-300), CA-37.5 (TA-300) | 6 | TA-414 |
 | FT-42 Registro automático y puesta al día | M | CA-35.6 (TA-296) | 1 | TA-415 |
 | FT-43 Conciliar con estado de cuenta CSV | M | CA-25.4 (TA-309), CA-26.6 (TA-310), CA-52.2 (TA-317) | 3 | TA-416 |
 | FT-46 Cobrar | M | CA-25.6 (TA-309), CA-26.4 (TA-310), CA-29.4 (TA-291) | 3 | TA-409 |
-| FT-47 Condonar | M | CA-19.3 (TA-306) | 1 | TA-407 |
+| FT-47 Condonar | M | CA-19.3 (TA-441) | 1 | TA-407 |
 | FT-55 Condiciones y tabla de amortización | M | CA-54.5 (TA-315) | 1 | TA-419 |
 | FT-62 Ritmo de gasto y proyección del cierre | M | CA-08.6 (TA-298) | 1 | TA-423 |
 | FT-70 Push de la bandeja con acciones | M | CA-34.4 (TA-294) | 1 | TA-429 |

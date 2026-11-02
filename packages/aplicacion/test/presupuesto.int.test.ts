@@ -270,7 +270,7 @@ describe('PRU-INT-PRES', () => {
       id: uuid(911),
       categoriaId: uuid(910),
       tipo: 'mensual',
-      modo: 'acumular',
+      modoMeta: 'acumular',
       monto: '100.00',
     };
     expect(await ejecutar(OP18, meta)).toMatchObject({ ok: true });
@@ -307,7 +307,7 @@ describe('PRU-INT-PRES', () => {
       id: uuid(922),
       categoriaId: uuid(920),
       tipo: 'semanal',
-      modo: 'rellenar_hasta',
+      modoMeta: 'rellenar_hasta',
       monto: '30.00',
     };
     expect(await preparar(OP18, crear)).toMatchObject({ ok: true, valor: { rechazos: [] } });

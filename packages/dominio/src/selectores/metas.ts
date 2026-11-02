@@ -12,7 +12,8 @@ export interface MetaDeLista {
   readonly categoria: Ref;
   readonly grupo: Ref;
   readonly tipo: Meta['tipo'];
-  readonly modo?: NonNullable<Meta['modo']>;
+  /** `modo` de la meta; en la interfaz `modo` es el modo de envío (CH-80). */
+  readonly modoMeta?: NonNullable<Meta['modo']>;
   readonly monto: Centavos;
   readonly fechaCreacion: FechaLocal;
   readonly fechaObjetivoVigente?: FechaLocal;
@@ -24,7 +25,7 @@ export interface MetaDeLista {
   readonly progreso?: number;
   readonly estado: EstadoDeMeta;
   readonly vencida: boolean;
-  /** Los valores vigentes de la meta, para OP-18. */
+  /** Los valores vigentes de la meta, para OP-18, con los nombres de su entrada (CH-80). */
   readonly esperado: Readonly<Record<string, unknown>>;
 }
 
@@ -63,7 +64,7 @@ export function metas(i: Instantanea): Metas {
       categoria: refDe(c),
       grupo: refDe({ id: g.id, nombre: g.nombre, archivada: g.archivado }),
       tipo: m.tipo,
-      ...(m.modo === null ? {} : { modo: m.modo }),
+      ...(m.modo === null ? {} : { modoMeta: m.modo }),
       monto: m.monto,
       fechaCreacion: m.fechaCreacion,
       ...(ev.fechaObjetivo === null ? {} : { fechaObjetivoVigente: ev.fechaObjetivo }),
@@ -74,7 +75,12 @@ export function metas(i: Instantanea): Metas {
       ...(progreso === undefined ? {} : { progreso }),
       estado: ev.estado,
       vencida: ev.estado === 'vencida',
-      esperado: { tipo: m.tipo, modo: m.modo, monto: m.monto, fechaObjetivo: m.fechaObjetivo },
+      esperado: {
+        tipo: m.tipo,
+        ...(m.modo === null ? {} : { modoMeta: m.modo }),
+        monto: m.monto,
+        fechaObjetivo: m.fechaObjetivo,
+      },
     };
     return [{ fila, grupo: g, categoria: c }];
   });
