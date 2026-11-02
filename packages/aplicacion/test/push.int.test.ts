@@ -420,6 +420,31 @@ describe('PRU-INT-NOTIF', () => {
     expect(
       await registrarSuscripcionPush({ ...entrada, endpoint: 'http://push.example/s1' }, op),
     ).toMatchObject({ ok: false, error: { categoria: 'VALIDACION' } });
+    // [CH-73] por id: elimina, repetirla elimina 0, el id inexistente no falla y lo ajeno queda
+    const otra = { ...entrada, endpoint: 'https://push.example/s2' };
+    await registrarSuscripcionPush(otra, op);
+    const idS2 = String(
+      (await sql(`SELECT id FROM finn.suscripciones_push WHERE endpoint = '${otra.endpoint}'`))[0],
+    );
+    expect(await eliminarSuscripcionPush({ id: idS2 }, op)).toMatchObject({
+      ok: true,
+      valor: { eliminadas: 1 },
+    });
+    expect(await eliminarSuscripcionPush({ id: idS2 }, op)).toMatchObject({
+      ok: true,
+      valor: { eliminadas: 0 },
+      yaAplicada: true,
+    });
+    expect(await eliminarSuscripcionPush({ id: 'no-es-uuid' }, op)).toMatchObject({
+      ok: false,
+      error: { categoria: 'VALIDACION' },
+    });
+    expect(
+      await eliminarSuscripcionPush({ id: idS2, endpoint: entrada.endpoint }, op),
+    ).toMatchObject({
+      ok: false,
+    });
+    expect(await cuenta(`SELECT count(*) FROM finn.suscripciones_push`)).toBe(1);
     const salir = { endpoint: entrada.endpoint };
     expect(await eliminarSuscripcionPush(salir, op)).toMatchObject({
       ok: true,

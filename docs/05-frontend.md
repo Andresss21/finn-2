@@ -2744,7 +2744,7 @@ navigator.serviceWorker.register('/serwist/sw.js', { scope: '/', updateViaCache:
 | Tocar "Activar notificaciones" (tarjeta de Inicio o Ajustes) | `Notification.requestPermission()` → si es `granted`, `registro.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: NEXT_PUBLIC_VAPID_PUBLIC_KEY })` → OPT-02 con `endpoint`, `p256dh`, `auth` y el agente |
 | Abrir la app con sesión AAL2 y permiso concedido | `SuscripcionPush` llama a `pushManager.getSubscription()`; si no hay, se suscribe; en ambos casos llama a OPT-02 (renueva `renovada_en`). Una vez por pestaña (marca en `almacen.ts`) |
 | Permiso denegado | Ajustes explica cómo habilitarlo en el navegador (CP-5) |
-| "Quitar" un dispositivo | OPT-03; si es este dispositivo, además `subscription.unsubscribe()` |
+| "Quitar" un dispositivo | OPT-03 con el `id` de la fila **[CH-73]**; si es este dispositivo, además `subscription.unsubscribe()`. "Este dispositivo" se reconoce comparando `endpointCorto` de la fila con `endpointCorto(getSubscription().endpoint)`, la misma función pura de `@finn/dominio/valores` (04 §6.11) |
 | iPhone o iPad | Web Push solo funciona con la app instalada en la pantalla de inicio: si `display-mode` no es `standalone`, Ajustes lo explica antes de pedir el permiso |
 
 `pushsubscriptionchange` no se atiende en el service worker: no puede llamar a una Server Action (04 2.2.1). La próxima vez que se abre la app, `SuscripcionPush` detecta la suscripción nueva o ausente y llama a OPT-02. Mientras tanto, las notificaciones quedan en el centro (04 11.6).
