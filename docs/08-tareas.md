@@ -451,8 +451,8 @@ El verificador deriva los ESC y los CB de las fichas y comprueba que la tarea du
 ### HT-7 Todas las fichas [I] terminadas
 
 ```hito
-despues: TA-315
-requiere: TA-263, TA-302, TA-303, TA-304, TA-305, TA-306, TA-307, TA-308, TA-309, TA-310, TA-311, TA-312, TA-313, TA-314, TA-315
+despues: TA-318
+requiere: TA-263, TA-302, TA-303, TA-304, TA-305, TA-306, TA-307, TA-308, TA-309, TA-310, TA-311, TA-312, TA-313, TA-314, TA-315, TA-317, TA-318
 tu: TU-11, TU-12, TU-16
 ```
 
@@ -1550,6 +1550,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-62** | Partición de TA-209 por tamaño (DT-02). El alcance completo de TA-209 midió prod=971 y total=1.423 contra una estimación de 380 y 900: pasa el +30 % de las tareas normales (520). Se parte: TA-209 conserva `BilleteraTarjetas`, `IdentidadCuenta` y `PosicionNeta` con sus textos y PRU-CMP-CTA-101; TA-553, nueva (orden 635), lleva `MovimientoBandeja`, los gráficos de barras con su tabla equivalente y el selector Gráfico / Tabla, con PRU-CMP-CTA-102, y las dependencias `d3-scale` y `d3-shape`. FE-44 pasa a TA-553 (E8: un solo dueño) y TA-209 queda con `cubre: —`. HT-6 requiere también TA-553 y su `despues` pasa a TA-553 (E7). **Además:** (1) el «séptimo estado» de la fila de la Bandeja (`descartado`) lo agregó el código por su cuenta: 06 §2.12 lista seis filas; se confirma contra 06 y 05 en TA-553. (2) Las pantallas que consumen estos componentes tienen orden menor que 635 y no pueden declarar `depende: TA-553` (E5): el orquestador programa TA-553 antes de ellas, y HT-6 la exige. El código completo queda en la rama `ta-209-completo` | 08 TA-209, TA-553, HT-6; 05 §10.8; 06 §2.12 | Delegado por el orquestador; **aplicado [CH-62]** en 08 TA-209, TA-553 y HT-6 |
 | **CH-68** | Los respaldos pasan de Cloudflare R2 a Backblaze B2. 02 ADR-22 decía "R2 puede pedir un medio de pago para activarse, aunque el uso quede dentro del nivel gratuito; el usuario lo acepta", con una alerta de facturación de Cloudflare en $0, y TU-11 pedía "registrar el medio de pago". El usuario decidió no registrar ningún medio de pago en Cloudflare. Resolución: el destino es Backblaze B2, con cuenta sin medio de pago y sin alerta: no hay cobro posible; al llegar al límite gratuito B2 rechaza las subidas con un 403 y eso se ve porque el job de respaldo falla. Secretos: `B2_ENDPOINT` (URL https completa, de la que se deduce la región), `B2_KEY_ID`, `B2_APPLICATION_KEY` y `B2_BUCKET`, en lugar de `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` y `R2_BUCKET`. Retención: B2 no elimina directamente sino que oculta y después borra, así que "se elimina a los 30 días; `mensuales/`, a los 365" queda en ocultar a los 30 y a los 365 y borrar 1 día después; las reglas corren una vez al día. RK-18 pasa de "cargo inesperado" a "las subidas se rechazan". TU-11 reescrita. El presupuesto de $0 y el resto de ADR-22 (`pg_dump` como `finn_respaldo`, `age`, 07:30 UTC, prefijos, prueba de restauración mensual) no cambian. `respaldo.yml` y `subir.mjs` están en TA-261. Secciones: 02 §0.5, §1, ADR-22, §6.1, RK-18, fuentes y registro de cambios; 03 §12.1; 04 §14.2, §16.2, §16.3; 07 §1.1, §32.4; 08 TU-11, TU-12, TA-261. |
 | **CH-69** | Partición de TA-283 por tamaño (DT-02). El alcance completo de FT-18 midió prod=631 en 15 archivos de producción contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). Se parte: TA-283 conserva la lista de la estructura con "Subir", "Bajar" y "Deshacer", `grupos/nuevo` y `categorias/nueva` con sus páginas interceptadas y su `loading.tsx` (CA-18.1, CA-18.3, CA-18.4); TA-316, nueva (orden 636), lleva `grupos/[grupoId]` y `categorias/[categoriaId]` con sus interceptadas (OP-08 nombre y grupo, OP-13), CA-18.2, CA-18.5 y CA-18.6, y cierra la ficha. TA-316 depende de TA-283; HT-6 la exige y su `despues` pasa a TA-316 (E7). El código completo queda en la rama local `ta-316-estructura-b` | 08 TA-283, TA-316, HT-6 | Delegado por el orquestador; **aplicado [CH-69]** en 08 TA-283, TA-316 y HT-6 |
+| **CH-71** | Partición de TA-313 por tamaño (DT-02) y laguna de `DetalleCuentaDto`. El alcance completo de FT-52 midió prod=905 en 13 archivos de producción contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). Se parte en tres: TA-313 conserva la ruta con la cabecera, el selector de período, los filtros y los movimientos con saldo corrido (CA-52.1, CA-52.3, CA-52.5); TA-317, nueva (orden 637), lleva las acciones, el estado de cuenta archivada con "Desarchivar", las conciliaciones y las programadas (CA-52.2, CA-52.4); TA-318, nueva (orden 638), lleva los bloques de tarjeta, préstamo e inversión y cierra la ficha con la `PRU-MAN` de CA-52.1. Cada una depende de la anterior; HT-7 las exige y su `despues` pasa a TA-318 (E7); TA-416 y TA-417 pasan a depender de TA-317. Laguna: 05 §3.4 pide a `SelectorPeriodo` el `periodo: PeriodoDto` y 04 §6.6 no lo daba en `DetalleCuentaDto`; ahora trae `periodo` (el de `periodoInicio`, o el activo). El código completo queda en la rama local `ta-317-detalle-resto` | 08 TA-313, TA-317, TA-318, HT-7; 04 §6.6 | Delegado por el orquestador; **aplicado [CH-71]** en 08 TA-313, TA-317, TA-318 y HT-7, y en 04 §6.6 |
 
 ---
 
@@ -7438,11 +7439,11 @@ compartido: —
 | FT-38 | SMS no reconocidos y con error | 6 | HT-6 | TA-301 | — |
 | FT-50 | Crear cuenta con saldo inicial | 7 | HT-6 | TA-282 | `/cuentas/nueva` |
 | FT-51 | Cuentas y posición neta | 8 | HT-7 | TA-312 | `/cuentas` |
-| FT-52 | Detalle de cuenta | 5 | HT-7 | TA-313 | `/cuentas/[cuentaId]` |
+| FT-52 | Detalle de cuenta | 5 | HT-7 | TA-313, TA-317, TA-318 | `/cuentas/[cuentaId]` |
 | FT-53 | Editar, ordenar, archivar, desarchivar y eliminar cuentas | 7 | HT-7 | TA-314 | `/cuentas/[cuentaId]/archivar`, `/cuentas/[cuentaId]/editar`, `/cuentas/[cuentaId]/eliminar`, `/cuentas/ordenar` |
 | FT-54 | Pagar cuota o abonar a capital | 5 | HT-7 | TA-315 | `/cuentas/[cuentaId]/cuota` |
 
-37 tareas, TA-280 a TA-315 y TA-316, 233 CA (las 31 fichas [I]).
+39 tareas, TA-280 a TA-315 y TA-316 a TA-318, 233 CA (las 31 fichas [I]).
 
 ### 22.3 Fichas de HT-5
 
@@ -8659,7 +8660,7 @@ fichas: FT-51
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
-#### TA-313 FT-52 Detalle de cuenta
+#### TA-313 FT-52 Detalle de cuenta (1 de 3) **[CH-71]**
 
 ```tarea
 orden: 362
@@ -8669,21 +8670,18 @@ depende: TA-171, TA-167, TA-210, TA-212, TA-219, TA-224, TA-312, TA-015
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=5 migraciones=0 total=1000
-cubre: CA-52.1, CA-52.2, CA-52.3, CA-52.4, CA-52.5, RUTA-/cuentas/[cuentaId]
+tamano: prod=400 archivos=11 ca=3 migraciones=0 total=1100
+cubre: CA-52.1, CA-52.3, CA-52.5, RUTA-/cuentas/[cuentaId]
 pru: —
 compartido: —
 fichas: FT-52
-pendiente: CA-52.2>FT-43
 ```
 
 **Qué construir.**
-- FT-52: las pantallas y flujos de su ficha (Flujo, Piezas, Estados, Errores y textos) para CA-52.1 a CA-52.5, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
-- Server Actions de las operaciones de la ficha en `servidor/acciones/<area>.ts`, una línea por operación (04 §2.2.2); `ACCESO-001` y la suite de accesibilidad las cubren solas (TA-218, TA-221).
+- FT-52: la ruta `/cuentas/[cuentaId]` con la cabecera (saldo y saldo confirmado), el selector de período (`SelectorPeriodo`, también con `?periodo=`), los filtros de tipo y estado y los movimientos con saldo corrido y paginación por cursor, para CA-52.1, CA-52.3 y CA-52.5, con la consulta de 04 §6.6 (que trae `periodo`, **[CH-71]**) y los textos del catálogo.
 - Rutas que esta tarea crea (dueña): `/cuentas/[cuentaId]`.
-- Último PR de la ficha: `pruebas/features.json` pasa FT-52 a `terminada` (07 §27, DT-06 condición 6).
-- CA con marca: CA-52.1 (error 2) — tienen además su `PRU-MAN` de 07 §22.1 (TU-16).
-- **[D] Pendientes de punta a punta (DT-27):** CA-52.2 (lo completa FT-43). Se prueban con el estado sembrado por operaciones y se agregan a `pruebas/pendientes-e2e.json`.
+- Los bloques de acciones, conciliaciones y programadas son de TA-317; los de tarjeta, préstamo e inversión, de TA-318 **[CH-71]**.
+- `esperarContenido` (`e2e/ayudas/esperas.ts`) deja de contar el `div[hidden]` vacío que queda tras un `notFound()` en streaming, con una prueba de que sigue esperando el contenido oculto real; la ruta pasa a `ejemplosDeRuta` de `presupuestos.json`.
 
 **Leer.** 06 FT-52 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7 (estados); 06-identidad-visual §3 en la sección de su pantalla; 04 §6 (su consulta).
 
@@ -8694,6 +8692,71 @@ pendiente: CA-52.2>FT-43
 - Las E2E de la ficha citan ESC-47, AV-04, AV-05, AV-06, AV-07, AV-08, AV-21 cuando el CA los nombra; sus pruebas de dominio e integración ya existen (B2 y B3).
 
 **Comandos.** `pnpm pruebas:ft FT-52` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** `pruebas:ft` sin faltantes en CA-52.1, CA-52.3 y CA-52.5 y el resumen de `pr:mergear`. La ficha sigue en `pendiente`: la cierra TA-318.
+
+#### TA-317 FT-52 Detalle de cuenta (2 de 3) **[CH-71]**
+
+```tarea
+orden: 637
+bloque: B6
+hito: HT-7
+depende: TA-210, TA-212, TA-219, TA-224, TA-313
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=300 archivos=8 ca=2 migraciones=0 total=800
+cubre: CA-52.2, CA-52.4
+pru: —
+compartido: —
+fichas: FT-52
+pendiente: CA-52.2>FT-43
+```
+
+**Qué construir.**
+- FT-52: las acciones del paso 4 por tipo de cuenta (editar, condiciones, pagar, cuota, conciliar, verificar saldo, registrar, archivar, eliminar), el estado de cuenta archivada (solo lectura, 05 §7.7) con "Desarchivar" (OP-05, acción de un toque con `Resultado`), las conciliaciones con diferencia aceptada, diferencia actual, AV-21 y cambios posteriores, y las programadas de la cuenta, para CA-52.2 y CA-52.4. **Portar desde la rama local `ta-317-detalle-resto`** (`conciliaciones.tsx`, `desarchivar.tsx`, `acciones/cuentas.ts`, la parte de acciones de `pantalla.tsx` y sus pruebas PRU-CMP-CTA-104).
+- Server Action `desarchivarCuenta` en `servidor/acciones/cuentas.ts`, una línea (04 §2.2.2).
+- **[D] Pendientes de punta a punta (DT-27):** CA-52.2 (lo completa FT-43). Se prueban con el estado sembrado por operaciones y se agregan a `pruebas/pendientes-e2e.json`.
+
+**Leer.** 06 FT-52 completo; 05 §2 (filas de sus rutas), §7.7 (solo lectura); 04 §6.6.
+
+**Archivos.** `apps/web/src/app/(finn)/cuentas/[cuentaId]/**`, `apps/web/src/servidor/acciones/cuentas.ts`, `apps/web/src/textos/cuenta-detalle.ts`, `apps/web/e2e/pantallas/cuentas/*`.
+
+**Pruebas primero.** Una prueba por CA de este trozo, con el identificador de su área (DT-21) y el CA entre corchetes; las E2E citan ESC-47 y AV-21.
+
+**Comandos.** `pnpm pruebas:ft FT-52` sin faltantes en CA-52.2 y CA-52.4; `pnpm ci:local`.
+
+**Terminada cuando.** `pruebas:ft` sin CA faltantes en este trozo y el resumen de `pr:mergear`.
+
+#### TA-318 FT-52 Detalle de cuenta (3 de 3) **[CH-71]**
+
+```tarea
+orden: 638
+bloque: B6
+hito: HT-7
+depende: TA-210, TA-212, TA-219, TA-224, TA-317
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=250 archivos=4 ca=0 migraciones=0 total=500
+cubre: —
+pru: —
+compartido: —
+fichas: FT-52
+```
+
+**Qué construir.**
+- FT-52, paso 3 del Flujo: los bloques de tarjeta (deuda, reservado, te falta reservar, ciclo, desglose al pagar), préstamo (condiciones, capital pendiente, amortización y costo financiero; FT-55 lo completa) e inversión (aportes, retiros, ajustes). **Portar desde la rama local `ta-317-detalle-resto`** (`por-tipo.tsx` y sus textos). La cara de la tarjeta y su acento no se dibujan en esta pantalla.
+- Último PR de la ficha: `pruebas/features.json` pasa FT-52 a `terminada` (07 §27, DT-06 condición 6).
+- CA con marca: CA-52.1 (error 2) — tiene además su `PRU-MAN` de 07 §22.1 (TU-16); el resumen de `pr:mergear` la muestra pendiente.
+
+**Leer.** 06 FT-52 completo; 04 §6.6; 06-identidad-visual §3 en la sección de su pantalla.
+
+**Archivos.** `apps/web/src/app/(finn)/cuentas/[cuentaId]/**`, `apps/web/src/textos/cuenta-detalle.ts`, `apps/web/e2e/pantallas/cuentas/*`.
+
+**Pruebas primero.** Una E2E o CMP por bloque, con el identificador de su área (DT-21).
+
+**Comandos.** `pnpm pruebas:ft FT-52` sin faltantes; `pnpm ci:local`.
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
@@ -8839,7 +8902,7 @@ pendiente: CA-54.5>FT-55
 | 359 | TA-310 | B6 | HT-7 | normal | FT-26 Eliminar y cambiar el estado bancario | 360 |
 | 360 | TA-311 | B6 | HT-7 | normal | FT-27 Transacción olvidada y cambios retroactivos | 360 |
 | 361 | TA-312 | B6 | HT-7 | normal | FT-51 Cuentas y posición neta | 360 |
-| 362 | TA-313 | B6 | HT-7 | normal | FT-52 Detalle de cuenta | 360 |
+| 362 | TA-313 | B6 | HT-7 | normal | FT-52 Detalle de cuenta (1 de 3) **[CH-71]** | 400 |
 | 363 | TA-314 | B6 | HT-7 | normal | FT-53 Editar, ordenar, archivar, desarchivar y eliminar cuentas | 360 |
 | 364 | TA-315 | B6 | HT-7 | normal | FT-54 Pagar cuota o abonar a capital | 360 |
 | 631 | TA-246 | B4 | HT-5 | normal | Componentes base I (parte 2): selección y buscador **[CH-52]** | 330 |
@@ -8848,6 +8911,8 @@ pendiente: CA-54.5>FT-55
 | 634 | TA-552 | B4 | HT-6 | normal | Navegación entre secciones: barra inferior, lateral y «Más secciones» **[CH-57]** | 320 |
 | 635 | TA-553 | B4 | HT-6 | normal | Componentes de dominio II (parte 2): bandeja y gráficos **[CH-62]** | 400 |
 | 636 | TA-316 | B6 | HT-6 | normal | FT-18 Grupos y categorías: crear, renombrar, reordenar y eliminar (2 de 2) **[CH-69]** | 360 |
+| 637 | TA-317 | B6 | HT-7 | normal | FT-52 Detalle de cuenta (2 de 3) **[CH-71]** | 300 |
+| 638 | TA-318 | B6 | HT-7 | normal | FT-52 Detalle de cuenta (3 de 3) **[CH-71]** | 250 |
 
 ---
 
@@ -9679,7 +9744,7 @@ e2e: CA-35.6
 orden: 716
 bloque: B7
 hito: HT-8
-depende: TA-210, TA-212, TA-219, TA-224, TA-165, TA-171, TA-172, TA-173, TA-184, TA-293, TA-309, TA-313, TA-310
+depende: TA-210, TA-212, TA-219, TA-224, TA-165, TA-171, TA-172, TA-173, TA-184, TA-293, TA-309, TA-317, TA-310
 tu: —
 revision: normal
 paralelo: libre
@@ -9716,7 +9781,7 @@ e2e: CA-25.4, CA-26.6, CA-52.2
 orden: 717
 bloque: B7
 hito: HT-8
-depende: TA-210, TA-212, TA-219, TA-224, TA-167, TA-171, TA-173, TA-313
+depende: TA-210, TA-212, TA-219, TA-224, TA-167, TA-171, TA-173, TA-317
 tu: —
 revision: normal
 paralelo: libre
@@ -10888,7 +10953,7 @@ fichas: FT-49
 | FT-40 Administrar programadas | M | CA-19.1 (TA-306), CA-19.5 (TA-306) | 2 | TA-413 |
 | FT-41 Próximos pagos, registro de un toque y omitir | M | CA-08.8 (TA-299), CA-26.3 (TA-310), CA-34.9 (TA-295), CA-35.5 (TA-296), CA-37.4 (TA-300), CA-37.5 (TA-300) | 6 | TA-414 |
 | FT-42 Registro automático y puesta al día | M | CA-35.6 (TA-296) | 1 | TA-415 |
-| FT-43 Conciliar con estado de cuenta CSV | M | CA-25.4 (TA-309), CA-26.6 (TA-310), CA-52.2 (TA-313) | 3 | TA-416 |
+| FT-43 Conciliar con estado de cuenta CSV | M | CA-25.4 (TA-309), CA-26.6 (TA-310), CA-52.2 (TA-317) | 3 | TA-416 |
 | FT-46 Cobrar | M | CA-25.6 (TA-309), CA-26.4 (TA-310), CA-29.4 (TA-291) | 3 | TA-409 |
 | FT-47 Condonar | M | CA-19.3 (TA-306) | 1 | TA-407 |
 | FT-55 Condiciones y tabla de amortización | M | CA-54.5 (TA-315) | 1 | TA-419 |

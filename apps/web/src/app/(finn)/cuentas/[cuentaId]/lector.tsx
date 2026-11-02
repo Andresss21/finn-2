@@ -1,7 +1,6 @@
 // Lector de `/cuentas/[cuentaId]` (05 §4.1): llama a `detalleCuenta()` con el id de la ruta y los filtros de la URL. Un id que no es
 // UUID es `notFound()` (7.3, `validacionDeSegmento`). Lo único que traduce los errores es `consultar()` (CP-13).
 import { detalleCuenta } from '@finn/aplicacion/consultas/detalle-cuenta';
-import { desarchivarCuenta } from '../../../../servidor/acciones/cuentas';
 import { consultar } from '../../../../servidor/consultar';
 import { depsDeConsulta } from '../../../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../../../servidor/parametros';
@@ -30,7 +29,6 @@ export async function LectorDetalleCuenta({
         estado: texto(busqueda['estado']),
         cursor: texto(busqueda['cursor']),
       }}
-      desarchivar={desarchivarCuenta}
     />
   );
 }

@@ -86,14 +86,16 @@ test.describe('PRU-E2E-CTA', () => {
     await esperarContenido(page);
     // El período cerrado trae el saldo inicial (5 feb) y el gasto del 10 feb, no el del 5 mar
     await expect(movimientos(page)).toHaveCount(2);
-    const vecinos = page.locator('[data-selector-periodo="elegido"]');
-    await expect(vecinos.getByRole('link', { name: 'Período siguiente' })).toHaveAttribute(
+    const selector = page.locator('[data-selector-periodo="cerrado"]');
+    // El siguiente es el período activo: su enlace no lleva `?periodo=` (05 §3.4)
+    await expect(selector.getByRole('link', { name: 'Período siguiente' })).toHaveAttribute(
       'href',
-      /\?periodo=2027-02-21$/,
+      /\/cuentas\/[0-9a-f-]{36}$/,
     );
-    await expect(vecinos.getByRole('link', { name: 'Ir al período actual' })).toBeVisible();
-    await vecinos.getByRole('link', { name: 'Período siguiente' }).click();
-    await expect(page).toHaveURL(/\?periodo=2027-02-21$/);
+    await expect(selector.getByRole('link', { name: 'Ir al período actual' })).toBeVisible();
+    // El período siguiente, pedido por su inicio, trae solo el gasto del 5 mar
+    await page.goto(`${page.url().split('?')[0] ?? ''}?periodo=2027-02-21`);
+    await esperarContenido(page);
     await expect(movimientos(page)).toHaveCount(1);
   });
 

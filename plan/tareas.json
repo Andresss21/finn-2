@@ -529,5 +529,9 @@
 
   "TA-553": { "estado": "terminada", "rama": "ta-553-bandeja-graficos", "pr": 241 },
 
-  "TA-316": { "estado": "pendiente" }
+  "TA-316": { "estado": "pendiente" },
+
+  "TA-317": { "estado": "pendiente" },
+
+  "TA-318": { "estado": "pendiente" }
 }

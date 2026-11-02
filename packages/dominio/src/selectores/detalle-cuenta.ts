@@ -19,7 +19,7 @@ import type { EstadoCuota, PagoPrestamo } from '../prestamos/contrato';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
 import { claveDe, filaDe, indice, paginar, type TransaccionFila } from './actividad';
-import { nombres } from './comunes';
+import { nombres, periodoDto } from './comunes';
 import { puntosBasicos } from './reportes/comunes';
 
 /** Lo que no está en los hechos del motor: tablas [H]. */
@@ -195,6 +195,8 @@ export function detalleCuenta(i: Instantanea, cuentaId: Uuid, o: DetalleCuentaOp
       fechaApertura: k.fechaApertura,
       archivada: k.archivada,
     },
+    // [CH-71] el período de los movimientos (el elegido o el activo): lo necesita `SelectorPeriodo` (05 §3.4)
+    periodo: periodoDto(i, periodos[pos] as (typeof periodos)[number]),
     saldo: s.saldo,
     saldoConfirmado: s.confirmado,
     navegacion: {
