@@ -3,7 +3,9 @@
 // id y prueba un rechazo del dominio con su código y su mensaje. Los ids nuevos son 1000+; las cuentas y categorías son
 // las de los hechos de prueba (efectivo 1 y 2, Visa 3, préstamo 4, categorías 11 y 12, pago 13, deudor 14).
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Cambio, Hechos, Instante, Uuid } from '@finn/dominio';
+import { calcular, type Cambio, type Hechos, type Instante, type Uuid } from '@finn/dominio';
+import { actividad, reportes } from '@finn/dominio/selectores';
+import { FechaLocal } from '@finn/dominio/valores';
 import { cargarHechos, escribir, leer, Memoria } from '@finn/db';
 import { crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY, RELOJ } from '../../db/test/ayudantes/hechos-prueba.ts';
@@ -553,5 +555,81 @@ describe('PRU-INT-TX', () => {
     expect(await ejecutar(OP27, { ...avance, id: uuid(1064), tarjetaId: E1 })).toMatchObject(
       rechazo('cuenta_tipo_no_valido', contiene('tipo efectivo')),
     );
+  });
+
+  // FT-22 y FT-23 (TA-307): los números del motor y los rechazos de OP-21 y OP-22 se miden con diferencias sobre la base de prueba
+  const instantanea = async () => calcular(await hechos(), FechaLocal.desdeTexto(HOY));
+  const saldoDe = (h: Hechos, cuenta: Uuid): number =>
+    h.efectos.filter((e) => e.cuentaId === cuenta).reduce((suma, e) => suma + e.monto, 0);
+
+  it('PRU-INT-TX-371 [CA-22.1, ESC-03] un ingreso de $1,000.00 en efectivo sube la cuenta y Listo para asignar en $1,000.00', async () => {
+    const antes = await instantanea();
+    expect(
+      await ejecutar(OP21, { id: uuid(1100), cuentaId: E1, fecha: FECHA, total: '1000.00' }),
+    ).toMatchObject({ ok: true, yaAplicada: false });
+    const tras = await instantanea();
+    expect(tras.lpa.total - antes.lpa.total).toBe(100000);
+    expect(saldoDe(tras.hechos, E1) - saldoDe(antes.hechos, E1)).toBe(100000);
+  });
+
+  it('PRU-INT-TX-371 [CA-22.2] enviar OP-21 con una tarjeta se rechaza con cuenta_tipo_no_valido y no escribe', async () => {
+    expect(
+      await ejecutar(OP21, { id: uuid(1101), cuentaId: T1, fecha: FECHA, total: '10.00' }),
+    ).toMatchObject(rechazo('cuenta_tipo_no_valido', contiene('tipo tarjeta')));
+    expect((await releer(uuid(1101))).tx).toBeUndefined();
+  });
+
+  it('PRU-INT-TX-371 [CA-22.3] un ingreso registrado aparece como ingreso en el reporte de ingresos frente a gastos', async () => {
+    const suma = (i: Awaited<ReturnType<typeof instantanea>>) =>
+      reportes.ingresosGastos(i).reduce((s, p) => s + p.ingresos, 0);
+    const antes = suma(await instantanea());
+    await ejecutar(OP21, { id: uuid(1102), cuentaId: E1, fecha: FECHA, total: '40.00' });
+    expect(suma(await instantanea()) - antes).toBe(4000);
+  });
+
+  it('PRU-INT-TX-372 [CA-23.1] transferir $200.00 mueve los saldos y no cambia Listo para asignar ni ningún Disponible', async () => {
+    const antes = await instantanea();
+    expect(
+      await ejecutar(OP22, {
+        id: uuid(1110),
+        origenId: E2,
+        destinoId: E1,
+        fecha: FECHA,
+        total: '200.00',
+      }),
+    ).toMatchObject({ ok: true, yaAplicada: false });
+    const tras = await instantanea();
+    expect(saldoDe(tras.hechos, E2) - saldoDe(antes.hechos, E2)).toBe(-20000);
+    expect(saldoDe(tras.hechos, E1) - saldoDe(antes.hechos, E1)).toBe(20000);
+    expect(tras.lpa.total).toBe(antes.lpa.total);
+    expect(tras.presupuesto).toEqual(antes.presupuesto);
+  });
+
+  it('PRU-INT-TX-372 [CA-23.2, CB-29] transferir con el mismo origen y destino se rechaza con "Elegí dos cuentas distintas." y no escribe', async () => {
+    expect(
+      await ejecutar(OP22, {
+        id: uuid(1111),
+        origenId: E1,
+        destinoId: E1,
+        fecha: FECHA,
+        total: '5.00',
+      }),
+    ).toMatchObject(rechazo('cuentas_iguales', 'Elegí dos cuentas distintas.'));
+    expect((await releer(uuid(1111))).tx).toBeUndefined();
+  });
+
+  it('PRU-INT-TX-372 [CA-23.3] una transferencia en Actividad tiene monto presentado $0.00 y las dos cuentas', async () => {
+    await ejecutar(OP22, {
+      id: uuid(1112),
+      origenId: E2,
+      destinoId: E1,
+      fecha: FECHA,
+      total: '30.00',
+    });
+    const fila = actividad(await instantanea())
+      .dias.flatMap((d) => d.transacciones)
+      .find((f) => f.id === uuid(1112));
+    expect(fila).toMatchObject({ tipo: 'transferencia', total: 3000, montoPresentado: 0 });
+    expect(fila?.cuentas.map((c) => c.cuenta.id).sort()).toEqual([E1, E2].sort());
   });
 });

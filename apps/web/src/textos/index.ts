@@ -2,6 +2,7 @@
 // Cada ficha agrega su área acá; ningún texto literal va en JSX fuera de `src/textos/` (L8).
 import { ajustesWebhook } from './ajustes-webhook.ts';
 import { autenticacion } from './autenticacion.ts';
+import { bandeja } from './bandeja.ts';
 import { base } from './base.ts';
 import { cuentas } from './cuentas.ts';
 import { cuentasNueva } from './cuentas-nueva.ts';
@@ -11,11 +12,13 @@ import { formularios } from './formularios.ts';
 import { alcanceReserva, glosario } from './glosario.ts';
 import { ingreso } from './ingreso.ts';
 import { navegacion } from './navegacion.ts';
+import { registrarTipo } from './registrar-tipo.ts';
 
 export {
   ajustesWebhook,
   autenticacion,
   alcanceReserva,
+  bandeja,
   base,
   cuentas,
   cuentasNueva,
@@ -25,12 +28,14 @@ export {
   glosario,
   ingreso,
   navegacion,
+  registrarTipo,
 };
 
 /** Áreas registradas, en un arreglo para que una prueba detecte nombres repetidos. */
 export const areas = [
   ['ajustesWebhook', ajustesWebhook],
   ['autenticacion', autenticacion],
+  ['bandeja', bandeja],
   ['base', base],
   ['cuentas', cuentas],
   ['cuentasNueva', cuentasNueva],
@@ -41,4 +46,5 @@ export const areas = [
   ['alcanceReserva', alcanceReserva],
   ['ingreso', ingreso],
   ['navegacion', navegacion],
+  ['registrarTipo', registrarTipo],
 ] as const;
