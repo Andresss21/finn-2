@@ -462,7 +462,7 @@ tu: TU-11, TU-12, TU-16
 
 ```hito
 despues: TA-447
-requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-414, TA-415, TA-416, TA-417, TA-418, TA-419, TA-420, TA-421, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
+requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-414, TA-415, TA-416, TA-417, TA-418, TA-419, TA-420, TA-421, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
 hitos: HT-2, HT-3, HT-7
 sin_pendientes: si
 tu: —
@@ -1563,6 +1563,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-76** | CA-75.1 pedía que "los negativos llevan el guion `-`" en el CSV, pero el CSV solo trae `total` y `linea_monto`, que 03 §4.5.1 (`CHECK (total > 0)`, `CHECK (monto > 0)`) define siempre positivos: no hay negativos que mostrar. CA-75.1 pasa a "el CSV nunca contiene U+2212 y todo monto negativo, si lo hubiera, usa `-`" (FD-25). Lo cubren PRU-CTR-AJUS-101 (el armado del CSV con un negativo, `-45.00`) y PRU-E2E-AJUS-101 (el archivo descargado, sin U+2212), ya en `main` (#288); sus títulos siguen correspondiendo y no cambian | 06 FT-75 CA-75.1 | Delegado por el orquestador; **aplicado [CH-76]** en 06 FT-75 |
 | **CH-77** | Estados de FT-04 y CA-04.6. CH-70 (punto 3) corrigió Estados ("redirige, salvo que existan categorías de la lista sugerida y falten otras"), pero CA-04.6 seguía diciendo que con cualquier categoría normal la plantilla redirige, contra CA-04.10. Lo implementado y probado (`flujos/presupuesto-estructura-plantilla/plantilla.tsx` y `reanudar.ts`; PRU-CMP-INICIO-102 y 106, PRU-E2E-INICIO-106 y 109): con una aplicación a medias en el borrador se sigue con sus ids; sin borrador, se comparan los nombres con `estructura()` dentro de su grupo y se ofrece seguir si existe al menos una categoría de la lista y falta algún elemento; si ninguna categoría normal es de la lista, o la lista está completa, redirige. CA-04.6, que quedaba en minoría, pasa a "una categoría normal que no es de la lista sugerida y sin una aplicación a medias", y Estados agrega la precisión. Las pruebas no cambian: PRU-E2E-INICIO-106 siembra "Supermercado" en el grupo "Gastos", que no es de la lista | 06 FT-04 Estados y CA-04.6 | Delegado por el orquestador; **aplicado [CH-77]** en 06 FT-04 |
 | **CH-78** | Fila de FT-03 que decía que la E2E de la Bandeja la agrega TA-294, cuando §30.1 y `pruebas/pendientes-e2e.json` dan TA-295 (FT-34). La fila está en §19.7, no en §30.2, y CH-70 ya la había cambiado a TA-295; §30.2 no nombra ninguna tarea para FT-03. Sin cambios en el texto; se registra para que el número no quede sin uso | 08 §19.7, §30.1, §30.2 | Delegado por el orquestador; **sin efecto**: ya aplicado por [CH-70] en 08 §19.7 |
+| **CH-79** | Partición de TA-427 por tamaño (DT-02), con precedente en CH-72, y `endpointCorto` frente a L1. (a) El alcance completo de FT-06 midió prod=626 en 16 archivos de producción (total=1128) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). La estimación no contaba el push del service worker (`sw.ts` no tenía manejo de `push` ni de `notificationclick`) ni `destinos.ts`. (b) Se parte en dos: TA-427 conserva `/ajustes/notificaciones` con OPT-02 y OPT-03 (CA-06.2, CA-06.4, CA-06.5, CA-06.6; prod=363, 9 archivos); TA-440, nueva (orden 728; TA-428 pasa al orden libre 699 para dejarle el lugar entre TA-427 y TA-429, que E5 exige a TA-429, TA-430 y TA-446), lleva la tarjeta de Inicio, la renovación al abrir la app, `destinos.ts` y el push del service worker (CA-06.1, CA-06.3, FE-57, PRU-SW-NOTIF-001) y cierra la ficha. TA-440 depende de TA-427 y de las mismas tareas; HT-8 la exige. Criterio de dependientes: TA-429 (FT-70) y TA-430 (FT-71) envían y reciben push, así que necesitan el service worker y pasan de TA-427 a TA-440; TA-446 (recorridos) espera la ficha cerrada y también pasa a TA-440. (c) L1 (05 §1.7) solo deja importar valores de `@finn/dominio` en `apps/web/src/formularios/`, y CH-73 pide que el cliente use `endpointCorto`: el cliente lo toma por el reexport `apps/web/src/formularios/endpoint-corto.ts`, sin tocar las reglas de ESLint. El código completo queda en la rama local `ta-440-notificaciones-2` | 08 TA-427, TA-440, TA-429, TA-430, TA-446, HT-8; 05 §8.6 | Delegado por el orquestador; **aplicado [CH-79]** en 08 y en 05 §8.6 |
 | **CH-81** | Presupuesto de bytes por ruta y selector Gráfico / Tabla (corrección posterior a TA-319 y TA-400). PRU-REN-PWA-002 (05 §13.1, `porRutaKb` 50 KB) deja a `/registrar/gasto` en 49,98 KB y a `/cuentas/nueva` en 49,95 KB. El desdoble del chunk compartido de formularios (+1,17 KB en todas las rutas con formulario) lo causaba el `RadioGroup` de Radix que usaba `SelectorSegmentado`, la base de `VistaGrafico`: una pantalla sin formulario que lo importaba se llevaba parte de ese chunk. Arreglo de configuración: no lo hay. Con Turbopack (Next 16.4.1, 05 §13.2) la configuración `webpack`/`splitChunks` no se aplica y `optimizePackageImports` solo reescribe importaciones de paquetes barril, que no son los `@radix-ui/react-*` sueltos: el reparto de chunks lo decide el grafo de módulos. Arreglo de componente: `SelectorSegmentado` con botones nativos `role="radio"`, flechas y foco (#281), sin Radix. Medido con `VistaGrafico` en el historial del detalle de categoría (#286) y en el de Listo para asignar (este cambio): `VistaGrafico` entra en el JS propio de cada pantalla (7,38 KB y 2,32 KB) y ninguna ruta con formulario cambia (compartido 161,9 KB, biblioteca 43,29 KB, `/registrar/gasto` 49,98 KB, `/cuentas/nueva` 49,95 KB, antes y después). `porRutaKb` no cambia. Los `lazy` de `flujos/registrar-gasto/formulario.tsx` (TA-293) se conservan: sin ellos `/registrar/gasto` pasaría los 50 KB. Lo cubre PRU-CMP-PRES-106 (el selector del historial de Listo para asignar cambia a la tabla) | 05 §10.8.1 (`SelectorVista`); 05 §13.1 sin cambios | Delegado por el orquestador; **aplicado [CH-81]** en 05 §10.8.1 |
 
 ---
@@ -9178,7 +9179,7 @@ compartido: —
 | Ficha | Pri. | Título | CA | Tareas | Rutas que posee | Completa pendientes |
 |---|---|---|---|---|---|---|
 | FT-05 | M | Instalar como app y página sin conexión | 6 | TA-437 | — | — |
-| FT-06 | M | Activar notificaciones en el dispositivo | 6 | TA-427 | `/ajustes/notificaciones` | — |
+| FT-06 | M | Activar notificaciones en el dispositivo | 6 | TA-427, TA-440 | `/ajustes/notificaciones` | — |
 | FT-12 | M | Asignación rápida | 9 | TA-403 | — | — |
 | FT-13 | M | Auto-asignar | 4 | TA-404 | `/presupuesto/auto-asignar` | — |
 | FT-15 | M | Detalle de Listo para asignar | 5 | TA-400 | — | — |
@@ -10163,7 +10164,7 @@ fichas: FT-67
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y, si completa pendientes, sus E2E en verde.
 
-#### TA-427 FT-06 Activar notificaciones en el dispositivo
+#### TA-427 FT-06 Activar notificaciones en el dispositivo (1 de 2) **[CH-79]**
 
 ```tarea
 orden: 727
@@ -10173,18 +10174,20 @@ depende: TA-210, TA-212, TA-219, TA-224, TA-172, TA-196, TA-280
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=6 migraciones=0 total=1000
-cubre: CA-06.1, CA-06.2, CA-06.3, CA-06.4, CA-06.5, CA-06.6, RUTA-/ajustes/notificaciones, FE-57
-pru: PRU-SW-NOTIF-001
+tamano: prod=360 archivos=9 ca=4 migraciones=0 total=900
+cubre: CA-06.2, CA-06.4, CA-06.5, CA-06.6, RUTA-/ajustes/notificaciones
+pru: —
 compartido: —
 fichas: FT-06
 ```
 
 **Qué construir.**
-- FT-06: las pantallas y flujos de la ficha (Flujo, Piezas, Estados, Errores y textos) para CA-06.1 a CA-06.6, con las consultas y operaciones que ya existen (B2 y B3) y los componentes de B4.
+- FT-06, la pantalla `/ajustes/notificaciones` **[CH-79]**: activar en este dispositivo (CA-06.2), cómo habilitarlo con el permiso denegado (CA-06.4), la explicación en iPhone sin instalar (CA-06.5) y "Quitar" un dispositivo (CA-06.6), con OPT-02 y OPT-03 como Server Actions.
+- «Este dispositivo» se reconoce con `endpointCorto` por el reexport `apps/web/src/formularios/endpoint-corto.ts` **[CH-79]** (05 §8.6).
+- La tarjeta de Inicio, la renovación al abrir la app, `destinos.ts` y el push del service worker son de TA-440 **[CH-79]**.
 - Server Actions de sus operaciones en `servidor/acciones/<area>.ts`; ACCESO-001 y la suite de accesibilidad las cubren solas (TA-218, TA-221).
 - Rutas que crea (dueña, DT-23): `/ajustes/notificaciones`.
-- Último PR de la ficha: `features.json` en `terminada` (07 §27).
+- La ficha sigue en `pendiente`: la cierra TA-440 **[CH-79]**.
 
 **Leer.** 06 FT-06 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7; 04 §6 (sus consultas); 06-identidad-visual §3 si su pantalla está en las capturas.
 
@@ -10192,16 +10195,49 @@ fichas: FT-06
 
 **Pruebas primero.**
 - Una prueba por CA de este trozo en el nivel de 07 §17 (DT-21), con el CA entre corchetes.
+
+**Comandos.** `pnpm pruebas:ft FT-06` sin faltantes en este trozo; `pnpm ci:local`.
+
+**Terminada cuando.** `pruebas:ft` sin CA faltantes en este trozo. La ficha sigue en `pendiente`.
+
+#### TA-440 FT-06 Activar notificaciones en el dispositivo (2 de 2) **[CH-79]**
+
+```tarea
+orden: 728
+bloque: B7
+hito: HT-8
+depende: TA-210, TA-212, TA-219, TA-224, TA-172, TA-196, TA-280, TA-427
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=240 archivos=7 ca=2 migraciones=0 total=700
+cubre: CA-06.1, CA-06.3, FE-57
+pru: PRU-SW-NOTIF-001
+compartido: —
+fichas: FT-06
+```
+
+**Qué construir.**
+- FT-06, resto: la tarjeta «Activar notificaciones» de Inicio, descartable y sin pedir el permiso al abrir (CA-06.1), y `SuscripcionPush` en el layout de `(finn)`, que renueva la suscripción una vez por pestaña con el permiso concedido (CA-06.3).
+- FE-57: `componentes/navegacion/destinos.ts` (05 §3.5) y el push en el service worker (`sw/push.ts`, `sw/sw.ts`): evento `push`, `notificationclick` y las acciones «Confirmar» y «Rechazar» (05 §8.6).
+- Último PR de la ficha: `pruebas/features.json` pasa FT-06 a `terminada` (07 §27, DT-06 condición 6).
+
+**Leer.** 06 FT-06 completo; 05 §3.5, §8.6; 04 §11.4, §11.5.
+
+**Archivos.** `apps/web/src/componentes/marco/*`, `apps/web/src/componentes/navegacion/destinos.ts`, `apps/web/src/sw/*`, `apps/web/src/app/(finn)/{layout,page}.tsx`, `apps/web/e2e/{pantallas,sw}/*`.
+
+**Pruebas primero.**
+- Una prueba por CA de este trozo en el nivel de 07 §17 (DT-21), con el CA entre corchetes.
 - PRU-SW-NOTIF-001 (07).
 
-**Comandos.** `pnpm pruebas:ft FT-06` sin faltantes en este trozo; `pnpm ci:local` con la E2E de la ficha.
+**Comandos.** `pnpm pruebas:ft FT-06` sin faltantes; `pnpm ci:local` con la E2E de la ficha.
 
-**Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y, si completa pendientes, sus E2E en verde.
+**Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27).
 
 #### TA-428 FT-69 Centro de notificaciones
 
 ```tarea
-orden: 728
+orden: 699
 bloque: B7
 hito: HT-8
 depende: TA-210, TA-212, TA-219, TA-224, TA-185, TA-197, TA-280
@@ -10238,7 +10274,7 @@ fichas: FT-69
 orden: 729
 bloque: B7
 hito: HT-8
-depende: TA-210, TA-212, TA-219, TA-224, TA-178, TA-197, TA-427, TA-295, TA-428
+depende: TA-210, TA-212, TA-219, TA-224, TA-178, TA-197, TA-440, TA-295, TA-428
 tu: —
 revision: normal
 paralelo: libre
@@ -10274,7 +10310,7 @@ e2e: CA-34.4
 orden: 730
 bloque: B7
 hito: HT-8
-depende: TA-210, TA-212, TA-219, TA-224, TA-194, TA-197, TA-427, TA-304, TA-402, TA-413, TA-415
+depende: TA-210, TA-212, TA-219, TA-224, TA-194, TA-197, TA-440, TA-304, TA-402, TA-413, TA-415
 tu: —
 revision: normal
 paralelo: libre
@@ -10614,7 +10650,7 @@ fichas: FT-78
 orden: 740
 bloque: B7
 hito: HT-8
-depende: TA-400, TA-403, TA-404, TA-408, TA-415, TA-423, TA-424, TA-427, TA-428, TA-429, TA-431, TA-439
+depende: TA-400, TA-403, TA-404, TA-408, TA-415, TA-423, TA-424, TA-440, TA-428, TA-429, TA-431, TA-439
 tu: —
 revision: normal
 paralelo: libre
@@ -11122,8 +11158,9 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 724 | TA-424 | B7 | HT-8 | normal | FT-63 Presupuesto contra la realidad y comparación con el promedio | 360 | 0 |
 | 725 | TA-425 | B7 | HT-8 | normal | FT-66 Tarjetas en el tiempo | 360 | 0 |
 | 726 | TA-426 | B7 | HT-8 | normal | FT-67 Hallazgos accionables | 360 | 0 |
-| 727 | TA-427 | B7 | HT-8 | normal | FT-06 Activar notificaciones en el dispositivo | 360 | 0 |
-| 728 | TA-428 | B7 | HT-8 | normal | FT-69 Centro de notificaciones | 360 | 0 |
+| 727 | TA-427 | B7 | HT-8 | normal | FT-06 Activar notificaciones en el dispositivo (1 de 2) **[CH-79]** | 360 | 0 |
+| 728 | TA-440 | B7 | HT-8 | normal | FT-06 Activar notificaciones en el dispositivo (2 de 2) **[CH-79]** | 240 | 0 |
+| 699 | TA-428 | B7 | HT-8 | normal | FT-69 Centro de notificaciones | 360 | 0 |
 | 729 | TA-429 | B7 | HT-8 | normal | FT-70 Push de la bandeja con acciones | 360 | 0 |
 | 730 | TA-430 | B7 | HT-8 | normal | FT-71 Push de programadas, cierre, metas, tarjetas y sistema (1 de 2) | 360 | 0 |
 | 731 | TA-431 | B7 | HT-8 | normal | FT-71 Push de programadas, cierre, metas, tarjetas y sistema (2 de 2) | 360 | 0 |
