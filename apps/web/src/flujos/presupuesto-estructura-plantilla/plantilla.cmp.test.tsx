@@ -54,6 +54,13 @@ function montar(ui: ReactNode): HTMLElement {
   return nodo;
 }
 
+interface Elemento {
+  id: string;
+  tipo: 'grupo' | 'categoria';
+  nombre: string;
+  grupoId?: string;
+}
+
 const boton = (nodo: HTMLElement, nombre: string): HTMLButtonElement => {
   const b = [...nodo.querySelectorAll('button')].find(
     (x) => (x.getAttribute('aria-label') ?? x.textContent) === nombre,
@@ -61,6 +68,15 @@ const boton = (nodo: HTMLElement, nombre: string): HTMLButtonElement => {
   if (b === undefined) throw new Error(`no hay un botón «${nombre}»`);
   return b;
 };
+
+/** Deja correr las tandas, vaciando las actualizaciones de la pantalla en cada vuelta, hasta que aparezca el texto. */
+async function esperarTexto(nodo: HTMLElement, texto: string): Promise<void> {
+  for (let i = 0; i < 200 && !(nodo.textContent ?? '').includes(texto); i += 1)
+    await act(async () => {
+      await Promise.resolve();
+    });
+  expect(nodo.textContent).toContain(texto);
+}
 
 describe('PRU-CMP-INICIO', () => {
   it('PRU-CMP-INICIO-101 con todo quitado, "Crear" queda deshabilitado con el motivo a la vista y sin llamar a la acción', async () => {
@@ -104,5 +120,106 @@ describe('PRU-CMP-INICIO', () => {
     const nodo = montar(<PanelPlantilla hayNormales crearLote={vi.fn()} />);
     expect(replace).not.toHaveBeenCalled();
     expect(boton(nodo, t.seguir(1, 2))).toBeTruthy();
+  });
+
+  it('PRU-CMP-INICIO-105 [CA-04.8] la plantilla completa se aplica en 4 llamadas de hasta 15 elementos, con cada grupo antes que sus categorías y el avance creciendo entre tandas', async () => {
+    const avances: (string | null | undefined)[] = [];
+    const llamadas: Elemento[][] = [];
+    const crearLote = vi.fn(async (entrada: { elementos: Elemento[] }) => {
+      await act(async () => {
+        await Promise.resolve(); // deja que la pantalla dibuje el avance de la tanda anterior
+      });
+      avances.push(document.querySelector('[role=status]')?.textContent);
+      llamadas.push(entrada.elementos);
+      return {
+        ok: true,
+        valor: { elementos: entrada.elementos.map((e) => ({ id: e.id, resultado: 'creado' })) },
+      };
+    });
+    const nodo = montar(<PanelPlantilla hayNormales={false} crearLote={crearLote as never} />);
+    await act(() => {
+      boton(nodo, t.crear(36)).click();
+      return Promise.resolve();
+    });
+    await esperarTexto(nodo, t.creadas(47));
+    expect(llamadas.map((l) => l.length)).toEqual([12, 12, 12, 11]);
+    expect(Math.max(...llamadas.map((l) => l.length))).toBeLessThanOrEqual(15);
+    const vistos = new Set<string>();
+    for (const e of llamadas.flat()) {
+      if (e.tipo === 'grupo') vistos.add(e.id);
+      else expect(vistos.has(e.grupoId ?? '')).toBe(true);
+    }
+    expect(avances).toEqual([0, 12, 24, 36].map((k) => t.creando(k, 47)));
+  });
+
+  it('PRU-CMP-INICIO-106 [CA-04.10] sin borrador y con 12 elementos ya creados, ofrece seguir con 12 de 47 y envía solo los 35 restantes, colgados de los grupos que ya existen', async () => {
+    const existentes = [
+      {
+        id: 'g-vivienda',
+        nombre: 'Vivienda',
+        categorias: t.grupos[0].categorias.map((nombre, i) => ({ id: 'cv' + String(i), nombre })),
+      },
+      {
+        id: 'g-vida',
+        nombre: 'vida DIARIA',
+        categorias: t.grupos[1].categorias.slice(0, 4).map((nombre, i) => ({
+          id: 'cd' + String(i),
+          nombre,
+        })),
+      },
+    ];
+    const enviados: Elemento[] = [];
+    const crearLote = vi.fn((entrada: { elementos: Elemento[] }) => {
+      enviados.push(...entrada.elementos);
+      return Promise.resolve({
+        ok: true,
+        valor: { elementos: entrada.elementos.map((e) => ({ id: e.id, resultado: 'creado' })) },
+      });
+    });
+    const nodo = montar(
+      <PanelPlantilla hayNormales existentes={existentes} crearLote={crearLote as never} />,
+    );
+    expect(replace).not.toHaveBeenCalled();
+    await act(() => {
+      boton(nodo, t.seguir(12, 47)).click();
+      return Promise.resolve();
+    });
+    await esperarTexto(nodo, t.creadas(47));
+    expect(enviados).toHaveLength(35);
+    const ropa = enviados.find((e) => e.nombre === 'Ropa y calzado');
+    expect(ropa?.grupoId).toBe('g-vida');
+    expect(enviados.map((e) => e.nombre)).not.toContain('Vivienda');
+    expect(enviados.map((e) => e.nombre)).not.toContain('Farmacia');
+    expect(nodo.textContent).not.toContain(t.noSeCrearon(1));
+  });
+
+  it('PRU-CMP-INICIO-107 [CA-04.13] si falla un grupo, sus categorías llevan el motivo del grupo en el resumen, aunque estén en otra tanda, y las de los demás grupos se crean', async () => {
+    const motivo = 'Ya existe un grupo con ese nombre.';
+    const fallido = new Set<string>();
+    const enviados: Elemento[] = [];
+    const crearLote = vi.fn((entrada: { elementos: Elemento[] }) => {
+      enviados.push(...entrada.elementos);
+      return Promise.resolve({
+        ok: true,
+        valor: {
+          elementos: entrada.elementos.map((e) => {
+            if (e.tipo === 'grupo' && e.nombre === 'Vida diaria') fallido.add(e.id);
+            const malo = e.tipo === 'grupo' ? fallido.has(e.id) : fallido.has(e.grupoId ?? '');
+            return { id: e.id, resultado: malo ? { mensaje: motivo } : 'creado' };
+          }),
+        },
+      });
+    });
+    const nodo = montar(<PanelPlantilla hayNormales={false} crearLote={crearLote as never} />);
+    await act(() => {
+      boton(nodo, t.crear(36)).click();
+      return Promise.resolve();
+    });
+    await esperarTexto(nodo, t.noSeCrearon(6));
+    expect(nodo.textContent).toContain(t.creadas(41));
+    for (const nombre of ['Vida diaria', ...t.grupos[1].categorias])
+      expect(nodo.textContent).toContain(t.noSeCreo(nombre, motivo));
+    expect(enviados.map((e) => e.nombre)).not.toContain('Ropa y calzado');
+    expect(enviados.map((e) => e.nombre)).toContain('Transporte');
   });
 });
