@@ -699,7 +699,7 @@ describe('PRU-INT-TX', () => {
     expect(await ejecutar(OP24, cuota)).toMatchObject({ ok: true, yaAplicada: false });
     const tras = await falta();
     // la compra baja el saldo de la tarjeta por el total y el pago de la Visa solo recibe lo cubierto (D2 y traslado)
-    const saldoT = (x: Awaited<ReturnType<typeof instantanea>>) =>
+    const saldoT = (x: Awaited<ReturnType<typeof instantanea>>): number =>
       x.cuentas.find((k) => k.cuentaId === T1)?.saldo ?? 0;
     const trasI = await instantanea();
     expect(saldoT(trasI) - saldoT(previa)).toBe(-30000);

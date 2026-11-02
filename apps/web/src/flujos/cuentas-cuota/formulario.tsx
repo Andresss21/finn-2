@@ -5,7 +5,6 @@
 // (PF-3): la suma del desglose, el capital pendiente y los avisos los decide el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
@@ -17,6 +16,7 @@ import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { useReemplazarBusqueda } from '../../componentes/navegacion/use-reemplazar-busqueda';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -82,8 +82,7 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
   const esCuota = modalidad === 'cuota';
   const titulo = esCuota ? t.tituloCuota : t.tituloAbono;
   const rutaPadre = `/cuentas/${prestamoId}`;
-  const router = useRouter();
-  const ruta = usePathname();
+  const reemplazarBusqueda = useReemplazarBusqueda();
   const enviar: AccionEscritura = (payload) =>
     pagarCuotaPrestamo(aEntradaDeAccion(modalidad, prestamoId, payload));
   const operacion = useOperacion({ accion: enviar, creacion: true });
@@ -118,10 +117,7 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
   };
   const cambiarFecha = (fecha: string) => {
     setValue('fecha', fecha, { shouldDirty: true, shouldValidate: formState.isSubmitted });
-    if (esCuota && props.tieneModelo) {
-      const q = new URLSearchParams({ modalidad, fecha });
-      router.replace(`${ruta}?${q.toString()}`, { scroll: false });
-    }
+    if (esCuota && props.tieneModelo) reemplazarBusqueda({ modalidad, fecha });
   };
   const error = (n: keyof Campos): string | undefined => formState.errors[n]?.message;
   const conError = (n: keyof Campos): { error?: string } => {
