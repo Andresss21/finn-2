@@ -493,7 +493,7 @@
 
   "TA-436": { "estado": "pendiente" },
 
-  "TA-437": { "estado": "pendiente" },
+  "TA-437": { "estado": "en_curso", "rama": "ta-437-pwa-instalar-sin-conexion" },
 
   "TA-438": { "estado": "pendiente" },
 
