@@ -19,6 +19,7 @@ import { formularios } from './formularios.ts';
 import { alcanceReserva, glosario } from './glosario.ts';
 import { ingreso } from './ingreso.ts';
 import { instalacion } from './instalacion.ts';
+import { metas } from './metas.ts';
 import { navegacion } from './navegacion.ts';
 import { plantilla } from './plantilla.ts';
 import { presupuesto } from './presupuesto.ts';
@@ -50,6 +51,7 @@ export {
   glosario,
   ingreso,
   instalacion,
+  metas,
   navegacion,
   plantilla,
   presupuesto,

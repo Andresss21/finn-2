@@ -397,7 +397,9 @@
 
   "TA-304": { "estado": "pendiente" },
 
-  "TA-305": { "estado": "pendiente" },
+  "TA-305": { "estado": "terminada", "rama": "ta-305-metas-pantallas", "pr": 300 },
+
+  "TA-442": { "estado": "pendiente" },
 
   "TA-306": { "estado": "terminada", "rama": "ta-306-archivar-1", "pr": 297 },
 

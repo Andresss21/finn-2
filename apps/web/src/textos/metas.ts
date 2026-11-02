@@ -1,0 +1,38 @@
+// Textos de `/metas`, y `/metas/nueva` (FT-17; 05 §2.3, §7). Voseo (05 §12.2). Los rechazos (`meta_ya_existe`,
+// `meta_en_categoria_de_pago`, `fecha_objetivo_pasada`, `categoria_archivada`) los trae el servidor en `mensaje`.
+export const metas = {
+  titulo: 'Metas',
+  nuevaMeta: 'Nueva meta',
+  tituloNueva: 'Nueva meta',
+  vacioTitulo: 'Todavía no tenés metas',
+  vacioTexto: 'Una meta dice cuánto falta asignar a una categoría. Nunca asigna sola.',
+  crearUna: 'Crear una meta',
+  sinCategorias: 'Todas tus categorías ya tienen meta.',
+  volver: 'Volver a Metas',
+  categoria: 'Categoría',
+  tipo: 'Tipo de meta',
+  tipos: { mensual: 'Mensual', semanal: 'Semanal', anual: 'Anual', para_fecha: 'Para una fecha' },
+  modo: 'Modo',
+  modos: { acumular: 'Acumular', rellenar_hasta: 'Rellenar hasta' },
+  monto: 'Monto de la meta',
+  fechaObjetivo: 'Fecha objetivo',
+  fechaObjetivoAnual: 'Fecha objetivo (si no, un año desde hoy)',
+  obligatorio: 'Completá este campo.',
+  montoMayorACero: 'Ingresá un monto mayor que cero.',
+  crear: 'Crear meta',
+  creando: 'Creando…',
+  creada: 'Meta creada',
+  vencida: {
+    titulo: 'Meta vencida',
+    texto: (categoria: string, fecha: string) =>
+      `La meta de ${categoria} venció el ${fecha} sin cumplirse.`,
+    extender: 'Extender la fecha',
+    ajustar: 'Ajustar el monto',
+  },
+  fila: {
+    porPeriodo: 'Monto del período',
+    para: (fecha: string) => `para el ${fecha}`,
+    editar: 'Editar',
+    detalle: 'Ver la categoría',
+  },
+} as const;
