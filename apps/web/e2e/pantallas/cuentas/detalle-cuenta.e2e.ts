@@ -141,4 +141,42 @@ test.describe('PRU-E2E-CTA', () => {
     });
     await esperarMonto(saldo, saldoDeLaCuenta);
   });
+
+  test('PRU-E2E-CTA-115 [AV-07] el detalle de una tarjeta con deuda de $18.75 y límite de $2,500.00 muestra la deuda, "Te falta reservar" por $18.75 y su ciclo', async ({
+    page,
+  }) => {
+    await sembrarOps(
+      [{ op: 'OP-01', cuenta: 'Visa Oro', tipo: 'tarjeta', saldo: 18.75, limite: 2500 }],
+      '2027-02-05',
+    );
+    await page.goto('/cuentas');
+    await esperarContenido(page);
+    await page.getByRole('link', { name: 'Ver detalle de Visa Oro' }).click();
+    await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
+    await esperarContenido(page);
+    const bloque = page.locator('[data-bloque="tarjeta"]');
+    await expect(bloque).toContainText('Te falta reservar');
+    await esperarMonto(bloque.locator('[data-centavos]').first(), 1875);
+    await expect(bloque).toContainText('Ciclo de facturación');
+    await expect(page.locator('[data-bloque="prestamo"], [data-bloque="inversion"]')).toHaveCount(
+      0,
+    );
+  });
+
+  test('PRU-E2E-CTA-116 el detalle de una inversión muestra su valor de $3,000.00 y sus aportes', async ({
+    page,
+  }) => {
+    await sembrarOps(
+      [{ op: 'OP-01', cuenta: 'Inversión', tipo: 'inversion', saldo: 3000 }],
+      '2027-02-05',
+    );
+    await page.goto('/cuentas');
+    await esperarContenido(page);
+    await page.locator('[data-grupo="Inversiones"] a').first().click();
+    await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
+    await esperarContenido(page);
+    const bloque = page.locator('[data-bloque="inversion"]');
+    await esperarMonto(bloque.locator('[data-centavos]').first(), 300000);
+    await expect(bloque).toContainText('Aportes');
+  });
 });
