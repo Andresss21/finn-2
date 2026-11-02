@@ -1,4 +1,4 @@
-// Textos de los Primeros pasos de Inicio (FT-04; 06 §3.15, CF-18; 05 §12). Sin "Ocultar por ahora" todavía: lo agrega TA-286.
+// Textos de los Primeros pasos de Inicio (FT-04; 06 §3.15, CF-18; 05 §12).
 export const primerosPasos = {
   titulo: 'Primeros pasos',
   pasos: {
@@ -7,4 +7,7 @@ export const primerosPasos = {
     sms: 'Conectar los SMS',
   },
   hecho: (paso: string) => `Hecho: ${paso}`,
+  ocultar: 'Ocultar por ahora',
+  recordatorio: (k: number) => `Primeros pasos: ${k} de 3`,
+  mostrar: 'Mostrar en Inicio',
 } as const;

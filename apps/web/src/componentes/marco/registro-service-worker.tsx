@@ -3,12 +3,16 @@
 // `SerwistProvider` (su `cacheOnNavigation` guardaría cada URL, FE-20, y `reloadOnOnline` perdería lo escrito, FE-21).
 // Si hay una versión instalada esperando, muestra el aviso de 7.6; "Recargar" la activa y la página se recarga una vez.
 import { useEffect, useState } from 'react';
+import { escucharInstalacion } from '../../cliente/instalacion';
 import { formularios } from '../../textos/formularios';
 import { AvisoEnLinea } from '../base/aviso';
 import { Boton } from '../base/boton';
 
 export function RegistroServiceWorker() {
   const [espera, setEspera] = useState<ServiceWorker | null>(null);
+
+  // Instalación a pedido (8.7): se guarda el evento aunque no haya service worker (desarrollo).
+  useEffect(() => escucharInstalacion(), []);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) return;

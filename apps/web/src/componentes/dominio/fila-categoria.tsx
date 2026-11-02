@@ -2,6 +2,7 @@
 import type { Centavos } from '@finn/dominio/valores';
 import { dominio } from '../../textos/dominio';
 import { Icono } from '../base/icono';
+import { EnlaceFinn } from '../navegacion/enlace-finn';
 import { BarraGastado, type BarraDto } from './barra-gastado';
 import { IndicadorEstado, type EstadoFinanciero } from './indicador-estado';
 import { Monto } from './monto';
@@ -97,13 +98,13 @@ export function FilaCategoria({
         </span>
       </a>
       {hrefAsignar === undefined || periodoCerrado ? null : (
-        <a
+        <EnlaceFinn
           href={hrefAsignar}
           aria-label={dominio.asignar(nombre)}
           className="inline-flex size-11 shrink-0 items-center justify-center rounded-pastilla bg-accion-tonal text-accion"
         >
           <Icono nombre="plus" />
-        </a>
+        </EnlaceFinn>
       )}
     </div>
   );

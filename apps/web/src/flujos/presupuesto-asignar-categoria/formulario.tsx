@@ -1,0 +1,267 @@
+'use client';
+// `/presupuesto/asignar/[categoriaId]` (FT-10, OP-14; 05 §2.3, §4.4, §4.7): el flujo corto de cambiar lo asignado a una categoría
+// en un período activo o futuro. Muestra lo que trae el servidor y envía el valor absoluto con `esperado` (lo que vio al abrir).
+// AV-11 llega como `REQUIERE_CONFIRMACION`; `conflicto_desactualizado` ofrece el valor actual. No calcula montos (PF-3).
+import type { Centavos } from '@finn/dominio/valores';
+import { useCallback, useState } from 'react';
+import * as z from 'zod';
+import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { Boton } from '../../componentes/base/boton';
+import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
+import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { Monto } from '../../componentes/dominio/monto';
+import {
+  CerrarFlujoAlMontar,
+  PaginaFlujoDeRuta,
+  SuperpuestoDeRuta,
+} from '../../componentes/navegacion/flujo-de-ruta';
+import { centavosATextoDecimal, formatearMonto } from '../../formato';
+import { aplicarSigno, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import { useFormularioFinn } from '../../formularios/use-formulario-finn';
+import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
+import { asignarEnCategoria } from '../../servidor/acciones/presupuesto';
+import { formularios } from '../../textos/formularios';
+import { presupuestoAsignar as t } from '../../textos/presupuesto-asignar';
+
+export interface PropsFormularioAsignar {
+  readonly categoriaId: string;
+  readonly categoria: string;
+  readonly archivada: boolean;
+  readonly periodoInicio: string;
+  readonly asignado: Centavos;
+  readonly disponible: Centavos;
+  readonly asignadoEsperado: Centavos;
+  readonly meta?: { readonly pedido: Centavos; readonly falta: Centavos };
+  /** La pantalla a la que vuelve la página completa al terminar (`cerrarFlujo()`, 05 §1.4). */
+  readonly rutaPadre: string;
+  readonly superpuesto: boolean;
+}
+
+const CONTRATO = z.object({
+  monto: z
+    .string()
+    .refine((v) => normalizarMontoEscrito(v).estado === 'valido', { error: t.obligatorio }),
+  signo: z.enum(['positivo', 'negativo']),
+});
+type Campos = z.infer<typeof CONTRATO>;
+type Cruda = Campos & {
+  modo: string;
+  esperado?: Record<string, unknown>;
+  revisionVista?: string;
+  huellaImpacto?: string;
+};
+interface Vista {
+  readonly impacto?: { readonly deltaLpa: Centavos } | null;
+  readonly avisos?: readonly {
+    readonly codigo: string;
+    readonly datos?: { readonly lpa?: Centavos };
+  }[];
+}
+const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
+
+/** Lo que el servidor guarda como Asignado, escrito como lo teclea la persona: el valor absoluto y su signo. */
+const camposDe = (asignado: Centavos): Campos => ({
+  monto: centavosATextoDecimal(Math.abs(asignado) as Centavos),
+  signo: asignado < 0 ? 'negativo' : 'positivo',
+});
+
+interface PropsCuerpo {
+  readonly p: PropsFormularioAsignar;
+  readonly esperado: Centavos;
+  readonly inicial: Campos;
+  readonly alUsarActual: (actual: Centavos, escrito: Campos) => void;
+}
+
+function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
+  const { categoriaId, periodoInicio, superpuesto, rutaPadre } = p;
+  const enviarAsignacion = useCallback<AccionEscritura>(
+    (payload) => {
+      const { modo, esperado: e, revisionVista, huellaImpacto, monto, signo } = payload as Cruda;
+      const normal = normalizarMontoEscrito(monto);
+      return asignarEnCategoria({
+        categoriaId,
+        periodoInicio,
+        montoNuevo: aplicarSigno(normal.estado === 'valido' ? normal.texto : monto, signo),
+        esperado: e,
+        modo,
+        ...(revisionVista === undefined ? {} : { revisionVista, huellaImpacto }),
+      });
+    },
+    [categoriaId, periodoInicio],
+  );
+  const operacion = useOperacion({
+    accion: enviarAsignacion,
+    esperado: { monto: centavosATextoDecimal(esperado) },
+  });
+  const formulario = useFormularioFinn<Campos>({
+    contrato: CONTRATO,
+    valoresIniciales: inicial,
+    operacion,
+  });
+  const { estado, error: fallo } = operacion;
+  const c = formulario.watch();
+  const vista = (operacion.previsualizacion ?? {}) as Vista;
+  const actual = (fallo?.datos?.['actuales'] as { monto?: Centavos } | undefined)?.monto;
+  const conflicto = fallo?.codigo === 'conflicto_desactualizado' && actual !== undefined;
+
+  // Terminó: `cerrarFlujo()` (05 §1.4) con los números nuevos en la pantalla de origen.
+  if (estado === 'listo')
+    return (
+      <>
+        <p role="status">{t.listo}</p>
+        <CerrarFlujoAlMontar rutaPadre={rutaPadre} superpuesto={superpuesto} />
+      </>
+    );
+  if (estado === 'confirmando')
+    return (
+      <ConfirmacionImpacto
+        titulo={t.revisar}
+        impacto={
+          vista.impacto
+            ? [
+                t.impactoLpa(
+                  `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
+                ),
+              ]
+            : []
+        }
+        avisos={(vista.avisos ?? []).map((a) =>
+          a.codigo === 'AV-11' && a.datos?.lpa !== undefined
+            ? t.avisos['AV-11'](formatearMonto(a.datos.lpa))
+            : a.codigo,
+        )}
+        textoConfirmar={t.confirmar}
+        textoVolver={t.volverAEditar}
+        enviando={false}
+        alConfirmar={() => void operacion.confirmar()}
+        alVolver={operacion.volverAEditar}
+      />
+    );
+  return (
+    <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
+      <dl
+        data-resumen-asignar
+        className="grid grid-cols-2 gap-3 rounded-contenedor bg-superficie-hundida p-3.5"
+      >
+        <div className="flex flex-col gap-0.5">
+          <dt className="text-cuerpo-pequeno text-texto-secundario">{t.asignado}</dt>
+          <dd data-campo="asignado" className="font-semibold">
+            <Monto centavos={p.asignado} />
+          </dd>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <dt className="text-cuerpo-pequeno text-texto-secundario">{t.disponible}</dt>
+          <dd data-campo="disponible" className="font-semibold">
+            <Monto centavos={p.disponible} />
+          </dd>
+        </div>
+        {p.meta === undefined ? null : (
+          <>
+            <div className="flex flex-col gap-0.5">
+              <dt className="text-cuerpo-pequeno text-texto-secundario">{t.metaPide}</dt>
+              <dd className="font-semibold">
+                <Monto centavos={p.meta.pedido} />
+              </dd>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <dt className="text-cuerpo-pequeno text-texto-secundario">{t.metaFalta}</dt>
+              <dd className="font-semibold">
+                <Monto centavos={p.meta.falta} />
+              </dd>
+            </div>
+          </>
+        )}
+      </dl>
+      {p.archivada ? <AvisoEnLinea estado="informacion">{t.archivada}</AvisoEnLinea> : null}
+      <EntradaMonto
+        nombre="monto"
+        etiqueta={t.nuevoAsignado}
+        valor={c.monto}
+        alCambiar={(v) => {
+          formulario.setValue('monto', v, {
+            shouldDirty: true,
+            shouldValidate: formulario.formState.isSubmitted,
+          });
+        }}
+        conSigno
+        signo={c.signo}
+        alCambiarSigno={(s) => {
+          formulario.setValue('signo', s, { shouldDirty: true });
+        }}
+        error={formulario.formState.errors.monto?.message}
+        requerido
+      />
+      {estado === 'error' && fallo !== undefined ? (
+        <AvisoEnLinea
+          estado="problema"
+          aparecioDespues
+          {...(conflicto
+            ? {
+                accion: (
+                  <Boton
+                    variante="secundaria"
+                    onClick={() => {
+                      alUsarActual(actual, formulario.getValues());
+                    }}
+                  >
+                    {t.usarValorActual}
+                  </Boton>
+                ),
+              }
+            : REINTENTABLES.includes(fallo.categoria)
+              ? {
+                  accion: (
+                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
+                      {formularios.intentarDeNuevo}
+                    </Boton>
+                  ),
+                }
+              : {})}
+        >
+          {fallo.mensaje}
+          {conflicto ? ` ${t.valorActual(formatearMonto(actual))}` : ''}
+        </AvisoEnLinea>
+      ) : null}
+      <Boton
+        tipo="submit"
+        enviando={estado === 'enviando'}
+        textoEnviando={t.guardando}
+        deshabilitado={!operacion.enLinea}
+        {...(operacion.motivoSinEnvio === undefined
+          ? {}
+          : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+      >
+        {t.guardar}
+      </Boton>
+    </form>
+  );
+}
+
+export function FormularioAsignar(p: PropsFormularioAsignar) {
+  // "Usar el valor actual" (05 §4.7): `esperado` pasa a lo que hay ahora y se conserva lo escrito. `useOperacion` copia
+  // `esperado` una sola vez, así que el cuerpo se vuelve a montar con la copia nueva.
+  const [base, setBase] = useState<{ esperado: Centavos; inicial: Campos; version: number }>({
+    esperado: p.asignadoEsperado,
+    inicial: camposDe(p.asignado),
+    version: 0,
+  });
+  const cuerpo = (
+    <Cuerpo
+      key={base.version}
+      p={p}
+      esperado={base.esperado}
+      inicial={base.inicial}
+      alUsarActual={(actual, escrito) => {
+        setBase((b) => ({ esperado: actual, inicial: escrito, version: b.version + 1 }));
+      }}
+    />
+  );
+  const titulo = t.tituloDe(p.categoria);
+  return p.superpuesto ? (
+    <SuperpuestoDeRuta titulo={titulo}>{cuerpo}</SuperpuestoDeRuta>
+  ) : (
+    <PaginaFlujoDeRuta titulo={titulo} rutaPadre={p.rutaPadre}>
+      {cuerpo}
+    </PaginaFlujoDeRuta>
+  );
+}
