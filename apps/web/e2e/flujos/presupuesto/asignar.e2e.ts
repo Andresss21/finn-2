@@ -102,7 +102,7 @@ test.describe('PRU-E2E-PRES', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-PRES-107 [CA-10.1, ESC-03] asignar $600.00 a Super desde su fila deja Listo para asignar en $400.00 y vuelve a Presupuesto', async ({
+  test('PRU-E2E-PRES-130 [CA-10.1, ESC-03] asignar $600.00 a Super desde su fila deja Listo para asignar en $400.00 y vuelve a Presupuesto', async ({
     page,
   }) => {
     await sembrarOps(ESC03_PASO1, '2027-02-05');
@@ -117,7 +117,7 @@ test.describe('PRU-E2E-PRES', () => {
     await esperarMonto(montoDeFila(page, 'Super', 0), 60000);
   });
 
-  test('PRU-E2E-PRES-108 [CA-10.2, ESC-03] asignar $200.00 a Gas en el período futuro se rechaza con lpa_negativo_en_futuro y dice que faltan $100.00', async ({
+  test('PRU-E2E-PRES-131 [CA-10.2, ESC-03] asignar $200.00 a Gas en el período futuro se rechaza con lpa_negativo_en_futuro y dice que faltan $100.00', async ({
     page,
   }) => {
     await sembrarOps(ESC03_PASO3, '2027-02-05');
@@ -133,7 +133,7 @@ test.describe('PRU-E2E-PRES', () => {
     await esperarMonto(lpa(page), 10000);
   });
 
-  test('PRU-E2E-PRES-109 [CA-10.3, ESC-03, AV-11, AV-20] asignar $200.00 a Gas en el activo avisa que dejará Listo para asignar en −$100.00 y, al confirmar, queda así con AV-20', async ({
+  test('PRU-E2E-PRES-132 [CA-10.3, ESC-03, AV-11, AV-20] asignar $200.00 a Gas en el activo avisa que dejará Listo para asignar en −$100.00 y, al confirmar, queda así con AV-20', async ({
     page,
   }) => {
     await sembrarOps(ESC03_PASO3, '2027-02-05');
@@ -150,7 +150,7 @@ test.describe('PRU-E2E-PRES', () => {
     await esperarMonto(montoDeFila(page, 'Gas', 0), 20000);
   });
 
-  test('PRU-E2E-PRES-110 [CA-10.4, ESC-05, ESC-06] asignar $100.00 más a Super en P1 lo deja en $0.00, Pago T en $400.00 y sin nada por reservar', async ({
+  test('PRU-E2E-PRES-133 [CA-10.4, ESC-05, ESC-06] asignar $100.00 más a Super en P1 lo deja en $0.00, Pago T en $400.00 y sin nada por reservar', async ({
     page,
   }) => {
     // Con P1 todavía activo (15 feb): es el estado del paso 2 de ESC-05
@@ -167,7 +167,7 @@ test.describe('PRU-E2E-PRES', () => {
     await esperarMonto(montoDePago(page, 1), 40000);
   });
 
-  test('PRU-E2E-PRES-111 [CA-10.5, ESC-07] asignar $100.00 a Pago T en P2 baja lo que falta reservar de T de $100.00 a $0.00', async ({
+  test('PRU-E2E-PRES-134 [CA-10.5, ESC-07] asignar $100.00 a Pago T en P2 baja lo que falta reservar de T de $100.00 a $0.00', async ({
     page,
   }) => {
     await sembrarOps(
@@ -184,7 +184,7 @@ test.describe('PRU-E2E-PRES', () => {
     await esperarMonto(montoDePago(page, 1), 40000);
   });
 
-  test('PRU-E2E-PRES-112 [CA-10.6, CB-09] con Asignado $50.00, escribir −$20.00 deja Asignado y Disponible en −$20.00 de débito', async ({
+  test('PRU-E2E-PRES-135 [CA-10.6, CB-09] con Asignado $50.00, escribir −$20.00 deja Asignado y Disponible en −$20.00 de débito', async ({
     page,
   }) => {
     await sembrarOps(
@@ -209,7 +209,7 @@ test.describe('PRU-E2E-PRES', () => {
     await expect(fila(page, 'Super')).toContainText('Sobregiro con débito o efectivo');
   });
 
-  test('PRU-E2E-PRES-113 [CA-10.7] si otra pestaña cambió lo asignado, enviar responde conflicto_desactualizado y ofrece el valor actual', async ({
+  test('PRU-E2E-PRES-136 [CA-10.7] si otra pestaña cambió lo asignado, enviar responde conflicto_desactualizado y ofrece el valor actual', async ({
     page,
     context,
   }) => {
@@ -235,7 +235,7 @@ test.describe('PRU-E2E-PRES', () => {
     await esperarMonto(montoDeFila(page, 'Super', 1), 80000);
   });
 
-  test('PRU-E2E-PRES-114 [CA-10.8] abrir asignar con un período cerrado llega al detalle de la categoría con el motivo periodo_cerrado', async ({
+  test('PRU-E2E-PRES-137 [CA-10.8] abrir asignar con un período cerrado llega al detalle de la categoría con el motivo periodo_cerrado', async ({
     page,
   }) => {
     await sembrarOps(ESC05_PASO2, '2027-02-21');
