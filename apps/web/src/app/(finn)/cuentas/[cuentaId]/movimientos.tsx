@@ -11,6 +11,7 @@ const t = cuentaDetalle.movimientos;
 const f = cuentaDetalle.filtros;
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline ${FOCO}`;
+const BOTON = `inline-flex min-h-11 items-center rounded-control bg-superficie-hundida px-4 font-semibold text-texto ${FOCO}`;
 const CAMPO = `min-h-11 rounded-control border border-borde-control bg-superficie px-2 text-texto ${FOCO}`;
 
 export interface FiltrosDetalle {
@@ -69,10 +70,7 @@ function Filtros({
           ))}
         </select>
       </label>
-      <button
-        type="submit"
-        className={`inline-flex min-h-11 items-center rounded-control bg-superficie-hundida px-4 font-semibold text-texto ${FOCO}`}
-      >
+      <button type="submit" className={BOTON}>
         {f.aplicar}
       </button>
       {hay ? (

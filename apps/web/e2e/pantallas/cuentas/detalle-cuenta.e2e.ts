@@ -100,7 +100,7 @@ test.describe('PRU-E2E-CTA', () => {
   test('PRU-E2E-CTA-114 [CA-52.5] con 120 movimientos cada página sigue el saldo corrido de la anterior y el más reciente es el saldo de la cuenta', async ({
     page,
   }) => {
-    test.setTimeout(180_000);
+    test.slow();
     const gastos: Op[] = Array.from({ length: 120 }, (_, n) => ({
       op: 'OP-20',
       cuenta: 'Ahorro',
