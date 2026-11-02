@@ -2444,6 +2444,8 @@ Perfil de referencia: un Android de gama media con 4G. En el laboratorio es el p
 
 KB = 1.000 bytes, tamaño **transferido con gzip** (la compresión de `next start`). Vercel sirve brotli, que comprime más: la medida de CI es conservadora.
 
+**[CH-87]** Una ruta nueva no suma bytes a las demás: una página vacía nueva deja iguales los archivos de JS de la compilación. Lo que sí suma es un módulo que Turbopack copia en el JS de muchas pantallas (como `src/formato/`): la eliminación de exportaciones sin uso es global, así que una función que empieza a usar una sola pantalla entra en todas las copias. Por eso `formato/index.ts` solo reexporta y sus archivos no tienen efectos al cargarse (13.3). Los presupuestos de la tabla no cambian.
+
 ### 13.2 Lo que se midió (V5-20, V5-26, V5-27)
 
 Compilación de producción real (Next 16.4.1 con Turbopack, React 19.3, `next start`), JS descargado al abrir cada ruta en un contexto nuevo de Chromium:
@@ -2489,6 +2491,7 @@ La página más simple fue la más lenta, lo que muestra el ruido de una sola co
 | **[F6]** `@dnd-kit/core` solo con `import()` en la Bandeja, en el primer momento libre después de hidratar (`requestIdleCallback`, tope de 2 s) o al primer toque o tecla sobre una fila (CF-22) | Medido en 06 V6-08: 15.0 KB gzip fuera de lo que se descarga antes de `load` |
 | Sin bibliotecas de fechas, de formato ni de utilidades generales (moment, date-fns, dayjs, lodash, numeral); `Intl` y el módulo de 5.4 | Se agrega a la lista de 04 §5.8 como regla L18 (`no-restricted-imports`) |
 | Sin bibliotecas de componentes además de Radix (a través de shadcn), ni de iconos completas: los iconos son SVG propios o se importan de a uno, nunca el paquete completo | Una biblioteca de iconos importada entera pesa más que todo el presupuesto de una ruta |
+| **[CH-87]** `src/formato/index.ts` solo reexporta; el código va en un archivo por grupo (montos, fechas, fechas con mes, instantes, porcentajes) y ningún archivo crea objetos al cargarse (cada `Intl` se crea al primer uso). PRU-DOM-VAL-159 lo comprueba | Turbopack copia `formato` en el JS de cada pantalla que formatea: con código en el índice o un `Intl` al cargarse, toda copia arrastraría cada función que use alguna pantalla |
 | Sin scripts de terceros (analítica, chat, mapas) | Además de peso, 00 y 04 no los prevén |
 | Fuente del sistema mientras el diseño no elija; las que elija, con `next/font`, autohospedadas y con `display: swap`, como máximo dos familias | LCP y CLS |
 | El código del QR de la inscripción (9.5) es el SVG que devuelve Supabase; sin biblioteca de QR | — |

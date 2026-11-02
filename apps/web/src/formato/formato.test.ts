@@ -82,4 +82,22 @@ describe('PRU-DOM-VAL-005 módulo de formato [V5-02]', () => {
     expect(formatearPorcentaje(4550)).toBe('45.5%');
     expect(formatearPorcentaje(10000)).toBe('100%');
   });
+
+  // CH-87: Turbopack copia `formato` en el JS de cada pantalla. Si `index.ts` tuviera código, o un archivo creara un
+  // `Intl` al cargarse, todo lo que importa `formato` arrastraría ese archivo y cada función nueva crecería en todas las rutas.
+  it('PRU-DOM-VAL-159 [V5-20] index.ts solo reexporta y ningún archivo de formato tiene efectos al cargarse', () => {
+    const fuentes = import.meta.glob<string>(['./*.ts', '!./*.test.ts'], {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    });
+    const sinComentarios = (s: string) =>
+      s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    const indice = sinComentarios(fuentes['./index.ts'] ?? '');
+    expect(indice.replace(/export\s*\{[^}]*\}\s*from\s*'[^']+';/g, '').trim()).toBe('');
+    const conEfectos = Object.entries(fuentes)
+      .filter(([, s]) => /^(export\s+)?(const|let|var)\s+\w+\s*=\s*new\s/m.test(sinComentarios(s)))
+      .map(([f]) => f);
+    expect(conEfectos).toEqual([]);
+  });
 });
