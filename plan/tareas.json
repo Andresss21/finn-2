@@ -413,7 +413,7 @@
 
   "TA-312": { "estado": "terminada", "rama": "ta-312-cuentas", "pr": 255 },
 
-  "TA-313": { "estado": "en_curso", "rama": "ta-313-detalle-cuenta" },
+  "TA-313": { "estado": "terminada", "rama": "ta-313-detalle-cuenta", "pr": 266 },
 
   "TA-314": { "estado": "pendiente" },
 
