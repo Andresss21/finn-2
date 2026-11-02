@@ -353,7 +353,7 @@
 
   "TA-282": { "estado": "terminada", "rama": "ta-282-cuenta-saldo-inicial-2", "pr": 249 },
 
-  "TA-283": { "estado": "pendiente" },
+  "TA-283": { "estado": "terminada", "rama": "ta-283-estructura-2", "pr": 256 },
 
   "TA-284": { "estado": "terminada", "rama": "ta-284-webhook-token", "pr": 250 },
 
@@ -527,5 +527,7 @@
 
   "TA-552": { "estado": "terminada", "rama": "ta-552-navegacion", "pr": 223 },
 
-  "TA-553": { "estado": "terminada", "rama": "ta-553-bandeja-graficos", "pr": 241 }
+  "TA-553": { "estado": "terminada", "rama": "ta-553-bandeja-graficos", "pr": 241 },
+
+  "TA-316": { "estado": "pendiente" }
 }
