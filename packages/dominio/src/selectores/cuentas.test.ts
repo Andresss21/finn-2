@@ -670,4 +670,46 @@ describe('PRU-DOM-CTA', () => {
       bloqueosEliminar: [],
     });
   });
+
+  it('PRU-DOM-CTA-108 [CA-51.7, CA-51.8] usoSinReservarBp con la tarjeta Visa (te falta reservar $170.00): 100 con límite $17,000.00, nulo con límite $0.00 y 10,000 si lo que falta supera el límite; las barras con activos y deudas en $0.00 son 0', () => {
+    const h = estado().hechos;
+    const conLimite = (limite: number) => {
+      const lista = cuentas(
+        calcular(
+          {
+            ...h,
+            tarjetas: h.tarjetas.map((t) =>
+              t.cuentaId === id('vi') ? { ...t, limiteCredito: c(limite) } : t,
+            ),
+          },
+          f('2027-04-15'),
+        ),
+      );
+      return lista.tarjetas.find((t) => t.cuenta.id === id('vi'));
+    };
+    expect(conLimite(17000)).toMatchObject({ faltaReservar: c(170), usoSinReservarBp: 100 });
+    expect(conLimite(0)).toMatchObject({ faltaReservar: c(170), usoSinReservarBp: null });
+    expect(conLimite(100)).toMatchObject({ faltaReservar: c(170), usoSinReservarBp: 10_000 });
+
+    // Sin saldos, las dos barras valen 0 (con activos iguales a deudas valen 10.000: lo comprueba la E2E de Cuentas).
+    const vacio = (extra: Partial<Hechos> = {}) =>
+      cuentas(
+        calcular(
+          {
+            ...h,
+            cuentas: h.cuentas.filter((k) => k.id === id('ef')),
+            tarjetas: [],
+            prestamos: [],
+            inversiones: [],
+            transacciones: [],
+            efectos: [],
+            lineas: [],
+            conciliaciones: [],
+            ...extra,
+          },
+          f('2027-04-15'),
+        ),
+      ).posicionNeta.barras;
+    expect(vacio()).toEqual({ activosBp: 0, deudasBp: 0 });
+  });
 });
