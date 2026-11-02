@@ -63,8 +63,14 @@ export function ResumenMeta({
         </div>
       )}
       <p className="text-cuerpo-pequeno text-texto-secundario">
-        {t.pide} <Monto centavos={meta.pedido} /> {t.enElPeriodo} · {t.falta}{' '}
-        <Monto centavos={meta.falta} />
+        {t.pide}{' '}
+        <span data-pedido>
+          <Monto centavos={meta.pedido} />
+        </span>{' '}
+        {t.enElPeriodo} · {t.falta}{' '}
+        <span data-falta>
+          <Monto centavos={meta.falta} />
+        </span>
       </p>
     </div>
   );
