@@ -1370,7 +1370,7 @@ Reglas comunes a todas las fichas:
 - Recarga a mitad: empieza una inscripción nueva y la anterior, sin verificar, se quita.
 - Ya existe un factor verificado: la ruta se niega (redirige a `/ingresar/verificar`).
 
-**Errores y textos.** `codigo_incorrecto`, `codigo_vencido`, `inscripcion_no_permitida` (05 §9.7). Sin textos nuevos.
+**Errores y textos.** `codigo_incorrecto`, `codigo_vencido`, `inscripcion_no_permitida` (05 §9.7). Sin textos nuevos. **[CH-63]** La pantalla de cierre del paso 5 se muestra en `/ingresar/inscribir?cierre=1`: la pantalla agrega la marca a la URL, sin navegar, antes de enviar el código y la quita si el código falla, para que el servidor, ya con AAL2, no redirija a `volver` antes de mostrar la recomendación (05 §9.2). Con un código incorrecto o vencido la URL queda sin la marca y el error se muestra en la misma pantalla.
 
 **Criterios de aceptación.**
 - **CA-02.1** Dado AAL1 sin factores, cuando abro `/ingresar/inscribir` dos veces seguidas (recargando), entonces Supabase tiene un solo factor sin verificar (el último).
@@ -1455,7 +1455,7 @@ Reglas comunes a todas las fichas:
 - Con cuentas y pasos pendientes: los Primeros pasos van encima de "Necesita tu atención". Ocultos: `/ajustes` muestra "Primeros pasos: {k} de 3" y "Mostrar en Inicio". **[B1]**
 - Plantilla con todo quitado: "Crear" deshabilitado con el motivo "Elegí al menos una categoría." **(nuevo)**.
 - Aplicación cortada (red, recarga, sesión vencida): al volver, "Seguir creando la plantilla ({k} de {n} creadas)" **(nuevo)**, con los mismos ids del borrador; sin borrador, se saltan por nombre los que ya existen (3.9.1). **[B1]**
-- Con categorías normales ya creadas: `/presupuesto/estructura/plantilla` redirige a `/presupuesto/estructura` (la plantilla es solo para empezar), salvo que existan categorías de la lista sugerida y falten otras: entonces ofrece seguir (CA-04.10) **[CH-70]**.
+- Con categorías normales ya creadas: `/presupuesto/estructura/plantilla` redirige a `/presupuesto/estructura` (la plantilla es solo para empezar), salvo que existan categorías de la lista sugerida y falten otras: entonces ofrece seguir (CA-04.10) **[CH-70]**. **[CH-77]** Precisamente: si el borrador de la pestaña tiene una aplicación a medias, se sigue con sus ids (CA-04.4); si no, se comparan los nombres de la lista con `estructura()` (sin mayúsculas, dentro de su grupo, 3.9.1) y se ofrece "Seguir creando la plantilla ({k} de {n} creadas)" cuando existe al menos una categoría de la lista y falta algún elemento. Sin ninguna categoría de la lista (las normales son otras) o con la lista completa, redirige (CA-04.6).
 
 **Errores y textos.** Por elemento: `nombre_repetido`, `grupo_archivado`, `grupo_del_sistema` (si el usuario agrega "Pagos de tarjeta"). Textos nuevos: los de "Estados", "Creando tu plantilla: {k} de {n}…" y "{n} creadas. {m} no se crearon:" **(nuevo)** seguido de cada nombre con su mensaje; los de 3.15 ("Hecho: {paso}", "Ocultar por ahora", "Primeros pasos: {k} de 3", "Mostrar en Inicio"). **[B1]**
 
@@ -1465,7 +1465,7 @@ Reglas comunes a todas las fichas:
 - **CA-04.3** Dado que quito el grupo "Educación" y renombro "Streaming" a "Netflix y Disney", cuando creo, entonces no existe "Educación" ni sus 2 categorías y existe "Netflix y Disney" en "Suscripciones".
 - **CA-04.4** **[B1]** Dado que la conexión se corta después de la primera tanda (12 elementos), cuando vuelvo a abrir la plantilla y sigo, entonces se crean los 35 restantes con los ids del borrador, ninguno se duplica y, si reenvío la primera tanda, sus 12 elementos responden `ya_aplicada`.
 - **CA-04.5** Dado que agrego "Supermercado" dos veces en "Vida diaria", cuando creo, entonces se crea una, la otra aparece en el resumen con el mensaje de `nombre_repetido` y las demás se crean.
-- **CA-04.6** Dado una categoría normal ya creada, cuando abro `/presupuesto/estructura/plantilla`, entonces me redirige a `/presupuesto/estructura`.
+- **CA-04.6** **[CH-77]** Dado una categoría normal ya creada que no es de la lista sugerida (por nombre, dentro de su grupo) y sin una aplicación de la plantilla a medias, cuando abro `/presupuesto/estructura/plantilla`, entonces me redirige a `/presupuesto/estructura`. Con una aplicación a medias, en el borrador o reconocida por nombre, ofrece seguir (CA-04.4, CA-04.10).
 - **CA-04.7** Dado los pasos 1 y 2 de ESC-01 hechos desde `/cuentas/nueva`, cuando abro Inicio, entonces Listo para asignar es $1,000.00 y "Te falta reservar" de T es $300.00.
 - **CA-04.8** **[B1]** Dado la plantilla completa (47 elementos), cuando la aplico, entonces la pantalla hace 4 llamadas a la acción, ninguna con más de 15 elementos, los grupos van antes que sus categorías y el avance cambia después de cada tanda.
 - **CA-04.9** **[B1]** En el perfil 4G de 05 §13.1, con 400 ms por escritura en el servidor, la aplicación de los 47 elementos termina en 20 s o menos (estimación de 3.9.1 a partir de V6-05; la Fase 7 lo mide con la aplicación real).
@@ -4321,7 +4321,7 @@ Reglas comunes a las fichas de reportes:
 **Referencias.** OPT-08; 05 §2.11 (`/ajustes/exportar`, descargas por `GET /api/exportar/{json|csv}`); FD-25 (las exportaciones usan el guion normal, no U+2212); consulta `ajustes()` (`exportaciones`).
 
 **Criterios de aceptación.**
-- **CA-75.1** Dado transacciones con montos negativos, cuando descargo el CSV, entonces los negativos llevan el guion `-` y no U+2212 (FD-25).
+- **CA-75.1** **[CH-76]** Dado transacciones registradas, cuando descargo el CSV, entonces el CSV nunca contiene U+2212 y todo monto negativo, si lo hubiera, usa `-` (FD-25). Sus montos son `total` y `linea_monto`, siempre positivos (03 §4.5.1), así que el formato del negativo se prueba sobre el armado del CSV.
 - **CA-75.2** Dado la descarga JSON, cuando la vuelvo a leer, entonces los montos están en centavos enteros y cada transacción tiene sus líneas y efectos.
 - **CA-75.3** Dado una sesión AAL1 o sin sesión, cuando pido `/api/exportar/csv`, entonces se rechaza.
 
