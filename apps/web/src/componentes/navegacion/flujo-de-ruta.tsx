@@ -33,11 +33,21 @@ export function PaginaFlujoDeRuta({
   );
 }
 
-/** Un flujo que ya terminó: `cerrarFlujo()` apenas se monta, hacia la pantalla padre (la página completa de 1.4). */
-export function CerrarFlujoAlMontar({ rutaPadre }: { readonly rutaPadre: string }) {
+/**
+ * Un flujo que ya terminó: `cerrarFlujo()` apenas se monta (05 §1.4). Página completa: hacia la pantalla padre. Superpuesto:
+ * `router.back()`, que vuelve a la pantalla de origen sin recargarla.
+ */
+export function CerrarFlujoAlMontar({
+  rutaPadre,
+  superpuesto = false,
+}: {
+  readonly rutaPadre: string;
+  readonly superpuesto?: boolean;
+}) {
   const router = useRouter();
   useEffect(() => {
-    router.replace(rutaPadre);
-  }, [router, rutaPadre]);
+    if (superpuesto) router.back();
+    else router.replace(rutaPadre);
+  }, [router, rutaPadre, superpuesto]);
   return null;
 }

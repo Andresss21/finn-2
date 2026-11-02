@@ -2,11 +2,19 @@ import axe from 'axe-core';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { Centavos } from '@finn/dominio/valores';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../app/globals.css';
 import { FilaCategoria, type FilaCategoriaDto } from './fila-categoria';
 import { FilaPagoTarjeta, type FilaPagoTarjetaDto } from './fila-pago';
 import { FilaTransaccion, type TransaccionFilaDto } from './fila-transaccion';
+
+// `FilaCategoria` enlaza con `EnlaceFinn` (envoltorio de `next/link`, el límite externo): acá es un `<a>`.
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
+    createElement('a', { href, ...resto }, children);
+  return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
+});
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
