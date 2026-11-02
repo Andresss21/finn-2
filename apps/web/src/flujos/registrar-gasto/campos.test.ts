@@ -143,4 +143,11 @@ describe('PRU-DOM-TX', () => {
       lineas: [{ destino: 'categoria' }],
     });
   });
+
+  it('PRU-DOM-TX-390 [CA-21.11] con 21 partes el contrato las rechaza en el campo de las partes antes de llegar al servidor, y con 20 las acepta', () => {
+    const partes = (n: number) =>
+      Array.from({ length: n }, () => parte({ monto: '1', categoriaId: SUPER }));
+    expect(rutas(con({ total: '21', lineas: partes(21) }))).toEqual(['lineas']);
+    expect(rutas(con({ total: '20', lineas: partes(20) }))).toEqual([]);
+  });
 });

@@ -5,20 +5,16 @@
 // que muestra por su cuenta es cuánto falta repartir, como ayuda visual (05 §5.1); la suma la valida el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { useFieldArray } from 'react-hook-form';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
-import { Resultado } from '../../componentes/base/resultado';
 import { Seleccion, type Opcion } from '../../componentes/base/seleccion';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
-import { Vacio } from '../../componentes/base/vacio';
 import { CampoLineas } from '../../componentes/formularios/campo-lineas';
-import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
-import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
 import { faltaRepartir } from '../../formularios/normalizar-monto';
@@ -60,11 +56,18 @@ interface Previsualizacion {
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 /** Los rechazos de negocio que se muestran junto al campo de las partes (CA-21.5), no como aviso del formulario. */
 const DE_LAS_PARTES = ['suma_lineas_distinta', 'linea_sin_destino'];
-/** Un enlace con el aspecto de un botón principal (05 §10.7): al menos 44 px de alto (05 §11.5). */
-const ENLACE =
-  'inline-flex min-h-12 items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 /** Un rechazo cuyo mensaje ya se muestra en su campo no se repite como aviso del formulario. */
 const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
+
+const ConfirmacionImpacto = lazy(() =>
+  import('../../componentes/formularios/confirmacion-impacto').then((m) => ({
+    default: m.ConfirmacionImpacto,
+  })),
+);
+const SinCuentas = lazy(() => import('./sin-cuentas'));
+const ResultadoGasto = lazy(() => import('./resultado-gasto'));
+const BorradorGasto = lazy(() => import('./borrador-gasto'));
+const SugerenciaComercio = lazy(() => import('./sugerencia-comercio'));
 
 const aOpciones = (xs: readonly Referencia[]): Opcion[] =>
   xs.map((x) => ({ valor: x.id, etiqueta: x.nombre }));
@@ -84,7 +87,7 @@ export function FormularioRegistrarGasto({
     valoresIniciales: inicial,
     operacion,
   });
-  const { setValue, formState, control } = formulario;
+  const { setValue, formState, control, reset } = formulario;
   const partes = useFieldArray({ control, name: 'lineas' });
   const c = formulario.watch();
 
@@ -112,49 +115,32 @@ export function FormularioRegistrarGasto({
   if (cuentas.length === 0)
     return (
       <PaginaFlujoDeRuta titulo={t.tituloGasto} rutaPadre="/registrar">
-        <Vacio
-          titulo={t.sinCuentasTitulo}
-          texto={t.sinCuentasTexto}
-          accion={
-            <EnlaceFinn href="/cuentas/nueva" className={ENLACE}>
-              {t.crearCuenta}
-            </EnlaceFinn>
-          }
-        />
+        <Suspense fallback={null}>
+          <SinCuentas />
+        </Suspense>
       </PaginaFlujoDeRuta>
     );
 
   if (estado === 'listo' && exito !== undefined) {
     const nombreDeCuenta = cuentas.find((x) => x.id === c.cuentaId)?.nombre ?? '';
     const reutilizados = deudoresReutilizados(c, deudores);
+    const tocadas = categorias.filter((x) =>
+      c.lineas.some((l) => l.destino === 'categoria' && l.categoriaId === x.id),
+    );
     return (
       <PaginaFlujoDeRuta titulo={t.listo} rutaPadre="/registrar">
-        <div className="flex flex-col gap-4">
-          <Resultado
+        <Suspense fallback={null}>
+          <ResultadoGasto
             texto={t.guardado(
               c.comercio.trim() === '' ? t.sinComercio : c.comercio.trim(),
               formatearMontoTexto(c.total),
               nombreDeCuenta,
               String(c.lineas.length),
             )}
+            tocadas={tocadas}
+            reutilizados={reutilizados}
           />
-          {reutilizados.map((nombre) => (
-            <p
-              key={nombre}
-              className="text-cuerpo-pequeno text-texto"
-              data-testid="deudor-existente"
-            >
-              {t.deudorExistente(nombre)}
-            </p>
-          ))}
-          <Boton
-            onClick={() => {
-              window.location.assign(window.location.pathname);
-            }}
-          >
-            {t.registrarOtro}
-          </Boton>
-        </div>
+        </Suspense>
       </PaginaFlujoDeRuta>
     );
   }
@@ -187,33 +173,38 @@ export function FormularioRegistrarGasto({
   return (
     <PaginaFlujoDeRuta titulo={t.tituloGasto} rutaPadre="/registrar">
       {estado === 'confirmando' ? (
-        <ConfirmacionImpacto
-          titulo={t.revisar}
-          {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
-          impacto={
-            vista.impacto
-              ? [
-                  t.impactoLpa(
-                    `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
-                  ),
-                ]
-              : []
-          }
-          avisos={(vista.avisos ?? []).map((a) =>
-            a.codigo === 'AV-01' ? t.avisoPeriodoCerrado : a.codigo,
-          )}
-          textoConfirmar={t.confirmar}
-          textoVolver={t.volverAEditar}
-          enviando={false}
-          alConfirmar={() => void operacion.confirmar()}
-          alVolver={operacion.volverAEditar}
-        />
+        <Suspense fallback={null}>
+          <ConfirmacionImpacto
+            titulo={t.revisar}
+            {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
+            impacto={
+              vista.impacto
+                ? [
+                    t.impactoLpa(
+                      `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
+                    ),
+                  ]
+                : []
+            }
+            avisos={(vista.avisos ?? []).map((a) =>
+              a.codigo === 'AV-01' ? t.avisoPeriodoCerrado : a.codigo,
+            )}
+            textoConfirmar={t.confirmar}
+            textoVolver={t.volverAEditar}
+            enviando={false}
+            alConfirmar={() => void operacion.confirmar()}
+            alVolver={operacion.volverAEditar}
+          />
+        </Suspense>
       ) : (
         <form
           onSubmit={(e) => void formulario.enviar(e)}
           noValidate
           className="flex flex-col gap-5"
         >
+          <Suspense fallback={null}>
+            <BorradorGasto campos={c} inicial={inicial} operacion={operacion} reset={reset} />
+          </Suspense>
           <Seleccion
             etiqueta={t.cuenta}
             opciones={opcionesCuentas}
@@ -226,7 +217,6 @@ export function FormularioRegistrarGasto({
             etiqueta={t.fecha}
             valor={c.fecha as FechaLocal}
             alCambiar={poner('fecha')}
-            maxima={hoy}
             error={error('fecha')}
             requerido
           />
@@ -243,6 +233,17 @@ export function FormularioRegistrarGasto({
             autoComplete="off"
             {...formulario.register('comercio')}
           />
+          {c.comercio.trim().length >= 2 ? (
+            <Suspense fallback={null}>
+              <SugerenciaComercio
+                comercio={c.comercio}
+                alUsar={(categoria) => {
+                  poner('lineas.0.destino')('categoria');
+                  poner('lineas.0.categoriaId')(categoria.id);
+                }}
+              />
+            </Suspense>
+          ) : null}
           <EntradaTexto etiqueta={t.nota} autoComplete="off" {...formulario.register('nota')} />
           <CampoLineas
             etiqueta={t.partes}
