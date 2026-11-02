@@ -82,7 +82,6 @@
     "fts": ["FT-10", "FT-11", "FT-17"]
   },
   { "patron": "apps/web/src/app/(finn)/metas/**", "fts": ["FT-17"] },
-  { "patron": "apps/web/src/flujos/metas-meta/**", "fts": ["FT-17"] },
   { "patron": "apps/web/src/flujos/metas-nueva/**", "fts": ["FT-17"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/mover/**", "fts": ["FT-11"] },
   {

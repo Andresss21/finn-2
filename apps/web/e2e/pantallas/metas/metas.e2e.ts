@@ -148,7 +148,7 @@ test.describe('PRU-E2E-META pantalla de metas', () => {
     await esperarMonto(pedido(page, 'Viaje'), 5000);
   });
 
-  test('PRU-E2E-META-105 [CA-17.4, ESC-38, AV-17] la meta de ESC-38 sin cumplirse en P5 muestra AV-17 con las dos acciones y su pedido de $200.00', async ({
+  test('PRU-E2E-META-105 [ESC-38, AV-17] la meta de ESC-38 sin cumplirse en P5 muestra AV-17 con las dos acciones y su pedido de $200.00', async ({
     page,
   }) => {
     await sembrarOps(ESC38_PASO4B, '2027-01-25', '2027-05-21');

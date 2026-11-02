@@ -8,7 +8,7 @@ import { depsDeConsulta } from '../../servidor/consultas';
 import type { BusquedaDePagina } from '../../servidor/parametros';
 import { metas as t } from '../../textos/metas';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
-import { FormularioMeta } from '../metas-meta/formulario';
+import { FormularioMeta } from './formulario';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

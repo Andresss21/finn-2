@@ -1,10 +1,9 @@
-// Textos de `/metas`, `/metas/nueva` y `/metas/[metaId]` (FT-17; 05 §2.3, §7). Voseo (05 §12.2). Los rechazos (`meta_ya_existe`,
+// Textos de `/metas`, y `/metas/nueva` (FT-17; 05 §2.3, §7). Voseo (05 §12.2). Los rechazos (`meta_ya_existe`,
 // `meta_en_categoria_de_pago`, `fecha_objetivo_pasada`, `categoria_archivada`) los trae el servidor en `mensaje`.
 export const metas = {
   titulo: 'Metas',
   nuevaMeta: 'Nueva meta',
   tituloNueva: 'Nueva meta',
-  tituloEditar: 'Editar meta',
   vacioTitulo: 'Todavía no tenés metas',
   vacioTexto: 'Una meta dice cuánto falta asignar a una categoría. Nunca asigna sola.',
   crearUna: 'Crear una meta',
@@ -22,20 +21,7 @@ export const metas = {
   montoMayorACero: 'Ingresá un monto mayor que cero.',
   crear: 'Crear meta',
   creando: 'Creando…',
-  guardar: 'Guardar cambios',
-  guardando: 'Guardando…',
-  sinCambios: 'No hay cambios para guardar.',
   creada: 'Meta creada',
-  guardada: 'Meta guardada',
-  eliminada: 'Meta eliminada',
-  noExiste: 'Esta meta ya no existe.',
-  eliminar: 'Eliminar meta',
-  eliminando: 'Eliminando…',
-  confirmarEliminar: (categoria: string) =>
-    `¿Eliminar la meta de ${categoria}? Lo asignado no cambia.`,
-  siEliminar: 'Sí, eliminar',
-  noEliminar: 'No, conservar',
-  cargarActual: 'Cargar lo que hay ahora',
   vencida: {
     titulo: 'Meta vencida',
     texto: (categoria: string, fecha: string) =>

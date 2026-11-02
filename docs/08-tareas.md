@@ -452,7 +452,7 @@ El verificador deriva los ESC y los CB de las fichas y comprueba que la tarea du
 
 ```hito
 despues: TA-318
-requiere: TA-263, TA-302, TA-303, TA-304, TA-305, TA-306, TA-441, TA-307, TA-308, TA-309, TA-310, TA-311, TA-312, TA-313, TA-314, TA-315, TA-317, TA-318
+requiere: TA-263, TA-302, TA-303, TA-304, TA-305, TA-306, TA-441, TA-442, TA-307, TA-308, TA-309, TA-310, TA-311, TA-312, TA-313, TA-314, TA-315, TA-317, TA-318
 tu: TU-11, TU-12, TU-16
 ```
 
@@ -1567,6 +1567,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-80** | El modo de la meta en OP-18 pasa a `modoMeta` (corrección previa a TA-305). 04 §3.3 daba a OP-18 un campo de entrada `modo` (`acumular` \| `rellenar_hasta`), pero `modo` ya es el modo de envío de toda Server Action (04 §2.2.2 paso 3; 05 §4.2–4.3): `accion()` lo saca de la entrada y `useOperacion` lo pisa con `previsualizar` o `confirmar`, así que ninguna meta mensual o semanal se podía crear ni editar desde la interfaz. OP-18 es la única operación con un campo `modo` propio. Decisión: el modo de la meta se llama `modoMeta` en la entrada de OP-18 (crear y editar) y en su `esperado`; el modo de envío no cambia. Criterio para las lecturas: `esperado` de `metas()` se reenvía a OP-18 y lleva `modoMeta` (solo si la meta tiene modo: el contrato no acepta `null`); los campos de solo lectura `modo?` de `metas()` (6.10), de `detalleCategoria().meta` (6.3) y, por 6.10, de `formulario('meta')` (6.14.4) también pasan a `modoMeta`, para que en la interfaz `modo` sea solo el modo de envío y el de la meta tenga un único nombre. No cambian la columna `metas.modo` (03), el tipo `Meta` ni el comando de `@finn/dominio`, ni el lenguaje de los escenarios (`{ op: 'OP-18', modo }`, que su ejecutor `int` traduce): el renombre es en el límite de entrada, sin migración. Ningún número esperado cambia | 04 §3.3, §6.3, §6.10, §6.14.4 | Delegado por el orquestador; **aplicado [CH-80]** en 04 §3.3, §6.3, §6.10 y §6.14.4 (01 OP-18 no nombra el campo); código en esta corrección |
 | **CH-81** | Presupuesto de bytes por ruta y selector Gráfico / Tabla (corrección posterior a TA-319 y TA-400). PRU-REN-PWA-002 (05 §13.1, `porRutaKb` 50 KB) deja a `/registrar/gasto` en 49,98 KB y a `/cuentas/nueva` en 49,95 KB. El desdoble del chunk compartido de formularios (+1,17 KB en todas las rutas con formulario) lo causaba el `RadioGroup` de Radix que usaba `SelectorSegmentado`, la base de `VistaGrafico`: una pantalla sin formulario que lo importaba se llevaba parte de ese chunk. Arreglo de configuración: no lo hay. Con Turbopack (Next 16.4.1, 05 §13.2) la configuración `webpack`/`splitChunks` no se aplica y `optimizePackageImports` solo reescribe importaciones de paquetes barril, que no son los `@radix-ui/react-*` sueltos: el reparto de chunks lo decide el grafo de módulos. Arreglo de componente: `SelectorSegmentado` con botones nativos `role="radio"`, flechas y foco (#281), sin Radix. Medido con `VistaGrafico` en el historial del detalle de categoría (#286) y en el de Listo para asignar (este cambio): `VistaGrafico` entra en el JS propio de cada pantalla (7,38 KB y 2,32 KB) y ninguna ruta con formulario cambia (compartido 161,9 KB, biblioteca 43,29 KB, `/registrar/gasto` 49,98 KB, `/cuentas/nueva` 49,95 KB, antes y después). `porRutaKb` no cambia. Los `lazy` de `flujos/registrar-gasto/formulario.tsx` (TA-293) se conservan: sin ellos `/registrar/gasto` pasaría los 50 KB. Lo cubre PRU-CMP-PRES-106 (el selector del historial de Listo para asignar cambia a la tabla) | 05 §10.8.1 (`SelectorVista`); 05 §13.1 sin cambios | Delegado por el orquestador; **aplicado [CH-81]** en 05 §10.8.1 |
 | **CH-82** | Partición de TA-306 por tamaño (DT-02), con precedente en CH-72 y CH-79, y cómo se entra al flujo de archivar. (a) El alcance completo de FT-19 midió prod≈758 en 13 archivos de producción (total≈1.520) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-306 conserva `/archivar` con OP-09 y el rechazo de OP-10 (CA-19.1, CA-19.5, CA-19.7; prod≈340, 6 archivos); TA-441, nueva (orden 365), lleva `/sacar`, el interceptor y la propuesta de un toque de AV-14 en Presupuesto (CA-19.2, CA-19.3, CA-19.4, CA-19.6; medido prod≈420, se declara 400, 9 archivos), cierra la ficha y lleva los pendientes CA-19.2>FT-28 y CA-19.3>FT-47. TA-441 depende de TA-306 y de las mismas tareas; HT-7 la exige. Criterio de dependientes: TA-406 (FT-28) y TA-407 (FT-47) completan CA-19.2 y CA-19.3, que ahora son de TA-441, así que pasan de TA-306 a TA-441; TA-413 (FT-40) completa CA-19.1 y CA-19.5 y sigue en TA-306. El código completo queda en la rama local `ta-441-sacar-archivada`. (c) 06 FT-19, Flujo paso 1, decía «Detalle de categoría → archivar», pero el detalle deshabilita «Archivar» con bloqueos (06-identidad-visual §6 punto 8 y 06 S3): al flujo se entra desde Estructura → editar → «Archivar», y desde el detalle solo cuando no hay bloqueos. No se cambia código | 08 TA-306, TA-441, TA-406, TA-407, HT-7; 06 FT-19, índice y §30.1 | Delegado por el orquestador; **aplicado [CH-82]** en 06 y en 08 |
+| **CH-83** | Partición de TA-305 por tamaño (DT-02), con precedente en CH-72, CH-79 y CH-82. (a) El alcance completo de FT-17 midió prod=629 en 12 archivos de producción (total≈1.600) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-305 conserva `/metas` y `/metas/nueva` con OP-18 crear (CA-17.1, CA-17.2, CA-17.3, CA-17.5, CA-17.6, CA-17.7; prod≈490 medido, se declara 400, 10 archivos); TA-442, nueva (orden 366), lleva `/metas/[metaId]` con OP-18 editar y eliminar, «Usar el valor actual» y la E2E de CA-17.4 (prod≈150, 5 archivos), cierra la ficha. TA-442 depende de TA-305, de las mismas tareas y de TA-299 (FT-08): CA-17.4 pide ver AV-17 en Inicio y no puede ser un pendiente de punta a punta hacia FT-08, cuyas tareas tienen orden menor (E5, E12), así que TA-442 lo prueba entera. HT-7 la exige. Criterio de dependientes: ninguna otra tarea depende de CA-17.4, así que ninguna cambia de TA-305 a TA-442. (c) El código de TA-442 queda en la rama local `ta-442-metas-editar`. (d) Mientras TA-442 no se mergee, los enlaces «Editar», «Extender la fecha» y «Ajustar el monto» de `/metas` y «Editar la meta» del detalle de categoría apuntan a `/metas/[metaId]`, que aún no existe | 08 TA-305, TA-442, HT-7 y §30.1 | Delegado por el orquestador; **aplicado [CH-83]** en 08 |
 
 ---
 
@@ -7437,7 +7438,7 @@ compartido: —
 | FT-11 | Mover dinero entre categorías | 4 | HT-7 | TA-302 | `/presupuesto/mover` |
 | FT-14 | Detalle de categoría: reparto, calendario e historial | 10 | HT-6 | TA-290, TA-319 | `/presupuesto/categorias/[categoriaId]` |
 | FT-16 | Sobregiros y cierre automático del período | 7 | HT-7 | TA-304 | — |
-| FT-17 | Metas | 7 | HT-7 | TA-305 | `/metas`, `/metas/[metaId]`, `/metas/nueva` |
+| FT-17 | Metas | 7 | HT-7 | TA-305, TA-442 **[CH-83]** | `/metas`, `/metas/[metaId]`, `/metas/nueva` |
 | FT-18 | Grupos y categorías: crear, renombrar, reordenar y eliminar | 6 | HT-6 | TA-283, TA-316 | `/presupuesto/estructura`, `/presupuesto/estructura/categorias/[categoriaId]`, `/presupuesto/estructura/categorias/nueva`, `/presupuesto/estructura/grupos/[grupoId]`, `/presupuesto/estructura/grupos/nuevo` |
 | FT-19 | Archivar y desarchivar categorías, y sacar el dinero de una archivada | 7 | HT-7 | TA-306, TA-441 **[CH-82]** | `/presupuesto/categorias/[categoriaId]/archivar`, `/presupuesto/categorias/[categoriaId]/sacar` |
 | FT-21 | Registrar gasto con división y por cobrar | 12 | HT-6 | TA-292, TA-293 | `/registrar`, `/registrar/gasto` |
@@ -8422,7 +8423,7 @@ pendiente: CA-16.5>FT-71
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
-#### TA-305 FT-17 Metas
+#### TA-305 FT-17 Metas, lista y nueva meta (1 de 2) **[CH-83]**
 
 ```tarea
 orden: 354
@@ -8432,18 +8433,19 @@ depende: TA-164, TA-170, TA-174, TA-210, TA-212, TA-219, TA-224, TA-288, TA-289
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=7 migraciones=0 total=1000
-cubre: CA-17.1, CA-17.2, CA-17.3, CA-17.4, CA-17.5, CA-17.6, CA-17.7, RUTA-/metas, RUTA-/metas/[metaId], RUTA-/metas/nueva
+tamano: prod=400 archivos=10 ca=6 migraciones=0 total=1000
+cubre: CA-17.1, CA-17.2, CA-17.3, CA-17.5, CA-17.6, CA-17.7, RUTA-/metas, RUTA-/metas/nueva
 pru: —
 compartido: —
 fichas: FT-17
 ```
 
 **Qué construir.**
-- FT-17: las pantallas y flujos de su ficha (Flujo, Piezas, Estados, Errores y textos) para CA-17.1 a CA-17.7, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
+- FT-17: las pantallas y flujos de su ficha (Flujo, Piezas, Estados, Errores y textos) para CA-17.1 a CA-17.3, CA-17.5, CA-17.6 y CA-17.7 **[CH-83]**, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
 - Server Actions de las operaciones de la ficha en `servidor/acciones/<area>.ts`, una línea por operación (04 §2.2.2); `ACCESO-001` y la suite de accesibilidad las cubren solas (TA-218, TA-221).
-- Rutas que esta tarea crea (dueña): `/metas`, `/metas/[metaId]`, `/metas/nueva`.
-- Último PR de la ficha: `pruebas/features.json` pasa FT-17 a `terminada` (07 §27, DT-06 condición 6).
+- Rutas que esta tarea crea (dueña): `/metas`, `/metas/nueva`. Editar y eliminar (`/metas/[metaId]`, CA-17.4) son de TA-442 **[CH-83]**.
+- La ficha sigue en `pendiente`: la cierra TA-442 **[CH-83]**.
+- El código de TA-442 ya está hecho en la rama local `ta-442-metas-editar` **[CH-83]**.
 
 **Leer.** 06 FT-17 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7 (estados); 06-identidad-visual §3 en la sección de su pantalla; 04 §6 (su consulta).
 
@@ -8455,7 +8457,7 @@ fichas: FT-17
 
 **Comandos.** `pnpm pruebas:ft FT-17` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
 
-**Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
+**Terminada cuando.** `pruebas:ft` sin CA faltantes en los CA de este trozo y el resumen de `pr:mergear`.
 
 #### TA-306 FT-19 Archivar categorías (1 de 2) **[CH-82]**
 
@@ -8528,6 +8530,40 @@ pendiente: CA-19.2>FT-28, CA-19.3>FT-47
 **Pruebas primero.** Una prueba por CA de este trozo (07 §17), con el CA entre corchetes.
 
 **Comandos.** `pnpm pruebas:ft FT-19` sin faltantes; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
+
+#### TA-442 FT-17 Editar y eliminar una meta (2 de 2) **[CH-83]**
+
+```tarea
+orden: 366
+bloque: B6
+hito: HT-7
+depende: TA-164, TA-170, TA-174, TA-210, TA-212, TA-219, TA-224, TA-288, TA-289, TA-305, TA-299
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=150 archivos=5 ca=1 migraciones=0 total=450
+cubre: CA-17.4, RUTA-/metas/[metaId]
+pru: —
+compartido: —
+fichas: FT-17
+```
+
+**Qué construir.**
+- FT-17, resto **[CH-83]**: el flujo corto `/metas/[metaId]` (OP-18 editar y eliminar, con «Extender la fecha» y «Ajustar el monto» de una vencida, y «Usar el valor actual» de 05 §4.7 con los `actuales` pasados de Centavos a texto decimal) y la E2E de CA-17.4: AV-17 en Inicio y en `/metas`, y desaparece al extender la fecha (ESC-38). Depende de TA-299 para que Inicio exista y no quede el CA pendiente de punta a punta.
+- Carpeta `flujos/metas-meta/` (05 §15.5) y la ampliación del formulario de TA-305 para editar.
+- Ruta que crea (dueña): `/metas/[metaId]`.
+- Último PR de la ficha: `pruebas/features.json` pasa FT-17 a `terminada` (07 §27, DT-06 condición 6).
+- El código ya está hecho en la rama local `ta-442-metas-editar` **[CH-83]**.
+
+**Leer.** 06 FT-17 completo; 05 §2 (fila de `/metas/[metaId]`), §4.7, §7; 04 §6 (su consulta).
+
+**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/textos/metas.ts`, `apps/web/e2e/flujos/<area>/*`.
+
+**Pruebas primero.** Una prueba por CA de este trozo (07 §17), con el CA entre corchetes.
+
+**Comandos.** `pnpm pruebas:ft FT-17` sin faltantes; `pnpm ci:local` con la E2E de la ficha.
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
@@ -8982,7 +9018,7 @@ pendiente: CA-54.5>FT-55
 | 351 | TA-302 | B6 | HT-7 | normal | FT-11 Mover dinero entre categorías | 360 |
 | 352 | TA-303 | B6 | HT-7 | normal | FT-30 Pagar tarjeta con desglose y pago excedente | 360 |
 | 353 | TA-304 | B6 | HT-7 | normal | FT-16 Sobregiros y cierre automático del período | 360 |
-| 354 | TA-305 | B6 | HT-7 | normal | FT-17 Metas | 360 |
+| 354 | TA-305 | B6 | HT-7 | normal | FT-17 Metas, lista y nueva meta (1 de 2) **[CH-83]** | 400 |
 | 355 | TA-306 | B6 | HT-7 | normal | FT-19 Archivar categorías (1 de 2) **[CH-82]** | 340 |
 | 356 | TA-307 | B6 | HT-7 | normal | FT-22 Registrar ingreso y FT-23 Transferencia entre cuentas propias | 360 |
 | 357 | TA-308 | B6 | HT-7 | normal | FT-24 Actividad con búsqueda y filtros | 360 |
@@ -8994,6 +9030,7 @@ pendiente: CA-54.5>FT-55
 | 363 | TA-314 | B6 | HT-7 | normal | FT-53 Editar, ordenar, archivar, desarchivar y eliminar cuentas | 360 |
 | 364 | TA-315 | B6 | HT-7 | normal | FT-54 Pagar cuota o abonar a capital | 360 |
 | 365 | TA-441 | B6 | HT-7 | normal | FT-19 Sacar el dinero de una archivada (2 de 2) **[CH-82]** | 400 |
+| 366 | TA-442 | B6 | HT-7 | normal | FT-17 Editar y eliminar una meta (2 de 2) **[CH-83]** | 150 |
 | 631 | TA-246 | B4 | HT-5 | normal | Componentes base I (parte 2): selección y buscador **[CH-52]** | 330 |
 | 632 | TA-247 | B4 | HT-5 | normal | Componentes base I (parte 3): pastillas y selector segmentado **[CH-52]** | 80 |
 | 633 | TA-551 | B4 | HT-6 | normal | Componentes de dominio I (parte 2): billete y selector de período **[CH-55]** | 200 |
