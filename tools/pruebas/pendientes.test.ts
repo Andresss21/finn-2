@@ -39,11 +39,15 @@ const P911: Pendiente = { ca: 'CA-09.11', completa: 'FT-28' };
 
 describe('PRU-SEG-OPER', () => {
   it('PRU-SEG-OPER-105 [M18] pendientes de punta a punta (DT-27, CH-08): pruebas:matriz lee pruebas/pendientes-e2e.json, exige la ficha que completa cada CA y su E2E al terminarla, y --puerta falla con un pendiente de una ficha que no es [P]', () => {
-    // El archivo del repositorio existe y está vacío antes de la primera tarea de B6
+    // El archivo del repositorio existe y es una lista de pendientes bien formados (vacía antes de la primera tarea de B6)
     const real: unknown = JSON.parse(
       readFileSync(new URL('../../pruebas/pendientes-e2e.json', import.meta.url), 'utf8'),
     );
-    expect(real).toEqual([]);
+    expect(Array.isArray(real)).toBe(true);
+    for (const p of real as Pendiente[]) {
+      expect(p.ca).toMatch(/^CA-\d{2}\.\d{1,2}$/);
+      expect(p.completa).toMatch(/^FT-\d{2}$/);
+    }
 
     // Abierto y bien marcado: pasa, y la matriz lo muestra con la ficha que lo completa
     const abierto = base([P33], { 'FT-03': 'terminada', 'CA-03.3': 'pendiente_e2e' });

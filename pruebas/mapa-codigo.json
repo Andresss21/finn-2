@@ -74,6 +74,9 @@
     "fts": ["FT-18"]
   },
   { "patron": "apps/web/src/flujos/presupuesto-estructura/**", "fts": ["FT-18"] },
+  { "patron": "apps/web/src/flujos/ajustes-webhook/**", "fts": ["FT-03"] },
+  { "patron": "apps/web/src/app/(finn)/ajustes/webhook/**", "fts": ["FT-03"] },
+  { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/api/sms/**", "fts": ["FT-03", "FT-34"] },
   { "patron": "apps/web/src/app/api/tareas/**", "fts": [] },
   { "patron": "apps/web/src/app/api/respaldo/**", "fts": ["FT-76"] },
