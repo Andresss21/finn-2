@@ -2014,9 +2014,9 @@ No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; c�
 
 #### OP-18 Crear, editar o eliminar meta
 
-- **Entrada:** crear: `{ id, categoriaId, tipo, modo?, monto: MontoTexto, fechaObjetivo? }`; editar: `{ metaId, monto?, modo?, fechaObjetivo?, esperado }`; eliminar: `{ metaId }`.
+- **Entrada:** crear: `{ id, categoriaId, tipo, modoMeta?, monto: MontoTexto, fechaObjetivo? }`; editar: `{ metaId, monto?, modoMeta?, fechaObjetivo?, esperado }`; eliminar: `{ metaId }`. **[CH-80]** El modo de la meta (`acumular` \| `rellenar_hasta`, la columna `metas.modo` de 03) se llama `modoMeta` en la entrada y en `esperado`, porque `modo` es el modo de envío de toda Server Action (§2.2.2, paso 3) y `accion()` lo saca de la entrada.
 - **Idempotencia:** creación / valor absoluto / eliminación.
-- **Precondiciones:** categoría normal y activa (`meta_en_categoria_de_pago`, `categoria_archivada`); sin otra meta (`meta_ya_existe`); modo en metas por período (contrato); `para_fecha` con fecha objetivo ≥ hoy al crear (`fecha_objetivo_pasada`). "Extender la fecha" y "ajustar el monto" de una meta vencida son ediciones (01 OP-18).
+- **Precondiciones:** categoría normal y activa (`meta_en_categoria_de_pago`, `categoria_archivada`); sin otra meta (`meta_ya_existe`); `modoMeta` en metas por período (contrato) **[CH-80]**; `para_fecha` con fecha objetivo ≥ hoy al crear (`fecha_objetivo_pasada`). "Extender la fecha" y "ajustar el monto" de una meta vencida son ediciones (01 OP-18).
 - **Hechos:** F3 `metas` (`fecha_creacion` = hoy), F4 o F2.
 - **Avisos:** estado: AV-17 desaparece al extender o ajustar.
 
@@ -2633,7 +2633,7 @@ interface DetalleCategoriaDto extends Encabezado {
   }[];
   entradasDelPeriodo: { transaccionId: Uuid; fecha: FechaLocal; monto: Centavos; caso: 'D-2' | 'D-3' | 'D-4' }[];
   meta: {
-    id: Uuid; tipo; modo?; monto; montoPeriodo; base; n?; fechaObjetivoVigente?: FechaLocal;
+    id: Uuid; tipo; modoMeta?; monto; montoPeriodo; base; n?; fechaObjetivoVigente?: FechaLocal;   // [CH-80] modoMeta, como en metas() (6.10)
     pedido; falta; estado: EstadoMeta;
     progresoBp?: number;                           // [F6] CF-25: como en metas() (6.10), metas de ahorro; tope 10.000
   } | null;                                        // §4.12; [CH-72] `id` = `metaId`, para enlazar a `/metas/[metaId]`
@@ -3005,12 +3005,12 @@ interface DatosBaseDto extends Encabezado {             // [F5] CP-12; más filt
 interface MetasDto extends Encabezado {
   metas: {
     id: Uuid; categoria: Ref; grupo: Ref;
-    tipo: TipoMeta; modo?: ModoMeta; monto: Centavos;
+    tipo: TipoMeta; modoMeta?: ModoMeta; monto: Centavos;    // [CH-80] modoMeta, como en la entrada de OP-18
     fechaCreacion: FechaLocal; fechaObjetivoVigente?: FechaLocal;   // con renovaciones (§4.12)
     montoPeriodo?: Centavos; pedido: Centavos; falta: Centavos;
     disponible: Centavos; progreso?: number;          // metas de ahorro: Disp(c, A) / monto en puntos básicos (máximo 10.000)
     estado: EstadoMeta; vencida: boolean;              // AV-17
-    esperado: Record<string, unknown>;                 // para OP-18 (editar)
+    esperado: Record<string, unknown>;                 // para OP-18 (editar); [CH-80] con los nombres de su entrada (`modoMeta`)
   }[];
   categoriasSinMeta: Ref[];                            // normales y activas, para crear una
 }
@@ -3236,7 +3236,7 @@ interface Catalogos {
 | `programada` | Crear: `{ prestamosConModelo: Uuid[] }` (QB-1). Editar: además, todos los campos con `esperado`, `calendarioEditable` y las próximas 5 ocurrencias | Hechos; [H] para `calendarioEditable` (6.12.1) |
 | `movimiento` | El `MovimientoDto` de la bandeja (6.8) y, si `tipo_propuesto = 'devolucion'`, las `candidatas` de `devolver` filtradas por la cuenta del movimiento, por `restante` ≥ su monto y por compras con fecha ≤ la del movimiento, las más recientes primero y hasta 20 **[CH-30]** | Bandeja + `capacidadDevolucion` |
 | `formato` | `{ formato?: { id; institucion; nombre; tipoMovimiento; patron; banderas; montoSeparadorMiles; montoSeparadorDecimal; formatosFecha; activo; esperado }; instituciones: Ref[]; smsParaProbar: { smsId; texto; recibidoEn; estado }[] }` (los 20 SMS más recientes en `no_reconocido` o `error`) | [H] e [I] |
-| `meta` | `{ meta?: … (6.10); categoriasSinMeta: Ref[] }` | `meta(c, p)` |
+| `meta` | `{ meta?: … (6.10); categoriasSinMeta: Ref[] }` (**[CH-80]** el modo de la meta es `modoMeta`, como en 6.10 y en la entrada de OP-18) | `meta(c, p)` |
 
 **[F6] `verificar_saldo` (CF-01).** Contexto:
 
