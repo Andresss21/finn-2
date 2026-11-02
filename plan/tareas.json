@@ -411,7 +411,7 @@
 
   "TA-311": { "estado": "pendiente" },
 
-  "TA-312": { "estado": "pendiente" },
+  "TA-312": { "estado": "terminada", "rama": "ta-312-cuentas", "pr": 0 },
 
   "TA-313": { "estado": "pendiente" },
 

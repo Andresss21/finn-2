@@ -4,7 +4,8 @@
 // montos (PF-3): el impacto y los avisos los trae el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
@@ -13,7 +14,6 @@ import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
-import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { formatearMonto } from '../../formato';
 import { useBorrador } from '../../formularios/use-borrador';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -51,9 +51,8 @@ interface Previsualizacion {
 const opciones = (m: Readonly<Record<string, string>>) =>
   Object.entries(m).map(([valor, etiqueta]) => ({ valor, etiqueta }));
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
-/** Un enlace con el aspecto de un botón principal (05 §10.7): al menos 44 px de alto (05 §11.5). */
-const ENLACE =
-  'inline-flex min-h-12 items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+/** La pantalla a la que vuelve el flujo al terminar (`cerrarFlujo()`, 05 §1.4). */
+const RUTA_PADRE = '/cuentas';
 /** Un rechazo cuyo mensaje ya se muestra en su campo no se repite como aviso del formulario. */
 const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
 /** La acción de OP-01 con la entrada armada desde lo escrito (los montos normalizados, lo vacío omitido). */
@@ -98,6 +97,10 @@ export function FormularioCuentaNueva({
   const avisoDeNombre = avisoDeNombreRepetido(c.tipo, c.nombre, nombresTarjetaUsados);
 
   const { estado, error: fallo, exito } = operacion;
+  const router = useRouter();
+  useEffect(() => {
+    if (estado === 'listo') router.replace(RUTA_PADRE);
+  }, [estado, router]);
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
 
   function campo(x: Descriptor) {
@@ -139,32 +142,16 @@ export function FormularioCuentaNueva({
     );
   }
 
+  // Terminó: `cerrarFlujo()` a la ruta padre (05 §1.4). Cuentas ya trae la cuenta nueva y su estado (la tarjeta con deuda, AV-07).
   if (estado === 'listo' && exito !== undefined)
     return (
-      <PaginaFlujoDeRuta titulo={t.listo} rutaPadre="/cuentas">
-        <div className="flex flex-col gap-4">
-          {exito.avisos.map((a) => (
-            <AvisoEnLinea key={a.codigo} estado="informacion" aparecioDespues>
-              {t.avisos[a.codigo] ?? a.mensaje}
-            </AvisoEnLinea>
-          ))}
-          <EnlaceFinn href="/cuentas" className={ENLACE}>
-            {t.verCuentas}
-          </EnlaceFinn>
-          <Boton
-            variante="secundaria"
-            onClick={() => {
-              window.location.assign('/cuentas/nueva');
-            }}
-          >
-            {t.otraCuenta}
-          </Boton>
-        </div>
+      <PaginaFlujoDeRuta titulo={t.listo} rutaPadre={RUTA_PADRE}>
+        {null}
       </PaginaFlujoDeRuta>
     );
 
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre="/cuentas">
+    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={RUTA_PADRE}>
       {estado === 'confirmando' ? (
         <ConfirmacionImpacto
           titulo={t.revisar}
