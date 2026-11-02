@@ -9,16 +9,14 @@ import { Boton } from '../../../../../componentes/base/boton';
 import { AvisoEnLinea } from '../../../../../componentes/base/aviso';
 import { IndicadorEstado } from '../../../../../componentes/dominio/indicador-estado';
 import { Monto } from '../../../../../componentes/dominio/monto';
-import { ResumenMeta } from '../../../../../componentes/dominio/resumen-meta';
 import type { AccionEscritura } from '../../../../../formularios/use-operacion';
 import { PublicarEncabezado } from '../../../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
 import { SelectorPeriodo } from '../../../../../componentes/navegacion/selector-periodo';
 import { formatearFecha, formatearMonto } from '../../../../../formato';
 import { categoriaDetalle as t } from '../../../../../textos/categoria-detalle';
-import { ConsumosYCalendario } from './consumos';
+import { Consumos } from './consumos';
 import { Desarchivar } from './desarchivar';
-import { Historial } from './historial';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline ${FOCO}`;
@@ -69,7 +67,7 @@ export function PantallaDetalleCategoria({
       </main>
     );
 
-  const { numeros, sobregiro, acciones, meta, periodo } = dto;
+  const { numeros, sobregiro, acciones, periodo } = dto;
   const cerrado = periodo.estado === 'cerrado';
   const archivada = categoria.archivada === true;
   const tarjetas = [
@@ -172,17 +170,6 @@ export function PantallaDetalleCategoria({
           </div>
         )}
 
-        {meta === null ? null : (
-          <Seccion titulo={t.meta.titulo} atributo="meta">
-            <ResumenMeta meta={meta} conseguido={numeros.disponible} />
-            {acciones.puedeAsignar && !cerrado && meta.falta > 0 ? (
-              <EnlaceFinn href={hrefAsignar} className={TONAL}>
-                {t.meta.asignar} <Monto centavos={meta.falta} />
-              </EnlaceFinn>
-            ) : null}
-          </Seccion>
-        )}
-
         <nav aria-label={t.acciones.etiqueta} className="flex flex-col gap-2">
           {acciones.puedeAsignar && !cerrado ? (
             <div className="grid grid-cols-2 gap-2">
@@ -226,23 +213,11 @@ export function PantallaDetalleCategoria({
               </EnlaceFinn>
             </>
           )}
-          <EnlaceFinn
-            href={meta === null ? `/metas/nueva?categoria=${categoria.id}` : '/metas'}
-            className={ENLACE}
-          >
-            {meta === null ? t.acciones.crearMeta : t.acciones.verMetas}
-          </EnlaceFinn>
         </nav>
       </div>
 
       <div className="flex flex-col gap-6">
-        <ConsumosYCalendario
-          consumos={dto.consumos}
-          calendario={dto.calendario}
-          periodo={periodo}
-          hoy={dto.hoy}
-          volver={conPeriodo(raiz)}
-        />
+        <Consumos consumos={dto.consumos} volver={conPeriodo(raiz)} />
         {dto.entradasDelPeriodo.length === 0 ? null : (
           <Seccion titulo={t.consumos.entradas} atributo="entradas">
             <ul className={CONTENEDOR}>
@@ -258,54 +233,6 @@ export function PantallaDetalleCategoria({
                     {formatearFecha(e.fecha)}
                   </EnlaceFinn>
                   <Monto centavos={e.monto} />
-                </li>
-              ))}
-            </ul>
-          </Seccion>
-        )}
-        <Seccion
-          titulo={
-            dto.historial.length === 0
-              ? t.historial.generico
-              : t.historial.titulo(dto.historial.length)
-          }
-          atributo="historial"
-        >
-          <Historial historial={dto.historial} resumen={dto.historialResumen} />
-        </Seccion>
-        {dto.programadas.length === 0 ? null : (
-          <Seccion titulo={t.programadas.titulo} atributo="programadas">
-            <ul className={CONTENEDOR}>
-              {dto.programadas.map((p) => (
-                <li
-                  key={p.programada.id}
-                  className="flex items-center justify-between gap-3 px-3.5 py-3"
-                >
-                  <span className="flex min-w-0 flex-col">
-                    <EnlaceFinn href={`/programadas/${p.programada.id}`} className={ENLACE}>
-                      {p.programada.nombre}
-                    </EnlaceFinn>
-                    {p.proxima === undefined ? null : (
-                      <span className="px-2 text-cuerpo-pequeno text-texto-secundario">
-                        {t.programadas.proxima} {formatearFecha(p.proxima)}
-                      </span>
-                    )}
-                  </span>
-                  <Monto centavos={p.monto} />
-                </li>
-              ))}
-            </ul>
-          </Seccion>
-        )}
-        {dto.reglas.length === 0 ? null : (
-          <Seccion titulo={t.reglas.titulo} atributo="reglas">
-            <ul className="flex flex-wrap gap-2">
-              {dto.reglas.map((r) => (
-                <li
-                  key={r.id}
-                  className="rounded-pastilla bg-superficie-hundida px-3.5 py-2 text-cuerpo-pequeno"
-                >
-                  {r.patron}
                 </li>
               ))}
             </ul>

@@ -1,197 +1,72 @@
-'use client';
-// Consumos y calendario del detalle de categoría (FT-14, CA-14.1 a CA-14.4; 06-identidad-visual §6). Los consumos salen del DTO
-// en el orden D2 con lo cubierto y lo no cubierto de cada uno; el calendario dibuja un punto por día con gasto, del tamaño que
-// da `intensidadBp` (CF-25), con su tabla equivalente (05 §11.3). Tocar un día filtra la lista ya cargada por fecha: es una
-// precisión, no un cálculo (CF-25). Dibuja lo que trae el DTO: no suma ni calcula montos (PF-3).
+// Consumos del detalle de categoría (FT-14, CA-14.1 a CA-14.3; 06-identidad-visual §6): salen del DTO en el orden D2, cada uno con
+// su medio, lo cubierto y lo no cubierto. La cobertura va en texto: el DTO no trae proporciones para una barrita (CF-25) y
+// calcularlas violaría PF-3. Dibuja lo que trae el DTO: no suma ni calcula montos.
 import type { DetalleCategoria } from '@finn/dominio/selectores';
-import { useState } from 'react';
 import { Vacio } from '../../../../../componentes/base/vacio';
-import { VistaGrafico } from '../../../../../componentes/graficos/vista-grafico';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
-import { formatearFecha, formatearMontoAccesible } from '../../../../../formato';
-import { diasDelCalendario } from '../../../../../formato/calendario';
 import { categoriaDetalle } from '../../../../../textos/categoria-detalle';
 
 const t = categoriaDetalle.consumos;
-const c = categoriaDetalle.calendario;
-const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-const DIAS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const DIA = 'flex h-11 flex-col items-center justify-center rounded-control text-cuerpo-pequeno';
-const ENLACE = `inline-flex min-h-11 items-center px-2 font-semibold underline ${FOCO}`;
-const CONTENEDOR = 'flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie';
+const ENLACE =
+  'inline-flex min-h-11 items-center px-2 font-semibold underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
-interface Props {
+export function Consumos({
+  consumos,
+  volver,
+}: {
   readonly consumos: DetalleCategoria['consumos'];
-  readonly calendario: DetalleCategoria['calendario'];
-  readonly periodo: { readonly inicio: string; readonly dias: number };
-  readonly hoy: string;
   /** La ruta de esta pantalla, para el `?volver=` del detalle de cada transacción (05 §3.3). */
   readonly volver: string;
-}
-
-export function ConsumosYCalendario({ consumos, calendario, periodo, hoy, volver }: Props) {
-  const [dia, setDia] = useState<string | null>(null);
-  const visibles = dia === null ? consumos : consumos.filter((x) => x.fecha === dia);
-  const porFecha = new Map<string, (typeof calendario)[number]>(
-    calendario.map((x) => [x.fecha, x]),
-  );
-  const dias = diasDelCalendario(periodo.inicio, periodo.dias);
-  const relleno = dias[0]?.columna ?? 0;
-
-  const grafico = (
-    <div className="flex flex-col gap-2">
-      <div role="group" aria-label={c.etiqueta} data-calendario className="grid grid-cols-7 gap-1">
-        {DIAS.map((l, k) => (
-          <span
-            key={k}
-            aria-hidden="true"
-            className="text-center text-rotulo text-texto-secundario"
-          >
-            {l}
-          </span>
-        ))}
-        {Array.from({ length: relleno }, (_, k) => (
-          <span key={`v${k}`} aria-hidden="true" />
-        ))}
-        {dias.map(({ fecha }) => {
-          const gasto = porFecha.get(fecha);
-          const numero = Number(fecha.slice(8));
-          const base = [
-            DIA,
-            fecha > hoy ? 'text-texto-terciario' : 'text-texto',
-            fecha === hoy ? 'ring-2 ring-foco' : '',
-          ].join(' ');
-          if (gasto === undefined)
-            return (
-              <span key={fecha} data-dia={fecha} className={base}>
-                {numero}
-              </span>
-            );
-          const lado = 6 + (gasto.intensidadBp / 10000) * 12;
-          return (
-            <button
-              key={fecha}
-              type="button"
-              data-dia={fecha}
-              data-intensidad={gasto.intensidadBp}
-              aria-pressed={dia === fecha}
-              aria-label={`${formatearFecha(fecha)}, ${c.gastado} ${formatearMontoAccesible(gasto.gastado)}`}
-              onClick={() => {
-                setDia(dia === fecha ? null : fecha);
-              }}
-              className={[base, FOCO, dia === fecha ? 'bg-superficie-hundida' : ''].join(' ')}
-            >
-              <span aria-hidden="true">{numero}</span>
-              <span
-                aria-hidden="true"
-                style={{ width: lado, height: lado }}
-                className="rounded-pastilla bg-texto"
-              />
-            </button>
-          );
-        })}
-      </div>
-      <p className="text-cuerpo-pequeno text-texto-terciario">{c.nota}</p>
-    </div>
-  );
-  const tabla = (
-    <table data-tabla-equivalente className="w-full text-cuerpo-pequeno">
-      <caption className="sr-only">{c.titulo}</caption>
-      <thead>
-        <tr className="text-left text-rotulo text-texto-secundario">
-          <th scope="col" className="py-2 font-normal">
-            {c.dia}
-          </th>
-          <th scope="col" className="py-2 text-right font-normal">
-            {c.gastado}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {calendario.map((x) => (
-          <tr key={x.fecha} className="border-t border-borde-sutil">
-            <th scope="row" className="py-2.5 text-left font-semibold">
-              {formatearFecha(x.fecha)}
-            </th>
-            <td className="py-2.5 text-right">
-              <Monto centavos={x.gastado} />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-
+}) {
   return (
-    <>
-      <section data-seccion="consumos" className="flex flex-col gap-2">
-        <h2 className="flex items-baseline justify-between gap-3">
-          <span className="text-titulo-seccion">{t.titulo}</span>
-          <span className="text-cuerpo-pequeno text-texto-secundario">{visibles.length}</span>
-        </h2>
-        {dia === null ? null : (
-          <p className="flex flex-wrap items-center gap-2 text-cuerpo-pequeno">
-            {t.delDia(formatearFecha(dia))}
-            <button
-              type="button"
-              onClick={() => {
-                setDia(null);
-              }}
-              className={ENLACE}
-            >
-              {t.todosLosDias}
-            </button>
-          </p>
-        )}
-        {visibles.length === 0 ? (
-          <Vacio titulo={t.vacio} texto={t.vacioTexto} icono="cero" />
-        ) : (
-          <ul className={CONTENEDOR}>
-            {visibles.map((x, k) => {
-              const transaccionId = 'transaccionId' in x.origen ? x.origen.transaccionId : null;
-              const nombre =
-                x.comercio ?? (transaccionId === null ? t.condonacion : x.cuenta.nombre);
-              return (
-                <li key={k} data-consumo={x.fecha} className="flex items-start gap-3 px-3.5 py-3">
-                  <span className="w-12 shrink-0 text-cuerpo-pequeno text-texto-secundario">
-                    {`${x.fecha.slice(8)}/${x.fecha.slice(5, 7)}`}
+    <section data-seccion="consumos" className="flex flex-col gap-2">
+      <h2 className="flex items-baseline justify-between gap-3">
+        <span className="text-titulo-seccion">{t.titulo}</span>
+        <span className="text-cuerpo-pequeno text-texto-secundario">{consumos.length}</span>
+      </h2>
+      {consumos.length === 0 ? (
+        <Vacio titulo={t.vacio} texto={t.vacioTexto} icono="cero" />
+      ) : (
+        <ul className="flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie">
+          {consumos.map((x, k) => {
+            const transaccionId = 'transaccionId' in x.origen ? x.origen.transaccionId : null;
+            const nombre = x.comercio ?? (transaccionId === null ? t.condonacion : x.cuenta.nombre);
+            return (
+              <li key={k} data-consumo={x.fecha} className="flex items-start gap-3 px-3.5 py-3">
+                <span className="w-12 shrink-0 text-cuerpo-pequeno text-texto-secundario">
+                  {`${x.fecha.slice(8)}/${x.fecha.slice(5, 7)}`}
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  {transaccionId === null ? (
+                    <span className="font-semibold">{nombre}</span>
+                  ) : (
+                    <EnlaceFinn
+                      href={`/actividad/${transaccionId}?volver=${encodeURIComponent(volver)}`}
+                      className={ENLACE}
+                    >
+                      {nombre}
+                    </EnlaceFinn>
+                  )}
+                  <span className="text-cuerpo-pequeno text-texto-secundario">
+                    {x.medio === 'tarjeta' ? t.tarjeta : t.debito} · {x.cuenta.nombre}
                   </span>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    {transaccionId === null ? (
-                      <span className="font-semibold">{nombre}</span>
-                    ) : (
-                      <EnlaceFinn
-                        href={`/actividad/${transaccionId}?volver=${encodeURIComponent(volver)}`}
-                        className={ENLACE}
-                      >
-                        {nombre}
-                      </EnlaceFinn>
+                  <span className="text-cuerpo-pequeno">
+                    {t.cubierto} <Monto centavos={x.cubierto} />
+                    {x.noCubierto === 0 ? null : (
+                      <span className="text-problema-texto">
+                        {' · '}
+                        {t.noCubierto} <Monto centavos={x.noCubierto} estado="problema" />
+                      </span>
                     )}
-                    <span className="text-cuerpo-pequeno text-texto-secundario">
-                      {x.medio === 'tarjeta' ? t.tarjeta : t.debito} · {x.cuenta.nombre}
-                    </span>
-                    <span className="text-cuerpo-pequeno">
-                      {t.cubierto} <Monto centavos={x.cubierto} />
-                      {x.noCubierto === 0 ? null : (
-                        <span className="text-problema-texto">
-                          {' · '}
-                          {t.noCubierto} <Monto centavos={x.noCubierto} estado="problema" />
-                        </span>
-                      )}
-                    </span>
                   </span>
-                  <Monto centavos={x.montoNeto} rol="cifra" />
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-      <section data-seccion="calendario" className="flex flex-col gap-2">
-        <h2 className="text-titulo-seccion">{c.titulo}</h2>
-        <VistaGrafico grafico={grafico} tabla={tabla} />
-      </section>
-    </>
+                </span>
+                <Monto centavos={x.montoNeto} rol="cifra" />
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }

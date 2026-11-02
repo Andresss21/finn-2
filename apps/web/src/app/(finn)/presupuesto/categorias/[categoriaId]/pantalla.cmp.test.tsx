@@ -108,19 +108,6 @@ const consumo = (fecha: string, medio: 'debito' | 'tarjeta', neto: number, cubie
   cubierto,
   noCubierto: neto - cubierto,
 });
-const periodoCerrado = (inicio: string) => ({
-  inicio,
-  fin: inicio,
-  dias: 28,
-  estado: 'cerrado',
-  transicion: false,
-});
-const hist = (inicio: string, asignado: number, gastado: number) => ({
-  periodo: periodoCerrado(inicio),
-  asignado,
-  gastado,
-  disponible: asignado - gastado,
-});
 const enlace = (raiz: HTMLElement, texto: string) =>
   [...raiz.querySelectorAll('a')].find((a) => a.textContent.includes(texto));
 const boton = (raiz: HTMLElement, texto: string) =>
@@ -136,82 +123,6 @@ const sinEspacios = (el: Element | null | undefined): string => {
 };
 
 describe('PRU-CMP-PRES-105 detalle de categoría', () => {
-  it('PRU-CMP-PRES-105 [CA-14.4] con gasto en 3 días el calendario muestra esos 3 días y su tabla equivalente tiene las mismas cifras', () => {
-    const calendario = [
-      { fecha: '2027-02-23', gastado: 1000, intensidadBp: 2500 },
-      { fecha: '2027-02-25', gastado: 4000, intensidadBp: 10000 },
-      { fecha: '2027-02-28', gastado: 2000, intensidadBp: 5000 },
-    ];
-    const raiz = mostrar(dto({ calendario }));
-    const botones = [...raiz.querySelectorAll('[data-calendario] button[data-dia]')];
-    expect(botones.map((b) => b.getAttribute('data-dia'))).toEqual([
-      '2027-02-23',
-      '2027-02-25',
-      '2027-02-28',
-    ]);
-    // La tabla es la misma información: una fila por día, con el gastado del DTO
-    const filas = [...raiz.querySelectorAll('[data-seccion="calendario"] tbody tr')];
-    expect(
-      filas.map((f) => [
-        f.querySelector('th')?.textContent,
-        f.querySelector('[data-centavos]')?.getAttribute('data-centavos'),
-      ]),
-    ).toEqual([
-      ['23/02/2027', '1000'],
-      ['25/02/2027', '4000'],
-      ['28/02/2027', '2000'],
-    ]);
-    // Cada día dice su gasto con su nombre accesible
-    expect(botones[1]?.getAttribute('aria-label')).toBe('25/02/2027, Gastado $40.00');
-  });
-
-  it('PRU-CMP-PRES-105 [CA-14.8] el punto de cada día crece con el `intensidadBp` que trae el DTO y un día en 0 queda en el tamaño mínimo', () => {
-    const calendario = [
-      { fecha: '2027-02-23', gastado: 1000, intensidadBp: 2500 },
-      { fecha: '2027-02-25', gastado: 4000, intensidadBp: 10000 },
-      { fecha: '2027-02-26', gastado: -500, intensidadBp: 0 },
-      { fecha: '2027-02-28', gastado: 2000, intensidadBp: 5000 },
-    ];
-    const raiz = mostrar(dto({ calendario }));
-    const lado = (dia: string) =>
-      (raiz.querySelector(`[data-dia="${dia}"] span[style]`) as HTMLElement).style.width;
-    expect(
-      ['2027-02-23', '2027-02-25', '2027-02-26', '2027-02-28'].map((d) => [
-        raiz.querySelector(`[data-dia="${d}"]`)?.getAttribute('data-intensidad'),
-        lado(d),
-      ]),
-    ).toEqual([
-      ['2500', '9px'],
-      ['10000', '18px'],
-      ['0', '6px'],
-      ['5000', '12px'],
-    ]);
-  });
-
-  it('PRU-CMP-PRES-105 [CA-14.4] tocar un día deja solo sus consumos y «Ver todos los días» los devuelve', () => {
-    const consumos = [
-      consumo('2027-02-23', 'debito', 1000, 1000),
-      consumo('2027-02-25', 'debito', 4000, 4000),
-    ];
-    const calendario = [
-      { fecha: '2027-02-23', gastado: 1000, intensidadBp: 2500 },
-      { fecha: '2027-02-25', gastado: 4000, intensidadBp: 10000 },
-    ];
-    const raiz = mostrar(dto({ consumos, calendario }));
-    const dia = raiz.querySelector('[data-dia="2027-02-25"]') as HTMLButtonElement;
-    act(() => {
-      dia.click();
-    });
-    expect(
-      [...raiz.querySelectorAll('[data-consumo]')].map((x) => x.getAttribute('data-consumo')),
-    ).toEqual(['2027-02-25']);
-    expect(dia.getAttribute('aria-pressed')).toBe('true');
-    act(() => {
-      boton(raiz, 'Ver todos los días')?.click();
-    });
-    expect(raiz.querySelectorAll('[data-consumo]')).toHaveLength(2);
-  });
-
   it('PRU-CMP-PRES-105 [CA-14.1] los consumos salen en el orden del DTO con su medio, lo cubierto y lo no cubierto', () => {
     const consumos = [
       consumo('2027-02-10', 'debito', 6000, 6000),
@@ -223,70 +134,6 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
       expect.stringMatching(/Débito · Ahorro.*cubierto \$60\.00.*\$60\.00$/),
       expect.stringMatching(/Tarjeta · Visa.*cubierto \$40\.00 · no cubierto \$30\.00.*\$70\.00$/),
     ]);
-  });
-
-  it('PRU-CMP-PRES-105 [CA-14.5] un historial de 4 períodos muestra esos 4, en tabla y en gráfico, y el título dice cuántos', () => {
-    const historial = [
-      hist('2026-10-21', 10000, 9000),
-      hist('2026-11-21', 10000, 8000),
-      hist('2026-12-21', 10000, 7000),
-      hist('2027-01-21', 10000, 6000),
-    ];
-    const raiz = mostrar(
-      dto({ historial, historialResumen: { promedioGastado: 7500, periodosExcedidos: 0 } }),
-    );
-    expect(raiz.querySelector('[data-seccion="historial"] h2')?.textContent).toBe(
-      'Últimos 4 períodos',
-    );
-    expect(raiz.querySelectorAll('[data-historial] tbody tr')).toHaveLength(4);
-    expect(raiz.querySelectorAll('[data-historial] svg [data-punto]')).toHaveLength(4);
-  });
-
-  it('PRU-CMP-PRES-105 [CA-14.9] «Se pasó 2 de 6» y el promedio vienen del DTO; con 3 períodos dice «Se pasó 1 de 3»', () => {
-    const seis = Array.from({ length: 6 }, (_, k) =>
-      hist(`2026-0${k + 3}-21`, 10000, k === 1 || k === 3 ? 11000 : 9000),
-    );
-    const raiz = mostrar(
-      dto({ historial: seis, historialResumen: { promedioGastado: 11195, periodosExcedidos: 2 } }),
-    );
-    expect(raiz.querySelector('[data-se-paso]')?.textContent).toBe('Se pasó 2 de 6');
-    expect(raiz.querySelector('[data-historial] [data-centavos="11195"]')).not.toBeNull();
-    const tres = mostrar(
-      dto({
-        historial: seis.slice(0, 3),
-        historialResumen: { promedioGastado: 100, periodosExcedidos: 1 },
-      }),
-    );
-    expect(tres.querySelector('[data-se-paso]')?.textContent).toBe('Se pasó 1 de 3');
-  });
-
-  it('PRU-CMP-PRES-105 [CA-14.10] la barra de la meta dibuja el `progresoBp` del DTO: 4,500 es 45 % y 10,000 es 100 %', () => {
-    const meta = (progresoBp: number, disponible: number) =>
-      dto({
-        numeros: { ...ceros, disponible },
-        meta: {
-          tipo: 'ahorro',
-          monto: 300000,
-          pedido: 17500,
-          falta: 7500,
-          estado: 'con_faltante',
-          progresoBp,
-        },
-      });
-    const parcial = mostrar(meta(4500, 135000));
-    const barra = parcial.querySelector('[role="progressbar"]');
-    expect(barra?.getAttribute('aria-valuenow')).toBe('45');
-    expect(barra?.getAttribute('aria-valuetext')).toBe('45%');
-    expect(sinEspacios(parcial.querySelector('[data-resumen-meta]'))).toContain(
-      '$1,350.00 de $3,000.00',
-    );
-    expect(sinEspacios(parcial.querySelector('[data-resumen-meta]'))).toContain(
-      'Pide $175.00 este período · falta $75.00',
-    );
-    const completa = mostrar(meta(10000, 350000));
-    expect(completa.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe(
-      '100',
-    );
   });
 
   it('PRU-CMP-PRES-105 [CA-14.6] con sobregiro mixto el encabezado nombra los dos indicadores sin montos y el desglose trae los montos de cada parte', () => {
@@ -395,17 +242,6 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
         numeros: { ...ceros, asignado: 12000, disponible: -2630, gastado: 14630 },
         sobregiro: { tipo: 'debito', total: 2630, parteTarjeta: 0, parteDebito: 2630 },
         consumos: [consumo('2027-02-23', 'debito', 14630, 12000)],
-        calendario: [{ fecha: '2027-02-23', gastado: 14630, intensidadBp: 10000 }],
-        historial: [hist('2027-01-21', 10000, 11000)],
-        historialResumen: { promedioGastado: 11000, periodosExcedidos: 1 },
-        meta: {
-          tipo: 'ahorro',
-          monto: 300000,
-          pedido: 17500,
-          falta: 7500,
-          estado: 'con_faltante',
-          progresoBp: 4500,
-        },
         reglas: [{ id: 'r1', patron: 'PIZZA HUT' }],
         programadas: [
           { programada: { id: 'p1', nombre: 'Netflix' }, monto: 1500, proxima: '2027-03-05' },

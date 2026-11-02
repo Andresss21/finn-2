@@ -153,16 +153,6 @@ const A7_RESTAURANTES: Op[] = [
   gastoA7('Cuenta corriente', 18.5, '2026-10-13'),
 ];
 
-// Tres gastos en tres días del primer período: $10.00, $40.00 y $20.00 (CA-14.8).
-const TRES_DIAS: Op[] = [
-  { op: 'OP-01', cuenta: 'Ahorro' },
-  { op: 'OP-07', categoria: 'Super' },
-  { op: 'OP-21', monto: 500 },
-  { op: 'OP-14', categoria: 'Super', monto: 200, periodo: 'P1' },
-  { op: 'OP-20', cuenta: 'Ahorro', monto: 10, categoria: 'Super', fecha: '2027-01-25' },
-  { op: 'OP-20', cuenta: 'Ahorro', monto: 40, categoria: 'Super', fecha: '2027-01-27' },
-  { op: 'OP-20', cuenta: 'Ahorro', monto: 20, categoria: 'Super', fecha: '2027-02-02' },
-];
 const SIN_GASTOS: Op[] = [
   { op: 'OP-01', cuenta: 'Ahorro' },
   { op: 'OP-07', categoria: 'Super' },
@@ -276,29 +266,7 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await expect(sobregiro(page).locator('[data-centavos="2000"]').first()).toBeVisible();
   });
 
-  test('PRU-E2E-PRES-111 [CA-14.4, CA-14.8] con gasto de $10.00, $40.00 y $20.00 en tres días el calendario muestra esos 3 días con intensidad 2,500, 10,000 y 5,000 y la tabla trae las mismas cifras', async ({
-    page,
-  }) => {
-    await sembrarOps(TRES_DIAS, '2027-02-10');
-    await abrirDetalle(page, 'Super');
-    const dias = page.locator('[data-calendario] button[data-dia]');
-    await expect(dias).toHaveCount(3);
-    await expect(dias.nth(0)).toHaveAttribute('data-intensidad', '2500');
-    await expect(dias.nth(1)).toHaveAttribute('data-intensidad', '10000');
-    await expect(dias.nth(2)).toHaveAttribute('data-intensidad', '5000');
-    const tabla = page.locator('[data-seccion="calendario"] tbody tr');
-    await expect(tabla).toHaveCount(3);
-    for (const [k, centavos] of [1000, 4000, 2000].entries())
-      await esperarMonto(tabla.nth(k).locator('[data-centavos]'), centavos);
-    // Tocar un día deja solo sus consumos
-    await dias.nth(1).click();
-    await expect(consumos(page)).toHaveCount(1);
-    await esperarMonto(montos(consumos(page)).last(), 4000);
-    await page.getByRole('button', { name: 'Ver todos los días' }).click();
-    await expect(consumos(page)).toHaveCount(3);
-  });
-
-  test('PRU-E2E-PRES-112 [CA-14.7, CA-14.9] el detalle de Restaurantes de A.7 trae «Cubrir $26.30», que abre asignar de la categoría sin llevar ningún monto, y «Se pasó 2 de 6» con sus 6 períodos', async ({
+  test('PRU-E2E-PRES-112 [CA-14.7] el detalle de Restaurantes de A.7 trae «Cubrir $26.30», que abre asignar de la categoría sin llevar ningún monto', async ({
     page,
   }) => {
     await sembrarOps(A7_RESTAURANTES, '2026-03-21', '2026-10-15');
@@ -314,8 +282,6 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await expect(consumos(page).nth(4)).toHaveAttribute('data-consumo', '2026-10-11');
     await esperarMonto(montos(consumos(page).nth(4)).nth(0), 2050);
     await esperarMonto(montos(consumos(page).nth(4)).nth(1), 780);
-    await expect(page.locator('[data-se-paso]')).toHaveText('Se pasó 2 de 6');
-    await expect(page.locator('[data-historial] tbody tr')).toHaveCount(6);
   });
 
   test('PRU-E2E-PRES-113 una categoría sin consumos en el período dice «Sin gastos en este período»', async ({
@@ -324,7 +290,6 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await sembrarOps(SIN_GASTOS, '2027-02-10');
     await abrirDetalle(page, 'Super');
     await expect(page.getByText('Sin gastos en este período')).toBeVisible();
-    await expect(page.locator('[data-historial="vacio"]')).toBeVisible();
   });
 
   test('PRU-E2E-PRES-114 con P1 cerrado el detalle de Super lo dice, no ofrece asignar ni mover y "atrás" vuelve al activo', async ({
