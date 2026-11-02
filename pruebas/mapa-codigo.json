@@ -84,6 +84,7 @@
   { "patron": "apps/web/src/app/(finn)/cuentas/*.tsx", "fts": ["FT-51"] },
   { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/*.tsx", "fts": ["FT-52"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/*.tsx", "fts": ["FT-09"] },
+  { "patron": "apps/web/src/app/(finn)/presupuesto/listo-para-asignar/*.tsx", "fts": ["FT-15"] },
   {
     "patron": "apps/web/src/app/(finn)/presupuesto/categorias/[categoriaId]/*.tsx",
     "fts": ["FT-14"]
