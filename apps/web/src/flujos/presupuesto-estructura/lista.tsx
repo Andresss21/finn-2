@@ -108,41 +108,22 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
               {g.sistema ? (
                 <span className="text-etiqueta">{t.delSistema}</span>
               ) : (
-                <>
-                  <EnlaceFinn
-                    href={`${RAIZ}/grupos/${g.id}`}
-                    className={ENLACE}
-                    aria-label={t.editar(g.nombre)}
-                  >
-                    {t.editarGrupo}
-                  </EnlaceFinn>
-                  {botones({
-                    tipo: 'grupo',
-                    id: g.id,
-                    nombre: g.nombre,
-                    pos: i + 1,
-                    de: grupos.length,
-                  })}
-                </>
+                botones({
+                  tipo: 'grupo',
+                  id: g.id,
+                  nombre: g.nombre,
+                  pos: i + 1,
+                  de: grupos.length,
+                })
               )}
             </div>
             <ul>
-              {categorias.map(({ categoria: c, clase, archivada }, j) => (
+              {categorias.map(({ categoria: c, archivada }, j) => (
                 <li
                   key={c.id}
                   className="flex flex-wrap items-center gap-x-2 border-t border-borde-sutil"
                 >
-                  {clase === 'normal' ? (
-                    <EnlaceFinn
-                      href={`${RAIZ}/categorias/${c.id}`}
-                      className="inline-flex min-h-11 min-w-0 flex-1 items-center text-enlace"
-                      aria-label={t.editar(c.nombre)}
-                    >
-                      {c.nombre}
-                    </EnlaceFinn>
-                  ) : (
-                    <span className="min-h-11 min-w-0 flex-1 py-2.5">{c.nombre}</span>
-                  )}
+                  <span className="min-h-11 min-w-0 flex-1 py-2.5">{c.nombre}</span>
                   {archivada ? <span className="text-etiqueta">{t.archivada}</span> : null}
                   {g.sistema
                     ? null

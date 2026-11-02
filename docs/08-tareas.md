@@ -432,8 +432,8 @@ tu: TU-09, TU-10, TU-12, TU-13
 ### HT-6 Uso diario mínimo
 
 ```hito
-despues: TA-553
-requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-552, TA-209, TA-553, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301
+despues: TA-316
+requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-552, TA-209, TA-553, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301, TA-316
 fichas: FT-01, FT-02, FT-03, FT-04, FT-08, FT-09, FT-10, FT-14, FT-18, FT-21, FT-29, FT-34, FT-35, FT-37, FT-38, FT-50
 pruebas: INV-01, INV-02, INV-03, INV-04, INV-05, INV-26, INV-27, INV-28, MOT-diferencial
 tu: TU-11, TU-12, TU-15
@@ -1549,6 +1549,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-67** | QR de inscripción roto y legible en tema oscuro. En el primer ingreso real, la imagen de `/ingresar/inscribir` salió rota: `@supabase/auth-js` 2.114 entrega `totp.qr_code` como `data:image/svg+xml;utf-8,` seguido del documento sin codificar, y `inscribir-factor.tsx` lo envolvía en otro data URI. Los dobles usaban `<svg/>` y las E2E miraban solo `toBeVisible`, que una imagen rota con texto alternativo también cumple. La pila local entrega `<?xml version="1.0"?>`, un comentario y el `<svg width="219" height="219">`, de 321 KB, con módulos negros y blancos y 12 px de zona de silencio transparente. Resolución: `iniciarInscripcion` devuelve en `qrSvg` solo el `<svg>`, que la interfaz sigue codificando con `encodeURIComponent` y mostrando como imagen; sin `<svg`, responde `interno`. El contrato de CP-11 no cambia de forma. Fondo y margen del `<img>`: `bg-marca-icono-figura p-3`. No hay un token blanco que no cambie con el tema, y ese (#F1F2EE) es el único claro fijo en los dos; no se crea uno nuevo. PRU-E2E-ACCESO-106, 111 y 112 comprueban `naturalWidth > 0`; 112 además fondo, margen y píxeles en tema oscuro; PRU-SEG-ACCESO-108 cubre la normalización. | 04 §12.2; 05 §9.5 | **Aprobado** por el orquestador (delegado por el usuario); **aplicado [CH-67]** en 04 §12.2 y 05 §9.5 |
 | **CH-62** | Partición de TA-209 por tamaño (DT-02). El alcance completo de TA-209 midió prod=971 y total=1.423 contra una estimación de 380 y 900: pasa el +30 % de las tareas normales (520). Se parte: TA-209 conserva `BilleteraTarjetas`, `IdentidadCuenta` y `PosicionNeta` con sus textos y PRU-CMP-CTA-101; TA-553, nueva (orden 635), lleva `MovimientoBandeja`, los gráficos de barras con su tabla equivalente y el selector Gráfico / Tabla, con PRU-CMP-CTA-102, y las dependencias `d3-scale` y `d3-shape`. FE-44 pasa a TA-553 (E8: un solo dueño) y TA-209 queda con `cubre: —`. HT-6 requiere también TA-553 y su `despues` pasa a TA-553 (E7). **Además:** (1) el «séptimo estado» de la fila de la Bandeja (`descartado`) lo agregó el código por su cuenta: 06 §2.12 lista seis filas; se confirma contra 06 y 05 en TA-553. (2) Las pantallas que consumen estos componentes tienen orden menor que 635 y no pueden declarar `depende: TA-553` (E5): el orquestador programa TA-553 antes de ellas, y HT-6 la exige. El código completo queda en la rama `ta-209-completo` | 08 TA-209, TA-553, HT-6; 05 §10.8; 06 §2.12 | Delegado por el orquestador; **aplicado [CH-62]** en 08 TA-209, TA-553 y HT-6 |
 | **CH-68** | Los respaldos pasan de Cloudflare R2 a Backblaze B2. 02 ADR-22 decía "R2 puede pedir un medio de pago para activarse, aunque el uso quede dentro del nivel gratuito; el usuario lo acepta", con una alerta de facturación de Cloudflare en $0, y TU-11 pedía "registrar el medio de pago". El usuario decidió no registrar ningún medio de pago en Cloudflare. Resolución: el destino es Backblaze B2, con cuenta sin medio de pago y sin alerta: no hay cobro posible; al llegar al límite gratuito B2 rechaza las subidas con un 403 y eso se ve porque el job de respaldo falla. Secretos: `B2_ENDPOINT` (URL https completa, de la que se deduce la región), `B2_KEY_ID`, `B2_APPLICATION_KEY` y `B2_BUCKET`, en lugar de `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` y `R2_BUCKET`. Retención: B2 no elimina directamente sino que oculta y después borra, así que "se elimina a los 30 días; `mensuales/`, a los 365" queda en ocultar a los 30 y a los 365 y borrar 1 día después; las reglas corren una vez al día. RK-18 pasa de "cargo inesperado" a "las subidas se rechazan". TU-11 reescrita. El presupuesto de $0 y el resto de ADR-22 (`pg_dump` como `finn_respaldo`, `age`, 07:30 UTC, prefijos, prueba de restauración mensual) no cambian. `respaldo.yml` y `subir.mjs` están en TA-261. Secciones: 02 §0.5, §1, ADR-22, §6.1, RK-18, fuentes y registro de cambios; 03 §12.1; 04 §14.2, §16.2, §16.3; 07 §1.1, §32.4; 08 TU-11, TU-12, TA-261. |
+| **CH-69** | Partición de TA-283 por tamaño (DT-02). El alcance completo de FT-18 midió prod=631 en 15 archivos de producción contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). Se parte: TA-283 conserva la lista de la estructura con "Subir", "Bajar" y "Deshacer", `grupos/nuevo` y `categorias/nueva` con sus páginas interceptadas y su `loading.tsx` (CA-18.1, CA-18.3, CA-18.4); TA-316, nueva (orden 636), lleva `grupos/[grupoId]` y `categorias/[categoriaId]` con sus interceptadas (OP-08 nombre y grupo, OP-13), CA-18.2, CA-18.5 y CA-18.6, y cierra la ficha. TA-316 depende de TA-283; HT-6 la exige y su `despues` pasa a TA-316 (E7). El código completo queda en la rama local `ta-316-estructura-b` | 08 TA-283, TA-316, HT-6 | Delegado por el orquestador; **aplicado [CH-69]** en 08 TA-283, TA-316 y HT-6 |
 
 ---
 
@@ -7420,7 +7421,7 @@ compartido: —
 | FT-14 | Detalle de categoría: reparto, calendario e historial | 10 | HT-6 | TA-290 | `/presupuesto/categorias/[categoriaId]` |
 | FT-16 | Sobregiros y cierre automático del período | 7 | HT-7 | TA-304 | — |
 | FT-17 | Metas | 7 | HT-7 | TA-305 | `/metas`, `/metas/[metaId]`, `/metas/nueva` |
-| FT-18 | Grupos y categorías: crear, renombrar, reordenar y eliminar | 6 | HT-6 | TA-283 | `/presupuesto/estructura`, `/presupuesto/estructura/categorias/[categoriaId]`, `/presupuesto/estructura/categorias/nueva`, `/presupuesto/estructura/grupos/[grupoId]`, `/presupuesto/estructura/grupos/nuevo` |
+| FT-18 | Grupos y categorías: crear, renombrar, reordenar y eliminar | 6 | HT-6 | TA-283, TA-316 | `/presupuesto/estructura`, `/presupuesto/estructura/categorias/[categoriaId]`, `/presupuesto/estructura/categorias/nueva`, `/presupuesto/estructura/grupos/[grupoId]`, `/presupuesto/estructura/grupos/nuevo` |
 | FT-19 | Archivar y desarchivar categorías, y sacar el dinero de una archivada | 7 | HT-7 | TA-306 | `/presupuesto/categorias/[categoriaId]/archivar`, `/presupuesto/categorias/[categoriaId]/sacar` |
 | FT-21 | Registrar gasto con división y por cobrar | 12 | HT-6 | TA-292, TA-293 | `/registrar`, `/registrar/gasto` |
 | FT-22 | Registrar ingreso | 3 | HT-7 | TA-307 | `/registrar/[tipo]` |
@@ -7441,7 +7442,7 @@ compartido: —
 | FT-53 | Editar, ordenar, archivar, desarchivar y eliminar cuentas | 7 | HT-7 | TA-314 | `/cuentas/[cuentaId]/archivar`, `/cuentas/[cuentaId]/editar`, `/cuentas/[cuentaId]/eliminar`, `/cuentas/ordenar` |
 | FT-54 | Pagar cuota o abonar a capital | 5 | HT-7 | TA-315 | `/cuentas/[cuentaId]/cuota` |
 
-36 tareas, TA-280 a TA-315, 233 CA (las 31 fichas [I]).
+37 tareas, TA-280 a TA-315 y TA-316, 233 CA (las 31 fichas [I]).
 
 ### 22.3 Fichas de HT-5
 
@@ -7553,7 +7554,7 @@ fichas: FT-50
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
-#### TA-283 FT-18 Grupos y categorías: crear, renombrar, reordenar y eliminar
+#### TA-283 FT-18 Grupos y categorías: crear, renombrar, reordenar y eliminar (1 de 2) **[CH-69]**
 
 ```tarea
 orden: 331
@@ -7563,18 +7564,17 @@ depende: TA-163, TA-170, TA-210, TA-212, TA-219, TA-224, TA-280
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=6 migraciones=0 total=1000
-cubre: CA-18.1, CA-18.2, CA-18.3, CA-18.4, CA-18.5, CA-18.6, RUTA-/presupuesto/estructura, RUTA-/presupuesto/estructura/categorias/[categoriaId], RUTA-/presupuesto/estructura/categorias/nueva, RUTA-/presupuesto/estructura/grupos/[grupoId], RUTA-/presupuesto/estructura/grupos/nuevo
+tamano: prod=400 archivos=12 ca=3 migraciones=0 total=1100
+cubre: CA-18.1, CA-18.3, CA-18.4, RUTA-/presupuesto/estructura, RUTA-/presupuesto/estructura/categorias/nueva, RUTA-/presupuesto/estructura/grupos/nuevo
 pru: —
 compartido: —
 fichas: FT-18
 ```
 
 **Qué construir.**
-- FT-18: las pantallas y flujos de su ficha (Flujo, Piezas, Estados, Errores y textos) para CA-18.1 a CA-18.6, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
+- FT-18: la lista de la estructura con "Subir", "Bajar" y "Deshacer" (OP-08 `orden`), y los flujos de nuevo grupo y nueva categoría (OP-07), para CA-18.1, CA-18.3 y CA-18.4, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
 - Server Actions de las operaciones de la ficha en `servidor/acciones/<area>.ts`, una línea por operación (04 §2.2.2); `ACCESO-001` y la suite de accesibilidad las cubren solas (TA-218, TA-221).
-- Rutas que esta tarea crea (dueña): `/presupuesto/estructura`, `/presupuesto/estructura/categorias/[categoriaId]`, `/presupuesto/estructura/categorias/nueva`, `/presupuesto/estructura/grupos/[grupoId]`, `/presupuesto/estructura/grupos/nuevo`.
-- Último PR de la ficha: `pruebas/features.json` pasa FT-18 a `terminada` (07 §27, DT-06 condición 6).
+- Rutas que esta tarea crea (dueña): `/presupuesto/estructura`, `/presupuesto/estructura/categorias/nueva`, `/presupuesto/estructura/grupos/nuevo`, con sus páginas interceptadas y su `loading.tsx` (05 §7). Editar y eliminar son de TA-316 **[CH-69]**.
 
 **Leer.** 06 FT-18 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7 (estados); 06-identidad-visual §3 en la sección de su pantalla; 04 §6 (su consulta).
 
@@ -7584,6 +7584,39 @@ fichas: FT-18
 - Una prueba por CA de este trozo, en el nivel que fija 07 §17 (regla de nivel por tipo de CA), con el identificador nuevo de su área (DT-21) y el CA entre corchetes.
 
 **Comandos.** `pnpm pruebas:ft FT-18` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** Los CA de este trozo con su prueba en verde; la ficha sigue `en_curso`.
+
+#### TA-316 FT-18 Grupos y categorías: crear, renombrar, reordenar y eliminar (2 de 2) **[CH-69]**
+
+```tarea
+orden: 636
+bloque: B6
+hito: HT-6
+depende: TA-163, TA-170, TA-210, TA-212, TA-219, TA-224, TA-280, TA-283
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=360 archivos=10 ca=3 migraciones=0 total=1000
+cubre: CA-18.2, CA-18.5, CA-18.6, RUTA-/presupuesto/estructura/categorias/[categoriaId], RUTA-/presupuesto/estructura/grupos/[grupoId]
+pru: —
+compartido: —
+fichas: FT-18
+```
+
+**Qué construir.**
+- FT-18: los flujos de editar un grupo y una categoría (OP-08: nombre y grupo; OP-13: eliminar y archivar grupo) para CA-18.2, CA-18.5 y CA-18.6, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo. **Portar desde la rama local `ta-316-estructura-b`** (`formulario.tsx` con los modos de edición, los enlaces de edición de `lista.tsx`, las páginas de `grupos/[grupoId]` y `categorias/[categoriaId]` y sus interceptadas, PRU-E2E-CATEG-102 y 104).
+- Rutas que esta tarea crea (dueña): `/presupuesto/estructura/categorias/[categoriaId]`, `/presupuesto/estructura/grupos/[grupoId]`, con sus páginas interceptadas y su `loading.tsx` (05 §7).
+- Último PR de la ficha: `pruebas/features.json` pasa FT-18 a `terminada` (07 §27, DT-06 condición 6).
+
+**Leer.** 06 FT-18 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7 (estados); 06-identidad-visual §3 en la sección de su pantalla; 04 §6 (su consulta).
+
+**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/<area>.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
+
+**Pruebas primero.**
+- Una prueba por CA de este trozo, en el nivel que fija 07 §17 (regla de nivel por tipo de CA), con el identificador nuevo de su área (DT-21) y el CA entre corchetes.
+
+**Comandos.** `pnpm pruebas:ft FT-18` sin faltantes; `pnpm ci:local` con la E2E de la ficha.
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
@@ -8740,7 +8773,7 @@ pendiente: CA-54.5>FT-55
 
 ### 22.6 Mapa de la Parte C
 
-65 tareas: 25 de B4, 4 de B5 y 36 de B6. **11 de revisión obligatoria** (DT-20). 11 pruebas nuevas con identificador (DT-17), además de las de los CA (DT-21).
+66 tareas: 25 de B4, 4 de B5 y 37 de B6. **11 de revisión obligatoria** (DT-20). 11 pruebas nuevas con identificador (DT-17), además de las de los CA (DT-21).
 
 | Orden | Tarea | Bloque | Hito | Revisión | Título | Prod. |
 |---|---|---|---|---|---|---|
@@ -8775,7 +8808,7 @@ pendiente: CA-54.5>FT-55
 | 328 | TA-261 | B5 | HT-6 | obligatoria | Workflow `respaldo.yml` | 160 |
 | 329 | TA-262 | B5 | HT-6 | obligatoria | Control de dinero diario (07 §31.1) | 160 |
 | 330 | TA-282 | B6 | HT-6 | normal | FT-50 Crear cuenta con saldo inicial | 360 |
-| 331 | TA-283 | B6 | HT-6 | normal | FT-18 Grupos y categorías: crear, renombrar, reordenar y eliminar | 360 |
+| 331 | TA-283 | B6 | HT-6 | normal | FT-18 Grupos y categorías: crear, renombrar, reordenar y eliminar (1 de 2) **[CH-69]** | 400 |
 | 332 | TA-284 | B6 | HT-6 | normal | FT-03 Conectar MacroDroid (token del webhook) | 360 |
 | 333 | TA-285 | B6 | HT-6 | normal | FT-04 Primer uso guiado, con la plantilla de categorías (1 de 2) | 360 |
 | 334 | TA-286 | B6 | HT-6 | normal | FT-04 Primer uso guiado, con la plantilla de categorías (2 de 2) | 360 |
@@ -8814,6 +8847,7 @@ pendiente: CA-54.5>FT-55
 | 633 | TA-551 | B4 | HT-6 | normal | Componentes de dominio I (parte 2): billete y selector de período **[CH-55]** | 200 |
 | 634 | TA-552 | B4 | HT-6 | normal | Navegación entre secciones: barra inferior, lateral y «Más secciones» **[CH-57]** | 320 |
 | 635 | TA-553 | B4 | HT-6 | normal | Componentes de dominio II (parte 2): bandeja y gráficos **[CH-62]** | 400 |
+| 636 | TA-316 | B6 | HT-6 | normal | FT-18 Grupos y categorías: crear, renombrar, reordenar y eliminar (2 de 2) **[CH-69]** | 360 |
 
 ---
 
@@ -8883,7 +8917,7 @@ Antes eran 21: TA-138 y TA-193 (OP-32 a OP-34) pasaron a la ola 1 por ESC-44 (§
 - **`/api/exportar/[formato]` llega antes que su función.** El Route Handler es de la Parte C (DT-19, TA-217), pero OPT-08 es de la ola 2 (TA-168). Hasta entonces responde 404 y se prueba solo su autorización; TA-168 agrega la prueba de punta a punta.
 - **HT-5 muestra un Inicio provisional.** El criterio de HT-5 dice "ver Inicio vacío"; Inicio (FT-08) es de HT-6. TA-200 deja una página provisional "Inicio vacío" que la tarea de FT-08 reemplaza (DT-23).
 - **El tamaño de las tareas de B6 es una estimación uniforme** (360 líneas de producción, 10 archivos). Una ficha con 10 CA y una pantalla nueva puede pasar de 400: `pr:mergear` obliga a partirla y TA-230 a TA-249 dan los números (P8-17).
-- **Revisión obligatoria en la Parte C:** 11 de 65 tareas (autenticación, reloj, Route Handlers, AAL2, arnés E2E, rendimiento y los cuatro workflows de operación). Ninguna tarea de fichas.
+- **Revisión obligatoria en la Parte C:** 11 de 66 tareas (autenticación, reloj, Route Handlers, AAL2, arnés E2E, rendimiento y los cuatro workflows de operación). Ninguna tarea de fichas.
 - **Recorridos de 06 §4** van todos a la Parte D (§23.1). Las E2E de cada pantalla [I] sí están en la C.
 
 ### 23.6 Riesgos de la Parte C
