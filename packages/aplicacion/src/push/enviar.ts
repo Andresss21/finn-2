@@ -134,7 +134,7 @@ async function enviarARegistrada(
       const estado = await entregar(s, peticion, claves, d.red ?? fetch);
       estados.push(estado);
       if (typeof estado === 'number' && ELIMINAN_SUSCRIPCION.has(estado))
-        await escribir((tx) => eliminarSuscripcion(tx, s.endpoint), opciones);
+        await escribir((tx) => eliminarSuscripcion(tx, { endpoint: s.endpoint }), opciones);
     }
   }
   const enviada = estados.includes(201);
@@ -214,9 +214,6 @@ export async function eliminarSuscripcionPush(
 ): Promise<ResultadoAccion<{ readonly eliminadas: number }>> {
   const e = optEliminarSuscripcion.safeParse(cruda);
   if (!e.success) return { ok: false, error: errorDeValidacion(e.error.issues) };
-  const eliminadas = await escribirTecnicoDb(
-    (tx) => eliminarSuscripcion(tx, e.data.endpoint),
-    opciones?.(),
-  );
+  const eliminadas = await escribirTecnicoDb((tx) => eliminarSuscripcion(tx, e.data), opciones?.());
   return { ok: true, valor: { eliminadas }, yaAplicada: eliminadas === 0, avisos: [] };
 }

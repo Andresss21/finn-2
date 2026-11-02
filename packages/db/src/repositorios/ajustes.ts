@@ -1,6 +1,7 @@
 // Lectura de Ajustes (04 §6.11): `formatos_bancarios` e `instituciones` [H], el conteo de `sms_procesamientos` por
 // formato [I] y [T] (`token_webhook`, `suscripciones_push`, `estado_respaldo`, `eventos_sistema`). Nunca devuelve el
 // hash del token ni las claves de las suscripciones. Instantes como texto ISO UTC (04 §13.1).
+import { endpointCorto } from '@finn/dominio/valores';
 import { ahoraDb } from '../ahora.ts';
 import { instanteDeDate } from '../mapeo/fechas.ts';
 import { txPrisma, type LectorTx } from '../transacciones.ts';
@@ -12,17 +13,6 @@ const HORA_MS = 3_600_000;
 const DIA_MS = 24 * HORA_MS;
 /** Eventos del diagnóstico (04 §15): los 50 últimos. */
 const DIAGNOSTICO_MAX = 50;
-
-/** Dominio del servicio de push y los últimos 8 caracteres del endpoint (04 §6.11). */
-function endpointCorto(endpoint: string): string {
-  let host = '';
-  try {
-    host = new URL(endpoint).host;
-  } catch {
-    // un endpoint que no es URL solo muestra su final
-  }
-  return `${host}…${endpoint.slice(-8)}`;
-}
 
 const instanteONulo = (d: Date | null | undefined): string | null =>
   d === null || d === undefined ? null : instanteDeDate(d);
@@ -71,6 +61,7 @@ export async function leerAjustesTecnicos(tx: LectorTx) {
       };
     }),
     suscripciones: suscripciones.map((s) => ({
+      id: s.id,
       endpointCorto: endpointCorto(s.endpoint),
       agente: s.agente,
       renovadaEn: instanteDeDate(s.renovadaEn),

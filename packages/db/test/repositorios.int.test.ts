@@ -200,7 +200,12 @@ describe('PRU-INT-ESQ', () => {
         escribir((tx) => guardarSuscripcion(tx, { ...s, endpoint: 'http://x' })),
       ),
     ).toBe('23514');
-    expect(await escribir((tx) => eliminarSuscripcion(tx, s.endpoint))).toBe(1);
+    expect(await escribir((tx) => eliminarSuscripcion(tx, { endpoint: s.endpoint }))).toBe(1);
+    // [CH-73] por id
+    await escribir((tx) => guardarSuscripcion(tx, s));
+    const [nueva] = await leer((tx) => listarSuscripciones(tx));
+    expect(await escribir((tx) => eliminarSuscripcion(tx, { id: nueva?.id ?? '' }))).toBe(1);
+    expect(await escribir((tx) => eliminarSuscripcion(tx, { id: nueva?.id ?? '' }))).toBe(0);
   });
 
   it('PRU-INT-ESQ-106 04 §7.8, §15.3: sanearMensaje conserva UUID y nombres de restricciones y cambia números y textos entre comillas por #', () => {

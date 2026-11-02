@@ -46,5 +46,8 @@ export const optSuscripcion = z.strictObject({
   claves: z.strictObject({ p256dh: claveBase64Url, auth: claveBase64Url }),
   agente: z.string().max(500).optional(),
 });
-/** OPT-03 (04 §3.10). */
-export const optEliminarSuscripcion = z.strictObject({ endpoint });
+/** OPT-03 (04 §3.10): por `id` (la interfaz) o por `endpoint` (el backend, 11.6) [CH-73]. */
+export const optEliminarSuscripcion = z.union([
+  z.strictObject({ id: uuid }),
+  z.strictObject({ endpoint }),
+]);

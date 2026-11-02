@@ -204,7 +204,18 @@ describe('PRU-INT-BAND', () => {
     await fijarRespaldo(base, '40 hours', '3 days');
     const con = await ajustes(deps);
     expect(con.webhook).toEqual({ configurado: true, rotadoEn: '2027-02-01T12:00:00.000Z' });
-    expect(con.suscripcionesPush).toEqual([
+    // [CH-73] cada suscripción trae su id (uuid) y nunca claves
+    expect(con.suscripcionesPush[0]?.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(JSON.stringify(con.suscripcionesPush)).not.toContain('clave-secreta');
+    expect(
+      con.suscripcionesPush.map((s) => ({
+        endpointCorto: s.endpointCorto,
+        agente: s.agente,
+        renovadaEn: s.renovadaEn,
+      })),
+    ).toEqual([
       {
         endpointCorto: 'push.ejemplo.test…12345678',
         agente: 'Pixel',
