@@ -365,7 +365,7 @@
 
   "TA-288": { "estado": "terminada", "rama": "ta-288-presupuesto-periodos-2", "pr": 269 },
 
-  "TA-289": { "estado": "pendiente" },
+  "TA-289": { "estado": "en_curso", "rama": "ta-289-asignar" },
 
   "TA-290": { "estado": "pendiente" },
 

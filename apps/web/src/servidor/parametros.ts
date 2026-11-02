@@ -30,7 +30,7 @@ const ENUMERADOS = new Set([
   'modalidad',
 ]);
 // Los usa la interfaz: no llegan a ninguna consulta.
-const SOLO_INTERFAZ = new Set(['volver', 'notificacion']);
+const SOLO_INTERFAZ = new Set(['volver', 'notificacion', 'motivo']);
 
 const camel = (nombre: string): string =>
   nombre.replace(/-([a-z])/g, (_, letra: string) => letra.toUpperCase());
