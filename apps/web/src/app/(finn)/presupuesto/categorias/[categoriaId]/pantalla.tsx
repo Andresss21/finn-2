@@ -16,7 +16,7 @@ import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
 import { SelectorPeriodo } from '../../../../../componentes/navegacion/selector-periodo';
 import { formatearFecha, formatearMonto } from '../../../../../formato';
 import { categoriaDetalle as t } from '../../../../../textos/categoria-detalle';
-import { ConsumosYCalendario } from './consumos';
+import { ConsumosYCalendario } from './calendario';
 import { Desarchivar } from './desarchivar';
 import { Historial } from './historial';
 
