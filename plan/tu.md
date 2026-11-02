@@ -38,3 +38,4 @@ RESULTADO: PASA
 | TU-09 | 2026-11-01 | hecho | Proyecto finn-2 sin Git, Root Directory apps/web, Next.js, Node 24, 13 variables en Production; whoami: Logged out |
 | TU-10 | 2026-11-01 | hecho | Claves VAPID cargadas en Vercel |
 | TU-12 | 2026-11-01 | hecho | Grupo desplegar: DIRECT_URL, RESPALDO_DB_URL, VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID; además FINN_ULTIMOS4_REALES |
+| TU-11 | 2026-11-02 | hecho | B2 bucket privado con ciclo diarios/ 30+1 y mensuales/ 365+1, clave limitada al bucket; age; secretos B2_* y AGE_* en GitHub |
