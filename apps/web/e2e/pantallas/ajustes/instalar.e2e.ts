@@ -57,7 +57,7 @@ test.describe('PRU-E2E-PWA', () => {
     await preparar();
   });
 
-  test('PRU-E2E-PWA-110 [CA-05.1] con la instalación disponible /ajustes ofrece "Instalar Finn en este dispositivo" y al tocarlo abre el diálogo del navegador', async ({
+  test('PRU-E2E-PWA-110 [CA-05.1] FE-58: con la instalación disponible /ajustes ofrece "Instalar Finn en este dispositivo" y al tocarlo abre el diálogo del navegador', async ({
     page,
   }) => {
     await abrir(page, '/ajustes');
