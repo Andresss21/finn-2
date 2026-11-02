@@ -15,6 +15,7 @@ import { estructura } from './estructura.ts';
 import { formularios } from './formularios.ts';
 import { alcanceReserva, glosario } from './glosario.ts';
 import { ingreso } from './ingreso.ts';
+import { instalacion } from './instalacion.ts';
 import { navegacion } from './navegacion.ts';
 import { plantilla } from './plantilla.ts';
 import { presupuesto } from './presupuesto.ts';
@@ -39,6 +40,7 @@ export {
   formularios,
   glosario,
   ingreso,
+  instalacion,
   navegacion,
   plantilla,
   presupuesto,
@@ -51,6 +53,7 @@ export {
 export const areas = [
   ['ajustesApariencia', ajustesApariencia],
   ['ajustesWebhook', ajustesWebhook],
+  ['instalacion', instalacion],
   ['plantilla', plantilla],
   ['presupuesto', presupuesto],
   ['presupuestoAsignar', presupuestoAsignar],
