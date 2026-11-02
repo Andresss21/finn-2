@@ -64,17 +64,17 @@ test.describe('PRU-E2E-CONC', () => {
   }) => {
     await preparar(EFECTIVO);
     await abrir(page, `${verificar}?fecha=2027-10-15`);
-    await expect(page.getByText(t.candidatas(2))).toBeVisible();
+    await expect(page.getByText(t.candidatas(3))).toBeVisible();
     await pedirDiferencia(page, t.saldoBanco, '1250');
     await expect(page.getByText(t.saldoFinn('15/10/2027', '$1,250.00'))).toBeVisible();
     await expect(page.getByText(t.diferencia('$0.00'))).toBeVisible();
     await expect(page.getByText(t.coincide)).toBeVisible();
-    await expect(marcas(page)).toHaveCount(2);
+    await expect(marcas(page)).toHaveCount(3);
     await expect(marcas(page).first()).toBeChecked();
     await expect(marcas(page).last()).toBeChecked();
     await page.getByRole('button', { name: t.revisar }).click();
     await expect(page.getByRole('heading', { name: t.tituloRevisar })).toBeFocused();
-    await expect(page.getByText(t.seMarcan(2))).toBeVisible();
+    await expect(page.getByText(t.seMarcan(3))).toBeVisible();
     await page.getByRole('button', { name: t.confirmar }).click();
     await expect(page.getByTestId('resultado')).toHaveText(t.guardado('Ahorro', '15/10/2027'));
     // Quedaron conciliadas: ya no hay candidatas a esa fecha.
@@ -90,7 +90,7 @@ test.describe('PRU-E2E-CONC', () => {
     await pedirDiferencia(page, t.saldoBanco, '1262');
     await expect(page.getByText(t.diferencia('+$12.00'))).toBeVisible();
     await expect(page.getByText(t.noCoincide)).toBeVisible();
-    await expect(marcas(page)).toHaveCount(2);
+    await expect(marcas(page)).toHaveCount(3);
     await expect(marcas(page).first()).not.toBeChecked();
     await expect(marcas(page).last()).not.toBeChecked();
     await page.getByRole('button', { name: t.revisar }).click();
@@ -99,7 +99,7 @@ test.describe('PRU-E2E-CONC', () => {
     await expect(page.getByTestId('resultado')).toHaveText(t.guardado('Ahorro', '15/10/2027'));
   });
 
-  test('PRU-E2E-CONC-146 en una tarjeta con $300.00 de deuda en Finn, escribo $290.00 de deuda: la diferencia es +$10.00 y se verifica igual sin transacciones', async ({
+  test('PRU-E2E-CONC-146 en una tarjeta con $300.00 de deuda en Finn, escribo $290.00 de deuda: la diferencia es +$10.00 y se verifica igual sin marcar la deuda inicial', async ({
     page,
   }) => {
     await preparar(TARJETA);
@@ -107,7 +107,8 @@ test.describe('PRU-E2E-CONC', () => {
     await pedirDiferencia(page, t.deudaBanco, '290');
     await expect(page.getByText(t.saldoFinn('20/10/2027', '−$300.00'))).toBeVisible();
     await expect(page.getByText(t.diferencia('+$10.00'))).toBeVisible();
-    await expect(page.getByText(t.sinCandidatas)).toBeVisible(); // se verifica igual, sin marcar nada
+    await expect(marcas(page)).toHaveCount(1); // la deuda inicial es la única candidata y no viene marcada
+    await expect(marcas(page).first()).not.toBeChecked();
     await page.getByRole('button', { name: t.revisar }).click();
     await page.getByRole('button', { name: t.confirmar }).click();
     await expect(page.getByTestId('resultado')).toBeVisible();
