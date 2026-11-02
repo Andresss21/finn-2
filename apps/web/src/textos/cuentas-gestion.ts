@@ -1,5 +1,4 @@
-// Textos de editar y ordenar cuentas (FT-53; 05 §2.7, §12). Los de la creación se reusan de `cuentas-nueva`; los rechazos del
-// servidor (`apertura_posterior_a_movimientos`, `ultimos4_repetidos`, `nombre_repetido`…) llegan ya compuestos en `mensaje`.
+// Textos de editar y ordenar cuentas (FT-53; 05 §2.7, §12); los rechazos del servidor llegan ya compuestos en `mensaje`.
 import { cuentasNueva } from './cuentas-nueva.ts';
 
 export const cuentasGestion = {

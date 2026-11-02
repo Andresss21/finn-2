@@ -1,7 +1,6 @@
 'use client';
 // `/cuentas/ordenar` (FT-53, OP-03; 05 §2.7): el flujo corto de ordenar las cuentas abiertas. Cada tipo se ordena entre sus
-// cuentas con «Subir» y «Bajar» (sin arrastrar: funciona con teclado y con un toque). Envía la lista completa en el orden nuevo;
-// si las cuentas cambiaron mientras tanto, el servidor responde `conflicto_desactualizado` y se pide recargar.
+// cuentas con «Subir» y «Bajar» y se envía la lista completa; ante `conflicto_desactualizado` se pide recargar.
 import { useCallback, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
