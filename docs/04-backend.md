@@ -2390,7 +2390,7 @@ No escriben hechos del motor. Las que escriben tablas [H] usan `escribir()`; las
 |---|---|---|---|---|
 | OPT-01 | Rotar el token del webhook | — (lo genera el servidor; se muestra una vez) | F4 `token_webhook` (`hash_sha256`, `creado_en`) | §8, §12 |
 | OPT-02 | Registrar o renovar suscripción push | `endpoint`, `claves.p256dh`, `claves.auth`, `agente?` | `suscripciones_push` (inserta o actualiza `renovada_en`) | §11 |
-| OPT-03 | Eliminar suscripción push | `endpoint` | `suscripciones_push` | §11 |
+| OPT-03 | Eliminar suscripción push | `{ id: Uuid } \| { endpoint }` **[CH-73]** (la interfaz usa `id`; el backend, `endpoint` en 11.6) | `suscripciones_push` | §11 |
 | OPT-04 | Marcar notificaciones como leídas | `ids: Uuid[]` o `todas: true` | `notificaciones.leida_en` | §11 |
 | OPT-05 | Crear, editar o desactivar un formato bancario | Campos de `formatos_bancarios` (03 §3.21) | `formatos_bancarios` ([H], con bloqueo) + auditoría en `eventos_sistema` (`datos.tipo = 'auditoria_formato'`, EN-1) | §8 |
 | OPT-06 | Probar un formato contra un SMS | Formato (guardado o en edición) y `smsId` | Ninguna (lectura) | §8 |
@@ -2633,10 +2633,10 @@ interface DetalleCategoriaDto extends Encabezado {
   }[];
   entradasDelPeriodo: { transaccionId: Uuid; fecha: FechaLocal; monto: Centavos; caso: 'D-2' | 'D-3' | 'D-4' }[];
   meta: {
-    tipo; modo?; monto; montoPeriodo; base; n?; fechaObjetivoVigente?: FechaLocal;
+    id: Uuid; tipo; modo?; monto; montoPeriodo; base; n?; fechaObjetivoVigente?: FechaLocal;
     pedido; falta; estado: EstadoMeta;
     progresoBp?: number;                           // [F6] CF-25: como en metas() (6.10), metas de ahorro; tope 10.000
-  } | null;                                        // §4.12
+  } | null;                                        // §4.12; [CH-72] `id` = `metaId`, para enlazar a `/metas/[metaId]`
   calendario: { fecha: FechaLocal; gastado: Centavos; intensidadBp: number }[];   // días con gasto ≠ 0 (R8); [F6] CF-25: máx(0, gastado) / máximo del período; 0 si el máximo ≤ 0
   historialResumen: { promedioGastado: Centavos; periodosExcedidos: number };   // [F6] CF-25: sobre `historial` (gastado > asignado)
   historial: { periodo: PeriodoDto; asignado; gastado; disponible: Centavos }[];  // [F6] CF-17: los 6 períodos cerrados anteriores en que existía c; si hay menos, los que haya
@@ -3030,7 +3030,7 @@ interface AjustesDto extends Encabezado {
   formatos: { id: Uuid; institucion: Ref; nombre: string; tipoMovimiento: TipoMovimientoBancario;
               activo: boolean; usos: number; ultimoUso?: Instante }[];   // usos = procesamientos con ese formato
   instituciones: Ref[];
-  suscripcionesPush: { endpointCorto: string; agente?: string; renovadaEn: Instante }[];
+  suscripcionesPush: { id: Uuid; endpointCorto: string; agente?: string; renovadaEn: Instante }[]; // [CH-73] id
   respaldo: { ultimoRespaldoEn?: Instante; ultimaRestauracionEn?: Instante;
               respaldoAtrasado: boolean; restauracionAtrasada: boolean };    // > 36 h, > 35 días (03 §7.5)
   diagnostico: { ocurridoEn: Instante; nivel: 'aviso' | 'error'; origen: string; mensaje: string; idError?: string }[]; // 50 últimos (§15)
@@ -3039,7 +3039,7 @@ interface AjustesDto extends Encabezado {
 ```
 
 - Lee tablas [H] (`formatos_bancarios`, `instituciones`), [I] (conteo de `sms_procesamientos` por `formato_id`) y [T] (`token_webhook`, `suscripciones_push`, `estado_respaldo`, `eventos_sistema`).
-- `endpointCorto`: dominio del servicio de push y los últimos 8 caracteres; nunca las claves.
+- `endpointCorto`: dominio del servicio de push y los últimos 8 caracteres; nunca las claves. **[CH-73]** Lo calcula `endpointCorto(endpoint)`, función pura exportada por `@finn/dominio/valores`: la interfaz la aplica al `endpoint` de `getSubscription()` y lo compara con el de cada fila para reconocer "este dispositivo". `id` es el de `suscripciones_push` y es lo que la interfaz envía a OPT-03.
 - El estado de los factores TOTP lo da Supabase Auth, no la base; lo define §12 (Parte C). **[F5]** La pantalla lo lee con `estadoSeguridad()` (12.2, CP-4); `AjustesDto` no cambia.
 
 ### 6.12 Otras pantallas conocidas

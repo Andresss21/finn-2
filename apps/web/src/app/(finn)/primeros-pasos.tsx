@@ -1,8 +1,12 @@
 // Primeros pasos de Inicio (FT-04; 06 §3.15, CF-18): sin estado ni cálculo, un paso está hecho porque su hecho existe
-// (`inicio().primerosPasos`); hecho, deja de ser enlace y se llama "Hecho: {paso}". "Ocultar por ahora" es de TA-286 (CA-04.11).
+// (`inicio().primerosPasos`); hecho, deja de ser enlace y se llama "Hecho: {paso}". "Ocultar por ahora" (CA-04.11) es una preferencia
+// del dispositivo: se ofrece con al menos una cuenta y, oculto, el bloque no se dibuja.
+'use client';
 import type { InicioSel } from '@finn/dominio/selectores';
+import { Boton } from '../../componentes/base/boton';
 import { Icono } from '../../componentes/base/icono';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
+import { usePrimerosPasosOcultos } from '../../cliente/usePrimerosPasosOcultos';
 import { primerosPasos as t } from '../../textos/primeros-pasos';
 
 const PASOS = [
@@ -16,6 +20,8 @@ export function PrimerosPasosDeInicio({
 }: {
   readonly pasos: NonNullable<InicioSel['primerosPasos']>;
 }) {
+  const { oculto, ocultar } = usePrimerosPasosOcultos();
+  if (oculto) return null;
   return (
     <section aria-labelledby="primeros-pasos" className="flex flex-col gap-2">
       <h2 id="primeros-pasos" className="text-titulo-seccion">
@@ -46,6 +52,13 @@ export function PrimerosPasosDeInicio({
           </li>
         ))}
       </ol>
+      {pasos.cuenta ? (
+        <div>
+          <Boton variante="discreta" onClick={ocultar}>
+            {t.ocultar}
+          </Boton>
+        </div>
+      ) : null}
     </section>
   );
 }

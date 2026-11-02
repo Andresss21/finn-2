@@ -31,6 +31,7 @@ export interface AjustesDto extends Encabezado {
   }[];
   readonly instituciones: readonly Ref[];
   readonly suscripcionesPush: readonly {
+    readonly id: string;
     readonly endpointCorto: string;
     readonly agente?: string;
     readonly renovadaEn: string;
@@ -88,6 +89,7 @@ export function ajustes(d: DepsConsulta): Promise<AjustesDto> {
         })),
         instituciones: t.instituciones,
         suscripcionesPush: t.suscripciones.map((s) => ({
+          id: s.id,
           endpointCorto: s.endpointCorto,
           ...(s.agente === null ? {} : { agente: s.agente }),
           renovadaEn: s.renovadaEn,

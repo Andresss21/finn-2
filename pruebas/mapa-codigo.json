@@ -64,39 +64,66 @@
   { "patron": "apps/web/src/servidor/acciones/autenticacion.ts", "fts": ["FT-01"] },
   { "patron": "apps/web/src/servidor/operaciones.ts", "fts": "marco" },
   { "patron": "apps/web/src/servidor/consultas.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/acciones/cuentas.ts", "fts": ["FT-50"] },
+  { "patron": "apps/web/src/servidor/acciones/cuentas.ts", "fts": ["FT-50", "FT-52"] },
   { "patron": "apps/web/src/app/(finn)/cuentas/nueva/**", "fts": ["FT-50"] },
   { "patron": "apps/web/src/flujos/cuentas-nueva/**", "fts": ["FT-50"] },
-  { "patron": "apps/web/src/servidor/acciones/categorias.ts", "fts": ["FT-18", "FT-04"] },
+  { "patron": "apps/web/src/servidor/acciones/categorias.ts", "fts": ["FT-18", "FT-04", "FT-14"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/estructura/**", "fts": ["FT-18"] },
   {
     "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/estructura/**",
     "fts": ["FT-18"]
   },
   { "patron": "apps/web/src/flujos/presupuesto-estructura/**", "fts": ["FT-18"] },
+  { "patron": "apps/web/src/servidor/acciones/presupuesto.ts", "fts": ["FT-10"] },
+  { "patron": "apps/web/src/app/(finn)/presupuesto/asignar/**", "fts": ["FT-10"] },
+  {
+    "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/asignar/**",
+    "fts": ["FT-10"]
+  },
+  { "patron": "apps/web/src/flujos/presupuesto-asignar-categoria/**", "fts": ["FT-10"] },
   { "patron": "apps/web/src/app/(finn)/cuentas/*.tsx", "fts": ["FT-51"] },
   { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/*.tsx", "fts": ["FT-52"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/*.tsx", "fts": ["FT-09"] },
   {
     "patron": "apps/web/src/servidor/acciones/transacciones.ts",
+<<<<<<< HEAD
     "fts": ["FT-22", "FT-23", "FT-54"]
   },
   { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/cuota/**", "fts": ["FT-54"] },
   { "patron": "apps/web/src/flujos/cuentas-cuota/**", "fts": ["FT-54"] },
+=======
+    "fts": ["FT-21", "FT-22", "FT-23"]
+  },
+  { "patron": "apps/web/src/app/(finn)/registrar/*.tsx", "fts": ["FT-21"] },
+  { "patron": "apps/web/src/app/(finn)/registrar/gasto/**", "fts": ["FT-21"] },
+  { "patron": "apps/web/src/flujos/registrar-gasto/**", "fts": ["FT-21"] },
+  { "patron": "apps/web/src/flujos/registrar/**", "fts": ["FT-21"] },
+  { "patron": "apps/web/src/app/(finn)/presupuesto/listo-para-asignar/*.tsx", "fts": ["FT-15"] },
+  {
+    "patron": "apps/web/src/app/(finn)/presupuesto/categorias/[categoriaId]/*.tsx",
+    "fts": ["FT-14"]
+  },
+>>>>>>> origin/main
   { "patron": "apps/web/src/app/(finn)/registrar/[tipo]/**", "fts": ["FT-22", "FT-23"] },
   { "patron": "apps/web/src/flujos/registrar-tipo/**", "fts": ["FT-22", "FT-23"] },
   { "patron": "apps/web/src/flujos/presupuesto-estructura-plantilla/**", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/primeros-pasos.tsx", "fts": ["FT-04"] },
+  { "patron": "apps/web/src/app/(finn)/ajustes/recordatorio-primeros-pasos.tsx", "fts": ["FT-04"] },
+  { "patron": "apps/web/src/cliente/usePrimerosPasosOcultos.ts", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/estructura/plantilla/**", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/page.tsx", "fts": ["FT-04"] },
+  { "patron": "apps/web/src/app/(finn)/ajustes/instalar-finn.tsx", "fts": ["FT-05"] },
+  { "patron": "apps/web/src/app/(finn)/ajustes/loading.tsx", "fts": ["FT-04"] },
   { "patron": "apps/web/src/flujos/ajustes-webhook/**", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/webhook/**", "fts": ["FT-03"] },
+  { "patron": "apps/web/src/app/(finn)/ajustes/apariencia/**", "fts": ["FT-77"] },
   { "patron": "apps/web/src/app/(finn)/bandeja/**", "fts": ["FT-34"] },
   { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/api/sms/**", "fts": ["FT-03", "FT-34"] },
   { "patron": "apps/web/src/app/api/tareas/**", "fts": [] },
   { "patron": "apps/web/src/app/api/respaldo/**", "fts": ["FT-76"] },
   { "patron": "apps/web/src/app/api/exportar/**", "fts": ["FT-75"] },
+  { "patron": "apps/web/src/app/(finn)/ajustes/exportar/**", "fts": ["FT-75"] },
   { "patron": "apps/web/src/app/api/notificaciones/**", "fts": ["FT-70"] },
   { "patron": "apps/web/vercel.json", "fts": [] },
   { "patron": "packages/aplicacion/src/operaciones/marco.ts", "fts": "marco" },

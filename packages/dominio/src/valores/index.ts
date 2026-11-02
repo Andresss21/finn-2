@@ -2,3 +2,4 @@
 // sms y conciliacion importan en ejecución.
 export { Centavos } from './centavos';
 export { FechaLocal, type PartesDeFecha } from './fecha-local';
+export { endpointCorto } from './endpoint-corto';

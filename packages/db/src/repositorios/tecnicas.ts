@@ -63,8 +63,12 @@ export function listarSuscripciones(tx: LectorTx) {
   return txPrisma(tx).suscripcionPush.findMany({ orderBy: { creadaEn: 'asc' } });
 }
 
-export async function eliminarSuscripcion(tx: EscritorTablasT, endpoint: string): Promise<number> {
-  const r = await txPrismaT(tx).suscripcionPush.deleteMany({ where: { endpoint } });
+/** Por `id` (la interfaz) o por `endpoint` (el 404 y 410 del envío, 04 §11.6) [CH-73]. */
+export async function eliminarSuscripcion(
+  tx: EscritorTablasT,
+  por: { readonly id: string } | { readonly endpoint: string },
+): Promise<number> {
+  const r = await txPrismaT(tx).suscripcionPush.deleteMany({ where: por });
   return r.count;
 }
 

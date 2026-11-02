@@ -18,6 +18,7 @@ import {
   refDe,
 } from './estructura';
 import { progresoDeMeta } from './metas';
+import { type PeriodoDto, periodoDto } from './comunes';
 import { contexto, puntosBasicos } from './reportes/comunes';
 import { existiaEn } from './reportes/existia-en';
 
@@ -32,7 +33,7 @@ export interface DetalleCategoria {
   readonly categoria: Ref;
   readonly grupo: Ref;
   readonly clase: 'normal';
-  readonly periodo: Periodo;
+  readonly periodo: PeriodoDto;
   /** Inicios de los períodos vecinos (CP-9). */
   readonly navegacion: { readonly anterior?: FechaLocal; readonly siguiente?: FechaLocal };
   readonly numeros: {
@@ -61,6 +62,7 @@ export interface DetalleCategoria {
     readonly caso: Exclude<CasoDevolucion, 'D-1'>;
   }[];
   readonly meta: {
+    readonly id: Uuid;
     readonly tipo: string;
     readonly modo?: string;
     readonly monto: Centavos;
@@ -85,7 +87,7 @@ export interface DetalleCategoria {
   };
   /** Hasta 6 períodos cerrados anteriores en que existía la categoría (CF-17), del más antiguo al más reciente. */
   readonly historial: readonly {
-    readonly periodo: Periodo;
+    readonly periodo: PeriodoDto;
     readonly asignado: Centavos;
     readonly gastado: Centavos;
     readonly disponible: Centavos;
@@ -193,7 +195,7 @@ export function detalleCategoria(
     .filter((d) => d.gastado !== 0);
   const maximo = porDia.reduce((m, d) => Centavos.max(m, d.gastado), Centavos.cero);
   const historial = celdasDelHistorial(i, categoriaId, p).map((x) => ({
-    periodo: x.periodo,
+    periodo: periodoDto(i, x.periodo),
     asignado: x.asignado,
     gastado: Centavos.negar(x.actividad),
     disponible: x.disponible,
@@ -211,7 +213,7 @@ export function detalleCategoria(
     categoria: refDe(cat),
     grupo: refDe({ id: grupo.id, nombre: grupo.nombre, archivada: grupo.archivado }),
     clase: 'normal',
-    periodo: p,
+    periodo: periodoDto(i, p),
     navegacion: vecinos(periodos, k),
     numeros: {
       asignado: celda.asignado,
@@ -262,6 +264,7 @@ export function detalleCategoria(
       evaluada === null || meta === undefined
         ? null
         : {
+            id: meta.id,
             tipo: meta.tipo,
             ...(meta.modo === null ? {} : { modo: meta.modo }),
             monto: meta.monto,
