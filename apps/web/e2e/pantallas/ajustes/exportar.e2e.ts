@@ -28,7 +28,15 @@ async function preparar(): Promise<void> {
     estadoInicial: [
       { op: 'OP-01', cuenta: 'Ahorro', saldo: 1000, apertura: '2027-02-05' },
       { op: 'OP-07', categoria: 'Super' },
-      { op: 'OP-20', cuenta: 'Ahorro', monto: 45, categoria: 'Super', fecha: HOY, hoy: HOY },
+      {
+        op: 'OP-20',
+        cuenta: 'Ahorro',
+        monto: 45,
+        categoria: 'Super',
+        fecha: HOY,
+        etiqueta: 'compra',
+      },
+      { op: 'OP-33', monto: 10, compra: 'compra', fecha: HOY },
     ],
     pasos: [],
   };
@@ -52,6 +60,7 @@ async function descargar(page: Page, nombre: string): Promise<{ archivo: string;
 
 interface Fila {
   id: string;
+  tipo?: string;
   transaccionId: string;
   total?: number;
   monto?: number;
@@ -61,7 +70,7 @@ interface Exportado {
 }
 
 test.describe('PRU-E2E-AJUS', () => {
-  test('PRU-E2E-AJUS-101 [CA-75.1] el CSV descargado desde la pantalla lleva los negativos con guion normal y ningún U+2212', async ({
+  test('PRU-E2E-AJUS-101 [CA-75.1] el CSV descargado desde la pantalla trae la compra y su devolución con el guion normal y ningún U+2212', async ({
     context,
     baseURL,
     page,
@@ -71,7 +80,10 @@ test.describe('PRU-E2E-AJUS', () => {
     await abrir(page);
     const { archivo, texto } = await descargar(page, t.csv.descargar);
     expect(archivo).toBe(`finn-transacciones-${HOY}.csv`);
-    expect(texto).toContain(',-45.00,');
+    // El total de una transacción es |X| (03 §4.5.1): el CSV real no trae negativos. El formato del negativo (-45.00) lo prueba
+    // PRU-CTR-AJUS-101; acá, que el archivo que sale de la pantalla trae la compra y su devolución y ningún signo U+2212.
+    expect(texto).toContain(',gasto,,,45.00,1,45.00,Super,');
+    expect(texto).toContain(',devolucion,,,10.00,1,10.00,,');
     expect(texto).not.toContain(MENOS);
   });
 
@@ -86,13 +98,19 @@ test.describe('PRU-E2E-AJUS', () => {
     const { archivo, texto } = await descargar(page, t.json.descargar);
     expect(archivo).toBe(`finn-hechos-${HOY}.json`);
     const { hechos } = JSON.parse(texto) as Exportado;
-    // El gasto de la semilla: 45.00 en centavos, con una línea y un efecto en la cuenta
-    const gasto = hechos.transacciones.find((x) => x.total === -4500);
+    // La compra de la semilla: 45.00 en centavos, con su línea y su efecto en la cuenta
+    const gasto = hechos.transacciones.find((x) => x.total === 4500);
     expect(gasto).toBeDefined();
+    expect(hechos.efectos.some((e) => e.transaccionId === gasto?.id && e.monto === -4500)).toBe(
+      true,
+    );
     for (const x of hechos.transacciones) {
       expect(Number.isInteger(x.total)).toBe(true);
-      expect(hechos.lineas.some((l) => l.transaccionId === x.id)).toBe(true);
       expect(hechos.efectos.some((e) => e.transaccionId === x.id)).toBe(true);
+      // El saldo inicial no lleva líneas: la compra y su devolución, sí
+      if (x.tipo !== 'saldo_inicial') {
+        expect(hechos.lineas.some((l) => l.transaccionId === x.id)).toBe(true);
+      }
     }
     for (const fila of [...hechos.lineas, ...hechos.efectos]) {
       expect(Number.isInteger(fila.monto)).toBe(true);
