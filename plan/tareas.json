@@ -373,7 +373,7 @@
 
   "TA-292": { "estado": "terminada", "rama": "ta-292-registrar-gasto-2", "pr": 289 },
 
-  "TA-293": { "estado": "pendiente" },
+  "TA-293": { "estado": "terminada", "rama": "ta-293-registrar-gasto-2", "pr": 293 },
 
   "TA-294": { "estado": "terminada", "rama": "ta-294-sms-bandeja", "pr": 254 },
 
@@ -473,7 +473,9 @@
 
   "TA-426": { "estado": "pendiente" },
 
-  "TA-427": { "estado": "pendiente" },
+  "TA-427": { "estado": "terminada", "rama": "ta-427-notificaciones-dispositivo", "pr": 294 },
+
+  "TA-440": { "estado": "pendiente" },
 
   "TA-428": { "estado": "pendiente" },
 
