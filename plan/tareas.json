@@ -535,5 +535,5 @@
 
   "TA-318": { "estado": "terminada", "rama": "ta-318-bloques-tipo-2", "pr": 278 },
 
-  "TA-319": { "estado": "en_curso", "rama": "ta-319-detalle-categoria-2" }
+  "TA-319": { "estado": "terminada", "rama": "ta-319-detalle-categoria-2", "pr": 280 }
 }
