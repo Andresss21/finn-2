@@ -8,6 +8,7 @@ import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { revisarTactil } from '../../ayudas/tactil.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
+import { formularios } from '../../../src/textos/formularios.ts';
 import { registrarGasto as t } from '../../../src/textos/registrar-gasto.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
@@ -46,6 +47,14 @@ const ESC20_PASO2: Op[] = [
       { deudor: 'Ana', monto: 25 },
     ],
   },
+];
+
+const ESC12_PASO1: Op[] = [
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta' },
+  { op: 'OP-07', categoria: 'Intereses y comisiones' },
+  { op: 'OP-21', monto: 500 },
+  { op: 'OP-14', categoria: 'Intereses y comisiones', monto: 20, periodo: 'P1' },
 ];
 
 async function preparar(hoy: string, estadoInicial: Op[]): Promise<void> {
@@ -280,5 +289,155 @@ test.describe('PRU-E2E-TX', () => {
       'href',
       '/cuentas/nueva',
     );
+  });
+
+  test('PRU-E2E-TX-390 [CA-21.7] una fecha posterior a hoy se rechaza nombrando hoy, y una anterior a la apertura de la cuenta se rechaza nombrando la apertura, y no se guarda nada', async ({
+    page,
+  }) => {
+    await preparar('2027-02-10', ESC20_PASO1);
+    await abrir(page, '/registrar/gasto');
+    await opcion(page, t.cuenta, 'Ahorro').click();
+    await campo(page, t.total).fill('10');
+    await parteConCategoria(page, 1, '10', 'Super');
+    await campo(page, t.fecha).fill('2027-02-11');
+    await page.getByRole('button', { name: t.guardar }).click();
+    await expect(
+      page.getByText('La fecha no puede ser posterior a hoy (10/02/2027).'),
+    ).toBeVisible();
+    await campo(page, t.fecha).fill('2027-01-10');
+    await page.getByRole('button', { name: t.guardar }).click();
+    await expect(
+      page.getByText('Ahorro se abrió el 21/01/2027; la fecha no puede ser anterior.'),
+    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: t.listo })).toHaveCount(0);
+    await page.goto('/presupuesto');
+    await esperarContenido(page);
+    await esperarMonto(disponible(page, 'Super'), 30000);
+  });
+
+  test('PRU-E2E-TX-391 [CA-21.8, ESC-12] registro un cargo con T de $25.00 en "Intereses y comisiones" y Int queda en −$5.00 con sobregiro de tarjeta de $5.00 y Pago T en $20.00', async ({
+    page,
+  }) => {
+    await preparar('2027-02-16', ESC12_PASO1);
+    await abrir(page, '/registrar/gasto');
+    await opcion(page, t.cuenta, 'T').click();
+    await campo(page, t.total).fill('25');
+    await parteConCategoria(page, 1, '25', 'Intereses y comisiones');
+    await page.getByRole('button', { name: t.guardar }).click();
+    await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
+    await page.goto('/presupuesto');
+    await esperarContenido(page);
+    await esperarMonto(disponible(page, 'Intereses y comisiones'), -500);
+    await esperarMonto(pagoTarjeta(page).nth(1), 2000);
+    await fila(page, 'Intereses y comisiones').click();
+    const sobregiro = page.locator('[data-sobregiro]');
+    await expect(sobregiro.first()).toHaveAttribute('data-sobregiro', 'tarjeta');
+    await esperarMonto(sobregiro.locator('[data-centavos]').first(), 500);
+  });
+
+  test('PRU-E2E-TX-392 [CA-21.9] con el formulario a medio llenar, recargar la pestaña restaura los campos y las partes y permite descartar el borrador', async ({
+    page,
+  }) => {
+    await preparar('2027-02-10', ESC19_PASO1);
+    await abrir(page, '/registrar/gasto');
+    await opcion(page, t.cuenta, 'T').click();
+    await campo(page, t.total).fill('150');
+    await campo(page, t.comercio).fill('PriceSmart');
+    await parteConCategoria(page, 1, '110', 'Super');
+    await agregarParte(page);
+    await campo(page, t.montoDeParte('2')).fill('40');
+    // el borrador se escribe 500 ms después del último cambio: se espera a que tenga la segunda parte
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          Object.entries<string>(sessionStorage as unknown as Record<string, string>).some(
+            ([k, v]) => k.startsWith('finn:borrador:') && v.includes('"monto":"40"'),
+          ),
+        ),
+      )
+      .toBe(true);
+    await page.reload();
+    await esperarHidratacion(page);
+    await expect(page.getByText(formularios.borradorRecuperado)).toBeVisible();
+    await expect(campo(page, t.total)).toHaveValue('150');
+    await expect(campo(page, t.comercio)).toHaveValue('PriceSmart');
+    await expect(campo(page, t.montoDeParte('1'))).toHaveValue('110');
+    await expect(campo(page, t.montoDeParte('2'))).toHaveValue('40');
+    await expect(opcion(page, t.categoriaDeParte('1'), 'Super')).toBeChecked();
+    await page.getByRole('button', { name: formularios.descartarBorrador }).click();
+    await expect(campo(page, t.total)).toHaveValue('');
+    await expect(page.getByText(formularios.borradorRecuperado)).toHaveCount(0);
+  });
+
+  test('PRU-E2E-TX-393 [CA-21.10] con una compra aprobada de "Mercado" en Super, escribir ese comercio sugiere Super y un toque lo pone en la parte 1', async ({
+    page,
+  }) => {
+    await preparar('2027-02-21', [
+      { op: 'OP-01', cuenta: 'Ahorro' },
+      { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta', ultimos4: '1234' },
+      { op: 'OP-07', categoria: 'Super' },
+      { op: 'OP-07', categoria: 'Mascota' },
+      { op: 'OP-21', monto: 500 },
+      { op: 'OP-14', categoria: 'Super', monto: 50 },
+      {
+        op: 'OP-35',
+        etiqueta: 'sms',
+        cuenta: 'T',
+        monto: 30,
+        comercio: 'Mercado',
+        recibido: '2027-02-20T19:00',
+        fecha: '2027-02-20',
+      },
+      { op: 'OP-37', etiqueta: 'sms', categoria: 'Super', aprobado: '2027-02-21T08:00' },
+    ]);
+    await abrir(page, '/registrar/gasto');
+    await campo(page, t.comercio).fill('Mercado');
+    await expect(page.getByTestId('sugerencia')).toContainText(t.sugerencia('Super'));
+    await page.getByRole('button', { name: t.usarSugerencia }).click();
+    await expect(opcion(page, t.categoriaDeParte('1'), 'Super')).toBeChecked();
+    await campo(page, t.comercio).fill('Otro sitio');
+    await expect(page.getByTestId('sugerencia')).toHaveCount(0);
+  });
+
+  test('PRU-E2E-TX-394 [CA-21.12, AV-01] un gasto de $148.60 con 3 líneas en el período activo se guarda sin previsualizar y dice "Guardado: PRICESMART · $148.60 · T · 3 líneas" con un enlace a cada categoría, y con la fecha en un período cerrado primero pide confirmar con el aviso', async ({
+    page,
+  }) => {
+    await preparar('2027-03-05', [
+      ...ESC19_PASO1.slice(0, 5),
+      { op: 'OP-14', categoria: 'Super', monto: 100 },
+      { op: 'OP-14', categoria: 'Mascota', monto: 20 },
+    ]);
+    await abrir(page, '/registrar/gasto');
+    await opcion(page, t.cuenta, 'T').click();
+    await campo(page, t.total).fill('148.60');
+    await campo(page, t.comercio).fill('PRICESMART');
+    await parteConCategoria(page, 1, '100', 'Super');
+    await agregarParte(page);
+    await parteConCategoria(page, 2, '40', 'Mascota');
+    await agregarParte(page);
+    await parteConCategoria(page, 3, '8.60', 'Super');
+    await page.getByRole('button', { name: t.guardar }).click();
+    await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
+    await expect(page.getByTestId('resultado')).toHaveText(
+      t.guardado('PRICESMART', '$148.60', 'T', '3'),
+    );
+    await expect(page.getByRole('link', { name: t.verCategoria('Super') })).toHaveAttribute(
+      'href',
+      /\/presupuesto\/categorias\/.+/,
+    );
+    await expect(page.getByRole('link', { name: t.verCategoria('Mascota') })).toBeVisible();
+    await expect(page.getByRole('link', { name: /^Ver / })).toHaveCount(2);
+    // con la fecha en un período cerrado, antes aparece el impacto con el aviso AV-01
+    await page.getByRole('button', { name: t.registrarOtro }).click();
+    await esperarHidratacion(page);
+    await opcion(page, t.cuenta, 'T').click();
+    await campo(page, t.fecha).fill('2027-01-25');
+    await campo(page, t.total).fill('10');
+    await parteConCategoria(page, 1, '10', 'Super');
+    await page.getByRole('button', { name: t.guardar }).click();
+    await expect(page.getByRole('heading', { name: t.revisar })).toBeVisible();
+    await expect(page.getByText(t.avisoPeriodoCerrado)).toBeVisible();
+    await page.getByRole('button', { name: t.confirmar }).click();
+    await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
   });
 });
