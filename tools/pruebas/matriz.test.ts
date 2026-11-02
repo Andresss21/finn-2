@@ -683,10 +683,8 @@ describe('matriz: M15 y M16, cierre de fichas y manuales pendientes (P7-18, V7-1
     const conPrueba = (id: string, archivo: string, estado?: 'pasada' | 'fallida' | 'omitida') => {
       const e = completo();
       e.inventario.push({ titulo: `${id} [CA-30.4] x`, archivo });
-      const resultados = verdes(e);
-      if (estado) resultados[id] = estado;
-      else delete resultados[id];
-      e.resultados = resultados;
+      const otras = Object.entries(verdes(e)).filter(([k]) => k !== id);
+      e.resultados = Object.fromEntries(estado ? [...otras, [id, estado]] : otras);
       return e;
     };
     const m15 = (e: Entradas) => verificar(e).errores.filter((x) => x.startsWith('M15'));
