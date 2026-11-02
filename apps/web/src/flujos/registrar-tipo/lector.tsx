@@ -26,8 +26,7 @@ export async function LectorRegistrarTipo({
     id: x.cuenta.id,
     nombre: x.cuenta.nombre,
   }));
-  const propuesta =
-    'cuentaPropuesta' in dto.contexto ? dto.contexto.cuentaPropuesta.id : undefined;
+  const propuesta = 'cuentaPropuesta' in dto.contexto ? dto.contexto.cuentaPropuesta.id : undefined;
   return (
     <FormularioRegistrarTipo
       tipo={tipo}
