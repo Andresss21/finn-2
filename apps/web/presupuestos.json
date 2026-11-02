@@ -7,5 +7,8 @@
   "lcpMs": 2500,
   "cls": 0.1,
   "inpMs": 200,
-  "ejemplosDeRuta": { "/pruebas/estados/[caso]": "/pruebas/estados/vacios" }
+  "ejemplosDeRuta": {
+    "/pruebas/estados/[caso]": "/pruebas/estados/vacios",
+    "/registrar/[tipo]": "/registrar/ingreso"
+  }
 }
