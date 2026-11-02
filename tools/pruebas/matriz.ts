@@ -290,8 +290,11 @@ export function resultadosCorrida(dir: string): Record<string, EstadoCorrida> {
   };
   const bajar = (s: Suite): void => {
     for (const sp of s.specs ?? []) {
-      const ok = (sp.tests ?? []).every((t) => t.status === 'expected' || t.status === 'flaky');
-      poner(sp.title, sp.ok && ok ? 'pasada' : 'fallida');
+      const estados = (sp.tests ?? []).map((t) => t.status);
+      const ok = estados.every((s) => s === 'expected' || s === 'flaky' || s === 'skipped');
+      // Un `test.skip` llega como `skipped` con `ok: true`: es omitida, no fallida (CH-70)
+      const omitida = estados.includes('skipped');
+      poner(sp.title, !sp.ok || !ok ? 'fallida' : omitida ? 'omitida' : 'pasada');
     }
     for (const h of s.suites ?? []) bajar(h);
   };

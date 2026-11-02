@@ -679,6 +679,81 @@ describe('matriz: M15 y M16, cierre de fichas y manuales pendientes (P7-18, V7-1
     ]);
   });
 
+  describe('PRU-SEG-OPER-112 [M15] CH-70: exención de las REN de tiempos omitidas fuera del nocturno', () => {
+    const conPrueba = (id: string, archivo: string, estado?: 'pasada' | 'fallida' | 'omitida') => {
+      const e = completo();
+      e.inventario.push({ titulo: `${id} [CA-30.4] x`, archivo });
+      const resultados = verdes(e);
+      if (estado) resultados[id] = estado;
+      else delete resultados[id];
+      e.resultados = resultados;
+      return e;
+    };
+    const m15 = (e: Entradas) => verificar(e).errores.filter((x) => x.startsWith('M15'));
+    const TIEMPO = 'apps/web/e2e/rendimiento/plantilla-tiempo.e2e.ts';
+    const ID = 'PRU-REN-TARJ-901';
+
+    it('PRU-SEG-OPER-112 REN de tiempos omitida o sin resultado no bloquea', () => {
+      expect(m15(conPrueba(ID, TIEMPO, 'omitida'))).toEqual([]);
+      expect(m15(conPrueba(ID, TIEMPO))).toEqual([]);
+      expect(m15(conPrueba(ID, 'apps/web/e2e/rendimiento/tiempos.e2e.ts', 'omitida'))).toEqual([]);
+    });
+
+    it('PRU-SEG-OPER-112 REN de tiempos que corrió y falló bloquea, y la cuarentena también', () => {
+      expect(m15(conPrueba(ID, TIEMPO, 'fallida'))).toEqual([
+        `M15 FT-30 está terminada y ${ID} no pasó en esta corrida (fallida)`,
+      ]);
+      const e = conPrueba(ID, TIEMPO, 'omitida');
+      e.cuarentena.push(vigente(ID));
+      expect(m15(e)).toEqual([`M15 FT-30 está terminada y ${ID} está en cuarentena`]);
+    });
+
+    it('PRU-SEG-OPER-112 REN de bytes y E2E omitidas siguen bloqueando', () => {
+      const bytes = 'apps/web/e2e/rendimiento/tamano.e2e.ts';
+      expect(m15(conPrueba(ID, bytes, 'omitida'))).toEqual([
+        `M15 FT-30 está terminada y ${ID} no pasó en esta corrida (omitida)`,
+      ]);
+      const e2e = 'PRU-E2E-TARJ-901';
+      expect(m15(conPrueba(e2e, 'apps/web/e2e/tarjetas.e2e.ts', 'omitida'))).toEqual([
+        `M15 FT-30 está terminada y ${e2e} no pasó en esta corrida (omitida)`,
+      ]);
+    });
+
+    it('PRU-SEG-OPER-112 un skip de Playwright se lee omitida; una falla real nunca', () => {
+      const dir = mkdtempSync(join(tmpdir(), 'finn-skip-'));
+      try {
+        const spec = (title: string, ok: boolean, ...status: string[]) => ({
+          title,
+          ok,
+          tests: status.map((s) => ({ status: s })),
+        });
+        writeFileSync(
+          join(dir, 'playwright.json'),
+          JSON.stringify({
+            suites: [
+              {
+                specs: [
+                  spec('PRU-REN-TARJ-901 [CA-30.4] a', true, 'skipped'),
+                  spec('PRU-REN-TARJ-902 [CA-30.4] b', false, 'skipped', 'unexpected'),
+                  spec('PRU-REN-TARJ-903 [CA-30.4] c', false, 'skipped'),
+                  spec('PRU-REN-TARJ-904 [CA-30.4] d', true, 'expected'),
+                ],
+              },
+            ],
+          }),
+        );
+        expect(resultadosCorrida(dir)).toEqual({
+          'PRU-REN-TARJ-901': 'omitida',
+          'PRU-REN-TARJ-902': 'fallida',
+          'PRU-REN-TARJ-903': 'fallida',
+          'PRU-REN-TARJ-904': 'pasada',
+        });
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+  });
+
   it('M15: una ficha en_curso no se mira', () => {
     const e = completo();
     e.features['FT-30'] = 'en_curso';

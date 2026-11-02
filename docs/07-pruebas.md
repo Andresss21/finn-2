@@ -857,7 +857,7 @@ El script exige **Disparador**, **Pasos** numerados y **Resultado esperado** (M1
 | M12 | Cada archivo de código de `apps/web/src` y `packages/*/src` está en `mapa-codigo.json` | Siempre |
 | M13 | `features.json` solo cita fichas que existen; una ficha diferida no puede salir de `pendiente` sin el CT que la active; un CA con pruebas en una ficha `pendiente` es un aviso | Siempre |
 | M14 | Cada CB tiene una prueba automática (P7-16) | Desde la primera ficha terminada |
-| M15 | Una ficha `terminada` tiene **todas** las pruebas automáticas de sus CA fuera de cuarentena y, con los resultados de la corrida (`--resultados`), en verde (P7-18) | Cuarentena: siempre; verde: en el job `cierre` (13.5) |
+| M15 | Una ficha `terminada` tiene **todas** las pruebas automáticas de sus CA fuera de cuarentena y, con los resultados de la corrida (`--resultados`), en verde (P7-18). Una `REN` de tiempos omitida o sin resultado fuera del nocturno no exige resultado y queda bajo el aviso de §6.6; si corrió y falló, bloquea, y las `REN` de bytes siguen exigidas **[CH-70]** | Cuarentena: siempre; verde: en el job `cierre` (13.5) |
 | M16 | Cada `PRU-MAN` de una ficha exigida tiene como **último** resultado "pasa" en `resultados.md`; si no, la ficha queda con "manual pendiente": aviso en modo incremental, falta en modo puerta. Las filas incompletas y los manuales inexistentes son errores | Siempre |
 | M17 | Todo commit que toca `resultados.md` o `firmantes-permitidos` está firmado con una clave de `firmantes-permitidos` leída de la rama base; un PR no puede tocar esos dos archivos | Siempre (`tools/pruebas/firmas.sh`) |
 | M18 **[F8]** (CH-08) | Cada CA de `pendientes-e2e.json` cita una ficha que existe; una ficha que completa pendientes no pasa a `terminada` sin una E2E que cite cada uno; `features.json` marca esos CA como `pendiente_e2e` hasta entonces; en modo puerta, un pendiente cuya ficha no es [P] es una falta | Siempre; la falta, en modo puerta |
@@ -1461,7 +1461,7 @@ Una ficha pasa a `terminada` en `pruebas/features.json` solo si se cumple todo e
 |---|---|---|
 | 1 | Cada CA de la ficha tiene al menos una prueba activa con su identificador en el título (M1) | `rapido` (matriz) |
 | 2 | Los ESC y AV que cita la ficha tienen sus pruebas (M2, M3); los invariantes y los CB, desde la primera ficha terminada (M4, M14) | `rapido` |
-| 3 | **Todas** las pruebas automáticas de sus CA pasaron en la corrida del PR y ninguna está en cuarentena (M15). El PR que cambia la ficha a `terminada` corre sus suites completas, E2E incluida | Job `cierre` |
+| 3 | **Todas** las pruebas automáticas de sus CA pasaron en la corrida del PR y ninguna está en cuarentena (M15), salvo las `REN` de tiempos omitidas fuera del nocturno, que quedan bajo el aviso de §6.6 **[CH-70]**. El PR que cambia la ficha a `terminada` corre sus suites completas, E2E incluida | Job `cierre` |
 | 4 | Los manuales de la ficha tienen su resultado "pasa" registrado y firmado por el usuario (M16, M17). Si no, la ficha queda **terminada con manual pendiente**, que no cuenta para la puerta | `rapido` y `pr:mergear` |
 | 5 | Los presupuestos de bytes de las rutas de la ficha se cumplen (6.6) y axe no encuentra violaciones en sus rutas (05 §11.10) | `e2e` |
 | 6 | Todo ejemplo numérico nuevo de la ficha sale de una semilla ejecutada por el motor, con su prueba (DP-27) | Revisión del PR; matriz (M7) para las referencias |
