@@ -531,7 +531,7 @@
 
   "TA-316": { "estado": "terminada", "rama": "ta-316-estructura-editar", "pr": 258 },
 
-  "TA-317": { "estado": "pendiente" },
+  "TA-317": { "estado": "en_curso", "rama": "ta-317-acciones" },
 
   "TA-318": { "estado": "pendiente" }
 }
