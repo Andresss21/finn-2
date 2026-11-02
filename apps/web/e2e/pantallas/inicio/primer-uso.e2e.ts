@@ -37,6 +37,25 @@ async function abrir(page: Page, ruta: string): Promise<void> {
   await esperarContenido(page);
 }
 
+interface Elemento {
+  id: string;
+  tipo: 'grupo' | 'categoria';
+  grupoId?: string;
+}
+
+/** Los elementos de cada llamada a la acción de la plantilla (POST a la misma ruta), en el orden en que salen. */
+async function contarLlamadas(page: Page): Promise<Elemento[][]> {
+  const llamadas: Elemento[][] = [];
+  await page.route(`**${PLANTILLA}`, (ruta) => {
+    if (ruta.request().method() === 'POST') {
+      const cuerpo = JSON.parse(ruta.request().postData() ?? '[]') as [{ elementos: Elemento[] }];
+      llamadas.push(cuerpo[0].elementos);
+    }
+    return ruta.fallback();
+  });
+  return llamadas;
+}
+
 const crear = (page: Page, n: number) =>
   page.getByRole('button', { name: t.crear(n), exact: true });
 
@@ -182,5 +201,127 @@ test.describe('PRU-E2E-INICIO', () => {
     await expect(page.getByRole('heading', { name: 'Ajustes', level: 1 })).toBeVisible();
     await page.getByRole('link', { name: ajustesWebhook.titulo, exact: true }).click();
     await expect(page).toHaveURL(/\/ajustes\/webhook$/);
+  });
+  test('PRU-E2E-INICIO-108 [CA-04.8] aplicar la plantilla completa hace 4 llamadas a la acción, ninguna con más de 15 elementos y con cada grupo antes que sus categorías', async ({
+    page,
+  }) => {
+    await preparar([]);
+    await abrir(page, PLANTILLA);
+    const llamadas = await contarLlamadas(page);
+    await crear(page, 36).click();
+    await expect(page.getByText(t.creadas(47), { exact: true })).toBeVisible();
+
+    expect(llamadas.map((l) => l.length)).toEqual([12, 12, 12, 11]);
+    const grupos = new Set<string>();
+    for (const e of llamadas.flat()) {
+      if (e.tipo === 'grupo') grupos.add(e.id);
+      else expect(grupos.has(e.grupoId ?? '')).toBe(true);
+    }
+  });
+
+  test('PRU-E2E-INICIO-109 [CA-04.10] sin el borrador de la pestaña, la plantilla a medias ofrece seguir con 12 de 47 y crea solo los 35 restantes, sin repetir los que ya existen', async ({
+    page,
+  }) => {
+    await preparar([]);
+    await abrir(page, PLANTILLA);
+    let llamadas = 0;
+    await page.route(`**${PLANTILLA}`, (ruta) => {
+      const accion = ruta.request().method() === 'POST';
+      llamadas += accion ? 1 : 0;
+      return accion && llamadas === 2 ? ruta.abort('connectionfailed') : ruta.fallback();
+    });
+    await crear(page, 36).click();
+    await expect(page.getByRole('button', { name: t.seguir(12, 47), exact: true })).toBeVisible();
+    await page.unroute(`**${PLANTILLA}`);
+
+    await page.evaluate(() => {
+      window.sessionStorage.clear(); // el borrador no está disponible (otra pestaña)
+    });
+    await abrir(page, PLANTILLA);
+    const enviadas = await contarLlamadas(page);
+    await page.getByRole('button', { name: t.seguir(12, 47), exact: true }).click();
+    await expect(page.getByText(t.creadas(47), { exact: true })).toBeVisible();
+
+    expect(enviadas.flat()).toHaveLength(35);
+    await expect(page.getByText(t.noSeCrearon(1))).toHaveCount(0);
+    const salida = await leerEstructura(page);
+    expect(sinSistema(salida)).toEqual(t.grupos.map((g) => [g.nombre, [...g.categorias]]));
+  });
+
+  test('PRU-E2E-INICIO-110 [CA-04.11] con una cuenta y las categorías, "Ocultar por ahora" esconde los Primeros pasos en este dispositivo, no en otro, y Ajustes muestra "2 de 3" con "Mostrar en Inicio"', async ({
+    page,
+    browser,
+    baseURL,
+  }) => {
+    await preparar([
+      { op: 'OP-01', cuenta: 'Ahorro', saldo: 1000, apertura: HOY },
+      { op: 'OP-07', categoria: 'Supermercado' },
+    ]);
+    await abrir(page, '/');
+    await page.getByRole('button', { name: p.ocultar, exact: true }).click();
+    await expect(page.getByRole('heading', { name: p.titulo })).toHaveCount(0);
+    await page.reload();
+    await esperarContenido(page);
+    await expect(page.getByRole('heading', { name: p.titulo })).toHaveCount(0);
+
+    const otro = await browser.newContext({ baseURL: baseURL ?? '' });
+    try {
+      await entrarAal2(otro, baseURL ?? '');
+      const hoja = await otro.newPage();
+      await abrir(hoja, '/');
+      await expect(hoja.getByRole('heading', { name: p.titulo })).toBeVisible();
+    } finally {
+      await otro.close();
+    }
+
+    await abrir(page, '/ajustes');
+    await expect(page.getByText(p.recordatorio(2), { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: p.mostrar, exact: true }).click();
+    await expect(page.getByText(p.recordatorio(2))).toHaveCount(0);
+    await abrir(page, '/');
+    await expect(page.getByRole('heading', { name: p.titulo })).toBeVisible();
+  });
+
+  test('PRU-E2E-INICIO-111 [CA-04.12] con los tres pasos hechos, los Primeros pasos no aparecen en Inicio ni en Ajustes, aunque estuvieran ocultos', async ({
+    page,
+  }) => {
+    await preparar([
+      { op: 'OP-01', cuenta: 'Ahorro', saldo: 1000, apertura: HOY },
+      { op: 'OP-07', categoria: 'Supermercado' },
+    ]);
+    await abrir(page, '/');
+    await page.getByRole('button', { name: p.ocultar, exact: true }).click();
+    await abrir(page, '/ajustes/webhook');
+    await page.getByRole('button', { name: ajustesWebhook.generar, exact: true }).click();
+    await expect(page.getByTestId('token')).toBeVisible();
+
+    await abrir(page, '/');
+    await expect(page.getByRole('heading', { name: p.titulo })).toHaveCount(0);
+    await abrir(page, '/ajustes');
+    await expect(page.getByRole('heading', { name: 'Ajustes', level: 1 })).toBeVisible();
+    await expect(page.getByText(/^Primeros pasos: /)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: p.mostrar })).toHaveCount(0);
+  });
+
+  test('PRU-E2E-INICIO-112 [CA-04.13] si falla el grupo "Pagos de tarjeta" de la plantilla, sus categorías aparecen en el resumen con el motivo del grupo y las de los demás grupos se crean', async ({
+    page,
+  }) => {
+    await preparar([]);
+    await abrir(page, PLANTILLA);
+    await page.getByRole('button', { name: t.agregarGrupo, exact: true }).click();
+    await page.getByLabel(t.nombreGrupo(t.grupoNuevo), { exact: true }).fill(SISTEMA);
+    await page.getByRole('button', { name: t.agregarCategoria(SISTEMA), exact: true }).click();
+    await page.getByLabel(t.nombreCategoria(t.categoriaNueva), { exact: true }).fill('Cuota');
+    await crear(page, 37).click();
+    await expect(page.getByText(t.creadas(47), { exact: true })).toBeVisible();
+    await expect(page.getByText(t.noSeCrearon(2), { exact: true })).toBeVisible();
+    const motivos = page.getByRole('listitem').filter({ hasText: /^(Pagos de tarjeta|Cuota): / });
+    await expect(motivos).toHaveCount(2);
+    const textos = await motivos.allTextContents();
+    expect(new Set(textos.map((x) => x.split(': ').slice(1).join(': '))).size).toBe(1);
+
+    const salida = await leerEstructura(page);
+    expect(salida.flatMap(([, c]) => c)).not.toContain('Cuota');
+    expect(sinSistema(salida)).toEqual(t.grupos.map((g) => [g.nombre, [...g.categorias]]));
   });
 });
