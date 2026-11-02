@@ -104,6 +104,123 @@ const fila = (id: string, saldoDespues: number, efecto = -1000) => ({
 });
 
 describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
+  it('PRU-CMP-CTA-104 [Q-detalleCuenta, AV-07] una tarjeta dibuja deuda, te falta reservar, uso del límite, ciclo y desglose al pagar tal como vienen', () => {
+    const raiz = mostrar(
+      dto({
+        cuenta: {
+          id: 'visa',
+          nombre: 'T',
+          tipo: 'tarjeta',
+          fechaApertura: '2027-01-21',
+          archivada: false,
+        },
+        tarjeta: {
+          deuda: 7700,
+          saldoAFavor: 0,
+          reservado: 7000,
+          faltaReservar: 700,
+          reservaExcedente: 0,
+          limite: 250000,
+          usoLimite: 308,
+          cicloFacturacion: { desde: '2027-02-16', hasta: '2027-03-15' },
+          desgloseAlPagar: {
+            deudaAnterior: 5000,
+            cargosDelCiclo: 2700,
+            yaPagado: 0,
+            paraNoGenerarIntereses: 7700,
+          },
+        },
+      }),
+    );
+    const b = raiz.querySelector('[data-bloque="tarjeta"]');
+    expect(b?.textContent).toContain('Te falta reservar');
+    const montos = [...(b?.querySelectorAll('[data-centavos]') ?? [])].map((m) =>
+      m.getAttribute('data-centavos'),
+    );
+    expect(montos).toEqual(['700', '7700', '0', '7000', '250000', '5000', '2700', '0', '7700']);
+    expect(b?.textContent).toContain('16/02/2027 al 15/03/2027');
+    expect(b?.textContent).toContain('3.08%');
+  });
+
+  it('PRU-CMP-CTA-104 [Q-detalleCuenta] un préstamo sin modelo dice que no hay amortización y con modelo dibuja la tabla del DTO', () => {
+    const base = {
+      condiciones: {
+        contraparte: 'Banco',
+        cuotaPactada: 10000,
+        plazoCuotas: 60,
+      },
+      capitalPendiente: 500000,
+      comparacion: null,
+      costoFinanciero: { interes: 1200, seguro: 300 },
+    };
+    const sin = mostrar(
+      dto({
+        cuenta: {
+          id: 'p',
+          nombre: 'P',
+          tipo: 'prestamo',
+          fechaApertura: '2027-01-21',
+          archivada: false,
+        },
+        prestamo: { ...base, amortizacion: null },
+      }),
+    );
+    expect(sin.querySelector('[data-bloque="prestamo"]')?.textContent).toContain(
+      'Sin modelo de cálculo',
+    );
+    expect(sin.querySelector('table')).toBeNull();
+
+    const con = mostrar(
+      dto({
+        cuenta: {
+          id: 'p',
+          nombre: 'P',
+          tipo: 'prestamo',
+          fechaApertura: '2027-01-21',
+          archivada: false,
+        },
+        prestamo: {
+          ...base,
+          amortizacion: [
+            {
+              numero: 1,
+              fecha: '2027-02-10',
+              interes: 500,
+              seguro: 100,
+              capital: 9400,
+              saldo: 490600,
+              estado: 'pagada',
+              pagado: 10000,
+            },
+          ],
+        },
+      }),
+    );
+    const fila = con.querySelector('tbody tr');
+    expect(fila?.textContent).toContain('Pagada');
+    expect(fila?.querySelectorAll('[data-centavos]')).toHaveLength(5);
+  });
+
+  it('PRU-CMP-CTA-104 [Q-detalleCuenta] una inversión dibuja valor, aportes, retiros y ajustes del DTO', () => {
+    const raiz = mostrar(
+      dto({
+        cuenta: {
+          id: 'i',
+          nombre: 'I',
+          tipo: 'inversion',
+          fechaApertura: '2027-01-21',
+          archivada: false,
+        },
+        inversion: { valor: 300000, aportes: 100000, retiros: 50000, ajustes: -2000 },
+      }),
+    );
+    const montos = [
+      ...(raiz.querySelector('[data-bloque="inversion"]')?.querySelectorAll('[data-centavos]') ??
+        []),
+    ].map((m) => m.getAttribute('data-centavos'));
+    expect(montos).toEqual(['300000', '100000', '50000', '-2000']);
+  });
+
   it('PRU-CMP-CTA-104 [CA-52.2, ESC-47] la conciliación de la tarjeta muestra la diferencia aceptada $2.00, la diferencia actual $5.00 con su aviso y el cambio posterior de A', () => {
     const raiz = mostrar(
       dto({

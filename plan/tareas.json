@@ -533,5 +533,5 @@
 
   "TA-317": { "estado": "terminada", "rama": "ta-317-acciones", "pr": 273 },
 
-  "TA-318": { "estado": "pendiente" }
+  "TA-318": { "estado": "en_curso", "rama": "ta-318-bloques-tipo" }
 }
