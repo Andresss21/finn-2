@@ -5,25 +5,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../../../app/globals.css';
 import { PantallaDetalleCuenta } from './pantalla';
 
-// `next/link` necesita `process`, que el navegador del proyecto no trae: el enlace se simula con un ancla (lo que prueba esta
-// suite son los destinos y lo que dibuja la pantalla, no la navegación).
-vi.mock('../../../../componentes/navegacion/enlace-finn', () => ({
-  EnlaceFinn: ({
-    href,
-    children,
-    className,
-    'aria-label': etiqueta,
-  }: {
-    href: string;
-    children?: ReactNode;
-    className?: string;
-    'aria-label'?: string;
-  }) => (
-    <a href={href} className={className} aria-label={etiqueta}>
-      {children}
-    </a>
-  ),
-}));
+// `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene: se simula `next/link` (el límite
+// externo), nunca `enlace-finn`, que otras suites importan de verdad.
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
+    createElement('a', { href, ...resto }, children);
+  // `next/link` es CommonJS: el módulo es la propia función, con `useLinkStatus` como propiedad.
+  return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
+});
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -90,7 +80,10 @@ const dto = (parcial: Record<string, unknown> = {}): DetalleCuentaDto =>
   }) as unknown as DetalleCuentaDto;
 
 const mostrar = (d: DetalleCuentaDto, filtros: Record<string, string | undefined> = {}) =>
-  montar(<PantallaDetalleCuenta dto={d} filtros={filtros} />);
+  montar(<PantallaDetalleCuenta dto={d} filtros={filtros} desarchivar={sinAccion} />);
+
+const sinAccion = () =>
+  Promise.resolve({ ok: true as const, valor: {}, yaAplicada: false, avisos: [] });
 
 const fila = (id: string, saldoDespues: number, efecto = -1000) => ({
   id,
@@ -111,6 +104,133 @@ const fila = (id: string, saldoDespues: number, efecto = -1000) => ({
 });
 
 describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
+  it('PRU-CMP-CTA-104 [CA-52.2, ESC-47] la conciliación de la tarjeta muestra la diferencia aceptada $2.00, la diferencia actual $5.00 con su aviso y el cambio posterior de A', () => {
+    const raiz = mostrar(
+      dto({
+        cuenta: {
+          id: 'visa',
+          nombre: 'T',
+          tipo: 'tarjeta',
+          fechaApertura: '2027-01-21',
+          archivada: false,
+        },
+        conciliaciones: [
+          {
+            id: 'c1',
+            fechaEstado: '2027-02-15',
+            saldoEstado: -7500,
+            terminadaEn: '2027-02-16T16:00:00.000Z',
+            diferenciaAceptada: 200,
+            diferenciaActual: 500,
+            modo: 'estado_cuenta',
+            transaccionesConciliadas: 2,
+            cambiosPosteriores: [
+              {
+                registradoEn: '2027-02-16T17:00:00.000Z',
+                motivos: ['monto'],
+                foto: { fecha: '2027-02-03', montoEfecto: -4000, comercio: 'A' },
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    const c = raiz.querySelector('[data-conciliacion="c1"]');
+    expect(c?.querySelector('h3')?.textContent).toContain('Estado de cuenta');
+    expect(
+      c
+        ?.querySelector('[data-diferencia="aceptada"] [data-centavos]')
+        ?.getAttribute('data-centavos'),
+    ).toBe('200');
+    expect(
+      c?.querySelector('[data-diferencia="actual"] [data-centavos]')?.getAttribute('data-centavos'),
+    ).toBe('500');
+    expect(c?.querySelector('[data-estado="advertencia"]')).not.toBeNull();
+    const cambio = c?.querySelector('[data-cambio-posterior]');
+    expect(cambio?.textContent).toContain('Cambió el monto');
+    expect(cambio?.textContent).toContain('Era: A');
+  });
+
+  it('PRU-CMP-CTA-104 [CA-52.2] una verificación de saldo se nombra así y, con la diferencia actual en cero, no muestra el aviso', () => {
+    const raiz = mostrar(
+      dto({
+        conciliaciones: [
+          {
+            id: 'c2',
+            fechaEstado: '2027-02-15',
+            saldoEstado: 0,
+            terminadaEn: '2027-02-16T16:00:00.000Z',
+            diferenciaAceptada: 0,
+            diferenciaActual: 0,
+            modo: 'saldo',
+            transaccionesConciliadas: 1,
+            cambiosPosteriores: [],
+          },
+        ],
+      }),
+    );
+    expect(raiz.querySelector('[data-conciliacion="c2"] h3')?.textContent).toContain(
+      'Verificación de saldo',
+    );
+    expect(raiz.querySelector('[data-conciliacion="c2"] [data-estado]')).toBeNull();
+  });
+
+  it('PRU-CMP-CTA-104 [CA-52.4] una cuenta archivada deshabilita Pagar, Cuota, Conciliar y Registrar con el motivo en texto y ofrece Desarchivar', () => {
+    const raiz = mostrar(
+      dto({
+        cuenta: {
+          id: 'vieja',
+          nombre: 'Vieja',
+          tipo: 'tarjeta',
+          fechaApertura: '2027-01-21',
+          archivada: true,
+        },
+      }),
+    );
+    for (const nombre of ['Pagar', 'Cuota', 'Conciliar', 'Registrar']) {
+      const li = raiz.querySelector(
+        `li[data-accion="${nombre === 'Cuota' ? 'cuota' : nombre.toLowerCase()}"]`,
+      );
+      const boton = li?.querySelector('button');
+      expect(boton?.textContent, nombre).toBe(nombre);
+      expect(boton?.disabled, nombre).toBe(true);
+      expect(li?.textContent, nombre).toContain('La cuenta está archivada');
+      expect(li?.querySelector('a'), nombre).toBeNull();
+    }
+    expect(raiz.querySelector('li[data-accion="desarchivar"] button')?.textContent).toBe(
+      'Desarchivar',
+    );
+    expect(raiz.querySelector('li[data-accion="archivar"]')).toBeNull();
+  });
+
+  it('PRU-CMP-CTA-104 [CA-52.4] una cuenta activa enlaza sus acciones y no ofrece Desarchivar', () => {
+    const raiz = mostrar(
+      dto({
+        cuenta: {
+          id: 'visa',
+          nombre: 'Visa',
+          tipo: 'tarjeta',
+          fechaApertura: '2027-01-21',
+          archivada: false,
+        },
+      }),
+    );
+    const hrefs = [...raiz.querySelectorAll('li[data-accion] a')].map((a) =>
+      a.getAttribute('href'),
+    );
+    expect(hrefs).toEqual(
+      expect.arrayContaining([
+        '/cuentas/visa/editar',
+        '/cuentas/visa/pagar',
+        '/cuentas/visa/conciliar',
+        '/cuentas/visa/archivar',
+        '/cuentas/visa/eliminar',
+        '/registrar/gasto?cuenta=visa',
+      ]),
+    );
+    expect(raiz.querySelector('li[data-accion="desarchivar"]')).toBeNull();
+  });
+
   it('PRU-CMP-CTA-104 [CA-52.3] con ?periodo= de un período cerrado el selector ofrece los períodos vecinos y volver al actual, y sin él usa el selector del período activo', () => {
     const cerrado = mostrar(
       dto({

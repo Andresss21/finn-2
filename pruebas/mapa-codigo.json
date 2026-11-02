@@ -64,7 +64,7 @@
   { "patron": "apps/web/src/servidor/acciones/autenticacion.ts", "fts": ["FT-01"] },
   { "patron": "apps/web/src/servidor/operaciones.ts", "fts": "marco" },
   { "patron": "apps/web/src/servidor/consultas.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/acciones/cuentas.ts", "fts": ["FT-50"] },
+  { "patron": "apps/web/src/servidor/acciones/cuentas.ts", "fts": ["FT-50", "FT-52"] },
   { "patron": "apps/web/src/app/(finn)/cuentas/nueva/**", "fts": ["FT-50"] },
   { "patron": "apps/web/src/flujos/cuentas-nueva/**", "fts": ["FT-50"] },
   { "patron": "apps/web/src/servidor/acciones/categorias.ts", "fts": ["FT-18", "FT-04", "FT-14"] },
