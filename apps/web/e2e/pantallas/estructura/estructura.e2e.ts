@@ -50,6 +50,9 @@ async function tactilEnMain(page: Page): Promise<void> {
   expect(chicos).toEqual([]);
 }
 
+/** El enlace de edición de una fila, por el nombre accesible del catálogo. */
+const editar = (page: Page, quien: string) =>
+  page.getByRole('link', { name: t.editar(quien), exact: true });
 const nombre = (page: Page) => page.getByLabel(t.nombre, { exact: true });
 const crear = (page: Page) => page.getByRole('button', { name: t.crear, exact: true });
 const mover = (page: Page, accion: string) =>
@@ -83,6 +86,80 @@ test.describe('PRU-E2E-CATEG', () => {
     await page.getByRole('radio', { name: 'Hogar' }).click();
     await crear(page).click();
     await expect(page.getByText(t.categoriaCreada)).toBeVisible();
+  });
+
+  test('PRU-E2E-CATEG-102 [CA-18.2] una categoría sin historial se elimina y desaparece; con una asignación, "Eliminar" queda deshabilitado con el motivo y los enlaces a archivar y fusionar', async ({
+    page,
+  }) => {
+    await preparar([
+      { op: 'OP-07', categoria: 'Por error' },
+      { op: 'OP-07', categoria: 'Comida' },
+      { op: 'OP-14', categoria: 'Comida', monto: 100 },
+    ]);
+    await abrir(page);
+    await editar(page, 'Por error').click();
+    await page.getByRole('button', { name: t.eliminarCategoria, exact: true }).click();
+    await expect(page.getByText(t.eliminado)).toBeVisible();
+    await abrir(page);
+    await expect(editar(page, 'Por error')).toHaveCount(0);
+
+    await editar(page, 'Comida').click();
+    await expect(
+      page.getByRole('button', { name: t.eliminarCategoria, exact: true }),
+    ).toBeDisabled();
+    await expect(
+      page.getByText('Comida tiene historial. Podés archivarla o fusionarla.'),
+    ).toBeVisible();
+    await expect(page.getByRole('link', { name: t.archivarCategoria, exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: t.fusionarCategoria, exact: true })).toBeVisible();
+  });
+
+  test('PRU-E2E-CATEG-104 [CA-18.5] un grupo con categorías activas no se archiva y, con todas archivadas, se archiva', async ({
+    page,
+  }) => {
+    await preparar([{ op: 'OP-07', categoria: 'Activa' }]);
+    await abrir(page);
+    await editar(page, 'Gastos').click();
+    await page.getByRole('button', { name: t.archivarGrupo, exact: true }).click();
+    await expect(page.getByText('Archivá primero todas las categorías de Gastos.')).toBeVisible();
+
+    await preparar([
+      { op: 'OP-07', categoria: 'Vieja' },
+      { op: 'OP-07', categoria: 'Otra vieja' },
+      { op: 'OP-09', categoria: 'Vieja' },
+      { op: 'OP-09', categoria: 'Otra vieja' },
+    ]);
+    await abrir(page);
+    await editar(page, 'Gastos').click();
+    await page.getByRole('button', { name: t.archivarGrupo, exact: true }).click();
+    await expect(page.getByText(t.grupoArchivado)).toBeVisible();
+  });
+
+  test('PRU-E2E-CATEG-106 [CA-18.3] "Bajar" un grupo lo pasa al segundo lugar y "Deshacer" lo devuelve; "Editar" renombra una categoría y la deja con el nombre nuevo en la lista', async ({
+    page,
+  }) => {
+    await preparar([{ op: 'OP-07', categoria: 'Suelta' }]);
+    await abrir(page);
+    await page.getByRole('link', { name: t.nuevoGrupo, exact: true }).click();
+    await nombre(page).fill('Hogar');
+    await page.getByRole('button', { name: t.crear, exact: true }).click();
+    await expect(page.getByText(t.grupoCreado)).toBeVisible();
+
+    await abrir(page);
+    const grupos = page.getByRole('heading', { level: 2, name: /^(Gastos|Hogar)$/ });
+    await expect(grupos).toHaveText(['Gastos', 'Hogar']);
+    await mover(page, t.bajarA('Gastos')).click();
+    await expect(grupos).toHaveText(['Hogar', 'Gastos']);
+    await mover(page, t.deshacer).click();
+    await expect(grupos).toHaveText(['Gastos', 'Hogar']);
+
+    await editar(page, 'Suelta').click();
+    await nombre(page).fill('Suelta 2');
+    await page.getByRole('button', { name: t.guardar, exact: true }).click();
+    await expect(page.getByText(t.guardado)).toBeVisible();
+    await abrir(page);
+    await expect(editar(page, 'Suelta 2')).toBeVisible();
+    await expect(editar(page, 'Suelta')).toHaveCount(0);
   });
 
   test('PRU-E2E-CATEG-103 [CA-18.3] con cuatro categorías, "Bajar" la primera la pasa al segundo lugar, "Deshacer" la devuelve y "Subir" la última la pasa al tercer lugar; todos los controles miden lo mínimo táctil', async ({
