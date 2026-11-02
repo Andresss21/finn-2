@@ -336,4 +336,26 @@ describe('selectores de Inicio, Presupuesto y detalle de LPA', () => {
     expect(presupuesto(i, f('2027-05-01')).periodo.estado).toBe('futuro');
     expect(() => presupuesto(i, f('2027-06-01'))).toThrow(RangeError);
   });
+  it('PRU-DOM-PRES-106 [CA-09.7, inv. 1] en el período activo, Σ saldos de efectivo = LPA + Σ Disponibles mostrados + Σ asignaciones futuras + sobregiro con tarjeta', () => {
+    // Con una asignación futura de 40 a super; el estado ya trae un sobregiro con tarjeta de 40 (cine) y una archivada con 30
+    const futura = {
+      id: id('a-super-futura'),
+      categoriaId: id('super'),
+      periodoInicio: f('2027-05-01'),
+      monto: c(40),
+    } as Asignacion;
+    const x = estado([futura]);
+    const p = presupuesto(x);
+    const suma = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
+    const efectivo = suma(x.cuentas.filter((k) => k.tipo === 'efectivo').map((k) => k.saldo));
+    const mostrados = suma([
+      p.totales.disponible,
+      ...p.pagosTarjeta.map((k) => k.disponible),
+      ...p.archivadasConDinero.map((k) => k.disponible),
+    ]);
+    expect(x.lpa.asignadoFuturos).toBe(c(40));
+    expect(x.sobregiroConTarjeta).toBe(c(40));
+    expect(p.archivadasConDinero.map((k) => k.disponible)).toEqual([c(30)]);
+    expect(efectivo).toBe(x.lpa.total + mostrados + x.lpa.asignadoFuturos + x.sobregiroConTarjeta);
+  });
 });
