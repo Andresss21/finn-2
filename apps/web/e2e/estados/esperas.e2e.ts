@@ -9,7 +9,7 @@ const documento = (cuerpo: string): string =>
 const abrir = (page: Page, cuerpo: string) => page.setContent(documento(cuerpo));
 
 test.describe('PRU-E2E-PWA esperas', () => {
-  test('PRU-E2E-PWA-104 esperarContenido ignora el div oculto vacío que deja un notFound() y sigue esperando el contenido oculto real, la frontera sin resolver y el estado de carga', async ({
+  test('PRU-E2E-PWA-105 esperarContenido ignora el div oculto vacío que deja un notFound() y sigue esperando el contenido oculto real, la frontera sin resolver y el estado de carga', async ({
     page,
   }) => {
     // Lo que dejó React tras un `notFound()` en streaming: la pantalla ya está dibujada y no hay nada pendiente
