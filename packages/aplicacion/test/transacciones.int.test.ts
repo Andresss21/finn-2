@@ -15,6 +15,9 @@ import {
   type DefinicionOperacion,
   type DepsMarco,
 } from '../src/operaciones/marco.ts';
+import type { ClaimsSesion } from '../src/autenticacion/autorizar.ts';
+import type { DepsConsulta } from '../src/consultas/comun.ts';
+import { formulario } from '../src/consultas/formulario/index.ts';
 import { OP01 } from '../src/operaciones/cuentas/index.ts';
 import { OP20, OP21, OP22, OP23, OP24, OP27 } from '../src/operaciones/transacciones/index.ts';
 
@@ -631,5 +634,123 @@ describe('PRU-INT-TX', () => {
       .find((f) => f.id === uuid(1112));
     expect(fila).toMatchObject({ tipo: 'transferencia', total: 3000, montoPresentado: 0 });
     expect(fila?.cuentas.map((c) => c.cuenta.id).sort()).toEqual([E1, E2].sort());
+  });
+  // FT-54 (TA-315): los rechazos de OP-24 con el texto que ve la persona y el efecto de pagar una cuota con tarjeta (CB-07)
+  const cuotaDe = (n: number, e: object) => ({
+    id: uuid(n),
+    modalidad: 'cuota',
+    origenId: E1,
+    prestamoId: P1,
+    fecha: FECHA,
+    categoriaId: C2,
+    ...e,
+  });
+
+  it('PRU-INT-CTA-154 [CA-54.2] un desglose que suma $349.00 para un total de $350.00 se rechaza con "Capital, interés y seguro suman $349.00; el pago es de $350.00." y no escribe', async () => {
+    const sinCuadrar = cuotaDe(1120, {
+      total: '350.00',
+      capital: '250.00',
+      interes: '90.00',
+      seguro: '9.00',
+    });
+    expect(await ejecutar(OP24, sinCuadrar)).toMatchObject(
+      rechazo(
+        'desglose_no_cuadra',
+        'Capital, interés y seguro suman $349.00; el pago es de $350.00.',
+      ),
+    );
+    expect((await releer(uuid(1120))).tx).toBeUndefined();
+  });
+
+  it('PRU-INT-CTA-154 [CA-54.3] un capital de $10,500.00 sobre lo que se debe del préstamo se rechaza con capital_mayor_que_pendiente y no escribe', async () => {
+    const enorme = cuotaDe(1121, {
+      total: '10500.00',
+      capital: '10500.00',
+      interes: '0.00',
+      seguro: '0.00',
+    });
+    expect(await ejecutar(OP24, enorme)).toMatchObject(
+      rechazo(
+        'capital_mayor_que_pendiente',
+        contiene('El capital ($10,500.00) supera lo que debés del préstamo'),
+      ),
+    );
+    expect((await releer(uuid(1121))).tx).toBeUndefined();
+  });
+
+  it('PRU-INT-CTA-154 [CA-54.4, CB-07] una cuota pagada con la Visa, con la categoría sin disponible suficiente, suma lo no cubierto a "te falta reservar" de esa tarjeta', async () => {
+    const falta = async () => (await instantanea()).tarjetas.find((t) => t.tarjetaId === T1);
+    const previa = await instantanea();
+    const antes = previa.tarjetas.find((t) => t.tarjetaId === T1);
+    // lo que la categoría cubre del pago: su Disponible del período activo, si es positivo (D2); el resto es lo no cubierto
+    const disponible =
+      previa.presupuesto.celdas.find(
+        (x) => x.categoriaId === C2 && x.periodo.inicio === previa.presupuesto.activo.inicio,
+      )?.disponible ?? 0;
+    const cubierto = Math.min(30000, Math.max(0, disponible));
+    expect(cubierto).toBeLessThan(30000);
+    const cuota = cuotaDe(1122, {
+      origenId: T1,
+      total: '300.00',
+      capital: '250.00',
+      interes: '40.00',
+      seguro: '10.00',
+    });
+    expect(await ejecutar(OP24, cuota)).toMatchObject({ ok: true, yaAplicada: false });
+    const tras = await falta();
+    // la compra baja el saldo de la tarjeta por el total y el pago de la Visa solo recibe lo cubierto (D2 y traslado)
+    const saldoT = (x: Awaited<ReturnType<typeof instantanea>>): number =>
+      x.cuentas.find((k) => k.cuentaId === T1)?.saldo ?? 0;
+    const trasI = await instantanea();
+    expect(saldoT(trasI) - saldoT(previa)).toBe(-30000);
+    expect((tras?.disponibleDePago ?? 0) - (antes?.disponibleDePago ?? 0)).toBe(cubierto);
+    // lo no cubierto es lo que falta reservar: S = máx(0, deuda − reservado) con la deuda y el reservado de después
+    const deuda = Math.max(0, -saldoT(trasI));
+    const reservado = Math.max(0, (antes?.disponibleDePago ?? 0) + cubierto);
+    expect(tras?.sinRespaldo).toBe(Math.max(0, deuda - reservado));
+    expect(tras?.sinRespaldo ?? 0).toBeGreaterThan(antes?.sinRespaldo ?? 0);
+  });
+  it('PRU-INT-CTA-155 [CA-54.5] el préstamo del Anexo A con modelo y la fecha del 15 de febrero de 2027: el desglose propuesto al abrir el flujo es interés $101.92, seguro $5.00 y capital $243.08', async () => {
+    const deConsulta: DepsConsulta = {
+      memoria: new Memoria(),
+      sesion: {
+        obtenerClaims: () => Promise.resolve({ sub: 'u', aal: 'aal2' } as ClaimsSesion),
+        obtenerUsuario: () => Promise.resolve({ id: 'u' }),
+      },
+      usuarioPermitido: 'u',
+      opciones: () => RELOJ,
+    };
+    const anexoA = {
+      id: uuid(1130),
+      tipo: 'prestamo',
+      nombre: 'Anexo A',
+      saldo: '10000.00',
+      fechaApertura: '2027-01-15',
+      contraparte: 'Banco Agrícola',
+      montoOriginal: '10000.00',
+      tasaNominalAnual: '12',
+      tipoTasa: 'fija',
+      seguroPrimerMes: '5.00',
+      frecuencia: 'mensual',
+      cuotaPactada: '350.00',
+      plazoCuotas: 24,
+      modeloCalculo: 'banco_agricola',
+      cuotasPagadasAlCrear: 0,
+    };
+    // La apertura cae en un período cerrado (AV-01): se confirma con la huella de la previsualización
+    const vista = await preparar(OP01, anexoA);
+    const huella = vista.ok ? vista.valor.huellaImpacto : null;
+    expect(await ejecutar(OP01, { ...anexoA, huellaImpacto: huella })).toMatchObject({ ok: true });
+
+    const dto = await formulario(deConsulta, {
+      operacion: 'cuota_prestamo',
+      prestamoId: anexoA.id,
+      modalidad: 'cuota',
+      fecha: '2027-02-15',
+    });
+    expect(dto.contexto).toMatchObject({
+      tieneModelo: true,
+      desglosePropuesto: { interes: 10192, seguro: 500, capital: 24308, total: 35000 },
+    });
   });
 });
