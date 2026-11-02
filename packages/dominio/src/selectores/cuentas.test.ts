@@ -725,4 +725,19 @@ describe('PRU-DOM-CTA', () => {
       ).posicionNeta.barras;
     expect(vacio()).toEqual({ activosBp: 0, deudasBp: 0 });
   });
+
+  it('PRU-DOM-CTA-170 [FT-53] cuentas() lista cada tipo en el orden de OP-03: por `orden` y, si empatan, por id', () => {
+    const base = estado();
+    const nuevoOrden: Record<string, number> = { ef: 20, vacia: 10 };
+    const i = calcular(
+      {
+        ...hechosDe(base),
+        cuentas: hechosDe(base).cuentas.map((k) => ({ ...k, orden: nuevoOrden[k.id] ?? k.orden })),
+      },
+      f('2027-04-15'),
+    );
+    expect(cuentas(i).efectivo.map((x) => x.cuenta.id)).toEqual([id('vacia'), id('ef')]);
+    // Con el mismo `orden` en todas, desempata el id (el de la base).
+    expect(cuentas(base).efectivo.map((x) => x.cuenta.id)).toEqual([id('ef'), id('vacia')]);
+  });
 });

@@ -32,7 +32,10 @@ export function cuentas(
 ) {
   const h = i.hechos;
   const n = nombres(i);
-  const activas = h.cuentas.filter((k) => !k.archivada);
+  // En el orden de OP-03 (`orden`, y el id si empatan), que es el de «Ordenar» (04 §6.14.2).
+  const activas = h.cuentas
+    .filter((k) => !k.archivada)
+    .sort((a, b) => a.orden - b.orden || (a.id < b.id ? -1 : 1));
   const saldoDe = (id: Uuid) => i.cuentas.find((s) => s.cuentaId === id);
   const comun = (k: (typeof h.cuentas)[number]) => ({
     cuenta: n.cuenta(k.id),
