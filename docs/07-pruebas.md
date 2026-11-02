@@ -428,7 +428,7 @@ Lo que solo existe en el proyecto real queda en la prueba de humo de 04 §17, si
 |---|---|---|---|
 | `rapido` | Siempre | Instalación con caché; `typecheck`; ESLint (fronteras, L1–L20); Prettier; `versiones.mjs`; gitleaks sobre el diff; C1 (lint de migraciones) y C2 (inmutabilidad); script de la matriz (Parte B); `DOM`, `ESC@motor`, `CTR`; `PROP` (300 casos en PR, 2.000 en `main`); diferencial contra el oráculo; cobertura de ramas de `@finn/dominio` (DP-09); `CMP` si cambió `apps/web` **[CH-61]** o si corre `cierre`. Calcula y publica `afecta_db` y `afecta_web` para los jobs siguientes | 2,5–3 min |
 | `integracion` | En el PR si `afecta_db` o si el PR pasa a listo; en `main` siempre | Plantilla y controles de 5.2; `INT`, `ESC@int`, `RH`, `ESQ`, PRU-INT-POOL; prueba de catálogo de CF-16 | 3–4 min |
-| `e2e` | En el PR **listo** con `afecta_web` (suites afectadas) **[CH-61]** y en el que pasa una ficha a `terminada`, con las suites de esa ficha (§13.2, paso 4); en `main` siempre (completo, proyecto `movil`) | `next build`; pila local mínima; usuario de prueba; Playwright; en `main`, además, tamaño de JS y de precache (deterministas, §6.6) | 6–8 min en PR; 10–11 en `main` |
+| `e2e` | En el PR **listo** con `afecta_web` (suites afectadas) **[CH-61]** y en el que pasa una ficha a `terminada`, completo porque corre `cierre` (§13.2, paso 4) **[CH-70]**; en `main` siempre (completo, proyecto `movil`) | `next build`; pila local mínima; usuario de prueba; Playwright; en `main`, además, tamaño de JS y de precache (deterministas, §6.6) | 6–8 min en PR; 10–11 con `cierre` **[CH-70]** y en `main` |
 | `desplegar` | Solo `main`, si todos los anteriores pasaron en la misma corrida | `prisma migrate deploy` en producción; C5, C6 y R15 con `finn_respaldo`; `vercel deploy --prod` (ADR-10, 03 §11.7) | 2–3 min |
 | `nocturno` | Según 6.1 | E2E `escritorio`, `zona-distinta`, `webkit-parcial`; accesibilidad en los dos temas; `SW`; Lighthouse CI, INP y benchmark del motor y de la carga a 10 años (mediana de 5); `PROP` con 10.000 casos; `RES` con volumen sintético | 18–22 min |
 
@@ -857,7 +857,7 @@ El script exige **Disparador**, **Pasos** numerados y **Resultado esperado** (M1
 | M12 | Cada archivo de código de `apps/web/src` y `packages/*/src` está en `mapa-codigo.json` | Siempre |
 | M13 | `features.json` solo cita fichas que existen; una ficha diferida no puede salir de `pendiente` sin el CT que la active; un CA con pruebas en una ficha `pendiente` es un aviso | Siempre |
 | M14 | Cada CB tiene una prueba automática (P7-16) | Desde la primera ficha terminada |
-| M15 | Una ficha `terminada` tiene **todas** las pruebas automáticas de sus CA fuera de cuarentena y, con los resultados de la corrida (`--resultados`), en verde (P7-18) | Cuarentena: siempre; verde: en el job `cierre` (13.5) |
+| M15 | Una ficha `terminada` tiene **todas** las pruebas automáticas de sus CA fuera de cuarentena y, con los resultados de la corrida (`--resultados`), en verde (P7-18). Una `REN` de tiempos omitida o sin resultado fuera del nocturno no exige resultado y queda bajo el aviso de §6.6; si corrió y falló, bloquea, y las `REN` de bytes siguen exigidas **[CH-70]** | Cuarentena: siempre; verde: en el job `cierre` (13.5) |
 | M16 | Cada `PRU-MAN` de una ficha exigida tiene como **último** resultado "pasa" en `resultados.md`; si no, la ficha queda con "manual pendiente": aviso en modo incremental, falta en modo puerta. Las filas incompletas y los manuales inexistentes son errores | Siempre |
 | M17 | Todo commit que toca `resultados.md` o `firmantes-permitidos` está firmado con una clave de `firmantes-permitidos` leída de la rama base; un PR no puede tocar esos dos archivos | Siempre (`tools/pruebas/firmas.sh`) |
 | M18 **[F8]** (CH-08) | Cada CA de `pendientes-e2e.json` cita una ficha que existe; una ficha que completa pendientes no pasa a `terminada` sin una E2E que cite cada uno; `features.json` marca esos CA como `pendiente_e2e` hasta entonces; en modo puerta, un pendiente cuya ficha no es [P] es una falta | Siempre; la falta, en modo puerta |
@@ -880,7 +880,7 @@ El script exige **Disparador**, **Pasos** numerados y **Resultado esperado** (M1
 1. Marca `"FT-30": "en_curso"` en `features.json`.
 2. Corre `pnpm pruebas:ft FT-30`. Recibe los 7 CA, los ESC y AV de la ficha, el recorrido 4.4, las pruebas que ya existen con su archivo, y el comando de cada herramienta con su filtro.
 3. Escribe las pruebas con `[CA-30.n]` en el título, en los archivos de §2.3.
-4. Marca `"FT-30": "terminada"`. `rapido` verifica que no falte nada de FT-30 (M1 a M14); el PR corre las suites de FT-30 completas, E2E incluida, aunque no esté en "listo", y el job `cierre` comprueba que todas estén en verde (M15). Si falta algo, el PR queda rojo.
+4. Marca `"FT-30": "terminada"`. `rapido` verifica que no falte nada de FT-30 (M1 a M14); el PR corre las suites de FT-30 completas y la E2E completa del proyecto `movil` **[CH-70]**, aunque no esté en "listo" ni toque la web, y el job `cierre` comprueba que estén en verde las de todas las fichas `terminada` (M15). Si falta algo, el PR queda rojo.
 5. Si FT-30 tiene manuales, quedan "manual pendiente" hasta que el usuario registre el resultado (M16). La ficha puede quedar `terminada`, pero no cuenta para la puerta.
 
 Salida real de `pruebas:ft FT-30` sobre el inventario sintético de V7-09 (los identificadores son los del inventario sintético):
@@ -1461,7 +1461,7 @@ Una ficha pasa a `terminada` en `pruebas/features.json` solo si se cumple todo e
 |---|---|---|
 | 1 | Cada CA de la ficha tiene al menos una prueba activa con su identificador en el título (M1) | `rapido` (matriz) |
 | 2 | Los ESC y AV que cita la ficha tienen sus pruebas (M2, M3); los invariantes y los CB, desde la primera ficha terminada (M4, M14) | `rapido` |
-| 3 | **Todas** las pruebas automáticas de sus CA pasaron en la corrida del PR y ninguna está en cuarentena (M15). El PR que cambia la ficha a `terminada` corre sus suites completas, E2E incluida | Job `cierre` |
+| 3 | **Todas** las pruebas automáticas de sus CA pasaron en la corrida del PR y ninguna está en cuarentena (M15), salvo las `REN` de tiempos omitidas fuera del nocturno, que quedan bajo el aviso de §6.6 **[CH-70]**. El PR que cambia la ficha a `terminada` corre sus suites completas, E2E incluida | Job `cierre` |
 | 4 | Los manuales de la ficha tienen su resultado "pasa" registrado y firmado por el usuario (M16, M17). Si no, la ficha queda **terminada con manual pendiente**, que no cuenta para la puerta | `rapido` y `pr:mergear` |
 | 5 | Los presupuestos de bytes de las rutas de la ficha se cumplen (6.6) y axe no encuentra violaciones en sus rutas (05 §11.10) | `e2e` |
 | 6 | Todo ejemplo numérico nuevo de la ficha sale de una semilla ejecutada por el motor, con su prueba (DP-27) | Revisión del PR; matriz (M7) para las referencias |
