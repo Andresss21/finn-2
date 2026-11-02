@@ -5,6 +5,8 @@
 import type { PresupuestoDto } from '@finn/aplicacion/consultas/presupuesto';
 import type { ReactNode } from 'react';
 import { Vacio } from '../../../componentes/base/vacio';
+import { SacarDeUnToque } from './sacar-un-toque';
+import type { AccionEscritura } from '../../../formularios/use-operacion';
 import { FilaCategoria } from '../../../componentes/dominio/fila-categoria';
 import { FilaPagoTarjeta } from '../../../componentes/dominio/fila-pago';
 import { ResumenListoParaAsignar } from '../../../componentes/dominio/billete';
@@ -57,9 +59,12 @@ function Seccion({
 export function PantallaPresupuesto({
   dto,
   filtro,
+  sacar,
 }: {
   readonly dto: PresupuestoDto;
   readonly filtro?: FiltroDeUrl;
+  /** `sacarDisponible` (OP-11, FT-19): la pone el lector; sin ella no se ofrece la propuesta de un toque de AV-14. */
+  readonly sacar?: AccionEscritura;
 }) {
   const { periodo, periodoActivo } = dto;
   const cerrado = periodo.estado === 'cerrado';
@@ -250,12 +255,22 @@ export function PantallaPresupuesto({
                         {dominio.disponible} <Monto centavos={fila.disponible} />
                       </span>
                     </span>
-                    <EnlaceFinn
-                      href={`/presupuesto/categorias/${fila.categoria.id}/sacar`}
-                      className={ACCION}
-                    >
-                      {t.archivadas.sacar(fila.categoria.nombre)}
-                    </EnlaceFinn>
+                    <span className="flex flex-wrap items-center gap-2">
+                      {sacar === undefined || fila.disponible <= 0 ? null : (
+                        <SacarDeUnToque
+                          categoriaId={fila.categoria.id}
+                          asignado={fila.asignadoEsperado}
+                          disponible={fila.disponible}
+                          accion={sacar}
+                        />
+                      )}
+                      <EnlaceFinn
+                        href={`/presupuesto/categorias/${fila.categoria.id}/sacar`}
+                        className={ACCION}
+                      >
+                        {t.archivadas.sacar(fila.categoria.nombre)}
+                      </EnlaceFinn>
+                    </span>
                   </li>
                 ))}
               </ul>
