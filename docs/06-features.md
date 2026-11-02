@@ -2015,7 +2015,7 @@ Reglas comunes a todas las fichas:
 - Quiero desarchivar una categoría si vuelvo a necesitarla.
 
 **Flujo.**
-1. Detalle de categoría → `/presupuesto/categorias/[categoriaId]/archivar` (flujo largo) → `formulario({ operacion: 'archivar_categoria' })`.
+1. **[CH-82]** Estructura → editar la categoría → «Archivar» → `/presupuesto/categorias/[categoriaId]/archivar` (flujo largo) → `formulario({ operacion: 'archivar_categoria' })`. Desde el detalle de categoría, «Archivar» solo se habilita cuando no hay bloqueos (06-identidad-visual §6 punto 8 y S3).
 2. Decisiones: destino del Disponible (otra categoría o LPA), con qué se cubre un Disponible negativo, devolver las asignaciones futuras, y para cada programada activa reasignarla o desactivarla.
 3. Previsualizar y confirmar → OP-09.
 4. Archivada con Disponible: AV-14 con la propuesta de sacarlo (OP-11 de un toque) o `/presupuesto/categorias/[categoriaId]/sacar` (flujo corto) para elegir destino y monto.
