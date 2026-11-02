@@ -1,6 +1,6 @@
 // `/cuentas/[cuentaId]` (FT-52; 06-identidad-visual §9): cabecera con saldo y saldo confirmado, el selector de período y los
-// movimientos con saldo corrido. Dibuja lo que trae el DTO: no calcula montos (PF-3) ni períodos (05 §3.4). Las acciones, las
-// conciliaciones y el bloque de cada tipo de cuenta son de las partes siguientes de la ficha.
+// movimientos con saldo corrido. Dibuja lo que trae el DTO: no calcula montos (PF-3) ni períodos (05 §3.4). Más las
+// acciones, el bloque del tipo de cuenta (tarjeta, préstamo o inversión), las conciliaciones y las programadas.
 import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta';
 import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { IndicadorEstado } from '../../../../componentes/dominio/indicador-estado';
@@ -13,6 +13,7 @@ import { cuentaDetalle as t } from '../../../../textos/cuenta-detalle';
 import { Acciones, Programadas } from './acciones';
 import { Conciliaciones } from './conciliaciones';
 import { Movimientos, type FiltrosDetalle } from './movimientos';
+import { BloqueInversion, BloquePrestamo, BloqueTarjeta } from './por-tipo';
 
 const ENLACE =
   'inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
@@ -63,6 +64,9 @@ export function PantallaDetalleCuenta({
       </header>
       {cuenta.archivada ? <AvisoEnLinea estado="informacion">{t.soloLectura}</AvisoEnLinea> : null}
       <Acciones cuenta={cuenta} desarchivar={desarchivar} />
+      {dto.tarjeta === undefined ? null : <BloqueTarjeta tarjeta={dto.tarjeta} />}
+      {dto.prestamo === undefined ? null : <BloquePrestamo prestamo={dto.prestamo} />}
+      {dto.inversion === undefined ? null : <BloqueInversion inversion={dto.inversion} />}
       <Conciliaciones conciliaciones={dto.conciliaciones} />
       <Programadas programadas={dto.programadas} />
       <SelectorPeriodo
