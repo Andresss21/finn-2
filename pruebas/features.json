@@ -1,1 +1,8 @@
-{ "FT-01": "terminada", "FT-02": "terminada", "FT-50": "terminada", "FT-51": "terminada" }
+{
+  "FT-01": "terminada",
+  "FT-02": "terminada",
+  "FT-03": "terminada",
+  "FT-50": "terminada",
+  "FT-51": "terminada",
+  "CA-03.3": "pendiente_e2e"
+}
