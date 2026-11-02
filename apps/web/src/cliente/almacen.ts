@@ -24,6 +24,28 @@ export const almacen = {
       return;
     }
   },
+  /** Preferencias del dispositivo (06 §3.15, como el tema): `localStorage`, igual de tolerante. Nunca guardan montos. */
+  leerLocal(clave: string): string | null {
+    try {
+      return window.localStorage.getItem(clave);
+    } catch {
+      return null;
+    }
+  },
+  escribirLocal(clave: string, valor: string): void {
+    try {
+      window.localStorage.setItem(clave, valor);
+    } catch {
+      return;
+    }
+  },
+  borrarLocal(clave: string): void {
+    try {
+      window.localStorage.removeItem(clave);
+    } catch {
+      return;
+    }
+  },
   /** Al salir de la sesión (05 §4.11): todas las claves que empiezan con el prefijo. */
   borrarPrefijo(prefijo: string): void {
     try {

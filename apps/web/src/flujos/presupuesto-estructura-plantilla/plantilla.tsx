@@ -13,6 +13,7 @@ import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navega
 import { claveDeBorrador } from '../../formularios/use-borrador';
 import type { AccionEscritura } from '../../formularios/use-operacion';
 import { plantilla as t } from '../../textos/plantilla';
+import { retomarPorNombre, type Existente } from './reanudar';
 import { tandas } from './tandas';
 
 const RAIZ = '/presupuesto/estructura';
@@ -115,8 +116,12 @@ function FilaNombre({
   );
 }
 
-export function PanelPlantilla(props: { hayNormales: boolean; crearLote: AccionEscritura }) {
-  const { hayNormales, crearLote } = props;
+export function PanelPlantilla(props: {
+  hayNormales: boolean;
+  existentes?: readonly Existente[];
+  crearLote: AccionEscritura;
+}) {
+  const { hayNormales, existentes = [], crearLote } = props;
   const [fase, setFase] = useState<Fase>('leyendo');
   const [filas, setFilas] = useState<Fila[]>(inicial);
   const [aplicacion, setAplicacion] = useState<Aplicacion>({ elementos: [], resultados: {} });
@@ -128,11 +133,14 @@ export function PanelPlantilla(props: { hayNormales: boolean; crearLote: AccionE
   useEffect(() => {
     if (leido.current) return;
     leido.current = true;
-    const guardado = leerGuardado();
-    if (guardado !== null) setAplicacion(guardado);
-    if (guardado !== null) setFase('pendiente');
-    else setFase(hayNormales ? 'saliendo' : 'editando');
-  }, [hayNormales]);
+    // Sin borrador (otra pestaña, almacenamiento no disponible), lo ya creado se reconoce por nombre (3.9.1).
+    const guardado = leerGuardado() ?? (hayNormales ? retomarPorNombre(existentes) : null);
+    if (guardado !== null) {
+      guardar(guardado);
+      setAplicacion(guardado);
+      setFase('pendiente');
+    } else setFase(hayNormales ? 'saliendo' : 'editando');
+  }, [hayNormales, existentes]);
   useEffect(() => {
     if (enfocar === null) return;
     document.querySelector<HTMLInputElement>(`[data-clave="${enfocar}"]`)?.focus();
@@ -159,13 +167,20 @@ export function PanelPlantilla(props: { hayNormales: boolean; crearLote: AccionE
     setAplicacion({ elementos: actual.elementos, resultados });
     const faltan = actual.elementos.filter((e) => !(e.id in resultados));
     for (const tanda of tandas(faltan, actual.elementos.length)) {
+      // Si un grupo falló en una tanda anterior, sus categorías no se intentan: llevan el motivo del grupo (CA-04.13).
+      const enviar = tanda.filter((e) => {
+        const motivo = e.grupoId === undefined ? null : resultados[e.grupoId];
+        if (typeof motivo === 'string') resultados[e.id] = motivo;
+        return typeof motivo !== 'string';
+      });
       let mensaje: string | null = null;
       try {
-        const r = await crearLote({ modo: 'confirmar', elementos: tanda });
-        if (r.ok)
+        const r =
+          enviar.length === 0 ? null : await crearLote({ modo: 'confirmar', elementos: enviar });
+        if (r?.ok === true)
           for (const e of (r.valor as SalidaOp07Lote).elementos)
             resultados[e.id] = typeof e.resultado === 'string' ? null : e.resultado.mensaje;
-        else mensaje = r.error.mensaje;
+        else if (r !== null) mensaje = r.error.mensaje;
       } catch {
         mensaje = t.sinConexion;
       }

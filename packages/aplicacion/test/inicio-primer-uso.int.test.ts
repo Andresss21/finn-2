@@ -13,6 +13,7 @@ import { inicio } from '../src/consultas/inicio.ts';
 import { crearEnLote } from '../src/operaciones/categorias/index.ts';
 import { OP01 } from '../src/operaciones/cuentas/index.ts';
 import { confirmar, type DepsMarco } from '../src/operaciones/marco.ts';
+import { rotarToken } from '../src/sms/token.ts';
 
 const USUARIO = 'usuario-unico';
 const uuid = (n: number): Uuid => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}` as Uuid;
@@ -114,5 +115,33 @@ describe('PRU-INT-INICIO', () => {
       2,
     );
     expect((await inicio(depsConsulta())).primerosPasos?.categorias).toBe(true);
+  });
+
+  it('PRU-INT-INICIO-103 [CA-04.12] con la cuenta, una categoría normal y el token del webhook, inicio().primerosPasos es null', async () => {
+    process.env['DATABASE_URL'] = base.url;
+    const deCuenta = {
+      id: uuid(300),
+      tipo: 'efectivo',
+      nombre: 'Efectivo',
+      saldo: '10.00',
+    } as const;
+    expect(await confirmar(OP01, deCuenta, depsMarco())).toMatchObject({ ok: true });
+    const lote = await crearEnLote(
+      {
+        elementos: [
+          { tipo: 'grupo', id: uuid(310), nombre: 'Casa' },
+          { tipo: 'categoria', id: uuid(311), nombre: 'Luz', grupoId: uuid(310) },
+        ],
+      },
+      depsMarco(),
+    );
+    expect(lote.ok).toBe(true);
+    expect((await inicio(depsConsulta())).primerosPasos).toEqual({
+      cuenta: true,
+      categorias: true,
+      sms: false,
+    });
+    await rotarToken();
+    expect((await inicio(depsConsulta())).primerosPasos).toBeNull();
   });
 });
