@@ -113,7 +113,7 @@ test.describe('PRU-E2E-PRES', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-PRES-107 [CA-15.2, ESC-02] con el paso 3 de ESC-02 el historial muestra $500.00 como Listo para asignar al cierre de P1', async ({
+  test('PRU-E2E-PRES-117 [CA-15.2, ESC-02] con el paso 3 de ESC-02 el historial muestra $500.00 como Listo para asignar al cierre de P1', async ({
     page,
   }) => {
     await sembrarOps(ESC02, '2027-03-05');
@@ -123,7 +123,7 @@ test.describe('PRU-E2E-PRES', () => {
     await expect(page.locator('[data-nota-historial="sin_adelantos"]')).toBeVisible();
   });
 
-  test('PRU-E2E-PRES-108 [CA-15.3, ESC-17] con el paso 3 de ESC-17 "Reducciones por sobregiro con débito" es $20.00', async ({
+  test('PRU-E2E-PRES-118 [CA-15.3, ESC-17] con el paso 3 de ESC-17 "Reducciones por sobregiro con débito" es $20.00', async ({
     page,
   }) => {
     await sembrarOps(ESC17, '2027-02-21');
@@ -131,7 +131,7 @@ test.describe('PRU-E2E-PRES', () => {
     await esperarMonto(linea(page, 'Reducciones por sobregiro con débito'), 2000);
   });
 
-  test('PRU-E2E-PRES-109 [CA-15.4, ESC-15] con el paso 2 de ESC-15 la reducción proyectada al cierre es $50.00 y lista Salidas', async ({
+  test('PRU-E2E-PRES-119 [CA-15.4, ESC-15] con el paso 2 de ESC-15 la reducción proyectada al cierre es $50.00 y lista Salidas', async ({
     page,
   }) => {
     await sembrarOps(ESC15, '2027-02-10');
@@ -140,7 +140,7 @@ test.describe('PRU-E2E-PRES', () => {
     await expect(page.locator('[data-seccion="reduccion"]')).toContainText('Salidas');
   });
 
-  test('PRU-E2E-PRES-110 [CA-15.5, ESC-40] con el paso 1 de ESC-40 "Otras entradas" es $5,000.00 e "Ingresos" $0.00', async ({
+  test('PRU-E2E-PRES-120 [CA-15.5, ESC-40] con el paso 1 de ESC-40 "Otras entradas" es $5,000.00 e "Ingresos" $0.00', async ({
     page,
   }) => {
     await sembrarOps(ESC40, '2027-02-10');
@@ -149,7 +149,7 @@ test.describe('PRU-E2E-PRES', () => {
     await esperarMonto(linea(page, 'Ingresos'), 0);
   });
 
-  test('PRU-E2E-PRES-111 un ?historial= fuera de 1 a 60 redirige a la ruta sin el parámetro y uno válido se conserva', async ({
+  test('PRU-E2E-PRES-121 un ?historial= fuera de 1 a 60 redirige a la ruta sin el parámetro y uno válido se conserva', async ({
     page,
   }) => {
     await sembrarOps(ESC02, '2027-03-05');

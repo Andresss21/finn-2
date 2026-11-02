@@ -72,7 +72,7 @@ const monto = (nodo: HTMLElement, etiqueta: string) =>
     ?.getAttribute('data-centavos');
 
 describe('PRU-CMP-PRES', () => {
-  it('PRU-CMP-PRES-105 la descomposición dibuja cada línea del DTO con su etiqueta, sin recalcular, y enlaza de vuelta al presupuesto', () => {
+  it('PRU-CMP-PRES-106 la descomposición dibuja cada línea del DTO con su etiqueta, sin recalcular, y enlaza de vuelta al presupuesto', () => {
     const nodo = montar(<PantallaListoParaAsignar dto={dto()} />);
     expect(nodo.querySelector('h1')?.textContent).toBe('Listo para asignar');
     expect(monto(nodo, 'Ingresos')).toBe('100000');
@@ -84,7 +84,7 @@ describe('PRU-CMP-PRES', () => {
     expect(nodo.querySelector('[data-estado="informacion"]')).toBeNull();
   });
 
-  it('PRU-CMP-PRES-105 con LPA negativo avisa AV-20 y con dinero en camino AV-09', () => {
+  it('PRU-CMP-PRES-106 con LPA negativo avisa AV-20 y con dinero en camino AV-09', () => {
     const nodo = montar(
       <PantallaListoParaAsignar
         dto={dto({
@@ -100,7 +100,7 @@ describe('PRU-CMP-PRES', () => {
     expect(nodo.querySelector('[data-estado="informacion"]')?.textContent).toContain('En camino');
   });
 
-  it('PRU-CMP-PRES-105 la reducción proyectada lista sus categorías y tarjetas; sin reducción lo dice', () => {
+  it('PRU-CMP-PRES-106 la reducción proyectada lista sus categorías y tarjetas; sin reducción lo dice', () => {
     const con = montar(
       <PantallaListoParaAsignar
         dto={dto({
@@ -126,7 +126,7 @@ describe('PRU-CMP-PRES', () => {
     );
   });
 
-  it('PRU-CMP-PRES-105 el historial trae el gráfico, su tabla equivalente con los mismos valores y la nota de B-4', () => {
+  it('PRU-CMP-PRES-106 el historial trae el gráfico, su tabla equivalente con los mismos valores y la nota de B-4', () => {
     const nodo = montar(<PantallaListoParaAsignar dto={dto()} />);
     expect(nodo.querySelector('svg[role="img"][data-grafico="lineas"]')).not.toBeNull();
     const filas = [...nodo.querySelectorAll('[data-tabla-equivalente] tbody tr')];
@@ -138,7 +138,7 @@ describe('PRU-CMP-PRES', () => {
     );
   });
 
-  it('PRU-CMP-PRES-105 sin períodos cerrados el historial dice que no hay ninguno y conserva la nota', () => {
+  it('PRU-CMP-PRES-106 sin períodos cerrados el historial dice que no hay ninguno y conserva la nota', () => {
     const nodo = montar(<PantallaListoParaAsignar dto={dto({ historial: [] })} />);
     expect(nodo.querySelector('[data-seccion="historial"]')?.textContent).toContain(
       'Todavía no hay períodos cerrados',
