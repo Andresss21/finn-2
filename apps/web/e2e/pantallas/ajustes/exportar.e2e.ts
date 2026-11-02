@@ -147,7 +147,7 @@ test.describe('PRU-E2E-AJUS', () => {
     await aal1.dispose();
   });
 
-  test('PRU-E2E-AJUS-104 el índice de Ajustes lleva a Exportar y todo control de la pantalla mide al menos 44 px', async ({
+  test('PRU-E2E-AJUS-104 el índice de Ajustes lleva a Exportar y todo control de la pantalla mide al menos 44 px [RUTA-/ajustes/exportar]', async ({
     context,
     baseURL,
     page,
