@@ -88,3 +88,10 @@ export function EntradaTexto({
     </Campo>
   );
 }
+
+/** Entrada sin etiqueta visible, para listas donde cada fila ya dice qué es: el nombre accesible va en `aria-label`. */
+export function EntradaSinEtiqueta(
+  props: Omit<InputHTMLAttributes<HTMLInputElement>, 'aria-label'> & { 'aria-label': string },
+) {
+  return <Input {...props} />;
+}
