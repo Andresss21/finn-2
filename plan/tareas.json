@@ -377,7 +377,7 @@
 
   "TA-294": { "estado": "terminada", "rama": "ta-294-sms-bandeja", "pr": 254 },
 
-  "TA-295": { "estado": "en_curso", "rama": "ta-295-sms-procesamiento" },
+  "TA-295": { "estado": "terminada", "rama": "ta-295-sms-procesamiento", "pr": 257 },
 
   "TA-296": { "estado": "pendiente" },
 
