@@ -4,8 +4,7 @@
 // montos (PF-3): el impacto y los avisos los trae el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
@@ -13,7 +12,7 @@ import { Seleccion } from '../../componentes/base/seleccion';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
-import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
 import { useBorrador } from '../../formularios/use-borrador';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -97,10 +96,6 @@ export function FormularioCuentaNueva({
   const avisoDeNombre = avisoDeNombreRepetido(c.tipo, c.nombre, nombresTarjetaUsados);
 
   const { estado, error: fallo, exito } = operacion;
-  const router = useRouter();
-  useEffect(() => {
-    if (estado === 'listo') router.replace(RUTA_PADRE);
-  }, [estado, router]);
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
 
   function campo(x: Descriptor) {
@@ -146,7 +141,7 @@ export function FormularioCuentaNueva({
   if (estado === 'listo' && exito !== undefined)
     return (
       <PaginaFlujoDeRuta titulo={t.listo} rutaPadre={RUTA_PADRE}>
-        {null}
+        <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
       </PaginaFlujoDeRuta>
     );
 

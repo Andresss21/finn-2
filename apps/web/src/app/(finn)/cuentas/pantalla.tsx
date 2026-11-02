@@ -4,17 +4,17 @@
 import type { CuentasDto } from '@finn/aplicacion/consultas/cuentas';
 import type { Centavos } from '@finn/dominio/valores';
 import type { ReactNode } from 'react';
-import { Icono } from '../../componentes/base/icono';
-import { Vacio } from '../../componentes/base/vacio';
-import { BilleteraTarjetas, type TarjetaDto } from '../../componentes/dominio/billetera';
-import { IdentidadCuenta } from '../../componentes/dominio/identidad-cuenta';
-import { IndicadorEstado } from '../../componentes/dominio/indicador-estado';
-import { Monto } from '../../componentes/dominio/monto';
-import { PosicionNeta } from '../../componentes/dominio/posicion-neta';
-import { PublicarEncabezado } from '../../componentes/marco/proveedor-encabezado';
-import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
-import { cuentas as t } from '../../textos/cuentas';
-import { glosario } from '../../textos/glosario';
+import { Icono } from '../../../componentes/base/icono';
+import { Vacio } from '../../../componentes/base/vacio';
+import { BilleteraTarjetas, type TarjetaDto } from '../../../componentes/dominio/billetera';
+import { IdentidadCuenta } from '../../../componentes/dominio/identidad-cuenta';
+import { IndicadorEstado } from '../../../componentes/dominio/indicador-estado';
+import { Monto } from '../../../componentes/dominio/monto';
+import { PosicionNeta } from '../../../componentes/dominio/posicion-neta';
+import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
+import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
+import { cuentas as t } from '../../../textos/cuentas';
+import { glosario } from '../../../textos/glosario';
 
 const p = t.pantalla;
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
@@ -79,7 +79,11 @@ export function PantallaCuentas({ dto }: { readonly dto: CuentasDto }) {
         <Vacio
           titulo={p.vacioTitulo}
           texto={p.vacioTexto}
-          accion={<EnlaceFinn href="/cuentas/nueva">{p.vacioAccion}</EnlaceFinn>}
+          accion={
+            <EnlaceFinn href="/cuentas/nueva" className={BOTON}>
+              {p.vacioAccion}
+            </EnlaceFinn>
+          }
         />
       ) : (
         <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:gap-x-10">

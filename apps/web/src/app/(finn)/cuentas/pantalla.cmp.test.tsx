@@ -2,12 +2,12 @@ import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { CuentasDto } from '@finn/aplicacion/consultas/cuentas';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import '../../app/globals.css';
+import '../../../app/globals.css';
 import { PantallaCuentas } from './pantalla';
 
 // `next/link` necesita `process`, que el navegador del proyecto no trae: el enlace se simula con un ancla (lo que prueba esta
 // suite son los destinos y lo que dibuja la pantalla, no la navegación).
-vi.mock('../../componentes/navegacion/enlace-finn', () => ({
+vi.mock('../../../componentes/navegacion/enlace-finn', () => ({
   EnlaceFinn: ({
     href,
     children,
