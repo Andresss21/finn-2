@@ -1335,16 +1335,19 @@ Número reservado (DT-02).
 - **Pasos:**
   1. vercel.com, plan Hobby → Account Settings → Tokens → crear un token `finn-2-alta`, con alcance de tu cuenta y **vencimiento de 1 día** (el más corto que ofrezca el panel).
   2. En una ventana de PowerShell tuya, fuera de Claude Code, desde `C:\finn\repo`:
-     - `$env:VERCEL_TOKEN = Read-Host "Token"` (no queda en el historial);
-     - `pnpm dlx vercel@<versión fijada> link --yes --project finn-2 --token $env:VERCEL_TOKEN`. Crea el proyecto y escribe `.vercel/project.json`, que está en `.gitignore`. Anotá `orgId` y `projectId`.
+     - **[CH-63]** `$env:VERCEL_TOKEN = [System.Net.NetworkCredential]::new('', (Read-Host "Token" -AsSecureString)).Password` (no queda en el historial; `-AsSecureString` no muestra el token en pantalla, y un `Read-Host` simple sí lo muestra);
+     - `pnpm dlx vercel@<versión fijada> link --yes --project finn-2 --token $env:VERCEL_TOKEN`. Crea el proyecto y escribe `.vercel/project.json`. Anotá `orgId` y `projectId`.
+     - **[CH-63]** Lo que además hace `link` (visto en el primer despliegue): **conecta el repositorio de Git** al proyecto (se desconecta en el paso 4), crea `.env.local` y **modifica `.gitignore`** para agregar `.vercel`. `.vercel/` y `.env*` ya están en el `.gitignore` del repositorio: descartá el cambio de `.gitignore` (`git checkout -- .gitignore`) y **no commitees ni `.vercel/` ni `.env.local`**; `git status` tiene que quedar limpio.
   3. Revocar el token en el panel y cerrar la ventana.
   4. En el panel del proyecto:
-     - Settings → Git: **sin repositorio conectado** (ADR-10).
-     - Settings → Environment Variables: casilla **Automatically expose System Environment Variables** activada (07 §4.3).
+     - Settings → Git: **sin repositorio conectado** (ADR-10). **[CH-63]** `link` lo deja conectado: tocá **Disconnect**. Se despliega solo desde el job `desplegar`.
+     - **[CH-63]** Settings → Build and Deployment: **Root Directory** `apps/web`, **Framework Preset** Next.js y **Node.js Version** 24.x.
+     - Settings → Environment Variables: casilla **Enable access to System Environment Variables** **[CH-63]** (antes se llamaba "Automatically expose System Environment Variables") activada (07 §4.3).
      - Cargar en **Production**, desde la web, las variables de 04 §14.2: `DATABASE_URL` (`finn_app`, 6543), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `FINN_USUARIO_ID`, `CRON_SECRET`, `RESPALDO_SECRET`, las VAPID (TU-10), `FINN_CONCILIACION_CLAVES`, `FINN_CONCILIACION_CLAVE_ACTIVA`, `FINN_CARGA_INCREMENTAL=off` y `FINN_WEBHOOK_FORMATO=json`.
+     - **[CH-63]** `NEXT_PUBLIC_SUPABASE_URL` es la URL completa, **con `https://`** (`https://<ref>.supabase.co`): sin el esquema, producción respondía 500.
      - **Nunca** `FINN_ENTORNO`, `FINN_RELOJ_ARCHIVO` ni `FINN_HOY_SIMULADO`, en ningún entorno.
-  5. **Token para CI:** otro token, `finn-2-ci`, con **alcance del proyecto** y el vencimiento más largo que aceptes (lo renovás con TU-20). Va **solo** a los secretos de GitHub, cargado desde la web (TU-12); nunca a un archivo de la PC.
-  6. **Comprobación final:** en una ventana nueva de Git Bash, `pnpm dlx vercel@<versión> whoami` debe **fallar** con "no credentials". Además, no existe `%AppData%\com.vercel.cli\Data\auth.json`, o no tiene token.
+  5. **Token para CI:** otro token, `finn-2-ci`, con **alcance del equipo** **[CH-63]** (el equipo o cuenta personal donde está `finn-2`) y el vencimiento más largo que aceptes (lo renovás con TU-20). Con alcance de proyecto no sirve: la API de equipos responde 403 y la CLI falla con "Could not retrieve Project Settings". Va **solo** a los secretos de GitHub, cargado desde la web (TU-12); nunca a un archivo de la PC.
+  6. **Comprobación final:** en una ventana nueva de Git Bash, `pnpm dlx vercel@<versión> whoami` debe **fallar** con "no credentials" **[CH-63]** o decir "Logged out" (los dos significan que no hay sesión guardada; "Logged out" puede salir aunque un token pasado con `--token` funcione). Además, no existe `%AppData%\com.vercel.cli\Data\auth.json`, o no tiene token, y `git status` en `C:\finn\repo` no muestra `.vercel/`, `.env.local` ni `.gitignore`.
 - **Secretos aleatorios:** en Git Bash, `openssl rand -base64 32` (no `Get-Random`, que no es criptográfico).
 
 ### TU-10 Claves VAPID
@@ -1555,6 +1558,11 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-72** | Partición de TA-290 por tamaño (DT-02) y laguna de `DetalleCategoriaDto`. El alcance completo de FT-14 midió prod=894 en 14 archivos de producción (total=1924) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). Se parte en dos: TA-290 conserva la ruta con el héroe, los números, el desglose del sobregiro con "Cubrir" y "Reservar", los consumos con lo cubierto y lo no cubierto, las entradas, las acciones y los estados (archivada con "Sacar" y "Desarchivar", período cerrado, `no_encontrado`) (CA-14.1, CA-14.2, CA-14.3, CA-14.6, CA-14.7); TA-319, nueva (orden 639), lleva el calendario con su tabla, el historial, la meta, las programadas y las reglas, y cierra la ficha (CA-14.4, CA-14.5, CA-14.8, CA-14.9, CA-14.10; CA-14.8 sigue pendiente de punta a punta de FT-28). TA-319 depende de TA-290; HT-6 la exige y su `despues` pasa a TA-319 (E7); el CA-14.8 de FT-28 pasa a TA-319 y TA-406 pasa a depender de TA-319. Lagunas: 04 §6.3 declara `periodo: PeriodoDto` y `historial[].periodo: PeriodoDto` y el selector devolvía `Periodo`; ahora devuelve `PeriodoDto`. Además, 05 §2.3 enlaza a `/metas/[metaId]` y `meta` de 04 §6.3 no traía el id: TA-319 agrega `id: Uuid` a `detalleCategoria().meta`. La barrita de cubierto y no cubierto de 06-identidad-visual §6 no se dibuja: el DTO no trae proporciones (CF-25) y calcularlas violaría PF-3; la cobertura va en texto. El código completo queda en la rama local `ta-319-detalle-categoria-2` | 08 TA-290, TA-319, HT-6 | Delegado por el orquestador; **aplicado [CH-72]** en 08 TA-290, TA-319 y HT-6,; el `id` de la meta en 04 §6.3 lo aplica TA-319 |
 | **CH-73** | OPT-03 por `id` y `id` en `suscripcionesPush` (corrección previa a TA-427). 06 FT-06 CA-06.6 y 05 §8.6 piden que "Quitar" funcione sobre cualquier dispositivo de la lista; 04 §3.10 daba a OPT-03 solo `endpoint` completo y 04 §6.11 solo `endpointCorto`, así que la interfaz no podía quitar un dispositivo que no fuera el actual. Decisión: `suscripcionesPush[]` trae `id` (el de `suscripciones_push`, sin migración); OPT-03 acepta `{ id } \| { endpoint }` (la interfaz usa `id`, el backend `endpoint` en 11.6); "este dispositivo" se reconoce comparando `endpointCorto` con el calculado de `getSubscription()` con `endpointCorto()`, función pura ahora en `@finn/dominio/valores` | 04 §3.10, §6.11; 05 §8.6; 06 FT-06 CA-06.6 | Delegado por el orquestador; **aplicado [CH-73]** en 04 §3.10 y §6.11 y en 05 §8.6; código en esta corrección |
 | **CH-74** | El tema forzado no era correcto antes de hidratar (05 §10.6, CA-77.2). El script previo a hidratar de next-themes 0.4.6 solo aplica `value` con `attribute="class"`; con `data-theme` escribía `dark` o `light`, que `tokens.css` no reconoce, y con el sistema en claro y "Oscuro" elegido había un destello claro. 05 §10.6 pasa a `themes={['claro', 'oscuro']}`, `value={{ claro: 'claro', oscuro: 'oscuro', light: 'claro', dark: 'oscuro' }}` y `enableColorScheme={false}`; los valores guardados en `finn-tema` son `claro`, `oscuro` o `system`, y los viejos `light` y `dark` se leen como su equivalente. PRU-DOM-PWA-001 verifica la cadena nueva. No se tocan `tokens.css` ni 06-identidad-visual | 05 §10.6; TA-506 | Delegado por el orquestador; **aplicado [CH-74]** en 05 §10.6 y en `ProveedorTema` |
+| **CH-63** | TU-09 y `?cierre=1`, con lo que pasó en el primer despliegue. (1) TU-09: `vercel link` conecta el repositorio de Git al proyecto, crea `.env.local` y modifica `.gitignore`; la TU pide desconectar el repositorio en Settings → Git (se despliega solo desde el job `desplegar`, ADR-10), descartar el cambio de `.gitignore` y no commitear `.vercel/` ni `.env.local`. `Read-Host` simple muestra el token: pasa a `Read-Host -AsSecureString`. Build and Deployment: Root Directory `apps/web`, Framework Next.js, Node 24.x. La casilla se llama ahora "Enable access to System Environment Variables". `vercel whoami` puede decir "Logged out" aunque un token funcione: la comprobación final acepta los dos mensajes. El token de CI `finn-2-ci` necesita alcance de **equipo**: con alcance de proyecto la API de equipos da 403 y la CLI falla con "Could not retrieve Project Settings". `NEXT_PUBLIC_SUPABASE_URL` lleva `https://` (sin el esquema, producción daba 500). TU-09 no se marca hecha. (2) `?cierre=1`: la implementación de FT-02 agrega la marca a `/ingresar/inscribir` antes de enviar el código del primer factor para que la página, ya con AAL2, no redirija a `volver` antes de mostrar la recomendación del respaldo (`app/ingresar/acceso.ts`, `flujos/ajustes-seguridad-factores-nuevo/inscribir-factor.tsx`); 05 §9.2 y 06 FT-02 no la mencionaban. Se documenta lo implementado, sin cambio de código | 08 TU-09; 05 §9.2; 06 FT-02 | Delegado por el orquestador; **aplicado [CH-63]** en 08 TU-09, en 05 §9.2 y en 06 FT-02 (Errores y textos) |
+| **CH-75** | Dependencias de reportes que faltaban (corrección previa a TA-505). TA-503 (FT-64), TA-504 (FT-65) y TA-505 (FT-68) usan `/reportes/[tipo]` (06 FT-64, FT-65 y FT-68, Piezas y Flujo), que crea TA-421 (FT-60), pero su `depende` no lo listaba y `plan:siguiente` las ofrecía antes de que exista la ruta. Las tres pasan a depender también de TA-421. `plan/tareas.json` no guarda `depende` (se deriva de 08) y no cambia | 08 TA-503, TA-504, TA-505 | Delegado por el orquestador; **aplicado [CH-75]** en 08 TA-503, TA-504 y TA-505 |
+| **CH-76** | CA-75.1 pedía que "los negativos llevan el guion `-`" en el CSV, pero el CSV solo trae `total` y `linea_monto`, que 03 §4.5.1 (`CHECK (total > 0)`, `CHECK (monto > 0)`) define siempre positivos: no hay negativos que mostrar. CA-75.1 pasa a "el CSV nunca contiene U+2212 y todo monto negativo, si lo hubiera, usa `-`" (FD-25). Lo cubren PRU-CTR-AJUS-101 (el armado del CSV con un negativo, `-45.00`) y PRU-E2E-AJUS-101 (el archivo descargado, sin U+2212), ya en `main` (#288); sus títulos siguen correspondiendo y no cambian | 06 FT-75 CA-75.1 | Delegado por el orquestador; **aplicado [CH-76]** en 06 FT-75 |
+| **CH-77** | Estados de FT-04 y CA-04.6. CH-70 (punto 3) corrigió Estados ("redirige, salvo que existan categorías de la lista sugerida y falten otras"), pero CA-04.6 seguía diciendo que con cualquier categoría normal la plantilla redirige, contra CA-04.10. Lo implementado y probado (`flujos/presupuesto-estructura-plantilla/plantilla.tsx` y `reanudar.ts`; PRU-CMP-INICIO-102 y 106, PRU-E2E-INICIO-106 y 109): con una aplicación a medias en el borrador se sigue con sus ids; sin borrador, se comparan los nombres con `estructura()` dentro de su grupo y se ofrece seguir si existe al menos una categoría de la lista y falta algún elemento; si ninguna categoría normal es de la lista, o la lista está completa, redirige. CA-04.6, que quedaba en minoría, pasa a "una categoría normal que no es de la lista sugerida y sin una aplicación a medias", y Estados agrega la precisión. Las pruebas no cambian: PRU-E2E-INICIO-106 siembra "Supermercado" en el grupo "Gastos", que no es de la lista | 06 FT-04 Estados y CA-04.6 | Delegado por el orquestador; **aplicado [CH-77]** en 06 FT-04 |
+| **CH-78** | Fila de FT-03 que decía que la E2E de la Bandeja la agrega TA-294, cuando §30.1 y `pruebas/pendientes-e2e.json` dan TA-295 (FT-34). La fila está en §19.7, no en §30.2, y CH-70 ya la había cambiado a TA-295; §30.2 no nombra ninguna tarea para FT-03. Sin cambios en el texto; se registra para que el número no quede sin uso | 08 §19.7, §30.1, §30.2 | Delegado por el orquestador; **sin efecto**: ya aplicado por [CH-70] en 08 §19.7 |
 
 ---
 
@@ -10813,7 +10821,7 @@ fichas: FT-59
 orden: 903
 bloque: B8
 hito: —
-depende: TA-210, TA-212, TA-219, TA-224, TA-142, TA-174, TA-308
+depende: TA-210, TA-212, TA-219, TA-224, TA-142, TA-174, TA-308, TA-421
 tu: —
 revision: normal
 paralelo: libre
@@ -10823,6 +10831,8 @@ pru: —
 compartido: —
 fichas: FT-64
 ```
+
+**[CH-75]** Depende además de TA-421 (FT-60): usa `/reportes/[tipo]`, que crea esa tarea.
 
 **Qué construir.**
 - FT-64: las pantallas y flujos de la ficha (Flujo, Piezas, Estados, Errores y textos) para CA-64.1 a CA-64.5, con las consultas y operaciones que ya existen (B2 y B3) y los componentes de B4.
@@ -10846,7 +10856,7 @@ fichas: FT-64
 orden: 904
 bloque: B8
 hito: —
-depende: TA-210, TA-212, TA-219, TA-224, TA-142, TA-174, TA-194
+depende: TA-210, TA-212, TA-219, TA-224, TA-142, TA-174, TA-194, TA-421
 tu: —
 revision: normal
 paralelo: libre
@@ -10856,6 +10866,8 @@ pru: —
 compartido: —
 fichas: FT-65
 ```
+
+**[CH-75]** Depende además de TA-421 (FT-60): usa `/reportes/[tipo]`, que crea esa tarea.
 
 **Qué construir.**
 - FT-65: las pantallas y flujos de la ficha (Flujo, Piezas, Estados, Errores y textos) para CA-65.1 a CA-65.4, con las consultas y operaciones que ya existen (B2 y B3) y los componentes de B4.
@@ -10879,7 +10891,7 @@ fichas: FT-65
 orden: 905
 bloque: B8
 hito: —
-depende: TA-210, TA-212, TA-219, TA-224, TA-143, TA-164, TA-174
+depende: TA-210, TA-212, TA-219, TA-224, TA-143, TA-164, TA-174, TA-421
 tu: —
 revision: normal
 paralelo: libre
@@ -10889,6 +10901,8 @@ pru: —
 compartido: —
 fichas: FT-68
 ```
+
+**[CH-75]** Depende además de TA-421 (FT-60): usa `/reportes/[tipo]`, que crea esa tarea.
 
 **Qué construir.**
 - FT-68: las pantallas y flujos de la ficha (Flujo, Piezas, Estados, Errores y textos) para CA-68.1 a CA-68.3, con las consultas y operaciones que ya existen (B2 y B3) y los componentes de B4.
