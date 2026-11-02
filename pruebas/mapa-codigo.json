@@ -69,6 +69,7 @@
   { "patron": "apps/web/src/flujos/cuentas-nueva/**", "fts": ["FT-50"] },
   { "patron": "apps/web/src/flujos/ajustes-webhook/**", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/webhook/**", "fts": ["FT-03"] },
+  { "patron": "apps/web/src/app/(finn)/bandeja/**", "fts": ["FT-34"] },
   { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/api/sms/**", "fts": ["FT-03", "FT-34"] },
   { "patron": "apps/web/src/app/api/tareas/**", "fts": [] },
