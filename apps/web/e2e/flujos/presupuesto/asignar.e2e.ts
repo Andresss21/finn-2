@@ -7,27 +7,43 @@ import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
-import esc03 from '../../../../../packages/dominio/escenarios/datos/esc-03.ts';
-import esc05 from '../../../../../packages/dominio/escenarios/datos/esc-05.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
 
 const P1 = '2027-01-21';
 const P2 = '2027-02-21';
 
-/** Las operaciones del paso `k` (desde 0) de un escenario de 01 §8. */
-const opsDelPaso = (e: { readonly pasos: readonly { readonly ops: readonly Op[] }[] }, k: number) =>
-  e.pasos[k]?.ops ?? [];
-
-// ESC-03 hasta el paso 3 (hoy 5 feb, A = P1): ingreso de $1,000.00, Super $600.00 en P1 y Salidas $300.00 en P2.
-const ESC03_PASO1: Op[] = [...esc03.estadoInicial, ...opsDelPaso(esc03, 0)];
-const ESC03_PASO3: Op[] = [...ESC03_PASO1, ...opsDelPaso(esc03, 1), ...opsDelPaso(esc03, 2)];
+// Las operaciones de 01 §8. ESC-03 hasta el paso 3 (hoy 5 feb, A = P1): ingreso de $1,000.00, Super $600.00 en P1 y Salidas
+// $300.00 en P2. Mascota tiene su meta de $50.00 como estado previo.
+const ESC03_PASO1: Op[] = [
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-07', categoria: 'Super' },
+  { op: 'OP-07', categoria: 'Salidas' },
+  { op: 'OP-07', categoria: 'Gas' },
+  { op: 'OP-07', categoria: 'Mascota' },
+  { op: 'OP-18', categoria: 'Mascota', monto: 50 },
+  { op: 'OP-21', monto: 1000 },
+];
+const ESC03_PASO3: Op[] = [
+  ...ESC03_PASO1,
+  { op: 'OP-14', categoria: 'Super', monto: 600, periodo: 'P1' },
+  { op: 'OP-14', categoria: 'Salidas', monto: 300, periodo: 'P2' },
+];
 // ESC-05 hasta el paso 2 con su historial en P1 (hoy 21 feb: P1 cerrado, A = P2); es el estado del que parten ESC-06 y ESC-07.
 const ESC05_PASO2: Op[] = [
-  ...esc05.estadoInicial,
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta' },
+  { op: 'OP-07', categoria: 'Super' },
   { op: 'OP-21', monto: 1000, hoy: '2027-02-10' },
   { op: 'OP-14', categoria: 'Super', monto: 300, periodo: 'P1', hoy: '2027-02-10' },
-  ...opsDelPaso(esc05, 1).map((o) => ({ ...o, hoy: '2027-02-10' })),
+  {
+    op: 'OP-20',
+    cuenta: 'T',
+    monto: 400,
+    categoria: 'Super',
+    fecha: '2027-02-10',
+    hoy: '2027-02-10',
+  },
 ];
 
 async function sembrarOps(estadoInicial: Op[], hoy: string): Promise<void> {
