@@ -59,8 +59,22 @@ test.describe('PRU-E2E-CTA', () => {
       [
         { op: 'OP-01', cuenta: 'Ahorro', saldo: 1000, apertura: '2027-02-05' },
         { op: 'OP-07', categoria: 'Super' },
-        { op: 'OP-20', cuenta: 'Ahorro', monto: 10, categoria: 'Super', fecha: '2027-02-10', hoy: '2027-02-10' },
-        { op: 'OP-20', cuenta: 'Ahorro', monto: 20, categoria: 'Super', fecha: '2027-03-05', hoy: '2027-03-05' },
+        {
+          op: 'OP-20',
+          cuenta: 'Ahorro',
+          monto: 10,
+          categoria: 'Super',
+          fecha: '2027-02-10',
+          hoy: '2027-02-10',
+        },
+        {
+          op: 'OP-20',
+          cuenta: 'Ahorro',
+          monto: 20,
+          categoria: 'Super',
+          fecha: '2027-03-05',
+          hoy: '2027-03-05',
+        },
       ],
       '2027-03-10',
     );
