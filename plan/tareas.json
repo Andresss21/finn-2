@@ -399,7 +399,7 @@
 
   "TA-305": { "estado": "pendiente" },
 
-  "TA-306": { "estado": "en_curso", "rama": "ta-306-archivar-1" },
+  "TA-306": { "estado": "terminada", "rama": "ta-306-archivar-1", "pr": 297 },
 
   "TA-441": { "estado": "pendiente" },
 
