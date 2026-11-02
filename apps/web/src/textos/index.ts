@@ -14,6 +14,7 @@ import { alcanceReserva, glosario } from './glosario.ts';
 import { ingreso } from './ingreso.ts';
 import { navegacion } from './navegacion.ts';
 import { plantilla } from './plantilla.ts';
+import { presupuesto } from './presupuesto.ts';
 import { primerosPasos } from './primeros-pasos.ts';
 import { registrarTipo } from './registrar-tipo.ts';
 
@@ -33,6 +34,7 @@ export {
   ingreso,
   navegacion,
   plantilla,
+  presupuesto,
   primerosPasos,
   registrarTipo,
 };
@@ -41,6 +43,7 @@ export {
 export const areas = [
   ['ajustesWebhook', ajustesWebhook],
   ['plantilla', plantilla],
+  ['presupuesto', presupuesto],
   ['primerosPasos', primerosPasos],
   ['autenticacion', autenticacion],
   ['bandeja', bandeja],

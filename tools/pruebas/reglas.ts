@@ -28,6 +28,20 @@ export const REF =
 export const PATRON_OP = /^packages\/aplicacion\/src\/operaciones\/(?:.*\/)?OP-(\d{2})-[^/]*\.ts$/;
 export const PATRON_CONSULTA = /^packages\/aplicacion\/src\/consultas\/([^/]+)\.ts$/;
 
+// REN de tiempos (07 §6.6): corren en el nocturno. Lista de permitidos: una REN de bytes nueva queda exigida
+const REN_DE_TIEMPOS =
+  /^(apps\/web\/e2e\/rendimiento\/(tiempos|[^/]+-tiempo)\.e2e\.ts|packages\/dominio\/bench\/[^/]+\.bench\.ts|packages\/db\/test\/carga-volumen\.int\.test\.ts)$/;
+
+/** M15, CH-70: una REN de tiempos omitida o sin resultado queda bajo el aviso del nocturno; si corrió y falló, bloquea. */
+function exentaEnCierre(p: Prueba, resultados: NonNullable<Entradas['resultados']>): boolean {
+  const estado = resultados[p.id];
+  return (
+    p.nivel === 'REN' &&
+    REN_DE_TIEMPOS.test(p.archivo) &&
+    (estado === undefined || estado === 'omitida')
+  );
+}
+
 export function globARegex(g: string): RegExp {
   const re = g
     .replace(/[.+^${}()|[\]\\]/g, '\\$&')
@@ -169,7 +183,7 @@ export function cobertura(e: Entradas, lista: Prueba[], ids: Set<string>) {
     for (const p of lista.filter((x) => x.refs.some((r) => cas.has(r))))
       if (enCuarentena.has(p.id))
         errores.push(`M15 ${f.ft} está terminada y ${p.id} está en cuarentena`);
-      else if (e.resultados && e.resultados[p.id] !== 'pasada')
+      else if (e.resultados && e.resultados[p.id] !== 'pasada' && !exentaEnCierre(p, e.resultados))
         errores.push(
           `M15 ${f.ft} está terminada y ${p.id} no pasó en esta corrida (${e.resultados[p.id] ?? 'sin resultado'})`,
         );
