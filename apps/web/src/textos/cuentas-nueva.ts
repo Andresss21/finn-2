@@ -65,6 +65,4 @@ export const cuentasNueva = {
     'AV-07': `La deuda de esta tarjeta queda como «${glosario.teFaltaReservar}».`,
   } as Readonly<Record<string, string>>,
   listo: 'Cuenta creada',
-  verCuentas: 'Ver mis cuentas',
-  otraCuenta: 'Crear otra cuenta',
 } as const;

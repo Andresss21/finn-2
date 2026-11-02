@@ -39,6 +39,25 @@ export const cuentas = {
     tarjetas: 'Tarjetas',
     prestamos: 'Préstamos',
   },
+  pantalla: {
+    titulo: 'Cuentas',
+    nuevaCuenta: 'Nueva cuenta',
+    ordenar: 'Ordenar',
+    verDetalle: (nombre: string) => `Ver detalle de ${nombre}`,
+    pagar: (nombre: string) => `Pagar ${nombre}`,
+    grupos: {
+      tarjetas: 'Tarjetas',
+      efectivo: 'Efectivo',
+      prestamos: 'Préstamos',
+      inversiones: 'Inversiones',
+      archivadas: 'Archivadas',
+    },
+    mostrarArchivadas: 'Mostrar archivadas',
+    ocultarArchivadas: 'Ocultar archivadas',
+    vacioTitulo: 'Agregá tu primera cuenta',
+    vacioTexto: 'Acá vas a ver dónde está tu dinero y cuánto debés.',
+    vacioAccion: 'Crear una cuenta',
+  },
   bandeja: {
     estados: {
       listo: 'Listo para aprobar',

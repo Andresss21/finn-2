@@ -4,8 +4,10 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarHidratacion } from '../../ayudas/esperas.ts';
+import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { cuentasNueva as t } from '../../../src/textos/cuentas-nueva.ts';
+import { glosario } from '../../../src/textos/glosario.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
 
@@ -32,6 +34,8 @@ async function abrir(page: Page, ruta = RUTA): Promise<void> {
 
 const campo = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exact: true });
 const crear = (page: Page) => page.getByRole('button', { name: t.guardar });
+/** Al terminar, el flujo se cierra a Cuentas (`cerrarFlujo()`, 05 §1.4): la cuenta nueva ya está ahí. */
+const alTerminar = (page: Page) => expect(page).toHaveURL(/\/cuentas$/);
 
 test.describe('PRU-E2E-CTA', () => {
   test.beforeEach(async ({ context, baseURL }) => {
@@ -46,7 +50,8 @@ test.describe('PRU-E2E-CTA', () => {
     await campo(page, t.nombre).fill('Ahorro');
     await campo(page, t.saldo.efectivo).fill('1000');
     await crear(page).click();
-    await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
+    await alTerminar(page);
+    await expect(page.locator('[data-identidad="efectivo"]').getByText('Ahorro')).toBeVisible();
 
     await abrir(page, `${RUTA}?tipo-cuenta=tarjeta`);
     await campo(page, t.nombre).fill('T');
@@ -56,8 +61,10 @@ test.describe('PRU-E2E-CTA', () => {
     await campo(page, t.diaCorte).fill('15');
     await campo(page, t.diaPago).fill('5');
     await crear(page).click();
-    await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
-    await expect(page.getByText(t.avisos['AV-07'] ?? '')).toBeVisible();
+    await alTerminar(page);
+    // AV-07: la deuda de la tarjeta queda como "te falta reservar" $300.00, a la vista en Cuentas
+    await expect(page.locator('[data-detalle-tarjeta]')).toContainText(glosario.teFaltaReservar);
+    await esperarMonto(page.locator('[data-detalle-tarjeta] [data-centavos]').first(), 30000);
   });
 
   test('PRU-E2E-CTA-102 [CA-50.2, ESC-02, AV-01] con hoy el 5 de marzo, un ahorro con apertura el 25 de enero muestra el impacto en Listo para asignar antes de confirmar', async ({
@@ -75,7 +82,7 @@ test.describe('PRU-E2E-CTA', () => {
     await expect(page.getByText(t.impactoLpa('+$500.00'))).toBeVisible();
     await expect(page.getByText(t.avisos['AV-01'] ?? '')).toBeVisible();
     await page.getByRole('button', { name: t.confirmar }).click();
-    await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
+    await alTerminar(page);
   });
 
   test('PRU-E2E-CTA-103 [CA-50.3, ESC-01] creo un préstamo en curso con capital pendiente de $5,000.00 y 10 cuotas pagadas', async ({
@@ -91,7 +98,7 @@ test.describe('PRU-E2E-CTA', () => {
     await campo(page, t.plazoCuotas).fill('36');
     await campo(page, t.cuotasPagadas).fill('10');
     await crear(page).click();
-    await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
+    await alTerminar(page);
   });
 
   test('PRU-E2E-CTA-104 [CA-50.4] el formulario avisa antes de enviar que "visa oro" ya se usa y el servidor la rechaza', async ({
@@ -107,7 +114,7 @@ test.describe('PRU-E2E-CTA', () => {
     await campo(page, t.diaPago).fill('5');
     await crear(page).click();
     await expect(page.getByText('Ya existe visa oro en Pagos de tarjeta.')).toBeVisible();
-    await expect(page.getByRole('heading', { name: t.listo })).toHaveCount(0);
+    await expect(page).toHaveURL(/\/cuentas\/nueva(\?|$)/);
   });
 
   test('PRU-E2E-CTA-105 [CA-50.5, CB-14] una segunda cuenta del BAC terminada en 4821 se rechaza y una de Banco Agrícola con 4821 se acepta', async ({
@@ -126,6 +133,6 @@ test.describe('PRU-E2E-CTA', () => {
 
     await page.getByRole('radio', { name: 'Banco Agrícola' }).click();
     await crear(page).click();
-    await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
+    await alTerminar(page);
   });
 });
