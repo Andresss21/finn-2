@@ -1,4 +1,4 @@
-// FT-19 Archivar categorías (06 FT-19; 05 §2.3; 07 §17: un flujo es una E2E). Cada
+// FT-19 Archivar y desarchivar categorías, y sacar el dinero de una archivada (06 FT-19; 05 §2.3; 07 §17: un flujo es una E2E). Cada
 // prueba parte de una base sembrada con las operaciones reales de ESC-44 (01 §8, DP-17) y del reloj del servidor fijo (DP-04), y
 // recorre el flujo como la persona. Los números los pone el motor: la prueba solo comprueba que el flujo los dibuja y los envía
 // (PF-3). Lo que completan otras fichas (DT-27) está en `pruebas/pendientes-e2e.json`.
@@ -37,6 +37,19 @@ const ESC44_PASO0: Op[] = [
     primeraFecha: '2027-03-10',
   },
 ];
+const ARCHIVAR_GIMNASIO: Op = {
+  op: 'OP-09',
+  categoria: 'Gimnasio',
+  destino: 'LPA',
+  devolverFuturas: true,
+  desactivar: ['gimnasio'],
+};
+// Paso 2: la devolución de $25.00 vinculada a la compra del 2 de febrero deja $25.00 en la archivada.
+const ESC44_PASO2: Op[] = [
+  ...ESC44_PASO0,
+  ARCHIVAR_GIMNASIO,
+  { op: 'OP-33', compra: 'gimnasio', monto: 25 },
+];
 
 async function sembrarOps(estadoInicial: Op[]): Promise<void> {
   fijarRelojServidor(`${HOY}T10:00:00-06:00`);
@@ -59,6 +72,7 @@ async function abrir(page: Page, ruta: string): Promise<void> {
 const fila = (page: Page, nombre: string) =>
   page.locator('[data-fila-categoria]').filter({ has: page.getByText(nombre, { exact: true }) });
 const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').first();
+const archivadas = (page: Page) => page.locator('[data-seccion="archivadas-con-dinero"]');
 
 test.describe('PRU-E2E-CATEG', () => {
   test.beforeEach(async ({ context, baseURL }) => {
@@ -89,6 +103,54 @@ test.describe('PRU-E2E-CATEG', () => {
     await abrir(page, '/presupuesto');
     await esperarMonto(lpa(page), 67000);
     await expect(fila(page, 'Gimnasio')).toHaveCount(0);
-    await expect(page.locator('[data-seccion="archivadas-con-dinero"]')).toHaveCount(0);
+    await expect(archivadas(page)).toHaveCount(0);
+  });
+
+  test('PRU-E2E-CATEG-108 [CA-19.4, ESC-44, AV-14] tocar la propuesta de AV-14 sube Listo para asignar de $670.00 a $695.00 y la sección de archivadas con dinero desaparece', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC44_PASO2);
+    await abrir(page, '/presupuesto');
+    await esperarMonto(lpa(page), 67000);
+    await esperarMonto(archivadas(page).locator('[data-centavos]').first(), 2500);
+    await archivadas(page)
+      .getByRole('button', { name: 'Sacar $25.00 a Listo para asignar' })
+      .click();
+    await esperarMonto(lpa(page), 69500);
+    await expect(archivadas(page)).toHaveCount(0);
+  });
+
+  test('PRU-E2E-CATEG-109 [AV-14, ESC-44] sacar parte del dinero de una archivada con el flujo corto lo deja en la categoría de destino y el resto sigue en AV-14', async ({
+    page,
+  }) => {
+    await sembrarOps([{ op: 'OP-07', categoria: 'Salidas' }, ...ESC44_PASO2]);
+    await abrir(page, '/presupuesto');
+    await archivadas(page).getByRole('link', { name: 'Sacar el dinero de Gimnasio' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page
+      .getByRole('radiogroup', { name: 'Poner en' })
+      .getByRole('radio', { name: /^Salidas/ })
+      .click();
+    await page.getByLabel(/Monto a sacar/).fill('10');
+    await page.getByRole('button', { name: 'Sacar', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/presupuesto$/);
+    await esperarContenido(page);
+    await esperarMonto(fila(page, 'Salidas').locator('[data-centavos]').first(), 1000);
+    await esperarMonto(archivadas(page).locator('[data-centavos]').first(), 1500);
+    await esperarMonto(lpa(page), 67000);
+  });
+
+  test('PRU-E2E-CATEG-110 [CA-19.6, ESC-44] una archivada aparece en el período cerrado en que se usó, con su nombre y sus números', async ({
+    page,
+  }) => {
+    await sembrarOps([...ESC44_PASO0, ARCHIVAR_GIMNASIO]);
+    await abrir(page, '/presupuesto?periodo=2027-01-21');
+    await expect(fila(page, 'Gimnasio')).toHaveCount(1);
+    // Disponible, Asignado y Gastado, en ese orden (05 §10.8)
+    await esperarMonto(fila(page, 'Gimnasio').locator('[data-centavos]').nth(1), 7000);
+    await esperarMonto(fila(page, 'Gimnasio').locator('[data-centavos]').nth(2), 3000);
+    await abrir(page, '/presupuesto');
+    await expect(fila(page, 'Gimnasio')).toHaveCount(0);
   });
 });

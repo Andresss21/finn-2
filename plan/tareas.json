@@ -401,7 +401,7 @@
 
   "TA-306": { "estado": "terminada", "rama": "ta-306-archivar-1", "pr": 297 },
 
-  "TA-441": { "estado": "pendiente" },
+  "TA-441": { "estado": "terminada", "rama": "ta-441-sacar", "pr": 299 },
 
   "TA-307": { "estado": "terminada", "rama": "ta-307-ingreso-transferencia", "pr": 253 },
 
