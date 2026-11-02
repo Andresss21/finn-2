@@ -5,6 +5,7 @@ import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { RecordatorioPrimerosPasos } from './recordatorio-primeros-pasos';
 import { consultar } from '../../../servidor/consultar';
 import { depsDeConsulta } from '../../../servidor/consultas';
+import { ajustesExportar } from '../../../textos/ajustes-exportar';
 import { ajustesWebhook } from '../../../textos/ajustes-webhook';
 import { navegacion } from '../../../textos/navegacion';
 
@@ -21,6 +22,12 @@ export default async function PaginaAjustes() {
         className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
       >
         {ajustesWebhook.titulo}
+      </EnlaceFinn>
+      <EnlaceFinn
+        href="/ajustes/exportar"
+        className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
+      >
+        {ajustesExportar.titulo}
       </EnlaceFinn>
     </main>
   );

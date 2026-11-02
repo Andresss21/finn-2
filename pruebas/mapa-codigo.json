@@ -100,6 +100,8 @@
   { "patron": "apps/web/src/app/api/tareas/**", "fts": [] },
   { "patron": "apps/web/src/app/api/respaldo/**", "fts": ["FT-76"] },
   { "patron": "apps/web/src/app/api/exportar/**", "fts": ["FT-75"] },
+  { "patron": "apps/web/src/app/(finn)/ajustes/exportar/**", "fts": ["FT-75"] },
+  { "patron": "apps/web/src/flujos/ajustes-exportar/**", "fts": ["FT-75"] },
   { "patron": "apps/web/src/app/api/notificaciones/**", "fts": ["FT-70"] },
   { "patron": "apps/web/vercel.json", "fts": [] },
   { "patron": "packages/aplicacion/src/operaciones/marco.ts", "fts": "marco" },
