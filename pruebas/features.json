@@ -10,6 +10,7 @@
   "FT-11": "terminada",
   "FT-15": "terminada",
   "FT-18": "terminada",
+  "FT-19": "terminada",
   "FT-22": "terminada",
   "FT-23": "terminada",
   "FT-50": "terminada",
@@ -25,5 +26,9 @@
   "CA-34.9": "pendiente_e2e",
   "CA-34.10": "pendiente_e2e",
   "CA-52.2": "pendiente_e2e",
-  "CA-54.5": "pendiente_e2e"
+  "CA-54.5": "pendiente_e2e",
+  "CA-19.1": "pendiente_e2e",
+  "CA-19.2": "pendiente_e2e",
+  "CA-19.3": "pendiente_e2e",
+  "CA-19.5": "pendiente_e2e"
 }
