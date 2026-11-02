@@ -1,0 +1,70 @@
+// Textos y contenido de la plantilla de categorías (FT-04; 06 §3.9; 05 §12): los 11 grupos y 36 categorías de 3.9.2, sin "Pagos de
+// tarjeta" (03 §9.3). Los rechazos del servidor llegan compuestos en `mensaje`.
+export const plantilla = {
+  titulo: 'Lista sugerida de categorías',
+  descripcion: 'Quitá lo que no uses, renombrá y agregá. Nada se guarda hasta que toques crear.',
+  grupos: [
+    {
+      nombre: 'Vivienda',
+      categorias: [
+        'Alquiler o cuota de vivienda',
+        'Energía eléctrica',
+        'Agua',
+        'Internet y teléfono',
+        'Gas',
+        'Mantenimiento del hogar',
+      ],
+    },
+    {
+      nombre: 'Vida diaria',
+      categorias: [
+        'Supermercado',
+        'Mercado y tienda',
+        'Farmacia',
+        'Cuidado personal',
+        'Ropa y calzado',
+      ],
+    },
+    {
+      nombre: 'Transporte',
+      categorias: ['Gasolina', 'Transporte y taxis', 'Parqueo', 'Mantenimiento del vehículo'],
+    },
+    { nombre: 'Comida fuera', categorias: ['Restaurantes', 'Cafés y antojos'] },
+    { nombre: 'Salud', categorias: ['Consultas y exámenes', 'Seguro médico'] },
+    { nombre: 'Suscripciones', categorias: ['Streaming', 'Apps y servicios digitales'] },
+    {
+      nombre: 'Familia y compromisos',
+      categorias: ['Apoyo a la familia', 'Regalos', 'Donaciones', 'Mascota'],
+    },
+    { nombre: 'Educación', categorias: ['Colegiatura', 'Cursos y libros'] },
+    {
+      nombre: 'Entretenimiento',
+      categorias: ['Salidas', 'Deporte y gimnasio', 'Pasatiempos'],
+    },
+    {
+      nombre: 'Finanzas',
+      categorias: ['Intereses y comisiones', 'Cuota de préstamo', 'Aporte a inversión'],
+    },
+    { nombre: 'Ahorro', categorias: ['Fondo de emergencia', 'Gastos anuales', 'Viaje'] },
+  ],
+  nombreGrupo: (nombre: string) => `Nombre del grupo ${nombre}`,
+  grupoNuevo: 'nuevo',
+  categoriaNueva: 'nueva',
+  nombreCategoria: (nombre: string) => `Nombre de la categoría ${nombre}`,
+  quitar: 'Quitar',
+  quitarGrupo: (nombre: string) => `Quitar el grupo ${nombre}`,
+  quitarCategoria: (nombre: string) => `Quitar la categoría ${nombre}`,
+  agregar: 'Agregar categoría',
+  agregarCategoria: (grupo: string) => `Agregar categoría a ${grupo}`,
+  agregarGrupo: 'Agregar grupo',
+  crear: (n: number) => `Crear ${n} ${n === 1 ? 'categoría' : 'categorías'}`,
+  elegirUna: 'Elegí al menos una categoría.',
+  creando: (k: number, n: number) => `Creando tu plantilla: ${k} de ${n}…`,
+  seguir: (k: number, n: number) => `Seguir creando la plantilla (${k} de ${n} creadas)`,
+  seInterrumpio: 'Se interrumpió la creación. Lo que ya se creó no se repite.',
+  sinConexion: 'No se pudo seguir. Revisá tu conexión y volvé a intentar.',
+  creadas: (n: number) => `${n} creadas.`,
+  noSeCrearon: (m: number) => `${m} no se crearon:`,
+  noSeCreo: (nombre: string, mensaje: string) => `${nombre}: ${mensaje}`,
+  verPresupuesto: 'Ir al presupuesto',
+} as const;

@@ -56,7 +56,8 @@ export function fichasPorPiezas(archivo: string, ps: Piezas[]): string[] {
   return cand.filter((c) => c.largo === mayor).map((c) => c.ft);
 }
 
-/** `terminadas`: las fichas que el PR pasa a `terminada`; corren sus suites completas (07 §13.2, paso 4). */
+/** `terminadas`: las fichas que el PR pasa a `terminada`. Con alguna corre `cierre`, y M15 exige el resultado de todas
+ * las fichas terminadas: la E2E corre completa (07 §13.2, paso 4; CH-70). */
 export function afectadas(
   e: Entradas,
   r: Resultado,
@@ -65,7 +66,7 @@ export function afectadas(
 ) {
   const ps = piezas(e.d06);
   const fts = new Set<string>(terminadas);
-  let todo = false;
+  let todo = terminadas.length > 0;
   for (const f of cambiados) {
     const deMapa = e.mapa.filter((m) => globARegex(m.patron).test(f));
     if (deMapa.some((m) => m.fts === 'marco')) todo = true;
