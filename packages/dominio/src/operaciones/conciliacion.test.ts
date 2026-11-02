@@ -485,4 +485,36 @@ describe('PRU-DOM-CONC-101: conciliación y verificar saldo (01 §5.8; 04 §3.8,
       codigo: 'cuenta_tipo_no_valido',
     });
   });
+
+  it('PRU-DOM-CONC-103 [CA-44.4, INV-14] OP-53: marcar una transacción con fecha posterior a la verificada se rechaza con transaccion_fuera_de_verificacion y no registra nada', () => {
+    const posterior = hechos(H0, gasto('P', 'T', 5, '16', 9));
+    const r = en(posterior, verificar('T', 75, { ids: [id('P')] }));
+    expect(primero(r)).toEqual({
+      codigo: 'transaccion_fuera_de_verificacion',
+      datos: { transaccionId: 'P' },
+    });
+    // Sin la posterior, la misma verificación se registra con la elegida.
+    const sin = en(posterior, verificar('T', 75, { ids: [id('A')] }));
+    expect(tabla(sin, 'conciliaciones')).toHaveLength(1);
+    expect(altas(sin)).toEqual([]);
+  });
+
+  it('PRU-DOM-CONC-104 [CA-44.6, AV-16] OP-53: cambiar el monto de una transacción conciliada por verificación registra un cambio posterior y la vuelve a confirmada, igual que con un estado de cuenta (P12)', () => {
+    const k1 = exito(en(H0, verificar('T', 75, { ids: [id('A'), id('B')] }))).hechosNuevos;
+    expect(k1.transacciones.find((t) => t.id === 'A')?.estadoBancario).toBe('conciliada');
+    const editar = {
+      operacion: 'OP-28',
+      transaccionId: id('A'),
+      instante: INSTANTE,
+      total: c(45),
+    };
+    const r = en(k1, editar);
+    expect(exito(r).avisos.map((a) => a.codigo)).toContain('AV-16');
+    expect(tabla(r, 'cambios_posteriores')).toHaveLength(1);
+    const k2 = exito(r).hechosNuevos;
+    expect(k2.transacciones.find((t) => t.id === 'A')?.estadoBancario).toBe('confirmada');
+    const fila = k2.conciliaciones[0] as Hechos['conciliaciones'][number];
+    expect(fila.modo).toBe('saldo');
+    expect(diferenciaActual(calcular(k2, HOY), fila)).toBe(c(7)); // −75 − (−82)
+  });
 });

@@ -27,6 +27,7 @@ import { presupuestoMover } from './presupuesto-mover.ts';
 import { primerosPasos } from './primeros-pasos.ts';
 import { registrarGasto } from './registrar-gasto.ts';
 import { registrarTipo } from './registrar-tipo.ts';
+import { verificarSaldo } from './verificar-saldo.ts';
 
 export {
   ajustesExportar,
@@ -57,6 +58,7 @@ export {
   primerosPasos,
   registrarGasto,
   registrarTipo,
+  verificarSaldo,
 };
 
 /** Áreas registradas, en un arreglo para que una prueba detecte nombres repetidos. */
@@ -89,4 +91,5 @@ export const areas = [
   ['navegacion', navegacion],
   ['registrarGasto', registrarGasto],
   ['registrarTipo', registrarTipo],
+  ['verificarSaldo', verificarSaldo],
 ] as const;
