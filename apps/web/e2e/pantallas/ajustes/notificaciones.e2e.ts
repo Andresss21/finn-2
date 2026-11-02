@@ -7,7 +7,7 @@ import { esperarHidratacion } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { notificaciones as t } from '../../../src/textos/notificaciones.ts';
 import type { Escenario } from '../../../../../packages/dominio/escenarios/tipos.ts';
-import type { Page } from '@playwright/test';
+import type { Page, Request } from '@playwright/test';
 
 const IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
@@ -102,14 +102,20 @@ test.describe('PRU-E2E-NOTIF', () => {
     const AGENTE = 'FinnE2E-NOTIF-101';
     test.use({ userAgent: AGENTE });
 
-    test('PRU-E2E-NOTIF-101 [CA-06.2, CA-06.6] Ajustes no pide el permiso al abrir; al activar aparece el dispositivo en Ajustes y "Quitar" lo borra y anula la suscripción local', async ({
+    test('PRU-E2E-NOTIF-101 [CA-06.1, CA-06.2, CA-06.6] Inicio no pide el permiso; al activar desde la tarjeta aparece el dispositivo en Ajustes y "Quitar" lo borra y anula la suscripción local', async ({
       page,
     }) => {
       await simular(page, 'default', 'https://push.example.test/send/e2e-notif-101-0123456789');
-      await abrir(page, '/ajustes/notificaciones');
+      await abrir(page, '/');
+      const activar = page.getByRole('button', { name: t.activar, exact: true });
+      await expect(page.getByRole('heading', { name: t.tarjetaTitulo })).toBeVisible();
       expect(await contador(page, 'pedidos')).toBe(0);
-      await page.getByRole('button', { name: t.activar, exact: true }).click();
-      await expect.poll(() => contador(page, 'pedidos')).toBe(1);
+
+      await activar.click();
+      await expect(page.getByRole('heading', { name: t.tarjetaTitulo })).toHaveCount(0);
+      expect(await contador(page, 'pedidos')).toBe(1);
+
+      await abrir(page, '/ajustes/notificaciones');
       await expect(page.getByText(t.activadasAqui)).toBeVisible();
       await expect(fila(page, AGENTE)).toContainText(t.esteDispositivo);
 
@@ -118,6 +124,31 @@ test.describe('PRU-E2E-NOTIF', () => {
         .click();
       await expect(fila(page, AGENTE)).toHaveCount(0);
       await expect.poll(() => contador(page, 'anuladas')).toBe(1);
+    });
+  });
+
+  test.describe('permiso concedido', () => {
+    test.use({ userAgent: 'FinnE2E-NOTIF-102' });
+
+    test('PRU-E2E-NOTIF-102 [CA-06.3] con el permiso concedido la app renueva la suscripción sin preguntar, una sola vez por pestaña', async ({
+      page,
+    }) => {
+      await simular(page, 'granted', 'https://push.example.test/send/e2e-notif-102-0123456789');
+      // OPT-02 es la única Server Action que lleva las claves de la suscripción
+      const esOpt02 = (r: Request): boolean =>
+        r.method() === 'POST' && r.postData()?.includes('clave-p256dh') === true;
+      const acciones: string[] = [];
+      page.on('request', (r) => {
+        if (esOpt02(r)) acciones.push(r.url());
+      });
+      const respondida = page.waitForResponse((r) => esOpt02(r.request()));
+      await abrir(page, '/');
+      await respondida;
+      await page.reload();
+      await esperarHidratacion(page);
+      await abrir(page, '/ajustes');
+      expect(acciones).toHaveLength(1);
+      expect(await contador(page, 'pedidos')).toBe(0);
     });
   });
 

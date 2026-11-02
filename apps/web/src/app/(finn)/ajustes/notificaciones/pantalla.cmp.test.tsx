@@ -5,6 +5,8 @@ import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../../globals.css';
+import { SuscripcionPush } from '../../../../componentes/marco/suscripcion-push';
+import { TarjetaActivarNotificaciones } from '../../../../componentes/marco/tarjeta-notificaciones';
 import { endpointCorto } from '../../../../formularios/endpoint-corto';
 import { notificaciones as t } from '../../../../textos/notificaciones';
 import { PanelNotificaciones, type DispositivoPush } from './panel';
@@ -96,6 +98,53 @@ const tocar = async (b: HTMLButtonElement | undefined): Promise<void> => {
 const ok = () => Promise.resolve({ ok: true });
 
 describe('PRU-CMP-NOTIF', () => {
+  it('PRU-CMP-NOTIF-101 [CA-06.1] con el permiso sin decidir la tarjeta se ve, no pide el permiso y se descarta', async () => {
+    const { pedir } = simularNavegador('default');
+    const nodo = await montar(<TarjetaActivarNotificaciones registrar={ok} />);
+    expect(nodo.querySelector('h2')?.textContent).toBe(t.tarjetaTitulo);
+    expect(pedir).not.toHaveBeenCalled();
+
+    await tocar(boton(nodo, t.descartar));
+    expect(nodo.querySelector('h2')).toBeNull();
+    expect(pedir).not.toHaveBeenCalled();
+
+    const otra = await montar(<TarjetaActivarNotificaciones registrar={ok} />);
+    expect(otra.querySelector('h2')).toBeNull();
+  });
+
+  it('PRU-CMP-NOTIF-102 [CA-06.2] al aceptar se registra el endpoint del navegador con sus claves y la tarjeta desaparece', async () => {
+    const registrar = vi.fn(() => Promise.resolve({ ok: true }));
+    const { pedir, nueva } = simularNavegador('default');
+    const nodo = await montar(<TarjetaActivarNotificaciones registrar={registrar} />);
+
+    await tocar(boton(nodo, t.activar));
+    expect(pedir).toHaveBeenCalledTimes(1);
+    expect(registrar).toHaveBeenCalledTimes(1);
+    expect(registrar).toHaveBeenCalledWith({
+      endpoint: nueva.endpoint,
+      claves: { p256dh: 'clave-p256dh', auth: 'clave-auth' },
+      agente: navigator.userAgent.slice(0, 500),
+    });
+    expect(nodo.querySelector('h2')).toBeNull();
+  });
+
+  it('PRU-CMP-NOTIF-103 [CA-06.3] con el permiso concedido renueva la suscripción una sola vez por pestaña', async () => {
+    const registrar = vi.fn(() => Promise.resolve({ ok: true }));
+    const { pushManager } = simularNavegador('granted', suscripcion());
+    await montar(<SuscripcionPush registrar={registrar} />);
+    await montar(<SuscripcionPush registrar={registrar} />);
+    expect(registrar).toHaveBeenCalledTimes(1);
+    expect(pushManager.subscribe).not.toHaveBeenCalled();
+  });
+
+  it('PRU-CMP-NOTIF-104 [CA-06.3] sin permiso concedido no renueva ni pregunta nada', async () => {
+    const registrar = vi.fn(() => Promise.resolve({ ok: true }));
+    const { pedir } = simularNavegador('default');
+    await montar(<SuscripcionPush registrar={registrar} />);
+    expect(registrar).not.toHaveBeenCalled();
+    expect(pedir).not.toHaveBeenCalled();
+  });
+
   it('PRU-CMP-NOTIF-105 [CA-06.4] con el permiso denegado el panel explica cómo habilitarlo en el navegador', async () => {
     simularNavegador('denied');
     const nodo = await montar(<PanelNotificaciones dispositivos={[]} registrar={ok} quitar={ok} />);
