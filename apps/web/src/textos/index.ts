@@ -10,6 +10,7 @@ import { formularios } from './formularios.ts';
 import { alcanceReserva, glosario } from './glosario.ts';
 import { ingreso } from './ingreso.ts';
 import { navegacion } from './navegacion.ts';
+import { registrarTipo } from './registrar-tipo.ts';
 
 export {
   autenticacion,
@@ -23,6 +24,7 @@ export {
   glosario,
   ingreso,
   navegacion,
+  registrarTipo,
 };
 
 /** Áreas registradas, en un arreglo para que una prueba detecte nombres repetidos. */
@@ -38,4 +40,5 @@ export const areas = [
   ['alcanceReserva', alcanceReserva],
   ['ingreso', ingreso],
   ['navegacion', navegacion],
+  ['registrarTipo', registrarTipo],
 ] as const;
