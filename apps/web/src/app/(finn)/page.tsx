@@ -2,6 +2,8 @@
 // Mientras no exista `proxy.ts` (TA-214), la exigencia de sesión de esta página es la única barrera de `/`.
 import { inicio } from '@finn/aplicacion/consultas/inicio';
 import { redirect } from 'next/navigation';
+import { TarjetaActivarNotificaciones } from '../../componentes/marco/tarjeta-notificaciones';
+import { registrarSuscripcion } from '../../servidor/acciones/notificaciones.ts';
 import { PrimerosPasosDeInicio } from './primeros-pasos';
 import { consultar } from '../../servidor/consultar.ts';
 import { depsDeConsulta } from '../../servidor/consultas.ts';
@@ -20,6 +22,7 @@ export default async function InicioProvisional() {
   return (
     <div className="flex flex-col gap-6 px-5 py-4">
       <h1>{TITULO_INICIO_PROVISIONAL}</h1>
+      <TarjetaActivarNotificaciones registrar={registrarSuscripcion} />
       {primerosPasos === null ? null : <PrimerosPasosDeInicio pasos={primerosPasos} />}
     </div>
   );
