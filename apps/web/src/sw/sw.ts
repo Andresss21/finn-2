@@ -3,7 +3,6 @@
 // página, respuesta RSC ni `/api/*` se guarda (FE-20, ADR-13). No usa `defaultCache` (guarda datos). La versión nueva
 // espera a "Recargar" (`skipWaiting: false`, `clientsClaim: false`). El push es de la Parte D (FE-57).
 import { NetworkOnly, Serwist, type PrecacheEntry } from 'serwist';
-import { atenderPush, atenderToque } from './push';
 
 declare const self: ServiceWorkerGlobalScope & { __SW_MANIFEST: (PrecacheEntry | string)[] };
 
@@ -27,9 +26,5 @@ const serwist = new Serwist({
 self.addEventListener('message', (evento) => {
   if ((evento.data as { type?: string } | null)?.type === 'SKIP_WAITING') void self.skipWaiting();
 });
-
-// Push y toque (8.6, FE-57).
-self.addEventListener('push', atenderPush);
-self.addEventListener('notificationclick', atenderToque);
 
 serwist.addEventListeners();
