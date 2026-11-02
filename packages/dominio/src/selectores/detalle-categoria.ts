@@ -62,6 +62,7 @@ export interface DetalleCategoria {
     readonly caso: Exclude<CasoDevolucion, 'D-1'>;
   }[];
   readonly meta: {
+    readonly id: Uuid;
     readonly tipo: string;
     readonly modo?: string;
     readonly monto: Centavos;
@@ -263,6 +264,7 @@ export function detalleCategoria(
       evaluada === null || meta === undefined
         ? null
         : {
+            id: meta.id,
             tipo: meta.tipo,
             ...(meta.modo === null ? {} : { modo: meta.modo }),
             monto: meta.monto,
