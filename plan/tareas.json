@@ -371,7 +371,7 @@
 
   "TA-291": { "estado": "pendiente" },
 
-  "TA-292": { "estado": "en_curso", "rama": "ta-292-registrar-gasto" },
+  "TA-292": { "estado": "terminada", "rama": "ta-292-registrar-gasto", "pr": 268 },
 
   "TA-293": { "estado": "pendiente" },
 
