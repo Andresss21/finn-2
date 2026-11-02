@@ -63,19 +63,29 @@ test.describe('PRU-SW-NOTIF', () => {
         { etiqueta: tag, decision: accion },
       );
 
-    await enviar(
-      JSON.stringify({
-        notificacionId: ID,
-        titulo: 'SMS por revisar',
-        cuerpo: 'Tenés un SMS para confirmar.',
-        etiqueta: 'sms',
-        destino: { pantalla: 'movimiento', movimientoId: MOVIMIENTO },
-        acciones: ['confirmar', 'rechazar'],
-      }),
-    );
-    await expect.poll(async () => (await mostradas()).length).toBe(1);
-    const [n] = await mostradas();
-    expect(n).toMatchObject({
+    // En Windows el centro de notificaciones del sistema a veces cierra la notificación apenas se muestra: si no aparece, se
+    // reenvía el push (con el mismo `tag` reemplaza, nunca duplica). La condición es la notificación visible, no un tiempo.
+    const mostrar = (datos: string, tag: string) =>
+      expect
+        .poll(
+          async () => {
+            if ((await mostradas()).some((x) => x.tag === tag)) return true;
+            await enviar(datos);
+            return false;
+          },
+          { timeout: 20_000 },
+        )
+        .toBe(true);
+    const sms = JSON.stringify({
+      notificacionId: ID,
+      titulo: 'SMS por revisar',
+      cuerpo: 'Tenés un SMS para confirmar.',
+      etiqueta: 'sms',
+      destino: { pantalla: 'movimiento', movimientoId: MOVIMIENTO },
+      acciones: ['confirmar', 'rechazar'],
+    });
+    await mostrar(sms, 'sms');
+    expect((await mostradas()).find((x) => x.tag === 'sms')).toMatchObject({
       title: 'SMS por revisar',
       body: 'Tenés un SMS para confirmar.',
       tag: 'sms',
@@ -87,8 +97,7 @@ test.describe('PRU-SW-NOTIF', () => {
     });
 
     // Una carga que no se puede leer igual muestra una notificación (Chrome exige `userVisibleOnly`).
-    await enviar('esto no es json');
-    await expect.poll(async () => (await mostradas()).length).toBe(2);
+    await mostrar('esto no es json', '');
     expect((await mostradas()).find((x) => x.tag === '')).toMatchObject({
       title: 'Finn',
       body: 'Tenés una notificación nueva.',
@@ -99,11 +108,12 @@ test.describe('PRU-SW-NOTIF', () => {
       (r) =>
         r.isNavigationRequest() && r.url().includes(`/bandeja/${MOVIMIENTO}?notificacion=${ID}`),
     );
+    await mostrar(sms, 'sms');
     await tocar('sms', '');
     await navegacion;
 
     // «Confirmar» sin sesión: el Route Handler real responde 401 y el service worker abre la bandeja (04 §11.5).
-    await enviar(
+    await mostrar(
       JSON.stringify({
         notificacionId: ID,
         titulo: 'SMS por revisar',
@@ -112,10 +122,8 @@ test.describe('PRU-SW-NOTIF', () => {
         destino: { pantalla: 'movimiento', movimientoId: MOVIMIENTO },
         acciones: ['confirmar'],
       }),
+      'cierre',
     );
-    await expect
-      .poll(async () => (await mostradas()).filter((x) => x.tag === 'cierre').length)
-      .toBe(1);
     const bandeja = page.waitForRequest(
       (r) => r.isNavigationRequest() && new URL(r.url()).pathname === '/bandeja',
     );
