@@ -9,6 +9,8 @@
   "inpMs": 200,
   "ejemplosDeRuta": {
     "/pruebas/estados/[caso]": "/pruebas/estados/vacios",
+    "/presupuesto/estructura/categorias/[categoriaId]": "/presupuesto/estructura/categorias/00000000-0000-4000-8000-000000000001",
+    "/presupuesto/estructura/grupos/[grupoId]": "/presupuesto/estructura/grupos/00000000-0000-4000-8000-000000000001",
     "/registrar/[tipo]": "/registrar/ingreso"
   }
 }
