@@ -489,7 +489,7 @@
 
   "TA-434": { "estado": "pendiente" },
 
-  "TA-435": { "estado": "pendiente" },
+  "TA-435": { "estado": "en_curso", "rama": "ta-435-exportar" },
 
   "TA-436": { "estado": "pendiente" },
 
