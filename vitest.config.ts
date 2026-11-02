@@ -130,6 +130,8 @@ export default defineConfig({
             'apps/web/src/app/api/**/*.rh.test.ts',
             // PRU-SEG-ACCESO-001 (TA-218): recorre las Server Actions y las rutas reales
             'apps/web/src/servidor/**/*.int.test.ts',
+            // PRU-RH-META-101 (CH-80): `accion()` con OP-18 contra la base de prueba
+            'apps/web/src/servidor/**/*.rh.test.ts',
             // PRU-SEG-OPER-103 (TA-250): humo.sh contra su propio contenedor; el arnés no lo usa
             'tools/humo/test/**/*.test.ts',
           ],
