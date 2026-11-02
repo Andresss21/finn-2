@@ -357,7 +357,7 @@
 
   "TA-284": { "estado": "terminada", "rama": "ta-284-webhook-token", "pr": 250 },
 
-  "TA-285": { "estado": "pendiente" },
+  "TA-285": { "estado": "terminada", "rama": "ta-285-primer-uso", "pr": 260 },
 
   "TA-286": { "estado": "pendiente" },
 
