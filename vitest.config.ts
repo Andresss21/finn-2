@@ -166,6 +166,7 @@ export default defineConfig({
             'd3-shape',
             'class-variance-authority',
             'clsx',
+            'next-themes',
             'tailwind-merge',
             '@radix-ui/react-dialog',
             '@radix-ui/react-label',

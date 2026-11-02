@@ -2,6 +2,7 @@
 // su medio, lo cubierto y lo no cubierto. La cobertura va en texto: el DTO no trae proporciones para una barrita (CF-25) y
 // calcularlas violaría PF-3. Dibuja lo que trae el DTO: no suma ni calcula montos.
 import type { DetalleCategoria } from '@finn/dominio/selectores';
+import type { ReactNode } from 'react';
 import { Vacio } from '../../../../../componentes/base/vacio';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
@@ -14,10 +15,13 @@ const ENLACE =
 export function Consumos({
   consumos,
   volver,
+  nota = null,
 }: {
   readonly consumos: DetalleCategoria['consumos'];
   /** La ruta de esta pantalla, para el `?volver=` del detalle de cada transacción (05 §3.3). */
   readonly volver: string;
+  /** Un aviso entre el título y la lista (el filtro por día del calendario). */
+  readonly nota?: ReactNode;
 }) {
   return (
     <section data-seccion="consumos" className="flex flex-col gap-2">
@@ -25,6 +29,7 @@ export function Consumos({
         <span className="text-titulo-seccion">{t.titulo}</span>
         <span className="text-cuerpo-pequeno text-texto-secundario">{consumos.length}</span>
       </h2>
+      {nota}
       {consumos.length === 0 ? (
         <Vacio titulo={t.vacio} texto={t.vacioTexto} icono="cero" />
       ) : (
