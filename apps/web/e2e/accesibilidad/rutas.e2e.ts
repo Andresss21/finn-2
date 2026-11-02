@@ -7,7 +7,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { entrarAal2 } from '../ayudas/sesion.ts';
 import { revisarAccesibilidad } from '../ayudas/accesibilidad.ts';
 import { revisarReflujo, revisarTactil } from '../ayudas/tactil.ts';
-import { esperarHidratacion } from '../ayudas/esperas.ts';
+import { esperarContenido } from '../ayudas/esperas.ts';
 
 const ID = '00000000-0000-4000-8000-000000000001';
 
@@ -28,7 +28,7 @@ function rutasDeLaApp(): string[] {
 
 async function abrir(page: Page, ruta: string): Promise<void> {
   await page.goto(ruta);
-  await esperarHidratacion(page);
+  await esperarContenido(page);
 }
 
 test.describe('PRU-E2E-PWA', () => {

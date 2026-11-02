@@ -97,12 +97,7 @@ test.describe('PRU-E2E-CTA', () => {
   test('PRU-E2E-CTA-104 [CA-50.4] el formulario avisa antes de enviar que "visa oro" ya se usa y el servidor la rechaza', async ({
     page,
   }) => {
-    // La memoria del servidor se indexa por revisión y la semilla de otra prueba puede repetirla: con dos cuentas, esta base
-    // tiene una revisión que la prueba anterior no dejó en esa memoria (si no, el servidor vería sus hechos y no estos).
-    await preparar('2027-02-05', [
-      { op: 'OP-01', cuenta: 'Visa Oro', tipo: 'tarjeta', saldo: 0 },
-      { op: 'OP-01', cuenta: 'Caja', saldo: 0 },
-    ]);
+    await preparar('2027-02-05', [{ op: 'OP-01', cuenta: 'Visa Oro', tipo: 'tarjeta', saldo: 0 }]);
     await abrir(page, `${RUTA}?tipo-cuenta=tarjeta`);
     await campo(page, t.nombre).fill('visa oro');
     await expect(page.getByText(t.nombreEnUso('Visa Oro'))).toBeVisible();
