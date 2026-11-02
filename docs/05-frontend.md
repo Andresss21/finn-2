@@ -1922,9 +1922,10 @@ Cada página de `ingresar` lee `estadoAcceso()` (CP-11) en el servidor y decide 
 | AAL1, usuario no permitido (`usuarioPermitido = false`) | Cierra la sesión y muestra el formulario con el mensaje de credenciales inválidas | Ídem → `/ingresar` | Ídem → `/ingresar` |
 | AAL1 con factores verificados (`factoresVerificados` no vacío) | → `/ingresar/verificar` | Muestra el código | → `/ingresar/verificar` |
 | AAL1 sin factores verificados | → `/ingresar/inscribir` | → `/ingresar/inscribir` | Muestra la inscripción |
-| AAL2 | → `volver` | → `volver` | → `volver` |
+| AAL2 | → `volver` | → `volver` | → `volver`; con `?cierre=1`, muestra el cierre **[CH-63]** |
 
 - Todas conservan `?volver=` (saneado como en 3.6).
+- **[CH-63]** **`?cierre=1`:** solo en `/ingresar/inscribir` y solo con AAL2, la página no redirige y muestra la pantalla de cierre del primer factor (9.5, paso 4; 06 FT-02, paso 5). El componente de cliente agrega `?cierre=1` a la URL con `history.replaceState` (sin navegar) justo antes de enviar el código y lo quita si el código falla. Hace falta porque el código correcto fija las cookies de AAL2 y Next vuelve a pintar la página en el servidor: sin la marca, la tabla redirigiría a `volver` y la recomendación del factor de respaldo no se vería. No da acceso a nada: con AAL1 o sin sesión la marca se ignora y la tabla se aplica igual; en las otras dos rutas no existe. Lo usa solo el primer factor: la inscripción del respaldo (`/ajustes/seguridad/factores/nuevo`) no la agrega.
 - `proxy.ts` no redirige estas rutas (CP-14): la tabla es la única lógica.
 
 **Justificación.** Con la tabla en el servidor, cualquier URL de acceso lleva al paso correcto, también si el usuario la guardó o vuelve con "atrás". *Alternativa descartada:* decidir en el cliente después de cargar (se vería un paso equivocado antes de redirigir).
