@@ -4,6 +4,7 @@ import { ajustesWebhook } from './ajustes-webhook.ts';
 import { autenticacion } from './autenticacion.ts';
 import { bandeja } from './bandeja.ts';
 import { base } from './base.ts';
+import { cuentaDetalle } from './cuenta-detalle.ts';
 import { cuentas } from './cuentas.ts';
 import { cuentasNueva } from './cuentas-nueva.ts';
 import { dominio } from './dominio.ts';
@@ -20,6 +21,7 @@ export {
   alcanceReserva,
   bandeja,
   base,
+  cuentaDetalle,
   cuentas,
   cuentasNueva,
   dominio,
@@ -37,6 +39,7 @@ export const areas = [
   ['autenticacion', autenticacion],
   ['bandeja', bandeja],
   ['base', base],
+  ['cuentaDetalle', cuentaDetalle],
   ['cuentas', cuentas],
   ['cuentasNueva', cuentasNueva],
   ['dominio', dominio],

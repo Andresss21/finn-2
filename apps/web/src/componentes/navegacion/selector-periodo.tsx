@@ -11,8 +11,9 @@ export interface PeriodoDto {
   readonly dias: number;
   readonly estado: 'cerrado' | 'activo' | 'futuro';
   readonly transicion: boolean;
-  readonly diasTranscurridos: number;
-  readonly diasRestantes: number;
+  /** Solo el período activo los trae (04 §6.0.2): sin ellos, el texto es solo el estado. */
+  readonly diasTranscurridos?: number;
+  readonly diasRestantes?: number;
 }
 
 export interface SelectorPeriodoProps {
@@ -50,7 +51,9 @@ export function SelectorPeriodo({
   };
   const { icono, texto } = estadoVisible(periodo);
   const detalle =
-    periodo.estado === 'activo'
+    periodo.estado === 'activo' &&
+    periodo.diasTranscurridos !== undefined &&
+    periodo.diasRestantes !== undefined
       ? [
           texto,
           dominio.periodo.transcurridos(periodo.diasTranscurridos),
