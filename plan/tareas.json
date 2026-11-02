@@ -361,7 +361,7 @@
 
   "TA-286": { "estado": "pendiente" },
 
-  "TA-287": { "estado": "en_curso", "rama": "ta-287-presupuesto-periodo" },
+  "TA-287": { "estado": "terminada", "rama": "ta-287-presupuesto-periodo", "pr": 264 },
 
   "TA-288": { "estado": "pendiente" },
 
