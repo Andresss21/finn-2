@@ -71,7 +71,7 @@ const boton = (nodo: HTMLElement, nombre: string): HTMLButtonElement => {
 
 /** Deja correr las tandas, vaciando las actualizaciones de la pantalla en cada vuelta, hasta que aparezca el texto. */
 async function esperarTexto(nodo: HTMLElement, texto: string): Promise<void> {
-  for (let i = 0; i < 200 && !(nodo.textContent ?? '').includes(texto); i += 1)
+  for (let i = 0; i < 200 && !nodo.textContent.includes(texto); i += 1)
     await act(async () => {
       await Promise.resolve();
     });
