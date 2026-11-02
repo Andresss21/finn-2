@@ -359,7 +359,7 @@
 
   "TA-285": { "estado": "terminada", "rama": "ta-285-primer-uso", "pr": 260 },
 
-  "TA-286": { "estado": "en_curso", "rama": "ta-286-primer-uso-plantilla-2" },
+  "TA-286": { "estado": "terminada", "rama": "ta-286-primer-uso-plantilla-2", "pr": 261 },
 
   "TA-287": { "estado": "pendiente" },
 
