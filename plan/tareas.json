@@ -359,7 +359,7 @@
 
   "TA-285": { "estado": "terminada", "rama": "ta-285-primer-uso", "pr": 260 },
 
-  "TA-286": { "estado": "pendiente" },
+  "TA-286": { "estado": "terminada", "rama": "ta-286-primer-uso-plantilla-4", "pr": 272 },
 
   "TA-287": { "estado": "terminada", "rama": "ta-287-presupuesto-periodo", "pr": 264 },
 
@@ -531,7 +531,7 @@
 
   "TA-316": { "estado": "terminada", "rama": "ta-316-estructura-editar", "pr": 258 },
 
-  "TA-317": { "estado": "pendiente" },
+  "TA-317": { "estado": "terminada", "rama": "ta-317-acciones", "pr": 273 },
 
   "TA-318": { "estado": "pendiente" }
 }
