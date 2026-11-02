@@ -13,6 +13,7 @@
     "/presupuesto/categorias/[categoriaId]": "/presupuesto/categorias/00000000-0000-4000-8000-000000000001",
     "/presupuesto/categorias/[categoriaId]/archivar": "/presupuesto/categorias/00000000-0000-4000-8000-000000000001/archivar",
     "/presupuesto/categorias/[categoriaId]/sacar": "/presupuesto/categorias/00000000-0000-4000-8000-000000000001/sacar",
+    "/presupuesto/categorias/[categoriaId]/fusionar": "/presupuesto/categorias/00000000-0000-4000-8000-000000000001/fusionar",
     "/pruebas/estados/[caso]": "/pruebas/estados/vacios",
     "/presupuesto/asignar/[categoriaId]": "/presupuesto/asignar/00000000-0000-4000-8000-000000000001",
     "/presupuesto/estructura/categorias/[categoriaId]": "/presupuesto/estructura/categorias/00000000-0000-4000-8000-000000000001",
