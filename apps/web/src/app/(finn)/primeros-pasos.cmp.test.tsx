@@ -6,22 +6,15 @@ import '../globals.css';
 import { primerosPasos as p } from '../../textos/primeros-pasos';
 import { PrimerosPasosDeInicio } from './primeros-pasos';
 
-// `next/link` necesita `process`, que el navegador del proyecto no trae: el enlace se simula con un ancla.
-vi.mock('../../componentes/navegacion/enlace-finn', () => ({
-  EnlaceFinn: ({
-    href,
-    children,
-    className,
-  }: {
-    href: string;
-    children?: ReactNode;
-    className?: string;
-  }) => (
-    <a href={href} className={className}>
-      {children}
-    </a>
-  ),
-}));
+// `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene: se simula `next/link`, nunca
+// `enlace-finn`, que otras suites importan de verdad (`vitest list` no limpia los mocks de cada sesión del navegador).
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
+    createElement('a', { href, ...resto }, children);
+  // `next/link` es CommonJS: el módulo es la propia función, con `useLinkStatus` como propiedad.
+  return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
+});
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
