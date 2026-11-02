@@ -841,7 +841,7 @@ describe('afectadas (07 §13.6, DP-19, CH-01)', () => {
     expect(con.total).toBeGreaterThan(0);
   });
 
-  it('PRU-SEG-OPER-110 [CH-70] una ficha que pasa a terminada da el filtro de la suite completa, sin tocar la web; sin fichas que se cierran corren solo las afectadas', () => {
+  it('PRU-SEG-OPER-110 [M15] CH-70: una ficha que pasa a terminada da el filtro de la suite completa, sin tocar la web; sin fichas que se cierran corren solo las afectadas', () => {
     const cierra = afectadas(e, r, ['pruebas/features.json'], ['FT-30']);
     expect(cierra.todo).toBe(true);
     expect(cierra.grepE2E).toBeNull();

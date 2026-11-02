@@ -436,7 +436,7 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     expect(d).toMatchObject({ afecta_web: false, e2e: true, cierre: true });
   });
 
-  it('PRU-SEG-OPER-111 [CH-70] en local, una ficha que se cierra corre e2e sin tocar la web; sin fichas que se cierran, solo con afecta_web', () => {
+  it('PRU-SEG-OPER-111 [M15] CH-70: en local, una ficha que se cierra corre e2e sin tocar la web; sin fichas que se cierran, solo con afecta_web', () => {
     expect(decidir('', '', ['docs/x.md'])).toMatchObject({ e2e: false, cierre: false });
     expect(decidir('', '', ['apps/web/src/x.tsx'])).toMatchObject({ e2e: true, cierre: false });
     mkdirSync(join(cwd, 'pruebas'));
