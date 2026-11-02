@@ -363,7 +363,7 @@
 
   "TA-287": { "estado": "terminada", "rama": "ta-287-presupuesto-periodo", "pr": 264 },
 
-  "TA-288": { "estado": "pendiente" },
+  "TA-288": { "estado": "terminada", "rama": "ta-288-presupuesto-periodos-2", "pr": 269 },
 
   "TA-289": { "estado": "pendiente" },
 
@@ -413,11 +413,11 @@
 
   "TA-312": { "estado": "terminada", "rama": "ta-312-cuentas", "pr": 255 },
 
-  "TA-313": { "estado": "pendiente" },
+  "TA-313": { "estado": "terminada", "rama": "ta-313-detalle-cuenta", "pr": 266 },
 
   "TA-314": { "estado": "pendiente" },
 
-  "TA-315": { "estado": "terminada", "rama": "ta-315-pagar-cuota", "pr": 267 },
+  "TA-315": { "estado": "terminada", "rama": "ta-315-pagar-cuota-2", "pr": 267 },
 
   "TA-400": { "estado": "pendiente" },
 
@@ -529,5 +529,9 @@
 
   "TA-553": { "estado": "terminada", "rama": "ta-553-bandeja-graficos", "pr": 241 },
 
-  "TA-316": { "estado": "terminada", "rama": "ta-316-estructura-editar", "pr": 258 }
+  "TA-316": { "estado": "terminada", "rama": "ta-316-estructura-editar", "pr": 258 },
+
+  "TA-317": { "estado": "pendiente" },
+
+  "TA-318": { "estado": "pendiente" }
 }

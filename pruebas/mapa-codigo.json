@@ -1,126 +1,478 @@
 [
-  { "patron": "apps/web/src/app/layout.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/app/globals.css", "fts": "marco" },
-  { "patron": "apps/web/src/app/tokens.css", "fts": "marco" },
-  { "patron": "apps/web/src/app/manifest.ts", "fts": "marco" },
-  { "patron": "apps/web/src/componentes/marco/*.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/componentes/navegacion/*", "fts": "marco" },
-  { "patron": "apps/web/src/app/(finn)/pruebas/**", "fts": "marco" },
-  { "patron": "apps/web/src/app/(finn)/layout.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/app/(finn)/@superpuesto/**", "fts": "marco" },
-  { "patron": "apps/web/src/app/(finn)/page.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/app/ingresar/layout.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/app/sin-conexion/layout.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/app/sin-conexion/page.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/app/serwist/**", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/accion.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/consultar.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/parametros.ts", "fts": "marco" },
-  { "patron": "apps/web/src/app/(finn)/error.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/app/(finn)/not-found.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/app/(finn)/loading.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/sesion.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/eco*.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/acciones/eco.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/acciones/indice.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/lectura.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/lecturas/**", "fts": "marco" },
-  { "patron": "apps/web/src/cliente/**", "fts": "marco" },
-  { "patron": "apps/web/src/navegacion/**", "fts": "marco" },
-  { "patron": "apps/web/src/textos/**", "fts": "marco" },
-  { "patron": "apps/web/src/componentes/base/icono.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/componentes/base/iconos/**", "fts": "marco" },
-  { "patron": "apps/web/src/componentes/base/*.tsx", "fts": "marco" },
-  { "patron": "apps/web/src/components/ui/**", "fts": "marco" },
-  { "patron": "apps/web/src/formato/**", "fts": "marco" },
-  { "patron": "apps/web/src/formularios/**", "fts": "marco" },
-  { "patron": "apps/web/src/componentes/formularios/**", "fts": "marco" },
-  { "patron": "apps/web/src/componentes/dominio/**", "fts": "marco" },
-  { "patron": "apps/web/src/componentes/graficos/**", "fts": "marco" },
-  { "patron": "apps/web/src/sw/**", "fts": "marco" },
-  { "patron": "apps/web/src/instrumentation.ts", "fts": "marco" },
-  { "patron": "apps/web/src/app/api/pruebas/**", "fts": "marco" },
-  { "patron": "apps/web/src/middleware.ts", "fts": "marco" },
-  { "patron": "apps/web/src/proxy*", "fts": "marco" },
-  { "patron": "apps/web/next.config.*", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/index.ts", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/contratos/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/errores/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/errores-de-base*", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/config/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/tiempo/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/reloj-prueba*", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/autenticacion/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/ids.ts", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/memoria.ts", "fts": "marco" },
-  { "patron": "apps/web/src/app/ingresar/page.tsx", "fts": ["FT-01"] },
-  { "patron": "apps/web/src/app/ingresar/verificar/**", "fts": ["FT-01"] },
-  { "patron": "apps/web/src/app/ingresar/inscribir/**", "fts": ["FT-02"] },
-  { "patron": "apps/web/src/app/(finn)/ajustes/seguridad/factores/nuevo/**", "fts": ["FT-02"] },
-  { "patron": "apps/web/src/flujos/ajustes-seguridad-factores-nuevo/**", "fts": ["FT-02"] },
-  { "patron": "apps/web/src/app/ingresar/acceso.ts", "fts": ["FT-01", "FT-02"] },
-  { "patron": "apps/web/src/app/ingresar/codigo.ts", "fts": ["FT-01"] },
-  { "patron": "apps/web/src/app/ingresar/formulario-ingresar.tsx", "fts": ["FT-01"] },
-  { "patron": "apps/web/src/servidor/acciones/autenticacion.ts", "fts": ["FT-01"] },
-  { "patron": "apps/web/src/servidor/operaciones.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/consultas.ts", "fts": "marco" },
-  { "patron": "apps/web/src/servidor/acciones/cuentas.ts", "fts": ["FT-50"] },
-  { "patron": "apps/web/src/app/(finn)/cuentas/nueva/**", "fts": ["FT-50"] },
-  { "patron": "apps/web/src/flujos/cuentas-nueva/**", "fts": ["FT-50"] },
-  { "patron": "apps/web/src/servidor/acciones/categorias.ts", "fts": ["FT-18", "FT-04"] },
-  { "patron": "apps/web/src/app/(finn)/presupuesto/estructura/**", "fts": ["FT-18"] },
+  {
+    "patron": "apps/web/src/app/layout.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/globals.css",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/tokens.css",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/manifest.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/componentes/marco/*.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/componentes/navegacion/*",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/pruebas/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/layout.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/@superpuesto/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/page.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/ingresar/layout.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/sin-conexion/layout.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/sin-conexion/page.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/serwist/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/accion.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/consultar.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/parametros.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/error.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/not-found.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/loading.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/sesion.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/eco*.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/acciones/eco.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/acciones/indice.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/lectura.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/lecturas/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/cliente/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/navegacion/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/textos/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/componentes/base/icono.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/componentes/base/iconos/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/componentes/base/*.tsx",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/components/ui/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/formato/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/formularios/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/componentes/formularios/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/componentes/dominio/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/componentes/graficos/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/sw/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/instrumentation.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/api/pruebas/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/middleware.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/proxy*",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/next.config.*",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/index.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/contratos/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/errores/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/errores-de-base*",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/config/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/tiempo/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/reloj-prueba*",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/autenticacion/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/ids.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/memoria.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/app/ingresar/page.tsx",
+    "fts": ["FT-01"]
+  },
+  {
+    "patron": "apps/web/src/app/ingresar/verificar/**",
+    "fts": ["FT-01"]
+  },
+  {
+    "patron": "apps/web/src/app/ingresar/inscribir/**",
+    "fts": ["FT-02"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/ajustes/seguridad/factores/nuevo/**",
+    "fts": ["FT-02"]
+  },
+  {
+    "patron": "apps/web/src/flujos/ajustes-seguridad-factores-nuevo/**",
+    "fts": ["FT-02"]
+  },
+  {
+    "patron": "apps/web/src/app/ingresar/acceso.ts",
+    "fts": ["FT-01", "FT-02"]
+  },
+  {
+    "patron": "apps/web/src/app/ingresar/codigo.ts",
+    "fts": ["FT-01"]
+  },
+  {
+    "patron": "apps/web/src/app/ingresar/formulario-ingresar.tsx",
+    "fts": ["FT-01"]
+  },
+  {
+    "patron": "apps/web/src/servidor/acciones/autenticacion.ts",
+    "fts": ["FT-01"]
+  },
+  {
+    "patron": "apps/web/src/servidor/operaciones.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/consultas.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "apps/web/src/servidor/acciones/cuentas.ts",
+    "fts": ["FT-50"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/cuentas/nueva/**",
+    "fts": ["FT-50"]
+  },
+  {
+    "patron": "apps/web/src/flujos/cuentas-nueva/**",
+    "fts": ["FT-50"]
+  },
+  {
+    "patron": "apps/web/src/servidor/acciones/categorias.ts",
+    "fts": ["FT-18", "FT-04"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/presupuesto/estructura/**",
+    "fts": ["FT-18"]
+  },
   {
     "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/estructura/**",
     "fts": ["FT-18"]
   },
-  { "patron": "apps/web/src/flujos/presupuesto-estructura/**", "fts": ["FT-18"] },
-  { "patron": "apps/web/src/app/(finn)/cuentas/*.tsx", "fts": ["FT-51"] },
+  {
+    "patron": "apps/web/src/flujos/presupuesto-estructura/**",
+    "fts": ["FT-18"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/cuentas/*.tsx",
+    "fts": ["FT-51"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/*.tsx",
+    "fts": ["FT-52"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/presupuesto/*.tsx",
+    "fts": ["FT-09"]
+  },
   {
     "patron": "apps/web/src/servidor/acciones/transacciones.ts",
     "fts": ["FT-22", "FT-23", "FT-54"]
   },
-  { "patron": "apps/web/src/app/(finn)/registrar/[tipo]/**", "fts": ["FT-22", "FT-23"] },
-  { "patron": "apps/web/src/flujos/registrar-tipo/**", "fts": ["FT-22", "FT-23"] },
-  { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/cuota/**", "fts": ["FT-54"] },
-  { "patron": "apps/web/src/flujos/cuentas-cuota/**", "fts": ["FT-54"] },
-  { "patron": "apps/web/src/app/(finn)/presupuesto/*.tsx", "fts": ["FT-09"] },
-  { "patron": "apps/web/src/flujos/presupuesto-estructura-plantilla/**", "fts": ["FT-04"] },
-  { "patron": "apps/web/src/app/(finn)/primeros-pasos.tsx", "fts": ["FT-04"] },
-  { "patron": "apps/web/src/app/(finn)/presupuesto/estructura/plantilla/**", "fts": ["FT-04"] },
-  { "patron": "apps/web/src/app/(finn)/ajustes/page.tsx", "fts": ["FT-04"] },
-  { "patron": "apps/web/src/flujos/ajustes-webhook/**", "fts": ["FT-03"] },
-  { "patron": "apps/web/src/app/(finn)/ajustes/webhook/**", "fts": ["FT-03"] },
-  { "patron": "apps/web/src/app/(finn)/bandeja/**", "fts": ["FT-34"] },
-  { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03"] },
-  { "patron": "apps/web/src/app/api/sms/**", "fts": ["FT-03", "FT-34"] },
-  { "patron": "apps/web/src/app/api/tareas/**", "fts": [] },
-  { "patron": "apps/web/src/app/api/respaldo/**", "fts": ["FT-76"] },
-  { "patron": "apps/web/src/app/api/exportar/**", "fts": ["FT-75"] },
-  { "patron": "apps/web/src/app/api/notificaciones/**", "fts": ["FT-70"] },
-  { "patron": "apps/web/vercel.json", "fts": [] },
-  { "patron": "packages/aplicacion/src/operaciones/marco.ts", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/operaciones/cuentas/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/operaciones/categorias/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/operaciones/presupuesto/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/operaciones/ajustes/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/operaciones/transacciones/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/operaciones/bandeja/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/operaciones/eventos/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/operaciones/conciliacion/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/operaciones/programadas/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/conciliacion/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/consultas/comun.ts", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/consultas/formulario/**", "fts": "marco" },
-  { "patron": "packages/aplicacion/src/operaciones/notificaciones/**", "fts": ["FT-69"] },
-  { "patron": "packages/aplicacion/src/operaciones/formatos/**", "fts": ["FT-73"] },
-  { "patron": "packages/aplicacion/src/exportacion/**", "fts": ["FT-75"] },
-  { "patron": "packages/aplicacion/src/push/**", "fts": ["FT-69"] },
-  { "patron": "packages/aplicacion/src/respaldo/**", "fts": ["FT-76"] },
-  { "patron": "packages/aplicacion/src/sms/token.ts", "fts": ["FT-03"] },
-  { "patron": "packages/aplicacion/src/sms/**", "fts": ["FT-34"] },
-  { "patron": "packages/aplicacion/src/tareas/**", "fts": [] },
-  { "patron": "packages/dominio/src/**", "fts": [] },
-  { "patron": "packages/db/src/**", "fts": [] },
-  { "patron": "packages/conciliacion/src/**", "fts": [] },
-  { "patron": "packages/sms/src/**", "fts": [] }
+  {
+    "patron": "apps/web/src/app/(finn)/registrar/[tipo]/**",
+    "fts": ["FT-22", "FT-23"]
+  },
+  {
+    "patron": "apps/web/src/flujos/registrar-tipo/**",
+    "fts": ["FT-22", "FT-23"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/cuota/**",
+    "fts": ["FT-54"]
+  },
+  {
+    "patron": "apps/web/src/flujos/cuentas-cuota/**",
+    "fts": ["FT-54"]
+  },
+  {
+    "patron": "apps/web/src/flujos/presupuesto-estructura-plantilla/**",
+    "fts": ["FT-04"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/primeros-pasos.tsx",
+    "fts": ["FT-04"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/presupuesto/estructura/plantilla/**",
+    "fts": ["FT-04"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/ajustes/page.tsx",
+    "fts": ["FT-04"]
+  },
+  {
+    "patron": "apps/web/src/flujos/ajustes-webhook/**",
+    "fts": ["FT-03"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/ajustes/webhook/**",
+    "fts": ["FT-03"]
+  },
+  {
+    "patron": "apps/web/src/app/(finn)/bandeja/**",
+    "fts": ["FT-34"]
+  },
+  {
+    "patron": "apps/web/src/servidor/acciones/ajustes.ts",
+    "fts": ["FT-03"]
+  },
+  {
+    "patron": "apps/web/src/app/api/sms/**",
+    "fts": ["FT-03", "FT-34"]
+  },
+  {
+    "patron": "apps/web/src/app/api/tareas/**",
+    "fts": []
+  },
+  {
+    "patron": "apps/web/src/app/api/respaldo/**",
+    "fts": ["FT-76"]
+  },
+  {
+    "patron": "apps/web/src/app/api/exportar/**",
+    "fts": ["FT-75"]
+  },
+  {
+    "patron": "apps/web/src/app/api/notificaciones/**",
+    "fts": ["FT-70"]
+  },
+  {
+    "patron": "apps/web/vercel.json",
+    "fts": []
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/marco.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/cuentas/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/categorias/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/presupuesto/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/ajustes/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/transacciones/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/bandeja/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/eventos/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/conciliacion/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/programadas/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/conciliacion/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/consultas/comun.ts",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/consultas/formulario/**",
+    "fts": "marco"
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/notificaciones/**",
+    "fts": ["FT-69"]
+  },
+  {
+    "patron": "packages/aplicacion/src/operaciones/formatos/**",
+    "fts": ["FT-73"]
+  },
+  {
+    "patron": "packages/aplicacion/src/exportacion/**",
+    "fts": ["FT-75"]
+  },
+  {
+    "patron": "packages/aplicacion/src/push/**",
+    "fts": ["FT-69"]
+  },
+  {
+    "patron": "packages/aplicacion/src/respaldo/**",
+    "fts": ["FT-76"]
+  },
+  {
+    "patron": "packages/aplicacion/src/sms/token.ts",
+    "fts": ["FT-03"]
+  },
+  {
+    "patron": "packages/aplicacion/src/sms/**",
+    "fts": ["FT-34"]
+  },
+  {
+    "patron": "packages/aplicacion/src/tareas/**",
+    "fts": []
+  },
+  {
+    "patron": "packages/dominio/src/**",
+    "fts": []
+  },
+  {
+    "patron": "packages/db/src/**",
+    "fts": []
+  },
+  {
+    "patron": "packages/conciliacion/src/**",
+    "fts": []
+  },
+  {
+    "patron": "packages/sms/src/**",
+    "fts": []
+  }
 ]

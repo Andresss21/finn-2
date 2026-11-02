@@ -2,6 +2,7 @@
   "FT-01": "terminada",
   "FT-02": "terminada",
   "FT-03": "terminada",
+  "FT-09": "terminada",
   "FT-18": "terminada",
   "FT-22": "terminada",
   "FT-23": "terminada",
@@ -9,6 +10,7 @@
   "FT-51": "terminada",
   "FT-54": "terminada",
   "CA-03.3": "pendiente_e2e",
+  "CA-09.11": "pendiente_e2e",
   "CA-34.4": "pendiente_e2e",
   "CA-54.5": "pendiente_e2e"
 }
