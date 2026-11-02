@@ -10,12 +10,16 @@ export async function esperarHidratacion(page: Page): Promise<void> {
  * El contenido de la ruta ya está en pantalla. El marco hidrata antes de que llegue una página que consulta datos: mientras se
  * transmite, `loading.tsx` ocupa su lugar y lo que React ya envió espera oculto, midiendo 0×0. El estado de carga (FE-33) lleva
  * `aria-busy`; cada frontera sin resolver deja `template#B:n` y su contenido en espera, `div[hidden]#S:n`. Ambos ya están en el
- * primer envío, así que no hay un momento en que falten y el contenido siga pendiente.
+ * primer envío, así que no hay un momento en que falten y el contenido siga pendiente. Un `div[hidden]#S:n` sin ningún
+ * elemento propio (solo su `template` y comentarios) es lo que deja una frontera cuyo contenido terminó en `notFound()`: la
+ * pantalla «Esto ya no existe.» ya está dibujada y no hay nada pendiente.
  */
 export async function esperarContenido(page: Page): Promise<void> {
   await esperarHidratacion(page);
   await expect(
-    page.locator('[aria-busy="true"], template[id^="B:"], div[hidden][id^="S:"]'),
+    page.locator(
+      '[aria-busy="true"], template[id^="B:"], div[hidden][id^="S:"]:has(> :not(template))',
+    ),
   ).toHaveCount(0);
 }
 
