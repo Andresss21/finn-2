@@ -4,6 +4,7 @@ import { ajustesWebhook } from './ajustes-webhook.ts';
 import { autenticacion } from './autenticacion.ts';
 import { base } from './base.ts';
 import { cuentas } from './cuentas.ts';
+import { cuentasCuota } from './cuentas-cuota.ts';
 import { cuentasNueva } from './cuentas-nueva.ts';
 import { dominio } from './dominio.ts';
 import { estados } from './estados.ts';
@@ -19,6 +20,7 @@ export {
   alcanceReserva,
   base,
   cuentas,
+  cuentasCuota,
   cuentasNueva,
   dominio,
   estados,
@@ -35,6 +37,7 @@ export const areas = [
   ['autenticacion', autenticacion],
   ['base', base],
   ['cuentas', cuentas],
+  ['cuentasCuota', cuentasCuota],
   ['cuentasNueva', cuentasNueva],
   ['dominio', dominio],
   ['estados', estados],
