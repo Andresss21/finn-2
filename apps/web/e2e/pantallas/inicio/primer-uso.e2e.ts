@@ -6,6 +6,7 @@ import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
+import { ajustesWebhook } from '../../../src/textos/ajustes-webhook.ts';
 import { estructura as te } from '../../../src/textos/estructura.ts';
 import { plantilla as t } from '../../../src/textos/plantilla.ts';
 import { primerosPasos as p } from '../../../src/textos/primeros-pasos.ts';
@@ -171,5 +172,15 @@ test.describe('PRU-E2E-INICIO', () => {
     await esperarContenido(page);
     await expect(page.getByRole('heading', { name: te.titulo, level: 1 })).toBeVisible();
     await expect(page.getByRole('link', { name: te.usarPlantilla })).toHaveCount(0);
+  });
+
+  test('PRU-E2E-INICIO-107 /ajustes abre con su título y enlaza a "Conectar los SMS", el tercer paso de los Primeros pasos', async ({
+    page,
+  }) => {
+    await preparar([]);
+    await abrir(page, '/ajustes');
+    await expect(page.getByRole('heading', { name: 'Ajustes', level: 1 })).toBeVisible();
+    await page.getByRole('link', { name: ajustesWebhook.titulo, exact: true }).click();
+    await expect(page).toHaveURL(/\/ajustes\/webhook$/);
   });
 });
