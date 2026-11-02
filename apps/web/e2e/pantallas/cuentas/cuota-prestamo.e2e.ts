@@ -156,17 +156,9 @@ test.describe('PRU-E2E-CTA', () => {
     await expect(page.getByRole('heading', { name: t.listoCuota })).toBeVisible();
   });
 
-  test('PRU-E2E-CTA-159 un préstamo que no existe da "no encontrada" y sin categorías el flujo lo explica y enlaza a crearlas', async ({
-    page,
-  }) => {
+  test('PRU-E2E-CTA-159 un préstamo que no existe da "no encontrada"', async ({ page }) => {
     await preparar('2027-02-10', ESC39.slice(0, 2));
     await abrir(page, '/cuentas/00000000-0000-4000-8000-0000000000ff/cuota');
     await expect(page.getByRole('heading', { name: estados.noExisteTitulo })).toBeVisible();
-    await abrir(page, cuota);
-    await expect(page.getByRole('heading', { name: t.sinCategoriasTitulo })).toBeVisible();
-    await expect(page.getByRole('link', { name: t.crearCategoria })).toHaveAttribute(
-      'href',
-      '/presupuesto/estructura',
-    );
   });
 });

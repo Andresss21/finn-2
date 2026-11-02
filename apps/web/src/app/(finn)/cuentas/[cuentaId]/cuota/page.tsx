@@ -1,5 +1,4 @@
-// `/cuentas/[cuentaId]/cuota` (05 §2.7, FT-54): pagar la cuota de un préstamo o abonar a capital (OP-24). `?modalidad=cuota|abono`
-// y `?fecha=` los lee el lector; la pantalla no calcula nada.
+// `/cuentas/[cuentaId]/cuota` (05 §2.7, FT-54): pagar la cuota de un préstamo o abonar a capital (OP-24).
 import type { Metadata } from 'next';
 import { LectorCuentasCuota } from '../../../../../flujos/cuentas-cuota/lector';
 import type { BusquedaDePagina } from '../../../../../servidor/parametros';

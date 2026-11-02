@@ -1,8 +1,6 @@
 'use client';
-// `/cuentas/[cuentaId]/cuota` (FT-54, OP-24; 05 §2.7): pagar la cuota de un préstamo o abonar a capital. El desglose de la cuota lo
-// propone el modelo del préstamo y se recalcula al cambiar la fecha si la persona no lo editó; solo el capital baja la deuda (error 6).
-// Se guarda en un solo viaje (05 §4.4); con la fecha en un período cerrado el servidor pide confirmar (AV-01). No calcula montos
-// (PF-3): la suma del desglose, el capital pendiente y los avisos los decide el servidor.
+// `/cuentas/[cuentaId]/cuota` (FT-54, OP-24; 05 §2.7): pagar la cuota de un préstamo o abonar a capital. El desglose propuesto se
+// recalcula al cambiar la fecha si la persona no lo editó. No calcula montos (PF-3): el servidor decide la suma y los avisos.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -10,11 +8,9 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Resultado } from '../../componentes/base/resultado';
 import { Seleccion } from '../../componentes/base/seleccion';
-import { Vacio } from '../../componentes/base/vacio';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
-import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { useReemplazarBusqueda } from '../../componentes/navegacion/use-reemplazar-busqueda';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
@@ -23,7 +19,6 @@ import { useOperacion, type AccionEscritura } from '../../formularios/use-operac
 import { pagarCuotaPrestamo } from '../../servidor/acciones/transacciones';
 import { cuentasCuota as t } from '../../textos/cuentas-cuota';
 import { formularios } from '../../textos/formularios';
-import { glosario } from '../../textos/glosario';
 import {
   CAMPOS_PROPUESTOS,
   aEntradaDeAccion,
@@ -65,17 +60,8 @@ interface Previsualizacion {
 }
 
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
-/** Un enlace con el aspecto de un botón principal (05 §10.7): al menos 44 px de alto (05 §11.5). */
-const ENLACE =
-  'inline-flex min-h-12 items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-/** Un rechazo cuyo mensaje ya se muestra en su campo no se repite como aviso del formulario. */
+/** Un rechazo que ya se muestra en su campo no se repite como aviso. */
 const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
-/** Los avisos "después" que la interfaz sabe nombrar; AV-02 y AV-03 usan los términos del glosario (05 §12.3). */
-const AVISOS: Readonly<Record<string, string>> = {
-  ...t.avisos,
-  'AV-02': glosario.sobregiroConDebitoOEfectivo,
-  'AV-03': glosario.deudaSinReservar,
-};
 
 export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
   const { modalidad, prestamoId, prestamoNombre, hoy, origenes, categorias, propuesta } = props;
@@ -86,13 +72,10 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
   const enviar: AccionEscritura = (payload) =>
     pagarCuotaPrestamo(aEntradaDeAccion(modalidad, prestamoId, payload));
   const operacion = useOperacion({ accion: enviar, creacion: true });
-  // Solo al abrir: una propuesta nueva (otra fecha) se aplica por el efecto de abajo, sin reiniciar lo escrito.
   const [inicial] = useState(() =>
     valoresIniciales(
       props.fecha,
-      categorias.some((x) => x.id === props.categoriaPropuesta)
-        ? props.categoriaPropuesta
-        : undefined,
+      props.categoriaPropuesta,
       propuesta,
       props.cuotaPactada,
       modalidad,
@@ -128,24 +111,6 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
   const { estado, error: fallo, exito } = operacion;
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
 
-  if (origenes.length < 1 || categorias.length < 1)
-    return (
-      <PaginaFlujoDeRuta titulo={titulo} rutaPadre={rutaPadre}>
-        <Vacio
-          titulo={origenes.length < 1 ? t.sinOrigenTitulo : t.sinCategoriasTitulo}
-          texto={origenes.length < 1 ? t.sinOrigenTexto : t.sinCategoriasTexto}
-          accion={
-            <EnlaceFinn
-              href={origenes.length < 1 ? '/cuentas/nueva' : '/presupuesto/estructura'}
-              className={ENLACE}
-            >
-              {origenes.length < 1 ? t.crearCuenta : t.crearCategoria}
-            </EnlaceFinn>
-          }
-        />
-      </PaginaFlujoDeRuta>
-    );
-
   if (estado === 'listo' && exito !== undefined) {
     const monto = formatearMontoTexto(c.total);
     return (
@@ -154,12 +119,9 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
           <Resultado texto={(esCuota ? t.cuotaGuardada : t.abonoGuardado)(monto, prestamoNombre)} />
           {exito.avisos.map((a) => (
             <AvisoEnLinea key={a.codigo} estado="informacion" aparecioDespues>
-              {AVISOS[a.codigo] ?? a.mensaje}
+              {t.avisos[a.codigo] ?? a.mensaje}
             </AvisoEnLinea>
           ))}
-          <EnlaceFinn href={rutaPadre} className={ENLACE}>
-            {t.verPrestamo}
-          </EnlaceFinn>
         </div>
       </PaginaFlujoDeRuta>
     );
@@ -180,7 +142,7 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
                 ]
               : []
           }
-          avisos={(vista.avisos ?? []).map((a) => AVISOS[a.codigo] ?? a.codigo)}
+          avisos={(vista.avisos ?? []).map((a) => t.avisos[a.codigo] ?? a.codigo)}
           textoConfirmar={t.confirmar}
           textoVolver={t.volverAEditar}
           enviando={false}

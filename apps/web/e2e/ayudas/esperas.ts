@@ -11,8 +11,7 @@ export async function esperarHidratacion(page: Page): Promise<void> {
  * transmite, `loading.tsx` ocupa su lugar y lo que React ya envió espera oculto, midiendo 0×0. El estado de carga (FE-33) lleva
  * `aria-busy`; cada frontera sin resolver deja `template#B:n` y su contenido en espera, `div[hidden]#S:n`. Ambos ya están en el
  * primer envío, así que no hay un momento en que falten y el contenido siga pendiente.
- * Una frontera que terminó en `notFound()` (un id que no existe) deja su `div[hidden]#S:n` vacío, solo con `template` y comentarios:
- * no es contenido pendiente, y la pantalla de «no existe» ya está a la vista.
+ * Una frontera que terminó en `notFound()` deja su `div[hidden]#S:n` sin contenido (solo `template`): no está pendiente.
  */
 export async function esperarContenido(page: Page): Promise<void> {
   await esperarHidratacion(page);

@@ -1,6 +1,5 @@
-// Lector de `/cuentas/[cuentaId]/cuota` (05 §2.7): llama a `formulario({ operacion: 'cuota_prestamo', prestamoId, modalidad, fecha })`
-// con `?modalidad=` y `?fecha=` de la URL y pasa el contexto y los catálogos al formulario. Los números ya vienen del servidor: aquí
-// solo se pasan a texto (PF-3). Lo único que traduce los errores de la consulta es `consultar()`.
+// Lector de `/cuentas/[cuentaId]/cuota` (05 §2.7): `formulario({ operacion: 'cuota_prestamo', … })` con `?modalidad=` y `?fecha=`.
+// Los números vienen del servidor y aquí solo pasan a texto (PF-3). Los errores de la consulta los traduce `consultar()`.
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { notFound } from 'next/navigation';
 import { centavosATextoDecimal } from '../../formato';
@@ -20,8 +19,8 @@ export async function LectorCuentasCuota({
   readonly busqueda: BusquedaDePagina;
 }) {
   if (!UUID.test(prestamoId)) notFound();
-  const modalidad = modalidadDe(aParametrosDeConsulta(busqueda)['modalidad']);
-  const { fecha } = aParametrosDeConsulta(busqueda);
+  const { modalidad: pedida, fecha } = aParametrosDeConsulta(busqueda);
+  const modalidad = modalidadDe(pedida);
   const dto = await consultar(async () =>
     formulario(await depsDeConsulta(), {
       operacion: 'cuota_prestamo',
@@ -31,17 +30,13 @@ export async function LectorCuentasCuota({
     }),
   );
   const cuentas = dto.catalogos.cuentas;
+  const origen = (tarjeta: boolean) => (x: { cuenta: { id: string; nombre: string } }) => ({
+    ...x.cuenta,
+    tarjeta,
+  });
   const origenes = [
-    ...(cuentas?.efectivo ?? []).map((x) => ({
-      id: x.cuenta.id,
-      nombre: x.cuenta.nombre,
-      tarjeta: false,
-    })),
-    ...(cuentas?.tarjetas ?? []).map((x) => ({
-      id: x.cuenta.id,
-      nombre: x.cuenta.nombre,
-      tarjeta: true,
-    })),
+    ...(cuentas?.efectivo ?? []).map(origen(false)),
+    ...(cuentas?.tarjetas ?? []).map(origen(true)),
   ];
   const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((g) =>
     g.categorias.map((c) => ({
@@ -64,6 +59,8 @@ export async function LectorCuentasCuota({
           seguro: centavosATextoDecimal(p.seguro),
           numeroCuota: p.numeroCuota,
         };
+  const propuestaId = 'categoriaPropuesta' in c ? c.categoriaPropuesta.id : undefined;
+  const categoriaPropuesta = categorias.some((x) => x.id === propuestaId) ? propuestaId : undefined;
   return (
     <FormularioCuentasCuota
       modalidad={modalidad}
@@ -77,7 +74,7 @@ export async function LectorCuentasCuota({
       cuotaPactada={centavosATextoDecimal(c.cuotaPactada)}
       tieneModelo={c.tieneModelo}
       propuesta={propuesta}
-      categoriaPropuesta={'categoriaPropuesta' in c ? c.categoriaPropuesta.id : undefined}
+      categoriaPropuesta={categoriaPropuesta}
     />
   );
 }

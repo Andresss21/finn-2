@@ -1,6 +1,5 @@
-// Los campos de `/cuentas/[cuentaId]/cuota` (FT-54): su contrato y la entrada de OP-24 (cuota y abono). Los valores del formulario
-// son texto, como los escribe la persona (05 §4.2); los rechazos de negocio (`desglose_no_cuadra`, `capital_mayor_que_pendiente`…)
-// son del servidor: la interfaz no suma ni compara montos (PF-3).
+// Campos de `/cuentas/[cuentaId]/cuota` (FT-54): contrato y entrada de OP-24. Los valores son texto (05 §4.2); los rechazos de
+// negocio (`desglose_no_cuadra`, `capital_mayor_que_pendiente`…) son del servidor: la interfaz no suma ni compara (PF-3).
 import * as z from 'zod';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { cuentasCuota as t } from '../../textos/cuentas-cuota';
@@ -21,14 +20,12 @@ const CAMPOS = z.object({
 });
 export type Campos = z.infer<typeof CAMPOS>;
 
-/** Los tres campos del desglose: lo que una propuesta nueva reemplaza si la persona no los editó. */
 export const CAMPOS_DESGLOSE = ['capital', 'interes', 'seguro'] as const;
-/** Los que puede traer una propuesta del modelo. */
 export const CAMPOS_PROPUESTOS = ['total', ...CAMPOS_DESGLOSE] as const;
 
 const escrito = (texto: string): boolean => normalizarMontoEscrito(texto).estado === 'valido';
 
-/** El contrato de cada modalidad: lo obligatorio escrito. En un abono no hay desglose: todo el total es capital. */
+/** Lo obligatorio escrito; en un abono no hay desglose: todo el total es capital. */
 export const contratoDe = (modalidad: Modalidad) =>
   CAMPOS.superRefine((c, ctx) => {
     const falta = (path: keyof Campos, message: string) => {
@@ -47,7 +44,6 @@ const monto = (texto: string): string => {
   return r.estado === 'valido' ? r.texto : texto;
 };
 
-/** `useOperacion` entrega los campos más `modo`, `id` y la confirmación: la entrada de OP-24 sale de ellos. */
 export function aEntradaDeAccion(
   modalidad: Modalidad,
   prestamoId: string,
@@ -71,7 +67,6 @@ export function aEntradaDeAccion(
   };
 }
 
-/** Lo que trae la consulta del desglose propuesto, ya como texto decimal (la consulta lo calcula; aquí no se suma). */
 export interface Propuesta {
   readonly total: string;
   readonly capital: string;
@@ -80,7 +75,7 @@ export interface Propuesta {
   readonly numeroCuota: number;
 }
 
-/** Los valores con que abre el formulario: la fecha es la de la URL o el `hoy` del servidor, nunca la del dispositivo (05 §5.5). */
+/** Valores con que abre: la fecha es la de la URL o el `hoy` del servidor (05 §5.5). */
 export const valoresIniciales = (
   fecha: string,
   categoriaPropuesta: string | undefined,
