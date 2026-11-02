@@ -841,6 +841,16 @@ describe('afectadas (07 §13.6, DP-19, CH-01)', () => {
     expect(con.total).toBeGreaterThan(0);
   });
 
+  it('PRU-SEG-OPER-110 [CH-70] una ficha que pasa a terminada da el filtro de la suite completa, sin tocar la web; sin fichas que se cierran corren solo las afectadas', () => {
+    const cierra = afectadas(e, r, ['pruebas/features.json'], ['FT-30']);
+    expect(cierra.todo).toBe(true);
+    expect(cierra.grepE2E).toBeNull();
+    expect(quien('pruebas/features.json').grepE2E).toBe('^$');
+    const web = quien('packages/aplicacion/src/operaciones/tarjetas/OP-23-pagar-tarjeta.ts');
+    expect(web.todo).toBe(false);
+    expect(web.grepE2E).toMatch(/PRU-E2E-TX-/);
+  });
+
   it('punto 1: una operación se resuelve por OP-nn-*.ts, en cualquier subcarpeta', () => {
     const a = quien('packages/aplicacion/src/operaciones/tarjetas/OP-23-pagar-tarjeta.ts');
     expect(a.fts).toContain('FT-30');

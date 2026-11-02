@@ -428,7 +428,7 @@ Lo que solo existe en el proyecto real queda en la prueba de humo de 04 §17, si
 |---|---|---|---|
 | `rapido` | Siempre | Instalación con caché; `typecheck`; ESLint (fronteras, L1–L20); Prettier; `versiones.mjs`; gitleaks sobre el diff; C1 (lint de migraciones) y C2 (inmutabilidad); script de la matriz (Parte B); `DOM`, `ESC@motor`, `CTR`; `PROP` (300 casos en PR, 2.000 en `main`); diferencial contra el oráculo; cobertura de ramas de `@finn/dominio` (DP-09); `CMP` si cambió `apps/web` **[CH-61]** o si corre `cierre`. Calcula y publica `afecta_db` y `afecta_web` para los jobs siguientes | 2,5–3 min |
 | `integracion` | En el PR si `afecta_db` o si el PR pasa a listo; en `main` siempre | Plantilla y controles de 5.2; `INT`, `ESC@int`, `RH`, `ESQ`, PRU-INT-POOL; prueba de catálogo de CF-16 | 3–4 min |
-| `e2e` | En el PR **listo** con `afecta_web` (suites afectadas) **[CH-61]** y en el que pasa una ficha a `terminada`, con las suites de esa ficha (§13.2, paso 4); en `main` siempre (completo, proyecto `movil`) | `next build`; pila local mínima; usuario de prueba; Playwright; en `main`, además, tamaño de JS y de precache (deterministas, §6.6) | 6–8 min en PR; 10–11 en `main` |
+| `e2e` | En el PR **listo** con `afecta_web` (suites afectadas) **[CH-61]** y en el que pasa una ficha a `terminada`, completo porque corre `cierre` (§13.2, paso 4) **[CH-70]**; en `main` siempre (completo, proyecto `movil`) | `next build`; pila local mínima; usuario de prueba; Playwright; en `main`, además, tamaño de JS y de precache (deterministas, §6.6) | 6–8 min en PR; 10–11 con `cierre` **[CH-70]** y en `main` |
 | `desplegar` | Solo `main`, si todos los anteriores pasaron en la misma corrida | `prisma migrate deploy` en producción; C5, C6 y R15 con `finn_respaldo`; `vercel deploy --prod` (ADR-10, 03 §11.7) | 2–3 min |
 | `nocturno` | Según 6.1 | E2E `escritorio`, `zona-distinta`, `webkit-parcial`; accesibilidad en los dos temas; `SW`; Lighthouse CI, INP y benchmark del motor y de la carga a 10 años (mediana de 5); `PROP` con 10.000 casos; `RES` con volumen sintético | 18–22 min |
 
@@ -880,7 +880,7 @@ El script exige **Disparador**, **Pasos** numerados y **Resultado esperado** (M1
 1. Marca `"FT-30": "en_curso"` en `features.json`.
 2. Corre `pnpm pruebas:ft FT-30`. Recibe los 7 CA, los ESC y AV de la ficha, el recorrido 4.4, las pruebas que ya existen con su archivo, y el comando de cada herramienta con su filtro.
 3. Escribe las pruebas con `[CA-30.n]` en el título, en los archivos de §2.3.
-4. Marca `"FT-30": "terminada"`. `rapido` verifica que no falte nada de FT-30 (M1 a M14); el PR corre las suites de FT-30 completas, E2E incluida, aunque no esté en "listo", y el job `cierre` comprueba que todas estén en verde (M15). Si falta algo, el PR queda rojo.
+4. Marca `"FT-30": "terminada"`. `rapido` verifica que no falte nada de FT-30 (M1 a M14); el PR corre las suites de FT-30 completas y la E2E completa del proyecto `movil` **[CH-70]**, aunque no esté en "listo" ni toque la web, y el job `cierre` comprueba que estén en verde las de todas las fichas `terminada` (M15). Si falta algo, el PR queda rojo.
 5. Si FT-30 tiene manuales, quedan "manual pendiente" hasta que el usuario registre el resultado (M16). La ficha puede quedar `terminada`, pero no cuenta para la puerta.
 
 Salida real de `pruebas:ft FT-30` sobre el inventario sintético de V7-09 (los identificadores son los del inventario sintético):
