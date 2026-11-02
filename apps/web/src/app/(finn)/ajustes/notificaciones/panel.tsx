@@ -2,17 +2,17 @@
 // `/ajustes/notificaciones` (FT-06, OPT-02 y OPT-03; 05 §8.6, CP-5): activar las notificaciones en este dispositivo y quitar
 // cualquiera de los de la lista. «Este dispositivo» se reconoce comparando `endpointCorto` (CH-73). No calcula nada (PF-3).
 import { useEffect, useState } from 'react';
-import { AvisoEnLinea } from '../../componentes/base/aviso';
-import { Boton } from '../../componentes/base/boton';
+import { AvisoEnLinea } from '../../../../componentes/base/aviso';
+import { Boton } from '../../../../componentes/base/boton';
 import {
   activar,
   anularLocal,
   endpointCortoDeEsteDispositivo,
   usePermiso,
   type RegistrarSuscripcion,
-} from '../../cliente/notificaciones';
-import { formatearInstante } from '../../formato';
-import { notificaciones as t } from '../../textos/notificaciones';
+} from '../../../../cliente/notificaciones';
+import { formatearInstante } from '../../../../formato';
+import { notificaciones as t } from '../../../../textos/notificaciones';
 
 export interface DispositivoPush {
   readonly id: string;
