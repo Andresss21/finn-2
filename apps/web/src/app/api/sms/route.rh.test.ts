@@ -102,6 +102,57 @@ describe('PRU-RH-BAND y PRU-SEG-BAND', () => {
     expect(await idDe(await json({ texto: 'hola', remitente: 'BAC' }))).toEqual(expect.any(String));
   });
 
+  it('PRU-RH-BAND-105 [CA-34.1] FT-34: con un token inválido llega un SMS y responde 401 sin guardar ninguna fila ni procesar nada', async () => {
+    const antes = await contarSms();
+    const cuerpo = JSON.stringify({ texto: 'con token inválido', remitente: 'BAC' });
+    const r = await post(cuerpo, { 'content-type': 'application/json' }, 'z'.repeat(43));
+    expect(r.status).toBe(401);
+    expect(await contarSms()).toBe(antes);
+    expect(h.despues).toHaveLength(0);
+  });
+
+  it('PRU-RH-BAND-106 [CA-34.2] FT-34: si la escritura de sms_recibidos falla, responde 503 con Retry-After: 30 y no queda ninguna fila', async () => {
+    const antes = await contarSms();
+    // La base rechaza toda fila nueva de `sms_recibidos` (la restricción no se valida contra las filas que ya hay)
+    await consultar(
+      base.urlAdmin,
+      'ALTER TABLE finn.sms_recibidos ADD CONSTRAINT ck_prueba_sin_escritura CHECK (false) NOT VALID',
+    );
+    try {
+      const r = await json({ texto: 'no se puede guardar', remitente: 'BAC' });
+      expect(r.status).toBe(503);
+      expect(r.headers.get('retry-after')).toBe('30');
+      expect(h.despues).toHaveLength(0);
+    } finally {
+      await consultar(
+        base.urlAdmin,
+        'ALTER TABLE finn.sms_recibidos DROP CONSTRAINT ck_prueba_sin_escritura',
+      );
+    }
+    expect(await contarSms()).toBe(antes);
+    // El fallo queda como evento, sin el texto del SMS (04 §15.2)
+    const avisos = await eventos('guardar_fallido');
+    expect(avisos.length).toBeGreaterThanOrEqual(1);
+    expect(JSON.stringify(avisos)).not.toContain('no se puede guardar');
+  });
+
+  it('PRU-RH-BAND-107 [CA-34.3] FT-34: un cuerpo JSON inválido con el token correcto responde 200, guarda el texto crudo con remitente desconocido y deja el movimiento en error con cuerpo_invalido', async () => {
+    vi.stubEnv('FINN_WEBHOOK_FORMATO', 'json');
+    const crudo = '{"texto": "BAC: compra "sin escapar"", "remitente": "BAC"}';
+    const id = await idDe(await post(crudo, { 'content-type': 'application/json' }));
+    expect(await sms(id)).toMatchObject({ texto: crudo, remitente: 'desconocido' });
+    await correrDespues();
+    const [mov] = await filas(`SELECT estado FROM finn.movimientos WHERE sms_id = '${id}'`);
+    expect(mov).toMatchObject({ estado: 'error' });
+    expect(await procesamientos(id)).toMatchObject([
+      { resultado: 'error', error_detalle: 'cuerpo_invalido: json_invalido' },
+    ]);
+    expect((await eventos('cuerpo_invalido')).at(-1)?.datos).toMatchObject({
+      smsId: id,
+      detalle: 'json_invalido',
+    });
+  });
+
   it('PRU-RH-BAND-101 [N-01] RH-sms: variante JSON: 200 con el id una vez guardado y procesa en after(), no antes', async () => {
     const id = await idDe(await json({ texto: 'con "comillas"\ny salto', remitente: 'BAC', x: 1 }));
     expect(await sms(id)).toMatchObject({ texto: 'con "comillas"\ny salto', remitente: 'BAC' });

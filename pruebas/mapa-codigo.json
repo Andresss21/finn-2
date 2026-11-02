@@ -74,8 +74,12 @@
     "fts": ["FT-18"]
   },
   { "patron": "apps/web/src/flujos/presupuesto-estructura/**", "fts": ["FT-18"] },
+  { "patron": "apps/web/src/servidor/acciones/transacciones.ts", "fts": ["FT-22", "FT-23"] },
+  { "patron": "apps/web/src/app/(finn)/registrar/[tipo]/**", "fts": ["FT-22", "FT-23"] },
+  { "patron": "apps/web/src/flujos/registrar-tipo/**", "fts": ["FT-22", "FT-23"] },
   { "patron": "apps/web/src/flujos/ajustes-webhook/**", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/webhook/**", "fts": ["FT-03"] },
+  { "patron": "apps/web/src/app/(finn)/bandeja/**", "fts": ["FT-34"] },
   { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/api/sms/**", "fts": ["FT-03", "FT-34"] },
   { "patron": "apps/web/src/app/api/tareas/**", "fts": [] },
