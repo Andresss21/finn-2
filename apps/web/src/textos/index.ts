@@ -2,6 +2,7 @@
 // Cada ficha agrega su área acá; ningún texto literal va en JSX fuera de `src/textos/` (L8).
 import { ajustesWebhook } from './ajustes-webhook.ts';
 import { autenticacion } from './autenticacion.ts';
+import { bandeja } from './bandeja.ts';
 import { base } from './base.ts';
 import { cuentas } from './cuentas.ts';
 import { cuentasCuota } from './cuentas-cuota.ts';
@@ -18,6 +19,7 @@ export {
   ajustesWebhook,
   autenticacion,
   alcanceReserva,
+  bandeja,
   base,
   cuentas,
   cuentasCuota,
@@ -35,6 +37,7 @@ export {
 export const areas = [
   ['ajustesWebhook', ajustesWebhook],
   ['autenticacion', autenticacion],
+  ['bandeja', bandeja],
   ['base', base],
   ['cuentas', cuentas],
   ['cuentasCuota', cuentasCuota],
