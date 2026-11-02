@@ -1,6 +1,6 @@
 // `/presupuesto/listo-para-asignar` (FT-15): cómo se compone Listo para asignar hoy, lo que va a reducir al cierre del período y
-// su valor al cierre de cada período, con el gráfico y su tabla equivalente (P5-13), las dos a la vista: sin selector, la
-// página no lleva JavaScript propio. Dibuja lo que trae el DTO: no calcula montos (PF-3); la descomposición llega partida y
+// su valor al cierre de cada período, con el gráfico y su tabla equivalente (P5-13) tras el selector Gráfico / Tabla de
+// 05 §10.8.1 (`VistaGrafico`, CH-81). Dibuja lo que trae el DTO: no calcula montos (PF-3); la descomposición llega partida y
 // cada línea dice si suma o resta por el grupo en que está.
 import type { DetalleLpaDto } from '@finn/aplicacion/consultas/detalle-lpa';
 import type { Centavos } from '@finn/dominio/valores';
@@ -9,6 +9,7 @@ import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { GraficoLineas } from '../../../../componentes/graficos/grafico-lineas';
 import { TablaEquivalente } from '../../../../componentes/graficos/tabla-equivalente';
+import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { formatearMonto, formatearPeriodoCorto } from '../../../../formato';
@@ -109,14 +110,16 @@ function Historial({ dto }: { readonly dto: DetalleLpaDto }) {
       {ultimo === undefined ? (
         <p className="text-cuerpo-pequeno text-texto-secundario">{t.historial.vacio}</p>
       ) : (
-        <>
-          <GraficoLineas
-            titulo={t.historial.grafico}
-            resumen={`${t.historial.resumen(puntos.length)}, el último ${formatearMonto(ultimo.valor)}`}
-            puntos={puntos}
-          />
-          <TablaEquivalente titulo={t.historial.grafico} puntos={puntos} />
-        </>
+        <VistaGrafico
+          grafico={
+            <GraficoLineas
+              titulo={t.historial.grafico}
+              resumen={`${t.historial.resumen(puntos.length)}, el último ${formatearMonto(ultimo.valor)}`}
+              puntos={puntos}
+            />
+          }
+          tabla={<TablaEquivalente titulo={t.historial.grafico} puntos={puntos} />}
+        />
       )}
       <p
         data-nota-historial={dto.notaHistorial}

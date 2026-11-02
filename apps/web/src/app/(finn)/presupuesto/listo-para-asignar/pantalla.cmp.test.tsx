@@ -138,6 +138,30 @@ describe('PRU-CMP-PRES', () => {
     );
   });
 
+  it('PRU-CMP-PRES-106 el selector Gráfico / Tabla del historial cambia a la tabla sin sacar el gráfico del árbol [FE-44]', () => {
+    const nodo = montar(<PantallaListoParaAsignar dto={dto()} />);
+    const historial = nodo.querySelector('[data-seccion="historial"]') as HTMLElement;
+    const opciones = [
+      ...historial.querySelectorAll<HTMLElement>('[role="radiogroup"] [role="radio"]'),
+    ];
+    expect(opciones.map((o) => o.textContent)).toEqual(['Gráfico', 'Tabla']);
+    expect(
+      historial.querySelector('[data-vista-grafico]')?.getAttribute('data-vista-grafico'),
+    ).toBe('grafico');
+    act(() => {
+      opciones[1]?.click();
+    });
+    expect(
+      historial.querySelector('[data-vista-grafico]')?.getAttribute('data-vista-grafico'),
+    ).toBe('tabla');
+    expect(
+      historial.querySelector('[data-tabla-equivalente]')?.parentElement?.className,
+    ).not.toContain('sr-only');
+    expect(historial.querySelector('svg[role="img"]')?.parentElement?.className).toContain(
+      'sr-only',
+    );
+  });
+
   it('PRU-CMP-PRES-106 sin períodos cerrados el historial dice que no hay ninguno y conserva la nota', () => {
     const nodo = montar(<PantallaListoParaAsignar dto={dto({ historial: [] })} />);
     expect(nodo.querySelector('[data-seccion="historial"]')?.textContent).toContain(
