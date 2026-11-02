@@ -14,9 +14,13 @@ export function ProveedorTema({ children }: { readonly children: ReactNode }) {
     document.documentElement.dataset['hidratado'] = 'si';
   }, []);
   return (
+    // [CH-74] El script previo a hidratar de next-themes escribe el nombre del tema sin pasar por `value` (solo lo mapea con
+    // `class`): los temas se llaman `claro` y `oscuro` para que `data-theme` sea correcto desde el primer dibujo (CA-77.2).
     <ThemeProvider
       attribute="data-theme"
-      value={{ light: 'claro', dark: 'oscuro' }}
+      themes={['claro', 'oscuro']}
+      value={{ claro: 'claro', oscuro: 'oscuro', light: 'claro', dark: 'oscuro' }}
+      enableColorScheme={false}
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange

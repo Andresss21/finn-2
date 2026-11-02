@@ -2,9 +2,12 @@
 import { inicio } from '@finn/aplicacion/consultas/inicio';
 import type { Metadata } from 'next';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
+import { InstalarFinn } from './instalar-finn';
 import { RecordatorioPrimerosPasos } from './recordatorio-primeros-pasos';
 import { consultar } from '../../../servidor/consultar';
 import { depsDeConsulta } from '../../../servidor/consultas';
+import { ajustesExportar } from '../../../textos/ajustes-exportar';
+import { ajustesApariencia } from '../../../textos/ajustes-apariencia';
 import { ajustesWebhook } from '../../../textos/ajustes-webhook';
 import { navegacion } from '../../../textos/navegacion';
 
@@ -16,11 +19,24 @@ export default async function PaginaAjustes() {
     <main className="mx-auto flex max-w-xl flex-col gap-4 px-5 py-4">
       <h1 className="text-titulo-pantalla">{navegacion.secciones.ajustes}</h1>
       <RecordatorioPrimerosPasos pasos={primerosPasos} />
+      <InstalarFinn />
       <EnlaceFinn
         href="/ajustes/webhook"
         className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
       >
         {ajustesWebhook.titulo}
+      </EnlaceFinn>
+      <EnlaceFinn
+        href="/ajustes/exportar"
+        className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
+      >
+        {ajustesExportar.titulo}
+      </EnlaceFinn>
+      <EnlaceFinn
+        href="/ajustes/apariencia"
+        className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
+      >
+        {ajustesApariencia.enlace}
       </EnlaceFinn>
     </main>
   );

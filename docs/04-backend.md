@@ -2633,10 +2633,10 @@ interface DetalleCategoriaDto extends Encabezado {
   }[];
   entradasDelPeriodo: { transaccionId: Uuid; fecha: FechaLocal; monto: Centavos; caso: 'D-2' | 'D-3' | 'D-4' }[];
   meta: {
-    tipo; modo?; monto; montoPeriodo; base; n?; fechaObjetivoVigente?: FechaLocal;
+    id: Uuid; tipo; modo?; monto; montoPeriodo; base; n?; fechaObjetivoVigente?: FechaLocal;
     pedido; falta; estado: EstadoMeta;
     progresoBp?: number;                           // [F6] CF-25: como en metas() (6.10), metas de ahorro; tope 10.000
-  } | null;                                        // §4.12
+  } | null;                                        // §4.12; [CH-72] `id` = `metaId`, para enlazar a `/metas/[metaId]`
   calendario: { fecha: FechaLocal; gastado: Centavos; intensidadBp: number }[];   // días con gasto ≠ 0 (R8); [F6] CF-25: máx(0, gastado) / máximo del período; 0 si el máximo ≤ 0
   historialResumen: { promedioGastado: Centavos; periodosExcedidos: number };   // [F6] CF-25: sobre `historial` (gastado > asignado)
   historial: { periodo: PeriodoDto; asignado; gastado; disponible: Centavos }[];  // [F6] CF-17: los 6 períodos cerrados anteriores en que existía c; si hay menos, los que haya

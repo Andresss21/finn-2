@@ -365,7 +365,7 @@
 
   "TA-288": { "estado": "terminada", "rama": "ta-288-presupuesto-periodos-2", "pr": 269 },
 
-  "TA-289": { "estado": "pendiente" },
+  "TA-289": { "estado": "terminada", "rama": "ta-289-asignar-2", "pr": 281 },
 
   "TA-290": { "estado": "terminada", "rama": "ta-290-detalle-categoria", "pr": 276 },
 
@@ -489,11 +489,11 @@
 
   "TA-434": { "estado": "pendiente" },
 
-  "TA-435": { "estado": "pendiente" },
+  "TA-435": { "estado": "terminada", "rama": "ta-435-exportar", "pr": 288 },
 
   "TA-436": { "estado": "pendiente" },
 
-  "TA-437": { "estado": "pendiente" },
+  "TA-437": { "estado": "terminada", "rama": "ta-437-pwa-instalar-sin-conexion", "pr": 287 },
 
   "TA-438": { "estado": "pendiente" },
 
@@ -517,7 +517,7 @@
 
   "TA-505": { "estado": "pendiente" },
 
-  "TA-506": { "estado": "pendiente" },
+  "TA-506": { "estado": "terminada", "rama": "ta-506-apariencia-2", "pr": 285 },
 
   "TA-549": { "estado": "bloqueada", "motivo": "CF-03" },
 
@@ -535,5 +535,5 @@
 
   "TA-318": { "estado": "terminada", "rama": "ta-318-bloques-tipo-2", "pr": 278 },
 
-  "TA-319": { "estado": "pendiente" }
+  "TA-319": { "estado": "terminada", "rama": "ta-319-detalle-categoria-4", "pr": 286 }
 }
