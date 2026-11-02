@@ -9,6 +9,7 @@ import { base } from './base.ts';
 import { categoriaDetalle } from './categoria-detalle.ts';
 import { cuentaDetalle } from './cuenta-detalle.ts';
 import { cuentas } from './cuentas.ts';
+import { cuentasCuota } from './cuentas-cuota.ts';
 import { cuentasNueva } from './cuentas-nueva.ts';
 import { dominio } from './dominio.ts';
 import { estados } from './estados.ts';
@@ -37,6 +38,7 @@ export {
   categoriaDetalle,
   cuentaDetalle,
   cuentas,
+  cuentasCuota,
   cuentasNueva,
   dominio,
   estados,
@@ -72,6 +74,7 @@ export const areas = [
   ['categoriaDetalle', categoriaDetalle],
   ['cuentaDetalle', cuentaDetalle],
   ['cuentas', cuentas],
+  ['cuentasCuota', cuentasCuota],
   ['cuentasNueva', cuentasNueva],
   ['dominio', dominio],
   ['estados', estados],

@@ -92,8 +92,10 @@
   { "patron": "apps/web/src/app/(finn)/presupuesto/*.tsx", "fts": ["FT-09"] },
   {
     "patron": "apps/web/src/servidor/acciones/transacciones.ts",
-    "fts": ["FT-21", "FT-22", "FT-23"]
+    "fts": ["FT-21", "FT-22", "FT-23", "FT-54"]
   },
+  { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/cuota/**", "fts": ["FT-54"] },
+  { "patron": "apps/web/src/flujos/cuentas-cuota/**", "fts": ["FT-54"] },
   { "patron": "apps/web/src/app/(finn)/registrar/*.tsx", "fts": ["FT-21"] },
   { "patron": "apps/web/src/app/(finn)/registrar/gasto/**", "fts": ["FT-21"] },
   { "patron": "apps/web/src/flujos/registrar-gasto/**", "fts": ["FT-21"] },
