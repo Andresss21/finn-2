@@ -74,7 +74,13 @@
     "fts": ["FT-18"]
   },
   { "patron": "apps/web/src/flujos/presupuesto-estructura/**", "fts": ["FT-18"] },
-  { "patron": "apps/web/src/servidor/acciones/presupuesto.ts", "fts": ["FT-10"] },
+  { "patron": "apps/web/src/servidor/acciones/presupuesto.ts", "fts": ["FT-10", "FT-11"] },
+  { "patron": "apps/web/src/app/(finn)/presupuesto/mover/**", "fts": ["FT-11"] },
+  {
+    "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/mover/**",
+    "fts": ["FT-11"]
+  },
+  { "patron": "apps/web/src/flujos/presupuesto-mover/**", "fts": ["FT-11"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/asignar/**", "fts": ["FT-10"] },
   {
     "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/asignar/**",
