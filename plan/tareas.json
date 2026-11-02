@@ -353,7 +353,7 @@
 
   "TA-282": { "estado": "terminada", "rama": "ta-282-cuenta-saldo-inicial-2", "pr": 249 },
 
-  "TA-283": { "estado": "terminada", "rama": "ta-283-estructura", "pr": 252 },
+  "TA-283": { "estado": "terminada", "rama": "ta-283-estructura-2", "pr": 253 },
 
   "TA-284": { "estado": "terminada", "rama": "ta-284-webhook-token", "pr": 250 },
 

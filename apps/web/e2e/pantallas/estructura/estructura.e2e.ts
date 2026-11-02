@@ -13,7 +13,7 @@ import type { Page } from '@playwright/test';
 const RUTA = '/presupuesto/estructura';
 const HOY = '2027-02-05';
 
-/** Una base con el estado inicial dado; el servidor fija el mismo instante. Cada semilla tiene un número distinto de hechos. */
+/** Una base con el estado inicial dado; el servidor fija el mismo instante. */
 async function preparar(estadoInicial: Op[]): Promise<void> {
   fijarRelojServidor(`${HOY}T10:00:00-06:00`);
   const escenario: Escenario = {
@@ -117,10 +117,7 @@ test.describe('PRU-E2E-CATEG', () => {
   test('PRU-E2E-CATEG-105 [CA-18.4] el grupo "Pagos de tarjeta" se muestra sin acciones y no se ofrece como grupo de una categoría nueva', async ({
     page,
   }) => {
-    // La memoria del servidor se indexa por revisión: 5 categorías dan una que las pruebas anteriores no dejaron en ella
-    await preparar(
-      ['Suelta', 'Dos', 'Tres', 'Cuatro', 'Cinco'].map((categoria) => ({ op: 'OP-07', categoria })),
-    );
+    await preparar([{ op: 'OP-07', categoria: 'Suelta' }]);
     await abrir(page);
     await expect(page.getByText(t.delSistema)).toBeVisible();
     await expect(page.getByRole('button', { name: /Pagos de tarjeta/ })).toHaveCount(0);
