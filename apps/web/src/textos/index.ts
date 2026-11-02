@@ -22,6 +22,7 @@ import { plantilla } from './plantilla.ts';
 import { presupuesto } from './presupuesto.ts';
 import { presupuestoAsignar } from './presupuesto-asignar.ts';
 import { primerosPasos } from './primeros-pasos.ts';
+import { registrarGasto } from './registrar-gasto.ts';
 import { registrarTipo } from './registrar-tipo.ts';
 
 export {
@@ -48,6 +49,7 @@ export {
   presupuesto,
   presupuestoAsignar,
   primerosPasos,
+  registrarGasto,
   registrarTipo,
 };
 
@@ -76,5 +78,6 @@ export const areas = [
   ['alcanceReserva', alcanceReserva],
   ['ingreso', ingreso],
   ['navegacion', navegacion],
+  ['registrarGasto', registrarGasto],
   ['registrarTipo', registrarTipo],
 ] as const;

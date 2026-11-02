@@ -10,9 +10,11 @@ import { FormularioRegistrarTipo } from './formulario';
 export async function LectorRegistrarTipo({
   tipo,
   busqueda,
+  superpuesto = false,
 }: {
   readonly tipo: TipoDeRegistro;
   readonly busqueda: BusquedaDePagina;
+  readonly superpuesto?: boolean;
 }) {
   const { cuentaId } = aParametrosDeConsulta(busqueda);
   const dto = await consultar(async () =>
@@ -30,6 +32,7 @@ export async function LectorRegistrarTipo({
   return (
     <FormularioRegistrarTipo
       tipo={tipo}
+      superpuesto={superpuesto}
       hoy={dto.hoy}
       cuentas={efectivo}
       cuentaPropuesta={efectivo.some((c) => c.id === propuesta) ? propuesta : undefined}

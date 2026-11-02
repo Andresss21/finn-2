@@ -4,7 +4,7 @@
 // cerrado el servidor pide confirmar con AV-01 antes de escribir. No calcula montos (PF-3): el impacto lo trae el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
@@ -15,7 +15,7 @@ import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
-import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { PaginaFlujoDeRuta, SuperpuestoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -35,6 +35,8 @@ export interface PropsFormularioRegistrarTipo {
   readonly hoy: FechaLocal;
   readonly cuentas: readonly { readonly id: string; readonly nombre: string }[];
   readonly cuentaPropuesta: string | undefined;
+  /** Interceptado sobre la pantalla de origen (05 §1.4): hoja o panel; sin él, página completa. */
+  readonly superpuesto?: boolean;
 }
 
 interface Previsualizacion {
@@ -50,11 +52,31 @@ const ENLACE =
 /** Un rechazo cuyo mensaje ya se muestra en su campo no se repite como aviso del formulario. */
 const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
 
+/** El marco del flujo: el superpuesto de la ruta interceptada o la página completa. */
+function Marco({
+  superpuesto,
+  titulo,
+  children,
+}: {
+  readonly superpuesto: boolean;
+  readonly titulo: string;
+  readonly children: ReactNode;
+}) {
+  return superpuesto ? (
+    <SuperpuestoDeRuta titulo={titulo}>{children}</SuperpuestoDeRuta>
+  ) : (
+    <PaginaFlujoDeRuta titulo={titulo} rutaPadre="/registrar">
+      {children}
+    </PaginaFlujoDeRuta>
+  );
+}
+
 export function FormularioRegistrarTipo({
   tipo,
   hoy,
   cuentas,
   cuentaPropuesta,
+  superpuesto = false,
 }: PropsFormularioRegistrarTipo) {
   const esIngreso = tipo === 'ingreso';
   const titulo = esIngreso ? t.tituloIngreso : t.tituloTransferencia;
@@ -86,7 +108,7 @@ export function FormularioRegistrarTipo({
   const faltan = esIngreso ? cuentas.length < 1 : cuentas.length < 2;
   if (faltan)
     return (
-      <PaginaFlujoDeRuta titulo={titulo} rutaPadre="/registrar">
+      <Marco superpuesto={superpuesto} titulo={titulo}>
         <Vacio
           titulo={esIngreso ? t.sinEfectivoTitulo : t.pocasTitulo}
           texto={esIngreso ? t.sinEfectivoTexto : t.pocasTexto}
@@ -96,16 +118,13 @@ export function FormularioRegistrarTipo({
             </EnlaceFinn>
           }
         />
-      </PaginaFlujoDeRuta>
+      </Marco>
     );
 
   if (estado === 'listo' && exito !== undefined) {
     const monto = formatearMontoTexto(c.total);
     return (
-      <PaginaFlujoDeRuta
-        titulo={esIngreso ? t.listoIngreso : t.listoTransferencia}
-        rutaPadre="/registrar"
-      >
+      <Marco superpuesto={superpuesto} titulo={esIngreso ? t.listoIngreso : t.listoTransferencia}>
         <div className="flex flex-col gap-4">
           <Resultado
             texto={
@@ -122,12 +141,12 @@ export function FormularioRegistrarTipo({
             {t.registrarOtro}
           </Boton>
         </div>
-      </PaginaFlujoDeRuta>
+      </Marco>
     );
   }
 
   return (
-    <PaginaFlujoDeRuta titulo={titulo} rutaPadre="/registrar">
+    <Marco superpuesto={superpuesto} titulo={titulo}>
       {estado === 'confirmando' ? (
         <ConfirmacionImpacto
           titulo={t.revisar}
@@ -237,6 +256,6 @@ export function FormularioRegistrarTipo({
           </Boton>
         </form>
       )}
-    </PaginaFlujoDeRuta>
+    </Marco>
   );
 }
