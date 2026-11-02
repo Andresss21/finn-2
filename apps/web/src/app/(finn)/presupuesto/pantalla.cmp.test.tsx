@@ -191,6 +191,104 @@ describe('PRU-CMP-PRES', () => {
     expect(filtrado.querySelector('a[aria-current="true"]')?.textContent).toBe('Sobregiradas');
   });
 
+  it('PRU-CMP-PRES-104 [CA-09.8, CA-09.9, CA-09.10] la pantalla dibuja la barra con los puntos básicos del DTO, sin recalcular, y el indicador de su sobregiro', () => {
+    const sobregirada = (
+      id: string,
+      barra: Record<string, unknown>,
+      tipo: 'debito' | 'mixto',
+    ): ReturnType<typeof fila> =>
+      fila(id, id, { disponible: -2630, clasificacion: 'sobregirada', sobregiro: { tipo }, barra });
+    const n = montar(
+      <PantallaPresupuesto
+        dto={dto({
+          grupos: [
+            {
+              grupo: { id: 'g1', nombre: 'Casa' },
+              orden: 1,
+              categorias: [
+                sobregirada(
+                  'ca-09-8',
+                  { cubiertoBp: 8202, excedenteBp: 1798, tipoExcedente: 'debito' },
+                  'debito',
+                ),
+                sobregirada(
+                  'ca-09-9',
+                  { cubiertoBp: 6667, excedenteBp: 3333, tipoExcedente: 'mixto' },
+                  'mixto',
+                ),
+                sobregirada(
+                  'ca-09-10',
+                  { cubiertoBp: 0, excedenteBp: 10_000, tipoExcedente: 'debito' },
+                  'debito',
+                ),
+              ],
+              totales: { asignado: 0, gastado: 0, disponible: 0 },
+            },
+          ],
+        })}
+      />,
+    );
+    const segmentos = (id: string) =>
+      [
+        ...(n.querySelector(`[data-fila-categoria="${id}"]`)?.querySelectorAll('[data-segmento]') ??
+          []),
+      ].map((s) => [s.getAttribute('data-segmento'), (s as HTMLElement).style.width]);
+    expect(segmentos('ca-09-8')).toEqual([
+      ['cubierto', '82.02%'],
+      ['excedente', '17.98%'],
+    ]);
+    expect(segmentos('ca-09-9')).toEqual([
+      ['cubierto', '66.67%'],
+      ['excedente', '33.33%'],
+    ]);
+    // Cubierto 0: no se dibuja un segmento vacío ni uno negativo.
+    expect(segmentos('ca-09-10')).toEqual([['excedente', '100%']]);
+    const estados = (id: string) =>
+      [
+        ...(n.querySelector(`[data-fila-categoria="${id}"]`)?.querySelectorAll('[data-estado]') ??
+          []),
+      ].map((e) => e.getAttribute('data-estado'));
+    expect(
+      n.querySelector('[data-fila-categoria="ca-09-8"] [data-barra]')?.getAttribute('data-barra'),
+    ).toBe('debito');
+    expect(
+      n.querySelector('[data-fila-categoria="ca-09-9"] [data-barra]')?.getAttribute('data-barra'),
+    ).toBe('mixto');
+    expect(estados('ca-09-10')).toContain('problema');
+    expect(estados('ca-09-9')).toEqual(expect.arrayContaining(['problema', 'deuda-sin-respaldo']));
+  });
+
+  it('PRU-CMP-PRES-104 [CA-09.11, CA-09.12] sin sobregiro la barra no trae excedente ni indicador, y con barra nula la fila no la dibuja', () => {
+    const n = montar(
+      <PantallaPresupuesto
+        dto={dto({
+          grupos: [
+            {
+              grupo: { id: 'g1', nombre: 'Casa' },
+              orden: 1,
+              categorias: [
+                fila('ca-09-11', 'Devuelta', {
+                  disponible: 0,
+                  barra: { cubiertoBp: 10_000, excedenteBp: 0, tipoExcedente: null },
+                }),
+                fila('ca-09-12', 'Sin asignar', { asignado: 0, disponible: 0, barra: null }),
+              ],
+              totales: { asignado: 0, gastado: 0, disponible: 0 },
+            },
+          ],
+        })}
+      />,
+    );
+    const devuelta = n.querySelector('[data-fila-categoria="ca-09-11"]');
+    expect(devuelta?.querySelector('[data-segmento="cubierto"]')).not.toBeNull();
+    expect(devuelta?.querySelector('[data-segmento="excedente"]')).toBeNull();
+    expect(devuelta?.querySelector('[data-estado="problema"]')).toBeNull();
+    expect(devuelta?.querySelector('[data-barra]')?.getAttribute('data-barra')).toBe('dentro');
+    const vacia = n.querySelector('[data-fila-categoria="ca-09-12"]');
+    expect(vacia).not.toBeNull();
+    expect(vacia?.querySelector('[data-barra]')).toBeNull();
+  });
+
   it('PRU-CMP-PRES-103 el selector dice el período de transición con sus días', () => {
     const transicion = { ...ACTIVO, dias: 11, transicion: true };
     const n = montar(<PantallaPresupuesto dto={dto({ periodo: transicion })} />);
