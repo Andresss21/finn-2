@@ -39,7 +39,7 @@ test.describe('PRU-E2E-PWA', () => {
     await preparar();
   });
 
-  test('PRU-E2E-PWA-106 [CA-77.1] sin elección, Finn sigue el tema del sistema y cambia con él', async ({
+  test('PRU-E2E-PWA-106 [CA-77.1, RUTA-/ajustes/apariencia] sin elección, Finn sigue el tema del sistema y cambia con él', async ({
     page,
   }) => {
     await page.emulateMedia({ colorScheme: 'dark' });
