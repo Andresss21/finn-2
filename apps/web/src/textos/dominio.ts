@@ -46,7 +46,7 @@ export const dominio = {
     activo: 'Actual',
     cerrado: 'Cerrado',
     futuro: 'Futuro',
-    transicion: 'De transición',
+    transicion: (dias: number) => `Período de transición, ${dias} ${dias === 1 ? 'día' : 'días'}`,
     transcurridos: (n: number) => `${n} ${n === 1 ? 'día transcurrido' : 'días transcurridos'}`,
     quedan: (n: number) => `${n === 1 ? 'queda' : 'quedan'} ${n}`,
   },
