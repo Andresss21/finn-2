@@ -44,7 +44,9 @@ const escenario = (estadoInicial: Op[]): Escenario => ({
 });
 
 /** El servidor fija las 20:00 del día 18, después de los SMS sembrados. */
-const fijarServidor = () => fijarRelojServidor(`${HOY}T20:00:00-06:00`);
+const fijarServidor = (): void => {
+  fijarRelojServidor(`${HOY}T20:00:00-06:00`);
+};
 
 async function abrirBandeja(page: Page): Promise<void> {
   await page.goto('/bandeja');
@@ -131,25 +133,20 @@ test.describe('PRU-E2E-BAND', () => {
   }) => {
     fijarServidor();
     // OP-41 no es una operación de los escenarios: se aplica por el marco entre el estado y el SMS, y el SMS llega después
-    const { ejecutorInt, copiarEstadoA } =
+    const { ejecutorInt, copiarEstadoA, idDeCategoria } =
       await import('../../../../../packages/aplicacion/test/escenarios/int.ts');
-    const { consultar } = await import('../../../../../packages/db/test/ayudantes/conexion.ts');
     const { confirmar } =
       await import('../../../../../packages/aplicacion/src/operaciones/marco.ts');
     const { OP41 } =
       await import('../../../../../packages/aplicacion/src/operaciones/bandeja/index.ts');
     const s = await ejecutorInt.iniciar(escenario(CUENTAS), HOY);
-    const [categoria] = await consultar(
-      s.base.urlAdmin,
-      `SELECT id FROM finn.categorias WHERE nombre = 'Supermercado'`,
-    );
     const regla = await confirmar(
       OP41 as never,
       {
         accion: 'crear',
         id: 'c0ffee00-0000-4000-8000-000000000041',
         patron: 'SELECTOS',
-        categoriaId: categoria,
+        categoriaId: await idDeCategoria(s, 'Supermercado'),
       },
       {
         memoria: s.memoria,

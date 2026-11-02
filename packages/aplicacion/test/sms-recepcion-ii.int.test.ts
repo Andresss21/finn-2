@@ -20,7 +20,6 @@ import { barrer, procesar } from '../src/sms/procesar.ts';
 import { ejecutorInt, type Estado } from './escenarios/int.ts';
 
 const HOY = '2027-02-18';
-const MIN = 60_000;
 const ESTADO_INICIAL: Op[] = [
   { op: 'OP-01', cuenta: 'Ahorro' },
   { op: 'OP-01', cuenta: 'Visa BAC', tipo: 'tarjeta', ultimos4: '4821' }, // la institución del dato es BAC
@@ -250,7 +249,7 @@ describe('PRU-INT-BAND (FT-34: recepción y procesamiento, 2 de 2)', () => {
   });
 
   it('PRU-INT-BAND-113 [CA-34.11] un SMS de más de 640 caracteres queda no reconocido sin evaluar los patrones, aunque su texto corto sí se reconoce', async () => {
-    const largo = compra('4821', '5.55', `${'A'.repeat(640)}`);
+    const largo = compra('4821', '5.55', 'A'.repeat(640));
     expect(largo.length).toBeGreaterThan(640);
     const id = await llega(largo, `${HOY}T14:20`);
     expect(await movimientoDe(id)).toMatchObject({

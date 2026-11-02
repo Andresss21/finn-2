@@ -198,6 +198,11 @@ const categoriaId = (i: Instantanea, nombre: string) => {
   throw new Error(`el dato nombra una categoría que no existe: ${nombre}`);
 };
 
+/** El id de la categoría que el dato llama `nombre`, para operaciones que los escenarios no traen (OP-41 en FT-34). */
+export async function idDeCategoria(s: Estado, nombre: string): Promise<Uuid> {
+  return categoriaId((await leerI(s)).i, nombre);
+}
+
 // ── Escritura: la operación real ─────────────────────────────────────────────────────────────────────────────────
 type Rechazo = { codigo: string };
 /** Simulado = real + desfase: se mide el reloj real de la base y se pide el instante local de la convención (DP-16). */
