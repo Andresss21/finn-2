@@ -62,18 +62,6 @@ describe('PRU-INT-CATEG', () => {
     expect(fila(esc44, '1')?.fallos).toEqual([]);
   });
 
-  it('PRU-INT-CATEG-109 [CA-19.2, ESC-44, AV-14] la devolución de $25.00 vinculada a la compra del 2 de febrero deja a Gimnasio con $25.00 y con AV-14', () => {
-    expect(fila(esc44, '2')?.fallos).toEqual([]);
-  });
-
-  it('PRU-INT-CATEG-110 [CA-19.3, ESC-44] condonar hacia Gimnasio archivada se rechaza con categoria_archivada y no cambia nada', () => {
-    expect(fila(esc44, '3')?.fallos).toEqual([]);
-  });
-
-  it('PRU-INT-CATEG-111 [CA-19.4, ESC-44, AV-14] sacar los $25.00 de Gimnasio a LPA sube LPA a $695.00 y deja a Gimnasio en $0.00', () => {
-    expect(fila(esc44, '4')?.fallos).toEqual([]);
-  });
-
   it('PRU-INT-CATEG-112 [CA-19.5] archivar con una programada activa sin decidir se rechaza con programada_sin_decision y, decidida, se archiva', () => {
     expect(fila(programada, '1')?.fallos).toEqual([]);
     expect(fila(programada, '2')?.fallos).toEqual([]);

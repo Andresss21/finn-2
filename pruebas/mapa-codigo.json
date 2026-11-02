@@ -88,16 +88,7 @@
     "patron": "apps/web/src/app/(finn)/presupuesto/categorias/[categoriaId]/archivar/**",
     "fts": ["FT-19"]
   },
-  {
-    "patron": "apps/web/src/app/(finn)/presupuesto/categorias/[categoriaId]/sacar/**",
-    "fts": ["FT-19"]
-  },
-  {
-    "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/categorias/**",
-    "fts": ["FT-19"]
-  },
   { "patron": "apps/web/src/flujos/presupuesto-categorias-archivar/**", "fts": ["FT-19"] },
-  { "patron": "apps/web/src/flujos/presupuesto-categorias-sacar/**", "fts": ["FT-19"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/asignar/**", "fts": ["FT-10"] },
   {
     "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/asignar/**",

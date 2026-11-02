@@ -2,7 +2,6 @@
 // Un `?periodo=` que no abre un período (o un `?filtro=` desconocido) llega como `VALIDACION`: `consultar()` redirige a la
 // misma ruta sin ese parámetro (05 §2.2, CP-13).
 import { presupuesto } from '@finn/aplicacion/consultas/presupuesto';
-import { sacarDisponible } from '../../../servidor/acciones/categorias';
 import { consultar } from '../../../servidor/consultar';
 import { depsDeConsulta } from '../../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../../servidor/parametros';
@@ -15,11 +14,5 @@ export async function LectorPresupuesto({ busqueda }: { readonly busqueda: Busqu
   const dto = await consultar(async () => presupuesto(await depsDeConsulta(), parametros));
   const crudo = busqueda['filtro'];
   const filtro = FILTROS.find((f) => f === crudo);
-  return (
-    <PantallaPresupuesto
-      dto={dto}
-      sacar={sacarDisponible}
-      {...(filtro === undefined ? {} : { filtro })}
-    />
-  );
+  return <PantallaPresupuesto dto={dto} {...(filtro === undefined ? {} : { filtro })} />;
 }
