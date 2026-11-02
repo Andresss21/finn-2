@@ -54,5 +54,9 @@ export const registrarGasto = {
   sinComercio: 'Gasto',
   deudorExistente: (nombre: string) =>
     `La parte por cobrar quedó a nombre de ${nombre}, que ya existía.`,
+  sugerencia: (categoria: string) => `Sugerencia: ${categoria}`,
+  usarSugerencia: 'Usar en la parte 1',
+  categoriasTocadas: 'Categorías del gasto',
+  verCategoria: (nombre: string) => `Ver ${nombre}`,
   registrarOtro: 'Registrar otro gasto',
 } as const;

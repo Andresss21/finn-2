@@ -10,6 +10,7 @@ import { ajustesExportar } from '../../../textos/ajustes-exportar';
 import { ajustesApariencia } from '../../../textos/ajustes-apariencia';
 import { ajustesWebhook } from '../../../textos/ajustes-webhook';
 import { navegacion } from '../../../textos/navegacion';
+import { notificaciones } from '../../../textos/notificaciones';
 
 export const metadata: Metadata = { title: navegacion.secciones.ajustes };
 
@@ -25,6 +26,12 @@ export default async function PaginaAjustes() {
         className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
       >
         {ajustesWebhook.titulo}
+      </EnlaceFinn>
+      <EnlaceFinn
+        href="/ajustes/notificaciones"
+        className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
+      >
+        {notificaciones.enlace}
       </EnlaceFinn>
       <EnlaceFinn
         href="/ajustes/exportar"
