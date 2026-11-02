@@ -419,7 +419,7 @@
 
   "TA-315": { "estado": "pendiente" },
 
-  "TA-400": { "estado": "pendiente" },
+  "TA-400": { "estado": "en_curso", "rama": "ta-400-listo-para-asignar" },
 
   "TA-401": { "estado": "pendiente" },
 
