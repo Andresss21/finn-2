@@ -5,7 +5,7 @@ import type { DetalleCategoria } from '@finn/dominio/selectores';
 import { Icono } from '../../../../../componentes/base/icono';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { GraficoBarras, type PuntoBarra } from '../../../../../componentes/graficos/grafico-barras';
-import { VistaGrafico } from './vista';
+import { VistaGrafico } from '../../../../../componentes/graficos/vista-grafico';
 import { formatearMonto } from '../../../../../formato';
 import { categoriaDetalle } from '../../../../../textos/categoria-detalle';
 
