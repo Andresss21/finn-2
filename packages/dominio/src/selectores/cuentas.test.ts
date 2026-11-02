@@ -518,6 +518,19 @@ describe('PRU-DOM-CTA', () => {
     const marzo = detalleCuenta(i, id('ef'), { periodoInicio: f('2027-03-01') });
     expect(marzo.movimientos.map((m) => m.id)).toEqual([id('retiro'), id('aporte'), id('g-mar')]);
     expect(marzo.navegacion).toEqual({ anterior: f('2027-02-01'), siguiente: f('2027-04-01') });
+    // [CH-71] `periodo` es el elegido (cerrado, sin días corridos) o, sin `periodoInicio`, el activo
+    expect(marzo.periodo).toEqual({
+      inicio: f('2027-03-01'),
+      fin: f('2027-03-31'),
+      dias: 31,
+      estado: 'cerrado',
+      transicion: false,
+    });
+    expect(detalleCuenta(i, id('ef')).periodo).toMatchObject({
+      inicio: f('2027-04-01'),
+      estado: 'activo',
+      diasTranscurridos: 15,
+    });
     expect(detalleCuenta(i, id('ef'), { tipo: 'gasto' }).movimientos.map((m) => m.id)).toEqual([
       id('g-mar'),
     ]);

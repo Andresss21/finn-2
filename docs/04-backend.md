@@ -2736,6 +2736,7 @@ interface CuentasDto extends Encabezado {
 ```ts
 interface DetalleCuentaDto extends Encabezado {
   cuenta: Ref & { tipo: TipoCuenta; institucion?: string; ultimos4?: string; fechaApertura: FechaLocal; archivada: boolean };
+  periodo: PeriodoDto;                                            // [CH-71] el de periodoInicio, o el activo: lo que `SelectorPeriodo` necesita (05 §3.4)
   saldo: Centavos; saldoConfirmado: Centavos;
   navegacion: { anterior?: FechaLocal; siguiente?: FechaLocal };   // [F5] CP-9: vecinos de periodoInicio, o del activo (selector periodos)
   movimientos: (TransaccionFila & { efectoEnCuenta: Centavos; saldoDespues: Centavos })[];  // saldo corrido (6.0.5)
