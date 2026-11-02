@@ -452,7 +452,7 @@ El verificador deriva los ESC y los CB de las fichas y comprueba que la tarea du
 
 ```hito
 despues: TA-318
-requiere: TA-263, TA-302, TA-303, TA-304, TA-305, TA-306, TA-441, TA-442, TA-307, TA-308, TA-309, TA-310, TA-311, TA-312, TA-313, TA-314, TA-315, TA-317, TA-318
+requiere: TA-263, TA-302, TA-303, TA-304, TA-305, TA-306, TA-441, TA-442, TA-307, TA-308, TA-309, TA-310, TA-311, TA-312, TA-313, TA-314, TA-443, TA-315, TA-317, TA-318
 tu: TU-11, TU-12, TU-16
 ```
 
@@ -1568,6 +1568,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-81** | Presupuesto de bytes por ruta y selector Gráfico / Tabla (corrección posterior a TA-319 y TA-400). PRU-REN-PWA-002 (05 §13.1, `porRutaKb` 50 KB) deja a `/registrar/gasto` en 49,98 KB y a `/cuentas/nueva` en 49,95 KB. El desdoble del chunk compartido de formularios (+1,17 KB en todas las rutas con formulario) lo causaba el `RadioGroup` de Radix que usaba `SelectorSegmentado`, la base de `VistaGrafico`: una pantalla sin formulario que lo importaba se llevaba parte de ese chunk. Arreglo de configuración: no lo hay. Con Turbopack (Next 16.4.1, 05 §13.2) la configuración `webpack`/`splitChunks` no se aplica y `optimizePackageImports` solo reescribe importaciones de paquetes barril, que no son los `@radix-ui/react-*` sueltos: el reparto de chunks lo decide el grafo de módulos. Arreglo de componente: `SelectorSegmentado` con botones nativos `role="radio"`, flechas y foco (#281), sin Radix. Medido con `VistaGrafico` en el historial del detalle de categoría (#286) y en el de Listo para asignar (este cambio): `VistaGrafico` entra en el JS propio de cada pantalla (7,38 KB y 2,32 KB) y ninguna ruta con formulario cambia (compartido 161,9 KB, biblioteca 43,29 KB, `/registrar/gasto` 49,98 KB, `/cuentas/nueva` 49,95 KB, antes y después). `porRutaKb` no cambia. Los `lazy` de `flujos/registrar-gasto/formulario.tsx` (TA-293) se conservan: sin ellos `/registrar/gasto` pasaría los 50 KB. Lo cubre PRU-CMP-PRES-106 (el selector del historial de Listo para asignar cambia a la tabla) | 05 §10.8.1 (`SelectorVista`); 05 §13.1 sin cambios | Delegado por el orquestador; **aplicado [CH-81]** en 05 §10.8.1 |
 | **CH-82** | Partición de TA-306 por tamaño (DT-02), con precedente en CH-72 y CH-79, y cómo se entra al flujo de archivar. (a) El alcance completo de FT-19 midió prod≈758 en 13 archivos de producción (total≈1.520) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-306 conserva `/archivar` con OP-09 y el rechazo de OP-10 (CA-19.1, CA-19.5, CA-19.7; prod≈340, 6 archivos); TA-441, nueva (orden 365), lleva `/sacar`, el interceptor y la propuesta de un toque de AV-14 en Presupuesto (CA-19.2, CA-19.3, CA-19.4, CA-19.6; medido prod≈420, se declara 400, 9 archivos), cierra la ficha y lleva los pendientes CA-19.2>FT-28 y CA-19.3>FT-47. TA-441 depende de TA-306 y de las mismas tareas; HT-7 la exige. Criterio de dependientes: TA-406 (FT-28) y TA-407 (FT-47) completan CA-19.2 y CA-19.3, que ahora son de TA-441, así que pasan de TA-306 a TA-441; TA-413 (FT-40) completa CA-19.1 y CA-19.5 y sigue en TA-306. El código completo queda en la rama local `ta-441-sacar-archivada`. (c) 06 FT-19, Flujo paso 1, decía «Detalle de categoría → archivar», pero el detalle deshabilita «Archivar» con bloqueos (06-identidad-visual §6 punto 8 y 06 S3): al flujo se entra desde Estructura → editar → «Archivar», y desde el detalle solo cuando no hay bloqueos. No se cambia código | 08 TA-306, TA-441, TA-406, TA-407, HT-7; 06 FT-19, índice y §30.1 | Delegado por el orquestador; **aplicado [CH-82]** en 06 y en 08 |
 | **CH-83** | Partición de TA-305 por tamaño (DT-02), con precedente en CH-72, CH-79 y CH-82. (a) El alcance completo de FT-17 midió prod=629 en 12 archivos de producción (total≈1.600) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-305 conserva `/metas` y `/metas/nueva` con OP-18 crear (CA-17.1, CA-17.2, CA-17.3, CA-17.5, CA-17.6, CA-17.7; prod=442 medido, se declara 400, 10 archivos); TA-442, nueva (orden 366), lleva `/metas/[metaId]` con OP-18 editar y eliminar, «Usar el valor actual» y la E2E de CA-17.4 (prod≈150, 5 archivos), cierra la ficha. TA-442 depende de TA-305, de las mismas tareas y de TA-299 (FT-08): CA-17.4 pide ver AV-17 en Inicio y no puede ser un pendiente de punta a punta hacia FT-08, cuyas tareas tienen orden menor (E5, E12), así que TA-442 lo prueba entera. HT-7 la exige. Criterio de dependientes: ninguna otra tarea depende de CA-17.4, así que ninguna cambia de TA-305 a TA-442. (c) El código de TA-442 queda en la rama local `ta-442-metas-editar`. (d) Mientras TA-442 no se mergee, los enlaces «Editar», «Extender la fecha» y «Ajustar el monto» de `/metas` y «Editar la meta» del detalle de categoría apuntan a `/metas/[metaId]`, que aún no existe | 08 TA-305, TA-442, HT-7 y §30.1 | Delegado por el orquestador; **aplicado [CH-83]** en 08 |
+| **CH-84** | Partición de TA-314 por tamaño (DT-02), con precedente en CH-72, CH-79, CH-82 y CH-83, y `cuentas()` sin ordenar por `orden`. (a) El alcance completo de FT-53 midió prod≈1.030 en 15 archivos de producción (total≈1.600) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). Las últimas fichas de pantalla midieron entre 1,7 y 2,1 veces la estimación. (b) Se parte en dos: TA-314 conserva `/cuentas/[cuentaId]/editar` con OP-02 y `/cuentas/ordenar` con OP-03 (CA-53.5, CA-53.6; prod=519 medido, se declara 400, 9 archivos); TA-443, nueva (orden 367), lleva `/archivar` con OP-04, `/eliminar` con OP-06 y «Archivar de nuevo» en el detalle (CA-53.1, CA-53.2, CA-53.3, CA-53.4, CA-53.7; prod≈490 medido, se declara 400, 12 archivos), cierra la ficha. TA-443 depende de TA-314 y de las mismas tareas; HT-7 la exige. Criterio de dependientes: ninguna otra tarea depende de TA-314 ni de CA-53.x, así que ninguna cambia de TA-314 a TA-443. (c) El código de TA-443 queda en la rama local `ta-443-cuentas-2`. (d) 04 §6.5 y §6.14.2 piden las cuentas «en el orden de OP-03», pero `cuentas()` del dominio no ordenaba por `orden`, así que «Ordenar» no tenía efecto visible: TA-314 la corrige (orden, y el id si empatan) con PRU-DOM-CTA-170. (e) TA-314 edita nombre, institución, últimos cuatro dígitos y fecha de apertura; los campos propios de una tarjeta o inversión que OP-02 también admite (límite, corte, pago, red, color, tasa, rendimiento) no tienen pantalla en 06 FT-53 y quedan sin tarea: si se quieren, es una ficha nueva. (f) Mientras TA-443 no se mergee, los enlaces «Archivar» y «Eliminar» del detalle de cuenta apuntan a rutas que aún no existen | 08 TA-314, TA-443, HT-7 y §30.1; 04 §6.5 | Delegado por el orquestador; **aplicado [CH-84]** en 08 |
 
 ---
 
@@ -7457,7 +7458,7 @@ compartido: —
 | FT-50 | Crear cuenta con saldo inicial | 7 | HT-6 | TA-282 | `/cuentas/nueva` |
 | FT-51 | Cuentas y posición neta | 8 | HT-7 | TA-312 | `/cuentas` |
 | FT-52 | Detalle de cuenta | 5 | HT-7 | TA-313, TA-317, TA-318 | `/cuentas/[cuentaId]` |
-| FT-53 | Editar, ordenar, archivar, desarchivar y eliminar cuentas | 7 | HT-7 | TA-314 | `/cuentas/[cuentaId]/archivar`, `/cuentas/[cuentaId]/editar`, `/cuentas/[cuentaId]/eliminar`, `/cuentas/ordenar` |
+| FT-53 | Editar, ordenar, archivar, desarchivar y eliminar cuentas | 7 | HT-7 | TA-314, TA-443 **[CH-84]** | `/cuentas/[cuentaId]/archivar`, `/cuentas/[cuentaId]/editar`, `/cuentas/[cuentaId]/eliminar`, `/cuentas/ordenar` |
 | FT-54 | Pagar cuota o abonar a capital | 5 | HT-7 | TA-315 | `/cuentas/[cuentaId]/cuota` |
 
 40 tareas, TA-280 a TA-315 y TA-316 a TA-319, 233 CA (las 31 fichas [I]).
@@ -8884,7 +8885,7 @@ fichas: FT-52
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
-#### TA-314 FT-53 Editar, ordenar, archivar, desarchivar y eliminar cuentas
+#### TA-314 FT-53 Editar y ordenar cuentas (1 de 2) **[CH-84]**
 
 ```tarea
 orden: 363
@@ -8894,18 +8895,19 @@ depende: TA-162, TA-171, TA-173, TA-210, TA-212, TA-219, TA-224, TA-313
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=7 migraciones=0 total=1000
-cubre: CA-53.1, CA-53.2, CA-53.3, CA-53.4, CA-53.5, CA-53.6, CA-53.7, RUTA-/cuentas/[cuentaId]/archivar, RUTA-/cuentas/[cuentaId]/editar, RUTA-/cuentas/[cuentaId]/eliminar, RUTA-/cuentas/ordenar
+tamano: prod=400 archivos=9 ca=2 migraciones=0 total=900
+cubre: CA-53.5, CA-53.6, RUTA-/cuentas/[cuentaId]/editar, RUTA-/cuentas/ordenar
 pru: —
 compartido: —
 fichas: FT-53
 ```
 
 **Qué construir.**
-- FT-53: las pantallas y flujos de su ficha (Flujo, Piezas, Estados, Errores y textos) para CA-53.1 a CA-53.7, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
+- FT-53, editar y ordenar **[CH-84]**: el flujo largo `/cuentas/[cuentaId]/editar` (OP-02: nombre, institución, últimos cuatro dígitos y fecha de apertura, con `esperado`, «Usar el valor actual», borrador y AV-01) y el flujo corto `/cuentas/ordenar` (OP-03), para CA-53.5 y CA-53.6, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo. `cuentas()` pasa a listar cada tipo en el orden de OP-03 (antes no ordenaba por `orden`).
 - Server Actions de las operaciones de la ficha en `servidor/acciones/<area>.ts`, una línea por operación (04 §2.2.2); `ACCESO-001` y la suite de accesibilidad las cubren solas (TA-218, TA-221).
-- Rutas que esta tarea crea (dueña): `/cuentas/[cuentaId]/archivar`, `/cuentas/[cuentaId]/editar`, `/cuentas/[cuentaId]/eliminar`, `/cuentas/ordenar`.
-- Último PR de la ficha: `pruebas/features.json` pasa FT-53 a `terminada` (07 §27, DT-06 condición 6).
+- Rutas que esta tarea crea (dueña): `/cuentas/[cuentaId]/editar`, `/cuentas/ordenar`. Archivar, desarchivar y eliminar (`/cuentas/[cuentaId]/archivar`, `/cuentas/[cuentaId]/eliminar`, CA-53.1, CA-53.2, CA-53.3, CA-53.4, CA-53.7) son de TA-443 **[CH-84]**.
+- La ficha sigue en `pendiente`: la cierra TA-443 **[CH-84]**.
+- El código de TA-443 ya está hecho en la rama local `ta-443-cuentas-2` **[CH-84]**.
 
 **Leer.** 06 FT-53 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7 (estados); 06-identidad-visual §3 en la sección de su pantalla; 04 §6 (su consulta).
 
@@ -8913,9 +8915,43 @@ fichas: FT-53
 
 **Pruebas primero.**
 - Una prueba por CA de este trozo, en el nivel que fija 07 §17 (regla de nivel por tipo de CA), con el identificador nuevo de su área (DT-21) y el CA entre corchetes.
-- Las E2E de la ficha citan ESC-43, AV-01, AV-15 cuando el CA los nombra; sus pruebas de dominio e integración ya existen (B2 y B3).
+- Las E2E de la ficha citan ESC-43, AV-01, AV-15 cuando el CA los nombra (este trozo no los nombra); sus pruebas de dominio e integración ya existen (B2 y B3).
 
 **Comandos.** `pnpm pruebas:ft FT-53` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** `pruebas:ft` sin CA faltantes en este trozo. La ficha sigue en `pendiente` **[CH-84]**.
+
+#### TA-443 FT-53 Archivar, desarchivar y eliminar cuentas (2 de 2) **[CH-84]**
+
+```tarea
+orden: 367
+bloque: B6
+hito: HT-7
+depende: TA-162, TA-171, TA-173, TA-210, TA-212, TA-219, TA-224, TA-313, TA-314
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=12 ca=5 migraciones=0 total=1000
+cubre: CA-53.1, CA-53.2, CA-53.3, CA-53.4, CA-53.7, RUTA-/cuentas/[cuentaId]/archivar, RUTA-/cuentas/[cuentaId]/eliminar
+pru: —
+compartido: —
+fichas: FT-53
+```
+
+**Qué construir.**
+- FT-53, resto **[CH-84]**: el flujo corto `/cuentas/[cuentaId]/archivar` (OP-04, con los bloqueos explicados en texto y, en una tarjeta, devolver las asignaciones futuras), el flujo corto `/cuentas/[cuentaId]/eliminar` (OP-06, previsualizando primero con AV-15 y AV-01, y con bloqueos que ofrecen archivar) y «Archivar de nuevo» como salida de «Desarchivar» en el detalle (OP-04 sin devolver asignaciones, 05 §4.14), para CA-53.1, CA-53.2, CA-53.3, CA-53.4 y CA-53.7.
+- Server Actions de OP-04 y OP-06 en `servidor/acciones/cuentas.ts`, una línea cada una.
+- Rutas que crea (dueña): `/cuentas/[cuentaId]/archivar`, `/cuentas/[cuentaId]/eliminar`.
+- Último PR de la ficha: `pruebas/features.json` pasa FT-53 a `terminada` (07 §27, DT-06 condición 6).
+- El código ya está hecho en la rama local `ta-443-cuentas-2` **[CH-84]**.
+
+**Leer.** 06 FT-53 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §4.14, §7; 04 §6 (su consulta).
+
+**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/cuentas.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
+
+**Pruebas primero.** Una prueba por CA de este trozo (07 §17), con el CA entre corchetes; las E2E citan ESC-43, AV-01 y AV-15 cuando el CA los nombra.
+
+**Comandos.** `pnpm pruebas:ft FT-53` sin faltantes; `pnpm ci:local` con la E2E de la ficha.
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
@@ -9027,10 +9063,11 @@ pendiente: CA-54.5>FT-55
 | 360 | TA-311 | B6 | HT-7 | normal | FT-27 Transacción olvidada y cambios retroactivos | 360 |
 | 361 | TA-312 | B6 | HT-7 | normal | FT-51 Cuentas y posición neta | 360 |
 | 362 | TA-313 | B6 | HT-7 | normal | FT-52 Detalle de cuenta (1 de 3) **[CH-71]** | 400 |
-| 363 | TA-314 | B6 | HT-7 | normal | FT-53 Editar, ordenar, archivar, desarchivar y eliminar cuentas | 360 |
+| 363 | TA-314 | B6 | HT-7 | normal | FT-53 Editar y ordenar cuentas (1 de 2) **[CH-84]** | 400 |
 | 364 | TA-315 | B6 | HT-7 | normal | FT-54 Pagar cuota o abonar a capital | 360 |
 | 365 | TA-441 | B6 | HT-7 | normal | FT-19 Sacar el dinero de una archivada (2 de 2) **[CH-82]** | 400 |
 | 366 | TA-442 | B6 | HT-7 | normal | FT-17 Editar y eliminar una meta (2 de 2) **[CH-83]** | 150 |
+| 367 | TA-443 | B6 | HT-7 | normal | FT-53 Archivar, desarchivar y eliminar cuentas (2 de 2) **[CH-84]** | 400 |
 | 631 | TA-246 | B4 | HT-5 | normal | Componentes base I (parte 2): selección y buscador **[CH-52]** | 330 |
 | 632 | TA-247 | B4 | HT-5 | normal | Componentes base I (parte 3): pastillas y selector segmentado **[CH-52]** | 80 |
 | 633 | TA-551 | B4 | HT-6 | normal | Componentes de dominio I (parte 2): billete y selector de período **[CH-55]** | 200 |
