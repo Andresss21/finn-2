@@ -1370,7 +1370,7 @@ Reglas comunes a todas las fichas:
 - Recarga a mitad: empieza una inscripción nueva y la anterior, sin verificar, se quita.
 - Ya existe un factor verificado: la ruta se niega (redirige a `/ingresar/verificar`).
 
-**Errores y textos.** `codigo_incorrecto`, `codigo_vencido`, `inscripcion_no_permitida` (05 §9.7). Sin textos nuevos. **[CH-63]** La pantalla de cierre del paso 5 se muestra en `/ingresar/inscribir?cierre=1`: la pantalla agrega la marca a la URL, sin navegar, antes de enviar el código y la quita si el código falla, para que el servidor, ya con AAL2, no redirija a `volver` antes de mostrar la recomendación (05 §9.2). Con un código incorrecto o vencido la URL queda sin la marca y el error se muestra en la misma pantalla.
+**Errores y textos.** `codigo_incorrecto`, `codigo_vencido`, `inscripcion_no_permitida` (05 §9.7). Sin textos nuevos. **[CH-63]** La pantalla de cierre del paso 5 se muestra en `/ingresar/inscribir?cierre=1`: la pantalla agrega la marca a la URL, sin navegar, antes de enviar el código y la quita si el código falla, para que el servidor, ya con AAL2, no redirija al destino de volver antes de mostrar la recomendación (05 §9.2). Con un código incorrecto o vencido la URL queda sin la marca y el error se muestra en la misma pantalla.
 
 **Criterios de aceptación.**
 - **CA-02.1** Dado AAL1 sin factores, cuando abro `/ingresar/inscribir` dos veces seguidas (recargando), entonces Supabase tiene un solo factor sin verificar (el último).
