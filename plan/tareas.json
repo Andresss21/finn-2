@@ -367,7 +367,7 @@
 
   "TA-289": { "estado": "pendiente" },
 
-  "TA-290": { "estado": "en_curso", "rama": "ta-290-detalle-categoria" },
+  "TA-290": { "estado": "terminada", "rama": "ta-290-detalle-categoria", "pr": 276 },
 
   "TA-291": { "estado": "pendiente" },
 
