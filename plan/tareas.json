@@ -477,7 +477,7 @@
 
   "TA-453": { "estado": "terminada", "rama": "ta-453-reportes-2", "pr": 320 },
 
-  "TA-457": { "estado": "pendiente" },
+  "TA-457": { "estado": "en_curso", "rama": "ta-457-editar-transaccion" },
 
   "TA-422": { "estado": "pendiente" },
 
