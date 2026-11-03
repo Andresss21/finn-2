@@ -27,7 +27,14 @@ export const bandeja = {
   revisar: {
     titulo: 'Revisar movimiento',
     sms: 'Texto del SMS',
-    categoria: 'Categoría',
+    tipo: 'Tipo',
+    tipos: {
+      gasto: 'Gasto',
+      ingreso: 'Ingreso',
+      pago_tarjeta: 'Pago de tarjeta',
+      devolucion: 'Devolución',
+    },
+    monto: 'Monto',
     aprobar: 'Aprobar',
     aprobando: 'Aprobando…',
     aprobadoYa: 'Este movimiento ya se aprobó.',
