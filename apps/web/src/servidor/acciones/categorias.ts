@@ -7,6 +7,7 @@ import {
   OP09,
   OP10,
   OP11,
+  OP12,
   OP13,
 } from '@finn/aplicacion/operaciones/categorias';
 import { accion } from '../accion.ts';
@@ -19,3 +20,4 @@ export const archivarCategoria = accion(operacion(OP09));
 export const desarchivarCategoria = accion(operacion(OP10));
 export const sacarDisponible = accion(operacion(OP11));
 export const eliminarEnEstructura = accion(operacion(OP13));
+export const fusionarCategorias = accion(operacion(OP12));
