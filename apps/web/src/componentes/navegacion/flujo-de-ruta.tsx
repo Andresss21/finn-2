@@ -33,6 +33,15 @@ export function PaginaFlujoDeRuta({
   );
 }
 
+/** `cerrarFlujo()` como función, para un botón del flujo (cancelar, volver): lo mismo que hace al terminar. */
+export function useCerrarFlujo(rutaPadre: string, superpuesto: boolean): () => void {
+  const router = useRouter();
+  return () => {
+    if (superpuesto) router.back();
+    else router.replace(rutaPadre);
+  };
+}
+
 /**
  * Un flujo que ya terminó: `cerrarFlujo()` apenas se monta (05 §1.4). Página completa: hacia la pantalla padre. Superpuesto:
  * `router.back()`, que vuelve a la pantalla de origen sin recargarla.
