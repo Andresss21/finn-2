@@ -19,9 +19,10 @@ import { centavosATextoDecimal, formatearMonto } from '../../formato';
 import { aplicarSigno, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
-import { asignarEnCategoria } from '../../servidor/acciones/presupuesto';
+import { asignarEnCategoria, asignarRapido } from '../../servidor/acciones/presupuesto';
 import { formularios } from '../../textos/formularios';
 import { presupuestoAsignar as t } from '../../textos/presupuesto-asignar';
+import { OpcionesRapidas, type DatosRapida, type VarianteRapida } from './rapida';
 
 export interface PropsFormularioAsignar {
   readonly categoriaId: string;
@@ -32,6 +33,8 @@ export interface PropsFormularioAsignar {
   readonly disponible: Centavos;
   readonly asignadoEsperado: Centavos;
   readonly meta?: { readonly pedido: Centavos; readonly falta: Centavos };
+  /** `contexto.rapida` (04 §6.14.4): lo que ofrece la asignación rápida de FT-12. */
+  readonly rapida?: DatosRapida;
   /** La pantalla a la que vuelve la página completa al terminar (`cerrarFlujo()`, 05 §1.4). */
   readonly rutaPadre: string;
   readonly superpuesto: boolean;
@@ -44,7 +47,9 @@ const CONTRATO = z.object({
   signo: z.enum(['positivo', 'negativo']),
 });
 type Campos = z.infer<typeof CONTRATO>;
-type Cruda = Campos & {
+type Cruda = Partial<Campos> & {
+  /** Con `variante` el envío es OP-16 (asignación rápida); sin ella, OP-14 con lo escrito. */
+  variante?: VarianteRapida;
   modo: string;
   esperado?: Record<string, unknown>;
   revisionVista?: string;
@@ -76,7 +81,19 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
   const { categoriaId, periodoInicio, superpuesto, rutaPadre } = p;
   const enviarAsignacion = useCallback<AccionEscritura>(
     (payload) => {
-      const { modo, esperado: e, revisionVista, huellaImpacto, monto, signo } = payload as Cruda;
+      const { modo, esperado: e, revisionVista, huellaImpacto, variante } = payload as Cruda;
+      const { monto = '', signo = 'positivo' } = payload as Cruda;
+      const confirmacion = revisionVista === undefined ? {} : { revisionVista, huellaImpacto };
+      // OP-16: el valor lo calcula el servidor; solo viaja la variante y lo que vio la persona (`esperado`).
+      if (variante !== undefined)
+        return asignarRapido({
+          categoriaId,
+          periodoInicio,
+          variante,
+          esperado: e,
+          modo,
+          ...confirmacion,
+        });
       const normal = normalizarMontoEscrito(monto);
       return asignarEnCategoria({
         categoriaId,
@@ -84,7 +101,7 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
         montoNuevo: aplicarSigno(normal.estado === 'valido' ? normal.texto : monto, signo),
         esperado: e,
         modo,
-        ...(revisionVista === undefined ? {} : { revisionVista, huellaImpacto }),
+        ...confirmacion,
       });
     },
     [categoriaId, periodoInicio],
@@ -173,6 +190,14 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
         )}
       </dl>
       {p.archivada ? <AvisoEnLinea estado="informacion">{t.archivada}</AvisoEnLinea> : null}
+      {p.rapida === undefined ? null : (
+        <OpcionesRapidas
+          rapida={p.rapida}
+          {...(p.meta === undefined ? {} : { faltaDeLaMeta: p.meta.falta })}
+          deshabilitado={!operacion.enLinea || estado === 'enviando'}
+          alElegir={(variante) => void operacion.enviar({ variante })}
+        />
+      )}
       <EntradaMonto
         nombre="monto"
         etiqueta={t.nuevoAsignado}

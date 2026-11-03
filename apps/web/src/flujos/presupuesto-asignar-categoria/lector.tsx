@@ -51,6 +51,7 @@ export async function LectorAsignar({
       disponible={contexto.disponible}
       asignadoEsperado={contexto.asignadoEsperado}
       {...(contexto.meta === undefined ? {} : { meta: contexto.meta })}
+      rapida={contexto.rapida}
       rutaPadre={pedido === undefined ? '/presupuesto' : `/presupuesto?periodo=${pedido}`}
       superpuesto={superpuesto}
     />

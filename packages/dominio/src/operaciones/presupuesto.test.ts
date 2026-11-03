@@ -18,6 +18,7 @@ import type {
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { aplicar } from './aplicar';
+import { realidad } from '../selectores/reportes';
 import { asignacionRapida } from './op-16';
 
 const c = (n: number) => Centavos.desdeEntero(n * 100);
@@ -698,5 +699,80 @@ describe('PRU-DOM-PRES-103: aplicar, asignación rápida y cambiar el ciclo (01 
     expect(insertadas(r3)).toEqual([]);
     expect(periodoNuevo(r3, '2028-02-15').inicio).toBe(f('2028-02-01'));
     expect(periodoNuevo(r3, '2028-01-15')).toEqual(enero);
+  });
+});
+
+// ── TA-403: FT-12 Asignación rápida (07 §17: un número del motor es DOM). Los períodos son los de `base()` con hoy = 15 may:
+// enero a abril cerrados, mayo activo.
+describe('PRU-DOM-PRES-109: asignación rápida, CA de FT-12 (CF-17, 3.14)', () => {
+  const MAY = f('2027-05-01');
+  const HOY_MAYO = f('2027-05-15');
+  const gastos = (x: string, montos: readonly (readonly [FechaLocal, Centavos])[]) =>
+    montos.reduce((h, [fecha, monto]) => gasto(h, x, fecha, monto, HOY_MAYO), base());
+  const centavos = (n: number) => Centavos.desdeEntero(n);
+
+  it('PRU-DOM-PRES-109 [CA-12.3] con Gastado $100.00, $100.00 y $100.02 en los 3 períodos cerrados el promedio es $100.01 (mitad hacia arriba de 10,000.67 centavos) y OP-16 lo asigna', () => {
+    const h = gastos('GAS', [
+      [ENE, centavos(10000)],
+      [FEB, centavos(10000)],
+      [MAR, centavos(10002)],
+    ]);
+    expect(rapida(h, 'GAS', MAY, HOY_MAYO).promedioGasto).toEqual({
+      monto: centavos(10001),
+      periodos: 3,
+    });
+    const r = exito(ejecutar(h, op16('GAS', MAY, 'promedio_gasto'), HOY_MAYO));
+    expect(asig(r.hechosNuevos, 'GAS', MAY)).toBe(centavos(10001));
+  });
+
+  it('PRU-DOM-PRES-109 [CA-12.4] un período cerrado más reciente sin asignación ni actividad no cuenta: el promedio usa los 3 anteriores en que existía la categoría', () => {
+    // Abril (el más reciente cerrado) no tiene nada; enero, febrero y marzo: (90 + 60 + 30) / 3 = 60.
+    const h = gastos('GAS', [
+      [ENE, c(90)],
+      [FEB, c(60)],
+      [MAR, c(30)],
+    ]);
+    expect(rapida(h, 'GAS', MAY, HOY_MAYO).promedioGasto).toEqual({ monto: c(60), periodos: 3 });
+  });
+
+  it('PRU-DOM-PRES-109 [CA-12.6] una categoría que existió en 2 períodos cerrados con $80.00 y $90.00 ofrece el promedio $85.00 de 2 períodos; con 1 período, su gastado', () => {
+    const dos = gastos('SAL', [
+      [ENE, c(80)],
+      [MAR, c(90)],
+    ]);
+    expect(rapida(dos, 'SAL', MAY, HOY_MAYO).promedioGasto).toEqual({ monto: c(85), periodos: 2 });
+    const uno = gastos('SAL', [[MAR, c(90)]]);
+    expect(rapida(uno, 'SAL', MAY, HOY_MAYO).promedioGasto).toEqual({ monto: c(90), periodos: 1 });
+  });
+
+  it('PRU-DOM-PRES-109 [CA-12.7] una categoría creada en el período activo no ofrece el promedio de gasto', () => {
+    const h = gastos('SAL', [[f('2027-05-05'), c(20)]]);
+    expect(rapida(h, 'SAL', MAY, HOY_MAYO).promedioGasto).toBeUndefined();
+  });
+
+  it('PRU-DOM-PRES-109 [CA-12.8] con 2 períodos la categoría no tiene hallazgo en presupuesto contra la realidad (3.5.6 exige 3); con 3 sí tiene su promedio', () => {
+    const delaCategoria = (h: Hechos) => {
+      const r = realidad(calcular(h, HOY_MAYO));
+      return {
+        hallazgos: r.hallazgos.filter((x) => x.categoria.id === 'SAL'),
+        promedio: r.categorias.find((x) => x.categoria.id === 'SAL')?.promedioGastado,
+      };
+    };
+    const dos = delaCategoria(
+      gastos('SAL', [
+        [ENE, c(80)],
+        [FEB, c(90)],
+      ]),
+    );
+    expect(dos.hallazgos).toEqual([]);
+    expect(dos.promedio).toBeNull();
+    const tres = delaCategoria(
+      gastos('SAL', [
+        [ENE, c(80)],
+        [FEB, c(90)],
+        [MAR, c(100)],
+      ]),
+    );
+    expect(tres.promedio).toBe(c(90));
   });
 });
