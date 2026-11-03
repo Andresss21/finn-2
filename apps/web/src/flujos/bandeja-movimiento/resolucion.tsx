@@ -33,12 +33,29 @@ export default function Resolucion({
   const botones: { texto: string; ejecutar: () => void }[] = [
     ...(estado === 'posible_duplicado'
       ? [
-          { texto: cuentas.bandeja.esOtroGasto, ejecutar: () => decidir('es_legitimo') },
-          { texto: t.esDuplicado, ejecutar: () => decidir('es_duplicado') },
+          {
+            texto: cuentas.bandeja.esOtroGasto,
+            ejecutar: () => {
+              decidir('es_legitimo');
+            },
+          },
+          {
+            texto: t.esDuplicado,
+            ejecutar: () => {
+              decidir('es_duplicado');
+            },
+          },
         ]
       : []),
     ...(estado === 'con_coincidencia'
-      ? [{ texto: t.noEsEstePago, ejecutar: () => decidir('rechazar_coincidencia') }]
+      ? [
+          {
+            texto: t.noEsEstePago,
+            ejecutar: () => {
+              decidir('rechazar_coincidencia');
+            },
+          },
+        ]
       : []),
     ...(sePuedeDescartar(estado)
       ? [
