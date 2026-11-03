@@ -383,13 +383,13 @@
 
   "TA-297": { "estado": "terminada", "rama": "ta-297-bandeja-aprobar", "pr": 327 },
 
-  "TA-298": { "estado": "terminada", "rama": "ta-298-inicio-resumen", "pr": 331 },
+  "TA-298": { "estado": "terminada", "rama": "ta-298-inicio-resumen", "pr": 334 },
 
   "TA-299": { "estado": "pendiente" },
 
   "TA-300": { "estado": "terminada", "rama": "ta-300-descartar-restaurar", "pr": 330 },
 
-  "TA-301": { "estado": "pendiente" },
+  "TA-301": { "estado": "terminada", "rama": "ta-301-sms-no-reconocidos", "pr": 332 },
 
   "TA-302": { "estado": "terminada", "rama": "ta-302-mover-dinero", "pr": 292 },
 

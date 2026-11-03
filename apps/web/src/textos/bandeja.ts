@@ -40,6 +40,10 @@ export const bandeja = {
     autodescartado: 'Autodescartado',
     verMas: 'Ver más descartados',
   },
+  // FT-38: SMS no reconocidos y con error (lo mínimo para confirmar lo que se hizo)
+  reprocesado: 'Se volvió a procesar este SMS.',
+  referenciaCopiada: 'Referencia copiada.',
+  noSePudoCopiar: (referencia: string) => `No se pudo copiar. La referencia es ${referencia}.`,
   // FT-35: aprobar con un toque (05 §4.15) y revisar el movimiento completo (`/bandeja/[movimientoId]`)
   aprobado: (...partes: string[]) => `Aprobado: ${partes.join(' · ')}`,
   aprobadoSinDatos: 'Aprobado',
@@ -49,6 +53,8 @@ export const bandeja = {
   revisar: {
     titulo: 'Revisar movimiento',
     sms: 'Texto del SMS',
+    detalleError: 'Detalle del error',
+    referencia: 'Referencia',
     tipo: 'Tipo',
     tipos: {
       gasto: 'Gasto',

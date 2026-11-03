@@ -15,7 +15,9 @@ export interface MovimientoDto {
   readonly id: string;
   readonly estado:
     'pendiente' | 'con_coincidencia' | 'posible_duplicado' | 'no_reconocido' | 'error';
-  readonly sms: { readonly texto: string };
+  readonly sms: { readonly texto: string; readonly id?: string };
+  /** El último intento de procesamiento (OP-49: `intentoVisto`) y su detalle de error saneado (04 §6.8). */
+  readonly procesamiento?: { readonly intento: number; readonly errorDetalle?: string };
   readonly cuenta: { readonly nombre: string } | null;
   readonly fecha: string | null;
   readonly monto: Centavos | null;
@@ -143,7 +145,7 @@ export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar }: Pr
           {contenido}
         </EnlaceFinn>
       )}
-      {vista === 'noReconocido' ? (
+      {vista === 'noReconocido' || vista === 'error' ? (
         <blockquote className="mt-2 ml-13 rounded-xl bg-superficie-hundida p-3 text-cuerpo-pequeno text-texto">
           {m.sms.texto}
         </blockquote>
