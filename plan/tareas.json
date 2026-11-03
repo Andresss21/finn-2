@@ -381,7 +381,7 @@
 
   "TA-296": { "estado": "terminada", "rama": "ta-296-revisar-aprobar", "pr": 312 },
 
-  "TA-297": { "estado": "en_curso", "rama": "ta-297-bandeja-aprobar" },
+  "TA-297": { "estado": "terminada", "rama": "ta-297-bandeja-aprobar", "pr": 325 },
 
   "TA-298": { "estado": "pendiente" },
 
