@@ -389,7 +389,7 @@
 
   "TA-300": { "estado": "terminada", "rama": "ta-300-descartar-restaurar", "pr": 330 },
 
-  "TA-301": { "estado": "en_curso", "rama": "ta-301-sms-no-reconocidos" },
+  "TA-301": { "estado": "terminada", "rama": "ta-301-sms-no-reconocidos", "pr": 332 },
 
   "TA-302": { "estado": "terminada", "rama": "ta-302-mover-dinero", "pr": 292 },
 
