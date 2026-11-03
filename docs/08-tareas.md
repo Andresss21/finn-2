@@ -433,7 +433,7 @@ tu: TU-09, TU-10, TU-12, TU-13
 
 ```hito
 despues: TA-319
-requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-552, TA-209, TA-553, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-297, TA-298, TA-299, TA-300, TA-301, TA-316, TA-319
+requiere: TA-112, TA-132, TA-133, TA-134, TA-189, TA-190, TA-191, TA-208, TA-551, TA-552, TA-209, TA-553, TA-217, TA-218, TA-220, TA-221, TA-222, TA-223, TA-261, TA-262, TA-282, TA-283, TA-284, TA-285, TA-286, TA-287, TA-288, TA-289, TA-290, TA-291, TA-292, TA-293, TA-294, TA-295, TA-296, TA-449, TA-297, TA-298, TA-299, TA-300, TA-301, TA-316, TA-319
 fichas: FT-01, FT-02, FT-03, FT-04, FT-08, FT-09, FT-10, FT-14, FT-18, FT-21, FT-29, FT-34, FT-35, FT-37, FT-38, FT-50
 pruebas: INV-01, INV-02, INV-03, INV-04, INV-05, INV-26, INV-27, INV-28, MOT-diferencial
 tu: TU-11, TU-12, TU-15
@@ -1571,6 +1571,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-84** | Partición de TA-314 por tamaño (DT-02), con precedente en CH-72, CH-79, CH-82 y CH-83, y `cuentas()` sin ordenar por `orden`. (a) El alcance completo de FT-53 midió prod≈1.030 en 15 archivos de producción (total≈1.600) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). Las últimas fichas de pantalla midieron entre 1,7 y 2,1 veces la estimación. (b) Se parte en dos: TA-314 conserva `/cuentas/[cuentaId]/editar` con OP-02 y `/cuentas/ordenar` con OP-03 (CA-53.5, CA-53.6; prod=519 medido, se declara 400, 9 archivos); TA-443, nueva (orden 367), lleva `/archivar` con OP-04, `/eliminar` con OP-06 y «Archivar de nuevo» en el detalle (CA-53.1, CA-53.2, CA-53.3, CA-53.4, CA-53.7; prod≈490 medido, se declara 400, 12 archivos), cierra la ficha. TA-443 depende de TA-314 y de las mismas tareas; HT-7 la exige. Criterio de dependientes: ninguna otra tarea depende de TA-314 ni de CA-53.x, así que ninguna cambia de TA-314 a TA-443. (c) El código de TA-443 queda en la rama local `ta-443-cuentas-2`. (d) 04 §6.5 y §6.14.2 piden las cuentas «en el orden de OP-03», pero `cuentas()` del dominio no ordenaba por `orden`, así que «Ordenar» no tenía efecto visible: TA-314 la corrige (orden, y el id si empatan) con PRU-DOM-CTA-170. (e) TA-314 edita nombre, institución, últimos cuatro dígitos y fecha de apertura; los campos propios de una tarjeta o inversión que OP-02 también admite (límite, corte, pago, red, color, tasa, rendimiento) no tienen pantalla en 06 FT-53 y quedan sin tarea: si se quieren, es una ficha nueva. (f) Mientras TA-443 no se mergee, los enlaces «Archivar» y «Eliminar» del detalle de cuenta apuntan a rutas que aún no existen | 08 TA-314, TA-443, HT-7 y §30.1; 04 §6.5 | Delegado por el orquestador; **aplicado [CH-84]** en 08 |
 | **CH-86** | Partición de TA-417 por tamaño (DT-02), con precedente en CH-72, CH-79, CH-82 y CH-83, y una laguna de `formulario`. (a) El alcance completo de FT-44 midió prod=626 en 12 archivos de producción (total≈1.000) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-417 conserva `/cuentas/[cuentaId]/verificar-saldo` con los pasos de datos, marcar y revisar sobre OP-53, la preselección solo si la diferencia es cero y el nombre «Verificación de saldo» en el detalle (CA-44.1, CA-44.4, CA-44.5, CA-44.6; prod=506 medido, se declara 400, 11 archivos); TA-445, nueva (orden 740; TA-446, TA-447, TA-470 y TA-550 pasan a 741, 742, 743 y 744 para dejarle el lugar que E5 y E7 exigen), lleva la propuesta de ajuste de AV-21 (abrir el flujo de ingreso, gasto o entrada a la tarjeta según 06 §3.2.5) y el borrador de 05 §4.11 (CA-44.2, CA-44.3; prod≈120, 3 archivos) y cierra la ficha. TA-445 depende de TA-417 y de las mismas tareas; HT-8 la exige. Criterio de dependientes: TA-446 y TA-447 solo usan CA-44.1 y CA-44.5 (06 §4), así que siguen dependiendo de TA-417. (c) Laguna: TA-241 dejó `verificar_saldo` solo en `@finn/dominio`; el contrato `parametrosFormulario` y el despacho de `formulario()` en `@finn/aplicacion` no lo tenían, y 04 §6.14 lo pide. TA-417 lo conecta (`consultas/formulario/verificar.ts`, una línea en el contrato y otra en el despacho): una cuenta que no es de efectivo ni tarjeta, archivada, o una fecha posterior a hoy responden `no_encontrado`. (d) El código de TA-445 queda en la rama local `ta-445-verificar-saldo-2`. (e) Mientras TA-445 no se mergee, tras confirmar con diferencia distinta de cero la pantalla no muestra AV-21 ni su enlace | 08 TA-417, TA-445, TA-446, TA-447, TA-470, TA-550, HT-8 y 04 §6.14 | Delegado por el orquestador; **aplicado [CH-86]** en 08 |
 | **CH-87** | Presupuesto de bytes y crecimiento por ruta (corrección previa a TA-405). Con FT-20 (fusionar), `/registrar/gasto` pasaba de 49,98 a 50,07 KB y `/cuentas/nueva` de 49,95 a 50,04 KB (PRU-REN-PWA-002, 05 §13.1, `porRutaKb` 50 KB) sin tocar esas rutas. Causa, medida con la compilación real (Next 16.4.1, Turbopack): no es la ruta. Una página nueva vacía (`…/[categoriaId]/fusionar/page.tsx` con un solo `<p>`) deja idénticos todos los archivos de `.next/static/chunks` y todas las medidas, y el manifiesto de rutas no llega al cliente como script (en el App Router no se carga `_buildManifest.js`). Lo que crecía era `src/formato/index.ts`: Turbopack copia ese módulo dentro del JS propio de 15 pantallas, y la eliminación de exportaciones sin uso es global, no por copia, así que cada copia lleva todas las funciones que usa algún componente cliente, incluidos los `Intl` de instante y porcentaje. El formulario de fusionar fue el primero en usar `formatearFechaTexto` en el cliente, y la tabla de meses entró en las 15 copias (+87 a +95 B gzip cada una). Arreglo: `formato/index.ts` solo reexporta y el código pasa a `monto.ts`, `fecha.ts`, `fecha-texto.ts`, `instante-texto.ts` y `porcentaje.ts`, con cada `Intl` creado al primer uso. Sin efectos al cargarse, Turbopack sigue las reexportaciones y cada pantalla lleva solo el archivo que usa. Medido con el flujo de TA-405 agregado y sin él: las demás rutas quedan iguales, y frente a `main` bajan (`/registrar/gasto` 49,80 KB, `/cuentas/nueva` 49,79 KB, `/cuentas/[cuentaId]/cuota` 48,48 KB; compartido 161,92 KB y biblioteca 44,06 KB sin cambio). `porRutaKb` no cambia. Lo fija PRU-DOM-VAL-159 (`index.ts` solo reexporta y ningún archivo de `formato` crea objetos al cargarse) | 05 §13.1 y §13.3 | Delegado por el orquestador; **aplicado [CH-87]** en 05 §13.1 y §13.3 |
+| **CH-88** | Partición de TA-296 por tamaño (DT-02), con precedente en CH-72, CH-79 y CH-82 a CH-86. (a) El alcance completo de FT-35 para CA-35.1 a CA-35.6 midió prod≈974 en 15 archivos de producción (total≈1.400) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-296 conserva la lista de `/bandeja` con «Aprobar» de un toque y su resultado en el lugar (FE-25), el traspaso al flujo, `/bandeja/[movimientoId]` con el texto del SMS, la categoría de un gasto con una sola parte, «Recordar esta categoría» y la confirmación AV-01 (CA-35.1, CA-35.2, CA-35.3, CA-35.4; prod≈509 medido, se declara 400, 12 archivos); TA-449, nueva (B6, HT-6, normal, sonnet, orden 370: E5 no deja ponerla entre TA-296 y TA-297), lleva la edición de cuenta, fecha, monto, comercio, nota y tipo (OP-36 con «Usar el valor actual»), las partes con división y por cobrar (reusa `ParteDeGasto`, que se extrae de `/registrar/gasto`), los estados de un movimiento ya aprobado o descartado al abrir el flujo y «Confirmar» una coincidencia (OP-40 `confirmar_coincidencia`) con CA-35.5 y CA-35.6 (prod≈480 estimado, 12 archivos). TA-449 depende de TA-296 y de las mismas tareas; HT-6 la exige. Los pendientes de punta a punta CA-35.5>FT-41 y CA-35.6>FT-42 pasan a TA-449, y TA-414 y TA-415 pasan a depender de ella (E12). TA-297 no depende de TA-449: CA-35.7 a CA-35.11 no usan la edición completa ni las coincidencias. (c) El traspaso de la lista al flujo lleva `?traspaso=1` y el flujo repite OP-37, así el servidor repite su mensaje o su previsualización (AV-01, AV-16) sin guardar el borrador de 05 §4.11 con `{ id, error }`; el comportamiento visible es el de 05 §4.15. Si se prefiere el borrador, TA-449 lo cambia. (d) El código de TA-449 queda en la rama local `ta-296-resto-local`. (e) Mientras TA-449 no se mergee, el flujo no edita cuenta, fecha, monto ni partes, y una coincidencia se aprueba como un movimiento común | 08 TA-296, TA-449, TA-414, TA-415, HT-6 y 05 §4.15 | Delegado por el orquestador; **aplicado [CH-88]** en 08 |
 
 ---
 
@@ -7454,7 +7455,7 @@ compartido: —
 | FT-29 | Categoría de pago y "te falta reservar" | 8 | HT-6 | TA-291 | — |
 | FT-30 | Pagar tarjeta con desglose y pago excedente | 7 | HT-7 | TA-303 | `/cuentas/[cuentaId]/pagar` |
 | FT-34 | Recepción y procesamiento de SMS | 14 | HT-6 | TA-294, TA-295 | `/bandeja` |
-| FT-35 | Revisar y aprobar: un toque, flujo completo y recordar regla | 11 | HT-6 | TA-296, TA-297 | `/bandeja/[movimientoId]` |
+| FT-35 | Revisar y aprobar: un toque, flujo completo y recordar regla | 11 | HT-6 | TA-296, TA-449 **[CH-88]**, TA-297 | `/bandeja/[movimientoId]` |
 | FT-37 | Descartar, restaurar, duplicados y coincidencias | 6 | HT-6 | TA-300 | — |
 | FT-38 | SMS no reconocidos y con error | 6 | HT-6 | TA-301 | — |
 | FT-50 | Crear cuenta con saldo inicial | 7 | HT-6 | TA-282 | `/cuentas/nueva` |
@@ -8102,7 +8103,7 @@ e2e: CA-03.3
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` con 07 §27 completo y el resumen de `pr:mergear` con sus manuales pendientes.
 
-#### TA-296 FT-35 Revisar y aprobar: un toque, flujo completo y recordar regla (1 de 2)
+#### TA-296 FT-35 Revisar y aprobar: un toque, flujo completo y recordar regla (1 de 2) **[CH-88]**
 
 ```tarea
 orden: 344
@@ -8112,19 +8113,20 @@ depende: TA-178, TA-174, TA-211, TA-210, TA-212, TA-219, TA-224, TA-293, TA-295,
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=6 migraciones=0 total=1000
-cubre: CA-35.1, CA-35.2, CA-35.3, CA-35.4, CA-35.5, CA-35.6, RUTA-/bandeja/[movimientoId], FE-25
+tamano: prod=400 archivos=12 ca=4 migraciones=0 total=1000
+cubre: CA-35.1, CA-35.2, CA-35.3, CA-35.4, RUTA-/bandeja/[movimientoId], FE-25
 pru: —
 compartido: —
 fichas: FT-35
-pendiente: CA-35.5>FT-41, CA-35.6>FT-42
 ```
 
 **Qué construir.**
-- FT-35: las pantallas y flujos de su ficha (Flujo, Piezas, Estados, Errores y textos) para CA-35.1 a CA-35.6, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
+- FT-35: las pantallas y flujos de su ficha (Flujo, Piezas, Estados, Errores y textos) para CA-35.1 a CA-35.4 **[CH-88]**, con la consulta de 04 §6, los componentes de B4 y los textos del catálogo.
 - Server Actions de las operaciones de la ficha en `servidor/acciones/<area>.ts`, una línea por operación (04 §2.2.2); `ACCESO-001` y la suite de accesibilidad las cubren solas (TA-218, TA-221).
 - Rutas que esta tarea crea (dueña): `/bandeja/[movimientoId]`.
-- **[D] Pendientes de punta a punta (DT-27):** CA-35.5 (lo completa FT-41), CA-35.6 (lo completa FT-42). Se prueban con el estado sembrado por operaciones y se agregan a `pruebas/pendientes-e2e.json`.
+- FT-35, parte 1 **[CH-88]**: la lista con «Aprobar» de un toque y su resultado en el lugar, el traspaso al flujo y `/bandeja/[movimientoId]` con el texto del SMS, la categoría de un gasto con una sola parte, «Recordar esta categoría» y la confirmación AV-01. La edición completa, las partes, los estados finales y las coincidencias (CA-35.5 y CA-35.6, con sus pendientes de punta a punta) son de TA-449 **[CH-88]**.
+- La ficha sigue en `en_curso`: la cierra TA-297.
+- El código de TA-449 ya está hecho en la rama local `ta-296-resto-local` **[CH-88]**.
 
 **Leer.** 06 FT-35 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7 (estados); 06-identidad-visual §3 en la sección de su pantalla; 04 §6 (su consulta).
 
@@ -8132,6 +8134,41 @@ pendiente: CA-35.5>FT-41, CA-35.6>FT-42
 
 **Pruebas primero.**
 - Una prueba por CA de este trozo, en el nivel que fija 07 §17 (regla de nivel por tipo de CA), con el identificador nuevo de su área (DT-21) y el CA entre corchetes.
+
+**Comandos.** `pnpm pruebas:ft FT-35` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** Los CA de este trozo con su prueba en verde; la ficha sigue `en_curso`.
+
+#### TA-449 FT-35 Revisar y aprobar: edición completa y coincidencias (parte B) **[CH-88]**
+
+```tarea
+orden: 370
+bloque: B6
+hito: HT-6
+depende: TA-178, TA-174, TA-211, TA-210, TA-212, TA-219, TA-224, TA-293, TA-295, TA-296, TA-015
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=12 ca=2 migraciones=0 total=1000
+cubre: CA-35.5, CA-35.6
+pru: —
+compartido: —
+fichas: FT-35
+pendiente: CA-35.5>FT-41, CA-35.6>FT-42
+```
+
+**Qué construir.**
+- FT-35, resto **[CH-88]**: en `/bandeja/[movimientoId]`, la edición de cuenta, fecha, monto, comercio, nota y tipo (OP-36, con «Usar el valor actual» ante `conflicto_desactualizado`), las partes con división y por cobrar (se extrae `ParteDeGasto` de `/registrar/gasto` y se reusa), los estados de un movimiento ya aprobado o descartado al abrir el flujo y «Confirmar» una coincidencia (OP-40 `confirmar_coincidencia`), para CA-35.5 y CA-35.6.
+- Server Action de OP-40 en `servidor/acciones/bandeja.ts`, una línea.
+- **[D] Pendientes de punta a punta (DT-27):** CA-35.5 (lo completa FT-41), CA-35.6 (lo completa FT-42). Se prueban con el estado sembrado por operaciones y se agregan a `pruebas/pendientes-e2e.json`.
+- El traspaso de la lista al flujo hoy lleva `?traspaso=1` y repite OP-37 **[CH-88]**; si se prefiere el borrador de 05 §4.11, esta tarea lo cambia.
+- El código ya está hecho en la rama local `ta-296-resto-local` **[CH-88]**.
+
+**Leer.** 06 FT-35 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §4.15, §7; 04 §6 (su consulta).
+
+**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/bandeja.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
+
+**Pruebas primero.** Una prueba por CA de este trozo (07 §17), con el CA entre corchetes.
 
 **Comandos.** `pnpm pruebas:ft FT-35` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
 
@@ -9046,7 +9083,7 @@ pendiente: CA-54.5>FT-55
 | 341 | TA-293 | B6 | HT-6 | normal | FT-21 Registrar gasto con división y por cobrar (2 de 2) | 360 |
 | 342 | TA-294 | B6 | HT-6 | normal | FT-34 Recepción y procesamiento de SMS (1 de 2) | 360 |
 | 343 | TA-295 | B6 | HT-6 | normal | FT-34 Recepción y procesamiento de SMS (2 de 2) | 360 |
-| 344 | TA-296 | B6 | HT-6 | normal | FT-35 Revisar y aprobar: un toque, flujo completo y recordar regla (1 de 2) | 360 |
+| 344 | TA-296 | B6 | HT-6 | normal | FT-35 Revisar y aprobar: un toque, flujo completo y recordar regla (1 de 2) **[CH-88]** | 400 |
 | 345 | TA-297 | B6 | HT-6 | normal | FT-35 Revisar y aprobar: un toque, flujo completo y recordar regla (2 de 2) | 360 |
 | 346 | TA-298 | B6 | HT-6 | normal | FT-08 Inicio: resumen diario y "¿algo necesita mi atención?" (1 de 2) | 360 |
 | 347 | TA-299 | B6 | HT-6 | normal | FT-08 Inicio: resumen diario y "¿algo necesita mi atención?" (2 de 2) | 360 |
@@ -9070,6 +9107,7 @@ pendiente: CA-54.5>FT-55
 | 365 | TA-441 | B6 | HT-7 | normal | FT-19 Sacar el dinero de una archivada (2 de 2) **[CH-82]** | 400 |
 | 366 | TA-442 | B6 | HT-7 | normal | FT-17 Editar y eliminar una meta (2 de 2) **[CH-83]** | 150 |
 | 367 | TA-443 | B6 | HT-7 | normal | FT-53 Archivar, desarchivar y eliminar cuentas (2 de 2) **[CH-84]** | 400 |
+| 370 | TA-449 | B6 | HT-6 | normal | FT-35 Revisar y aprobar: edición completa y coincidencias (parte B) **[CH-88]** | 400 |
 | 631 | TA-246 | B4 | HT-5 | normal | Componentes base I (parte 2): selección y buscador **[CH-52]** | 330 |
 | 632 | TA-247 | B4 | HT-5 | normal | Componentes base I (parte 3): pastillas y selector segmentado **[CH-52]** | 80 |
 | 633 | TA-551 | B4 | HT-6 | normal | Componentes de dominio I (parte 2): billete y selector de período **[CH-55]** | 200 |
@@ -9837,7 +9875,7 @@ e2e: CA-19.1, CA-19.5
 orden: 714
 bloque: B7
 hito: HT-8
-depende: TA-210, TA-212, TA-219, TA-224, TA-169, TA-173, TA-194, TA-197, TA-198, TA-413, TA-295, TA-297, TA-299, TA-300, TA-310
+depende: TA-210, TA-212, TA-219, TA-224, TA-169, TA-173, TA-194, TA-197, TA-198, TA-413, TA-295, TA-297, TA-299, TA-300, TA-310, TA-449
 tu: —
 revision: normal
 paralelo: libre
@@ -9874,7 +9912,7 @@ e2e: CA-08.8, CA-26.3, CA-34.9, CA-35.5, CA-37.4, CA-37.5
 orden: 715
 bloque: B7
 hito: HT-8
-depende: TA-210, TA-212, TA-219, TA-224, TA-169, TA-172, TA-194, TA-197, TA-198, TA-413, TA-414, TA-297
+depende: TA-210, TA-212, TA-219, TA-224, TA-169, TA-172, TA-194, TA-197, TA-198, TA-413, TA-414, TA-297, TA-449
 tu: —
 revision: normal
 paralelo: libre
@@ -11193,8 +11231,8 @@ fichas: FT-49
 | FT-28 Devoluciones | M | CA-09.11 (TA-288), CA-14.8 (TA-319), CA-19.2 (TA-441), CA-24.3 (TA-308), CA-25.5 (TA-309) | 5 | TA-406 |
 | FT-39 Reglas de comercio | M | CA-21.10 (TA-293), CA-34.10 (TA-295), CA-35.11 (TA-297) | 3 | TA-411 |
 | FT-40 Administrar programadas | M | CA-19.1 (TA-306), CA-19.5 (TA-306) | 2 | TA-413 |
-| FT-41 Próximos pagos, registro de un toque y omitir | M | CA-08.8 (TA-299), CA-26.3 (TA-310), CA-34.9 (TA-295), CA-35.5 (TA-296), CA-37.4 (TA-300), CA-37.5 (TA-300) | 6 | TA-414 |
-| FT-42 Registro automático y puesta al día | M | CA-35.6 (TA-296) | 1 | TA-415 |
+| FT-41 Próximos pagos, registro de un toque y omitir | M | CA-08.8 (TA-299), CA-26.3 (TA-310), CA-34.9 (TA-295), CA-35.5 (TA-449), CA-37.4 (TA-300), CA-37.5 (TA-300) | 6 | TA-414 |
+| FT-42 Registro automático y puesta al día | M | CA-35.6 (TA-449) | 1 | TA-415 |
 | FT-43 Conciliar con estado de cuenta CSV | M | CA-25.4 (TA-309), CA-26.6 (TA-310), CA-52.2 (TA-317) | 3 | TA-416 |
 | FT-46 Cobrar | M | CA-25.6 (TA-309), CA-26.4 (TA-310), CA-29.4 (TA-291) | 3 | TA-409 |
 | FT-47 Condonar | M | CA-19.3 (TA-441) | 1 | TA-407 |

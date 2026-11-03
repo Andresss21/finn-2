@@ -379,7 +379,7 @@
 
   "TA-295": { "estado": "terminada", "rama": "ta-295-sms-procesamiento-2", "pr": 274 },
 
-  "TA-296": { "estado": "pendiente" },
+  "TA-296": { "estado": "en_curso", "rama": "ta-296-revisar-aprobar" },
 
   "TA-297": { "estado": "pendiente" },
 
@@ -400,6 +400,8 @@
   "TA-305": { "estado": "terminada", "rama": "ta-305-metas-pantallas", "pr": 300 },
 
   "TA-442": { "estado": "pendiente" },
+
+  "TA-449": { "estado": "pendiente" },
 
   "TA-443": { "estado": "pendiente" },
 

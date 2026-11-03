@@ -21,6 +21,7 @@
     "./sms/*": "./src/sms/*.ts",
     "./tareas/*": "./src/tareas/*.ts",
     "./operaciones/ajustes": "./src/operaciones/ajustes/index.ts",
+    "./operaciones/bandeja": "./src/operaciones/bandeja/index.ts",
     "./operaciones/categorias": "./src/operaciones/categorias/index.ts",
     "./operaciones/conciliacion": "./src/operaciones/conciliacion/index.ts",
     "./operaciones/formatos": "./src/operaciones/formatos/index.ts",
