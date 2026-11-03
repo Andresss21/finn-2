@@ -435,7 +435,7 @@
 
   "TA-404": { "estado": "pendiente" },
 
-  "TA-405": { "estado": "pendiente" },
+  "TA-405": { "estado": "terminada", "rama": "ta-405-fusionar-categorias", "pr": 310 },
 
   "TA-406": { "estado": "pendiente" },
 
