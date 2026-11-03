@@ -6,7 +6,14 @@ import type { Periodo } from '../calculo/periodos';
 import type { Instantanea, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import { type CausaDeExcedente, causasDelExcedente, nombres, type Ref } from './comunes';
+import {
+  type CausaDeExcedente,
+  causasDelExcedente,
+  nombres,
+  type PeriodoDto,
+  periodoDto,
+  type Ref,
+} from './comunes';
 import { proxima } from './cuentas';
 import { celdasDelHistorial, vecinos } from './detalle-categoria';
 import { porOrden } from './estructura';
@@ -21,7 +28,8 @@ export interface DetallePagoTarjeta {
   readonly categoria: Ref;
   readonly tarjeta: Ref;
   readonly clase: 'pago';
-  readonly periodo: Periodo;
+  /** [FT-29] `PeriodoDto` (04 §6.3): el selector de período necesita su estado. */
+  readonly periodo: PeriodoDto;
   readonly navegacion: { readonly anterior?: FechaLocal; readonly siguiente?: FechaLocal };
   readonly numeros: {
     readonly asignado: Centavos;
@@ -110,7 +118,7 @@ export function detallePagoTarjeta(
     categoria: n.categoria(categoriaId),
     tarjeta: n.cuenta(t),
     clase: 'pago',
-    periodo: p,
+    periodo: periodoDto(i, p),
     navegacion: vecinos(periodos, k),
     numeros: {
       asignado: celda.asignado,
