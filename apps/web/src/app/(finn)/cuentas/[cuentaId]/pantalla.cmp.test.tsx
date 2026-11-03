@@ -80,7 +80,14 @@ const dto = (parcial: Record<string, unknown> = {}): DetalleCuentaDto =>
   }) as unknown as DetalleCuentaDto;
 
 const mostrar = (d: DetalleCuentaDto, filtros: Record<string, string | undefined> = {}) =>
-  montar(<PantallaDetalleCuenta dto={d} filtros={filtros} desarchivar={sinAccion} />);
+  montar(
+    <PantallaDetalleCuenta
+      dto={d}
+      filtros={filtros}
+      desarchivar={sinAccion}
+      archivar={sinAccion}
+    />,
+  );
 
 const sinAccion = () =>
   Promise.resolve({ ok: true as const, valor: {}, yaAplicada: false, avisos: [] });

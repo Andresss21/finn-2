@@ -403,7 +403,7 @@
 
   "TA-449": { "estado": "pendiente" },
 
-  "TA-443": { "estado": "pendiente" },
+  "TA-443": { "estado": "terminada", "rama": "ta-443-cuentas", "pr": 311 },
 
   "TA-306": { "estado": "terminada", "rama": "ta-306-archivar-1", "pr": 297 },
 
