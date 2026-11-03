@@ -157,6 +157,7 @@
   { "patron": "apps/web/src/app/(finn)/ajustes/webhook/**", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/apariencia/**", "fts": ["FT-77"] },
   { "patron": "apps/web/src/app/(finn)/bandeja/**", "fts": ["FT-34", "FT-35"] },
+  { "patron": "apps/web/src/app/(finn)/reportes/**", "fts": ["FT-60"] },
   { "patron": "apps/web/src/flujos/bandeja-movimiento/**", "fts": ["FT-35"] },
   { "patron": "apps/web/src/servidor/acciones/bandeja.ts", "fts": ["FT-35"] },
   { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03"] },

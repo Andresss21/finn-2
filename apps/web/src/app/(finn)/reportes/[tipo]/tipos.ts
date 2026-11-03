@@ -1,11 +1,8 @@
 // El `[tipo]` de la URL y el `tipo` de la consulta `reporte()` (05 §2.10, 04 §6.9.2). Cualquier otro es `notFound()`.
 export const TIPOS = {
   tendencia: 'tendencia',
-  categorias: 'categorias',
   'ingresos-gastos': 'ingresos_gastos',
   remanente: 'remanente',
-  'top-comercios': 'top_comercios',
-  cumplimiento: 'cumplimiento',
   patrimonio: 'patrimonio',
 } as const;
 
