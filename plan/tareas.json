@@ -369,7 +369,7 @@
 
   "TA-290": { "estado": "terminada", "rama": "ta-290-detalle-categoria", "pr": 276 },
 
-  "TA-291": { "estado": "pendiente" },
+  "TA-291": { "estado": "en_curso", "rama": "ta-291-categoria-pago" },
 
   "TA-292": { "estado": "terminada", "rama": "ta-292-registrar-gasto-2", "pr": 289 },
 
