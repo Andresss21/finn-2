@@ -1293,11 +1293,14 @@ Se parte de cero: `REVOKE ALL ON SCHEMA finn FROM PUBLIC`, `REVOKE ALL ON ALL TA
 | `secuencia_creacion` | — (la usa el trigger `c_asignar_secuencia`; DB-21) | `SELECT` |
 | Secuencia de `eventos_sistema` | `USAGE` | `SELECT` |
 | Secuencia de `eliminaciones` | — (solo la usan los triggers) | `SELECT` |
-| `tomar_bloqueo()`, `hoy()`, `eliminar_conciliaciones_de_cuenta(uuid)` | `EXECUTE` | — |
+| `hoy()` | `EXECUTE` | `EXECUTE` **[CH-91]** |
+| `tomar_bloqueo()`, `eliminar_conciliaciones_de_cuenta(uuid)` | `EXECUTE` | — |
 | Demás funciones | — (las ejecutan los triggers como `SECURITY DEFINER`) | — |
 | `_prisma_migrations` | — | `SELECT` |
 
 Ningún rol de la app tiene `TRUNCATE`, `REFERENCES`, `TRIGGER` ni privilegios de DDL.
+
+**[CH-91]** `finn_respaldo` ejecuta `hoy()` porque el control de dinero diario (07 §31.1) lee los hechos con `leer()` de `@finn/db`, la misma consulta que la app, y `leer()` llama a `finn.hoy()`. `hoy()` es `STABLE` y no escribe, y la sesión de `finn_respaldo` sigue con `default_transaction_read_only = on`. Se concede en una migración de expansión (`20261103000000_m_hoy_respaldo`, DP-31).
 
 **Única vía para eliminar conciliaciones (HZ-1).** `finn_app` no tiene `DELETE` sobre `conciliaciones` ni `cambios_posteriores`. Solo puede eliminarlas llamando a `finn.eliminar_conciliaciones_de_cuenta`, que corre como su dueño y exige el bloqueo, `operacion() = 'eliminar_cuenta'` y que la cuenta ya no tenga efectos. Aun así, `e_solo_insercion` rechaza cualquier eliminación fuera de esa operación, y `x_verificar_eliminacion_cuenta` exige al confirmar que la cuenta ya no exista. Probado en 10.5.
 

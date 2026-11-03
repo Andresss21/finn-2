@@ -2,6 +2,7 @@
 # ni depende de otro workflow. Sin `if:` ni `continue-on-error`: un paso que falla corta el job, GitHub envía el correo
 # y OPT-09 no se llama; a las 36 h, la tarea diaria avisa del respaldo atrasado. C5, C6 y R15 corren al final, porque
 # una deriva no invalida el volcado ya subido. El volcado en claro no sale del runner y nunca va a los logs.
+# El último es el control de dinero diario (TA-262; 07 §31.1, DP-29; CH-91).
 name: respaldo
 
 on:
@@ -13,8 +14,10 @@ concurrency:
   group: respaldo
   cancel-in-progress: false
 
+# actions: read solo para bajar el artefacto del control de dinero del día anterior (CH-91)
 permissions:
   contents: read
+  actions: read
 
 jobs:
   respaldo:
@@ -68,3 +71,28 @@ jobs:
           RESPALDO_DB_URL: ${{ secrets.RESPALDO_DB_URL }}
           FINN_URL: ${{ secrets.FINN_URL }}
           RESPALDO_SECRET: ${{ secrets.RESPALDO_SECRET }}
+      # 07 §31.1 (TA-262, DP-29, CH-91): control de dinero diario. Se baja el artefacto del día anterior, si existe, para
+      # comparar los conteos (informativo); `medir` deja el resultado sin montos, se sube como artefacto y `juzgar`
+      # falla si un invariante falla. Así el artefacto queda también cuando el job falla, sin `if:`.
+      - id: control-anterior
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dir="$RUNNER_TEMP/control-dinero-anterior"
+          mkdir -p "$dir"
+          id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=control-dinero&per_page=20"             --jq '[.artifacts[] | select(.expired | not)][0].id // empty')
+          if [ -n "$id" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > "$dir/anterior.zip"
+            unzip -q -o "$dir/anterior.zip" -d "$dir"
+          fi
+          echo "artefacto anterior: ${id:-ninguno}"
+      - run: node tools/respaldo/control-dinero.ts medir
+        env:
+          RESPALDO_DB_URL: ${{ secrets.RESPALDO_DB_URL }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: control-dinero
+          path: ${{ runner.temp }}/control-dinero/control-dinero.json
+          if-no-files-found: error
+          retention-days: 90
+      - run: node tools/respaldo/control-dinero.ts juzgar
