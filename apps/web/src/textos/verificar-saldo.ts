@@ -32,6 +32,13 @@ export const verificarSaldo = {
   tituloListo: 'Saldo verificado',
   guardado: (cuenta: string, fecha: string) =>
     `Verificación de saldo guardada: ${cuenta}, al ${fecha}`,
+  ajusteIngreso: (monto: string) =>
+    `Tu banco muestra ${monto} más. Podés registrar un ingreso de ${monto} como ajuste.`,
+  ajusteEntrada: (monto: string) =>
+    `Tu banco muestra ${monto} menos de deuda. Podés registrar una entrada a la tarjeta de ${monto} como ajuste.`,
+  ajusteGasto: (monto: string) =>
+    `Tu banco muestra ${monto} menos. Podés registrar un gasto de ${monto} como ajuste.`,
+  crearAjuste: 'Crear el ajuste',
   rechazos: {
     cuenta_tipo_no_valido: 'Solo se verifica el saldo de una cuenta de efectivo o una tarjeta.',
     cuenta_archivada: 'Esta cuenta está archivada. Desarchivala para verificar su saldo.',
