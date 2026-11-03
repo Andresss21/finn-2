@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react';
 import { Vacio } from '../../../componentes/base/vacio';
 import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
 import { bandeja as t } from '../../../textos/bandeja';
-import type { ValorAprobado } from '../../../flujos/bandeja-movimiento/aprobado';
+import type { ResultadoFila } from '../../../flujos/bandeja-movimiento/descarte';
 import { FilaBandeja } from './fila';
 
 interface Contadores {
@@ -21,7 +21,7 @@ interface Contadores {
 interface Retenida {
   readonly movimiento: MovimientoDto;
   readonly indice: number;
-  readonly resultado: ValorAprobado | undefined;
+  readonly resultado: ResultadoFila | undefined;
   readonly enCurso: boolean;
 }
 
@@ -53,7 +53,7 @@ export function ListaBandeja({
     },
     [movimientos],
   );
-  const alTerminar = useCallback((id: string, resultado: ValorAprobado | undefined) => {
+  const alTerminar = useCallback((id: string, resultado: ResultadoFila | undefined) => {
     setRetenidas((r) => {
       const previa = r[id];
       return previa === undefined ? r : { ...r, [id]: { ...previa, resultado, enCurso: false } };

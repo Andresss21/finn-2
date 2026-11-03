@@ -18,5 +18,7 @@
   { "ca": "CA-35.6", "completa": "FT-42" },
   { "ca": "CA-35.11", "completa": "FT-39" },
   { "ca": "CA-08.5", "completa": "FT-27" },
-  { "ca": "CA-08.6", "completa": "FT-62" }
+  { "ca": "CA-08.6", "completa": "FT-62" },
+  { "ca": "CA-37.4", "completa": "FT-41" },
+  { "ca": "CA-37.5", "completa": "FT-41" }
 ]

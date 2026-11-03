@@ -3,7 +3,7 @@
 // vista, cambiar lo que hace falta y aprobarlo. «Aprobar» guarda primero lo que cambió (OP-36, con lo que se vio en `esperado`) y
 // después aprueba (OP-37); con la fecha en un período cerrado el servidor pide confirmar con AV-01. Es un flujo largo: siempre
 // página completa (05 §1.4). No calcula montos (PF-3): la suma de las partes la valida el servidor.
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFieldArray } from 'react-hook-form';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
@@ -65,6 +65,8 @@ const Coincidencia = lazy(() =>
   import('./coincidencia').then((m) => ({ default: m.Coincidencia })),
 );
 const ResultadoDeAprobar = lazy(() => import('./resultado'));
+const Resolucion = lazy(() => import('./resolucion'));
+const Descartado = lazy(() => import('./descartado'));
 const YaResuelto = lazy(() => import('./ya-resuelto'));
 
 const Edicion = lazy(() => import('./edicion'));
@@ -115,6 +117,10 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
     confirmando: boolean;
   } | null>(null);
   const [recordar, setRecordar] = useState(false);
+  const [descartado, setDescartado] = useState(false); // FT-37: lo descartó aquí, con «Restaurar» en su lugar
+  const alDescartar = useCallback(() => {
+    setDescartado(true);
+  }, []);
   const formulario = useFormularioFinn<Campos>({
     contrato,
     valoresIniciales: inicial,
@@ -177,6 +183,21 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
       <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
         <Suspense fallback={null}>
           <ResultadoDeAprobar valor={valor} />
+        </Suspense>
+      </PaginaFlujoDeRuta>
+    );
+  }
+
+  if (descartado) {
+    const { comercio, monto } = movimiento.esperado;
+    return (
+      <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
+        <Suspense fallback={null}>
+          <Descartado
+            movimientoId={movimiento.id}
+            comercio={typeof comercio === 'string' ? comercio : null}
+            monto={typeof monto === 'number' ? monto : null}
+          />
         </Suspense>
       </PaginaFlujoDeRuta>
     );
@@ -304,6 +325,13 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
           {t.revisar.aprobar}
         </Boton>
       </form>
+      <Suspense fallback={null}>
+        <Resolucion
+          movimientoId={movimiento.id}
+          estado={movimiento.estado}
+          alDescartar={alDescartar}
+        />
+      </Suspense>
     </PaginaFlujoDeRuta>
   );
 }

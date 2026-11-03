@@ -1,6 +1,7 @@
 'use client';
-// Una fila de `/bandeja` con «Aprobar» de un toque (FT-35, FE-25, 05 §4.15), con su propio `useOperacion`. Si el servidor pide
-// confirmar o datos, traspasa al flujo `/bandeja/[movimientoId]`; si no, el resultado dice lo que aprobó (CP-15).
+// Una fila de `/bandeja` con «Aprobar», «Es otro gasto» y «Descartar» de un toque (FT-35, FT-37, FE-24, FE-25, 05 §4.14, §4.15),
+// cada acción con su propio `useOperacion`. Si el servidor pide confirmar o datos al aprobar, traspasa al flujo
+// `/bandeja/[movimientoId]`; si no, el resultado dice lo que se hizo (CP-15) y, al descartar, ofrece «Restaurar» (OP-39).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import { useEffect } from 'react';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
@@ -13,8 +14,13 @@ import {
 } from '../../../componentes/dominio/movimiento-bandeja';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { textoAprobado, type ValorAprobado } from '../../../flujos/bandeja-movimiento/aprobado';
+import { textoDescartado, type ResultadoFila } from '../../../flujos/bandeja-movimiento/descarte';
 import { useOperacion } from '../../../formularios/use-operacion';
-import { aprobarMovimiento } from '../../../servidor/acciones/bandeja';
+import {
+  aprobarMovimiento,
+  descartarMovimiento,
+  resolverCoincidencia,
+} from '../../../servidor/acciones/bandeja';
 import { bandeja as t } from '../../../textos/bandeja';
 import { formularios } from '../../../textos/formularios';
 
@@ -28,9 +34,9 @@ const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 interface Props {
   readonly movimiento: MovimientoDto;
   readonly hrefRevisar: string;
-  readonly resultado: ValorAprobado | undefined;
+  readonly resultado: ResultadoFila | undefined;
   readonly alIniciar: (id: string) => void;
-  readonly alTerminar: (id: string, valor: ValorAprobado | undefined) => void;
+  readonly alTerminar: (id: string, valor: ResultadoFila | undefined) => void;
 }
 
 export function FilaBandeja({
@@ -41,6 +47,9 @@ export function FilaBandeja({
   alTerminar,
 }: Props) {
   const operacion = useOperacion({ accion: aprobarMovimiento, creacion: true });
+  const descartar = useOperacion({ accion: descartarMovimiento });
+  const restaurar = useOperacion({ accion: descartarMovimiento });
+  const legitimo = useOperacion({ accion: resolverCoincidencia });
   const { estado, error, exito } = operacion;
 
   useEffect(() => {
@@ -53,28 +62,70 @@ export function FilaBandeja({
       if (necesitaElFlujo(error)) traspasar();
       else alTerminar(m.id, undefined);
     } else if (estado === 'listo' && exito !== undefined)
-      alTerminar(m.id, exito.valor as ValorAprobado);
+      alTerminar(m.id, { tipo: 'aprobado', valor: exito.valor as ValorAprobado });
   }, [estado, error, exito, m.id, hrefRevisar, alTerminar]);
 
-  if (resultado !== undefined)
+  // Descartar deja el resultado en el lugar de la fila; restaurar lo quita (la revalidación la devuelve a la lista)
+  useEffect(() => {
+    if (descartar.estado === 'listo') alTerminar(m.id, { tipo: 'descartado' });
+    else if (descartar.estado === 'error') alTerminar(m.id, undefined);
+  }, [descartar.estado, m.id, alTerminar]);
+  useEffect(() => {
+    if (restaurar.estado === 'listo') alTerminar(m.id, undefined);
+  }, [restaurar.estado, m.id, alTerminar]);
+
+  if (resultado?.tipo === 'aprobado')
     return (
       <Resultado
-        texto={textoAprobado(resultado)}
+        texto={textoAprobado(resultado.valor)}
         enlace={
-          <EnlaceFinn href={`/actividad/${resultado.transaccionId}`}>{t.verTransaccion}</EnlaceFinn>
+          <EnlaceFinn href={`/actividad/${resultado.valor.transaccionId}`}>
+            {t.verTransaccion}
+          </EnlaceFinn>
         }
       />
     );
+  if (resultado?.tipo === 'descartado')
+    return (
+      <>
+        <Resultado
+          texto={textoDescartado(m.comercio, m.monto)}
+          salida={{
+            etiqueta: t.restaurar,
+            ejecutar: () => {
+              void restaurar.enviar({ movimientoId: m.id, accion: 'restaurar' });
+            },
+          }}
+        />
+        {restaurar.estado === 'error' && restaurar.error !== undefined ? (
+          <div className="px-4 pb-3.5">
+            <AvisoEnLinea estado="problema" aparecioDespues>
+              {restaurar.error.mensaje}
+            </AvisoEnLinea>
+          </div>
+        ) : null}
+      </>
+    );
   const alAccionar = (accion: AccionBandeja): void => {
-    if (accion !== 'aprobar') return;
-    alIniciar(m.id);
-    void operacion.enviar({
-      movimientoId: m.id,
-      ...(m.origenPropuesto === undefined ? {} : { origenId: m.origenPropuesto.id }),
-    });
+    if (accion === 'aprobar') {
+      alIniciar(m.id);
+      void operacion.enviar({
+        movimientoId: m.id,
+        ...(m.origenPropuesto === undefined ? {} : { origenId: m.origenPropuesto.id }),
+      });
+    } else if (accion === 'descartar') {
+      alIniciar(m.id);
+      void descartar.enviar({ movimientoId: m.id, accion: 'descartar' });
+    } else if (accion === 'es-otro-gasto')
+      void legitimo.enviar({ movimientoId: m.id, decision: 'es_legitimo' });
   };
-  const mensaje =
-    estado === 'error' && error !== undefined && !necesitaElFlujo(error) ? error : undefined;
+  const fallida = [operacion, descartar, restaurar, legitimo].find(
+    (o) =>
+      o.estado === 'error' &&
+      o.error !== undefined &&
+      !(o === operacion && necesitaElFlujo(o.error)),
+  );
+  const mensaje = fallida?.error;
   return (
     <>
       <MovimientoBandeja movimiento={m} hrefRevisar={hrefRevisar} alAccionar={alAccionar} />
@@ -86,7 +137,7 @@ export function FilaBandeja({
             {...(REINTENTABLES.includes(mensaje.categoria)
               ? {
                   accion: (
-                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
+                    <Boton variante="secundaria" onClick={() => void fallida?.reintentar()}>
                       {formularios.intentarDeNuevo}
                     </Boton>
                   ),

@@ -18,6 +18,28 @@ export const bandeja = {
     titulo: 'Bandeja al día',
     texto: 'No hay movimientos por revisar.',
   },
+  // FT-37: descartar, restaurar y los descartados (05 §4.14; «No hay movimientos descartados» y «No es este pago» son nuevos)
+  descartaste: (nombre: string) => `Descartaste ${nombre}.`,
+  restauraste: (nombre: string) => `Restauraste ${nombre}.`,
+  restaurar: 'Restaurar',
+  esDuplicado: 'Es duplicado',
+  noEsEstePago: 'No es este pago',
+  resolver: 'Resolver este movimiento',
+  vistas: {
+    nombre: 'Vista de la Bandeja',
+    activos: 'Por revisar',
+    descartados: 'Descartados',
+  },
+  descartados: {
+    lista: 'Movimientos descartados',
+    vacio: {
+      titulo: 'No hay movimientos descartados',
+      texto: 'Lo que descartes aparece acá, para que lo restaures si te equivocaste.',
+    },
+    descartado: 'Descartado',
+    autodescartado: 'Autodescartado',
+    verMas: 'Ver más descartados',
+  },
   // FT-35: aprobar con un toque (05 §4.15) y revisar el movimiento completo (`/bandeja/[movimientoId]`)
   aprobado: (...partes: string[]) => `Aprobado: ${partes.join(' · ')}`,
   aprobadoSinDatos: 'Aprobado',
