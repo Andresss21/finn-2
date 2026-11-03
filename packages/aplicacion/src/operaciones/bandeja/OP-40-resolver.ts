@@ -34,7 +34,7 @@ export const OP40: DefinicionOperacion<EntradaOp40, Resuelto, SalidaMovimiento> 
     const c = await cargarMovimiento(tx, e.movimientoId);
     if (c === null) return { tipo: 'no_encontrado' };
     if (e.decision === 'confirmar_coincidencia')
-      return veredictoDeAprobacion(c.movimiento, h, e.id) ?? { tipo: 'aplicar' };
+      return veredictoDeAprobacion(c.movimiento, h, e.id, false) ?? { tipo: 'aplicar' };
     return yaDecidida(e.decision, c.movimiento)
       ? {
           tipo: 'ya_aplicada',

@@ -64,7 +64,7 @@ test.describe('PRU-E2E-BAND', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-BAND-141 [CA-35.9] tres «Aprobar» seguidos con uno que se aprobó en otra pestaña: las otras dos filas se aprueban y la que falló dice que ya está aprobada', async ({
+  test('PRU-E2E-BAND-141 [CA-35.9] tres «Aprobar» seguidos con uno que se aprobó en otra pestaña: las otras dos filas se aprueban y la que falló no deja un resultado', async ({
     page,
     context,
   }) => {
@@ -89,13 +89,12 @@ test.describe('PRU-E2E-BAND', () => {
     await aprobar(page, '$14.00').click();
 
     await expect(page.getByTestId('resultado')).toHaveCount(2);
-    await expect(page.getByTestId('resultado').first()).toContainText(
-      t.aprobado('Super', '$12.00', 'T', 'Super'),
-    );
-    await expect(page.getByTestId('resultado').last()).toContainText(
-      t.aprobado('Super', '$14.00', 'T', 'Super'),
-    );
-    await expect(page.getByText('Este movimiento ya está aprobado.')).toBeVisible();
+    for (const monto of ['$12.00', '$14.00'])
+      await expect(
+        page.getByTestId('resultado').filter({ hasText: t.aprobado('Super', monto, 'T', 'Super') }),
+      ).toHaveCount(1);
+    // La que falló no deja un resultado propio: la revalidación la quita (su mensaje lo cubre PRU-E2E-BAND-142)
+    await expect(page.getByTestId('resultado').filter({ hasText: '$13.00' })).toHaveCount(0);
   });
 
   test('PRU-E2E-BAND-142 [CA-35.10] un movimiento aprobado en otra pestaña muestra «Este movimiento ya está aprobado.» al tocar «Aprobar» y al revisar la lista desaparece', async ({
