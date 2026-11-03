@@ -19,6 +19,7 @@ import { categoriaDetalle as t } from '../../../../../textos/categoria-detalle';
 import { ConsumosYCalendario } from './calendario';
 import { Desarchivar } from './desarchivar';
 import { Historial } from './historial';
+import { PantallaPagoTarjeta } from './pago';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline ${FOCO}`;
@@ -59,15 +60,7 @@ export function PantallaDetalleCategoria({
     </EnlaceFinn>
   );
   const raiz = `/presupuesto/categorias/${categoria.id}`;
-  if (dto.clase === 'pago')
-    return (
-      <main className="mx-auto flex max-w-3xl flex-col gap-4 px-5 py-4">
-        <PublicarEncabezado encabezado={dto} />
-        {volver}
-        <h1 className="text-titulo-pantalla">{categoria.nombre}</h1>
-        <p className="text-cuerpo-pequeno text-texto-secundario">{t.pago.titulo}</p>
-      </main>
-    );
+  if (dto.clase === 'pago') return <PantallaPagoTarjeta dto={dto} />;
 
   const { numeros, sobregiro, acciones, meta, periodo } = dto;
   const cerrado = periodo.estado === 'cerrado';
