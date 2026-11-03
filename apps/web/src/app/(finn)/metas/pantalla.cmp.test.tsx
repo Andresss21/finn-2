@@ -156,9 +156,26 @@ describe('PRU-CMP-META-101 metas', () => {
       bandejaPorRevisar: 0,
       categoria: { id: 'p1', nombre: 'Pago Visa' },
       grupo: { id: 'g', nombre: 'Pagos de tarjeta' },
+      tarjeta: { id: 't1', nombre: 'Visa' },
       clase: 'pago',
       periodo: ACTIVO,
       navegacion: {},
+      numeros: { asignado: 0, actividad: 0, arrastre: 0, disponible: 0 },
+      tarjetaHoy: { deuda: 0, saldoAFavor: 0, reservado: 0, faltaReservar: 0, reservaExcedente: 0 },
+      pagoExcedente: null,
+      traslados: [],
+      pagos: [],
+      pagosImplicitos: [],
+      devoluciones: [],
+      desgloseAlPagar: {
+        deudaAnterior: 0,
+        cargosDelCiclo: 0,
+        yaPagado: 0,
+        paraNoGenerarIntereses: 0,
+        ultimoCorte: '2027-02-10',
+        proximoPago: '2027-03-05',
+      },
+      historial: [],
     } as unknown as DetalleCategoriaDto;
     const raiz = mostrar(
       <PantallaDetalleCategoria
