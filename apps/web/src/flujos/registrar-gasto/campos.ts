@@ -63,12 +63,12 @@ export const contrato = CAMPOS.superRefine((c, ctx) => {
   });
 });
 
-const monto = (texto: string): string => {
+export const monto = (texto: string): string => {
   const r = normalizarMontoEscrito(texto);
   return r.estado === 'valido' ? r.texto : texto;
 };
 
-const destinoDe = (l: Parte): Record<string, string> =>
+export const destinoDe = (l: Parte): Record<string, string> =>
   l.destino === 'categoria'
     ? { categoriaId: l.categoriaId }
     : l.deudorId === DEUDOR_NUEVO

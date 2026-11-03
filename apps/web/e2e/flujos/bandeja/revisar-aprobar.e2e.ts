@@ -100,7 +100,7 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(page.getByText(/Super/).first()).toBeVisible();
 
     await page
-      .getByRole('radiogroup', { name: t.revisar.categoria })
+      .getByRole('radiogroup', { name: g.categoriaDeParte('1') })
       .getByRole('radio', { name: 'Super' })
       .click();
     await page.getByRole('button', { name: t.revisar.aprobar }).click();

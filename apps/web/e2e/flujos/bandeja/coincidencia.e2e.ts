@@ -7,6 +7,7 @@ import { esperarContenido } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
+import { registrarGasto as g } from '../../../src/textos/registrar-gasto.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
 
@@ -86,7 +87,7 @@ test.describe('PRU-E2E-BAND', () => {
 
     // Netflix no tiene historial: la categoría se elige en el flujo y «Confirmar» la guarda antes (OP-36)
     await page
-      .getByRole('radiogroup', { name: t.revisar.categoria })
+      .getByRole('radiogroup', { name: g.categoriaDeParte('1') })
       .getByRole('radio', { name: 'Super' })
       .click();
     await page.getByRole('button', { name: t.revisar.confirmarCoincidencia }).click();

@@ -11,8 +11,6 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { Seleccion, type Opcion } from '../../componentes/base/seleccion';
-import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
-import { CampoLineas } from '../../componentes/formularios/campo-lineas';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
@@ -67,6 +65,11 @@ const ConfirmacionImpacto = lazy(() =>
 const SinCuentas = lazy(() => import('./sin-cuentas'));
 const ResultadoGasto = lazy(() => import('./resultado-gasto'));
 const BorradorGasto = lazy(() => import('./borrador-gasto'));
+// La parte se carga aparte: el HTML del servidor ya la trae y el presupuesto de bytes de la ruta no la cuenta (05 §13.1)
+const CampoLineas = lazy(() =>
+  import('../../componentes/formularios/campo-lineas').then((m) => ({ default: m.CampoLineas })),
+);
+const ParteDeGasto = lazy(() => import('./parte').then((m) => ({ default: m.ParteDeGasto })));
 const SugerenciaComercio = lazy(() => import('./sugerencia-comercio'));
 
 const aOpciones = (xs: readonly Referencia[]): Opcion[] =>
@@ -245,78 +248,45 @@ export function FormularioRegistrarGasto({
             </Suspense>
           ) : null}
           <EntradaTexto etiqueta={t.nota} autoComplete="off" {...formulario.register('nota')} />
-          <CampoLineas
-            etiqueta={t.partes}
-            claves={partes.fields.map((f) => f.id)}
-            maximo={MAXIMO_PARTES}
-            textoAgregar={t.agregarParte}
-            textoParte={t.parte}
-            textoQuitar={t.quitarParte}
-            textoCantidad={t.cantidadPartes}
-            alAgregar={() => {
-              partes.append(parteVacia());
-            }}
-            alQuitar={(i) => {
-              partes.remove(i);
-            }}
-            ayuda={ayuda}
-            error={errorDeLasPartes}
-            renderParte={(i) => {
-              const n = String(i + 1);
-              const parte = c.lineas[i];
-              if (parte === undefined) return null;
-              return (
-                <>
-                  <EntradaMonto
-                    nombre={`lineas.${i}.monto`}
-                    etiqueta={t.montoDeParte(n)}
-                    valor={parte.monto}
-                    alCambiar={poner(`lineas.${i}.monto`)}
-                    error={errorDeParte(i, 'monto')}
-                    requerido
-                  />
-                  <SelectorSegmentado
-                    etiqueta={t.destinoDeParte(n)}
-                    opciones={[
-                      { valor: 'categoria', etiqueta: t.destinoCategoria },
-                      { valor: 'por_cobrar', etiqueta: t.destinoPorCobrar },
-                    ]}
-                    valor={parte.destino}
-                    alCambiar={(v) => {
-                      cambiarDestino(i, v as DestinoDeParte);
-                    }}
-                  />
-                  {parte.destino === 'categoria' ? (
-                    <Seleccion
-                      etiqueta={t.categoriaDeParte(n)}
-                      opciones={opcionesCategorias}
-                      valor={parte.categoriaId}
-                      alCambiar={poner(`lineas.${i}.categoriaId`)}
-                      {...conError(errorDeParte(i, 'categoriaId'))}
+          <Suspense fallback={null}>
+            <CampoLineas
+              etiqueta={t.partes}
+              claves={partes.fields.map((f) => f.id)}
+              maximo={MAXIMO_PARTES}
+              textoAgregar={t.agregarParte}
+              textoParte={t.parte}
+              textoQuitar={t.quitarParte}
+              textoCantidad={t.cantidadPartes}
+              alAgregar={() => {
+                partes.append(parteVacia());
+              }}
+              alQuitar={(i) => {
+                partes.remove(i);
+              }}
+              ayuda={ayuda}
+              error={errorDeLasPartes}
+              renderParte={(i) => {
+                const parte = c.lineas[i];
+                if (parte === undefined) return null;
+                return (
+                  <Suspense fallback={null}>
+                    <ParteDeGasto
+                      i={i}
+                      parte={parte}
+                      categorias={opcionesCategorias}
+                      deudores={opcionesDeudores}
+                      error={(campo) => errorDeParte(i, campo)}
+                      poner={poner}
+                      alCambiarDestino={(d) => {
+                        cambiarDestino(i, d);
+                      }}
+                      registroDeudorNuevo={formulario.register(`lineas.${i}.deudorNuevo`)}
                     />
-                  ) : (
-                    <>
-                      <Seleccion
-                        etiqueta={t.deudorDeParte(n)}
-                        opciones={opcionesDeudores}
-                        valor={parte.deudorId}
-                        alCambiar={poner(`lineas.${i}.deudorId`)}
-                        {...conError(errorDeParte(i, 'deudorId'))}
-                      />
-                      {parte.deudorId === DEUDOR_NUEVO ? (
-                        <EntradaTexto
-                          etiqueta={t.deudorNuevoDeParte(n)}
-                          autoComplete="off"
-                          {...conError(errorDeParte(i, 'deudorNuevo'))}
-                          {...formulario.register(`lineas.${i}.deudorNuevo`)}
-                        />
-                      ) : null}
-                    </>
-                  )}
-                </>
-              );
-            }}
-          />
+                  </Suspense>
+                );
+              }}
+            />
+          </Suspense>
           {estado === 'error' &&
           fallo !== undefined &&
           deLasPartes === undefined &&
