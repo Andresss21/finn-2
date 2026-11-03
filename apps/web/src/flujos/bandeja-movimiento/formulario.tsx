@@ -11,11 +11,16 @@ import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
 import { useOperacion } from '../../formularios/use-operacion';
-import { aprobarMovimiento, editarMovimiento } from '../../servidor/acciones/bandeja';
+import {
+  aprobarMovimiento,
+  editarMovimiento,
+  resolverCoincidencia,
+} from '../../servidor/acciones/bandeja';
 import { bandeja as t } from '../../textos/bandeja';
 import { formularios } from '../../textos/formularios';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
 import { textoAprobado, type ValorAprobado } from './aprobado';
+import type { DatosCoincidencia } from './coincidencia';
 
 export interface PropsFormularioMovimiento {
   readonly movimiento: {
@@ -29,6 +34,9 @@ export interface PropsFormularioMovimiento {
     readonly categoriaId: string | null;
     readonly origenId?: string;
     readonly esperado: Readonly<Record<string, unknown>>;
+    readonly estado: string;
+    /** Con una coincidencia sobre un pago programado (OP-40): lo que se muestra de ella. */
+    readonly coincidencia?: DatosCoincidencia;
   };
   readonly categorias: readonly { readonly id: string; readonly nombre: string }[];
   /** Viene de la fila de la lista (05 §4.15): se vuelve a aprobar para mostrar el mensaje o la confirmación. */
@@ -48,6 +56,12 @@ const ConfirmacionImpacto = lazy(() =>
   })),
 );
 
+const Coincidencia = lazy(() =>
+  import('./coincidencia').then((m) => ({ default: m.Coincidencia })),
+);
+const YaResuelto = lazy(() => import('./ya-resuelto'));
+const FINALES = ['aprobado', 'descartado', 'autodescartado'];
+
 function TextoDelSms({ texto }: { readonly texto: string }) {
   return (
     <section aria-label={t.revisar.sms} className="flex flex-col gap-1">
@@ -59,17 +73,36 @@ function TextoDelSms({ texto }: { readonly texto: string }) {
   );
 }
 
-export function FormularioMovimiento({
-  movimiento: m,
-  categorias,
-  traspaso,
-}: PropsFormularioMovimiento) {
+export function FormularioMovimiento(props: PropsFormularioMovimiento) {
+  // Si al abrir ya está aprobado o descartado se muestra su estado; si no, el flujo sigue montado aunque la revalidación
+  // cambie su estado al aprobar (el resultado es suyo).
+  const [abierto] = useState(() => !FINALES.includes(props.movimiento.estado));
+  if (abierto) return <Flujo {...props} />;
+  return (
+    <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
+      <Suspense fallback={null}>
+        <YaResuelto aprobado={props.movimiento.estado === 'aprobado'}>
+          <TextoDelSms texto={props.movimiento.sms} />
+        </YaResuelto>
+      </Suspense>
+    </PaginaFlujoDeRuta>
+  );
+}
+
+function Flujo({ movimiento: m, categorias, traspaso }: PropsFormularioMovimiento) {
   const editar = useOperacion({ accion: editarMovimiento });
-  const aprobar = useOperacion({ accion: aprobarMovimiento, creacion: true });
+  const aprobarSolo = useOperacion({ accion: aprobarMovimiento, creacion: true });
+  const coincide = useOperacion({ accion: resolverCoincidencia, creacion: true });
+  // Confirmar una coincidencia es aprobar (OP-40 ejecuta OP-37): lo que ya se envió por ahí manda
+  const aprobar = ['enviando', 'confirmando', 'listo'].includes(coincide.estado)
+    ? coincide
+    : aprobarSolo;
   const [categoriaId, setCategoriaId] = useState(m.categoriaId ?? '');
   const [recordar, setRecordar] = useState(false);
-  const pendiente = useRef<Record<string, unknown> | null>(null); // la aprobación que sigue a guardar
-  const { enviar: aprobarAhora } = aprobar;
+  // la aprobación (o la confirmación de la coincidencia, OP-40) que sigue a guardar
+  const pendiente = useRef<{ entrada: Record<string, unknown>; confirmando: boolean } | null>(null);
+  const { enviar: aprobarAhora } = aprobarSolo;
+  const { enviar: confirmarAhora } = coincide;
   const conCategoria = m.tipo === 'gasto' && m.partes <= 1 && m.montoTexto !== null;
 
   const { id, origenId } = m;
@@ -81,23 +114,24 @@ export function FormularioMovimiento({
   // Terminó de guardar la categoría: se aprueba
   useEffect(() => {
     if (editar.estado !== 'listo' || pendiente.current === null) return;
-    const entrada = pendiente.current;
+    const { entrada, confirmando } = pendiente.current;
     pendiente.current = null;
-    void aprobarAhora(entrada);
-  }, [editar.estado, aprobarAhora]);
+    void (confirmando ? confirmarAhora : aprobarAhora)(entrada);
+  }, [editar.estado, aprobarAhora, confirmarAhora]);
 
-  const alAprobar = (evento: SyntheticEvent): void => {
-    evento.preventDefault();
+  // «Aprobar» y «Confirmar» (coincidencia) guardan primero la categoría elegida y después aprueban (OP-37 u OP-40)
+  const enviar = (confirmando: boolean): void => {
     const entrada = {
+      ...(confirmando ? { decision: 'confirmar_coincidencia' } : {}),
       movimientoId: id,
       ...(origenId === undefined ? {} : { origenId }),
       ...(recordar && conCategoria && categoriaId !== '' ? { recordarRegla: true } : {}),
     };
     if (!conCategoria || categoriaId === '' || categoriaId === m.categoriaId) {
-      void aprobarAhora(entrada);
+      void (confirmando ? confirmarAhora : aprobarAhora)(entrada);
       return;
     }
-    pendiente.current = entrada;
+    pendiente.current = { entrada, confirmando };
     void editar.enviar({
       movimientoId: id,
       lineas: [{ monto: m.montoTexto, destino: { categoriaId } }],
@@ -105,7 +139,12 @@ export function FormularioMovimiento({
     });
   };
 
-  const fallo = editar.estado === 'error' ? editar.error : aprobar.error;
+  const alAprobar = (evento: SyntheticEvent): void => {
+    evento.preventDefault();
+    enviar(false);
+  };
+
+  const fallo = [editar, aprobarSolo, coincide].find((o) => o.estado === 'error')?.error;
   const vista = (aprobar.previsualizacion ?? {}) as Previsualizacion;
 
   if (aprobar.estado === 'listo' && aprobar.exito !== undefined) {
@@ -156,6 +195,18 @@ export function FormularioMovimiento({
   return (
     <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
       <form onSubmit={alAprobar} className="flex flex-col gap-5">
+        {m.coincidencia === undefined ? null : (
+          <Suspense fallback={null}>
+            <Coincidencia
+              coincidencia={m.coincidencia}
+              enviando={coincide.estado === 'enviando'}
+              deshabilitado={!coincide.enLinea}
+              alConfirmar={() => {
+                enviar(true);
+              }}
+            />
+          </Suspense>
+        )}
         <TextoDelSms texto={m.sms} />
         {conCategoria ? (
           <Seleccion
@@ -188,7 +239,9 @@ export function FormularioMovimiento({
                     <Boton
                       variante="secundaria"
                       onClick={() =>
-                        void (editar.estado === 'error' ? editar : aprobar).reintentar()
+                        void [editar, aprobarSolo, coincide]
+                          .find((o) => o.estado === 'error')
+                          ?.reintentar()
                       }
                     >
                       {formularios.intentarDeNuevo}

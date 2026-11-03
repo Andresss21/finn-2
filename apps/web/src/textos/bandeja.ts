@@ -30,6 +30,16 @@ export const bandeja = {
     categoria: 'Categoría',
     aprobar: 'Aprobar',
     aprobando: 'Aprobando…',
+    aprobadoYa: 'Este movimiento ya se aprobó.',
+    descartadoYa: 'Este movimiento está descartado.',
+    volver: 'Volver a la Bandeja',
+    coincidencia: 'Coincide con un pago programado',
+    coincidePendiente: (programada: string, fecha: string, monto: string) =>
+      `Coincide con «${programada}» esperada el ${fecha} por ${monto}. Al confirmar, se crea la transacción y la ocurrencia queda emparejada.`,
+    coincideRegistrada: (programada: string, fecha: string, monto: string) =>
+      `Coincide con «${programada}» del ${fecha} por ${monto}, que Finn ya registró. Al confirmar, esa transacción pasa al monto del SMS y no se crea otra.`,
+    confirmarCoincidencia: 'Confirmar',
+    confirmando: 'Confirmando…',
     recordar: 'Recordar esta categoría para este comercio',
     revisarImpacto: 'Revisá antes de aprobar',
   },

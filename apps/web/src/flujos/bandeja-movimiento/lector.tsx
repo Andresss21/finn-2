@@ -3,7 +3,7 @@
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
-import { centavosATextoDecimal } from '../../formato';
+import { centavosATextoDecimal, formatearFechaTexto, formatearMonto } from '../../formato';
 import { FormularioMovimiento } from './formulario';
 
 export async function LectorMovimiento({
@@ -40,6 +40,17 @@ export async function LectorMovimiento({
             : null,
         ...(m.origenPropuesto === undefined ? {} : { origenId: m.origenPropuesto.id }),
         esperado: m.esperado,
+        estado: m.estado,
+        ...(m.coincidencia === undefined
+          ? {}
+          : {
+              coincidencia: {
+                programada: m.coincidencia.programada.nombre,
+                fecha: formatearFechaTexto(m.coincidencia.fechaEsperada),
+                monto: formatearMonto(m.coincidencia.montoEsperado),
+                registrada: m.coincidencia.ocurrencia === 'registrada',
+              },
+            }),
       }}
       categorias={categorias}
       traspaso={traspaso}
