@@ -18,4 +18,19 @@ export const bandeja = {
     titulo: 'Bandeja al día',
     texto: 'No hay movimientos por revisar.',
   },
+  // FT-35: aprobar con un toque (05 §4.15) y revisar el movimiento completo (`/bandeja/[movimientoId]`)
+  aprobado: (...partes: string[]) => `Aprobado: ${partes.join(' · ')}`,
+  aprobadoSinDatos: 'Aprobado',
+  dividido: (n: number) => `Dividido en ${n} partes`,
+  porCobrarA: (nombre: string) => `Por cobrar: ${nombre}`,
+  verTransaccion: 'Ver transacción',
+  revisar: {
+    titulo: 'Revisar movimiento',
+    sms: 'Texto del SMS',
+    categoria: 'Categoría',
+    aprobar: 'Aprobar',
+    aprobando: 'Aprobando…',
+    recordar: 'Recordar esta categoría para este comercio',
+    revisarImpacto: 'Revisá antes de aprobar',
+  },
 } as const;

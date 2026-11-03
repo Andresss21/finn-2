@@ -1,11 +1,13 @@
+'use client';
 // La lista de `/bandeja` (06-identidad-visual §7): resumen con los contadores, las filas compactas (`MovimientoBandeja`) y,
-// sin movimientos, el vacío «Bandeja al día». Sin estado propio: lo que muestra es lo que devolvió `bandeja()`.
+// sin movimientos, el vacío «Bandeja al día». Lo que muestra es lo que devolvió `bandeja()`, salvo la fila que se aprobó con
+// un toque: la revalidación la saca de la lista y su resultado queda en su lugar (FT-35, 05 §4.15).
+import { useCallback, useState } from 'react';
 import { Vacio } from '../../../componentes/base/vacio';
-import {
-  MovimientoBandeja,
-  type MovimientoDto,
-} from '../../../componentes/dominio/movimiento-bandeja';
+import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
 import { bandeja as t } from '../../../textos/bandeja';
+import type { ValorAprobado } from '../../../flujos/bandeja-movimiento/aprobado';
+import { FilaBandeja } from './fila';
 
 interface Contadores {
   readonly pendientes: number;
@@ -13,6 +15,14 @@ interface Contadores {
   readonly posiblesDuplicados: number;
   readonly noReconocidos: number;
   readonly errores: number;
+}
+
+/** Una fila que se aprobó o se está aprobando: se queda donde estaba aunque la lista ya no la traiga. */
+interface Retenida {
+  readonly movimiento: MovimientoDto;
+  readonly indice: number;
+  readonly resultado: ValorAprobado | undefined;
+  readonly enCurso: boolean;
 }
 
 /** Solo las clases que tienen movimientos, en el orden de `contadores`. */
@@ -30,7 +40,31 @@ export function ListaBandeja({
   readonly contadores: Contadores;
   readonly movimientos: readonly MovimientoDto[];
 }) {
-  if (movimientos.length === 0)
+  const [retenidas, setRetenidas] = useState<Readonly<Record<string, Retenida>>>({});
+  const alIniciar = useCallback(
+    (id: string) => {
+      const indice = movimientos.findIndex((m) => m.id === id);
+      const movimiento = movimientos[indice];
+      if (movimiento === undefined) return;
+      setRetenidas((r) => ({
+        ...r,
+        [id]: { movimiento, indice, resultado: undefined, enCurso: true },
+      }));
+    },
+    [movimientos],
+  );
+  const alTerminar = useCallback((id: string, resultado: ValorAprobado | undefined) => {
+    setRetenidas((r) => {
+      const previa = r[id];
+      return previa === undefined ? r : { ...r, [id]: { ...previa, resultado, enCurso: false } };
+    });
+  }, []);
+
+  const filas = [...movimientos];
+  for (const r of Object.values(retenidas))
+    if ((r.enCurso || r.resultado !== undefined) && !filas.some((m) => m.id === r.movimiento.id))
+      filas.splice(Math.min(r.indice, filas.length), 0, r.movimiento);
+  if (filas.length === 0)
     return <Vacio titulo={t.alDia.titulo} texto={t.alDia.texto} icono="inbox" />;
   return (
     <>
@@ -43,9 +77,15 @@ export function ListaBandeja({
         aria-label={t.lista}
         className="divide-y divide-borde-sutil rounded-contenedor bg-superficie"
       >
-        {movimientos.map((m) => (
+        {filas.map((m) => (
           <div key={m.id} role="listitem">
-            <MovimientoBandeja movimiento={m} hrefRevisar={`/bandeja/${m.id}`} />
+            <FilaBandeja
+              movimiento={m}
+              hrefRevisar={`/bandeja/${m.id}`}
+              resultado={retenidas[m.id]?.resultado}
+              alIniciar={alIniciar}
+              alTerminar={alTerminar}
+            />
           </div>
         ))}
       </div>
