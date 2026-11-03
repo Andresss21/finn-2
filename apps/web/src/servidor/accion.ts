@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { errorInterno } from '@finn/aplicacion/autenticacion';
 import { errorDeValidacion, type ResultadoAccion } from '@finn/aplicacion/errores';
 import type { ResultadoPrevisualizar } from '@finn/aplicacion/operaciones';
+import { ARBOL_CON_DATOS } from './revalidar.ts';
 import { exigirSesionAal2 } from './sesion.ts';
 
 /** Lo que `@finn/aplicacion` expone por cada OP/OPT (04 §2.3.1): `previsualizar(entrada)` y `confirmar(entrada)`. */
@@ -24,7 +25,7 @@ function separarModo(cruda: unknown): { modo: (typeof MODOS)[number] | null; res
 
 /**
  * Las cinco etapas de 04 §2.2.2: sesión AAL2; contrato Zod (dentro de `previsualizar`/`confirmar`); elegir según
- * `entrada.modo`; `revalidatePath('/', 'layout')` si se escribió; devolver `ResultadoAccion` sin lanzar nada hacia el
+ * `entrada.modo`; `revalidatePath('/(finn)', 'layout')` si se escribió (CH-97); devolver `ResultadoAccion` sin lanzar nada hacia el
  * cliente (salvo el `redirect()` de Next, que ninguna de estas etapas usa).
  */
 export function accion<Salida>(definicion: OperacionAccionable<Salida>) {
@@ -43,7 +44,7 @@ export function accion<Salida>(definicion: OperacionAccionable<Salida>) {
     if (modo === 'previsualizar') return definicion.previsualizar(resto);
 
     const resultado = await definicion.confirmar(resto);
-    if (resultado.ok) revalidatePath('/', 'layout');
+    if (resultado.ok) revalidatePath(ARBOL_CON_DATOS, 'layout');
     return resultado;
   };
 }

@@ -161,7 +161,7 @@ Las verificaciones de la Parte B (V5-15 a V5-19) usan el mismo entorno y la mism
 |---|---|---|
 | V5-01 | Normalización de `EntradaMonto` (`normalizarMontoEscrito`, `limpiarPegado`) | 22 casos de tabla y 8 de pegado con el resultado esperado. Propiedad: 900.000 textos (cada monto de 0 a 21.474.836,47 escrito con punto, coma, ceros a la izquierda y sin decimales) producen un texto que cumple `montoTexto` de 04 §13.3 y vuelve exactamente a los mismos centavos. En Node 24 y en Chromium (configuración regional `es-SV` y `en-US`) |
 | V5-02 | Módulo de formato (**[F6]** CF-15: las salidas fijadas pasan a `−$45.00`, y un caso comprueba que la exportación CSV sigue con `-45.00`) | `$1,234.50`, `-$45.00`, `$0.75`, `$21,474,836.47`, `05/10/2026`, `5 oct 2026`, `05/10/2026 14:32`, `45.5%`: correctos en Node 24 y en Chromium. 400.000 montos (los 200.000 alrededor de cero y 200.000 al azar en todo el rango) formateados desde texto decimal coinciden con una referencia construida a mano. **Observaciones:** ICU escribe septiembre como **"sept"** y separa fecha y hora del instante con **coma** (`05/10/2026, 14:32`); por eso el mes abreviado sale de una tabla propia y el instante se arma con `formatToParts` (5.4). El porcentaje de ICU para `es-SV` no lleva espacio (`45.5%`) |
-| V5-03 | Escritura con Server Action en Next 16 | a) Una escritura simple actualiza la página con la respuesta de la acción (`revalidatePath('/', 'layout')`), sin refrescar a mano; el formulario conserva su `esperado` al abrir. b) `REQUIERE_CONFIRMACION` → se muestra la previsualización → confirmar con `revisionVista` y `huellaImpacto` escribe al primer intento: exactamente **dos** llamadas. c) Dos pestañas: la segunda recibe `conflicto_desactualizado` |
+| V5-03 | Escritura con Server Action en Next 16 | a) Una escritura simple actualiza la página con la respuesta de la acción (`revalidatePath('/', 'layout')`; **[CH-97]** hoy `revalidatePath('/(finn)', 'layout')`, 04 §5.8), sin refrescar a mano; el formulario conserva su `esperado` al abrir. b) `REQUIERE_CONFIRMACION` → se muestra la previsualización → confirmar con `revisionVista` y `huellaImpacto` escribe al primer intento: exactamente **dos** llamadas. c) Dos pestañas: la segunda recibe `conflicto_desactualizado` |
 | V5-04 | Doble envío | Tres `requestSubmit()` en el mismo ciclo, con una acción de 800 ms → **una** llamada |
 | V5-05 | Id conservado y reintento único | `OCUPADO` en el primer intento → reintento automático con el mismo id → éxito (2 llamadas). `INCIERTO` después de aplicar → reintento con el mismo id → `yaAplicada` sin duplicar. El siguiente envío tras un éxito usa un id nuevo |
 | V5-06 | Flujo corto en ruta interceptada | a) Navegación interna a `/asignar`: se muestra en el slot y la página de origen sigue montada. b) Al terminar, `router.back()` lo cierra y vuelve a `/` con los datos nuevos. c) Recargar con el flujo abierto → página completa. d) Abrir la URL directamente → página completa. e) "Atrás" del navegador lo cierra |
@@ -897,7 +897,7 @@ Además: los errores de una lectura interactiva no se muestran como error del fo
 
 - **Avisos "después"** (`SalidaOperacion.avisos`): se muestran con su texto del servidor en la pantalla a la que vuelve el flujo [Diseño, con el requisito de anunciarse a los lectores de pantalla].
 - **Propuestas** (`SalidaOperacion.propuestas`, CP-8). **[F6] CF-05:** con `ejecucion: 'un_toque'` se ejecuta tal cual; con `'abrir_flujo'` la interfaz escribe `entrada` como borrador del flujo de destino (4.11) y navega a su ruta: OP-20 → `/registrar/gasto`, OP-21 → `/registrar/ingreso`, OP-27 → `/registrar/entrada-tarjeta`, OP-42 → `/programadas/nueva`: se ofrecen como acciones de un toque o como enlace a su flujo con la entrada como valores iniciales. La interfaz nunca calcula la entrada de una propuesta.
-- **Navegación:** `cerrarFlujo()` (1.4). La pantalla de destino ya trae los datos nuevos con la respuesta de la acción, por `revalidatePath('/', 'layout')` (04 5.8, V5-03a): **no** se llama a `router.refresh()` después de escribir.
+- **Navegación:** `cerrarFlujo()` (1.4). La pantalla de destino ya trae los datos nuevos con la respuesta de la acción, por **[CH-97]** `revalidatePath('/(finn)', 'layout')` (04 5.8, V5-03a): **no** se llama a `router.refresh()` después de escribir.
 - Borra el borrador y renueva el id (4.5, 4.11).
 
 ### 4.14 Acciones de un toque y salida para revertir (FE-24) **[R1]**
@@ -1108,8 +1108,8 @@ Decisiones de detalle, todas por V5-02:
 
 ### 6.3 Revalidación tras escribir
 
-- `accion()` ejecuta `revalidatePath('/', 'layout')` tras cada escritura correcta (04 §5.8). La respuesta de la Server Action ya trae la pantalla actual con los datos nuevos (V5-03a): el cliente **no** llama a `router.refresh()` después de escribir.
-- Al cerrar un flujo superpuesto con `router.back()`, la pantalla de origen también muestra los datos nuevos (V5-06b): la revalidación invalida todo el árbol.
+- `accion()` ejecuta **[CH-97]** `revalidatePath('/(finn)', 'layout')` tras cada escritura correcta (04 §5.8): se invalida el árbol de `(finn)`; las rutas estáticas (`/serwist/[path]`, `manifest`, `/sin-conexion`) no dependen de datos y no se invalidan. La respuesta de la Server Action ya trae la pantalla actual con los datos nuevos (V5-03a): el cliente **no** llama a `router.refresh()` después de escribir.
+- Al cerrar un flujo superpuesto con `router.back()`, la pantalla de origen también muestra los datos nuevos (V5-06b): la revalidación invalida todo el árbol de `(finn)`, y la caché del enrutador del cliente se descarta entera con cualquier revalidación.
 
 ### 6.4 `Encabezado` en el marco (FE-06)
 

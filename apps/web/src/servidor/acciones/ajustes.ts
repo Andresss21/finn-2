@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { errorInterno } from '@finn/aplicacion/autenticacion';
 import type { ResultadoAccion } from '@finn/aplicacion/errores';
 import { rotarToken } from '@finn/aplicacion/sms/token';
+import { ARBOL_CON_DATOS } from '../revalidar.ts';
 import { exigirSesionAal2 } from '../sesion.ts';
 
 export async function rotarTokenWebhook(): Promise<ResultadoAccion<{ readonly token: string }>> {
@@ -13,7 +14,7 @@ export async function rotarTokenWebhook(): Promise<ResultadoAccion<{ readonly to
   if (!sesion.ok) return { ok: false, error: sesion.error };
   try {
     const { token } = await rotarToken();
-    revalidatePath('/', 'layout');
+    revalidatePath(ARBOL_CON_DATOS, 'layout');
     return { ok: true, valor: { token }, yaAplicada: false, avisos: [] };
   } catch {
     // Sin el detalle: ni el mensaje del error ni la pila pueden llevar datos de la operación

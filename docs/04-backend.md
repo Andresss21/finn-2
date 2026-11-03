@@ -536,7 +536,7 @@ export const registrarGasto = accion(operaciones.OP20_registrarGasto);
 1. `exigirSesionAal2()` (2.2.5). Si falla: `{ ok: false, error: NO_AUTORIZADO }`.
 2. Valida la entrada con `definicion.contrato` (Zod). Si falla: `VALIDACION` con los campos (7.6).
 3. Llama a `definicion.previsualizar` o `definicion.confirmar` según `entrada.modo` (4.3).
-4. Si el resultado es correcto y hubo escritura: `revalidatePath('/', 'layout')` (5.8).
+4. Si el resultado es correcto y hubo escritura: **[CH-97]** `revalidatePath('/(finn)', 'layout')` (5.8).
 5. Devuelve `ResultadoAccion<T>` (7.1). **Nunca lanza** hacia el cliente, salvo `redirect()` de Next.
 
 #### 2.2.3 Forma de un Route Handler
@@ -1156,7 +1156,7 @@ Mantiene el determinismo porque reconstruye exactamente los hechos de esa revisi
 
 - Toda página con datos de usuario lee la sesión (cookies), lo que la hace dinámica en Next.
 - Prohibidos, por lint, en `apps/web/src/app/(finn)` y en `@finn/aplicacion`: la directiva `'use cache'`, `export const revalidate`, `unstable_cache` y `fetch` con caché (ADR-02, RK-11).
-- Después de cada escritura correcta, `accion()` ejecuta `revalidatePath('/', 'layout')`: se invalida todo el árbol, porque una operación puede cambiar números de cualquier pantalla (inv. 27).
+- Después de cada escritura correcta, `accion()` ejecuta **[CH-97]** `revalidatePath('/(finn)', 'layout')`: se invalida el árbol de `(finn)`, donde están todas las pantallas con datos, porque una operación puede cambiar números de cualquier pantalla (inv. 27); las rutas estáticas (`/serwist/[path]`, `manifest`, `/sin-conexion`) no dependen de datos y no se invalidan. Con `revalidatePath('/', 'layout')`, la etiqueta `_N_T_/layout`, que Next pone en toda ruta prerenderizada, hacía que Vercel regenerara `/serwist/sw.js` en runtime tras cada escritura (05 §8.1).
 - La estrategia de refresco en el cliente tras medianoche es de la Fase 5 (RT-21).
 
 
