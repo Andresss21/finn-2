@@ -89,6 +89,80 @@ const ESC31: Op[] = [
   },
 ];
 
+// ESC-13 hasta el paso 4 (reserva excedente de $30.00): cada operación con su día; el paso 3 pasa a P2 el 21 feb.
+const ESC13: Op[] = [
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta' },
+  { op: 'OP-07', categoria: 'Super' },
+  { op: 'OP-21', monto: 500, hoy: '2027-02-10' },
+  { op: 'OP-14', categoria: 'Super', monto: 100, periodo: 'P1', hoy: '2027-02-10' },
+  { op: 'OP-20', cuenta: 'T', monto: 100, categoria: 'Super', hoy: '2027-02-10' },
+  { op: 'OP-23', tarjeta: 'T', monto: 130, hoy: '2027-02-10' },
+  { op: 'OP-14', categoria: 'Super', monto: 30, periodo: 'P2', hoy: '2027-02-21' },
+  { op: 'OP-20', cuenta: 'T', monto: 30, categoria: 'Super', hoy: '2027-02-21' },
+];
+// ESC-44 hasta el paso 2 (Gimnasio archivada con Disponible $25.00).
+const ESC44: Op[] = [
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-07', categoria: 'Gimnasio' },
+  { op: 'OP-21', monto: 700, fecha: '2027-01-25', hoy: '2027-01-25' },
+  { op: 'OP-14', categoria: 'Gimnasio', monto: 70, periodo: 'P1', hoy: '2027-01-25' },
+  {
+    op: 'OP-20',
+    cuenta: 'Ahorro',
+    monto: 30,
+    categoria: 'Gimnasio',
+    fecha: '2027-02-02',
+    hoy: '2027-02-02',
+    etiqueta: 'gimnasio',
+  },
+  { op: 'OP-14', categoria: 'Gimnasio', monto: 30, periodo: 'P3' },
+  {
+    op: 'OP-42',
+    etiqueta: 'gimnasio',
+    cuenta: 'Ahorro',
+    comercio: 'Gimnasio',
+    monto: 30,
+    categoria: 'Gimnasio',
+    primeraFecha: '2027-03-10',
+  },
+  {
+    op: 'OP-09',
+    categoria: 'Gimnasio',
+    destino: 'LPA',
+    devolverFuturas: true,
+    desactivar: ['gimnasio'],
+  },
+  { op: 'OP-33', compra: 'gimnasio', monto: 25 },
+];
+// Nada necesita atención: todo está asignado y no hay pagos, sobregiros ni Bandeja.
+const AL_DIA: Op[] = [
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-07', categoria: 'Super' },
+  { op: 'OP-21', monto: 1000 },
+  { op: 'OP-14', categoria: 'Super', monto: 1000, periodo: 'P1' },
+];
+const RENTA = {
+  op: 'OP-42',
+  etiqueta: 'Renta',
+  cuenta: 'Ahorro',
+  comercio: 'Renta',
+  monto: 50,
+  categoria: 'Super',
+} as const;
+// ESC-03 hasta el paso 3 (hoy 5 feb): ingreso de $1,000.00, Super $600.00 en P1 y Salidas $300.00 en P2; Mascota tiene su meta.
+const ESC03: Op[] = [
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-07', categoria: 'Super' },
+  { op: 'OP-07', categoria: 'Salidas' },
+  { op: 'OP-07', categoria: 'Gas' },
+  { op: 'OP-07', categoria: 'Mascota' },
+  { op: 'OP-18', categoria: 'Mascota', monto: 50 },
+  { op: 'OP-21', monto: 1000 },
+  { op: 'OP-14', categoria: 'Super', monto: 600, periodo: 'P1' },
+  { op: 'OP-14', categoria: 'Salidas', monto: 300, periodo: 'P2' },
+];
+
 /**
  * Lo que `posteriores()` registrará al producir AV-01 (BE-38): todavía ninguna operación lo hace (lo completa FT-27, pendiente de
  * punta a punta en `pendientes-e2e.json`), así que la semilla agrega la notificación con la cifra del paso 1 de ESC-31.
@@ -263,5 +337,173 @@ test.describe('PRU-E2E-INICIO', () => {
     await expect(
       page.getByRole('heading', { name: listoParaAsignar.titulo, level: 1 }),
     ).toBeVisible();
+  });
+  test('PRU-E2E-INICIO-140 [CA-08.7, ESC-13, AV-08] con el paso 4 de ESC-13 la propuesta de reserva excedente devuelve $30.00 con un toque: Listo para asignar sube de $340.00 a $370.00 y aparece "Deshacer", que lo vuelve a $340.00', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC13, '2027-02-21');
+    await abrir(page);
+    await esperarMonto(billete(page).locator('[data-centavos]').first(), 34000);
+    const propuesta = page.locator('[data-reserva-excedente]');
+    await expect(propuesta).toContainText('$30.00');
+    await propuesta.getByRole('button', { name: t.devolverReserva('$30.00') }).click();
+    await esperarMonto(billete(page).locator('[data-centavos]').first(), 37000);
+    const salida = page.locator('[data-reserva-devuelta]');
+    await expect(salida).toContainText(t.reservaDevuelta('T', '$30.00'));
+    await salida.getByRole('button', { name: t.deshacer, exact: true }).click();
+    await esperarMonto(billete(page).locator('[data-centavos]').first(), 34000);
+    await expect(page.locator('[data-reserva-devuelta]')).toHaveCount(0);
+    await expect(page.locator('[data-reserva-excedente]')).toHaveCount(1);
+  });
+
+  test('PRU-E2E-INICIO-141 [CA-08.8] sin ninguna condición de atención Inicio dice "Todo al día"; con una sola ocurrencia atrasada no lo dice y la lista', async ({
+    page,
+  }) => {
+    await sembrarOps(AL_DIA, '2027-02-10');
+    await abrir(page);
+    await expect(page.locator('[data-todo-al-dia]')).toContainText(t.todoAlDia.titulo);
+    await expect(page.locator('[data-todo-al-dia]')).toContainText(t.todoAlDia.texto);
+
+    await sembrarOps([...AL_DIA, { ...RENTA, primeraFecha: '2027-02-05' }], '2027-02-10');
+    await abrir(page);
+    await expect(page.locator('[data-todo-al-dia]')).toHaveCount(0);
+    await expect(page.locator('[data-pago-atrasado]')).toContainText('Renta');
+    await expect(page.locator('[data-pago-atrasado]')).toContainText('$50.00');
+  });
+
+  test('PRU-E2E-INICIO-142 [CA-08.9] con 7 transacciones "Recientes" muestra las 5 últimas por fecha, de la más reciente a la más antigua', async ({
+    page,
+  }) => {
+    const gastos = [1, 2, 3, 4, 5, 6, 7].map((n): Op => ({
+      op: 'OP-20',
+      cuenta: 'Ahorro',
+      monto: 10 + n,
+      categoria: 'Super',
+      fecha: `2027-02-0${n}`,
+    }));
+    // El ingreso es del 25 ene: queda fuera de las 5 últimas.
+    const base: Op[] = [
+      { op: 'OP-01', cuenta: 'Ahorro' },
+      { op: 'OP-07', categoria: 'Super' },
+      { op: 'OP-21', monto: 1000, fecha: '2027-01-25', hoy: '2027-01-25' },
+      { op: 'OP-14', categoria: 'Super', monto: 1000, periodo: 'P1', hoy: '2027-01-25' },
+    ];
+    await sembrarOps([...base, ...gastos], '2027-02-10');
+    await abrir(page);
+    const filas = page.locator('[data-seccion="recientes"] [data-fila-transaccion]');
+    await expect(filas).toHaveCount(5);
+    for (const [i, monto] of [-1700, -1600, -1500, -1400, -1300].entries())
+      await esperarMonto(filas.nth(i).locator('[data-centavos]'), monto);
+  });
+
+  test('PRU-E2E-INICIO-143 [CA-08.10] una tarjeta con pago en 2 días y $120.00 para no generar intereses aparece en "Pagos de tarjeta próximos" con enlace a su cuenta; con $0.00 no aparece', async ({
+    page,
+  }) => {
+    const base: Op[] = [
+      { op: 'OP-01', cuenta: 'Ahorro' },
+      { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta', diaCorte: 15, diaPago: 5 },
+      { op: 'OP-07', categoria: 'Super' },
+      { op: 'OP-21', monto: 500, fecha: '2027-01-25', hoy: '2027-01-25' },
+      { op: 'OP-14', categoria: 'Super', monto: 200, periodo: 'P1', hoy: '2027-01-25' },
+    ];
+    const compra: Op = {
+      op: 'OP-20',
+      cuenta: 'T',
+      monto: 120,
+      categoria: 'Super',
+      fecha: '2027-02-10',
+      hoy: '2027-02-10',
+    };
+    await sembrarOps([...base, compra], '2027-03-03');
+    await abrir(page);
+    const fila = page.locator('[data-pago-tarjeta]');
+    await expect(fila).toHaveCount(1);
+    await esperarMonto(fila.locator('[data-centavos]'), 12000);
+    await expect(page.getByText(t.pagoDeTarjeta('05/03'))).toBeVisible();
+    await expect(fila.locator('xpath=ancestor::a')).toHaveAttribute(
+      'href',
+      /^\/cuentas\/[0-9a-f-]+$/,
+    );
+
+    await sembrarOps(base, '2027-03-03');
+    await abrir(page);
+    await expect(page.locator('[data-pago-tarjeta]')).toHaveCount(0);
+  });
+
+  test('PRU-E2E-INICIO-144 [CA-08.11] el botón del billete va a las categorías sin fondos si las hay, a Presupuesto si no, y con Listo para asignar negativo dice "Quitar $100.00 de una categoría" y va a Presupuesto', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC03, '2027-02-05');
+    await abrir(page);
+    await billete(page)
+      .getByRole('link', { name: t.asignar('$100.00') })
+      .click();
+    await expect(page).toHaveURL(/\/presupuesto\?filtro=sin-fondos$/);
+
+    await sembrarOps(
+      ESC03.filter((o) => o.op !== 'OP-18'),
+      '2027-02-05',
+    );
+    await abrir(page);
+    await billete(page)
+      .getByRole('link', { name: t.asignar('$100.00') })
+      .click();
+    await expect(page).toHaveURL(/\/presupuesto$/);
+
+    await sembrarOps(
+      [...ESC03, { op: 'OP-14', categoria: 'Gas', monto: 200, periodo: 'P1' }],
+      '2027-02-05',
+    );
+    await abrir(page);
+    await billete(page)
+      .getByRole('link', { name: t.quitar('$100.00') })
+      .click();
+    await expect(page).toHaveURL(/\/presupuesto$/);
+  });
+
+  test('PRU-E2E-INICIO-145 [CA-08.12, ESC-20] con $25.00 en camino de un deudor el billete dice "En camino $25.00" sin el nombre del deudor', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC20, '2027-02-10');
+    await abrir(page);
+    await expect(billete(page).locator('[data-en-camino]')).toContainText('En camino $25.00');
+    await expect(page.getByText('Ana', { exact: true })).toHaveCount(0);
+  });
+
+  test('PRU-E2E-INICIO-146 [AV-14, ESC-44] con el paso 2 de ESC-44 la archivada con $25.00 se ofrece en Inicio: un toque saca el dinero y Listo para asignar sube de $670.00 a $695.00', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC44, '2027-03-05');
+    await abrir(page);
+    await esperarMonto(billete(page).locator('[data-centavos]').first(), 67000);
+    const fila = page.locator('[data-archivada]');
+    await expect(fila).toContainText('Gimnasio');
+    await expect(fila).toContainText('$25.00');
+    await fila.getByRole('button', { name: /^Sacar \$25\.00/ }).click();
+    await esperarMonto(billete(page).locator('[data-centavos]').first(), 69500);
+    await expect(page.locator('[data-archivada]')).toHaveCount(0);
+  });
+
+  test('PRU-E2E-INICIO-147 [FT-08] los próximos 7 días listan la ocurrencia con "se registra sola" y el enlace a su ocurrencia, y no quitan el "Todo al día"', async ({
+    page,
+  }) => {
+    const netflix = {
+      ...RENTA,
+      comercio: 'Netflix',
+      etiqueta: 'Netflix',
+      primeraFecha: '2027-02-12',
+      automatico: true,
+    } as const;
+    await sembrarOps([...AL_DIA, netflix], '2027-02-10');
+    await abrir(page);
+    const fila = page.locator('[data-proximo-pago]');
+    await expect(fila).toHaveCount(1);
+    await expect(fila).toContainText('Netflix');
+    await expect(fila).toContainText(t.seRegistraSola);
+    await expect(fila.locator('a')).toHaveAttribute(
+      'href',
+      /^\/programadas\/[0-9a-f-]+\/ocurrencias\/2027-02-12$/,
+    );
+    await expect(page.locator('[data-todo-al-dia]')).toHaveCount(1);
   });
 });

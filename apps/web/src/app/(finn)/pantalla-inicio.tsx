@@ -10,7 +10,10 @@ import { IndicadorEstado, type EstadoFinanciero } from '../../componentes/domini
 import { Monto } from '../../componentes/dominio/monto';
 import { PublicarEncabezado } from '../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
+import { SacarDeUnToque } from './presupuesto/sacar-un-toque';
 import { MarcarLeido } from './marcar-leido';
+import { hrefDeOcurrencia, ProximosPagos, Recientes, TodoAlDia } from './inicio-secciones';
+import { ReservaExcedente } from './reserva-excedente';
 import { formatearFecha, formatearMonto } from '../../formato';
 import type { AccionEscritura } from '../../formularios/use-operacion';
 import { dominio } from '../../textos/dominio';
@@ -26,10 +29,22 @@ const RESUMEN = `flex min-h-11 cursor-pointer list-none items-center gap-3 [&::-
 const ENLACE = `inline-flex min-h-11 items-center font-semibold text-enlace underline ${FOCO}`;
 const ACCION = `inline-flex min-h-11 items-center font-semibold underline ${FOCO}`;
 
-function Seccion({ titulo, children }: { readonly titulo: string; readonly children: ReactNode }) {
+/**
+ * Sin `conTitulo` la sección queda vacía y oculta, pero montada: la salida «Deshacer» de la propuesta de AV-08 vive adentro y
+ * debe seguir en su lugar cuando la revalidación hace desaparecer la fila (05 §4.14, regla 4).
+ */
+function Seccion({
+  titulo,
+  conTitulo = true,
+  children,
+}: {
+  readonly titulo: string;
+  readonly conTitulo?: boolean;
+  readonly children: ReactNode;
+}) {
   return (
-    <section aria-label={titulo} className="flex flex-col gap-2">
-      <h2 className="text-titulo-seccion">{titulo}</h2>
+    <section aria-label={titulo} className="flex flex-col gap-2 empty:hidden">
+      {conTitulo ? <h2 className="text-titulo-seccion">{titulo}</h2> : null}
       {children}
     </section>
   );
@@ -138,10 +153,19 @@ function Hallazgo({ h }: { readonly h: HallazgoDeRitmo }) {
 export function PantallaInicio({
   dto,
   marcarLeidas,
+  asignar,
+  sacar,
+  haySinFondos = false,
 }: {
   readonly dto: InicioDto;
   /** `marcarLeidas` (OPT-04): la pone el lector; sin ella no se ofrece «Marcar como leído». */
   readonly marcarLeidas?: AccionEscritura;
+  /** `asignarEnCategoria` (OP-14): la pone el lector; sin ella no se ofrece la propuesta de AV-08. */
+  readonly asignar?: AccionEscritura;
+  /** `sacarDisponible` (OP-11): la pone el lector; sin ella no se ofrece la propuesta de AV-14. */
+  readonly sacar?: AccionEscritura;
+  /** Hay al menos una categoría sin fondos (`presupuesto` con ese filtro): a dónde lleva el botón del billete (P6-26). */
+  readonly haySinFondos?: boolean;
 }) {
   const { atencion: a, primerosPasos, patrimonio } = dto;
   const sinCuentas = primerosPasos !== null && !primerosPasos.cuenta;
@@ -151,9 +175,26 @@ export function PantallaInicio({
     a.sobregiradas.length +
     a.faltaReservar.length +
     a.pagosExcedentes.length +
-    a.metasVencidas.length;
-  const hayAtencion = filas + a.cambiosRetroactivos.length + a.hallazgosRitmo.length > 0;
-
+    a.archivadasConDisponible.length +
+    a.metasVencidas.length +
+    a.pagosAtrasados.length +
+    a.pagosTarjetaProximos.length;
+  const avisos = a.cambiosRetroactivos.length + a.hallazgosRitmo.length + a.reservaExcedente.length;
+  const hayAtencion = filas + avisos > 0;
+  // El botón del billete (CA-08.11, P6-26): con Listo para asignar positivo, a las categorías sin fondos si las hay; con
+  // negativo, a Presupuesto. Con $0.00 no hay a dónde asignar.
+  const botonLpa =
+    dto.lpa === 0
+      ? undefined
+      : dto.lpa < 0
+        ? {
+            href: '/presupuesto',
+            texto: t.quitar(formatearMonto(Math.abs(dto.lpa) as typeof dto.lpa)),
+          }
+        : {
+            href: haySinFondos ? '/presupuesto?filtro=sin-fondos' : '/presupuesto',
+            texto: t.asignar(formatearMonto(dto.lpa)),
+          };
   return (
     <main className="mx-auto flex max-w-270 flex-col gap-7 px-5 py-4 md:grid md:grid-cols-2 md:items-start md:gap-x-10">
       <PublicarEncabezado encabezado={dto} />
@@ -166,6 +207,7 @@ export function PantallaInicio({
               lpa={dto.lpa}
               enCamino={dto.enCamino}
               lpaNegativo={dto.lpaNegativo}
+              {...(botonLpa === undefined ? {} : { accion: botonLpa })}
             />
             <p className="text-cuerpo-pequeno text-texto-secundario">
               {dias === undefined ? null : t.quedan(dias)}
@@ -176,8 +218,8 @@ export function PantallaInicio({
           </div>
         )}
         {primerosPasos === null ? null : <PrimerosPasosDeInicio pasos={primerosPasos} />}
-        {sinCuentas || !hayAtencion ? null : (
-          <Seccion titulo={t.atencion}>
+        {sinCuentas ? null : (
+          <Seccion titulo={t.atencion} conTitulo={hayAtencion}>
             {a.cambiosRetroactivos.map((n) => (
               <div key={n.id} data-cambio-retroactivo={n.id}>
                 <AvisoEnLinea
@@ -196,6 +238,9 @@ export function PantallaInicio({
             {a.hallazgosRitmo.map((h) => (
               <Hallazgo key={h.clave} h={h} />
             ))}
+            {asignar === undefined ? null : (
+              <ReservaExcedente filas={a.reservaExcedente} accion={asignar} />
+            )}
             {filas === 0 ? null : (
               <div className={CONTENEDOR}>
                 {dto.bandejaPorRevisar === 0 ? null : (
@@ -230,6 +275,38 @@ export function PantallaInicio({
                     {x.tarjeta.nombre} <Monto centavos={x.monto} rol="cifra" />
                   </FilaAtencion>
                 ))}
+                {a.archivadasConDisponible.map((x) => (
+                  <div
+                    key={x.categoria.id}
+                    data-archivada={x.categoria.id}
+                    className="flex flex-col gap-2 px-4 py-3"
+                  >
+                    <span className="flex flex-col items-start gap-1">
+                      <span className="font-semibold text-texto">{x.categoria.nombre}</span>
+                      <IndicadorEstado
+                        estado="advertencia"
+                        etiqueta={t.archivadaConDinero(x.categoria.nombre)}
+                      />
+                    </span>
+                    <span className="text-cuerpo-pequeno">
+                      {t.disponible} <Monto centavos={x.disponible} rol="cifra" />
+                    </span>
+                    {sacar === undefined || x.disponible <= 0 ? null : (
+                      <SacarDeUnToque
+                        categoriaId={x.categoria.id}
+                        asignado={x.asignado}
+                        disponible={x.disponible}
+                        accion={sacar}
+                      />
+                    )}
+                    <EnlaceFinn
+                      href={`/presupuesto/categorias/${x.categoria.id}/sacar`}
+                      className={ENLACE}
+                    >
+                      {t.sacarElDinero}
+                    </EnlaceFinn>
+                  </div>
+                ))}
                 {a.metasVencidas.map((x) => (
                   <FilaAtencion
                     key={x.categoria.id}
@@ -240,13 +317,40 @@ export function PantallaInicio({
                     {x.categoria.nombre} <Monto centavos={x.falta} rol="cifra" />
                   </FilaAtencion>
                 ))}
+                {a.pagosAtrasados.map((o) => (
+                  <FilaAtencion
+                    key={`${o.programada.id}-${o.fechaEsperada}`}
+                    href={hrefDeOcurrencia(o)}
+                    estado="advertencia"
+                    etiqueta={t.atrasado}
+                  >
+                    <span data-pago-atrasado={o.programada.id}>
+                      {o.programada.nombre} <Monto centavos={o.monto} rol="cifra" />
+                    </span>
+                  </FilaAtencion>
+                ))}
+                {a.pagosTarjetaProximos.map((x) => (
+                  <FilaAtencion
+                    key={x.tarjeta.id}
+                    href={`/cuentas/${x.tarjeta.id}`}
+                    estado="advertencia"
+                    etiqueta={t.pagoDeTarjeta(formatearFecha(x.fechaPago).slice(0, 5))}
+                  >
+                    <span data-pago-tarjeta={x.tarjeta.id}>
+                      {x.tarjeta.nombre} <Monto centavos={x.paraNoGenerarIntereses} rol="cifra" />
+                    </span>
+                  </FilaAtencion>
+                ))}
               </div>
             )}
           </Seccion>
         )}
+        {sinCuentas || hayAtencion ? null : <TodoAlDia />}
       </div>
       {sinCuentas ? null : (
         <div className="flex flex-col gap-7">
+          <ProximosPagos pagos={a.proximosPagos} />
+          <Recientes filas={dto.recientes} />
           <EnlaceFinn href="/cuentas" className={FILA_EN_CONTENEDOR}>
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="text-rotulo">{t.patrimonio.titulo}</span>

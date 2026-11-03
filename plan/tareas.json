@@ -385,7 +385,7 @@
 
   "TA-298": { "estado": "terminada", "rama": "ta-298-inicio-resumen-2", "pr": 334 },
 
-  "TA-299": { "estado": "pendiente" },
+  "TA-299": { "estado": "en_curso", "rama": "ta-299-inicio-resto" },
 
   "TA-300": { "estado": "terminada", "rama": "ta-300-descartar-restaurar", "pr": 330 },
 
