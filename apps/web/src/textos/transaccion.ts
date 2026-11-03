@@ -1,4 +1,4 @@
-// Textos de `/actividad/[transaccionId]` y `/actividad/[transaccionId]/editar` (FT-25; 05 §2.6, §7.2). Voseo (05 §12.2). Los
+// Textos de `/actividad/[transaccionId]` y  (FT-25; 05 §2.6, §7.2). Voseo (05 §12.2). Los
 // rechazos del servidor (`cambio_cuenta_con_devoluciones`, `linea_menor_que_eventos`…) llegan compuestos en `mensaje`.
 import { actividad } from './actividad.ts';
 import { glosario } from './glosario.ts';
@@ -6,7 +6,6 @@ import { glosario } from './glosario.ts';
 export const transaccion = {
   titulo: 'Transacción',
   volver: 'Volver',
-  editar: 'Editar',
   fecha: 'Fecha',
   tipo: 'Tipo',
   estado: 'Estado',
@@ -32,15 +31,4 @@ export const transaccion = {
   cambioPosterior: (cuando: string, motivos: string) => `${cuando}: ${motivos}`,
   motivos: { monto: 'monto', fecha: 'fecha', cuenta: 'cuenta', eliminacion: 'eliminación' },
   archivada: actividad.archivada,
-  editarTitulo: 'Editar transacción',
-  guardar: 'Guardar cambios',
-  guardando: 'Guardando…',
-  revisar: 'Revisá el impacto',
-  confirmar: 'Confirmar',
-  volverAEditar: 'Volver a editar',
-  avisos: {
-    'AV-01': 'La fecha es de un período cerrado o cambia el período de la transacción.',
-    'AV-16': `Esta transacción está ${glosario.conciliada.toLowerCase()}: al cambiarla vuelve a ${glosario.confirmada.toLowerCase()} y queda un cambio posterior.`,
-  } as Readonly<Record<string, string>>,
-  impactoLpa: (delta: string) => `${glosario.listoParaAsignar} cambia ${delta}.`,
 } as const;

@@ -33,15 +33,6 @@ export interface PropsEdicion {
   /** El rechazo del servidor que va junto al campo de las partes, si lo hay. */
   readonly deLasPartes: string | undefined;
   readonly ayuda: string | undefined;
-  /** Con la edición de una transacción ya registrada (FT-25): sin tipo, con la cuenta fija o ausente y las partes al total. */
-  readonly registrada?: {
-    /** No se ofrece la cuenta: la transacción mueve más de una (transferencia, pago). */
-    readonly sinCuenta: boolean;
-    /** Por qué no se puede cambiar la cuenta (04 §6.7.2 `restricciones`). */
-    readonly motivoCuenta?: string;
-    /** Cuenta archivada (CB-24): solo categoría, comercio y nota. */
-    readonly soloEtiquetas: boolean;
-  };
 }
 
 const aOpciones = (xs: readonly Referencia[]): Opcion[] =>
@@ -58,7 +49,6 @@ export default function Edicion({
   deudores,
   deLasPartes,
   ayuda,
-  registrada,
 }: PropsEdicion) {
   const { setValue, formState } = formulario;
   const c = formulario.watch();
@@ -79,33 +69,23 @@ export default function Edicion({
   const errorCuenta = error('cuentaId');
   return (
     <>
-      {registrada === undefined ? (
-        <Seleccion
-          etiqueta={t.revisar.tipo}
-          opciones={TIPOS}
-          valor={c.tipo}
-          alCambiar={(tipo) => {
-            poner('tipo')(tipo);
-            if (tipo === 'gasto' && c.lineas.length === 0)
-              partes.append({ ...parteVacia(), monto: c.total });
-          }}
-        />
-      ) : null}
-      {registrada?.sinCuenta === true ? null : (
-        <Seleccion
-          etiqueta={g.cuenta}
-          opciones={aOpciones(cuentas)}
-          valor={c.cuentaId}
-          alCambiar={poner('cuentaId')}
-          deshabilitada={
-            registrada?.soloEtiquetas === true || registrada?.motivoCuenta !== undefined
-          }
-          {...(registrada?.motivoCuenta === undefined
-            ? {}
-            : { descripcion: registrada.motivoCuenta })}
-          {...(errorCuenta === undefined ? {} : { error: errorCuenta })}
-        />
-      )}
+      <Seleccion
+        etiqueta={t.revisar.tipo}
+        opciones={TIPOS}
+        valor={c.tipo}
+        alCambiar={(tipo) => {
+          poner('tipo')(tipo);
+          if (tipo === 'gasto' && c.lineas.length === 0)
+            partes.append({ ...parteVacia(), monto: c.total });
+        }}
+      />
+      <Seleccion
+        etiqueta={g.cuenta}
+        opciones={aOpciones(cuentas)}
+        valor={c.cuentaId}
+        alCambiar={poner('cuentaId')}
+        {...(errorCuenta === undefined ? {} : { error: errorCuenta })}
+      />
       <EntradaFecha
         nombre="fecha"
         etiqueta={g.fecha}
@@ -113,20 +93,14 @@ export default function Edicion({
         alCambiar={poner('fecha')}
         error={error('fecha')}
         requerido
-        deshabilitado={registrada?.soloEtiquetas === true}
       />
       <EntradaMonto
         nombre="total"
         etiqueta={t.revisar.monto}
         valor={c.total}
-        alCambiar={(valor) => {
-          poner('total')(valor);
-          // Una sola parte sigue al total (OP-28): se copia el texto, no se calcula (PF-3)
-          if (registrada !== undefined && c.lineas.length === 1) poner('lineas.0.monto')(valor);
-        }}
+        alCambiar={poner('total')}
         error={error('total')}
         requerido
-        deshabilitado={registrada?.soloEtiquetas === true}
       />
       <EntradaTexto etiqueta={g.comercio} autoComplete="off" {...formulario.register('comercio')} />
       <EntradaTexto etiqueta={g.nota} autoComplete="off" {...formulario.register('nota')} />

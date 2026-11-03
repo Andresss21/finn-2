@@ -415,7 +415,7 @@
 
   "TA-308": { "estado": "terminada", "rama": "ta-308-actividad-2", "pr": 317 },
 
-  "TA-309": { "estado": "pendiente" },
+  "TA-309": { "estado": "en_curso", "rama": "ta-309-detalle-edicion" },
 
   "TA-310": { "estado": "pendiente" },
 
@@ -476,6 +476,8 @@
   "TA-421": { "estado": "terminada", "rama": "ta-421-reportes-base", "pr": 316 },
 
   "TA-453": { "estado": "terminada", "rama": "ta-453-reportes-2", "pr": 320 },
+
+  "TA-457": { "estado": "pendiente" },
 
   "TA-422": { "estado": "pendiente" },
 
