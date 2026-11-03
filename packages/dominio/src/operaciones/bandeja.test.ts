@@ -622,7 +622,7 @@ describe('PRU-DOM-BAND-103: aprobar todos, descartar, reglas, reprocesar y crear
     expect(codigo(op({ accion: 'eliminar', reglaId: id('nada') }))).toBe('no_encontrado');
   });
 
-  it('PRU-DOM-BAND-103 [AV-23] OP-49 reprocesa un SMS con error: pasos 2 a 11 de OP-35 con el instante de recepción original (ventana del autodescarte y fecha por defecto, N-02), actualiza el mismo movimiento y reemplaza sus líneas con orden nuevo (BE-16)', () => {
+  it('PRU-DOM-BAND-103 [AV-23, CA-38.5] OP-49 reprocesa un SMS con error: pasos 2 a 11 de OP-35 con el instante de recepción original (ventana del autodescarte y fecha por defecto, N-02), actualiza el mismo movimiento y reemplaza sus líneas con orden nuevo (BE-16)', () => {
     const hb: Hechos = {
       ...H0,
       cuentas: H0.cuentas.map((k) =>
