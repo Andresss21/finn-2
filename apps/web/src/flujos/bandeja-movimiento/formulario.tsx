@@ -14,6 +14,7 @@ import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion } from '../../formularios/use-operacion';
 import {
   aprobarMovimiento,
+  crearAMano,
   editarMovimiento,
   resolverCoincidencia,
 } from '../../servidor/acciones/bandeja';
@@ -33,6 +34,8 @@ export interface PropsFormularioMovimiento {
     readonly id: string;
     readonly estado: string;
     readonly sms: string;
+    /** Solo en un SMS con error: el detalle saneado de su último intento (FT-38). */
+    readonly errorDetalle?: string;
     readonly esperado: Readonly<Record<string, unknown>>;
     readonly origenId?: string;
     /** Con una coincidencia sobre una transacción programada (OP-40): lo que se muestra de ella. */
@@ -66,6 +69,7 @@ const Coincidencia = lazy(() =>
 );
 const ResultadoDeAprobar = lazy(() => import('./resultado'));
 const Resolucion = lazy(() => import('./resolucion'));
+const DetalleError = lazy(() => import('./detalle-error'));
 const Descartado = lazy(() => import('./descartado'));
 const YaResuelto = lazy(() => import('./ya-resuelto'));
 
@@ -101,7 +105,11 @@ export function FormularioMovimiento(props: PropsFormularioMovimiento) {
 
 function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFormularioMovimiento) {
   const editar = useOperacion({ accion: editarMovimiento });
-  const aprobarSolo = useOperacion({ accion: aprobarMovimiento, creacion: true });
+  // Un SMS con error se aprueba con OP-50 (crear a mano, FT-38); el resto con OP-37
+  const aprobarSolo = useOperacion({
+    accion: movimiento.estado === 'error' ? crearAMano : aprobarMovimiento,
+    creacion: true,
+  });
   const coincide = useOperacion({ accion: resolverCoincidencia, creacion: true });
   // Confirmar una coincidencia es aprobar (OP-40 ejecuta OP-37): lo que ya se envió por ahí manda
   const aprobar = ['enviando', 'confirmando', 'listo'].includes(coincide.estado)
@@ -259,6 +267,11 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
           </Suspense>
         )}
         <TextoDelSms texto={movimiento.sms} />
+        {movimiento.errorDetalle === undefined ? null : (
+          <Suspense fallback={null}>
+            <DetalleError errorDetalle={movimiento.errorDetalle} />
+          </Suspense>
+        )}
         <Suspense fallback={null}>
           <Edicion
             formulario={formulario}
