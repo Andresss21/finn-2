@@ -114,7 +114,7 @@ test.describe('PRU-E2E-TX actividad', () => {
     ]);
     await abrir(page, '/actividad?tipo=gasto');
     await expect(page.getByText('Sin resultados con estos filtros')).toBeVisible();
-    await page.getByRole('link', { name: 'Quitar filtros' }).click();
+    await page.getByRole('link', { name: 'Quitar filtros' }).first().click();
     await esperarContenido(page);
     await expect(page).toHaveURL(/\/actividad$/);
     await expect(filas(page)).toHaveCount(1);
