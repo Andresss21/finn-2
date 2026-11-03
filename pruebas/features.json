@@ -31,6 +31,7 @@
   "FT-24": "terminada",
   "FT-29": "terminada",
   "FT-60": "terminada",
+  "FT-37": "terminada",
   "CA-09.11": "pendiente_e2e",
   "CA-14.8": "pendiente_e2e",
   "CA-21.10": "pendiente_e2e",
@@ -47,5 +48,7 @@
   "CA-29.4": "pendiente_e2e",
   "CA-35.5": "pendiente_e2e",
   "CA-35.6": "pendiente_e2e",
-  "CA-35.11": "pendiente_e2e"
+  "CA-35.11": "pendiente_e2e",
+  "CA-37.4": "pendiente_e2e",
+  "CA-37.5": "pendiente_e2e"
 }
