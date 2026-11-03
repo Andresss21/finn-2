@@ -30,7 +30,7 @@ export function textoAprobado(v: ValorAprobado): string {
         ? t.porCobrarA(a.destino.deudor.nombre)
         : t.dividido(a.destino.partes);
   return t.aprobado(
-    [a.comercio ?? '', formatearMonto(a.total as Centavos), a.cuenta.nombre, destino].filter(
+    ...[a.comercio ?? '', formatearMonto(a.total as Centavos), a.cuenta.nombre, destino].filter(
       (x) => x !== '',
     ),
   );

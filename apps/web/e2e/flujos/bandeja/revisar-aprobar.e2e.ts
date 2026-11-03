@@ -68,7 +68,7 @@ test.describe('PRU-E2E-BAND', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-BAND-120 [CA-35.1, FE-25] un toque en «Aprobar» reemplaza la fila por «Aprobado: Super · $12.00 · T · Super» y «Ver transacción» abre la transacción creada', async ({
+  test('PRU-E2E-BAND-120 [CA-35.1] un toque en «Aprobar» reemplaza la fila por «Aprobado: Super · $12.00 · T · Super» y «Ver transacción» abre la transacción creada', async ({
     page,
   }) => {
     await preparar(CON_HISTORIAL, `${DIA_20}T20:00:00`);
@@ -80,7 +80,7 @@ test.describe('PRU-E2E-BAND', () => {
       .click();
 
     await expect(page.getByTestId('resultado')).toHaveText(
-      `${t.aprobado(['Super', '$12.00', 'T', 'Super'])}${t.verTransaccion}`,
+      `${t.aprobado('Super', '$12.00', 'T', 'Super')}${t.verTransaccion}`,
     );
     await expect(page.getByRole('link', { name: t.verTransaccion })).toHaveAttribute(
       'href',
@@ -110,7 +110,7 @@ test.describe('PRU-E2E-BAND', () => {
     await page.getByRole('button', { name: g.confirmar }).click();
 
     await expect(page.getByTestId('resultado')).toContainText(
-      t.aprobado(['Super', '$30.00', 'T', 'Super']),
+      t.aprobado('Super', '$30.00', 'T', 'Super'),
     );
     await page.goto('/presupuesto');
     await esperarContenido(page);
@@ -121,7 +121,7 @@ test.describe('PRU-E2E-BAND', () => {
     );
   });
 
-  test('PRU-E2E-BAND-122 [CA-35.3, INV-8] aprobar sin elegir categoría muestra el rechazo linea_sin_destino y el movimiento sigue por revisar', async ({
+  test('PRU-E2E-BAND-122 [CA-35.3, INV-08] aprobar sin elegir categoría muestra el rechazo linea_sin_destino y el movimiento sigue por revisar', async ({
     page,
   }) => {
     await preparar(ESC46_PASO1, `${DIA_20}T20:00:00`);

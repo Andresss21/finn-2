@@ -15,5 +15,7 @@ export default async function PaginaMovimiento({
   readonly searchParams: Promise<BusquedaDePagina>;
 }) {
   const { traspaso } = await searchParams;
-  return <LectorMovimiento movimientoId={(await params).movimientoId} traspaso={traspaso === '1'} />;
+  return (
+    <LectorMovimiento movimientoId={(await params).movimientoId} traspaso={traspaso === '1'} />
+  );
 }

@@ -58,7 +58,7 @@ describe('PRU-INT-BAND', () => {
     );
   });
 
-  it('PRU-INT-BAND-120 [CA-35.3, INV-8] aprobar un movimiento con una línea sin destino se rechaza con linea_sin_destino y no crea ninguna transacción', async () => {
+  it('PRU-INT-BAND-120 [CA-35.3, INV-08] aprobar un movimiento con una línea sin destino se rechaza con linea_sin_destino y no crea ninguna transacción', async () => {
     const antes = await hechos();
     const r = await confirmar(OP37, { movimientoId: SIN_DESTINO, id: uuid(4201) }, deps());
     expect(r).toMatchObject({
