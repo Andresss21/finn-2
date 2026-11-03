@@ -146,4 +146,22 @@ test.describe('PRU-E2E-BAND', () => {
 
     await expect(page.getByTestId('resultado')).toContainText(t.porCobrarA('Ana'));
   });
+  test('PRU-E2E-BAND-140 una parte por cobrar a «Otra persona» crea a la persona nueva y deja la deuda a su nombre', async ({
+    page,
+  }) => {
+    await abrirElMovimiento(page);
+
+    await page
+      .getByRole('radiogroup', { name: g.destinoDeParte('1') })
+      .getByRole('radio', { name: g.destinoPorCobrar })
+      .click();
+    await page
+      .getByRole('radiogroup', { name: g.deudorDeParte('1') })
+      .getByRole('radio', { name: g.otraPersona })
+      .click();
+    await page.getByRole('textbox', { name: g.deudorNuevoDeParte('1') }).fill('Beto');
+    await page.getByRole('button', { name: t.revisar.aprobar }).click();
+
+    await expect(page.getByTestId('resultado')).toContainText(t.porCobrarA('Beto'));
+  });
 });

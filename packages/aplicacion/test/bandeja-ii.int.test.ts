@@ -417,9 +417,8 @@ describe('PRU-INT-BAND', () => {
     const valor = aprobado.ok ? aprobado.valor : undefined;
     expect(await ejecutar(OP50, entrada)).toMatchObject({ ok: true, yaAplicada: true, valor });
     expect(await ejecutar(OP50, { ...entrada, id: uuid(5002) })).toMatchObject({
-      ok: true,
-      yaAplicada: true,
-      valor: { transaccionId: id },
+      ok: false,
+      error: { codigo: 'movimiento_estado_no_valido' }, // otro id: ya está aprobado (CH-99)
     });
     expect((await hechos()).transacciones.some((t) => t.id === uuid(5002))).toBe(false);
     expect(await ejecutar(OP50, { movimientoId: mov(13), id: TX4 })).toMatchObject({

@@ -4,6 +4,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Hechos, Instante, Uuid } from '@finn/dominio';
 import { cargarHechos, leer, leerReglasComercio, Memoria } from '@finn/db';
+import { bandeja } from '../src/consultas/bandeja.ts';
+import type { DepsConsulta } from '../src/consultas/comun.ts';
 import { consultar, crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY, RELOJ } from '../../db/test/ayudantes/hechos-prueba.ts';
 import { confirmar, type DepsMarco } from '../src/operaciones/marco.ts';
@@ -11,11 +13,14 @@ import { OP37 } from '../src/operaciones/bandeja/index.ts';
 
 const uuid = (n: number): Uuid => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}` as Uuid;
 const E1 = uuid(1),
+  T1 = uuid(3),
   C1 = uuid(11),
   C2 = uuid(12);
 const SIN_DESTINO = uuid(4001),
   UNA_LINEA = uuid(4002),
-  DOS_LINEAS = uuid(4003);
+  DOS_LINEAS = uuid(4003),
+  PAGO_T1 = uuid(4004),
+  PARA_D2 = uuid(4005);
 const INSTANTE = `${HOY}T12:00:00.000Z` as Instante;
 
 describe('PRU-INT-BAND', () => {
@@ -50,10 +55,16 @@ describe('PRU-INT-BAND', () => {
       `BEGIN; SELECT finn.tomar_bloqueo();
        ${movimiento(1, 'Tienda', [[700, null]])}
        ${movimiento(2, 'Farmacia San Jose', [[900, C1]])}
+       ${movimiento(5, 'Panadería', [[300, C1]])}
        ${movimiento(3, 'Mercado Central', [
          [600, C1],
          [400, C2],
        ])}
+       INSERT INTO finn.sms_recibidos (id, texto, remitente, recibido_en)
+         VALUES ('${uuid(4104)}', 'pago tarjeta', 'banco', timestamptz '2027-02-04T10:45:30Z');
+       INSERT INTO finn.movimientos (id, sms_id, estado, cuenta_id, fecha, monto, comercio, tipo_propuesto)
+         VALUES ('${PAGO_T1}', '${uuid(4104)}', 'pendiente', '${T1}', date '2027-02-04', 700, NULL, 'pago_tarjeta');
+       INSERT INTO finn.movimiento_lineas (movimiento_id, orden, monto) VALUES ('${PAGO_T1}', 1, 700);
        COMMIT;`,
     );
   });
@@ -96,5 +107,46 @@ describe('PRU-INT-BAND', () => {
       valor: { aprobado: { destino: { categoria: { id: C1 } } } },
     });
     expect(await reglas()).toEqual([['Farmacia San Jose', C1]]);
+  });
+  it('PRU-INT-BAND-122 [CA-35.7] un pago de tarjeta llega con el origen del último pago (Ahorro) y se aprueba con un toque; sin origenId no se aprueba', async () => {
+    const deps_: DepsConsulta = {
+      memoria: new Memoria(),
+      sesion: {
+        obtenerClaims: () => Promise.resolve({ sub: 'u', aal: 'aal2' }),
+        obtenerUsuario: () => Promise.resolve({ id: 'u' }),
+      },
+      usuarioPermitido: 'u',
+      opciones: () => RELOJ,
+    };
+    const lista = await bandeja(deps_);
+    const m = lista.movimientos.find((x) => x.id === PAGO_T1);
+    expect(m?.origenPropuesto).toMatchObject({ id: E1 });
+    expect(m?.aprobacion.posible).toBe(true);
+
+    expect(await confirmar(OP37, { movimientoId: PAGO_T1, id: uuid(4204) }, deps())).toMatchObject({
+      ok: false,
+      error: { categoria: 'VALIDACION' },
+    });
+    const r = await confirmar(
+      OP37,
+      { movimientoId: PAGO_T1, id: uuid(4204), origenId: E1 },
+      deps(),
+    );
+    expect(r).toMatchObject({ ok: true, valor: { estado: 'aprobado' } });
+    const h = await hechos();
+    expect(h.transacciones.find((t) => t.id === uuid(4204))).toMatchObject({
+      tipo: 'pago_tarjeta',
+    });
+  });
+
+  it('PRU-INT-BAND-123 [CA-35.8, D2] la transacción aprobada desde un SMS lleva como hora de registro y clave de orden el instante de recepción del SMS, no el de la aprobación', async () => {
+    const r = await confirmar(OP37, { movimientoId: PARA_D2, id: uuid(4205) }, deps());
+    expect(r).toMatchObject({ ok: true });
+    const t = (await hechos()).transacciones.find((x) => x.id === uuid(4205));
+    expect(t).toMatchObject({
+      horaRegistro: '2027-02-04T10:25:00.000Z',
+      claveOrden: '2027-02-04T10:25:00.000Z',
+    });
+    expect(INSTANTE).not.toBe('2027-02-04T10:25:00.000Z');
   });
 });
