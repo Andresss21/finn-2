@@ -11,6 +11,7 @@ const CAMPO_DISTINTO: Readonly<Record<string, string>> = {
   'tipo-cuenta': 'tipo',
   'tipo-evento': 'tipo',
   cuenta: 'cuentaId',
+  categoria: 'categoriaId',
   cuentas: 'cuentaIds',
   categorias: 'categoriaIds',
   archivadas: 'incluirArchivadas',
