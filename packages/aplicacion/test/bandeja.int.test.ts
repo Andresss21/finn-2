@@ -226,12 +226,10 @@ describe('PRU-INT-BAND', () => {
       yaAplicada: true,
       valor,
     });
-    // el reintento con otro id no crea otra transacción: el movimiento ya tiene la suya
-    expect(await ejecutar(OP37, { movimientoId: M1, id: uuid(3002) })).toMatchObject({
-      ok: true,
-      yaAplicada: true,
-      valor: { transaccionId: id },
-    });
+    // otro id (otra pestaña) no crea otra transacción: el movimiento ya tiene la suya (CH-99)
+    expect(await ejecutar(OP37, { movimientoId: M1, id: uuid(3002) })).toMatchObject(
+      rechazo('movimiento_estado_no_valido', 'Este movimiento ya está aprobado.'),
+    );
     expect((await hechos()).transacciones.some((t) => t.id === uuid(3002))).toBe(false);
     // el id de una transacción que existe, en otro movimiento, es un conflicto
     expect(await ejecutar(OP37, { movimientoId: MA, id: TX4 })).toMatchObject({
@@ -242,9 +240,9 @@ describe('PRU-INT-BAND', () => {
     expect(
       await ejecutar(OP37, { movimientoId: MOVIMIENTOS.noReconocido, id: uuid(3003) }),
     ).toMatchObject(rechazo('movimiento_sin_cuenta', 'Elegí la cuenta de este movimiento.'));
-    expect(await ejecutar(OP37, { movimientoId: M1, id: uuid(3004) })).toMatchObject({
-      yaAplicada: true,
-    });
+    expect(await ejecutar(OP37, { movimientoId: M1, id: uuid(3004) })).toMatchObject(
+      rechazo('movimiento_estado_no_valido', 'Este movimiento ya está aprobado.'),
+    );
     expect(
       await ejecutar(OP37, { movimientoId: MOVIMIENTOS.descartado, id: uuid(3005) }),
     ).toMatchObject(rechazo('movimiento_estado_no_valido', 'Este movimiento ya está descartado.'));

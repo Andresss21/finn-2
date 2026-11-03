@@ -2205,7 +2205,7 @@ El flujo HTTP completo (autenticación, códigos 401/5xx/200, configuración de 
 #### OP-37 Aprobar movimiento
 
 - **Entrada:** `movimientoId`; `id` (para la transacción nueva; no se usa si se vincula a una registrada); `origenId?: Uuid` (obligatorio si `tipo_propuesto = 'pago_tarjeta'`: la cuenta de efectivo de la que salió el pago, que el SMS no informa); `recordarRegla?: boolean`; `revisionVista?`, `huellaImpacto?`.
-- **Idempotencia:** natural: si el movimiento ya está `aprobado`, `ya_aplicada` con su `transaccion_id`; además, creación sobre `transacciones.id`.
+- **Idempotencia:** natural: si el movimiento ya está `aprobado` con la transacción de este mismo `id`, `ya_aplicada` con su `transaccion_id`; si está aprobado con otra transacción, `movimiento_estado_no_valido` **[CH-99]** (OP-40 `confirmar_coincidencia` sobre una registrada conserva `ya_aplicada`: su `id` no se usa); además, creación sobre `transacciones.id`.
 - **Confirmación:** la de la operación que ejecuta (AV-01 si la fecha es de un período cerrado, como en ESC-46); AV-16 si vincula a una registrada conciliada y cambia su monto.
 - **Precondiciones:**
   - estado `pendiente`, `con_coincidencia`, `no_reconocido` (con los datos completados a mano) o `error` (OP-50) (`movimiento_estado_no_valido`);

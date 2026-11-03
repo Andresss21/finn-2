@@ -114,15 +114,21 @@ export function salidaAprobada(h: Hechos, m: Movimiento): SalidaAprobada {
 }
 
 /**
- * Idempotencia de una aprobación (OP-37, OP-40): aprobado → `ya_aplicada` con su transacción; un `id` que ya es de
- * otra transacción → `conflicto_id` (4.6.1). `undefined` si hay que seguir.
+ * Idempotencia de una aprobación (OP-37, OP-40): aprobado con la transacción de este mismo `id` → `ya_aplicada`; aprobado con otra
+ * (otra pestaña) sigue y el dominio responde `movimiento_estado_no_valido` (CH-99); un `id` que ya es de otra transacción → `conflicto_id` (4.6.1). `undefined` si hay que seguir.
  */
 export function veredictoDeAprobacion(
   m: Movimiento,
   h: Hechos,
   id: Uuid,
+  /** Falso en OP-40: al vincular a una registrada el `id` no se usa y la transacción es la de la ocurrencia. */
+  soloMismoId = true,
 ): Veredicto<SalidaAprobada> | undefined {
-  if (m.estado === 'aprobado' && h.transacciones.some((t) => t.id === m.transaccionId))
+  if (
+    m.estado === 'aprobado' &&
+    (!soloMismoId || m.transaccionId === id) &&
+    h.transacciones.some((t) => t.id === m.transaccionId)
+  )
     return { tipo: 'ya_aplicada', salida: salidaAprobada(h, m) };
   return h.transacciones.some((t) => t.id === id) ? { tipo: 'conflicto_id' } : undefined;
 }
