@@ -435,7 +435,7 @@
 
   "TA-402": { "estado": "pendiente" },
 
-  "TA-403": { "estado": "pendiente" },
+  "TA-403": { "estado": "terminada", "rama": "ta-403-asignacion-rapida", "pr": 319 },
 
   "TA-404": { "estado": "pendiente" },
 
