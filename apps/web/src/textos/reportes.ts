@@ -1,0 +1,47 @@
+// Textos de `/reportes/[tipo]` (FT-60; 05 §2.10, 04 §6.9.5). Voseo (05 §12.2). `remanente` nunca se llama «flujo de caja».
+export const reportes = {
+  titulo: 'Reportes',
+  pestanas: {
+    tendencia: 'Tendencia',
+    'ingresos-gastos': 'Ingresos y gastos',
+    remanente: 'Remanente',
+    patrimonio: 'Patrimonio',
+  },
+  titulos: {
+    tendencia: 'Tendencia de ingresos y gastos',
+    'ingresos-gastos': 'Ingresos frente a gastos',
+    remanente: 'Lo que te quedó del período',
+    patrimonio: 'Tu patrimonio',
+  },
+  explicacionRemanente:
+    'Ingresos del período menos lo que gastaste, incluidas las compras con tarjeta',
+  sinMovimientos: 'No hay movimientos en estos períodos',
+  sinMovimientosTexto: 'Probá con otra ventana de períodos.',
+  ventana: 'Ventana',
+  ventanas: {
+    actual: 'Período actual',
+    ultimos_1: 'Último período',
+    ultimos_3: '3 períodos',
+    ultimos_6: '6 períodos',
+    ultimos_12: '12 períodos',
+  },
+  columnas: {
+    periodo: 'Período desde',
+    ingresos: 'Ingresos',
+    gastos: 'Gastos',
+    otrasEntradas: 'Otras entradas',
+    restituciones: 'Restituciones',
+    diferencia: 'Diferencia',
+    neto: 'Neto',
+    acumulado: 'Acumulado',
+    activos: 'Activos',
+    deudas: 'Deudas',
+  },
+  patrimonioHoy: 'Patrimonio neto hoy',
+  resumenLinea: (primero: string, ultimo: string) => `de ${primero} a ${ultimo}`,
+  serieIngresos: 'Ingresos',
+  serieGastos: 'Gastos',
+  serieDiferencia: 'Ingresos menos gastos',
+  serieRemanente: 'Remanente acumulado',
+  serieNeto: 'Patrimonio neto',
+} as const;
