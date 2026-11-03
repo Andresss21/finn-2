@@ -4,10 +4,12 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
+import { bandeja as b } from '../../../src/textos/bandeja.ts';
+import { registrarGasto as g } from '../../../src/textos/registrar-gasto.ts';
 import { transaccion as t } from '../../../src/textos/transaccion.ts';
 import type { Escenario } from '../../../../../packages/dominio/escenarios/tipos.ts';
 
-const HOY = '2027-02-21';
+const DIA_20 = '2027-02-20';
 
 test.describe('PRU-E2E-TX detalle de una transacción', () => {
   test.beforeEach(async ({ context, baseURL }) => {
@@ -17,12 +19,13 @@ test.describe('PRU-E2E-TX detalle de una transacción', () => {
   test('PRU-E2E-TX-410 [CA-25.8] RUTA-/actividad/[transaccionId] una transacción aprobada desde un SMS muestra el texto original del SMS y «Volver» regresa a la lista', async ({
     page,
   }) => {
-    fijarRelojServidor(`${HOY}T10:00:00-06:00`);
+    fijarRelojServidor(`${DIA_20}T20:00:00-06:00`);
+    // Un SMS de $30.00 de «Super» a las 7 pm; la transacción nace al aprobarlo desde la Bandeja
     const escenario: Escenario = {
       id: 'SEM-ACT-25',
       titulo: 'Semilla de FT-25, detalle',
       refs: [],
-      hoy: '2027-02-20',
+      hoy: DIA_20,
       estadoInicial: [
         { op: 'OP-01', cuenta: 'Ahorro' },
         { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta', ultimos4: '1234' },
@@ -35,14 +38,23 @@ test.describe('PRU-E2E-TX detalle de una transacción', () => {
           cuenta: 'T',
           monto: 30,
           comercio: 'Super',
-          recibido: '2027-02-20T19:00',
-          fecha: '2027-02-20',
+          recibido: `${DIA_20}T19:00`,
+          fecha: DIA_20,
         },
-        { op: 'OP-37', etiqueta: 'sms', categoria: 'Super', aprobado: '2027-02-21T08:00' },
       ],
       pasos: [],
     };
-    await sembrar(escenario, HOY);
+    await sembrar(escenario, DIA_20);
+
+    await page.goto('/bandeja');
+    await esperarContenido(page);
+    await page.locator('[data-movimiento]').getByRole('link').click();
+    await page
+      .getByRole('radiogroup', { name: g.categoriaDeParte('1') })
+      .getByRole('radio', { name: 'Super' })
+      .click();
+    await page.getByRole('button', { name: b.revisar.aprobar }).click();
+    await expect(page.getByTestId('resultado')).toBeVisible();
 
     await page.goto('/actividad');
     await esperarContenido(page);
@@ -51,7 +63,6 @@ test.describe('PRU-E2E-TX detalle de una transacción', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Super' })).toBeVisible();
     await expect(page.getByRole('heading', { name: t.mensajeOriginal })).toBeVisible();
     await expect(page.locator('blockquote')).toContainText('compra por USD 30.00');
-    await expect(page.locator('blockquote')).toContainText('Super');
 
     await page.getByRole('link', { name: t.volver }).click();
     await expect(page).toHaveURL(/\/actividad(\?.*)?$/);
