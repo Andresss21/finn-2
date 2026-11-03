@@ -40,7 +40,7 @@ export async function consultar(url, sql, Cliente = clientePg()) {
   }
 }
 
-/** Etiqueta inmutable; la del despliegue vigente es la mayor con `git tag --sort=-v:refname 'desplegado-*'`. */
+/** Etiqueta inmutable; la del despliegue vigente es la mayor con `git tag --list --sort=-v:refname 'desplegado-*'`. */
 export const nombreEtiqueta = (env) =>
   `desplegado-${env['GITHUB_RUN_NUMBER']}-${env['GITHUB_RUN_ATTEMPT']}`;
 
