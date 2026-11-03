@@ -325,7 +325,7 @@ describe('PRU-INT-BAND', () => {
     });
   });
 
-  it('PRU-INT-BAND-103 [V-27] OP-49: reprocesa el SMS con error con su instante original y agrega un intento; con un intento más nuevo es ya aplicada y un movimiento que no está en error se rechaza', async () => {
+  it('PRU-INT-BAND-103 [V-27, CA-38.3, CA-38.4] OP-49: reprocesa el SMS con error con su instante original y agrega un intento; con un intento más nuevo es ya aplicada y un movimiento que no está en error se rechaza', async () => {
     const SMS = uuid(2111);
     const entrada = { smsId: SMS, intentoVisto: 1 };
     const antes = await estado();

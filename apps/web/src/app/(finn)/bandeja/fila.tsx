@@ -15,10 +15,16 @@ import {
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { textoAprobado, type ValorAprobado } from '../../../flujos/bandeja-movimiento/aprobado';
 import { textoDescartado, type ResultadoFila } from '../../../flujos/bandeja-movimiento/descarte';
+import {
+  entradaDeReproceso,
+  referenciaDe,
+  useCopiarReferencia,
+} from '../../../flujos/bandeja-movimiento/error-sms';
 import { useOperacion } from '../../../formularios/use-operacion';
 import {
   aprobarMovimiento,
   descartarMovimiento,
+  reprocesarSms,
   resolverCoincidencia,
 } from '../../../servidor/acciones/bandeja';
 import { bandeja as t } from '../../../textos/bandeja';
@@ -50,6 +56,8 @@ export function FilaBandeja({
   const descartar = useOperacion({ accion: descartarMovimiento });
   const restaurar = useOperacion({ accion: descartarMovimiento });
   const legitimo = useOperacion({ accion: resolverCoincidencia });
+  const reprocesar = useOperacion({ accion: reprocesarSms }); // OP-49 (FT-38)
+  const { copia, copiar } = useCopiarReferencia();
   const { estado, error, exito } = operacion;
 
   useEffect(() => {
@@ -106,6 +114,7 @@ export function FilaBandeja({
         ) : null}
       </>
     );
+  const referencia = referenciaDe(m.procesamiento?.errorDetalle);
   const alAccionar = (accion: AccionBandeja): void => {
     if (accion === 'aprobar') {
       alIniciar(m.id);
@@ -118,8 +127,12 @@ export function FilaBandeja({
       void descartar.enviar({ movimientoId: m.id, accion: 'descartar' });
     } else if (accion === 'es-otro-gasto')
       void legitimo.enviar({ movimientoId: m.id, decision: 'es_legitimo' });
+    else if (accion === 'reintentar') {
+      const entrada = entradaDeReproceso(m);
+      if (entrada !== undefined) void reprocesar.enviar(entrada);
+    } else copiar(referencia);
   };
-  const fallida = [operacion, descartar, restaurar, legitimo].find(
+  const fallida = [operacion, descartar, restaurar, legitimo, reprocesar].find(
     (o) =>
       o.estado === 'error' &&
       o.error !== undefined &&
@@ -129,6 +142,15 @@ export function FilaBandeja({
   return (
     <>
       <MovimientoBandeja movimiento={m} hrefRevisar={hrefRevisar} alAccionar={alAccionar} />
+      {reprocesar.estado === 'listo' || copia !== 'nada' ? (
+        <p role="status" className="px-4 pb-3.5 text-cuerpo-pequeno text-texto-secundario">
+          {copia === 'copiada'
+            ? t.referenciaCopiada
+            : copia === 'fallo'
+              ? t.noSePudoCopiar(referencia)
+              : t.reprocesado}
+        </p>
+      ) : null}
       {mensaje === undefined ? null : (
         <div className="px-4 pb-3.5">
           <AvisoEnLinea

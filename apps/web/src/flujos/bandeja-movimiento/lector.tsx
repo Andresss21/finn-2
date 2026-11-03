@@ -36,6 +36,9 @@ export async function LectorMovimiento({
         id: m.id,
         estado: m.estado,
         sms: m.sms.texto,
+        ...(m.estado !== 'error' || m.procesamiento.errorDetalle === undefined
+          ? {}
+          : { errorDetalle: m.procesamiento.errorDetalle }),
         esperado: m.esperado,
         ...(m.coincidencia === undefined
           ? {}
