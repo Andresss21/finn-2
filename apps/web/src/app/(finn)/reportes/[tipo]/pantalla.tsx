@@ -27,8 +27,7 @@ const COMPARTIDOS = ['ventana', 'cuentas'] as const;
 function hrefDe(url: TipoDeUrl, p: Parametros, cambios: Parametros = {}): string {
   const q = new URLSearchParams();
   for (const [clave, valor] of Object.entries({ ...p, ...cambios })) {
-    if ( valor === '' || (clave === 'ventana' && valor === 'actual'))
-      continue;
+    if (valor === '' || (clave === 'ventana' && valor === 'actual')) continue;
     q.set(clave, clave === 'ventana' ? valor.replace('_', '-') : valor);
   }
   const s = q.toString();

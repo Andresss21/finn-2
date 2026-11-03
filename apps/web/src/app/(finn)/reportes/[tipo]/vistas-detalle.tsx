@@ -26,12 +26,12 @@ function nombreDe(lista: readonly Ref[], id: string): string {
   return ref.archivada === true ? `${ref.nombre} (${t.archivada})` : ref.nombre;
 }
 
-interface Columna<F> {
+export interface Columna<F> {
   readonly id: keyof typeof t.columnas;
   readonly celda: (fila: F) => ReactNode;
 }
 
-function Tabla<F>({
+export function Tabla<F>({
   titulo,
   columnas,
   filas,
