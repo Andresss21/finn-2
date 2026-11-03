@@ -1,9 +1,10 @@
 'use client';
 // `/cuentas/[cuentaId]/verificar-saldo` (FT-44, OP-53; 06 §3.2; 05 §2.7): escribir el saldo del banco a una fecha, ver la diferencia
-// que dice el servidor, elegir qué marcar y confirmar: datos (previsualiza con todas para traer la diferencia), marcar (todas
-// preseleccionadas solo si la diferencia es exactamente cero, P6-5) y revisar (previsualiza con lo marcado y confirma). PF-3.
+// que dice el servidor, elegir qué marcar como conciliado y confirmar. Tres pasos sobre la misma operación: datos (previsualiza
+// con todas las candidatas para traer la diferencia), marcar (todas preseleccionadas solo si la diferencia es exactamente cero, P6-5)
+// y revisar (previsualiza con lo marcado y confirma). No calcula montos (PF-3).
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Resultado } from '../../componentes/base/resultado';
@@ -11,6 +12,7 @@ import { Monto } from '../../componentes/dominio/monto';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { useReemplazarBusqueda } from '../../componentes/navegacion/use-reemplazar-busqueda';
 import { formatearFecha, formatearMonto } from '../../formato';
@@ -20,6 +22,8 @@ import { dominio } from '../../textos/dominio';
 import { formularios } from '../../textos/formularios';
 import { verificarSaldo as t } from '../../textos/verificar-saldo';
 import { aEntradaDeAccion, contrato, type Campos, type Marcar } from './campos';
+
+const BorradorVerificarSaldo = lazy(() => import('./borrador'));
 
 export interface PropsFormularioVerificarSaldo {
   /** `verificarSaldo` (OP-53): la pone el lector, así el formulario se prueba sin servidor. */
@@ -46,12 +50,24 @@ interface Vista {
     readonly diferencia: Centavos;
     readonly marcaria: number;
   };
+  readonly avisos?: readonly {
+    readonly codigo: string;
+    readonly datos?: Record<string, unknown>;
+  }[];
   readonly rechazos?: readonly { readonly codigo: string }[];
 }
 type Paso = 'datos' | 'marcar' | 'revisar';
+type Ajuste = NonNullable<Vista['avisos']>[number];
 
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const MENSAJES: Readonly<Record<string, string | undefined>> = t.rechazos;
+/** La ruta del flujo que crea el ajuste de AV-21 (FD-06) según la operación que propone el servidor. */
+const RUTA_AJUSTE: Readonly<Record<string, string | undefined>> = {
+  'OP-20': 'gasto',
+  'OP-21': 'ingreso',
+  'OP-27': 'entrada-tarjeta',
+};
+
 const conSigno = (monto: Centavos): string => `${monto > 0 ? '+' : ''}${formatearMonto(monto)}`;
 
 export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
@@ -69,12 +85,13 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
     valoresIniciales: inicial,
     operacion,
   });
-  const { setValue, formState } = formulario;
+  const { setValue, formState, reset } = formulario;
   const c = formulario.watch();
 
   const [paso, setPaso] = useState<Paso>('datos');
   const [marcas, setMarcas] = useState<'todas' | ReadonlySet<string>>(new Set());
   const [rechazo, setRechazo] = useState<string>();
+  const [ajuste, setAjuste] = useState<Ajuste>();
   const [base, setBase] = useState<Vista['propuesta']>();
   const siguiente = useRef<Paso | null>(null);
   const { estado, error: fallo, exito, previsualizacion } = operacion;
@@ -98,6 +115,7 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
       // Comparar con cero no es aritmética (06 §3.2.2, P6-5).
       setMarcas(v.propuesta?.diferencia === 0 ? 'todas' : new Set());
     }
+    setAjuste(v.avisos?.find((a) => a.codigo === 'AV-21'));
     setPaso(destino);
   }, [estado, previsualizacion, volverAEditar]);
 
@@ -123,37 +141,39 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
   const error = (n: keyof Campos): string | undefined => formState.errors[n]?.message;
   const vista = (previsualizacion ?? {}) as Vista;
   const fechaTexto = formatearFecha(c.fecha);
-  const avisos = (
-    <>
-      {rechazo === undefined ? null : (
-        <AvisoEnLinea estado="problema" aparecioDespues>
-          {MENSAJES[rechazo] ?? t.rechazos.otro}
-        </AvisoEnLinea>
-      )}
-      {estado === 'error' && fallo !== undefined ? (
-        <AvisoEnLinea
-          estado="problema"
-          aparecioDespues
-          {...(REINTENTABLES.includes(fallo.categoria)
-            ? {
-                accion: (
-                  <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                    {formularios.intentarDeNuevo}
-                  </Boton>
-                ),
-              }
-            : {})}
-        >
-          {fallo.mensaje}
-        </AvisoEnLinea>
-      ) : null}
-    </>
-  );
 
   if (estado === 'listo' && exito !== undefined) {
+    const ruta = RUTA_AJUSTE[String(ajuste?.datos?.['operacion'])];
+    const monto = ajuste?.datos?.['monto'] as Centavos | undefined;
+    const texto =
+      monto === undefined
+        ? undefined
+        : ajuste?.datos?.['operacion'] === 'OP-21'
+          ? t.ajusteIngreso(formatearMonto(monto))
+          : ajuste?.datos?.['operacion'] === 'OP-27'
+            ? t.ajusteEntrada(formatearMonto(monto))
+            : t.ajusteGasto(formatearMonto(monto));
     return (
       <PaginaFlujoDeRuta titulo={t.tituloListo} rutaPadre={rutaPadre}>
-        <Resultado texto={t.guardado(cuenta, fechaTexto)} />
+        <div className="flex flex-col gap-4">
+          <Resultado texto={t.guardado(cuenta, fechaTexto)} />
+          {ruta === undefined || texto === undefined ? null : (
+            <AvisoEnLinea
+              estado="advertencia"
+              aparecioDespues
+              accion={
+                <EnlaceFinn
+                  href={`/registrar/${ruta}?cuenta=${cuentaId}`}
+                  className="inline-flex min-h-11 items-center font-bold text-enlace underline"
+                >
+                  {t.crearAjuste}
+                </EnlaceFinn>
+              }
+            >
+              {texto}
+            </AvisoEnLinea>
+          )}
+        </div>
       </PaginaFlujoDeRuta>
     );
   }
@@ -163,7 +183,11 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
     return (
       <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
         <div className="flex flex-col gap-4">
-          {avisos}
+          {estado === 'error' && fallo !== undefined ? (
+            <AvisoEnLinea estado="problema" aparecioDespues>
+              {fallo.mensaje}
+            </AvisoEnLinea>
+          ) : null}
           <ConfirmacionImpacto
             titulo={t.tituloRevisar}
             {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
@@ -237,7 +261,16 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
               ))}
             </fieldset>
           )}
-          {avisos}
+          {estado === 'error' && fallo !== undefined ? (
+            <AvisoEnLinea estado="problema" aparecioDespues>
+              {fallo.mensaje}
+            </AvisoEnLinea>
+          ) : null}
+          {rechazo === undefined ? null : (
+            <AvisoEnLinea estado="problema" aparecioDespues>
+              {MENSAJES[rechazo] ?? t.rechazos.otro}
+            </AvisoEnLinea>
+          )}
           <div className="flex gap-3">
             <Boton enviando={estado === 'enviando'} textoEnviando={t.calculando} onClick={revisar}>
               {t.revisar}
@@ -259,6 +292,14 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
   return (
     <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
       <form onSubmit={verDiferencia} noValidate className="flex flex-col gap-5">
+        <Suspense fallback={null}>
+          <BorradorVerificarSaldo
+            campos={c}
+            inicial={inicial}
+            operacion={operacion}
+            reset={reset}
+          />
+        </Suspense>
         <p>{t.cuenta(cuenta)}</p>
         <EntradaFecha
           nombre="fecha"
@@ -293,7 +334,28 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
           requerido
         />
         <p>{t.candidatas(p.cantidad)}</p>
-        {avisos}
+        {rechazo === undefined ? null : (
+          <AvisoEnLinea estado="problema" aparecioDespues>
+            {MENSAJES[rechazo] ?? t.rechazos.otro}
+          </AvisoEnLinea>
+        )}
+        {estado === 'error' && fallo !== undefined ? (
+          <AvisoEnLinea
+            estado="problema"
+            aparecioDespues
+            {...(REINTENTABLES.includes(fallo.categoria)
+              ? {
+                  accion: (
+                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
+                      {formularios.intentarDeNuevo}
+                    </Boton>
+                  ),
+                }
+              : {})}
+          >
+            {fallo.mensaje}
+          </AvisoEnLinea>
+        ) : null}
         <Boton
           tipo="submit"
           enviando={estado === 'enviando'}

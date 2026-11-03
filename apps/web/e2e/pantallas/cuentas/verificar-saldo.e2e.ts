@@ -2,7 +2,6 @@
 // operaciones reales (DP-17) y del reloj del servidor fijo (DP-04), y recorre `/cuentas/[cuentaId]/verificar-saldo` como la persona.
 // La diferencia, el saldo de Finn y la propuesta de AV-21 los pone el servidor: la prueba solo comprueba que la pantalla los dibuja
 // (PF-3). Los rechazos de OP-53 y el cambio posterior (CA-44.4, CA-44.6) los miden las pruebas de dominio PRU-DOM-CONC-103 y 104.
-// La propuesta de AV-21 (CA-44.2, CA-44.3) y el borrador son de TA-445 (CH-86).
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarHidratacion } from '../../ayudas/esperas.ts';
@@ -82,7 +81,7 @@ test.describe('PRU-E2E-CONC', () => {
     await expect(page.getByText(t.candidatas(0))).toBeVisible();
   });
 
-  test('PRU-E2E-CONC-145 con $1,262.00 la diferencia es +$12.00, ninguna candidata viene marcada y al confirmar se guarda sin marcar nada', async ({
+  test('PRU-E2E-CONC-145 [CA-44.2, AV-21] con $1,262.00 la diferencia es +$12.00, ninguna candidata viene marcada y al confirmar aparece la propuesta de un ingreso de $12.00', async ({
     page,
   }) => {
     await preparar(EFECTIVO);
@@ -97,9 +96,14 @@ test.describe('PRU-E2E-CONC', () => {
     await expect(page.getByText(t.seMarcan(0))).toBeVisible();
     await page.getByRole('button', { name: t.confirmar }).click();
     await expect(page.getByTestId('resultado')).toHaveText(t.guardado('Ahorro', '15/10/2027'));
+    await expect(page.getByText(t.ajusteIngreso('$12.00'))).toBeVisible();
+    await expect(page.getByRole('link', { name: t.crearAjuste })).toHaveAttribute(
+      'href',
+      `/registrar/ingreso?cuenta=${CUENTA}`,
+    );
   });
 
-  test('PRU-E2E-CONC-146 en una tarjeta con $300.00 de deuda en Finn, escribo $290.00 de deuda: la diferencia es +$10.00 y se verifica igual sin marcar la deuda inicial', async ({
+  test('PRU-E2E-CONC-146 [CA-44.3, AV-21] en una tarjeta con $300.00 de deuda en Finn, escribo $290.00 de deuda: la diferencia es +$10.00 y la propuesta es una entrada a la tarjeta', async ({
     page,
   }) => {
     await preparar(TARJETA);
@@ -112,6 +116,11 @@ test.describe('PRU-E2E-CONC', () => {
     await page.getByRole('button', { name: t.revisar }).click();
     await page.getByRole('button', { name: t.confirmar }).click();
     await expect(page.getByTestId('resultado')).toBeVisible();
+    await expect(page.getByText(t.ajusteEntrada('$10.00'))).toBeVisible();
+    await expect(page.getByRole('link', { name: t.crearAjuste })).toHaveAttribute(
+      'href',
+      `/registrar/entrada-tarjeta?cuenta=${CUENTA}`,
+    );
   });
 
   test('PRU-E2E-CONC-147 [CA-44.5] una verificación hecha aparece en el detalle de la cuenta como "Verificación de saldo"', async ({

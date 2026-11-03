@@ -461,7 +461,7 @@
 
   "TA-417": { "estado": "terminada", "rama": "ta-417-verificar-saldo-2", "pr": 305 },
 
-  "TA-445": { "estado": "pendiente" },
+  "TA-445": { "estado": "terminada", "rama": "ta-445-verificar-saldo", "pr": 307 },
 
   "TA-418": { "estado": "pendiente" },
 
