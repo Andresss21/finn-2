@@ -471,7 +471,7 @@
 
   "TA-420": { "estado": "pendiente" },
 
-  "TA-421": { "estado": "en_curso", "rama": "ta-421-reportes-base" },
+  "TA-421": { "estado": "terminada", "rama": "ta-421-reportes-base", "pr": 316 },
 
   "TA-453": { "estado": "pendiente" },
 
