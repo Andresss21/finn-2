@@ -437,7 +437,7 @@
 
   "TA-403": { "estado": "terminada", "rama": "ta-403-asignacion-rapida", "pr": 319 },
 
-  "TA-404": { "estado": "pendiente" },
+  "TA-404": { "estado": "en_curso", "rama": "ta-404-auto-asignar" },
 
   "TA-405": { "estado": "terminada", "rama": "ta-405-fusionar-categorias", "pr": 310 },
 

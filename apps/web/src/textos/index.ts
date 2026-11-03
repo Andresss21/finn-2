@@ -27,6 +27,7 @@ import { navegacion } from './navegacion.ts';
 import { plantilla } from './plantilla.ts';
 import { presupuesto } from './presupuesto.ts';
 import { presupuestoAsignar } from './presupuesto-asignar.ts';
+import { presupuestoAutoAsignar } from './presupuesto-auto-asignar.ts';
 import { presupuestoMover } from './presupuesto-mover.ts';
 import { primerosPasos } from './primeros-pasos.ts';
 import { registrarGasto } from './registrar-gasto.ts';
@@ -63,6 +64,7 @@ export {
   plantilla,
   presupuesto,
   presupuestoAsignar,
+  presupuestoAutoAsignar,
   presupuestoMover,
   primerosPasos,
   registrarGasto,
@@ -81,6 +83,7 @@ export const areas = [
   ['plantilla', plantilla],
   ['presupuesto', presupuesto],
   ['presupuestoAsignar', presupuestoAsignar],
+  ['presupuestoAutoAsignar', presupuestoAutoAsignar],
   ['presupuestoMover', presupuestoMover],
   ['primerosPasos', primerosPasos],
   ['autenticacion', autenticacion],
