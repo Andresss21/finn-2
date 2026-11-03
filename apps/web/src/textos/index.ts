@@ -33,6 +33,7 @@ import { primerosPasos } from './primeros-pasos.ts';
 import { registrarGasto } from './registrar-gasto.ts';
 import { registrarTipo } from './registrar-tipo.ts';
 import { reportes } from './reportes.ts';
+import { transaccion } from './transaccion.ts';
 import { verificarSaldo } from './verificar-saldo.ts';
 
 export {
@@ -70,6 +71,7 @@ export {
   registrarGasto,
   registrarTipo,
   reportes,
+  transaccion,
   verificarSaldo,
 };
 
@@ -108,5 +110,6 @@ export const areas = [
   ['registrarGasto', registrarGasto],
   ['registrarTipo', registrarTipo],
   ['reportes', reportes],
+  ['transaccion', transaccion],
   ['verificarSaldo', verificarSaldo],
 ] as const;
