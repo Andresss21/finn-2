@@ -18,6 +18,7 @@ import { movimiento } from './movimiento.ts';
 import { pagarTarjeta } from './pagar-tarjeta.ts';
 import { programada } from './programada.ts';
 import { registrar } from './registrar.ts';
+import { verificar } from './verificar.ts';
 
 /** El cuerpo de cada operación: lo que devuelve su módulo. */
 interface Cuerpos {
@@ -35,6 +36,7 @@ interface Cuerpos {
   readonly devolver: Awaited<ReturnType<typeof devolver>>;
   readonly fusionar: Awaited<ReturnType<typeof fusionar>>;
   readonly programada: Awaited<ReturnType<typeof programada>>;
+  readonly verificar_saldo: Awaited<ReturnType<typeof verificar>>;
 }
 
 export type FormularioDto = Encabezado & Cuerpos[keyof Cuerpos];
@@ -81,6 +83,8 @@ export function formulario(d: DepsConsulta, parametros: unknown): Promise<Formul
             return fusionar(c, p);
           case 'programada':
             return programada(c, p);
+          case 'verificar_saldo':
+            return verificar(c, p);
         }
       })();
       return { ...c.encabezado, ...cuerpo };

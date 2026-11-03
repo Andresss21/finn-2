@@ -20,6 +20,7 @@ import { formularios } from './formularios.ts';
 import { alcanceReserva, glosario } from './glosario.ts';
 import { ingreso } from './ingreso.ts';
 import { instalacion } from './instalacion.ts';
+import { metas } from './metas.ts';
 import { navegacion } from './navegacion.ts';
 import { plantilla } from './plantilla.ts';
 import { presupuesto } from './presupuesto.ts';
@@ -28,6 +29,7 @@ import { presupuestoMover } from './presupuesto-mover.ts';
 import { primerosPasos } from './primeros-pasos.ts';
 import { registrarGasto } from './registrar-gasto.ts';
 import { registrarTipo } from './registrar-tipo.ts';
+import { verificarSaldo } from './verificar-saldo.ts';
 
 export {
   ajustesExportar,
@@ -51,6 +53,7 @@ export {
   glosario,
   ingreso,
   instalacion,
+  metas,
   navegacion,
   plantilla,
   presupuesto,
@@ -59,6 +62,7 @@ export {
   primerosPasos,
   registrarGasto,
   registrarTipo,
+  verificarSaldo,
 };
 
 /** Áreas registradas, en un arreglo para que una prueba detecte nombres repetidos. */
@@ -92,4 +96,5 @@ export const areas = [
   ['navegacion', navegacion],
   ['registrarGasto', registrarGasto],
   ['registrarTipo', registrarTipo],
+  ['verificarSaldo', verificarSaldo],
 ] as const;

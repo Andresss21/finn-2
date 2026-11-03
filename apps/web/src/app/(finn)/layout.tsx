@@ -10,6 +10,8 @@ import { ponerAlDia } from '@finn/aplicacion/tareas/puesta-al-dia';
 import { after } from 'next/server';
 import type { ReactNode } from 'react';
 import { Marco } from '../../componentes/marco/marco';
+import { SuscripcionPush } from '../../componentes/marco/suscripcion-push';
+import { registrarSuscripcion } from '../../servidor/acciones/notificaciones';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,5 +25,10 @@ export default function LayoutFinn({
   after(() =>
     ponerAlDia({ memoria: memoriaDeInstancia, opciones: () => ({ reloj: relojDePrueba() }) }),
   );
-  return <Marco superpuesto={superpuesto}>{children}</Marco>;
+  return (
+    <Marco superpuesto={superpuesto}>
+      {children}
+      <SuscripcionPush registrar={registrarSuscripcion} />
+    </Marco>
+  );
 }

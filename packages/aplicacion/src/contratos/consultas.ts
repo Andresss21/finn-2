@@ -224,6 +224,11 @@ export const parametrosFormulario = z.discriminatedUnion(
       programadaId: uuid.optional(),
       fechaEsperada: fechaLocal.optional(),
     }),
+    z.object({
+      operacion: z.literal('verificar_saldo'),
+      cuentaId: uuid,
+      fecha: fechaLocal.optional(),
+    }),
   ],
   { error: 'La operación del formulario no es válida.' },
 );
