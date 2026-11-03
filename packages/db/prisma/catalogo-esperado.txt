@@ -218,6 +218,7 @@ privilegio|grupos|finn_app|SELECT
 privilegio|grupos|finn_app|UPDATE
 privilegio|grupos|finn_respaldo|SELECT
 privilegio|hoy()|finn_app|EXECUTE
+privilegio|hoy()|finn_respaldo|EXECUTE
 privilegio|instante()|finn_app|EXECUTE
 privilegio|instituciones|finn_app|DELETE
 privilegio|instituciones|finn_app|INSERT

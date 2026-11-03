@@ -343,7 +343,7 @@
 
   "TA-261": { "estado": "terminada", "rama": "ta-261-respaldo-yml", "pr": 245 },
 
-  "TA-262": { "estado": "pendiente" },
+  "TA-262": { "estado": "terminada", "rama": "ta-262-control-dinero-2", "pr": 322 },
 
   "TA-263": { "estado": "pendiente" },
 
