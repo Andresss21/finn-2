@@ -411,7 +411,7 @@
 
   "TA-307": { "estado": "terminada", "rama": "ta-307-ingreso-transferencia", "pr": 253 },
 
-  "TA-308": { "estado": "en_curso", "rama": "ta-308-actividad" },
+  "TA-308": { "estado": "terminada", "rama": "ta-308-actividad", "pr": 314 },
 
   "TA-309": { "estado": "pendiente" },
 
