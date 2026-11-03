@@ -12,6 +12,8 @@
     "/cuentas/[cuentaId]/verificar-saldo": "/cuentas/00000000-0000-4000-8000-000000000001/verificar-saldo",
     "/cuentas/[cuentaId]": "/cuentas/00000000-0000-4000-8000-000000000001",
     "/cuentas/[cuentaId]/editar": "/cuentas/00000000-0000-4000-8000-000000000001/editar",
+    "/cuentas/[cuentaId]/archivar": "/cuentas/00000000-0000-4000-8000-000000000001/archivar",
+    "/cuentas/[cuentaId]/eliminar": "/cuentas/00000000-0000-4000-8000-000000000001/eliminar",
     "/presupuesto/categorias/[categoriaId]": "/presupuesto/categorias/00000000-0000-4000-8000-000000000001",
     "/presupuesto/categorias/[categoriaId]/archivar": "/presupuesto/categorias/00000000-0000-4000-8000-000000000001/archivar",
     "/presupuesto/categorias/[categoriaId]/sacar": "/presupuesto/categorias/00000000-0000-4000-8000-000000000001/sacar",

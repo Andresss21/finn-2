@@ -22,11 +22,14 @@ export function PantallaDetalleCuenta({
   dto,
   filtros,
   desarchivar,
+  archivar,
 }: {
   readonly dto: DetalleCuentaDto;
   readonly filtros: FiltrosDetalle;
   /** La Server Action de OP-05: la pasa el lector. */
   readonly desarchivar: AccionEscritura;
+  /** La Server Action de OP-04 («Archivar de nuevo»): la pasa el lector. */
+  readonly archivar: AccionEscritura;
 }) {
   const { cuenta, navegacion } = dto;
   const parametros = Object.fromEntries(
@@ -63,7 +66,7 @@ export function PantallaDetalleCuenta({
         </dl>
       </header>
       {cuenta.archivada ? <AvisoEnLinea estado="informacion">{t.soloLectura}</AvisoEnLinea> : null}
-      <Acciones cuenta={cuenta} desarchivar={desarchivar} />
+      <Acciones cuenta={cuenta} desarchivar={desarchivar} archivar={archivar} />
       {dto.tarjeta === undefined ? null : <BloqueTarjeta tarjeta={dto.tarjeta} />}
       {dto.prestamo === undefined ? null : <BloquePrestamo prestamo={dto.prestamo} />}
       {dto.inversion === undefined ? null : <BloqueInversion inversion={dto.inversion} />}

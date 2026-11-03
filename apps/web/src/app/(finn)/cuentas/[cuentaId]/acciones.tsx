@@ -47,9 +47,11 @@ function accionesDe(c: Cuenta): readonly Accion[] {
 export function Acciones({
   cuenta,
   desarchivar,
+  archivar,
 }: {
   readonly cuenta: Cuenta;
   readonly desarchivar: AccionEscritura;
+  readonly archivar: AccionEscritura;
 }) {
   return (
     <section aria-label={t.acciones.titulo} className="flex flex-col gap-2">
@@ -71,11 +73,12 @@ export function Acciones({
             )}
           </li>
         ))}
-        {cuenta.archivada ? (
-          <li data-accion="desarchivar">
-            <Desarchivar cuentaId={cuenta.id} accion={desarchivar} />
-          </li>
-        ) : null}
+        <Desarchivar
+          cuentaId={cuenta.id}
+          archivada={cuenta.archivada}
+          accion={desarchivar}
+          volver={archivar}
+        />
       </ul>
     </section>
   );

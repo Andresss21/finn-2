@@ -11,6 +11,8 @@ export const cuentaDetalle = {
   soloLectura: 'Esta cuenta está archivada: solo podés mirarla.',
   desarchivar: 'Desarchivar',
   desarchivada: 'Cuenta desarchivada.',
+  archivarDeNuevo: 'Archivar de nuevo',
+  archivadaDeNuevo: 'Cuenta archivada.',
   acciones: {
     titulo: 'Acciones',
     editar: 'Editar',
