@@ -183,7 +183,7 @@ describe('PRU-INT-BAND', () => {
     expect(await estado()).toEqual(antes);
   });
 
-  it('PRU-INT-BAND-102 [INV-13, CB-15] OP-37: aprueba con origen SMS y hora de recepción, repetirla con el mismo id es ya aplicada con su transacción, otro id es movimiento_estado_no_valido y no duplica y los rechazos llegan con su mensaje', async () => {
+  it('PRU-INT-BAND-102 [INV-13, CB-15] OP-37: aprueba con origen SMS y hora de recepción, repetirla es ya aplicada con su transacción, otro id no duplica y los rechazos llegan con su mensaje', async () => {
     const M1 = MOVIMIENTOS.pendiente as Uuid;
     const id = uuid(3001);
     const antes = await estado();
