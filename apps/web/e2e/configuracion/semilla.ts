@@ -1,6 +1,7 @@
 // El punto de partida de cada prueba (TA-219): el `test` con la red bloqueada y `sembrar`. Las pruebas de páginas
 // importan `test` y `expect` de aquí, no de @playwright/test.
 import { test as base } from '@playwright/test';
+import type { NotificacionSembrada } from '../../../../packages/aplicacion/test/escenarios/int.ts';
 import type { Escenario } from '../../../../packages/dominio/escenarios/tipos';
 
 export { expect } from '@playwright/test';
@@ -30,10 +31,15 @@ export const test = base.extend<{ redBloqueada: undefined }>({
  * semilla (`packages/dominio/escenarios/semillas/`) y deja el resultado en finn_e2e, la base a la que está conectada
  * la app; el pool del servidor se reconecta solo. Importa el ejecutor al usarse: una prueba sin semilla no carga Prisma.
  */
-export async function sembrar(estado: Escenario, hoy: string): Promise<void> {
-  const { copiarEstadoA, ejecutorInt } =
+export async function sembrar(
+  estado: Escenario,
+  hoy: string,
+  notificaciones: readonly NotificacionSembrada[] = [],
+): Promise<void> {
+  const { copiarEstadoA, ejecutorInt, sembrarNotificaciones } =
     await import('../../../../packages/aplicacion/test/escenarios/int.ts');
   const s = await ejecutorInt.iniciar(estado, hoy);
+  await sembrarNotificaciones(s, notificaciones);
   await copiarEstadoA(s, BASE_E2E);
   await ejecutorInt.terminar(s);
 }
