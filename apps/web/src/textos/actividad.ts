@@ -1,0 +1,31 @@
+// Textos de `/actividad` (FT-24; 05 §2.6, §7.2). Voseo (05 §12.2). Los nombres de tipo y de estado son los del detalle de cuenta.
+import { cuentaDetalle } from './cuenta-detalle.ts';
+
+export const actividad = {
+  titulo: 'Actividad',
+  vacioTitulo: 'Todavía no hay transacciones',
+  vacioTexto: 'Cuando registres un gasto, un ingreso o una transferencia, lo vas a ver acá.',
+  registrar: 'Registrar',
+  buscar: 'Buscar',
+  buscarAyuda: 'Busca en el comercio y en la nota.',
+  filtros: 'Filtros',
+  aplicar: 'Filtrar',
+  quitarFiltros: 'Quitar filtros',
+  archivada: (nombre: string) => `${nombre} (archivada)`,
+  cargarMas: 'Cargar más',
+  alInicio: 'Volver a las más recientes',
+  cuenta: 'Cuenta',
+  categoria: 'Categoría',
+  tipo: 'Tipo',
+  estado: 'Estado',
+  origen: 'Origen',
+  desde: 'Desde',
+  hasta: 'Hasta',
+  montoDesde: 'Monto desde',
+  montoHasta: 'Monto hasta',
+  todas: 'Todas',
+  todos: 'Todos',
+  tipos: cuentaDetalle.filtros.tipos,
+  estados: cuentaDetalle.filtros.estados,
+  origenes: { sms: 'SMS', manual: 'Manual', importada: 'Importada', programada: 'Programada' },
+} as const;

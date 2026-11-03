@@ -462,7 +462,7 @@ tu: TU-11, TU-12, TU-16
 
 ```hito
 despues: TA-447
-requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-414, TA-415, TA-416, TA-417, TA-445, TA-418, TA-419, TA-420, TA-421, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
+requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-414, TA-415, TA-416, TA-417, TA-445, TA-418, TA-419, TA-420, TA-421, TA-453, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
 hitos: HT-2, HT-3, HT-7
 sin_pendientes: si
 tu: —
@@ -1573,6 +1573,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-87** | Presupuesto de bytes y crecimiento por ruta (corrección previa a TA-405). Con FT-20 (fusionar), `/registrar/gasto` pasaba de 49,98 a 50,07 KB y `/cuentas/nueva` de 49,95 a 50,04 KB (PRU-REN-PWA-002, 05 §13.1, `porRutaKb` 50 KB) sin tocar esas rutas. Causa, medida con la compilación real (Next 16.4.1, Turbopack): no es la ruta. Una página nueva vacía (`…/[categoriaId]/fusionar/page.tsx` con un solo `<p>`) deja idénticos todos los archivos de `.next/static/chunks` y todas las medidas, y el manifiesto de rutas no llega al cliente como script (en el App Router no se carga `_buildManifest.js`). Lo que crecía era `src/formato/index.ts`: Turbopack copia ese módulo dentro del JS propio de 15 pantallas, y la eliminación de exportaciones sin uso es global, no por copia, así que cada copia lleva todas las funciones que usa algún componente cliente, incluidos los `Intl` de instante y porcentaje. El formulario de fusionar fue el primero en usar `formatearFechaTexto` en el cliente, y la tabla de meses entró en las 15 copias (+87 a +95 B gzip cada una). Arreglo: `formato/index.ts` solo reexporta y el código pasa a `monto.ts`, `fecha.ts`, `fecha-texto.ts`, `instante-texto.ts` y `porcentaje.ts`, con cada `Intl` creado al primer uso. Sin efectos al cargarse, Turbopack sigue las reexportaciones y cada pantalla lleva solo el archivo que usa. Medido con el flujo de TA-405 agregado y sin él: las demás rutas quedan iguales, y frente a `main` bajan (`/registrar/gasto` 49,80 KB, `/cuentas/nueva` 49,79 KB, `/cuentas/[cuentaId]/cuota` 48,48 KB; compartido 161,92 KB y biblioteca 44,06 KB sin cambio). `porRutaKb` no cambia. Lo fija PRU-DOM-VAL-159 (`index.ts` solo reexporta y ningún archivo de `formato` crea objetos al cargarse) | 05 §13.1 y §13.3 | Delegado por el orquestador; **aplicado [CH-87]** en 05 §13.1 y §13.3 |
 | **CH-88** | Partición de TA-296 por tamaño (DT-02), con precedente en CH-72, CH-79 y CH-82 a CH-86. (a) El alcance completo de FT-35 para CA-35.1 a CA-35.6 midió prod≈974 en 15 archivos de producción (total≈1.400) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520). (b) Se parte en dos: TA-296 conserva la lista de `/bandeja` con «Aprobar» de un toque y su resultado en el lugar (FE-25), el traspaso al flujo, `/bandeja/[movimientoId]` con el texto del SMS, la categoría de un gasto con una sola parte, «Recordar esta categoría» y la confirmación AV-01 (CA-35.1, CA-35.2, CA-35.3, CA-35.4; prod≈509 medido, se declara 400, 12 archivos); TA-449, nueva (B6, HT-6, normal, sonnet, orden 370: E5 no deja ponerla entre TA-296 y TA-297), lleva la edición de cuenta, fecha, monto, comercio, nota y tipo (OP-36 con «Usar el valor actual»), las partes con división y por cobrar (reusa `ParteDeGasto`, que se extrae de `/registrar/gasto`), los estados de un movimiento ya aprobado o descartado al abrir el flujo y «Confirmar» una coincidencia (OP-40 `confirmar_coincidencia`) con CA-35.5 y CA-35.6 (prod≈480 estimado, 12 archivos). TA-449 depende de TA-296 y de las mismas tareas; HT-6 la exige. Los pendientes de punta a punta CA-35.5>FT-41 y CA-35.6>FT-42 pasan a TA-449, y TA-414 y TA-415 pasan a depender de ella (E12). TA-297 no depende de TA-449: CA-35.7 a CA-35.11 no usan la edición completa ni las coincidencias. (c) El traspaso de la lista al flujo lleva `?traspaso=1` y el flujo repite OP-37, así el servidor repite su mensaje o su previsualización (AV-01, AV-16) sin guardar el borrador de 05 §4.11 con `{ id, error }`; el comportamiento visible es el de 05 §4.15. Si se prefiere el borrador, TA-449 lo cambia. (d) El código de TA-449 queda en la rama local `ta-296-resto-local`. (e) Mientras TA-449 no se mergee, el flujo no edita cuenta, fecha, monto ni partes, y una coincidencia se aprueba como un movimiento común | 08 TA-296, TA-449, TA-414, TA-415, HT-6 y 05 §4.15 | Delegado por el orquestador; **aplicado [CH-88]** en 08 |
 | **CH-89** | Partición de TA-449 por el presupuesto de bytes de `/bandeja/[movimientoId]` (05 §13.1, PRU-REN-PWA-002), con precedente en CH-88. (a) El alcance completo de TA-449 (edición de cuenta, fecha, monto, comercio, nota y tipo, partes con división y por cobrar y extracción de `ParteDeGasto`) midió `/bandeja/[movimientoId]` en 51,59 KB y `/registrar/gasto` en 50,02 KB contra el tope de 50 KB, aun cargando con `lazy` el resultado, la coincidencia y el estado resuelto. (b) Se parte en dos: TA-449 pasa a «parte B, 1 de 2» y conserva las coincidencias (OP-40 `confirmar_coincidencia`, que guarda antes la categoría elegida) y los estados de un movimiento ya aprobado o descartado al abrir el flujo, con CA-35.5 y CA-35.6 y sus pendientes de punta a punta CA-35.5>FT-41 y CA-35.6>FT-42 (prod=188 medido, se declara 200, 6 archivos); no toca `/registrar/gasto`. TA-450, nueva (B6, HT-6, normal, sonnet, orden 371), «parte B, 2 de 2», lleva la edición completa con OP-36 y «Usar el valor actual», las partes con división y por cobrar, la extracción de `ParteDeGasto` y la resolución del tope de bytes de `/bandeja/[movimientoId]` y de `/registrar/gasto` (subir el tope de la ruta, mover la edición a un paso que se carga al tocar «Editar» o dividir la ruta; si cambia 05 §13.1 o §2.5 es un CH propio). TA-450 depende de TA-449; HT-6 la exige. Criterio de dependientes: TA-414, TA-415 y TA-297 no usan la edición completa, así que no pasan a depender de TA-450. (c) El código de TA-450 queda en la rama local `ta-450-edicion-completa-local` (4d845fa). (d) Mientras TA-450 no se mergee, el flujo no edita cuenta, fecha, monto, comercio, nota ni tipo, y no divide en partes ni marca por cobrar | 08 TA-449, TA-450, HT-6 y 05 §13.1 | Delegado por el orquestador; **aplicado [CH-89]** en 08 |
+| **CH-93** | Partición de TA-421 por tamaño (DT-02), con precedente en CH-72, CH-79 y CH-82 a CH-88. (a) El alcance completo de FT-60 midió prod≈890 en 11 archivos de producción (total≈1.100) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520); las pantallas de las últimas fichas midieron entre 1,7 y 2,1 veces la estimación. (b) Se parte en dos: TA-421 conserva `/reportes` (redirección a `/reportes/tendencia`) y `/reportes/[tipo]` con `tendencia`, `ingresos-gastos`, `remanente` y `patrimonio`, la ventana (`?ventana=`), `Pestanas` como enlaces (05 §10.7), la tabla equivalente con el selector Gráfico / Tabla, «No hay movimientos en estos períodos» y «Lo que te quedó del período» con su explicación (CA-60.1, CA-60.2, CA-60.3, CA-60.4, CA-60.8; prod=415 medido, se declara 400, 10 archivos); TA-453, nueva (B7, HT-8, normal, sonnet, orden 741; TA-446, TA-447, TA-470 y TA-550 pasan a 742, 743, 744 y 745 para dejarle el lugar que E5 y E7 exigen), lleva `categorias` con `GraficoDona` (8 porciones y «Otras»), `top-comercios`, `cumplimiento`, el filtro de cuentas (`?cuentas=`), el de grupo (`?grupo=`) y el límite (`?limite=`), con CA-60.5, CA-60.6, CA-60.7, CA-60.9 y CA-60.10 (prod≈480 estimado, se declara 400, 9 archivos), y cierra la ficha. TA-453 depende de TA-421 y de las mismas tareas; HT-8 la exige. Criterio de dependientes: TA-422, TA-423, TA-424, TA-425, TA-426, TA-503, TA-504 y TA-505 usan `/reportes/[tipo]`, no `categorias`, `top-comercios` ni `cumplimiento`, así que siguen dependiendo de TA-421. (c) `Pestanas` (05 §10.7) no existía en `componentes/`: TA-421 la crea en `componentes/navegacion/pestanas.tsx` como enlaces con `aria-current` y la usa también para la ventana; TA-453 la reusa para los filtros. `GraficoDona` (05 §10.8) tampoco existía: lo crea TA-453. (d) El DTO de `reporte()` no trae `filtros` (CP-12, 04 §6.9; el comentario de `reporte.ts` lo marca «PENDIENTE DE DOMINIO»): TA-453 toma los nombres de cuentas, grupos y categorías de `cuentas({ incluirArchivadas })` y `estructura()` en el lector de la página, sin tocar `@finn/aplicacion`. Si se prefiere el campo `filtros` del DTO, es una tarea de B3. (e) El código de TA-453 queda en la rama local `ta-453-reportes-2-local`. (f) Mientras TA-453 no se mergee, `/reportes/[tipo]` responde `notFound()` para `categorias`, `top-comercios` y `cumplimiento`, y la barra de Reportes lista solo los cuatro tipos de TA-421 | 08 TA-421, TA-453, HT-8 y 05 §2.10, §10.7, §10.8 | Delegado por el orquestador; **aplicado [CH-93]** en 08 |
 
 ---
 
@@ -7225,7 +7226,7 @@ compartido: —
 #### TA-550 Presupuestos de rendimiento sobre las pantallas reales **[CH-51]**
 
 ```tarea
-orden: 744
+orden: 745
 bloque: B6
 hito: HT-9
 depende: TA-222, TA-280, TA-292, TA-293, TA-287, TA-294, TA-298, TA-308, TA-421
@@ -9395,7 +9396,7 @@ compartido: —
 | FT-57 | M | Inversiones: aporte, retiro y ajuste | 4 | TA-420 | — | — |
 | FT-58 | P | Modelos de préstamo de otros bancos | 3 | TA-501 | — | — |
 | FT-59 | P | Proyección de inversiones | 3 | TA-502 | — | — |
-| FT-60 | M | Reportes base (producto §10) | 10 | TA-421 | `/reportes`, `/reportes/[tipo]` | — |
+| FT-60 | M | Reportes base (producto §10) | 10 | TA-421, TA-453 **[CH-93]** | `/reportes`, `/reportes/[tipo]` | — |
 | FT-61 | M | Gasto semanal | 7 | TA-422 | — | — |
 | FT-62 | M | Ritmo de gasto y proyección del cierre | 7 | TA-423 | — | CA-08.6 |
 | FT-63 | M | Presupuesto contra la realidad y comparación con el promedio | 5 | TA-424 | — | — |
@@ -10187,7 +10188,7 @@ fichas: FT-57
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y, si completa pendientes, sus E2E en verde.
 
-#### TA-421 FT-60 Reportes base (producto §10)
+#### TA-421 FT-60 Reportes base (producto §10) (1 de 2) **[CH-93]**
 
 ```tarea
 orden: 721
@@ -10197,18 +10198,56 @@ depende: TA-210, TA-212, TA-219, TA-224, TA-141, TA-174, TA-288, TA-293
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=10 migraciones=0 total=1000
-cubre: CA-60.1, CA-60.2, CA-60.3, CA-60.4, CA-60.5, CA-60.6, CA-60.7, CA-60.8, CA-60.9, CA-60.10, RUTA-/reportes, RUTA-/reportes/[tipo]
+tamano: prod=400 archivos=10 ca=5 migraciones=0 total=1000
+cubre: CA-60.1, CA-60.2, CA-60.3, CA-60.4, CA-60.8, RUTA-/reportes, RUTA-/reportes/[tipo]
 pru: —
 compartido: —
 fichas: FT-60
 ```
 
 **Qué construir.**
-- FT-60: las pantallas y flujos de la ficha (Flujo, Piezas, Estados, Errores y textos) para CA-60.1 a CA-60.10, con las consultas y operaciones que ya existen (B2 y B3) y los componentes de B4.
+- FT-60: las pantallas y flujos de la ficha (Flujo, Piezas, Estados, Errores y textos) para CA-60.1, CA-60.2, CA-60.3, CA-60.4 y CA-60.8 **[CH-93]**, con las consultas y operaciones que ya existen (B2 y B3) y los componentes de B4.
 - Server Actions de sus operaciones en `servidor/acciones/<area>.ts`; ACCESO-001 y la suite de accesibilidad las cubren solas (TA-218, TA-221).
 - Rutas que crea (dueña, DT-23): `/reportes`, `/reportes/[tipo]`.
+- FT-60, parte 1 **[CH-93]**: `/reportes` redirige a `/reportes/tendencia`; `/reportes/[tipo]` con `tendencia`, `ingresos-gastos`, `remanente` y `patrimonio`, la ventana, `Pestanas` como enlaces (se crea en `componentes/navegacion/`), la tabla equivalente y los estados vacíos. `categorias`, `top-comercios`, `cumplimiento` y los filtros de cuentas, grupo y límite (CA-60.5, CA-60.6, CA-60.7, CA-60.9 y CA-60.10) son de TA-453 **[CH-93]**.
+- La ficha sigue en `en_curso`: la cierra TA-453.
+- El código de TA-453 ya está hecho en la rama local `ta-453-reportes-2-local` **[CH-93]**.
+
+**Leer.** 06 FT-60 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7; 04 §6 (sus consultas); 06-identidad-visual §3 si su pantalla está en las capturas.
+
+**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/<area>.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
+
+**Pruebas primero.**
+- Una prueba por CA de este trozo en el nivel de 07 §17 (DT-21), con el CA entre corchetes.
+
+**Comandos.** `pnpm pruebas:ft FT-60` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** Los CA de este trozo con su prueba en verde; la ficha sigue `en_curso`.
+
+#### TA-453 FT-60 Reportes base: categorías, comercios, cumplimiento y filtros (2 de 2) **[CH-93]**
+
+```tarea
+orden: 741
+bloque: B7
+hito: HT-8
+depende: TA-210, TA-212, TA-219, TA-224, TA-141, TA-174, TA-288, TA-293, TA-421
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=9 ca=5 migraciones=0 total=1000
+cubre: CA-60.5, CA-60.6, CA-60.7, CA-60.9, CA-60.10
+pru: —
+compartido: —
+fichas: FT-60
+```
+
+**Qué construir.**
+- FT-60: las pantallas y flujos de la ficha (Flujo, Piezas, Estados, Errores y textos) para CA-60.5, CA-60.6, CA-60.7, CA-60.9 y CA-60.10 **[CH-93]**, con las consultas y operaciones que ya existen (B2 y B3) y los componentes de B4.
+- Server Actions de sus operaciones en `servidor/acciones/<area>.ts`; ACCESO-001 y la suite de accesibilidad las cubren solas (TA-218, TA-221).
+- Rutas: las crea TA-421 (`/reportes`, `/reportes/[tipo]`); esta tarea agrega `categorias`, `top-comercios` y `cumplimiento` a la tabla de tipos y los filtros de cuentas, grupo y límite.
+- FT-60, resto **[CH-93]**: `GraficoDona` (`componentes/graficos/`, 8 porciones y «Otras», 05 §10.8), los tres reportes y los filtros como `Pestanas`. Los nombres de cuentas, grupos y categorías salen de `cuentas({ incluirArchivadas })` y `estructura()`, porque el DTO de `reporte()` no trae `filtros` (CH-93 (d)).
 - Último PR de la ficha: `features.json` en `terminada` (07 §27).
+- El código ya está hecho en la rama local `ta-453-reportes-2-local` **[CH-93]**.
 
 **Leer.** 06 FT-60 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7; 04 §6 (sus consultas); 06-identidad-visual §3 si su pantalla está en las capturas.
 
@@ -10872,7 +10911,7 @@ fichas: FT-78
 #### TA-446 Recorridos de 06 §4.1, §4.2, §4.3 de punta a punta
 
 ```tarea
-orden: 741
+orden: 742
 bloque: B7
 hito: HT-8
 depende: TA-400, TA-403, TA-404, TA-408, TA-415, TA-423, TA-424, TA-440, TA-428, TA-429, TA-431, TA-439
@@ -10907,7 +10946,7 @@ compartido: —
 #### TA-447 Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta
 
 ```tarea
-orden: 742
+orden: 743
 bloque: B7
 hito: HT-8
 depende: TA-400, TA-402, TA-416, TA-417, TA-418, TA-431
@@ -10942,7 +10981,7 @@ compartido: —
 #### TA-470 Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03)
 
 ```tarea
-orden: 743
+orden: 744
 bloque: B7
 hito: HT-9
 depende: TA-181, TA-176, TA-180, TA-433
@@ -11377,7 +11416,7 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 718 | TA-418 | B7 | HT-8 | normal | FT-32 Cashback, avance y transferencia de deuda | 360 | 0 |
 | 719 | TA-419 | B7 | HT-8 | normal | FT-55 Condiciones y tabla de amortización | 360 | 0 |
 | 720 | TA-420 | B7 | HT-8 | normal | FT-57 Inversiones: aporte, retiro y ajuste | 360 | 0 |
-| 721 | TA-421 | B7 | HT-8 | normal | FT-60 Reportes base (producto §10) | 360 | 0 |
+| 721 | TA-421 | B7 | HT-8 | normal | FT-60 Reportes base (producto §10) (1 de 2) **[CH-93]** | 400 | 0 |
 | 722 | TA-422 | B7 | HT-8 | normal | FT-61 Gasto semanal | 360 | 0 |
 | 723 | TA-423 | B7 | HT-8 | normal | FT-62 Ritmo de gasto y proyección del cierre | 360 | 0 |
 | 724 | TA-424 | B7 | HT-8 | normal | FT-63 Presupuesto contra la realidad y comparación con el promedio | 360 | 0 |
@@ -11398,10 +11437,11 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 738 | TA-438 | B7 | HT-8 | normal | FT-78 Arrastrar un movimiento a una categoría (1 de 2) | 360 | 0 |
 | 739 | TA-439 | B7 | HT-8 | normal | FT-78 Arrastrar un movimiento a una categoría (2 de 2) | 360 | 0 |
 | 740 | TA-445 | B7 | HT-8 | normal | FT-44 Verificar saldo: ajuste de AV-21 y borrador (2 de 2) **[CH-86]** | 120 | 0 |
-| 741 | TA-446 | B7 | HT-8 | normal | Recorridos de 06 §4.1, §4.2, §4.3 de punta a punta | 40 | 0 |
-| 742 | TA-447 | B7 | HT-8 | normal | Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta | 40 | 0 |
-| 743 | TA-470 | B7 | HT-9 | obligatoria | Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03) | 80 | 1 |
-| 744 | TA-550 | B6 | HT-9 | obligatoria | Presupuestos de rendimiento sobre las pantallas reales **[CH-51]** | 150 |
+| 742 | TA-446 | B7 | HT-8 | normal | Recorridos de 06 §4.1, §4.2, §4.3 de punta a punta | 40 | 0 |
+| 743 | TA-447 | B7 | HT-8 | normal | Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta | 40 | 0 |
+| 744 | TA-470 | B7 | HT-9 | obligatoria | Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03) | 80 | 1 |
+| 745 | TA-550 | B6 | HT-9 | obligatoria | Presupuestos de rendimiento sobre las pantallas reales **[CH-51]** | 150 |
+| 741 | TA-453 | B7 | HT-8 | normal | FT-60 Reportes base: categorías, comercios, cumplimiento y filtros (2 de 2) **[CH-93]** | 400 | 0 |
 | 900 | TA-500 | B8 | — | normal | FT-56 Desembolso de préstamo | 360 | 0 |
 | 901 | TA-501 | B8 | — | normal | FT-58 Modelos de préstamo de otros bancos | 360 | 0 |
 | 902 | TA-502 | B8 | — | normal | FT-59 Proyección de inversiones | 360 | 0 |

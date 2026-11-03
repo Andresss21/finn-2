@@ -82,6 +82,7 @@
     "fts": ["FT-10", "FT-11", "FT-17"]
   },
   { "patron": "apps/web/src/app/(finn)/metas/**", "fts": ["FT-17"] },
+  { "patron": "apps/web/src/app/(finn)/actividad/**", "fts": ["FT-24"] },
   { "patron": "apps/web/src/flujos/metas-nueva/**", "fts": ["FT-17"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/mover/**", "fts": ["FT-11"] },
   {
@@ -157,6 +158,7 @@
   { "patron": "apps/web/src/app/(finn)/ajustes/webhook/**", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/apariencia/**", "fts": ["FT-77"] },
   { "patron": "apps/web/src/app/(finn)/bandeja/**", "fts": ["FT-34", "FT-35"] },
+  { "patron": "apps/web/src/app/(finn)/reportes/**", "fts": ["FT-60"] },
   { "patron": "apps/web/src/flujos/bandeja-movimiento/**", "fts": ["FT-35"] },
   { "patron": "apps/web/src/servidor/acciones/bandeja.ts", "fts": ["FT-35"] },
   { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03"] },
