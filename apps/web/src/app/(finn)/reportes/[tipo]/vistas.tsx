@@ -9,6 +9,7 @@ import { Monto } from '../../../../componentes/dominio/monto';
 import { formatearFecha } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
 import type { TipoDeReporte } from './tipos';
+import { Categorias, Cumplimiento, TopComercios, type Nombres } from './vistas-detalle';
 
 interface Columna<F> {
   readonly id: keyof typeof t.columnas;
@@ -106,7 +107,7 @@ function Serie<F extends { readonly periodo: string }>({
 const sinMovimiento = (cifras: readonly Centavos[]): boolean => cifras.every((c) => c === 0);
 
 /** El cuerpo del reporte, o `null` si la ventana no tiene movimientos (05 §2.10). */
-export function cuerpoDe(tipo: TipoDeReporte, dto: unknown): ReactNode {
+export function cuerpoDe(tipo: TipoDeReporte, dto: unknown, nombres: Nombres): ReactNode {
   switch (tipo) {
     case 'tendencia': {
       const { periodos } = dto as ReporteDe<'tendencia'>;
@@ -158,6 +159,19 @@ export function cuerpoDe(tipo: TipoDeReporte, dto: unknown): ReactNode {
           columnas={[campo('neto'), campo('acumulado')]}
         />
       );
+    }
+    case 'categorias': {
+      const d = dto as ReporteDe<'categorias'>;
+      if (d.categorias.length + d.conDevolucionNeta.length === 0) return null;
+      return <Categorias dto={d} nombres={nombres} />;
+    }
+    case 'top_comercios': {
+      const d = dto as ReporteDe<'top_comercios'>;
+      return d.comercios.length === 0 ? null : <TopComercios dto={d} nombres={nombres} />;
+    }
+    case 'cumplimiento': {
+      const d = dto as ReporteDe<'cumplimiento'>;
+      return d.filas.length === 0 ? null : <Cumplimiento dto={d} nombres={nombres} />;
     }
     case 'patrimonio': {
       const { serie, posicionHoy } = dto as ReporteDe<'patrimonio'>;
