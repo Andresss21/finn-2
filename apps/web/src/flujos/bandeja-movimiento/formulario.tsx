@@ -1,15 +1,16 @@
 'use client';
-// `/bandeja/[movimientoId]` (FT-35, OP-36 y OP-37; 05 §2.5): revisar un movimiento con el texto del SMS siempre a la vista,
-// elegir su categoría y aprobarlo: «Aprobar» guarda primero la categoría (OP-36) y después aprueba (OP-37); con la fecha en un
-// período cerrado el servidor pide confirmar con AV-01. Flujo largo: página completa (05 §1.4). No calcula montos (PF-3).
-import { lazy, Suspense, useEffect, useRef, useState, type SyntheticEvent } from 'react';
+// `/bandeja/[movimientoId]` (FT-35, OP-36 y OP-37; 05 §2.5): revisar un movimiento completo, con el texto del SMS siempre a la
+// vista, cambiar lo que hace falta y aprobarlo. «Aprobar» guarda primero lo que cambió (OP-36, con lo que se vio en `esperado`) y
+// después aprueba (OP-37); con la fecha en un período cerrado el servidor pide confirmar con AV-01. Es un flujo largo: siempre
+// página completa (05 §1.4). No calcula montos (PF-3): la suma de las partes la valida el servidor.
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useFieldArray } from 'react-hook-form';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Resultado } from '../../componentes/base/resultado';
-import { Seleccion } from '../../componentes/base/seleccion';
-import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
+import { faltaRepartir } from '../../formularios/normalizar-monto';
+import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion } from '../../formularios/use-operacion';
 import {
   aprobarMovimiento,
@@ -19,28 +20,29 @@ import {
 import { bandeja as t } from '../../textos/bandeja';
 import { formularios } from '../../textos/formularios';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
-import { textoAprobado, type ValorAprobado } from './aprobado';
+import type { ValorAprobado } from './aprobado';
 import type { DatosCoincidencia } from './coincidencia';
+import { camposIniciales, contrato, entradaDeEdicion, ofreceRecordar, type Campos } from './campos';
 
+interface Referencia {
+  readonly id: string;
+  readonly nombre: string;
+}
 export interface PropsFormularioMovimiento {
   readonly movimiento: {
     readonly id: string;
-    readonly sms: string;
-    readonly comercio: string | null;
-    /** El monto en texto decimal, para la línea de OP-36. */
-    readonly montoTexto: string | null;
-    readonly tipo: string | null;
-    readonly partes: number;
-    readonly categoriaId: string | null;
-    readonly origenId?: string;
-    readonly esperado: Readonly<Record<string, unknown>>;
     readonly estado: string;
-    /** Con una coincidencia sobre un pago programado (OP-40): lo que se muestra de ella. */
+    readonly sms: string;
+    readonly esperado: Readonly<Record<string, unknown>>;
+    readonly origenId?: string;
+    /** Con una coincidencia sobre una transacción programada (OP-40): lo que se muestra de ella. */
     readonly coincidencia?: DatosCoincidencia;
   };
-  readonly categorias: readonly { readonly id: string; readonly nombre: string }[];
   /** Viene de la fila de la lista (05 §4.15): se vuelve a aprobar para mostrar el mensaje o la confirmación. */
   readonly traspaso: boolean;
+  readonly cuentas: readonly Referencia[];
+  readonly categorias: readonly Referencia[];
+  readonly deudores: readonly Referencia[];
 }
 
 interface Previsualizacion {
@@ -49,6 +51,9 @@ interface Previsualizacion {
 }
 
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
+/** Los rechazos que se muestran junto al campo de las partes, no como aviso del formulario. */
+const DE_LAS_PARTES = ['suma_lineas_distinta', 'linea_sin_destino'];
+const FINALES = ['aprobado', 'descartado', 'autodescartado'];
 
 const ConfirmacionImpacto = lazy(() =>
   import('../../componentes/formularios/confirmacion-impacto').then((m) => ({
@@ -59,8 +64,10 @@ const ConfirmacionImpacto = lazy(() =>
 const Coincidencia = lazy(() =>
   import('./coincidencia').then((m) => ({ default: m.Coincidencia })),
 );
+const ResultadoDeAprobar = lazy(() => import('./resultado'));
 const YaResuelto = lazy(() => import('./ya-resuelto'));
-const FINALES = ['aprobado', 'descartado', 'autodescartado'];
+
+const Edicion = lazy(() => import('./edicion'));
 
 function TextoDelSms({ texto }: { readonly texto: string }) {
   return (
@@ -78,10 +85,11 @@ export function FormularioMovimiento(props: PropsFormularioMovimiento) {
   // cambie su estado al aprobar (el resultado es suyo).
   const [abierto] = useState(() => !FINALES.includes(props.movimiento.estado));
   if (abierto) return <Flujo {...props} />;
+  const aprobado = props.movimiento.estado === 'aprobado';
   return (
     <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
       <Suspense fallback={null}>
-        <YaResuelto aprobado={props.movimiento.estado === 'aprobado'}>
+        <YaResuelto aprobado={aprobado}>
           <TextoDelSms texto={props.movimiento.sms} />
         </YaResuelto>
       </Suspense>
@@ -89,7 +97,7 @@ export function FormularioMovimiento(props: PropsFormularioMovimiento) {
   );
 }
 
-function Flujo({ movimiento: m, categorias, traspaso }: PropsFormularioMovimiento) {
+function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFormularioMovimiento) {
   const editar = useOperacion({ accion: editarMovimiento });
   const aprobarSolo = useOperacion({ accion: aprobarMovimiento, creacion: true });
   const coincide = useOperacion({ accion: resolverCoincidencia, creacion: true });
@@ -97,68 +105,79 @@ function Flujo({ movimiento: m, categorias, traspaso }: PropsFormularioMovimient
   const aprobar = ['enviando', 'confirmando', 'listo'].includes(coincide.estado)
     ? coincide
     : aprobarSolo;
-  const [categoriaId, setCategoriaId] = useState(m.categoriaId ?? '');
+  const inicial = useMemo(() => camposIniciales(movimiento.esperado), [movimiento.esperado]);
+  const base = useRef(inicial); // lo último guardado en el servidor, para saber qué cambió
+  const visto = useRef(movimiento.esperado); // lo que vio la persona (FE-09), para OP-36
+  // lo que se aprueba (o confirma, OP-40) al terminar de guardar
+  const pendiente = useRef<{
+    campos: Campos;
+    entrada: Record<string, unknown>;
+    confirmando: boolean;
+  } | null>(null);
   const [recordar, setRecordar] = useState(false);
-  // la aprobación (o la confirmación de la coincidencia, OP-40) que sigue a guardar
-  const pendiente = useRef<{ entrada: Record<string, unknown>; confirmando: boolean } | null>(null);
+  const formulario = useFormularioFinn<Campos>({
+    contrato,
+    valoresIniciales: inicial,
+    operacion: editar,
+  });
+  const { control } = formulario;
+  const partes = useFieldArray({ control, name: 'lineas' });
+  const c = formulario.watch();
   const { enviar: aprobarAhora } = aprobarSolo;
   const { enviar: confirmarAhora } = coincide;
-  const conCategoria = m.tipo === 'gasto' && m.partes <= 1 && m.montoTexto !== null;
 
-  const { id, origenId } = m;
+  const entradaDeAprobar = (campos: Campos, confirmando: boolean): Record<string, unknown> => ({
+    ...(confirmando ? { decision: 'confirmar_coincidencia' } : {}),
+    movimientoId: movimiento.id,
+    ...(movimiento.origenId === undefined ? {} : { origenId: movimiento.origenId }),
+    ...(recordar && ofreceRecordar(campos) ? { recordarRegla: true } : {}),
+  });
+
+  // El traspaso de la lista (05 §4.15): se vuelve a aprobar y el servidor repite su mensaje o su confirmación
+  const { id: movimientoId, origenId } = movimiento;
   useEffect(() => {
     if (traspaso)
-      void aprobarAhora({ movimientoId: id, ...(origenId === undefined ? {} : { origenId }) });
-  }, [traspaso, id, origenId, aprobarAhora]);
+      void aprobarAhora({ movimientoId, ...(origenId === undefined ? {} : { origenId }) });
+  }, [traspaso, movimientoId, origenId, aprobarAhora]);
 
-  // Terminó de guardar la categoría: se aprueba
+  // Terminó de guardar los cambios: se aprueba lo que se guardó
   useEffect(() => {
     if (editar.estado !== 'listo' || pendiente.current === null) return;
-    const { entrada, confirmando } = pendiente.current;
+    const { campos, entrada, confirmando } = pendiente.current;
     pendiente.current = null;
+    base.current = campos;
     void (confirmando ? confirmarAhora : aprobarAhora)(entrada);
   }, [editar.estado, aprobarAhora, confirmarAhora]);
 
-  // «Aprobar» y «Confirmar» (coincidencia) guardan primero la categoría elegida y después aprueban (OP-37 u OP-40)
-  const enviar = (confirmando: boolean): void => {
-    const entrada = {
-      ...(confirmando ? { decision: 'confirmar_coincidencia' } : {}),
-      movimientoId: id,
-      ...(origenId === undefined ? {} : { origenId }),
-      ...(recordar && conCategoria && categoriaId !== '' ? { recordarRegla: true } : {}),
-    };
-    if (!conCategoria || categoriaId === '' || categoriaId === m.categoriaId) {
-      void (confirmando ? confirmarAhora : aprobarAhora)(entrada);
-      return;
-    }
-    pendiente.current = { entrada, confirmando };
-    void editar.enviar({
-      movimientoId: id,
-      lineas: [{ monto: m.montoTexto, destino: { categoriaId } }],
-      esperado: m.esperado,
-    });
-  };
+  // Lo que se guardó pasa a ser lo que se vio (la revalidación trae los valores nuevos)
+  useEffect(() => {
+    if (editar.estado === 'listo') visto.current = movimiento.esperado;
+  }, [editar.estado, movimiento.esperado]);
 
-  const alAprobar = (evento: SyntheticEvent): void => {
-    evento.preventDefault();
-    enviar(false);
-  };
+  // «Aprobar» y «Confirmar» (coincidencia) guardan primero lo que cambió y después aprueban (OP-37 u OP-40)
+  const alEnviar = (confirmando: boolean) =>
+    formulario.handleSubmit((campos) => {
+      const cambios = entradaDeEdicion(movimiento.id, base.current, campos, visto.current);
+      const entrada = entradaDeAprobar(campos, confirmando);
+      if (cambios === undefined) return (confirmando ? confirmarAhora : aprobarAhora)(entrada);
+      pendiente.current = { campos, entrada, confirmando };
+      return editar.enviar(cambios);
+    });
 
   const fallo = [editar, aprobarSolo, coincide].find((o) => o.estado === 'error')?.error;
+  const deLasPartes =
+    fallo !== undefined && DE_LAS_PARTES.includes(fallo.codigo) ? fallo.mensaje : undefined;
+  const conflicto = fallo?.codigo === 'conflicto_desactualizado';
   const vista = (aprobar.previsualizacion ?? {}) as Previsualizacion;
+  const enviando = editar.estado === 'enviando' || aprobar.estado === 'enviando';
 
   if (aprobar.estado === 'listo' && aprobar.exito !== undefined) {
     const valor = aprobar.exito.valor as ValorAprobado;
     return (
       <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
-        <div className="flex flex-col gap-4">
-          <Resultado
-            texto={textoAprobado(valor)}
-            enlace={
-              <EnlaceFinn href={`/actividad/${valor.transaccionId}`}>{t.verTransaccion}</EnlaceFinn>
-            }
-          />
-        </div>
+        <Suspense fallback={null}>
+          <ResultadoDeAprobar valor={valor} />
+        </Suspense>
       </PaginaFlujoDeRuta>
     );
   }
@@ -192,31 +211,45 @@ function Flujo({ movimiento: m, categorias, traspaso }: PropsFormularioMovimient
       </PaginaFlujoDeRuta>
     );
 
+  const falta = faltaRepartir(
+    c.total,
+    c.lineas.map((l) => l.monto),
+  );
+  const ayuda =
+    falta === undefined
+      ? undefined
+      : falta > 0
+        ? g.faltaRepartir(formatearMonto(falta))
+        : falta < 0
+          ? g.sobraRepartir
+          : g.todoRepartido;
+
   return (
     <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
-      <form onSubmit={alAprobar} className="flex flex-col gap-5">
-        {m.coincidencia === undefined ? null : (
+      <form onSubmit={(e) => void alEnviar(false)(e)} noValidate className="flex flex-col gap-5">
+        {movimiento.coincidencia === undefined ? null : (
           <Suspense fallback={null}>
             <Coincidencia
-              coincidencia={m.coincidencia}
+              coincidencia={movimiento.coincidencia}
               enviando={coincide.estado === 'enviando'}
               deshabilitado={!coincide.enLinea}
-              alConfirmar={() => {
-                enviar(true);
-              }}
+              alConfirmar={() => void alEnviar(true)()}
             />
           </Suspense>
         )}
-        <TextoDelSms texto={m.sms} />
-        {conCategoria ? (
-          <Seleccion
-            etiqueta={t.revisar.categoria}
-            opciones={categorias.map((x) => ({ valor: x.id, etiqueta: x.nombre }))}
-            valor={categoriaId}
-            alCambiar={setCategoriaId}
+        <TextoDelSms texto={movimiento.sms} />
+        <Suspense fallback={null}>
+          <Edicion
+            formulario={formulario}
+            partes={partes}
+            cuentas={cuentas}
+            categorias={categorias}
+            deudores={deudores}
+            deLasPartes={deLasPartes}
+            ayuda={ayuda}
           />
-        ) : null}
-        {conCategoria && categoriaId !== '' && m.comercio !== null ? (
+        </Suspense>
+        {ofreceRecordar(c) ? (
           <label className="flex min-h-11 items-center gap-3 rounded-contenedor bg-superficie px-3.5">
             <input
               type="checkbox"
@@ -229,22 +262,28 @@ function Flujo({ movimiento: m, categorias, traspaso }: PropsFormularioMovimient
             <span>{t.revisar.recordar}</span>
           </label>
         ) : null}
-        {fallo === undefined ? null : (
+        {fallo !== undefined &&
+        deLasPartes === undefined &&
+        !Object.values(fallo.campos ?? {}).includes(fallo.mensaje) ? (
           <AvisoEnLinea
             estado="problema"
             aparecioDespues
-            {...(REINTENTABLES.includes(fallo.categoria)
+            {...(conflicto || REINTENTABLES.includes(fallo.categoria)
               ? {
                   accion: (
                     <Boton
                       variante="secundaria"
-                      onClick={() =>
-                        void [editar, aprobarSolo, coincide]
-                          .find((o) => o.estado === 'error')
-                          ?.reintentar()
-                      }
+                      onClick={() => {
+                        if (conflicto) {
+                          visto.current = { ...visto.current, ...fallo.datos };
+                          editar.volverAEditar();
+                        } else
+                          void [editar, aprobarSolo, coincide]
+                            .find((o) => o.estado === 'error')
+                            ?.reintentar();
+                      }}
                     >
-                      {formularios.intentarDeNuevo}
+                      {conflicto ? formularios.usarValorActual : formularios.intentarDeNuevo}
                     </Boton>
                   ),
                 }
@@ -252,10 +291,10 @@ function Flujo({ movimiento: m, categorias, traspaso }: PropsFormularioMovimient
           >
             {fallo.mensaje}
           </AvisoEnLinea>
-        )}
+        ) : null}
         <Boton
           tipo="submit"
-          enviando={editar.estado === 'enviando' || aprobar.estado === 'enviando'}
+          enviando={enviando}
           textoEnviando={t.revisar.aprobando}
           deshabilitado={!aprobar.enLinea}
           {...(aprobar.motivoSinEnvio === undefined
