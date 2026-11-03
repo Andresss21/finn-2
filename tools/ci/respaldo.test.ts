@@ -1,6 +1,7 @@
 // PRU-SEG-OPER-104 (TA-261; 02 ADR-22; 04 §16.1 a §16.3; 07 §6.1, §32.3; DT-17): lee .github/workflows/respaldo.yml, y
 // comprueba con dobles que tools/respaldo/subir.mjs no registra un respaldo que no subió. Ninguna prueba toca B2, la
 // base ni la app.
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -64,7 +65,7 @@ describe('PRU-SEG-OPER', () => {
     const catalogo = pasos.findIndex((p) => p.id === 'catalogo-desplegado');
     expect(catalogo).toBeGreaterThan(pasos.indexOf(paso('registrar')));
     expect(catalogo).toBeLessThan(pasos.indexOf(paso('controles')));
-    expect(pasos[catalogo]?.run).toContain("git tag --sort=-v:refname 'desplegado-*'");
+    expect(pasos[catalogo]?.run).toContain("git tag --list --sort=-v:refname 'desplegado-*'");
     // Cada paso recibe solo sus secretos; los de preparación, ninguno
     const secretos = (p: Paso): string[] => Object.keys(p.env ?? {}).sort();
     expect(secretos(paso('version'))).toEqual(['RESPALDO_DB_URL']);
@@ -105,6 +106,39 @@ describe('PRU-SEG-OPER', () => {
     expect(herramientas).toContain('apt.postgresql.org.sh');
     expect(herramientas).toContain('postgresql-client-${PG_MAYOR}');
     expect(herramientas).toMatch(/\bage\b/);
+  });
+
+  it('PRU-SEG-OPER-113 [M4] etiqueta vigente (CH-106; 04 §16.3 paso 5): el comando de catalogo-desplegado, ejecutado en un repositorio con desplegado-9-1, -10-1 y -10-2, devuelve desplegado-10-2, y lo que restaura existe', () => {
+    const run = pasos.find((p) => p.id === 'catalogo-desplegado')?.run ?? '';
+    // `etiqueta=$(git … | head -n 1)`: se corre la parte de git tal cual y se toma su primera línea
+    const m = /etiqueta=\$\(git (.+) \| head -n 1\)/.exec(run);
+    expect(m, run).not.toBeNull();
+    const args = (m?.[1] ?? '').split(' ').map((a) => a.replace(/^'(.*)'$/, '$1'));
+    const repo = mkdtempSync(join(tmpdir(), 'finn-etiquetas-'));
+    try {
+      // Sin la configuración del usuario (tag.sort, firmas): solo cuenta lo que dice el comando
+      const vacia = join(repo, 'gitconfig-vacia');
+      writeFileSync(vacia, '');
+      const env = { ...process.env, GIT_CONFIG_GLOBAL: vacia, GIT_CONFIG_NOSYSTEM: '1' };
+      const git = (a: string[], input?: string): string => {
+        const r = spawnSync('git', a, { cwd: repo, env, encoding: 'utf8', input });
+        if (r.status !== 0) throw new Error(`git ${a.join(' ')}: ${r.stderr}`);
+        return r.stdout;
+      };
+      git(['init', '-q']);
+      // Etiquetas livianas sobre un blob: no hace falta commit ni identidad
+      const blob = git(['hash-object', '-w', '--stdin'], 'x').trim();
+      for (const t of ['desplegado-9-1', 'desplegado-10-1', 'desplegado-10-2'])
+        git(['tag', t, blob]);
+      expect(git(args).split('\n')[0]).toBe('desplegado-10-2');
+      expect(git(['tag', '--list']).split('\n').filter(Boolean)).toHaveLength(3);
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+    // `git checkout "$etiqueta" -- …`: cada archivo existe en el árbol (la etiqueta vigente sale de main)
+    const restaura = /git checkout "\$etiqueta" -- (.+)/.exec(run)?.[1]?.split(' ') ?? [];
+    expect(restaura.length).toBeGreaterThan(0);
+    for (const f of restaura) expect(existsSync(join(raiz, f)), f).toBe(true);
   });
 });
 

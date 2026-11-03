@@ -94,6 +94,9 @@ export function Seleccion({
           </Label>
         ))}
       </RadioGroup>
+      {descripcion === undefined ? null : (
+        <p className="text-sm text-texto-secundario">{descripcion}</p>
+      )}
       {error === undefined ? null : <MensajeError>{error}</MensajeError>}
     </div>
   );
