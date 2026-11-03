@@ -54,7 +54,8 @@ describe('PRU-SEG-OPER', () => {
     expect(Object.keys(wf.on).sort()).toEqual(['schedule', 'workflow_dispatch']);
     expect(wf.jobs['respaldo']?.['runs-on']).toBe('ubuntu-24.04');
     expect(wf.concurrency).toEqual({ group: 'respaldo', 'cancel-in-progress': false });
-    expect(wf.permissions).toEqual({ contents: 'read' });
+    // actions: read, solo para bajar el artefacto del control de dinero del día anterior (CH-91)
+    expect(wf.permissions).toEqual({ contents: 'read', actions: 'read' });
     // 04 §16.3: volcar, cifrar y subir, OPT-09 y, al final, los controles contra el commit desplegado
     const orden = ['version', 'volcar', 'subir', 'registrar', 'controles'].map((s) =>
       pasos.indexOf(paso(s)),
@@ -78,7 +79,23 @@ describe('PRU-SEG-OPER', () => {
     expect(secretos(paso('registrar'))).toEqual(['FINN_URL', 'RESPALDO_SECRET']);
     expect(secretos(paso('controles'))).toEqual(['FINN_URL', 'RESPALDO_DB_URL', 'RESPALDO_SECRET']);
     expect(crudo).not.toMatch(/AGE_PRIVATE_KEY|R2_/);
-    for (const p of pasos.filter((x) => !x.run?.startsWith('node tools/respaldo/subir.mjs')))
+    // 07 §31.1 (TA-262, CH-91): el control de dinero es lo último; mide, sube el artefacto y recién entonces juzga
+    const control = (sub: string): number =>
+      pasos.findIndex((p) => p.run === `node tools/respaldo/control-dinero.ts ${sub}`);
+    const anterior = pasos.findIndex((p) => p.id === 'control-anterior');
+    const subida = pasos.findIndex((p) => p.uses?.startsWith('actions/upload-artifact@'));
+    expect([anterior, control('medir'), subida, control('juzgar')]).toEqual(
+      [0, 1, 2, 3].map((i) => pasos.length - 4 + i),
+    );
+    expect(anterior).toBeGreaterThan(pasos.indexOf(paso('controles')));
+    expect(pasos[control('medir')]?.env).toEqual({
+      RESPALDO_DB_URL: '${{ secrets.RESPALDO_DB_URL }}',
+    });
+    expect(pasos[anterior]?.env).toEqual({ GH_TOKEN: '${{ github.token }}' });
+    const conEnv = new Set([pasos[control('medir')], pasos[anterior]]);
+    for (const p of pasos.filter(
+      (x) => !x.run?.startsWith('node tools/respaldo/subir.mjs') && !conEnv.has(x),
+    ))
       expect(p.env, p.run ?? p.uses).toBeUndefined();
     for (const p of pasos.filter((x) => x.uses !== undefined))
       expect(p.uses).toMatch(/^[\w.-]+\/[\w.-]+(\/[\w.-]+)?@[0-9a-f]{40}$/);
