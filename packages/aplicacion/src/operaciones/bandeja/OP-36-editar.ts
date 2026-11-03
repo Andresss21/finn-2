@@ -1,5 +1,5 @@
 // OP-36 Editar movimiento (04 §3.6): valor absoluto (4.6.2); las líneas se comparan en orden, como en `esperado`.
-import type { Hechos } from '@finn/dominio';
+import type { Hechos, Uuid } from '@finn/dominio';
 import {
   CAMPOS_OP36,
   op36,
@@ -20,7 +20,10 @@ type Campo = (typeof CAMPOS_OP36)[number];
 
 const EDITABLES = ['pendiente', 'con_coincidencia', 'posible_duplicado', 'no_reconocido', 'error'];
 
-/** El destino pedido de cada línea como tres columnas; `deudorNuevo` se reconoce por nombre sin mayúsculas. */
+/**
+ * El destino pedido de cada línea como tres columnas; `deudorNuevo` se reconoce por nombre sin mayúsculas. Un nombre que aún no
+ * es deudor no es «sin destino»: lleva una marca propia para no confundirse con la línea sin destino que ya tiene el movimiento.
+ */
 const lineasPedidas = (h: Hechos, lineas: NonNullable<EntradaOp36['lineas']>): LineaVista[] =>
   lineas.map(({ monto, destino: d = {} }) => {
     const nuevo = 'deudorNuevo' in d ? d.deudorNuevo.toLowerCase() : undefined;
@@ -29,7 +32,8 @@ const lineasPedidas = (h: Hechos, lineas: NonNullable<EntradaOp36['lineas']>): L
     return {
       monto,
       categoriaId: 'categoriaId' in d ? d.categoriaId : null,
-      deudorId: nuevo === undefined && !('deudorId' in d) ? null : (deudor ?? null),
+      deudorId:
+        nuevo === undefined && !('deudorId' in d) ? null : (deudor ?? (`nuevo:${nuevo}` as Uuid)),
       lineaOriginalId: 'lineaOriginalId' in d ? d.lineaOriginalId : null,
     };
   });
