@@ -84,9 +84,14 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(otra.getByTestId('resultado')).toContainText(t.aprobado('Super', '$13.00'));
     await otra.close();
 
-    await aprobar(page, '$12.00').click();
-    await aprobar(page, '$13.00').click();
-    await aprobar(page, '$14.00').click();
+    // Los tres toques seguidos, en el mismo instante: la revalidación del primero no los alcanza a quitar
+    await page.evaluate(() => {
+      document
+        .querySelectorAll<HTMLButtonElement>('[data-movimiento] button[aria-label^="Aprobar"]')
+        .forEach((b) => {
+          b.click();
+        });
+    });
 
     await expect(page.getByTestId('resultado')).toHaveCount(2);
     for (const monto of ['$12.00', '$14.00'])
