@@ -61,7 +61,14 @@ describe('te falta reservar por tarjeta', () => {
     const i = await estado(
       [
         { op: 'OP-01', cuenta: 'Cuenta corriente', saldo: 3000, ...apertura },
-        { op: 'OP-01', cuenta: 'Visa Oro', tipo: 'tarjeta', diaCorte: 25, diaPago: 15, ...apertura },
+        {
+          op: 'OP-01',
+          cuenta: 'Visa Oro',
+          tipo: 'tarjeta',
+          diaCorte: 25,
+          diaPago: 15,
+          ...apertura,
+        },
       ],
       '2026-10-18',
     );

@@ -37,8 +37,20 @@ const ACTIVO = {
   diasTranscurridos: 10,
   diasRestantes: 18,
 };
-const FUTURO = { inicio: '2027-03-21', fin: '2027-04-20', dias: 31, estado: 'futuro', transicion: false };
-const CERRADO = { inicio: '2027-01-21', fin: '2027-02-20', dias: 31, estado: 'cerrado', transicion: false };
+const FUTURO = {
+  inicio: '2027-03-21',
+  fin: '2027-04-20',
+  dias: 31,
+  estado: 'futuro',
+  transicion: false,
+};
+const CERRADO = {
+  inicio: '2027-01-21',
+  fin: '2027-02-20',
+  dias: 31,
+  estado: 'cerrado',
+  transicion: false,
+};
 const ID = '11111111-1111-4111-8111-111111111111';
 const TARJETA = '22222222-2222-4222-8222-222222222222';
 const hoyCero = { deuda: 0, saldoAFavor: 0, reservado: 0, faltaReservar: 0, reservaExcedente: 0 };
@@ -86,7 +98,7 @@ const mostrar = (d: DetalleCategoriaDto): HTMLElement => {
   montados.push({ raiz, nodo });
   return nodo;
 };
-const texto = (n: HTMLElement): string => n.textContent ?? '';
+const texto = (n: HTMLElement): string => n.textContent;
 
 describe('PRU-CMP-PRES categoría de pago de tarjeta', () => {
   it('PRU-CMP-PRES-110 [CA-29.3, AV-04, AV-07] con te falta reservar $30.00 y un pago excedente de $20.00 el número principal es «Te falta reservar $30.00» y AV-04 por $20.00 va aparte, como información secundaria', () => {

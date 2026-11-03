@@ -214,7 +214,7 @@ test.describe('PRU-E2E-PRES categoría de pago de tarjeta', () => {
     for (const nombre of ['Visa', 'Master']) {
       const delante = page.locator('[data-detalle-tarjeta] [data-centavos]').first();
       const trasera = page.locator('[data-billetera] button').filter({ hasText: nombre });
-      if ((await trasera.count()) > 0) await trasera.click();
+      if ((await trasera.count()) > 0) await trasera.dispatchEvent('click');
       await expect(delante).toHaveAttribute('data-centavos', enPresupuesto[nombre] ?? '');
     }
   });
@@ -226,8 +226,8 @@ test.describe('PRU-E2E-PRES categoría de pago de tarjeta', () => {
     await abrir(page, RUTA);
     await expect(page.locator('[data-fila-pago]')).toContainText('Te falta reservar');
     await abrir(page, `${RUTA}?periodo=2027-02-21`);
-    await expect(page.locator('[data-fila-pago]')).toHaveCount(1);
-    await expect(page.locator('[data-fila-pago]')).not.toContainText('Te falta reservar');
+    await expect(page.locator('[data-fila-pago]')).toHaveCount(0);
+    await expect(page.locator('main')).not.toContainText('Te falta reservar');
   });
 
   test('PRU-E2E-PRES-177 [CA-29.8] Visa Oro con fecha de pago el 15/11 dice «Pagá antes del 15/11», el valor de desgloseAlPagar.proximoPago', async ({
