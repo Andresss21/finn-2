@@ -415,7 +415,7 @@
 
   "TA-308": { "estado": "terminada", "rama": "ta-308-actividad-2", "pr": 317 },
 
-  "TA-309": { "estado": "terminada", "rama": "ta-309-detalle-edicion", "pr": 326 },
+  "TA-309": { "estado": "en_curso", "rama": "ta-309-detalle-2" },
 
   "TA-310": { "estado": "pendiente" },
 
