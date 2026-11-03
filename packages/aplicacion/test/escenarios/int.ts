@@ -847,6 +847,32 @@ export async function copiarEstadoA(s: Estado, destino: string): Promise<void> {
   await comoAdmin(`ALTER DATABASE ${destino} SET finn.reloj_simulado = on`);
 }
 
+/** Una notificación [T] que la E2E agrega al estado sembrado (04 §3.10); `datos.destino` es el de BE-38. */
+export interface NotificacionSembrada {
+  readonly aviso: string;
+  readonly motivo: string;
+  readonly titulo: string;
+  readonly cuerpo: string;
+}
+
+/**
+ * Lo que ninguna operación registra todavía (el AV-01 de BE-38 lo registrará `posteriores()` en FT-27): la fila va a la fuente,
+ * antes de `copiarEstadoA`. Las notificaciones no son de las 18 tablas [M] y no cambian `finn.revision`.
+ */
+export async function sembrarNotificaciones(
+  s: Estado,
+  filas: readonly NotificacionSembrada[],
+): Promise<void> {
+  const literal = (t: string) => `'${t.replaceAll("'", "''")}'`;
+  for (const f of filas)
+    await consultarSql(
+      s.base.urlAdmin,
+      `INSERT INTO finn.notificaciones (id, aviso, motivo, titulo, cuerpo, datos)
+       VALUES (gen_random_uuid(), ${literal(f.aviso)}, ${literal(f.motivo)}, ${literal(f.titulo)}, ${literal(f.cuerpo)},
+               '{"destino":{"pantalla":"inicio"}}'::jsonb)`,
+    );
+}
+
 export const ejecutorInt: Ejecutor<Estado> = {
   nombre: 'int',
   async iniciar(e: Escenario, hoy: string) {
