@@ -157,6 +157,7 @@ describe('PRU-CMP-CTA-102 bandeja y gráficos', () => {
     const nombres = [...raiz.querySelectorAll('button')].map((b) => b.getAttribute('aria-label'));
     expect(nombres).toEqual([
       'Aprobar SUPER SELECTOS',
+      'Descartar SUPER SELECTOS',
       'Es otro gasto SUPER SELECTOS',
       'Descartar SUPER SELECTOS',
       'Intentar de nuevo SUPER SELECTOS',

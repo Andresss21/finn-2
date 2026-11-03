@@ -52,7 +52,10 @@ const ENLACE: Readonly<Partial<Record<Vista, string>>> = {
   faltaOtro: t.completarDatos,
 };
 const ACCIONES: Readonly<Partial<Record<Vista, readonly (readonly [AccionBandeja, string])[]>>> = {
-  listo: [['aprobar', t.aprobar]],
+  listo: [
+    ['aprobar', t.aprobar],
+    ['descartar', t.descartar],
+  ],
   duplicado: [
     ['es-otro-gasto', t.esOtroGasto],
     ['descartar', t.descartar],
