@@ -79,7 +79,7 @@
   { "patron": "apps/web/src/flujos/presupuesto-estructura/**", "fts": ["FT-18"] },
   {
     "patron": "apps/web/src/servidor/acciones/presupuesto.ts",
-    "fts": ["FT-10", "FT-11", "FT-17"]
+    "fts": ["FT-10", "FT-11", "FT-12", "FT-17"]
   },
   { "patron": "apps/web/src/app/(finn)/metas/**", "fts": ["FT-17"] },
   { "patron": "apps/web/src/app/(finn)/actividad/**", "fts": ["FT-24"] },
@@ -114,7 +114,7 @@
     "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/asignar/**",
     "fts": ["FT-10"]
   },
-  { "patron": "apps/web/src/flujos/presupuesto-asignar-categoria/**", "fts": ["FT-10"] },
+  { "patron": "apps/web/src/flujos/presupuesto-asignar-categoria/**", "fts": ["FT-10", "FT-12"] },
   { "patron": "apps/web/src/app/(finn)/cuentas/*.tsx", "fts": ["FT-51"] },
   { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/*.tsx", "fts": ["FT-52"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/*.tsx", "fts": ["FT-09"] },

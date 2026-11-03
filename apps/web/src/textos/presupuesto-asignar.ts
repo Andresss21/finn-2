@@ -25,4 +25,15 @@ export const presupuestoAsignar = {
   valorActual: (monto: string) => `El valor actual de ${glosario.asignado} es ${monto}.`,
   usarValorActual: 'Usar el valor actual',
   listo: 'Asignación guardada',
+  // FT-12 (06 FT-12, Errores y textos): cada opción con su monto; "Tu promedio de gasto" dice cuántos períodos promedia si son menos de 3.
+  rapida: {
+    titulo: 'Asignación rápida',
+    faltaMeta: 'Lo que falta para la meta',
+    periodoPasado: 'Lo mismo que el período pasado',
+    cubrirSobregiro: 'Cubrir el sobregiro',
+    promedio: (periodos: number) =>
+      periodos >= 3
+        ? 'Tu promedio de gasto'
+        : `Tu promedio de gasto (${periodos} ${periodos === 1 ? 'período' : 'períodos'})`,
+  },
 } as const;
