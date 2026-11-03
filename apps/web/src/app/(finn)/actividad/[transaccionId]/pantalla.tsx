@@ -108,6 +108,7 @@ export function PantallaDetalleTransaccion({
 }) {
   const x = dto.transaccion;
   const origen = volver ?? '/actividad';
+  const editar = `/actividad/${x.id}/editar${volver === undefined ? '' : `?volver=${encodeURIComponent(volver)}`}`;
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4">
       <PublicarEncabezado encabezado={dto} />
@@ -125,6 +126,9 @@ export function PantallaDetalleTransaccion({
           <Dato rotulo={t.periodo}>{formatearPeriodoCorto(x.periodo)}</Dato>
           {x.nota === null || x.nota === '' ? null : <Dato rotulo={t.nota}>{x.nota}</Dato>}
         </dl>
+        <EnlaceFinn href={editar} className={ENLACE}>
+          {t.editar}
+        </EnlaceFinn>
       </header>
       <Origen dto={dto} />
       <section aria-label={t.cuentas} className="flex flex-col gap-1">
