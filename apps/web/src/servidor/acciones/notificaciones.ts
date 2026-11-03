@@ -8,6 +8,7 @@ import { errorInterno } from '@finn/aplicacion/autenticacion';
 import type { ResultadoAccion } from '@finn/aplicacion/errores';
 import { marcarNotificacionesLeidas } from '@finn/aplicacion/operaciones/notificaciones';
 import { eliminarSuscripcionPush, registrarSuscripcionPush } from '@finn/aplicacion/push/enviar';
+import { ARBOL_CON_DATOS } from '../revalidar.ts';
 import { exigirSesionAal2 } from '../sesion.ts';
 
 const opciones = () => ({ reloj: relojDePrueba() });
@@ -32,7 +33,7 @@ export async function marcarLeidas(
   if (!sesion.ok) return { ok: false, error: sesion.error };
   try {
     const r = await marcarNotificacionesLeidas(cruda, opciones);
-    if (r.ok) revalidatePath('/', 'layout');
+    if (r.ok) revalidatePath(ARBOL_CON_DATOS, 'layout');
     return r;
   } catch {
     return { ok: false, error: errorInterno() };

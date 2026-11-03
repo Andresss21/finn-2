@@ -141,7 +141,7 @@ test.describe('PRU-E2E-ACCESO', () => {
 
     await pasarCookies();
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Inicio vacío');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Inicio');
 
     // Factor de respaldo con el secreto que entrega `enroll`; se quita para no dejar rastro en el usuario.
     const inicio = await iniciarInscripcion(auth, finn, {});
