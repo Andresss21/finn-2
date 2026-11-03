@@ -8,6 +8,8 @@
   "cls": 0.1,
   "inpMs": 200,
   "ejemplosDeRuta": {
+    "/actividad/[transaccionId]": "/actividad/00000000-0000-4000-8000-000000000001",
+    "/actividad/[transaccionId]/editar": "/actividad/00000000-0000-4000-8000-000000000001/editar",
     "/bandeja/[movimientoId]": "/bandeja/00000000-0000-4000-8000-000000000001",
     "/cuentas/[cuentaId]/cuota": "/cuentas/00000000-0000-4000-8000-000000000001/cuota",
     "/cuentas/[cuentaId]/verificar-saldo": "/cuentas/00000000-0000-4000-8000-000000000001/verificar-saldo",
