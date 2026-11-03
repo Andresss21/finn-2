@@ -82,5 +82,4 @@ export const categoriaDetalle = {
       programadas: 'No se puede archivar: tiene programadas activas.',
     },
   },
-  pago: { titulo: 'Categoría de pago de tarjeta' },
 } as const;
