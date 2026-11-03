@@ -2794,7 +2794,7 @@ Reglas comunes a todas las fichas:
 
 **Criterios de aceptación.**
 - **CA-37.1** Dado un pendiente, cuando lo descarto, entonces sale de la lista y en su lugar queda "Descartaste {comercio} {monto}. Restaurar"; al restaurar, vuelve a la lista.
-- **CA-37.2** Dado un autodescartado, cuando lo restauro desde la vista de descartados, entonces se reevalúa y queda como posible duplicado del original (mismo texto, misma cuenta y monto).
+- **CA-37.2** Dado un autodescartado, cuando lo restauro desde la vista de descartados, entonces se reevalúa (HZ-2): queda pendiente, porque su texto es idéntico al del original y 01 §4.17 exige texto distinto para el posible duplicado; si cumple otro criterio, queda con coincidencia o como posible duplicado de otro movimiento **[CH-101]**.
 - **CA-37.3** Dado un posible duplicado, cuando toco "Es otro gasto", entonces pasa a pendiente sin candidata y no aparece ninguna salida para revertir.
 - **CA-37.4** Dado una coincidencia rechazada, cuando el movimiento cumple el criterio de duplicado, entonces pasa a posible duplicado; si no, a pendiente; y la ocurrencia sigue pendiente.
 - **CA-37.5** Dado dos SMS que corresponden a la misma ocurrencia, cuando el primero se emparejó, entonces el segundo no se empareja: se evalúa como posible duplicado (CB-16).

@@ -97,7 +97,7 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(filas(page)).toContainText('Super');
   });
 
-  test('PRU-E2E-BAND-151 [CA-37.2] un autodescartado se ve en la vista de descartados y al restaurarlo vuelve como posible duplicado del original', async ({
+  test('PRU-E2E-BAND-151 [CA-37.2] un autodescartado se ve en la vista de descartados y al restaurarlo se reevalúa y queda pendiente, porque su texto es idéntico al del original', async ({
     page,
   }) => {
     await preparar([
@@ -110,15 +110,16 @@ test.describe('PRU-E2E-BAND', () => {
 
     await page.getByRole('button', { name: accion(t.restaurar, 'Libreria') }).click();
     await expect(page.getByTestId('resultado')).toContainText(t.restauraste('Libreria $7.00'));
-    // Quedó como posible duplicado: admite «Descartar» como salida
+    // Quedó pendiente: admite «Descartar» como salida
     await expect(page.getByTestId('resultado').getByRole('button')).toHaveText(
       cuentas.bandeja.descartar,
     );
 
     await abrir(page);
     await expect(filas(page)).toHaveCount(2);
-    await expect(page.locator('[data-vista="duplicado"]')).toHaveCount(1);
-    await expect(page.locator('[data-vista="duplicado"]')).toContainText('Libreria');
+    // CH-101: el texto es idéntico al del original (01 §4.17 exige texto distinto): queda pendiente, sin candidata
+    await expect(page.locator('[data-vista="duplicado"]')).toHaveCount(0);
+    await expect(page.locator('[data-vista="falta"]')).toHaveCount(2);
     await abrir(page, '/bandeja?vista=descartados');
     await expect(page.getByText(t.descartados.vacio.titulo)).toBeVisible();
   });
