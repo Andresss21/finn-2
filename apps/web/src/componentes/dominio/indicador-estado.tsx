@@ -15,15 +15,15 @@ export const COLOR_TEXTO: Readonly<Record<EstadoFinanciero, string>> = {
   informacion: 'text-informacion-texto',
 };
 
-const COLOR_PASTILLA: Readonly<Record<EstadoFinanciero, string>> = {
-  positivo: 'bg-positivo-fondo border-positivo-borde text-positivo-texto',
-  cero: 'bg-cero-fondo border-cero-borde text-cero-texto',
-  problema: 'bg-problema-fondo border-problema-borde text-problema-texto',
-  advertencia: 'bg-advertencia-fondo border-advertencia-borde text-advertencia-texto',
-  deuda: 'bg-deuda-fondo border-deuda-borde text-deuda-texto',
-  'deuda-sin-respaldo':
-    'bg-deuda-sin-respaldo-fondo border-deuda-sin-respaldo-borde text-deuda-sin-respaldo-texto',
-  informacion: 'bg-informacion-fondo border-informacion-borde text-informacion-texto',
+// Círculo de 20 px con el fondo del estado; el glifo lleva el color de texto del estado (A.6 §2.4, sin cajita).
+const COLOR_CIRCULO: Readonly<Record<EstadoFinanciero, string>> = {
+  positivo: 'bg-positivo-fondo text-positivo-texto',
+  cero: 'bg-cero-fondo text-cero-texto',
+  problema: 'bg-problema-fondo text-problema-texto',
+  advertencia: 'bg-advertencia-fondo text-advertencia-texto',
+  deuda: 'bg-deuda-fondo text-deuda-texto',
+  'deuda-sin-respaldo': 'bg-deuda-sin-respaldo-fondo text-deuda-sin-respaldo-texto',
+  informacion: 'bg-informacion-fondo text-informacion-texto',
 };
 
 interface PropsIndicadorEstado {
@@ -32,18 +32,33 @@ interface PropsIndicadorEstado {
   readonly etiqueta: string;
   /** Con `false` el nombre queda solo para lectores de pantalla y el glifo lleva la señal visible. */
   readonly visible?: boolean;
+  /** Sobre el grafito del billete la etiqueta va en `texto-sobre-marca`; el círculo conserva el color del estado. */
+  readonly sobreMarca?: boolean;
 }
 
-export function IndicadorEstado({ estado, etiqueta, visible = true }: PropsIndicadorEstado) {
+export function IndicadorEstado({
+  estado,
+  etiqueta,
+  visible = true,
+  sobreMarca = false,
+}: PropsIndicadorEstado) {
   return (
     <span
       data-estado={estado}
       className={[
-        'inline-flex items-center gap-1.5 rounded-pastilla border px-2 py-0.5 text-etiqueta',
-        COLOR_PASTILLA[estado],
+        'inline-flex items-center gap-2 text-etiqueta font-semibold',
+        sobreMarca ? 'text-texto-sobre-marca' : COLOR_TEXTO[estado],
       ].join(' ')}
     >
-      <Icono nombre={estado} tamano={16} />
+      <span
+        aria-hidden="true"
+        className={[
+          'inline-flex size-5 flex-none items-center justify-center rounded-full',
+          COLOR_CIRCULO[estado],
+        ].join(' ')}
+      >
+        <Icono nombre={estado} tamano={13} />
+      </span>
       <span className={visible ? '' : 'sr-only'}>{etiqueta}</span>
     </span>
   );
