@@ -25,7 +25,12 @@ export interface MovimientoDto {
   readonly tipoPropuesto?: string | null;
   readonly comercio: string | null;
   readonly categoriaSugerida: { readonly nombre: string; readonly porRegla: boolean } | null;
-  readonly aprobacion: { readonly posible: boolean; readonly faltantes: readonly string[] };
+  readonly aprobacion: {
+    readonly posible: boolean;
+    readonly faltantes: readonly string[];
+    /** Por qué `bandeja()` no lo incluye en «Aprobar todos» (FT-36); ausente si es elegible. */
+    readonly motivoNoElegible?: string;
+  };
   /** Solo en un pago de tarjeta (BE-41): la cuenta de la que salió el último pago. */
   readonly origenPropuesto?: { readonly id: string };
 }

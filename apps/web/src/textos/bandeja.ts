@@ -50,6 +50,19 @@ export const bandeja = {
   dividido: (n: number) => `Dividido en ${n} partes`,
   porCobrarA: (nombre: string) => `Por cobrar: ${nombre}`,
   verTransaccion: 'Ver transacción',
+  // FT-36: Aprobar todos (OP-38) y AV-19. «Aprobar todos ({n})» es nuevo; los motivos son los de 04 OP-38
+  aprobarTodos: {
+    boton: (n: number) => `Aprobar todos (${n})`,
+    aprobando: 'Aprobando…',
+    aprobaste: (n: number) => `Aprobaste ${n} ${n === 1 ? 'movimiento' : 'movimientos'}.`,
+    noAprobados: (n: number) =>
+      n === 1 ? 'No se aprobó 1 movimiento' : `No se aprobaron ${n} movimientos`,
+    sinComercio: 'Movimiento sin comercio',
+    motivos: {
+      requiere_revision_individual: 'Requiere revisión individual (afecta un período cerrado).',
+      pago_sin_origen: 'Elegí de qué cuenta salió el pago.',
+    } as Readonly<Record<string, string>>,
+  },
   revisar: {
     titulo: 'Revisar movimiento',
     sms: 'Texto del SMS',

@@ -82,7 +82,11 @@ export default async function PaginaBandeja({
       <PublicarEncabezado encabezado={dto} />
       <h1 className="text-titulo-pantalla">{t.titulo}</h1>
       {selector}
-      <ListaBandeja contadores={dto.contadores} movimientos={movimientos} />
+      <ListaBandeja
+        contadores={dto.contadores}
+        elegibles={dto.elegiblesAprobarTodos}
+        movimientos={movimientos}
+      />
     </main>
   );
 }
