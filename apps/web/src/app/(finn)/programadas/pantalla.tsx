@@ -12,7 +12,7 @@ import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { formatearFechaTexto } from '../../../formato';
 import { gestionarProgramada } from '../../../servidor/acciones/programadas';
 import { programadas as t } from '../../../textos/programadas';
-import { Activar } from '../../../flujos/programadas/activar';
+import { Activar } from './activar';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const CONTENEDOR =

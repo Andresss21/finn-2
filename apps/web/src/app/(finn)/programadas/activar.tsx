@@ -3,10 +3,10 @@
 // Al terminar queda el `Resultado` en el lugar, con la operación inversa como salida (sin tiempo límite). La página se vuelve a leer
 // sola porque la Server Action revalida el marco; por eso el estado inicial se guarda al montar. No calcula nada (PF-3).
 import { useState } from 'react';
-import { Boton } from '../../componentes/base/boton';
-import { Resultado } from '../../componentes/base/resultado';
-import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
-import { programadas as t } from '../../textos/programadas';
+import { Boton } from '../../../componentes/base/boton';
+import { Resultado } from '../../../componentes/base/resultado';
+import { useOperacion, type AccionEscritura } from '../../../formularios/use-operacion';
+import { programadas as t } from '../../../textos/programadas';
 
 export function Activar({
   programadaId,
