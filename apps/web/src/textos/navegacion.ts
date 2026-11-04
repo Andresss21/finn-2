@@ -4,6 +4,7 @@ export const navegacion = {
   saltar: 'Saltar al contenido',
   principal: 'Navegación principal',
   secundarias: 'Más secciones',
+  masAcciones: 'Más acciones',
   masRotulo: 'Más',
   registrar: 'Registrar',
   marca: 'Finn',

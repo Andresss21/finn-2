@@ -4,9 +4,10 @@
 // (barra inferior y lateral), el enlace «Saltar al contenido» y el indicador global de navegación en curso (FE-39). No mueve
 // el foco al navegar (11.2).
 // Teléfono: el título es el `h1` de la página, que `globals.css` pone en la barra; una hija (`volverDeRuta`) lleva «Volver
-// a…» y la campana, las demás Registrar, campana y ☰; `PaginaFlujo` oculta las barras. Computadora: campana arriba a la derecha.
+// a…» y la campana (más «Más acciones» si la pantalla publica `PublicarAcciones`, CH-115), las demás Registrar, campana y ☰;
+// `PaginaFlujo` oculta las barras. Computadora: campana (y «Más acciones») arriba a la derecha.
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useConexion } from '../../cliente/useConexion';
 import { useRefrescoAutomatico } from '../../cliente/useRefrescoAutomatico';
 import { navegacion } from '../../textos/navegacion';
@@ -22,7 +23,11 @@ import { precargar, SuperpuestoDiferido } from '../navegacion/hoja-diferida';
 import { useRefrescar } from '../navegacion/use-refrescar';
 import { MasSecciones, NavegacionApp } from '../navegacion/navegacion-app';
 import { SECCIONES, seccionDeRuta, volverDeRuta } from '../navegacion/secciones';
+import { ContextoAcciones, type AccionesPublicadas } from './publicar-acciones';
 import { ProveedorEncabezado, useEncabezado } from './proveedor-encabezado';
+
+// El menú se descarga con la primera pantalla hija que publica acciones (05 §13.3): no entra al JS compartido de todas las rutas.
+const MasAcciones = lazy(() => import('./mas-acciones').then((m) => ({ default: m.MasAcciones })));
 
 export function Marco({
   children,
@@ -31,9 +36,14 @@ export function Marco({
   readonly children: ReactNode;
   readonly superpuesto?: ReactNode;
 }) {
+  const [acciones, setAcciones] = useState<AccionesPublicadas | null>(null);
   return (
     <ProveedorEncabezado>
-      <CuerpoDelMarco superpuesto={superpuesto}>{children}</CuerpoDelMarco>
+      <ContextoAcciones value={setAcciones}>
+        <CuerpoDelMarco superpuesto={superpuesto} acciones={acciones}>
+          {children}
+        </CuerpoDelMarco>
+      </ContextoAcciones>
     </ProveedorEncabezado>
   );
 }
@@ -41,9 +51,11 @@ export function Marco({
 function CuerpoDelMarco({
   children,
   superpuesto,
+  acciones,
 }: {
   readonly children: ReactNode;
   readonly superpuesto: ReactNode;
+  readonly acciones: AccionesPublicadas | null;
 }) {
   const pathname = usePathname();
   const busqueda = useSearchParams();
@@ -88,6 +100,7 @@ function CuerpoDelMarco({
   const comun = { secciones: SECCIONES, seccionActiva: seccionDeRuta(pathname), contadores };
   const ruta = rutaRegistrar(pathname);
   const volver = volverDeRuta(pathname, busqueda);
+  const conAcciones = acciones !== null && acciones.acciones.length > 0;
 
   return (
     <ContextoNavegacionPendiente value={marcar}>
@@ -117,6 +130,7 @@ function CuerpoDelMarco({
         id="contenido"
         tabIndex={-1}
         data-barra={volver === null ? 'principal' : 'hija'}
+        data-acciones={conAcciones ? '' : undefined}
         className="relative pt-15 pb-28 outline-none md:pt-0 md:pb-0 md:pl-62"
       >
         <header
@@ -137,6 +151,11 @@ function CuerpoDelMarco({
             <span className="flex w-27.5 justify-end md:hidden">
               <AccesoRegistrar ruta={ruta} variante="barra" />
             </span>
+          ) : null}
+          {conAcciones ? (
+            <Suspense fallback={null}>
+              <MasAcciones {...acciones} />
+            </Suspense>
           ) : null}
           <Campana valor={contadores.notificaciones} />
           {volver === null ? (
