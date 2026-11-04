@@ -49,7 +49,7 @@ const porciones = [
 ];
 
 describe('PRU-CMP-CTA contenedor de gráfico', () => {
-  it('PRU-CMP-CTA-210 los textos del SVG miden 11 px aunque el contenedor sea ancho: el SVG no se amplía más allá de su viewBox [A.6 2.18]', () => {
+  it('PRU-CMP-CTA-210 los textos del SVG miden 11 px aunque el contenedor sea ancho: el SVG no se amplía más allá de su viewBox [FE-44]', () => {
     const raiz = montar(
       <>
         <GraficoBarras titulo="Barras" resumen="x" puntos={puntos} />
@@ -81,7 +81,7 @@ describe('PRU-CMP-CTA contenedor de gráfico', () => {
     }
   });
 
-  it('PRU-CMP-CTA-211 contenedor: selector Gráfico / Tabla a la derecha del encabezado, cifra grande y leyenda [A.6 2.18]', () => {
+  it('PRU-CMP-CTA-211 contenedor: selector Gráfico / Tabla a la derecha del encabezado, cifra grande y leyenda [FE-44, P5-13]', () => {
     const raiz = montar(
       <VistaGrafico
         titulo="Categorías"
@@ -117,7 +117,7 @@ describe('PRU-CMP-CTA contenedor de gráfico', () => {
     expect(raiz.querySelector('svg [data-total]')?.textContent).toBe('$635.60');
   });
 
-  it('PRU-CMP-CTA-213 contenedor: en computadora la tabla va al lado del gráfico y el selector se oculta [A.6 2.18]', async () => {
+  it('PRU-CMP-CTA-213 contenedor: en computadora la tabla va al lado del gráfico y el selector se oculta [FE-44, P5-13]', async () => {
     await page.viewport(1100, 800);
     const raiz = montar(
       <VistaGrafico
@@ -136,7 +136,7 @@ describe('PRU-CMP-CTA contenedor de gráfico', () => {
     expect(t.left).toBeGreaterThanOrEqual(g.right - 1);
   });
 
-  it('PRU-CMP-CTA-212 tabla equivalente: la fila actual va resaltada y marcada [A.6 2.18]', () => {
+  it('PRU-CMP-CTA-212 tabla equivalente: la fila actual va resaltada y marcada [P5-13]', () => {
     const raiz = montar(<TablaEquivalente titulo="Semanas" puntos={puntos} />, 390);
     const filas = [...raiz.querySelectorAll('tbody tr')];
     expect(filas.map((f) => f.getAttribute('aria-current'))).toEqual([null, 'true']);
