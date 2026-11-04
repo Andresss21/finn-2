@@ -102,8 +102,15 @@ export const bajarPila = (): void => {
   supabase('stop', '--no-backup');
 };
 
-/** Levanta la pila y devuelve las variables que necesitan `next start` y las ayudas de la E2E. */
-export async function levantarPila(): Promise<Record<string, string>> {
+/**
+ * Solo la pila (db, auth y kong), sin bases ni usuarios, con su URL y sus claves. Quien la llama tiene el candado (DT-22):
+ * la usan `levantarPila` y PRU-SEG-ACCESO-102, que antes usaba la pila de la E2E de otro agente sin candado [CH-104].
+ */
+export async function levantarAuth(): Promise<{
+  url: string;
+  clavePublica: string;
+  claveServicio: string;
+}> {
   bajarPila(); // una corrida cortada puede haberla dejado arriba
   const inicio = supabase('start', '-x', EXCLUIDOS.join(','));
   if (!inicio.ok) throw new Error(`pila E2E: supabase start falló\n${inicio.salida}`);
@@ -115,6 +122,12 @@ export async function levantarPila(): Promise<Record<string, string>> {
   if (!url || !clavePublica || !claveServicio)
     throw new Error('pila E2E: supabase status no trae API_URL, ANON_KEY y SERVICE_ROLE_KEY');
   await esperarAuth(url, clavePublica);
+  return { url, clavePublica, claveServicio };
+}
+
+/** Levanta la pila y devuelve las variables que necesitan `next start` y las ayudas de la E2E. */
+export async function levantarPila(): Promise<Record<string, string>> {
+  const { url, clavePublica, claveServicio } = await levantarAuth();
   await prepararBase();
   const usuario = await crearUsuario({ url, clavePublica, claveServicio });
   const otro = await crearUsuarioNoPermitido({ url, clavePublica, claveServicio });
