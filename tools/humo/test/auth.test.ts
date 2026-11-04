@@ -96,12 +96,14 @@ describe.skipIf(enCI)('PRU-SEG-ACCESO', () => {
     [servicio, publica] = [pila.claveServicio, pila.clavePublica];
   }, 3_900_000);
 
+  // Solo quien tomó el candado baja la pila: si `beforeAll` no lo consiguió, la pila es de la E2E que lo tiene
   afterAll(async () => {
+    if (soltar === undefined) return;
     try {
       if (servicio) for (const id of creados) await pedir('DELETE', `/admin/users/${id}`);
     } finally {
       bajarPila();
-      soltar?.();
+      soltar();
     }
   }, 300_000);
 
