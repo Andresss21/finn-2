@@ -46,7 +46,7 @@ export function IndicadorEstado({
     <span
       data-estado={estado}
       className={[
-        'inline-flex items-center gap-[7px] text-etiqueta font-semibold',
+        'inline-flex items-center gap-2 text-etiqueta font-semibold',
         sobreMarca ? 'text-texto-sobre-marca' : COLOR_TEXTO[estado],
       ].join(' ')}
     >
