@@ -29,6 +29,7 @@ import { metas } from './metas.ts';
 import { programadas } from './programadas.ts';
 import { navegacion } from './navegacion.ts';
 import { plantilla } from './plantilla.ts';
+import { porCobrar } from './por-cobrar.ts';
 import { presupuesto } from './presupuesto.ts';
 import { presupuestoAsignar } from './presupuesto-asignar.ts';
 import { presupuestoAutoAsignar } from './presupuesto-auto-asignar.ts';
@@ -71,6 +72,7 @@ export {
   programadas,
   navegacion,
   plantilla,
+  porCobrar,
   presupuesto,
   presupuestoAsignar,
   presupuestoAutoAsignar,
@@ -94,6 +96,7 @@ export const areas = [
   ['inicio', inicio],
   ['instalacion', instalacion],
   ['plantilla', plantilla],
+  ['porCobrar', porCobrar],
   ['presupuesto', presupuesto],
   ['presupuestoAsignar', presupuestoAsignar],
   ['presupuestoAutoAsignar', presupuestoAutoAsignar],
