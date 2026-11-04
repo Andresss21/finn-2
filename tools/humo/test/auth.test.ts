@@ -88,7 +88,9 @@ describe.skipIf(enCI)('PRU-SEG-ACCESO', () => {
   beforeAll(async () => {
     soltar = await tomarCandado({
       alEsperar: (d) => {
-        console.log(`PRU-SEG-ACCESO-102: el candado de la E2E lo tiene ${String(d.pid)}; esperando`);
+        console.log(
+          `PRU-SEG-ACCESO-102: el candado de la E2E lo tiene ${String(d.pid)}; esperando`,
+        );
       },
     });
     const pila = await levantarAuth();
