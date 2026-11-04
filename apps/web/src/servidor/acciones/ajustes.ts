@@ -1,13 +1,18 @@
 'use server';
-// Server Actions de Ajustes (04 §2.2.2): OPT-01, rotar el token del webhook (FT-03). Es una operación técnica sin entrada ni
-// previsualización: exige sesión AAL2 con `getUser()` (04 §12.3) antes de tocar nada. El token en claro sale una sola vez, en
-// el `valor` de la respuesta; nunca va a un error, a un registro ni a una URL.
+// Server Actions de Ajustes (04 §2.2.2): OP-19, cambiar el ciclo (FT-72), y OPT-01, rotar el token del webhook (FT-03). OPT-01 es
+// una operación técnica sin entrada ni previsualización: exige sesión AAL2 con `getUser()` (04 §12.3) antes de tocar nada. El
+// token en claro sale una sola vez, en el `valor` de la respuesta; nunca va a un error, a un registro ni a una URL.
 import { revalidatePath } from 'next/cache';
 import { errorInterno } from '@finn/aplicacion/autenticacion';
 import type { ResultadoAccion } from '@finn/aplicacion/errores';
+import { OP19 } from '@finn/aplicacion/operaciones/ajustes';
 import { rotarToken } from '@finn/aplicacion/sms/token';
+import { accion } from '../accion.ts';
+import { operacion } from '../operaciones.ts';
 import { ARBOL_CON_DATOS } from '../revalidar.ts';
 import { exigirSesionAal2 } from '../sesion.ts';
+
+export const cambiarCiclo = accion(operacion(OP19));
 
 export async function rotarTokenWebhook(): Promise<ResultadoAccion<{ readonly token: string }>> {
   const sesion = await exigirSesionAal2();
