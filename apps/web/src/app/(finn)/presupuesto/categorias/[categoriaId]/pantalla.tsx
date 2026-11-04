@@ -5,12 +5,15 @@
 import type { DetalleCategoriaDto } from '@finn/aplicacion/consultas/detalle-categoria';
 import type { Centavos } from '@finn/dominio/valores';
 import type { ReactNode } from 'react';
-import { Boton } from '../../../../../componentes/base/boton';
 import { AvisoEnLinea } from '../../../../../componentes/base/aviso';
 import { IndicadorEstado } from '../../../../../componentes/dominio/indicador-estado';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { ResumenMeta } from '../../../../../componentes/dominio/resumen-meta';
 import type { AccionEscritura } from '../../../../../formularios/use-operacion';
+import {
+  PublicarAcciones,
+  type AccionPantalla,
+} from '../../../../../componentes/marco/publicar-acciones';
 import { PublicarEncabezado } from '../../../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
 import { SelectorPeriodo } from '../../../../../componentes/navegacion/selector-periodo';
@@ -75,6 +78,56 @@ export function PantallaDetalleCategoria({
         ? 'deuda-sin-respaldo'
         : 'problema';
   const bloqueo = acciones.bloqueosArchivo[0];
+  // «Más acciones» de la barra (P1-04, CH-115): los enlaces que antes iban sueltos en el contenido. Los motivos de bloqueo
+  // los da el DTO (PF-3).
+  const bloqueoArchivar =
+    bloqueo === undefined && acciones.puedeArchivar ? undefined : (bloqueo ?? 'disponible');
+  const menu: AccionPantalla[] = [
+    {
+      etiqueta: t.acciones.editar,
+      ruta: `/presupuesto/estructura/categorias/${categoria.id}`,
+      icono: 'edit',
+    },
+    {
+      etiqueta: meta === null ? t.acciones.crearMeta : t.acciones.verMetas,
+      ruta: meta === null ? `/metas/nueva?categoria=${categoria.id}` : `/metas/${meta.id}`,
+      icono: 'target',
+    },
+    ...(acciones.puedeAsignar && !cerrado
+      ? [
+          {
+            etiqueta: t.acciones.mover,
+            ruta: conPeriodo(`/presupuesto/mover?categoria-origen=${categoria.id}`),
+            icono: 'swap',
+          } as const,
+        ]
+      : []),
+    ...(archivada
+      ? []
+      : [
+          bloqueoArchivar === undefined
+            ? ({ etiqueta: t.acciones.archivar, ruta: `${raiz}/archivar`, icono: 'inbox' } as const)
+            : ({
+                etiqueta: t.acciones.archivar,
+                motivo: t.acciones.bloqueos[bloqueoArchivar],
+                icono: 'inbox',
+              } as const),
+          { etiqueta: t.acciones.fusionar, ruta: `${raiz}/fusionar`, icono: 'repeat' } as const,
+        ]),
+    acciones.puedeEliminar
+      ? {
+          etiqueta: t.acciones.eliminar,
+          ruta: `/presupuesto/estructura/categorias/${categoria.id}`,
+          icono: 'trash',
+          peligro: true,
+        }
+      : {
+          etiqueta: t.acciones.eliminar,
+          motivo: t.acciones.bloqueos.eliminar,
+          icono: 'trash',
+          peligro: true,
+        },
+  ];
   const hrefAsignar = conPeriodo(`/presupuesto/asignar/${categoria.id}`);
   const numero = (rotulo: string, centavos: Centavos) => (
     <div key={rotulo} className="flex min-w-0 flex-col gap-0.5">
@@ -88,6 +141,7 @@ export function PantallaDetalleCategoria({
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-5 py-4 md:grid md:grid-cols-[1fr_1.6fr] md:items-start md:gap-x-8">
       <PublicarEncabezado encabezado={dto} />
+      <PublicarAcciones titulo={categoria.nombre} acciones={menu} />
       <div className="flex flex-col gap-3 md:col-span-2">
         {volver}
         <SelectorPeriodo
@@ -190,41 +244,12 @@ export function PantallaDetalleCategoria({
               </EnlaceFinn>
             </div>
           ) : null}
-          {archivada ? (
-            <>
-              {numeros.disponible > 0 ? (
-                <EnlaceFinn href={`${raiz}/sacar`} className={TONAL}>
-                  {t.acciones.sacar}
-                </EnlaceFinn>
-              ) : null}
-              <Desarchivar categoriaId={categoria.id} accion={desarchivar} />
-            </>
-          ) : (
-            <>
-              {bloqueo === undefined && acciones.puedeArchivar ? (
-                <EnlaceFinn href={`${raiz}/archivar`} className={TONAL}>
-                  {t.acciones.archivar}
-                </EnlaceFinn>
-              ) : (
-                <Boton
-                  variante="secundaria"
-                  deshabilitado
-                  motivoDeshabilitado={t.acciones.bloqueos[bloqueo ?? 'disponible']}
-                >
-                  {t.acciones.archivar}
-                </Boton>
-              )}
-              <EnlaceFinn href={`${raiz}/fusionar`} className={ENLACE}>
-                {t.acciones.fusionar}
-              </EnlaceFinn>
-            </>
-          )}
-          <EnlaceFinn
-            href={meta === null ? `/metas/nueva?categoria=${categoria.id}` : `/metas/${meta.id}`}
-            className={ENLACE}
-          >
-            {meta === null ? t.acciones.crearMeta : t.acciones.verMetas}
-          </EnlaceFinn>
+          {archivada && numeros.disponible > 0 ? (
+            <EnlaceFinn href={`${raiz}/sacar`} className={TONAL}>
+              {t.acciones.sacar}
+            </EnlaceFinn>
+          ) : null}
+          {archivada ? <Desarchivar categoriaId={categoria.id} accion={desarchivar} /> : null}
         </nav>
       </div>
 

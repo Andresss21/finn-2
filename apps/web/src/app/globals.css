@@ -83,6 +83,10 @@ body {
     right: 3.75rem;
     font-size: 1.625rem;
   }
+  /* «Más acciones» (tres puntos) suma un botón de 44 a la derecha de la campana. */
+  #contenido[data-barra='hija'][data-acciones] h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
+    right: 6.75rem;
+  }
   /* Flujo largo a pantalla completa: sin la barra superior ni la inferior. */
   body:has([data-pagina-flujo]) [data-marco-barra] {
     display: none;
@@ -104,6 +108,10 @@ body {
   }
   #contenido > main > :first-child {
     margin-right: 3.5rem;
+  }
+  /* «Más acciones» (con su rótulo) ocupa lugar junto a la campana. */
+  #contenido[data-acciones] > main > :first-child {
+    margin-right: 13.5rem;
   }
 }
 

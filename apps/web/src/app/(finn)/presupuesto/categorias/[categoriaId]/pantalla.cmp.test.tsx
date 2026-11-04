@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import type { DetalleCategoriaDto } from '@finn/aplicacion/consultas/detalle-categoria';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../../../globals.css';
+import { Marco } from '../../../../../componentes/marco/marco';
 import { PantallaDetalleCategoria } from './pantalla';
 
 // `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene: se simula `next/link`, nunca
@@ -17,6 +18,13 @@ vi.mock('next/link', async () => {
   // `next/link` es CommonJS: el módulo es la propia función, con `useLinkStatus` como propiedad.
   return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
 });
+
+// Solo el límite externo: el marco lee la ruta del enrutador de Next, que el navegador de prueba no tiene.
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/presupuesto/categorias/11111111-1111-4111-8111-111111111111',
+  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ refresh: () => undefined, replace: () => undefined, back: () => undefined }),
+}));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -97,6 +105,33 @@ const mostrar = (d: DetalleCategoriaDto): HTMLElement => {
   montados.push({ raiz, nodo });
   return nodo;
 };
+
+/** Dentro del marco, que dibuja «Más acciones» con lo que la pantalla publica (P1-04, CH-115). Devuelve el menú abierto. */
+const abrirMenu = async (d: DetalleCategoriaDto): Promise<HTMLElement> => {
+  const nodo = document.createElement('div');
+  document.body.append(nodo);
+  const raiz = createRoot(nodo);
+  act(() => {
+    raiz.render(
+      <Marco>
+        <PantallaDetalleCategoria dto={d} desarchivar={desarchivar} />
+      </Marco>,
+    );
+  });
+  montados.push({ raiz, nodo });
+  // El menú se descarga diferido: el botón llega con su módulo.
+  await vi.waitFor(() => {
+    expect(nodo.querySelector('button[aria-label="Más acciones"]')).not.toBeNull();
+  });
+  act(() => {
+    nodo.querySelector<HTMLButtonElement>('button[aria-label="Más acciones"]')?.click();
+  });
+  return nodo.querySelector<HTMLElement>('[role=menu]') as HTMLElement;
+};
+const accion = (menu: HTMLElement, texto: string) =>
+  [...menu.querySelectorAll<HTMLElement>('[role=menuitem]')].find((a) =>
+    a.textContent.includes(texto),
+  );
 
 const consumo = (fecha: string, medio: 'debito' | 'tarjeta', neto: number, cubierto: number) => ({
   origen: { transaccionId: `t-${fecha}-${medio}` },
@@ -260,7 +295,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     expect(tres.querySelector('[data-se-paso]')?.textContent).toBe('Se pasó 1 de 3');
   });
 
-  it('PRU-CMP-PRES-105 [CA-14.10] la barra de la meta dibuja el `progresoBp` del DTO: 4,500 es 45 % y 10,000 es 100 %', () => {
+  it('PRU-CMP-PRES-105 [CA-14.10] la barra de la meta dibuja el `progresoBp` del DTO: 4,500 es 45 % y 10,000 es 100 %', async () => {
     const meta = (progresoBp: number, disponible: number) =>
       dto({
         numeros: { ...ceros, disponible },
@@ -275,6 +310,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
         },
       });
     const parcial = mostrar(meta(4500, 135000));
+    const menu = await abrirMenu(meta(4500, 135000));
     const barra = parcial.querySelector('[role="progressbar"]');
     expect(barra?.getAttribute('aria-valuenow')).toBe('45');
     expect(barra?.getAttribute('aria-valuetext')).toBe('45%');
@@ -285,7 +321,8 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
       'Pide $175.00 este período · falta $75.00',
     );
     // [CH-72] la meta se edita en `/metas/[metaId]` con el `id` que trae el DTO
-    expect(enlace(parcial, 'Editar la meta')?.getAttribute('href')).toBe('/metas/meta-1');
+    expect(accion(menu, 'Editar la meta')?.getAttribute('href')).toBe('/metas/meta-1');
+    expect(enlace(parcial, 'Editar la meta')).toBeUndefined();
     const completa = mostrar(meta(10000, 350000));
     expect(completa.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe(
       '100',
@@ -377,19 +414,25 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     );
   });
 
-  it('PRU-CMP-PRES-105 con Disponible distinto de cero «Archivar» queda deshabilitado con su motivo', () => {
-    const raiz = mostrar(
+  it('PRU-CMP-PRES-105 con Disponible distinto de cero «Archivar» queda deshabilitado con su motivo', async () => {
+    const menu = await abrirMenu(
       dto({
         numeros: { ...ceros, disponible: 5000 },
         acciones: { ...acciones, puedeArchivar: false, bloqueosArchivo: ['disponible'] },
       }),
     );
-    const archivar = boton(raiz, 'Archivar') as HTMLButtonElement;
-    expect(archivar.disabled).toBe(true);
-    expect(raiz.textContent).toContain('No se puede archivar: tiene Disponible distinto de cero.');
-    expect(enlace(raiz, 'Fusionar')?.getAttribute('href')).toBe(
+    // CH-115: «Archivar» y «Fusionar con otra» viven en «Más acciones», no sueltos en el contenido.
+    const archivar = accion(menu, 'Archivar');
+    expect(archivar?.getAttribute('aria-disabled')).toBe('true');
+    expect(archivar?.hasAttribute('href')).toBe(false);
+    expect(archivar?.textContent).toContain(
+      'No se puede archivar: tiene Disponible distinto de cero.',
+    );
+    expect(accion(menu, 'Fusionar')?.getAttribute('href')).toBe(
       `/presupuesto/categorias/${ID}/fusionar`,
     );
+    expect(accion(menu, 'Eliminar')?.hasAttribute('href')).toBe(true);
+    expect(boton(document.body, 'Archivar')).toBeUndefined();
   });
 
   it('PRU-CMP-PRES-105 la pantalla completa no tiene violaciones de accesibilidad', async () => {
