@@ -515,7 +515,7 @@
 
   "TA-467": { "estado": "terminada", "rama": "ta-467-instituciones-ui-2", "pr": 368 },
 
-  "TA-472": { "estado": "pendiente" },
+  "TA-472": { "estado": "terminada", "rama": "ta-472-probar-formato", "pr": 0 },
 
   "TA-434": { "estado": "pendiente" },
 
