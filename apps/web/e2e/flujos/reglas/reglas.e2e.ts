@@ -79,7 +79,7 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-BAND-170 [CA-39.1, RUTA-/reglas/nueva] con las reglas "SELECTOS → Supermercado" y "SUPER SELECTOS ESCALON → Restaurantes" creadas, el SMS de SUPER SELECTOS ESCALON sugiere Restaurantes (el patrón más largo)', async ({
+  test('PRU-E2E-BAND-170 [CA-39.1] RUTA-/reglas/nueva con las reglas "SELECTOS → Supermercado" y "SUPER SELECTOS ESCALON → Restaurantes" creadas, el SMS de SUPER SELECTOS ESCALON sugiere Restaurantes (el patrón más largo)', async ({
     page,
   }) => {
     await preparar([sms('selectos', 'SUPER SELECTOS ESCALON', 12, '15:00')]);
@@ -91,7 +91,7 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     );
   });
 
-  test('PRU-E2E-BAND-171 [CA-39.2, RUTA-/reglas/nueva, RUTA-/reglas] crear "SELECTOS" cuando ya existe "selectos" se rechaza con «Ya hay una regla para SELECTOS.» y la lista sigue con una sola regla', async ({
+  test('PRU-E2E-BAND-171 [CA-39.2] RUTA-/reglas/nueva RUTA-/reglas crear "SELECTOS" cuando ya existe "selectos" se rechaza con «Ya hay una regla para SELECTOS.» y la lista sigue con una sola regla', async ({
     page,
   }) => {
     await preparar([]);
@@ -104,7 +104,7 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     await expect(regla(page, 'selectos')).toContainText(r.hacia('Supermercado'));
   });
 
-  test('PRU-E2E-BAND-172 [CA-39.3, RUTA-/reglas] una regla hacia una categoría que se archivó queda marcada «No se aplica» y el SMS de ese comercio vuelve a sugerir la categoría del historial', async ({
+  test('PRU-E2E-BAND-172 [CA-39.3] RUTA-/reglas una regla hacia una categoría que se archivó queda marcada «No se aplica» y el SMS de ese comercio vuelve a sugerir la categoría del historial', async ({
     page,
   }) => {
     await preparar([
@@ -132,7 +132,7 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     await expect(fila(page, '$20.00')).not.toContainText(cuentas.bandeja.porRegla);
   });
 
-  test('PRU-E2E-BAND-173 [CA-39.4, RUTA-/reglas/[reglaId]] eliminar una regla desde su pantalla hace que el SMS de ese comercio sugiera la categoría del historial, y sin historial queda sin destino', async ({
+  test('PRU-E2E-BAND-173 [CA-39.4] RUTA-/reglas/[reglaId] eliminar una regla desde su pantalla hace que el SMS de ese comercio sugiera la categoría del historial, y sin historial queda sin destino', async ({
     page,
   }) => {
     await preparar([
@@ -165,7 +165,7 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     await expect(fila(page, '$8.00')).not.toContainText('→');
   });
 
-  test('PRU-E2E-BAND-174 [CA-21.10, RUTA-/reglas/nueva] con la regla "MERCADO → Supermercado" creada, escribir ese comercio en Registrar gasto sugiere Supermercado y un toque lo pone en la parte 1', async ({
+  test('PRU-E2E-BAND-174 [CA-21.10] RUTA-/reglas/nueva con la regla "MERCADO → Supermercado" creada, escribir ese comercio en Registrar gasto sugiere Supermercado y un toque lo pone en la parte 1', async ({
     page,
   }) => {
     await preparar([]);
@@ -187,7 +187,7 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     ).toBeChecked();
   });
 
-  test('PRU-E2E-BAND-175 [CA-34.10, RUTA-/reglas/nueva] con la regla "SELECTOS → Supermercado" creada, el SMS de SUPER SELECTOS ESCALON aparece en la Bandeja con Supermercado propuesto por regla', async ({
+  test('PRU-E2E-BAND-175 [CA-34.10] RUTA-/reglas/nueva con la regla "SELECTOS → Supermercado" creada, el SMS de SUPER SELECTOS ESCALON aparece en la Bandeja con Supermercado propuesto por regla', async ({
     page,
   }) => {
     await preparar([sms('selectos', 'SUPER SELECTOS ESCALON', 12, '14:10')]);
@@ -203,7 +203,7 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     );
   });
 
-  test('PRU-E2E-BAND-176 [CA-35.11, RUTA-/reglas/nueva] con la regla "PIZZA HUT → Restaurantes" creada, la fila de PIZZA HUT dice «(por regla)» y la sugerida por el historial no lo dice', async ({
+  test('PRU-E2E-BAND-176 [CA-35.11] RUTA-/reglas/nueva con la regla "PIZZA HUT → Restaurantes" creada, la fila de PIZZA HUT dice «(por regla)» y la sugerida por el historial no lo dice', async ({
     page,
   }) => {
     await preparar([
@@ -220,7 +220,7 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     await expect(fila(page, '$12.00')).not.toContainText(cuentas.bandeja.porRegla);
   });
 
-  test('PRU-E2E-BAND-177 [RUTA-/reglas, RUTA-/reglas/[reglaId]] sin reglas la lista lo explica; corregir la categoría de una regla desde su pantalla se ve en la lista, y la pantalla de la regla ofrece «Volver» al marco', async ({
+  test('PRU-E2E-BAND-177 [FT-39] RUTA-/reglas RUTA-/reglas/[reglaId] sin reglas la lista lo explica; corregir la categoría de una regla desde su pantalla se ve en la lista, y la pantalla de la regla ofrece «Volver» al marco', async ({
     page,
   }) => {
     await preparar([]);
