@@ -62,3 +62,70 @@ body {
     transform: translateX(520%) skewX(-20deg);
   }
 }
+
+/* Marco (06-identidad-visual §3, export K1, CH-109). En teléfono el `h1` de la página (llega del servidor) va en la barra
+   fija, antes de Registrar (110) + campana + ☰, o entre «Volver» y la campana; el de un flujo va en su propia barra. */
+@media (width < 48rem) {
+  #contenido h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
+    position: fixed;
+    top: 0;
+    left: 1.25rem;
+    right: 13.625rem;
+    z-index: 31;
+    line-height: 3.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+  }
+  #contenido[data-barra='hija'] h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
+    left: 3.75rem;
+    right: 3.75rem;
+    font-size: 1.625rem;
+  }
+  /* Flujo largo a pantalla completa: sin la barra superior ni la inferior. */
+  body:has([data-pagina-flujo]) [data-marco-barra] {
+    display: none;
+  }
+  body:has([data-pagina-flujo]) #contenido {
+    padding-block: 0;
+  }
+}
+
+/* Computadora: a la izquierda, padding 32 48 48, `--ancho-pantalla` (o todo el ancho), título de 2.5 rem y lugar para la campana. */
+@media (width >= 48rem) {
+  #contenido > main {
+    margin-inline: 0;
+    max-width: var(--ancho-pantalla, none);
+    padding: 2rem 3rem 3rem;
+  }
+  #contenido h1.text-titulo-pantalla {
+    font-size: 2.5rem;
+  }
+  #contenido > main > :first-child {
+    margin-right: 3.5rem;
+  }
+}
+
+/* Halos del botón de la Bandeja mientras hay movimientos por revisar (06-identidad-visual 3.1): decorativos. */
+.finn-halo {
+  position: absolute;
+  inset: -0.25rem;
+  border: 2px solid var(--accion);
+  border-radius: 1.375rem;
+  pointer-events: none;
+  animation: finn-halo 2.8s ease-out infinite;
+}
+.finn-halo + .finn-halo {
+  animation-delay: 1.4s;
+}
+@keyframes finn-halo {
+  0% {
+    transform: scale(0.94);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
