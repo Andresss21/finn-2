@@ -40,7 +40,7 @@ test.describe('PRU-E2E-AJUS', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-AJUS-124 [RUTA-/ajustes/formatos] desde Ajustes se llega a la lista, que muestra los formatos sembrados con su institución y sin usos, y enlaza a crear uno y a Instituciones', async ({
+  test('PRU-E2E-AJUS-124 [FT-73] RUTA-/ajustes/formatos desde Ajustes se llega a la lista, que muestra los formatos sembrados con su institución y sin usos, y enlaza a crear uno y a Instituciones', async ({
     page,
   }) => {
     await preparar();
