@@ -144,27 +144,49 @@ describe('PRU-CMP-PRES-201 barra de gastado: meta cubierta y excedente con tarje
 });
 
 describe('PRU-CMP-BAND-200 signo de los montos de la Bandeja [FE-44]', () => {
-  const movimiento = (monto: number): MovimientoDto => ({
+  const movimiento = (monto: number, tipoPropuesto: string | null): MovimientoDto => ({
     id: 'm1',
     estado: 'pendiente',
     sms: { texto: 'BAC: compra por $12.35' },
     cuenta: { nombre: 'Visa Oro' },
     fecha: '2026-10-15',
     monto: c(monto),
+    tipoPropuesto,
     comercio: 'Pizza Hut',
     categoriaSugerida: null,
     aprobacion: { posible: true, faltantes: [] },
   });
+  const visible = (m: MovimientoDto) => {
+    const raiz = montar(<MovimientoBandeja movimiento={m} hrefRevisar="/b/1" />);
+    const valor = raiz.querySelector('[data-centavos]') as HTMLElement;
+    return [
+      valor.querySelector('[aria-hidden="true"]')?.textContent,
+      valor.querySelector('.sr-only')?.textContent,
+      valor,
+    ] as const;
+  };
 
-  it.each([1235, -1235])(
-    'PRU-CMP-BAND-200 el monto %i se muestra como −$12.35 (U+2212) y el lector oye "menos $12.35"',
-    (monto) => {
-      const raiz = montar(<MovimientoBandeja movimiento={movimiento(monto)} hrefRevisar="/b/1" />);
-      const valor = raiz.querySelector('[data-centavos]') as HTMLElement;
-      expect(valor.querySelector('[aria-hidden="true"]')?.textContent).toBe('−$12.35');
-      expect(valor.querySelector('.sr-only')?.textContent).toBe('menos $12.35');
+  it.each([
+    [1235, 'gasto'],
+    [-1235, 'gasto'],
+    [1235, 'pago_tarjeta'],
+  ])(
+    'PRU-CMP-BAND-200 el monto %i de un %s sale como −$12.35 (U+2212); el lector oye "menos $12.35"',
+    (monto, tipo) => {
+      const [texto, lector, valor] = visible(movimiento(monto, tipo));
+      expect(texto).toBe('−$12.35');
+      expect(lector).toBe('menos $12.35');
       expect(valor.getAttribute('data-centavos')).toBe(String(monto));
       expect(estilo(valor).fontVariantNumeric).toContain('tabular-nums');
+    },
+  );
+
+  it.each(['ingreso', 'devolucion', 'transferencia', null])(
+    'PRU-CMP-BAND-201 un movimiento de tipo %s va sin signo: no es un gasto ni un pago que sale',
+    (tipo) => {
+      const [texto, lector] = visible(movimiento(1235, tipo));
+      expect(texto).toBe('$12.35');
+      expect(lector).toBe('$12.35');
     },
   );
 });

@@ -21,12 +21,16 @@ export interface MovimientoDto {
   readonly cuenta: { readonly nombre: string } | null;
   readonly fecha: string | null;
   readonly monto: Centavos | null;
+  /** El tipo que propone el servidor (04 §6.8); decide el signo del monto. `null`: aún sin tipo. */
+  readonly tipoPropuesto?: string | null;
   readonly comercio: string | null;
   readonly categoriaSugerida: { readonly nombre: string; readonly porRegla: boolean } | null;
   readonly aprobacion: { readonly posible: boolean; readonly faltantes: readonly string[] };
   /** Solo en un pago de tarjeta (BE-41): la cuenta de la que salió el último pago. */
   readonly origenPropuesto?: { readonly id: string };
 }
+// Solo un gasto y un pago de tarjeta sacan dinero: el signo sale del tipo que entrega el servidor, nunca se deduce (PF-3).
+const SALEN: ReadonlySet<string> = new Set(['gasto', 'pago_tarjeta']);
 export type AccionBandeja = 'aprobar' | 'es-otro-gasto' | 'descartar' | 'reintentar' | 'copiar';
 type Vista = keyof typeof cuentas.bandeja.estados;
 
@@ -132,7 +136,13 @@ export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar }: Pr
           )}
         </span>
       </span>
-      {m.monto === null ? null : <Monto centavos={m.monto} rol="cifra" presentacion="salida" />}
+      {m.monto === null ? null : (
+        <Monto
+          centavos={m.monto}
+          rol="cifra"
+          presentacion={SALEN.has(m.tipoPropuesto ?? '') ? 'salida' : 'absoluto'}
+        />
+      )}
       {conAcciones ? null : <Icono nombre="chevR" tamano={16} className="text-texto-terciario" />}
     </>
   );
