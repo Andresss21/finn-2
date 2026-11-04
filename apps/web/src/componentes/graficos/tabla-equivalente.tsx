@@ -39,9 +39,10 @@ export function TablaEquivalente({
         {puntos.map((p) => (
           <tr
             key={p.clave}
+            {...(p.actual === true ? { 'aria-current': 'true' as const } : {})}
             className={[
               'border-t border-borde-sutil',
-              p.actual === true ? 'bg-superficie-hundida' : '',
+              p.actual === true ? 'bg-superficie-hundida font-semibold' : '',
             ].join(' ')}
           >
             <th scope="row" className="py-2.5 text-left font-semibold">

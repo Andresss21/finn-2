@@ -55,7 +55,8 @@ export function GraficoLineas({ titulo, resumen, puntos }: PropsGraficoLineas) {
       role="img"
       aria-label={cuentas.grafico.resumen(titulo, resumen)}
       viewBox={`0 0 ${ANCHO} ${ALTO}`}
-      className="h-auto w-full"
+      style={{ maxWidth: ANCHO }}
+      className="mx-auto h-auto w-full"
       data-grafico="lineas"
     >
       <line x1="0" x2={ANCHO} y1={y(0)} y2={y(0)} className="stroke-grafico-rejilla" />

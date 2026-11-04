@@ -58,7 +58,8 @@ export function GraficoBarras({ titulo, resumen, puntos }: PropsGraficoBarras) {
       role="img"
       aria-label={cuentas.grafico.resumen(titulo, resumen)}
       viewBox={`0 0 ${ANCHO} 160`}
-      className="h-auto w-full"
+      style={{ maxWidth: ANCHO }}
+      className="mx-auto h-auto w-full"
       data-grafico="barras"
     >
       <line x1="0" x2={ANCHO} y1={BASE} y2={BASE} className="stroke-grafico-rejilla" />
@@ -103,7 +104,7 @@ export function GraficoBarras({ titulo, resumen, puntos }: PropsGraficoBarras) {
                 />
                 <text
                   x={centro}
-                  y={y(p.valor) - 5}
+                  y={Math.min(y(p.valor), y(p.referencia ?? p.valor)) - 7}
                   textAnchor="middle"
                   fontSize="11"
                   fontWeight="700"

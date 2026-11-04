@@ -118,6 +118,7 @@ export function Categorias({
   return (
     <div className="flex flex-col gap-4">
       <VistaGrafico
+        tablaAlLado
         grafico={
           <GraficoDona
             titulo={t.titulos.categorias}

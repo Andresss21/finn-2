@@ -19,6 +19,9 @@ export interface PropsGraficoDona {
   readonly titulo: string;
   readonly resumen: string;
   readonly porciones: readonly PorcionDona[];
+  /** Total al centro, ya formateado: lo da el DTO (PF-3, la dona no suma montos). Sin él, el centro queda vacío. */
+  readonly total?: string;
+  readonly etiquetaTotal?: string;
 }
 
 // Clases completas: Tailwind solo genera las que ve escritas.
@@ -33,22 +36,31 @@ const RELLENO = [
   'fill-grafico-serie-8',
 ] as const;
 const FONDO = [
-  'size-3 shrink-0 rounded-full bg-grafico-serie-1',
-  'size-3 shrink-0 rounded-full bg-grafico-serie-2',
-  'size-3 shrink-0 rounded-full bg-grafico-serie-3',
-  'size-3 shrink-0 rounded-full bg-grafico-serie-4',
-  'size-3 shrink-0 rounded-full bg-grafico-serie-5',
-  'size-3 shrink-0 rounded-full bg-grafico-serie-6',
-  'size-3 shrink-0 rounded-full bg-grafico-serie-7',
-  'size-3 shrink-0 rounded-full bg-grafico-serie-8',
+  'size-3 shrink-0 rounded-sm bg-grafico-serie-1',
+  'size-3 shrink-0 rounded-sm bg-grafico-serie-2',
+  'size-3 shrink-0 rounded-sm bg-grafico-serie-3',
+  'size-3 shrink-0 rounded-sm bg-grafico-serie-4',
+  'size-3 shrink-0 rounded-sm bg-grafico-serie-5',
+  'size-3 shrink-0 rounded-sm bg-grafico-serie-6',
+  'size-3 shrink-0 rounded-sm bg-grafico-serie-7',
+  'size-3 shrink-0 rounded-sm bg-grafico-serie-8',
 ] as const;
-const OTRAS = 'size-3 shrink-0 rounded-full bg-grafico-otras';
-const arco = arc<{ startAngle: number; endAngle: number }>().innerRadius(44).outerRadius(80);
+const OTRAS = 'size-3 shrink-0 rounded-sm bg-grafico-otras';
+const arco = arc<{ startAngle: number; endAngle: number }>()
+  .innerRadius(62)
+  .outerRadius(84)
+  .padAngle(0.025);
 const reparto = pie<PorcionDona>()
   .value((p) => p.porcentaje)
   .sort(null);
 
-export function GraficoDona({ titulo, resumen, porciones }: PropsGraficoDona) {
+export function GraficoDona({
+  titulo,
+  resumen,
+  porciones,
+  total,
+  etiquetaTotal,
+}: PropsGraficoDona) {
   if (porciones.length === 0) {
     return (
       <div
@@ -60,12 +72,13 @@ export function GraficoDona({ titulo, resumen, porciones }: PropsGraficoDona) {
     );
   }
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-3 md:flex-row md:gap-5">
       <svg
         role="img"
         aria-label={cuentas.grafico.resumen(titulo, resumen)}
         viewBox="-90 -90 180 180"
-        className="h-auto w-full max-w-60"
+        style={{ maxWidth: 180 }}
+        className="h-auto w-full shrink-0"
         data-grafico="dona"
       >
         {reparto([...porciones]).map((a, i) => (
@@ -77,8 +90,34 @@ export function GraficoDona({ titulo, resumen, porciones }: PropsGraficoDona) {
             className={a.data.otras === true ? 'fill-grafico-otras' : RELLENO[i % RELLENO.length]}
           />
         ))}
+        {total === undefined ? null : (
+          <>
+            <text
+              data-total
+              x="0"
+              y={etiquetaTotal === undefined ? 6 : -2}
+              textAnchor="middle"
+              fontSize="20"
+              fontWeight="800"
+              className="fill-grafico-tinta"
+            >
+              {total}
+            </text>
+            {etiquetaTotal === undefined ? null : (
+              <text
+                x="0"
+                y="14"
+                textAnchor="middle"
+                fontSize="11"
+                className="fill-texto-secundario"
+              >
+                {etiquetaTotal}
+              </text>
+            )}
+          </>
+        )}
       </svg>
-      <ul aria-label={t.leyenda} className="flex w-full flex-col gap-1 text-cuerpo-pequeno">
+      <ul aria-label={t.leyenda} className="flex w-full min-w-0 flex-col gap-1 text-cuerpo-pequeno">
         {porciones.map((p, i) => (
           <li
             key={p.clave}
