@@ -11,9 +11,10 @@ export async function LectorProgramada() {
     async () => formulario(await depsDeConsulta(), { operacion: 'programada' }),
     { validacionDeSegmento: true },
   );
-  const cuentas = [...(dto.catalogos.cuentas?.efectivo ?? []), ...(dto.catalogos.cuentas?.tarjetas ?? [])].map(
-    (x) => ({ id: x.cuenta.id, nombre: x.cuenta.nombre }),
-  );
+  const cuentas = [
+    ...(dto.catalogos.cuentas?.efectivo ?? []),
+    ...(dto.catalogos.cuentas?.tarjetas ?? []),
+  ].map((x) => ({ id: x.cuenta.id, nombre: x.cuenta.nombre }));
   const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((g) =>
     g.categorias.map((x) => ({ id: x.categoria.id, nombre: x.categoria.nombre })),
   );
