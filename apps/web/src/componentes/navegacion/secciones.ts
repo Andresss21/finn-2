@@ -53,3 +53,34 @@ export function seccionDeRuta(pathname: string): IdSeccion | null {
   }
   return mejor?.id ?? null;
 }
+
+// `rutaPadre` de los detalles (3.3); el tercero dice si lleva el mismo `?periodo=`. `/cuentas/nueva` y `ordenar` son flujos.
+const DETALLES: readonly (readonly [RegExp, string, boolean])[] = [
+  [/^\/presupuesto\/categorias\/[^/]+$/, '/presupuesto', true],
+  [/^\/presupuesto\/(listo-para-asignar|estructura)$/, '/presupuesto', false],
+  [/^\/actividad\/[^/]+$/, '/actividad', false],
+  [/^\/cuentas\/(?!nueva$|ordenar$)[^/]+$/, '/cuentas', false],
+  [/^\/ajustes\/.+$/, '/ajustes', false],
+];
+
+/**
+ * «Volver» de una pantalla hija (3.3, N8): `?volver=` si es una ruta interna (3.6, [R2]); si no, la `rutaPadre`. La etiqueta
+ * nombra la sección de la ruta a la que vuelve. Fuera de un detalle, `null`.
+ */
+export function volverDeRuta(
+  pathname: string,
+  busqueda: Pick<URLSearchParams, 'get'>,
+): { readonly ruta: string; readonly etiqueta: string } | null {
+  const detalle = DETALLES.find(([patron]) => patron.test(pathname));
+  if (detalle === undefined) return null;
+  const [, padre, conPeriodo] = detalle;
+  const pedido = busqueda.get('volver') ?? '';
+  const periodo = busqueda.get('periodo');
+  const ruta = /^\/(?![/\\])/.test(pedido)
+    ? pedido
+    : conPeriodo && periodo !== null
+      ? `${padre}?periodo=${encodeURIComponent(periodo)}`
+      : padre;
+  const id = seccionDeRuta(ruta.split('?')[0] ?? ruta);
+  return { ruta, etiqueta: navegacion.volverA(id === null ? null : navegacion.secciones[id]) };
+}
