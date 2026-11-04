@@ -4,6 +4,7 @@
 import { useEffect, useRef } from 'react';
 import { AvisoEnLinea } from '../base/aviso';
 import { Boton } from '../base/boton';
+import { lineasDeImpacto, type VistaDeImpacto } from './lineas-impacto';
 
 export interface PropsConfirmacionImpacto {
   readonly titulo: string;
@@ -65,4 +66,12 @@ export function ConfirmacionImpacto({
       </div>
     </section>
   );
+}
+
+/** Lo mismo con el impacto de AV-01 (FT-27): las líneas salen de la previsualización del servidor. */
+export function ConfirmacionImpactoDeVista({
+  vista,
+  ...resto
+}: Omit<PropsConfirmacionImpacto, 'impacto'> & { readonly vista: VistaDeImpacto }) {
+  return <ConfirmacionImpacto impacto={lineasDeImpacto(vista)} {...resto} />;
 }
