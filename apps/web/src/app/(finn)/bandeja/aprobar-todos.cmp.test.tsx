@@ -95,7 +95,7 @@ describe('PRU-CMP-BAND', () => {
     expect(aviso?.querySelectorAll('li')).toHaveLength(1);
   });
 
-  it('PRU-CMP-BAND-161 [FT-36 Estados] sin elegibles el botón «Aprobar todos» no aparece', () => {
+  it('PRU-CMP-BAND-161 [FT-36] sin elegibles el botón «Aprobar todos» no aparece', () => {
     const nodo = montar(<AprobarTodos elegibles={[]} movimientos={[PAGO]} />);
     expect(nodo.querySelector('button')).toBeNull();
   });
