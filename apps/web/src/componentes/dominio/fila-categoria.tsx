@@ -57,9 +57,20 @@ function indicadores(fila: FilaCategoriaDto): Indicador[] {
   return lista;
 }
 
+// 06 §1: Disponible positivo en `--positivo-texto`; cero en `--texto`; negativo, según con qué se pasó.
 function estadoDisponible(fila: FilaCategoriaDto): EstadoFinanciero | undefined {
-  if (fila.sobregiro === null) return undefined;
+  if (fila.sobregiro === null) return fila.disponible > 0 ? 'positivo' : undefined;
   return fila.sobregiro.tipo === 'tarjeta' ? 'deuda-sin-respaldo' : 'problema';
+}
+
+// La meta cubierta es la del indicador `metaCubierta` (falta 0 y sin otro estado): lo dice el DTO, no se calcula.
+function metaCubierta(fila: FilaCategoriaDto): boolean {
+  return (
+    fila.sobregiro === null &&
+    fila.meta !== null &&
+    fila.meta.falta === 0 &&
+    fila.meta.estado !== 'vencida'
+  );
 }
 
 export function FilaCategoria({
@@ -80,7 +91,7 @@ export function FilaCategoria({
             <Monto centavos={fila.disponible} rol="cifra" {...(estado ? { estado } : {})} />
           </span>
         </span>
-        <BarraGastado barra={fila.barra} />
+        <BarraGastado barra={fila.barra} metaCubierta={metaCubierta(fila)} />
         <span className="text-cuerpo-pequeno text-texto-secundario">
           {periodoCerrado ? (
             <span className="mr-2 inline-flex items-center gap-1.5 text-texto-terciario">

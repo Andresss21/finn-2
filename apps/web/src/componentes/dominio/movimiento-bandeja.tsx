@@ -132,7 +132,7 @@ export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar }: Pr
           )}
         </span>
       </span>
-      {m.monto === null ? null : <Monto centavos={m.monto} rol="cifra" />}
+      {m.monto === null ? null : <Monto centavos={m.monto} rol="cifra" presentacion="salida" />}
       {conAcciones ? null : <Icono nombre="chevR" tamano={16} className="text-texto-terciario" />}
     </>
   );
