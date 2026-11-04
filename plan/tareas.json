@@ -505,6 +505,10 @@
 
   "TA-433": { "estado": "en_curso", "rama": "ta-433-formatos-instituciones" },
 
+  "TA-466": { "estado": "pendiente" },
+
+  "TA-467": { "estado": "pendiente" },
+
   "TA-434": { "estado": "pendiente" },
 
   "TA-435": { "estado": "terminada", "rama": "ta-435-exportar", "pr": 288 },

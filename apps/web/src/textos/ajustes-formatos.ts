@@ -1,6 +1,6 @@
-// Textos de `/ajustes/formatos` y `/ajustes/instituciones` (FT-73; 05 §2.11, §12; 04 §8.5, §8.7). Voseo (05 §12.2). Los rechazos de la
-// política del patrón (`patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento`) y `nombre_repetido` llegan ya
-// compuestos del servidor en `mensaje`: acá no se repiten.
+// Textos de `/ajustes/formatos` (FT-73; 05 §2.11, §12; 04 §8.5, §8.7). Voseo (05 §12.2). Los rechazos de la política del patrón
+// (`patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento`) llegan ya compuestos del servidor en `mensaje`:
+// acá no se repiten. Los textos del formulario y de Instituciones se suman con sus partes (CH-125).
 export const ajustesFormatos = {
   titulo: 'Formatos bancarios',
   enlace: 'Formatos bancarios',
@@ -12,70 +12,13 @@ export const ajustesFormatos = {
     texto: 'Creá el primero para que Finn lea los SMS de tu banco.',
   },
   sinUsos: 'Sin usos todavía',
-  usos: (n: number | string, ultimo: string) => `${n} ${Number(n) === 1 ? 'uso' : 'usos'} · último ${ultimo}`,
+  usos: (n: number | string, ultimo: string) =>
+    `${n} ${Number(n) === 1 ? 'uso' : 'usos'} · último ${ultimo}`,
   inactivo: 'Inactivo',
-  tituloNuevo: 'Nuevo formato',
-  tituloEditar: 'Editar formato',
   tipos: {
     compra: 'Compra',
     deposito: 'Depósito',
     pago_tarjeta: 'Pago de tarjeta',
     devolucion: 'Devolución',
   },
-  separadoresMiles: { ',': 'Coma (,)', '.': 'Punto (.)', '': 'Ninguno' },
-  separadoresDecimal: { '.': 'Punto (.)', ',': 'Coma (,)' },
-  campos: {
-    institucion: 'Institución',
-    elegirInstitucion: 'Elegí una institución',
-    nombre: 'Nombre del formato',
-    tipo: 'Tipo de movimiento',
-    patron: 'Patrón',
-    patronAyuda:
-      'Una expresión regular con los grupos ultimos4 y monto, y fecha si elegís formatos de fecha.',
-    banderas: 'Banderas',
-    banderasAyuda: 'Solo i, m, s y u, en ese orden.',
-    miles: 'Separador de miles',
-    decimal: 'Separador decimal',
-    fechas: 'Formatos de fecha',
-    activo: 'Activo',
-  },
-  guardar: 'Guardar formato',
-  guardando: 'Guardando…',
-  listo: 'Formato guardado',
-  probar: {
-    titulo: 'Probar con un SMS',
-    sinSms: 'No hay SMS sin reconocer ni con error para probar.',
-    elegir: 'SMS para probar',
-    boton: 'Probar',
-    probando: 'Probando…',
-    nada: 'Probar no guarda nada.',
-    noReconocido: 'No reconocido',
-    conError: 'Con error',
-    coincide: 'El formato reconoce este SMS.',
-    noCoincide: 'El formato no reconoce este SMS.',
-    demasiadoLargo: 'El SMS es demasiado largo: Finn no lo interpreta.',
-    patron: 'El patrón no coincide con el texto.',
-    fallo: {
-      ultimos4: 'Falló el normalizador de los últimos 4 dígitos.',
-      monto: 'Falló el normalizador del monto.',
-      fecha: 'Falló el normalizador de la fecha.',
-    },
-    grupos: 'Grupos capturados',
-    sinGrupos: 'No se capturó ningún grupo.',
-  },
-} as const;
-
-export const ajustesInstituciones = {
-  titulo: 'Instituciones',
-  nueva: 'Nueva institución',
-  vacio: {
-    titulo: 'Todavía no hay instituciones',
-    texto: 'Agregá la primera para poder crear sus formatos.',
-  },
-  tituloNueva: 'Nueva institución',
-  tituloEditar: 'Renombrar institución',
-  nombre: 'Nombre',
-  guardar: 'Guardar institución',
-  guardando: 'Guardando…',
-  formatos: 'Formatos bancarios',
 } as const;
