@@ -143,12 +143,11 @@ export function PantallaProgramadas({
                     </span>
                     <Monto centavos={p.monto} rol="cifra" presentacion="salida" />
                   </EnlaceFinn>
-                  <div className="px-4 pb-3 empty:hidden">
+                  <div className="px-4 pb-3">
                     <Activar
                       programadaId={p.id}
                       nombre={p.comercio}
                       activa={p.activa}
-                      ofrecerDesactivar={false}
                       accion={gestionarProgramada}
                     />
                   </div>

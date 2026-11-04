@@ -13,15 +13,12 @@ export function Activar({
   nombre,
   activa,
   accion,
-  ofrecerDesactivar = true,
 }: {
   readonly programadaId: string;
   readonly nombre: string;
   readonly activa: boolean;
   /** `gestionarProgramada` (OP-42): la pasa el lector, así el componente se prueba sin servidor. */
   readonly accion: AccionEscritura;
-  /** En la lista solo se ofrece reactivar; el componente sigue montado para conservar su resultado. */
-  readonly ofrecerDesactivar?: boolean;
 }) {
   const [inicial] = useState(activa);
   const cambio = useOperacion({ accion });
@@ -30,7 +27,6 @@ export function Activar({
   const enviar = (operacion: typeof cambio, nueva: boolean) =>
     operacion.enviar({ accion: 'activar', programadaId, activa: nueva });
   const hecho = cambio.estado === 'listo';
-  if (!hecho && inicial && !ofrecerDesactivar) return null;
   const revertido = inversa.estado === 'listo';
   return (
     <div data-accion="activar" className="flex flex-col gap-2">
