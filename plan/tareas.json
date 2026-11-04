@@ -503,7 +503,7 @@
 
   "TA-432": { "estado": "terminada", "rama": "ta-432-ciclo", "pr": 348 },
 
-  "TA-433": { "estado": "en_curso", "rama": "ta-433-formatos-instituciones" },
+  "TA-433": { "estado": "terminada", "rama": "ta-433-formatos-instituciones", "pr": 354 },
 
   "TA-466": { "estado": "pendiente" },
 
