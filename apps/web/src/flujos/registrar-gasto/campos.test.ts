@@ -8,6 +8,7 @@ import {
   destinoDeValor,
   deudoresReutilizados,
   parteVacia,
+  textoDeAviso,
   valorDeDestino,
   valoresIniciales,
   type Campos,
@@ -170,5 +171,11 @@ describe('PRU-DOM-TX', () => {
       categoriaId: '',
       deudorId: ANA,
     });
+  });
+
+  it('PRU-DOM-TX-441 [AV-07] un aviso de la previsualización se muestra con su texto del catálogo y no como el código crudo', () => {
+    expect(textoDeAviso('AV-07')).toBe('La deuda de esa tarjeta queda como «Te falta reservar».');
+    expect(textoDeAviso('AV-01')).toContain('período cerrado');
+    expect(textoDeAviso('AV-99')).toBe('AV-99');
   });
 });

@@ -17,6 +17,8 @@ export interface PropsEntradaFecha {
   readonly error?: string | undefined;
   readonly requerido?: boolean;
   readonly deshabilitado?: boolean;
+  /** Sin la línea «Fecha elegida: …» (S5 no la tiene). */
+  readonly sinVistaPrevia?: boolean;
 }
 
 function aFecha(texto: string): FechaLocal | undefined {
@@ -37,6 +39,7 @@ export function EntradaFecha({
   error,
   requerido = false,
   deshabilitado = false,
+  sinVistaPrevia = false,
 }: PropsEntradaFecha) {
   // El navegador entrega '' mientras la fecha está a medio escribir: el borrador se guarda aparte y el valor del
   // formulario solo cambia con una fecha completa y dentro del rango.
@@ -56,7 +59,7 @@ export function EntradaFecha({
   return (
     <EntradaTexto
       etiqueta={etiqueta}
-      {...(fecha === undefined || fuera
+      {...(fecha === undefined || fuera || sinVistaPrevia
         ? {}
         : { descripcion: base.fechaVistaPrevia(formatearFecha(fecha)) })}
       {...(mensaje === undefined ? {} : { error: mensaje })}
