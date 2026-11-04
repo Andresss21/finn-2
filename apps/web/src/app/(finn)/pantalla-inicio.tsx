@@ -196,9 +196,9 @@ export function PantallaInicio({
             texto: t.asignar(formatearMonto(dto.lpa)),
           };
   return (
-    <main className="mx-auto flex max-w-270 flex-col gap-7 px-5 py-4 md:grid md:grid-cols-2 md:items-start md:gap-x-10">
+    <main className="mx-auto flex max-w-270 flex-col gap-7 px-5 py-4 md:grid md:grid-cols-2 md:items-start md:gap-x-10 md:[--ancho-pantalla:73.5rem]">
       <PublicarEncabezado encabezado={dto} />
-      <h1 className="sr-only">{t.titulo}</h1>
+      <h1 className="text-titulo-pantalla md:col-span-2">{t.titulo}</h1>
       <div className="flex flex-col gap-7">
         {sinCuentas ? null : (
           <div className="flex flex-col gap-2">
