@@ -174,6 +174,7 @@
   { "patron": "apps/web/src/flujos/ajustes-ciclo/**", "fts": ["FT-72"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/ciclo/**", "fts": ["FT-72"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/formatos/**", "fts": ["FT-73"] },
+  { "patron": "apps/web/src/flujos/ajustes-formatos-*/**", "fts": ["FT-73"] },
   { "patron": "apps/web/src/servidor/acciones/formatos.ts", "fts": ["FT-73"] },
   { "patron": "apps/web/src/app/(finn)/bandeja/**", "fts": ["FT-34", "FT-35"] },
   { "patron": "apps/web/src/app/(finn)/reportes/**", "fts": ["FT-60"] },
