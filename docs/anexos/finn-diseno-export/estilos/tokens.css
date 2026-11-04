@@ -1,0 +1,276 @@
+/* Finn 2.0 · tokens (A.3 + agregados de A.10). Claro por defecto; oscuro por preferencia del sistema o data-theme="oscuro". */
+
+:root {
+  --tarjeta-oro: linear-gradient(135deg, #15120C 0%, #3A301E 40%, #6E5631 78%, #7E6638 100%);
+  --tarjeta-plata: linear-gradient(135deg, #121519 0%, #2B3138 45%, #4A525C 80%, #5C6670 100%);
+  --patron-sin-reservar: repeating-linear-gradient(135deg, var(--deuda-sin-respaldo-borde) 0 3px, var(--deuda-sin-respaldo-fondo) 3px 6px);
+  --fuente-titulo: "Big Shoulders Display", "Archivo", system-ui, sans-serif;
+  --fuente-cuerpo: "Archivo", system-ui, sans-serif;
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 20px;
+  --espacio-6: 24px;
+  --espacio-8: 32px;
+  --espacio-10: 40px;
+  --espacio-12: 48px;
+  --espacio-16: 64px;
+  --radio-control: 10px;
+  --radio-contenedor: 16px;
+  --radio-pastilla: 999px;
+  --radio-superpuesto: 24px;
+  --radio-identidad: 18px;
+  --radio-tarjeta: 20px;
+  --duracion-rapida: 120ms;
+  --duracion-normal: 220ms;
+  --duracion-lenta: 400ms;
+  --duracion-transicion: 340ms;
+  --duracion-ambiental: 5000ms;
+  --curva-estandar: cubic-bezier(.2, .8, .2, 1);
+  --curva-entrada: cubic-bezier(.2, .9, .25, 1);
+  --curva-salida: cubic-bezier(.4, 0, 1, 1);
+  --curva-enfasis: cubic-bezier(.3, 1.4, .5, 1);
+  --capa-marco: 10;
+  --capa-superpuesto: 40;
+  --capa-aviso: 50;
+  --tactil-minimo: 44px;
+}
+
+:root {
+  color-scheme: light;
+  --fondo: #F1F2EE;
+  --superficie: #FFFFFF;
+  --superficie-elevada: #FFFFFF;
+  --superficie-hundida: #E7E9E3;
+  --borde-sutil: #D9DCD4;
+  --borde-control: #767D87;
+  --foco: #1F47D1;
+  --velo: rgba(16,20,24,.5);
+  --texto: #101418;
+  --texto-secundario: #474E58;
+  --texto-terciario: #61686F;
+  --texto-deshabilitado: #AEB3BA;
+  --enlace: #1F47D1;
+  --accion: #1F47D1;
+  --accion-hover: #1838A8;
+  --accion-presionada: #132C85;
+  --texto-sobre-accion: #FFFFFF;
+  --accion-secundaria: #E7E9E3;
+  --peligro: #B42318;
+  --texto-sobre-peligro: #FFFFFF;
+  --marca: #101418;
+  --texto-sobre-marca: #F1F2EE;
+  --positivo-texto: #0A6B5F;
+  --positivo-fondo: #DDF2EE;
+  --positivo-borde: #13897A;
+  --cero-texto: #474E58;
+  --cero-fondo: #E7E9E3;
+  --cero-borde: #767D87;
+  --advertencia-texto: #835A00;
+  --advertencia-fondo: #FFF0C2;
+  --advertencia-borde: #A87800;
+  --problema-texto: #B8400A;
+  --problema-fondo: #FFE3D3;
+  --problema-borde: #C9521C;
+  --deuda-texto: #5644C2;
+  --deuda-fondo: #ECE9FB;
+  --deuda-borde: #6A58D6;
+  --deuda-sin-respaldo-texto: #A3195B;
+  --deuda-sin-respaldo-fondo: #FCE4EF;
+  --deuda-sin-respaldo-borde: #C02A6E;
+  --informacion-texto: #0E5E86;
+  --informacion-fondo: #E0F0F8;
+  --informacion-borde: #1A76A6;
+  --grafico-serie-1: #2489EA;
+  --grafico-serie-2: #E25A73;
+  --grafico-serie-3: #7A2A90;
+  --grafico-serie-4: #266600;
+  --grafico-serie-5: #99578A;
+  --grafico-serie-6: #739629;
+  --grafico-serie-7: #B16CD9;
+  --grafico-serie-8: #88392E;
+  --grafico-referencia: #474E58;
+  --grafico-rejilla: #D9DCD4;
+  --marca-icono-fondo: #101418;
+  --marca-icono-figura: #F1F2EE;
+  --accion-tonal: #E4E9FB;
+  --grafico-tinta: #101418;
+  --grafico-otras: #61686F;
+  --marca-grabado: rgba(241,242,238,.08);
+  --cuenta-banco: #DCE8EE;
+  --cuenta-ahorro: #E2EBDA;
+  --cuenta-prestamo: #EFE3D8;
+  --cuenta-inversion: #E4E2F0;
+  --cuenta-motivo: rgba(16,20,24,.08);
+  --cuenta-disco: rgba(255,255,255,.7);
+  --tarjeta-oro-texto: #F7F1E3;
+  --tarjeta-plata-texto: #F2F4F6;
+  --elevacion-1: 0 1px 2px rgba(16,20,24,.05), 0 10px 28px -10px rgba(16,20,24,.16);
+  --elevacion-2: 0 8px 24px rgba(16,20,24,.12);
+  --elevacion-3: 0 18px 48px rgba(16,20,24,.22);
+}
+
+:root[data-theme="oscuro"] {
+  color-scheme: dark;
+  --fondo: #0D1013;
+  --superficie: #161A1F;
+  --superficie-elevada: #1F242B;
+  --superficie-hundida: #090B0D;
+  --borde-sutil: #2B3139;
+  --borde-control: #737B86;
+  --foco: #7A93FF;
+  --velo: rgba(0,0,0,.6);
+  --texto: #EEF0EC;
+  --texto-secundario: #AEB5BE;
+  --texto-terciario: #8B939D;
+  --texto-deshabilitado: #4A515A;
+  --enlace: #7A93FF;
+  --accion: #7A93FF;
+  --accion-hover: #97ABFF;
+  --accion-presionada: #B3C2FF;
+  --texto-sobre-accion: #0D1013;
+  --accion-secundaria: #1F242B;
+  --peligro: #FF7A6E;
+  --texto-sobre-peligro: #0D1013;
+  --marca: #EEF0EC;
+  --texto-sobre-marca: #0D1013;
+  --positivo-texto: #4FD1B8;
+  --positivo-fondo: #0F2E2A;
+  --positivo-borde: #2FAE97;
+  --cero-texto: #AEB5BE;
+  --cero-fondo: #1F242B;
+  --cero-borde: #737B86;
+  --advertencia-texto: #F4C04E;
+  --advertencia-fondo: #33280B;
+  --advertencia-borde: #C99A2E;
+  --problema-texto: #FF8A4C;
+  --problema-fondo: #3A1A0C;
+  --problema-borde: #E0702F;
+  --deuda-texto: #ADA2FF;
+  --deuda-fondo: #221E45;
+  --deuda-borde: #8C80F0;
+  --deuda-sin-respaldo-texto: #FF7AB6;
+  --deuda-sin-respaldo-fondo: #3D1129;
+  --deuda-sin-respaldo-borde: #E0559A;
+  --informacion-texto: #6CC4F0;
+  --informacion-fondo: #0B2A3A;
+  --informacion-borde: #3FA3D6;
+  --grafico-serie-1: #0072CE;
+  --grafico-serie-2: #B34B53;
+  --grafico-serie-3: #A047B9;
+  --grafico-serie-4: #438F21;
+  --grafico-serie-5: #975889;
+  --grafico-serie-6: #6A8F02;
+  --grafico-serie-7: #9A47C6;
+  --grafico-serie-8: #A6584C;
+  --grafico-referencia: #AEB5BE;
+  --grafico-rejilla: #2B3139;
+  --marca-icono-fondo: #101418;
+  --marca-icono-figura: #F1F2EE;
+  --accion-tonal: #1C2444;
+  --grafico-tinta: #EEF0EC;
+  --grafico-otras: #8B939D;
+  --marca-grabado: rgba(13,16,19,.08);
+  --cuenta-banco: #13222B;
+  --cuenta-ahorro: #172219;
+  --cuenta-prestamo: #261C15;
+  --cuenta-inversion: #1C1B2A;
+  --cuenta-motivo: rgba(238,240,236,.07);
+  --cuenta-disco: rgba(255,255,255,.07);
+  --tarjeta-oro-texto: #F7F1E3;
+  --tarjeta-plata-texto: #F2F4F6;
+  --elevacion-1: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 30px -12px rgba(0,0,0,.75);
+  --elevacion-2: 0 8px 24px rgba(0,0,0,.45);
+  --elevacion-3: 0 18px 48px rgba(0,0,0,.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="claro"]) {
+    color-scheme: dark;
+    --fondo: #0D1013;
+    --superficie: #161A1F;
+    --superficie-elevada: #1F242B;
+    --superficie-hundida: #090B0D;
+    --borde-sutil: #2B3139;
+    --borde-control: #737B86;
+    --foco: #7A93FF;
+    --velo: rgba(0,0,0,.6);
+    --texto: #EEF0EC;
+    --texto-secundario: #AEB5BE;
+    --texto-terciario: #8B939D;
+    --texto-deshabilitado: #4A515A;
+    --enlace: #7A93FF;
+    --accion: #7A93FF;
+    --accion-hover: #97ABFF;
+    --accion-presionada: #B3C2FF;
+    --texto-sobre-accion: #0D1013;
+    --accion-secundaria: #1F242B;
+    --peligro: #FF7A6E;
+    --texto-sobre-peligro: #0D1013;
+    --marca: #EEF0EC;
+    --texto-sobre-marca: #0D1013;
+    --positivo-texto: #4FD1B8;
+    --positivo-fondo: #0F2E2A;
+    --positivo-borde: #2FAE97;
+    --cero-texto: #AEB5BE;
+    --cero-fondo: #1F242B;
+    --cero-borde: #737B86;
+    --advertencia-texto: #F4C04E;
+    --advertencia-fondo: #33280B;
+    --advertencia-borde: #C99A2E;
+    --problema-texto: #FF8A4C;
+    --problema-fondo: #3A1A0C;
+    --problema-borde: #E0702F;
+    --deuda-texto: #ADA2FF;
+    --deuda-fondo: #221E45;
+    --deuda-borde: #8C80F0;
+    --deuda-sin-respaldo-texto: #FF7AB6;
+    --deuda-sin-respaldo-fondo: #3D1129;
+    --deuda-sin-respaldo-borde: #E0559A;
+    --informacion-texto: #6CC4F0;
+    --informacion-fondo: #0B2A3A;
+    --informacion-borde: #3FA3D6;
+    --grafico-serie-1: #0072CE;
+    --grafico-serie-2: #B34B53;
+    --grafico-serie-3: #A047B9;
+    --grafico-serie-4: #438F21;
+    --grafico-serie-5: #975889;
+    --grafico-serie-6: #6A8F02;
+    --grafico-serie-7: #9A47C6;
+    --grafico-serie-8: #A6584C;
+    --grafico-referencia: #AEB5BE;
+    --grafico-rejilla: #2B3139;
+    --marca-icono-fondo: #101418;
+    --marca-icono-figura: #F1F2EE;
+    --accion-tonal: #1C2444;
+    --grafico-tinta: #EEF0EC;
+    --grafico-otras: #8B939D;
+    --marca-grabado: rgba(13,16,19,.08);
+    --cuenta-banco: #13222B;
+    --cuenta-ahorro: #172219;
+    --cuenta-prestamo: #261C15;
+    --cuenta-inversion: #1C1B2A;
+    --cuenta-motivo: rgba(238,240,236,.07);
+    --cuenta-disco: rgba(255,255,255,.07);
+    --tarjeta-oro-texto: #F7F1E3;
+    --tarjeta-plata-texto: #F2F4F6;
+    --elevacion-1: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 30px -12px rgba(0,0,0,.75);
+    --elevacion-2: 0 8px 24px rgba(0,0,0,.45);
+    --elevacion-3: 0 18px 48px rgba(0,0,0,.6);
+  }
+}
+
+/* Roles tipográficos (A.5): en rem; los montos con cifras tabulares */
+.t-cifra-principal { font-family: var(--fuente-cuerpo); font-size: 2.75rem; line-height: 1.05; font-weight: 800; font-stretch: 72%; font-variant-numeric: tabular-nums; }
+.t-cifra { font-family: var(--fuente-cuerpo); font-size: 1.25rem; line-height: 1.25; font-weight: 700; font-stretch: 80%; font-variant-numeric: tabular-nums; }
+.t-titulo-pantalla { font-family: var(--fuente-titulo); font-size: 2rem; line-height: 1.05; font-weight: 800; letter-spacing: .01em; text-transform: uppercase; }
+.t-titulo-seccion { font-family: var(--fuente-titulo); font-size: 1.375rem; line-height: 1.15; font-weight: 700; letter-spacing: .01em; text-transform: uppercase; }
+.t-cuerpo { font-family: var(--fuente-cuerpo); font-size: 1rem; line-height: 1.5; font-weight: 400; }
+.t-cuerpo-pequeno { font-family: var(--fuente-cuerpo); font-size: .875rem; line-height: 1.45; font-weight: 400; }
+.t-etiqueta { font-family: var(--fuente-cuerpo); font-size: .875rem; line-height: 1.35; font-weight: 500; }
+.t-rotulo { font-family: var(--fuente-cuerpo); font-size: .75rem; line-height: 1.3; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

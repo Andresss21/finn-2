@@ -653,3 +653,19 @@ dentro de `finn-entrega.zip`) quedan como archivo; `finn-marca.zip` también est
 | `finn-marca/icon-adaptable-512.png` | — (el zip: 06-identidad-visual, 08-tareas) | — |
 | `finn-marca/insignia-96.png` | — (el zip: 06-identidad-visual, 08-tareas) | — |
 | `finn-marca/manifest-icons.json` | 06-identidad-visual, 08-tareas | TA-203 |
+
+## Anexo posterior: `finn-diseno-export/` [CH-107]
+
+No viene de un zip de `C:\finn\_entrada\` del encargo original sino de `finn-diseno-export.zip`, el export en código del diseño
+aprobado (entrega A.10) que Claude Design generó el 2026-11-03 a pedido del usuario. Corresponde a A.10 **sin cambios de diseño**:
+solo pasó a `var(--token)` los colores que existen en `tokens.css`. Es la fuente para «portar desde anexos» en las correcciones
+visuales y en las pantallas de las fichas pendientes; el diseño sigue mandando por `finn-entrega/PANTALLAS.md` y `06-identidad-visual.md`.
+
+- Contenido (167 archivos): `pantallas/` (58 HTML, uno por variante de captura), `componentes/` (93 HTML de K2 a K5, claro y oscuro),
+  `prototipo/` (prototipo v2 ejecutable, con `fuente/`), `estilos/`, `fuentes/` (con licencias OFL junto a las fuentes) e `INDICE.md`
+  propio con las diferencias conocidas (D1 a D11) y los valores fuera de los tokens (§8).
+- `referencia/` del export (66 capturas y `prototipo-logica.js`) **no se copia**: se comparó con SHA-256 y los 67 archivos son
+  idénticos a los de `finn-entrega/referencia/`. Las rutas `referencia/…` que cita el `INDICE.md` del export se leen en esa carpeta.
+- Revisado antes de commitear: sin secretos ni datos personales; las únicas URLs son dos enlaces de las licencias OFL; sin scripts
+  externos ni seguimiento. El archivo más grande pesa 456 KB (prototipo); no hay binarios que pidan LFS.
+- Detalle por archivo: el `INDICE.md` del propio export. Esta tabla no lo repite y `pnpm plan:anexos` no lo cita.
