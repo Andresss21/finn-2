@@ -83,7 +83,7 @@ describe('PRU-INT-TX', () => {
     expect(despues.efectos).toEqual(antes.efectos);
   });
 
-  it('PRU-INT-TX-431 [CA-27.6, BE-38] al confirmar con la huella de la previsualización queda un cambio_retroactivo sin push y sin leer con el resumen de ese impacto (Δ LPA −$20.00), y repetirla no suma otro', async () => {
+  it('PRU-INT-TX-431 [CA-27.6] al confirmar con la huella de la previsualización queda un cambio_retroactivo sin push y sin leer con el resumen de ese impacto (Δ LPA −$20.00), y repetirla no suma otro', async () => {
     const entrada = olvidado(1502);
     const vista = await preparar(OP20, entrada);
     if (!vista.ok || vista.valor.huellaImpacto === null) throw new Error('previsualizar falló');
