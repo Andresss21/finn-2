@@ -459,7 +459,7 @@
 
   "TA-468": { "estado": "terminada", "rama": "ta-468-formulario", "pr": 363 },
 
-  "TA-473": { "estado": "pendiente" },
+  "TA-473": { "estado": "en_curso", "rama": "ta-473-programadas-destinos-2" },
 
   "TA-474": { "estado": "pendiente" },
 

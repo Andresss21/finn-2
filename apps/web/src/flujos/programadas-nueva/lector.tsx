@@ -6,33 +6,41 @@ import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { FormularioProgramada } from './formulario';
 
+const refs = (xs: readonly { readonly cuenta: { id: string; nombre: string } }[] | undefined) =>
+  (xs ?? []).map((x) => ({ id: x.cuenta.id, nombre: x.cuenta.nombre }));
+
 export async function LectorProgramada() {
   const dto = await consultar(
     async () => formulario(await depsDeConsulta(), { operacion: 'programada' }),
     { validacionDeSegmento: true },
   );
-  const cuentas = [
-    ...(dto.catalogos.cuentas?.efectivo ?? []),
-    ...(dto.catalogos.cuentas?.tarjetas ?? []),
-  ].map((x) => ({ id: x.cuenta.id, nombre: x.cuenta.nombre }));
+  const cuentas = dto.catalogos.cuentas;
+  const efectivo = refs(cuentas?.efectivo);
   const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((g) =>
     g.categorias.map((x) => ({ id: x.categoria.id, nombre: x.categoria.nombre })),
   );
   return (
     <FormularioProgramada
       inicial={{
+        tipo: 'gasto',
         cuentaId: '',
+        cuentaDestinoId: '',
         comercio: '',
         monto: '',
         tolerancia: '',
-        categoriaId: '',
         frecuencia: 'mensual',
         frecuenciaDias: '',
         primeraFecha: dto.hoy,
         fechaFin: '',
         registroAutomatico: false,
+        lineas: [{ monto: '', categoriaId: '' }],
       }}
-      cuentas={cuentas}
+      origenes={{ gasto: [...efectivo, ...refs(cuentas?.tarjetas)], otros: efectivo }}
+      destinos={{
+        pago_tarjeta: refs(cuentas?.tarjetas),
+        cuota_prestamo: refs(cuentas?.prestamos),
+        aporte_inversion: refs(cuentas?.inversiones),
+      }}
       categorias={categorias}
       accion={gestionarProgramada}
     />

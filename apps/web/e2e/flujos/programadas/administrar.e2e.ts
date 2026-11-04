@@ -82,7 +82,46 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await expect(proximos).not.toContainText('Luz');
   });
 
-  test('PRU-E2E-PROG-107 RUTA-/programadas/nueva [CA-40.8] crear una programada no cambia Listo para asignar', async ({
+  test('PRU-E2E-PROG-104 RUTA-/programadas/nueva [CA-40.4] una cuota con registro automático hacia un préstamo sin modelo se rechaza con registro_automatico_sin_modelo', async ({
+    page,
+  }) => {
+    await sembrarOps(
+      [
+        ...BASE,
+        {
+          op: 'OP-01',
+          cuenta: 'Préstamo',
+          tipo: 'prestamo',
+          saldo: 5000,
+          prestamo: {
+            contraparte: 'Banco',
+            montoOriginal: 6000,
+            cuota: 210,
+            plazoCuotas: 60,
+            cuotasPagadas: 10,
+          },
+        },
+        { op: 'OP-07', categoria: 'Cuotas' },
+      ],
+      '2027-02-10',
+    );
+    await abrir(page, '/programadas/nueva');
+    await page.getByRole('radio', { name: 'Cuota' }).click();
+    await page.getByLabel('Cuenta', { exact: true }).selectOption({ label: 'Ahorro' });
+    await page.getByLabel('Cuenta de destino').selectOption({ label: 'Préstamo' });
+    await page.getByLabel('Comercio', { exact: true }).fill('Cuota del préstamo');
+    await page.getByLabel('Monto', { exact: true }).fill('210');
+    await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Cuotas' });
+    await page.getByLabel('Primera fecha').fill('2027-02-20');
+    await page.getByRole('switch', { name: 'Registrar sola en su fecha' }).check();
+    await page.getByRole('button', { name: 'Crear programada' }).click();
+    await expect(
+      page.getByText('Para registrar sola una cuota, el préstamo necesita un modelo de cálculo.'),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/programadas\/nueva/);
+  });
+
+  test('PRU-E2E-PROG-107RUTA-/programadas/nueva [CA-40.8] crear una programada no cambia Listo para asignar', async ({
     page,
   }) => {
     await sembrarOps(BASE, '2027-02-10');
