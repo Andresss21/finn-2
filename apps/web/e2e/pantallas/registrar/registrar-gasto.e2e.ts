@@ -4,11 +4,7 @@
 // Los campos se buscan por su etiqueta del catálogo (FE-51).
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
-import {
-  esperarContenido,
-  esperarControlHidratado,
-  esperarHidratacion,
-} from '../../ayudas/esperas.ts';
+import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { revisarTactil } from '../../ayudas/tactil.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
@@ -83,7 +79,12 @@ const campo = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exac
 /** La cuenta y el destino de cada línea son selecciones nativas del export (K2, S5): se elige por el nombre de la opción. */
 const elegir = async (page: Page, etiqueta: string, nombre: string): Promise<void> => {
   const control = campo(page, etiqueta);
-  await esperarControlHidratado(control);
+  // React pone el valor del estado al hidratar el control: un cambio hecho antes se perdería (los campos de texto lo repiten, este no)
+  await expect
+    .poll(() =>
+      control.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))),
+    )
+    .toBe(true);
   await control.selectOption({ label: nombre });
 };
 const elegida = (page: Page, etiqueta: string) => campo(page, etiqueta).locator('option:checked');
