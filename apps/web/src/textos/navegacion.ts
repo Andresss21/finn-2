@@ -20,7 +20,7 @@ export const navegacion = {
   masDeNoventaYNueve: '99+',
   // Barra de una pantalla hija (06-identidad-visual §3.1)
   volverA: (seccion: string | null) => (seccion === null ? 'Volver' : `Volver a ${seccion}`),
-  // Panel de la campana (06-identidad-visual 2.17) mientras el centro de notificaciones (FT-69) no existe
+  // Pie del centro de notificaciones (06-identidad-visual 2.17, P6-25)
   notificacionesPie:
     'Acá llegan recordatorios y avisos de Finn. Los movimientos de tus SMS por revisar están en la Bandeja.',
   secciones: {

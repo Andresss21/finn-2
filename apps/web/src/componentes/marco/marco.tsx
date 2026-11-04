@@ -19,7 +19,6 @@ import {
   EnlaceFinn,
   EVENTO_SIN_CONEXION,
 } from '../navegacion/enlace-finn';
-import { precargar, SuperpuestoDiferido } from '../navegacion/hoja-diferida';
 import { useRefrescar } from '../navegacion/use-refrescar';
 import { MasSecciones, NavegacionApp } from '../navegacion/navegacion-app';
 import { SECCIONES, seccionDeRuta, volverDeRuta } from '../navegacion/secciones';
@@ -172,42 +171,18 @@ function CuerpoDelMarco({
 }
 
 /**
- * La campana (06-identidad-visual 3.1, N7). `/notificaciones` no existe todavía (FT-69): en lugar de enlazar a una ruta que
- * daría «Esto ya no existe.», abre el panel diferido desde arriba (la forma de CF-23) con el pie de 2.17.
+ * La campana (06-identidad-visual 3.1, N7; CF-23): enlaza a `/notificaciones`. Desde otra pantalla la ruta se intercepta y se ve
+ * como el panel que cae desde arriba (`@superpuesto/(.)notificaciones`); abierta directamente, es la página completa.
  */
 function Campana({ valor }: { readonly valor: number | null }) {
-  const [abierta, setAbierta] = useState(false);
   return (
-    <>
-      <button
-        type="button"
-        aria-label={navegacion.notificaciones(valor)}
-        aria-haspopup="dialog"
-        aria-expanded={abierta}
-        onPointerEnter={precargar}
-        onFocus={precargar}
-        onClick={() => {
-          setAbierta(true);
-        }}
-        className="relative inline-flex size-11 items-center justify-center rounded-pastilla text-texto md:bg-superficie-hundida"
-      >
-        <Icono nombre="bell" tamano={22} />
-        <Contador valor={valor} forma="campana" />
-      </button>
-      {abierta ? (
-        <SuperpuestoDiferido
-          titulo={navegacion.secciones.notificaciones}
-          desde="arriba"
-          alCerrar={() => {
-            setAbierta(false);
-          }}
-        >
-          <p className="text-cuerpo-pequeno mb-3 flex gap-2.5 rounded-contenedor bg-superficie-hundida p-3.5 text-texto-secundario">
-            <Icono nombre="info" tamano={18} className="mt-0.5 shrink-0" />
-            {navegacion.notificacionesPie}
-          </p>
-        </SuperpuestoDiferido>
-      ) : null}
-    </>
+    <EnlaceFinn
+      href="/notificaciones"
+      aria-label={navegacion.notificaciones(valor)}
+      className="relative inline-flex size-11 items-center justify-center rounded-pastilla text-texto md:bg-superficie-hundida"
+    >
+      <Icono nombre="bell" tamano={22} />
+      <Contador valor={valor} forma="campana" />
+    </EnlaceFinn>
   );
 }
