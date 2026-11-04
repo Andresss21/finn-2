@@ -63,10 +63,8 @@ body {
   }
 }
 
-/* Marco (06-identidad-visual §3, export K1, CH-109). El título de la barra es el `h1` de cada página: así llega con la página
-   desde el servidor, sin esperar a hidratar. En teléfono se dibuja dentro de la barra fija de 60 px, entre el borde (o
-   «Volver») y los botones de la derecha, en una línea con puntos suspensivos; el de un flujo va en su propia barra. Anchos
-   a la derecha: Registrar (110) + campana + «Más secciones»; en una hija, la campana (+ «Más acciones»). */
+/* Marco (06-identidad-visual §3, export K1, CH-109). En teléfono el `h1` de la página (llega del servidor) va en la barra
+   fija, antes de Registrar (110) + campana + ☰, o entre «Volver» y la campana; el de un flujo va en su propia barra. */
 @media (width < 48rem) {
   #contenido h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
     position: fixed;
@@ -85,9 +83,6 @@ body {
     right: 3.75rem;
     font-size: 1.625rem;
   }
-  #contenido[data-barra='hija'][data-acciones] h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
-    right: 6.75rem;
-  }
   /* Flujo largo a pantalla completa: sin la barra superior ni la inferior. */
   body:has([data-pagina-flujo]) [data-marco-barra] {
     display: none;
@@ -97,8 +92,7 @@ body {
   }
 }
 
-/* Computadora: contenido alineado a la izquierda con padding 32 48 48 y el ancho de la pantalla (`--ancho-pantalla`, todo el
-   ancho si no fija otro); título de 2.5 rem. La primera fila deja lugar a la campana (y a «Más acciones»). */
+/* Computadora: a la izquierda, padding 32 48 48, `--ancho-pantalla` (o todo el ancho), título de 2.5 rem y lugar para la campana. */
 @media (width >= 48rem) {
   #contenido > main {
     margin-inline: 0;
@@ -110,9 +104,6 @@ body {
   }
   #contenido > main > :first-child {
     margin-right: 3.5rem;
-  }
-  #contenido[data-acciones] > main > :first-child {
-    margin-right: 13.5rem;
   }
 }
 

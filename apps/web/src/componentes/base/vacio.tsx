@@ -1,9 +1,8 @@
-// Vacío (06-identidad-visual 2.19, 05 §7.2): círculo de 72 con el glifo, título, texto de 280 como máximo y la acción. Un
-// error («Esto ya no existe.», entrega 2 del diseño) va en el círculo neutro: el `positivo` es para lo que está al día.
+// Vacío (06-identidad-visual 2.19, 05 §7.2): círculo de 72 con el glifo, título, texto de 280 como máximo y la acción.
 import type { ReactNode } from 'react';
 import { Icono, type NombreIcono } from './icono';
 
-// Mapa de clases literales (L13).
+// Mapa de clases literales (L13). Un error («Esto ya no existe.», entrega 2 del diseño) va en el círculo neutro.
 const TONOS = {
   positivo:
     'flex size-18 items-center justify-center rounded-pastilla bg-positivo-fondo text-positivo-texto',

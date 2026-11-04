@@ -69,9 +69,7 @@ test.describe('PRU-E2E-PWA', () => {
       expect((caja?.x ?? 0) + (caja?.width ?? 0)).toBeLessThanOrEqual(registrar?.x ?? 0);
       expect(await estilo(page, '#contenido h1', 'font-size')).toBe('32px');
       // Zona segura de la barra inferior (6 4 22).
-      expect(
-        await estilo(page, 'nav[data-marco-barra]', 'padding-bottom'),
-      ).toBe('22px');
+      expect(await estilo(page, 'nav[data-marco-barra]', 'padding-bottom')).toBe('22px');
     }
 
     // Pantalla hija: en teléfono, «Volver a Presupuesto» de 44 px en la barra y el título de 1.625 rem.

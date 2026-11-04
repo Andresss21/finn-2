@@ -3,8 +3,7 @@
 // no entre en el texto visible del enlace (axe: label-content-name-mismatch).
 import { navegacion } from '../../textos/navegacion';
 
-// Mapa de clases literales (L13). Bandeja: 22 px con borde de 2 px `fondo`. Campana: 17 px con anillo de 2 px en la barra del
-// teléfono; en computadora, 18 px sin anillo sobre el círculo de 44 (export K1, CH-109).
+// Mapa de clases literales (L13). Bandeja: 22 px, borde `fondo`. Campana (export K1): 17 px con anillo; en computadora, 18 px.
 const FORMAS = {
   bandeja:
     'absolute -top-1.5 -right-1.5 inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-pastilla border-2 border-fondo bg-accion px-1 text-xs leading-none font-extrabold text-texto-sobre-accion after:content-[attr(data-contador)]',
