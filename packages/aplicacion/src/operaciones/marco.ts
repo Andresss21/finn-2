@@ -45,6 +45,7 @@ import {
   type ResultadoAccion,
 } from '../errores/index.ts';
 import { generadorAleatorio, generadorDerivado } from '../ids.ts';
+import { efectoCambioRetroactivo, nombresDelImpacto } from './impacto-texto.ts';
 
 /** Clase de idempotencia de una operación (04 §4.6). */
 export type ClaseIdempotencia = 'creacion' | 'valor_absoluto' | 'eliminacion' | 'natural';
@@ -139,6 +140,8 @@ export interface ResultadoPrevisualizar {
   readonly avisos: readonly AvisoOperacion[];
   readonly rechazos: readonly Rechazo[];
   readonly propuesta?: Propuesta;
+  /** AV-01 y los Δ por categoría o tarjeta: id → nombre para decir qué cambia (no entra en la huella). */
+  readonly nombres?: Readonly<Record<string, string>>;
 }
 
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -444,6 +447,7 @@ export async function previsualizar<E, R, S>(
               huellaImpacto: huellaDe(resultado),
               impacto: resultado.impacto,
               avisos: resultado.avisos,
+              nombres: nombresDelImpacto(resultado.impacto, resultado.hechosNuevos),
             }
           : {
               ...vista,
@@ -549,6 +553,7 @@ export async function confirmar<E, R, S>(
             impacto: resultado.impacto,
             avisos: resultado.avisos,
             rechazos: [],
+            nombres: nombresDelImpacto(resultado.impacto, resultado.hechosNuevos),
           },
           ...(typeof revisionVista === 'string' && revisionVista !== tx.estado.revision
             ? { datos: { revisionVista, revisionActual: tx.estado.revision } }
@@ -569,7 +574,10 @@ export async function confirmar<E, R, S>(
       resultado,
       revision,
       valores,
-      efectos: def.posteriores?.(resultado) ?? [],
+      efectos: [
+        ...(def.posteriores?.(resultado) ?? []),
+        ...efectoCambioRetroactivo(resultado, d.escribirTecnico, opcionesDe(d)),
+      ],
     };
   };
 

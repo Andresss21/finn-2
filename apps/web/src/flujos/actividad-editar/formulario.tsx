@@ -5,6 +5,7 @@
 // montos (PF-3): la suma de las partes la valida el servidor.
 import { lazy, Suspense, useRef } from 'react';
 import { useFieldArray } from 'react-hook-form';
+import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import {
@@ -43,8 +44,7 @@ export interface PropsFormularioActividadEditar {
   readonly accion: AccionEscritura;
 }
 
-interface Previsualizacion {
-  readonly impacto?: { readonly deltaLpa: number } | null;
+interface Previsualizacion extends VistaDeImpacto {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
@@ -59,7 +59,7 @@ const DE_LAS_PARTES = [
 
 const ConfirmacionImpacto = lazy(() =>
   import('../../componentes/formularios/confirmacion-impacto').then((m) => ({
-    default: m.ConfirmacionImpacto,
+    default: m.ConfirmacionImpactoDeVista,
   })),
 );
 // Los campos se cargan aparte: el HTML del servidor ya los trae y el presupuesto de bytes de la ruta no los cuenta (05 §13.1)
@@ -111,15 +111,7 @@ export function FormularioActividadEditar({
           <ConfirmacionImpacto
             titulo={t.revisar}
             {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
-            impacto={
-              vista.impacto
-                ? [
-                    t.impactoLpa(
-                      `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa as never)}`,
-                    ),
-                  ]
-                : []
-            }
+            vista={vista}
             avisos={(vista.avisos ?? []).map((a) => t.avisos[a.codigo] ?? a.codigo)}
             textoConfirmar={t.confirmar}
             textoVolver={t.volverAEditar}
