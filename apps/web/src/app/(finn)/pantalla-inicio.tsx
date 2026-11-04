@@ -6,10 +6,11 @@ import type { ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Icono } from '../../componentes/base/icono';
 import { ResumenListoParaAsignar } from '../../componentes/dominio/billete';
-import { IndicadorEstado, type EstadoFinanciero } from '../../componentes/dominio/indicador-estado';
+import { COLOR_TEXTO } from '../../componentes/dominio/indicador-estado';
 import { Monto } from '../../componentes/dominio/monto';
 import { PublicarEncabezado } from '../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
+import { CirculoEstado, FOCO, FilaAtencion, TextoDeFila } from './fila-atencion';
 import { SacarDeUnToque } from './presupuesto/sacar-un-toque';
 import { MarcarLeido } from './marcar-leido';
 import { hrefDeOcurrencia, ProximosPagos, Recientes, TodoAlDia } from './inicio-secciones';
@@ -21,13 +22,13 @@ import { glosario } from '../../textos/glosario';
 import { inicio as t } from '../../textos/inicio';
 import { PrimerosPasosDeInicio } from './primeros-pasos';
 
-const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-const CONTENEDOR = 'flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie';
-const FILA = `flex min-h-17 items-center gap-3 px-4 py-3 ${FOCO}`;
-const FILA_EN_CONTENEDOR = `${CONTENEDOR} flex min-h-17 items-center gap-3 px-4 py-3 ${FOCO}`;
-const RESUMEN = `flex min-h-11 cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden ${FOCO}`;
-const ENLACE = `inline-flex min-h-11 items-center font-semibold text-enlace underline ${FOCO}`;
-const ACCION = `inline-flex min-h-11 items-center font-semibold underline ${FOCO}`;
+const CONTENEDOR =
+  'flex flex-col divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1';
+const BASE_ENLACE = `inline-flex min-h-11 items-center gap-1.5 text-etiqueta font-bold no-underline ${FOCO}`;
+const ENLACE = `${BASE_ENLACE} text-enlace`;
+const SUMARIO_BASE = `grid min-h-17 grid-cols-[36px_minmax(0,1fr)_18px] items-center gap-3 px-4 no-underline ${FOCO}`;
+const SUMARIO = `${SUMARIO_BASE} cursor-pointer list-none [&::-webkit-details-marker]:hidden`;
+const FILA_PATRIMONIO = `flex min-h-16 items-center justify-between gap-3 rounded-contenedor bg-superficie px-3.5 no-underline shadow-elevacion-1 ${FOCO}`;
 
 /**
  * Sin `conTitulo` la sección queda vacía y oculta, pero montada: la salida «Deshacer» de la propuesta de AV-08 vive adentro y
@@ -43,33 +44,12 @@ function Seccion({
   readonly children: ReactNode;
 }) {
   return (
-    <section aria-label={titulo} className="flex flex-col gap-2 empty:hidden">
-      {conTitulo ? <h2 className="text-titulo-seccion">{titulo}</h2> : null}
+    <section aria-label={titulo} className="flex flex-col gap-2.5 empty:hidden">
+      {conTitulo ? (
+        <h2 className="flex min-h-11 items-center text-titulo-seccion">{titulo}</h2>
+      ) : null}
       {children}
     </section>
-  );
-}
-
-/** Una fila de atención que enlaza a donde se resuelve. */
-function FilaAtencion({
-  href,
-  estado,
-  etiqueta,
-  children,
-}: {
-  readonly href: string;
-  readonly estado: EstadoFinanciero;
-  readonly etiqueta: string;
-  readonly children: ReactNode;
-}) {
-  return (
-    <EnlaceFinn href={href} className={FILA}>
-      <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
-        <span className="font-semibold text-texto">{children}</span>
-        <IndicadorEstado estado={estado} etiqueta={etiqueta} />
-      </span>
-      <Icono nombre="chevR" />
-    </EnlaceFinn>
   );
 }
 
@@ -78,24 +58,24 @@ function Sobregiro({ fila }: { readonly fila: InicioDto['atencion']['sobregirada
   const conDebito = s.tipo !== 'tarjeta';
   const conTarjeta = s.tipo !== 'debito';
   return (
-    <details className="group px-4 py-3" data-sobregiro={categoria.id}>
-      <summary className={RESUMEN}>
-        <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
-          <span className="font-semibold text-texto">{categoria.nombre}</span>
-          <span className="flex flex-wrap gap-2">
-            {conDebito ? (
-              <IndicadorEstado estado="problema" etiqueta={dominio.sobregiroDebito} />
-            ) : null}
-            {conTarjeta ? (
-              <IndicadorEstado estado="deuda-sin-respaldo" etiqueta={dominio.deudaSinReservar} />
-            ) : null}
-          </span>
-        </span>
+    <details className="group" data-sobregiro={categoria.id}>
+      <summary className={SUMARIO}>
+        <CirculoEstado estado={conDebito ? 'problema' : 'deuda-sin-respaldo'} />
+        <TextoDeFila
+          etiquetas={[
+            ...(conDebito ? [{ estado: 'problema' as const, texto: dominio.sobregiroDebito }] : []),
+            ...(conTarjeta
+              ? [{ estado: 'deuda-sin-respaldo' as const, texto: dominio.deudaSinReservar }]
+              : []),
+          ]}
+        >
+          {categoria.nombre}
+        </TextoDeFila>
         <span className="group-open:rotate-90">
-          <Icono nombre="chevR" />
+          <Icono nombre="chevR" tamano={18} />
         </span>
       </summary>
-      <div className="flex flex-col gap-1.5 pt-2 text-cuerpo-pequeno">
+      <div className="flex flex-col gap-1.5 px-4 pb-3 pl-16 text-cuerpo-pequeno">
         <p>
           {t.sobregiro}{' '}
           <Monto
@@ -139,7 +119,7 @@ function Hallazgo({ h }: { readonly h: HallazgoDeRitmo }) {
       <AvisoEnLinea
         estado={h.estado}
         accion={
-          <EnlaceFinn href={href} className={ACCION}>
+          <EnlaceFinn href={href} className={[BASE_ENLACE, COLOR_TEXTO[h.estado]].join(' ')}>
             {etiqueta}
           </EnlaceFinn>
         }
@@ -169,7 +149,6 @@ export function PantallaInicio({
 }) {
   const { atencion: a, primerosPasos, patrimonio } = dto;
   const sinCuentas = primerosPasos !== null && !primerosPasos.cuenta;
-  const dias = dto.periodoActivo.diasRestantes;
   const filas =
     (dto.bandejaPorRevisar > 0 ? 1 : 0) +
     a.sobregiradas.length +
@@ -196,12 +175,12 @@ export function PantallaInicio({
             texto: t.asignar(formatearMonto(dto.lpa)),
           };
   return (
-    <main className="mx-auto flex max-w-270 flex-col gap-7 px-5 py-4 md:grid md:grid-cols-2 md:items-start md:gap-x-10">
+    <main className="mx-auto flex max-w-270 flex-col gap-7 px-5 py-4 md:grid md:grid-cols-2 md:items-start md:gap-x-9">
       <PublicarEncabezado encabezado={dto} />
       <h1 className="sr-only">{t.titulo}</h1>
-      <div className="flex flex-col gap-7">
+      <div className="flex flex-col gap-7 md:gap-8">
         {sinCuentas ? null : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <ResumenListoParaAsignar
               variante="billete"
               lpa={dto.lpa}
@@ -209,12 +188,14 @@ export function PantallaInicio({
               lpaNegativo={dto.lpaNegativo}
               {...(botonLpa === undefined ? {} : { accion: botonLpa })}
             />
-            <p className="text-cuerpo-pequeno text-texto-secundario">
-              {dias === undefined ? null : t.quedan(dias)}
-            </p>
-            <EnlaceFinn href="/presupuesto/listo-para-asignar" className={ENLACE}>
-              {t.verDetalle}
-            </EnlaceFinn>
+            <div className="flex justify-end">
+              <EnlaceFinn href="/presupuesto/listo-para-asignar" className={ENLACE}>
+                {t.verDetalle}
+                <span className="text-accion">
+                  <Icono nombre="chevR" tamano={16} />
+                </span>
+              </EnlaceFinn>
+            </div>
           </div>
         )}
         {primerosPasos === null ? null : <PrimerosPasosDeInicio pasos={primerosPasos} />}
@@ -261,8 +242,9 @@ export function PantallaInicio({
                     href={`/cuentas/${x.tarjeta.id}`}
                     estado="deuda-sin-respaldo"
                     etiqueta={glosario.teFaltaReservar}
+                    monto={x.monto}
                   >
-                    {x.tarjeta.nombre} <Monto centavos={x.monto} rol="cifra" />
+                    {x.tarjeta.nombre}
                   </FilaAtencion>
                 ))}
                 {a.pagosExcedentes.map((x) => (
@@ -271,8 +253,9 @@ export function PantallaInicio({
                     href={`/cuentas/${x.tarjeta.id}`}
                     estado="problema"
                     etiqueta={glosario.pagasteDeMas}
+                    monto={x.monto}
                   >
-                    {x.tarjeta.nombre} <Monto centavos={x.monto} rol="cifra" />
+                    {x.tarjeta.nombre}
                   </FilaAtencion>
                 ))}
                 {a.archivadasConDisponible.map((x) => (
@@ -281,14 +264,20 @@ export function PantallaInicio({
                     data-archivada={x.categoria.id}
                     className="flex flex-col gap-2 px-4 py-3"
                   >
-                    <span className="flex flex-col items-start gap-1">
-                      <span className="font-semibold text-texto">{x.categoria.nombre}</span>
-                      <IndicadorEstado
-                        estado="advertencia"
-                        etiqueta={t.archivadaConDinero(x.categoria.nombre)}
-                      />
+                    <span className="grid grid-cols-[36px_minmax(0,1fr)] items-center gap-3">
+                      <CirculoEstado estado="advertencia" />
+                      <TextoDeFila
+                        etiquetas={[
+                          {
+                            estado: 'advertencia',
+                            texto: t.archivadaConDinero(x.categoria.nombre),
+                          },
+                        ]}
+                      >
+                        {x.categoria.nombre}
+                      </TextoDeFila>
                     </span>
-                    <span className="text-cuerpo-pequeno">
+                    <span className="pl-12 text-cuerpo-pequeno">
                       {t.disponible} <Monto centavos={x.disponible} rol="cifra" />
                     </span>
                     {sacar === undefined || x.disponible <= 0 ? null : (
@@ -313,8 +302,9 @@ export function PantallaInicio({
                     href={`/presupuesto/categorias/${x.categoria.id}`}
                     estado="advertencia"
                     etiqueta={dominio.metaVencida}
+                    monto={x.falta}
                   >
-                    {x.categoria.nombre} <Monto centavos={x.falta} rol="cifra" />
+                    {x.categoria.nombre}
                   </FilaAtencion>
                 ))}
                 {a.pagosAtrasados.map((o) => (
@@ -323,10 +313,10 @@ export function PantallaInicio({
                     href={hrefDeOcurrencia(o)}
                     estado="advertencia"
                     etiqueta={t.atrasado}
+                    monto={o.monto}
+                    datos={{ 'data-pago-atrasado': o.programada.id }}
                   >
-                    <span data-pago-atrasado={o.programada.id}>
-                      {o.programada.nombre} <Monto centavos={o.monto} rol="cifra" />
-                    </span>
+                    {o.programada.nombre}
                   </FilaAtencion>
                 ))}
                 {a.pagosTarjetaProximos.map((x) => (
@@ -335,10 +325,10 @@ export function PantallaInicio({
                     href={`/cuentas/${x.tarjeta.id}`}
                     estado="advertencia"
                     etiqueta={t.pagoDeTarjeta(formatearFecha(x.fechaPago).slice(0, 5))}
+                    monto={x.paraNoGenerarIntereses}
+                    datos={{ 'data-pago-tarjeta': x.tarjeta.id }}
                   >
-                    <span data-pago-tarjeta={x.tarjeta.id}>
-                      {x.tarjeta.nombre} <Monto centavos={x.paraNoGenerarIntereses} rol="cifra" />
-                    </span>
+                    {x.tarjeta.nombre}
                   </FilaAtencion>
                 ))}
               </div>
@@ -348,21 +338,23 @@ export function PantallaInicio({
         {sinCuentas || hayAtencion ? null : <TodoAlDia />}
       </div>
       {sinCuentas ? null : (
-        <div className="flex flex-col gap-7">
+        <div className="flex flex-col gap-7 md:gap-8">
           <ProximosPagos pagos={a.proximosPagos} />
           <Recientes filas={dto.recientes} />
-          <EnlaceFinn href="/cuentas" className={FILA_EN_CONTENEDOR}>
-            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="text-rotulo">{t.patrimonio.titulo}</span>
-              <span data-patrimonio className="font-semibold">
-                <Monto centavos={patrimonio.neto} rol="cifra" />
-              </span>
-              <span className="text-cuerpo-pequeno text-texto-secundario">
+          <EnlaceFinn href="/cuentas" className={FILA_PATRIMONIO}>
+            <span className="flex min-w-0 flex-col gap-px">
+              <span className="font-semibold text-texto">{t.patrimonio.titulo}</span>
+              <span className="text-cuerpo-pequeno text-texto-secundario tabular-nums [&_[data-centavos]]:text-cuerpo-pequeno">
                 {t.patrimonio.activos} <Monto centavos={patrimonio.activos} /> ·{' '}
                 {t.patrimonio.deudas} <Monto centavos={patrimonio.deudas} />
               </span>
             </span>
-            <Icono nombre="chevR" />
+            <span className="flex flex-none items-center gap-2.5">
+              <span data-patrimonio>
+                <Monto centavos={patrimonio.neto} rol="cifra" />
+              </span>
+              <Icono nombre="chevR" tamano={18} />
+            </span>
           </EnlaceFinn>
         </div>
       )}
