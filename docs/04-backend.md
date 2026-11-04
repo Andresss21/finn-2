@@ -2552,6 +2552,7 @@ interface OcurrenciaDto {
 }
 ```
 
+- **[CH-105] Forma de `reservaExcedente` y `archivadasConDisponible`.** En lugar de `accion: Propuesta`, el selector entrega los datos con que la interfaz escribe la entrada de un toque sin calcular (PF-3): `reservaExcedente: { tarjeta, monto, categoriaPagoId, periodoInicio, asignado, montoNuevo }` (OP-14 sobre pago(t) en A con `montoNuevo` = Asig − RE(t) y `esperado.monto` = Asig) y `archivadasConDisponible: { categoria, disponible, asignado }` (OP-11 con `esperado.asignacionOrigen` = Asig(c, A)). La salida para revertir de AV-08 intercambia `montoNuevo` y `esperado.monto`.
 - **Mismos números en todas las pantallas (error 11).** `sobregiradas` usa el mismo `Disp(c, A)` (con arrastre) que Presupuesto; ambas llaman a `seleccionar.categoria`.
 - `atencion.bandeja` lee `movimientos` ([H]) con un `count` por estado (índice `ix_movimientos_estado`).
 - `cambiosRetroactivos` lee `notificaciones` ([T]) con `aviso = 'AV-01'` y `leida_en` nulo.

@@ -236,7 +236,11 @@ describe('selectores de Inicio y detalle de LPA', () => {
       { categoria: { id: 'viaje', nombre: 'viaje' }, falta: c(500) },
     ]);
     expect(x.atencion.archivadasConDisponible).toEqual([
-      { categoria: { id: 'vieja', nombre: 'vieja', archivada: true }, disponible: c(30) },
+      {
+        categoria: { id: 'vieja', nombre: 'vieja', archivada: true },
+        disponible: c(30),
+        asignado: c(0),
+      },
     ]);
     // Pago el 17 (2 días) y 60 de deuda anterior al corte del 1 de abril, sin pagos desde entonces.
     expect(x.atencion.pagosTarjetaProximos).toEqual([

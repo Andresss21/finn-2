@@ -847,7 +847,7 @@ El script exige **Disparador**, **Pasos** numerados y **Resultado esperado** (M1
 | M2 | Cada ESC tiene `@motor` y `@int` | Si alguna ficha exigida lo cita en su bloque Escenarios |
 | M3 | Cada AV tiene una prueba automática | Si alguna ficha exigida lo cita en su bloque Avisos |
 | M4 | Cada invariante tiene una prueba `PROP`, `DOM`, `INT` o `ESQ` | Desde la primera ficha terminada (el motor ya existe) |
-| M5 | Cada recorrido tiene su E2E | Cuando todas las fichas que cita están exigidas |
+| M5 | Cada recorrido tiene su E2E | Cuando todas las fichas que cita están exigidas, salvo que el recorrido figure como pendiente de punta a punta en `pruebas/pendientes-e2e.json` (DT-27, **[CH-105]**); en modo puerta, siempre |
 | M6 | Las 92 verificaciones previas están en el JSON, con destino existente o con motivo | Siempre que estén en el JSON; el destino, en modo puerta |
 | M7 | Toda referencia citada existe en los documentos (incluidas las `Q-<consulta>` de 06 §6.3, **[CH-34]**, y las `FORM-<operacion>` de `formulario()`, **[CH-37]**) | Siempre |
 | M8 | Identificador bien formado, con nivel y área de las tablas 1.1 y 2.2; único; nivel coherente con el archivo (§2.3); todo archivo de prueba lleva identificador | Siempre |
