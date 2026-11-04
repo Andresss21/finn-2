@@ -3,20 +3,21 @@
 // ingreso y de mover dinero entre dos cuentas de efectivo. Se guardan en un solo viaje (05 §4.4); con la fecha en un período
 // cerrado el servidor pide confirmar con AV-01 antes de escribir. No calcula montos (PF-3): el impacto lo trae el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
-import type { Centavos, FechaLocal } from '@finn/dominio/valores';
+import type { FechaLocal } from '@finn/dominio/valores';
 import { useMemo, type ReactNode } from 'react';
+import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { Resultado } from '../../componentes/base/resultado';
 import { Seleccion } from '../../componentes/base/seleccion';
 import { Vacio } from '../../componentes/base/vacio';
-import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
+import { ConfirmacionImpactoDeVista as ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta, SuperpuestoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
-import { formatearMonto, formatearMontoTexto } from '../../formato';
+import { formatearMontoTexto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { registrarIngreso, transferirEntreCuentas } from '../../servidor/acciones/transacciones';
@@ -39,8 +40,7 @@ export interface PropsFormularioRegistrarTipo {
   readonly superpuesto?: boolean;
 }
 
-interface Previsualizacion {
-  readonly impacto?: { readonly deltaLpa: Centavos } | null;
+interface Previsualizacion extends VistaDeImpacto {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
@@ -151,15 +151,7 @@ export function FormularioRegistrarTipo({
         <ConfirmacionImpacto
           titulo={t.revisar}
           {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
-          impacto={
-            vista.impacto
-              ? [
-                  t.impactoLpa(
-                    `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
-                  ),
-                ]
-              : []
-          }
+          vista={vista}
           avisos={(vista.avisos ?? []).map((a) =>
             a.codigo === 'AV-01' ? t.avisoPeriodoCerrado : a.codigo,
           )}

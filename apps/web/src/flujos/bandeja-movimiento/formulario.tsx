@@ -5,6 +5,7 @@
 // página completa (05 §1.4). No calcula montos (PF-3): la suma de las partes la valida el servidor.
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFieldArray } from 'react-hook-form';
+import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
@@ -48,8 +49,7 @@ export interface PropsFormularioMovimiento {
   readonly deudores: readonly Referencia[];
 }
 
-interface Previsualizacion {
-  readonly impacto?: { readonly deltaLpa: number } | null;
+interface Previsualizacion extends VistaDeImpacto {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
@@ -60,7 +60,7 @@ const FINALES = ['aprobado', 'descartado', 'autodescartado'];
 
 const ConfirmacionImpacto = lazy(() =>
   import('../../componentes/formularios/confirmacion-impacto').then((m) => ({
-    default: m.ConfirmacionImpacto,
+    default: m.ConfirmacionImpactoDeVista,
   })),
 );
 
@@ -218,15 +218,7 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
           <ConfirmacionImpacto
             titulo={t.revisar.revisarImpacto}
             {...(aprobar.impactoCambio ? { nota: formularios.impactoCambio } : {})}
-            impacto={
-              vista.impacto
-                ? [
-                    g.impactoLpa(
-                      `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa as never)}`,
-                    ),
-                  ]
-                : []
-            }
+            vista={vista}
             avisos={(vista.avisos ?? []).map((a) =>
               a.codigo === 'AV-01' ? g.avisoPeriodoCerrado : a.codigo,
             )}

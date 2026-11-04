@@ -16,16 +16,16 @@ export interface ResumenListoParaAsignarProps {
   readonly accion?: { readonly href: string; readonly texto: string };
 }
 
-// Dos anillos de `--marca-grabado` desde esquinas opuestas (anillos de 7–8 px y de 9–10 px).
+// Dos anillos de `--marca-grabado` desde esquinas opuestas (anillos de 7–8 px y de 9–10 px), como en el export (K3, S1).
 const GUILLOCHE = [
-  'repeating-radial-gradient(circle at 0 0, transparent 0 7px, var(--marca-grabado) 7px 8px)',
-  'repeating-radial-gradient(circle at 100% 100%, transparent 0 9px, var(--marca-grabado) 9px 10px)',
+  'repeating-radial-gradient(circle at 0% 100%, transparent 0 7px, var(--marca-grabado) 7px 8px)',
+  'repeating-radial-gradient(circle at 100% 0%, transparent 0 9px, var(--marca-grabado) 9px 10px)',
 ].join(', ');
 
 const ENLACE_BOTON =
   'inline-flex min-h-11 items-center justify-center rounded-control bg-accion px-5 text-base font-semibold text-texto-sobre-accion hover:bg-accion-hover active:bg-accion-presionada focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE_BOTON_ANCHO =
-  'inline-flex min-h-13 w-full items-center justify-center rounded-control bg-accion px-5 text-base font-semibold text-texto-sobre-accion hover:bg-accion-hover active:bg-accion-presionada focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+  'inline-flex min-h-13 w-full items-center justify-center rounded-control bg-accion px-5 text-base font-bold text-texto-sobre-accion hover:bg-accion-hover active:bg-accion-presionada focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
 // El texto visible va por dígitos para que rueden uno tras otro (90 ms); el accesible es una sola frase (V5-25).
 function Cifras({ centavos, grande }: { readonly centavos: Centavos; readonly grande: boolean }) {
@@ -87,7 +87,6 @@ function Decoracion() {
         className="absolute -inset-6 animate-[finn-guilloche_40s_linear_infinite_alternate]"
         style={{ backgroundImage: GUILLOCHE }}
       />
-      <div className="absolute -top-8 -right-8 size-40 animate-[finn-resplandor_6s_ease-in-out_infinite] rounded-full bg-accion opacity-25 blur-[22px]" />
       <div className="absolute inset-y-0 left-0 w-1/5 animate-[finn-brillo_7s_linear_infinite] bg-linear-to-r from-transparent via-texto-sobre-marca/10 to-transparent" />
     </div>
   );
@@ -133,15 +132,26 @@ export function ResumenListoParaAsignar({
       aria-label={dominio.billete.rotulo}
       className="flex flex-col gap-3"
     >
-      <div className="relative isolate flex flex-col gap-2 overflow-hidden rounded-contenedor bg-marca px-5 pt-5.5 pb-5 text-texto-sobre-marca">
-        <Decoracion />
-        <p className="relative z-10 text-rotulo">{dominio.billete.rotulo}</p>
-        <div className="relative z-10">
-          <Cifras centavos={lpa} grande />
-        </div>
-        <div className="relative z-10 flex flex-col gap-1.5">
-          <Estado lpa={lpa} lpaNegativo={lpaNegativo} />
-          <EnCamino enCamino={enCamino} />
+      <div className="relative">
+        {/* El resplandor azul queda debajo de la tarjeta (export, S1): dentro de ella teñía el guilloché, sobre todo en oscuro. */}
+        <span
+          aria-hidden="true"
+          data-resplandor
+          className="pointer-events-none absolute inset-x-[12%] -bottom-3.5 h-10 animate-[finn-resplandor_6s_ease-in-out_infinite] rounded-full bg-accion/45 blur-[22px]"
+        />
+        <div
+          data-tarjeta-billete
+          className="relative isolate flex flex-col gap-2 overflow-hidden rounded-contenedor bg-marca px-5 pt-5.5 pb-5 text-texto-sobre-marca"
+        >
+          <Decoracion />
+          <p className="relative z-10 text-rotulo">{dominio.billete.rotulo}</p>
+          <div className="relative z-10">
+            <Cifras centavos={lpa} grande />
+          </div>
+          <div className="relative z-10 flex flex-col gap-1.5">
+            <Estado lpa={lpa} lpaNegativo={lpaNegativo} />
+            <EnCamino enCamino={enCamino} />
+          </div>
         </div>
       </div>
       {boton}

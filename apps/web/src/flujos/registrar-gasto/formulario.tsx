@@ -7,6 +7,7 @@ import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useMemo } from 'react';
 import { useFieldArray } from 'react-hook-form';
+import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
@@ -46,8 +47,7 @@ export interface PropsFormularioRegistrarGasto {
   readonly cuentaPropuesta: string | undefined;
 }
 
-interface Previsualizacion {
-  readonly impacto?: { readonly deltaLpa: Centavos } | null;
+interface Previsualizacion extends VistaDeImpacto {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
@@ -59,7 +59,7 @@ const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).inclu
 
 const ConfirmacionImpacto = lazy(() =>
   import('../../componentes/formularios/confirmacion-impacto').then((m) => ({
-    default: m.ConfirmacionImpacto,
+    default: m.ConfirmacionImpactoDeVista,
   })),
 );
 const SinCuentas = lazy(() => import('./sin-cuentas'));
@@ -180,15 +180,7 @@ export function FormularioRegistrarGasto({
           <ConfirmacionImpacto
             titulo={t.revisar}
             {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
-            impacto={
-              vista.impacto
-                ? [
-                    t.impactoLpa(
-                      `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
-                    ),
-                  ]
-                : []
-            }
+            vista={vista}
             avisos={(vista.avisos ?? []).map((a) =>
               a.codigo === 'AV-01' ? t.avisoPeriodoCerrado : a.codigo,
             )}
