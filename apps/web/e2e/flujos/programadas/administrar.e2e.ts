@@ -121,7 +121,7 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await expect(page).toHaveURL(/\/programadas\/nueva/);
   });
 
-  test('PRU-E2E-PROG-107RUTA-/programadas/nueva [CA-40.8] crear una programada no cambia Listo para asignar', async ({
+  test('PRU-E2E-PROG-107 RUTA-/programadas/nueva [CA-40.8] crear una programada no cambia Listo para asignar', async ({
     page,
   }) => {
     await sembrarOps(BASE, '2027-02-10');
