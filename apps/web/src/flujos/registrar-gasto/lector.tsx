@@ -2,9 +2,11 @@
 // de la URL y pasa al formulario las cuentas de efectivo y tarjeta abiertas, las categorías y los deudores. Lo único que traduce los
 // errores de la consulta es `consultar()`.
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
+import { formatearMonto } from '../../formato';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
+import { registrarGasto as t } from '../../textos/registrar-gasto';
 import { FormularioRegistrarGasto } from './formulario';
 
 export async function LectorRegistrarGasto({ busqueda }: { readonly busqueda: BusquedaDePagina }) {
@@ -16,10 +18,21 @@ export async function LectorRegistrarGasto({ busqueda }: { readonly busqueda: Bu
       ...(typeof cuentaId === 'string' ? { cuentaId } : {}),
     }),
   );
+  // El detalle del campo cerrado es del DTO tal cual (S5): el saldo de efectivo o la deuda de la tarjeta; no se calcula nada.
   const cuentas = [
-    ...(dto.catalogos.cuentas?.efectivo ?? []),
-    ...(dto.catalogos.cuentas?.tarjetas ?? []),
-  ].map((x) => ({ id: x.cuenta.id, nombre: x.cuenta.nombre }));
+    ...(dto.catalogos.cuentas?.efectivo ?? []).map((x) => ({
+      id: x.cuenta.id,
+      nombre: x.cuenta.nombre,
+      tipo: 'efectivo' as const,
+      detalle: t.saldoDeCuenta(formatearMonto(x.saldo)),
+    })),
+    ...(dto.catalogos.cuentas?.tarjetas ?? []).map((x) => ({
+      id: x.cuenta.id,
+      nombre: x.cuenta.nombre,
+      tipo: 'tarjeta' as const,
+      detalle: t.deudaDeCuenta(formatearMonto(x.deuda)),
+    })),
+  ];
   const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((g) =>
     g.categorias.map((x) => ({ id: x.categoria.id, nombre: x.categoria.nombre })),
   );

@@ -16,8 +16,10 @@ export interface PropsControl {
 export interface PropsCampo {
   readonly etiqueta: string;
   readonly descripcion?: string;
-  readonly error?: string;
+  readonly error?: string | undefined;
   readonly requerido?: boolean;
+  /** La etiqueta solo para lectores de pantalla: filas compactas donde el contexto ya dice qué es (export S5). */
+  readonly etiquetaOculta?: boolean;
   /** El control, o una función que lo arma con las props del campo (cuando el control va dentro de otro componente). */
   readonly children:
     ReactElement<Record<string, unknown>> | ((props: PropsControl) => ReactElement);
@@ -32,7 +34,14 @@ export function MensajeError({ children }: { readonly children: string }) {
   );
 }
 
-export function Campo({ etiqueta, descripcion, error, requerido = false, children }: PropsCampo) {
+export function Campo({
+  etiqueta,
+  descripcion,
+  error,
+  requerido = false,
+  etiquetaOculta = false,
+  children,
+}: PropsCampo) {
   const id = useId();
   const idDescripcion = `${id}-d`;
   const idError = `${id}-e`;
@@ -47,7 +56,7 @@ export function Campo({ etiqueta, descripcion, error, requerido = false, childre
   };
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex justify-between gap-2">
+      <div className={etiquetaOculta ? 'sr-only' : 'flex justify-between gap-2'}>
         <Label htmlFor={id}>{etiqueta}</Label>
         {requerido ? null : <span className="text-sm text-texto-terciario">{base.opcional}</span>}
       </div>
@@ -75,6 +84,7 @@ export function EntradaTexto({
   descripcion,
   error,
   requerido,
+  etiquetaOculta,
   ...entrada
 }: PropsEntradaTexto) {
   return (
@@ -83,6 +93,7 @@ export function EntradaTexto({
       {...(descripcion === undefined ? {} : { descripcion })}
       {...(error === undefined ? {} : { error })}
       {...(requerido === undefined ? {} : { requerido })}
+      {...(etiquetaOculta === undefined ? {} : { etiquetaOculta })}
     >
       <Input {...entrada} />
     </Campo>
