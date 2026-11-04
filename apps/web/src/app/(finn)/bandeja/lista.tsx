@@ -7,6 +7,7 @@ import { Vacio } from '../../../componentes/base/vacio';
 import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
 import { bandeja as t } from '../../../textos/bandeja';
 import type { ResultadoFila } from '../../../flujos/bandeja-movimiento/descarte';
+import { aprobarTodos } from '../../../servidor/acciones/bandeja';
 import { AprobarTodos } from './aprobar-todos';
 import { FilaBandeja } from './fila';
 
@@ -76,7 +77,7 @@ export function ListaBandeja({
           <span className="text-cuerpo-pequeno text-texto-secundario">{desglose(contadores)}</span>
         </p>
       )}
-      <AprobarTodos elegibles={elegibles} movimientos={movimientos} />
+      <AprobarTodos accion={aprobarTodos} elegibles={elegibles} movimientos={movimientos} />
       {filas.length === 0 ? (
         <Vacio titulo={t.alDia.titulo} texto={t.alDia.texto} icono="inbox" />
       ) : (

@@ -1,6 +1,5 @@
 // FT-36, «Aprobar todos» (07 §17: un texto o un estado de un componente es una CMP). El pago de tarjeta pendiente no se puede sembrar
-// en la E2E (necesita un formato de SMS propio); aquí se prueba qué manda el botón y qué dice AV-19. La Server Action es el límite
-// del servidor y se reemplaza; qué aprueba OP-38 lo prueba la integración.
+// en la E2E (necesita un formato de SMS propio); aquí se prueba qué manda el botón y qué dice AV-19. La Server Action se pasa por prop; qué aprueba OP-38 lo prueba la integración.
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -9,8 +8,7 @@ import type { MovimientoDto } from '../../../componentes/dominio/movimiento-band
 import { bandeja as t } from '../../../textos/bandeja';
 import { AprobarTodos } from './aprobar-todos';
 
-const { aprobar } = vi.hoisted(() => ({ aprobar: vi.fn() }));
-vi.mock('../../../servidor/acciones/bandeja', () => ({ aprobarTodos: aprobar }));
+const aprobar = vi.fn(); // la Server Action llega por prop: no se simula ningún módulo propio
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -75,7 +73,9 @@ describe('PRU-CMP-BAND', () => {
       yaAplicada: false,
       avisos: [{ codigo: 'AV-19', mensaje: 'AV-19' }],
     });
-    const nodo = montar(<AprobarTodos elegibles={['e1']} movimientos={[LISTO, PAGO]} />);
+    const nodo = montar(
+      <AprobarTodos accion={aprobar} elegibles={['e1']} movimientos={[LISTO, PAGO]} />,
+    );
     const boton = nodo.querySelector('button');
     expect(boton?.textContent).toBe(t.aprobarTodos.boton(1));
 
@@ -96,7 +96,7 @@ describe('PRU-CMP-BAND', () => {
   });
 
   it('PRU-CMP-BAND-161 [FT-36] sin elegibles el botón «Aprobar todos» no aparece', () => {
-    const nodo = montar(<AprobarTodos elegibles={[]} movimientos={[PAGO]} />);
+    const nodo = montar(<AprobarTodos accion={aprobar} elegibles={[]} movimientos={[PAGO]} />);
     expect(nodo.querySelector('button')).toBeNull();
   });
 });

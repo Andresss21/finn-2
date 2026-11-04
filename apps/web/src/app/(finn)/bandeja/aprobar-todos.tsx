@@ -8,8 +8,7 @@ import { Boton } from '../../../componentes/base/boton';
 import { Resultado } from '../../../componentes/base/resultado';
 import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
 import { formatearMonto } from '../../../formato';
-import { useOperacion } from '../../../formularios/use-operacion';
-import { aprobarTodos } from '../../../servidor/acciones/bandeja';
+import { useOperacion, type AccionEscritura } from '../../../formularios/use-operacion';
 import { bandeja as t } from '../../../textos/bandeja';
 import { formularios } from '../../../textos/formularios';
 
@@ -57,14 +56,17 @@ function noAprobados(
 }
 
 export function AprobarTodos({
+  accion,
   elegibles,
   movimientos,
 }: {
+  /** La Server Action de OP-38 (`aprobarTodos`); llega por prop para probar el componente sin el servidor. */
+  readonly accion: AccionEscritura;
   /** `elegiblesAprobarTodos` de `bandeja()`: los que OP-38 intentaría. */
   readonly elegibles: readonly string[];
   readonly movimientos: readonly MovimientoDto[];
 }) {
-  const operacion = useOperacion({ accion: aprobarTodos });
+  const operacion = useOperacion({ accion });
   const ids = useRef<Record<string, string> | null>(null); // un id de transacción por movimiento, estable hasta un `ok`
   const [vistos, setVistos] = useState<readonly MovimientoDto[]>([]);
   const { estado, error, exito } = operacion;
