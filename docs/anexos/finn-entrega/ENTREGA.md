@@ -117,3 +117,7 @@ Componentes visuales propios: billetera de tarjetas, identidad por tipo de cuent
 ## Notificaciones (propuesta)
 
 El anexo pide el contador junto al acceso (N7) pero no define el contenido. Propuesta: la Bandeja tiene los movimientos de los SMS por revisar; Notificaciones tiene recordatorios y avisos de Finn (corte de tarjeta con falta de reserva, cuotas próximas, metas cubiertas, reglas aplicadas, cierre de período). “Estás sin conexión” y “Hay una versión nueva” siguen siendo avisos globales, no notificaciones.
+
+## Export en código [CH-107]
+
+El diseño de esta entrega A.10 también existe como HTML ejecutable en `../finn-diseno-export/` (pantallas, componentes, prototipo v2), sin cambios de diseño. Sus capturas son las de `referencia/` de esta carpeta.
