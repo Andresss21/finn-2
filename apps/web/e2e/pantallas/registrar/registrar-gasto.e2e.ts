@@ -456,7 +456,7 @@ test.describe('PRU-E2E-TX', () => {
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
   });
 
-  test('PRU-E2E-TX-440 [CA-21.1] la cuenta se elige en una selección de 52 px que dice la deuda de la tarjeta y Fecha y Total van en dos columnas', async ({
+  test('PRU-E2E-TX-440 [CA-21.1] la cuenta se elige en una selección de 52 px que dice la deuda de la tarjeta , Fecha y Total van en dos columnas y el Total lleva el prefijo «$» sin la línea «Se entiende como»', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
@@ -469,6 +469,9 @@ test.describe('PRU-E2E-TX', () => {
     const total = await campo(page, t.total).boundingBox();
     expect(Math.abs((fecha?.y ?? 0) - (total?.y ?? 99))).toBeLessThan(2);
     expect(total?.x ?? 0).toBeGreaterThan((fecha?.x ?? 0) + (fecha?.width ?? 0) - 1);
+    await expect(campo(page, t.total).locator('xpath=..')).toContainText('$');
+    await expect(page.getByText('Se entiende como')).toHaveCount(0);
+    await expect(page.getByText('Fecha elegida')).toHaveCount(0);
   });
 
   test('PRU-E2E-TX-441 [CA-21.1] dividir dice «Dividir · opcional · N líneas», cada línea es una fila con selección, monto y × en la misma altura y «+ Agregar línea» suma otra', async ({
@@ -510,5 +513,40 @@ test.describe('PRU-E2E-TX', () => {
       expect((boton?.y ?? 0) + (boton?.height ?? 0)).toBeGreaterThan(alto - 40);
       expect((boton?.y ?? 0) + (boton?.height ?? 0)).toBeLessThanOrEqual(alto);
     }
+  });
+
+  test('PRU-E2E-TX-443 [CA-21.12] al guardar, el resultado dice el monto de cada línea, enlaza a cada categoría, ofrece «Registrar otro» y «Volver a Inicio»', async ({
+    page,
+  }) => {
+    await preparar('2027-02-10', ESC19_PASO1);
+    await abrir(page, '/registrar/gasto');
+    await elegir(page, t.cuenta, 'T');
+    await campo(page, t.total).fill('150');
+    await parteConCategoria(page, 1, '110', 'Super');
+    await agregarParte(page);
+    await parteConCategoria(page, 2, '40', 'Mascota');
+    await guardar(page).click();
+    await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
+    const detalle = page.getByRole('list', { name: t.lineasGuardadas });
+    await expect(detalle).toContainText('Super');
+    await expect(detalle).toContainText('$110.00');
+    await expect(detalle).toContainText('Mascota');
+    await expect(detalle).toContainText('$40.00');
+    await expect(page.getByRole('link', { name: t.volverAInicio })).toHaveAttribute('href', '/');
+    await expect(page.getByRole('button', { name: t.registrarOtro })).toBeVisible();
+  });
+
+  test('PRU-E2E-TX-444 [CA-21.1] en computadora la pantalla va en dos columnas iguales: los datos a la izquierda y las líneas a la derecha', async ({
+    page,
+  }) => {
+    test.skip((page.viewportSize()?.width ?? 0) < 768, 'Solo en computadora');
+    await preparar('2027-02-10', ESC19_PASO1);
+    await abrir(page, '/registrar/gasto');
+    await expect(page.locator('[data-campo-lineas]')).toBeVisible();
+    const cuenta = await campo(page, t.cuenta).boundingBox();
+    const lineas = await page.locator('[data-campo-lineas]').boundingBox();
+    expect(Math.abs((cuenta?.width ?? 0) - (lineas?.width ?? 99))).toBeLessThan(2);
+    expect(lineas?.x ?? 0).toBeGreaterThan((cuenta?.x ?? 0) + (cuenta?.width ?? 0));
+    expect(Math.abs((cuenta?.y ?? 0) - (lineas?.y ?? 99))).toBeLessThan(60);
   });
 });

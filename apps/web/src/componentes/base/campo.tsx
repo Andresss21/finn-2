@@ -2,6 +2,7 @@
 import { cloneElement, useId, type InputHTMLAttributes, type ReactElement } from 'react';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
+import { cn } from '../../components/ui/utils';
 import { base } from '../../textos/base';
 import { Icono } from './icono';
 
@@ -76,7 +77,10 @@ export function Campo({
 }
 
 export type PropsEntradaTexto = Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'required'> &
-  Omit<PropsCampo, 'children'>;
+  Omit<PropsCampo, 'children'> & {
+    /** Texto fijo antes de lo escrito, en color secundario (el «$» de un monto). */
+    readonly prefijo?: string;
+  };
 
 /** Entrada de texto con su `Campo`. La etiqueta nunca es el `placeholder`. */
 export function EntradaTexto({
@@ -85,6 +89,8 @@ export function EntradaTexto({
   error,
   requerido,
   etiquetaOculta,
+  prefijo,
+  className,
   ...entrada
 }: PropsEntradaTexto) {
   return (
@@ -95,7 +101,21 @@ export function EntradaTexto({
       {...(requerido === undefined ? {} : { requerido })}
       {...(etiquetaOculta === undefined ? {} : { etiquetaOculta })}
     >
-      <Input {...entrada} />
+      {(control) =>
+        prefijo === undefined ? (
+          <Input {...control} className={className} {...entrada} />
+        ) : (
+          <div className="relative">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-texto-secundario"
+            >
+              {prefijo}
+            </span>
+            <Input {...control} className={cn('pl-7', className)} {...entrada} />
+          </div>
+        )
+      }
     </Campo>
   );
 }

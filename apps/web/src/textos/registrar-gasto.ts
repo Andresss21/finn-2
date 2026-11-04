@@ -60,6 +60,7 @@ export const registrarGasto = {
   volverAEditar: 'Volver a editar',
   revisar: 'Revisá el impacto',
   impactoLpa: (delta: string) => `${glosario.listoParaAsignar} cambia ${delta}.`,
+  avisoDeudaTarjeta: `La deuda de esa tarjeta queda como «${glosario.teFaltaReservar}».`,
   avisoPeriodoCerrado: 'La fecha es de un período cerrado: cambia el período activo.',
   listo: 'Gasto registrado',
   guardado: (comercio: string, monto: string, cuenta: string, partes: string) =>
@@ -69,7 +70,9 @@ export const registrarGasto = {
     `La parte por cobrar quedó a nombre de ${nombre}, que ya existía.`,
   sugerencia: (categoria: string) => `Sugerencia: ${categoria}`,
   usarSugerencia: 'Usar en la parte 1',
+  lineasGuardadas: 'Líneas del gasto',
   categoriasTocadas: 'Categorías del gasto',
   verCategoria: (nombre: string) => `Ver ${nombre}`,
-  registrarOtro: 'Registrar otro gasto',
+  registrarOtro: 'Registrar otro',
+  volverAInicio: 'Volver a Inicio',
 } as const;

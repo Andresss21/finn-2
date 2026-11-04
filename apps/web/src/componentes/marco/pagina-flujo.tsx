@@ -13,7 +13,17 @@ export interface PropsPaginaFlujo {
   readonly alCerrar: () => void;
   readonly children: ReactNode;
   readonly acciones?: ReactNode;
+  /** Computadora a dos columnas (S5 del export): el ancho de Inicio en lugar del de un flujo corto. */
+  readonly ancha?: boolean;
 }
+
+// Clases literales (L13).
+const ANCHO = {
+  normal:
+    'mx-auto flex min-h-dvh max-w-xl flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:42rem]',
+  ancha:
+    'mx-auto flex min-h-dvh max-w-270 flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:73.5rem]',
+} as const;
 
 export function PaginaFlujo({
   titulo,
@@ -21,12 +31,10 @@ export function PaginaFlujo({
   alCerrar,
   children,
   acciones,
+  ancha = false,
 }: PropsPaginaFlujo) {
   return (
-    <main
-      data-pagina-flujo
-      className="mx-auto flex min-h-dvh max-w-xl flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:42rem]"
-    >
+    <main data-pagina-flujo className={ancha ? ANCHO.ancha : ANCHO.normal}>
       <div className="sticky top-0 z-30 flex min-h-15 items-center gap-1 bg-fondo pr-2 pl-5 md:static md:p-0">
         <button
           type="button"

@@ -12,6 +12,7 @@
     "/actividad/[transaccionId]/editar": "/actividad/00000000-0000-4000-8000-000000000001/editar",
     "/actividad/[transaccionId]/eliminar": "/actividad/00000000-0000-4000-8000-000000000001/eliminar",
     "/actividad/[transaccionId]/estado": "/actividad/00000000-0000-4000-8000-000000000001/estado",
+    "/ajustes/instituciones/[institucionId]": "/ajustes/instituciones/00000000-0000-4000-8000-000000000001",
     "/bandeja/[movimientoId]": "/bandeja/00000000-0000-4000-8000-000000000001",
     "/cuentas/[cuentaId]/cuota": "/cuentas/00000000-0000-4000-8000-000000000001/cuota",
     "/cuentas/[cuentaId]/verificar-saldo": "/cuentas/00000000-0000-4000-8000-000000000001/verificar-saldo",

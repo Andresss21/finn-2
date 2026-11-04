@@ -136,3 +136,10 @@ export const destinoDeValor = (
   valor.startsWith('d:')
     ? { destino: 'por_cobrar', categoriaId: '', deudorId: valor.slice(2) }
     : { destino: 'categoria', categoriaId: valor.slice(2), deudorId: '' };
+
+/** Los avisos «antes» de la previsualización con su texto (04 §7.5): un código sin texto se muestra tal cual. */
+const AVISOS: Readonly<Record<string, string>> = {
+  'AV-01': t.avisoPeriodoCerrado,
+  'AV-07': t.avisoDeudaTarjeta,
+};
+export const textoDeAviso = (codigo: string): string => AVISOS[codigo] ?? codigo;
