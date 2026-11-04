@@ -462,7 +462,7 @@ tu: TU-11, TU-12, TU-16
 
 ```hito
 despues: TA-447
-requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-414, TA-415, TA-416, TA-417, TA-445, TA-418, TA-419, TA-420, TA-421, TA-453, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-466, TA-467, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
+requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-468, TA-414, TA-415, TA-416, TA-417, TA-445, TA-418, TA-419, TA-420, TA-421, TA-453, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-466, TA-467, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
 hitos: HT-2, HT-3, HT-7
 sin_pendientes: si
 tu: —
@@ -1593,6 +1593,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-119** | FT-58 (Modelos de préstamo de otros bancos) diferida hasta que exista un segundo banco real (TA-501). (a) **Origen:** TA-501 se detuvo por una contradicción el 2026-11-04. 06 FT-58, CA-58.1: «cumple las cinco salidas de A.1 con su propio ejemplo numérico validado contra un estado de cuenta real». 01 Anexo A solo define Banco Agrícola, y 06 §2 lo confirma («01 Anexo A solo define Banco Agrícola»). No existe otro banco ni ningún estado de cuenta, así que CA-58.1 no se puede cumplir ni verificar. (b) **Decisión del usuario:** no tiene préstamos en otro banco; FT-58 se difiere. (c) **Efecto:** FT-58 queda diferida como FT-49 (CF-03, DT-31): `plan/tareas.json` pone TA-501 en `bloqueada` con el motivo «diferida CH-119» y `plan:siguiente` no la ofrece. Ya era [P], con `hito: —`, fuera de HT-4 a HT-9 y de las 69 fichas de la puerta, así que no frena HT-8 ni HT-9 y no hace falta tocar `tools/` ni `pruebas/features.json` (FT-58 sigue `pendiente`; sus CA se exigen solo al pasar a `terminada`, P7-15). Los CA de FT-58 no cambian. (d) **Qué la reactiva:** un anexo en `docs/anexos/` con el banco, sus reglas en el formato de 01 A.2 y un ejemplo numérico tomado de un estado de cuenta real; con eso el usuario decide por un CH sacar a TA-501 de `bloqueada`. (e) **Archivos:** `docs/06-features.md` (nota en FT-58 y fila de la tabla de fichas), `docs/08-tareas.md` (esta fila, TA-501 y §26.5), `plan/tareas.json`. Sin migración ni código | 06 FT-58 y CA-58.1; 06 §2; 01 Anexo A; 08 TA-501, DT-31 | Decidido por el usuario el 2026-11-04; **aplicado [CH-119]** en 06 FT-58, 08 TA-501 y §26.5 y en `plan/tareas.json` |
 | **CH-120** | Presupuesto (S2) portado del export de diseño: la tabla de computadora y las piezas que faltan (corrección posterior a TA-287, "FT-09 Presupuesto del período"; auditoría visual del 2026-11-03, §2.3 #1, #5, #6, #7, #8, #9, #10, #11, #12 y #14, §3 y §5.3 puntos 6 y 7). (a) **Síntoma:** en computadora `/presupuesto` mostraba las tarjetas del teléfono estiradas, sin la tabla Categoría · Asignado · Gastado · Disponible con la línea de 2 px, y con el período y los filtros uno sobre otro; el filtro activo iba en `--accion` (azul) y `Pastillas` no se usaba en ninguna parte; la franja de Listo para asignar decía "Ver el detalle"; Mover dinero y Auto-asignar eran botones grises (`--superficie-hundida`); el período decía "21 sep – 20 oct 2026"; la fila de pago de tarjeta llevaba el indicador debajo; los encabezados de grupo iban en `.t-titulo-seccion`; los totales llevaban un título "Totales del período" y rótulos sin `.t-rotulo`. (b) **Causa:** `FT-09` se construyó antes de que existiera el export (S2, `finn-diseno-export-2` D3 y 15) y nunca se portó. (c) **Resolución:** portado de `S2-Presupuesto__*`, D3 y `herramientas__*`, solo el marcado y las clases, con los textos del catálogo, los roles y los `data-*` de las E2E. `fila-categoria.tsx` es una rejilla que en teléfono apila nombre y Disponible, barra, Asignado · Gastado e indicadores, y desde `md` es la fila de la tabla (columnas `1.6fr` y 3 de 110 px, el "+" de asignar queda como quinta columna de 44 px porque la asignación no tiene otra entrada); `pantalla.tsx` lleva período y filtros lado a lado, la tabla con el encabezado de 2 px y los grupos como rótulos pequeños en `--texto-secundario` (en teléfono conservan su total), y a la derecha la franja, "Ver cómo se compone", Mover dinero y Auto-asignar tonales (`--accion-tonal`, 44 px), Pagos de tarjeta y Totales sin título (con rótulos `.t-rotulo` y valores en 700; el título queda como `aria-label`). `Pastillas` admite `href` por opción y se dibuja como enlaces de servidor con `aria-current`, el activo en `--texto` sobre `--fondo` y la fila que se desplaza en teléfono (D3); `fila-pago.tsx` pone el indicador a la derecha de "Disponible para pagar". El selector de período usa `formatearPeriodoNumerico` ("21/09 – 20/10/2026"). El botón de la franja dice "Asignar" y lleva a la lista de categorías (`#categorias`): no existe una ruta de asignar sin categoría y no se inventó una; "Ver el detalle" pasa a ser el enlace "Ver cómo se compone", sin cambiar `billete.tsx`. La fila de pago ya enlazaba a `/presupuesto/categorias/<categoría de pago>`, ruta que existe (su pantalla es de CH-115); el texto "Al día" del catálogo se conserva aunque el diseño dice "Deuda de tarjeta". Bytes: todo es de servidor; se midió con `e2e/rendimiento/tamano.e2e.ts`. No se tocó ninguna cifra ni se calcula ningún monto en la interfaz (PF-3). (d) **Archivos:** `apps/web/src/app/(finn)/presupuesto/pantalla.tsx`, `apps/web/src/componentes/base/pastillas.tsx`, `apps/web/src/componentes/dominio/{fila-categoria,fila-pago}.tsx`, `apps/web/src/componentes/navegacion/selector-periodo.tsx`, `apps/web/src/formato/{fecha-texto,index}.ts`, `apps/web/src/textos/presupuesto.ts`, `pantalla.cmp.test.tsx`, `pastillas-segmentado.cmp.test.tsx`, `periodo.cmp.test.tsx`, `formato.test.ts`, `presupuesto.e2e.ts`, `ciclo.e2e.ts` (solo el texto de la fecha); 08. (e) **Prueba:** PRU-CMP-PRES-230 (filtros como enlaces, activo en `--texto` sobre `--fondo`, fila que se desplaza), PRU-CMP-PRES-231 (tabla: encabezado de 2 px y celdas alineadas a su columna), PRU-CMP-PRES-232 (franja "Asignar" de 44 px, "Ver cómo se compone", Mover dinero y Auto-asignar tonales), PRU-CMP-PRES-233 (indicador a la derecha y enlace de la fila de pago), PRU-CMP-PRES-234 (totales sin título, rótulos y 700), PRU-CMP-PRES-235 (formato del período) y PRU-E2E-PRES-230 (en 1280 px período y filtros lado a lado, filtro activo en `--texto` y la columna Disponible alineada con su encabezado); PRU-DOM-VAL-005 suma el formato numérico, y la prueba del selector de período (`periodo.cmp.test.tsx`) cambia solo el texto de la fecha | 05 §10.8; 06-identidad-visual 2.3, 2.6, 2.7, 2.8, 2.15 y §5; PANTALLAS 5 | Delegado por el orquestador; **aplicado [CH-120]** en `/presupuesto`, `Pastillas`, la fila de categoría, la fila de pago y el selector de período |
 | **CH-122** | Cuentas (S6) portado del export de diseño (corrección posterior a TA-312, «Cuentas y posición neta», FT-51). (a) **Síntoma:** la auditoría visual del 2026-11-03 (§2.7 diferencias 1 a 11; §3 filas Tarjeta y billetera 2.9, Identidad por tipo 2.10 e Interruptor) halló en `/cuentas`: la cara de la tarjeta sin chip, sin ícono sin contacto, sin guilloché ni «VISA · CRÉDITO» y con el banco bajo el nombre; el detalle de la tarjeta al frente sin contenedor, sin «Confirmado» ni porcentaje y con el uso del límite en gris; los enlaces subrayados «Ver detalle de…» y «Pagar…»; las identidades con los rótulos «SALDO» y «CONFIRMADO» y el talón del préstamo y las barras de la inversión lejos del diseño; «En camino» como pastilla suelta fuera de la posición neta; «Mostrar archivadas» como enlace subrayado en lugar de interruptor; «Nueva cuenta» partido en dos líneas en teléfono; y el encabezado de grupo con la jerarquía invertida (el `h2` no llevaba la tipografía del título). (b) **Causa:** TA-312 construyó la pantalla desde 05 §10.8 y 06 §2.9 a §2.11 sin partir del HTML de `pantallas/S6-Cuentas__*` ni de `componentes/K3-…tarjeta-de-credito`, `K5-…billetera-de-tarjetas`, `K5-…identidad-por-tipo-de-cuenta` y `K2-…casilla-interruptor-opciones` del export (CH-107). (c) **Resolución:** se porta el marcado y el CSS del export conservando la lógica, los textos del catálogo y los `data-*` de las pruebas. `billetera.tsx`: cara con guilloché, brillo, chip (oro o plata), ícono sin contacto, nombre con el banco a la derecha y «Visa · crédito» con los últimos dígitos; detalle dentro de un contenedor (`--superficie`, elevación 1) con el indicador, «Confirmado» (`saldoConfirmado` del DTO), el porcentaje (`usoLimite` formateado, sin cálculo) y la barra de uso en `--accion` con el rayado sin reservar; con la propiedad `enlazar` la cara del frente es el enlace al detalle (nombre accesible «Ver detalle de …»), y las de atrás siguen siendo botones de 44 px sin arrastre. `identidad-cuenta.tsx`: sin rótulos, con nombre en 700, banco · últimos dígitos y saldo `.t-cifra`; la libreta, el boleto con muescas y talón de 103 px, las seis barras de la inversión y la fila horizontal de la archivada, como en el export; «Confirmado $X» queda en una línea secundaria sin rótulo porque CA-51.5 lo exige. `posicion-neta.tsx` recibe `enCamino` y lo dibuja dentro del contenedor bajo la cifra. Nuevo `base/interruptor-enlace.tsx` (K2): enlace de servidor con `role="switch"` y `aria-checked`, con la misma etiqueta en ambos estados (se deja de usar «Ocultar archivadas»); en el grupo «Archivadas» va bajo el encabezado, como en `S6-Cuentas__archivadas-visibles`. `pantalla.tsx`: se quitan los enlaces «Ver detalle de…» y «Pagar…» (la tarjeta o la fila entera enlaza; pagar se hace desde el detalle de la cuenta y desde Inicio), el encabezado de grupo lleva el `h2` con la tipografía de título y el total fuera de él, y «Ordenar» y «Nueva cuenta» no se parten. **Queda fuera, sin dato o sin diseño:** (i) la cuenta de ahorro con `coins`, anillos y `--cuenta-ahorro`: 06-features («Identidad distinta para Cuenta corriente y Cuenta de ahorro», fila «Ajuste del diseño») fija que 03 no distingue subtipos de cuenta de efectivo y que todas usan `cuenta-banco`; distinguirlas es una columna nueva en 03 y el DTO no trae el subtipo (propuesta: CH aparte si el usuario la quiere); (ii) las archivadas sin banco ni saldo, porque `archivadas` del DTO trae solo `{ id, nombre }`; (iii) el talón «Sin modelo» del préstamo sin modelo (diferencia 8 de la auditoría) es dato; (iv) la entrega 2 no trae una pantalla de la lista de Cuentas, así que «Ordenar» y «Nueva cuenta» quedan donde estaban, sin partirse. (d) **Archivos:** `apps/web/src/app/(finn)/cuentas/{pantalla.tsx,pantalla.cmp.test.tsx}`, `apps/web/src/componentes/dominio/{billetera,identidad-cuenta,posicion-neta}.tsx`, `cuentas.cmp.test.tsx`, `apps/web/src/componentes/base/interruptor-enlace.tsx`, `apps/web/e2e/pantallas/cuentas/cuentas.e2e.ts` y esta fila. (e) **Prueba:** PRU-CMP-CTA-230 a 235 (nuevas, proyecto `componentes`) exigen la cara con chip, ícono sin contacto, guilloché, red y banco; el detalle en su contenedor con Confirmado, porcentaje y barra en `--accion`; el enlace único de la cara del frente; la identidad sin rótulos; el talón, las barras y la archivada; «En camino» dentro de la posición neta; el interruptor con `role`, `aria-checked` y etiqueta fija; y la ausencia de «Pagar…» y de enlaces subrayados. PRU-E2E-CTA-230 (nueva) mide en teléfono que «Nueva cuenta» no se parte y que la cara del frente lleva al detalle; PRU-E2E-CTA-112 pasa de enlace a interruptor | 06 FT-51; 06-identidad-visual 2.9 a 2.11; A.6; 08 TA-312, CH-107 | Delegado por el orquestador; **aplicado [CH-122]** en 08 |
+| **CH-128** | Partición de TA-413 por tamaño (DT-02), con precedente en CH-86, CH-100 y CH-125. (a) El alcance completo de FT-40 (lista, formulario y eliminación, CA-40.1 a CA-40.8) midió prod≈1.030 en 13 archivos de producción contra una estimación de 360 y 10, es decir 2,8 veces: pasa el +30 % de las tareas normales (520); las pantallas de B7 miden entre 1,3 y 3 veces la estimación. (b) Se parte en dos: TA-413 conserva `/programadas` con el horizonte, los atrasados, los próximos, la lista de todas las programadas y «Desactivar» y «Reactivar» de un toque con su `Resultado` (CA-40.5, CA-40.6, CA-40.7; prod≈360, 7 archivos); TA-468, nueva (B7, HT-8, normal, sonnet, orden 698), lleva `/programadas/nueva` y `/programadas/[programadaId]` con el formulario, la edición con `calendarioEditable` y la eliminación (CA-40.1 a CA-40.4 y CA-40.8), completa los pendientes CA-19.1 y CA-19.5 (DT-27) y cierra la ficha: pasa FT-40 a `terminada`. TA-468 depende de TA-413 y de las mismas tareas; HT-8 la exige. (c) Las tareas que dependen de TA-413 por la lista (TA-414, TA-415 y las demás) siguen dependiendo de TA-413. (d) El código del formulario queda en la rama local `ta-468-programadas-2`: mide ≈670 líneas de producción, por encima del 30 % de excepción, así que quien la tome mide contra `main` y propone partirla otra vez si pasa de 520. (e) En la lista, las filas enlazan a `/programadas/[programadaId]`, que existe recién con TA-468. (f) «90 días» del diseño se quita: `programadas()` calcula hasta 30 días (BE-37, `parametrosProgramadas`) | 08 TA-413, TA-468, HT-8; 06 FT-40; 04 BE-37 | Delegado por el orquestador; **aplicado [CH-128]** en 08 |
 | **CH-125** | La ficha FT-73 se parte en tres (TA-433, TA-466, TA-467) porque superaba DT-01: medida contra `main`, daba ~1.050 líneas de producción en ~27 archivos (tope 400 y 12; con el 30 % de excepción, 520 y 15), y aun solo los formatos pasaban de 820 líneas. Hallazgos que la causaron o aparecieron al construirla: (a) el contexto `formulario({ operacion: 'formato' })` de 04 §6.14.4 no existía: TA-198 no lo entregó, y TA-433 lo crea con `leerSmsParaProbar` en `@finn/db` y el caso en `parametrosFormulario` (solo adiciones en `packages/aplicacion`); (b) `recheck`, que aplica la política de patrones de OPT-05 (BE-46), lanza un binario nativo propio y bajo Turbopack fallaba con `INTERNO`: se agrega `serverExternalPackages: ['recheck']` en `apps/web/next.config.ts`; (c) los tres formatos sembrados por la migración tienen grado de retroceso 3 y no pasan la política, así que guardar o desactivar uno se rechaza con `patron_lento` hasta que FX-1 los reescriba con las muestras: las E2E de TA-466 crean un formato propio; (d) `session_id` para la auditoría de OPT-05 no llega con `exigirSesionAal2()`: `servidor/sesion.ts` suma `sesionIdDeLaPeticion()`. Reparto: TA-433 (base y lista de formatos, `RUTA-/ajustes/formatos`), TA-466 (formulario de formatos, CA-73.1 a CA-73.6 y las rutas `nuevo` y `[formatoId]`; cierra FT-73) y TA-467 (instituciones, sus tres rutas), con TA-466 y TA-467 dependientes de TA-433 | 08 TA-433, TA-466, TA-467; 06 FT-73; 04 §6.14.4, §8.5 | Delegado por el orquestador; **aplicado [CH-125]** en 08 |
 
 ---
@@ -9442,7 +9443,7 @@ compartido: —
 | FT-33 | M | Corte, pago y monto para no generar intereses, con recordatorio | 6 | TA-402 | — | — |
 | FT-36 | M | Aprobar todos | 5 | TA-412 | — | — |
 | FT-39 | M | Reglas de comercio | 4 | TA-411 | `/reglas`, `/reglas/[reglaId]`, `/reglas/nueva` | CA-21.10, CA-34.10, CA-35.11 |
-| FT-40 | M | Administrar programadas | 8 | TA-413 | `/programadas`, `/programadas/[programadaId]`, `/programadas/nueva` | CA-19.1, CA-19.5 |
+| FT-40 | M | Administrar programadas | 8 | TA-413, TA-468 | `/programadas`, `/programadas/[programadaId]`, `/programadas/nueva` | CA-19.1, CA-19.5 |
 | FT-41 | M | Próximos pagos, registro de un toque y omitir | 6 | TA-414 | `/programadas/[programadaId]/ocurrencias/[fechaEsperada]` | CA-08.8, CA-26.3, CA-34.9, CA-35.5, CA-37.4, CA-37.5 |
 | FT-42 | M | Registro automático y puesta al día | 6 | TA-415 | — | CA-35.6 |
 | FT-43 | M | Conciliar con estado de cuenta CSV | 10 | TA-416 | `/cuentas/[cuentaId]/conciliar` | CA-25.4, CA-26.6, CA-52.2 |
@@ -9930,18 +9931,51 @@ fichas: FT-36
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y, si completa pendientes, sus E2E en verde.
 
-#### TA-413 FT-40 Administrar programadas
+#### TA-413 FT-40 Administrar programadas: lista y desactivar (1 de 2) **[CH-128]**
 
 ```tarea
-orden: 713
+orden: 697
 bloque: B7
 hito: HT-8
 depende: TA-210, TA-212, TA-219, TA-224, TA-172, TA-173, TA-194, TA-197, TA-198, TA-283, TA-282, TA-306
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=8 migraciones=0 total=1000
-cubre: CA-40.1, CA-40.2, CA-40.3, CA-40.4, CA-40.5, CA-40.6, CA-40.7, CA-40.8, RUTA-/programadas, RUTA-/programadas/[programadaId], RUTA-/programadas/nueva
+tamano: prod=360 archivos=7 ca=3 migraciones=0 total=520
+cubre: CA-40.5, CA-40.6, CA-40.7, RUTA-/programadas
+pru: —
+compartido: —
+fichas: FT-40
+```
+
+**Qué construir.**
+- FT-40, la lista: `/programadas` con el horizonte (`?horizonte=7|30`), los pagos atrasados, los próximos, todas las programadas con su estado, el aviso de cuota sin modelo y «Desactivar» y «Reactivar» como acciones de un toque con su `Resultado` y la operación inversa (OP-42 `activa`, 05 §4.14), para CA-40.5, CA-40.6 y CA-40.7.
+- Server Action `gestionarProgramada` (OP-42) en `servidor/acciones/programadas.ts`, el export `@finn/aplicacion/operaciones/programadas` y los textos de la ficha (también los del formulario, que usa TA-468).
+- Ruta que esta tarea crea (dueña, DT-23): `/programadas`. Crear, editar y eliminar son de TA-468 **[CH-128]**.
+
+**Leer.** 06 FT-40 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7; 04 §6 (sus consultas); 06-identidad-visual §3 si su pantalla está en las capturas.
+
+**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/<area>.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
+
+**Pruebas primero.**
+- Una prueba por CA de este trozo en el nivel de 07 §17 (DT-21), con el CA entre corchetes.
+
+**Comandos.** `pnpm pruebas:ft FT-40` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** Los CA de este trozo con su prueba en verde; la ficha sigue `en_curso`.
+
+#### TA-468 FT-40 Administrar programadas: formulario (2 de 2) **[CH-128]**
+
+```tarea
+orden: 698
+bloque: B7
+hito: HT-8
+depende: TA-210, TA-212, TA-219, TA-224, TA-172, TA-173, TA-194, TA-197, TA-198, TA-283, TA-282, TA-306, TA-413
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=8 ca=5 migraciones=0 total=900
+cubre: CA-40.1, CA-40.2, CA-40.3, CA-40.4, CA-40.8, RUTA-/programadas/[programadaId], RUTA-/programadas/nueva
 pru: —
 compartido: —
 fichas: FT-40
@@ -9949,9 +9983,8 @@ e2e: CA-19.1, CA-19.5
 ```
 
 **Qué construir.**
-- FT-40: las pantallas y flujos de la ficha (Flujo, Piezas, Estados, Errores y textos) para CA-40.1 a CA-40.8, con las consultas y operaciones que ya existen (B2 y B3) y los componentes de B4.
-- Server Actions de sus operaciones en `servidor/acciones/<area>.ts`; ACCESO-001 y la suite de accesibilidad las cubren solas (TA-218, TA-221).
-- Rutas que crea (dueña, DT-23): `/programadas`, `/programadas/[programadaId]`, `/programadas/nueva`.
+- FT-40, el formulario: crear una programada (OP-42), editarla con `calendarioEditable` y su motivo (`calendario_con_historial`), y eliminarla si `puedeEliminar` (OP-51), para CA-40.1 a CA-40.4 y CA-40.8. **Portar desde la rama local `ta-468-programadas-2`**, que tiene el código y sus E2E completos (`flujos/programadas-nueva` y `flujos/programadas-programada` (FE-59 deriva la carpeta de la ruta), las dos páginas, la Server Action `eliminarProgramada`, la fila de `secciones.ts` para `/programadas/[programadaId]`, el ejemplo de ruta en `apps/web/presupuestos.json` y PRU-E2E-PROG-103 a 109); medir contra `main`: la rama ronda las 670 líneas de producción, así que si pasa de 520 se parte otra vez (CH aparte).
+- Rutas que esta tarea crea (dueña, DT-23): `/programadas/nueva` y `/programadas/[programadaId]`.
 - **Completa pendientes de punta a punta (DT-27):** CA-19.1, CA-19.5. Una E2E por CA, que recorre el flujo de esta ficha y verifica el resultado en la pantalla de la ficha [I], con el CA entre corchetes; esta tarea no pasa la ficha a `terminada` sin ellas (TA-015).
 - Último PR de la ficha: `features.json` en `terminada` (07 §27).
 
@@ -9963,9 +9996,9 @@ e2e: CA-19.1, CA-19.5
 - Una prueba por CA de este trozo en el nivel de 07 §17 (DT-21), con el CA entre corchetes.
 - Las E2E de los pendientes que completa (campo `e2e`).
 
-**Comandos.** `pnpm pruebas:ft FT-40` sin faltantes en este trozo; `pnpm ci:local` con la E2E de la ficha.
+**Comandos.** `pnpm pruebas:ft FT-40` sin faltantes; `pnpm ci:local` con la E2E de la ficha.
 
-**Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y, si completa pendientes, sus E2E en verde.
+**Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y sus E2E de CA-19.1 y CA-19.5 en verde.
 
 #### TA-414 FT-41 Próximos pagos, registro de un toque y omitir
 
@@ -11433,7 +11466,7 @@ fichas: FT-49
 | FT-34 Recepción y procesamiento de SMS | I | CA-03.3 (TA-284) | 1 | TA-295 |
 | FT-28 Devoluciones | M | CA-09.11 (TA-288), CA-14.8 (TA-319), CA-19.2 (TA-441), CA-24.3 (TA-308), CA-25.5 (TA-457) | 5 | TA-406 |
 | FT-39 Reglas de comercio | M | CA-21.10 (TA-293), CA-34.10 (TA-295), CA-35.11 (TA-297) | 3 | TA-411 |
-| FT-40 Administrar programadas | M | CA-19.1 (TA-306), CA-19.5 (TA-306) | 2 | TA-413 |
+| FT-40 Administrar programadas | M | CA-19.1 (TA-306), CA-19.5 (TA-306) | 2 | TA-468 |
 | FT-41 Próximos pagos, registro de un toque y omitir | M | CA-08.8 (TA-299), CA-26.3 (TA-310), CA-34.9 (TA-295), CA-35.5 (TA-449), CA-37.4 (TA-300), CA-37.5 (TA-300) | 6 | TA-414 |
 | FT-42 Registro automático y puesta al día | M | CA-35.6 (TA-449) | 1 | TA-415 |
 | FT-43 Conciliar con estado de cuenta CSV | M | CA-25.4 (TA-457), CA-26.6 (TA-310), CA-52.2 (TA-317) | 3 | TA-416 |
@@ -11536,7 +11569,6 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 710 | TA-410 | B7 | HT-8 | normal | FT-48 Renombrar deudor | 360 | 0 |
 | 711 | TA-411 | B7 | HT-8 | normal | FT-39 Reglas de comercio | 360 | 0 |
 | 712 | TA-412 | B7 | HT-8 | normal | FT-36 Aprobar todos | 360 | 0 |
-| 713 | TA-413 | B7 | HT-8 | normal | FT-40 Administrar programadas | 360 | 0 |
 | 714 | TA-414 | B7 | HT-8 | normal | FT-41 Próximos pagos, registro de un toque y omitir | 360 | 0 |
 | 715 | TA-415 | B7 | HT-8 | normal | FT-42 Registro automático y puesta al día | 360 | 0 |
 | 716 | TA-416 | B7 | HT-8 | normal | FT-43 Conciliar con estado de cuenta CSV | 360 | 0 |
@@ -11552,6 +11584,8 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 726 | TA-426 | B7 | HT-8 | normal | FT-67 Hallazgos accionables | 360 | 0 |
 | 727 | TA-427 | B7 | HT-8 | normal | FT-06 Activar notificaciones en el dispositivo (1 de 2) **[CH-79]** | 360 | 0 |
 | 728 | TA-440 | B7 | HT-8 | normal | FT-06 Activar notificaciones en el dispositivo (2 de 2) **[CH-79]** | 240 | 0 |
+| 697 | TA-413 | B7 | HT-8 | normal | FT-40 Administrar programadas: lista y desactivar (1 de 2) **[CH-128]** | 360 | 0 |
+| 698 | TA-468 | B7 | HT-8 | normal | FT-40 Administrar programadas: formulario (2 de 2) **[CH-128]** | 400 | 0 |
 | 699 | TA-428 | B7 | HT-8 | normal | FT-69 Centro de notificaciones | 360 | 0 |
 | 729 | TA-429 | B7 | HT-8 | normal | FT-70 Push de la bandeja con acciones | 360 | 0 |
 | 730 | TA-430 | B7 | HT-8 | normal | FT-71 Push de programadas, cierre, metas, tarjetas y sistema (1 de 2) | 360 | 0 |

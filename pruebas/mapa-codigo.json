@@ -87,6 +87,8 @@
   { "patron": "apps/web/src/app/(finn)/actividad/**", "fts": ["FT-24"] },
   { "patron": "apps/web/src/flujos/actividad-editar/**", "fts": ["FT-25"] },
   { "patron": "apps/web/src/flujos/metas-nueva/**", "fts": ["FT-17"] },
+  { "patron": "apps/web/src/app/(finn)/programadas/**", "fts": ["FT-40", "FT-41"] },
+  { "patron": "apps/web/src/servidor/acciones/programadas.ts", "fts": ["FT-40"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/mover/**", "fts": ["FT-11"] },
   {
     "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/mover/**",

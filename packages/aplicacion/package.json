@@ -27,6 +27,7 @@
     "./operaciones/formatos": "./src/operaciones/formatos/index.ts",
     "./operaciones/eventos": "./src/operaciones/eventos/index.ts",
     "./operaciones/presupuesto": "./src/operaciones/presupuesto/index.ts",
+    "./operaciones/programadas": "./src/operaciones/programadas/index.ts",
     "./operaciones/transacciones": "./src/operaciones/transacciones/index.ts",
     "./tiempo": "./src/tiempo/index.ts"
   },
