@@ -2,11 +2,20 @@ import axe from 'axe-core';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { Centavos } from '@finn/dominio/valores';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../app/globals.css';
 import { BilleteraTarjetas, type TarjetaDto } from './billetera';
 import { IdentidadCuenta } from './identidad-cuenta';
 import { PosicionNeta, type PosicionNetaDto } from './posicion-neta';
+
+// `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene: se simula `next/link`, nunca
+// `enlace-finn`, que otras suites importan de verdad.
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
+    createElement('a', { href, ...resto }, children);
+  return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
+});
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -51,6 +60,7 @@ const visa: TarjetaDto = {
   red: 'Visa',
   color: 'oro',
   deuda: c(60718),
+  saldoConfirmado: c(60718),
   saldoAFavor: c(0),
   limite: c(250000),
   usoLimite: 2569,
@@ -178,13 +188,13 @@ describe('PRU-CMP-CTA-101 cuentas', () => {
     const [efectivo, prestamo, sinModelo, inversion, archivada] = [
       ...raiz.querySelectorAll('[data-identidad]'),
     ].map(textoAccesible);
-    expect(efectivo).toContain('Saldo$1,500.00');
-    expect(efectivo).toContain('Confirmado$1,480.00');
+    expect(efectivo).toContain('$1,500.00');
+    expect(efectivo).toContain('Confirmado $1,480.00');
     expect(efectivo).toContain('Diferencia con el estado de cuenta');
     expect(prestamo).toContain('Cuota7');
     expect(prestamo).toContain('20/10/2026');
     expect(sinModelo).toContain('Sin modelo');
-    expect(inversion).toContain('Valor$800.00');
+    expect(inversion).toContain('Fondo$800.00');
     expect(archivada).toContain('Archivada');
     expect(
       [...raiz.querySelectorAll('[data-identidad]')].map((e) => e.getAttribute('data-identidad')),
@@ -200,6 +210,108 @@ describe('PRU-CMP-CTA-101 cuentas', () => {
     expect(d?.className).toContain('repeating-linear-gradient');
     expect(textoAccesible(raiz)).toContain('Posición neta$667.82');
     expect(textoAccesible(raiz)).toContain('Tarjetas $607.18');
+  });
+
+  it('PRU-CMP-CTA-230 [CA-51.8] la cara lleva chip, ícono sin contacto, guilloché, red y banco a la derecha; el detalle va en su contenedor con Confirmado, porcentaje y barra en acción', () => {
+    const raiz = montar(<BilleteraTarjetas tarjetas={[visa]} />);
+    const cara = raiz.querySelector<HTMLElement>('[data-tarjeta="visa"]') as HTMLElement;
+    expect(cara.querySelector('[data-chip]')).not.toBeNull();
+    expect(cara.querySelectorAll('svg[aria-hidden="true"] path').length).toBe(3);
+    expect(getComputedStyle(cara).backgroundImage).toContain('repeating-radial-gradient');
+    const [nombre, banco] = [...(cara.children[1]?.children ?? [])];
+    expect(nombre?.textContent).toBe('Visa Oro');
+    expect(banco?.textContent).toBe('BAC');
+    expect(cara.textContent).toContain('Visa · crédito');
+    const detalle = raiz.querySelector<HTMLElement>('[data-detalle-tarjeta]') as HTMLElement;
+    expect(getComputedStyle(detalle).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+    expect(getComputedStyle(detalle).boxShadow).not.toBe('none');
+    expect(textoAccesible(detalle)).toContain('Confirmado $607.18');
+    expect(textoAccesible(detalle)).toContain('25.69%');
+    const uso = detalle.querySelector('[role="progressbar"] > span') as HTMLElement;
+    expect(uso.className).toContain('bg-accion');
+    expect(
+      (detalle.querySelector('[data-segmento="sin-reservar"]') as HTMLElement).className,
+    ).toContain('patron-sin-reservar');
+  });
+
+  it('PRU-CMP-CTA-231 con enlazar, la cara del frente es el único enlace al detalle (nombre «Ver detalle de …»); sin enlazar no hay enlaces', () => {
+    const con = montar(<BilleteraTarjetas tarjetas={[visa, master]} enlazar />);
+    const enlaces = [...con.querySelectorAll('a')];
+    expect(enlaces.map((a) => a.getAttribute('href'))).toEqual(['/cuentas/visa']);
+    expect(enlaces[0]?.getAttribute('aria-label')).toBe('Ver detalle de Visa Oro');
+    expect(enlaces[0]?.querySelector('[data-tarjeta="visa"]')).not.toBeNull();
+    act(() => {
+      con.querySelector<HTMLButtonElement>('[data-billetera] button')?.click();
+    });
+    expect(con.querySelector('a')?.getAttribute('href')).toBe('/cuentas/master');
+    expect(montar(<BilleteraTarjetas tarjetas={[visa]} />).querySelector('a')).toBeNull();
+  });
+
+  it('PRU-CMP-CTA-232 [CA-51.5] la identidad no lleva rótulos SALDO ni CONFIRMADO: nombre en 700, banco · dígitos y el saldo; la diferencia y el confirmado siguen a la vista', () => {
+    const raiz = montar(
+      <IdentidadCuenta
+        tipo="efectivo"
+        fila={{
+          cuenta: { id: 'a', nombre: 'Cuenta corriente' },
+          institucion: 'BAC',
+          ultimos4: '0042',
+          saldo: c(150000),
+          saldoConfirmado: c(148000),
+          ultimaConciliacion: { diferenciaActual: c(500) },
+        }}
+      />,
+    );
+    const art = raiz.querySelector('[data-identidad="efectivo"]') as HTMLElement;
+    expect(art.querySelector('.text-rotulo')).toBeNull();
+    const [nombre, detalle] = [...art.querySelectorAll('p')];
+    expect(nombre?.textContent).toBe('Cuenta corriente');
+    expect(getComputedStyle(nombre as Element).fontWeight).toBe('700');
+    expect(detalle?.textContent).toBe('BAC · •••• 0042');
+    expect(textoAccesible(art)).not.toMatch(/Saldo/i);
+    expect(textoAccesible(art)).toContain('Confirmado $1,480.00');
+    expect(textoAccesible(art)).toContain('Diferencia con el estado de cuenta');
+  });
+
+  it('PRU-CMP-CTA-232 el préstamo lleva el talón a la derecha con muescas, la inversión sus seis barras y la archivada el candado, sin saldo', () => {
+    const raiz = montar(
+      <>
+        <IdentidadCuenta
+          tipo="prestamo"
+          fila={{
+            cuenta: { id: 'p', nombre: 'Préstamo auto' },
+            contraparte: 'Banco',
+            capitalPendiente: c(900000),
+            proximaCuota: { fecha: '2026-10-20', monto: c(21000), numero: 7 },
+          }}
+        />
+        <IdentidadCuenta
+          tipo="inversion"
+          fila={{ cuenta: { id: 'i', nombre: 'Fondo' }, valor: c(80000) }}
+        />
+        <IdentidadCuenta tipo="archivada" fila={{ id: 'z', nombre: 'Vieja' }} />
+      </>,
+    );
+    const [prestamo, inversion, archivada] = [
+      ...raiz.querySelectorAll<HTMLElement>('[data-identidad]'),
+    ];
+    expect(textoAccesible(prestamo as Node)).toContain('Banco · capital pendiente');
+    const talon = prestamo?.querySelector('[data-talon]') as HTMLElement;
+    expect(getComputedStyle(talon).borderLeftStyle).toBe('dashed');
+    expect(Math.round(talon.getBoundingClientRect().width)).toBe(103);
+    expect(prestamo?.querySelectorAll('span.rounded-full[aria-hidden="true"]').length).toBe(2);
+    expect(inversion?.querySelectorAll('svg rect').length).toBe(6);
+    expect(textoAccesible(archivada as Node)).toBe('ViejaArchivada');
+    expect(archivada?.querySelector('[data-centavos]')).toBeNull();
+  });
+
+  it('PRU-CMP-CTA-233 [CA-51.5] «En camino» va dentro del contenedor de la posición neta y no se dibuja si es cero', () => {
+    const con = montar(<PosicionNeta posicion={posicion} enCamino={c(4000)} />);
+    const dentro = con.querySelector('[data-posicion-neta] [data-en-camino]');
+    expect(dentro?.textContent).toContain('En camino');
+    expect(dentro?.textContent).toContain('$40.00');
+    expect(
+      montar(<PosicionNeta posicion={posicion} />).querySelector('[data-en-camino]'),
+    ).toBeNull();
   });
 
   it.each(temas)('PRU-CMP-CTA-101 axe sin violaciones en el tema %s', async (tema) => {
