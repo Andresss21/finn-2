@@ -1,37 +1,23 @@
 // PRU-SEG-ACCESO-102 (TA-253; 04 §12.6 [CH-42], §17.2 H-10; 07 §5.3): `tools/recuperacion/borrar-factores.mjs` y el
 // paso H-10 de humo.sh contra la pila local de Supabase (`supabase start -x …`, db, auth y kong, con la
 // configuración de supabase/config.toml: TOTP habilitado y registro cerrado, 04 §12.1). Las claves salen de
-// `supabase status`. Solo local: si la pila no está levantada (en el runner de CI no se levanta), la prueba se omite.
+// `supabase status`. Solo local: en el runner de CI la pila no se levanta y la prueba se omite.
 import { spawnSync } from 'node:child_process';
 import { createHmac, randomBytes } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { tomarCandado } from '../../pruebas/e2e/candado.ts';
+import { bajarPila, levantarAuth } from '../../pruebas/e2e/pila.ts';
 
 const raiz = fileURLToPath(new URL('../../../', import.meta.url)).replaceAll('\\', '/');
 const API = 'http://127.0.0.1:54321';
-const pila =
-  spawnSync('docker', ['ps', '-q', '--filter', 'name=^supabase_auth_finn$'], {
-    encoding: 'utf8',
-  }).stdout.trim() !== '';
-
-function claves(): Record<string, string> {
-  if (!pila) return {};
-  const cli =
-    /^SUPABASE_CLI=(\S+)/m.exec(readFileSync(`${raiz}infra/versiones.env`, 'utf8'))?.[1] ?? '';
-  const r = spawnSync(`npx -y supabase@${cli} status -o env`, {
-    cwd: raiz,
-    shell: true,
-    encoding: 'utf8',
-  });
-  return Object.fromEntries(
-    r.stdout.split('\n').flatMap((l) => {
-      const m = /^([A-Z_]+)="?(.*?)"?\s*$/.exec(l);
-      return m?.[1] && m[2] !== undefined ? [[m[1], m[2]]] : [];
-    }),
-  );
-}
-const { SERVICE_ROLE_KEY: servicio = '', ANON_KEY: publica = '' } = claves();
+// [CH-104] Antes corría solo si encontraba una pila levantada, que siempre era la de la E2E de otro agente: sin su
+// candado, esa corrida la bajaba (`supabase stop --no-backup`) o creaba sus usuarios a mitad de la prueba. Ahora la
+// pila es suya: toma el candado de la E2E (DT-22) y la levanta, como `pnpm test:e2e`. En CI no se levanta (07 §5.3).
+const enCI = (process.env['CI'] ?? '') !== '';
+let servicio = '';
+let publica = '';
+let soltar: (() => void) | undefined;
 const creados: string[] = [];
 
 // `ms`: la hora de la cabecera Date de GoTrue (el reloj del servicio, que es el que valida el TOTP)
@@ -97,11 +83,28 @@ function borrarFactores(env: Record<string, string>) {
   });
 }
 
-afterAll(async () => {
-  for (const id of creados) await pedir('DELETE', `/admin/users/${id}`);
-});
+describe.skipIf(enCI)('PRU-SEG-ACCESO', () => {
+  // La espera del candado es la de otra E2E en curso (tomarCandado corta a la hora); después, `supabase start`
+  beforeAll(async () => {
+    soltar = await tomarCandado({
+      alEsperar: (d) => {
+        console.log(`PRU-SEG-ACCESO-102: el candado de la E2E lo tiene ${String(d.pid)}; esperando`);
+      },
+    });
+    const pila = await levantarAuth();
+    expect(pila.url).toBe(API);
+    [servicio, publica] = [pila.claveServicio, pila.clavePublica];
+  }, 3_900_000);
 
-describe.skipIf(!pila)('PRU-SEG-ACCESO', () => {
+  afterAll(async () => {
+    try {
+      if (servicio) for (const id of creados) await pedir('DELETE', `/admin/users/${id}`);
+    } finally {
+      bajarPila();
+      soltar?.();
+    }
+  }, 300_000);
+
   it('PRU-SEG-ACCESO-102 [H-10] BE-56 HUMO-iad1-auth: borrar-factores.mjs contra la pila local de Supabase: a un usuario con un TOTP verificado y dos sesiones (AAL1 y AAL2) le borra los factores, fija la contraseña nueva de FINN_CLAVE_NUEVA y así cierra sus sesiones (los dos refresh token fallan, la contraseña vieja ya no entra y la nueva sí), deja 0 factores y no escribe la clave de servicio ni la contraseña; controles: sin FINN_CLAVE_NUEVA sale con 2 y con un usuario inexistente con 1, sin la clave; y H-10 de humo.sh pasa contra la pila (JWKS asimétrico, recuperación, registro cerrado) y borra su usuario de prueba', async () => {
     expect(servicio.length, 'supabase status').toBeGreaterThan(20);
     const email = `pru-102-${randomBytes(6).toString('hex')}@example.com`;

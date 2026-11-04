@@ -243,8 +243,10 @@ describe('PRU-INT-BAND', () => {
     expect(con.respaldo).toMatchObject({ respaldoAtrasado: true, restauracionAtrasada: false });
     expect(con.respaldo.ultimoRespaldoEn).toBeDefined();
     expect(con.respaldo.ultimaRestauracionEn).toBeDefined();
-    // Ni el hash del token ni las claves de la suscripción salen jamás (04 §6.11)
-    expect(JSON.stringify(con)).not.toMatch(/abab|clave-secreta/);
+    // Ni el hash del token ni las claves de la suscripción salen jamás (04 §6.11). El hash sembrado es «ab» × 32: se
+    // busca un tramo de 16 caracteres, que no cabe en ningún tramo de un uuid (12 como máximo), así que el id
+    // aleatorio de la suscripción no da un positivo falso con «abab» [CH-104]
+    expect(JSON.stringify(con)).not.toMatch(/(?:ab){8}|clave-secreta/);
 
     // 6. Respaldo reciente (2 h) y restauración vieja (36 días)
     await fijarRespaldo(base, '2 hours', '36 days');
