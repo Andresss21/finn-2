@@ -457,7 +457,7 @@
 
   "TA-413": { "estado": "terminada", "rama": "ta-413-programadas-2", "pr": 360 },
 
-  "TA-468": { "estado": "pendiente" },
+  "TA-468": { "estado": "en_curso", "rama": "ta-468-formulario" },
 
   "TA-414": { "estado": "pendiente" },
 
