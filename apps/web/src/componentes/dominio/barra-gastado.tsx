@@ -7,18 +7,25 @@ export interface BarraDto {
   readonly metaBp?: number;
 }
 
+interface PropsBarra {
+  readonly barra: BarraDto | null;
+  /** Meta cubierta (la fila lo sabe por el DTO): lo gastado se pinta en `--positivo-borde` (06 2.5). */
+  readonly metaCubierta?: boolean;
+}
+
 const EXCEDENTE = {
   debito: 'bg-problema-borde',
-  tarjeta: 'bg-[image:var(--patron-sin-reservar)]',
-  // Mixto: franja superior de débito y franja inferior rayada de tarjeta, distinguibles sin color.
+  // 06 2.5: el excedente con tarjeta es sólido (el rayado es del uso del límite de la tarjeta).
+  tarjeta: 'bg-deuda-sin-respaldo-borde',
+  // Mixto: franja superior de débito y franja inferior de tarjeta, distinguibles sin color.
   mixto:
-    'bg-[linear-gradient(var(--problema-borde)_0_50%,transparent_50%),var(--patron-sin-reservar)]',
+    'bg-[linear-gradient(var(--problema-borde)_0_50%,var(--deuda-sin-respaldo-borde)_50%_100%)]',
 } as const;
 
 // Conversión de unidad: puntos básicos a porcentaje de ancho (no es aritmética de montos).
 const ancho = (bp: number) => ({ width: `${bp / 100}%` });
 
-export function BarraGastado({ barra }: { readonly barra: BarraDto | null }) {
+export function BarraGastado({ barra, metaCubierta = false }: PropsBarra) {
   if (barra === null) return null;
   const { cubiertoBp, excedenteBp, tipoExcedente, metaBp } = barra;
   return (
@@ -28,7 +35,11 @@ export function BarraGastado({ barra }: { readonly barra: BarraDto | null }) {
       className="flex h-1.5 gap-0.5 overflow-hidden rounded-pastilla bg-superficie-hundida"
     >
       {cubiertoBp > 0 ? (
-        <span data-segmento="cubierto" style={ancho(cubiertoBp)} className="bg-texto-secundario" />
+        <span
+          data-segmento="cubierto"
+          style={ancho(cubiertoBp)}
+          className={metaCubierta ? 'bg-positivo-borde' : 'bg-texto-secundario'}
+        />
       ) : null}
       {excedenteBp > 0 && tipoExcedente !== null ? (
         <span

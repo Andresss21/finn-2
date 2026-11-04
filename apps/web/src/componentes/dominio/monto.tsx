@@ -14,8 +14,11 @@ interface PropsMonto {
   readonly centavos: Centavos;
   readonly rol?: keyof typeof ROL;
   readonly estado?: EstadoFinanciero;
-  /** `absoluto` muestra el valor sin signo (la fila ya dice si es salida o deuda). */
-  readonly presentacion?: 'con-signo' | 'absoluto';
+  /**
+   * `absoluto` muestra el valor sin signo (la fila ya dice si es salida o deuda); `salida` lo muestra siempre con el
+   * signo menos, porque el tipo de la fila (un gasto, un consumo) dice que sale dinero, aunque el DTO traiga el valor positivo.
+   */
+  readonly presentacion?: 'con-signo' | 'absoluto' | 'salida';
 }
 
 export function Monto({
@@ -24,7 +27,10 @@ export function Monto({
   estado,
   presentacion = 'con-signo',
 }: PropsMonto) {
-  const mostrado = presentacion === 'absoluto' ? (Math.abs(centavos) as Centavos) : centavos;
+  const absoluto = Math.abs(centavos);
+  const mostrado = (
+    presentacion === 'absoluto' ? absoluto : presentacion === 'salida' ? -absoluto : centavos
+  ) as Centavos;
   const color = estado === undefined ? '' : COLOR_TEXTO[estado];
   return (
     <span
