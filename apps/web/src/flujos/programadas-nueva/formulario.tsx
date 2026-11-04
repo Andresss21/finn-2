@@ -199,7 +199,7 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             onChange={(e) => {
               poner('registroAutomatico')(e.target.checked);
             }}
-            className="size-5"
+            className="size-11"
           />
           <span className="text-cuerpo">{t.registroAutomatico}</span>
         </label>
