@@ -48,6 +48,7 @@ function Serie<F extends { readonly periodo: string }>({
   const etiquetas = filas.map((f) => formatearFecha(f.periodo));
   return (
     <VistaGrafico
+      tablaAlLado
       grafico={
         <div className="flex flex-col gap-4">
           {lineas.map((l) => (
