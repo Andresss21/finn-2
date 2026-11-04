@@ -457,7 +457,11 @@
 
   "TA-413": { "estado": "terminada", "rama": "ta-413-programadas-2", "pr": 360 },
 
-  "TA-468": { "estado": "pendiente" },
+  "TA-468": { "estado": "terminada", "rama": "ta-468-formulario", "pr": 363 },
+
+  "TA-473": { "estado": "pendiente" },
+
+  "TA-474": { "estado": "pendiente" },
 
   "TA-414": { "estado": "pendiente" },
 
@@ -509,7 +513,7 @@
 
   "TA-466": { "estado": "terminada", "rama": "ta-466-formatos-formulario-2", "pr": 364 },
 
-  "TA-467": { "estado": "pendiente" },
+  "TA-467": { "estado": "terminada", "rama": "ta-467-instituciones-ui-2", "pr": 368 },
 
   "TA-472": { "estado": "pendiente" },
 
