@@ -453,7 +453,7 @@
 
   "TA-411": { "estado": "terminada", "rama": "ta-411-reglas", "pr": 353 },
 
-  "TA-412": { "estado": "en_curso", "rama": "ta-412-aprobar-todos" },
+  "TA-412": { "estado": "terminada", "rama": "ta-412-aprobar-todos", "pr": 359 },
 
   "TA-413": { "estado": "pendiente" },
 
