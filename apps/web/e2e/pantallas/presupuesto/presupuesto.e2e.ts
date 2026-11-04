@@ -206,4 +206,56 @@ test.describe('PRU-E2E-PRES', () => {
     ).toHaveAttribute('href', /\/presupuesto\/categorias\/[0-9a-f-]+\/sacar$/);
     await expect(fila(page, 'Gimnasio')).toHaveCount(0);
   });
+
+  test('PRU-E2E-PRES-230 [CA-09.3] en computadora el período y los filtros van lado a lado y las categorías son una tabla cuyas columnas coinciden con su encabezado', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await sembrarOps(TRES_CLASES, '2027-02-10');
+    await abrir(page);
+    await esperarMonto(disponible(page, 'Cubierta'), 2000);
+    const selector = page.locator('[data-selector-periodo]');
+    await expect(selector).toContainText('21/01 – 20/02/2027');
+    const filtros = page.getByRole('group', { name: 'Filtrar categorías' });
+    const [a, b] = [await selector.boundingBox(), await filtros.boundingBox()];
+    expect(
+      Math.abs((a?.y ?? 0) - (b?.y ?? 999)),
+      'período y filtros a la misma altura',
+    ).toBeLessThan(40);
+    expect(b?.x ?? 0).toBeGreaterThan((a?.x ?? 0) + (a?.width ?? 0) - 1);
+    // El filtro activo es --texto sobre --fondo (no el azul de acción)
+    const activo = filtros.getByRole('link', { name: 'Todas', exact: true });
+    await expect(activo).toHaveAttribute('aria-current', 'true');
+    const colores = await activo.evaluate((e) => {
+      const sonda = (v: string) => {
+        const i = document.createElement('i');
+        i.style.color = `var(${v})`;
+        document.body.append(i);
+        const c = getComputedStyle(i).color;
+        i.remove();
+        return c;
+      };
+      const x = getComputedStyle(e);
+      return {
+        fondo: x.backgroundColor,
+        texto: x.color,
+        texto0: sonda('--texto'),
+        fondo0: sonda('--fondo'),
+      };
+    });
+    expect(colores.fondo).toBe(colores.texto0);
+    expect(colores.texto).toBe(colores.fondo0);
+    // La columna Disponible: el encabezado y el monto de cada fila terminan en el mismo borde
+    const encabezado = page.getByText('Disponible', { exact: true }).first();
+    const borde = async (l: typeof encabezado) => Math.round((await l.boundingBox())?.x ?? 0);
+    const ancho = async (l: typeof encabezado) => Math.round((await l.boundingBox())?.width ?? 0);
+    const derechaEncabezado = (await borde(encabezado)) + (await ancho(encabezado));
+    for (const nombre of ['Cubierta', 'Sobregirada', 'Sin fondos']) {
+      const monto = disponible(page, nombre);
+      const derecha = (await borde(monto)) + (await ancho(monto));
+      expect(Math.abs(derecha - derechaEncabezado), `${nombre}: Disponible alineado`).toBeLessThan(
+        3,
+      );
+    }
+  });
 });

@@ -67,7 +67,7 @@ test.describe('PRU-E2E-AJUS', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-AJUS-110 [CA-72.1] con el estado de ESC-45, cambiar el día a 1 dice que rige desde el 21/12/2027 con un período de transición del 21/12 al 31/12 (11 días) y, al confirmar, Listo para asignar y los Disponibles no cambian', async ({
+  test('PRU-E2E-AJUS-110 [CA-72.1] RUTA-/ajustes/ciclo con el estado de ESC-45, cambiar el día a 1 dice que rige desde el 21/12/2027 con un período de transición del 21/12 al 31/12 (11 días) y, al confirmar, Listo para asignar y los Disponibles no cambian', async ({
     page,
   }) => {
     await sembrarOps(ESC45, '2027-11-10');
@@ -165,9 +165,9 @@ test.describe('PRU-E2E-AJUS', () => {
     const selector = page.locator('[data-selector-periodo]');
     fijarRelojServidor('2027-02-27T10:00:00-06:00');
     await abrir(page, '/presupuesto');
-    await expect(selector).toContainText('31 ene – 27 feb 2027');
+    await expect(selector).toContainText('31/01 – 27/02/2027');
     fijarRelojServidor('2027-02-28T10:00:00-06:00');
     await abrir(page, '/presupuesto');
-    await expect(selector).toContainText('28 feb – 30 mar 2027');
+    await expect(selector).toContainText('28/02 – 30/03/2027');
   });
 });

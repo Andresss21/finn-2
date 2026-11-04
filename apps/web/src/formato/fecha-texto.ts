@@ -18,3 +18,10 @@ export function formatearFechaTexto(f: string): string {
 export function formatearPeriodoCorto(p: Periodo): string {
   return `${diaYMes(p.inicio)} – ${formatearFechaTexto(p.fin)}`;
 }
+
+/** `21/09 – 20/10/2026` (selector de período, 06-identidad-visual 2.15); el año es el del fin. */
+export function formatearPeriodoNumerico(p: Periodo): string {
+  const [, mi, di] = p.inicio.split('-');
+  const [af, mf, df] = p.fin.split('-');
+  return `${di}/${mi} – ${df}/${mf}/${af}`;
+}

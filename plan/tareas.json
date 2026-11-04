@@ -451,11 +451,11 @@
 
   "TA-410": { "estado": "pendiente" },
 
-  "TA-411": { "estado": "pendiente" },
+  "TA-411": { "estado": "terminada", "rama": "ta-411-reglas", "pr": 353 },
 
   "TA-412": { "estado": "pendiente" },
 
-  "TA-413": { "estado": "terminada", "rama": "ta-413-programadas", "pr": 356 },
+  "TA-413": { "estado": "terminada", "rama": "ta-413-programadas-2", "pr": 359 },
 
   "TA-468": { "estado": "pendiente" },
 
@@ -505,7 +505,11 @@
 
   "TA-432": { "estado": "terminada", "rama": "ta-432-ciclo", "pr": 348 },
 
-  "TA-433": { "estado": "pendiente" },
+  "TA-433": { "estado": "terminada", "rama": "ta-433-formatos-instituciones", "pr": 354 },
+
+  "TA-466": { "estado": "pendiente" },
+
+  "TA-467": { "estado": "pendiente" },
 
   "TA-434": { "estado": "pendiente" },
 

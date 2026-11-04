@@ -11,6 +11,7 @@ import {
   formatearMontoTexto,
   formatearPeriodo,
   formatearPeriodoCorto,
+  formatearPeriodoNumerico,
   formatearPorcentaje,
 } from './index';
 
@@ -78,6 +79,7 @@ describe('PRU-DOM-VAL-005 módulo de formato [V5-02]', () => {
     const p = { inicio: '2026-09-21', fin: '2026-10-20' };
     expect(formatearPeriodo(p)).toBe('21/09/2026 – 20/10/2026');
     expect(formatearPeriodoCorto(p)).toBe('21 sep – 20 oct 2026');
+    expect(formatearPeriodoNumerico(p)).toBe('21/09 – 20/10/2026');
     expect(formatearInstante('2026-10-05T20:32:00Z')).toBe('05/10/2026 14:32');
     expect(formatearPorcentaje(4550)).toBe('45.5%');
     expect(formatearPorcentaje(10000)).toBe('100%');
