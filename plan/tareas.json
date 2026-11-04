@@ -507,7 +507,7 @@
 
   "TA-433": { "estado": "terminada", "rama": "ta-433-formatos-instituciones", "pr": 354 },
 
-  "TA-466": { "estado": "en_curso", "rama": "ta-466-formatos-formulario-2" },
+  "TA-466": { "estado": "terminada", "rama": "ta-466-formatos-formulario-2", "pr": 364 },
 
   "TA-467": { "estado": "pendiente" },
 
