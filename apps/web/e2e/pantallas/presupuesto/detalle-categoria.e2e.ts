@@ -379,7 +379,12 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await expect(page.getByRole('link', { name: 'Asignar', exact: true })).toBeVisible();
     await expect(page.getByText('Categoría archivada')).toHaveCount(0);
     // Con Disponible distinto de cero, archivar de nuevo queda deshabilitado con su motivo
-    await expect(page.getByRole('button', { name: 'Archivar' })).toBeDisabled();
+    // (CH-115: «Archivar» vive en «Más acciones», deshabilitada con su motivo)
+    await page.getByRole('button', { name: 'Más acciones' }).click();
+    await expect(page.getByRole('menuitem', { name: /^Archivar/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     await expect(
       page.getByText('No se puede archivar: tiene Disponible distinto de cero.'),
     ).toBeVisible();

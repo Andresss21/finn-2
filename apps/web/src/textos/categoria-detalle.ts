@@ -69,6 +69,8 @@ export const categoriaDetalle = {
     etiqueta: 'Acciones de la categoría',
     asignar: 'Asignar',
     mover: 'Mover dinero',
+    editar: 'Editar nombre y grupo',
+    eliminar: 'Eliminar',
     archivar: 'Archivar',
     fusionar: 'Fusionar con otra',
     sacar: 'Sacar el dinero',
@@ -80,6 +82,7 @@ export const categoriaDetalle = {
       disponible: 'No se puede archivar: tiene Disponible distinto de cero.',
       asignaciones_futuras: 'No se puede archivar: tiene asignaciones en períodos futuros.',
       programadas: 'No se puede archivar: tiene programadas activas.',
+      eliminar: 'Tiene historial. Podés archivarla o fusionarla.',
     },
   },
 } as const;
