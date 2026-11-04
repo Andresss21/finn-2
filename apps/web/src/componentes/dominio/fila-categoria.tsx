@@ -113,9 +113,7 @@ export function FilaCategoria({
             <span className="md:sr-only">{dominio.asignado} </span>
             <Monto centavos={fila.asignado} />
           </span>
-          <span className="md:sr-only">
-            {' · '}
-          </span>
+          <span className="md:sr-only">{' · '}</span>
           <span className={C3}>
             <span className="md:sr-only">{dominio.gastado} </span>
             <Monto centavos={fila.gastado} />

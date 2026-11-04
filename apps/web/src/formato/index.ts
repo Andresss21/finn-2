@@ -12,6 +12,10 @@ export {
   formatearMontoTexto,
 } from './monto.ts';
 export { formatearFecha, formatearPeriodo } from './fecha.ts';
-export { formatearFechaTexto, formatearPeriodoCorto, formatearPeriodoNumerico } from './fecha-texto.ts';
+export {
+  formatearFechaTexto,
+  formatearPeriodoCorto,
+  formatearPeriodoNumerico,
+} from './fecha-texto.ts';
 export { formatearInstante } from './instante-texto.ts';
 export { formatearPorcentaje } from './porcentaje.ts';
