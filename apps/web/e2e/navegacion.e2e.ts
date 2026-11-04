@@ -45,10 +45,12 @@ test.describe('PRU-E2E-PWA', () => {
     const bandeja = nav.getByRole('link', { name: navegacion.bandeja(3), exact: true });
     await expect(bandeja).toBeVisible();
     await expect(bandeja).toHaveAttribute('href', '/bandeja');
-    // La campana es un botón mientras `/notificaciones` no existe (CH-109): lleva el contador en su nombre igual.
-    await expect(
-      page.getByRole('button', { name: navegacion.notificaciones(2), exact: true }),
-    ).toBeVisible();
+    // La campana enlaza a `/notificaciones` (FT-69, CF-23) y lleva el contador en su nombre.
+    const campana = page
+      .locator('[data-marco-barra]')
+      .getByRole('link', { name: navegacion.notificaciones(2), exact: true });
+    await expect(campana).toBeVisible();
+    await expect(campana).toHaveAttribute('href', '/notificaciones');
 
     // El número se pinta con `::after`: sale en pantalla, no entra en el texto del enlace y sí en su nombre (3.3).
     const contador = bandeja.locator('[data-contador]');

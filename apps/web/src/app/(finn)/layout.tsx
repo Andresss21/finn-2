@@ -10,8 +10,9 @@ import { ponerAlDia } from '@finn/aplicacion/tareas/puesta-al-dia';
 import { after } from 'next/server';
 import type { ReactNode } from 'react';
 import { Marco } from '../../componentes/marco/marco';
+import { MarcarLeidaAlAbrir } from '../../componentes/navegacion/marcar-leida-al-abrir';
 import { SuscripcionPush } from '../../componentes/marco/suscripcion-push';
-import { registrarSuscripcion } from '../../servidor/acciones/notificaciones';
+import { marcarLeidas, registrarSuscripcion } from '../../servidor/acciones/notificaciones';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ export default function LayoutFinn({
   return (
     <Marco superpuesto={superpuesto}>
       {children}
+      <MarcarLeidaAlAbrir marcarLeidas={marcarLeidas} />
       <SuscripcionPush registrar={registrarSuscripcion} />
     </Marco>
   );

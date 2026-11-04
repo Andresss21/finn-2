@@ -31,6 +31,27 @@ export const notificaciones = {
   quitar: 'Quitar',
   quitarEtiqueta: (nombre: string) => `Quitar ${nombre}`,
   noSePudo: 'No se pudo completar. Probá de nuevo.',
+  // Centro de notificaciones `/notificaciones` (FT-69; 05 §2.9)
+  centro: {
+    filtro: 'Mostrar',
+    todas: 'Todas',
+    sinLeer: (n: number | null) => (n === null || n === 0 ? 'Sin leer' : `Sin leer · ${n}`),
+    marcarTodo: 'Marcar todo como leído',
+    marcando: 'Marcando…',
+    todoLeido: 'Todo leído',
+    nuevas: 'Nuevas',
+    anteriores: 'Anteriores',
+    sinLeerMarca: 'Sin leer',
+    yaNoExiste: 'Esto ya no existe',
+    vacioTitulo: 'No tenés notificaciones',
+    vacioTexto:
+      'Acá vas a ver lo que Finn registró solo, tus pagos próximos y el cierre del período.',
+    sinLeerVacioTitulo: 'Todo leído',
+    sinLeerVacioTexto: 'No tenés notificaciones sin leer.',
+    masAntiguas: 'Ver más antiguas',
+    desdeElPrincipio: 'Volver a las más nuevas',
+    retencion: 'Se guardan las notificaciones de los últimos 180 días.',
+  },
   // Service worker (05 §8.6)
   push: {
     confirmar: 'Confirmar',
