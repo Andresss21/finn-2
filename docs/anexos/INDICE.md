@@ -669,3 +669,24 @@ visuales y en las pantallas de las fichas pendientes; el diseño sigue mandando 
 - Revisado antes de commitear: sin secretos ni datos personales; las únicas URLs son dos enlaces de las licencias OFL; sin scripts
   externos ni seguimiento. El archivo más grande pesa 456 KB (prototipo); no hay binarios que pidan LFS.
 - Detalle por archivo: el `INDICE.md` del propio export. Esta tabla no lo repite y `pnpm plan:anexos` no lo cita.
+
+## Anexo posterior: `finn-diseno-export-2/` [CH-108]
+
+Segunda entrega del export en código de Claude Design (`finn-diseno-export-2.zip`, `C:\finn\_entrada\`), pedida el 2026-11-03 tras
+la auditoría visual. Completa `finn-diseno-export/` (CH-107): resuelve D1 a D4, agrega EntradaFecha con calendario, los estados
+cargando y error, "Más acciones" y 15 pantallas de la parte 2. PANTALLAS.md y 06-identidad-visual siguen mandando si hay diferencia.
+
+| Carpeta | Contenido |
+|---|---|
+| `pantallas/` | 483 HTML y 483 PNG en 21 carpetas (161 estados × teléfono claro, teléfono oscuro y computadora claro) |
+| `componentes/` | Hojas P1-01 a P1-05 (10 HTML y 10 PNG, claro y oscuro) |
+| `estilos/` | Solo `tokens-propuesta.css`: tokens nuevos **propuestos**, no aplicados a `tokens.css` |
+| `fuentes/` | Archivo y Big Shoulders Display (OFL); los HTML las cargan por ruta relativa, por eso se copian |
+| `INDICE.md` | Índice propio del export (estados, rutas, fichas, decisiones en §6) |
+
+- No se copiaron `estilos/tokens.css`, `tokens.json`, `finn.css` y `fuentes.css`: son idénticos por SHA-256 a los de
+  `finn-diseno-export/estilos/` y ningún HTML los referencia (cada página lleva su CSS adentro). Las fuentes también son idénticas
+  a las del export 1 pero sí se copian, porque `url("../../fuentes/…")` las busca ahí y sin ellas el HTML cae a la fuente del sistema.
+- Revisado antes de commitear: sin secretos ni datos personales; sin URLs externas salvo las de las licencias OFL; sin scripts
+  externos. 993 archivos, 83,9 MB; el mayor pesa 437 KB (PNG), muy por debajo de los 50 MB de GitHub.
+- Detalle por archivo: el `INDICE.md` del propio export.
