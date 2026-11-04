@@ -7,6 +7,7 @@ import { Vacio } from '../../../componentes/base/vacio';
 import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
 import { bandeja as t } from '../../../textos/bandeja';
 import type { ResultadoFila } from '../../../flujos/bandeja-movimiento/descarte';
+import { AprobarTodos } from './aprobar-todos';
 import { FilaBandeja } from './fila';
 
 interface Contadores {
@@ -35,9 +36,11 @@ function desglose(c: Contadores): string {
 
 export function ListaBandeja({
   contadores,
+  elegibles,
   movimientos,
 }: {
   readonly contadores: Contadores;
+  readonly elegibles: readonly string[];
   readonly movimientos: readonly MovimientoDto[];
 }) {
   const [retenidas, setRetenidas] = useState<Readonly<Record<string, Retenida>>>({});
@@ -64,32 +67,40 @@ export function ListaBandeja({
   for (const r of Object.values(retenidas))
     if ((r.enCurso || r.resultado !== undefined) && !filas.some((m) => m.id === r.movimiento.id))
       filas.splice(Math.min(r.indice, filas.length), 0, r.movimiento);
-  if (filas.length === 0)
-    return <Vacio titulo={t.alDia.titulo} texto={t.alDia.texto} icono="inbox" />;
+  // «Aprobar todos» ocupa siempre el mismo lugar: su resultado sobrevive a que la lista quede vacía (FT-36)
   return (
     <>
-      <p className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <span className="text-titulo-seccion">{t.porRevisar(movimientos.length)}</span>
-        <span className="text-cuerpo-pequeno text-texto-secundario">{desglose(contadores)}</span>
-      </p>
-      <div
-        role="list"
-        aria-label={t.lista}
-        className="divide-y divide-borde-sutil rounded-contenedor bg-superficie"
-      >
-        {filas.map((m) => (
-          <div key={m.id} role="listitem">
-            <FilaBandeja
-              movimiento={m}
-              hrefRevisar={`/bandeja/${m.id}`}
-              resultado={retenidas[m.id]?.resultado}
-              alIniciar={alIniciar}
-              alTerminar={alTerminar}
-            />
+      {filas.length === 0 ? null : (
+        <p className="flex flex-wrap items-baseline justify-between gap-x-3">
+          <span className="text-titulo-seccion">{t.porRevisar(movimientos.length)}</span>
+          <span className="text-cuerpo-pequeno text-texto-secundario">{desglose(contadores)}</span>
+        </p>
+      )}
+      <AprobarTodos elegibles={elegibles} movimientos={movimientos} />
+      {filas.length === 0 ? (
+        <Vacio titulo={t.alDia.titulo} texto={t.alDia.texto} icono="inbox" />
+      ) : (
+        <>
+          <div
+            role="list"
+            aria-label={t.lista}
+            className="divide-y divide-borde-sutil rounded-contenedor bg-superficie"
+          >
+            {filas.map((m) => (
+              <div key={m.id} role="listitem">
+                <FilaBandeja
+                  movimiento={m}
+                  hrefRevisar={`/bandeja/${m.id}`}
+                  resultado={retenidas[m.id]?.resultado}
+                  alIniciar={alIniciar}
+                  alTerminar={alTerminar}
+                />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <p className="text-cuerpo-pequeno text-texto-terciario">{t.nota}</p>
+          <p className="text-cuerpo-pequeno text-texto-terciario">{t.nota}</p>
+        </>
+      )}
     </>
   );
 }
