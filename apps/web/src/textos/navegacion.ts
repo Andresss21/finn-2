@@ -17,6 +17,11 @@ export const navegacion = {
     borrador: 'Lo que estabas registrando sigue guardado en esta pestaña.',
   },
   masDeNoventaYNueve: '99+',
+  // Barra de una pantalla hija (06-identidad-visual §3.1)
+  volverA: (seccion: string | null) => (seccion === null ? 'Volver' : `Volver a ${seccion}`),
+  // Panel de la campana (06-identidad-visual 2.17) mientras el centro de notificaciones (FT-69) no existe
+  notificacionesPie:
+    'Acá llegan recordatorios y avisos de Finn. Los movimientos de tus SMS por revisar están en la Bandeja.',
   secciones: {
     inicio: 'Inicio',
     presupuesto: 'Presupuesto',

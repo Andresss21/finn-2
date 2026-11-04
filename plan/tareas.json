@@ -525,7 +525,7 @@
 
   "TA-500": { "estado": "pendiente" },
 
-  "TA-501": { "estado": "pendiente" },
+  "TA-501": { "estado": "bloqueada", "motivo": "diferida CH-119" },
 
   "TA-502": { "estado": "pendiente" },
 

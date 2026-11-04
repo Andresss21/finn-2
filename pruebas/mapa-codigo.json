@@ -19,6 +19,7 @@
   { "patron": "apps/web/src/servidor/parametros.ts", "fts": "marco" },
   { "patron": "apps/web/src/app/(finn)/error.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/(finn)/not-found.tsx", "fts": "marco" },
+  { "patron": "apps/web/src/app/not-found.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/(finn)/loading.tsx", "fts": "marco" },
   { "patron": "apps/web/src/servidor/sesion.ts", "fts": "marco" },
   { "patron": "apps/web/src/servidor/eco*.ts", "fts": "marco" },

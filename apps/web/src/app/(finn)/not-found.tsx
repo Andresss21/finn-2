@@ -16,6 +16,8 @@ export default async function NoExiste() {
       <Vacio
         titulo={estados.noExisteTitulo}
         texto={estados.noExisteTexto}
+        icono="search"
+        tono="neutro"
         accion={
           seccion === undefined ? undefined : (
             <EnlaceFinn
