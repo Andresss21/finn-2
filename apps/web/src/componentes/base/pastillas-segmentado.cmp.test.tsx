@@ -7,6 +7,15 @@ import '../../app/globals.css';
 import { Pastillas } from './pastillas';
 import { SelectorSegmentado } from './selector-segmentado';
 
+// `Pastillas` importa `EnlaceFinn` (sus opciones con `href`), que importa `next/link`: necesita `process`, que el navegador de
+// prueba no tiene. Se simula `next/link`, nunca `enlace-finn`.
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
+    createElement('a', { href, ...resto }, children);
+  return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
+});
+
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const montados: { raiz: Root; nodo: HTMLElement }[] = [];
