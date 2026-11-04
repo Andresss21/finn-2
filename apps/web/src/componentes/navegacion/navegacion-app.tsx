@@ -78,10 +78,11 @@ const PESTANA =
   'group relative flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium text-texto-secundario aria-[current=page]:font-bold aria-[current=page]:text-texto';
 const RAYA =
   'absolute top-0 h-0.75 w-7 rounded-b-sm bg-accion opacity-0 group-aria-[current=page]:opacity-100';
-// Mapa de clases literales (L13): fila alta (principal, 44 px) y baja (secundaria, 40 px y texto chico).
+// Mapa de clases literales (L13): fila alta (principal) y baja (secundaria, texto chico). Las dos de 44 px: el diseño pide 40
+// para la baja, pero 05 §11.5 (FE-47) exige 44 sin una excepción registrada (Contradicción en CH-109).
 const FILAS = {
   alta: 'group text-cuerpo relative flex min-h-11 items-center gap-3 rounded-control px-3 font-medium text-texto-secundario aria-[current=page]:bg-superficie-hundida aria-[current=page]:font-bold aria-[current=page]:text-texto',
-  baja: 'group text-cuerpo-pequeno relative flex min-h-10 items-center gap-3 rounded-control px-3 text-texto-secundario aria-[current=page]:bg-superficie-hundida aria-[current=page]:font-bold aria-[current=page]:text-texto',
+  baja: 'group text-cuerpo-pequeno relative flex min-h-11 items-center gap-3 rounded-control px-3 text-texto-secundario aria-[current=page]:bg-superficie-hundida aria-[current=page]:font-bold aria-[current=page]:text-texto',
 } as const;
 
 function BarraInferior({ secciones, seccionActiva, contadores }: PropsNavegacionApp) {
