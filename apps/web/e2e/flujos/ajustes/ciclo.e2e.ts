@@ -67,7 +67,7 @@ test.describe('PRU-E2E-AJUS', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-AJUS-110 [CA-72.1] con el estado de ESC-45, cambiar el día a 1 dice que rige desde el 21/12/2027 con un período de transición del 21/12 al 31/12 (11 días) y, al confirmar, Listo para asignar y los Disponibles no cambian', async ({
+  test('PRU-E2E-AJUS-110 [CA-72.1] RUTA-/ajustes/ciclo con el estado de ESC-45, cambiar el día a 1 dice que rige desde el 21/12/2027 con un período de transición del 21/12 al 31/12 (11 días) y, al confirmar, Listo para asignar y los Disponibles no cambian', async ({
     page,
   }) => {
     await sembrarOps(ESC45, '2027-11-10');

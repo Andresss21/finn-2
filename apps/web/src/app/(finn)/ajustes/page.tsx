@@ -7,6 +7,7 @@ import { RecordatorioPrimerosPasos } from './recordatorio-primeros-pasos';
 import { consultar } from '../../../servidor/consultar';
 import { depsDeConsulta } from '../../../servidor/consultas';
 import { ajustesCiclo } from '../../../textos/ajustes-ciclo';
+import { ajustesFormatos } from '../../../textos/ajustes-formatos';
 import { ajustesExportar } from '../../../textos/ajustes-exportar';
 import { ajustesApariencia } from '../../../textos/ajustes-apariencia';
 import { ajustesWebhook } from '../../../textos/ajustes-webhook';
@@ -45,6 +46,12 @@ export default async function PaginaAjustes() {
         className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
       >
         {ajustesCiclo.enlace}
+      </EnlaceFinn>
+      <EnlaceFinn
+        href="/ajustes/formatos"
+        className="inline-flex min-h-11 items-center font-semibold text-enlace underline"
+      >
+        {ajustesFormatos.enlace}
       </EnlaceFinn>
       <EnlaceFinn
         href="/ajustes/apariencia"

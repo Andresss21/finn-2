@@ -130,4 +130,39 @@ test.describe('PRU-E2E-PWA', () => {
     await expect(page.locator('[data-glifo="search"]')).toBeVisible();
     await expect(page.locator('[data-glifo="positivo"]')).toHaveCount(0);
   });
+
+  test('PRU-E2E-PWA-183 [] el detalle de una categoría publica «Más acciones» en la barra (tres puntos después de la campana en teléfono, con rótulo junto a ella en computadora) con Eliminar al final en peligro; las pantallas principales no lo tienen', async ({
+    page,
+  }) => {
+    await sembrarBase();
+    await abrir(page, '/presupuesto');
+    await expect(barra(page).getByRole('button', { name: navegacion.masAcciones })).toHaveCount(0);
+    const id = await page
+      .locator('[data-fila-categoria]')
+      .first()
+      .getAttribute('data-fila-categoria');
+    await abrir(page, `/presupuesto/categorias/${id}`);
+
+    const boton = barra(page).getByRole('button', { name: navegacion.masAcciones });
+    await expect(boton).toHaveAttribute('aria-expanded', 'false');
+    const campana = await barra(page)
+      .getByRole('button', { name: /^Notificaciones/ })
+      .boundingBox();
+    const cajaBoton = await boton.boundingBox();
+    expect(campana === null || cajaBoton === null).toBe(false);
+    if (enEscritorio(page)) expect(cajaBoton?.x ?? 0).toBeLessThan(campana?.x ?? 0);
+    else expect(cajaBoton?.x ?? 0).toBeGreaterThan(campana?.x ?? 0);
+
+    await boton.click();
+    const items = page.getByRole('menu', { name: navegacion.masAcciones }).getByRole('menuitem');
+    await expect(items).toHaveCount(6);
+    await expect(items.first()).toContainText('Editar nombre y grupo');
+    await expect(items.last()).toContainText('Eliminar');
+    await expect(items.last()).toHaveClass(/text-peligro/);
+    await revisarAccesibilidad(page);
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('menu')).toHaveCount(0);
+    await expect(boton).toBeFocused();
+  });
 });

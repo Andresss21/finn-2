@@ -61,6 +61,7 @@ const DETALLES: readonly (readonly [RegExp, string, boolean])[] = [
   [/^\/actividad\/[^/]+$/, '/actividad', false],
   [/^\/cuentas\/(?!nueva$|ordenar$)[^/]+$/, '/cuentas', false],
   [/^\/ajustes\/.+$/, '/ajustes', false],
+  [/^\/reglas\/(?!nueva$)[^/]+$/, '/reglas', false],
 ];
 
 /**
