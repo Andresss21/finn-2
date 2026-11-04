@@ -36,7 +36,11 @@ export function ListaFormatos({ formatos }: { readonly formatos: readonly Format
                   href={`/ajustes/formatos/${f.id}`}
                   className="flex min-h-14 flex-col gap-0.5 px-4 py-3"
                 >
-                  <span className={f.activo ? 'font-semibold text-texto' : 'font-semibold text-texto-secundario'}>
+                  <span
+                    className={
+                      f.activo ? 'font-semibold text-texto' : 'font-semibold text-texto-secundario'
+                    }
+                  >
                     {`${f.institucion.nombre} · ${f.nombre}`}
                   </span>
                   <span className="text-cuerpo-pequeno text-texto-secundario">

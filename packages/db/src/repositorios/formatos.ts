@@ -109,7 +109,7 @@ export async function leerSmsParaProbar(tx: LectorTx): Promise<SmsParaProbar[]> 
   }));
 }
 
-export type AccionAuditoriaFormato ='crear' | 'editar' | 'activar' | 'desactivar';
+export type AccionAuditoriaFormato = 'crear' | 'editar' | 'activar' | 'desactivar';
 
 /**
  * BE-47, EN-1: la fila de auditoría en la misma transacción del formato (04 §8.7). Guarda la fila completa antes y
