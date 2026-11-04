@@ -847,12 +847,18 @@ export async function copiarEstadoA(s: Estado, destino: string): Promise<void> {
   await comoAdmin(`ALTER DATABASE ${destino} SET finn.reloj_simulado = on`);
 }
 
-/** Una notificación [T] que la E2E agrega al estado sembrado (04 §3.10); `datos.destino` es el de BE-38. */
+/**
+ * Una notificación [T] que la E2E agrega al estado sembrado (04 §3.10). `destino` es el de BE-38 (por omisión, Inicio);
+ * `'primera_transaccion'` apunta a la primera transacción que dejaron las operaciones. `leida` y `creadaEn` fijan su estado y orden.
+ */
 export interface NotificacionSembrada {
   readonly aviso: string;
   readonly motivo: string;
   readonly titulo: string;
   readonly cuerpo: string;
+  readonly destino?: unknown;
+  readonly leida?: boolean;
+  readonly creadaEn?: string;
 }
 
 /**
@@ -864,13 +870,24 @@ export async function sembrarNotificaciones(
   filas: readonly NotificacionSembrada[],
 ): Promise<void> {
   const literal = (t: string) => `'${t.replaceAll("'", "''")}'`;
-  for (const f of filas)
+  for (const f of filas) {
+    let destino: unknown = f.destino ?? { pantalla: 'inicio' };
+    if (destino === 'primera_transaccion') {
+      const [id = ''] = await consultarSql(
+        s.base.urlAdmin,
+        'SELECT id FROM finn.transacciones ORDER BY id LIMIT 1',
+      );
+      destino = { pantalla: 'transaccion', transaccionId: id };
+    }
     await consultarSql(
       s.base.urlAdmin,
-      `INSERT INTO finn.notificaciones (id, aviso, motivo, titulo, cuerpo, datos)
+      `INSERT INTO finn.notificaciones (id, aviso, motivo, titulo, cuerpo, datos, creada_en, leida_en)
        VALUES (gen_random_uuid(), ${literal(f.aviso)}, ${literal(f.motivo)}, ${literal(f.titulo)}, ${literal(f.cuerpo)},
-               '{"destino":{"pantalla":"inicio"}}'::jsonb)`,
+               ${literal(JSON.stringify({ destino }))}::jsonb,
+               ${f.creadaEn === undefined ? 'now()' : `${literal(f.creadaEn)}::timestamptz`},
+               ${f.leida === true ? 'now()' : 'NULL'})`,
     );
+  }
 }
 
 export const ejecutorInt: Ejecutor<Estado> = {

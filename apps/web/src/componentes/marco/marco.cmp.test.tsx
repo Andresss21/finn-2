@@ -1,5 +1,5 @@
 // El marco portado del export de diseño (CH-109; 06-identidad-visual §3; 05 §3.3): «Volver» de las pantallas hijas en la
-// barra, «Más acciones» que cada pantalla llena y la campana que no lleva a una ruta que no existe (FT-69 sin construir).
+// barra, «Más acciones» que cada pantalla llena y la campana que lleva a /notificaciones (FT-69).
 // La forma (dónde se ve cada cosa en teléfono y en computadora) la prueba PRU-E2E-PWA-180.
 import axe from 'axe-core';
 import { act, type ReactNode } from 'react';
@@ -114,33 +114,13 @@ describe('PRU-CMP-PWA', () => {
     expect(enlaceVolver(montar('/cuentas/nueva', '', <main />))).toBeNull();
   });
 
-  it('PRU-CMP-PWA-181 [] la campana no es un enlace a /notificaciones (FT-69 sin construir): es un botón con el contador en su nombre que abre el panel desde arriba', async () => {
+  it('PRU-CMP-PWA-181 [] la campana de la barra es un enlace a /notificaciones con el contador en su nombre (CF-23): la ruta se intercepta como panel desde otra pantalla y es página completa al abrirla directamente', () => {
     const nodo = montar('/presupuesto', '', <main />);
-    // La barra (no la fila de la sección en la barra lateral, que es el contrato de 3.1) ya no enlaza a la ruta.
-    expect(nodo.querySelector('header a[href="/notificaciones"]')).toBeNull();
-    const campana = nodo.querySelector<HTMLButtonElement>(
-      `header button[aria-label="${navegacion.notificaciones(null)}"]`,
-    );
-    expect(campana?.getAttribute('aria-haspopup')).toBe('dialog');
-
-    await sinAct(async () => {
-      await userEvent.click(campana as HTMLButtonElement);
-    });
-    await vi.waitFor(() => {
-      expect(document.querySelector('[role=dialog]')).not.toBeNull();
-    });
-    const panel = document.querySelector<HTMLElement>('[role=dialog]') as HTMLElement;
-    expect(panel.querySelector('h2')?.textContent).toBe(navegacion.secciones.notificaciones);
-    expect(panel.textContent).toContain(navegacion.notificacionesPie);
-    expect(panel.className).toContain('top-0');
-
-    await sinAct(async () => {
-      await userEvent.keyboard('{Escape}');
-    });
-    await vi.waitFor(() => {
-      expect(document.querySelector('[role=dialog]')).toBeNull();
-    });
-    expect(document.activeElement).toBe(campana);
+    const campana = nodo.querySelector<HTMLAnchorElement>('header a[href="/notificaciones"]');
+    expect(campana?.getAttribute('aria-label')).toBe(navegacion.notificaciones(null));
+    expect(campana?.querySelector('svg, [data-glifo]')).not.toBeNull();
+    // Ya no abre un panel propio: el panel es la ruta interceptada (@superpuesto/(.)notificaciones).
+    expect(document.querySelector('[role=dialog]')).toBeNull();
   });
 
   it('PRU-CMP-PWA-182 [] «Más acciones» no se muestra sin acciones; con las que publica la pantalla abre un menú con el teclado, la no disponible con su motivo, y Escape lo cierra y devuelve el foco', async () => {

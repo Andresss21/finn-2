@@ -175,6 +175,8 @@ export default defineConfig({
             '@radix-ui/react-radio-group',
             '@radix-ui/react-select',
             '@radix-ui/react-slot',
+            // `destinos.ts` valida el destino de una notificación con su contrato (05 §3.5): el centro lo importa.
+            'zod',
           ],
         },
         test: {

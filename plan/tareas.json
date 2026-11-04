@@ -493,7 +493,7 @@
 
   "TA-440": { "estado": "terminada", "rama": "ta-440-notificaciones", "pr": 301 },
 
-  "TA-428": { "estado": "pendiente" },
+  "TA-428": { "estado": "terminada", "rama": "ta-428-notificaciones", "pr": 358 },
 
   "TA-429": { "estado": "pendiente" },
 

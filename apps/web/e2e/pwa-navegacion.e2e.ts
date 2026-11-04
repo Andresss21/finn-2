@@ -63,9 +63,11 @@ test.describe('PRU-E2E-PWA', () => {
 
     // El marco publica el Encabezado de la página (FE-06) y el contador va en el nombre accesible del enlace (3.3, N7).
     await expect(page.locator('html')).toHaveAttribute('data-revision', 'revision-de-prueba');
-    // La campana lleva el contador en su nombre (N7); es un botón mientras `/notificaciones` no existe (CH-109).
+    // La campana lleva el contador en su nombre (N7) y enlaza a `/notificaciones` (FT-69).
     await expect(
-      page.getByRole('button', { name: navegacion.notificaciones(2), exact: true }),
+      page
+        .locator('[data-marco-barra]')
+        .getByRole('link', { name: navegacion.notificaciones(2), exact: true }),
     ).toBeVisible();
 
     // Al cargar la página, el primer Tab llega a «Saltar al contenido» (11.1) y activarlo enfoca el contenido.
