@@ -50,13 +50,27 @@ export interface InicioSel {
     readonly sobregiradas: { categoria: Ref; grupo: Ref; sobregiro: SobregiroDto }[];
     readonly faltaReservar: { tarjeta: Ref; monto: Centavos }[];
     readonly pagosExcedentes: { tarjeta: Ref; monto: Centavos; causas: CausaDeExcedente[] }[];
-    /** Sin `accion`: la propuesta de AV-08 la arma la aplicación. */
-    readonly reservaExcedente: { tarjeta: Ref; monto: Centavos }[];
+    /**
+     * AV-08: lo que necesita la propuesta de un toque (OP-14 sobre pago(t) en A, 04 §3.0.3): la categoría de pago, su Asig y
+     * `montoNuevo` = Asig − RE(t). La interfaz no resta (PF-3).
+     */
+    readonly reservaExcedente: {
+      tarjeta: Ref;
+      monto: Centavos;
+      categoriaPagoId: Uuid;
+      periodoInicio: FechaLocal;
+      asignado: Centavos;
+      montoNuevo: Centavos;
+    }[];
     readonly proximosPagos: OcurrenciaDto[];
     readonly pagosAtrasados: OcurrenciaDto[];
     readonly metasVencidas: { categoria: Ref; falta: Centavos }[];
-    /** Sin `accion`: la propuesta de AV-14 la arma la aplicación. */
-    readonly archivadasConDisponible: { categoria: Ref; disponible: Centavos }[];
+    /** AV-14: con `asignado` = Asig(c, A), el `esperado` de la propuesta de un toque (OP-11). */
+    readonly archivadasConDisponible: {
+      categoria: Ref;
+      disponible: Centavos;
+      asignado: Centavos;
+    }[];
     /** Los RITMO_INICIO_MAX de mayor impacto de `ritmo` (06 §3.7); sin texto ni propuesta. */
     readonly hallazgosRitmo: HallazgoDeRitmo[];
     readonly pagosTarjetaProximos: {
@@ -165,7 +179,21 @@ export function inicio(i: Instantanea, smsConectado: boolean): InicioSel {
         }),
       reservaExcedente: i.tarjetas
         .filter((t) => positivo(t.reservaExcedente))
-        .map((t) => ({ tarjeta: nom.cuenta(t.tarjetaId), monto: t.reservaExcedente })),
+        .flatMap((t) => {
+          const pago = celdas.find((x) => x.clase === 'pago' && x.tarjetaId === t.tarjetaId);
+          return pago === undefined
+            ? []
+            : [
+                {
+                  tarjeta: nom.cuenta(t.tarjetaId),
+                  monto: t.reservaExcedente,
+                  categoriaPagoId: pago.categoriaId,
+                  periodoInicio: b.activo.inicio,
+                  asignado: pago.asignado,
+                  montoNuevo: Centavos.restar(pago.asignado, t.reservaExcedente),
+                },
+              ];
+        }),
       proximosPagos: i.ocurrencias
         .filter((o) => o.fecha >= i.hoy && o.fecha <= limite)
         .flatMap(ocurrencia),
@@ -181,6 +209,8 @@ export function inicio(i: Instantanea, smsConectado: boolean): InicioSel {
         .map((a) => ({
           categoria: nom.categoria(a.datos.categoriaId as Uuid),
           disponible: a.datos.monto as Centavos,
+          asignado:
+            celdas.find((x) => x.categoriaId === a.datos.categoriaId)?.asignado ?? Centavos.cero,
         })),
       hallazgosRitmo: ritmo(i).hallazgos.slice(0, RITMO_INICIO_MAX),
       pagosTarjetaProximos,

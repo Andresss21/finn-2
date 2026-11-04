@@ -165,7 +165,14 @@ export function cobertura(e: Entradas, lista: Prueba[], ids: Set<string>) {
       errores.push(`M4 ${o.id} sin prueba PROP, DOM, INT o ESQ`);
     if (o.tipo === 'CB' && algunaTerminada && !auto.length)
       errores.push(`M14 ${o.id} sin prueba automática`);
-    if (o.tipo === 'REC' && (o.fts ?? []).every(ex) && !auto.some((x) => x.startsWith('PRU-E2E-')))
+    // [CH-105] Un recorrido en pendientes-e2e.json (DT-27) no da error mientras no esté la puerta
+    const recPendiente = !e.puerta && e.pendientes.some((x) => x.ca === o.id);
+    if (
+      o.tipo === 'REC' &&
+      (o.fts ?? []).every(ex) &&
+      !auto.some((x) => x.startsWith('PRU-E2E-')) &&
+      !recPendiente
+    )
       errores.push(`M5 ${o.id} sin prueba E2E`);
     if (o.tipo === 'VER') errores.push(...verificacionPrevia(e, o.id, activas, falta));
   }

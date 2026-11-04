@@ -9,12 +9,15 @@ import type { Objetivo } from './documentos.ts';
 import type { Entradas, Prueba } from './matriz.ts';
 
 export interface Pendiente {
-  ca: string; // CA-nn.m de una ficha [I]
-  completa: string; // FT-nn: la ficha que produce el estado y escribe la E2E que lo cierra
+  ca: string; // CA-nn.m de una ficha [I], o REC-n.m de un recorrido de 06 §4 [CH-105]
+  completa: string; // FT-nn: la ficha que produce el estado y escribe la E2E que lo cierra; para un REC, TA-nnn (la tarea de la E2E)
 }
 type Features = Entradas['features'];
 const MARCA = 'pendiente_e2e';
 export const ES_CA = /^CA-\d{2}\.\d{1,2}$/;
+/** [CH-105] Un recorrido de 06 §4 también puede quedar pendiente de punta a punta: lo completa la tarea de la Parte D que lo escribe. */
+export const ES_REC = /^REC-\d+\.\d+$/;
+const ES_TAREA = /^TA-\d{3}$/;
 
 /** Abierto mientras la ficha que lo completa no está terminada (con la E2E, que M18 exige al terminarla). */
 export const abierto = (p: Pendiente, features: Features): boolean =>
@@ -30,6 +33,23 @@ export function pendientesE2e(e: Entradas, activas: Prueba[], obj: Objetivo[]) {
   for (const [ca, n] of vistos)
     if (n > 1) errores.push(`M18 ${ca} aparece ${n} veces en pruebas/pendientes-e2e.json`);
   for (const p of e.pendientes.filter((x, i, xs) => xs.findIndex((y) => y.ca === x.ca) === i)) {
+    if (ES_REC.test(p.ca)) {
+      // [CH-105] Recorrido pendiente: abierto mientras ninguna E2E activa lo cite; M5 lo tolera salvo en la puerta
+      if (!obj.some((x) => x.tipo === 'REC' && x.id === p.ca))
+        errores.push(`M18 pruebas/pendientes-e2e.json cita ${p.ca}, que no existe en 06`);
+      else if (!ES_TAREA.test(p.completa))
+        errores.push(`M18 ${p.ca} en pruebas/pendientes-e2e.json no dice qué tarea lo completa`);
+      else if (activas.some((t) => t.id.startsWith('PRU-E2E-') && t.refs.includes(p.ca)))
+        errores.push(
+          `M18 ${p.ca} ya tiene su E2E (${p.completa}): quitalo de pruebas/pendientes-e2e.json`,
+        );
+      else if (e.puerta)
+        errores.push(
+          `M18 ${p.ca} sigue pendiente de punta a punta: lo completa ${p.completa}, y la puerta no admite recorridos pendientes`,
+        );
+      else avisos.push(`M18 ${p.ca} pendiente de punta a punta: lo completa ${p.completa}`);
+      continue;
+    }
     const o = obj.find((x) => x.tipo === 'CA' && x.id === p.ca);
     const f = fs.find((x) => x.ft === p.completa);
     if (!o) {

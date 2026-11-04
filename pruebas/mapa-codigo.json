@@ -157,6 +157,8 @@
   { "patron": "apps/web/src/flujos/presupuesto-estructura-plantilla/**", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/pantalla-inicio.tsx", "fts": ["FT-08"] },
   { "patron": "apps/web/src/app/(finn)/marcar-leido.tsx", "fts": ["FT-08"] },
+  { "patron": "apps/web/src/app/(finn)/inicio-secciones.tsx", "fts": ["FT-08"] },
+  { "patron": "apps/web/src/app/(finn)/reserva-excedente.tsx", "fts": ["FT-08"] },
   { "patron": "apps/web/src/app/(finn)/primeros-pasos.tsx", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/recordatorio-primeros-pasos.tsx", "fts": ["FT-04"] },
   { "patron": "apps/web/src/cliente/usePrimerosPasosOcultos.ts", "fts": ["FT-04"] },

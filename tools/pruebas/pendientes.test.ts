@@ -45,8 +45,8 @@ describe('PRU-SEG-OPER', () => {
     );
     expect(Array.isArray(real)).toBe(true);
     for (const p of real as Pendiente[]) {
-      expect(p.ca).toMatch(/^CA-\d{2}\.\d{1,2}$/);
-      expect(p.completa).toMatch(/^FT-\d{2}$/);
+      expect(p.ca).toMatch(/^(CA-\d{2}\.\d{1,2}|REC-\d+\.\d+)$/);
+      expect(p.completa).toMatch(p.ca.startsWith('REC-') ? /^TA-\d{3}$/ : /^FT-\d{2}$/);
     }
 
     // Abierto y bien marcado: pasa, y la matriz lo muestra con la ficha que lo completa
@@ -100,6 +100,45 @@ describe('PRU-SEG-OPER', () => {
     const deP = base([{ ca: 'CA-03.3', completa: 'FT-56' }], { 'CA-03.3': 'pendiente_e2e' });
     deP.puerta = true;
     expect(m18(deP)).toEqual([]);
+  });
+
+  it('PRU-SEG-OPER-105 [M5, M18] un recorrido pendiente de punta a punta (CH-105, DT-27) no da error de M5 mientras no esté la puerta; sin la entrada en pendientes-e2e.json sí', () => {
+    const rec = verificar(base([], {})).obj.find((o) => o.tipo === 'REC' && o.id === 'REC-4.1');
+    const terminadas = Object.fromEntries(
+      (rec?.fts ?? []).map((f) => [f, 'terminada']),
+    ) as Entradas['features'];
+    const m5 = (e: Entradas): string[] =>
+      verificar(e).errores.filter((x) => x.startsWith('M5 ') && x.includes('REC-4.1'));
+    const R: Pendiente = { ca: 'REC-4.1', completa: 'TA-446' };
+    // Control: sin el recorrido en pendientes-e2e.json, con todas sus fichas terminadas, M5 falla
+    expect(m5(base([], terminadas))).toEqual(['M5 REC-4.1 sin prueba E2E']);
+    // Pendiente: M5 calla, M18 lo muestra como aviso con la tarea que lo completa
+    const e = base([R], terminadas);
+    expect(m5(e)).toEqual([]);
+    expect(m18(e)).toEqual([]);
+    expect(verificar(e).avisos).toContain(
+      'M18 REC-4.1 pendiente de punta a punta: lo completa TA-446',
+    );
+    // Puerta: lo exige igual que a un CA pendiente
+    const puerta = base([R], terminadas);
+    puerta.puerta = true;
+    expect(m5(puerta)).toEqual(['M5 REC-4.1 sin prueba E2E']);
+    expect(m18(puerta)).toEqual([
+      'M18 REC-4.1 sigue pendiente de punta a punta: lo completa TA-446, y la puerta no admite recorridos pendientes',
+    ]);
+    // Con su E2E, el pendiente sobra
+    const con = base([R], terminadas);
+    con.inventario.push({ titulo: 'PRU-E2E-REC-101 [REC-4.1] primer uso', archivo: E2E });
+    expect(m18(con)).toEqual([
+      'M18 REC-4.1 ya tiene su E2E (TA-446): quitalo de pruebas/pendientes-e2e.json',
+    ]);
+    // Mal formado: el recorrido tiene que existir y lo completa una tarea
+    expect(m18(base([{ ca: 'REC-9.9', completa: 'TA-446' }], {}))).toEqual([
+      'M18 pruebas/pendientes-e2e.json cita REC-9.9, que no existe en 06',
+    ]);
+    expect(m18(base([{ ca: 'REC-4.1', completa: 'FT-34' }], {}))).toEqual([
+      'M18 REC-4.1 en pruebas/pendientes-e2e.json no dice qué tarea lo completa',
+    ]);
   });
 
   it('PRU-SEG-OPER-105 [M18] control: la ficha que completa un pendiente pasa a terminada sin la E2E', () => {
