@@ -104,7 +104,7 @@ test.describe('PRU-E2E-COBRO pantalla de por cobrar', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-COBRO-101 [CA-45.1, ESC-20] con el paso 2 de ESC-20 Ana debe $25.00 con débito y estado abierto, y "En camino" es $25.00 RUTA-/por-cobrar', async ({
+  test('PRU-E2E-COBRO-101 [CA-45.1, ESC-20] con el paso 2 de ESC-20 Ana debe $25.00 con débito y estado abierto, y «En camino» es $25.00 RUTA-/por-cobrar', async ({
     page,
   }) => {
     await sembrarOps(ESC20_PASO2);
@@ -119,7 +119,7 @@ test.describe('PRU-E2E-COBRO pantalla de por cobrar', () => {
     await esperarMonto(enCamino(page), 2500);
   });
 
-  test('PRU-E2E-COBRO-102 [CA-45.2, ESC-22] con el paso 1 de ESC-22 Ana debe $40.00 con tarjeta, pero "En camino" es $0.00', async ({
+  test('PRU-E2E-COBRO-102 [CA-45.2, ESC-22] con el paso 1 de ESC-22 Ana debe $40.00 con tarjeta, pero «En camino» es $0.00', async ({
     page,
   }) => {
     await sembrarOps(ESC22_PASO1);
