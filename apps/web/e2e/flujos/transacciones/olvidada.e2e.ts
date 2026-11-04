@@ -81,8 +81,17 @@ async function preparar(hoy: string, estadoInicial: Op[]): Promise<void> {
 }
 
 const campo = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exact: true });
-const opcion = (page: Page, grupo: string, nombre: string) =>
-  page.getByRole('radiogroup', { name: grupo, exact: true }).getByRole('radio', { name: nombre });
+/** La cuenta y el destino de la línea son selecciones nativas del export (K2, S5): se elige por el nombre de la opción. */
+const elegir = async (page: Page, etiqueta: string, nombre: string): Promise<void> => {
+  const control = campo(page, etiqueta);
+  // React pone el valor del estado al hidratar el control: un cambio hecho antes se perdería (los campos de texto lo repiten, este no)
+  await expect
+    .poll(() =>
+      control.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))),
+    )
+    .toBe(true);
+  await control.selectOption({ label: nombre });
+};
 const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').first();
 const fila = (page: Page, nombre: string) =>
   page.locator('[data-fila-categoria]').filter({ hasText: nombre });
@@ -97,12 +106,12 @@ async function registrar(
 ): Promise<void> {
   await page.goto('/registrar/gasto');
   await esperarHidratacion(page);
-  await opcion(page, t.cuenta, datos.cuenta).click();
+  await elegir(page, t.cuenta, datos.cuenta);
   await campo(page, t.fecha).fill(datos.fecha);
   await campo(page, t.total).fill(datos.total);
   await campo(page, t.montoDeParte('1')).fill(datos.total);
-  await opcion(page, t.categoriaDeParte('1'), datos.categoria).click();
-  await page.getByRole('button', { name: t.guardar }).click();
+  await elegir(page, t.categoriaDeParte('1'), datos.categoria);
+  await page.getByRole('button', { name: /^Guardar/ }).click();
 }
 
 async function confirmar(page: Page): Promise<void> {
