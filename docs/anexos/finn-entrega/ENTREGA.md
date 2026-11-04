@@ -121,3 +121,5 @@ El anexo pide el contador junto al acceso (N7) pero no define el contenido. Prop
 ## Export en código [CH-107]
 
 El diseño de esta entrega A.10 también existe como HTML ejecutable en `../finn-diseno-export/` (pantallas, componentes, prototipo v2), sin cambios de diseño. Sus capturas son las de `referencia/` de esta carpeta.
+
+La segunda entrega del export (D1 a D4, EntradaFecha con calendario, estados cargando y error, "Más acciones" y 15 pantallas más) está en `../finn-diseno-export-2/` [CH-108].
