@@ -187,9 +187,27 @@ test.describe('PRU-E2E-CTA', () => {
     for (const grupo of ['Tarjetas', 'Efectivo', 'Préstamos'])
       await expect(page.locator(`[data-grupo="${grupo}"]`)).toBeVisible();
     await expect(page.locator('[data-grupo="Inversiones"]')).toHaveCount(0);
-    await page.getByRole('link', { name: 'Mostrar archivadas' }).click();
+    const interruptor = page.getByRole('switch', { name: 'Mostrar archivadas' });
+    await expect(interruptor).toHaveAttribute('aria-checked', 'false');
+    await interruptor.click();
     await expect(page).toHaveURL(/\/cuentas\?archivadas=1$/);
-    await expect(page.getByRole('link', { name: 'Ocultar archivadas' })).toBeVisible();
+    await expect(interruptor).toHaveAttribute('aria-checked', 'true');
     await expect(page.getByRole('link', { name: 'Nueva cuenta' })).toBeVisible();
+  });
+
+  test('PRU-E2E-CTA-230 [CA-51.8] en teléfono «Nueva cuenta» no se parte y la tarjeta del frente, entera, lleva al detalle', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await sembrarOps(
+      [{ op: 'OP-01', cuenta: 'Visa Oro', tipo: 'tarjeta', saldo: 18.75, limite: 2500 }],
+      '2027-02-05',
+    );
+    await abrir(page);
+    const nueva = await page.getByRole('link', { name: 'Nueva cuenta' }).boundingBox();
+    expect(nueva?.height).toBeLessThan(60);
+    await expect(page.getByRole('link', { name: /^Pagar / })).toHaveCount(0);
+    await page.getByRole('link', { name: 'Ver detalle de Visa Oro', exact: true }).click();
+    await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
   });
 });

@@ -3,6 +3,7 @@
 import type { Centavos } from '@finn/dominio/valores';
 import { glosario } from '../../textos/glosario';
 import { cuentas } from '../../textos/cuentas';
+import { IndicadorEstado } from './indicador-estado';
 import { Monto } from './monto';
 
 export interface PosicionNetaDto {
@@ -63,16 +64,29 @@ function Fila({
   );
 }
 
-export function PosicionNeta({ posicion }: { readonly posicion: PosicionNetaDto }) {
+/** `enCamino` va dentro del contenedor, bajo la cifra (no como pastilla suelta fuera de él). */
+export function PosicionNeta({
+  posicion,
+  enCamino,
+}: {
+  readonly posicion: PosicionNetaDto;
+  readonly enCamino?: Centavos;
+}) {
   const { activos, deudas, barras } = posicion;
   return (
     <section
       data-posicion-neta
-      className="flex flex-col gap-4 rounded-contenedor bg-superficie p-4.5"
+      className="flex flex-col gap-4 rounded-contenedor bg-superficie p-4.5 shadow-elevacion-1"
     >
       <div>
         <p className="text-rotulo text-texto-secundario">{glosario.posicionNeta}</p>
         <Monto centavos={posicion.neto} rol="cifra-principal" />
+        {enCamino !== undefined && enCamino > 0 ? (
+          <p data-en-camino className="mt-1 flex flex-wrap items-center gap-2">
+            <IndicadorEstado estado="informacion" etiqueta={glosario.enCamino} />
+            <Monto centavos={enCamino} rol="cuerpo" />
+          </p>
+        ) : null}
       </div>
       <Fila
         nombre={t.activos}

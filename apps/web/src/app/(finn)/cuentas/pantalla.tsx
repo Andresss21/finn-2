@@ -5,44 +5,44 @@ import type { CuentasDto } from '@finn/aplicacion/consultas/cuentas';
 import type { Centavos } from '@finn/dominio/valores';
 import type { ReactNode } from 'react';
 import { Icono } from '../../../componentes/base/icono';
+import { InterruptorEnlace } from '../../../componentes/base/interruptor-enlace';
 import { Vacio } from '../../../componentes/base/vacio';
 import { BilleteraTarjetas, type TarjetaDto } from '../../../componentes/dominio/billetera';
 import { IdentidadCuenta } from '../../../componentes/dominio/identidad-cuenta';
-import { IndicadorEstado } from '../../../componentes/dominio/indicador-estado';
 import { Monto } from '../../../componentes/dominio/monto';
 import { PosicionNeta } from '../../../componentes/dominio/posicion-neta';
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { cuentas as t } from '../../../textos/cuentas';
-import { glosario } from '../../../textos/glosario';
 
 const p = t.pantalla;
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-const BOTON = `inline-flex min-h-11 items-center justify-center gap-1.5 rounded-control bg-superficie-hundida px-4 font-semibold text-texto ${FOCO}`;
-const ACCION = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline ${FOCO}`;
+const BOTON = `inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-control bg-superficie-hundida px-4 font-semibold text-texto ${FOCO}`;
 const TARJETA = `block rounded-identidad ${FOCO}`;
 
 function Grupo({
   titulo,
   total,
+  cantidad,
   clase = '',
   children,
 }: {
   readonly titulo: string;
   readonly total?: Centavos;
+  readonly cantidad?: number;
   readonly clase?: string;
   readonly children: ReactNode;
 }) {
   return (
     <section data-grupo={titulo} className={['flex flex-col gap-3', clase].join(' ')}>
-      <h2 className="flex items-baseline justify-between gap-3">
-        <span className="text-titulo-seccion">{titulo}</span>
-        {total === undefined ? null : (
-          <span className="text-cuerpo-pequeno font-semibold">
-            <Monto centavos={total} rol="cuerpo" />
-          </span>
-        )}
-      </h2>
+      <div className="flex items-baseline justify-between gap-3 px-1">
+        <h2 className="text-titulo-seccion" style={{ fontSize: '1.125rem' }}>
+          {titulo}
+        </h2>
+        <span className="text-cuerpo-pequeno font-semibold text-texto-secundario">
+          {total === undefined ? cantidad : <Monto centavos={total} rol="cuerpo" />}
+        </span>
+      </div>
       {children}
     </section>
   );
@@ -88,13 +88,7 @@ export function PantallaCuentas({ dto }: { readonly dto: CuentasDto }) {
       ) : (
         <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:gap-x-10">
           <div className="flex flex-col gap-3 md:col-start-1">
-            <PosicionNeta posicion={posicionNeta} />
-            {dto.enCamino > 0 ? (
-              <p data-en-camino className="flex flex-wrap items-center gap-2">
-                <IndicadorEstado estado="informacion" etiqueta={glosario.enCamino} />
-                <Monto centavos={dto.enCamino} rol="cuerpo" />
-              </p>
-            ) : null}
+            <PosicionNeta posicion={posicionNeta} enCamino={dto.enCamino} />
           </div>
           {tarjetas.length === 0 ? null : (
             <Grupo
@@ -102,25 +96,7 @@ export function PantallaCuentas({ dto }: { readonly dto: CuentasDto }) {
               total={posicionNeta.deudas.tarjetas}
               clase="md:col-start-2 md:row-span-4 md:row-start-1 md:self-start"
             >
-              <BilleteraTarjetas tarjetas={tarjetas} />
-              <ul className="flex flex-col">
-                {dto.tarjetas.map((x) => (
-                  <li
-                    key={x.cuenta.id}
-                    className="flex flex-wrap items-center justify-between gap-2"
-                  >
-                    <span className="font-semibold">{x.cuenta.nombre}</span>
-                    <span className="flex items-center">
-                      <EnlaceFinn href={`/cuentas/${x.cuenta.id}`} className={ACCION}>
-                        {p.verDetalle(x.cuenta.nombre)}
-                      </EnlaceFinn>
-                      <EnlaceFinn href={`/cuentas/${x.cuenta.id}/pagar`} className={ACCION}>
-                        {p.pagar(x.cuenta.nombre)}
-                      </EnlaceFinn>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <BilleteraTarjetas tarjetas={tarjetas} enlazar />
             </Grupo>
           )}
           {dto.efectivo.length === 0 ? null : (
@@ -169,16 +145,16 @@ export function PantallaCuentas({ dto }: { readonly dto: CuentasDto }) {
             </Grupo>
           )}
           <div className="flex flex-col gap-3 md:col-start-2">
-            {/* El interruptor es un enlace: cada estado tiene su URL y funciona sin hidratar. */}
-            <EnlaceFinn
-              href={archivadas === undefined ? '/cuentas?archivadas=1' : '/cuentas'}
-              replace
-              className={ACCION}
-            >
-              {archivadas === undefined ? p.mostrarArchivadas : p.ocultarArchivadas}
-            </EnlaceFinn>
-            {archivadas === undefined || archivadas.length === 0 ? null : (
-              <Grupo titulo={p.grupos.archivadas}>
+            {/* Cada estado del interruptor tiene su URL y funciona sin hidratar. */}
+            {archivadas === undefined || archivadas.length === 0 ? (
+              <InterruptorEnlace
+                href={archivadas === undefined ? '/cuentas?archivadas=1' : '/cuentas'}
+                activo={archivadas !== undefined}
+                etiqueta={p.mostrarArchivadas}
+              />
+            ) : (
+              <Grupo titulo={p.grupos.archivadas} cantidad={archivadas.length}>
+                <InterruptorEnlace href="/cuentas" activo etiqueta={p.mostrarArchivadas} />
                 {archivadas.map((x) => (
                   <EnlaceFinn key={x.id} href={`/cuentas/${x.id}`} className={TARJETA}>
                     <IdentidadCuenta tipo="archivada" fila={x} />

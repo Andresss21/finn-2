@@ -84,9 +84,9 @@ describe('PRU-CMP-CTA-103 pantalla de Cuentas', () => {
   it('PRU-CMP-CTA-103 [CA-51.4] sin archivadas en el DTO no hay grupo y se ofrece mostrarlas; con ellas aparecen marcadas', () => {
     const sin = montar(<PantallaCuentas dto={dto({ efectivo: [ahorro] })} />);
     expect(sin.querySelector('[data-grupo="Archivadas"]')).toBeNull();
-    expect(sin.querySelector('a[href="/cuentas?archivadas=1"]')?.textContent).toBe(
-      'Mostrar archivadas',
-    );
+    const apagado = sin.querySelector('a[href="/cuentas?archivadas=1"]');
+    expect(apagado?.textContent).toBe('Mostrar archivadas');
+    expect(apagado?.getAttribute('aria-checked')).toBe('false');
 
     const con = montar(
       <PantallaCuentas
@@ -101,7 +101,9 @@ describe('PRU-CMP-CTA-103 pantalla de Cuentas', () => {
     expect(grupo?.querySelector('[data-identidad="archivada"]')?.textContent).toContain(
       'Archivada',
     );
-    expect(con.querySelector('a[href="/cuentas"]')?.textContent).toBe('Ocultar archivadas');
+    const encendido = con.querySelector('a[href="/cuentas"]');
+    expect(encendido?.textContent).toBe('Mostrar archivadas');
+    expect(encendido?.getAttribute('aria-checked')).toBe('true');
   });
 
   it('PRU-CMP-CTA-103 [CA-51.5] la cuenta muestra su saldo y su saldo confirmado tal como vienen, con la diferencia a la vista', () => {
@@ -179,8 +181,49 @@ describe('PRU-CMP-CTA-103 pantalla de Cuentas', () => {
         '/cuentas/ordenar',
         '/cuentas/ahorro',
         '/cuentas/visa',
-        '/cuentas/visa/pagar',
       ]),
     );
+  });
+
+  it('PRU-CMP-CTA-234 [CA-51.4] «Mostrar archivadas» es un interruptor de servidor: enlace con role switch, aria-checked y la misma etiqueta en ambos estados', () => {
+    const interruptores = (raiz: HTMLElement) =>
+      [...raiz.querySelectorAll('[role="switch"]')].map((e) => [
+        e.tagName,
+        e.getAttribute('aria-checked'),
+        e.getAttribute('href'),
+        e.textContent,
+      ]);
+    expect(interruptores(montar(<PantallaCuentas dto={dto({ efectivo: [ahorro] })} />))).toEqual([
+      ['A', 'false', '/cuentas?archivadas=1', 'Mostrar archivadas'],
+    ]);
+    expect(
+      interruptores(montar(<PantallaCuentas dto={dto({ efectivo: [ahorro], archivadas: [] })} />)),
+    ).toEqual([['A', 'true', '/cuentas', 'Mostrar archivadas']]);
+    const con = montar(
+      <PantallaCuentas
+        dto={dto({ efectivo: [ahorro], archivadas: [{ id: 'vieja', nombre: 'Vieja' }] })}
+      />,
+    );
+    expect(interruptores(con)).toEqual([['A', 'true', '/cuentas', 'Mostrar archivadas']]);
+    expect(con.querySelector('[data-grupo="Archivadas"] [role="switch"]')).not.toBeNull();
+    expect(con.querySelector('[data-grupo="Archivadas"] h2')?.textContent).toBe('Archivadas');
+  });
+
+  it('PRU-CMP-CTA-235 la tarjeta enlaza entera: no hay «Ver detalle de …» ni «Pagar …» subrayados; «En camino» está dentro de la posición neta y «Nueva cuenta» no se parte', () => {
+    const raiz = montar(
+      <PantallaCuentas dto={dto({ efectivo: [ahorro], tarjetas: [visa()], enCamino: 4000 })} />,
+    );
+    const nombres = [...raiz.querySelectorAll('a')].map(
+      (a) => a.getAttribute('aria-label') ?? a.textContent,
+    );
+    expect(nombres).toContain('Ver detalle de Visa Oro');
+    expect(nombres.filter((n) => /^Pagar /.test(n))).toEqual([]);
+    expect(raiz.querySelectorAll('a.underline').length).toBe(0);
+    expect(raiz.querySelector('[data-posicion-neta] [data-en-camino]')?.textContent).toContain(
+      '$40.00',
+    );
+    expect(raiz.querySelectorAll('[data-en-camino]').length).toBe(1);
+    const nueva = raiz.querySelector('a[href="/cuentas/nueva"]') as HTMLElement;
+    expect(getComputedStyle(nueva).whiteSpace).toBe('nowrap');
   });
 });
