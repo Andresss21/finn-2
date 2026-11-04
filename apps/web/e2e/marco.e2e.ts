@@ -100,7 +100,7 @@ test.describe('PRU-E2E-PWA', () => {
     await revisarAccesibilidad(page);
   });
 
-  test('PRU-E2E-PWA-181 [] una ruta que no existe muestra «Esto ya no existe.» en español con el glifo de búsqueda y el enlace a Inicio, y la campana abre su panel sin salir de la pantalla', async ({
+  test('PRU-E2E-PWA-181 [] una ruta que no existe muestra «Esto ya no existe.» en español con el glifo de búsqueda y el enlace a Inicio, y la campana abre su panel sobre la pantalla (la ruta interceptada /notificaciones)', async ({
     page,
   }) => {
     await page.goto('/una-ruta-que-no-existe');
@@ -114,12 +114,12 @@ test.describe('PRU-E2E-PWA', () => {
 
     await sembrarBase();
     await abrir(page, '/presupuesto');
-    const campana = page.getByRole('button', { name: /^Notificaciones/ });
+    const campana = barra(page).getByRole('link', { name: /^Notificaciones/ });
     await campana.click();
     await expect(
       page.getByRole('dialog', { name: navegacion.secciones.notificaciones }),
     ).toBeVisible();
-    await expect(page).toHaveURL('/presupuesto');
+    await expect(page).toHaveURL('/notificaciones');
   });
 
   test('PRU-E2E-PWA-182 [V5-17] NO_ENCONTRADO de una consulta muestra «Esto ya no existe.» con el glifo de búsqueda, no el de positivo', async ({
@@ -146,7 +146,7 @@ test.describe('PRU-E2E-PWA', () => {
     const boton = barra(page).getByRole('button', { name: navegacion.masAcciones });
     await expect(boton).toHaveAttribute('aria-expanded', 'false');
     const campana = await barra(page)
-      .getByRole('button', { name: /^Notificaciones/ })
+      .getByRole('link', { name: /^Notificaciones/ })
       .boundingBox();
     const cajaBoton = await boton.boundingBox();
     expect(campana === null || cajaBoton === null).toBe(false);
