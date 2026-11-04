@@ -62,7 +62,7 @@ jobs:
       # 04 §16.3, paso 5: la instantánea y las consultas del commit desplegado, no las de main, que puede ir adelante
       - id: catalogo-desplegado
         run: |
-          etiqueta=$(git tag --sort=-v:refname 'desplegado-*' | head -n 1)
+          etiqueta=$(git tag --list --sort=-v:refname 'desplegado-*' | head -n 1)
           test -n "$etiqueta"
           git checkout "$etiqueta" -- packages/db/prisma/catalogo-esperado.txt tools/db/catalogo.sql tools/db/reglas-catalogo.sql tools/db/regla-r15.sql
           echo "catálogo de $etiqueta"
