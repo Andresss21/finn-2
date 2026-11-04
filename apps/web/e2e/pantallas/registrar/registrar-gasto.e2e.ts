@@ -4,7 +4,11 @@
 // Los campos se buscan por su etiqueta del catálogo (FE-51).
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
-import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
+import {
+  esperarContenido,
+  esperarControlHidratado,
+  esperarHidratacion,
+} from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { revisarTactil } from '../../ayudas/tactil.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
@@ -76,8 +80,15 @@ async function abrir(page: Page, ruta: string): Promise<void> {
 }
 
 const campo = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exact: true });
-const opcion = (page: Page, grupo: string, nombre: string) =>
-  page.getByRole('radiogroup', { name: grupo, exact: true }).getByRole('radio', { name: nombre });
+/** La cuenta y el destino de cada línea son selecciones nativas del export (K2, S5): se elige por el nombre de la opción. */
+const elegir = async (page: Page, etiqueta: string, nombre: string): Promise<void> => {
+  const control = campo(page, etiqueta);
+  await esperarControlHidratado(control);
+  await control.selectOption({ label: nombre });
+};
+const elegida = (page: Page, etiqueta: string) => campo(page, etiqueta).locator('option:checked');
+/** Con el total escrito el botón dice «Guardar $X» (S5); sin él, «Guardar gasto». */
+const guardar = (page: Page) => page.getByRole('button', { name: /^Guardar/ });
 
 /** Escribe una parte con categoría: su monto y la categoría elegida. */
 async function parteConCategoria(
@@ -87,11 +98,11 @@ async function parteConCategoria(
   categoria: string,
 ): Promise<void> {
   await campo(page, t.montoDeParte(String(n))).fill(monto);
-  await opcion(page, t.categoriaDeParte(String(n)), categoria).click();
+  await elegir(page, t.categoriaDeParte(String(n)), categoria);
 }
 
 async function agregarParte(page: Page): Promise<void> {
-  await page.getByRole('button', { name: t.agregarParte }).click();
+  await page.getByRole('button', { name: t.agregarLinea }).click();
 }
 
 const fila = (page: Page, nombre: string) =>
@@ -118,14 +129,17 @@ test.describe('PRU-E2E-TX', () => {
     await page.keyboard.press('Tab'); // el primer Tab muestra «Saltar al contenido» (11.2): se mide ya visible
     await revisarTactil(page);
     await expect(campo(page, t.fecha)).toHaveValue('2027-02-10');
-    await opcion(page, t.cuenta, 'T').click();
+    await elegir(page, t.cuenta, 'T');
     await campo(page, t.total).fill('150');
     await parteConCategoria(page, 1, '110', 'Super');
     await expect(page.getByTestId('falta-repartir')).toHaveText(t.faltaRepartir('$40.00'));
     await agregarParte(page);
     await parteConCategoria(page, 2, '40', 'Mascota');
-    await expect(page.getByTestId('falta-repartir')).toHaveText(t.todoRepartido);
-    await page.getByRole('button', { name: t.guardar }).click();
+    await expect(page.getByTestId('falta-repartir')).toHaveCount(0);
+    await expect(page.getByTestId('suma-lineas')).toHaveText(
+      `${t.sumaDeLineas}$150.00${t.sumaDe}$150.00`,
+    );
+    await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await expect(page.getByTestId('resultado')).toHaveText(
       t.guardado(t.sinComercio, '$150.00', 'T', '2'),
@@ -143,18 +157,17 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-10', ESC24_PASO1);
     await abrir(page, '/registrar/gasto');
-    await opcion(page, t.cuenta, 'T').click();
+    await elegir(page, t.cuenta, 'T');
     await campo(page, t.total).fill('200');
     await parteConCategoria(page, 1, '90', 'Super');
     await agregarParte(page);
     await parteConCategoria(page, 2, '30', 'Mascota');
     await agregarParte(page);
     await campo(page, t.montoDeParte('3')).fill('80');
-    await opcion(page, t.destinoDeParte('3'), t.destinoPorCobrar).click();
-    // sin deudores todavía, la persona se escribe: la parte por cobrar abre con «Otra persona»
-    await expect(opcion(page, t.deudorDeParte('3'), t.otraPersona)).toBeChecked();
+    // sin deudores todavía, la persona se escribe: se elige «Otra persona» entre las que me deben y aparece su nombre
+    await elegir(page, t.categoriaDeParte('3'), t.porCobrarA(t.otraPersona));
     await campo(page, t.deudorNuevoDeParte('3')).fill('Ana');
-    await page.getByRole('button', { name: t.guardar }).click();
+    await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await expect(page.getByTestId('resultado')).toHaveText(
       t.guardado(t.sinComercio, '$200.00', 'T', '3'),
@@ -172,14 +185,14 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-10', ESC20_PASO1);
     await abrir(page, '/registrar/gasto');
-    await opcion(page, t.cuenta, 'Ahorro').click();
+    await elegir(page, t.cuenta, 'Ahorro');
     await campo(page, t.total).fill('50');
     await parteConCategoria(page, 1, '25', 'Super');
     await agregarParte(page);
     await campo(page, t.montoDeParte('2')).fill('25');
-    await opcion(page, t.destinoDeParte('2'), t.destinoPorCobrar).click();
+    await elegir(page, t.categoriaDeParte('2'), t.porCobrarA(t.otraPersona));
     await campo(page, t.deudorNuevoDeParte('2')).fill('Ana');
-    await page.getByRole('button', { name: t.guardar }).click();
+    await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await page.goto('/presupuesto');
     await esperarContenido(page);
@@ -193,15 +206,16 @@ test.describe('PRU-E2E-TX', () => {
     await preparar('2027-02-10', ESC20_PASO2);
     await abrir(page, '/registrar/gasto');
     await campo(page, t.total).fill('40');
-    await opcion(page, t.cuenta, 'Ahorro').click();
+    await elegir(page, t.cuenta, 'Ahorro');
     await parteConCategoria(page, 1, '20', 'Super');
     await agregarParte(page);
     await campo(page, t.montoDeParte('2')).fill('20');
-    await opcion(page, t.destinoDeParte('2'), t.destinoPorCobrar).click();
-    await expect(opcion(page, t.deudorDeParte('2'), 'Ana')).toBeVisible();
-    await opcion(page, t.deudorDeParte('2'), t.otraPersona).click();
+    await expect(
+      campo(page, t.categoriaDeParte('2')).locator('option', { hasText: t.porCobrarA('Ana') }),
+    ).toHaveCount(1);
+    await elegir(page, t.categoriaDeParte('2'), t.porCobrarA(t.otraPersona));
     await campo(page, t.deudorNuevoDeParte('2')).fill('ana');
-    await page.getByRole('button', { name: t.guardar }).click();
+    await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await expect(page.getByTestId('deudor-existente')).toHaveText(t.deudorExistente('Ana'));
   });
@@ -211,13 +225,13 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
-    await opcion(page, t.cuenta, 'T').click();
+    await elegir(page, t.cuenta, 'T');
     await campo(page, t.total).fill('150');
     await parteConCategoria(page, 1, '110', 'Super');
     await agregarParte(page);
     await parteConCategoria(page, 2, '39', 'Mascota');
     await expect(page.getByTestId('falta-repartir')).toHaveText(t.faltaRepartir('$1.00'));
-    await page.getByRole('button', { name: t.guardar }).click();
+    await guardar(page).click();
     await expect(
       page
         .locator('[data-campo-lineas]')
@@ -236,10 +250,10 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
-    await opcion(page, t.cuenta, 'T').click();
+    await elegir(page, t.cuenta, 'T');
     await campo(page, t.total).fill('50');
     await campo(page, t.montoDeParte('1')).fill('50');
-    await page.getByRole('button', { name: t.guardar }).click();
+    await guardar(page).click();
     await expect(page.getByText(t.lineaSinDestino)).toBeVisible();
     await expect(page.getByRole('heading', { name: t.listo })).toHaveCount(0);
     await page.goto('/presupuesto');
@@ -296,16 +310,16 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-10', ESC20_PASO1);
     await abrir(page, '/registrar/gasto');
-    await opcion(page, t.cuenta, 'Ahorro').click();
+    await elegir(page, t.cuenta, 'Ahorro');
     await campo(page, t.total).fill('10');
     await parteConCategoria(page, 1, '10', 'Super');
     await campo(page, t.fecha).fill('2027-02-11');
-    await page.getByRole('button', { name: t.guardar }).click();
+    await guardar(page).click();
     await expect(
       page.getByText('La fecha no puede ser posterior a hoy (10/02/2027).'),
     ).toBeVisible();
     await campo(page, t.fecha).fill('2027-01-10');
-    await page.getByRole('button', { name: t.guardar }).click();
+    await guardar(page).click();
     await expect(
       page.getByText('Ahorro se abrió el 21/01/2027; la fecha no puede ser anterior.'),
     ).toBeVisible();
@@ -320,10 +334,10 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-16', ESC12_PASO1);
     await abrir(page, '/registrar/gasto');
-    await opcion(page, t.cuenta, 'T').click();
+    await elegir(page, t.cuenta, 'T');
     await campo(page, t.total).fill('25');
     await parteConCategoria(page, 1, '25', 'Intereses y comisiones');
-    await page.getByRole('button', { name: t.guardar }).click();
+    await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await page.goto('/presupuesto');
     await esperarContenido(page);
@@ -340,7 +354,7 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
-    await opcion(page, t.cuenta, 'T').click();
+    await elegir(page, t.cuenta, 'T');
     await campo(page, t.total).fill('150');
     await campo(page, t.comercio).fill('PriceSmart');
     await parteConCategoria(page, 1, '110', 'Super');
@@ -363,7 +377,7 @@ test.describe('PRU-E2E-TX', () => {
     await expect(campo(page, t.comercio)).toHaveValue('PriceSmart');
     await expect(campo(page, t.montoDeParte('1'))).toHaveValue('110');
     await expect(campo(page, t.montoDeParte('2'))).toHaveValue('40');
-    await expect(opcion(page, t.categoriaDeParte('1'), 'Super')).toBeChecked();
+    await expect(elegida(page, t.categoriaDeParte('1'))).toHaveText('Super');
     await page.getByRole('button', { name: formularios.descartarBorrador }).click();
     await expect(campo(page, t.total)).toHaveValue('');
     await expect(page.getByText(formularios.borradorRecuperado)).toHaveCount(0);
@@ -394,7 +408,7 @@ test.describe('PRU-E2E-TX', () => {
     await campo(page, t.comercio).fill('Mercado');
     await expect(page.getByTestId('sugerencia')).toContainText(t.sugerencia('Super'));
     await page.getByRole('button', { name: t.usarSugerencia }).click();
-    await expect(opcion(page, t.categoriaDeParte('1'), 'Super')).toBeChecked();
+    await expect(elegida(page, t.categoriaDeParte('1'))).toHaveText('Super');
     await campo(page, t.comercio).fill('Otro sitio');
     await expect(page.getByTestId('sugerencia')).toHaveCount(0);
   });
@@ -408,7 +422,7 @@ test.describe('PRU-E2E-TX', () => {
       { op: 'OP-14', categoria: 'Mascota', monto: 20 },
     ]);
     await abrir(page, '/registrar/gasto');
-    await opcion(page, t.cuenta, 'T').click();
+    await elegir(page, t.cuenta, 'T');
     await campo(page, t.total).fill('148.60');
     await campo(page, t.comercio).fill('PRICESMART');
     await parteConCategoria(page, 1, '100', 'Super');
@@ -416,7 +430,7 @@ test.describe('PRU-E2E-TX', () => {
     await parteConCategoria(page, 2, '40', 'Mascota');
     await agregarParte(page);
     await parteConCategoria(page, 3, '8.60', 'Super');
-    await page.getByRole('button', { name: t.guardar }).click();
+    await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await expect(page.getByTestId('resultado')).toHaveText(
       t.guardado('PRICESMART', '$148.60', 'T', '3'),
@@ -430,14 +444,70 @@ test.describe('PRU-E2E-TX', () => {
     // con la fecha en un período cerrado, antes aparece el impacto con el aviso AV-01
     await page.getByRole('button', { name: t.registrarOtro }).click();
     await esperarHidratacion(page);
-    await opcion(page, t.cuenta, 'T').click();
+    await elegir(page, t.cuenta, 'T');
     await campo(page, t.fecha).fill('2027-01-25');
     await campo(page, t.total).fill('10');
     await parteConCategoria(page, 1, '10', 'Super');
-    await page.getByRole('button', { name: t.guardar }).click();
+    await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.revisar })).toBeVisible();
     await expect(page.getByText(t.avisoPeriodoCerrado)).toBeVisible();
     await page.getByRole('button', { name: t.confirmar }).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
+  });
+
+  test('PRU-E2E-TX-440 [CA-21.1] la cuenta se elige en una selección de 52 px que dice la deuda de la tarjeta y Fecha y Total van en dos columnas', async ({
+    page,
+  }) => {
+    await preparar('2027-02-10', ESC19_PASO1);
+    await abrir(page, '/registrar/gasto');
+    await elegir(page, t.cuenta, 'T');
+    await expect(campo(page, t.cuenta).locator('xpath=..')).toContainText(t.deudaDeCuenta('$0.00'));
+    expect((await campo(page, t.cuenta).locator('xpath=..').boundingBox())?.height).toBe(52);
+    await campo(page, t.total).fill('150');
+    const fecha = await campo(page, t.fecha).boundingBox();
+    const total = await campo(page, t.total).boundingBox();
+    expect(Math.abs((fecha?.y ?? 0) - (total?.y ?? 99))).toBeLessThan(2);
+    expect(total?.x ?? 0).toBeGreaterThan((fecha?.x ?? 0) + (fecha?.width ?? 0) - 1);
+  });
+
+  test('PRU-E2E-TX-441 [CA-21.1] dividir dice «Dividir · opcional · N líneas», cada línea es una fila con selección, monto y × en la misma altura y «+ Agregar línea» suma otra', async ({
+    page,
+  }) => {
+    await preparar('2027-02-10', ESC19_PASO1);
+    await abrir(page, '/registrar/gasto');
+    const lineas = page.locator('[data-campo-lineas]');
+    await expect(lineas).toContainText(t.dividir);
+    await expect(lineas).toContainText(t.opcional);
+    await expect(lineas).toContainText(t.lineas('1'));
+    await agregarParte(page);
+    await expect(lineas).toContainText(t.lineas('2'));
+    const destino = await campo(page, t.categoriaDeParte('2')).boundingBox();
+    const monto = await campo(page, t.montoDeParte('2')).boundingBox();
+    const quitar = await page.getByRole('button', { name: t.quitarParte('2') }).boundingBox();
+    expect(Math.abs((destino?.y ?? 0) - (monto?.y ?? 99))).toBeLessThan(2);
+    expect(monto?.width).toBe(120);
+    expect(quitar?.width).toBe(44);
+    expect((quitar?.x ?? 0) > (monto?.x ?? 99)).toBe(true);
+    await page.getByRole('button', { name: t.quitarParte('2') }).click();
+    await expect(lineas).toContainText(t.lineas('1'));
+  });
+
+  test('PRU-E2E-TX-442 [CA-21.12] el botón dice «Guardar $X» con el total escrito y queda en un pie fijo abajo en teléfono y bajo las líneas, a la derecha, en computadora', async ({
+    page,
+  }) => {
+    await preparar('2027-02-10', ESC19_PASO1);
+    await abrir(page, '/registrar/gasto');
+    await expect(guardar(page)).toHaveText(t.guardar);
+    await campo(page, t.total).fill('150');
+    await expect(guardar(page)).toHaveText(t.guardarMonto('$150.00'));
+    const boton = await guardar(page).boundingBox();
+    const lineas = await page.locator('[data-campo-lineas]').boundingBox();
+    const alto = page.viewportSize()?.height ?? 0;
+    if ((page.viewportSize()?.width ?? 0) >= 768) {
+      expect(Math.abs((boton?.x ?? 0) - (lineas?.x ?? 99))).toBeLessThan(2);
+    } else {
+      expect((boton?.y ?? 0) + (boton?.height ?? 0)).toBeGreaterThan(alto - 40);
+      expect((boton?.y ?? 0) + (boton?.height ?? 0)).toBeLessThanOrEqual(alto);
+    }
   });
 });

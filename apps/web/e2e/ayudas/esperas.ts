@@ -1,5 +1,5 @@
 // Ayudas de espera por estado (05 §14.4): nunca un tiempo fijo (07 §7.1). Los atributos son el contrato de 05 §14.3.
-import { expect, type Page, type Response } from '@playwright/test';
+import { expect, type Locator, type Page, type Response } from '@playwright/test';
 
 // El `redirect()` que llega después del primer envío (una página bajo un `loading.tsx`, como `/presupuesto/mover` y
 // `/reportes`) deja este meta en el documento; el navegador sigue al destino, casi siempre con un documento nuevo.
@@ -58,6 +58,18 @@ export async function irAlDocumentoFinal(page: Page, ruta: string): Promise<void
 /** `data-hidratado="si"` en `<html>`: lo pone el marco en su primer efecto. */
 export async function esperarHidratacion(page: Page): Promise<void> {
   await expect(page.locator('html')).toHaveAttribute('data-hidratado', 'si');
+}
+
+/**
+ * El control ya lo hidrató React (tiene su instancia): un cambio hecho antes se pierde cuando React lo hidrata y lo vuelve a poner en
+ * el valor del estado. Los campos de texto lo toleran porque React repite su evento; una selección nativa, no siempre.
+ */
+export async function esperarControlHidratado(control: Locator): Promise<void> {
+  await expect
+    .poll(() =>
+      control.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))),
+    )
+    .toBe(true);
 }
 
 /**

@@ -4,7 +4,11 @@
 // el presupuesto queda como dice el escenario y Inicio guarda el aviso hasta marcarlo como leído. Los números los pone el motor.
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
-import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
+import {
+  esperarContenido,
+  esperarControlHidratado,
+  esperarHidratacion,
+} from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { impactoLineas as impacto } from '../../../src/textos/formularios.ts';
@@ -81,8 +85,12 @@ async function preparar(hoy: string, estadoInicial: Op[]): Promise<void> {
 }
 
 const campo = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exact: true });
-const opcion = (page: Page, grupo: string, nombre: string) =>
-  page.getByRole('radiogroup', { name: grupo, exact: true }).getByRole('radio', { name: nombre });
+/** La cuenta y el destino de la línea son selecciones nativas del export (K2, S5): se elige por el nombre de la opción. */
+const elegir = async (page: Page, etiqueta: string, nombre: string): Promise<void> => {
+  const control = campo(page, etiqueta);
+  await esperarControlHidratado(control);
+  await control.selectOption({ label: nombre });
+};
 const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').first();
 const fila = (page: Page, nombre: string) =>
   page.locator('[data-fila-categoria]').filter({ hasText: nombre });
@@ -97,12 +105,12 @@ async function registrar(
 ): Promise<void> {
   await page.goto('/registrar/gasto');
   await esperarHidratacion(page);
-  await opcion(page, t.cuenta, datos.cuenta).click();
+  await elegir(page, t.cuenta, datos.cuenta);
   await campo(page, t.fecha).fill(datos.fecha);
   await campo(page, t.total).fill(datos.total);
   await campo(page, t.montoDeParte('1')).fill(datos.total);
-  await opcion(page, t.categoriaDeParte('1'), datos.categoria).click();
-  await page.getByRole('button', { name: t.guardar }).click();
+  await elegir(page, t.categoriaDeParte('1'), datos.categoria);
+  await page.getByRole('button', { name: /^Guardar/ }).click();
 }
 
 async function confirmar(page: Page): Promise<void> {
