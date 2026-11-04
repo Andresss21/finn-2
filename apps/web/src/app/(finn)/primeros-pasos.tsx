@@ -72,7 +72,7 @@ export function PrimerosPasosDeInicio({
                 <span className="flex flex-col gap-0.5">
                   <EnlaceFinn
                     href={enlace}
-                    className="font-semibold text-texto no-underline after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-3 focus-visible:after:-outline-offset-3 focus-visible:after:outline-foco"
+                    className="-my-2.5 flex min-h-11 items-center font-semibold text-texto no-underline after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-3 focus-visible:after:-outline-offset-3 focus-visible:after:outline-foco"
                   >
                     {t.pasos[paso]}
                   </EnlaceFinn>

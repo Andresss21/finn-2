@@ -120,6 +120,7 @@ describe('PRU-CMP-INICIO', () => {
       const circulo = fila.querySelector('svg')?.parentElement;
       expect([arriba(circulo).width, arriba(circulo).height]).toEqual([40, 40]);
     }
+    expect(arriba(filas[1]?.querySelector('a')).height).toBeGreaterThanOrEqual(44);
     expect(filas[0]?.querySelector('a')).toBeNull();
     expect(filas[0]?.textContent).toContain(p.hecho(p.pasos.cuenta));
     expect(filas[1]?.textContent).toContain(p.detalles.categorias);
