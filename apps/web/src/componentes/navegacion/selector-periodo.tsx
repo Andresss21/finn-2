@@ -1,6 +1,6 @@
 // Selector de período (05 §3.4, FE-31; 06-identidad-visual 2.15). Son enlaces, no botones con estado: cada período
 // tiene su URL. El período activo no lleva `?periodo=`. Nunca calcula un período: lo que no viene, no aparece.
-import { formatearPeriodoCorto } from '../../formato';
+import { formatearPeriodoNumerico } from '../../formato';
 import { dominio } from '../../textos/dominio';
 import { Icono, type NombreIcono } from '../base/icono';
 import { EnlaceFinn } from './enlace-finn';
@@ -80,7 +80,7 @@ export function SelectorPeriodo({
           </EnlaceFinn>
         )}
         <div className="flex min-w-0 flex-col items-center text-center">
-          <p className="text-cuerpo font-bold">{formatearPeriodoCorto(periodo)}</p>
+          <p className="text-cuerpo font-bold">{formatearPeriodoNumerico(periodo)}</p>
           <p className="flex items-center gap-1.5 text-cuerpo-pequeno text-texto-secundario">
             <Icono nombre={icono} tamano={16} />
             <span>{detalle}</span>
