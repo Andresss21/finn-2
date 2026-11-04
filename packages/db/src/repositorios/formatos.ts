@@ -1,6 +1,7 @@
 // Formatos bancarios e instituciones [H] (03 §3.20, §3.21; 04 §8.7: OPT-05, OPT-07) y su auditoría (BE-47, EN-1).
 // Las escrituras exigen un `EscritorTx` (con el bloqueo tomado); no entran en la instantánea del motor.
 import { ahoraDb, conAhora } from '../ahora.ts';
+import { instanteDeDate } from '../mapeo/fechas.ts';
 import { txPrisma, txPrismaT, type EscritorTx, type LectorTx } from '../transacciones.ts';
 import type { DatosEvento } from './eventos.ts';
 
@@ -81,6 +82,31 @@ export async function guardarInstitucion(tx: EscritorTx, i: FilaInstitucion): Pr
     create: { id: i.id, nombre: i.nombre },
     update: { nombre: i.nombre },
   });
+}
+
+/** Un SMS para probar un formato (04 §6.14.4): uno de los 20 más recientes cuyo movimiento quedó sin reconocer o con error. */
+export interface SmsParaProbar {
+  readonly smsId: string;
+  readonly texto: string;
+  readonly recibidoEn: string;
+  readonly estado: 'no_reconocido' | 'error';
+}
+
+const CANTIDAD_SMS_PARA_PROBAR = 20;
+
+export async function leerSmsParaProbar(tx: LectorTx): Promise<SmsParaProbar[]> {
+  const filas = await txPrisma(tx).movimiento.findMany({
+    where: { estado: { in: ['no_reconocido', 'error'] } },
+    orderBy: [{ sms: { recibidoEn: 'desc' } }, { id: 'desc' }],
+    take: CANTIDAD_SMS_PARA_PROBAR,
+    select: { estado: true, sms: { select: { id: true, texto: true, recibidoEn: true } } },
+  });
+  return filas.map((f) => ({
+    smsId: f.sms.id,
+    texto: f.sms.texto,
+    recibidoEn: instanteDeDate(f.sms.recibidoEn),
+    estado: f.estado as SmsParaProbar['estado'],
+  }));
 }
 
 export type AccionAuditoriaFormato = 'crear' | 'editar' | 'activar' | 'desactivar';

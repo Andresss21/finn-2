@@ -2,6 +2,7 @@
 // Cada ficha agrega su área acá; ningún texto literal va en JSX fuera de `src/textos/` (L8).
 import { actividad } from './actividad.ts';
 import { ajustesCiclo } from './ajustes-ciclo.ts';
+import { ajustesFormatos } from './ajustes-formatos.ts';
 import { ajustesExportar } from './ajustes-exportar.ts';
 import { ajustesApariencia } from './ajustes-apariencia.ts';
 import { ajustesWebhook } from './ajustes-webhook.ts';
@@ -41,6 +42,7 @@ import { verificarSaldo } from './verificar-saldo.ts';
 export {
   actividad,
   ajustesCiclo,
+  ajustesFormatos,
   ajustesExportar,
   ajustesApariencia,
   ajustesWebhook,
@@ -83,6 +85,7 @@ export {
 export const areas = [
   ['actividad', actividad],
   ['ajustesCiclo', ajustesCiclo],
+  ['ajustesFormatos', ajustesFormatos],
   ['ajustesExportar', ajustesExportar],
   ['ajustesApariencia', ajustesApariencia],
   ['ajustesWebhook', ajustesWebhook],

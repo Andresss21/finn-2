@@ -6,6 +6,7 @@ import {
   OP37,
   OP39,
   OP40,
+  OP41,
   OP50,
   reprocesar,
 } from '@finn/aplicacion/operaciones/bandeja';
@@ -19,3 +20,4 @@ export const resolverCoincidencia = accion(operacion(OP40));
 export const reprocesarSms = accion(operacionLote(reprocesar)); // OP-49: natural, sin vista previa
 export const aprobarTodos = accion(operacionLote(lote)); // OP-38: un `escribir()` por movimiento, sin vista previa
 export const crearAMano = accion(operacion(OP50));
+export const gestionarRegla = accion(operacion(OP41)); // OP-41: reglas de comercio (FT-39)

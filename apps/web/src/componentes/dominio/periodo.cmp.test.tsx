@@ -169,7 +169,7 @@ describe('PRU-CMP-PRES-102 billete y selector de período [FE-31, CF-13]', () =>
     const raiz = montar(selectores);
     const [a, ce, fu, tr] = [...raiz.querySelectorAll('[data-selector-periodo]')];
     expect(a?.getAttribute('data-selector-periodo')).toBe('activo');
-    expect(textoAccesible(a)).toContain('21 sep – 20 oct 2026');
+    expect(textoAccesible(a)).toContain('21/09 – 20/10/2026');
     expect(textoAccesible(a)).toContain('Actual · 25 días transcurridos · quedan 5');
     expect(a?.querySelector('a[aria-label="Período anterior"]')?.getAttribute('href')).toBe(
       '/presupuesto?periodo=2026-08-21',
