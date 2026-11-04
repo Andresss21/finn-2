@@ -252,6 +252,33 @@ describe('PRU-INT-BAND', () => {
     });
   });
 
+  it('PRU-INT-BAND-124 [CA-36.5] OP-38: ninguna transacción que crea el lote tiene una línea sin destino, aunque en el lote haya movimientos sin destino', async () => {
+    await consultar(
+      base.urlAdmin,
+      `BEGIN; SELECT finn.tomar_bloqueo();
+       ${sembrar(8, 'pendiente', E1, FECHA, 450, 'gasto', { linea: 450 })}
+       ${sembrar(9, 'pendiente', E1, FECHA, 460, 'gasto')}
+       ${sembrar(10, 'pendiente', E1, FECHA, 470, 'gasto', { linea: 470 })}
+       COMMIT;`,
+    );
+    const L = [mov(8), mov(9), mov(10)];
+    const ids = Object.fromEntries(L.map((m, k) => [m, uuid(3300 + k)]));
+    const r = await aprobarTodos({ movimientoIds: L, ids }, deps());
+    expect(r).toMatchObject({ ok: true, avisos: [{ codigo: 'AV-19' }] });
+    const h = await hechos();
+    const creadas = L.map((_, k) => uuid(3300 + k)).filter((t) =>
+      h.transacciones.some((x) => x.id === t),
+    );
+    expect(creadas).toEqual([uuid(3300), uuid(3302)]); // la del movimiento sin destino no se crea
+    for (const t of creadas) {
+      const lineas = h.lineas.filter((l) => l.transaccionId === t);
+      expect(lineas.length).toBeGreaterThan(0);
+      for (const l of lineas)
+        expect([l.categoriaId, l.deudorId, l.lineaOriginalId].some((d) => d !== null)).toBe(true);
+    }
+    expect(await movimiento(mov(9))).toMatchObject({ estado: 'pendiente', transaccionId: null });
+  });
+
   it('PRU-INT-BAND-103 [CB-28] OP-41: crea, edita y elimina una regla; repetir es ya aplicada, un valor visto viejo es conflicto_desactualizado, un patrón repetido o una categoría no permitida se rechazan con su mensaje', async () => {
     const R1 = uuid(4001);
     const crear = { accion: 'crear', id: R1, patron: 'Panaderia', categoriaId: C1 };
