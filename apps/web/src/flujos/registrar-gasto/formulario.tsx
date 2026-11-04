@@ -25,8 +25,10 @@ import { registrarGasto as t } from '../../textos/registrar-gasto';
 import {
   aEntradaDeAccion,
   contrato,
+  DEUDOR_NUEVO,
   deudoresReutilizados,
   parteVacia,
+  textoDeAviso,
   valoresIniciales,
   type Campos,
 } from './campos';
@@ -72,6 +74,18 @@ const BorradorGasto = lazy(() => import('./borrador-gasto'));
 // Las líneas se cargan aparte: el HTML del servidor ya las trae y el presupuesto de bytes de la ruta no las cuenta (05 §13.1)
 const LineasDeGasto = lazy(() => import('./lineas'));
 const SugerenciaComercio = lazy(() => import('./sugerencia-comercio'));
+
+/** A quién o a qué categoría fue una línea, para el resultado: el nombre escrito si es una persona nueva. */
+const nombreDelDestino = (
+  l: Campos['lineas'][number],
+  categorias: readonly Referencia[],
+  deudores: readonly Referencia[],
+): string =>
+  l.destino === 'categoria'
+    ? (categorias.find((x) => x.id === l.categoriaId)?.nombre ?? '')
+    : l.deudorId === DEUDOR_NUEVO
+      ? l.deudorNuevo.trim()
+      : (deudores.find((x) => x.id === l.deudorId)?.nombre ?? '');
 
 const aOpciones = (xs: readonly CuentaDelCampo[]): OpcionNativa[] =>
   xs.map((x) => ({
@@ -139,6 +153,11 @@ export function FormularioRegistrarGasto({
               nombreDeCuenta,
               String(c.lineas.length),
             )}
+            lineas={c.lineas.map((l, i) => ({
+              clave: partes.fields[i]?.id ?? String(i),
+              destino: nombreDelDestino(l, categorias, deudores),
+              monto: formatearMontoTexto(l.monto),
+            }))}
             tocadas={tocadas}
             reutilizados={reutilizados}
           />
@@ -166,7 +185,6 @@ export function FormularioRegistrarGasto({
 
   const totalValido = normalizarMontoEscrito(c.total).estado === 'valido';
 
-  // «Guardar $X» va en el pie fijo de la página (S5); es el botón de envío del formulario aunque quede fuera de él.
   const guardar = (
     <Boton
       tipo="submit"
@@ -187,7 +205,12 @@ export function FormularioRegistrarGasto({
     <PaginaFlujoDeRuta
       titulo={t.tituloGasto}
       rutaPadre="/registrar"
-      {...(estado === 'confirmando' ? {} : { acciones: guardar })}
+      ancha
+      {...(estado === 'confirmando'
+        ? {}
+        : {
+            acciones: <div className="w-full md:ml-auto md:w-[calc(50%-1.125rem)]">{guardar}</div>,
+          })}
     >
       {estado === 'confirmando' ? (
         <Suspense fallback={null}>
@@ -195,9 +218,7 @@ export function FormularioRegistrarGasto({
             titulo={t.revisar}
             {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
             vista={vista}
-            avisos={(vista.avisos ?? []).map((a) =>
-              a.codigo === 'AV-01' ? t.avisoPeriodoCerrado : a.codigo,
-            )}
+            avisos={(vista.avisos ?? []).map((a) => textoDeAviso(a.codigo))}
             textoConfirmar={t.confirmar}
             textoVolver={t.volverAEditar}
             enviando={false}
@@ -215,71 +236,81 @@ export function FormularioRegistrarGasto({
           <Suspense fallback={null}>
             <BorradorGasto campos={c} inicial={inicial} operacion={operacion} reset={reset} />
           </Suspense>
-          <SeleccionNativa
-            etiqueta={t.cuenta}
-            alta
-            marcador={t.elegirCuenta}
-            opciones={opcionesCuentas}
-            valor={c.cuentaId}
-            alCambiar={poner('cuentaId')}
-            error={error('cuentaId')}
-          />
-          <div className="grid grid-cols-2 gap-2.5 [&>*]:min-w-0">
-            <EntradaFecha
-              nombre="fecha"
-              etiqueta={t.fecha}
-              valor={c.fecha as FechaLocal}
-              alCambiar={poner('fecha')}
-              error={error('fecha')}
-              requerido
-            />
-            <EntradaMonto
-              nombre="total"
-              etiqueta={t.total}
-              valor={c.total}
-              alCambiar={poner('total')}
-              error={error('total')}
-              requerido
-            />
-          </div>
-          <EntradaTexto
-            etiqueta={t.comercio}
-            autoComplete="off"
-            {...formulario.register('comercio')}
-          />
-          {c.comercio.trim().length >= 2 ? (
-            <Suspense fallback={null}>
-              <SugerenciaComercio
-                comercio={c.comercio}
-                alUsar={(categoria) => {
-                  poner('lineas.0.destino')('categoria');
-                  poner('lineas.0.categoriaId')(categoria.id);
-                }}
+          <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:items-start md:gap-x-9">
+            <div className="flex flex-col gap-4.5 md:col-start-1 md:row-start-1">
+              <SeleccionNativa
+                etiqueta={t.cuenta}
+                alta
+                marcador={t.elegirCuenta}
+                opciones={opcionesCuentas}
+                valor={c.cuentaId}
+                alCambiar={poner('cuentaId')}
+                error={error('cuentaId')}
               />
-            </Suspense>
-          ) : null}
-          <EntradaTexto etiqueta={t.nota} autoComplete="off" {...formulario.register('nota')} />
-          <Suspense fallback={null}>
-            <LineasDeGasto
-              lineas={c.lineas}
-              claves={partes.fields.map((f) => f.id)}
-              categorias={categorias}
-              deudores={deudores}
-              total={c.total}
-              error={errorDeParte}
-              errorDeLasPartes={errorDeLasPartes}
-              ayuda={ayuda}
-              poner={poner}
-              registroDeudorNuevo={(i) => formulario.register(`lineas.${i}.deudorNuevo`)}
-              alAgregar={() => {
-                partes.append(parteVacia());
-              }}
-              alQuitar={(i) => {
-                partes.remove(i);
-              }}
-            />
-          </Suspense>
-          <EntradaTexto etiqueta={t.nota} autoComplete="off" {...formulario.register('nota')} />
+              <div className="grid grid-cols-2 gap-2.5 [&>*]:min-w-0">
+                <EntradaFecha
+                  nombre="fecha"
+                  etiqueta={t.fecha}
+                  valor={c.fecha as FechaLocal}
+                  alCambiar={poner('fecha')}
+                  error={error('fecha')}
+                  requerido
+                  sinVistaPrevia
+                />
+                <EntradaMonto
+                  nombre="total"
+                  etiqueta={t.total}
+                  valor={c.total}
+                  alCambiar={poner('total')}
+                  error={error('total')}
+                  requerido
+                  prefijo="$"
+                  sinVistaPrevia
+                />
+              </div>
+              <EntradaTexto
+                etiqueta={t.comercio}
+                autoComplete="off"
+                {...formulario.register('comercio')}
+              />
+              {c.comercio.trim().length >= 2 ? (
+                <Suspense fallback={null}>
+                  <SugerenciaComercio
+                    comercio={c.comercio}
+                    alUsar={(categoria) => {
+                      poner('lineas.0.destino')('categoria');
+                      poner('lineas.0.categoriaId')(categoria.id);
+                    }}
+                  />
+                </Suspense>
+              ) : null}
+            </div>
+            <div className="md:col-start-2 md:row-span-2 md:row-start-1">
+              <Suspense fallback={null}>
+                <LineasDeGasto
+                  lineas={c.lineas}
+                  claves={partes.fields.map((f) => f.id)}
+                  categorias={categorias}
+                  deudores={deudores}
+                  total={c.total}
+                  error={errorDeParte}
+                  errorDeLasPartes={errorDeLasPartes}
+                  ayuda={ayuda}
+                  poner={poner}
+                  registroDeudorNuevo={(i) => formulario.register(`lineas.${i}.deudorNuevo`)}
+                  alAgregar={() => {
+                    partes.append(parteVacia());
+                  }}
+                  alQuitar={(i) => {
+                    partes.remove(i);
+                  }}
+                />
+              </Suspense>
+            </div>
+            <div className="md:col-start-1 md:row-start-2">
+              <EntradaTexto etiqueta={t.nota} autoComplete="off" {...formulario.register('nota')} />
+            </div>
+          </div>
           {estado === 'error' &&
           fallo !== undefined &&
           deLasPartes === undefined &&

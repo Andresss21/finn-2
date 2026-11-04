@@ -30,6 +30,10 @@ export interface PropsEntradaMonto {
   readonly requerido?: boolean;
   readonly deshabilitado?: boolean;
   readonly enterKeyHint?: 'next' | 'done' | 'go' | 'send' | 'enter';
+  /** Texto fijo antes del monto, en color secundario (el «$» del Total en el export S5). */
+  readonly prefijo?: string;
+  /** Sin la línea «Se entiende como…» (S5 no la tiene). */
+  readonly sinVistaPrevia?: boolean;
   /** Fila compacta de una línea de gasto: etiqueta solo para lectores de pantalla y monto a la derecha (K4). */
   readonly compacto?: boolean;
 }
@@ -54,6 +58,8 @@ export function EntradaMonto({
   requerido = false,
   deshabilitado = false,
   enterKeyHint = 'next',
+  prefijo,
+  sinVistaPrevia = false,
   compacto = false,
 }: PropsEntradaMonto) {
   const resultado = normalizarMontoEscrito(valor);
@@ -65,7 +71,7 @@ export function EntradaMonto({
         : undefined;
   const mensaje = errorLocal ?? error;
   const vista =
-    resultado.estado === 'valido' && !compacto
+    resultado.estado === 'valido' && !sinVistaPrevia && !compacto
       ? formatearMontoTexto(conSigno ? aplicarSigno(resultado.texto, signo) : resultado.texto)
       : undefined;
 
@@ -96,6 +102,7 @@ export function EntradaMonto({
         {...(mensaje === undefined ? {} : { error: mensaje })}
         requerido={requerido}
         etiquetaOculta={compacto}
+        {...(prefijo === undefined ? {} : { prefijo })}
         name={nombre}
         type="text"
         inputMode="decimal"
