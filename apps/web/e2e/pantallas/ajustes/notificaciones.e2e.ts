@@ -67,6 +67,33 @@ async function simular(
           return Promise.resolve('granted');
         },
       };
+      // [CH-104] Solo observa: la respuesta de OPT-02 sigue abierta después del resultado (transmite el árbol revalidado), así
+      // que ni su fin ni sus cabeceras dicen que la app ya lo leyó. Una copia de la respuesta cuenta `opt02-resultados`
+      // cuando llega la fila del resultado; la app recibe los mismos bytes en la misma tarea.
+      const fetchReal = window.fetch.bind(window);
+      window.fetch = (entrada, init) => {
+        const respuesta = fetchReal(entrada, init);
+        if (typeof init?.body === 'string' && init.body.includes('clave-p256dh'))
+          void respuesta.then(
+            async (r) => {
+              const lector = r.clone().body?.getReader();
+              const decodificar = new TextDecoder();
+              let texto = '';
+              for (;;) {
+                const trozo = await lector?.read();
+                if (trozo === undefined || trozo.done) return;
+                texto += decodificar.decode(trozo.value, { stream: true });
+                if (texto.includes('"ok":')) {
+                  contar('opt02-resultados');
+                  await lector?.cancel();
+                  return;
+                }
+              }
+            },
+            () => undefined,
+          );
+        return respuesta;
+      };
       Object.assign(window, { Notification: Simulada });
       Object.defineProperty(navigator, 'serviceWorker', {
         configurable: true,
@@ -141,9 +168,11 @@ test.describe('PRU-E2E-NOTIF', () => {
       page.on('request', (r) => {
         if (esOpt02(r)) acciones.push(r.url());
       });
-      const respondida = page.waitForResponse((r) => esOpt02(r.request()));
       await abrir(page, '/');
-      await respondida;
+      // [CH-104] Recargar antes de que la app lea el resultado aborta el pedido, `renovar` lo toma como fallo y borra la
+      // marca, y la recarga renueva otra vez (falló con 3 pedidos, dos `net::ERR_ABORTED`, y el servidor respondió ok las
+      // tres veces). Esperar las cabeceras no alcanza: se recarga cuando el resultado ya llegó a la página.
+      await expect.poll(() => contador(page, 'opt02-resultados')).toBe(1);
       await page.reload();
       await esperarHidratacion(page);
       await abrir(page, '/ajustes');
