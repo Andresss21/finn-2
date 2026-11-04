@@ -120,3 +120,19 @@ export function deudoresReutilizados(
     .map((l) => l.deudorNuevo.trim().toLowerCase());
   return existentes.filter((d) => nombres.includes(d.nombre.toLowerCase())).map((d) => d.nombre);
 }
+
+/**
+ * El destino de una línea compacta (K4) es una sola selección: `c:<categoría>` o `d:<persona>` (`d:nuevo` = otra persona). Esto
+ * traduce entre ese valor y los tres campos de la parte, que son los que viajan al servidor y al borrador.
+ */
+export const valorDeDestino = (l: Parte): string => {
+  const id = l.destino === 'categoria' ? l.categoriaId : l.deudorId;
+  return id === '' ? '' : `${l.destino === 'categoria' ? 'c' : 'd'}:${id}`;
+};
+
+export const destinoDeValor = (
+  valor: string,
+): Pick<Parte, 'destino' | 'categoriaId' | 'deudorId'> =>
+  valor.startsWith('d:')
+    ? { destino: 'por_cobrar', categoriaId: '', deudorId: valor.slice(2) }
+    : { destino: 'categoria', categoriaId: valor.slice(2), deudorId: '' };

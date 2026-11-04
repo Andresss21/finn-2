@@ -5,8 +5,10 @@ import {
   aEntradaDeAccion,
   contrato,
   DEUDOR_NUEVO,
+  destinoDeValor,
   deudoresReutilizados,
   parteVacia,
+  valorDeDestino,
   valoresIniciales,
   type Campos,
   type Parte,
@@ -149,5 +151,24 @@ describe('PRU-DOM-TX', () => {
       Array.from({ length: n }, () => parte({ monto: '1', categoriaId: SUPER }));
     expect(rutas(con({ total: '21', lineas: partes(21) }))).toEqual(['lineas']);
     expect(rutas(con({ total: '20', lineas: partes(20) }))).toEqual([]);
+  });
+
+  it('PRU-DOM-TX-440 [CA-21.2] el destino de una línea compacta es una sola selección que va y viene entre categoría, persona existente y otra persona sin perder los campos de la parte', () => {
+    expect(valorDeDestino(parte({}))).toBe('');
+    for (const l of [
+      parte({ destino: 'categoria', categoriaId: SUPER }),
+      parte({ destino: 'por_cobrar', deudorId: ANA }),
+      parte({ destino: 'por_cobrar', deudorId: DEUDOR_NUEVO }),
+    ])
+      expect(destinoDeValor(valorDeDestino(l))).toEqual({
+        destino: l.destino,
+        categoriaId: l.categoriaId,
+        deudorId: l.deudorId,
+      });
+    expect(destinoDeValor(`d:${ANA}`)).toEqual({
+      destino: 'por_cobrar',
+      categoriaId: '',
+      deudorId: ANA,
+    });
   });
 });

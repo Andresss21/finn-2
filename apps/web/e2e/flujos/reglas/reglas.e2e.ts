@@ -181,10 +181,8 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     await expect(page.getByTestId('sugerencia')).toContainText(g.sugerencia('Supermercado'));
     await page.getByRole('button', { name: g.usarSugerencia }).click();
     await expect(
-      page
-        .getByRole('radiogroup', { name: g.categoriaDeParte('1') })
-        .getByRole('radio', { name: 'Supermercado' }),
-    ).toBeChecked();
+      page.getByLabel(g.categoriaDeParte('1'), { exact: true }).locator('option:checked'),
+    ).toHaveText('Supermercado');
   });
 
   test('PRU-E2E-BAND-175 [CA-34.10] RUTA-/reglas/nueva con la regla "SELECTOS → Supermercado" creada, el SMS de SUPER SELECTOS ESCALON aparece en la Bandeja con Supermercado propuesto por regla', async ({

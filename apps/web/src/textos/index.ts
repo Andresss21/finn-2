@@ -26,6 +26,7 @@ import { ingreso } from './ingreso.ts';
 import { inicio } from './inicio.ts';
 import { instalacion } from './instalacion.ts';
 import { metas } from './metas.ts';
+import { programadas } from './programadas.ts';
 import { navegacion } from './navegacion.ts';
 import { plantilla } from './plantilla.ts';
 import { presupuesto } from './presupuesto.ts';
@@ -67,6 +68,7 @@ export {
   inicio,
   instalacion,
   metas,
+  programadas,
   navegacion,
   plantilla,
   presupuesto,
