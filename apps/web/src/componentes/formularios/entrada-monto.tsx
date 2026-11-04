@@ -30,6 +30,8 @@ export interface PropsEntradaMonto {
   readonly requerido?: boolean;
   readonly deshabilitado?: boolean;
   readonly enterKeyHint?: 'next' | 'done' | 'go' | 'send' | 'enter';
+  /** Fila compacta de una línea de gasto: etiqueta solo para lectores de pantalla y monto a la derecha (K4). */
+  readonly compacto?: boolean;
 }
 
 const MENSAJE: Record<MotivoInvalido, string> = {
@@ -52,6 +54,7 @@ export function EntradaMonto({
   requerido = false,
   deshabilitado = false,
   enterKeyHint = 'next',
+  compacto = false,
 }: PropsEntradaMonto) {
   const resultado = normalizarMontoEscrito(valor);
   const errorLocal =
@@ -62,7 +65,7 @@ export function EntradaMonto({
         : undefined;
   const mensaje = errorLocal ?? error;
   const vista =
-    resultado.estado === 'valido'
+    resultado.estado === 'valido' && !compacto
       ? formatearMontoTexto(conSigno ? aplicarSigno(resultado.texto, signo) : resultado.texto)
       : undefined;
 
@@ -92,6 +95,7 @@ export function EntradaMonto({
         {...(ayuda === '' ? {} : { descripcion: ayuda })}
         {...(mensaje === undefined ? {} : { error: mensaje })}
         requerido={requerido}
+        etiquetaOculta={compacto}
         name={nombre}
         type="text"
         inputMode="decimal"
@@ -99,7 +103,7 @@ export function EntradaMonto({
         enterKeyHint={enterKeyHint}
         value={valor}
         disabled={deshabilitado}
-        className="tabular-nums"
+        className={compacto ? 'tabular-nums text-right' : 'tabular-nums'}
         onChange={alEscribir}
         onPaste={alPegar}
       />

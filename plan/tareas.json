@@ -455,7 +455,9 @@
 
   "TA-412": { "estado": "pendiente" },
 
-  "TA-413": { "estado": "pendiente" },
+  "TA-413": { "estado": "terminada", "rama": "ta-413-programadas-2", "pr": 360 },
+
+  "TA-468": { "estado": "pendiente" },
 
   "TA-414": { "estado": "pendiente" },
 
@@ -493,7 +495,7 @@
 
   "TA-440": { "estado": "terminada", "rama": "ta-440-notificaciones", "pr": 301 },
 
-  "TA-428": { "estado": "pendiente" },
+  "TA-428": { "estado": "terminada", "rama": "ta-428-notificaciones", "pr": 358 },
 
   "TA-429": { "estado": "pendiente" },
 
