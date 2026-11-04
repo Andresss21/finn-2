@@ -165,9 +165,9 @@ test.describe('PRU-E2E-AJUS', () => {
     const selector = page.locator('[data-selector-periodo]');
     fijarRelojServidor('2027-02-27T10:00:00-06:00');
     await abrir(page, '/presupuesto');
-    await expect(selector).toContainText('31 ene – 27 feb 2027');
+    await expect(selector).toContainText('31/01 – 27/02/2027');
     fijarRelojServidor('2027-02-28T10:00:00-06:00');
     await abrir(page, '/presupuesto');
-    await expect(selector).toContainText('28 feb – 30 mar 2027');
+    await expect(selector).toContainText('28/02 – 30/03/2027');
   });
 });
