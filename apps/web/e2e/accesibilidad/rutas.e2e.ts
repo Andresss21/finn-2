@@ -32,7 +32,8 @@ async function abrir(page: Page, ruta: string): Promise<void> {
 }
 
 test.describe('PRU-E2E-PWA', () => {
-  test.describe.configure({ timeout: 180_000 });
+  // Una sola prueba recorre todas las rutas en dos tamaños y dos temas: el presupuesto crece con el árbol, no se recorta la revisión.
+  test.describe.configure({ timeout: Math.max(180_000, rutasDeLaApp().length * 5_000) });
 
   test.beforeEach(async ({ context, baseURL }) => {
     await entrarAal2(context, baseURL ?? '');
