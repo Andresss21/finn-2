@@ -3,6 +3,7 @@
 // sembrada con operaciones reales de 01 §8 (DP-17) y del reloj del servidor fijo (DP-04). Los textos salen del catálogo (FE-51).
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
+import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
@@ -142,10 +143,7 @@ test.describe('PRU-E2E-BAND', () => {
     // Se aprueba el primero recordando la categoría
     await fila(page, '$20.00').getByRole('link').click();
     await expect(page.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
-    await page
-      .getByRole('radiogroup', { name: g.categoriaDeParte('1') })
-      .getByRole('radio', { name: 'Restaurantes' })
-      .click();
+    await elegirOpcion(page, g.categoriaDeParte('1'), 'Restaurantes');
     await page.getByRole('checkbox', { name: t.revisar.recordar }).check();
     await page.getByRole('button', { name: t.revisar.aprobar }).click();
     await expect(page.getByTestId('resultado')).toBeVisible();

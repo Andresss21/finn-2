@@ -77,6 +77,10 @@ export const bandeja = {
     },
     monto: 'Monto',
     aprobar: 'Aprobar',
+    // CH-136: el pie fijo dice cuánto se aprueba, como «Guardar $X» de Registrar gasto
+    aprobarMonto: (monto: string) => `Aprobar ${monto}`,
+    categoriaSugerida: (nombre: string, porRegla: boolean) =>
+      `Categoría sugerida: ${nombre} (${porRegla ? 'por regla' : 'de tu historial'})`,
     aprobando: 'Aprobando…',
     aprobadoYa: 'Este movimiento ya se aprobó.',
     descartadoYa: 'Este movimiento está descartado.',

@@ -3,6 +3,7 @@
 // la prueba abre el presupuesto y comprueba que los dibuja (PF-3). Los textos salen del catálogo (FE-51).
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
+import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
@@ -51,10 +52,9 @@ async function abrirElMovimiento(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
 }
 
-const categoriaDeParte = (page: Page, n: string, nombre: string) =>
-  page
-    .getByRole('radiogroup', { name: g.categoriaDeParte(n) })
-    .getByRole('radio', { name: nombre });
+/** El destino de cada línea es una selección nativa (K4, CH-136): categoría o «<persona> (me lo debe)». */
+const destinoDeParte = (page: Page, n: string, nombre: string) =>
+  elegirOpcion(page, g.categoriaDeParte(n), nombre);
 
 async function disponible(page: Page, categoria: string, centavos: number): Promise<void> {
   await page.goto('/presupuesto');
@@ -86,7 +86,7 @@ test.describe('PRU-E2E-BAND', () => {
     await page.getByRole('textbox', { name: g.comercio }).fill('Tienda');
     await page.getByRole('textbox', { name: t.revisar.monto, exact: true }).fill('20');
     await page.getByRole('textbox', { name: g.montoDeParte('1') }).fill('20');
-    await categoriaDeParte(page, '1', 'Super').click();
+    await destinoDeParte(page, '1', 'Super');
     await page.getByRole('button', { name: t.revisar.aprobar }).click();
 
     await expect(page.getByTestId('resultado')).toContainText(
@@ -101,11 +101,11 @@ test.describe('PRU-E2E-BAND', () => {
     await abrirElMovimiento(page);
 
     await page.getByRole('textbox', { name: g.montoDeParte('1') }).fill('20');
-    await categoriaDeParte(page, '1', 'Super').click();
-    await page.getByRole('button', { name: g.agregarParte }).click();
+    await destinoDeParte(page, '1', 'Super');
+    await page.getByRole('button', { name: g.agregarLinea }).click();
     await page.getByRole('textbox', { name: g.montoDeParte('2') }).fill('10');
-    await categoriaDeParte(page, '2', 'Casa').click();
-    await expect(page.getByText(g.todoRepartido)).toBeVisible();
+    await destinoDeParte(page, '2', 'Casa');
+    await expect(page.getByTestId('suma-lineas')).toBeVisible();
     await page.getByRole('button', { name: t.revisar.aprobar }).click();
 
     await expect(page.getByTestId('resultado')).toContainText(t.dividido(2));
@@ -119,7 +119,7 @@ test.describe('PRU-E2E-BAND', () => {
     await abrirElMovimiento(page);
 
     await page.getByRole('textbox', { name: g.montoDeParte('1') }).fill('20');
-    await categoriaDeParte(page, '1', 'Super').click();
+    await destinoDeParte(page, '1', 'Super');
     await expect(page.getByText(g.faltaRepartir('$10.00'))).toBeVisible();
     await page.getByRole('button', { name: t.revisar.aprobar }).click();
 
@@ -134,14 +134,7 @@ test.describe('PRU-E2E-BAND', () => {
   }) => {
     await abrirElMovimiento(page);
 
-    await page
-      .getByRole('radiogroup', { name: g.destinoDeParte('1') })
-      .getByRole('radio', { name: g.destinoPorCobrar })
-      .click();
-    await page
-      .getByRole('radiogroup', { name: g.deudorDeParte('1') })
-      .getByRole('radio', { name: 'Ana' })
-      .click();
+    await destinoDeParte(page, '1', g.porCobrarA('Ana'));
     await page.getByRole('button', { name: t.revisar.aprobar }).click();
 
     await expect(page.getByTestId('resultado')).toContainText(t.porCobrarA('Ana'));
@@ -151,14 +144,7 @@ test.describe('PRU-E2E-BAND', () => {
   }) => {
     await abrirElMovimiento(page);
 
-    await page
-      .getByRole('radiogroup', { name: g.destinoDeParte('1') })
-      .getByRole('radio', { name: g.destinoPorCobrar })
-      .click();
-    await page
-      .getByRole('radiogroup', { name: g.deudorDeParte('1') })
-      .getByRole('radio', { name: g.otraPersona })
-      .click();
+    await destinoDeParte(page, '1', g.porCobrarA(g.otraPersona));
     await page.getByRole('textbox', { name: g.deudorNuevoDeParte('1') }).fill('Beto');
     await page.getByRole('button', { name: t.revisar.aprobar }).click();
 

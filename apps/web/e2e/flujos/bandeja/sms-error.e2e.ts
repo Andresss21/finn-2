@@ -4,6 +4,7 @@
 // con error (BE-60). Los textos salen del catálogo (FE-51). El resto de la ficha lo prueban el dominio, la integración y las CMP.
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
+import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { formatearFechaTexto } from '../../../src/formato/index.ts';
@@ -101,17 +102,11 @@ test.describe('PRU-E2E-BAND', () => {
       .getByRole('radiogroup', { name: t.revisar.tipo })
       .getByText(t.revisar.tipos.gasto)
       .click();
-    await page
-      .getByRole('radiogroup', { name: g.cuenta })
-      .getByText('Ahorro', { exact: true })
-      .click();
+    await elegirOpcion(page, g.cuenta, 'Ahorro');
     await page.getByLabel(g.fecha, { exact: true }).fill('2027-02-10');
     await page.getByRole('textbox', { name: t.revisar.monto, exact: true }).fill('12.50');
     await page.getByRole('textbox', { name: g.montoDeParte('1') }).fill('12.50');
-    await page
-      .getByRole('radiogroup', { name: g.categoriaDeParte('1') })
-      .getByText('Supermercado', { exact: true })
-      .click();
+    await elegirOpcion(page, g.categoriaDeParte('1'), 'Supermercado');
     await page.getByRole('button', { name: t.revisar.aprobar }).click();
 
     await expect(page.getByTestId('resultado')).toContainText('$12.50');
