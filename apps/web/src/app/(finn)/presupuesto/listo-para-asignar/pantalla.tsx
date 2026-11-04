@@ -23,15 +23,18 @@ const LISTA = 'flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-s
 function Seccion({
   titulo,
   atributo,
+  sinTitulo = false,
   children,
 }: {
   readonly titulo: string;
   readonly atributo: string;
+  /** El título lo dibuja el contenido: el contenedor de gráfico lo lleva en su encabezado. */
+  readonly sinTitulo?: boolean;
   readonly children: ReactNode;
 }) {
   return (
     <section data-seccion={atributo} className="flex flex-col gap-3">
-      <h2 className="text-titulo-seccion">{titulo}</h2>
+      {sinTitulo ? null : <h2 className="text-titulo-seccion">{titulo}</h2>}
       {children}
     </section>
   );
@@ -106,11 +109,15 @@ function Historial({ dto }: { readonly dto: DetalleLpaDto }) {
   }));
   const ultimo = puntos.at(-1);
   return (
-    <Seccion titulo={t.historial.titulo} atributo="historial">
+    <Seccion titulo={t.historial.titulo} atributo="historial" sinTitulo={ultimo !== undefined}>
       {ultimo === undefined ? (
         <p className="text-cuerpo-pequeno text-texto-secundario">{t.historial.vacio}</p>
       ) : (
         <VistaGrafico
+          titulo={t.historial.titulo}
+          cifra={<Monto centavos={ultimo.valor} rol="cifra-principal" />}
+          nota={ultimo.etiqueta}
+          tablaAlLado
           grafico={
             <GraficoLineas
               titulo={t.historial.grafico}

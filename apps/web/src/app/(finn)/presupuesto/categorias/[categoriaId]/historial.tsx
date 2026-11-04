@@ -80,16 +80,12 @@ export function Historial({
     </table>
   );
   return (
-    <div data-historial={n} className="flex flex-col gap-3">
-      <p className="flex flex-wrap items-baseline justify-between gap-2 text-cuerpo-pequeno">
-        <span data-se-paso className="font-semibold">
-          {t.sePaso(resumen.periodosExcedidos, n)}
-        </span>
-        <span className="text-texto-secundario">
-          {t.promedio} <Monto centavos={resumen.promedioGastado} />
-        </span>
-      </p>
+    <div data-historial={n}>
       <VistaGrafico
+        cifra={<Monto centavos={resumen.promedioGastado} rol="cifra-principal" />}
+        nota={t.promedio}
+        aparte={<span data-se-paso>{t.sePaso(resumen.periodosExcedidos, n)}</span>}
+        tablaAlLado
         grafico={
           <GraficoBarras
             titulo={t.titulo(n)}
