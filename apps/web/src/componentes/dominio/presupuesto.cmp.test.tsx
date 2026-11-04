@@ -139,7 +139,7 @@ describe('PRU-CMP-PRES-101 componentes de dominio del Presupuesto [CF-13]', () =
       'Deuda sin reservar',
     );
     expect(tar?.querySelector('[data-segmento="excedente"]')?.className).toContain(
-      'patron-sin-reservar',
+      'bg-deuda-sin-respaldo-borde',
     );
     expect(cer?.querySelector('[data-estado]')).toBeNull();
     expect(textoAccesible(cer)).toContain('Período cerrado');
