@@ -57,7 +57,8 @@ async function previsualizarCafeEnSalidas(page: Page): Promise<void> {
   await abrir(page, '/presupuesto');
   const id = await fila(page, 'Café').getAttribute('data-fila-categoria');
   await abrir(page, `/presupuesto/categorias/${id}`);
-  await page.getByRole('link', { name: 'Fusionar con otra', exact: true }).click();
+  await page.getByRole('button', { name: 'Más acciones' }).click();
+  await page.getByRole('menuitem', { name: 'Fusionar con otra', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Fusionar categorías', level: 1 })).toBeVisible();
   await page
     .getByRole('radiogroup', { name: 'Fusionar con' })
