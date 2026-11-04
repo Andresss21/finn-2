@@ -1,6 +1,8 @@
-// Identidad por tipo de cuenta (05 §10.8.1; 06-identidad-visual 2.10). Fondo y motivo son decorativos: la información
-// va en texto. Una identidad para toda cuenta de efectivo; préstamo con talón; inversión; archivada.
+// Identidad por tipo de cuenta (05 §10.8.1; 06-identidad-visual 2.10; export K5). Fondo y motivo son decorativos: la
+// información va en texto. Una identidad para toda cuenta de efectivo (06-features, ajuste del diseño: 03 no distingue
+// subtipos); préstamo con talón; inversión; archivada. Sin rótulos: nombre, banco · últimos dígitos y el saldo.
 import type { Centavos } from '@finn/dominio/valores';
+import type { CSSProperties, ReactNode } from 'react';
 import { formatearFecha } from '../../formato';
 import { cuentas } from '../../textos/cuentas';
 import { Icono, type NombreIcono } from '../base/icono';
@@ -42,6 +44,7 @@ export type PropsIdentidadCuenta =
   | { readonly tipo: 'archivada'; readonly fila: Ref };
 
 const t = cuentas.cuenta;
+const BASE = 'relative overflow-hidden rounded-identidad text-texto';
 const FONDO = {
   efectivo: 'bg-cuenta-banco',
   prestamo: 'bg-cuenta-prestamo',
@@ -54,28 +57,41 @@ const ICONO: Readonly<Record<PropsIdentidadCuenta['tipo'], NombreIcono>> = {
   inversion: 'trend',
   archivada: 'lock',
 };
-// Motivos decorativos (aria-hidden): libreta, boleto con línea punteada y barras que suben.
-const MOTIVO = {
-  efectivo:
-    'absolute right-0 inset-y-0 w-[70%] bg-[repeating-linear-gradient(0deg,var(--cuenta-motivo)_0_1px,transparent_1px_14px)] [mask-image:linear-gradient(90deg,transparent,#000)]',
-  prestamo: 'absolute right-[103px] inset-y-4 border-l-2 border-dashed border-cuenta-motivo',
-  inversion:
-    'absolute right-3 bottom-3 h-12 w-24 bg-[repeating-linear-gradient(90deg,var(--cuenta-motivo)_0_10px,transparent_10px_16px)] rounded-control',
-  archivada: 'hidden',
-} as const;
+// Motivo decorativo de la cuenta de efectivo: líneas de libreta (1 px cada 14) en el 70 % derecho, desvanecidas.
+const LIBRETA: CSSProperties = {
+  backgroundImage:
+    'repeating-linear-gradient(180deg, transparent 0 13px, var(--cuenta-motivo) 13px 14px)',
+  maskImage: 'linear-gradient(to left, #000 30%, transparent)',
+};
+const BARRAS = [
+  [0, 46, 14],
+  [22, 36, 24],
+  [44, 40, 20],
+  [66, 24, 36],
+  [88, 12, 48],
+  [110, 0, 60],
+] as const;
+
+const Disco = ({ tipo }: { tipo: PropsIdentidadCuenta['tipo'] }) => (
+  <span className="relative flex size-9.5 flex-none items-center justify-center rounded-xl bg-cuenta-disco">
+    <Icono nombre={ICONO[tipo]} tamano={20} />
+  </span>
+);
 
 function Datos({
   nombre,
   detalle,
+  clase = '',
   children,
 }: {
   nombre: string;
   detalle?: string;
-  children: React.ReactNode;
+  clase?: string;
+  children?: ReactNode;
 }) {
   return (
-    <div className="mt-auto">
-      <p className="text-cuerpo font-bold text-texto">{nombre}</p>
+    <div className={['relative flex flex-col gap-0.5', clase].join(' ')}>
+      <p className="text-cuerpo font-bold">{nombre}</p>
       {detalle === undefined || detalle === '' ? null : (
         <p className="text-cuerpo-pequeno text-texto-secundario">{detalle}</p>
       )}
@@ -84,90 +100,110 @@ function Datos({
   );
 }
 
-const Rotulo = ({ children }: { children: React.ReactNode }) => (
-  <span className="mr-1 text-rotulo text-texto-secundario">{children}</span>
-);
-
 export function IdentidadCuenta(props: PropsIdentidadCuenta) {
   const { tipo } = props;
-  let cuerpo: React.ReactNode;
   if (props.tipo === 'efectivo') {
     const f = props.fila;
     const dif = f.ultimaConciliacion?.diferenciaActual ?? 0;
-    cuerpo = (
-      <Datos
-        nombre={f.cuenta.nombre}
-        detalle={[
-          f.institucion,
-          f.ultimos4 === undefined ? undefined : cuentas.tarjeta.ultimos4(f.ultimos4),
-        ]
-          .filter(Boolean)
-          .join(' · ')}
+    return (
+      <article
+        data-identidad={tipo}
+        className={[BASE, FONDO[tipo], 'flex min-h-42 flex-col gap-3 p-4'].join(' ')}
       >
-        <p>
-          <Rotulo>{t.saldo}</Rotulo>
+        <span aria-hidden="true" style={LIBRETA} className="absolute inset-y-0 right-0 w-[70%]" />
+        <Disco tipo={tipo} />
+        <Datos
+          clase="mt-auto"
+          nombre={f.cuenta.nombre}
+          detalle={[
+            f.institucion,
+            f.ultimos4 === undefined ? undefined : cuentas.tarjeta.ultimos4(f.ultimos4),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        >
           <Monto centavos={f.saldo} rol="cifra" />
-        </p>
-        <p>
-          <Rotulo>{t.confirmado}</Rotulo>
-          <Monto centavos={f.saldoConfirmado} rol="cuerpo" />
-        </p>
-        {dif === 0 ? null : <IndicadorEstado estado="advertencia" etiqueta={t.diferencia} />}
-      </Datos>
+          <p className="text-cuerpo-pequeno text-texto-secundario">
+            {t.confirmado} <Monto centavos={f.saldoConfirmado} rol="cuerpo" />
+          </p>
+          {dif === 0 ? null : <IndicadorEstado estado="advertencia" etiqueta={t.diferencia} />}
+        </Datos>
+      </article>
     );
-  } else if (props.tipo === 'prestamo') {
+  }
+  if (props.tipo === 'prestamo') {
     const f = props.fila;
-    cuerpo = (
-      <Datos nombre={f.cuenta.nombre} detalle={f.contraparte}>
-        <p>
-          <Rotulo>{t.capitalPendiente}</Rotulo>
-          <Monto centavos={f.capitalPendiente} rol="cifra" />
-        </p>
-        <p data-talon className="mt-2 text-cuerpo-pequeno">
+    return (
+      <article
+        data-identidad={tipo}
+        className={[BASE, FONDO[tipo], 'grid grid-cols-[1fr_103px]'].join(' ')}
+      >
+        <span
+          aria-hidden="true"
+          className="absolute -top-[11px] right-[92px] size-[22px] rounded-full bg-fondo"
+        />
+        <span
+          aria-hidden="true"
+          className="absolute -bottom-[11px] right-[92px] size-[22px] rounded-full bg-fondo"
+        />
+        <div className="relative flex flex-col gap-3 p-4">
+          <Disco tipo={tipo} />
+          <Datos
+            nombre={f.cuenta.nombre}
+            detalle={`${f.contraparte} · ${t.capitalPendiente.toLowerCase()}`}
+          >
+            <Monto centavos={f.capitalPendiente} rol="cifra" />
+          </Datos>
+        </div>
+        <div
+          data-talon
+          className="relative flex flex-col items-center justify-center gap-0.5 border-l-2 border-dashed border-texto/20 px-2 py-4 text-center"
+        >
           {f.proximaCuota === undefined ? (
-            t.sinModelo
+            <span className="text-cuerpo-pequeno text-texto-secundario">{t.sinModelo}</span>
           ) : (
             <>
-              <Rotulo>{t.cuota}</Rotulo>
-              <span className="font-titulo text-[2.75rem] font-extrabold">
+              <span className="text-rotulo text-texto-secundario">{t.cuota}</span>
+              <span className="font-titulo text-[2.75rem] leading-none font-extrabold">
                 {f.proximaCuota.numero}
-              </span>{' '}
-              <span className="font-bold">{formatearFecha(f.proximaCuota.fecha)}</span>{' '}
-              <Monto centavos={f.proximaCuota.monto} rol="cuerpo" />
+              </span>
+              <span className="text-cuerpo-pequeno font-bold">
+                {formatearFecha(f.proximaCuota.fecha)}
+              </span>
+              <span className="text-cuerpo-pequeno text-texto-secundario">
+                <Monto centavos={f.proximaCuota.monto} rol="cuerpo" />
+              </span>
             </>
           )}
-        </p>
-      </Datos>
+        </div>
+      </article>
     );
-  } else if (props.tipo === 'inversion') {
-    cuerpo = (
-      <Datos nombre={props.fila.cuenta.nombre}>
-        <p>
-          <Rotulo>{t.valor}</Rotulo>
+  }
+  if (props.tipo === 'inversion') {
+    return (
+      <article
+        data-identidad={tipo}
+        className={[BASE, FONDO[tipo], 'flex items-center gap-3.5 px-4 py-4.5'].join(' ')}
+      >
+        <svg aria-hidden="true" width="128" height="60" className="absolute right-3.5 bottom-3.5">
+          {BARRAS.map(([x, y, alto]) => (
+            <rect key={x} x={x} y={y} width="16" height={alto} rx="4" fill="var(--cuenta-motivo)" />
+          ))}
+        </svg>
+        <Disco tipo={tipo} />
+        <Datos clase="flex-1" nombre={props.fila.cuenta.nombre}>
           <Monto centavos={props.fila.valor} rol="cifra" />
-        </p>
-      </Datos>
-    );
-  } else {
-    cuerpo = (
-      <Datos nombre={props.fila.nombre} detalle={t.archivada}>
-        {null}
-      </Datos>
+        </Datos>
+      </article>
     );
   }
   return (
     <article
       data-identidad={tipo}
-      className={[
-        'relative flex min-h-[10.5rem] flex-col gap-3 overflow-hidden rounded-identidad p-4 text-texto',
-        FONDO[tipo],
-      ].join(' ')}
+      className={[BASE, FONDO[tipo], 'flex items-center gap-3.5 p-4'].join(' ')}
     >
-      <span aria-hidden="true" className={MOTIVO[tipo]} />
-      <span className="relative flex size-9.5 items-center justify-center rounded-xl bg-cuenta-disco">
-        <Icono nombre={ICONO[tipo]} tamano={20} />
-      </span>
-      <div className="relative mt-auto">{cuerpo}</div>
+      <Disco tipo={tipo} />
+      <Datos clase="flex-1" nombre={props.fila.nombre} detalle={t.archivada} />
     </article>
   );
 }
