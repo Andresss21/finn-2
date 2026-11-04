@@ -51,6 +51,13 @@ export async function exigirSesionAal2(): Promise<ResultadoSesion> {
   return exigirSesionEscritura(await sesionDeLaPeticion(), usuarioPermitido());
 }
 
+/** El `session_id` del JWT, para la auditoría de OPT-05 (04 §8.7); nunca se muestra. Solo se llama con la sesión ya exigida. */
+export async function sesionIdDeLaPeticion(): Promise<string> {
+  const { data } = await (await clienteAuth()).getClaims();
+  const id = (data?.claims as { readonly session_id?: unknown } | undefined)?.session_id;
+  return typeof id === 'string' ? id : 'sin_sesion';
+}
+
 /** Las funciones de 04 §12.2 sobre las cookies de la petición. La entrada es cruda: la valida su contrato. */
 const conCookies =
   <R>(f: (a: ClienteAuth, usuario: string, cruda: unknown) => Promise<R>) =>

@@ -7,6 +7,8 @@ const config: NextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: '3mb' },
   },
+  // `recheck` (política de patrones de OPT-05, BE-46) lanza un binario nativo propio: empaquetado no lo encuentra.
+  serverExternalPackages: ['recheck'],
   // Los paquetes del workspace se publican como TypeScript (`exports` apunta a `src/*.ts`).
   transpilePackages: [
     '@finn/aplicacion',

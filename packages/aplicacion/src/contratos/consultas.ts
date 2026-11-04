@@ -219,6 +219,7 @@ export const parametrosFormulario = z.discriminatedUnion(
       busqueda: z.string({ error: 'La búsqueda no es válida.' }).max(200).optional(),
     }),
     z.object({ operacion: z.literal('fusionar'), categoriaId: uuid }),
+    z.object({ operacion: z.literal('formato'), formatoId: uuid.optional() }),
     z.object({
       operacion: z.literal('programada'),
       programadaId: uuid.optional(),

@@ -71,10 +71,10 @@ export function FilaPagoTarjeta({
           {...(p.conColor ? { estado: p.estado } : {})}
         />
       </span>
-      <span className="text-cuerpo-pequeno text-texto-secundario">
-        {dominio.disponibleParaPagar} <Monto centavos={fila.disponible} />
-      </span>
-      <span>
+      <span className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <span className="text-cuerpo-pequeno text-texto-secundario">
+          {dominio.disponibleParaPagar} <Monto centavos={fila.disponible} />
+        </span>
         <IndicadorEstado estado={p.estado} etiqueta={p.etiqueta} />
       </span>
     </a>

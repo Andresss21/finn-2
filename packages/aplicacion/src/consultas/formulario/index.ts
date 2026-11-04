@@ -12,6 +12,7 @@ import { cuenta } from './cuenta.ts';
 import { cuota } from './cuota.ts';
 import { devolver } from './devolver.ts';
 import { editar } from './editar.ts';
+import { formato } from './formato.ts';
 import { fusionar } from './fusionar.ts';
 import { meta } from './meta.ts';
 import { movimiento } from './movimiento.ts';
@@ -35,6 +36,7 @@ interface Cuerpos {
   readonly condonar: Awaited<ReturnType<typeof condonar>>;
   readonly devolver: Awaited<ReturnType<typeof devolver>>;
   readonly fusionar: Awaited<ReturnType<typeof fusionar>>;
+  readonly formato: Awaited<ReturnType<typeof formato>>;
   readonly programada: Awaited<ReturnType<typeof programada>>;
   readonly verificar_saldo: Awaited<ReturnType<typeof verificar>>;
 }
@@ -79,6 +81,8 @@ export function formulario(d: DepsConsulta, parametros: unknown): Promise<Formul
             return condonar(c, p);
           case 'devolver':
             return devolver(c, p);
+          case 'formato':
+            return formato(c, p);
           case 'fusionar':
             return fusionar(c, p);
           case 'programada':
