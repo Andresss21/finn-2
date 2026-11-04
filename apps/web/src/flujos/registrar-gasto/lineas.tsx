@@ -108,6 +108,7 @@ export default function LineasDeGasto({
                   error={error(i, 'monto')}
                   requerido
                   compacto
+                  prefijo="$"
                 />
                 {claves.length > 1 ? (
                   <button

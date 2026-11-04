@@ -37,7 +37,10 @@ export function ConfirmacionImpacto({
     encabezado.current?.focus();
   }, []);
   return (
-    <section className="flex flex-col gap-4" aria-labelledby="confirmacion-titulo">
+    <section
+      className="flex flex-col gap-4 rounded-contenedor bg-superficie p-3.5 shadow-elevacion-1"
+      aria-labelledby="confirmacion-titulo"
+    >
       <h2 id="confirmacion-titulo" ref={encabezado} tabIndex={-1} className="text-titulo-seccion">
         {titulo}
       </h2>
