@@ -100,4 +100,32 @@ describe('PRU-CMP-INICIO', () => {
     const completo = montar(<RecordatorioPrimerosPasos pasos={null} />);
     expect(completo.textContent).toBe('');
   });
+
+  it('PRU-CMP-INICIO-225 [CA-04.1] los Primeros pasos van en un contenedor: encabezado con "k de 3" y "Ocultar por ahora" a la derecha, filas de 64 px con círculo de 40 px y subtítulo, y el paso hecho dice "Hecho" sin ser enlace', () => {
+    const nodo = montar(
+      <PrimerosPasosDeInicio pasos={{ cuenta: true, categorias: false, sms: false }} />,
+    );
+    const titulo = nodo.querySelector('h2');
+    expect(titulo?.textContent).toBe(p.titulo);
+    expect(nodo.textContent).toContain(p.progreso(1));
+    const ocultar = boton(nodo, p.ocultar);
+    const arriba = (e: Element | null | undefined) => (e as Element).getBoundingClientRect();
+    expect(Math.abs(arriba(ocultar).top - arriba(titulo).top)).toBeLessThan(30);
+    expect(arriba(ocultar).left).toBeGreaterThan(arriba(titulo).right);
+    expect(arriba(ocultar).height).toBeGreaterThanOrEqual(44);
+    const filas = [...nodo.querySelectorAll('li')];
+    expect(filas).toHaveLength(3);
+    for (const fila of filas) {
+      expect(arriba(fila).height).toBeGreaterThanOrEqual(64);
+      const circulo = fila.querySelector('svg')?.parentElement;
+      expect([arriba(circulo).width, arriba(circulo).height]).toEqual([40, 40]);
+    }
+    expect(arriba(filas[1]?.querySelector('a')).height).toBeGreaterThanOrEqual(44);
+    expect(filas[0]?.querySelector('a')).toBeNull();
+    expect(filas[0]?.textContent).toContain(p.hecho(p.pasos.cuenta));
+    expect(filas[1]?.textContent).toContain(p.detalles.categorias);
+    expect(getComputedStyle(filas[1]?.querySelector('a') as Element).textDecorationLine).toBe(
+      'none',
+    );
+  });
 });

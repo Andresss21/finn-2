@@ -419,7 +419,7 @@
 
   "TA-310": { "estado": "pendiente" },
 
-  "TA-311": { "estado": "pendiente" },
+  "TA-311": { "estado": "terminada", "rama": "ta-311-olvidada", "pr": 347 },
 
   "TA-312": { "estado": "terminada", "rama": "ta-312-cuentas", "pr": 255 },
 
@@ -501,7 +501,7 @@
 
   "TA-431": { "estado": "pendiente" },
 
-  "TA-432": { "estado": "pendiente" },
+  "TA-432": { "estado": "terminada", "rama": "ta-432-ciclo", "pr": 348 },
 
   "TA-433": { "estado": "pendiente" },
 
