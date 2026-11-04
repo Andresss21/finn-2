@@ -66,7 +66,7 @@ export function Consumos({
                     )}
                   </span>
                 </span>
-                <Monto centavos={x.montoNeto} rol="cifra" />
+                <Monto centavos={x.montoNeto} rol="cifra" presentacion="salida" />
               </li>
             );
           })}
