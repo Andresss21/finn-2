@@ -57,9 +57,13 @@ function Cifras({ centavos, grande }: { readonly centavos: Centavos; readonly gr
 
 function Estado({ lpa, lpaNegativo }: Pick<ResumenListoParaAsignarProps, 'lpa' | 'lpaNegativo'>) {
   if (lpaNegativo) {
-    return <IndicadorEstado estado="problema" etiqueta={dominio.billete.asignasteDeMas} />;
+    return (
+      <IndicadorEstado estado="problema" etiqueta={dominio.billete.asignasteDeMas} sobreMarca />
+    );
   }
-  if (lpa === 0) return <IndicadorEstado estado="cero" etiqueta={dominio.billete.todoAsignado} />;
+  if (lpa === 0) {
+    return <IndicadorEstado estado="cero" etiqueta={dominio.billete.todoAsignado} sobreMarca />;
+  }
   return null;
 }
 

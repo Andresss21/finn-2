@@ -111,6 +111,24 @@ describe('PRU-CMP-VAL-005 Monto e IndicadorEstado en el árbol de accesibilidad 
     expect(new Set(formas).size).toBe(ESTADOS.length);
   });
 
+  it.each(ESTADOS)(
+    'PRU-CMP-VAL-190 IndicadorEstado %s es un círculo de 20 px con el glifo y la etiqueta coloreada, sin caja [A.6 §2.4]',
+    (estado, etiqueta) => {
+      document.documentElement.dataset['theme'] = 'claro';
+      const raiz = montar(<IndicadorEstado estado={estado} etiqueta={etiqueta} />);
+      const el = raiz.querySelector('[data-estado]');
+      const clases = el?.className.split(' ') ?? [];
+      expect(clases).toContain(`text-${estado}-texto`);
+      expect(clases.filter((x) => /^(bg|border|rounded|px|py)-/.test(x))).toEqual([]);
+      const circulo = el?.querySelector('span[aria-hidden="true"]');
+      expect(circulo?.className).toContain('size-5');
+      expect(circulo?.className).toContain('rounded-full');
+      expect(circulo?.className).toContain(`bg-${estado}-fondo`);
+      expect(circulo?.querySelector('svg')).not.toBeNull();
+      expect(el?.textContent).toBe(etiqueta);
+    },
+  );
+
   it.each(temas)('PRU-CMP-VAL-005 axe sin violaciones en el tema %s', async (tema) => {
     document.documentElement.dataset['theme'] = tema;
     const raiz = montar(
