@@ -451,7 +451,7 @@
 
   "TA-410": { "estado": "pendiente" },
 
-  "TA-411": { "estado": "pendiente" },
+  "TA-411": { "estado": "en_curso", "rama": "ta-411-reglas" },
 
   "TA-412": { "estado": "pendiente" },
 
