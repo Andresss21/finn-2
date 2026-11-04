@@ -16,7 +16,7 @@ export const COLOR_TEXTO: Readonly<Record<EstadoFinanciero, string>> = {
 };
 
 // Círculo de 20 px con el fondo del estado; el glifo lleva el color de texto del estado (A.6 §2.4, sin cajita).
-const COLOR_CIRCULO: Readonly<Record<EstadoFinanciero, string>> = {
+export const COLOR_CIRCULO: Readonly<Record<EstadoFinanciero, string>> = {
   positivo: 'bg-positivo-fondo text-positivo-texto',
   cero: 'bg-cero-fondo text-cero-texto',
   problema: 'bg-problema-fondo text-problema-texto',
