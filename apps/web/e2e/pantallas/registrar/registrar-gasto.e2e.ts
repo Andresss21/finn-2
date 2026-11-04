@@ -264,7 +264,7 @@ test.describe('PRU-E2E-TX', () => {
     await esperarMonto(pagoTarjeta(page).nth(1), 0);
   });
 
-  test('PRU-E2E-TX-382 desde Registrar elijo un gasto y se abre la página completa del gasto, y un ingreso se abre sobre Registrar y se cierra volviendo a ella', async ({
+  test('PRU-E2E-TX-382 [RUTA-/registrar] desde Registrar elijo un gasto y se abre la página completa del gasto, y un ingreso se abre sobre Registrar y se cierra volviendo a ella', async ({
     page,
   }) => {
     await preparar('2027-02-10', [
@@ -456,7 +456,7 @@ test.describe('PRU-E2E-TX', () => {
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
   });
 
-  test('PRU-E2E-TX-440 [CA-21.1] la cuenta se elige en una selección de 52 px que dice la deuda de la tarjeta y Fecha y Total van en dos columnas', async ({
+  test('PRU-E2E-TX-440 [CA-21.1, RUTA-/registrar/gasto] la cuenta se elige en una selección de 52 px que dice la deuda de la tarjeta y Fecha y Total van en dos columnas', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
