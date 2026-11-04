@@ -28,7 +28,7 @@ const mensualDel17: Programada = {
 const hechos = (p: Programada): Hechos =>
   ({ programadas: [p], ocurrencias_resueltas: [] }) as unknown as Hechos;
 
-describe('PRU-DOM-PROG-102', () => {
+describe('PRU-DOM-PROG registro automático de programadas reactivadas', () => {
   it('PRU-DOM-PROG-102 [CA-40.6] una programada mensual del 17 con registro automático, reactivada el 20 de septiembre, no registra el 20 de septiembre ninguna ocurrencia del tramo inactivo', () => {
     expect(ocurrenciasAutomaticas(hechos(mensualDel17), f('2027-09-20'))).toEqual([]);
     expect(ocurrenciasAutomaticas(hechos(mensualDel17), f('2027-10-17'))).toEqual([
