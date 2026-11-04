@@ -1,0 +1,123 @@
+// FT-73 Formatos bancarios (07 §17: un texto, un estado o el foco de un componente es una CMP). El formulario solo dibuja lo que trae
+// `formulario({ operacion: 'formato' })` y arma la entrada de OPT-05: la política del patrón la aplica el servidor y la prueban
+// el dominio, la integración y la E2E.
+import axe from 'axe-core';
+import { act, type ReactNode } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
+import '../../app/globals.css';
+import { ajustesFormatos as t } from '../../textos/ajustes-formatos';
+import { FormularioFormato, type PropsFormularioFormato } from './formulario';
+
+// `next/navigation` necesita `process`: el enrutador se simula para ver adónde manda el marco del flujo.
+const replace = vi.fn();
+vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ replace }) }));
+
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+const montados: { raiz: Root; nodo: HTMLElement }[] = [];
+afterEach(() => {
+  for (const { raiz, nodo } of montados.splice(0)) {
+    act(() => {
+      raiz.unmount();
+    });
+    nodo.remove();
+  }
+  replace.mockClear();
+  sessionStorage.clear();
+});
+
+function montar(ui: ReactNode): HTMLElement {
+  document.body.style.cssText = 'background: var(--fondo); color: var(--texto)';
+  const nodo = document.createElement('div');
+  document.body.append(nodo);
+  const raiz = createRoot(nodo);
+  act(() => {
+    raiz.render(ui);
+  });
+  montados.push({ raiz, nodo });
+  return nodo;
+}
+
+const BAC = '11111111-1111-4111-8111-111111111111';
+const FORMATO_ID = '22222222-2222-4222-8222-222222222222';
+const ok = <T,>(valor: T) =>
+  Promise.resolve({ ok: true as const, valor, yaAplicada: false, avisos: [] });
+const formato = {
+  id: FORMATO_ID,
+  institucion: { id: BAC, nombre: 'BAC' },
+  nombre: 'BAC compra',
+  tipoMovimiento: 'compra',
+  patron: String.raw`(?<ultimos4>\d{4}) (?<monto>[\d.]+)`,
+  banderas: 'i',
+  montoSeparadorMiles: ',',
+  montoSeparadorDecimal: '.',
+  formatosFecha: ['AAAA/MM/DD'],
+  activo: true,
+};
+const base = (extra: Partial<PropsFormularioFormato> = {}): PropsFormularioFormato => ({
+  guardar: vi.fn(() => ok({ formatoId: FORMATO_ID, accion: 'editar' })),
+  instituciones: [{ id: BAC, nombre: 'BAC' }],
+  formato,
+  ...extra,
+});
+
+const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement => {
+  const b = [...nodo.querySelectorAll('button')].find((x) => x.textContent === texto);
+  if (b === undefined) throw new Error(`no hay un botón «${texto}»`);
+  return b;
+};
+const tocar = async (nodo: HTMLElement, texto: string): Promise<void> => {
+  await act(async () => {
+    boton(nodo, texto).click();
+    await Promise.resolve();
+  });
+};
+
+describe('PRU-CMP-AJUS', () => {
+  it('PRU-CMP-AJUS-121 [CA-73.1] editar manda el id del formato con lo escrito y un rechazo de la política se ve en el campo del patrón', async () => {
+    const mensaje = 'El patrón puede tardar demasiado (grado 3). Simplificalo.';
+    const props = base({
+      guardar: vi.fn(() =>
+        Promise.resolve({
+          ok: false as const,
+          error: {
+            categoria: 'VALIDACION' as const,
+            codigo: 'patron_lento',
+            mensaje,
+            campos: { patron: mensaje },
+          },
+        }),
+      ),
+    });
+    const nodo = montar(<FormularioFormato {...props} />);
+    const nombre = nodo.querySelector<HTMLInputElement>('input:not([type=checkbox])');
+    if (nombre === null) throw new Error('no hay campo de nombre');
+    await act(async () => {
+      await userEvent.fill(nombre, 'BAC compra 2');
+    });
+    await tocar(nodo, t.guardar);
+    expect(props.guardar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: FORMATO_ID,
+        modo: 'confirmar',
+        nombre: 'BAC compra 2',
+        institucionId: BAC,
+        formatosFecha: ['AAAA/MM/DD'],
+        activo: true,
+      }),
+    );
+    expect(nodo.textContent).toContain(mensaje);
+    expect(
+      nodo.querySelector('[aria-invalid="true"]')?.getAttribute('aria-describedby'),
+    ).not.toBeNull();
+  });
+
+  it('PRU-CMP-AJUS-122 [FT-73] la pantalla de crear un formato no tiene violaciones de accesibilidad', async () => {
+    const nodo = montar(
+      <FormularioFormato guardar={base().guardar} instituciones={base().instituciones} />,
+    );
+    expect((await axe.run(nodo)).violations).toEqual([]);
+  });
+});

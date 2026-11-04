@@ -462,7 +462,7 @@ tu: TU-11, TU-12, TU-16
 
 ```hito
 despues: TA-447
-requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-468, TA-473, TA-474, TA-414, TA-415, TA-416, TA-417, TA-445, TA-418, TA-419, TA-420, TA-421, TA-453, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-466, TA-467, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
+requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-468, TA-473, TA-474, TA-414, TA-415, TA-416, TA-417, TA-445, TA-418, TA-419, TA-420, TA-421, TA-453, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-466, TA-472, TA-467, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
 hitos: HT-2, HT-3, HT-7
 sin_pendientes: si
 tu: —
@@ -1600,6 +1600,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-125** | La ficha FT-73 se parte en tres (TA-433, TA-466, TA-467) porque superaba DT-01: medida contra `main`, daba ~1.050 líneas de producción en ~27 archivos (tope 400 y 12; con el 30 % de excepción, 520 y 15), y aun solo los formatos pasaban de 820 líneas. Hallazgos que la causaron o aparecieron al construirla: (a) el contexto `formulario({ operacion: 'formato' })` de 04 §6.14.4 no existía: TA-198 no lo entregó, y TA-433 lo crea con `leerSmsParaProbar` en `@finn/db` y el caso en `parametrosFormulario` (solo adiciones en `packages/aplicacion`); (b) `recheck`, que aplica la política de patrones de OPT-05 (BE-46), lanza un binario nativo propio y bajo Turbopack fallaba con `INTERNO`: se agrega `serverExternalPackages: ['recheck']` en `apps/web/next.config.ts`; (c) los tres formatos sembrados por la migración tienen grado de retroceso 3 y no pasan la política, así que guardar o desactivar uno se rechaza con `patron_lento` hasta que FX-1 los reescriba con las muestras: las E2E de TA-466 crean un formato propio; (d) `session_id` para la auditoría de OPT-05 no llega con `exigirSesionAal2()`: `servidor/sesion.ts` suma `sesionIdDeLaPeticion()`. Reparto: TA-433 (base y lista de formatos, `RUTA-/ajustes/formatos`), TA-466 (formulario de formatos, CA-73.1 a CA-73.6 y las rutas `nuevo` y `[formatoId]`; cierra FT-73) y TA-467 (instituciones, sus tres rutas), con TA-466 y TA-467 dependientes de TA-433 | 08 TA-433, TA-466, TA-467; 06 FT-73; 04 §6.14.4, §8.5 | Delegado por el orquestador; **aplicado [CH-125]** en 08 |
 | **CH-126** | Registrar gasto (S5) portado del export de diseño, parte 1 de 2 (corrección posterior a TA-292, FT-21; el trabajo excede DT-01 incluso con el 30 %, y se parte en CH-126 y CH-127). (a) **Síntoma:** la auditoría visual del 2026-11-03 (§1 punto 2; §2.6 diferencias 1 a 6 y 8; §3 filas Selección, EntradaFecha, EntradaMonto y Líneas) halló en `/registrar/gasto` la cuenta como lista de radios en lugar de la selección de 52 px con ícono, nombre en 600, «Deuda $642.18» y `chevD`; Fecha y Total apilados, con el Total sin el prefijo «$» y con la línea «Se entiende como…»; cada parte como una tarjeta con «Parte n», «Quitar la parte n», un selector Categoría / Por cobrar y su campo, en lugar de la sección «Dividir · opcional · N líneas» con filas `[selección 1fr][monto 120][× 44]`; «Agregar una parte» como botón tonal a todo el ancho; un «Todo repartido» en negrita en lugar de «Suma de las líneas $X de $Y»; y «Guardar gasto» como botón al final del formulario en lugar del pie fijo «Guardar $X». (b) **Causa:** TA-292 construyó la pantalla desde 05 §2.4 y §10.7 sin partir del HTML de `pantallas/S5-Registrar__*`, de `componentes/K4-…lineas-de-un-gasto-dividido` ni de `K2-…seleccion` del export (CH-107). (c) **Resolución:** se porta el marcado y las medidas del export conservando la lógica, los textos del catálogo, los roles y los `data-*` de las pruebas. **Parte 1 (este CH):** nuevo `base/seleccion-nativa.tsx` (un `<select>` nativo transparente sobre el campo relleno de 48 o 52 px, con ícono, nombre, detalle y `chevD`; sin Radix ni radios, así que no suma JS de biblioteca; `Seleccion` no se toca porque la usan Mover, Cuentas y Revisar movimiento); la cuenta usa esa selección con el detalle del DTO («Deuda $…» de la tarjeta, saldo del efectivo) formateado en `lector.tsx`; Fecha y Total en dos columnas; `flujos/registrar-gasto/lineas.tsx` (nuevo): «Dividir · opcional», «N líneas», una fila por línea con el destino en una sola selección que agrupa las categorías y «<persona> (me lo debe)» (K4; sale el selector segmentado de cada parte y «Otra persona» pide el nombre debajo), monto compacto de 120 px alineado a la derecha, × de 44 px, «+ Agregar línea» discreto y «Suma de las líneas $X de $Y» con la misma suma que ya alimentaba la ayuda de PF-3 (`sumarMontosEscritos`; no hay cálculo nuevo); «Falta repartir» solo aparece si falta o sobra; `Campo` y `EntradaMonto` aceptan `etiquetaOculta` y `compacto`; «Guardar $X» (el total ya parseado de `formatearMontoTexto`; «Guardar gasto» mientras no hay un total válido) va en el pie fijo de `PaginaFlujo` (`acciones`) como botón de envío del formulario (`form=`). `parte.tsx` y `campo-lineas.tsx` quedan como están porque Revisar movimiento (FT-35) los usa. **Diferencia del prototipo, rige P6-27 a):** el bloque «Antes de guardar» del prototipo NO va en S5; mandan sobre el prototipo y sobre 06-identidad-visual:461 06-features:4537 y :4608 («el bloque se quita», P6-27 a), CA-21.12 («se guarda sin previsualizar»), 05:744 y FE-07: `ConfirmacionImpacto` se muestra solo cuando el servidor pide confirmar (AV-01) y no se agrega ninguna previsualización. No hace falta enmendar documentos. **Parte 2 (CH-127, rama local `ch-127-registrar-gasto-2`):** prefijo «$» del Total y fuera «Se entiende como…» y «Fecha elegida…»; resultado de guardado (A.6 §2.13) con el monto de cada línea, «Registrar otro» tonal, «Volver a Inicio» y los enlaces a cada categoría; el aviso AV-07 con su texto del catálogo en lugar del código crudo; el contenedor K4 «confirmacion-del-impacto» para `ConfirmacionImpacto`; y computadora a dos columnas iguales. **Fecha:** queda la `EntradaFecha` nativa; el calendario del diseño va en otra corrección. (d) **Archivos:** `apps/web/src/componentes/base/{seleccion-nativa.tsx,campo.tsx}`, `apps/web/src/componentes/formularios/entrada-monto.tsx`, `apps/web/src/flujos/registrar-gasto/{formulario.tsx,lineas.tsx,campos.ts,lector.tsx}`, `apps/web/src/textos/registrar-gasto.ts`, sus pruebas (`seleccion-nativa.cmp.test.tsx`, `lineas.cmp.test.tsx`, `campos.test.ts`, `registrar-gasto.e2e.ts`, `olvidada.e2e.ts`, `ayudas/esperas.ts`) y esta fila. (e) **Prueba:** PRU-CMP-TX-440 (nuevas, proyecto `componentes`) exige la selección nativa con nombre accesible, ícono, detalle, 52 y 48 px, grupos y `aria-invalid`, sin radios y sin violaciones de axe en los dos temas; PRU-CMP-TX-441 a 443 exigen las líneas compactas, la suma contra el total, el destino de una sola selección con «otra persona» y agregar y quitar; PRU-DOM-TX-440 exige que el destino compacto vaya y vuelva entre los tres campos de la parte; PRU-E2E-TX-440 a 442 (nuevas) miden la cuenta de 52 px con «Deuda $0.00», Fecha y Total en dos columnas, las filas `[selección][monto 120][× 44]` y el botón «Guardar $X» en el pie. Las E2E existentes de TX (376 a 394 y 430 a 433) cambian solo el gesto (elegir en la selección en lugar de pulsar un radio, y «Guardar $X» en lugar de «Guardar gasto») y no cambian ninguna cifra. PRU-REN-PWA-002: `/registrar/gasto` pasa de ≈ 49,7 KB a 22,1 KB (compartido 164,4 KB; `/cuentas/nueva` 49,7 KB) | 06 FT-21, P6-27 a), CA-21.12; 06-identidad-visual 2.2, 2.3; A.6; 08 TA-292, CH-107 | Delegado por el orquestador; **aplicado [CH-126]** en 08 |
 | **CH-127** | Registrar gasto (S5) portado del export de diseño, parte 2 de 2 (corrección posterior a TA-292, FT-21; continúa CH-126). (a) **Síntoma:** tras CH-126 quedaban en `/registrar/gasto` el Total sin el prefijo «$», las líneas «Se entiende como…» y «Fecha elegida…», el aviso AV-07 mostrado con el código crudo, un resultado de guardado sin el monto de cada línea ni «Registrar otro» y «Volver a Inicio» como en A.6 §2.13, y la computadora en una sola columna. (b) **Causa:** CH-126 se partió por tamaño (DT-01) y esta parte quedó pendiente. (c) **Resolución:** prefijo «$» del Total y fuera «Se entiende como…» y «Fecha elegida…»; resultado de guardado (A.6 §2.13) con el monto de cada línea, «Registrar otro» tonal, «Volver a Inicio» y un enlace a cada categoría (CA-21.12); AV-07 con su texto del catálogo (`textoDeAviso`); contenedor K4 «confirmacion-del-impacto» para `ConfirmacionImpacto`, que sigue saliendo solo con AV-01 (rige P6-27 a: no hay «Antes de guardar»); computadora en dos columnas iguales, con la prop opcional `ancha` de `PaginaFlujo` (los demás flujos no la pasan y no cambian). (d) **Archivos:** `apps/web/src/componentes/base/campo.tsx`, `apps/web/src/componentes/formularios/{confirmacion-impacto,entrada-fecha,entrada-monto}.tsx`, `apps/web/src/componentes/marco/pagina-flujo.tsx`, `apps/web/src/flujos/registrar-gasto/{campos.ts,formulario.tsx,lineas.tsx,resultado-gasto.tsx}`, `apps/web/src/textos/registrar-gasto.ts`, sus pruebas (`campos.test.ts`, `registrar-gasto.e2e.ts`) y esta fila. (e) **Prueba:** PRU-E2E-TX-443 [CA-21.12] exige el resultado con el monto de cada línea, los enlaces a cada categoría, «Registrar otro» y «Volver a Inicio»; PRU-E2E-TX-444 [CA-21.1] exige la computadora en dos columnas iguales; `campos.test.ts` cubre el texto de AV-07. No cambia ninguna cifra | 06 FT-21, P6-27 a), CA-21.12; A.6 §2.13; 08 TA-292, CH-126 | Delegado por el orquestador; **aplicado [CH-127]** en 08 |
+| **CH-131** | TA-466 (formulario de formatos, CH-125) se parte en dos porque, medida contra `main`, la parte de crear y editar más la de probar contra un SMS daba ~575 líneas de producción (tope con el 30 % de excepción: 520). Reparto: TA-466 (2a) crea y edita un formato (CA-73.1, CA-73.2, CA-73.4 y CA-73.5, rutas `nuevo` y `[formatoId]`) y TA-472 (2b) agrega el panel de probar contra un SMS sin guardar (OPT-06, CA-73.3: `probar.tsx`, sus textos y PRU-CMP-AJUS-120 y 123), dependiente de TA-466. TA-472 cierra el trozo de formulario de FT-73; `pruebas/features.json` pasa FT-73 a `terminada` en el último PR de la ficha entre TA-472 y TA-467 | 08 TA-466, TA-472; 06 FT-73 | Delegado por el orquestador; **aplicado [CH-131]** en 08 |
 
 ---
 
@@ -9476,7 +9477,7 @@ compartido: —
 | FT-70 | M | Push de la bandeja con acciones | 7 | TA-429 | — | CA-34.4 |
 | FT-71 | M | Push de programadas, cierre, metas, tarjetas y sistema | 14 | TA-430, TA-431 | — | CA-16.5 |
 | FT-72 | M | Cambiar el ciclo | 6 | TA-432 | `/ajustes/ciclo` | — |
-| FT-73 | M | Formatos bancarios e instituciones | 6 | TA-433, TA-466, TA-467 | `/ajustes/formatos`, `/ajustes/formatos/[formatoId]`, `/ajustes/formatos/nuevo`, `/ajustes/instituciones`, `/ajustes/instituciones/[institucionId]`, `/ajustes/instituciones/nueva` | — |
+| FT-73 | M | Formatos bancarios e instituciones | 6 | TA-433, TA-466, TA-472, TA-467 | `/ajustes/formatos`, `/ajustes/formatos/[formatoId]`, `/ajustes/formatos/nuevo`, `/ajustes/instituciones`, `/ajustes/instituciones/[institucionId]`, `/ajustes/instituciones/nueva` | — |
 | FT-74 | M | Factores y sesiones | 4 | TA-434 | `/ajustes/seguridad`, `/ajustes/seguridad/factores/[factorId]/quitar` | — |
 | FT-75 | M | Exportar | 3 | TA-435 | `/ajustes/exportar` | — |
 | FT-76 | M | Respaldo y diagnóstico | 4 | TA-436 | `/ajustes/diagnostico`, `/ajustes/respaldo` | — |
@@ -10864,7 +10865,7 @@ fichas: FT-73
 
 **Terminada cuando.** La ruta con su prueba en verde; la ficha sigue `en_curso`.
 
-#### TA-466 FT-73 Formatos bancarios e instituciones: formulario de formatos (2 de 3) **[CH-125]**
+#### TA-466 FT-73 Formatos bancarios e instituciones: formulario de formatos, crear y editar (2a de 3) **[CH-125, CH-131]**
 
 ```tarea
 orden: 691
@@ -10874,15 +10875,15 @@ depende: TA-210, TA-212, TA-219, TA-224, TA-172, TA-173, TA-195, TA-198, TA-295,
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=400 archivos=9 ca=6 migraciones=0 total=900
-cubre: CA-73.1, CA-73.2, CA-73.3, CA-73.4, CA-73.5, CA-73.6, RUTA-/ajustes/formatos/[formatoId], RUTA-/ajustes/formatos/nuevo
+tamano: prod=400 archivos=9 ca=4 migraciones=0 total=620
+cubre: CA-73.1, CA-73.2, CA-73.4, CA-73.5, RUTA-/ajustes/formatos/[formatoId], RUTA-/ajustes/formatos/nuevo
 pru: —
 compartido: —
 fichas: FT-73
 ```
 
 **Qué construir.**
-- FT-73: los flujos de crear y editar un formato (OPT-05) y de probarlo contra un SMS sin guardar (OPT-06), para CA-73.1 a CA-73.5 y CA-73.6 (manual). **Portar desde la rama local `ta-466-formatos-formulario`**, que tiene el código y sus pruebas completos (`flujos/ajustes-formatos-formato/`, `flujos/ajustes-formatos-nuevo/`, sus dos páginas, los textos del formulario y PRU-CMP-AJUS-120 a 123 y PRU-E2E-AJUS-120 a 123); recortar lo de Instituciones, que es de TA-467.
+- FT-73: los flujos de crear y editar un formato (OPT-05), para CA-73.1, CA-73.2, CA-73.4 y CA-73.5. **Portar desde la rama local `ta-466-formatos-formulario`** (`flujos/ajustes-formatos-formato/`, `flujos/ajustes-formatos-nuevo/`, sus dos páginas, los textos del formulario, PRU-CMP-AJUS-121 y 122 y PRU-E2E-AJUS-120 a 123); recortar lo de Instituciones (TA-467) y el panel de probar contra un SMS (`probar.tsx`, CA-73.3), que es de TA-472 **[CH-131]**.
 - Rutas que esta tarea crea (dueña): `/ajustes/formatos/nuevo` y `/ajustes/formatos/[formatoId]`, con `ejemplosDeRuta` en `apps/web/presupuestos.json`.
 - Los formatos sembrados no pasan la política (grado 3, 03 §9.5): las E2E crean uno propio.
 - Último PR de la ficha: `pruebas/features.json` pasa FT-73 a `terminada` (07 §27), con PRU-MAN-BAND-004 (CA-73.6) pendiente.
@@ -10897,6 +10898,39 @@ fichas: FT-73
 **Comandos.** `pnpm pruebas:ft FT-73` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
 
 **Terminada cuando.** Los CA de este trozo con su prueba en verde, la ficha en `terminada` (07 §27, con el manual pendiente) y, si completa pendientes, sus E2E en verde.
+
+#### TA-472 FT-73 Formatos bancarios e instituciones: formulario de formatos, probar contra un SMS (2b de 3) **[CH-125, CH-131]**
+
+```tarea
+orden: 693
+bloque: B7
+hito: HT-8
+depende: TA-466
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=160 archivos=4 ca=2 migraciones=0 total=300
+cubre: CA-73.3, CA-73.6
+pru: —
+compartido: —
+fichas: FT-73
+```
+
+**Qué construir.**
+- FT-73: probar un formato en edición contra un SMS sin reconocer o con error, sin guardar (OPT-06), para CA-73.3, y CA-73.6 (manual). **Portar desde la rama local `ta-466-formatos-formulario`**: `flujos/ajustes-formatos-formato/probar.tsx` (con `CAJA_SELECT` ya en `formulario.tsx`), el bloque `probar` de `textos/ajustes-formatos.ts`, el cableado en `formulario.tsx` y los dos `lector.tsx` (`probarFormatoContraSms`, `smsParaProbar`), y PRU-CMP-AJUS-120 y 123.
+- No crea rutas.
+- Último PR de la ficha entre esta y TA-467: `pruebas/features.json` pasa FT-73 a `terminada` (07 §27), con PRU-MAN-BAND-004 (CA-73.6) pendiente.
+
+**Leer.** 06 FT-73 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas) y §7; 04 §6 (sus consultas); 06-identidad-visual §3, si su pantalla está en las capturas.
+
+**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/<area>.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
+
+**Pruebas primero.**
+- Una prueba por CA de este trozo en el nivel de 07 §17 (DT-21), con el CA entre corchetes.
+
+**Comandos.** `pnpm pruebas:ft FT-73` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** CA-73.3 con su prueba en verde y la ficha en `terminada` si TA-467 ya cerró (07 §27, con el manual pendiente).
 
 #### TA-467 FT-73 Formatos bancarios e instituciones: instituciones (3 de 3) **[CH-125]**
 
@@ -10928,7 +10962,7 @@ fichas: FT-73
 
 **Comandos.** `pnpm pruebas:ft FT-73` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
 
-**Terminada cuando.** Las tres rutas con su prueba en verde; la ficha sigue `en_curso` si TA-466 no cerró, o ya está `terminada`.
+**Terminada cuando.** Las tres rutas con su prueba en verde; la ficha sigue `en_curso` si TA-466 o TA-472 no cerraron, o ya está `terminada`.
 
 #### TA-434 FT-74 Factores y sesiones
 
@@ -11671,8 +11705,9 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 743 | TA-447 | B7 | HT-8 | normal | Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta | 40 | 0 |
 | 744 | TA-470 | B7 | HT-9 | obligatoria | Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03) | 80 | 1 |
 | 745 | TA-550 | B6 | HT-9 | obligatoria | Presupuestos de rendimiento sobre las pantallas reales **[CH-51]** | 150 |
-| 691 | TA-466 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: formulario de formatos (2 de 3) **[CH-125]** | 400 | 0 |
+| 691 | TA-466 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: formulario de formatos, crear y editar (2a de 3) **[CH-125, CH-131]** | 400 | 0 |
 | 692 | TA-467 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: instituciones (3 de 3) **[CH-125]** | 240 | 0 |
+| 693 | TA-472 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: formulario de formatos, probar contra un SMS (2b de 3) **[CH-125, CH-131]** | 160 | 0 |
 | 741 | TA-453 | B7 | HT-8 | normal | FT-60 Reportes base: categorías, comercios, cumplimiento y filtros (2 de 2) **[CH-93]** | 400 | 0 |
 | 900 | TA-500 | B8 | — | normal | FT-56 Desembolso de préstamo | 360 | 0 |
 | 901 | TA-501 | B8 | — | normal | FT-58 Modelos de préstamo de otros bancos | 360 | 0 |
