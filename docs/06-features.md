@@ -519,7 +519,7 @@ La columna "Piezas principales" es orientativa; la trazabilidad completa está e
 | FT-55 | Condiciones y tabla de amortización | M | Informativa; la cuota se paga sin ella | OP-48, Anexo A de 01 |
 | FT-56 | Desembolso de préstamo | P | Ocasional; un préstamo en curso se crea con su saldo (P13) | OP-26 |
 | FT-57 | Inversiones: aporte, retiro y ajuste | M | Mensual en algunos casos; no bloquea el presupuesto | OP-25 |
-| FT-58 | Modelos de préstamo de otros bancos | P | 01 Anexo A solo define Banco Agrícola | — |
+| FT-58 | Modelos de préstamo de otros bancos | P | 01 Anexo A solo define Banco Agrícola. **Diferida [CH-119]** | — |
 | FT-59 | Proyección de inversiones | P | 01 A.3 no tiene modelo de rendimiento | — |
 
 #### Reportes
@@ -3667,6 +3667,8 @@ Reglas comunes a todas las fichas:
 **Dependencias.** FT-50.
 
 #### FT-58 Modelos de préstamo de otros bancos [P]
+
+**Diferida [CH-119].** Sin un segundo banco real no hay estado de cuenta contra el cual validar CA-58.1; la ficha queda diferida y TA-501 `bloqueada` («diferida CH-119»). Se reactiva con un anexo del banco, sus reglas en formato A.2 y un ejemplo numérico de un estado de cuenta real. Los CA siguen como están.
 
 **Objetivo.** Agregar modelos de cálculo para préstamos de otras instituciones, con el mismo contrato que el de Banco Agrícola.
 
