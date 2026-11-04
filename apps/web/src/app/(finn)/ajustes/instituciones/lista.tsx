@@ -23,7 +23,11 @@ export function ListaInstituciones({
         ) : (
           <ul className="overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
             {instituciones.map((i) => (
-              <li key={i.id} data-institucion className="border-b border-borde-sutil last:border-b-0">
+              <li
+                key={i.id}
+                data-institucion
+                className="border-b border-borde-sutil last:border-b-0"
+              >
                 <EnlaceFinn
                   href={`/ajustes/instituciones/${i.id}`}
                   className="flex min-h-14 items-center px-4 py-3 font-semibold"
