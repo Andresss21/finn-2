@@ -164,8 +164,8 @@ const ESC03: Op[] = [
 ];
 
 /**
- * Lo que `posteriores()` registrará al producir AV-01 (BE-38): todavía ninguna operación lo hace (lo completa FT-27, pendiente de
- * punta a punta en `pendientes-e2e.json`), así que la semilla agrega la notificación con la cifra del paso 1 de ESC-31.
+ * Lo que el marco registra al producir AV-01 (BE-38). Esta prueba de Inicio parte del estado del paso 0 de ESC-31 y siembra la
+ * notificación con la cifra del paso 1; el recorrido que la produce de verdad (registrar el débito olvidado) es de FT-27.
  */
 const CAMBIO_RETROACTIVO = {
   aviso: 'AV-01',
@@ -291,7 +291,7 @@ test.describe('PRU-E2E-INICIO', () => {
   test('PRU-E2E-INICIO-134 [CA-08.5, ESC-31] con el cambio retroactivo del paso 1 de ESC-31 Inicio muestra su resumen; "Marcar como leído" lo quita y no vuelve al recargar', async ({
     page,
   }) => {
-    await sembrarOps(ESC31, '2027-04-05', [CAMBIO_RETROACTIVO]);
+    await sembrarOps(ESC31.slice(0, -1), '2027-04-05', [CAMBIO_RETROACTIVO]);
     await abrir(page);
     const cambio = page.locator('[data-cambio-retroactivo]');
     await expect(cambio).toHaveCount(1);
