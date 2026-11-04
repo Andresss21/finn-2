@@ -3,6 +3,7 @@
 import { actividad } from './actividad.ts';
 import { ajustesCiclo } from './ajustes-ciclo.ts';
 import { ajustesFormatos } from './ajustes-formatos.ts';
+import { ajustesInstituciones } from './ajustes-instituciones.ts';
 import { ajustesExportar } from './ajustes-exportar.ts';
 import { ajustesApariencia } from './ajustes-apariencia.ts';
 import { ajustesWebhook } from './ajustes-webhook.ts';
@@ -43,6 +44,7 @@ export {
   actividad,
   ajustesCiclo,
   ajustesFormatos,
+  ajustesInstituciones,
   ajustesExportar,
   ajustesApariencia,
   ajustesWebhook,
@@ -86,6 +88,7 @@ export const areas = [
   ['actividad', actividad],
   ['ajustesCiclo', ajustesCiclo],
   ['ajustesFormatos', ajustesFormatos],
+  ['ajustesInstituciones', ajustesInstituciones],
   ['ajustesExportar', ajustesExportar],
   ['ajustesApariencia', ajustesApariencia],
   ['ajustesWebhook', ajustesWebhook],

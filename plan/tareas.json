@@ -507,7 +507,7 @@
 
   "TA-466": { "estado": "pendiente" },
 
-  "TA-467": { "estado": "pendiente" },
+  "TA-467": { "estado": "en_curso", "rama": "ta-467-instituciones-ui" },
 
   "TA-434": { "estado": "pendiente" },
 
