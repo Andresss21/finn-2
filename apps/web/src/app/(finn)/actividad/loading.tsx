@@ -4,7 +4,6 @@
 import { estados } from '../../../textos/estados';
 import { actividad as t } from '../../../textos/actividad';
 
-const BLOQUE = 'rounded-control bg-superficie-hundida motion-safe:animate-pulse';
 const FILAS = [0, 1, 2, 3] as const;
 
 export default function Cargando() {
@@ -13,7 +12,10 @@ export default function Cargando() {
       <h1 className="text-titulo-pantalla">{t.titulo}</h1>
       <div role="status" aria-busy="true" className="flex flex-col gap-4">
         <span className="sr-only">{estados.cargando}</span>
-        <div aria-hidden="true" className={`h-12 w-full ${BLOQUE}`} />
+        <div
+          aria-hidden="true"
+          className="h-12 w-full rounded-control bg-superficie-hundida motion-safe:animate-pulse"
+        />
         <ul
           aria-hidden="true"
           className="flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie"
@@ -23,12 +25,12 @@ export default function Cargando() {
               key={i}
               className="grid min-h-16 grid-cols-[2.25rem_1fr_auto] items-center gap-2.5 px-4 py-2"
             >
-              <span className={`size-9 ${BLOQUE}`} />
+              <span className="size-9 rounded-control bg-superficie-hundida motion-safe:animate-pulse" />
               <span className="flex flex-col gap-1.5">
-                <span className={`h-4 w-3/5 ${BLOQUE}`} />
-                <span className={`h-3 w-2/5 ${BLOQUE}`} />
+                <span className="h-4 w-3/5 rounded-control bg-superficie-hundida motion-safe:animate-pulse" />
+                <span className="h-3 w-2/5 rounded-control bg-superficie-hundida motion-safe:animate-pulse" />
               </span>
-              <span className={`h-5 w-16 ${BLOQUE}`} />
+              <span className="h-5 w-16 rounded-control bg-superficie-hundida motion-safe:animate-pulse" />
             </li>
           ))}
         </ul>

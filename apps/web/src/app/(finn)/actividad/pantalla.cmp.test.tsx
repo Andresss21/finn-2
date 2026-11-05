@@ -196,7 +196,7 @@ const conCuentas = (
 });
 
 describe('PRU-CMP-TX-460 actividad del diseño', () => {
-  it('PRU-CMP-TX-460 [FT-24 Flujo 2] los días se rotulan «Hoy · …», «Ayer · …» y «Domingo …», cada uno con su lista', () => {
+  it('PRU-CMP-TX-460 los días se rotulan «Hoy · …», «Ayer · …» y «Domingo …», cada uno con su lista', () => {
     const raiz = mostrar(
       dto([
         { fecha: '2027-02-21', transacciones: [fila('a', 'gasto', 'A', -100)] },
@@ -209,7 +209,7 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
     expect(raiz.querySelectorAll('[data-dia] ul')).toHaveLength(3);
   });
 
-  it('PRU-CMP-TX-460 [FT-24 Flujo 2] la fila dice la cuenta y la categoría, «n partes» o origen → destino, y cada marca con su texto', () => {
+  it('PRU-CMP-TX-460 la fila dice la cuenta y la categoría, «n partes» o origen → destino, y cada marca con su texto', () => {
     const raiz = mostrar(
       dto([
         {
@@ -243,7 +243,7 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
     expect(texto('tr')).toContain('Programada');
   });
 
-  it('PRU-CMP-TX-460 [FT-24 Estados] los filtros activos son fichas con su «x» que quitan solo ese filtro y conservan el texto', () => {
+  it('PRU-CMP-TX-460 los filtros activos son fichas con su «x» que quitan solo ese filtro y conservan el texto', () => {
     const raiz = mostrar(dto([]), {
       texto: 'sel',
       cuenta: 'k1',
@@ -264,7 +264,7 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
     expect(raiz.querySelector('summary')?.getAttribute('aria-label')).toBe('Filtros, 4 activos');
   });
 
-  it('PRU-CMP-TX-460 [FT-24 Flujo 1] cada filtro de lista es un select nativo con su etiqueta, su nombre y la opción de la URL elegida', () => {
+  it('PRU-CMP-TX-460 cada filtro de lista es un select nativo con su etiqueta, su nombre y la opción de la URL elegida', () => {
     const raiz = mostrar(dto([]), { categoria: 'c1', cuenta: 'k1' });
     const lista = (etiqueta: string) => {
       const id = [...raiz.querySelectorAll('label')].find(
@@ -284,7 +284,7 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
     expect(lista('Tipo')?.value).toBe('');
   });
 
-  it('PRU-CMP-TX-460 [FT-24 Estados] el estado de carga anuncia «Cargando la pantalla» una vez y no dibuja números', () => {
+  it('PRU-CMP-TX-460 el estado de carga anuncia «Cargando la pantalla» una vez y no dibuja números', () => {
     const nodo = document.createElement('div');
     document.body.append(nodo);
     const raiz = createRoot(nodo);
