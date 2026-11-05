@@ -96,7 +96,11 @@ test.describe('PRU-E2E-BAND', () => {
     await abrirBandeja(page, 'noReconocido');
     await filas(page).getByRole('link', { name: cuentas.bandeja.registrarAMano }).click();
     await expect(page.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
-    await expect(page.getByText(texto, { exact: true })).toBeVisible();
+    const panel = page.locator('main[data-pagina-flujo]');
+    await expect(panel.getByText(texto, { exact: true })).toBeVisible();
+    // CH-137: un no reconocido se ve primero con sus salidas; «Registrar a mano» muestra los campos
+    await esperarHidratacion(page);
+    await panel.getByRole('button', { name: cuentas.bandeja.registrarAMano }).click();
 
     await page
       .getByRole('radiogroup', { name: t.revisar.tipo })
