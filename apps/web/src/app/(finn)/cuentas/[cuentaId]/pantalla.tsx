@@ -14,7 +14,7 @@ import { AccionesArchivada, AccionesPrincipales, Programadas, menuDe } from './a
 import { Cabecera } from './cabecera';
 import { AvisoDiferencia, Conciliaciones } from './conciliaciones';
 import { Movimientos, type FiltrosDetalle } from './movimientos';
-import { BloqueInversion, BloquePrestamo, BloqueTarjeta } from './por-tipo';
+import { BloquePrestamo, BloqueTarjeta, ProximaCuota } from './por-tipo';
 
 const ENLACE =
   'inline-flex min-h-11 items-center rounded-control px-2 text-cuerpo-pequeno text-texto-secundario focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
@@ -61,8 +61,12 @@ export function PantallaDetalleCuenta({
           {dto.tarjeta === undefined ? null : <BloqueTarjeta tarjeta={dto.tarjeta} />}
         </div>
         <div className="flex flex-col gap-6">
-          {dto.prestamo === undefined ? null : <BloquePrestamo prestamo={dto.prestamo} />}
-          {dto.inversion === undefined ? null : <BloqueInversion inversion={dto.inversion} />}
+          {dto.prestamo === undefined || cuenta.archivada ? null : (
+            <ProximaCuota cuentaId={cuenta.id} prestamo={dto.prestamo} />
+          )}
+          {dto.prestamo === undefined ? null : (
+            <BloquePrestamo prestamo={dto.prestamo} cuentaId={cuenta.id} />
+          )}
           <SelectorPeriodo
             periodo={dto.periodo}
             periodoActivo={dto.periodoActivo}

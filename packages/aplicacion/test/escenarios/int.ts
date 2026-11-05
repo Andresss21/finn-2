@@ -57,6 +57,7 @@ import {
   OP27,
   OP28,
   OP29,
+  OP30,
 } from '../../src/operaciones/transacciones/index.ts';
 import {
   ciclo,
@@ -421,6 +422,18 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
     }
     case 'OP-29':
       return como(OP29, { transaccionId: deEtiqueta(op.etiqueta) });
+    case 'OP-30': {
+      const transaccionId = deEtiqueta(op.etiqueta);
+      const t = buscar(
+        i.hechos.transacciones.find((x) => x.id === transaccionId),
+        op.etiqueta,
+      );
+      return como(OP30, {
+        transaccionId,
+        estadoNuevo: op.estado,
+        esperado: { estado: t.estadoBancario },
+      });
+    }
     case 'OP-31': {
       const transaccionId = deEtiqueta(op.cobro);
       const linea = buscar(
