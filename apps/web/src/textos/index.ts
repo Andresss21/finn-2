@@ -17,6 +17,7 @@ import { categoriasFusionar } from './categorias-fusionar.ts';
 import { cuentaDetalle } from './cuenta-detalle.ts';
 import { cuentas } from './cuentas.ts';
 import { cuentasCuota } from './cuentas-cuota.ts';
+import { cuentasPagar } from './cuentas-pagar.ts';
 import { cuentasNueva } from './cuentas-nueva.ts';
 import { dominio } from './dominio.ts';
 import { estados } from './estados.ts';
@@ -30,6 +31,7 @@ import { metas } from './metas.ts';
 import { programadas } from './programadas.ts';
 import { navegacion } from './navegacion.ts';
 import { plantilla } from './plantilla.ts';
+import { porCobrar } from './por-cobrar.ts';
 import { presupuesto } from './presupuesto.ts';
 import { presupuestoAsignar } from './presupuesto-asignar.ts';
 import { presupuestoAutoAsignar } from './presupuesto-auto-asignar.ts';
@@ -60,6 +62,7 @@ export {
   cuentaDetalle,
   cuentas,
   cuentasCuota,
+  cuentasPagar,
   cuentasNueva,
   dominio,
   estados,
@@ -73,6 +76,7 @@ export {
   programadas,
   navegacion,
   plantilla,
+  porCobrar,
   presupuesto,
   presupuestoAsignar,
   presupuestoAutoAsignar,
@@ -97,6 +101,7 @@ export const areas = [
   ['inicio', inicio],
   ['instalacion', instalacion],
   ['plantilla', plantilla],
+  ['porCobrar', porCobrar],
   ['presupuesto', presupuesto],
   ['presupuestoAsignar', presupuestoAsignar],
   ['presupuestoAutoAsignar', presupuestoAutoAsignar],
@@ -112,6 +117,7 @@ export const areas = [
   ['cuentaDetalle', cuentaDetalle],
   ['cuentas', cuentas],
   ['cuentasCuota', cuentasCuota],
+  ['cuentasPagar', cuentasPagar],
   ['cuentasNueva', cuentasNueva],
   ['dominio', dominio],
   ['estados', estados],

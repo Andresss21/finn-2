@@ -4,6 +4,7 @@
 // dibuja (PF-3). Los textos salen del catálogo (FE-51).
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
+import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
@@ -97,12 +98,9 @@ test.describe('PRU-E2E-BAND', () => {
     await abrirBandeja(page);
     await fila(page).getByRole('link').click();
     await expect(page.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
-    await expect(page.getByText(/Super/).first()).toBeVisible();
+    await expect(page.locator('main[data-pagina-flujo]').getByText(/Super/).first()).toBeVisible();
 
-    await page
-      .getByRole('radiogroup', { name: g.categoriaDeParte('1') })
-      .getByRole('radio', { name: 'Super' })
-      .click();
+    await elegirOpcion(page, g.categoriaDeParte('1'), 'Super');
     await page.getByRole('button', { name: t.revisar.aprobar }).click();
 
     await expect(page.getByRole('heading', { name: t.revisar.revisarImpacto })).toBeVisible();

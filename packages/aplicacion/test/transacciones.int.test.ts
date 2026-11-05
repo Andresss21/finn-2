@@ -264,9 +264,14 @@ describe('PRU-INT-TX', () => {
     if (!vista.ok) throw new Error('previsualizar falló');
     const { revisionVista, huellaImpacto } = vista.valor;
 
+    // la previsualización de la confirmación trae el saldo a favor que dejaría el pago (04 OP-23, Avisos)
     expect(await ejecutar(OP23, entrada)).toMatchObject({
       ok: false,
-      error: { categoria: 'REQUIERE_CONFIRMACION', codigo: 'requiere_confirmacion' },
+      error: {
+        categoria: 'REQUIERE_CONFIRMACION',
+        codigo: 'requiere_confirmacion',
+        previsualizacion: { propuesta: { saldoAFavor: expect.any(Number) as number } },
+      },
     });
     expect((await releer(id)).tx).toBeUndefined();
 

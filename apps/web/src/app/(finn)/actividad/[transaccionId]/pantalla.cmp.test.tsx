@@ -97,4 +97,51 @@ describe('FT-25 detalle de una transacción', () => {
     const manual = mostrar(dto({ origenDetalle: undefined }));
     expect(manual.querySelector('blockquote')).toBeNull();
   });
+
+  it('PRU-CMP-TX-470 [CA-25.8] el detalle muestra «Comercio y nota», las partes con su cubierto y no cubierto, sus eventos y controles de 44 px como mínimo', () => {
+    const nodo = mostrar(
+      dto({
+        lineas: [
+          {
+            id: 'l1',
+            orden: 1,
+            monto: 2250,
+            destino: { categoria: { id: 'k1', nombre: 'Farmacia' } },
+            reparto: { cubierto: 1735, noCubierto: 515 },
+            cobros: [],
+            condonaciones: [],
+            devoluciones: [{ transaccionId: 'd1', fecha: '2027-02-23', monto: 500, caso: 'D-1' }],
+          },
+          {
+            id: 'l2',
+            orden: 2,
+            monto: 3000,
+            destino: { deudor: { id: 'u1', nombre: 'Carlos' } },
+            porCobrar: { abierto: 2000, restituido: 1000, condonado: 0, devuelto: 0 },
+            cobros: [
+              {
+                transaccionId: 'c1',
+                fecha: '2027-02-22',
+                monto: 1000,
+                restitucion: 1000,
+                excedente: 0,
+              },
+            ],
+            condonaciones: [],
+            devoluciones: [],
+          },
+        ],
+        nota: 'x',
+      }),
+    );
+    const titulos = [...nodo.querySelectorAll('h2')].map((h) => h.textContent);
+    expect(titulos).toEqual(expect.arrayContaining(['Comercio y nota', 'Partes', 'Eventos']));
+    const [farmacia, carlos] = [...nodo.querySelectorAll('[data-linea]')];
+    expect(farmacia?.textContent).toContain('Cubierto $17.35 · no cubierto $5.15');
+    expect(carlos?.textContent).toContain('Cobrado $10.00 · por cobrar $20.00');
+    expect(nodo.querySelector('main')?.textContent).toContain('dividido en 2 partes');
+    expect(nodo.querySelector('[aria-hidden="true"] span')).not.toBeNull();
+    for (const enlace of nodo.querySelectorAll('a'))
+      expect(enlace.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+  });
 });

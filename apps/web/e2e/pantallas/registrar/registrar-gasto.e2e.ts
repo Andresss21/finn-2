@@ -539,7 +539,7 @@ test.describe('PRU-E2E-TX', () => {
   test('PRU-E2E-TX-444 [CA-21.1] en computadora la pantalla va en dos columnas iguales: los datos a la izquierda y las líneas a la derecha', async ({
     page,
   }) => {
-    test.skip((page.viewportSize()?.width ?? 0) < 768, 'Solo en computadora');
+    await page.setViewportSize({ width: 1280, height: 900 });
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
     await expect(page.locator('[data-campo-lineas]')).toBeVisible();

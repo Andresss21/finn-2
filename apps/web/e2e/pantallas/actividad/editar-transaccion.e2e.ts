@@ -4,6 +4,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { formularios } from '../../../src/textos/formularios.ts';
@@ -39,11 +40,9 @@ async function irAEditar(page: Page, texto: string): Promise<void> {
   await expect(page.getByRole('heading', { level: 1, name: t.editarTitulo })).toBeVisible();
 }
 
-const monto = (page: Page) => page.getByRole('textbox', { name: 'Monto', exact: true });
+const monto = (page: Page) => page.getByRole('textbox', { name: g.total, exact: true });
 const guardar = (page: Page) => page.getByRole('button', { name: t.guardar });
 const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').first();
-const cuentaRadio = (page: Page, nombre: string) =>
-  page.getByRole('radiogroup', { name: g.cuenta }).getByRole('radio', { name: nombre });
 const terminada = (page: Page) =>
   expect(page.getByRole('heading', { level: 1, name: t.editarTitulo })).toHaveCount(0);
 
@@ -135,7 +134,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
   }) => {
     await preparar(ESC17, HOY17);
     await irAEditar(page, '$70.00');
-    await cuentaRadio(page, 'Ahorro').click();
+    await elegirOpcion(page, g.cuenta, 'Ahorro');
     await guardar(page).click();
     await terminada(page);
 
@@ -193,10 +192,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
   }) => {
     await preparar(ESC47, '2027-02-16');
     await irAEditar(page, '$40.00');
-    await page
-      .getByRole('radiogroup', { name: g.categoriaDeParte('1') })
-      .getByRole('radio', { name: 'Casa' })
-      .click();
+    await elegirOpcion(page, g.categoriaDeParte('1'), 'Casa');
     await guardar(page).click();
     await page.getByRole('button', { name: t.confirmar }).click();
 
@@ -221,7 +217,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
       '2027-02-12',
     );
     await irAEditar(page, '$40.00');
-    await expect(cuentaRadio(page, 'Corriente')).toBeDisabled();
+    await expect(page.locator('[data-cuenta-fija]')).toContainText('Ahorro');
     await expect(page.getByText(/devoluci/i)).toBeVisible();
   });
 
@@ -275,5 +271,43 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
     await page.getByRole('textbox', { name: g.comercio }).fill('Otro');
     await guardar(page).click();
     await expect(page.getByRole('button', { name: formularios.usarValorActual })).toBeVisible();
+  });
+
+  test('PRU-E2E-TX-470 [CA-25.1] la edición pone la cuenta en una selección de 52 px con su detalle, Fecha y Total en dos columnas, las partes en filas compactas y «Guardar cambios» en el pie fijo', async ({
+    page,
+  }) => {
+    await preparar(ESC17, HOY17);
+    await irAEditar(page, '$70.00');
+    const cuenta = page.getByLabel(g.cuenta, { exact: true });
+    await expect(cuenta.locator('xpath=..')).toContainText(g.deudaDeCuenta('$70.00'));
+    expect((await cuenta.locator('xpath=..').boundingBox())?.height).toBe(52);
+    const fecha = await page.getByLabel(g.fecha).boundingBox();
+    const total = await page.getByRole('textbox', { name: g.total, exact: true }).boundingBox();
+    expect(Math.abs((fecha?.y ?? 0) - (total?.y ?? 99))).toBeLessThan(2);
+    expect(total?.x ?? 0).toBeGreaterThan((fecha?.x ?? 0) + (fecha?.width ?? 0) - 1);
+    const destino = await page.getByLabel(g.categoriaDeParte('1'), { exact: true }).boundingBox();
+    const parte = await page.getByRole('textbox', { name: g.montoDeParte('1') }).boundingBox();
+    expect(Math.abs((destino?.y ?? 0) - (parte?.y ?? 99))).toBeLessThan(2);
+    expect(parte?.width).toBe(120);
+    const pie = await guardar(page).boundingBox();
+    const alto = page.viewportSize()?.height ?? 0;
+    expect((pie?.y ?? 0) + (pie?.height ?? 0)).toBeGreaterThan(alto - 40);
+    expect(pie?.height ?? 0).toBeGreaterThanOrEqual(44);
+  });
+
+  test('PRU-E2E-TX-471 [CA-25.8] RUTA-/actividad/[transaccionId] el detalle muestra «Comercio y nota», las partes con su cubierto y los controles de 44 px como mínimo', async ({
+    page,
+  }) => {
+    await preparar(ESC17, HOY17);
+    await abrir(page, '/actividad');
+    await page.locator('[data-fila-transaccion]').filter({ hasText: '$70.00' }).first().click();
+    await expect(page.getByRole('heading', { name: t.comercioYNota })).toBeVisible();
+    await expect(page.getByRole('heading', { name: t.partes })).toBeVisible();
+    await expect(page.locator('[data-linea]').first()).toContainText(t.cubierto);
+    for (const enlace of [
+      page.getByRole('main').getByRole('link', { name: t.volver }),
+      page.getByRole('link', { name: t.editar }),
+    ])
+      expect((await enlace.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   });
 });
