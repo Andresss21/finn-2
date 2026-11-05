@@ -62,6 +62,7 @@ async function preparar(estadoInicial: Op[]): Promise<void> {
 const panel = (page: Page): Locator => page.locator('main[data-pagina-flujo]');
 const filas = (page: Page): Locator => page.locator('[data-movimiento]');
 const alto = async (l: Locator): Promise<number> => (await l.boundingBox())?.height ?? 0;
+const esEscritorio = (page: Page): boolean => (page.viewportSize()?.width ?? 0) >= 1024;
 
 /** Abre la revisión desde la fila de la lista que tenga ese texto. */
 async function abrirDeLaLista(page: Page, texto: string | RegExp): Promise<void> {
@@ -262,5 +263,73 @@ test.describe('PRU-E2E-BAND', () => {
     expect(await alto(restaurar)).toBeGreaterThanOrEqual(44);
     await restaurar.click();
     await expect(p.getByTestId('resultado')).toContainText(t.restauraste('Cafe Luna $3.50'));
+  });
+
+  test('PRU-E2E-BAND-206 [CA-35.1] después de aprobar, el pie ofrece «Siguiente movimiento» con el que seguía en la lista', async ({
+    page,
+  }) => {
+    await preparar([...HISTORIAL, sms('a', 'Super', 30, '10:15'), sms('b', 'Super', 20, '10:30')]);
+    await page.goto('/bandeja');
+    await esperarContenido(page);
+    const primero = await filas(page).first().getByRole('link').getAttribute('href');
+    const segundo = await filas(page).nth(1).getByRole('link').getAttribute('href');
+    await page.goto(primero ?? '');
+    await esperarHidratacion(page);
+    await panel(page)
+      .getByRole('button', { name: /^Aprobar/ })
+      .click();
+    await expect(page.getByTestId('resultado')).toBeVisible();
+    const siguiente = panel(page).getByRole('link', { name: t.revisar.siguiente });
+    await expect(siguiente).toHaveAttribute('href', segundo ?? '');
+    expect(await alto(siguiente)).toBeGreaterThanOrEqual(44);
+    await siguiente.click();
+    await expect(page).toHaveURL(segundo ?? '');
+    await expect(panel(page).getByLabel(t.revisar.monto, { exact: true })).toBeVisible();
+  });
+
+  test('PRU-E2E-BAND-207 [FT-35] en computadora la lista queda a la izquierda con el movimiento marcado y el panel dice «1 de 2» con flechas de 44 px; en teléfono no hay lista ni flechas', async ({
+    page,
+  }) => {
+    await preparar([...HISTORIAL, sms('a', 'Super', 30, '10:15'), sms('b', 'Super', 20, '10:30')]);
+    await page.goto('/bandeja');
+    await esperarContenido(page);
+    const segundo = await filas(page).nth(1).getByRole('link').getAttribute('href');
+    await filas(page).first().getByRole('link').click();
+    await expect(page.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
+    const navegacion = page.locator('[data-panel-navegacion]');
+    if (!esEscritorio(page)) {
+      await expect(navegacion).toBeHidden();
+      await expect(page.locator('[data-lista-lateral]')).toBeHidden();
+      return;
+    }
+    await expect(page.locator('[data-lista-lateral]').locator('[data-movimiento]')).toHaveCount(2);
+    await expect(
+      page.locator('[data-lista-lateral] [aria-current=true] [data-movimiento]'),
+    ).toHaveCount(1);
+    await expect(navegacion).toContainText(t.revisar.panel.posicion(1, 2));
+    const anterior = navegacion.getByRole('button', { name: t.revisar.panel.anterior });
+    await expect(anterior).toBeDisabled();
+    const siguiente = navegacion.getByRole('link', { name: t.revisar.panel.siguiente });
+    await expect(siguiente).toHaveAttribute('href', segundo ?? '');
+    const caja = await siguiente.boundingBox();
+    expect(Math.min(caja?.width ?? 0, caja?.height ?? 0)).toBeGreaterThanOrEqual(44);
+    await siguiente.click();
+    await expect(navegacion).toContainText(t.revisar.panel.posicion(2, 2));
+  });
+
+  test('PRU-E2E-BAND-208 [FT-37] después de descartar, el panel ofrece «Siguiente movimiento» con el que seguía en la lista', async ({
+    page,
+  }) => {
+    await preparar([...HISTORIAL, sms('a', 'Super', 30, '10:15'), sms('b', 'Super', 20, '10:30')]);
+    await page.goto('/bandeja');
+    await esperarContenido(page);
+    const primero = await filas(page).first().getByRole('link').getAttribute('href');
+    const segundo = await filas(page).nth(1).getByRole('link').getAttribute('href');
+    await page.goto(primero ?? '');
+    await esperarHidratacion(page);
+    await panel(page).getByRole('button', { name: cuentas.bandeja.descartar }).click();
+    const siguiente = panel(page).getByRole('link', { name: t.revisar.siguiente });
+    await expect(siguiente).toHaveAttribute('href', segundo ?? '');
+    expect(await alto(siguiente)).toBeGreaterThanOrEqual(44);
   });
 });

@@ -1,6 +1,7 @@
 // Lector de `/bandeja/[movimientoId]` (05 §2.5): llama a `formulario({ operacion: 'movimiento', movimientoId })` y pasa al
 // flujo el movimiento con los catálogos de cuentas, categorías y personas. Lo único que traduce los errores de la consulta
 // es `consultar()`.
+import type { ReactNode } from 'react';
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { formatearFechaTexto, formatearMonto } from '../../formato';
 import { vistaDe } from '../../componentes/dominio/vista-movimiento';
@@ -8,14 +9,20 @@ import { registrarGasto as g } from '../../textos/registrar-gasto';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { FormularioMovimiento } from './formulario';
+import type { NavegacionDelPanel } from './panel-navegacion';
 
 export async function LectorMovimiento({
   movimientoId,
   traspaso,
+  lateral,
+  navegacion,
 }: {
   readonly movimientoId: string;
   /** Viene de la fila de la lista, que no pudo aprobar con un toque (05 §4.15). */
   readonly traspaso: boolean;
+  /** Computadora: la lista de la Bandeja a la izquierda y el lugar del movimiento en ella (CH-137). */
+  readonly lateral?: ReactNode;
+  readonly navegacion?: NavegacionDelPanel;
 }) {
   const dto = await consultar(async () =>
     formulario(await depsDeConsulta(), { operacion: 'movimiento', movimientoId }),
@@ -92,6 +99,8 @@ export async function LectorMovimiento({
       categorias={categorias}
       deudores={deudores}
       traspaso={traspaso}
+      {...(lateral === undefined ? {} : { lateral })}
+      {...(navegacion === undefined ? {} : { navegacion })}
     />
   );
 }
