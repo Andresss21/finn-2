@@ -9,8 +9,7 @@ export const presupuestoMover = {
   monto: 'Monto a mover',
   obligatorio: 'Ingresá un monto.',
   elegirCategoria: 'Elegí una categoría.',
-  categoriaConDisponible: (nombre: string, disponible: string) =>
-    `${nombre} — ${glosario.disponible} ${disponible}`,
+  disponibleDe: (monto: string) => `${glosario.disponible} ${monto}`,
   mover: 'Mover',
   moviendo: 'Moviendo…',
   usarValoresActuales: 'Usar los valores actuales',

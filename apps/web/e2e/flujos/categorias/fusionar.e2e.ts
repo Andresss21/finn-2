@@ -60,10 +60,7 @@ async function previsualizarCafeEnSalidas(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Más acciones' }).click();
   await page.getByRole('menuitem', { name: 'Fusionar con otra', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Fusionar categorías', level: 1 })).toBeVisible();
-  await page
-    .getByRole('radiogroup', { name: 'Fusionar con' })
-    .getByRole('radio', { name: 'Salidas' })
-    .click();
+  await page.getByLabel('Fusionar con').selectOption({ label: 'Salidas' });
   await page.getByRole('button', { name: 'Fusionar', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Revisá el impacto' })).toBeVisible();
 }

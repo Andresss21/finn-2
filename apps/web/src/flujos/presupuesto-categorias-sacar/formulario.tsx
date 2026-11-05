@@ -8,7 +8,7 @@ import { useCallback, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Seleccion, type Opcion } from '../../componentes/base/seleccion';
+import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import {
   CerrarFlujoAlMontar,
@@ -21,6 +21,7 @@ import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { categoriasArchivar } from '../../textos/categorias-archivar';
 import { formularios } from '../../textos/formularios';
+import { PieDeHoja } from '../pie-de-hoja';
 
 const t = categoriasArchivar.sacar;
 
@@ -109,18 +110,20 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
       </>
     );
 
-  const opciones: readonly Opcion[] = [
+  const opciones: readonly OpcionNativa[] = [
     { valor: LPA, etiqueta: categoriasArchivar.lpa },
     ...p.destinos.map((d) => ({
       valor: d.id,
-      etiqueta: categoriasArchivar.categoriaConDisponible(d.nombre, formatearMonto(d.disponible)),
+      etiqueta: d.nombre,
+      detalle: categoriasArchivar.disponibleDe(formatearMonto(d.disponible)),
     })),
   ];
   const errores = formulario.formState.errors;
   return (
     <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
-      <p>{t.disponible(p.categoria, formatearMonto(p.disponible))}</p>
-      <Seleccion
+      <SeleccionNativa
+        alta
+        marcador={t.destino}
         etiqueta={t.destino}
         opciones={opciones}
         valor={c.destino}
@@ -140,7 +143,12 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
         }}
         error={errores.monto?.message}
         requerido
+        prefijo="$"
+        sinVistaPrevia
       />
+      <p className="text-cuerpo-pequeno text-texto-secundario">
+        {t.disponible(p.categoria, formatearMonto(p.disponible))}
+      </p>
       {estado === 'error' && fallo !== undefined ? (
         <AvisoEnLinea
           estado="problema"
@@ -175,17 +183,19 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
           {fallo.mensaje}
         </AvisoEnLinea>
       ) : null}
-      <Boton
-        tipo="submit"
-        enviando={estado === 'enviando'}
-        textoEnviando={t.sacando}
-        deshabilitado={!operacion.enLinea}
-        {...(operacion.motivoSinEnvio === undefined
-          ? {}
-          : { motivoDeshabilitado: operacion.motivoSinEnvio })}
-      >
-        {t.sacar}
-      </Boton>
+      <PieDeHoja rutaPadre={rutaPadre} superpuesto={superpuesto}>
+        <Boton
+          tipo="submit"
+          enviando={estado === 'enviando'}
+          textoEnviando={t.sacando}
+          deshabilitado={!operacion.enLinea}
+          {...(operacion.motivoSinEnvio === undefined
+            ? {}
+            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+        >
+          {t.sacar}
+        </Boton>
+      </PieDeHoja>
     </form>
   );
 }

@@ -3,7 +3,7 @@
 // en un período activo o futuro. Muestra lo que trae el servidor y envía el valor absoluto con `esperado` (lo que vio al abrir).
 // AV-11 llega como `REQUIERE_CONFIRMACION`; `conflicto_desactualizado` ofrece el valor actual. No calcula montos (PF-3).
 import type { Centavos } from '@finn/dominio/valores';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
@@ -22,6 +22,7 @@ import { useOperacion, type AccionEscritura } from '../../formularios/use-operac
 import { asignarEnCategoria, asignarRapido } from '../../servidor/acciones/presupuesto';
 import { formularios } from '../../textos/formularios';
 import { presupuestoAsignar as t } from '../../textos/presupuesto-asignar';
+import { PieDeHoja } from '../pie-de-hoja';
 import { OpcionesRapidas, type DatosRapida, type VarianteRapida } from './rapida';
 
 export interface PropsFormularioAsignar {
@@ -75,6 +76,27 @@ interface PropsCuerpo {
   readonly esperado: Centavos;
   readonly inicial: Campos;
   readonly alUsarActual: (actual: Centavos, escrito: Campos) => void;
+}
+
+function Cifra({
+  rotulo,
+  campo,
+  aviso = false,
+  children,
+}: {
+  readonly rotulo: string;
+  readonly campo: string;
+  readonly aviso?: boolean;
+  readonly children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt className="text-rotulo text-texto-secundario">{rotulo}</dt>
+      <dd data-campo={campo} className={aviso ? 'font-bold text-advertencia-texto' : 'font-bold'}>
+        {children}
+      </dd>
+    </div>
+  );
 }
 
 function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
@@ -156,37 +178,22 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
     );
   return (
     <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
-      <dl
-        data-resumen-asignar
-        className="grid grid-cols-2 gap-3 rounded-contenedor bg-superficie-hundida p-3.5"
-      >
-        <div className="flex flex-col gap-0.5">
-          <dt className="text-cuerpo-pequeno text-texto-secundario">{t.asignado}</dt>
-          <dd data-campo="asignado" className="font-semibold">
-            <Monto centavos={p.asignado} />
-          </dd>
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <dt className="text-cuerpo-pequeno text-texto-secundario">{t.disponible}</dt>
-          <dd data-campo="disponible" className="font-semibold">
-            <Monto centavos={p.disponible} />
-          </dd>
-        </div>
+      {p.meta === undefined ? null : (
+        <p className="text-cuerpo-pequeno text-texto-secundario">
+          {t.metaPide} <Monto centavos={p.meta.pedido} />
+        </p>
+      )}
+      <dl data-resumen-asignar className="grid grid-cols-3 gap-2">
+        <Cifra rotulo={t.asignado} campo="asignado">
+          <Monto centavos={p.asignado} />
+        </Cifra>
+        <Cifra rotulo={t.disponible} campo="disponible">
+          <Monto centavos={p.disponible} />
+        </Cifra>
         {p.meta === undefined ? null : (
-          <>
-            <div className="flex flex-col gap-0.5">
-              <dt className="text-cuerpo-pequeno text-texto-secundario">{t.metaPide}</dt>
-              <dd className="font-semibold">
-                <Monto centavos={p.meta.pedido} />
-              </dd>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <dt className="text-cuerpo-pequeno text-texto-secundario">{t.metaFalta}</dt>
-              <dd className="font-semibold">
-                <Monto centavos={p.meta.falta} />
-              </dd>
-            </div>
-          </>
+          <Cifra rotulo={t.metaFalta} campo="meta-falta" aviso>
+            <Monto centavos={p.meta.falta} />
+          </Cifra>
         )}
       </dl>
       {p.archivada ? <AvisoEnLinea estado="informacion">{t.archivada}</AvisoEnLinea> : null}
@@ -209,6 +216,7 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
           });
         }}
         conSigno
+        sinVistaPrevia
         signo={c.signo}
         alCambiarSigno={(s) => {
           formulario.setValue('signo', s, { shouldDirty: true });
@@ -247,17 +255,19 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
           {conflicto ? ` ${t.valorActual(formatearMonto(actual))}` : ''}
         </AvisoEnLinea>
       ) : null}
-      <Boton
-        tipo="submit"
-        enviando={estado === 'enviando'}
-        textoEnviando={t.guardando}
-        deshabilitado={!operacion.enLinea}
-        {...(operacion.motivoSinEnvio === undefined
-          ? {}
-          : { motivoDeshabilitado: operacion.motivoSinEnvio })}
-      >
-        {t.guardar}
-      </Boton>
+      <PieDeHoja rutaPadre={rutaPadre} superpuesto={superpuesto}>
+        <Boton
+          tipo="submit"
+          enviando={estado === 'enviando'}
+          textoEnviando={t.guardando}
+          deshabilitado={!operacion.enLinea}
+          {...(operacion.motivoSinEnvio === undefined
+            ? {}
+            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+        >
+          {t.guardar}
+        </Boton>
+      </PieDeHoja>
     </form>
   );
 }

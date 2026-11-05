@@ -7,7 +7,7 @@ import { useCallback } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Seleccion, type Opcion } from '../../componentes/base/seleccion';
+import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearFechaTexto, formatearMonto } from '../../formato';
@@ -56,6 +56,7 @@ interface Vista {
 
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const PREFIJO = 'asignado:';
+const ID_FORMULARIO = 'formulario-fusionar';
 const CONTRATO = z.object({ destino: z.string().min(1, { error: t.destino }) });
 const conSigno = (c: Centavos): string => `${c > 0 ? '+' : ''}${formatearMonto(c)}`;
 
@@ -144,37 +145,56 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
     );
   }
 
-  const opciones: readonly Opcion[] = destinos.map((d) => ({ valor: d.id, etiqueta: d.nombre }));
+  const opciones: readonly OpcionNativa[] = destinos.map((d) => ({
+    valor: d.id,
+    etiqueta: d.nombre,
+  }));
   const filas = [
     t.periodos(resumen.periodosConAsignacion),
     t.transacciones(resumen.transacciones),
     t.condonaciones(resumen.condonaciones),
     t.programadas(resumen.programadas),
     t.reglas(resumen.reglas),
-    ...(resumen.meta === undefined ? [] : [t.metaDescartada(origen.nombre)]),
   ];
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={`/presupuesto/categorias/${origen.id}`}>
+    <PaginaFlujoDeRuta
+      titulo={t.titulo}
+      rutaPadre={`/presupuesto/categorias/${origen.id}`}
+      {...(destinos.length === 0
+        ? {}
+        : {
+            acciones: (
+              <div className="w-full md:ml-auto md:w-[calc(50%-1.125rem)]">
+                <Boton
+                  tipo="submit"
+                  form={ID_FORMULARIO}
+                  variante="peligro"
+                  className="w-full"
+                  enviando={estado === 'enviando'}
+                  textoEnviando={t.fusionando}
+                  deshabilitado={!operacion.enLinea}
+                  {...(operacion.motivoSinEnvio === undefined
+                    ? {}
+                    : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+                >
+                  {t.fusionar}
+                </Boton>
+              </div>
+            ),
+          })}
+    >
       {destinos.length === 0 ? (
         <AvisoEnLinea estado="informacion">{t.sinDestinos}</AvisoEnLinea>
       ) : (
         <form
+          id={ID_FORMULARIO}
           onSubmit={(e) => void formulario.enviar(e)}
           noValidate
           className="flex flex-col gap-5"
         >
-          <p>{t.intro(origen.nombre)}</p>
-          <section aria-labelledby="fusion-resumen" className="flex flex-col gap-1">
-            <h2 id="fusion-resumen" className="text-titulo-seccion">
-              {t.resumenTitulo}
-            </h2>
-            <ul>
-              {filas.map((f) => (
-                <li key={f}>{f}</li>
-              ))}
-            </ul>
-          </section>
-          <Seleccion
+          <SeleccionNativa
+            alta
+            marcador={t.destino}
             etiqueta={t.destino}
             opciones={opciones}
             valor={c.destino}
@@ -185,6 +205,22 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
               ? {}
               : { error: formulario.formState.errors.destino.message })}
           />
+          <section aria-labelledby="fusion-resumen" className="flex flex-col gap-2.5">
+            <h2 id="fusion-resumen" className="text-titulo-seccion">
+              {t.resumenTitulo}
+            </h2>
+            <ul className="divide-y divide-borde-sutil rounded-contenedor bg-superficie px-4 py-1 shadow-elevacion-1">
+              {filas.map((f) => (
+                <li key={f} className="py-2.5 text-texto-secundario">
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </section>
+          {resumen.meta === undefined ? null : (
+            <AvisoEnLinea estado="advertencia">{t.metaDescartada(origen.nombre)}</AvisoEnLinea>
+          )}
+          <AvisoEnLinea estado="informacion">{t.intro(origen.nombre)}</AvisoEnLinea>
           {estado === 'error' && fallo !== undefined ? (
             <AvisoEnLinea
               estado="problema"
@@ -202,17 +238,6 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
               {fallo.mensaje}
             </AvisoEnLinea>
           ) : null}
-          <Boton
-            tipo="submit"
-            enviando={estado === 'enviando'}
-            textoEnviando={t.fusionando}
-            deshabilitado={!operacion.enLinea}
-            {...(operacion.motivoSinEnvio === undefined
-              ? {}
-              : { motivoDeshabilitado: operacion.motivoSinEnvio })}
-          >
-            {t.fusionar}
-          </Boton>
         </form>
       )}
     </PaginaFlujoDeRuta>
