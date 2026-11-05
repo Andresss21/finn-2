@@ -7,9 +7,11 @@ import { FilaTransaccion } from '../../../componentes/dominio/fila-transaccion';
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { VacioSinResultados } from '../../../componentes/navegacion/vacios';
-import { formatearFecha } from '../../../formato';
+import { rotuloDeDia } from '../../../formato/rotulo-de-dia';
 import { actividad as t } from '../../../textos/actividad';
 import { Buscador } from './buscador';
+import { FichasDeFiltros } from './chips';
+import { detalleDeFila } from './detalle-de-fila';
 import { FormularioFiltros, type GrupoDeFiltro, type RefDeFiltro } from './filtros';
 
 /** Los parámetros de 05 §2.2 que lee esta pantalla, con el nombre que llevan en la URL. */
@@ -73,6 +75,14 @@ export function PantallaActividad({
       </div>
       <Buscador texto={texto ?? ''} resto={sinTexto} />
       <FormularioFiltros filtros={sinCursor} cuentas={cuentas} grupos={grupos} />
+      <FichasDeFiltros
+        filtros={sinTexto}
+        cuentas={cuentas}
+        grupos={grupos}
+        hrefSin={(claves) =>
+          hrefDe(sinCursor, Object.fromEntries(claves.map((k) => [k, undefined])))
+        }
+      />
       {dto.dias.length === 0 ? (
         filtrado ? (
           <VacioSinResultados rutaSinFiltros="/actividad" />
@@ -82,12 +92,15 @@ export function PantallaActividad({
       ) : (
         dto.dias.map((dia) => (
           <section key={dia.fecha} data-dia={dia.fecha} className="flex flex-col gap-2">
-            <h2 className="text-rotulo text-texto-secundario">{formatearFecha(dia.fecha)}</h2>
-            <ul className="flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie">
+            <h2 className="px-1 text-rotulo text-texto-secundario">
+              {rotuloDeDia(dia.fecha, dto.hoy)}
+            </h2>
+            <ul className="flex flex-col divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
               {dia.transacciones.map((fila) => (
                 <li key={fila.id}>
                   <FilaTransaccion
                     fila={fila}
+                    detalle={detalleDeFila(fila)}
                     hrefDetalle={`/actividad/${fila.id}?volver=${encodeURIComponent(actual)}`}
                   />
                 </li>

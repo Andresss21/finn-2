@@ -132,4 +132,20 @@ test.describe('PRU-E2E-TX actividad', () => {
     await expect(page).toHaveURL(/texto=zzz/);
     await expect(page.getByText('Sin resultados con estos filtros')).toBeVisible();
   });
+
+  test('PRU-E2E-TX-460 [FT-24 Flujo 2] los días llevan su rótulo, el filtro de lista nativo aplica en la URL y la ficha del filtro lo quita', async ({
+    page,
+  }) => {
+    await preparar(CAFES);
+    await abrir(page, '/actividad?tipo=gasto');
+    await expect(page.locator('[data-dia="2027-03-04"] h2')).toHaveText('Ayer · jueves 04/03');
+    await expect(page.getByText('Filtros · 1')).toBeVisible();
+    await page.getByLabel('Categoría').selectOption({ label: 'Cafés' });
+    await page.getByRole('button', { name: 'Filtrar' }).click();
+    await expect(page).toHaveURL(/categoria=/);
+    await expect(page).toHaveURL(/tipo=gasto/);
+    await page.getByRole('link', { name: 'Quitar filtro Gasto' }).click();
+    await expect(page).not.toHaveURL(/tipo=/);
+    await expect(page).toHaveURL(/categoria=/);
+  });
 });
