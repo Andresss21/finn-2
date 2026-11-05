@@ -193,6 +193,7 @@
   { "patron": "apps/web/src/app/(finn)/reglas/**", "fts": ["FT-39"] },
   { "patron": "apps/web/src/flujos/reglas-nueva/**", "fts": ["FT-39"] },
   { "patron": "apps/web/src/flujos/programadas-nueva/**", "fts": ["FT-40"] },
+  { "patron": "apps/web/src/flujos/programadas-programada/**", "fts": ["FT-40"] },
   { "patron": "apps/web/src/flujos/reglas-regla/**", "fts": ["FT-39"] },
   { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03"] },
   { "patron": "apps/web/src/servidor/acciones/notificaciones.ts", "fts": ["FT-06", "FT-08"] },
