@@ -145,7 +145,10 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(page.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
     await elegirOpcion(page, g.categoriaDeParte('1'), 'Restaurantes');
     await page.getByRole('checkbox', { name: t.revisar.recordar }).check();
-    await page.getByRole('button', { name: t.revisar.aprobar }).click();
+    await page
+      .locator('main[data-pagina-flujo]')
+      .getByRole('button', { name: t.revisar.aprobar })
+      .click();
     await expect(page.getByTestId('resultado')).toBeVisible();
 
     await abrirBandeja(page);
