@@ -4,7 +4,7 @@
 import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta';
 import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Monto } from '../../../../componentes/dominio/monto';
-import { formatearFecha, formatearInstante } from '../../../../formato';
+import { formatearFecha, formatearInstante, formatearMonto } from '../../../../formato';
 import { cuentaDetalle } from '../../../../textos/cuenta-detalle';
 import { dominio } from '../../../../textos/dominio';
 
@@ -25,6 +25,32 @@ function Dato({
   );
 }
 
+/** El aviso de la cabecera (AV-21): solo si la conciliación más reciente tiene una diferencia hoy. */
+export function AvisoDiferencia({
+  conciliacion: c,
+}: {
+  readonly conciliacion: DetalleCuentaDto['conciliaciones'][number] | undefined;
+}) {
+  if (c === undefined || c.diferenciaActual === 0) return null;
+  return (
+    <AvisoEnLinea
+      estado="advertencia"
+      titulo={t.diferenciaConElEstado}
+      accion={
+        <a href={`#conciliacion-${c.id}`} className="inline-flex min-h-11 items-center">
+          {t.verConciliacion}
+        </a>
+      }
+    >
+      {t.textoDiferencia(
+        formatearFecha(c.fechaEstado),
+        formatearMonto(c.saldoEstado),
+        formatearMonto(c.diferenciaActual),
+      )}
+    </AvisoEnLinea>
+  );
+}
+
 export function Conciliaciones({
   conciliaciones,
 }: {
@@ -37,6 +63,7 @@ export function Conciliaciones({
       {conciliaciones.map((c) => (
         <article
           key={c.id}
+          id={`conciliacion-${c.id}`}
           data-conciliacion={c.id}
           className="flex flex-col gap-3 rounded-contenedor bg-superficie p-3.5"
         >

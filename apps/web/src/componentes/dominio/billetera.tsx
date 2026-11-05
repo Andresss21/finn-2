@@ -42,7 +42,13 @@ const ATRAS =
   'absolute inset-x-0 z-0 min-h-11 scale-[.94] cursor-pointer rounded-tarjeta saturate-[.85] brightness-[.92]';
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
-function Cara({ tarjeta }: { readonly tarjeta: TarjetaDto }) {
+/** Lo que dibuja la cara; el detalle de cuenta (FT-52) la usa sin el resto del DTO de la lista. */
+export type DatosCara = Pick<
+  TarjetaDto,
+  'cuenta' | 'institucion' | 'ultimos4' | 'red' | 'color' | 'deuda' | 'saldoAFavor'
+>;
+
+export function Cara({ tarjeta }: { readonly tarjeta: DatosCara }) {
   const plata = tarjeta.color === 'plata';
   const aFavor = tarjeta.deuda === 0 && tarjeta.saldoAFavor > 0;
   return (
