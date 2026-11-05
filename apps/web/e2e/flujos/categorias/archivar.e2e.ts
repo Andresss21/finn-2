@@ -91,10 +91,7 @@ test.describe('PRU-E2E-CATEG', () => {
 
     await expect(page.getByRole('heading', { name: 'Archivar categoría', level: 1 })).toBeVisible();
     await expect(page.getByText('Tiene dinero asignado en 1 período futuro.')).toBeVisible();
-    await page
-      .getByRole('radiogroup', { name: /Programada Gimnasio/ })
-      .getByRole('radio', { name: 'Desactivarla' })
-      .click();
+    await page.getByLabel(/Programada Gimnasio/).selectOption({ label: 'Desactivarla' });
     await page.getByRole('button', { name: 'Archivar', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Revisá el impacto' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
@@ -127,10 +124,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await abrir(page, '/presupuesto');
     await archivadas(page).getByRole('link', { name: 'Sacar el dinero de Gimnasio' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
-    await page
-      .getByRole('radiogroup', { name: 'Poner en' })
-      .getByRole('radio', { name: /^Salidas/ })
-      .click();
+    await page.getByLabel('Poner en').selectOption({ label: 'Salidas' });
     await page.getByLabel(/Monto a sacar/).fill('10');
     await page.getByRole('button', { name: 'Sacar', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
