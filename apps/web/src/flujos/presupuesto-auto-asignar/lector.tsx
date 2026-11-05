@@ -5,6 +5,7 @@
 import { presupuesto } from '@finn/aplicacion/consultas/presupuesto';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { redirect } from 'next/navigation';
+import { formatearMonto, formatearPeriodoNumerico } from '../../formato';
 import { autoAsignar } from '../../servidor/acciones/presupuesto';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
@@ -32,6 +33,8 @@ export async function LectorAutoAsignar({ busqueda, superpuesto = false }: Props
       accion={autoAsignar}
       periodoInicio={dto.periodo.inicio}
       revision={dto.revision}
+      periodo={formatearPeriodoNumerico(dto.periodo)}
+      lpa={formatearMonto(dto.lpa)}
       nombres={Object.fromEntries(filas.map((f) => [f.categoria.id, f.categoria.nombre]))}
       hayFalta={filas.some((f) => f.meta !== null && f.meta.falta > 0)}
       rutaPadre={rutaPadre}

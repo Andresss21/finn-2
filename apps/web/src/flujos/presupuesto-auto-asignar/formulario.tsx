@@ -3,6 +3,8 @@
 // Su primera pantalla ES el impacto (FE-07): al abrir pide `modo: 'previsualizar'` con `esperado.revision` (lo que vio la
 // pantalla) y muestra lo que asignaría a cada categoría y lo que quedaría sin cubrir (AV-18); confirmar envía la misma entrada
 // con la huella. Con `conflicto_desactualizado` ofrece volver a calcular con la revisión actual. No calcula montos (PF-3).
+// Marcado del export (07-flujos-del-presupuesto, CH-180): el período como subtítulo, una fila por categoría con «+$…» y el estado
+// sin faltas como aviso positivo. El resumen «Se asigna / Listo para asignar → / Sin cubrir» del export no va (PF-3, P6-27 a).
 import type { Centavos } from '@finn/dominio/valores';
 import { useEffect, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
@@ -15,6 +17,7 @@ import {
   useCerrarFlujo,
 } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
+import { base as textosBase } from '../../textos/base';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { formularios } from '../../textos/formularios';
 import { presupuestoAutoAsignar as t } from '../../textos/presupuesto-auto-asignar';
@@ -25,6 +28,9 @@ export interface PropsFormularioAutoAsignar {
   readonly periodoInicio: string;
   /** La revisión que vio la pantalla: el `esperado` de OP-17 (el resultado depende de todo el estado). */
   readonly revision: string;
+  /** El período ya formateado (subtítulo) y Listo para asignar ya formateado (introducción), los dos del DTO. */
+  readonly periodo: string;
+  readonly lpa: string;
   /** Nombre de cada categoría por id, para dibujar lo que trae la previsualización. */
   readonly nombres: Readonly<Record<string, string>>;
   /** Alguna meta de una categoría activa tiene falta en el período; si no, no hay nada que confirmar. */
@@ -84,9 +90,11 @@ function Cuerpo({ p, revision, alUsarActuales }: PropsCuerpo) {
   if (!hayFalta)
     return (
       <div className="flex flex-col gap-4">
-        <p>{t.sinFalta}</p>
+        <AvisoEnLinea estado="positivo" titulo={t.nadaQueAutoAsignar}>
+          {t.sinFalta}
+        </AvisoEnLinea>
         <Boton variante="secundaria" onClick={cerrar}>
-          {t.volver}
+          {textosBase.cerrar}
         </Boton>
       </div>
     );
@@ -123,9 +131,17 @@ function Cuerpo({ p, revision, alUsarActuales }: PropsCuerpo) {
           </Boton>
         </div>
       );
-    const asignaciones = (vista.impacto?.deltaDisponible ?? []).map((x) =>
-      t.asignaria(nombre(x.categoriaId), formatearMonto(x.delta)),
-    );
+    const asignaciones = (vista.impacto?.deltaDisponible ?? []).map((x) => (
+      <div data-categoria={x.categoriaId} className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-semibold">{nombre(x.categoriaId)}</p>
+          <p className="text-cuerpo-pequeno text-texto-secundario">{t.faltaParaLaMeta}</p>
+        </div>
+        <span className="shrink-0 font-bold tabular-nums">
+          {`${x.delta > 0 ? '+' : ''}${formatearMonto(x.delta)}`}
+        </span>
+      </div>
+    ));
     const pendientes = sinCubrir(vista);
     // Con Listo para asignar en cero o negativo no se asigna nada: no hay nada que confirmar.
     if (asignaciones.length === 0)
@@ -144,24 +160,27 @@ function Cuerpo({ p, revision, alUsarActuales }: PropsCuerpo) {
       );
     const delta = vista.impacto?.deltaLpa;
     return (
-      <ConfirmacionImpacto
-        titulo={t.revisar}
-        impacto={[
-          ...asignaciones,
-          ...(delta === undefined
-            ? []
-            : [t.impactoLpa(`${delta > 0 ? '+' : ''}${formatearMonto(delta)}`)]),
-        ]}
-        avisos={pendientes}
-        textoConfirmar={t.confirmar}
-        textoVolver={t.cancelar}
-        enviando={estado === 'enviando'}
-        alConfirmar={() => {
-          setConfirmada(vista);
-          void operacion.confirmar();
-        }}
-        alVolver={cerrar}
-      />
+      <div className="flex flex-col gap-4">
+        <p>{t.intro(p.lpa)}</p>
+        <ConfirmacionImpacto
+          titulo={t.revisar}
+          impacto={[
+            ...asignaciones,
+            ...(delta === undefined
+              ? []
+              : [t.impactoLpa(`${delta > 0 ? '+' : ''}${formatearMonto(delta)}`)]),
+          ]}
+          avisos={pendientes}
+          textoConfirmar={t.confirmar}
+          textoVolver={t.cancelar}
+          enviando={estado === 'enviando'}
+          alConfirmar={() => {
+            setConfirmada(vista);
+            void operacion.confirmar();
+          }}
+          alVolver={cerrar}
+        />
+      </div>
     );
   }
 
@@ -219,10 +238,13 @@ export function FormularioAutoAsignar(p: PropsFormularioAutoAsignar) {
       }}
     />
   );
+  const descripcion = t.periodo(p.periodo);
   return p.superpuesto ? (
-    <SuperpuestoDeRuta titulo={t.titulo}>{cuerpo}</SuperpuestoDeRuta>
+    <SuperpuestoDeRuta titulo={t.titulo} descripcion={descripcion}>
+      {cuerpo}
+    </SuperpuestoDeRuta>
   ) : (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={p.rutaPadre}>
+    <PaginaFlujoDeRuta titulo={t.titulo} descripcion={descripcion} rutaPadre={p.rutaPadre}>
       {cuerpo}
     </PaginaFlujoDeRuta>
   );

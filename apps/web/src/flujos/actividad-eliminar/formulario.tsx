@@ -8,7 +8,7 @@ import { useCallback } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Monto } from '../../componentes/dominio/monto';
-import { ConfirmacionImpactoDeVista } from '../../componentes/formularios/confirmacion-impacto';
+import { ConfirmacionImpactoDeVista } from '../../componentes/formularios/confirmacion-impacto-de-vista';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';

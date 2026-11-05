@@ -955,4 +955,28 @@ describe('PRU-INT-NOTIF', () => {
       ),
     ).toBe(0);
   });
+
+  it('PRU-INT-PRES-300 [CA-16.5] sin usar la app durante 3 períodos, la tarea diaria envía un solo push de cierre (el del último período) y los anteriores quedan en eventos_sistema', async () => {
+    await suscribir('ok');
+    const cierres = () =>
+      sql(`SELECT datos->>'clave' FROM finn.notificaciones WHERE motivo = 'cierre_periodo'`);
+    const sinPush = () =>
+      sql(
+        `SELECT datos->>'periodoInicio' FROM finn.eventos_sistema WHERE mensaje = 'cierre_sin_push' ORDER BY datos->>'periodoInicio'`,
+      );
+    // BE-51. Hoy: el 05/06. Pasaron los cierres del 21/03, el 21/04 y el 14/05 (o el 21/05): al menos 3 períodos sin avisar
+    expect((await pasoCierre.ejecutar(deps('2027-06-05'))).cantidad).toBe(1);
+
+    const [clave] = (await cierres()) as [string];
+    expect(await cierres()).toHaveLength(1);
+    expect(recibidos).toHaveLength(1);
+    const [r] = recibidos as [Recibido];
+    const ultimo = clave.replace('cierre:', '');
+    expect(r.carga['destino']).toEqual({ pantalla: 'presupuesto', periodoInicio: ultimo });
+
+    const anteriores = await sinPush();
+    expect(anteriores.length).toBeGreaterThanOrEqual(2);
+    for (const periodo of anteriores) expect(periodo < ultimo).toBe(true);
+    expect(new Set(anteriores).size).toBe(anteriores.length);
+  });
 });

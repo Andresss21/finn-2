@@ -1,17 +1,19 @@
 'use client';
 // `ConfirmacionImpacto` (05 §4.4, §10): la previsualización antes de confirmar. Recibe el foco al aparecer (su título) y
 // ofrece "Confirmar" y "Volver a editar". Muestra lo que arma el llamador con los números del servidor; no calcula nada (PF-3).
-import { useEffect, useRef } from 'react';
+// Marcado del export (07-flujos-del-presupuesto, CH-180): el impacto en una tarjeta de filas y los botones en dos columnas,
+// «Volver» tonal a la izquierda y la acción a la derecha, como `flujos/pie-de-hoja.tsx`. La variante con las líneas de AV-01 vive
+// en `confirmacion-impacto-de-vista.tsx`, para que las pantallas que no la usan no carguen esas líneas (05 §13.1, CH-87).
+import { useEffect, useRef, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../base/aviso';
 import { Boton } from '../base/boton';
-import { lineasDeImpacto, type VistaDeImpacto } from './lineas-impacto';
 
 export interface PropsConfirmacionImpacto {
   readonly titulo: string;
   /** "El impacto cambió" (4.4 paso 2), cuando se pidió confirmar de nuevo. */
   readonly nota?: string;
-  /** El impacto en el período activo, ya formateado. */
-  readonly impacto: readonly string[];
+  /** El impacto en el período activo, ya formateado: una fila de la tarjeta por elemento. */
+  readonly impacto: readonly ReactNode[];
   /** Los avisos "antes", con su texto. */
   readonly avisos: readonly string[];
   readonly textoConfirmar: string;
@@ -37,10 +39,7 @@ export function ConfirmacionImpacto({
     encabezado.current?.focus();
   }, []);
   return (
-    <section
-      className="flex flex-col gap-4 rounded-contenedor bg-superficie p-3.5 shadow-elevacion-1"
-      aria-labelledby="confirmacion-titulo"
-    >
+    <section className="flex flex-col gap-4" aria-labelledby="confirmacion-titulo">
       <h2 id="confirmacion-titulo" ref={encabezado} tabIndex={-1} className="text-titulo-seccion">
         {titulo}
       </h2>
@@ -49,9 +48,11 @@ export function ConfirmacionImpacto({
           {nota}
         </AvisoEnLinea>
       )}
-      <ul className="flex flex-col gap-1">
-        {impacto.map((linea) => (
-          <li key={linea}>{linea}</li>
+      <ul className="divide-y divide-borde-sutil rounded-contenedor bg-superficie px-4 py-1 shadow-elevacion-1 empty:hidden">
+        {impacto.map((linea, i) => (
+          <li key={i} className="py-2.5">
+            {linea}
+          </li>
         ))}
       </ul>
       {avisos.map((aviso) => (
@@ -59,22 +60,14 @@ export function ConfirmacionImpacto({
           {aviso}
         </AvisoEnLinea>
       ))}
-      <div className="flex gap-3">
-        <Boton enviando={enviando} onClick={alConfirmar}>
-          {textoConfirmar}
-        </Boton>
+      <div className="grid grid-cols-2 gap-2">
         <Boton variante="secundaria" onClick={alVolver}>
           {textoVolver}
+        </Boton>
+        <Boton enviando={enviando} onClick={alConfirmar}>
+          {textoConfirmar}
         </Boton>
       </div>
     </section>
   );
-}
-
-/** Lo mismo con el impacto de AV-01 (FT-27): las líneas salen de la previsualización del servidor. */
-export function ConfirmacionImpactoDeVista({
-  vista,
-  ...resto
-}: Omit<PropsConfirmacionImpacto, 'impacto'> & { readonly vista: VistaDeImpacto }) {
-  return <ConfirmacionImpacto impacto={lineasDeImpacto(vista)} {...resto} />;
 }

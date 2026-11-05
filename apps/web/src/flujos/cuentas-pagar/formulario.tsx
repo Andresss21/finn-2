@@ -11,7 +11,7 @@ import { Boton } from '../../componentes/base/boton';
 import { Pastillas } from '../../componentes/base/pastillas';
 import { Resultado } from '../../componentes/base/resultado';
 import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
-import { ConfirmacionImpactoDeVista } from '../../componentes/formularios/confirmacion-impacto';
+import { ConfirmacionImpactoDeVista } from '../../componentes/formularios/confirmacion-impacto-de-vista';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
