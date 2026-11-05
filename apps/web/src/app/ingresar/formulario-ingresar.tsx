@@ -75,9 +75,9 @@ export function FormularioIngresar({
         void formulario.enviar(e);
       }}
       noValidate
-      className="flex flex-col gap-5"
+      className="flex flex-col gap-4"
     >
-      <h1 className="text-titulo-pantalla">{t.tituloIngresar}</h1>
+      <h1 className="text-titulo-seccion">{t.tituloIngresar}</h1>
       {mensaje === undefined ? null : (
         <AvisoEnLinea estado="problema" aparecioDespues={operacion.error !== undefined}>
           {mensaje}

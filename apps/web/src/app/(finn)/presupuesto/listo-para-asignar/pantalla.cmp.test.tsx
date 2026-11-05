@@ -81,7 +81,7 @@ describe('PRU-CMP-PRES', () => {
     expect(monto(nodo, 'Reducciones por sobregiro con débito')).toBe('2000');
     expect(nodo.querySelector('a[href="/presupuesto"]')).not.toBeNull();
     expect(nodo.querySelector('[data-estado="problema"]')).toBeNull();
-    expect(nodo.querySelector('[data-estado="informacion"]')).toBeNull();
+    expect(nodo.querySelector('[data-en-camino]')).toBeNull();
   });
 
   it('PRU-CMP-PRES-106 con LPA negativo avisa AV-20 y con dinero en camino AV-09', () => {
@@ -97,7 +97,7 @@ describe('PRU-CMP-PRES', () => {
     expect(nodo.querySelector('[data-estado="problema"]')?.textContent).toContain(
       'Asignaste más de lo que tenés',
     );
-    expect(nodo.querySelector('[data-estado="informacion"]')?.textContent).toContain('En camino');
+    expect(nodo.querySelector('[data-en-camino]')?.textContent).toContain('En camino');
   });
 
   it('PRU-CMP-PRES-106 la reducción proyectada lista sus categorías y tarjetas; sin reducción lo dice', () => {
@@ -167,7 +167,26 @@ describe('PRU-CMP-PRES', () => {
     expect(nodo.querySelector('[data-seccion="historial"]')?.textContent).toContain(
       'Todavía no hay períodos cerrados',
     );
-    expect(nodo.querySelector('svg')).toBeNull();
+    expect(nodo.querySelector('[data-grafico]')).toBeNull();
     expect(nodo.querySelector('[data-nota-historial]')).not.toBeNull();
+  });
+
+  it('PRU-CMP-PRES-275 el billete lleva la acción de Inicio: «Asignar» con LPA positivo, «Quitar … de una categoría» con negativo y ninguna con cero', () => {
+    const accion = (n: HTMLElement) =>
+      n.querySelector('[data-resumen-lpa="billete"] a')?.textContent ?? null;
+    expect(accion(montar(<PantallaListoParaAsignar dto={dto()} />))).toBe('Asignar $670.00');
+    expect(
+      accion(montar(<PantallaListoParaAsignar dto={dto({ lpa: -8615, lpaNegativo: true })} />)),
+    ).toBe('Quitar $86.15 de una categoría');
+    expect(accion(montar(<PantallaListoParaAsignar dto={dto({ lpa: 0 })} />))).toBeNull();
+  });
+
+  it('PRU-CMP-PRES-276 la descomposición y la reducción van cada una en su tarjeta con el título como rótulo', () => {
+    const nodo = montar(<PantallaListoParaAsignar dto={dto()} />);
+    for (const seccion of ['descomposicion', 'reduccion']) {
+      const s = nodo.querySelector(`[data-seccion="${seccion}"]`) as HTMLElement;
+      expect(s.className).toContain('bg-superficie');
+      expect(s.querySelector('h2')?.className).toContain('text-rotulo');
+    }
   });
 });
