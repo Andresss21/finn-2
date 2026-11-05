@@ -318,6 +318,21 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await expect(page.locator('[data-historial] tbody tr')).toHaveCount(6);
   });
 
+  test('PRU-E2E-PRES-240 [CH-140] el detalle de Restaurantes trae la cifra «Sobregiro $26.30» en la rejilla, la insignia de fecha de cada consumo y las acciones de asignar y mover', async ({
+    page,
+  }) => {
+    await sembrarOps(A7_RESTAURANTES, '2026-03-21', '2026-10-15');
+    await abrirDetalle(page, 'Restaurantes');
+    const cifras = page.locator('[data-numeros] > div');
+    await expect(cifras).toHaveCount(6);
+    await expect(cifras.last()).toContainText('Sobregiro');
+    await esperarMonto(montos(cifras.last()), 2630);
+    const insignia = consumos(page).nth(4).locator('[data-insignia-fecha]');
+    await expect(insignia).toHaveText('oct11');
+    const acciones = page.getByRole('navigation', { name: 'Acciones de la categoría' });
+    await expect(acciones.getByRole('link')).toHaveText(['Asignar', 'Mover dinero']);
+  });
+
   test('PRU-E2E-PRES-113 una categoría sin consumos en el período dice «Sin gastos en este período»', async ({
     page,
   }) => {
