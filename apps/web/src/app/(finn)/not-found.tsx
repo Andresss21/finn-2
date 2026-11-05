@@ -22,7 +22,7 @@ export default async function NoExiste() {
           seccion === undefined ? undefined : (
             <EnlaceFinn
               href={seccion.ruta}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center"
+              className="text-etiqueta inline-flex min-h-11 min-w-11 items-center justify-center rounded-control bg-accion-tonal px-5 font-bold text-accion"
             >
               {estados.irA(seccion.etiqueta)}
             </EnlaceFinn>
