@@ -462,7 +462,7 @@ tu: TU-11, TU-12, TU-16
 
 ```hito
 despues: TA-447
-requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-468, TA-473, TA-474, TA-414, TA-415, TA-416, TA-417, TA-445, TA-418, TA-419, TA-420, TA-421, TA-453, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-466, TA-472, TA-467, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
+requiere: TA-400, TA-401, TA-402, TA-403, TA-404, TA-405, TA-406, TA-480, TA-407, TA-408, TA-409, TA-410, TA-411, TA-412, TA-413, TA-468, TA-473, TA-474, TA-414, TA-415, TA-416, TA-417, TA-445, TA-418, TA-419, TA-420, TA-421, TA-453, TA-422, TA-423, TA-424, TA-425, TA-426, TA-427, TA-440, TA-428, TA-429, TA-430, TA-431, TA-432, TA-433, TA-466, TA-472, TA-467, TA-434, TA-435, TA-436, TA-437, TA-438, TA-439, TA-446, TA-447
 hitos: HT-2, HT-3, HT-7
 sin_pendientes: si
 tu: —
@@ -1620,6 +1620,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-147** | `EntradaFecha` con el calendario del diseño, P1-03 (corrección posterior a TA-207; CH-112 y CH-126 dejaron «el selector del calendario» sin verificar). (a) **Síntoma:** el campo era un `<input type="date">` nativo, sin el campo dd/mm/aaaa ni el calendario del export. (b) **Causa:** TA-207 se construyó desde 05 §5.3 («el selector nativo o uno del diseño»). (c) **Resolución:** se porta `componentes/P1-03-entradafecha…` del export. `entrada-fecha.tsx`: campo de texto dd/mm/aaaa con las barras automáticas (acepta también un `AAAA-MM-DD` pegado), error «Esa fecha no existe…», botón de 44 px «Elegir en el calendario»; entrega la `FechaLocal` solo con una fecha completa, existente y dentro de `minima` y `maxima`. `calendario-fecha.tsx` (nuevo, `React.lazy`, sin librerías ni Radix): `role=dialog` con `role=grid`, mes con flechas, hoy con anillo y `aria-current`, día elegido con `aria-pressed`, días fuera de rango tachados y deshabilitados, celdas de 44 px, teclado de la APG (flechas, Inicio/Fin, RePág/AvPág con Mays para el año, Enter, Esc con el foco de vuelta al botón) y «Hoy» al pie. El «hoy» llega por la prop `hoy` (puesta en los 7 formularios que lo tienen) o, sin ella, de `<html data-hoy>`; nada usa el reloj. `EntradaTexto` gana `acciones`; textos en `textos/calendario.ts` (perezoso). **Diferencias del prototipo:** los atajos Hoy y Ayer fuera del campo, el pie «período» y los avisos de período cerrado y solo lectura no se portan (suman bytes eager o dependen de datos de cada flujo). El costo en bytes se acepta con CH-178. (d) **Archivos:** `apps/web/src/componentes/formularios/{entrada-fecha.tsx,calendario-fecha.tsx}`, `componentes/base/campo.tsx`, `textos/{base,calendario}.ts`, los 7 formularios de `flujos/` y 3 `toHaveValue` de E2E a dd/mm/aaaa. (e) **Pruebas:** PRU-CMP-TX-480 a 485 (campo, errores, calendario, selección, teclado, medidas de 44 px, axe en claro y oscuro) y PRU-E2E-TX-480 a 484. Ninguna cifra cambia. | 06-identidad-visual P1-03; 05 §5.3, §11.5, §13.1; 08 TA-207, CH-112, CH-126, CH-178 | Delegado por el orquestador; **aplicado [CH-147]** en apps/web y 08 |
 | **CH-178** | El tope de JS por ruta sube de 50 a 52 KB (05 §13.1, fila «JS por ruta»; `apps/web/presupuestos.json`, `porRutaKb`). (a) **Motivo:** el calendario de `EntradaFecha` (P1-03, CH-147) suma ≈ 1,2 KB gzip eager por ruta con formulario: la máscara dd/mm/aaaa, el botón y el `React.lazy`; el calendario mismo (≈ 1,9 KB) y sus textos van en un chunk perezoso que no carga hasta abrirlo. El margen de `/cuentas/nueva` era de 0,03 KB (49,97 KB), así que ningún campo con botón entraba sin recortar otra cosa. (b) **Medida** con `tamano.e2e.ts`, `origin/main` contra la rama (el compartido no cambia: 165,19 → 165,17 KB; el resto de las rutas varía ±0,02 KB): Rutas, KB gzip antes → después (delta): `/cuentas/nueva` 49,97 → 51,13 (+1,16); `/cuentas/[id]/cuota` 48,85 → 50,01 (+1,16); `/cuentas/[id]/editar` 47,84 → 48,89 (+1,05); `/cuentas/[id]/pagar` 21,39 → 22,56 (+1,17); `/cuentas/[id]/verificar-saldo` 22,39 → 23,44 (+1,05); `/registrar/[tipo]` 48,46 → 49,64 (+1,18); `/registrar/gasto` 22,66 → 23,67 (+1,01); `/metas/nueva` 19,14 → 20,13 (+0,99); `/programadas/nueva` y `/programadas/[id]` 22,24 → 23,38 ( +1,14). (c) **Alternativas descartadas:** recortar 1,2 KB de `/cuentas/nueva` en una tarea aparte; dejar el `type=date` nativo con solo el botón perezoso (no resuelve `/cuentas/nueva`). Reportes sigue en 120 KB, la biblioteca de formularios en 50 KB y el compartido en 170 KB. | 05 §13.1; 08 CH-147 | Delegado por el orquestador; **aplicado [CH-178]** en 05 y `presupuestos.json` |
 | **CH-184** | La respuesta de OPT-02 no queda abierta: era la medición (corrección posterior a TA-440, dueña de la renovación de FT-06; revisa lo medido en CH-104 (a)). (a) **Síntoma:** CH-104 midió con `response.finished()` de Playwright que la respuesta de OPT-02 seguía abierta más de 60 s, desde `/` y desde `/ajustes/notificaciones`, y sospechó de la revalidación o del `after()` del layout de `(finn)`, que en Vercel mantendrían viva la función. (b) **Causa:** el servidor cierra la respuesta en milisegundos; lo que no termina es el pedido tal como lo ve Playwright. Medido contra la compilación de la E2E (`next start`): repetido desde Node con las mismas cabeceras y cuerpo, el servidor manda la respuesta entera de OPT-02 (9.457 bytes con el resultado y el árbol revalidado, `x-action-revalidated: 1`, `Transfer-Encoding: chunked`) y la cierra en 23 a 68 ms; la escritura de `/pruebas/eco` con `accion()`, en 19 ms. En el navegador, CDP registra los seis trozos y la página lee el cuerpo hasta el fin a los ~120 ms, pero Chrome termina el pedido de OPT-02 con `Network.loadingFailed net::ERR_ABORTED` a los 42–62 ms en vez de `loadingFinished` (en todas las corridas menos una, que tenía una segunda sesión de CDP; la de eco termina bien). `Response.finished()` solo se cumple con `requestfinished` (`playwright-core` 1.56.1, `lib/client/browserContext.js`), así que con un pedido fallido espera hasta que se cierra la página: esos eran los «más de 60 s». **Descartados, con medición:** el `after()` del layout (la escritura de eco también rinde el layout y cierra en 19 ms; `after()` corre al cerrar la respuesta, no la retiene); el tipo de revalidación (con `revalidatePath(ARBOL_CON_DATOS, 'layout')` en OPT-02, mismo `ERR_ABORTED`); el `page.route` de la red bloqueada (sin él, igual); el recolector de basura del navegador (reteniendo la promesa, la respuesta y su cuerpo, igual); el service worker (la E2E lo bloquea) y Postgres o un `LISTEN` (el servidor ya cerró la respuesta). No se averiguó por qué Chrome marca abortado el pedido de OPT-02 y no el de eco: no afecta a la app (el resultado llega entero y `renovar` lo lee) ni al servidor. (c) **Resolución:** sin cambio de producción ni de documentos aprobados; 04 no pide nada que lo provoque. PRU-E2E-NOTIF-116 repite con la sesión del contexto (`page.request`) el pedido real de OPT-02 que hace la renovación y el de una escritura de eco, lee cada respuesta entera con un tope de 10 s y exige el resultado `ok` y `x-action-revalidated`: si algo dejara abierta la respuesta de una Server Action con revalidación, falla por el tope. Desde el navegador no se puede medir, por el `ERR_ABORTED`. El comentario de CH-104 en el simulador de NOTIF-102 se corrige; NOTIF-102 no cambia. (d) **Archivos:** `apps/web/e2e/pantallas/ajustes/notificaciones.e2e.ts`. (e) **Prueba:** NOTIF-116 pasa en menos de 1 s; con una promesa de 20 s agregada al resultado de OPT-02 (mutación temporal, no commiteada) falla por el tope de 10 s. | 08 CH-104 | Delegado por el orquestador; **aplicado [CH-184]** en 08 y en el arnés |
+| **CH-191** | Partición de TA-406 por tamaño (DT-02), con precedente en CH-72, CH-79 y CH-82. (a) El alcance completo de FT-28 midió prod≈614 en 10 archivos de producción (con la eliminación de eventos) (total≈1.600) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520); la pantalla de devolver (monto, reparto con capacidad por parte, fecha, cuenta, estado sin capacidad y rechazo por parte) y el enlace de cada evento no entran con la eliminación de eventos. (b) Se parte en dos: TA-406 conserva `/actividad/[transaccionId]/devolver` con OP-33a y la acción «Devolver» del detalle (CA-28.1 a CA-28.8, prod≈425, 7 archivos; su orden pasa a 694, libre, para dejarle el 706 a la segunda parte, porque E5 exige que TA-480 vaya después de ella y HT-8 espera a TA-447); TA-480, nueva (orden 706), lleva `/actividad/[transaccionId]/eventos/eliminar` con OP-34, el enlace «Eliminar» de cada evento del detalle (CA-28.9), cierra la ficha y completa los cinco pendientes de punta a punta (CA-09.11, CA-14.8, CA-19.2, CA-24.3, CA-25.5). TA-480 depende de TA-406 y de las mismas tareas que ella; HT-8 la exige. (c) La eliminación reutiliza `FormularioActividadEliminar` de TA-310 con sus textos y su entrada de OP-34 como parámetros; no cambia ninguna cifra | 08 TA-406, TA-480, HT-8; 06 FT-28 | Delegado por el orquestador; **aplicado [CH-191]** en 08 |
 
 ---
 
@@ -9462,7 +9463,7 @@ compartido: —
 | FT-13 | M | Auto-asignar | 4 | TA-404 | `/presupuesto/auto-asignar` | — |
 | FT-15 | M | Detalle de Listo para asignar | 5 | TA-400 | — | — |
 | FT-20 | M | Fusionar categorías | 5 | TA-405 | `/presupuesto/categorias/[categoriaId]/fusionar` | — |
-| FT-28 | M | Devoluciones | 9 | TA-406 | `/actividad/[transaccionId]/devolver`, `/actividad/[transaccionId]/eventos/eliminar` | CA-09.11, CA-14.8, CA-19.2, CA-24.3, CA-25.5 |
+| FT-28 | M | Devoluciones | 9 | TA-406, TA-480 | `/actividad/[transaccionId]/devolver`, `/actividad/[transaccionId]/eventos/eliminar` | CA-09.11, CA-14.8, CA-19.2, CA-24.3, CA-25.5 |
 | FT-31 | M | Reserva excedente y saldo a favor | 4 | TA-401 | — | — |
 | FT-32 | M | Cashback, avance y transferencia de deuda | 4 | TA-418 | — | — |
 | FT-33 | M | Corte, pago y monto para no generar intereses, con recordatorio | 6 | TA-402 | — | — |
@@ -9707,18 +9708,51 @@ fichas: FT-20
 
 **Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y, si completa pendientes, sus E2E en verde.
 
-#### TA-406 FT-28 Devoluciones
+#### TA-406 FT-28 Devoluciones (1 de 2) **[CH-191]**
+
+```tarea
+orden: 694
+bloque: B7
+hito: HT-8
+depende: TA-210, TA-212, TA-219, TA-224, TA-171, TA-173, TA-193, TA-198, TA-309, TA-457
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=400 archivos=7 ca=8 migraciones=0 total=1200
+cubre: CA-28.1, CA-28.2, CA-28.3, CA-28.4, CA-28.5, CA-28.6, CA-28.7, CA-28.8, RUTA-/actividad/[transaccionId]/devolver
+pru: —
+compartido: —
+fichas: FT-28
+```
+
+**Qué construir.**
+- FT-28, Flujo pasos 1 y 4 (devolución vinculada): `/actividad/[transaccionId]/devolver` con el monto, el reparto entre las partes y su capacidad, la fecha y la cuenta, el estado sin capacidad restante y la acción «Devolver» del detalle, para CA-28.1 a CA-28.8, con `formulario({ operacion: 'devolver' })` y OP-33a.
+- Server Action de OP-33 en `servidor/acciones/eventos.ts`; `ACCESO-001` y la suite de accesibilidad la cubren sola (TA-218, TA-221).
+- Rutas que esta tarea crea (dueña): `/actividad/[transaccionId]/devolver`.
+- Eliminar un evento (CA-28.9) y los pendientes de punta a punta son de TA-480 **[CH-191]**.
+
+**Leer.** 06 FT-28 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7; 04 §6 (sus consultas); 06-identidad-visual §3 si su pantalla está en las capturas.
+
+**Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/<area>.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
+
+**Pruebas primero.** Una prueba por CA de este trozo en el nivel de 07 §17 (DT-21), con el CA entre corchetes.
+
+**Comandos.** `pnpm pruebas:ft FT-28` sin faltantes en los CA de este trozo; `pnpm ci:local` con la E2E de la ficha.
+
+**Terminada cuando.** `pruebas:ft` sin faltantes en CA-28.1 a CA-28.8. La ficha sigue en `pendiente`: la cierra TA-480.
+
+#### TA-480 FT-28 Devoluciones (2 de 2) **[CH-191]**
 
 ```tarea
 orden: 706
 bloque: B7
 hito: HT-8
-depende: TA-210, TA-212, TA-219, TA-224, TA-171, TA-173, TA-193, TA-198, TA-309, TA-288, TA-290, TA-319, TA-441, TA-308, TA-457
+depende: TA-210, TA-212, TA-219, TA-224, TA-171, TA-173, TA-193, TA-198, TA-309, TA-288, TA-290, TA-319, TA-441, TA-308, TA-457, TA-406
 tu: —
 revision: normal
 paralelo: libre
-tamano: prod=360 archivos=10 ca=9 migraciones=0 total=1000
-cubre: CA-28.1, CA-28.2, CA-28.3, CA-28.4, CA-28.5, CA-28.6, CA-28.7, CA-28.8, CA-28.9, RUTA-/actividad/[transaccionId]/devolver, RUTA-/actividad/[transaccionId]/eventos/eliminar
+tamano: prod=200 archivos=6 ca=1 migraciones=0 total=800
+cubre: CA-28.9, RUTA-/actividad/[transaccionId]/eventos/eliminar
 pru: —
 compartido: —
 fichas: FT-28
@@ -9726,13 +9760,13 @@ e2e: CA-09.11, CA-14.8, CA-19.2, CA-24.3, CA-25.5
 ```
 
 **Qué construir.**
-- FT-28: las pantallas y flujos de la ficha (Flujo, Piezas, Estados, Errores y textos) para CA-28.1 a CA-28.9, con las consultas y operaciones que ya existen (B2 y B3) y los componentes de B4.
-- Server Actions de sus operaciones en `servidor/acciones/<area>.ts`; ACCESO-001 y la suite de accesibilidad las cubren solas (TA-218, TA-221).
-- Rutas que crea (dueña, DT-23): `/actividad/[transaccionId]/devolver`, `/actividad/[transaccionId]/eventos/eliminar`.
-- **Completa pendientes de punta a punta (DT-27):** CA-09.11, CA-14.8, CA-19.2, CA-24.3, CA-25.5. Una E2E por CA, que recorre el flujo de esta ficha y verifica el resultado en la pantalla de la ficha [I], con el CA entre corchetes; esta tarea no pasa la ficha a `terminada` sin ellas (TA-015).
+- FT-28, Flujo paso 3: `/actividad/[transaccionId]/eventos/eliminar?tipo-evento=&evento=` (OP-34) para un cobro, una condonación o una devolución, con el enlace «Eliminar» de cada evento del detalle, para CA-28.9.
+- Server Action de OP-34 en `servidor/acciones/eventos.ts`.
+- Rutas que esta tarea crea (dueña): `/actividad/[transaccionId]/eventos/eliminar`.
+- **Completa pendientes de punta a punta (DT-27):** CA-09.11, CA-14.8, CA-19.2, CA-24.3, CA-25.5. Una E2E por CA, que recorre el flujo de esta ficha y verifica el resultado en la pantalla de la ficha [I], con el CA entre corchetes. Esta tarea no pasa la ficha a `terminada` sin ellas (TA-015).
 - Último PR de la ficha: `features.json` en `terminada` (07 §27).
 
-**Leer.** 06 FT-28 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7; 04 §6 (sus consultas); 06-identidad-visual §3 si su pantalla está en las capturas.
+**Leer.** 06 FT-28 completo, con sus marcas de revisión; 05 §2 (filas de sus rutas), §7; 04 §6 (sus consultas).
 
 **Archivos.** `apps/web/src/app/(finn)/<ruta>/**`, `apps/web/src/flujos/<flujo>/*`, `apps/web/src/servidor/acciones/<area>.ts`, `apps/web/src/textos/<area>.ts`, `apps/web/e2e/{pantallas,flujos}/<area>/*`.
 
@@ -9740,9 +9774,9 @@ e2e: CA-09.11, CA-14.8, CA-19.2, CA-24.3, CA-25.5
 - Una prueba por CA de este trozo en el nivel de 07 §17 (DT-21), con el CA entre corchetes.
 - Las E2E de los pendientes que completa (campo `e2e`).
 
-**Comandos.** `pnpm pruebas:ft FT-28` sin faltantes en este trozo; `pnpm ci:local` con la E2E de la ficha.
+**Comandos.** `pnpm pruebas:ft FT-28` sin faltantes; `pnpm ci:local` con la E2E de la ficha.
 
-**Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y, si completa pendientes, sus E2E en verde.
+**Terminada cuando.** `pruebas:ft` sin CA faltantes, la ficha en `terminada` (07 §27) y sus E2E de pendientes en verde.
 
 #### TA-407 FT-47 Condonar
 
@@ -11583,7 +11617,7 @@ fichas: FT-49
 | FT-27 Transacción olvidada y cambios retroactivos | I | CA-08.5 (TA-298) | 1 | TA-311 |
 | FT-30 Pagar tarjeta con desglose y pago excedente | I | CA-08.7 (TA-299) | 1 | TA-303 |
 | FT-34 Recepción y procesamiento de SMS | I | CA-03.3 (TA-284) | 1 | TA-295 |
-| FT-28 Devoluciones | M | CA-09.11 (TA-288), CA-14.8 (TA-319), CA-19.2 (TA-441), CA-24.3 (TA-308), CA-25.5 (TA-457) | 5 | TA-406 |
+| FT-28 Devoluciones | M | CA-09.11 (TA-288), CA-14.8 (TA-319), CA-19.2 (TA-441), CA-24.3 (TA-308), CA-25.5 (TA-457) | 5 | TA-480 |
 | FT-39 Reglas de comercio | M | CA-21.10 (TA-293), CA-34.10 (TA-295), CA-35.11 (TA-297) | 3 | TA-411 |
 | FT-40 Administrar programadas | M | CA-19.1 (TA-306), CA-19.5 (TA-306) | 2 | TA-474 |
 | FT-41 Próximos pagos, registro de un toque y omitir | M | CA-08.8 (TA-299), CA-26.3 (TA-310), CA-34.9 (TA-295), CA-35.5 (TA-449), CA-37.4 (TA-300), CA-37.5 (TA-300) | 6 | TA-414 |
@@ -11681,7 +11715,8 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 703 | TA-403 | B7 | HT-8 | normal | FT-12 Asignación rápida | 360 | 0 |
 | 704 | TA-404 | B7 | HT-8 | normal | FT-13 Auto-asignar | 360 | 0 |
 | 705 | TA-405 | B7 | HT-8 | normal | FT-20 Fusionar categorías | 360 | 0 |
-| 706 | TA-406 | B7 | HT-8 | normal | FT-28 Devoluciones | 360 | 0 |
+| 694 | TA-406 | B7 | HT-8 | normal | FT-28 Devoluciones (1 de 2) **[CH-191]** | 400 | 0 |
+| 706 | TA-480 | B7 | HT-8 | normal | FT-28 Devoluciones (2 de 2) **[CH-191]** | 200 | 0 |
 | 707 | TA-407 | B7 | HT-8 | normal | FT-47 Condonar | 360 | 0 |
 | 708 | TA-408 | B7 | HT-8 | normal | FT-45 Por cobrar y dinero en camino | 360 | 0 |
 | 709 | TA-409 | B7 | HT-8 | normal | FT-46 Cobrar | 360 | 0 |
