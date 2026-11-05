@@ -119,9 +119,7 @@ test.describe('PRU-E2E-BAND', () => {
     const datos = page.getByRole('main');
     await expect(datos).toContainText(formatearFechaTexto('2027-02-10'));
     await expect(datos).toContainText(transaccion.origenes.sms);
-    await expect(page.getByRole('region', { name: transaccion.origen })).toContainText(
-      texto,
-    );
+    await expect(page.getByRole('region', { name: transaccion.origen })).toContainText(texto);
   });
 
   test('PRU-E2E-BAND-161 [CA-38.2] «Intentar de nuevo» sobre un SMS con error vuelve a procesar su texto original: la fila deja de estar con error y queda por revisar', async ({
