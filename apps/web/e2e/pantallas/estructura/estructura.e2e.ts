@@ -201,7 +201,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await expect(
       page.getByRole('link', { name: t.agregarCategoria('Pagos de tarjeta') }),
     ).toHaveCount(0);
-    await page.getByRole('link', { name: t.nuevaCategoria, exact: true }).click();
+    await page.getByRole('link', { name: t.agregarCategoria('Gastos') }).click();
     await expect(nombre(page)).toBeVisible();
     await expect(page.getByRole('radio', { name: 'Pagos de tarjeta' })).toHaveCount(0);
     await expect(page.getByRole('radio', { name: 'Gastos' })).toBeChecked();
