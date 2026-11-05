@@ -2,7 +2,7 @@
 // `bandeja()` en `coincidencia`; el servidor decide qué pasa al confirmar (OP-40) y lo prueban la integración y las E2E (PF-3).
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import '../../app/globals.css';
 import { bandeja as t } from '../../textos/bandeja';
 import { Coincidencia, type DatosCoincidencia } from './coincidencia';
@@ -37,44 +37,27 @@ const PENDIENTE: DatosCoincidencia = {
   monto: '$15.49',
   registrada: false,
 };
-const boton = (nodo: HTMLElement): HTMLButtonElement => {
-  const b = [...nodo.querySelectorAll('button')].find(
-    (x) => x.textContent === t.revisar.confirmarCoincidencia,
-  );
-  if (b === undefined) throw new Error('no hay «Confirmar»');
-  return b;
-};
-
 describe('PRU-CMP-BAND', () => {
-  it('PRU-CMP-BAND-110 [CA-35.5] con una ocurrencia pendiente dice que se crea la transacción y «Confirmar» avisa al flujo', async () => {
-    const alConfirmar = vi.fn();
-    const nodo = montar(
-      <Coincidencia
-        coincidencia={PENDIENTE}
-        enviando={false}
-        deshabilitado={false}
-        alConfirmar={alConfirmar}
-      />,
-    );
+  it('PRU-CMP-BAND-110 [CA-35.5] con una ocurrencia pendiente dice que se crea la transacción y muestra la tabla Programada / Fecha esperada / Monto esperado, sin botones (van en el pie)', () => {
+    const nodo = montar(<Coincidencia coincidencia={PENDIENTE} />);
     expect(nodo.textContent).toContain(
       t.revisar.coincidePendiente('Netflix', '20 de febrero', '$15.49'),
     );
-    await act(() => {
-      boton(nodo).click();
-      return Promise.resolve();
-    });
-    expect(alConfirmar).toHaveBeenCalledTimes(1);
+    const filas = [...nodo.querySelectorAll('dl > div')].map((f) => [
+      f.querySelector('dt')?.textContent,
+      f.querySelector('dd')?.textContent,
+    ]);
+    expect(filas).toEqual([
+      [t.revisar.programada, 'Netflix'],
+      [t.revisar.fechaEsperada, '20 de febrero'],
+      [t.revisar.montoEsperado, '$15.49'],
+    ]);
+    expect(nodo.textContent).toContain(t.revisar.coincidenciaNota);
+    expect(nodo.querySelectorAll('button')).toHaveLength(0);
   });
 
   it('PRU-CMP-BAND-111 [CA-35.6] con la ocurrencia ya registrada dice que no se crea otra transacción', () => {
-    const nodo = montar(
-      <Coincidencia
-        coincidencia={{ ...PENDIENTE, registrada: true }}
-        enviando={false}
-        deshabilitado={false}
-        alConfirmar={vi.fn()}
-      />,
-    );
+    const nodo = montar(<Coincidencia coincidencia={{ ...PENDIENTE, registrada: true }} />);
     expect(nodo.textContent).toContain(
       t.revisar.coincideRegistrada('Netflix', '20 de febrero', '$15.49'),
     );

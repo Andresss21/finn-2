@@ -53,6 +53,13 @@ export async function LectorMovimiento({
           ? {}
           : { errorDetalle: m.procesamiento.errorDetalle }),
         esperado: m.esperado,
+        nota: m.nota,
+        ...(m.duplicado === undefined
+          ? {}
+          : { duplicado: { ...m.duplicado, cuenta: m.duplicado.cuenta?.nombre ?? null } }),
+        ...(m.estado === 'error'
+          ? { reproceso: { smsId: m.sms.id, intentoVisto: m.procesamiento.intento } }
+          : {}),
         resumen: {
           vista:
             m.estado === 'aprobado' || m.estado === 'descartado' || m.estado === 'autodescartado'
