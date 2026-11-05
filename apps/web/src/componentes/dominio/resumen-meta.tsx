@@ -19,7 +19,7 @@ export interface MetaDto {
 const t = categoriaDetalle.meta;
 
 /** El estado de 10.3 de una meta: vencida es advertencia; cumplida y completada, positivo. */
-function indicador(meta: MetaDto): { estado: EstadoFinanciero; etiqueta: string } {
+export function indicadorDeMeta(meta: MetaDto): { estado: EstadoFinanciero; etiqueta: string } {
   if (meta.estado === 'vencida') return { estado: 'advertencia', etiqueta: dominio.metaVencida };
   if (meta.estado === 'cumplida') return { estado: 'positivo', etiqueta: dominio.metaCumplida };
   if (meta.estado === 'completada') return { estado: 'positivo', etiqueta: dominio.metaCompletada };
@@ -36,7 +36,7 @@ export function ResumenMeta({
   /** Lo que ya hay en la categoría (su Disponible), para decir «$1,350.00 de $3,000.00». */
   readonly conseguido: Centavos;
 }) {
-  const { estado, etiqueta } = indicador(meta);
+  const { estado, etiqueta } = indicadorDeMeta(meta);
   const bp = meta.progresoBp;
   return (
     <div data-resumen-meta={meta.estado} className="flex flex-col gap-2">

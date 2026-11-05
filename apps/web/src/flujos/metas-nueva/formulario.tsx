@@ -92,6 +92,8 @@ export function FormularioMeta({ categorias, categoriaInicial }: PropsFormulario
     });
   };
   const porPeriodo = c.tipo === 'mensual' || c.tipo === 'semanal';
+  // Con la categoría ya elegida (S4 del export 09a) el título la nombra y no hay selector.
+  const fija = categorias.find((x) => x.id === categoriaInicial);
   const { estado, error: fallo } = operacion;
 
   if (estado === 'listo')
@@ -102,32 +104,37 @@ export function FormularioMeta({ categorias, categoriaInicial }: PropsFormulario
     );
 
   return (
-    <PaginaFlujoDeRuta titulo={t.tituloNueva} rutaPadre={RUTA_PADRE}>
+    <PaginaFlujoDeRuta
+      titulo={fija === undefined ? t.tituloNueva : t.tituloPara(fija.nombre)}
+      rutaPadre={RUTA_PADRE}
+    >
       <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
-        <Campo
-          etiqueta={t.categoria}
-          requerido
-          {...(errors.categoriaId?.message === undefined
-            ? {}
-            : { error: errors.categoriaId.message })}
-        >
-          {(props) => (
-            <select
-              {...props}
-              value={c.categoriaId}
-              onChange={(e) => {
-                poner('categoriaId')(e.target.value);
-              }}
-              className="min-h-11 rounded-control border border-borde bg-superficie px-3 text-base"
-            >
-              {categorias.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.nombre}
-                </option>
-              ))}
-            </select>
-          )}
-        </Campo>
+        {fija === undefined ? (
+          <Campo
+            etiqueta={t.categoria}
+            requerido
+            {...(errors.categoriaId?.message === undefined
+              ? {}
+              : { error: errors.categoriaId.message })}
+          >
+            {(props) => (
+              <select
+                {...props}
+                value={c.categoriaId}
+                onChange={(e) => {
+                  poner('categoriaId')(e.target.value);
+                }}
+                className="min-h-11 rounded-control border border-borde bg-superficie px-3 text-base"
+              >
+                {categorias.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Campo>
+        ) : null}
         <SelectorSegmentado
           etiqueta={t.tipo}
           opciones={opciones(t.tipos)}
