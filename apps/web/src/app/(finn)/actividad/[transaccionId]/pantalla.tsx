@@ -186,6 +186,9 @@ export function PantallaDetalleTransaccion({
   // «Más acciones» (CH-115): cambiar el estado bancario (OP-30; la conciliada solo la fija OP-47) y Eliminar (OP-29) al final
   const conciliada = x.estadoBancario === 'conciliada';
   const acciones: readonly AccionPantalla[] = [
+    ...(x.tipo === 'gasto'
+      ? [{ etiqueta: t.registrarDevolucion, ruta: `/actividad/${x.id}/devolver${sufijo}` }]
+      : []),
     {
       etiqueta: x.estadoBancario === 'pendiente' ? t.marcarConfirmada : t.marcarPendiente,
       ...(conciliada

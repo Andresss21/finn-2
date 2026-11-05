@@ -11,7 +11,7 @@ export interface PorcionDona {
   readonly etiqueta: string;
   /** Puntos básicos (04 §6.9.2): las porciones suman 10.000. */
   readonly porcentaje: number;
-  /** Monto ya formateado que da el DTO (PF-3): va en la leyenda, antes del porcentaje. «Otras» no lo lleva: sumarlo sería calcular. */
+  /** Monto ya formateado que da el DTO (PF-3): va en la leyenda, antes del porcentaje. Para «Otras» es `montoOtras` del DTO (CH-177): nunca una suma de la interfaz. */
   readonly monto?: string;
   /** La porción «Otras» no usa un color de la paleta categórica. */
   readonly otras?: boolean;
