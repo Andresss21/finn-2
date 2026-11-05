@@ -1,6 +1,7 @@
-// FT-40 Administrar programadas, crear (06 FT-40; 05 §2 y §7; 07 §17: un flujo es una E2E). Cada prueba parte de una base sembrada con las operaciones
+// FT-40 Administrar programadas (06 FT-40; 05 §2 y §7; 07 §17: un flujo es una E2E). Cada prueba parte de una base sembrada con las operaciones
 // reales de un escenario de 01 §8 (DP-17) y del reloj del servidor fijo (DP-04), y recorre el flujo como la persona. Los números los pone el
-// motor: la prueba solo comprueba que el flujo los dibuja y los envía (PF-3).
+// motor: la prueba solo comprueba que el flujo los dibuja y los envía (PF-3). También completa de punta a punta CA-19.1 y CA-19.5 (DT-27,
+// `pruebas/pendientes-e2e.json`): el efecto de archivar una categoría sobre sus programadas se ve en `/programadas`.
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
@@ -24,6 +25,32 @@ const NETFLIX: Op = {
   categoria: 'Streaming',
   primeraFecha: '2027-02-17',
 };
+// ESC-44 paso 0: Gimnasio con $70.00 en P1, el débito de $30.00 del 2 de febrero, $30.00 en P3 (futuro) y una programada activa.
+const ESC44_PASO0: Op[] = [
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-07', categoria: 'Gimnasio' },
+  { op: 'OP-21', monto: 700, fecha: '2027-01-25', hoy: '2027-01-25' },
+  { op: 'OP-14', categoria: 'Gimnasio', monto: 70, periodo: 'P1', hoy: '2027-01-25' },
+  {
+    op: 'OP-20',
+    cuenta: 'Ahorro',
+    monto: 30,
+    categoria: 'Gimnasio',
+    fecha: '2027-02-02',
+    hoy: '2027-02-02',
+    etiqueta: 'gimnasio',
+  },
+  { op: 'OP-14', categoria: 'Gimnasio', monto: 30, periodo: 'P3' },
+  {
+    op: 'OP-42',
+    etiqueta: 'gimnasio',
+    cuenta: 'Ahorro',
+    comercio: 'Gimnasio',
+    monto: 30,
+    categoria: 'Gimnasio',
+    primeraFecha: '2027-03-10',
+  },
+];
 
 /** Siembra las operaciones con `hoy` y deja el reloj del servidor en `hoyServidor` (por defecto, el mismo día). */
 async function sembrarOps(ops: Op[], hoy: string, hoyServidor = hoy): Promise<void> {
@@ -66,7 +93,7 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-PROG-101 RUTA-/programadas/nueva RUTA-/programadas [CA-40.1] crear la Netflix mensual de $15.49 el día 17 con Visa Oro a Streaming la deja en Programadas a 7 días y en los próximos pagos de Inicio, y una a 20 días solo en Programadas', async ({
+  test('PRU-E2E-PROG-101 [CA-40.1] RUTA-/programadas/nueva RUTA-/programadas crear la Netflix mensual de $15.49 el día 17 con Visa Oro a Streaming la deja en Programadas a 7 días y en los próximos pagos de Inicio, y una a 20 días solo en Programadas', async ({
     page,
   }) => {
     await sembrarOps(
@@ -82,7 +109,60 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await expect(proximos).not.toContainText('Luz');
   });
 
-  test('PRU-E2E-PROG-104 RUTA-/programadas/nueva [CA-40.4] una cuota con registro automático hacia un préstamo sin modelo se rechaza con registro_automatico_sin_modelo', async ({
+  test('PRU-E2E-PROG-102 [CA-40.2] RUTA-/programadas/[programadaId] con una ocurrencia registrada el día y la frecuencia quedan sin edición con el motivo de calendario_con_historial y cambiar el monto sí se guarda', async ({
+    page,
+  }) => {
+    await sembrarOps(
+      [
+        ...BASE,
+        NETFLIX,
+        { op: 'OP-43', modo: 'toque', programada: 'netflix', fecha: '2027-02-17' },
+      ],
+      '2027-02-20',
+    );
+    await abrir(page, '/programadas');
+    await page
+      .getByRole('link', { name: /Netflix/ })
+      .first()
+      .click();
+    await esperarContenido(page);
+    await expect(page.getByLabel('Primera fecha')).toBeDisabled();
+    await expect(page.getByLabel('Frecuencia')).toBeDisabled();
+    await expect(page.getByText(/ya tiene pagos registrados/)).toBeVisible();
+    await page.getByLabel('Monto', { exact: true }).fill('17.99');
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
+    await expect(page).toHaveURL(/\/programadas$/);
+    await esperarContenido(page);
+    await expect(fila(page, 'Netflix')).toContainText('$17.99');
+  });
+
+  test('PRU-E2E-PROG-103 [CA-40.3] RUTA-/programadas/[programadaId] una programada sin historial se elimina y desaparece, y con historial Eliminar no se ofrece', async ({
+    page,
+  }) => {
+    await sembrarOps(
+      [
+        ...BASE,
+        NETFLIX,
+        { op: 'OP-43', modo: 'toque', programada: 'netflix', fecha: '2027-02-17' },
+        { ...NETFLIX, etiqueta: 'gym', comercio: 'Gimnasio', primeraFecha: '2027-03-05' },
+      ],
+      '2027-02-20',
+    );
+    await abrir(page, '/programadas');
+    await fila(page, 'Netflix').getByRole('link').click();
+    await esperarContenido(page);
+    await expect(page.getByRole('button', { name: 'Eliminar', exact: true })).toHaveCount(0);
+    await abrir(page, '/programadas');
+    await fila(page, 'Gimnasio').getByRole('link').click();
+    await esperarContenido(page);
+    await page.getByRole('button', { name: 'Eliminar', exact: true }).click();
+    await expect(page).toHaveURL(/\/programadas$/);
+    await esperarContenido(page);
+    await expect(fila(page, 'Gimnasio')).toHaveCount(0);
+    await expect(fila(page, 'Netflix')).toHaveCount(1);
+  });
+
+  test('PRU-E2E-PROG-104 [CA-40.4] RUTA-/programadas/nueva una cuota con registro automático hacia un préstamo sin modelo se rechaza con registro_automatico_sin_modelo', async ({
     page,
   }) => {
     await sembrarOps(
@@ -121,14 +201,60 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await expect(page).toHaveURL(/\/programadas\/nueva/);
   });
 
-  test('PRU-E2E-PROG-107 RUTA-/programadas/nueva [CA-40.8] crear una programada no cambia Listo para asignar', async ({
+  test('PRU-E2E-PROG-107 [CA-40.8] RUTA-/programadas/nueva crear, editar y desactivar una programada no cambia Listo para asignar', async ({
     page,
   }) => {
     await sembrarOps(BASE, '2027-02-10');
     await abrir(page, '/presupuesto');
     await esperarMonto(lpa(page), 100000);
     await crearNetflix(page);
+    await fila(page, 'Netflix').getByRole('link').click();
+    await esperarContenido(page);
+    await page.getByLabel('Monto', { exact: true }).fill('20');
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
+    await expect(page).toHaveURL(/\/programadas$/);
+    await fila(page, 'Netflix').getByRole('link').click();
+    await esperarContenido(page);
+    await page.getByRole('button', { name: 'Desactivar', exact: true }).click();
+    await expect(page.getByTestId('resultado')).toBeVisible();
     await abrir(page, '/presupuesto');
     await esperarMonto(lpa(page), 100000);
+  });
+
+  test('PRU-E2E-PROG-108 [CA-19.1, ESC-44] RUTA-/programadas archivar Gimnasio con la programada desactivada la deja inactiva en Programadas', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC44_PASO0, '2027-03-05');
+    await abrir(page, '/presupuesto/estructura');
+    await page.getByRole('link', { name: 'Editar Gimnasio', exact: true }).click();
+    await page.getByRole('link', { name: 'Archivar', exact: true }).click();
+    await page
+      .getByRole('radiogroup', { name: /Programada Gimnasio/ })
+      .getByRole('radio', { name: 'Desactivarla' })
+      .click();
+    await page.getByRole('button', { name: 'Archivar', exact: true }).click();
+    await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
+    await expect(page).toHaveURL(/\/presupuesto\/categorias\/[0-9a-f-]+$/);
+
+    await abrir(page, '/programadas');
+    await expect(fila(page, 'Gimnasio')).toContainText('Desactivada');
+    await expect(fila(page, 'Gimnasio').getByRole('button', { name: 'Reactivar' })).toBeVisible();
+    await expect(page.locator('[data-seccion="proximos"] [data-proximo]')).toHaveCount(0);
+  });
+
+  test('PRU-E2E-PROG-109 [CA-19.5, ESC-44] RUTA-/programadas archivar una categoría con una programada activa sin decidir sobre ella no se envía y la programada sigue activa en Programadas', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC44_PASO0, '2027-03-05');
+    await abrir(page, '/presupuesto/estructura');
+    await page.getByRole('link', { name: 'Editar Gimnasio', exact: true }).click();
+    await page.getByRole('link', { name: 'Archivar', exact: true }).click();
+    await page.getByRole('button', { name: 'Archivar', exact: true }).click();
+    await expect(page.getByText('Elegí una opción.')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Revisá el impacto' })).toHaveCount(0);
+
+    await abrir(page, '/programadas');
+    await expect(fila(page, 'Gimnasio')).not.toContainText('Desactivada');
+    await expect(page.locator('[data-seccion="proximos"] [data-proximo]')).toHaveCount(1);
   });
 });

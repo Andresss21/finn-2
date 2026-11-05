@@ -28,6 +28,8 @@ export interface PropsSeleccionNativa {
   /** 52 px con ícono y dos líneas (la cuenta) en lugar de 48 px (la línea de un gasto). */
   readonly alta?: boolean;
   readonly etiquetaOculta?: boolean;
+  /** Sin edición (p. ej. el calendario con historial). */
+  readonly deshabilitado?: boolean;
 }
 
 // Fuera del JSX por L15: el foco y el error los dan `has-*` del `<select>` que el campo contiene.
@@ -43,6 +45,7 @@ export function SeleccionNativa({
   error,
   alta = false,
   etiquetaOculta = false,
+  deshabilitado = false,
 }: PropsSeleccionNativa) {
   const elegida = opciones.find((o) => o.valor === valor);
   const lista = (grupo: string | undefined) =>
@@ -80,6 +83,7 @@ export function SeleccionNativa({
           <select
             {...control}
             value={valor}
+            disabled={deshabilitado}
             className="absolute inset-0 size-full cursor-pointer appearance-none opacity-0"
             onChange={(e) => {
               alCambiar(e.target.value);
