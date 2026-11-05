@@ -5,7 +5,7 @@ import { Marca } from '../../componentes/marco/marca';
 
 export default function LayoutIngresar({ children }: { readonly children: ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-8 bg-fondo px-5 py-10 text-texto">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-8 bg-fondo px-6 pb-10 pt-16 text-texto">
       <Marca />
       {children}
     </main>

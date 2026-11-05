@@ -6,6 +6,7 @@ import type { DetalleLpaDto } from '@finn/aplicacion/consultas/detalle-lpa';
 import type { Centavos } from '@finn/dominio/valores';
 import type { ReactNode } from 'react';
 import { AvisoEnLinea } from '../../../../componentes/base/aviso';
+import { ResumenListoParaAsignar } from '../../../../componentes/dominio/billete';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { GraficoLineas } from '../../../../componentes/graficos/grafico-lineas';
 import { TablaEquivalente } from '../../../../componentes/graficos/tabla-equivalente';
@@ -13,28 +14,36 @@ import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { formatearMonto, formatearPeriodoCorto } from '../../../../formato';
-import { dominio } from '../../../../textos/dominio';
+import { inicio } from '../../../../textos/inicio';
 import { listoParaAsignar as t } from '../../../../textos/listo-para-asignar';
 
 const ENLACE =
   'inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-const LISTA = 'flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie px-4';
+const LISTA = 'flex flex-col divide-y divide-borde-sutil';
+const TARJETA = 'flex flex-col gap-3 rounded-contenedor bg-superficie p-4 shadow-elevacion-1';
 
 function Seccion({
   titulo,
   atributo,
   sinTitulo = false,
+  tarjeta = false,
   children,
 }: {
   readonly titulo: string;
   readonly atributo: string;
   /** El título lo dibuja el contenido: el contenedor de gráfico lo lleva en su encabezado. */
   readonly sinTitulo?: boolean;
+  /** Dentro de una tarjeta con el título como rótulo (export 05). */
+  readonly tarjeta?: boolean;
   readonly children: ReactNode;
 }) {
   return (
-    <section data-seccion={atributo} className="flex flex-col gap-3">
-      {sinTitulo ? null : <h2 className="text-titulo-seccion">{titulo}</h2>}
+    <section data-seccion={atributo} className={tarjeta ? TARJETA : 'flex flex-col gap-3'}>
+      {sinTitulo ? null : (
+        <h2 className={tarjeta ? 'text-rotulo text-texto-secundario' : 'text-titulo-seccion'}>
+          {titulo}
+        </h2>
+      )}
       {children}
     </section>
   );
@@ -73,7 +82,7 @@ function Grupo({
 function Reduccion({ dto }: { readonly dto: DetalleLpaDto }) {
   const { total, categorias, tarjetas } = dto.reduccionProyectadaAlCierre;
   return (
-    <Seccion titulo={t.reduccion.titulo} atributo="reduccion">
+    <Seccion titulo={t.reduccion.titulo} atributo="reduccion" tarjeta>
       {total === 0 ? (
         <p className="text-cuerpo-pequeno text-texto-secundario">{t.reduccion.ninguna}</p>
       ) : (
@@ -128,12 +137,9 @@ function Historial({ dto }: { readonly dto: DetalleLpaDto }) {
           tabla={<TablaEquivalente titulo={t.historial.grafico} puntos={puntos} />}
         />
       )}
-      <p
-        data-nota-historial={dto.notaHistorial}
-        className="text-cuerpo-pequeno text-texto-secundario"
-      >
-        {t.historial.nota}
-      </p>
+      <div data-nota-historial={dto.notaHistorial}>
+        <AvisoEnLinea estado="informacion">{t.historial.nota}</AvisoEnLinea>
+      </div>
     </Seccion>
   );
 }
@@ -147,23 +153,25 @@ export function PantallaListoParaAsignar({ dto }: { readonly dto: DetalleLpaDto 
       <EnlaceFinn href="/presupuesto" className={ENLACE}>
         {t.volver}
       </EnlaceFinn>
-      <header className="flex flex-col gap-2">
-        <h1 className="text-titulo-pantalla">{t.titulo}</h1>
-        <Monto
-          centavos={dto.lpa}
-          rol="cifra-principal"
-          {...(dto.lpaNegativo ? { estado: 'problema' as const } : {})}
-        />
-      </header>
-      {dto.lpaNegativo ? (
-        <AvisoEnLinea estado="problema">{dominio.billete.asignasteDeMas}</AvisoEnLinea>
-      ) : null}
-      {d.enCamino > 0 ? (
-        <AvisoEnLinea estado="informacion">
-          {dominio.billete.enCamino} <Monto centavos={d.enCamino} rol="cuerpo" />
-        </AvisoEnLinea>
-      ) : null}
-      <Seccion titulo={x.titulo} atributo="descomposicion">
+      <h1 className="text-titulo-pantalla">{t.titulo}</h1>
+      <ResumenListoParaAsignar
+        variante="billete"
+        lpa={dto.lpa}
+        enCamino={d.enCamino}
+        lpaNegativo={dto.lpaNegativo}
+        {...(dto.lpa === 0
+          ? {}
+          : {
+              accion: {
+                href: '/presupuesto',
+                texto:
+                  dto.lpa < 0
+                    ? inicio.quitar(formatearMonto(Math.abs(dto.lpa) as typeof dto.lpa))
+                    : inicio.asignar(formatearMonto(dto.lpa)),
+              },
+            })}
+      />
+      <Seccion titulo={x.titulo} atributo="descomposicion" tarjeta>
         <Grupo
           titulo={x.suma}
           lineas={[

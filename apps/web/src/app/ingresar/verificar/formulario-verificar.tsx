@@ -79,9 +79,9 @@ export function FormularioVerificar({
         void formulario.enviar(e);
       }}
       noValidate
-      className="flex flex-col gap-5"
+      className="flex flex-col gap-4"
     >
-      <h1 className="text-titulo-pantalla">{t.tituloVerificar}</h1>
+      <h1 className="text-titulo-seccion">{t.tituloVerificar}</h1>
       <p className="text-cuerpo-pequeno text-texto-secundario">{t.introVerificar}</p>
       {error === undefined ? null : (
         <AvisoEnLinea estado="problema" aparecioDespues>
