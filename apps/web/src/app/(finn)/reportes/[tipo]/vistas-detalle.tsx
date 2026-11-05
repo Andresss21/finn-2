@@ -1,5 +1,6 @@
 // Los reportes por categoría y por comercio de FT-60 (04 §6.9.2): `categorias` con su dona, `top-comercios` y `cumplimiento`. Dibujan
-// lo que trae el DTO, con su tabla equivalente (P5-13). No calculan montos (PF-3): «Otras» suma puntos básicos del DTO, nunca montos.
+// lo que trae el DTO, con su tabla equivalente (P5-13). No calculan montos (PF-3): «Otras» suma puntos básicos del DTO, nunca montos;
+// su monto (`montoOtras`) y el total del centro (`total`) los trae el DTO (CH-177).
 import type { ReactNode } from 'react';
 import type { ReporteDe } from '@finn/aplicacion/consultas/reporte';
 import type { Ref } from '@finn/dominio/selectores';
@@ -112,6 +113,7 @@ export function Categorias({
             clave: 'otras',
             etiqueta: t.otras,
             porcentaje: resto.reduce((suma, c) => suma + c.porcentaje, 0),
+            monto: formatearMonto(dto.montoOtras),
             otras: true,
           },
         ];
@@ -128,6 +130,8 @@ export function Categorias({
                 : t.resumenDona(mayor.etiqueta, formatearPorcentaje(mayor.porcentaje))
             }
             porciones={porciones}
+            total={formatearMonto(dto.total)}
+            etiquetaTotal={t.totalDona}
           />
         }
         tabla={
