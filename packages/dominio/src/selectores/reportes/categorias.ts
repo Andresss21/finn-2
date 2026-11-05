@@ -1,7 +1,8 @@
 // Reporte `categorias` (04 §6.9.2): en qué se va el dinero. Gastado acumulado en W por categoría
 // normal con actividad (archivadas incluidas, R4). La dona usa las de gastado > 0; las de gastado ≤ 0
 // (devolución neta) van aparte. `porcentaje` en puntos básicos sobre Σ de los positivos y suma
-// exactamente 10.000: el ajuste de redondeo va de a 1 punto a las categorías de mayor gasto.
+// exactamente 10.000: el ajuste de redondeo va de a 1 punto a las categorías de mayor gasto. [CH-177] `total` es Σ de los
+// positivos (el centro de la dona) y `montoOtras` lo de las que siguen a las 8 primeras (CA-60.5): la interfaz no suma (PF-3).
 import type { Instantanea, Uuid } from '../../hechos';
 import { Centavos } from '../../valores/centavos';
 import { type FiltroDeReporte, medidor, periodosDeVentana, puntosBasicos, suma } from './comunes';
@@ -16,7 +17,14 @@ export interface FilaDeCategoria {
 export interface ReporteDeCategorias {
   readonly categorias: readonly FilaDeCategoria[];
   readonly conDevolucionNeta: readonly { readonly categoria: Uuid; readonly gastado: Centavos }[];
+  /** Σ de los `gastado` > 0, incluidas las que la dona agrupa en «Otras»; 0 sin ninguna (04 §6.9.2, CH-177). */
+  readonly total: Centavos;
+  /** Σ de los `gastado` desde la porción PORCIONES_DE_LA_DONA + 1 en el orden de `categorias`; 0 si caben todas. */
+  readonly montoOtras: Centavos;
 }
+
+/** Porciones con nombre propio en la dona; las que siguen van juntas en «Otras» (CA-60.5, 05 §10.8). */
+export const PORCIONES_DE_LA_DONA = 8;
 
 export function categorias(
   i: Instantanea,
@@ -56,5 +64,7 @@ export function categorias(
       .filter((x) => x.gastado <= 0)
       .sort((a, b) => a.gastado - b.gastado || porId(a, b))
       .map((x) => ({ categoria: x.categoria, gastado: x.gastado })),
+    total,
+    montoOtras: suma(positivas.slice(PORCIONES_DE_LA_DONA).map((x) => x.gastado)),
   };
 }
