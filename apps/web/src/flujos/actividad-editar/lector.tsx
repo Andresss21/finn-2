@@ -7,6 +7,8 @@ import { mensajeDeRechazo } from '@finn/aplicacion/errores';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { editarTransaccion } from '../../servidor/acciones/transacciones';
+import { formatearMonto } from '../../formato';
+import { registrarGasto as g } from '../../textos/registrar-gasto';
 import { transaccion as t } from '../../textos/transaccion';
 import { camposIniciales } from './campos';
 import { FormularioActividadEditar } from './formulario';
@@ -27,9 +29,27 @@ export async function LectorActividadEditar({
     { validacionDeSegmento: true },
   );
   const c = dto.contexto;
-  const cuentas = Object.values(dto.catalogos.cuentas ?? {})
-    .flat()
-    .map((x) => ({ id: x.cuenta.id, nombre: nombre(x.cuenta) }));
+  // El detalle del campo cerrado es del DTO tal cual: la deuda de la tarjeta o el saldo del efectivo; no se calcula nada.
+  const cat = dto.catalogos.cuentas;
+  const cuentas = [
+    ...(cat?.efectivo ?? []).map((x) => ({
+      id: x.cuenta.id,
+      nombre: nombre(x.cuenta),
+      tipo: 'efectivo' as const,
+      detalle: g.saldoDeCuenta(formatearMonto(x.saldo)),
+    })),
+    ...(cat?.tarjetas ?? []).map((x) => ({
+      id: x.cuenta.id,
+      nombre: nombre(x.cuenta),
+      tipo: 'tarjeta' as const,
+      detalle: g.deudaDeCuenta(formatearMonto(x.deuda)),
+    })),
+    ...[...(cat?.prestamos ?? []), ...(cat?.inversiones ?? [])].map((x) => ({
+      id: x.cuenta.id,
+      nombre: nombre(x.cuenta),
+      tipo: 'otra' as const,
+    })),
+  ];
   const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((g) =>
     g.categorias.map((x) => ({ id: x.categoria.id, nombre: nombre(x.categoria) })),
   );
