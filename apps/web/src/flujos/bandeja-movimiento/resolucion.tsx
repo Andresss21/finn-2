@@ -1,10 +1,12 @@
 'use client';
 // Las salidas de un movimiento que no se aprueba (FT-37, 05 §4.14): «Descartar» (OP-39), «Es otro gasto» y «Es duplicado» en un
 // posible duplicado, y «No es este pago» en una coincidencia (OP-40). Un movimiento con coincidencia no ofrece «Descartar»
-// (05 §4.14, CA-37.6): el servidor también lo rechaza con `movimiento_estado_no_valido`. Se carga cuando hace falta.
+// (05 §4.14, CA-37.6): el servidor también lo rechaza con `movimiento_estado_no_valido`. Se carga cuando hace falta. Va en el pie fijo
+// bajo «Aprobar $X» (S4, CH-136): secundario tonal (D1), con el ícono de la papelera en «Descartar».
 import { useEffect } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
+import { Icono } from '../../componentes/base/icono';
 import { useOperacion } from '../../formularios/use-operacion';
 import { descartarMovimiento, resolverCoincidencia } from '../../servidor/acciones/bandeja';
 import { bandeja as t } from '../../textos/bandeja';
@@ -30,7 +32,7 @@ export default function Resolucion({
   const decidir = (decision: Decision): void => {
     void resolver.enviar({ movimientoId, decision });
   };
-  const botones: { texto: string; ejecutar: () => void }[] = [
+  const botones: { texto: string; ejecutar: () => void; icono?: 'trash' }[] = [
     ...(estado === 'posible_duplicado'
       ? [
           {
@@ -61,6 +63,7 @@ export default function Resolucion({
       ? [
           {
             texto: cuentas.bandeja.descartar,
+            icono: 'trash' as const,
             ejecutar: () => {
               void descartar.enviar({ movimientoId, accion: 'descartar' });
             },
@@ -88,7 +91,9 @@ export default function Resolucion({
             variante="secundaria"
             deshabilitado={ocupado || sinConexion}
             onClick={b.ejecutar}
+            className="flex-1"
           >
+            {b.icono === undefined ? null : <Icono nombre={b.icono} tamano={18} />}
             {b.texto}
           </Boton>
         ))}

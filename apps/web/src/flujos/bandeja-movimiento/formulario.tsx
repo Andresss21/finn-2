@@ -2,15 +2,16 @@
 // `/bandeja/[movimientoId]` (FT-35, OP-36 y OP-37; 05 §2.5): revisar un movimiento completo, con el texto del SMS siempre a la
 // vista, cambiar lo que hace falta y aprobarlo. «Aprobar» guarda primero lo que cambió (OP-36, con lo que se vio en `esperado`) y
 // después aprueba (OP-37); con la fecha en un período cerrado el servidor pide confirmar con AV-01. Es un flujo largo: siempre
-// página completa (05 §1.4). No calcula montos (PF-3): la suma de las partes la valida el servidor.
+// página completa (05 §1.4). No calcula montos (PF-3): la suma de las partes la valida el servidor. CH-136 lo porta del export (S4): encabezado,
+// campos con selección nativa y líneas compactas, y el pie fijo con «Aprobar $X» y las salidas del movimiento.
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFieldArray } from 'react-hook-form';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
-import { formatearMonto } from '../../formato';
-import { faltaRepartir } from '../../formularios/normalizar-monto';
+import { formatearMonto, formatearMontoTexto } from '../../formato';
+import { faltaRepartir, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion } from '../../formularios/use-operacion';
 import {
@@ -24,6 +25,9 @@ import { formularios } from '../../textos/formularios';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
 import type { ValorAprobado } from './aprobado';
 import type { DatosCoincidencia } from './coincidencia';
+import { TextoDelSms } from './texto-sms';
+import type { CuentaDelMovimiento } from './campos-movimiento';
+import type { ResumenDelMovimiento } from './encabezado';
 import { camposIniciales, contrato, entradaDeEdicion, ofreceRecordar, type Campos } from './campos';
 
 interface Referencia {
@@ -41,10 +45,12 @@ export interface PropsFormularioMovimiento {
     readonly origenId?: string;
     /** Con una coincidencia sobre una transacción programada (OP-40): lo que se muestra de ella. */
     readonly coincidencia?: DatosCoincidencia;
+    /** Lo que dice el encabezado (S4): el estado, el comercio, el monto y la categoría sugerida con su origen. */
+    readonly resumen: ResumenDelMovimiento;
   };
   /** Viene de la fila de la lista (05 §4.15): se vuelve a aprobar para mostrar el mensaje o la confirmación. */
   readonly traspaso: boolean;
-  readonly cuentas: readonly Referencia[];
+  readonly cuentas: readonly CuentaDelMovimiento[];
   readonly categorias: readonly Referencia[];
   readonly deudores: readonly Referencia[];
 }
@@ -73,18 +79,11 @@ const DetalleError = lazy(() => import('./detalle-error'));
 const Descartado = lazy(() => import('./descartado'));
 const YaResuelto = lazy(() => import('./ya-resuelto'));
 
-const Edicion = lazy(() => import('./edicion'));
+const CamposMovimiento = lazy(() => import('./campos-movimiento'));
+const Encabezado = lazy(() => import('./encabezado'));
+const SinCuentasDeMovimiento = lazy(() => import('./sin-cuentas-movimiento'));
 
-function TextoDelSms({ texto }: { readonly texto: string }) {
-  return (
-    <section aria-label={t.revisar.sms} className="flex flex-col gap-1">
-      <h2 className="text-cuerpo-pequeno font-bold text-texto-secundario">{t.revisar.sms}</h2>
-      <blockquote className="rounded-xl bg-superficie-hundida p-3 text-cuerpo-pequeno text-texto">
-        {texto}
-      </blockquote>
-    </section>
-  );
-}
+const ID_FORMULARIO = 'formulario-revisar-movimiento';
 
 export function FormularioMovimiento(props: PropsFormularioMovimiento) {
   // Si al abrir ya está aprobado o descartado se muestra su estado; si no, el flujo sigue montado aunque la revalidación
@@ -236,18 +235,60 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
     c.total,
     c.lineas.map((l) => l.monto),
   );
+  // Repartido del todo no dice nada: lo dice la suma de las líneas (S5). Falta o sobra sí.
   const ayuda =
-    falta === undefined
+    falta === undefined || falta === 0
       ? undefined
       : falta > 0
         ? g.faltaRepartir(formatearMonto(falta))
-        : falta < 0
-          ? g.sobraRepartir
-          : g.todoRepartido;
+        : g.sobraRepartir;
+  const totalValido = normalizarMontoEscrito(c.total).estado === 'valido';
+
+  if (cuentas.length === 0)
+    return (
+      <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
+        <Suspense fallback={null}>
+          <SinCuentasDeMovimiento texto={movimiento.sms} />
+        </Suspense>
+      </PaginaFlujoDeRuta>
+    );
+
+  const pie = (
+    <div className="flex w-full flex-col gap-2">
+      <Boton
+        tipo="submit"
+        form={ID_FORMULARIO}
+        enviando={enviando}
+        textoEnviando={t.revisar.aprobando}
+        deshabilitado={!aprobar.enLinea}
+        className="w-full"
+        {...(aprobar.motivoSinEnvio === undefined
+          ? {}
+          : { motivoDeshabilitado: aprobar.motivoSinEnvio })}
+      >
+        {totalValido ? t.revisar.aprobarMonto(formatearMontoTexto(c.total)) : t.revisar.aprobar}
+      </Boton>
+      <Suspense fallback={null}>
+        <Resolucion
+          movimientoId={movimiento.id}
+          estado={movimiento.estado}
+          alDescartar={alDescartar}
+        />
+      </Suspense>
+    </div>
+  );
 
   return (
-    <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
-      <form onSubmit={(e) => void alEnviar(false)(e)} noValidate className="flex flex-col gap-5">
+    <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja" acciones={pie}>
+      <form
+        id={ID_FORMULARIO}
+        onSubmit={(e) => void alEnviar(false)(e)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
+        <Suspense fallback={null}>
+          <Encabezado resumen={movimiento.resumen} />
+        </Suspense>
         {movimiento.coincidencia === undefined ? null : (
           <Suspense fallback={null}>
             <Coincidencia
@@ -265,7 +306,7 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
           </Suspense>
         )}
         <Suspense fallback={null}>
-          <Edicion
+          <CamposMovimiento
             formulario={formulario}
             partes={partes}
             cuentas={cuentas}
@@ -318,25 +359,7 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
             {fallo.mensaje}
           </AvisoEnLinea>
         ) : null}
-        <Boton
-          tipo="submit"
-          enviando={enviando}
-          textoEnviando={t.revisar.aprobando}
-          deshabilitado={!aprobar.enLinea}
-          {...(aprobar.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: aprobar.motivoSinEnvio })}
-        >
-          {t.revisar.aprobar}
-        </Boton>
       </form>
-      <Suspense fallback={null}>
-        <Resolucion
-          movimientoId={movimiento.id}
-          estado={movimiento.estado}
-          alDescartar={alDescartar}
-        />
-      </Suspense>
     </PaginaFlujoDeRuta>
   );
 }

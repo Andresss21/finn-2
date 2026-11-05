@@ -2,6 +2,7 @@
 // operaciones reales (DP-17), con el reloj del servidor fijo (DP-04), y abre el detalle como la persona, desde la lista de Actividad.
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
+import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { bandeja as b } from '../../../src/textos/bandeja.ts';
@@ -49,10 +50,7 @@ test.describe('PRU-E2E-TX detalle de una transacción', () => {
     await page.goto('/bandeja');
     await esperarContenido(page);
     await page.locator('[data-movimiento]').getByRole('link').click();
-    await page
-      .getByRole('radiogroup', { name: g.categoriaDeParte('1') })
-      .getByRole('radio', { name: 'Super' })
-      .click();
+    await elegirOpcion(page, g.categoriaDeParte('1'), 'Super');
     await page.getByRole('button', { name: b.revisar.aprobar }).click();
     await expect(page.getByTestId('resultado')).toBeVisible();
 
