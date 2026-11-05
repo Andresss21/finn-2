@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
+import type { AccionEscritura } from '../../formularios/use-operacion';
 import { transaccion as t } from '../../textos/transaccion';
 import { FormularioActividadDevolver, type PropsFormularioDevolver } from './formulario';
 
@@ -44,8 +45,7 @@ async function montar(ui: ReactNode): Promise<HTMLElement> {
   return nodo;
 }
 
-const ok = (_entrada?: unknown) =>
-  Promise.resolve({ ok: true as const, valor: {}, yaAplicada: false, avisos: [] });
+const ok = () => Promise.resolve({ ok: true as const, valor: {}, yaAplicada: false, avisos: [] });
 const base: Omit<PropsFormularioDevolver, 'accion'> = {
   transaccionId: 't1',
   hoy: '2027-03-01' as never,
@@ -75,7 +75,7 @@ const registrar = (): HTMLButtonElement => {
 
 describe('PRU-CMP-TX devolver', () => {
   it('PRU-CMP-TX-490 [CA-28.1] con una sola parte, el monto devuelto se copia al reparto y «Registrar devolución $100.00» envía la compra, la fecha del servidor, la cuenta y esa parte', async () => {
-    const accion = vi.fn(ok);
+    const accion = vi.fn<AccionEscritura>(ok);
     const nodo = await montar(<FormularioActividadDevolver {...base} accion={accion} />);
     expect(nodo.textContent).toContain(t.quedanPorDevolver('$100.00'));
     expect(registrar().textContent).toBe(t.registrarDevolucion);
@@ -132,7 +132,7 @@ describe('PRU-CMP-TX devolver', () => {
   });
 
   it('PRU-CMP-TX-492 [] una parte sin lo escrito no viaja en el reparto, y los montos de las partes tienen 44 px de alto como mínimo', async () => {
-    const accion = vi.fn(ok);
+    const accion = vi.fn<AccionEscritura>(ok);
     const nodo = await montar(
       <FormularioActividadDevolver {...base} partes={dos} accion={accion} />,
     );
@@ -149,7 +149,7 @@ describe('PRU-CMP-TX devolver', () => {
   });
 
   it('PRU-CMP-TX-493 [] una compra sin capacidad restante lo dice con el total, lo devuelto y lo que queda, y no ofrece registrar', async () => {
-    const accion = vi.fn(ok);
+    const accion = vi.fn<AccionEscritura>(ok);
     const nodo = await montar(
       <FormularioActividadDevolver
         {...base}
