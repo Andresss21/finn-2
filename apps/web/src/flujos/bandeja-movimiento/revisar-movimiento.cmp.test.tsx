@@ -95,7 +95,7 @@ describe('PRU-CMP-BAND', () => {
   it('PRU-CMP-BAND-210 [FT-35] la cuenta es una selección nativa de 52 px con la deuda de la tarjeta, Fecha y Monto van en dos columnas con «$» y no hay radios para la cuenta ni líneas «Se entiende como»', () => {
     const nodo = montarElemento(<Arnes inicial={campos('gasto', 1)} />);
     const cuenta = nodo.querySelector<HTMLSelectElement>('select');
-    expect(cuenta?.labels?.[0]?.textContent).toContain(g.cuenta);
+    expect(cuenta?.labels[0]?.textContent).toContain(g.cuenta);
     const caja = cuenta?.parentElement;
     expect(caja?.getBoundingClientRect().height).toBe(52);
     expect(caja?.textContent).toContain('Deuda $642.18');
