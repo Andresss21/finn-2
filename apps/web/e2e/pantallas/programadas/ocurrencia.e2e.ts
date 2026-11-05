@@ -9,7 +9,6 @@ import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
-import esc50 from '../../../../../packages/dominio/escenarios/datos/esc-50.ts';
 import { bandeja as b } from '../../../src/textos/bandeja.ts';
 import { estados } from '../../../src/textos/estados.ts';
 import { inicio } from '../../../src/textos/inicio.ts';
@@ -20,6 +19,27 @@ import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/t
 import type { Page } from '@playwright/test';
 
 const t = programadas.ocurrencia;
+// ESC-50 hasta el paso 1 (hoy 10 mar): la suscripción de $10.00 con registro automático; la del 25 ene (P1, cerrado) queda pendiente.
+const ESC50_PASO1: Op[] = [
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta' },
+  { op: 'OP-07', categoria: 'Suscripciones' },
+  {
+    op: 'OP-42',
+    etiqueta: 'Suscripción',
+    cuenta: 'T',
+    comercio: 'Suscripción',
+    monto: 10,
+    categoria: 'Suscripciones',
+    primeraFecha: '2027-01-25',
+    automatico: true,
+  },
+  { op: 'OP-21', monto: 100, fecha: '2027-01-25', hoy: '2027-01-25' },
+  { op: 'OP-14', categoria: 'Suscripciones', monto: 10, periodo: 'P1', hoy: '2027-01-25' },
+  { op: 'OP-14', categoria: 'Suscripciones', monto: 10, periodo: 'P2' },
+  { op: 'OP-14', categoria: 'Suscripciones', monto: 10, periodo: 'P3' },
+  { op: 'OP-43', modo: 'automatico' },
+];
 const MENSAJE_RESUELTA = 'Ese pago programado ya está registrado.';
 const BASE: Op[] = [
   { op: 'OP-01', cuenta: 'Ahorro' },
@@ -158,8 +178,7 @@ test.describe('PRU-E2E-PROG ocurrencia de una programada', () => {
   test('PRU-E2E-PROG-124 [CA-41.5, ESC-50, AV-01] RUTA-/programadas/[programadaId]/ocurrencias/[fechaEsperada] con el paso 1 de ESC-50 registrar con un toque la ocurrencia del 25 de enero (P1, cerrado) muestra AV-01 y, al confirmar, llega al estado final del paso 1b', async ({
     page,
   }) => {
-    const paso = (n: string) => esc50.pasos.find((p) => p.n === n)?.ops ?? [];
-    await preparar([...esc50.estadoInicial, ...paso('0'), ...paso('1')], '2027-03-10');
+    await preparar(ESC50_PASO1, '2027-03-10');
     await abrir(page, '/');
     await atrasado(page).click();
     await esperarHidratacion(page);
