@@ -3,6 +3,7 @@
 // «No hay movimientos en estos períodos». `remanente` siempre con su título y su explicación (04 §6.9.5).
 import type { ReporteDto } from '@finn/aplicacion/consultas/reporte';
 import { Vacio } from '../../../../componentes/base/vacio';
+import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
 import { Pestanas, type PestanaDeEnlace } from '../../../../componentes/navegacion/pestanas';
 import { reportes as t } from '../../../../textos/reportes';
@@ -33,6 +34,10 @@ function hrefDe(url: TipoDeUrl, p: Parametros, cambios: Parametros = {}): string
   const s = q.toString();
   return s === '' ? `/reportes/${url}` : `/reportes/${url}?${s}`;
 }
+
+// Clases literales (L13): el botón tonal del estado vacío, de 48 px.
+const ACCION_VACIO =
+  'inline-flex min-h-12 items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
 interface Filtro {
   readonly etiqueta: string;
@@ -104,41 +109,84 @@ export function PantallaReporte({
   const compartidos = Object.fromEntries(
     Object.entries(parametros).filter(([k]) => (COMPARTIDOS as readonly string[]).includes(k)),
   );
+  const filtros = filtrosDe(url, parametros, nombres);
+  const [ventana, ...otros] = filtros;
+  // Sin movimientos, la salida del diseño es mirar más períodos; si ya se miran 3 o más, no hay a dónde ampliar.
+  const ampliar =
+    parametros.ventana === 'ultimos_3' ||
+    parametros.ventana === 'ultimos_6' ||
+    parametros.ventana === 'ultimos_12';
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-4 px-5 py-4">
+    <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4 md:max-w-6xl">
       <PublicarEncabezado encabezado={dto} />
       <h1 className="text-titulo-pantalla">{t.titulo}</h1>
-      <Pestanas
-        etiqueta={t.titulo}
-        pestanas={TIPOS_DE_URL.map((u) => ({
-          id: u,
-          etiqueta: t.pestanas[u],
-          href: hrefDe(u, compartidos),
-        }))}
-        activas={[url]}
-      />
-      <section data-reporte={TIPOS[url]} className="flex flex-col gap-4">
-        <h2 className="text-titulo-seccion">{t.titulos[url]}</h2>
-        {url === 'remanente' ? (
-          <p data-explicacion className="text-cuerpo-pequeno text-texto-secundario">
-            {t.explicacionRemanente}
-          </p>
-        ) : null}
-        <div className="flex flex-col gap-1">
-          {filtrosDe(url, parametros, nombres).map((f) => (
-            <Pestanas
-              key={f.etiqueta}
-              etiqueta={f.etiqueta}
-              pestanas={f.opciones}
-              activas={f.activas}
-              marca="true"
-            />
-          ))}
+      <div className="-mx-5 px-5">
+        <Pestanas
+          etiqueta={t.titulo}
+          variante="tinta"
+          pestanas={TIPOS_DE_URL.map((u) => ({
+            id: u,
+            etiqueta: t.pestanas[u],
+            href: hrefDe(u, compartidos),
+          }))}
+          activas={[url]}
+        />
+      </div>
+      <section
+        data-reporte={TIPOS[url]}
+        className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] md:items-start md:gap-10"
+      >
+        <div data-reporte-filtros className="flex flex-col gap-5">
+          <h2 className="text-titulo-seccion">{t.titulos[url]}</h2>
+          {url === 'remanente' ? (
+            <p data-explicacion className="text-cuerpo-pequeno text-texto-secundario">
+              {t.explicacionRemanente}
+            </p>
+          ) : null}
+          {ventana === undefined ? null : (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-etiqueta text-texto">{ventana.etiqueta}</span>
+              <Pestanas
+                etiqueta={ventana.etiqueta}
+                pestanas={ventana.opciones}
+                activas={ventana.activas}
+                marca="true"
+                variante="segmento"
+              />
+            </div>
+          )}
+          <div className="flex flex-col gap-1">
+            {otros.map((f) => (
+              <Pestanas
+                key={f.etiqueta}
+                etiqueta={f.etiqueta}
+                pestanas={f.opciones}
+                activas={f.activas}
+                marca="true"
+              />
+            ))}
+          </div>
         </div>
         {cuerpo === null ? (
-          <Vacio titulo={t.sinMovimientos} texto={t.sinMovimientosTexto} icono="cero" />
+          <Vacio
+            titulo={t.sinMovimientos}
+            texto={t.sinMovimientosTexto}
+            icono="cero"
+            {...(ampliar
+              ? {}
+              : {
+                  accion: (
+                    <EnlaceFinn
+                      href={hrefDe(url, parametros, { ventana: 'ultimos_3' })}
+                      className={ACCION_VACIO}
+                    >
+                      {t.verVentana(t.ventanas.ultimos_3)}
+                    </EnlaceFinn>
+                  ),
+                })}
+          />
         ) : (
-          cuerpo
+          <div className="min-w-0">{cuerpo}</div>
         )}
       </section>
     </main>

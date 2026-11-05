@@ -23,8 +23,9 @@ export const reportes = {
     'Ingresos del período menos lo que gastaste, incluidas las compras con tarjeta',
   sinMovimientos: 'No hay movimientos en estos períodos',
   sinMovimientosTexto: 'Probá con otra ventana de períodos o quitá el filtro de cuentas.',
+  verVentana: (ventana: string) => `Ver ${ventana}`,
   filtros: { cuentas: 'Cuentas', grupo: 'Grupo', limite: 'Cuántos', todos: 'Todos' },
-  ventana: 'Ventana',
+  ventana: 'Períodos',
   ventanas: {
     actual: 'Período actual',
     ultimos_1: 'Último período',
