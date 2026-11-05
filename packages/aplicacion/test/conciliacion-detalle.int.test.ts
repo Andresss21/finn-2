@@ -51,7 +51,7 @@ describe('PRU-INT-CONC', () => {
     process.env['DATABASE_URL'] = base.url; // el cliente del proceso (04 §2.5)
   });
 
-  it('PRU-INT-CONC-101 [OP-45, BE-48] OP-45 devuelve, de cada coincidencia y de cada transacción solo en Finn, la fecha, el comercio, el efecto en la cuenta y el estado bancario guardados', async () => {
+  it('PRU-INT-CONC-101 OP-45 BE-48 CH-201: devuelve, de cada coincidencia y de cada transacción solo en Finn, la fecha, el comercio, el efecto en la cuenta y el estado bancario guardados', async () => {
     const pampa = uuid(2010);
     const r20 = await confirmar(
       OP20,

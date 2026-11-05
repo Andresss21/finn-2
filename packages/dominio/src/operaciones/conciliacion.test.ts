@@ -521,7 +521,7 @@ describe('PRU-DOM-CONC-101: conciliación y verificar saldo (01 §5.8; 04 §3.8,
     expect(diferenciaActual(calcular(k2, HOY), fila)).toBe(c(7)); // −75 − (−82)
   });
 
-  it('PRU-DOM-CONC-105 [ESC-47, OP-45, BE-48] OP-45: cada coincidencia y cada transacción solo en Finn traen la fecha, el comercio, el efecto en la cuenta y el estado bancario de los hechos', () => {
+  it('PRU-DOM-CONC-105 [ESC-47] OP-45 BE-48 CH-201: cada coincidencia y cada transacción solo en Finn traen la fecha, el comercio, el efecto en la cuenta y el estado bancario de los hechos', () => {
     // ESC-47 más LA PAMPA (−28.30 el 11, sin movimiento en el estado), un pago de 30 de Ef a T el 13 y B
     // confirmada por el banco.
     const pago = {
