@@ -21,6 +21,7 @@ export {
   propuestaDeVerificacion,
   type Clasificacion,
   type PropuestaDeVerificacion,
+  type TransaccionConciliacion,
 } from './conciliacion';
 // `desglosePropuesto(prestamo, fecha)` de 04 (Anexo A.2 punto 8): también la `propuesta` de la previsualización de OP-24 (04 §4.3 [CH-36])
 export { desglosePropuesto, type PropuestaCuota } from '../operaciones/op-24';

@@ -144,13 +144,14 @@ const av21 = (r: ResultadoAplicar) => exito(r).avisos.find((a) => a.codigo === '
 describe('PRU-DOM-CONC-101: conciliación y verificar saldo (01 §5.8; 04 §3.8, §9.5; 06 §3.2)', () => {
   it('PRU-DOM-CONC-101 [ESC-47, CB-18] OP-45 BE-48: seleccionar.clasificarConciliacion empareja 1 a 1 con la fecha más cercana y la clave de orden más antigua, y propone la diferencia del estado', () => {
     const i = calcular(H0, HOY);
-    expect(clasificarConciliacion(i, id('T'), ESTADO)).toEqual({
+    // El detalle de cada transacción (CH-201) lo comprueba PRU-DOM-CONC-105
+    expect(clasificarConciliacion(i, id('T'), ESTADO)).toMatchObject({
       coincidencias: [
         { transaccionId: 'A', movimientoIndice: 0 },
         { transaccionId: 'B', movimientoIndice: 1 },
       ],
       soloEnEstado: [2],
-      soloEnFinn: ['C'],
+      soloEnFinn: [{ transaccionId: 'C' }],
       saldoFinn: c(-77),
       diferencia: c(2), // −75 − (−77)
     });
@@ -193,7 +194,9 @@ describe('PRU-DOM-CONC-101: conciliación y verificar saldo (01 §5.8; 04 §3.8,
     expect(r).toMatchObject({ soloEnEstado: [3], soloEnFinn: [] });
     // Con el primer movimiento el 10, la ventana empieza el 7: W (2 feb) queda fuera.
     expect(
-      clasificarConciliacion(calcular(ajustado, HOY), id('Ef'), estado(['10'])).soloEnFinn,
+      clasificarConciliacion(calcular(ajustado, HOY), id('Ef'), estado(['10'])).soloEnFinn.map(
+        (t) => t.transaccionId,
+      ),
     ).toEqual(['X', 'Y']);
   });
 
@@ -516,5 +519,50 @@ describe('PRU-DOM-CONC-101: conciliación y verificar saldo (01 §5.8; 04 §3.8,
     const fila = k2.conciliaciones[0] as Hechos['conciliaciones'][number];
     expect(fila.modo).toBe('saldo');
     expect(diferenciaActual(calcular(k2, HOY), fila)).toBe(c(7)); // −75 − (−82)
+  });
+
+  it('PRU-DOM-CONC-105 [ESC-47, OP-45, BE-48] OP-45: cada coincidencia y cada transacción solo en Finn traen la fecha, el comercio, el efecto en la cuenta y el estado bancario de los hechos', () => {
+    // ESC-47 más LA PAMPA (−28.30 el 11, sin movimiento en el estado), un pago de 30 de Ef a T el 13 y B
+    // confirmada por el banco.
+    const pago = {
+      ...{ operacion: 'OP-23', id: id('P'), instante: ins(6), fecha: f('13'), total: c(30) },
+      ...{ origenId: id('Ef'), tarjetaId: id('T'), comercio: 'Pago Visa' },
+    };
+    const h = hechos(H0, { ...gasto('L', 'T', 28.3, '11', 5), comercio: 'LA PAMPA' }, pago);
+    const conB: Hechos = {
+      ...h,
+      transacciones: h.transacciones.map((t) =>
+        t.id === 'B' ? { ...t, estadoBancario: 'confirmada' as const } : t,
+      ),
+    };
+    const i = calcular(conB, HOY);
+    const r = clasificarConciliacion(i, id('T'), ESTADO);
+    const fila = (t: string, dia: string, comercio: string | null, monto: number, estado: string) =>
+      ({ transaccionId: t, fecha: f(dia), comercio, monto: c(monto), estadoBancario: estado });
+    expect(r.coincidencias).toEqual([
+      { ...fila('A', '05', null, -40, 'pendiente'), movimientoIndice: 0 },
+      { ...fila('B', '08', null, -25, 'confirmada'), movimientoIndice: 1 },
+    ]);
+    // En el orden de las candidatas: clave de orden (el instante del alta: C, L, P)
+    expect(r.soloEnFinn).toEqual([
+      fila('C', '12', null, -12, 'pendiente'),
+      fila('L', '11', 'LA PAMPA', -28.3, 'pendiente'),
+      fila('P', '13', 'Pago Visa', 30, 'pendiente'),
+    ]);
+    expect(op45(i, { cuentaId: id('T'), estado: ESTADO })).toEqual(r);
+    // El monto es el efecto en la cuenta del estado, no el total: el pago sale de Ef con −30
+    const sinMovimientos = { fechaEstado: f('15'), saldoFinal: c(0), movimientos: [] };
+    expect(clasificarConciliacion(i, id('Ef'), sinMovimientos).soloEnFinn).toEqual([
+      fila('P', '13', 'Pago Visa', -30, 'pendiente'),
+    ]);
+    // Y cada dato es el de la fila de la transacción y de su efecto en la cuenta
+    for (const x of [...r.coincidencias, ...r.soloEnFinn]) {
+      const t = conB.transacciones.find((y) => y.id === x.transaccionId);
+      const e = conB.efectos.find((y) => y.transaccionId === x.transaccionId && y.cuentaId === 'T');
+      expect(x).toMatchObject({
+        ...{ fecha: t?.fecha, comercio: t?.comercio, estadoBancario: t?.estadoBancario },
+        monto: e?.monto,
+      });
+    }
   });
 });
