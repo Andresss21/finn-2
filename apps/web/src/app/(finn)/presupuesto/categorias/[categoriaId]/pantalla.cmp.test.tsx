@@ -465,3 +465,78 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     ).toEqual([]);
   });
 });
+
+describe('Detalle de categoría: ajustes del diseño (CH-140)', () => {
+  it('PRU-CMP-PRES-240 [CA-14.1] cada consumo lleva la insignia con el mes abreviado y el día de dos cifras', () => {
+    const raiz = mostrar(
+      dto({
+        consumos: [
+          consumo('2027-02-05', 'debito', 6000, 6000),
+          consumo('2027-03-01', 'tarjeta', 700, 700),
+        ],
+      }),
+    );
+    const insignias = [...raiz.querySelectorAll('[data-consumo] [data-insignia-fecha]')].map((x) =>
+      x.textContent.replace(/\s+/g, ' ').trim(),
+    );
+    expect(insignias).toEqual(['feb05', 'mar01']);
+  });
+
+  it('PRU-CMP-PRES-241 [CA-14.6] con sobregiro de débito la rejilla suma «Sobregiro» con el total del DTO', () => {
+    const raiz = mostrar(
+      dto({
+        numeros: { ...ceros, asignado: 12000, gastado: 14630, fondo: 12000, disponible: -2630 },
+        sobregiro: { tipo: 'debito', total: 2630, parteTarjeta: 0, parteDebito: 2630 },
+      }),
+    );
+    const celdas = [...raiz.querySelectorAll('[data-numeros] > div')].map((x) => sinEspacios(x));
+    expect(celdas).toEqual([
+      'Asignado$120.00',
+      'Gastado$146.30',
+      'Arrastrado$0.00',
+      'Fondo$120.00',
+      'Entradas$0.00',
+      'Sobregiro$26.30',
+    ]);
+  });
+
+  it('PRU-CMP-PRES-242 [CA-14.6] con sobregiro de tarjeta la sexta cifra es «Con tarjeta», y sin sobregiro la rejilla tiene cinco', () => {
+    const conTarjeta = mostrar(
+      dto({
+        numeros: { ...ceros, disponible: -1875 },
+        sobregiro: { tipo: 'tarjeta', total: 1875, parteTarjeta: 1875, parteDebito: 0 },
+      }),
+    );
+    const ultima = [...conTarjeta.querySelectorAll('[data-numeros] > div')].at(-1);
+    expect(sinEspacios(ultima ?? null)).toBe('Con tarjeta$18.75');
+    const sin = mostrar(dto());
+    expect(sin.querySelectorAll('[data-numeros] > div')).toHaveLength(5);
+  });
+
+  it('PRU-CMP-PRES-243 [CA-14.1] en el orden del diseño: cifras, sobregiro, consumos, historial, y al final las acciones de asignar y mover', () => {
+    const raiz = mostrar(
+      dto({
+        numeros: { ...ceros, disponible: -2630 },
+        sobregiro: { tipo: 'debito', total: 2630, parteTarjeta: 0, parteDebito: 2630 },
+        consumos: [consumo('2027-02-10', 'debito', 6000, 6000)],
+        historial: [hist('2027-01-21', 10000, 9000)],
+        historialResumen: { promedioGastado: 9000, periodosExcedidos: 0 },
+      }),
+    );
+    const orden = [
+      '[data-numeros]',
+      '[data-sobregiro]',
+      '[data-seccion="consumos"]',
+      '[data-seccion="historial"]',
+      'nav[aria-label="Acciones de la categoría"]',
+    ].map((q) => raiz.querySelector(q));
+    expect(orden.every((x) => x !== null)).toBe(true);
+    for (let k = 1; k < orden.length; k++) {
+      const anterior = orden[k - 1] as Element;
+      const actual = orden[k] as Element;
+      expect(anterior.compareDocumentPosition(actual) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(
+        0,
+      );
+    }
+  });
+});

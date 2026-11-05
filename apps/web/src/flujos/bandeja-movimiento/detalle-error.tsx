@@ -37,6 +37,7 @@ export default function DetalleError({ errorDetalle }: { readonly errorDetalle: 
               : ''}
         </span>
       </div>
+      <p className="text-cuerpo-pequeno text-texto-secundario">{t.revisar.referenciaNota}</p>
     </section>
   );
 }
