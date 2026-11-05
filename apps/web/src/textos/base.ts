@@ -26,4 +26,6 @@ export const base = {
   montoVistaPrevia: (monto: string) => `Se entiende como ${monto}`,
   fechaFuera: 'Elegí una fecha dentro del rango permitido.',
   fechaVistaPrevia: (fecha: string) => `Fecha elegida: ${fecha}`,
+  fechaNoExiste: 'Esa fecha no existe. Escribila como dd/mm/aaaa.',
+  abrirCalendario: 'Elegir en el calendario',
 } as const;

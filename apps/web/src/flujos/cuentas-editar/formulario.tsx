@@ -210,6 +210,7 @@ function Cuerpo({
           valor={c.fechaApertura as FechaLocal}
           alCambiar={poner('fechaApertura')}
           maxima={hoy}
+          hoy={hoy}
           error={formState.errors.fechaApertura?.message}
           requerido
         />

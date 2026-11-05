@@ -191,6 +191,7 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
               valor={c.fecha as FechaLocal}
               alCambiar={poner('fecha')}
               maxima={hoy}
+              hoy={hoy}
               error={error('fecha')}
               requerido
               sinVistaPrevia
