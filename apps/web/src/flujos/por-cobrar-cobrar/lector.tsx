@@ -1,10 +1,8 @@
 // Lector de `/por-cobrar/cobrar` (05 §2): `formulario({ operacion: 'cobrar', lineaId, deudorId, fecha })` con `?linea=`, `?deudor=`
 // y `?fecha=`. Las partidas con saldo abierto, las cuentas, la propuesta AV-22 y las categorías de pago vienen del servidor y aquí
-// solo pasan a texto (PF-3). Sin partidas abiertas a esa fecha no se ofrece cobrar (06 FT-46, Estados).
+// solo pasan a texto (PF-3). Sin partidas abiertas a esa fecha el formulario no ofrece cobrar (06 FT-46, Estados).
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { notFound } from 'next/navigation';
-import { Vacio } from '../../componentes/base/vacio';
-import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { centavosATextoDecimal, formatearMonto } from '../../formato';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
@@ -39,12 +37,6 @@ export async function LectorPorCobrarCobrar({ busqueda }: { readonly busqueda: B
     }),
   );
   const partidas = 'lineas' in dto.contexto ? dto.contexto.lineas : [];
-  if (partidas.length === 0)
-    return (
-      <PaginaFlujoDeRuta titulo={t.tituloGenerico} rutaPadre={RUTA_PADRE}>
-        <Vacio titulo={t.sinSaldoTitulo} texto={t.sinSaldoTexto} icono="cero" />
-      </PaginaFlujoDeRuta>
-    );
   const pagos = dto.catalogos.categoriasPago ?? [];
   const pagoDe = (tarjetaId: string | undefined) =>
     tarjetaId === undefined ? undefined : pagos.find((p) => p.tarjeta.id === tarjetaId);

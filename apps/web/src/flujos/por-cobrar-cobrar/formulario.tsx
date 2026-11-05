@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Resultado } from '../../componentes/base/resultado';
+import { Vacio } from '../../componentes/base/vacio';
 import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
 import { ConfirmacionImpactoDeVista } from '../../componentes/formularios/confirmacion-impacto-de-vista';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
@@ -63,7 +64,10 @@ const ENLACE =
   'inline-flex min-h-11 items-center font-semibold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
 export function FormularioPorCobrarCobrar(props: PropsFormularioPorCobrarCobrar) {
-  const { hoy, rutaPadre, partidas, cuentas } = props;
+  const { hoy, rutaPadre } = props;
+  // Lo que vio el usuario al abrir (FE-09): un cobro que cierra la partida refresca la ruta, y el resultado no debe perderse.
+  const [partidas] = useState(props.partidas);
+  const [cuentas] = useState(props.cuentas);
   const [inicial] = useState<Campos>(() => ({
     lineaId: props.lineaInicial,
     cuentaId: cuentas.find((x) => !x.tarjeta)?.id ?? '',
@@ -109,7 +113,12 @@ export function FormularioPorCobrarCobrar(props: PropsFormularioPorCobrarCobrar)
     [cuentas],
   );
 
-  if (partida === undefined) return null;
+  if (partida === undefined)
+    return (
+      <PaginaFlujoDeRuta titulo={t.tituloGenerico} rutaPadre={rutaPadre}>
+        <Vacio titulo={t.sinSaldoTitulo} texto={t.sinSaldoTexto} icono="cero" />
+      </PaginaFlujoDeRuta>
+    );
 
   if (estado === 'listo' && exito !== undefined) {
     const aviso22 = exito.avisos.some((a) => a.codigo === 'AV-22');

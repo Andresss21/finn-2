@@ -190,6 +190,8 @@ test.describe('PRU-E2E-COBRO flujo de cobrar', () => {
   }) => {
     await sembrarOps(ESC20_PASO2, '2027-02-10');
     await irACobrar(page);
+    await abrir(page, page.url()); // una carga completa, como el resto de las E2E que miden el tamaño táctil
+    await elegirOpcion(page, t.cuenta, 'Ahorro'); // espera a que React hidrate el flujo
     await page.keyboard.press('Tab'); // el primer Tab muestra «Saltar al contenido» (11.2): se mide ya visible
     await revisarTactil(page);
     await expect(campo(page, t.monto)).toHaveValue('25.00'); // el saldo abierto que propone el servidor
