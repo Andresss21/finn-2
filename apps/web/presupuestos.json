@@ -12,6 +12,7 @@
     "/actividad/[transaccionId]/devolver": "/actividad/00000000-0000-4000-8000-000000000001/devolver",
     "/actividad/[transaccionId]/editar": "/actividad/00000000-0000-4000-8000-000000000001/editar",
     "/actividad/[transaccionId]/eliminar": "/actividad/00000000-0000-4000-8000-000000000001/eliminar",
+    "/actividad/[transaccionId]/eventos/eliminar": "/actividad/00000000-0000-4000-8000-000000000001/eventos/eliminar",
     "/actividad/[transaccionId]/estado": "/actividad/00000000-0000-4000-8000-000000000001/estado",
     "/ajustes/formatos/[formatoId]": "/ajustes/formatos/00000000-0000-4000-8000-000000000001",
     "/ajustes/instituciones/[institucionId]": "/ajustes/instituciones/00000000-0000-4000-8000-000000000001",

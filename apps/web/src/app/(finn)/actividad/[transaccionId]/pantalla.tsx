@@ -117,28 +117,45 @@ function Parte({ linea, n }: { readonly linea: Linea; readonly n: number }) {
   );
 }
 
-function Eventos({ lineas }: { readonly lineas: readonly Linea[] }) {
+function Eventos({
+  lineas,
+  transaccionId,
+  sufijo,
+}: {
+  readonly lineas: readonly Linea[];
+  readonly transaccionId: string;
+  readonly sufijo: string;
+}) {
+  // Cada evento enlaza a eliminarlo (OP-34, FT-28): `?tipo-evento=` y `?evento=` (05 §2.6, R2)
   const eventos = lineas.flatMap((l) => [
-    ...l.cobros.map((e) => [t.restituido, e.fecha, e.monto] as const),
-    ...l.condonaciones.map((e) => [t.condonado, e.fecha, e.monto] as const),
-    ...l.devoluciones.map((e) => [t.devuelto, e.fecha, e.monto] as const),
+    ...l.cobros.map((e) => [t.restituido, e.fecha, e.monto, 'cobro', e.transaccionId] as const),
+    ...l.condonaciones.map((e) => [t.condonado, e.fecha, e.monto, 'condonacion', e.id] as const),
+    ...l.devoluciones.map(
+      (e) => [t.devuelto, e.fecha, e.monto, 'devolucion', e.transaccionId] as const,
+    ),
   ]);
   if (eventos.length === 0) return null;
   return (
     <Seccion titulo={t.eventos}>
       <ul className={TARJETA_LISTA}>
-        {eventos.map(([rotulo, fecha, monto]) => (
-          <li
-            key={`${rotulo}-${fecha}-${monto}`}
-            className="flex items-center justify-between gap-3 px-4 py-3"
-          >
+        {eventos.map(([rotulo, fecha, monto, tipo, id]) => (
+          <li key={id} className="flex items-center justify-between gap-3 px-4 py-1">
             <span className="flex flex-col">
               <span className="font-semibold">{rotulo}</span>
               <span className="text-cuerpo-pequeno text-texto-secundario">
                 {formatearFechaTexto(fecha)}
               </span>
             </span>
-            <Monto centavos={monto} presentacion="absoluto" />
+            <span className="flex items-center gap-2">
+              <Monto centavos={monto} presentacion="absoluto" />
+              <EnlaceFinn
+                href={`/actividad/${transaccionId}/eventos/eliminar?tipo-evento=${tipo}&evento=${id}${sufijo.replace('?', '&')}`}
+                aria-label={t.eliminarEventoDe(rotulo, formatearFechaTexto(fecha))}
+                className="inline-flex min-h-11 items-center px-2 font-semibold text-problema-texto focus-visible:outline-3 focus-visible:outline-foco"
+              >
+                {t.eliminar}
+              </EnlaceFinn>
+            </span>
           </li>
         ))}
       </ul>
@@ -266,7 +283,7 @@ export function PantallaDetalleTransaccion({
           ))}
         </ul>
       </Seccion>
-      <Eventos lineas={dto.lineas} />
+      <Eventos lineas={dto.lineas} transaccionId={x.id} sufijo={sufijo} />
       <Origen dto={dto} />
       {dto.conciliacion === undefined ? null : (
         <AvisoEnLinea estado="informacion">

@@ -443,7 +443,7 @@
 
   "TA-406": { "estado": "terminada", "rama": "ta-406-devolver-2", "pr": 409 },
 
-  "TA-480": { "estado": "pendiente" },
+  "TA-480": { "estado": "en_curso", "rama": "ta-480-devoluciones-2", "pr": 411 },
 
   "TA-407": { "estado": "pendiente" },
 
