@@ -179,4 +179,35 @@ test.describe('PRU-E2E-CTA', () => {
     await esperarMonto(bloque.locator('[data-centavos]').first(), 300000);
     await expect(bloque).toContainText('Aportes');
   });
+
+  test('PRU-E2E-CTA-260 [Q-detalleCuenta] el detalle de una cuenta de efectivo va en dos columnas en computadora y en una en teléfono, con sus botones de 44 px y «Más acciones» con Editar, Ordenar y los bloqueos con su motivo', async ({
+    page,
+  }) => {
+    await sembrarOps(
+      [{ op: 'OP-01', cuenta: 'Ahorro', saldo: 100, apertura: '2027-02-05' }],
+      '2027-02-10',
+    );
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await abrirDetalle(page);
+    const cabecera = await page.locator('main header[data-identidad]').boundingBox();
+    const lista = await page.locator('[data-movimientos]').boundingBox();
+    expect((cabecera?.x ?? 0) + (cabecera?.width ?? 0)).toBeLessThanOrEqual(lista?.x ?? 0);
+    await page.getByRole('button', { name: 'Más acciones' }).click();
+    await expect(page.getByRole('menuitem', { name: 'Editar' })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Ordenar cuentas' })).toBeVisible();
+    await expect(page.getByRole('menu')).toContainText('su saldo debe ser $0.00');
+    await page.keyboard.press('Escape');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    await esperarContenido(page);
+    const arriba = await page.locator('main header[data-identidad]').boundingBox();
+    const abajo = await page.locator('[data-movimientos]').boundingBox();
+    expect(arriba?.y ?? 0).toBeLessThan(abajo?.y ?? 0);
+    expect(Math.abs((arriba?.x ?? 0) - (abajo?.x ?? 1))).toBeLessThan(2);
+    for (const nombre of ['Verificar saldo', 'Registrar']) {
+      const caja = await page.getByRole('link', { name: nombre, exact: true }).boundingBox();
+      expect(caja?.height ?? 0, nombre).toBeGreaterThanOrEqual(44);
+    }
+  });
 });
