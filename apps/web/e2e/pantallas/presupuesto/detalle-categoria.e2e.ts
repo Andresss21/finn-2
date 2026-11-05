@@ -318,7 +318,7 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await expect(page.locator('[data-historial] tbody tr')).toHaveCount(6);
   });
 
-  test('PRU-E2E-PRES-240 [CH-140] el detalle de Restaurantes trae la cifra «Sobregiro $26.30» en la rejilla, la insignia de fecha de cada consumo y las acciones de asignar y mover', async ({
+  test('PRU-E2E-PRES-240 [CA-14.1] el detalle de Restaurantes trae la cifra «Sobregiro $26.30» en la rejilla, la insignia de fecha de cada consumo y las acciones de asignar y mover', async ({
     page,
   }) => {
     await sembrarOps(A7_RESTAURANTES, '2026-03-21', '2026-10-15');

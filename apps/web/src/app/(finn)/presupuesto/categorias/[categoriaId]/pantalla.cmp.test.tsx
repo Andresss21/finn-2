@@ -467,7 +467,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
 });
 
 describe('Detalle de categoría: ajustes del diseño (CH-140)', () => {
-  it('PRU-CMP-PRES-240 [CH-140] cada consumo lleva la insignia con el mes abreviado y el día de dos cifras', () => {
+  it('PRU-CMP-PRES-240 [CA-14.1] cada consumo lleva la insignia con el mes abreviado y el día de dos cifras', () => {
     const raiz = mostrar(
       dto({
         consumos: [
@@ -482,7 +482,7 @@ describe('Detalle de categoría: ajustes del diseño (CH-140)', () => {
     expect(insignias).toEqual(['feb05', 'mar01']);
   });
 
-  it('PRU-CMP-PRES-241 [CH-140] con sobregiro de débito la rejilla suma «Sobregiro» con el total del DTO', () => {
+  it('PRU-CMP-PRES-241 [CA-14.6] con sobregiro de débito la rejilla suma «Sobregiro» con el total del DTO', () => {
     const raiz = mostrar(
       dto({
         numeros: { ...ceros, asignado: 12000, gastado: 14630, fondo: 12000, disponible: -2630 },
@@ -500,7 +500,7 @@ describe('Detalle de categoría: ajustes del diseño (CH-140)', () => {
     ]);
   });
 
-  it('PRU-CMP-PRES-242 [CH-140] con sobregiro de tarjeta la sexta cifra es «Con tarjeta», y sin sobregiro la rejilla tiene cinco', () => {
+  it('PRU-CMP-PRES-242 [CA-14.6] con sobregiro de tarjeta la sexta cifra es «Con tarjeta», y sin sobregiro la rejilla tiene cinco', () => {
     const conTarjeta = mostrar(
       dto({
         numeros: { ...ceros, disponible: -1875 },
@@ -513,7 +513,7 @@ describe('Detalle de categoría: ajustes del diseño (CH-140)', () => {
     expect(sin.querySelectorAll('[data-numeros] > div')).toHaveLength(5);
   });
 
-  it('PRU-CMP-PRES-243 [CH-140] en el orden del diseño: cifras, sobregiro, consumos, historial, y al final las acciones de asignar y mover', () => {
+  it('PRU-CMP-PRES-243 [CA-14.1] en el orden del diseño: cifras, sobregiro, consumos, historial, y al final las acciones de asignar y mover', () => {
     const raiz = mostrar(
       dto({
         numeros: { ...ceros, disponible: -2630 },
