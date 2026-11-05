@@ -125,7 +125,7 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(p.getByLabel(g.fecha, { exact: true })).toBeVisible();
   });
 
-  test('PRU-E2E-BAND-201 [CA-38.1] un SMS no reconocido muestra el texto y el aviso sin campos, con «Registrar a mano» principal y «Descartar» tonales de al menos 44 px; «Registrar a mano» muestra los campos', async ({
+  test('PRU-E2E-BAND-201 [FT-38] un SMS no reconocido muestra el texto y el aviso sin campos, con «Registrar a mano» principal y «Descartar» tonales de al menos 44 px; «Registrar a mano» muestra los campos', async ({
     page,
     request,
   }) => {
@@ -198,7 +198,7 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(p.getByLabel(t.revisar.monto, { exact: true })).toHaveValue('15.49');
   });
 
-  test('PRU-E2E-BAND-203 [CA-35.5] una coincidencia muestra la tabla Programada / Fecha esperada / Monto esperado y su pie trae «Confirmar» principal y «No es este pago» tonal de al menos 44 px, sin «Aprobar» ni «Descartar»', async ({
+  test('PRU-E2E-BAND-203 [FT-35] una coincidencia muestra la tabla Programada / Fecha esperada / Monto esperado y su pie trae «Confirmar» principal y «No es este pago» tonal de al menos 44 px, sin «Aprobar» ni «Descartar»', async ({
     page,
   }) => {
     await preparar([NETFLIX, sms('sms', 'Netflix', 15.49, '19:00')]);
@@ -219,7 +219,7 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(p.getByRole('button', { name: cuentas.bandeja.descartar })).toHaveCount(0);
   });
 
-  test('PRU-E2E-BAND-204 [CA-35.10] un movimiento que ya se aprobó se abre con su estado, el SMS y sus datos en solo lectura, sin «Restaurar» y con «Volver a la Bandeja»', async ({
+  test('PRU-E2E-BAND-204 [FT-35] un movimiento que ya se aprobó se abre con su estado, el SMS y sus datos en solo lectura, sin «Restaurar» y con «Volver a la Bandeja»', async ({
     page,
   }) => {
     await preparar([...HISTORIAL, sms('a', 'Super', 30, '10:15')]);
@@ -243,7 +243,7 @@ test.describe('PRU-E2E-BAND', () => {
     expect(await alto(volver)).toBeGreaterThanOrEqual(44);
   });
 
-  test('PRU-E2E-BAND-205 [CA-37.1] un movimiento que ya se descartó se abre con su estado y «Restaurar» en el pie; «Restaurar» dice que se restauró', async ({
+  test('PRU-E2E-BAND-205 [FT-37] un movimiento que ya se descartó se abre con su estado y «Restaurar» en el pie; «Restaurar» dice que se restauró', async ({
     page,
   }) => {
     await preparar([sms('a', 'Cafe Luna', 3.5, '10:15')]);
