@@ -12,6 +12,7 @@ import { cuentas as c } from '../../textos/cuentas';
 import { Coincidencia } from './coincidencia';
 import Encabezado, { type ResumenDelMovimiento } from './encabezado';
 import EstadoPropio, { type DuplicadoDe } from './estados';
+import { PanelNavegacion } from './panel-navegacion';
 
 // `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene (el enrutado se prueba en E2E).
 vi.mock('next/link', async () => {
@@ -118,6 +119,24 @@ describe('PRU-CMP-BAND', () => {
     );
     expect(descartado.textContent).toContain(t.descartados.descartado);
     expect(descartado.querySelector('[data-estado=cero]')).not.toBeNull();
+  });
+
+  it('PRU-CMP-BAND-230 [FT-35] el panel de computadora dice «n de N» y sus flechas enlazan al anterior y al siguiente; en los extremos la flecha está deshabilitada', () => {
+    const medio = montar(
+      <PanelNavegacion navegacion={{ posicion: 2, total: 6, anterior: 'a', siguiente: 'b' }} />,
+    );
+    expect(medio.textContent).toContain(t.revisar.panel.posicion(2, 6));
+    expect(
+      medio.querySelector(`a[aria-label="${t.revisar.panel.anterior}"]`)?.getAttribute('href'),
+    ).toBe('/bandeja/a');
+    expect(
+      medio.querySelector(`a[aria-label="${t.revisar.panel.siguiente}"]`)?.getAttribute('href'),
+    ).toBe('/bandeja/b');
+    const primero = montar(<PanelNavegacion navegacion={{ posicion: 1, total: 1 }} />);
+    expect(primero.querySelector('a')).toBeNull();
+    expect([...primero.querySelectorAll('button')].every((b) => b.hasAttribute('disabled'))).toBe(
+      true,
+    );
   });
 
   it('PRU-CMP-BAND-224 [FT-35] los estados con pantalla propia no tienen violaciones de axe en claro ni en oscuro', async () => {

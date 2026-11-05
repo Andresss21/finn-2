@@ -1,6 +1,7 @@
 'use client';
 // Un movimiento que al abrir el flujo ya estaba aprobado o descartado (FT-35, FT-37; S4 del export, CH-137): su estado, el SMS, sus datos en
 // solo lectura y, en el pie, «Restaurar» (si está descartado, OP-39) y «Volver a la Bandeja». Se carga cuando hace falta.
+import type { ComponentProps } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Icono } from '../../componentes/base/icono';
@@ -14,24 +15,19 @@ import { bandeja as t } from '../../textos/bandeja';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
 import { textoRestaurado } from './descarte';
 import Encabezado, { type ResumenDelMovimiento } from './encabezado';
-import { TablaDatos } from './piezas';
+import { ENLACE, TablaDatos } from './piezas';
 import { TextoDelSms } from './texto-sms';
 
-// Clases literales (L13): el enlace de volver con el aspecto del botón principal o del tonal (D1)
-const ENLACE = {
-  principal:
-    'inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion',
-  tonal:
-    'inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion',
-} as const;
-
 export default function YaResuelto({
+  marco,
   aprobado,
   movimientoId,
   sms,
   nota,
   resumen: r,
 }: {
+  /** El marco de la página (título, ruta padre, panel de la computadora): es el mismo que el del resto del flujo. */
+  readonly marco: Omit<ComponentProps<typeof PaginaFlujoDeRuta>, 'children' | 'acciones'>;
   readonly aprobado: boolean;
   readonly movimientoId: string;
   readonly sms: string;
@@ -72,7 +68,7 @@ export default function YaResuelto({
     </div>
   );
   return (
-    <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja" acciones={pie}>
+    <PaginaFlujoDeRuta {...marco} acciones={pie}>
       <div className="flex flex-col gap-5">
         <Encabezado resumen={{ ...r, final: aprobado ? 'aprobado' : 'descartado' }} />
         {restaurado ? (

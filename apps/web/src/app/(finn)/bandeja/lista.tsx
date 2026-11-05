@@ -39,10 +39,13 @@ export function ListaBandeja({
   contadores,
   elegibles,
   movimientos,
+  actual,
 }: {
   readonly contadores: Contadores;
   readonly elegibles: readonly string[];
   readonly movimientos: readonly MovimientoDto[];
+  /** El movimiento que se revisa a la derecha, en computadora (CH-137): queda marcado en la lista. */
+  readonly actual?: string;
 }) {
   const [retenidas, setRetenidas] = useState<Readonly<Record<string, Retenida>>>({});
   const alIniciar = useCallback(
@@ -88,7 +91,13 @@ export function ListaBandeja({
             className="divide-y divide-borde-sutil rounded-contenedor bg-superficie"
           >
             {filas.map((m) => (
-              <div key={m.id} role="listitem">
+              <div
+                key={m.id}
+                role="listitem"
+                {...(m.id === actual
+                  ? { 'aria-current': 'true', className: 'bg-superficie-hundida' }
+                  : {})}
+              >
                 <FilaBandeja
                   movimiento={m}
                   hrefRevisar={`/bandeja/${m.id}`}

@@ -8,6 +8,7 @@ import { useFieldArray } from 'react-hook-form';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
+import type { CuentaDeEdicion } from './edicion';
 import {
   CerrarFlujoAlMontar,
   PaginaFlujoDeRuta,
@@ -29,7 +30,7 @@ interface Referencia {
 export interface PropsFormularioActividadEditar {
   readonly transaccionId: string;
   readonly inicial: Campos;
-  readonly cuentas: readonly Referencia[];
+  readonly cuentas: readonly CuentaDeEdicion[];
   readonly categorias: readonly Referencia[];
   readonly deudores: readonly Referencia[];
   /** La transacción mueve más de una cuenta: no se ofrece cambiarla. */
@@ -48,6 +49,7 @@ interface Previsualizacion extends VistaDeImpacto {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
+const ID_FORMULARIO = 'formulario-actividad-editar';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 /** Los rechazos que se muestran junto al campo de las partes, no como aviso del formulario. */
 const DE_LAS_PARTES = [
@@ -63,7 +65,7 @@ const ConfirmacionImpacto = lazy(() =>
   })),
 );
 // Los campos se cargan aparte: el HTML del servidor ya los trae y el presupuesto de bytes de la ruta no los cuenta (05 §13.1)
-const Edicion = lazy(() => import('../bandeja-movimiento/edicion'));
+const Edicion = lazy(() => import('./edicion'));
 
 export function FormularioActividadEditar({
   transaccionId,
@@ -136,9 +138,35 @@ export function FormularioActividadEditar({
           ? g.sobraRepartir
           : g.todoRepartido;
 
+  const guardar = (
+    <Boton
+      tipo="submit"
+      form={ID_FORMULARIO}
+      enviando={estado === 'enviando'}
+      textoEnviando={t.guardando}
+      deshabilitado={!enLinea}
+      className="w-full"
+      {...(operacion.motivoSinEnvio === undefined
+        ? {}
+        : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+    >
+      {t.guardar}
+    </Boton>
+  );
+
   return (
-    <PaginaFlujoDeRuta titulo={t.editarTitulo} rutaPadre={detalle}>
-      <form onSubmit={(e) => void alEnviar(e)} noValidate className="flex flex-col gap-5">
+    <PaginaFlujoDeRuta titulo={t.editarTitulo} rutaPadre={detalle} acciones={guardar}>
+      <form
+        id={ID_FORMULARIO}
+        onSubmit={(e) => void alEnviar(e)}
+        noValidate
+        className="flex flex-col gap-4.5"
+      >
+        {soloEtiquetas ? (
+          <AvisoEnLinea estado="cero" titulo={t.cuentaArchivada}>
+            {motivoCuenta}
+          </AvisoEnLinea>
+        ) : null}
         <Suspense fallback={null}>
           <Edicion
             formulario={formulario}
@@ -148,11 +176,9 @@ export function FormularioActividadEditar({
             deudores={deudores}
             deLasPartes={deLasPartes}
             ayuda={ayuda}
-            registrada={{
-              sinCuenta,
-              soloEtiquetas,
-              ...(motivoCuenta === undefined ? {} : { motivoCuenta }),
-            }}
+            sinCuenta={sinCuenta}
+            soloEtiquetas={soloEtiquetas}
+            {...(motivoCuenta === undefined ? {} : { motivoCuenta })}
           />
         </Suspense>
         {fallo !== undefined &&
@@ -160,6 +186,7 @@ export function FormularioActividadEditar({
         !Object.values(fallo.campos ?? {}).includes(fallo.mensaje) ? (
           <AvisoEnLinea
             estado="problema"
+            {...(conflicto ? { titulo: t.cambioMientrasEditabas } : {})}
             aparecioDespues
             {...(conflicto || REINTENTABLES.includes(fallo.categoria)
               ? {
@@ -185,17 +212,6 @@ export function FormularioActividadEditar({
             {fallo.mensaje}
           </AvisoEnLinea>
         ) : null}
-        <Boton
-          tipo="submit"
-          enviando={estado === 'enviando'}
-          textoEnviando={t.guardando}
-          deshabilitado={!enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
-        >
-          {t.guardar}
-        </Boton>
       </form>
     </PaginaFlujoDeRuta>
   );
