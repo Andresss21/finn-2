@@ -95,6 +95,7 @@
     "fts": ["FT-11"]
   },
   { "patron": "apps/web/src/flujos/presupuesto-mover/**", "fts": ["FT-11"] },
+  { "patron": "apps/web/src/flujos/pie-de-hoja.tsx", "fts": ["FT-10", "FT-11", "FT-19"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/auto-asignar/**", "fts": ["FT-13"] },
   {
     "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/auto-asignar/**",
