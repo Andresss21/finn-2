@@ -420,4 +420,17 @@ describe('PRU-DOM-REP', () => {
     ventanaYFiltro();
     existencia();
   });
+
+  it('PRU-DOM-REP-150 [FT-60] REP-categorias trae el total gastado para el centro de la dona y el monto de «Otras», con la ventana y los filtros (04 §6.9.2, CH-177)', () => {
+    const v = { ventana: 'ultimos_3' } as const;
+    // Renta 300 + súper 170 + cine 90 + vieja 25 = $585.00; 4 categorías caben en la dona, sin «Otras».
+    expect(categorias(i, v)).toMatchObject({ total: m(585), montoOtras: m(0) });
+    // Solo el grupo ocio: cine 90 + vieja 25.
+    expect(categorias(i, { ...v, grupoId: id('ocio') })).toMatchObject({ total: m(115) });
+    // Solo la tarjeta: cine 100 − la devolución D-1 de 10.
+    expect(categorias(i, { ...v, cuentaIds: [id('vi')] })).toMatchObject({ total: m(90) });
+    // Abril (actual): súper 20 + 35 + 10. Marzo (último cerrado): renta 300 + vieja 25; el súper sin gasto no suma.
+    expect(categorias(i).total).toBe(m(65));
+    expect(categorias(i, { ventana: 'ultimos_1' }).total).toBe(m(325));
+  });
 });
