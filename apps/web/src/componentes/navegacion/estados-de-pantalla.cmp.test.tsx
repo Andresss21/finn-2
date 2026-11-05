@@ -1,0 +1,117 @@
+// Error de pantalla y página sin conexión del export de diseño (pantalla 14) (CMP, sin servidor).
+import axe from 'axe-core';
+import { userEvent } from 'vitest/browser';
+import { act, type ReactNode } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import '../../app/globals.css';
+import PaginaSinConexion from '../../app/sin-conexion/page';
+import { ErrorDeLaPantalla } from './error-de-pantalla';
+
+// Solo el límite externo: `next/navigation` necesita el enrutador de Next, que el navegador de prueba no tiene.
+const refrescar = vi.hoisted(() => vi.fn());
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: refrescar }) }));
+
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+let montado: { raiz: Root; nodo: HTMLElement } | undefined;
+afterEach(() => {
+  if (montado !== undefined) {
+    const { raiz, nodo } = montado;
+    act(() => {
+      raiz.unmount();
+    });
+    nodo.remove();
+    montado = undefined;
+  }
+  document.documentElement.removeAttribute('data-theme');
+  refrescar.mockClear();
+});
+
+function montar(ui: ReactNode): HTMLElement {
+  document.body.style.cssText = 'background: var(--fondo); color: var(--texto)';
+  const nodo = document.createElement('div');
+  document.body.append(nodo);
+  const raiz = createRoot(nodo);
+  act(() => {
+    raiz.render(ui);
+  });
+  montado = { raiz, nodo };
+  return nodo;
+}
+
+const sinAct = async (f: () => Promise<void>): Promise<void> => {
+  await act(f);
+};
+
+describe('PRU-CMP-AJUS-142 error de pantalla', () => {
+  it('PRU-CMP-AJUS-142 [CA-38.6] la tarjeta dice el mensaje y la referencia, «Copiar referencia» la copia y «Intentar de nuevo» reinicia, todo de 44 px o más', async () => {
+    const copiar = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: copiar },
+      configurable: true,
+    });
+    const reset = vi.fn();
+    const raiz = montar(
+      <ErrorDeLaPantalla
+        error={Object.assign(new Error('x'), { digest: 'E-ABC234' })}
+        reset={reset}
+      />,
+    );
+    const alerta = raiz.querySelector('[role=alert]') as HTMLElement;
+    expect(alerta.textContent).toContain('Algo salió mal y no se pudo cargar esta pantalla.');
+    expect(alerta.textContent).toContain('Referencia: E-ABC234');
+    const botones = [...alerta.querySelectorAll('button')];
+    expect(botones.map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual([
+      'Copiar referencia',
+      'Intentar de nuevo',
+    ]);
+    for (const b of botones) expect(b.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    await sinAct(async () => {
+      await userEvent.click(botones[0] as HTMLElement);
+    });
+    expect(copiar).toHaveBeenCalledWith('E-ABC234');
+    expect(alerta.querySelector('[role=status]')?.textContent).toBe('Referencia copiada.');
+    await sinAct(async () => {
+      await userEvent.click(botones[1] as HTMLElement);
+    });
+    expect(refrescar).toHaveBeenCalledTimes(1);
+    expect(reset).toHaveBeenCalledTimes(1);
+  });
+
+  it('PRU-CMP-AJUS-143 [V5-24] sin referencia no ofrece copiarla, y la tarjeta no tiene violaciones de accesibilidad en los dos temas', async () => {
+    for (const tema of ['claro', 'oscuro'] as const) {
+      document.documentElement.dataset['theme'] = tema;
+      const raiz = montar(<ErrorDeLaPantalla error={new Error('x')} reset={() => undefined} />);
+      expect(raiz.querySelector('[aria-label="Copiar referencia"]')).toBeNull();
+      const { violations } = await axe.run(raiz, {
+        runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
+      });
+      expect(violations.map((v) => v.id)).toEqual([]);
+      act(() => {
+        montado?.raiz.unmount();
+      });
+      montado?.nodo.remove();
+      montado = undefined;
+    }
+  });
+});
+
+describe('PRU-CMP-AJUS-144 página sin conexión', () => {
+  it.each(['claro', 'oscuro'] as const)(
+    'PRU-CMP-AJUS-144 [FT-05] la marca, el glifo, el título, el texto y «Intentar de nuevo» de 44 px, sin violaciones de accesibilidad en el tema %s',
+    async (tema) => {
+      document.documentElement.dataset['theme'] = tema;
+      const raiz = montar(<PaginaSinConexion />);
+      expect(raiz.querySelector('h1')?.textContent).toBe('Estás sin conexión');
+      expect(raiz.querySelectorAll('svg').length).toBeGreaterThanOrEqual(1);
+      const boton = raiz.querySelector('button') as HTMLElement;
+      expect(boton.textContent).toBe('Intentar de nuevo');
+      expect(boton.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+      const { violations } = await axe.run(raiz, {
+        runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
+      });
+      expect(violations.map((v) => v.id)).toEqual([]);
+    },
+  );
+});
