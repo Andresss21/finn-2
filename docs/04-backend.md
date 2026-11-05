@@ -2340,6 +2340,7 @@ El flujo completo (decodificación, adaptadores, firma) está en §9 (Parte C).
 - **Entrada:** `cuentaId`, archivo CSV (≤ 2 MiB, BE-06).
 - **Comportamiento:** con `leer()`: decodifica, reconoce el formato, extrae los movimientos, la fecha del estado y el saldo final; clasifica en coincidencias, solo en el estado y solo en Finn (§4.17).
 - **Salida:** la clasificación y una **carga firmada** (HMAC con la cuenta, el contenido normalizado, el vencimiento de 24 h y la versión de la clave; P4-14).
+  - **[CH-201]** Junto a ellas, el estado leído (`formato`, `fechaEstado`, `saldoFinal`, `movimientos`). En la clasificación (9.5), cada elemento de `coincidencias` es `{ transaccionId, movimientoIndice, fecha, comercio: string | null, monto, estadoBancario }` y cada uno de `soloEnFinn`, `{ transaccionId, fecha, comercio: string | null, monto, estadoBancario }`: la fecha, el comercio y el estado bancario de la transacción, y `monto` = su efecto en la cuenta (convención de 9.4). Salen de los hechos que OP-45 ya carga en `leer()`, sin otra consulta. `soloEnEstado` son los índices de `movimientos`.
 - **Hechos:** ninguno.
 - **Errores:** `formato_no_reconocido`, `formato_ambiguo`, `archivo_pdf`.
 
@@ -3103,6 +3104,8 @@ interface PorCobrarDto extends Encabezado {
 
 No tiene consulta propia: la pantalla muestra la salida de OP-45 (3.8) y, al terminar, el detalle de cuenta (6.6).
 
+**[CH-201]** De cada transacción de Finn (coincidencias y solo en Finn), la fecha, el comercio, el monto (efecto en la cuenta) y el estado bancario vienen en la clasificación de OP-45; de cada movimiento del estado, en `movimientos`. La fecha del estado y el saldo final salen del CSV: la interfaz no los pide ni los calcula (PF-3).
+
 ### 6.13 Cobertura de pantallas
 
 | Pantalla (encargo y producto) | Consulta |
@@ -3592,6 +3595,7 @@ Verificado con PapaParse 5.7.0 sobre un mismo contenido con tildes, `Ñ` y un ca
 - Candidatas de Finn: las transacciones con efecto en la cuenta, no conciliadas, con fecha dentro de [primera fecha del estado − 3 días, `fechaEstado`].
 - **Coincidencia** (supuesto 10): misma cuenta, mismo monto (el efecto en la cuenta), diferencia de fechas ≤ 3 días; relación 1 a 1, eligiendo la fecha más cercana y, si empatan, la clave de orden más antigua (y después `secuencia`).
 - **Solo en el estado:** movimientos sin pareja. **Solo en Finn:** candidatas sin pareja.
+- **[CH-201]** Cada transacción de una coincidencia o de solo en Finn va con su detalle: `transaccionId`, `fecha`, `comercio`, `monto` (el efecto en la cuenta, el mismo que usa el criterio) y `estadoBancario`, tomados de las filas de los hechos de la instantánea. Las coincidencias van en el orden de los movimientos; solo en Finn, en el orden de las candidatas (clave de orden, después `secuencia` e id).
 - Además devuelve el **saldo de Finn a `fechaEstado`** (`saldo(cuenta, fechaEstado)`) y la diferencia propuesta (saldo final del estado − saldo de Finn), que será la diferencia aceptada si se termina sin cambios (OP-47).
 
 **Reclasificación.** OP-46 y OP-47 vuelven a clasificar con los hechos del momento: si entre la subida y la confirmación cambió algo (otra transacción, una edición), el resultado lo refleja, y OP-47 rechaza los pares que ya no cumplen el criterio (`coincidencia_no_valida`). *Alternativa descartada:* confiar en la clasificación firmada; la firma garantiza el contenido del estado de cuenta, no el estado de Finn.
