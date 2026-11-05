@@ -4,7 +4,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import '../../app/globals.css';
-import { ConfirmacionImpactoDeVista } from './confirmacion-impacto';
+import { ConfirmacionImpactoDeVista } from './confirmacion-impacto-de-vista';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

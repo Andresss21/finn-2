@@ -64,7 +64,7 @@ const DE_LAS_PARTES = ['suma_lineas_distinta', 'linea_sin_destino'];
 const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
 
 const ConfirmacionImpacto = lazy(() =>
-  import('../../componentes/formularios/confirmacion-impacto').then((m) => ({
+  import('../../componentes/formularios/confirmacion-impacto-de-vista').then((m) => ({
     default: m.ConfirmacionImpactoDeVista,
   })),
 );

@@ -189,4 +189,31 @@ describe('PRU-CMP-CATEG', () => {
     await tocar(nodo, t.volverAEditar);
     expect(nodo.textContent).toContain(t.resumenTitulo);
   });
+
+  it('PRU-CMP-PRES-283 [FT-20] la confirmación de Fusionar dibuja cada línea del impacto como fila de una tarjeta, AV-01 como advertencia y «Volver a editar» y «Confirmar» en dos columnas de 44 px o más, sin «antes → después»', async () => {
+    const accion = vi.fn(() => ok(vista()));
+    const nodo = montar(<FormularioFusionar {...base} accion={accion} />);
+    await elegirDestino(nodo, 'Salidas');
+    await tocar(nodo, t.fusionar);
+    const tarjeta = nodo.querySelector('section ul');
+    expect(tarjeta?.className).toContain('rounded-contenedor');
+    expect(
+      [...(tarjeta?.querySelectorAll(':scope > li') ?? [])].map((li) => li.textContent),
+    ).toEqual([
+      t.deltaLpa('+$30.00'),
+      t.deltaDisponible('Salidas', '−$30.00'),
+      t.deltaPeriodo('21 ene 2027', 'Salidas', '+$50.00'),
+      t.metaDescartada('Café'),
+    ]);
+    expect(nodo.querySelector('section [data-estado="advertencia"]')?.textContent).toContain(
+      t.periodoCerrado,
+    );
+    expect(document.activeElement?.textContent).toBe(t.revisar);
+    const pie = boton(nodo, t.confirmar).parentElement;
+    expect(pie?.className).toContain('grid-cols-2');
+    const botones = [...(pie?.querySelectorAll('button') ?? [])];
+    expect(botones.map((b) => b.textContent)).toEqual([t.volverAEditar, t.confirmar]);
+    for (const b of botones) expect(b.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expect(nodo.textContent).not.toContain('→');
+  });
 });
