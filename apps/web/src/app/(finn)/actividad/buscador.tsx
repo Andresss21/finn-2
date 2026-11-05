@@ -4,6 +4,7 @@
 // mismo al enviarlo.
 import { useEffect, useRef, useState } from 'react';
 import { EntradaTexto } from '../../../componentes/base/campo';
+import { Icono } from '../../../componentes/base/icono';
 import { useReemplazarBusqueda } from '../../../componentes/navegacion/use-reemplazar-busqueda';
 import { actividad as t } from '../../../textos/actividad';
 
@@ -29,16 +30,24 @@ export function Buscador({
     [],
   );
 
+  const aplicar = (nuevo: string) => {
+    const busqueda: Record<string, string> = {};
+    for (const [k, v] of Object.entries(ultimoRestoRef.current))
+      if (v !== undefined) busqueda[k] = v;
+    if (nuevo !== '') busqueda['texto'] = nuevo;
+    reemplazar(busqueda);
+  };
   const cambiar = (nuevo: string) => {
     setValor(nuevo);
     clearTimeout(temporizador.current);
     temporizador.current = setTimeout(() => {
-      const busqueda: Record<string, string> = {};
-      for (const [k, v] of Object.entries(ultimoRestoRef.current))
-        if (v !== undefined) busqueda[k] = v;
-      if (nuevo !== '') busqueda['texto'] = nuevo;
-      reemplazar(busqueda);
+      aplicar(nuevo);
     }, ESPERA_MS);
+  };
+  const borrar = () => {
+    setValor('');
+    clearTimeout(temporizador.current);
+    aplicar('');
   };
 
   return (
@@ -46,17 +55,38 @@ export function Buscador({
       {Object.entries(resto).map(([k, v]) =>
         v === undefined ? null : <input key={k} type="hidden" name={k} value={v} />,
       )}
-      <EntradaTexto
-        etiqueta={t.buscar}
-        descripcion={t.buscarAyuda}
-        type="search"
-        name="texto"
-        value={valor}
-        autoComplete="off"
-        onChange={(e) => {
-          cambiar(e.currentTarget.value);
-        }}
-      />
+      <div className="flex items-start gap-1">
+        <div className="relative min-w-0 flex-1">
+          <EntradaTexto
+            etiqueta={t.buscar}
+            etiquetaOculta
+            type="search"
+            name="texto"
+            placeholder={t.buscarMarcador}
+            value={valor}
+            autoComplete="off"
+            className="pl-10 [&::-webkit-search-cancel-button]:hidden"
+            onChange={(e) => {
+              cambiar(e.currentTarget.value);
+            }}
+          />
+          <Icono
+            nombre="search"
+            tamano={20}
+            className="pointer-events-none absolute top-3 left-3 text-texto-secundario"
+          />
+        </div>
+        {valor === '' ? null : (
+          <button
+            type="button"
+            aria-label={t.borrarBusqueda}
+            onClick={borrar}
+            className="flex size-12 shrink-0 items-center justify-center rounded-control text-texto focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
+          >
+            <Icono nombre="x" tamano={20} />
+          </button>
+        )}
+      </div>
     </form>
   );
 }
