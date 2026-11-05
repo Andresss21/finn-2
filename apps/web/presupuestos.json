@@ -13,6 +13,7 @@
     "/ajustes/formatos/[formatoId]": "/ajustes/formatos/00000000-0000-4000-8000-000000000001",
     "/ajustes/instituciones/[institucionId]": "/ajustes/instituciones/00000000-0000-4000-8000-000000000001",
     "/bandeja/[movimientoId]": "/bandeja/00000000-0000-4000-8000-000000000001",
+    "/cuentas/[cuentaId]/pagar": "/cuentas/00000000-0000-4000-8000-000000000001/pagar",
     "/cuentas/[cuentaId]/cuota": "/cuentas/00000000-0000-4000-8000-000000000001/cuota",
     "/cuentas/[cuentaId]/verificar-saldo": "/cuentas/00000000-0000-4000-8000-000000000001/verificar-saldo",
     "/cuentas/[cuentaId]": "/cuentas/00000000-0000-4000-8000-000000000001",
