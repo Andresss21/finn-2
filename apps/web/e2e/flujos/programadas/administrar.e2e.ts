@@ -121,10 +121,7 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
       '2027-02-20',
     );
     await abrir(page, '/programadas');
-    await page
-      .getByRole('link', { name: /Netflix/ })
-      .first()
-      .click();
+    await fila(page, 'Netflix').getByRole('link').click();
     await esperarContenido(page);
     await expect(page.getByLabel('Primera fecha')).toBeDisabled();
     await expect(page.getByLabel('Frecuencia')).toBeDisabled();

@@ -95,7 +95,7 @@
   { "patron": "apps/web/src/flujos/metas-nueva/**", "fts": ["FT-17"] },
   { "patron": "apps/web/src/flujos/metas-meta/**", "fts": ["FT-17"] },
   { "patron": "apps/web/src/app/(finn)/programadas/**", "fts": ["FT-40", "FT-41"] },
-  { "patron": "apps/web/src/servidor/acciones/programadas.ts", "fts": ["FT-40"] },
+  { "patron": "apps/web/src/servidor/acciones/programadas.ts", "fts": ["FT-40", "FT-41"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/mover/**", "fts": ["FT-11"] },
   {
     "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/mover/**",
@@ -199,6 +199,11 @@
   { "patron": "apps/web/src/flujos/reglas-nueva/**", "fts": ["FT-39"] },
   { "patron": "apps/web/src/flujos/programadas-nueva/**", "fts": ["FT-40"] },
   { "patron": "apps/web/src/flujos/programadas-programada/**", "fts": ["FT-40"] },
+  { "patron": "apps/web/src/flujos/programadas-ocurrencias-fecha-esperada/**", "fts": ["FT-41"] },
+  {
+    "patron": "apps/web/src/app/(finn)/@superpuesto/(.)programadas/**",
+    "fts": ["FT-41"]
+  },
   { "patron": "apps/web/src/flujos/reglas-regla/**", "fts": ["FT-39"] },
   { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03"] },
   { "patron": "apps/web/src/servidor/acciones/notificaciones.ts", "fts": ["FT-06", "FT-08"] },

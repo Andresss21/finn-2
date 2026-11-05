@@ -80,7 +80,7 @@ describe('PRU-INT-PROG', () => {
     process.env['DATABASE_URL'] = base.url; // el cliente del proceso (04 §2.5)
   });
 
-  it('PRU-INT-PROG-102 [ESC-50, INV-15, CB-33, CF-20, V-06] OP-42, OP-43, OP-44, OP-51 y el registro automático: de punta a punta, idempotentes y con sus rechazos', async () => {
+  it('PRU-INT-PROG-102 [CA-41.4, ESC-50, INV-15, CB-33, CF-20, V-06] OP-42, OP-43, OP-44, OP-51 y el registro automático: de punta a punta, idempotentes y con sus rechazos', async () => {
     // OP-42 crear: previsualizar no escribe; repetir es ya aplicada y otros datos con el mismo id, conflicto_id
     const auto = gasto(GASTO, {
       registroAutomatico: true,
