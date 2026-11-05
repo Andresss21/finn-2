@@ -310,6 +310,7 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
             if (fecha !== '') reemplazarBusqueda({ fecha });
           }}
           maxima={hoy}
+          hoy={hoy}
           error={error('fecha')}
           requerido
         />

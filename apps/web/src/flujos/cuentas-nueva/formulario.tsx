@@ -227,6 +227,7 @@ export function FormularioCuentaNueva({
             valor={c.fechaApertura as FechaLocal}
             alCambiar={poner('fechaApertura')}
             maxima={hoy}
+            hoy={hoy}
             error={error('fechaApertura')}
             requerido
           />

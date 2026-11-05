@@ -1,0 +1,25 @@
+// Textos del calendario de `EntradaFecha` (P1-03 del export). Archivo aparte: solo lo importa el calendario, que se carga al abrirlo (05 §13.1).
+export const calendario = {
+  titulo: 'Calendario',
+  mesAnterior: 'Mes anterior',
+  mesSiguiente: 'Mes siguiente',
+  hoy: 'Hoy',
+  esHoy: 'hoy',
+  noDisponible: 'no disponible',
+  dias: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'],
+  iniciales: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+  meses: [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ],
+} as const;

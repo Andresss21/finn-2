@@ -1,5 +1,11 @@
 // Campo con etiqueta, descripción y error (05 §10.7, 11.10). Genera los ids y asocia todo al control.
-import { cloneElement, useId, type InputHTMLAttributes, type ReactElement } from 'react';
+import {
+  cloneElement,
+  useId,
+  type InputHTMLAttributes,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { cn } from '../../components/ui/utils';
@@ -80,6 +86,8 @@ export type PropsEntradaTexto = Omit<InputHTMLAttributes<HTMLInputElement>, 'id'
   Omit<PropsCampo, 'children'> & {
     /** Texto fijo antes de lo escrito, en color secundario (el «$» de un monto). */
     readonly prefijo?: string;
+    /** Lo que va dentro del campo, sobre su borde derecho: el botón del calendario de `EntradaFecha`. */
+    readonly acciones?: ReactNode;
   };
 
 /** Entrada de texto con su `Campo`. La etiqueta nunca es el `placeholder`. */
@@ -90,6 +98,7 @@ export function EntradaTexto({
   requerido,
   etiquetaOculta,
   prefijo,
+  acciones,
   className,
   ...entrada
 }: PropsEntradaTexto) {
@@ -102,17 +111,24 @@ export function EntradaTexto({
       {...(etiquetaOculta === undefined ? {} : { etiquetaOculta })}
     >
       {(control) =>
-        prefijo === undefined ? (
+        prefijo === undefined && acciones === undefined ? (
           <Input {...control} className={className} {...entrada} />
         ) : (
           <div className="relative">
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-texto-secundario"
-            >
-              {prefijo}
-            </span>
-            <Input {...control} className={cn('pl-7', className)} {...entrada} />
+            {prefijo === undefined ? null : (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-texto-secundario"
+              >
+                {prefijo}
+              </span>
+            )}
+            <Input
+              {...control}
+              className={cn(prefijo === undefined ? '' : 'pl-7', className)}
+              {...entrada}
+            />
+            {acciones}
           </div>
         )
       }
