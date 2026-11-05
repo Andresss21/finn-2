@@ -112,10 +112,10 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(page.getByTestId('resultado')).toContainText('$12.50');
     await page.getByRole('link', { name: t.verTransaccion }).click();
     await esperarContenido(page);
-    const datos = page.locator('dl');
+    const datos = page.getByRole('main');
     await expect(datos).toContainText(formatearFechaTexto('2027-02-10'));
     await expect(datos).toContainText(transaccion.origenes.sms);
-    await expect(page.getByRole('region', { name: transaccion.mensajeOriginal })).toContainText(
+    await expect(page.getByRole('region', { name: transaccion.origen })).toContainText(
       texto,
     );
   });

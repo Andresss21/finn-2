@@ -14,7 +14,14 @@ import { transaccion as t } from '../../../../textos/transaccion';
 
 const ENLACE =
   'inline-flex min-h-11 items-center gap-1.5 self-start rounded-control font-semibold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-const TARJETA = 'rounded-contenedor bg-superficie shadow-elevacion-1';
+const TARJETA_LISTA =
+  'divide-y divide-borde-sutil rounded-contenedor bg-superficie shadow-elevacion-1';
+const TARJETA_FILAS =
+  'divide-y divide-borde-sutil rounded-contenedor bg-superficie px-4 py-1 shadow-elevacion-1';
+const TARJETA_PARTES =
+  'divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1';
+const RESUMEN = 'text-cuerpo-pequeno text-texto-secundario';
+const RESUMEN_SIN_CUBRIR = 'text-cuerpo-pequeno text-problema-texto';
 const PASTILLA =
   'inline-flex min-h-8 items-center gap-1.5 rounded-pastilla bg-superficie-hundida px-3 text-cuerpo-pequeno font-medium';
 
@@ -101,13 +108,7 @@ function Parte({ linea, n }: { readonly linea: Linea; readonly n: number }) {
           <span className="bg-problema-fondo" style={{ flexGrow: linea.reparto.noCubierto }} />
         </div>
       )}
-      {texto === '' ? null : (
-        <p
-          className={`text-cuerpo-pequeno ${sinCubrir ? 'text-problema-texto' : 'text-texto-secundario'}`}
-        >
-          {texto}
-        </p>
-      )}
+      {texto === '' ? null : <p className={sinCubrir ? RESUMEN_SIN_CUBRIR : RESUMEN}>{texto}</p>}
     </li>
   );
 }
@@ -121,7 +122,7 @@ function Eventos({ lineas }: { readonly lineas: readonly Linea[] }) {
   if (eventos.length === 0) return null;
   return (
     <Seccion titulo={t.eventos}>
-      <ul className={`${TARJETA} divide-y divide-borde-sutil`}>
+      <ul className={TARJETA_LISTA}>
         {eventos.map(([rotulo, fecha, monto]) => (
           <li
             key={`${rotulo}-${fecha}-${monto}`}
@@ -221,20 +222,20 @@ export function PantallaDetalleTransaccion({
         </EnlaceFinn>
       </header>
       <Seccion titulo={t.comercioYNota}>
-        <dl className={`${TARJETA} divide-y divide-borde-sutil px-4 py-1`}>
+        <dl className={TARJETA_FILAS}>
           <Fila rotulo={t.comercio}>{x.comercio ?? dominio.sinComercio}</Fila>
           {nota === undefined ? null : <Fila rotulo={t.nota}>{nota}</Fila>}
         </dl>
       </Seccion>
       <Seccion titulo={t.partes}>
-        <ul className={`${TARJETA} divide-y divide-borde-sutil overflow-hidden`}>
+        <ul className={TARJETA_PARTES}>
           {dto.lineas.map((l, i) => (
             <Parte key={l.id} linea={l} n={i + 1} />
           ))}
         </ul>
       </Seccion>
       <Seccion titulo={t.cuentas}>
-        <ul className={`${TARJETA} divide-y divide-borde-sutil px-4 py-1`}>
+        <ul className={TARJETA_FILAS}>
           {dto.efectos.map((e) => (
             <li key={e.cuenta.id} className="flex items-baseline justify-between gap-3 py-2">
               <span className="text-cuerpo-pequeno text-texto-secundario">
@@ -254,7 +255,7 @@ export function PantallaDetalleTransaccion({
       )}
       {dto.cambiosPosteriores.length === 0 ? null : (
         <Seccion titulo={t.cambiosPosteriores}>
-          <ul data-cambios-posteriores className={`${TARJETA} divide-y divide-borde-sutil`}>
+          <ul data-cambios-posteriores className={TARJETA_LISTA}>
             {dto.cambiosPosteriores.map((c) => (
               <li key={c.registradoEn} className="px-4 py-3 text-cuerpo-pequeno">
                 {t.cambioPosterior(

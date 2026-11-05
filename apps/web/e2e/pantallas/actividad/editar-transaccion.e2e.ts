@@ -305,7 +305,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
     await expect(page.getByRole('heading', { name: t.partes })).toBeVisible();
     await expect(page.locator('[data-linea]').first()).toContainText(t.cubierto);
     for (const enlace of [
-      page.getByRole('link', { name: t.volver }),
+      page.getByRole('main').getByRole('link', { name: t.volver }),
       page.getByRole('link', { name: t.editar }),
     ])
       expect((await enlace.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
