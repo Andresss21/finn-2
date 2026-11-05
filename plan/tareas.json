@@ -395,7 +395,7 @@
 
   "TA-303": { "estado": "terminada", "rama": "ta-303-pagar-tarjeta", "pr": 378 },
 
-  "TA-304": { "estado": "pendiente" },
+  "TA-304": { "estado": "terminada", "rama": "ta-304-sobregiros-cierre", "pr": 403 },
 
   "TA-305": { "estado": "terminada", "rama": "ta-305-metas-pantallas", "pr": 300 },
 
