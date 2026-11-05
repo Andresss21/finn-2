@@ -175,9 +175,48 @@ test.describe('PRU-E2E-CTA', () => {
     await page.locator('[data-grupo="Inversiones"] a').first().click();
     await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
     await esperarContenido(page);
-    const bloque = page.locator('[data-bloque="inversion"]');
-    await esperarMonto(bloque.locator('[data-centavos]').first(), 300000);
-    await expect(bloque).toContainText('Aportes');
+    const cabecera = page.locator('[data-identidad="inversion"]');
+    await esperarMonto(cabecera.locator('dd [data-centavos]').first(), 300000);
+    await expect(page.locator('[data-bloque="inversion"]')).toContainText('Aportes');
+  });
+
+  test('PRU-E2E-CTA-261 [Q-detalleCuenta] el detalle de un préstamo muestra la próxima cuota con Pagar, las condiciones con Editar, con controles de 44 px', async ({
+    page,
+  }) => {
+    await sembrarOps(
+      [
+        {
+          op: 'OP-01',
+          cuenta: 'Préstamo',
+          tipo: 'prestamo',
+          saldo: 10000,
+          prestamo: {
+            contraparte: 'Banco',
+            montoOriginal: 10000,
+            cuota: 350,
+            plazoCuotas: 36,
+            cuotasPagadas: 0,
+          },
+        },
+      ],
+      '2027-02-05',
+    );
+    await page.goto('/cuentas');
+    await esperarContenido(page);
+    await page.locator('[data-grupo="Préstamos"] a').first().click();
+    await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
+    await esperarContenido(page);
+    const proxima = page.locator('[data-bloque="proxima-cuota"]');
+    // Sin modelo de cálculo no hay tabla: la tarjeta dice la cuota pactada y no inventa «n de N» (PF-3)
+    await expect(proxima).toContainText('Cuota pactada');
+    await esperarMonto(proxima.locator('[data-centavos]').first(), 35000);
+    const pagar = await proxima.getByRole('link', { name: 'Pagar' }).boundingBox();
+    expect(pagar?.height ?? 0).toBeGreaterThanOrEqual(44);
+    const editar = await page
+      .locator('[data-bloque="prestamo"]')
+      .getByRole('link', { name: 'Editar' })
+      .boundingBox();
+    expect(editar?.height ?? 0).toBeGreaterThanOrEqual(44);
   });
 
   test('PRU-E2E-CTA-260 [Q-detalleCuenta] el detalle de una cuenta de efectivo va en dos columnas en computadora y en una en teléfono, con sus botones de 44 px y «Más acciones» con Editar, Ordenar y los bloqueos con su motivo', async ({
