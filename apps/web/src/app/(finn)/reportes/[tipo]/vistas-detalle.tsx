@@ -43,7 +43,7 @@ export function Tabla<F>({
   readonly clave: (fila: F) => string;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto in-[.sr-only]:overflow-visible">
       <table data-tabla-reporte className="w-full text-cuerpo-pequeno">
         <caption className="sr-only">{titulo}</caption>
         <thead>
@@ -119,7 +119,6 @@ export function Categorias({
   return (
     <div className="flex flex-col gap-4">
       <VistaGrafico
-        tablaAlLado
         grafico={
           <GraficoDona
             titulo={t.titulos.categorias}

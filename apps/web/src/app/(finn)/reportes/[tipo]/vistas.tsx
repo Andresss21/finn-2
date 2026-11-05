@@ -48,7 +48,6 @@ function Serie<F extends { readonly periodo: string }>({
   const etiquetas = filas.map((f) => formatearFecha(f.periodo));
   return (
     <VistaGrafico
-      tablaAlLado
       grafico={
         <div className="flex flex-col gap-4">
           {lineas.map((l) => (
@@ -67,7 +66,7 @@ function Serie<F extends { readonly periodo: string }>({
         </div>
       }
       tabla={
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto in-[.sr-only]:overflow-visible">
           <table data-tabla-reporte className="w-full text-cuerpo-pequeno">
             <caption className="sr-only">{titulo}</caption>
             <thead>
@@ -180,9 +179,9 @@ export function cuerpoDe(tipo: TipoDeReporte, dto: unknown, nombres: Nombres): R
       if (serie.length === 0) return null;
       return (
         <div className="flex flex-col gap-4">
-          <p data-patrimonio-hoy className="flex items-baseline justify-between gap-3">
+          <p data-patrimonio-hoy className="flex flex-col gap-0.5">
+            <Monto centavos={posicionHoy.total} rol="cifra-principal" />
             <span className="text-cuerpo-pequeno text-texto-secundario">{t.patrimonioHoy}</span>
-            <Monto centavos={posicionHoy.total} rol="cifra" />
           </p>
           <Serie
             titulo={t.titulos.patrimonio}
