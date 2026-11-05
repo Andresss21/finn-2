@@ -50,7 +50,9 @@ function libro(montos: readonly number[]): Hechos {
   );
   const gastos = montos.flatMap((monto, k) => (monto > 0 ? [{ monto, k }] : []));
   return {
-    vigencias_ciclo: [{ id: id('v1'), diaInicio: 1, rigeDesde: null, revision: null } as VigenciaCiclo],
+    vigencias_ciclo: [
+      { id: id('v1'), diaInicio: 1, rigeDesde: null, revision: null } as VigenciaCiclo,
+    ],
     cuentas: [{ id: id('ef'), tipo: 'efectivo', nombre: 'Efectivo' } as Cuenta],
     tarjetas: [],
     prestamos: [],
@@ -142,9 +144,13 @@ describe('PRU-PROP-REP', () => {
     );
     // Hechos generados (devoluciones, tarjetas, cobros): las mismas igualdades en cada ventana.
     fc.assert(
-      fc.property(hechosArb(HOY), fc.constantFrom<Ventana>('actual', 'ultimos_3', 'ultimos_12'), (h, ventana) => {
-        cuadra(categorias(calcular(h, HOY), { ventana }));
-      }),
+      fc.property(
+        hechosArb(HOY),
+        fc.constantFrom<Ventana>('actual', 'ultimos_3', 'ultimos_12'),
+        (h, ventana) => {
+          cuadra(categorias(calcular(h, HOY), { ventana }));
+        },
+      ),
       opciones,
     );
   });
