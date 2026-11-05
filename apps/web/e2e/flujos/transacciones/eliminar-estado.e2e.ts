@@ -297,6 +297,6 @@ test.describe('PRU-E2E-TX eliminar y cambiar el estado bancario', () => {
     await page.getByRole('radio', { name: /^Pendiente/ }).click();
     await page.getByRole('button', { name: t.guardarEstado }).click();
     await expect(page.getByRole('heading', { level: 1, name: t.estadoTitulo })).toHaveCount(0);
-    await expect(page.locator('dd', { hasText: /^Pendiente$/ })).toBeVisible();
+    await expect(page.locator('main span', { hasText: /^Pendiente$/ }).first()).toBeVisible();
   });
 });
