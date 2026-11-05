@@ -1,5 +1,5 @@
 // Los campos de `/programadas/nueva` (FT-40, OP-42 crear): texto, como los escribe la persona (05 §4.2). De ellos sale la entrada de OP-42,
-// con los tipos con destino y las partes del gasto. La edición es de TA-474. No calcula montos (PF-3).
+// con los tipos con destino y las partes del gasto. También la edición (TA-474). No calcula montos (PF-3).
 import * as z from 'zod';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { programadas as t } from '../../textos/programadas';
@@ -97,4 +97,41 @@ export function entradaDeCreacion(c: Campos): Record<string, unknown> {
     registroAutomatico: c.registroAutomatico,
     ...(c.tipo === 'pago_tarjeta' ? {} : { lineas: lineasDe(c) }),
   };
+}
+
+const nuloSiVacio = (v: string): string | null => (v.trim() === '' ? null : v.trim());
+
+/** Cada campo editable de OP-42 con su valor enviable (nulo si está vacío); sirve para comparar al editar y como `esperado`. */
+export function valoresEnviables(c: Campos): Record<string, unknown> {
+  return {
+    cuentaId: c.cuentaId,
+    cuentaDestinoId: c.tipo === 'gasto' ? null : nuloSiVacio(c.cuentaDestinoId),
+    comercio: c.comercio.trim(),
+    monto: texto(c.monto),
+    tolerancia: c.tolerancia.trim() === '' ? '0.00' : texto(c.tolerancia),
+    frecuencia: c.frecuencia,
+    frecuenciaDias: c.frecuencia === 'cada_n_dias' ? Number(c.frecuenciaDias) : null,
+    primeraFecha: c.primeraFecha,
+    fechaFin: nuloSiVacio(c.fechaFin),
+    registroAutomatico: c.registroAutomatico,
+    lineas: lineasDe(c),
+  };
+}
+
+/** La entrada de OP-42 `editar` con lo que cambió respecto de `base`; `undefined` si no cambió nada. El `esperado` lo agrega `useOperacion`. */
+export function entradaDeEdicion(
+  programadaId: string,
+  base: Campos,
+  c: Campos,
+): Record<string, unknown> | undefined {
+  const antes = valoresEnviables(base);
+  const ahora = valoresEnviables(c);
+  const cambios = Object.fromEntries(
+    Object.keys(ahora).flatMap((k) =>
+      JSON.stringify(ahora[k]) === JSON.stringify(antes[k]) ? [] : [[k, ahora[k]]],
+    ),
+  );
+  return Object.keys(cambios).length === 0
+    ? undefined
+    : { accion: 'editar', programadaId, ...cambios };
 }
