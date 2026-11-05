@@ -6,7 +6,7 @@ import type { Centavos } from '@finn/dominio/valores';
 import { GraficoLineas } from '../../../../componentes/graficos/grafico-lineas';
 import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { Monto } from '../../../../componentes/dominio/monto';
-import { formatearFecha } from '../../../../formato';
+import { formatearFecha, formatearMesCorto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
 import type { TipoDeReporte } from './tipos';
 import { Categorias, Cumplimiento, TopComercios, type Nombres } from './vistas-detalle';
@@ -56,9 +56,10 @@ function Serie<F extends { readonly periodo: string }>({
               key={l.titulo}
               titulo={l.titulo}
               resumen={t.resumenLinea(etiquetas[0] ?? '', etiquetas[etiquetas.length - 1] ?? '')}
-              puntos={filas.map((f, i) => ({
+              etiquetasTodas
+              puntos={filas.map((f) => ({
                 clave: f.periodo,
-                etiqueta: etiquetas[i] ?? f.periodo,
+                etiqueta: formatearMesCorto(f.periodo),
                 valor: l.valor(f),
               }))}
             />

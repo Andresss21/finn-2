@@ -5,6 +5,7 @@ import type { DetalleCategoria } from '@finn/dominio/selectores';
 import { Icono } from '../../../../../componentes/base/icono';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { GraficoBarras, type PuntoBarra } from '../../../../../componentes/graficos/grafico-barras';
+import { LeyendaGrafico } from '../../../../../componentes/graficos/leyenda-grafico';
 import { VistaGrafico } from '../../../../../componentes/graficos/vista-grafico';
 import { formatearMonto } from '../../../../../formato';
 import { categoriaDetalle } from '../../../../../textos/categoria-detalle';
@@ -86,6 +87,17 @@ export function Historial({
         nota={t.promedio}
         aparte={<span data-se-paso>{t.sePaso(resumen.periodosExcedidos, n)}</span>}
         tablaAlLado
+        leyenda={
+          <LeyendaGrafico
+            items={[
+              { forma: 'barra', texto: t.leyendaGasto },
+              ...(resumen.periodosExcedidos > 0
+                ? [{ forma: 'excedido' as const, texto: t.leyendaSePaso }]
+                : []),
+              { forma: 'referencia', texto: t.leyendaAsignado },
+            ]}
+          />
+        }
         grafico={
           <GraficoBarras
             titulo={t.titulo(n)}
