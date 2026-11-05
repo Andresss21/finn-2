@@ -20,8 +20,12 @@ const ESTADO = {
   error: 'problema',
 } as const;
 
+const FINAL = { aprobado: 'positivo', descartado: 'cero' } as const;
+
 export interface ResumenDelMovimiento {
   readonly vista: VistaMovimiento;
+  /** Un movimiento que ya no se revisa: el estado que dice el encabezado en lugar de la vista (CH-137). */
+  readonly final?: 'aprobado' | 'descartado';
   readonly comercio: string | null;
   readonly monto: Centavos | null;
   /** Un gasto o un pago de tarjeta sale dinero: el tipo lo dice el servidor (FE-44). */
@@ -32,7 +36,7 @@ export interface ResumenDelMovimiento {
 }
 
 export default function Encabezado({ resumen: r }: { readonly resumen: ResumenDelMovimiento }) {
-  const estado = ESTADO[r.vista];
+  const estado = r.final === undefined ? ESTADO[r.vista] : FINAL[r.final];
   const linea = [
     r.cuenta,
     r.fecha === null ? null : formatearFecha(r.fecha),
@@ -58,7 +62,11 @@ export default function Encabezado({ resumen: r }: { readonly resumen: ResumenDe
         >
           <Icono nombre={estado} tamano={13} />
         </span>
-        {c.bandeja.estados[r.vista]}
+        {r.final === 'aprobado'
+          ? t.aprobadoSinDatos
+          : r.final === 'descartado'
+            ? t.descartados.descartado
+            : c.bandeja.estados[r.vista]}
       </span>
       <p className="text-titulo-seccion break-words">{r.comercio ?? c.bandeja.sinComercio}</p>
       {r.monto === null ? null : (

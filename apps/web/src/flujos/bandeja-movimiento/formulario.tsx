@@ -28,6 +28,7 @@ import type { DatosCoincidencia } from './coincidencia';
 import { TextoDelSms } from './texto-sms';
 import type { CuentaDelMovimiento } from './campos-movimiento';
 import type { ResumenDelMovimiento } from './encabezado';
+import type { DuplicadoDe } from './estados';
 import { camposIniciales, contrato, entradaDeEdicion, ofreceRecordar, type Campos } from './campos';
 
 interface Referencia {
@@ -47,6 +48,11 @@ export interface PropsFormularioMovimiento {
     readonly coincidencia?: DatosCoincidencia;
     /** Lo que dice el encabezado (S4): el estado, el comercio, el monto y la categoría sugerida con su origen. */
     readonly resumen: ResumenDelMovimiento;
+    readonly nota: string | null;
+    /** Solo en un posible duplicado: el gasto con el que coincide. */
+    readonly duplicado?: DuplicadoDe;
+    /** Solo en un SMS con error: lo que necesita «Intentar de nuevo» (OP-49). */
+    readonly reproceso?: { readonly smsId: string; readonly intentoVisto: number };
   };
   /** Viene de la fila de la lista (05 §4.15): se vuelve a aprobar para mostrar el mensaje o la confirmación. */
   readonly traspaso: boolean;
@@ -78,6 +84,7 @@ const Resolucion = lazy(() => import('./resolucion'));
 const DetalleError = lazy(() => import('./detalle-error'));
 const Descartado = lazy(() => import('./descartado'));
 const YaResuelto = lazy(() => import('./ya-resuelto'));
+const EstadoPropio = lazy(() => import('./estados'));
 
 const CamposMovimiento = lazy(() => import('./campos-movimiento'));
 const Encabezado = lazy(() => import('./encabezado'));
@@ -89,20 +96,27 @@ export function FormularioMovimiento(props: PropsFormularioMovimiento) {
   // Si al abrir ya está aprobado o descartado se muestra su estado; si no, el flujo sigue montado aunque la revalidación
   // cambie su estado al aprobar (el resultado es suyo).
   const [abierto] = useState(() => !FINALES.includes(props.movimiento.estado));
+  const m = props.movimiento;
   if (abierto) return <Flujo {...props} />;
-  const aprobado = props.movimiento.estado === 'aprobado';
   return (
-    <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
-      <Suspense fallback={null}>
-        <YaResuelto aprobado={aprobado}>
-          <TextoDelSms texto={props.movimiento.sms} />
-        </YaResuelto>
-      </Suspense>
-    </PaginaFlujoDeRuta>
+    <Suspense fallback={null}>
+      <YaResuelto
+        aprobado={m.estado === 'aprobado'}
+        movimientoId={m.id}
+        sms={m.sms}
+        nota={m.nota}
+        resumen={m.resumen}
+      />
+    </Suspense>
   );
 }
 
 function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFormularioMovimiento) {
+  const [aMano, setAMano] = useState(false); // «Registrar a mano»: un SMS que no se leyó pasa a sus campos
+  const conCoincidencia = movimiento.estado === 'con_coincidencia';
+  const sinLeer = movimiento.estado === 'no_reconocido' || movimiento.estado === 'error';
+  // Sin «Aprobar»: un posible duplicado y un SMS que no se leyó se resuelven con las decisiones del pie (S4 del export)
+  const propio = movimiento.estado === 'posible_duplicado' || (sinLeer && !aMano);
   const editar = useOperacion({ accion: editarMovimiento });
   // Un SMS con error se aprueba con OP-50 (crear a mano, FT-38); el resto con OP-37
   const aprobarSolo = useOperacion({
@@ -166,6 +180,17 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
   useEffect(() => {
     if (editar.estado === 'listo') visto.current = movimiento.esperado;
   }, [editar.estado, movimiento.esperado]);
+
+  // Un SMS con error que se volvió a procesar trae otros valores (OP-49): el formulario parte de ellos
+  const estadoPrevio = useRef(movimiento.estado);
+  useEffect(() => {
+    const antes = estadoPrevio.current;
+    estadoPrevio.current = movimiento.estado;
+    if (antes !== 'error' || movimiento.estado === 'error') return;
+    formulario.reset(inicial);
+    base.current = inicial;
+    visto.current = movimiento.esperado;
+  }, [movimiento.estado, movimiento.esperado, inicial, formulario]);
 
   // «Aprobar» y «Confirmar» (coincidencia) guardan primero lo que cambió y después aprueban (OP-37 u OP-40)
   const alEnviar = (confirmando: boolean) =>
@@ -244,6 +269,45 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
         : g.sobraRepartir;
   const totalValido = normalizarMontoEscrito(c.total).estado === 'valido';
 
+  const salidas = (
+    <Suspense fallback={null}>
+      <Resolucion
+        movimientoId={movimiento.id}
+        estado={movimiento.estado}
+        propio={propio}
+        alDescartar={alDescartar}
+        {...(propio && sinLeer
+          ? {
+              alRegistrarAMano: () => {
+                setAMano(true);
+              },
+            }
+          : {})}
+        {...(movimiento.reproceso === undefined ? {} : { reproceso: movimiento.reproceso })}
+      />
+    </Suspense>
+  );
+
+  if (propio)
+    return (
+      <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja" acciones={salidas}>
+        <div className="flex flex-col gap-5">
+          <Suspense fallback={null}>
+            <Encabezado resumen={movimiento.resumen} />
+          </Suspense>
+          <TextoDelSms texto={movimiento.sms} />
+          <Suspense fallback={null}>
+            <EstadoPropio estado={movimiento.estado} duplicado={movimiento.duplicado} />
+          </Suspense>
+          {movimiento.errorDetalle === undefined ? null : (
+            <Suspense fallback={null}>
+              <DetalleError errorDetalle={movimiento.errorDetalle} />
+            </Suspense>
+          )}
+        </div>
+      </PaginaFlujoDeRuta>
+    );
+
   if (cuentas.length === 0)
     return (
       <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
@@ -253,28 +317,27 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
       </PaginaFlujoDeRuta>
     );
 
+  // «Aprobar $X» (o «Confirmar», que aprueba la coincidencia con OP-40) y, debajo, las salidas tonales
   const pie = (
     <div className="flex w-full flex-col gap-2">
       <Boton
         tipo="submit"
         form={ID_FORMULARIO}
         enviando={enviando}
-        textoEnviando={t.revisar.aprobando}
+        textoEnviando={conCoincidencia ? t.revisar.confirmando : t.revisar.aprobando}
         deshabilitado={!aprobar.enLinea}
         className="w-full"
         {...(aprobar.motivoSinEnvio === undefined
           ? {}
           : { motivoDeshabilitado: aprobar.motivoSinEnvio })}
       >
-        {totalValido ? t.revisar.aprobarMonto(formatearMontoTexto(c.total)) : t.revisar.aprobar}
+        {conCoincidencia
+          ? t.revisar.confirmarCoincidencia
+          : totalValido
+            ? t.revisar.aprobarMonto(formatearMontoTexto(c.total))
+            : t.revisar.aprobar}
       </Boton>
-      <Suspense fallback={null}>
-        <Resolucion
-          movimientoId={movimiento.id}
-          estado={movimiento.estado}
-          alDescartar={alDescartar}
-        />
-      </Suspense>
+      {salidas}
     </div>
   );
 
@@ -282,24 +345,19 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
     <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja" acciones={pie}>
       <form
         id={ID_FORMULARIO}
-        onSubmit={(e) => void alEnviar(false)(e)}
+        onSubmit={(e) => void alEnviar(conCoincidencia)(e)}
         noValidate
         className="flex flex-col gap-5"
       >
         <Suspense fallback={null}>
           <Encabezado resumen={movimiento.resumen} />
         </Suspense>
+        <TextoDelSms texto={movimiento.sms} />
         {movimiento.coincidencia === undefined ? null : (
           <Suspense fallback={null}>
-            <Coincidencia
-              coincidencia={movimiento.coincidencia}
-              enviando={coincide.estado === 'enviando'}
-              deshabilitado={!coincide.enLinea}
-              alConfirmar={() => void alEnviar(true)()}
-            />
+            <Coincidencia coincidencia={movimiento.coincidencia} />
           </Suspense>
         )}
-        <TextoDelSms texto={movimiento.sms} />
         {movimiento.errorDetalle === undefined ? null : (
           <Suspense fallback={null}>
             <DetalleError errorDetalle={movimiento.errorDetalle} />

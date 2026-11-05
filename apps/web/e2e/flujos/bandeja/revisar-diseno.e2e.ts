@@ -137,7 +137,11 @@ test.describe('PRU-E2E-BAND', () => {
       .getByRole('link', { name: cuentas.bandeja.registrarAMano })
       .click();
     await expect(page.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
-    await expect(page.getByText(texto, { exact: true })).toBeVisible();
+    const panel = page.locator('main[data-pagina-flujo]');
+    await expect(panel.getByText(texto, { exact: true })).toBeVisible();
+    // CH-137: el no reconocido se ve primero con sus salidas; «Registrar a mano» lleva a los campos y, sin cuentas, a la guía
+    await esperarHidratacion(page);
+    await panel.getByRole('button', { name: cuentas.bandeja.registrarAMano }).click();
     await expect(page.getByText(g.sinCuentasTitulo)).toBeVisible();
     await expect(page.getByRole('link', { name: g.crearCuenta })).toHaveAttribute(
       'href',
