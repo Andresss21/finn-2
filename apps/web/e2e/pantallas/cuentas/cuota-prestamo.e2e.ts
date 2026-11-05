@@ -147,7 +147,7 @@ test.describe('PRU-E2E-CTA', () => {
   }) => {
     await preparar('2027-03-05', ESC39.slice(0, 4)); // P1 ya está cerrado: sin la asignación del paso 1
     await abrir(page, `${cuota}&fecha=2027-02-05`);
-    await expect(campo(page, t.fecha)).toHaveValue('2027-02-05');
+    await expect(campo(page, t.fecha)).toHaveValue('05/02/2027');
     await llenarCuota(page, ['250', '90', '10']);
     await page.getByRole('button', { name: t.guardarCuota }).click();
     await expect(page.getByRole('heading', { name: t.revisar })).toBeFocused();

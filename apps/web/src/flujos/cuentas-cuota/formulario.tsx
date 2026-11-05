@@ -173,6 +173,7 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
             valor={c.fecha as FechaLocal}
             alCambiar={cambiarFecha}
             maxima={hoy}
+            hoy={hoy}
             error={error('fecha')}
             requerido
           />

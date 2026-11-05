@@ -129,7 +129,7 @@ test.describe('PRU-E2E-TX', () => {
     await abrir(page, '/registrar/gasto');
     await page.keyboard.press('Tab'); // el primer Tab muestra «Saltar al contenido» (11.2): se mide ya visible
     await revisarTactil(page);
-    await expect(campo(page, t.fecha)).toHaveValue('2027-02-10');
+    await expect(campo(page, t.fecha)).toHaveValue('10/02/2027');
     await elegir(page, t.cuenta, 'T');
     await campo(page, t.total).fill('150');
     await parteConCategoria(page, 1, '110', 'Super');
