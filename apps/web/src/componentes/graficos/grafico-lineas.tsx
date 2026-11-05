@@ -18,6 +18,8 @@ export interface PropsGraficoLineas {
   /** El dato principal; junto al título da el nombre accesible. */
   readonly resumen: string;
   readonly puntos: readonly PuntoLinea[];
+  /** Rotula el eje con la etiqueta de cada punto (etiquetas cortas, como los meses de 04-reportes); por defecto, solo el primero y el último. */
+  readonly etiquetasTodas?: boolean;
 }
 
 const ANCHO = 320;
@@ -30,7 +32,12 @@ const trazo = line<readonly [number, number]>()
   .x((p) => p[0])
   .y((p) => p[1]);
 
-export function GraficoLineas({ titulo, resumen, puntos }: PropsGraficoLineas) {
+export function GraficoLineas({
+  titulo,
+  resumen,
+  puntos,
+  etiquetasTodas = false,
+}: PropsGraficoLineas) {
   if (puntos.length === 0) {
     return (
       <div
@@ -75,27 +82,27 @@ export function GraficoLineas({ titulo, resumen, puntos }: PropsGraficoLineas) {
               className={i === ultimo ? 'fill-accion' : 'fill-grafico-serie-1'}
             />
             {i === 0 || i === ultimo ? (
-              <>
-                <text
-                  x={cx}
-                  y={cy - 9}
-                  textAnchor={ancla}
-                  fontSize="11"
-                  fontWeight="700"
-                  className="fill-texto"
-                >
-                  {formatearMonto(p.valor)}
-                </text>
-                <text
-                  x={pie}
-                  y={ALTO - 12}
-                  textAnchor={ancla}
-                  fontSize="11"
-                  className="fill-texto-secundario"
-                >
-                  {p.etiqueta}
-                </text>
-              </>
+              <text
+                x={cx}
+                y={cy - 9}
+                textAnchor={ancla}
+                fontSize="11"
+                fontWeight="700"
+                className="fill-texto"
+              >
+                {formatearMonto(p.valor)}
+              </text>
+            ) : null}
+            {i === 0 || i === ultimo || etiquetasTodas ? (
+              <text
+                x={etiquetasTodas ? cx : pie}
+                y={ALTO - 12}
+                textAnchor={etiquetasTodas ? 'middle' : ancla}
+                fontSize="11"
+                className="fill-texto-secundario"
+              >
+                {p.etiqueta}
+              </text>
             ) : null}
           </g>
         );

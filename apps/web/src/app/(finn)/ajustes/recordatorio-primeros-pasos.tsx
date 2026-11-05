@@ -15,8 +15,11 @@ export function RecordatorioPrimerosPasos({
   if (pasos === null || !oculto) return null;
   const hechos = [pasos.cuenta, pasos.categorias, pasos.sms].filter(Boolean).length;
   return (
-    <section aria-label={t.titulo} className="flex items-center justify-between gap-3">
-      <p>{t.recordatorio(hechos)}</p>
+    <section
+      aria-label={t.titulo}
+      className="flex items-center justify-between gap-3 rounded-contenedor bg-superficie p-4 shadow-elevacion-1"
+    >
+      <p className="font-bold">{t.recordatorio(hechos)}</p>
       <Boton variante="secundaria" onClick={mostrar}>
         {t.mostrar}
       </Boton>
