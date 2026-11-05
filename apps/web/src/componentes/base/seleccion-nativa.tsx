@@ -28,6 +28,8 @@ export interface PropsSeleccionNativa {
   /** 52 px con ícono y dos líneas (la cuenta) en lugar de 48 px (la línea de un gasto). */
   readonly alta?: boolean;
   readonly etiquetaOculta?: boolean;
+  /** Con nombre, el `<select>` viaja en un formulario GET aunque la página aún no tenga JavaScript. */
+  readonly nombre?: string;
 }
 
 // Fuera del JSX por L15: el foco y el error los dan `has-*` del `<select>` que el campo contiene.
@@ -43,6 +45,7 @@ export function SeleccionNativa({
   error,
   alta = false,
   etiquetaOculta = false,
+  nombre,
 }: PropsSeleccionNativa) {
   const elegida = opciones.find((o) => o.valor === valor);
   const lista = (grupo: string | undefined) =>
@@ -79,6 +82,7 @@ export function SeleccionNativa({
           <Icono nombre="chevD" tamano={20} className="shrink-0 text-texto-secundario" />
           <select
             {...control}
+            {...(nombre === undefined ? {} : { name: nombre })}
             value={valor}
             className="absolute inset-0 size-full cursor-pointer appearance-none opacity-0"
             onChange={(e) => {

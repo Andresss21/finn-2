@@ -7,6 +7,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import type { ActividadDto } from '@finn/aplicacion/consultas/actividad';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../../globals.css';
+import Cargando from './loading';
 import { PantallaActividad, type FiltrosActividad } from './pantalla';
 
 // Solo el límite externo: `next/link` y `next/navigation` necesitan el enrutador de Next, que el navegador de prueba no tiene.
@@ -177,5 +178,123 @@ describe('PRU-CMP-TX-400 actividad', () => {
     vi.useRealTimers();
     const resultado = await axe.run(raiz);
     expect(resultado.violations.map((v) => v.id)).toEqual([]);
+  });
+});
+
+const conCuentas = (
+  id: string,
+  cuentas: [string, number][],
+  lineas: string[],
+  presentado: number,
+) => ({
+  ...fila(id, 'gasto', 'Super', presentado),
+  cuentas: cuentas.map(([nombre, monto]) => ({ cuenta: { id: nombre, nombre }, monto })),
+  lineas: lineas.map((nombre) => ({
+    destino: { id: nombre, nombre, tipo: 'categoria' },
+    monto: 100,
+  })),
+});
+
+describe('PRU-CMP-TX-460 actividad del diseño', () => {
+  it('PRU-CMP-TX-460 los días se rotulan «Hoy · …», «Ayer · …» y «Domingo …», cada uno con su lista', () => {
+    const raiz = mostrar(
+      dto([
+        { fecha: '2027-02-21', transacciones: [fila('a', 'gasto', 'A', -100)] },
+        { fecha: '2027-02-20', transacciones: [fila('b', 'gasto', 'B', -100)] },
+        { fecha: '2027-02-14', transacciones: [fila('c', 'gasto', 'C', -100)] },
+      ]),
+    );
+    const rotulos = [...raiz.querySelectorAll('[data-dia] h2')].map((h) => h.textContent);
+    expect(rotulos).toEqual(['Hoy · domingo 21/02', 'Ayer · sábado 20/02', 'Domingo 14/02']);
+    expect(raiz.querySelectorAll('[data-dia] ul')).toHaveLength(3);
+  });
+
+  it('PRU-CMP-TX-460 la fila dice la cuenta y la categoría, «n partes» o origen → destino, y cada marca con su texto', () => {
+    const raiz = mostrar(
+      dto([
+        {
+          fecha: '2027-02-21',
+          transacciones: [
+            conCuentas('uno', [['Visa Oro', -100]], ['Supermercado'], -100),
+            conCuentas('tres', [['Visa Oro', -300]], ['A', 'B', 'C'], -300),
+            {
+              ...conCuentas(
+                'tr',
+                [
+                  ['Ahorro', 500],
+                  ['Corriente', -500],
+                ],
+                [],
+                0,
+              ),
+              estadoBancario: 'pendiente',
+              marcas: { ...MARCAS, programada: true },
+            },
+          ],
+        },
+      ]),
+    );
+    const texto = (id: string) =>
+      raiz.querySelector(`[data-fila-transaccion="${id}"]`)?.textContent ?? '';
+    expect(texto('uno')).toContain('Visa Oro · Supermercado');
+    expect(texto('tres')).toContain('Visa Oro · 3 partes');
+    expect(texto('tr')).toContain('Corriente → Ahorro');
+    expect(texto('tr')).toContain('Pendiente');
+    expect(texto('tr')).toContain('Programada');
+  });
+
+  it('PRU-CMP-TX-460 los filtros activos son fichas con su «x» que quitan solo ese filtro y conservan el texto', () => {
+    const raiz = mostrar(dto([]), {
+      texto: 'sel',
+      cuenta: 'k1',
+      tipo: 'gasto',
+      desde: '2027-02-21',
+      hasta: '2027-03-05',
+    });
+    const fichas = [...raiz.querySelectorAll<HTMLAnchorElement>('[data-filtros-activos] a')];
+    expect(fichas.map((a) => a.getAttribute('aria-label'))).toEqual([
+      'Quitar filtro Ahorro',
+      'Quitar filtro Gasto',
+      'Quitar filtro 21/02 – 05/03',
+    ]);
+    expect(fichas[1]?.getAttribute('href')).toBe(
+      '/actividad?texto=sel&cuenta=k1&desde=2027-02-21&hasta=2027-03-05',
+    );
+    expect(fichas[2]?.getAttribute('href')).toBe('/actividad?texto=sel&cuenta=k1&tipo=gasto');
+    expect(raiz.querySelector('summary')?.getAttribute('aria-label')).toBe('Filtros, 4 activos');
+  });
+
+  it('PRU-CMP-TX-460 cada filtro de lista es un select nativo con su etiqueta, su nombre y la opción de la URL elegida', () => {
+    const raiz = mostrar(dto([]), { categoria: 'c1', cuenta: 'k1' });
+    const lista = (etiqueta: string) => {
+      const id = [...raiz.querySelectorAll('label')].find(
+        (l) => l.textContent === etiqueta,
+      )?.htmlFor;
+      return raiz.querySelector<HTMLSelectElement>(`select[id="${id ?? ''}"]`);
+    };
+    expect(['Cuenta', 'Categoría', 'Tipo', 'Estado', 'Origen'].map((e) => lista(e)?.name)).toEqual([
+      'cuenta',
+      'categoria',
+      'tipo',
+      'estado',
+      'origen',
+    ]);
+    expect(lista('Categoría')?.value).toBe('c1');
+    expect(lista('Cuenta')?.value).toBe('k1');
+    expect(lista('Tipo')?.value).toBe('');
+  });
+
+  it('PRU-CMP-TX-460 el estado de carga anuncia «Cargando la pantalla» una vez y no dibuja números', () => {
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    act(() => {
+      raiz.render(<Cargando />);
+    });
+    montados.push({ raiz, nodo });
+    const region = nodo.querySelector('[role="status"]');
+    expect(region?.getAttribute('aria-busy')).toBe('true');
+    expect(region?.textContent).toBe('Cargando la pantalla');
+    expect(nodo.querySelector('[data-centavos]')).toBeNull();
   });
 });
