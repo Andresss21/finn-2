@@ -192,4 +192,44 @@ test.describe('PRU-E2E-REP reportes por período', () => {
     await abrir(page, '/reportes/flujo-de-caja');
     await expect(page.getByText('Esto ya no existe.')).toBeVisible();
   });
+
+  test('PRU-E2E-REP-150 [FT-60] la plantilla en computadora pone los períodos a la izquierda y el reporte a la derecha, en teléfono todo en una columna, y las pestañas y los períodos miden al menos 44 px', async ({
+    page,
+  }) => {
+    await sembrarOps(CINCO_PERIODOS, '2027-05-25');
+    const reporte = page.locator('[data-reporte]');
+    const enlaces = page.locator('nav[aria-label="Reportes"] a, nav[aria-label="Períodos"] a');
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await abrir(page, '/reportes/tendencia?ventana=ultimos-3');
+    const izquierda = await page.locator('[data-reporte-filtros]').boundingBox();
+    const derecha = await reporte.locator('[data-vista-grafico]').first().boundingBox();
+    expect(izquierda).not.toBeNull();
+    expect(derecha).not.toBeNull();
+    expect(derecha?.x ?? 0).toBeGreaterThan((izquierda?.x ?? 0) + (izquierda?.width ?? 0));
+    expect(Math.abs((derecha?.y ?? 0) - (izquierda?.y ?? 0))).toBeLessThan(80);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await abrir(page, '/reportes/tendencia?ventana=ultimos-3');
+    const arriba = await page.locator('[data-reporte-filtros]').boundingBox();
+    const abajo = await reporte.locator('[data-vista-grafico]').first().boundingBox();
+    expect(abajo?.y ?? 0).toBeGreaterThan((arriba?.y ?? 0) + (arriba?.height ?? 0) - 1);
+    for (const alto of await enlaces.evaluateAll((es) =>
+      es.map((e) => e.getBoundingClientRect().height),
+    ))
+      expect(alto).toBeGreaterThanOrEqual(44);
+  });
+
+  test('PRU-E2E-REP-151 [FT-60] sin movimientos en el período actual, «Ver 3 períodos» abre la ventana de 3 períodos con su opción marcada y el gráfico RUTA-/reportes/[tipo]', async ({
+    page,
+  }) => {
+    await sembrarOps([{ op: 'OP-01', cuenta: 'Ahorro' }], '2027-02-10');
+    await abrir(page, '/reportes/tendencia');
+    await expect(page.getByText('No hay movimientos en estos períodos')).toBeVisible();
+    await page.getByRole('link', { name: 'Ver 3 períodos' }).click();
+    await expect(page).toHaveURL(/ventana=ultimos-3$/);
+    await expect(page.getByRole('link', { name: '3 períodos' })).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
+    await expect(page.getByRole('link', { name: 'Ver 3 períodos' })).toHaveCount(0);
+  });
 });
