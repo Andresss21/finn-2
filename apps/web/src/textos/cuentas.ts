@@ -85,6 +85,7 @@ export const cuentas = {
     grafico: 'Gráfico',
     tabla: 'Tabla',
     sinDatos: 'Todavía no hay datos para este gráfico.',
+    leyenda: 'Leyenda',
     periodo: 'Período',
     valor: 'Valor',
     referencia: 'Referencia',

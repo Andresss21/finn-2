@@ -256,6 +256,7 @@ export function FormularioRegistrarGasto({
                   error={error('fecha')}
                   requerido
                   sinVistaPrevia
+                  hoy={hoy}
                 />
                 <EntradaMonto
                   nombre="total"

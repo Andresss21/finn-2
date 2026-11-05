@@ -7,7 +7,7 @@ import type { Centavos } from '@finn/dominio/valores';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { GraficoDona, type PorcionDona } from '../../../../componentes/graficos/grafico-dona';
 import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
-import { formatearFecha, formatearPorcentaje } from '../../../../formato';
+import { formatearFecha, formatearMonto, formatearPorcentaje } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
 
 export interface Nombres {
@@ -100,6 +100,7 @@ export function Categorias({
     clave: c.categoria,
     etiqueta: nombre(c.categoria),
     porcentaje: c.porcentaje,
+    monto: formatearMonto(c.gastado),
   }));
   const resto = dto.categorias.slice(MAXIMO_PORCIONES);
   const porciones: PorcionDona[] =

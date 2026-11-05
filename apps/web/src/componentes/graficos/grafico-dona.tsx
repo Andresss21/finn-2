@@ -11,6 +11,8 @@ export interface PorcionDona {
   readonly etiqueta: string;
   /** Puntos básicos (04 §6.9.2): las porciones suman 10.000. */
   readonly porcentaje: number;
+  /** Monto ya formateado que da el DTO (PF-3): va en la leyenda, antes del porcentaje. «Otras» no lo lleva: sumarlo sería calcular. */
+  readonly monto?: string;
   /** La porción «Otras» no usa un color de la paleta categórica. */
   readonly otras?: boolean;
 }
@@ -45,7 +47,9 @@ const FONDO = [
   'size-3 shrink-0 rounded-sm bg-grafico-serie-7',
   'size-3 shrink-0 rounded-sm bg-grafico-serie-8',
 ] as const;
-const OTRAS = 'size-3 shrink-0 rounded-sm bg-grafico-otras';
+// «Otras» va rayada, como en el diseño: no usa un color de la paleta categórica y se distingue sin color.
+const OTRAS =
+  'size-3 shrink-0 rounded-sm border border-grafico-otras bg-[repeating-linear-gradient(135deg,var(--grafico-otras)_0_1.5px,transparent_1.5px_4px)]';
 const arco = arc<{ startAngle: number; endAngle: number }>()
   .innerRadius(62)
   .outerRadius(84)
@@ -81,13 +85,26 @@ export function GraficoDona({
         className="h-auto w-full shrink-0"
         data-grafico="dona"
       >
+        <defs>
+          <pattern
+            id="finn-rayado-otras"
+            width="5"
+            height="5"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
+            <rect width="5" height="5" className="fill-superficie" />
+            <rect width="1.8" height="5" className="fill-grafico-otras" />
+          </pattern>
+        </defs>
         {reparto([...porciones]).map((a, i) => (
           <path
             key={a.data.clave}
             d={arco(a) ?? ''}
             data-porcion={a.data.clave}
             data-porcentaje={a.data.porcentaje}
-            className={a.data.otras === true ? 'fill-grafico-otras' : RELLENO[i % RELLENO.length]}
+            className={a.data.otras === true ? undefined : RELLENO[i % RELLENO.length]}
+            {...(a.data.otras === true ? { fill: 'url(#finn-rayado-otras)' } : {})}
           />
         ))}
         {total === undefined ? null : (
@@ -131,7 +148,16 @@ export function GraficoDona({
               />
               <span className="truncate">{p.etiqueta}</span>
             </span>
-            <span className="font-semibold tabular-nums">{formatearPorcentaje(p.porcentaje)}</span>
+            <span className="flex shrink-0 items-baseline gap-3 tabular-nums">
+              {p.monto === undefined ? null : <span className="font-semibold">{p.monto}</span>}
+              <span
+                className={
+                  p.monto === undefined ? 'font-semibold' : 'w-10 text-right text-texto-secundario'
+                }
+              >
+                {formatearPorcentaje(p.porcentaje)}
+              </span>
+            </span>
           </li>
         ))}
       </ul>

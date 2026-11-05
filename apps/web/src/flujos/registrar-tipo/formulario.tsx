@@ -199,6 +199,7 @@ export function FormularioRegistrarTipo({
             valor={c.fecha as FechaLocal}
             alCambiar={poner('fecha')}
             maxima={hoy}
+            hoy={hoy}
             error={error('fecha')}
             requerido
           />
