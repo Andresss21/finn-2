@@ -1,5 +1,5 @@
 // EntradaFecha con calendario (P1-03 del export; 07 §17: un flujo es una E2E), recorrida en `/registrar/gasto`, donde la fecha va en dos
-// columnas con el Total. El «hoy» sale del reloj del servidor fijo (DP-04) y llega por `<html data-hoy>`: la prueba no usa el del navegador.
+// columnas con el Total. El «hoy» sale del reloj del servidor fijo (DP-04) y llega por la prop `hoy` del formulario: la prueba no usa el del navegador.
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarHidratacion } from '../../ayudas/esperas.ts';
@@ -28,8 +28,6 @@ async function abrirGasto(page: Page): Promise<void> {
   await sembrar(escenario, HOY);
   await page.goto('/registrar/gasto');
   await esperarHidratacion(page);
-  // El «hoy» del Encabezado llega a `<html>` cuando la página publica su consulta.
-  await expect(page.locator('html')).toHaveAttribute('data-hoy', HOY);
 }
 
 const fecha = (page: Page) => page.getByLabel(t.fecha, { exact: true });
@@ -55,10 +53,10 @@ test.describe('PRU-E2E-TX', () => {
     await expect(botonCalendario(page)).toHaveAttribute('aria-expanded', 'true');
     await expect(calendario(page)).toContainText('febrero 2027');
     await expect(
-      calendario(page).getByRole('button', { name: '10 de febrero, hoy' }),
+      calendario(page).getByRole('button', { name: '10 de febrero, hoy', exact: true }),
     ).toHaveAttribute('aria-current', 'date');
     await expect(
-      calendario(page).getByRole('button', { name: '10 de febrero, hoy' }),
+      calendario(page).getByRole('button', { name: '10 de febrero, hoy', exact: true }),
     ).toBeFocused();
     await expect(calendario(page).getByRole('grid')).toBeVisible();
   });
@@ -68,7 +66,7 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await abrirGasto(page);
     await botonCalendario(page).click();
-    await calendario(page).getByRole('button', { name: '3 de febrero' }).click();
+    await calendario(page).getByRole('button', { name: '3 de febrero', exact: true }).click();
     await expect(fecha(page)).toHaveValue('03/02/2027');
     await expect(calendario(page)).toHaveCount(0);
     await expect(botonCalendario(page)).toBeFocused();
@@ -77,10 +75,9 @@ test.describe('PRU-E2E-TX', () => {
     await expect(fecha(page)).toHaveValue('25/01/2027');
     await botonCalendario(page).click();
     await expect(calendario(page)).toContainText('enero 2027');
-    await expect(calendario(page).getByRole('button', { name: '25 de enero' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect(
+      calendario(page).getByRole('button', { name: '25 de enero', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('PRU-E2E-TX-482 [FT-21] con el teclado se abre, se recorre con flechas, Inicio, Fin y RePág, se elige con Enter y Esc cierra devolviendo el foco', async ({
@@ -90,19 +87,29 @@ test.describe('PRU-E2E-TX', () => {
     await botonCalendario(page).focus();
     await page.keyboard.press('Enter');
     await expect(
-      calendario(page).getByRole('button', { name: '10 de febrero, hoy' }),
+      calendario(page).getByRole('button', { name: '10 de febrero, hoy', exact: true }),
     ).toBeFocused();
     await page.keyboard.press('ArrowLeft');
-    await expect(calendario(page).getByRole('button', { name: '9 de febrero' })).toBeFocused();
+    await expect(
+      calendario(page).getByRole('button', { name: '9 de febrero', exact: true }),
+    ).toBeFocused();
     await page.keyboard.press('Home');
-    await expect(calendario(page).getByRole('button', { name: '8 de febrero' })).toBeFocused(); // lunes
+    await expect(
+      calendario(page).getByRole('button', { name: '8 de febrero', exact: true }),
+    ).toBeFocused(); // lunes
     await page.keyboard.press('End');
-    await expect(calendario(page).getByRole('button', { name: '14 de febrero' })).toBeFocused(); // domingo
+    await expect(
+      calendario(page).getByRole('button', { name: '14 de febrero', exact: true }),
+    ).toBeFocused(); // domingo
     await page.keyboard.press('ArrowDown');
-    await expect(calendario(page).getByRole('button', { name: '21 de febrero' })).toBeFocused();
+    await expect(
+      calendario(page).getByRole('button', { name: '21 de febrero', exact: true }),
+    ).toBeFocused();
     await page.keyboard.press('PageUp');
     await expect(calendario(page)).toContainText('enero 2027');
-    await expect(calendario(page).getByRole('button', { name: '21 de enero' })).toBeFocused();
+    await expect(
+      calendario(page).getByRole('button', { name: '21 de enero', exact: true }),
+    ).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(fecha(page)).toHaveValue('21/01/2027');
     await expect(calendario(page)).toHaveCount(0);
