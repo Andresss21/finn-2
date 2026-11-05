@@ -28,6 +28,7 @@ export const bandeja = {
   vistas: {
     nombre: 'Vista de la Bandeja',
     activos: 'Por revisar',
+    activosConConteo: (n: number) => `Por revisar · ${n}`,
     descartados: 'Descartados',
   },
   descartados: {

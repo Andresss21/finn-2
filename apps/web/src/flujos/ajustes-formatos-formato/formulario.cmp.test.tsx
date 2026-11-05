@@ -1,6 +1,7 @@
 // FT-73 Formatos bancarios (07 §17: un texto, un estado o el foco de un componente es una CMP). El formulario solo dibuja lo que trae
-// `formulario({ operacion: 'formato' })` y arma la entrada de OPT-05: la política del patrón la aplica el servidor y la prueban
+// `formulario({ operacion: 'formato' })` y arma la entrada de OPT-05 y OPT-06: la política del patrón la aplica el servidor y la prueban
 // el dominio, la integración y la E2E.
+import type { SalidaProbar } from '@finn/aplicacion/operaciones/formatos';
 import axe from 'axe-core';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -41,6 +42,7 @@ function montar(ui: ReactNode): HTMLElement {
 }
 
 const BAC = '11111111-1111-4111-8111-111111111111';
+const SMS_ID = '33333333-3333-4333-8333-333333333333';
 const FORMATO_ID = '22222222-2222-4222-8222-222222222222';
 const ok = <T,>(valor: T) =>
   Promise.resolve({ ok: true as const, valor, yaAplicada: false, avisos: [] });
@@ -58,7 +60,16 @@ const formato = {
 };
 const base = (extra: Partial<PropsFormularioFormato> = {}): PropsFormularioFormato => ({
   guardar: vi.fn(() => ok({ formatoId: FORMATO_ID, accion: 'editar' })),
+  probar: vi.fn(() => ok<SalidaProbar>({ coincide: true, demasiadoLargo: false })),
   instituciones: [{ id: BAC, nombre: 'BAC' }],
+  smsParaProbar: [
+    {
+      smsId: SMS_ID,
+      texto: 'Compra de 4821 por 1,5x',
+      recibidoEn: '2027-02-18T20:00:00.000Z',
+      estado: 'no_reconocido',
+    },
+  ],
   formato,
   ...extra,
 });
@@ -76,6 +87,33 @@ const tocar = async (nodo: HTMLElement, texto: string): Promise<void> => {
 };
 
 describe('PRU-CMP-AJUS', () => {
+  it('PRU-CMP-AJUS-120 [CA-73.3] probar contra un SMS muestra los grupos capturados y qué normalizador falló, y no guarda nada', async () => {
+    const props = base({
+      probar: vi.fn(() =>
+        ok<SalidaProbar>({
+          coincide: false,
+          demasiadoLargo: false,
+          grupos: { ultimos4: '4821', monto: '1,5x' },
+          fallo: 'monto',
+        }),
+      ),
+    });
+    const nodo = montar(<FormularioFormato {...props} />);
+    await tocar(nodo, t.probar.boton);
+    const resultado = nodo.querySelector('[data-resultado-prueba]');
+    expect(resultado?.textContent).toContain(t.probar.fallo.monto);
+    expect(resultado?.textContent).toContain('ultimos4');
+    expect(resultado?.textContent).toContain('4821');
+    expect(resultado?.textContent).toContain('1,5x');
+    const llamada = vi.mocked(props.probar).mock.calls[0]?.[0] as {
+      smsId: string;
+      formato: { patron: string; institucionId: string };
+    };
+    expect(llamada.smsId).toBe(SMS_ID);
+    expect(llamada.formato).toMatchObject({ patron: formato.patron, institucionId: BAC });
+    expect(props.guardar).not.toHaveBeenCalled();
+  });
+
   it('PRU-CMP-AJUS-121 [CA-73.1] editar manda el id del formato con lo escrito y un rechazo de la política se ve en el campo del patrón', async () => {
     const mensaje = 'El patrón puede tardar demasiado (grado 3). Simplificalo.';
     const props = base({
@@ -114,10 +152,16 @@ describe('PRU-CMP-AJUS', () => {
     ).not.toBeNull();
   });
 
-  it('PRU-CMP-AJUS-122 [FT-73] la pantalla de crear un formato no tiene violaciones de accesibilidad', async () => {
-    const nodo = montar(
-      <FormularioFormato guardar={base().guardar} instituciones={base().instituciones} />,
-    );
-    expect((await axe.run(nodo)).violations).toEqual([]);
+  it('PRU-CMP-AJUS-122 [FT-73] sin SMS para probar lo dice y la pantalla no tiene violaciones de accesibilidad', async () => {
+    const sin = montar(<FormularioFormato {...base({ smsParaProbar: [] })} />);
+    expect(sin.textContent).toContain(t.probar.sinSms);
+    expect((await axe.run(sin)).violations).toEqual([]);
+  });
+
+  it('PRU-CMP-AJUS-123 [FT-73] la pantalla con el resultado de una prueba no tiene violaciones de accesibilidad', async () => {
+    const con = montar(<FormularioFormato {...base()} />);
+    await tocar(con, t.probar.boton);
+    expect(con.querySelector('[data-resultado-prueba]')?.textContent).toContain(t.probar.coincide);
+    expect((await axe.run(con)).violations).toEqual([]);
   });
 });

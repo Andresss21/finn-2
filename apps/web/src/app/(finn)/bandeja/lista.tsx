@@ -88,7 +88,7 @@ export function ListaBandeja({
           <div
             role="list"
             aria-label={t.lista}
-            className="divide-y divide-borde-sutil rounded-contenedor bg-superficie"
+            className="divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1"
           >
             {filas.map((m) => (
               <div
