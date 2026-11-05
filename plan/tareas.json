@@ -441,7 +441,7 @@
 
   "TA-405": { "estado": "terminada", "rama": "ta-405-fusionar-categorias", "pr": 310 },
 
-  "TA-406": { "estado": "en_curso", "rama": "ta-406-devoluciones" },
+  "TA-406": { "estado": "terminada", "rama": "ta-406-devoluciones", "pr": 406 },
 
   "TA-480": { "estado": "pendiente" },
 
