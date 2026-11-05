@@ -13,7 +13,15 @@ export interface PropsSelectorSegmentado {
   readonly opciones: readonly OpcionSegmento[];
   readonly valor: string;
   readonly alCambiar: (valor: string) => void;
+  /** S4 del export (CH-136): ocupa el ancho, con las opciones iguales y sin elegir ninguna mientras `valor` no es una de ellas. */
+  readonly llena?: boolean;
 }
+
+// Clases literales (L13).
+const BOTON =
+  'min-h-11 cursor-pointer text-texto-secundario focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco data-[state=checked]:bg-superficie data-[state=checked]:font-bold data-[state=checked]:text-texto data-[state=checked]:shadow-elevacion-1';
+const BOTON_LLENO = 'min-w-0 flex-1 rounded-lg px-1 text-etiqueta';
+const BOTON_PASTILLA = 'min-w-11 rounded-pastilla px-4 text-base';
 
 const SALTO: Readonly<Record<string, 1 | -1>> = {
   ArrowRight: 1,
@@ -27,9 +35,14 @@ export function SelectorSegmentado({
   opciones,
   valor,
   alCambiar,
+  llena = false,
 }: PropsSelectorSegmentado) {
   const grupo = useRef<HTMLDivElement>(null);
-  const activa = opciones.some((o) => o.valor === valor) ? valor : opciones[0]?.valor;
+  const activa = opciones.some((o) => o.valor === valor)
+    ? valor
+    : llena
+      ? undefined
+      : opciones[0]?.valor;
 
   function alTeclear(e: KeyboardEvent<HTMLButtonElement>, k: number) {
     const paso = SALTO[e.key];
@@ -47,7 +60,11 @@ export function SelectorSegmentado({
       ref={grupo}
       role="radiogroup"
       aria-label={etiqueta}
-      className="inline-flex rounded-pastilla bg-superficie-hundida p-1"
+      className={
+        llena
+          ? 'flex gap-0.5 rounded-control bg-superficie-hundida p-0.75'
+          : 'inline-flex rounded-pastilla bg-superficie-hundida p-1'
+      }
     >
       {opciones.map((o, k) => {
         const marcada = o.valor === activa;
@@ -57,7 +74,7 @@ export function SelectorSegmentado({
             type="button"
             role="radio"
             aria-checked={marcada}
-            tabIndex={marcada ? 0 : -1}
+            tabIndex={marcada || (activa === undefined && k === 0) ? 0 : -1}
             data-state={marcada ? 'checked' : 'unchecked'}
             onClick={() => {
               alCambiar(o.valor);
@@ -65,7 +82,7 @@ export function SelectorSegmentado({
             onKeyDown={(e) => {
               alTeclear(e, k);
             }}
-            className="min-h-11 min-w-11 cursor-pointer rounded-pastilla px-4 text-base text-texto-secundario focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco data-[state=checked]:bg-superficie data-[state=checked]:font-bold data-[state=checked]:text-texto data-[state=checked]:shadow-elevacion-1"
+            className={[BOTON, llena ? BOTON_LLENO : BOTON_PASTILLA].join(' ')}
           >
             {o.etiqueta}
           </button>

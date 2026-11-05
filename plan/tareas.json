@@ -393,7 +393,7 @@
 
   "TA-302": { "estado": "terminada", "rama": "ta-302-mover-dinero", "pr": 292 },
 
-  "TA-303": { "estado": "pendiente" },
+  "TA-303": { "estado": "terminada", "rama": "ta-303-pagar-tarjeta", "pr": 378 },
 
   "TA-304": { "estado": "pendiente" },
 
@@ -511,9 +511,11 @@
 
   "TA-433": { "estado": "terminada", "rama": "ta-433-formatos-instituciones", "pr": 354 },
 
-  "TA-466": { "estado": "pendiente" },
+  "TA-466": { "estado": "terminada", "rama": "ta-466-formatos-formulario-3", "pr": 371 },
 
   "TA-467": { "estado": "terminada", "rama": "ta-467-instituciones-ui-2", "pr": 368 },
+
+  "TA-472": { "estado": "pendiente" },
 
   "TA-434": { "estado": "pendiente" },
 

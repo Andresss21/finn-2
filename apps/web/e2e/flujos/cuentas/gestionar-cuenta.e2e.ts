@@ -33,7 +33,8 @@ async function abrirEditar(page: Page, enlace: (p: Page) => Locator): Promise<vo
   await enlace(page).click();
   await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
   await esperarContenido(page);
-  await page.getByRole('link', { name: 'Editar', exact: true }).click();
+  await page.getByRole('button', { name: 'Más acciones' }).click();
+  await page.getByRole('menuitem', { name: 'Editar', exact: true }).click();
   await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}\/editar$/);
   await esperarContenido(page);
 }

@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { Vacio } from '../../../../../componentes/base/vacio';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
+import { formatearFechaTexto } from '../../../../../formato';
 import { categoriaDetalle } from '../../../../../textos/categoria-detalle';
 
 const t = categoriaDetalle.consumos;
@@ -39,8 +40,14 @@ export function Consumos({
             const nombre = x.comercio ?? (transaccionId === null ? t.condonacion : x.cuenta.nombre);
             return (
               <li key={k} data-consumo={x.fecha} className="flex items-start gap-3 px-3.5 py-3">
-                <span className="w-12 shrink-0 text-cuerpo-pequeno text-texto-secundario">
-                  {`${x.fecha.slice(8)}/${x.fecha.slice(5, 7)}`}
+                <span
+                  data-insignia-fecha
+                  className="flex w-12 shrink-0 flex-col items-center leading-none"
+                >
+                  <span className="text-rotulo text-texto-secundario">
+                    {formatearFechaTexto(x.fecha).split(' ')[1]}
+                  </span>
+                  <span className="text-cifra">{x.fecha.slice(8)}</span>
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col">
                   {transaccionId === null ? (

@@ -77,6 +77,10 @@ export const bandeja = {
     },
     monto: 'Monto',
     aprobar: 'Aprobar',
+    // CH-136: el pie fijo dice cuánto se aprueba, como «Guardar $X» de Registrar gasto
+    aprobarMonto: (monto: string) => `Aprobar ${monto}`,
+    categoriaSugerida: (nombre: string, porRegla: boolean) =>
+      `Categoría sugerida: ${nombre} (${porRegla ? 'por regla' : 'de tu historial'})`,
     aprobando: 'Aprobando…',
     aprobadoYa: 'Este movimiento ya se aprobó.',
     descartadoYa: 'Este movimiento está descartado.',
@@ -90,5 +94,21 @@ export const bandeja = {
     confirmando: 'Confirmando…',
     recordar: 'Recordar esta categoría para este comercio',
     revisarImpacto: 'Revisá antes de aprobar',
+    // CH-137: los estados con pantalla propia (S4 del export; los textos de esta lista son nuevos)
+    programada: 'Programada',
+    fechaEsperada: 'Fecha esperada',
+    montoEsperado: 'Monto esperado',
+    coincidenciaNota:
+      'Un movimiento con coincidencia no se descarta: si no es este pago, se revisa como un gasto nuevo.',
+    igualA: (fecha: string) => `Igual a un gasto del ${fecha}`,
+    igualDetalle: 'Ya hay un gasto igual en la misma cuenta, el mismo día y por el mismo monto.',
+    duplicadoNota: '«Es duplicado» lo descarta; se puede restaurar desde Descartados.',
+    noReconocido:
+      'No encontramos un formato que lea este SMS. Podés registrarlo a mano con el texto a la vista o descartarlo.',
+    falloTitulo: 'Algo falló al procesarlo',
+    falloTexto:
+      'Algo falló al procesar este SMS. No se registró nada. Podés intentarlo de nuevo; si vuelve a fallar, guardá la referencia.',
+    referenciaNota: 'La misma referencia aparece en Ajustes › Diagnóstico.',
+    soloLectura: 'Solo lectura',
   },
 } as const;

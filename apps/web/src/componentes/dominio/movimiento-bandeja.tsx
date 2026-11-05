@@ -10,6 +10,9 @@ import { Boton } from '../base/boton';
 import { EnlaceFinn } from '../navegacion/enlace-finn';
 import { COLOR_TEXTO, type EstadoFinanciero } from './indicador-estado';
 import { Monto } from './monto';
+import { vistaDe, type VistaMovimiento } from './vista-movimiento';
+
+export { vistaDe };
 
 export interface MovimientoDto {
   readonly id: string;
@@ -37,7 +40,7 @@ export interface MovimientoDto {
 // Solo un gasto y un pago de tarjeta sacan dinero: el signo sale del tipo que entrega el servidor, nunca se deduce (PF-3).
 const SALEN: ReadonlySet<string> = new Set(['gasto', 'pago_tarjeta']);
 export type AccionBandeja = 'aprobar' | 'es-otro-gasto' | 'descartar' | 'reintentar' | 'copiar';
-type Vista = keyof typeof cuentas.bandeja.estados;
+type Vista = VistaMovimiento;
 
 const t = cuentas.bandeja;
 const ESTADO: Readonly<Record<Vista, EstadoFinanciero>> = {
@@ -76,28 +79,6 @@ const ACCIONES: Readonly<Partial<Record<Vista, readonly (readonly [AccionBandeja
     ['copiar', t.copiarReferencia],
   ],
 };
-
-/**
- * Los siete estados de la fila (06 2.12): `pendiente` se parte en listo, falta la categoría y datos faltantes. Los
- * descartados no tienen fila compacta aquí: su vista (con "Restaurar") es de la pantalla de la Bandeja.
- */
-export function vistaDe(m: MovimientoDto): Vista {
-  switch (m.estado) {
-    case 'pendiente':
-      if (m.aprobacion.posible) return 'listo';
-      return m.aprobacion.faltantes.length === 0 || m.aprobacion.faltantes.includes('destino')
-        ? 'falta'
-        : 'faltaOtro';
-    case 'con_coincidencia':
-      return 'coincidencia';
-    case 'posible_duplicado':
-      return 'duplicado';
-    case 'no_reconocido':
-      return 'noReconocido';
-    case 'error':
-      return 'error';
-  }
-}
 
 interface Props {
   readonly movimiento: MovimientoDto;

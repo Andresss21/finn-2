@@ -27,16 +27,81 @@ const ICONO_MARCA: Readonly<Record<keyof TransaccionFilaDto['marcas'], NombreIco
   periodoCerrado: 'lock',
 };
 
-export function FilaTransaccion({
+/** La fila de la lista de Actividad (export 02): círculo con ícono, «cuenta · categoría» y cada marca con su texto. */
+export interface DetalleDeFila {
+  readonly subtitulo: string;
+  readonly icono: NombreIcono;
+}
+
+const MARCA = 'inline-flex items-center gap-1 text-cuerpo-pequeno text-texto-secundario';
+const PENDIENTE = `${MARCA} rounded-pastilla border border-dashed border-borde-control px-1.5`;
+
+function FilaDetallada({
   fila,
   hrefDetalle,
+  detalle,
+  marcas,
 }: {
   readonly fila: TransaccionFilaDto;
   readonly hrefDetalle: string;
+  readonly detalle: DetalleDeFila;
+  readonly marcas: readonly (keyof TransaccionFilaDto['marcas'])[];
+}) {
+  return (
+    <a
+      href={hrefDetalle}
+      data-fila-transaccion={fila.id}
+      className="grid min-h-16 grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-2.5 px-4 py-2"
+    >
+      <span className="flex size-9 items-center justify-center rounded-contenedor bg-superficie-hundida text-texto">
+        <Icono nombre={detalle.icono} tamano={20} />
+      </span>
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate text-cuerpo font-semibold text-texto">
+          {fila.comercio ?? dominio.sinComercio}
+        </span>
+        <span className="text-cuerpo-pequeno text-texto-secundario">{detalle.subtitulo}</span>
+        <span className="flex flex-wrap gap-2">
+          {fila.estadoBancario === 'pendiente' ? (
+            <span className={PENDIENTE}>
+              <Icono nombre="clock" tamano={14} />
+              {dominio.estadoBancario.pendiente}
+            </span>
+          ) : null}
+          {marcas.map((m) => (
+            <span key={m} className={MARCA}>
+              <Icono nombre={ICONO_MARCA[m]} tamano={14} />
+              {dominio.marcas[m]}
+            </span>
+          ))}
+        </span>
+      </span>
+      <Monto
+        centavos={fila.montoPresentado}
+        rol="cifra"
+        {...(fila.montoPresentado > 0 ? { estado: 'positivo' as const } : {})}
+      />
+    </a>
+  );
+}
+
+export function FilaTransaccion({
+  fila,
+  hrefDetalle,
+  detalle,
+}: {
+  readonly fila: TransaccionFilaDto;
+  readonly hrefDetalle: string;
+  /** Solo la lista de Actividad lo pasa; las demás pantallas dibujan la fila compacta. */
+  readonly detalle?: DetalleDeFila;
 }) {
   const marcas = (Object.keys(ICONO_MARCA) as (keyof TransaccionFilaDto['marcas'])[]).filter(
     (m) => fila.marcas[m],
   );
+  if (detalle !== undefined)
+    return (
+      <FilaDetallada fila={fila} hrefDetalle={hrefDetalle} detalle={detalle} marcas={marcas} />
+    );
   return (
     <a
       href={hrefDetalle}
