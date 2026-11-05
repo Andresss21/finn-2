@@ -1,9 +1,11 @@
 'use client';
-// `/programadas/nueva` (FT-40, OP-42 crear; 05 §2): el flujo largo de una programada: tipo, cuentas, comercio, monto y tolerancia, partes del
-// gasto, frecuencia, primera fecha, fin y registro automático. Los destinos salen del catálogo del servidor. La edición es de TA-474.
+// `/programadas/nueva` y `/programadas/[programadaId]` (FT-40, OP-42 crear y editar, OP-51; 05 §2): el flujo largo de una programada: tipo, cuentas, comercio, monto y tolerancia, partes del
+// gasto, frecuencia, primera fecha, fin y registro automático. Los destinos salen del catálogo del servidor. Con `programadaId` edita
+// (OP-42 `editar`, OP-51 eliminar); con `calendarioEditable = false` la primera fecha y la frecuencia se muestran sin edición y con el motivo.
 // No calcula montos (PF-3): la suma de las partes la valida el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
+import type { ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
@@ -17,13 +19,23 @@ import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { formularios } from '../../textos/formularios';
 import { programadas as t } from '../../textos/programadas';
-import { contrato, entradaDeCreacion, FRECUENCIAS, type Campos } from './campos';
+import {
+  contrato,
+  entradaDeCreacion,
+  entradaDeEdicion,
+  FRECUENCIAS,
+  valoresEnviables,
+  type Campos,
+} from './campos';
 
 interface Ref {
   readonly id: string;
   readonly nombre: string;
 }
 export interface PropsFormularioProgramada {
+  /** Sin `programadaId`, crea. */
+  readonly programadaId?: string;
+  readonly nombre?: string;
   readonly inicial: Campos;
   /** Cuentas de origen: un gasto sale de efectivo o tarjeta; los demás tipos, de efectivo. */
   readonly origenes: { readonly gasto: readonly Ref[]; readonly otros: readonly Ref[] };
@@ -31,8 +43,15 @@ export interface PropsFormularioProgramada {
     Record<'pago_tarjeta' | 'cuota_prestamo' | 'aporte_inversion', readonly Ref[]>
   >;
   readonly categorias: readonly Ref[];
-  /** `gestionarProgramada` (OP-42): la pone el lector. */
+  /** `false` con historial: primera fecha y frecuencia sin edición, con este motivo. */
+  readonly calendarioEditable: boolean;
+  readonly motivoCalendario: string;
+  readonly puedeEliminar: boolean;
+  /** `gestionarProgramada` (OP-42) y `eliminarProgramada` (OP-51): las pone el lector. */
   readonly accion: AccionEscritura;
+  readonly accionEliminar: AccionEscritura;
+  /** Desactivar y reactivar (solo al editar): lo arma el lector. */
+  readonly activar?: ReactNode;
 }
 
 const RUTA_PADRE = '/programadas';
@@ -46,10 +65,16 @@ const deRefs = (xs: readonly Ref[]) => xs.map((x) => ({ valor: x.id, etiqueta: x
 const PARTE_VACIA = { monto: '', categoriaId: '' };
 
 export function FormularioProgramada(p: PropsFormularioProgramada) {
-  const operacion = useOperacion({ accion: p.accion, creacion: true });
+  const { programadaId, inicial, calendarioEditable } = p;
+  const edita = programadaId !== undefined;
+  const operacion = useOperacion({
+    accion: p.accion,
+    ...(edita ? { esperado: valoresEnviables(inicial) } : { creacion: true }),
+  });
+  const eliminacion = useOperacion({ accion: p.accionEliminar });
   const formulario = useFormularioFinn<Campos>({
     contrato,
-    valoresIniciales: p.inicial,
+    valoresIniciales: inicial,
     operacion,
   });
   const c = formulario.watch();
@@ -71,17 +96,24 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
     formulario.setValue('cuentaDestinoId', '');
     ponerLineas(tipo === 'pago_tarjeta' ? [] : [c.lineas[0] ?? PARTE_VACIA]);
   };
-  const { estado, error: falla } = operacion;
+  const { estado, error: fallo } = operacion;
+  const falla = fallo ?? eliminacion.error;
   const erroresLineas = errors.lineas as
     | readonly ({ monto?: { message?: string }; categoriaId?: { message?: string } } | undefined)[]
     | undefined;
-  const alEnviar = formulario.handleSubmit(() =>
-    operacion.enviar(entradaDeCreacion(formulario.getValues())),
-  );
+  const alEnviar = formulario.handleSubmit(() => {
+    const valores = formulario.getValues();
+    if (!edita) return operacion.enviar(entradaDeCreacion(valores));
+    const entrada = entradaDeEdicion(programadaId, inicial, valores);
+    return entrada === undefined ? undefined : operacion.enviar(entrada);
+  });
 
-  if (estado === 'listo')
+  if (estado === 'listo' || eliminacion.estado === 'listo')
     return (
-      <PaginaFlujoDeRuta titulo={t.creada} rutaPadre={RUTA_PADRE}>
+      <PaginaFlujoDeRuta
+        titulo={eliminacion.estado === 'listo' ? t.eliminada : edita ? t.guardada : t.creada}
+        rutaPadre={RUTA_PADRE}
+      >
         <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
       </PaginaFlujoDeRuta>
     );
@@ -94,14 +126,19 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
   };
 
   return (
-    <PaginaFlujoDeRuta titulo={t.tituloNueva} rutaPadre={RUTA_PADRE}>
+    <PaginaFlujoDeRuta
+      titulo={edita ? t.tituloEditar(p.nombre ?? '') : t.tituloNueva}
+      rutaPadre={RUTA_PADRE}
+    >
       <form onSubmit={(e) => void alEnviar(e)} noValidate className="flex flex-col gap-5">
-        <SelectorSegmentado
-          etiqueta={t.tipo}
-          opciones={opciones(t.tipos)}
-          valor={c.tipo}
-          alCambiar={cambiarTipo}
-        />
+        {edita ? null : (
+          <SelectorSegmentado
+            etiqueta={t.tipo}
+            opciones={opciones(t.tipos)}
+            valor={c.tipo}
+            alCambiar={cambiarTipo}
+          />
+        )}
         <SeleccionNativa
           etiqueta={t.cuenta}
           opciones={deRefs(origenes)}
@@ -161,7 +198,7 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             alQuitar={(i) => {
               ponerLineas(c.lineas.filter((_, j) => j !== i));
             }}
-            error={falla?.codigo === 'suma_lineas_distinta' ? falla.mensaje : undefined}
+            error={fallo?.codigo === 'suma_lineas_distinta' ? fallo.mensaje : undefined}
             renderParte={(i) => (
               <>
                 <EntradaMonto
@@ -214,7 +251,11 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             ) : null}
           </>
         )}
+        {calendarioEditable ? null : (
+          <AvisoEnLinea estado="informacion">{p.motivoCalendario}</AvisoEnLinea>
+        )}
         <SeleccionNativa
+          deshabilitado={!calendarioEditable}
           etiqueta={t.frecuencia}
           opciones={FRECUENCIAS.map((f) => ({ valor: f, etiqueta: t.frecuencias[f] }))}
           valor={c.frecuencia}
@@ -228,6 +269,7 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             etiqueta={t.cadaDias}
             requerido
             inputMode="numeric"
+            disabled={!calendarioEditable}
             value={c.frecuenciaDias}
             onChange={(e) => {
               poner('frecuenciaDias')(e.target.value.replace(/\D/g, ''));
@@ -241,6 +283,7 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
           valor={c.primeraFecha as FechaLocal}
           alCambiar={poner('primeraFecha')}
           error={errors.primeraFecha?.message}
+          deshabilitado={!calendarioEditable}
           requerido
         />
         <EntradaFecha
@@ -282,14 +325,25 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
         <Boton
           tipo="submit"
           enviando={estado === 'enviando'}
-          textoEnviando={t.creando}
+          textoEnviando={edita ? t.guardando : t.creando}
           deshabilitado={!operacion.enLinea}
           {...(operacion.motivoSinEnvio === undefined
             ? {}
             : { motivoDeshabilitado: operacion.motivoSinEnvio })}
         >
-          {t.crear}
+          {edita ? t.guardar : t.crear}
         </Boton>
+        {edita ? p.activar : null}
+        {edita && p.puedeEliminar ? (
+          <Boton
+            variante="peligro"
+            enviando={eliminacion.estado === 'enviando'}
+            textoEnviando={t.eliminando}
+            onClick={() => void eliminacion.enviar({ programadaId })}
+          >
+            {t.eliminar}
+          </Boton>
+        ) : null}
       </form>
     </PaginaFlujoDeRuta>
   );
