@@ -2440,7 +2440,7 @@ Perfil de referencia: un Android de gama media con 4G. En el laboratorio es el p
 | JS compartido | ≤ 170 KB gzip | Playwright: JS de una ruta mínima de `(finn)` |
 | **[R3]** Biblioteca de formularios (React Hook Form, `@hookform/resolvers` y Zod con la configuración en español) | ≤ 50 KB gzip, medida aparte (PC-1) | Playwright: los archivos que cargan **todas** las rutas con formulario y ninguna ruta sin formulario |
 | **[R4]** Precache del service worker (todos los archivos estáticos de la versión, §8.3) | ≤ 1,5 MB gzip | Playwright: suma de lo que guarda el precache tras instalarse |
-| JS por ruta | ≤ 50 KB gzip; Reportes ≤ 120 KB. **[R3]** En una ruta con formulario, sin contar la biblioteca de formularios | Playwright: JS de la ruta menos el compartido y, si tiene formulario, menos la biblioteca de formularios |
+| JS por ruta | ≤ 52 KB gzip **[CH-178]**; Reportes ≤ 120 KB. **[R3]** En una ruta con formulario, sin contar la biblioteca de formularios | Playwright: JS de la ruta menos el compartido y, si tiene formulario, menos la biblioteca de formularios |
 
 KB = 1.000 bytes, tamaño **transferido con gzip** (la compresión de `next start`). Vercel sirve brotli, que comprime más: la medida de CI es conservadora.
 
