@@ -52,7 +52,7 @@ test.describe('PRU-E2E-PROG pantalla de programadas', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-PROG-110 RUTA-/programadas [CA-40.5] la mensual del 17 desactivada el 1 de junio y reactivada el 20 de septiembre no tiene atrasadas y su próxima es el 17 de octubre', async ({
+  test('PRU-E2E-PROG-110 [CA-40.5] RUTA-/programadas la mensual del 17 desactivada el 1 de junio y reactivada el 20 de septiembre no tiene atrasadas y su próxima es el 17 de octubre', async ({
     page,
   }) => {
     await sembrarOps(
@@ -76,7 +76,7 @@ test.describe('PRU-E2E-PROG pantalla de programadas', () => {
     await expect(proximos(page)).toContainText('17');
   });
 
-  test('PRU-E2E-PROG-111 RUTA-/programadas [CA-40.7] desactivar una programada deja el resultado con Reactivar y tocarlo la vuelve a dejar activa', async ({
+  test('PRU-E2E-PROG-111 [CA-40.7] RUTA-/programadas desactivar una programada deja el resultado con Reactivar y tocarlo la vuelve a dejar activa', async ({
     page,
   }) => {
     await sembrarOps([...BASE, NETFLIX], '2027-02-10');
