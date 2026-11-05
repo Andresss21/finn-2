@@ -6,6 +6,7 @@ export const formularios = {
   yaEstabaGuardado: 'Ya estaba guardado',
   noExiste: 'Esto ya no existe.',
   intentarDeNuevo: 'Intentar de nuevo',
+  cancelar: 'Cancelar',
   impactoCambio: 'El impacto cambió',
   versionNueva: 'Hay una versión nueva de Finn. Recargá para continuar.',
   recargar: 'Recargar',

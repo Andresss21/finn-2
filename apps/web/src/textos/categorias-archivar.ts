@@ -10,8 +10,7 @@ export const categoriasArchivar = {
   destinoDisponible: (monto: string) => `Mandar ${monto} de ${glosario.disponible} a`,
   cubrirSobregiro: (monto: string) => `Cubrir el sobregiro de ${monto} con`,
   lpa: glosario.listoParaAsignar,
-  categoriaConDisponible: (nombre: string, disponible: string) =>
-    `${nombre} — ${glosario.disponible} ${disponible}`,
+  disponibleDe: (monto: string) => `${glosario.disponible} ${monto}`,
   futuras: (n: number) =>
     n === 1
       ? `Tiene dinero asignado en 1 período futuro. Se devuelve a ${glosario.listoParaAsignar}.`

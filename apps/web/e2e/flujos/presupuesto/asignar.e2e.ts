@@ -117,6 +117,22 @@ test.describe('PRU-E2E-PRES', () => {
     await esperarMonto(montoDeFila(page, 'Super', 0), 60000);
   });
 
+  test('PRU-E2E-PRES-251 [FT-10] la hoja de Asignar dibuja Asignado y Disponible como cifras en columnas y «Cancelar», que cierra sin guardar', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC03_PASO1, '2027-02-05');
+    await abrir(page, '/presupuesto');
+    await esperarMonto(lpa(page), 100000);
+    await page.getByRole('link', { name: 'Asignar a Super' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    const resumen = page.locator('[data-resumen-asignar]');
+    await expect(resumen.locator('dt')).toHaveText(['Asignado', 'Disponible']);
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/presupuesto$/);
+    await esperarMonto(lpa(page), 100000);
+  });
+
   test('PRU-E2E-PRES-131 [CA-10.2, ESC-03] asignar $200.00 a Gas en el período futuro se rechaza con lpa_negativo_en_futuro y dice que faltan $100.00', async ({
     page,
   }) => {
