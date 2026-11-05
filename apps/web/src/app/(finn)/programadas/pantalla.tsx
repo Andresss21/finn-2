@@ -110,7 +110,10 @@ export function PantallaProgramadas({
               <ul className={CONTENEDOR}>
                 {proximos.map((o) => (
                   <li key={`${o.programada.id}-${o.fechaEsperada}`} data-proximo={o.programada.id}>
-                    <EnlaceFinn href={`/programadas/${o.programada.id}`} className={FILA}>
+                    <EnlaceFinn
+                      href={`/programadas/${o.programada.id}/ocurrencias/${o.fechaEsperada}`}
+                      className={FILA}
+                    >
                       <InsigniaDeFecha fecha={o.fechaEsperada} />
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="truncate font-semibold text-texto">
