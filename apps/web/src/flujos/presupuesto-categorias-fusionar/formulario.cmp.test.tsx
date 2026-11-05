@@ -77,13 +77,17 @@ const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement => {
 const tocar = async (nodo: HTMLElement, texto: string): Promise<void> => {
   await userEvent.click(boton(nodo, texto));
 };
-const elegirDestino = async (nodo: HTMLElement, nombre: string): Promise<void> => {
-  const r = [...nodo.querySelectorAll<HTMLElement>('[role="radio"]')].find((x) =>
-    x.closest('label')?.textContent.includes(nombre),
-  );
-  if (r === undefined) throw new Error(`no hay «${nombre}»`);
-  await userEvent.click(r);
+/** Elige `opcion` en el `<select>` nativo cuya etiqueta contiene `grupo`. */
+const elegirDestinoEn = async (nodo: HTMLElement, grupo: string, opcion: string): Promise<void> => {
+  const etiqueta = [...nodo.querySelectorAll('label')].find((l) => l.textContent.includes(grupo));
+  const select = nodo.querySelector<HTMLSelectElement>(`select[id="${etiqueta?.htmlFor}"]`);
+  if (select === null) throw new Error(`no hay «${grupo}»`);
+  const o = [...select.options].find((x) => x.text === opcion);
+  if (o === undefined) throw new Error(`no hay «${opcion}» en «${grupo}»`);
+  await userEvent.selectOptions(select, o.value);
 };
+const elegirDestino = (nodo: HTMLElement, nombre: string): Promise<void> =>
+  elegirDestinoEn(nodo, 'Fusionar con', nombre);
 
 describe('PRU-CMP-CATEG', () => {
   it('PRU-CMP-CATEG-120 sin otra categoría activa el flujo lo explica y no ofrece fusionar', () => {

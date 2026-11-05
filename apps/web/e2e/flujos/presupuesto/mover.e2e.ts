@@ -50,10 +50,8 @@ const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').f
 const montoDeFila = (page: Page, nombre: string, n: 0 | 1 | 2) =>
   fila(page, nombre).locator('[data-centavos]').nth(n);
 
-const elegir = (page: Page, grupo: 'Sacar de' | 'Poner en', categoria: string) =>
-  page
-    .getByRole('radiogroup', { name: grupo })
-    .getByRole('radio', { name: new RegExp(`^${categoria} —`) });
+const elegir = async (page: Page, grupo: 'Sacar de' | 'Poner en', categoria: string) =>
+  page.getByLabel(grupo).selectOption({ label: categoria });
 const mover = (page: Page) => page.getByRole('button', { name: 'Mover', exact: true });
 
 async function moverDinero(
@@ -62,8 +60,8 @@ async function moverDinero(
   destino: string,
   monto: string,
 ): Promise<void> {
-  await elegir(page, 'Sacar de', origen).click();
-  await elegir(page, 'Poner en', destino).click();
+  await elegir(page, 'Sacar de', origen);
+  await elegir(page, 'Poner en', destino);
   await page.getByLabel(/Monto a mover/).fill(monto);
   await mover(page).click();
 }
@@ -93,6 +91,21 @@ test.describe('PRU-E2E-PRES', () => {
     await abrir(page, '/presupuesto');
     await esperarMonto(lpa(page), 32000);
     await esperarMonto(montoDeFila(page, 'Super', 0), 3000);
+  });
+
+  test('PRU-E2E-PRES-250 [FT-11] la hoja de Mover dibuja origen y destino como selección con su Disponible y «Cancelar», que cierra sin mover nada', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC16_PASO1, '2027-02-10');
+    await abrir(page, '/presupuesto');
+    await esperarMonto(lpa(page), 32000);
+    await page.getByRole('link', { name: 'Mover dinero' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await elegir(page, 'Sacar de', 'Super');
+    await expect(page.getByRole('dialog')).toContainText('Disponible $80.00');
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await esperarMonto(montoDeFila(page, 'Super', 0), 8000);
   });
 
   test('PRU-E2E-PRES-151 [CA-11.2, ESC-16, AV-02] mover $50.00 de Super con $30.00 se acepta, lo deja en −$20.00 y la fila muestra el sobregiro con débito', async ({

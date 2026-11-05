@@ -8,7 +8,7 @@ import { useCallback, useMemo } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Seleccion, type Opcion } from '../../componentes/base/seleccion';
+import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
@@ -51,6 +51,7 @@ interface Vista {
   readonly rechazos?: readonly { readonly codigo: string }[];
 }
 
+const ID_FORMULARIO = 'formulario-archivar';
 const LPA = 'lpa';
 const DESACTIVAR = 'desactivar';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
@@ -159,26 +160,54 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
     );
   }
 
-  const opcionesDestino: readonly Opcion[] = [
+  const opcionesDestino: readonly OpcionNativa[] = [
     { valor: LPA, etiqueta: t.lpa },
     ...p.destinos.map((d) => ({
       valor: d.id,
-      etiqueta: t.categoriaConDisponible(d.nombre, formatearMonto(d.disponible)),
+      etiqueta: d.nombre,
+      detalle: t.disponibleDe(formatearMonto(d.disponible)),
     })),
   ];
-  const opcionesProgramada: readonly Opcion[] = [
+  const opcionesProgramada: readonly OpcionNativa[] = [
     { valor: DESACTIVAR, etiqueta: t.desactivar },
     ...p.destinos.map((d) => ({ valor: d.id, etiqueta: t.reasignarA(d.nombre) })),
   ];
   const nada = disponible === 0 && futuras === 0 && programadas.length === 0;
   const montoTexto = formatearMonto(disponible);
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
-      <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
+    <PaginaFlujoDeRuta
+      titulo={t.titulo}
+      rutaPadre={rutaPadre}
+      acciones={
+        <div className="w-full md:ml-auto md:w-[calc(50%-1.125rem)]">
+          <Boton
+            tipo="submit"
+            form={ID_FORMULARIO}
+            className="w-full"
+            enviando={estado === 'enviando'}
+            textoEnviando={t.archivando}
+            deshabilitado={!operacion.enLinea}
+            {...(operacion.motivoSinEnvio === undefined
+              ? {}
+              : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          >
+            {t.archivar}
+          </Boton>
+        </div>
+      }
+    >
+      <form
+        id={ID_FORMULARIO}
+        onSubmit={(e) => void formulario.enviar(e)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
         <p className="font-semibold">{p.categoria}</p>
         {nada ? <p>{t.nadaQueDecidir(p.categoria)}</p> : null}
         {disponible === 0 ? null : (
-          <Seleccion
+          <SeleccionNativa
+            alta
+            marcador={t.elegir}
             etiqueta={
               disponible > 0 ? t.destinoDisponible(montoTexto) : t.cubrirSobregiro(montoTexto)
             }
@@ -189,9 +218,15 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
             }}
           />
         )}
-        {futuras === 0 ? null : <p data-futuras>{t.futuras(futuras)}</p>}
+        {futuras === 0 ? null : (
+          <p data-futuras className="rounded-contenedor bg-superficie p-3.5 shadow-elevacion-1">
+            {t.futuras(futuras)}
+          </p>
+        )}
         {programadas.map((x) => (
-          <Seleccion
+          <SeleccionNativa
+            alta
+            marcador={t.elegir}
             key={x.id}
             etiqueta={t.programada(x.comercio, formatearMonto(x.monto))}
             opciones={opcionesProgramada}
@@ -224,17 +259,6 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
             {fallo.mensaje}
           </AvisoEnLinea>
         ) : null}
-        <Boton
-          tipo="submit"
-          enviando={estado === 'enviando'}
-          textoEnviando={t.archivando}
-          deshabilitado={!operacion.enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
-        >
-          {t.archivar}
-        </Boton>
       </form>
     </PaginaFlujoDeRuta>
   );

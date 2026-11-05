@@ -89,10 +89,9 @@ describe('PRU-CMP-CATEG', () => {
   it('PRU-CMP-CATEG-106 [CA-19.4] elegir otra categoría y otro monto envía también el Asignado del destino que vio', async () => {
     const accion = vi.fn(ok);
     const nodo = montar(<FormularioSacar {...base} accion={accion} />);
-    const opcion = [...nodo.querySelectorAll<HTMLElement>('[role="radio"]')].find((x) =>
-      x.closest('label')?.textContent.includes('Salidas'),
-    );
-    await userEvent.click(opcion as HTMLElement);
+    const select = nodo.querySelector('select') as HTMLSelectElement;
+    const salidas = [...select.options].find((x) => x.text === 'Salidas');
+    await userEvent.selectOptions(select, (salidas as HTMLOptionElement).value);
     await userEvent.fill(montoEscrito(nodo), '10');
     await userEvent.click(boton(nodo, t.sacar));
     expect(accion).toHaveBeenLastCalledWith({

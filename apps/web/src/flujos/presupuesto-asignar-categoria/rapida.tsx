@@ -2,7 +2,6 @@
 // Asignación rápida (FT-12, OP-16; 06 FT-12): las opciones de `contexto.rapida` (04 §6.14.4) de `/presupuesto/asignar/[categoriaId]`,
 // cada una con su monto. Tocar una envía OP-16 con su `variante`: el valor lo calcula el servidor y la interfaz solo lo dibuja (PF-3).
 import type { Centavos } from '@finn/dominio/valores';
-import { Boton } from '../../componentes/base/boton';
 import { Monto } from '../../componentes/dominio/monto';
 import { presupuestoAsignar as t } from '../../textos/presupuesto-asignar';
 
@@ -58,29 +57,30 @@ export function OpcionesRapidas({
       monto: rapida.cubrirSobregiro,
     });
   return (
-    <div
+    <section
       role="group"
       aria-label={t.rapida.titulo}
       data-asignacion-rapida
-      className="flex flex-col gap-2"
+      className="flex flex-col gap-2.5"
     >
-      <p className="text-cuerpo-pequeno text-texto-secundario">{t.rapida.titulo}</p>
-      {opciones.map((o) => (
-        <Boton
-          key={o.variante}
-          variante="secundaria"
-          deshabilitado={deshabilitado}
-          data-variante={o.variante}
-          onClick={() => {
-            alElegir(o.variante);
-          }}
-        >
-          <span className="flex w-full items-center justify-between gap-3">
-            <span>{o.texto}</span>
+      <h3 className="text-titulo-seccion">{t.rapida.titulo}</h3>
+      <div className="divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
+        {opciones.map((o) => (
+          <button
+            key={o.variante}
+            type="button"
+            disabled={deshabilitado}
+            data-variante={o.variante}
+            onClick={() => {
+              alElegir(o.variante);
+            }}
+            className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-1 text-left disabled:opacity-60"
+          >
+            <span className="font-semibold">{o.texto}</span>
             <Monto centavos={o.monto} />
-          </span>
-        </Boton>
-      ))}
-    </div>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
