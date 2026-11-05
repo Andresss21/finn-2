@@ -128,7 +128,7 @@ function cuadra(r: ReturnType<typeof categorias>) {
 }
 
 describe('PRU-PROP-REP', () => {
-  it('PRU-PROP-REP-150 [FT-60] REP-categorias (04 §6.9.2, CH-177): `total` es la suma de los gastado > 0 de todas las porciones, «Otras» incluida, y `montoOtras` la de las que siguen a las 8 primeras', () => {
+  it('PRU-PROP-REP-150 [FT-60] REP-categorias (04 §6.9.2, CH-177): `total` es la suma de los gastado positivos de todas las porciones, «Otras» incluida, y `montoOtras` la de las que siguen a las 8 primeras', () => {
     // Hasta 14 categorías, algunas sin gasto: con más de 8 con gasto hay «Otras».
     fc.assert(
       fc.property(fc.array(fc.nat(500_000), { minLength: 0, maxLength: 14 }), (montos) => {
