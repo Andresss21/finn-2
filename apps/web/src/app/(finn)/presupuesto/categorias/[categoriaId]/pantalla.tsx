@@ -190,6 +190,11 @@ export function PantallaDetalleCategoria({
           {numero(t.numeros.arrastre, numeros.arrastre)}
           {numero(t.numeros.fondo, numeros.fondo)}
           {numero(t.numeros.entradas, numeros.entradas)}
+          {sobregiro === null
+            ? null
+            : sobregiro.tipo === 'tarjeta'
+              ? numero(t.sobregiro.conTarjeta, sobregiro.parteTarjeta)
+              : numero(t.numeros.sobregiro, sobregiro.total)}
         </dl>
 
         {sobregiro === null ? null : (
@@ -229,31 +234,9 @@ export function PantallaDetalleCategoria({
             ) : null}
           </Seccion>
         )}
-
-        <nav aria-label={t.acciones.etiqueta} className="flex flex-col gap-2">
-          {acciones.puedeAsignar && !cerrado ? (
-            <div className="grid grid-cols-2 gap-2">
-              <EnlaceFinn href={hrefAsignar} className={PRINCIPAL}>
-                {t.acciones.asignar}
-              </EnlaceFinn>
-              <EnlaceFinn
-                href={conPeriodo(`/presupuesto/mover?categoria-origen=${categoria.id}`)}
-                className={TONAL}
-              >
-                {t.acciones.mover}
-              </EnlaceFinn>
-            </div>
-          ) : null}
-          {archivada && numeros.disponible > 0 ? (
-            <EnlaceFinn href={`${raiz}/sacar`} className={TONAL}>
-              {t.acciones.sacar}
-            </EnlaceFinn>
-          ) : null}
-          {archivada ? <Desarchivar categoriaId={categoria.id} accion={desarchivar} /> : null}
-        </nav>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 md:row-span-2">
         <ConsumosYCalendario
           consumos={dto.consumos}
           calendario={dto.calendario}
@@ -330,6 +313,27 @@ export function PantallaDetalleCategoria({
           </Seccion>
         )}
       </div>
+      <nav aria-label={t.acciones.etiqueta} className="flex flex-col gap-2 md:col-start-1">
+        {acciones.puedeAsignar && !cerrado ? (
+          <div className="grid grid-cols-2 gap-2">
+            <EnlaceFinn href={hrefAsignar} className={PRINCIPAL}>
+              {t.acciones.asignar}
+            </EnlaceFinn>
+            <EnlaceFinn
+              href={conPeriodo(`/presupuesto/mover?categoria-origen=${categoria.id}`)}
+              className={TONAL}
+            >
+              {t.acciones.mover}
+            </EnlaceFinn>
+          </div>
+        ) : null}
+        {archivada && numeros.disponible > 0 ? (
+          <EnlaceFinn href={`${raiz}/sacar`} className={TONAL}>
+            {t.acciones.sacar}
+          </EnlaceFinn>
+        ) : null}
+        {archivada ? <Desarchivar categoriaId={categoria.id} accion={desarchivar} /> : null}
+      </nav>
     </main>
   );
 }
