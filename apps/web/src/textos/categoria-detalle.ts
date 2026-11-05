@@ -14,6 +14,7 @@ export const categoriaDetalle = {
     arrastre: glosario.arrastrado,
     fondo: 'Fondo',
     entradas: 'Entradas',
+    sobregiro: 'Sobregiro',
   },
   sobregiro: {
     debito: glosario.sobregiroConDebitoOEfectivo,

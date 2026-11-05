@@ -35,8 +35,8 @@ const lpa = (page: Page): Locator => page.locator('[data-resumen-lpa] [data-cent
 const boton = (page: Page, nombre: string): Locator =>
   page.getByRole('button', { name: nombre, exact: true });
 
-/** Entra por Cuentas, abre el detalle de la cuenta `nombre` y toca la acción `accion`. */
-async function abrirAccion(page: Page, nombre: string, accion: string): Promise<void> {
+/** Entra por Cuentas, abre el detalle de la cuenta `nombre` y abre «Más acciones» (CH-142: las acciones viven ahí). */
+async function abrirMenu(page: Page, nombre: string): Promise<void> {
   await abrir(page, '/cuentas');
   // Las de efectivo son una tarjeta que enlaza; las tarjetas de crédito, un enlace «Ver detalle de …».
   await page
@@ -47,7 +47,13 @@ async function abrirAccion(page: Page, nombre: string, accion: string): Promise<
     .click();
   await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
   await esperarContenido(page);
-  await page.getByRole('link', { name: accion, exact: true }).click();
+  await page.getByRole('button', { name: 'Más acciones' }).click();
+}
+
+/** Abre el detalle de la cuenta `nombre` y toca la acción `accion` de «Más acciones». */
+async function abrirAccion(page: Page, nombre: string, accion: string): Promise<void> {
+  await abrirMenu(page, nombre);
+  await page.getByRole('menuitem', { name: accion, exact: true }).click();
   await esperarContenido(page);
 }
 
@@ -92,8 +98,14 @@ test.describe('PRU-E2E-CTA', () => {
       { op: 'OP-01', cuenta: 'Ahorro' },
       { op: 'OP-01', cuenta: 'Visa', tipo: 'tarjeta', saldo: 50 },
     ]);
-    await abrirAccion(page, 'Visa', cuentaDetalle.acciones.archivar);
-    await expect(page).toHaveURL(/\/archivar$/);
+    await abrirMenu(page, 'Visa');
+    // Bloqueada: «Archivar» no lleva a ningún lado y dice el motivo en el propio menú (CH-142)
+    await expect(page.getByRole('menu')).toContainText('Visa todavía tiene una deuda de $50.00.');
+    await expect(page.getByRole('menuitem', { name: /^Archivar/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    await page.goto(`${page.url().split('?')[0] ?? ''}/archivar`);
     await expect(page.getByText('Visa todavía tiene una deuda de $50.00.')).toBeVisible();
     await expect(boton(page, cuentasGestion.archivar.archivar)).toHaveCount(0);
   });
@@ -136,7 +148,15 @@ test.describe('PRU-E2E-CTA', () => {
         hoy: '2027-02-10',
       },
     ]);
-    await abrirAccion(page, 'Ahorro', cuentaDetalle.acciones.eliminar);
+    await abrirMenu(page, 'Ahorro');
+    await expect(page.getByRole('menu')).toContainText(
+      cuentasGestion.eliminar.bloqueos.cuenta_con_movimientos('Ahorro'),
+    );
+    await expect(page.getByRole('menuitem', { name: /^Eliminar/ })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    await page.goto(`${page.url().split('?')[0] ?? ''}/eliminar`);
     await expect(page).toHaveURL(/\/eliminar$/);
     await expect(
       page.getByText(cuentasGestion.eliminar.bloqueos.cuenta_con_movimientos('Ahorro')),

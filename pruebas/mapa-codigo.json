@@ -83,9 +83,12 @@
     "patron": "apps/web/src/servidor/acciones/presupuesto.ts",
     "fts": ["FT-10", "FT-11", "FT-12", "FT-13", "FT-17"]
   },
+  { "patron": "apps/web/src/app/(finn)/por-cobrar/**", "fts": ["FT-45"] },
   { "patron": "apps/web/src/app/(finn)/metas/**", "fts": ["FT-17"] },
   { "patron": "apps/web/src/app/(finn)/actividad/**", "fts": ["FT-24"] },
   { "patron": "apps/web/src/flujos/actividad-editar/**", "fts": ["FT-25"] },
+  { "patron": "apps/web/src/flujos/actividad-eliminar/**", "fts": ["FT-26"] },
+  { "patron": "apps/web/src/flujos/actividad-estado/**", "fts": ["FT-26"] },
   { "patron": "apps/web/src/flujos/metas-nueva/**", "fts": ["FT-17"] },
   { "patron": "apps/web/src/app/(finn)/programadas/**", "fts": ["FT-40", "FT-41"] },
   { "patron": "apps/web/src/servidor/acciones/programadas.ts", "fts": ["FT-40"] },
@@ -95,6 +98,7 @@
     "fts": ["FT-11"]
   },
   { "patron": "apps/web/src/flujos/presupuesto-mover/**", "fts": ["FT-11"] },
+  { "patron": "apps/web/src/flujos/pie-de-hoja.tsx", "fts": ["FT-10", "FT-11", "FT-19"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/auto-asignar/**", "fts": ["FT-13"] },
   {
     "patron": "apps/web/src/app/(finn)/@superpuesto/(.)presupuesto/auto-asignar/**",
@@ -135,6 +139,8 @@
   },
   { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/cuota/**", "fts": ["FT-54"] },
   { "patron": "apps/web/src/flujos/cuentas-cuota/**", "fts": ["FT-54"] },
+  { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/pagar/**", "fts": ["FT-30"] },
+  { "patron": "apps/web/src/flujos/cuentas-pagar/**", "fts": ["FT-30"] },
   { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/verificar-saldo/**", "fts": ["FT-44"] },
   { "patron": "apps/web/src/flujos/cuentas-verificar-saldo/**", "fts": ["FT-44"] },
   { "patron": "apps/web/src/servidor/acciones/conciliacion.ts", "fts": ["FT-43", "FT-44"] },

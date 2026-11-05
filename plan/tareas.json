@@ -393,7 +393,7 @@
 
   "TA-302": { "estado": "terminada", "rama": "ta-302-mover-dinero", "pr": 292 },
 
-  "TA-303": { "estado": "pendiente" },
+  "TA-303": { "estado": "terminada", "rama": "ta-303-pagar-tarjeta", "pr": 378 },
 
   "TA-304": { "estado": "pendiente" },
 
@@ -417,7 +417,7 @@
 
   "TA-309": { "estado": "terminada", "rama": "ta-309-detalle-2", "pr": 328 },
 
-  "TA-310": { "estado": "pendiente" },
+  "TA-310": { "estado": "terminada", "rama": "ta-310-eliminar-estado-3", "pr": 388 },
 
   "TA-311": { "estado": "terminada", "rama": "ta-311-olvidada", "pr": 347 },
 
@@ -445,7 +445,7 @@
 
   "TA-407": { "estado": "pendiente" },
 
-  "TA-408": { "estado": "pendiente" },
+  "TA-408": { "estado": "terminada", "rama": "ta-408-por-cobrar-3", "pr": 386 },
 
   "TA-409": { "estado": "pendiente" },
 

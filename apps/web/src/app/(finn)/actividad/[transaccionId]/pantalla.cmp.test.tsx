@@ -4,6 +4,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import type { DetalleTransaccionDto } from '@finn/aplicacion/consultas/detalle-transaccion';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../../../app/globals.css';
+import {
+  ContextoAcciones,
+  type AccionesPublicadas,
+} from '../../../../componentes/marco/publicar-acciones';
+import { transaccion as t } from '../../../../textos/transaccion';
 import { PantallaDetalleTransaccion } from './pantalla';
 
 // `next/link` necesita el enrutador de Next, que el navegador de prueba no tiene: se simula `next/link` (el límite externo).
@@ -96,5 +101,97 @@ describe('FT-25 detalle de una transacción', () => {
     expect(desdeCuenta.querySelector('a')?.getAttribute('href')).toBe('/cuentas/c1');
     const manual = mostrar(dto({ origenDetalle: undefined }));
     expect(manual.querySelector('blockquote')).toBeNull();
+  });
+
+  it('PRU-CMP-TX-458 [CA-26.1] publica a «Más acciones» cambiar el estado y, al final en peligro, Eliminar, con `?volver=`; una conciliada deshabilita el cambio con su motivo', () => {
+    const publicadas: (AccionesPublicadas | null)[] = [];
+    const publicar = (a: AccionesPublicadas | null): void => {
+      publicadas.push(a);
+    };
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    act(() => {
+      raiz.render(
+        <ContextoAcciones.Provider value={publicar}>
+          <PantallaDetalleTransaccion dto={dto()} volver="/cuentas/c1" />
+        </ContextoAcciones.Provider>,
+      );
+    });
+    montados.push({ raiz, nodo });
+    const acciones = publicadas.at(-1)?.acciones ?? [];
+    expect(acciones.map((a) => a.etiqueta)).toEqual([t.marcarConfirmada, t.eliminar]);
+    expect(acciones[0]?.ruta).toBe('/actividad/t1/estado?volver=%2Fcuentas%2Fc1');
+    expect(acciones[1]).toMatchObject({
+      ruta: '/actividad/t1/eliminar?volver=%2Fcuentas%2Fc1',
+      peligro: true,
+    });
+
+    const conciliada = document.createElement('div');
+    document.body.append(conciliada);
+    const otra = createRoot(conciliada);
+    act(() => {
+      otra.render(
+        <ContextoAcciones.Provider value={publicar}>
+          <PantallaDetalleTransaccion
+            dto={dto({
+              transaccion: { ...dto().transaccion, estadoBancario: 'conciliada' },
+            })}
+            volver={undefined}
+          />
+        </ContextoAcciones.Provider>,
+      );
+    });
+    montados.push({ raiz: otra, nodo: conciliada });
+    const estado = publicadas.at(-1)?.acciones[0];
+    expect(estado?.ruta).toBeUndefined();
+    expect(estado?.motivo).toBe(t.estadoConciliadaNota);
+  });
+
+  it('PRU-CMP-TX-470 [CA-25.8] el detalle muestra «Comercio y nota», las partes con su cubierto y no cubierto, sus eventos y controles de 44 px como mínimo', () => {
+    const nodo = mostrar(
+      dto({
+        lineas: [
+          {
+            id: 'l1',
+            orden: 1,
+            monto: 2250,
+            destino: { categoria: { id: 'k1', nombre: 'Farmacia' } },
+            reparto: { cubierto: 1735, noCubierto: 515 },
+            cobros: [],
+            condonaciones: [],
+            devoluciones: [{ transaccionId: 'd1', fecha: '2027-02-23', monto: 500, caso: 'D-1' }],
+          },
+          {
+            id: 'l2',
+            orden: 2,
+            monto: 3000,
+            destino: { deudor: { id: 'u1', nombre: 'Carlos' } },
+            porCobrar: { abierto: 2000, restituido: 1000, condonado: 0, devuelto: 0 },
+            cobros: [
+              {
+                transaccionId: 'c1',
+                fecha: '2027-02-22',
+                monto: 1000,
+                restitucion: 1000,
+                excedente: 0,
+              },
+            ],
+            condonaciones: [],
+            devoluciones: [],
+          },
+        ],
+        nota: 'x',
+      }),
+    );
+    const titulos = [...nodo.querySelectorAll('h2')].map((h) => h.textContent);
+    expect(titulos).toEqual(expect.arrayContaining(['Comercio y nota', 'Partes', 'Eventos']));
+    const [farmacia, carlos] = [...nodo.querySelectorAll('[data-linea]')];
+    expect(farmacia?.textContent).toContain('Cubierto $17.35 · no cubierto $5.15');
+    expect(carlos?.textContent).toContain('Cobrado $10.00 · por cobrar $20.00');
+    expect(nodo.querySelector('main')?.textContent).toContain('dividido en 2 partes');
+    expect(nodo.querySelector('[aria-hidden="true"] span')).not.toBeNull();
+    for (const enlace of nodo.querySelectorAll('a'))
+      expect(enlace.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
   });
 });
