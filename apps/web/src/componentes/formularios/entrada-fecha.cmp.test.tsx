@@ -65,7 +65,7 @@ function Campo({
 }
 
 const texto = (raiz: HTMLElement): HTMLInputElement => {
-  const campo = raiz.querySelector<HTMLInputElement>('input[type=text]');
+  const campo = raiz.querySelector<HTMLInputElement>('input[inputmode=numeric]');
   if (campo === null) throw new Error('no hay campo de texto');
   return campo;
 };
