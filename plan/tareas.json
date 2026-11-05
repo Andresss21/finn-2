@@ -431,7 +431,7 @@
 
   "TA-400": { "estado": "terminada", "rama": "ta-400-listo-para-asignar", "pr": 279 },
 
-  "TA-401": { "estado": "pendiente" },
+  "TA-401": { "estado": "terminada", "rama": "ta-401-reserva-excedente", "pr": 408 },
 
   "TA-402": { "estado": "pendiente" },
 
@@ -441,7 +441,9 @@
 
   "TA-405": { "estado": "terminada", "rama": "ta-405-fusionar-categorias", "pr": 310 },
 
-  "TA-406": { "estado": "pendiente" },
+  "TA-406": { "estado": "terminada", "rama": "ta-406-devolver-2", "pr": 409 },
+
+  "TA-480": { "estado": "pendiente" },
 
   "TA-407": { "estado": "pendiente" },
 
