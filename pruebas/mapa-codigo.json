@@ -168,7 +168,7 @@
   { "patron": "apps/web/src/app/(finn)/marcar-leido.tsx", "fts": ["FT-08"] },
   { "patron": "apps/web/src/app/(finn)/inicio-secciones.tsx", "fts": ["FT-08"] },
   { "patron": "apps/web/src/app/(finn)/fila-atencion.tsx", "fts": ["FT-08"] },
-  { "patron": "apps/web/src/app/(finn)/reserva-excedente.tsx", "fts": ["FT-08"] },
+  { "patron": "apps/web/src/app/(finn)/reserva-excedente.tsx", "fts": ["FT-08", "FT-31"] },
   { "patron": "apps/web/src/app/(finn)/primeros-pasos.tsx", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/recordatorio-primeros-pasos.tsx", "fts": ["FT-04"] },
   { "patron": "apps/web/src/cliente/usePrimerosPasosOcultos.ts", "fts": ["FT-04"] },
