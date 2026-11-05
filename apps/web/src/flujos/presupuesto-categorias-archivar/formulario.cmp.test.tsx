@@ -180,4 +180,22 @@ describe('PRU-CMP-CATEG', () => {
     await tocar(nodo, t.volverAEditar);
     expect(nodo.textContent).toContain(t.archivar);
   });
+
+  it('PRU-CMP-PRES-282 [FT-19] la confirmación de Archivar dibuja el impacto del servidor en una tarjeta de filas, con el foco en su título y «Volver a editar» y «Confirmar» en dos columnas de 44 px o más, sin «antes → después»', async () => {
+    const accion = vi.fn(() => ok(vista()));
+    const nodo = montar(<FormularioArchivar {...base} accion={accion} />);
+    await tocar(nodo, t.archivar);
+    const tarjeta = nodo.querySelector('section ul');
+    expect(tarjeta?.className).toContain('rounded-contenedor');
+    expect(
+      [...(tarjeta?.querySelectorAll(':scope > li') ?? [])].map((li) => li.textContent),
+    ).toEqual([t.impactoLpa('+$40.00')]);
+    expect(document.activeElement?.textContent).toBe(t.revisar);
+    const pie = boton(nodo, t.confirmar).parentElement;
+    expect(pie?.className).toContain('grid-cols-2');
+    const botones = [...(pie?.querySelectorAll('button') ?? [])];
+    expect(botones.map((b) => b.textContent)).toEqual([t.volverAEditar, t.confirmar]);
+    for (const b of botones) expect(b.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expect(nodo.textContent).not.toContain('→');
+  });
 });

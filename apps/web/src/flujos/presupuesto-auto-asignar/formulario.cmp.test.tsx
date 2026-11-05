@@ -55,6 +55,8 @@ const sinCubrir = { codigo: 'AV-18', datos: { [MASCOTA]: 5000 } };
 const base: Omit<PropsFormularioAutoAsignar, 'accion'> = {
   periodoInicio: '2027-02-01',
   revision: 'r1',
+  periodo: '01/02 – 28/02/2027',
+  lpa: '$300.00',
   nombres: { [SUPER]: 'Super', [MASCOTA]: 'Mascota' },
   hayFalta: true,
   rutaPadre: '/presupuesto',
@@ -69,6 +71,10 @@ const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement => {
 const tocar = async (nodo: HTMLElement, texto: string): Promise<void> => {
   await userEvent.click(boton(nodo, texto));
 };
+/** El texto de la fila de la tarjeta de una categoría (nombre, «falta para la meta» y el monto). */
+const filaDe = (nodo: HTMLElement, id: string): string | undefined =>
+  nodo.querySelector(`li [data-categoria="${id}"]`)?.textContent;
+const alto = (e: Element): number => e.getBoundingClientRect().height;
 
 describe('PRU-CMP-PRES', () => {
   it('PRU-CMP-PRES-130 [AV-18] al abrir previsualiza sola con la revisión vista, dibuja lo que asignaría y lo que queda sin cubrir; confirmar envía la misma entrada con la huella y el aviso sigue a la vista', async () => {
@@ -85,7 +91,7 @@ describe('PRU-CMP-PRES', () => {
       esperado: { revision: 'r1' },
     });
     expect(nodo.textContent).toContain(t.revisar);
-    expect(nodo.textContent).toContain(t.asignaria('Super', '$300.00'));
+    expect(filaDe(nodo, SUPER)).toBe(`Super${t.faltaParaLaMeta}+$300.00`);
     expect(nodo.textContent).toContain(t.sinCubrir('Mascota', '$50.00'));
 
     await tocar(nodo, t.confirmar);
@@ -161,5 +167,40 @@ describe('PRU-CMP-PRES', () => {
       esperado: { revision: 'r2' },
     });
     expect(nodo.textContent).toContain(t.revisar);
+  });
+  it('PRU-CMP-PRES-280 [FT-13] la confirmación de Auto-asignar dibuja el período, la introducción con Listo para asignar, una fila por categoría con «+$…» en una tarjeta, lo que queda sin cubrir como advertencia y «Cancelar» y «Asignar» en dos columnas de 44 px o más, sin «antes → después»', async () => {
+    const accion = vi.fn(() => ok(vista({ avisos: [sinCubrir] })));
+    const nodo = await montar(<FormularioAutoAsignar {...base} accion={accion} />);
+    expect(nodo.textContent).toContain(t.periodo('01/02 – 28/02/2027'));
+    expect(nodo.textContent).toContain(t.intro('$300.00'));
+    const tarjeta = nodo.querySelector('section ul');
+    expect(tarjeta?.className).toContain('rounded-contenedor');
+    const filas = [...(tarjeta?.querySelectorAll(':scope > li') ?? [])].map((li) => li.textContent);
+    expect(filas).toEqual([`Super${t.faltaParaLaMeta}+$300.00`, t.impactoLpa('−$300.00')]);
+    const aviso = nodo.querySelector('[data-estado="advertencia"]');
+    expect(aviso?.textContent).toContain(t.sinCubrir('Mascota', '$50.00'));
+    // El foco va al título de la confirmación, como antes (05 §4.4)
+    expect(document.activeElement?.textContent).toBe(t.revisar);
+    const pie = boton(nodo, t.confirmar).parentElement;
+    expect(pie?.className).toContain('grid-cols-2');
+    expect([...(pie?.querySelectorAll('button') ?? [])].map((b) => b.textContent)).toEqual([
+      t.cancelar,
+      t.confirmar,
+    ]);
+    for (const b of pie?.querySelectorAll('button') ?? [])
+      expect(alto(b)).toBeGreaterThanOrEqual(44);
+    expect(nodo.textContent).not.toContain('→');
+  });
+
+  it('PRU-CMP-PRES-281 [FT-13] sin metas con falta lo dice en un aviso positivo con su título y «Cerrar», de 44 px o más, cierra el flujo', async () => {
+    const accion = vi.fn(() => ok(vista()));
+    const nodo = await montar(<FormularioAutoAsignar {...base} hayFalta={false} accion={accion} />);
+    const aviso = nodo.querySelector('[data-estado="positivo"]');
+    expect(aviso?.textContent).toContain(t.nadaQueAutoAsignar);
+    expect(aviso?.textContent).toContain(t.sinFalta);
+    expect(alto(boton(nodo, 'Cerrar'))).toBeGreaterThanOrEqual(44);
+    await tocar(nodo, 'Cerrar');
+    expect(replace).toHaveBeenCalledWith('/presupuesto');
+    expect(accion).not.toHaveBeenCalled();
   });
 });

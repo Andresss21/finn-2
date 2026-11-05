@@ -92,6 +92,7 @@
   { "patron": "apps/web/src/flujos/actividad-devolver/**", "fts": ["FT-28"] },
   { "patron": "apps/web/src/servidor/acciones/eventos.ts", "fts": ["FT-28"] },
   { "patron": "apps/web/src/flujos/metas-nueva/**", "fts": ["FT-17"] },
+  { "patron": "apps/web/src/flujos/metas-meta/**", "fts": ["FT-17"] },
   { "patron": "apps/web/src/app/(finn)/programadas/**", "fts": ["FT-40", "FT-41"] },
   { "patron": "apps/web/src/servidor/acciones/programadas.ts", "fts": ["FT-40"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/mover/**", "fts": ["FT-11"] },
