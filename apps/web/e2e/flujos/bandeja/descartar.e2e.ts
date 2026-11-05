@@ -215,4 +215,46 @@ test.describe('PRU-E2E-BAND', () => {
     await abrir(page);
     await expect(filas(page)).toHaveCount(1);
   });
+
+  test('PRU-E2E-BAND-216 [FT-34] el selector segmentado «Por revisar · N» / «Descartados» cambia de vista, marca la elegida y vuelve', async ({
+    page,
+  }) => {
+    await preparar([
+      sms('primero', 'Libreria', 7, '10:00'),
+      sms('repetido', 'Libreria', 7, '10:09'),
+    ]);
+    await abrir(page);
+    const grupo = page.getByRole('radiogroup', { name: t.vistas.nombre });
+    const porRevisar = grupo.getByRole('radio', { name: t.vistas.activosConConteo(1) });
+    const descartados = grupo.getByRole('radio', { name: t.vistas.descartados });
+    await expect(porRevisar).toBeChecked();
+    await expect(descartados).not.toBeChecked();
+
+    await descartados.click();
+    await expect(page).toHaveURL(/\/bandeja\?vista=descartados$/);
+    await expect(grupo.getByRole('radio', { name: t.vistas.descartados })).toBeChecked();
+    await expect(filas(page)).toHaveCount(1);
+
+    await grupo.getByRole('radio', { name: t.vistas.activosConConteo(1) }).click();
+    await expect(page).toHaveURL(/\/bandeja$/);
+    await expect(grupo.getByRole('radio', { name: t.vistas.activosConConteo(1) })).toBeChecked();
+  });
+
+  test('PRU-E2E-BAND-217 [FT-37] la fila de un descartado lleva el monto con el signo de su tipo y un «Restaurar» de al menos 44 px', async ({
+    page,
+  }) => {
+    await preparar([
+      sms('primero', 'Libreria', 7, '10:00'),
+      sms('repetido', 'Libreria', 7, '10:09'),
+    ]);
+    await abrir(page, '/bandeja?vista=descartados');
+    const monto = filas(page).locator('[data-centavos]');
+    await esperarMonto(monto, 700);
+    await expect(monto.locator('[aria-hidden="true"]')).toHaveText(/^[−-]\$7\.00$/);
+    const caja = await page
+      .getByRole('button', { name: accion(t.restaurar, 'Libreria') })
+      .boundingBox();
+    expect(caja?.height).toBeGreaterThanOrEqual(44);
+    expect(caja?.width).toBeGreaterThanOrEqual(44);
+  });
 });
