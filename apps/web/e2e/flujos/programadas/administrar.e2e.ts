@@ -228,10 +228,7 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await abrir(page, '/presupuesto/estructura');
     await page.getByRole('link', { name: 'Editar Gimnasio', exact: true }).click();
     await page.getByRole('link', { name: 'Archivar', exact: true }).click();
-    await page
-      .getByRole('radiogroup', { name: /Programada Gimnasio/ })
-      .getByRole('radio', { name: 'Desactivarla' })
-      .click();
+    await page.getByLabel(/Programada Gimnasio/).selectOption({ label: 'Desactivarla' });
     await page.getByRole('button', { name: 'Archivar', exact: true }).click();
     await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
     await expect(page).toHaveURL(/\/presupuesto\/categorias\/[0-9a-f-]+$/);
@@ -250,7 +247,7 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await page.getByRole('link', { name: 'Editar Gimnasio', exact: true }).click();
     await page.getByRole('link', { name: 'Archivar', exact: true }).click();
     await page.getByRole('button', { name: 'Archivar', exact: true }).click();
-    await expect(page.getByText('Elegí una opción.')).toBeVisible();
+    await expect(page.locator('p').filter({ hasText: 'Elegí una opción.' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Revisá el impacto' })).toHaveCount(0);
 
     await abrir(page, '/programadas');
