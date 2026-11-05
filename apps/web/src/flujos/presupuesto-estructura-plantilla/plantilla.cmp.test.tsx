@@ -214,4 +214,45 @@ describe('PRU-CMP-INICIO', () => {
     expect(enviados.map((e) => e.nombre)).not.toContain('Ropa y calzado');
     expect(enviados.map((e) => e.nombre)).toContain('Transporte');
   });
+
+  it('PRU-CMP-PRES-270 quitar una categoría la tacha y baja la cuenta de «Crear»; «Deshacer» la devuelve', async () => {
+    const nodo = montar(<PanelPlantilla hayNormales={false} crearLote={vi.fn()} />);
+    const primera = t.grupos[0].categorias[0];
+    await act(() => {
+      boton(nodo, t.quitarCategoria(primera)).click();
+      return Promise.resolve();
+    });
+    expect(boton(nodo, t.crear(35))).toBeTruthy();
+    const entrada = nodo.querySelector(`[aria-label="${t.nombreCategoria(primera)}"]`);
+    expect(entrada?.className).toContain('line-through');
+    await act(() => {
+      boton(nodo, `${t.deshacer}: ${t.quitarCategoria(primera)}`).click();
+      return Promise.resolve();
+    });
+    expect(boton(nodo, t.crear(36))).toBeTruthy();
+  });
+
+  it('PRU-CMP-PRES-271 [CA-04.10] cortada la creación dice cuántas se crearon y cuáles faltan, sin repetir lo creado', async () => {
+    const crearLote = vi.fn((entrada: { elementos: Elemento[] }) =>
+      Promise.resolve(
+        crearLote.mock.calls.length === 1
+          ? {
+              ok: true,
+              valor: {
+                elementos: entrada.elementos.map((e) => ({ id: e.id, resultado: 'creado' })),
+              },
+            }
+          : { ok: false, error: { mensaje: 'Se cortó.' } },
+      ),
+    );
+    const nodo = montar(<PanelPlantilla hayNormales={false} crearLote={crearLote as never} />);
+    await act(() => {
+      boton(nodo, t.crear(36)).click();
+      return Promise.resolve();
+    });
+    await esperarTexto(nodo, t.seguir(12, 47));
+    const faltan = nodo.querySelector('[data-faltan]')?.textContent ?? '';
+    expect(faltan).toContain(`${t.creadasN(12)} · ${t.faltan}: `);
+    expect(faltan).not.toContain(t.grupos[0].nombre);
+  });
 });
