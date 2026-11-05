@@ -417,7 +417,7 @@
 
   "TA-309": { "estado": "terminada", "rama": "ta-309-detalle-2", "pr": 328 },
 
-  "TA-310": { "estado": "pendiente" },
+  "TA-310": { "estado": "terminada", "rama": "ta-310-eliminar-estado-3", "pr": 388 },
 
   "TA-311": { "estado": "terminada", "rama": "ta-311-olvidada", "pr": 347 },
 

@@ -93,9 +93,28 @@ export function Cabecera({ dto }: { readonly dto: DetalleCuentaDto }) {
           <Monto centavos={cifra} rol="cifra-principal" />
         </dd>
       </dl>
-      <p className="relative text-cuerpo-pequeno text-texto-secundario">
-        {t.saldoConfirmado} <Monto centavos={dto.saldoConfirmado} rol="cuerpo" />
-      </p>
+      {dto.inversion === undefined ? (
+        <p className="relative text-cuerpo-pequeno text-texto-secundario">
+          {t.saldoConfirmado} <Monto centavos={dto.saldoConfirmado} rol="cuerpo" />
+        </p>
+      ) : (
+        <dl data-bloque="inversion" className="relative grid grid-cols-3 gap-2 text-cuerpo-pequeno">
+          {(
+            [
+              [t.inversion.aportes, dto.inversion.aportes],
+              [t.inversion.retiros, dto.inversion.retiros],
+              [t.inversion.ajustes, dto.inversion.ajustes],
+            ] as const
+          ).map(([etiqueta, centavos]) => (
+            <div key={etiqueta}>
+              <dt className="text-rotulo text-texto-secundario">{etiqueta}</dt>
+              <dd className="font-bold">
+                <Monto centavos={centavos} rol="cuerpo" />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </header>
   );
 }
