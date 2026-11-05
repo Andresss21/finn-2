@@ -178,7 +178,7 @@ it(
 );
 
 it(
-  'PRU-ESC-30@int [ESC-30, P10, D-4, D-2] Devolución sin compra original',
+  'PRU-ESC-30@int [ESC-30, P10, D-4, D-2, CA-28.7] Devolución sin compra original',
   () => verificar('ESC-30'),
   TOPE,
 );

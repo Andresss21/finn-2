@@ -29,6 +29,7 @@ export const transaccion = {
   parteDe: (n: number) => `Parte ${n}`,
   porCobrarA: (nombre: string) => `${glosario.porCobrar} a ${nombre}`,
   devolucionDeOtraCompra: 'Devolución de otra compra',
+  deudorPorCobrar: (nombre: string) => `${nombre} (${glosario.porCobrar.toLowerCase()})`,
   cubierto: 'Cubierto',
   noCubierto: 'No cubierto',
   abierto: 'Por cobrar',
@@ -73,4 +74,22 @@ export const transaccion = {
   estadoConciliadaNota: `«${glosario.conciliada}» no se elige aquí: se marca al conciliar el estado de cuenta o al verificar el saldo.`,
   estadoActual: 'Estado',
   guardarEstado: 'Guardar',
+  // FT-28: devolver (OP-33a); 05 §2.6. Los rechazos llegan compuestos en `mensaje`.
+  devolverTitulo: 'Registrar devolución',
+  devolverNota:
+    'La devolución vuelve a la cuenta y al Disponible de cada parte. Podés repartirla como quieras, hasta lo que queda en cada una.',
+  montoDevuelto: 'Monto devuelto',
+  repartoEntrePartes: 'Reparto entre las partes',
+  quedanPorDevolver: (monto: string) => `quedan ${monto} por devolver`,
+  montoDe: (parte: string) => `Monto de ${parte}`,
+  devolverA: 'Devolver a',
+  registrarDevolucion: 'Registrar devolución',
+  registrarDevolucionMonto: (monto: string) => `Registrar devolución ${monto}`,
+  sinNadaTitulo: 'Sin nada por devolver',
+  sinNadaTexto:
+    'Esta compra ya se devolvió completa: no queda nada por devolver en ninguna de sus partes.',
+  totalDeLaCompra: 'Total de la compra',
+  quedaPorDevolver: 'Queda por devolver',
+  volverATransaccion: 'Volver a la transacción',
+  corregiMonto: (parte: string) => `Corregí el monto de ${parte}.`,
 } as const;

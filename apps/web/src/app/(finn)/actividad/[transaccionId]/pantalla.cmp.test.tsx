@@ -103,7 +103,7 @@ describe('FT-25 detalle de una transacción', () => {
     expect(manual.querySelector('blockquote')).toBeNull();
   });
 
-  it('PRU-CMP-TX-458 [CA-26.1] publica a «Más acciones» cambiar el estado y, al final en peligro, Eliminar, con `?volver=`; una conciliada deshabilita el cambio con su motivo', () => {
+  it('PRU-CMP-TX-458 [CA-26.1] publica a «Más acciones» registrar la devolución de un gasto, cambiar el estado y, al final en peligro, Eliminar, con `?volver=`; una conciliada deshabilita el cambio con su motivo', () => {
     const publicadas: (AccionesPublicadas | null)[] = [];
     const publicar = (a: AccionesPublicadas | null): void => {
       publicadas.push(a);
@@ -120,9 +120,14 @@ describe('FT-25 detalle de una transacción', () => {
     });
     montados.push({ raiz, nodo });
     const acciones = publicadas.at(-1)?.acciones ?? [];
-    expect(acciones.map((a) => a.etiqueta)).toEqual([t.marcarConfirmada, t.eliminar]);
-    expect(acciones[0]?.ruta).toBe('/actividad/t1/estado?volver=%2Fcuentas%2Fc1');
-    expect(acciones[1]).toMatchObject({
+    expect(acciones.map((a) => a.etiqueta)).toEqual([
+      t.registrarDevolucion,
+      t.marcarConfirmada,
+      t.eliminar,
+    ]);
+    expect(acciones[0]?.ruta).toBe('/actividad/t1/devolver?volver=%2Fcuentas%2Fc1');
+    expect(acciones[1]?.ruta).toBe('/actividad/t1/estado?volver=%2Fcuentas%2Fc1');
+    expect(acciones[2]).toMatchObject({
       ruta: '/actividad/t1/eliminar?volver=%2Fcuentas%2Fc1',
       peligro: true,
     });
@@ -143,7 +148,7 @@ describe('FT-25 detalle de una transacción', () => {
       );
     });
     montados.push({ raiz: otra, nodo: conciliada });
-    const estado = publicadas.at(-1)?.acciones[0];
+    const estado = publicadas.at(-1)?.acciones[1];
     expect(estado?.ruta).toBeUndefined();
     expect(estado?.motivo).toBe(t.estadoConciliadaNota);
   });
