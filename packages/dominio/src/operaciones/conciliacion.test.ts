@@ -537,8 +537,13 @@ describe('PRU-DOM-CONC-101: conciliación y verificar saldo (01 §5.8; 04 §3.8,
     };
     const i = calcular(conB, HOY);
     const r = clasificarConciliacion(i, id('T'), ESTADO);
-    const fila = (t: string, dia: string, comercio: string | null, monto: number, estado: string) =>
-      ({ transaccionId: t, fecha: f(dia), comercio, monto: c(monto), estadoBancario: estado });
+    const fila = (
+      t: string,
+      dia: string,
+      comercio: string | null,
+      monto: number,
+      estado: string,
+    ) => ({ transaccionId: t, fecha: f(dia), comercio, monto: c(monto), estadoBancario: estado });
     expect(r.coincidencias).toEqual([
       { ...fila('A', '05', null, -40, 'pendiente'), movimientoIndice: 0 },
       { ...fila('B', '08', null, -25, 'confirmada'), movimientoIndice: 1 },
