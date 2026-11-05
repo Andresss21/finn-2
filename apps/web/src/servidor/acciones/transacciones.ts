@@ -4,6 +4,7 @@ import {
   OP20,
   OP21,
   OP22,
+  OP23,
   OP24,
   OP28,
   OP29,
@@ -15,6 +16,7 @@ import { operacion } from '../operaciones.ts';
 export const registrarGasto = accion(operacion(OP20));
 export const registrarIngreso = accion(operacion(OP21));
 export const transferirEntreCuentas = accion(operacion(OP22));
+export const pagarTarjeta = accion(operacion(OP23));
 export const pagarCuotaPrestamo = accion(operacion(OP24));
 export const editarTransaccion = accion(operacion(OP28));
 export const eliminarTransaccion = accion(operacion(OP29));

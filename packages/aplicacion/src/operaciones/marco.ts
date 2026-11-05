@@ -542,7 +542,9 @@ export async function confirmar<E, R, S>(
     const huella = huellaDe(resultado);
     const pide =
       def.exigeConfirmacion === true || resultado.avisos.some((a) => a.requiereConfirmacion);
-    if (pide && huellaImpacto !== huella)
+    if (pide && huellaImpacto !== huella) {
+      // La propuesta (p. ej. el saldo a favor de OP-23) viaja también aquí: es la previsualización que ve quien confirma
+      const propuesta = def.proponer?.(tx, entrada, hechos);
       return terminar({
         tipo: 'error',
         error: errorDe('requiere_confirmacion', 'REQUIERE_CONFIRMACION', {
@@ -554,12 +556,14 @@ export async function confirmar<E, R, S>(
             avisos: resultado.avisos,
             rechazos: [],
             nombres: nombresDelImpacto(resultado.impacto, resultado.hechosNuevos),
+            ...(propuesta === undefined ? {} : { propuesta }),
           },
           ...(typeof revisionVista === 'string' && revisionVista !== tx.estado.revision
             ? { datos: { revisionVista, revisionActual: tx.estado.revision } }
             : {}),
         }),
       });
+    }
 
     // Pasos 10 a 13
     const declarada = def.operacionDeclarada ?? resultado.operacionDeclarada;
