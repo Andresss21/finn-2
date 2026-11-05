@@ -5,6 +5,14 @@
 import type { ReactNode } from 'react';
 import { Icono } from '../../componentes/base/icono';
 
+// Clases literales (L13): el enlace con el aspecto del botón principal o del tonal (D1)
+export const ENLACE = {
+  principal:
+    'inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion',
+  tonal:
+    'inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion',
+} as const;
+
 export function TablaDatos({ filas }: { readonly filas: readonly (readonly [string, string])[] }) {
   return (
     <dl className="rounded-contenedor bg-superficie px-4 py-1">

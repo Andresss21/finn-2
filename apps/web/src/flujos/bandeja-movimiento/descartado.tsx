@@ -16,15 +16,19 @@ import {
   textoRestaurado,
   type ValorMovimiento,
 } from './descarte';
+import { ENLACE } from './piezas';
 
 export default function Descartado({
   movimientoId,
   comercio,
   monto,
+  siguienteId,
 }: {
   readonly movimientoId: string;
   readonly comercio: string | null;
   readonly monto: number | null;
+  /** El movimiento que seguía en la lista al abrir (CH-151): «Siguiente movimiento» en el panel de computadora. */
+  readonly siguienteId?: string | undefined;
 }) {
   const restaurar = useOperacion({ accion: descartarMovimiento });
   const descartar = useOperacion({ accion: descartarMovimiento });
@@ -70,6 +74,11 @@ export default function Descartado({
         <AvisoEnLinea estado="problema" aparecioDespues>
           {fallo.mensaje}
         </AvisoEnLinea>
+      )}
+      {siguienteId === undefined ? null : (
+        <EnlaceFinn href={`/bandeja/${siguienteId}`} className={ENLACE.principal}>
+          {t.revisar.siguiente}
+        </EnlaceFinn>
       )}
       <EnlaceFinn
         href="/bandeja"

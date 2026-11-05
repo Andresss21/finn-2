@@ -98,7 +98,7 @@ test.describe('PRU-E2E-BAND', () => {
     await abrirBandeja(page);
     await fila(page).getByRole('link').click();
     await expect(page.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
-    await expect(page.getByText(/Super/).first()).toBeVisible();
+    await expect(page.locator('main[data-pagina-flujo]').getByText(/Super/).first()).toBeVisible();
 
     await elegirOpcion(page, g.categoriaDeParte('1'), 'Super');
     await page.getByRole('button', { name: t.revisar.aprobar }).click();

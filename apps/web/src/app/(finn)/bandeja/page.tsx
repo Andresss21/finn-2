@@ -2,13 +2,13 @@
 // Con `?vista=descartados` muestra los descartados y autodescartados, paginados por cursor, con «Restaurar».
 import { bandeja } from '@finn/aplicacion/consultas/bandeja';
 import type { Metadata } from 'next';
-import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
 import { Pestanas } from '../../../componentes/navegacion/pestanas';
 import { consultar } from '../../../servidor/consultar';
 import { depsDeConsulta } from '../../../servidor/consultas';
 import type { BusquedaDePagina } from '../../../servidor/parametros';
 import { bandeja as t } from '../../../textos/bandeja';
+import { soloActivos } from './activos';
 import { ListaDescartados, type Descartado } from './descartados';
 import { ListaBandeja } from './lista';
 
@@ -73,10 +73,7 @@ export default async function PaginaBandeja({
       </main>
     );
   // La vista de activos solo trae estados con fila compacta; el filtro deja ese hecho en el tipo
-  const movimientos = dto.movimientos.filter(
-    (m): m is typeof m & { estado: MovimientoDto['estado'] } =>
-      m.estado !== 'aprobado' && m.estado !== 'descartado' && m.estado !== 'autodescartado',
-  );
+  const movimientos = soloActivos(dto.movimientos);
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-4">
       <PublicarEncabezado encabezado={dto} />
