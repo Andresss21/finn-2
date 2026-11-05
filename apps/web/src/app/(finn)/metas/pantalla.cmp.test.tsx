@@ -112,7 +112,7 @@ describe('PRU-CMP-META-101 metas', () => {
     expect(filas[1]?.textContent).toContain('Acumular');
   });
 
-  it('PRU-CMP-META-101 [AV-17] una meta vencida muestra el aviso con «Extender la fecha» y «Ajustar el monto»; una que no, no', () => {
+  it('PRU-CMP-META-101 [AV-17] una meta vencida muestra el aviso con «Extender la fecha» y «Ajustar el monto» y va en «Otras metas»; una que no, no', () => {
     const raiz = mostrar(
       <PantallaMetas
         dto={dto([
@@ -129,15 +129,15 @@ describe('PRU-CMP-META-101 metas', () => {
         ])}
       />,
     );
-    const filas = raiz.querySelectorAll('[data-meta]');
-    expect(filas[0]?.getAttribute('data-vencida')).toBe('si');
-    expect(filas[0]?.textContent).toContain('Meta vencida');
-    expect(filas[0]?.textContent).toContain('15/05/2027');
-    expect(enlaces(filas[0] as HTMLElement)).toEqual(
+    const aviso = raiz.querySelector('[data-aviso-meta="m3"]') as HTMLElement;
+    expect(aviso.textContent).toContain('Meta vencida');
+    expect(aviso.textContent).toContain('15/05/2027');
+    expect(enlaces(aviso)).toEqual(
       expect.arrayContaining(['Extender la fecha', 'Ajustar el monto']),
     );
-    expect(filas[1]?.getAttribute('data-vencida')).toBe('no');
-    expect(filas[1]?.textContent).not.toContain('Extender la fecha');
+    expect(raiz.querySelectorAll('[data-aviso-meta]')).toHaveLength(1);
+    expect(raiz.querySelector('[data-meta="m3"]')?.getAttribute('data-vencida')).toBe('si');
+    expect(raiz.querySelector('[data-meta="m1"]')?.getAttribute('data-vencida')).toBe('no');
   });
 
   it('PRU-CMP-META-101 sin metas lo dice y ofrece crear una con la primera categoría sin meta', () => {
@@ -213,5 +213,55 @@ describe('PRU-CMP-META-101 metas', () => {
     expect(
       resultado.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.html).join(' | ')}`),
     ).toEqual([]);
+  });
+});
+
+describe('PRU-CMP-META-130 metas del diseño (CH-145)', () => {
+  it('PRU-CMP-META-130 [CA-17.1] la vigente va en una tarjeta con su resumen y la vencida, en «Otras metas» como fila con su estado y su enlace', () => {
+    const raiz = mostrar(
+      <PantallaMetas
+        dto={dto([
+          meta(),
+          meta({
+            id: 'm5',
+            categoria: { id: 'c5', nombre: 'Netflix' },
+            estado: 'vencida',
+            vencida: true,
+          }),
+        ])}
+      />,
+    );
+    const tarjeta = raiz.querySelector('[data-meta="m1"]') as HTMLElement;
+    expect(tarjeta.querySelector('[data-resumen-meta]')).not.toBeNull();
+    const fila = raiz.querySelector('[data-meta="m5"]') as HTMLElement;
+    expect(fila.querySelector('[data-resumen-meta]')).toBeNull();
+    expect(fila.querySelector('a')?.getAttribute('href')).toBe('/metas/m5');
+    expect(fila.textContent).toContain('Meta vencida');
+    expect(raiz.querySelector('#otras')?.textContent).toBe('Otras metas');
+  });
+
+  it('PRU-CMP-META-131 sin metas lista las categorías sin meta, cada una con su enlace a crearla', () => {
+    const raiz = mostrar(
+      <PantallaMetas
+        dto={dto(
+          [],
+          [
+            { id: 'c8', nombre: 'Gasolina' },
+            { id: 'c9', nombre: 'Viaje' },
+          ],
+        )}
+      />,
+    );
+    const filas = [...raiz.querySelectorAll('[data-sin-meta]')];
+    expect(filas.map((f) => f.textContent)).toEqual(['GasolinaSin meta', 'ViajeSin meta']);
+    expect(filas[1]?.querySelector('a')?.getAttribute('href')).toBe('/metas/nueva?categoria=c9');
+  });
+
+  it('PRU-CMP-META-132 los enlaces y filas de la pantalla miden al menos 44 px de alto', () => {
+    const raiz = mostrar(<PantallaMetas dto={dto([meta()], [{ id: 'c9', nombre: 'Viaje' }])} />);
+    const chicos = [...raiz.querySelectorAll('a')].filter(
+      (a) => a.getBoundingClientRect().height < 44,
+    );
+    expect(chicos.map((a) => a.textContent)).toEqual([]);
   });
 });

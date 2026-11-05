@@ -8,6 +8,7 @@ import { almacen } from '../../cliente/almacen';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaSinEtiqueta } from '../../componentes/base/campo';
+import { Icono } from '../../componentes/base/icono';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { claveDeBorrador } from '../../formularios/use-borrador';
@@ -18,12 +19,13 @@ import { tandas } from './tandas';
 
 const RAIZ = '/presupuesto/estructura';
 const CLAVE = claveDeBorrador(`${RAIZ}/plantilla`);
-const ENLACE = 'inline-flex min-h-11 items-center px-3 font-semibold text-enlace underline';
 
 interface Fila {
   readonly clave: string;
   readonly padre: string | null;
   readonly nombre: string;
+  /** Quitada de la lista, con «Deshacer» a un toque (export 08): no se crea mientras lo esté. */
+  readonly quitada?: boolean;
 }
 interface Elemento {
   readonly id: string;
@@ -50,7 +52,7 @@ const inicial = (): Fila[] =>
   });
 const limpio = (f: Fila): string => f.nombre.trim();
 const hijas = (filas: readonly Fila[], g: Fila): Fila[] =>
-  filas.filter((c) => c.padre === g.clave && limpio(c) !== '');
+  filas.filter((c) => c.padre === g.clave && c.quitada !== true && limpio(c) !== '');
 const conNombre = (filas: readonly Fila[]): Fila[] =>
   filas.filter((g) => g.padre === null && limpio(g) !== '');
 
@@ -79,23 +81,32 @@ const guardar = (campos: Aplicacion): void => {
   almacen.escribir(CLAVE, JSON.stringify({ version: 1, campos }));
 };
 
+const ESTILO = {
+  normal: 'min-w-0 flex-1',
+  grupo: 'text-rotulo min-w-0 flex-1',
+  quitada: 'min-w-0 flex-1 text-texto-secundario line-through',
+} as const;
+
 function FilaNombre({
   fila,
   etiqueta,
   etiquetaQuitar,
   alCambiar,
   alQuitar,
+  grupo = false,
 }: {
   readonly fila: Fila;
   readonly etiqueta: string;
   readonly etiquetaQuitar: string;
   readonly alCambiar: (clave: string, nombre: string) => void;
   readonly alQuitar: (clave: string) => void;
+  readonly grupo?: boolean;
 }) {
+  const quitada = fila.quitada === true;
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       <EntradaSinEtiqueta
-        className="min-w-0 flex-1"
+        className={ESTILO[quitada ? 'quitada' : grupo ? 'grupo' : 'normal']}
         data-clave={fila.clave}
         aria-label={etiqueta}
         value={fila.nombre}
@@ -105,12 +116,13 @@ function FilaNombre({
       />
       <Boton
         variante="discreta"
-        aria-label={etiquetaQuitar}
+        className="min-w-11 px-0"
+        aria-label={quitada ? `${t.deshacer}: ${etiquetaQuitar}` : etiquetaQuitar}
         onClick={() => {
           alQuitar(fila.clave);
         }}
       >
-        {t.quitar}
+        <Icono nombre={quitada ? 'undo' : 'x'} tamano={20} />
       </Boton>
     </div>
   );
@@ -151,7 +163,11 @@ export function PanelPlantilla(props: {
     setFilas((fs) => fs.map((f) => (f.clave === k ? { ...f, nombre } : f)));
   };
   const quitar = (k: string): void => {
-    setFilas((fs) => fs.filter((f) => f.clave !== k && f.padre !== k));
+    setFilas((fs) =>
+      fs.find((f) => f.clave === k)?.padre === null
+        ? fs.filter((f) => f.clave !== k && f.padre !== k)
+        : fs.map((f) => (f.clave === k ? { ...f, quitada: f.quitada !== true } : f)),
+    );
   };
   const agregarA = (padre: string | null) => (): void => {
     const nueva = { clave: clave(), padre, nombre: '' };
@@ -213,33 +229,62 @@ export function PanelPlantilla(props: {
     return typeof motivo === 'string' ? [{ id: e.id, texto: t.noSeCreo(e.nombre, motivo) }] : [];
   });
 
+  const acciones =
+    fase === 'editando' ? (
+      <Boton
+        className="flex-1"
+        deshabilitado={categorias === 0}
+        motivoDeshabilitado={t.elegirUna}
+        onClick={crear}
+      >
+        {t.crear(categorias)}
+      </Boton>
+    ) : fase === 'pendiente' ? (
+      <Boton className="flex-1" onClick={seguir}>
+        {t.seguir(hechos, total)}
+      </Boton>
+    ) : fase === 'resumen' ? (
+      <EnlaceFinn
+        href="/presupuesto"
+        className="inline-flex min-h-12 flex-1 items-center justify-center rounded-control bg-accion font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
+      >
+        {t.verPresupuesto}
+      </EnlaceFinn>
+    ) : undefined;
+  const faltan = aplicacion.elementos.filter((e) => !(e.id in aplicacion.resultados));
+
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={RAIZ}>
-      <div className="flex flex-col gap-4">
+    <PaginaFlujoDeRuta
+      titulo={t.titulo}
+      rutaPadre={RAIZ}
+      {...(fase === 'editando' ? { descripcion: t.descripcion } : {})}
+      {...(acciones === undefined ? {} : { acciones })}
+    >
+      <div className="flex flex-col gap-5">
         {fase === 'saliendo' ? <CerrarFlujoAlMontar rutaPadre={RAIZ} /> : null}
         {fase === 'editando' ? (
           <>
-            <p className="text-cuerpo-pequeno text-texto-secundario">{t.descripcion}</p>
             {filas
               .filter((g) => g.padre === null)
               .map((g) => {
                 const nombre = limpio(g) === '' ? t.grupoNuevo : limpio(g);
                 return (
-                  <div key={g.clave} className="flex flex-col gap-2">
+                  <div key={g.clave} className="flex flex-col gap-1">
                     <FilaNombre
+                      grupo
                       fila={g}
                       etiqueta={t.nombreGrupo(nombre)}
                       etiquetaQuitar={t.quitarGrupo(nombre)}
                       alCambiar={renombrar}
                       alQuitar={quitar}
                     />
-                    <ul className="flex flex-col gap-2 pl-4">
+                    <ul className="overflow-hidden rounded-contenedor bg-superficie px-3 shadow-elevacion-1">
                       {filas
                         .filter((c) => c.padre === g.clave)
                         .map((c) => {
                           const propio = limpio(c) === '' ? t.categoriaNueva : limpio(c);
                           return (
-                            <li key={c.clave}>
+                            <li key={c.clave} className="border-b border-borde-sutil">
                               <FilaNombre
                                 fila={c}
                                 etiqueta={t.nombreCategoria(propio)}
@@ -250,40 +295,43 @@ export function PanelPlantilla(props: {
                             </li>
                           );
                         })}
+                      <li>
+                        <Boton
+                          variante="discreta"
+                          aria-label={t.agregarCategoria(nombre)}
+                          onClick={agregarA(g.clave)}
+                        >
+                          {t.agregar}
+                        </Boton>
+                      </li>
                     </ul>
-                    <div>
-                      <Boton
-                        variante="discreta"
-                        aria-label={t.agregarCategoria(nombre)}
-                        onClick={agregarA(g.clave)}
-                      >
-                        {t.agregar}
-                      </Boton>
-                    </div>
                   </div>
                 );
               })}
             <div>
-              <Boton variante="secundaria" onClick={agregarA(null)}>
+              <Boton variante="discreta" onClick={agregarA(null)}>
+                <Icono nombre="plus" tamano={18} />
                 {t.agregarGrupo}
               </Boton>
             </div>
-            <Boton
-              deshabilitado={categorias === 0}
-              motivoDeshabilitado={t.elegirUna}
-              onClick={crear}
-            >
-              {t.crear(categorias)}
-            </Boton>
           </>
         ) : null}
-        {fase === 'aplicando' ? <p role="status">{t.creando(hechos, total)}</p> : null}
+        {fase === 'aplicando' ? (
+          <div className="flex flex-col gap-2">
+            <p role="status" className="text-cuerpo font-semibold">
+              {t.creando(hechos, total)}
+            </p>
+            <p className="text-cuerpo-pequeno text-texto-secundario">{t.podesSalir}</p>
+          </div>
+        ) : null}
         {fase === 'pendiente' ? (
           <>
             <AvisoEnLinea estado="advertencia" aparecioDespues>
               {fallo ?? t.seInterrumpio}
             </AvisoEnLinea>
-            <Boton onClick={seguir}>{t.seguir(hechos, total)}</Boton>
+            <p data-faltan className="text-cuerpo-pequeno text-texto-secundario">
+              {t.creadasN(hechos)} · {t.faltan}: {faltan.map((e) => e.nombre).join(', ')}
+            </p>
           </>
         ) : null}
         {fase === 'resumen' ? (
@@ -295,9 +343,6 @@ export function PanelPlantilla(props: {
                 <li key={r.id}>{r.texto}</li>
               ))}
             </ul>
-            <EnlaceFinn href="/presupuesto" className={ENLACE}>
-              {t.verPresupuesto}
-            </EnlaceFinn>
           </div>
         ) : null}
       </div>

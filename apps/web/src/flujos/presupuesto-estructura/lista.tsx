@@ -6,14 +6,18 @@ import type { GrupoDeEstructura } from '@finn/dominio/selectores';
 import { useRef } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { Icono } from '../../componentes/base/icono';
+import { Vacio } from '../../componentes/base/vacio';
+import { PaginaFlujoDeRuta, useCerrarFlujo } from '../../componentes/navegacion/flujo-de-ruta';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { useUnToque } from '../../formularios/use-un-toque';
 import { editarEnEstructura } from '../../servidor/acciones/categorias';
 import { estructura as t } from '../../textos/estructura';
 
 const RAIZ = '/presupuesto/estructura';
-const ENLACE = 'inline-flex min-h-11 items-center px-3 font-semibold text-enlace underline';
+const ENLACE = 'inline-flex min-h-11 items-center px-3 font-semibold text-enlace';
+const ENLACE_ANCHO =
+  'inline-flex min-h-11 w-full items-center gap-2 px-4 font-semibold text-enlace';
 const PRINCIPAL =
   'inline-flex min-h-12 items-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
@@ -51,6 +55,7 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
         <Boton
           key={d}
           variante="discreta"
+          className="min-w-11 px-0"
           deshabilitado={ocupado}
           aria-label={(d < 0 ? t.subirA : t.bajarA)(nombre)}
           onClick={() => {
@@ -58,15 +63,24 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
             void un.tocar({ tipo, id, orden: pos + d, esperado: { orden: pos } });
           }}
         >
-          {d < 0 ? t.subir : t.bajar}
+          <Icono nombre="chevD" tamano={18} className={d < 0 ? 'rotate-180' : ''} />
         </Boton>
       ),
     );
   const sinNormales = !grupos.some((g) => g.categorias.some((c) => c.clase === 'normal'));
+  const cerrar = useCerrarFlujo('/presupuesto', false);
 
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre="/presupuesto">
-      <div className="flex flex-col gap-4">
+    <PaginaFlujoDeRuta
+      titulo={t.titulo}
+      rutaPadre="/presupuesto"
+      acciones={
+        <Boton onClick={cerrar} className="min-h-12 flex-1">
+          {t.listo}
+        </Boton>
+      }
+    >
+      <div className="flex flex-col gap-5">
         {un.salida === null ? null : (
           <AvisoEnLinea
             estado="informacion"
@@ -85,29 +99,30 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
             {fallo.mensaje}
           </AvisoEnLinea>
         )}
-        <div className="flex flex-wrap gap-2">
-          <EnlaceFinn href={`${RAIZ}/grupos/nuevo`} className={PRINCIPAL}>
-            {t.nuevoGrupo}
-          </EnlaceFinn>
-          <EnlaceFinn href={`${RAIZ}/categorias/nueva`} className={ENLACE}>
-            {t.nuevaCategoria}
-          </EnlaceFinn>
-          {sinNormales ? (
-            <EnlaceFinn href={`${RAIZ}/plantilla`} className={ENLACE}>
-              {t.usarPlantilla}
-            </EnlaceFinn>
-          ) : null}
-        </div>
+        {sinNormales ? (
+          <Vacio
+            titulo={t.vacioTitulo}
+            texto={t.vacioTexto}
+            icono="grid"
+            tono="neutro"
+            accion={
+              <EnlaceFinn href={`${RAIZ}/plantilla`} className={PRINCIPAL}>
+                {t.usarPlantilla}
+              </EnlaceFinn>
+            }
+          />
+        ) : null}
         {grupos.map(({ grupo: g, categorias }, i) => (
-          <section key={g.id} aria-labelledby={`g-${g.id}`}>
-            <div className="flex flex-wrap items-center gap-x-2">
-              <h2 id={`g-${g.id}`} className="text-titulo-seccion min-w-0 flex-1 py-2">
+          <section key={g.id} aria-labelledby={`g-${g.id}`} className="flex flex-col gap-2">
+            <div className="flex items-center gap-x-2">
+              <h2
+                id={`g-${g.id}`}
+                className="text-rotulo min-w-0 flex-1 py-2 text-texto-secundario"
+              >
                 {g.nombre}
               </h2>
               {g.archivado ? <span className="text-etiqueta">{t.archivado}</span> : null}
-              {g.sistema ? (
-                <span className="text-etiqueta">{t.delSistema}</span>
-              ) : (
+              {g.sistema ? null : (
                 <>
                   <EnlaceFinn
                     href={`${RAIZ}/grupos/${g.id}`}
@@ -126,23 +141,30 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
                 </>
               )}
             </div>
-            <ul>
+            <ul className="overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
               {categorias.map(({ categoria: c, clase, archivada }, j) => (
                 <li
                   key={c.id}
-                  className="flex flex-wrap items-center gap-x-2 border-t border-borde-sutil"
+                  className="flex items-center gap-x-2 border-b border-borde-sutil px-4"
                 >
-                  {clase === 'normal' ? (
-                    <EnlaceFinn
-                      href={`${RAIZ}/categorias/${c.id}`}
-                      className="inline-flex min-h-11 min-w-0 flex-1 items-center text-enlace"
-                      aria-label={t.editar(c.nombre)}
-                    >
-                      {c.nombre}
-                    </EnlaceFinn>
-                  ) : (
-                    <span className="min-h-11 min-w-0 flex-1 py-2.5">{c.nombre}</span>
-                  )}
+                  <div className="flex min-h-14 min-w-0 flex-1 flex-col justify-center">
+                    {clase === 'normal' ? (
+                      <EnlaceFinn
+                        href={`${RAIZ}/categorias/${c.id}`}
+                        className="text-cuerpo inline-flex min-h-11 min-w-0 items-center font-semibold"
+                        aria-label={t.editar(c.nombre)}
+                      >
+                        {c.nombre}
+                      </EnlaceFinn>
+                    ) : (
+                      <span className="text-cuerpo py-2.5 font-semibold">{c.nombre}</span>
+                    )}
+                    {g.sistema ? (
+                      <span className="text-cuerpo-pequeno text-texto-secundario">
+                        {t.delSistema}
+                      </span>
+                    ) : null}
+                  </div>
                   {archivada ? <span className="text-etiqueta">{t.archivada}</span> : null}
                   {g.sistema
                     ? null
@@ -155,17 +177,33 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
                       })}
                 </li>
               ))}
+              {categorias.length === 0 ? (
+                <li className="text-cuerpo-pequeno border-b border-borde-sutil px-4 py-3 text-texto-secundario">
+                  {t.sinCategorias}
+                </li>
+              ) : null}
+              {g.sistema || g.archivado ? null : (
+                <li>
+                  <EnlaceFinn
+                    href={`${RAIZ}/categorias/nueva?grupo=${g.id}`}
+                    className={ENLACE_ANCHO}
+                  >
+                    <Icono nombre="plus" tamano={18} />
+                    {t.nuevaCategoria}
+                    <span className="sr-only"> {t.agregarCategoria(g.nombre)}</span>
+                  </EnlaceFinn>
+                </li>
+              )}
             </ul>
-            {categorias.length === 0 ? (
-              <p className="text-cuerpo-pequeno text-texto-secundario">{t.sinCategorias}</p>
-            ) : null}
-            {g.sistema || g.archivado ? null : (
-              <EnlaceFinn href={`${RAIZ}/categorias/nueva?grupo=${g.id}`} className={ENLACE}>
-                {t.agregarCategoria(g.nombre)}
-              </EnlaceFinn>
-            )}
           </section>
         ))}
+        <EnlaceFinn
+          href={`${RAIZ}/grupos/nuevo`}
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-accion-tonal font-semibold text-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
+        >
+          <Icono nombre="plus" tamano={18} />
+          {t.nuevoGrupo}
+        </EnlaceFinn>
       </div>
     </PaginaFlujoDeRuta>
   );
