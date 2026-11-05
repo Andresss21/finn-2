@@ -239,7 +239,7 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
             }}
             {...(errores.programadas?.[x.id]?.message === undefined
               ? {}
-              : { error: errores.programadas[x.id]?.message as string })}
+              : { error: errores.programadas[x.id]?.message })}
           />
         ))}
         {estado === 'error' && fallo !== undefined ? (
