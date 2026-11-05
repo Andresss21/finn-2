@@ -1,6 +1,7 @@
 // `seleccionar.clasificarConciliacion` (BE-48; 01 §4.17, supuesto 10; 04 §9.5): coincidencias 1 a 1
 // con el criterio de `criterios/conciliacion.ts`, solo en el estado, solo en Finn, el saldo de Finn a
 // la fecha del estado y la diferencia propuesta. OP-46 y OP-47 la repiten con los hechos del momento.
+// Cada transacción trae su detalle (CH-201): la pantalla de 04 §6.12.6 no tiene consulta propia.
 import { saldoAl } from '../calculo/saldos';
 import {
   type Candidata,
@@ -8,6 +9,7 @@ import {
   type Partida,
 } from '../criterios/conciliacion';
 import type {
+  EstadoBancario,
   EstadoDeCuenta,
   Hechos,
   Instantanea,
@@ -18,13 +20,21 @@ import type {
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 
+/** Una transacción de Finn en la clasificación (CH-201): sus datos en los hechos y su efecto en la cuenta. */
+export interface TransaccionConciliacion {
+  readonly transaccionId: Uuid;
+  readonly fecha: FechaLocal;
+  readonly comercio: string | null;
+  readonly monto: Centavos; // el efecto en la cuenta (04 §9.4)
+  readonly estadoBancario: EstadoBancario;
+}
+
 export interface Clasificacion {
-  readonly coincidencias: readonly {
-    readonly transaccionId: Uuid;
+  readonly coincidencias: readonly (TransaccionConciliacion & {
     readonly movimientoIndice: number;
-  }[];
+  })[];
   readonly soloEnEstado: readonly number[]; // índices de los movimientos sin pareja
-  readonly soloEnFinn: readonly Uuid[]; // candidatas sin pareja
+  readonly soloEnFinn: readonly TransaccionConciliacion[]; // candidatas sin pareja
   readonly saldoFinn: Centavos; // saldo(cuenta, fechaEstado)
   readonly diferencia: Centavos; // saldo final del estado − saldo de Finn (ESC-47)
 }
@@ -83,15 +93,24 @@ export function clasificarConciliacion(
   const pares = coincidenciasDeConciliacion(partidas, candidatas);
   const usadas = new Set(pares.values());
   const saldoFinn = saldoAl(i.hechos, cuentaId, estado.fechaEstado);
+  // El detalle sale de las filas ya cargadas, en un solo recorrido; el monto es el de la candidata (su efecto)
+  const porId = new Map(candidatas.map((c) => [c.id, c]));
+  const filas = new Map(
+    i.hechos.transacciones.filter((t) => porId.has(t.id)).map((t) => [t.id as string, t]),
+  );
+  const detalle = (c: Candidata): TransaccionConciliacion => {
+    const { id, fecha, comercio, estadoBancario } = filas.get(c.id) as Transaccion;
+    return { transaccionId: id, fecha, comercio, monto: c.monto, estadoBancario };
+  };
   return {
     coincidencias: estado.movimientos.flatMap((m) => {
-      const t = pares.get(String(m.indice)) as Uuid | undefined;
-      return t === undefined ? [] : [{ transaccionId: t, movimientoIndice: m.indice }];
+      const c = porId.get(pares.get(String(m.indice)) ?? '');
+      return c === undefined ? [] : [{ ...detalle(c), movimientoIndice: m.indice }];
     }),
     soloEnEstado: estado.movimientos
       .filter((m) => !pares.has(String(m.indice)))
       .map((m) => m.indice),
-    soloEnFinn: candidatas.filter((c) => !usadas.has(c.id)).map((c) => c.id as Uuid),
+    soloEnFinn: candidatas.filter((c) => !usadas.has(c.id)).map(detalle),
     saldoFinn,
     diferencia: Centavos.restar(estado.saldoFinal, saldoFinn),
   };

@@ -17,7 +17,11 @@ import {
 } from '../../errores/index.ts';
 import { enLectura, type DepsMarco } from '../marco.ts';
 
-/** La clasificación (§4.17) junto al estado leído y su carga firmada, que la interfaz guarda en el componente. */
+/**
+ * La clasificación (§4.17) junto al estado leído y su carga firmada, que la interfaz guarda en el componente. Cada
+ * transacción de la clasificación trae su fecha, comercio, efecto en la cuenta y estado bancario (CH-201), sacados de
+ * los hechos que ya cargó `leer()`: la pantalla (04 §6.12.6) no tiene otra consulta.
+ */
 export type SalidaOp45 = EstadoNormalizado & {
   readonly clasificacion: Clasificacion;
   readonly carga: string;
