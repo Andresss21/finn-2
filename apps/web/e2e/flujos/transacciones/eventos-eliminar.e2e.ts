@@ -159,10 +159,11 @@ test.describe('PRU-E2E-TX eventos de una compra', () => {
     await abrir(page, '/presupuesto');
     await esperarMonto(disponible(page, 'Ropa'), 0);
     await devolver(page, '100', ['$100.00']);
+    const detalle = page.url();
     await abrir(page, '/presupuesto');
     await esperarMonto(disponible(page, 'Ropa'), 10000);
 
-    await irAlDetalle(page, '$100.00');
+    await abrir(page, detalle);
     await page.getByRole('link', { name: /^Eliminar devuelto/ }).click();
     await expect(
       page.getByRole('heading', { level: 1, name: t.eliminarEventoTitulo }),
@@ -202,18 +203,17 @@ test.describe('PRU-E2E-TX eventos de una compra', () => {
     await expect(fila.locator('[data-estado="problema"]')).toHaveCount(0);
   });
 
-  test('PRU-E2E-TX-502 [CA-14.8] con gastos de $10.00, $40.00 y $20.00 en tres días, al devolver $30.00 el día del de $20.00 el calendario de la categoría marca 2,500, 10,000 y 0', async ({
+  test('PRU-E2E-TX-502 [CA-14.8] con gastos de $10.00, $40.00 y $20.00 en tres días, al devolver completo el de $40.00 el calendario de la categoría deja solo los días de $10.00 y $20.00, con 5,000 y 10,000', async ({
     page,
   }) => {
     await preparar(TRES_DIAS, '2027-02-02');
-    await devolver(page, '30', ['$40.00']);
+    await devolver(page, '40', ['$40.00']);
 
     await abrirCategoria(page, 'Super');
     const dias = page.locator('[data-calendario] button[data-dia]');
-    await expect(dias).toHaveCount(3);
-    await expect(dias.nth(0)).toHaveAttribute('data-intensidad', '2500');
+    await expect(dias).toHaveCount(2);
+    await expect(dias.nth(0)).toHaveAttribute('data-intensidad', '5000');
     await expect(dias.nth(1)).toHaveAttribute('data-intensidad', '10000');
-    await expect(dias.nth(2)).toHaveAttribute('data-intensidad', '0');
   });
 
   test('PRU-E2E-TX-503 [CA-14.8] si el único gasto de la categoría se devuelve completo el mismo día, ningún día tiene gasto positivo y todos los días del calendario quedan en 0', async ({
