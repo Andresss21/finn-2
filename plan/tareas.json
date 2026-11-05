@@ -393,7 +393,7 @@
 
   "TA-302": { "estado": "terminada", "rama": "ta-302-mover-dinero", "pr": 292 },
 
-  "TA-303": { "estado": "pendiente" },
+  "TA-303": { "estado": "en_curso", "rama": "ta-303-pagar-tarjeta" },
 
   "TA-304": { "estado": "pendiente" },
 
