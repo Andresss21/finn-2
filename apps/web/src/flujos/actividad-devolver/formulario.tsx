@@ -22,7 +22,7 @@ import { transaccion as t } from '../../textos/transaccion';
 import { SinCapacidad, type ResumenDeCompra } from './sin-capacidad';
 
 const ConfirmacionImpacto = lazy(() =>
-  import('../../componentes/formularios/confirmacion-impacto').then((m) => ({
+  import('../../componentes/formularios/confirmacion-impacto-de-vista').then((m) => ({
     default: m.ConfirmacionImpactoDeVista,
   })),
 );
