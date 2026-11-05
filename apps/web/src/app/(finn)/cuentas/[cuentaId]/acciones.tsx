@@ -147,15 +147,23 @@ export function Programadas({
 }) {
   if (programadas.length === 0) return null;
   return (
-    <section className="flex flex-col gap-2">
+    <section data-programadas className="flex flex-col gap-2.5">
       <h2 className="text-titulo-seccion">{t.programadas.titulo}</h2>
-      <ul className="flex flex-col gap-1">
+      <ul className="flex flex-col divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
         {programadas.map((p) => (
-          <li key={p.programada.id} className="flex flex-wrap items-center justify-between gap-2">
-            <span className="font-semibold">{p.programada.nombre}</span>
-            <span className="text-cuerpo-pequeno text-texto-secundario">
-              {p.rol === 'origen' ? t.programadas.origen : t.programadas.destino}
-              {p.activa ? '' : ` · ${t.programadas.inactiva}`}
+          <li
+            key={p.programada.id}
+            className="grid min-h-14 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 px-4 py-3"
+          >
+            <span className="flex size-10 items-center justify-center rounded-pastilla bg-superficie-hundida">
+              <Icono nombre="repeat" tamano={20} />
+            </span>
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="font-semibold">{p.programada.nombre}</span>
+              <span className="text-cuerpo-pequeno text-texto-secundario">
+                {p.rol === 'origen' ? t.programadas.origen : t.programadas.destino}
+                {p.activa ? '' : ` · ${t.programadas.inactiva}`}
+              </span>
             </span>
           </li>
         ))}

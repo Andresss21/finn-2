@@ -45,7 +45,10 @@ export const cuentaDetalle = {
     diferenciaActual: 'Diferencia actual',
     conciliadas: (n: number) =>
       `${n} ${n === 1 ? 'transacción conciliada' : 'transacciones conciliadas'}`,
-    avisoDiferencia: 'Todavía hay una diferencia con el estado de cuenta.',
+    resumen: (fecha: string, aceptada: string, actual: string) =>
+      `${fecha} · diferencia aceptada ${aceptada} · actual ${actual}`,
+    badgeDiferencia: 'Diferencia',
+    badgeIgual: 'Igual',
     cambiosTitulo: 'Cambios posteriores',
     cambio: (motivos: string, cuando: string) => `${motivos} · registrado el ${cuando}`,
     motivos: {
@@ -57,7 +60,7 @@ export const cuentaDetalle = {
     comoEra: (comercio: string, fecha: string) => `Era: ${comercio}, ${fecha}`,
   },
   programadas: {
-    titulo: 'Programadas',
+    titulo: 'Programadas de esta cuenta',
     origen: 'Sale de esta cuenta',
     destino: 'Entra a esta cuenta',
     inactiva: 'Inactiva',
@@ -124,6 +127,7 @@ export const cuentaDetalle = {
     cargosDelCiclo: 'Cargos del ciclo',
     yaPagado: 'Ya pagado',
     sinIntereses: 'Para no generar intereses',
+    reservadoDe: 'Reservado',
   },
   prestamo: {
     titulo: 'Préstamo',
@@ -143,6 +147,10 @@ export const cuentaDetalle = {
     seguro: 'Seguro',
     saldo: 'Saldo',
     pagado: 'Pagado',
+    proximaCuota: (n: number, de: number) => `Próxima cuota · ${n} de ${de}`,
+    cuotasPagadas: (n: number, de: number) => `Cuotas pagadas ${n} de ${de}`,
+    condiciones: 'Condiciones',
+    montoOriginal: 'Monto original',
     estados: {
       pagada: 'Pagada',
       parcial: 'Parcial',

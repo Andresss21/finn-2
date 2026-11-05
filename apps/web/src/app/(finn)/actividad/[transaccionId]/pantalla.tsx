@@ -5,6 +5,10 @@ import type { DetalleTransaccionDto } from '@finn/aplicacion/consultas/detalle-t
 import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Icono } from '../../../../componentes/base/icono';
 import { Monto } from '../../../../componentes/dominio/monto';
+import {
+  PublicarAcciones,
+  type AccionPantalla,
+} from '../../../../componentes/marco/publicar-acciones';
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { formatearFechaTexto, formatearInstante, formatearMonto } from '../../../../formato';
@@ -177,7 +181,19 @@ export function PantallaDetalleTransaccion({
 }) {
   const x = dto.transaccion;
   const origen = volver ?? '/actividad';
-  const editar = `/actividad/${x.id}/editar${volver === undefined ? '' : `?volver=${encodeURIComponent(volver)}`}`;
+  const sufijo = volver === undefined ? '' : `?volver=${encodeURIComponent(volver)}`;
+  const editar = `/actividad/${x.id}/editar${sufijo}`;
+  // «Más acciones» (CH-115): cambiar el estado bancario (OP-30; la conciliada solo la fija OP-47) y Eliminar (OP-29) al final
+  const conciliada = x.estadoBancario === 'conciliada';
+  const acciones: readonly AccionPantalla[] = [
+    {
+      etiqueta: x.estadoBancario === 'pendiente' ? t.marcarConfirmada : t.marcarPendiente,
+      ...(conciliada
+        ? { motivo: t.estadoConciliadaNota }
+        : { ruta: `/actividad/${x.id}/estado${sufijo}` }),
+    },
+    { etiqueta: t.eliminar, ruta: `/actividad/${x.id}/eliminar${sufijo}`, peligro: true },
+  ];
   const cuentas = dto.efectos
     .map((e) => (e.cuenta.archivada === true ? t.archivada(e.cuenta.nombre) : e.cuenta.nombre))
     .join(' · ');
@@ -185,6 +201,7 @@ export function PantallaDetalleTransaccion({
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4">
       <PublicarEncabezado encabezado={dto} />
+      <PublicarAcciones titulo={x.comercio ?? dominio.sinComercio} acciones={acciones} />
       <header className="flex flex-col gap-2">
         <div className="-ml-2 flex items-center gap-1">
           <EnlaceFinn
