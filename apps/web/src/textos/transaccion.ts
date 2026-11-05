@@ -82,7 +82,7 @@ export const transaccion = {
   repartoEntrePartes: 'Reparto entre las partes',
   quedanPorDevolver: (monto: string) => `quedan ${monto} por devolver`,
   montoDe: (parte: string) => `Monto de ${parte}`,
-  vueleA: 'Vuelve a',
+  devolverA: 'Devolver a',
   registrarDevolucion: 'Registrar devolución',
   registrarDevolucionMonto: (monto: string) => `Registrar devolución ${monto}`,
   sinNadaTitulo: 'Sin nada por devolver',

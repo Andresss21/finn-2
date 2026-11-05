@@ -229,7 +229,7 @@ export function FormularioActividadDevolver(p: PropsFormularioDevolver) {
               hoy={hoy}
             />
             <SeleccionNativa
-              etiqueta={t.vueleA}
+              etiqueta={t.devolverA}
               alta
               marcador={g.elegirCuenta}
               opciones={p.cuentas}
