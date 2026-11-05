@@ -9,6 +9,7 @@
   "inpMs": 200,
   "ejemplosDeRuta": {
     "/actividad/[transaccionId]": "/actividad/00000000-0000-4000-8000-000000000001",
+    "/actividad/[transaccionId]/devolver": "/actividad/00000000-0000-4000-8000-000000000001/devolver",
     "/actividad/[transaccionId]/editar": "/actividad/00000000-0000-4000-8000-000000000001/editar",
     "/actividad/[transaccionId]/eliminar": "/actividad/00000000-0000-4000-8000-000000000001/eliminar",
     "/actividad/[transaccionId]/estado": "/actividad/00000000-0000-4000-8000-000000000001/estado",

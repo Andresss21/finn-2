@@ -298,4 +298,19 @@ describe('PRU-INT-DEV', () => {
     ).toMatchObject({ ok: true, yaAplicada: false });
     expect((await hechos()).transacciones.some((t) => t.id === cobro.id)).toBe(false);
   });
+
+  it('PRU-INT-DEV-101 [CA-28.8, CB-31] OP-33a: vincularle una devolución a una cuota de préstamo se rechaza con devolucion_de_no_gasto y no escribe nada', async () => {
+    const cuota = uuid(110); // la cuota del 2 de febrero de los hechos de prueba, con su línea L7
+    const entrada = {
+      id: uuid(1320),
+      transaccionOriginalId: cuota,
+      fecha: FECHA,
+      total: '1.00',
+      reparto: [{ lineaId: uuid(307), monto: '1.00' }],
+    };
+    expect(await ejecutar(OP33, entrada)).toMatchObject(
+      rechazo('devolucion_de_no_gasto', 'Solo las compras admiten devoluciones vinculadas.'),
+    );
+    expect((await hechos()).transacciones.some((t) => t.id === entrada.id)).toBe(false);
+  });
 });
