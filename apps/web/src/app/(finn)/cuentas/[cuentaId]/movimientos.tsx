@@ -2,16 +2,20 @@
 // el filtro por tipo y estado, y el enlace a la página anterior en el tiempo (`?cursor=`). Dibuja lo que trae el DTO: no suma (PF-3).
 import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta';
 import { Vacio } from '../../../../componentes/base/vacio';
-import { FilaTransaccion } from '../../../../componentes/dominio/fila-transaccion';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
+import { formatearFecha } from '../../../../formato';
 import { cuentaDetalle } from '../../../../textos/cuenta-detalle';
+import { dominio } from '../../../../textos/dominio';
 
 const t = cuentaDetalle.movimientos;
 const f = cuentaDetalle.filtros;
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline ${FOCO}`;
 const BOTON = `inline-flex min-h-11 items-center rounded-control bg-superficie-hundida px-4 font-semibold text-texto ${FOCO}`;
+const ENLACE_ACTIVIDAD = `inline-flex min-h-11 items-center font-bold text-enlace ${FOCO}`;
+const TONAL = `inline-flex min-h-12 items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion ${FOCO}`;
+const FILA = `grid min-h-14 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 ${FOCO}`;
 const CAMPO = `min-h-11 rounded-control border border-borde-control bg-superficie px-2 text-texto ${FOCO}`;
 
 export interface FiltrosDetalle {
@@ -89,6 +93,29 @@ function Filtros({
   );
 }
 
+type Fila = DetalleCuentaDto['movimientos'][number];
+
+/** «14/10/2026 · Farmacia · conciliada»: la fecha, con qué se relaciona y su estado, tal como vienen en la fila (PF-3). */
+function subtitulo(m: Fila, cuentaId: string): string {
+  const otra = m.cuentas.find((c) => c.cuenta.id !== cuentaId);
+  const con =
+    m.lineas.length > 1
+      ? t.partes(m.lineas.length)
+      : (m.lineas[0]?.destino.nombre ??
+        (otra === undefined
+          ? f.tipos[m.tipo].toLowerCase()
+          : m.efectoEnCuenta < 0
+            ? t.a(otra.cuenta.nombre)
+            : t.desde(otra.cuenta.nombre)));
+  return [
+    formatearFecha(m.fecha),
+    con,
+    m.estadoBancario === 'conciliada' ? dominio.estadoBancario.conciliada.toLowerCase() : undefined,
+  ]
+    .filter((x) => x !== undefined)
+    .join(' · ');
+}
+
 export function Movimientos({
   dto,
   filtros,
@@ -100,30 +127,59 @@ export function Movimientos({
   const filtrado = filtros.tipo !== undefined || filtros.estado !== undefined;
   return (
     <section data-movimientos className="flex flex-col gap-3">
-      <h2 className="text-titulo-seccion">{t.titulo}</h2>
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <h2 className="text-titulo-seccion">{t.titulo}</h2>
+        <EnlaceFinn href={`/actividad?cuenta=${id}`} className={ENLACE_ACTIVIDAD}>
+          {cuentaDetalle.acciones.verEnActividad}
+        </EnlaceFinn>
+      </div>
       <Filtros cuentaId={id} filtros={filtros} />
       {dto.movimientos.length === 0 ? (
         <Vacio
           titulo={filtrado || filtros.periodo !== undefined ? t.sinResultados : t.vacio}
           texto={filtrado || filtros.periodo !== undefined ? t.sinResultadosTexto : t.vacioTexto}
           icono="cero"
+          {...(filtrado || filtros.periodo !== undefined || dto.cuenta.archivada
+            ? {}
+            : {
+                accion: (
+                  <EnlaceFinn href={`/registrar/gasto?cuenta=${id}`} className={TONAL}>
+                    {cuentaDetalle.acciones.registrarConEstaCuenta}
+                  </EnlaceFinn>
+                ),
+              })}
         />
       ) : (
-        <ul className="flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie">
+        <ul className="flex flex-col divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
           {dto.movimientos.map((m) => (
             <li key={m.id} data-movimiento={m.id}>
-              <FilaTransaccion
-                fila={m}
-                hrefDetalle={`/actividad/${m.id}?volver=${encodeURIComponent(`/cuentas/${id}`)}`}
-              />
-              <p className="flex flex-wrap items-center justify-between gap-2 px-3.5 pb-2 text-cuerpo-pequeno text-texto-secundario">
-                <span>
-                  {t.efecto} <Monto centavos={m.efectoEnCuenta} rol="cuerpo" />
+              <a
+                href={`/actividad/${m.id}?volver=${encodeURIComponent(`/cuentas/${id}`)}`}
+                data-fila-transaccion={m.id}
+                className={FILA}
+              >
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate font-semibold">
+                    {m.comercio ?? dominio.sinComercio}
+                  </span>
+                  <span className="text-cuerpo-pequeno text-texto-secundario">
+                    {subtitulo(m, id)}
+                  </span>
                 </span>
-                <span data-saldo-despues={m.saldoDespues}>
-                  {t.saldoDespues} <Monto centavos={m.saldoDespues} rol="cuerpo" />
-                </span>
-              </p>
+                <p className="flex flex-col items-end gap-0.5">
+                  <Monto
+                    centavos={m.efectoEnCuenta}
+                    rol="cifra"
+                    {...(m.efectoEnCuenta > 0 ? { estado: 'positivo' as const } : {})}
+                  />
+                  <span
+                    data-saldo-despues={m.saldoDespues}
+                    className="text-cuerpo-pequeno text-texto-secundario"
+                  >
+                    {t.saldoCorto} <Monto centavos={m.saldoDespues} rol="cuerpo" />
+                  </span>
+                </p>
+              </a>
             </li>
           ))}
         </ul>
