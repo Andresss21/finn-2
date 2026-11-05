@@ -11,7 +11,6 @@ import type {
   Linea,
   Transaccion,
   Uuid,
-  VigenciaCiclo,
 } from '../../hechos';
 import { hechosArb } from '../../pruebas/generadores';
 import { Centavos } from '../../valores/centavos';
@@ -50,9 +49,7 @@ function libro(montos: readonly number[]): Hechos {
   );
   const gastos = montos.flatMap((monto, k) => (monto > 0 ? [{ monto, k }] : []));
   return {
-    vigencias_ciclo: [
-      { id: id('v1'), diaInicio: 1, rigeDesde: null, revision: null } as VigenciaCiclo,
-    ],
+    vigencias_ciclo: [{ id: id('v1'), diaInicio: 1, rigeDesde: null, revision: null }],
     cuentas: [{ id: id('ef'), tipo: 'efectivo', nombre: 'Efectivo' } as Cuenta],
     tarjetas: [],
     prestamos: [],
