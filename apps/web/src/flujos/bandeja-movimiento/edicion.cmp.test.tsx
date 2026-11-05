@@ -76,7 +76,7 @@ describe('PRU-CMP-BAND', () => {
     const nodo = montar(campos('gasto', 1));
     expect(nodo.textContent).toContain(t.revisar.tipo);
     expect(nodo.textContent).toContain(g.cuenta);
-    expect(valorDe(nodo, g.fecha)).toBe('2027-02-20');
+    expect(valorDe(nodo, g.fecha)).toBe('20/02/2027');
     expect(valorDe(nodo, t.revisar.monto)).toBe('30.00');
     expect(valorDe(nodo, g.comercio)).toBe('Super');
     expect(nodo.textContent).toContain(g.partes);
