@@ -47,6 +47,7 @@ export function Pastillas({ etiqueta, opciones, valor, alCambiar, reemplazar }: 
         return (
           <Button
             key={o.valor}
+            type="button"
             variant="filter"
             aria-pressed={activa}
             onClick={() => {
