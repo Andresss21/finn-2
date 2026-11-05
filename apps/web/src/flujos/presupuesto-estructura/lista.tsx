@@ -122,7 +122,9 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
                 {g.nombre}
               </h2>
               {g.archivado ? <span className="text-etiqueta">{t.archivado}</span> : null}
-              {g.sistema ? null : (
+              {g.sistema ? (
+                <span className="text-etiqueta">{t.delSistema}</span>
+              ) : (
                 <>
                   <EnlaceFinn
                     href={`${RAIZ}/grupos/${g.id}`}
@@ -141,49 +143,46 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
                 </>
               )}
             </div>
-            <ul className="overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
-              {categorias.map(({ categoria: c, clase, archivada }, j) => (
-                <li
-                  key={c.id}
-                  className="flex items-center gap-x-2 border-b border-borde-sutil px-4"
-                >
-                  <div className="flex min-h-14 min-w-0 flex-1 flex-col justify-center">
-                    {clase === 'normal' ? (
-                      <EnlaceFinn
-                        href={`${RAIZ}/categorias/${c.id}`}
-                        className="text-cuerpo inline-flex min-h-11 min-w-0 items-center font-semibold"
-                        aria-label={t.editar(c.nombre)}
-                      >
-                        {c.nombre}
-                      </EnlaceFinn>
-                    ) : (
-                      <span className="text-cuerpo py-2.5 font-semibold">{c.nombre}</span>
-                    )}
-                    {g.sistema ? (
-                      <span className="text-cuerpo-pequeno text-texto-secundario">
-                        {t.delSistema}
-                      </span>
-                    ) : null}
-                  </div>
-                  {archivada ? <span className="text-etiqueta">{t.archivada}</span> : null}
-                  {g.sistema
-                    ? null
-                    : botones({
-                        tipo: 'categoria',
-                        id: c.id,
-                        nombre: c.nombre,
-                        pos: j + 1,
-                        de: categorias.length,
-                      })}
-                </li>
-              ))}
-              {categorias.length === 0 ? (
-                <li className="text-cuerpo-pequeno border-b border-borde-sutil px-4 py-3 text-texto-secundario">
-                  {t.sinCategorias}
-                </li>
-              ) : null}
+            <div className="overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
+              <ul>
+                {categorias.map(({ categoria: c, clase, archivada }, j) => (
+                  <li
+                    key={c.id}
+                    className="flex items-center gap-x-2 border-b border-borde-sutil px-4"
+                  >
+                    <div className="flex min-h-14 min-w-0 flex-1 flex-col justify-center">
+                      {clase === 'normal' ? (
+                        <EnlaceFinn
+                          href={`${RAIZ}/categorias/${c.id}`}
+                          className="text-cuerpo inline-flex min-h-11 min-w-0 items-center font-semibold"
+                          aria-label={t.editar(c.nombre)}
+                        >
+                          {c.nombre}
+                        </EnlaceFinn>
+                      ) : (
+                        <span className="text-cuerpo py-2.5 font-semibold">{c.nombre}</span>
+                      )}
+                    </div>
+                    {archivada ? <span className="text-etiqueta">{t.archivada}</span> : null}
+                    {g.sistema
+                      ? null
+                      : botones({
+                          tipo: 'categoria',
+                          id: c.id,
+                          nombre: c.nombre,
+                          pos: j + 1,
+                          de: categorias.length,
+                        })}
+                  </li>
+                ))}
+                {categorias.length === 0 ? (
+                  <li className="text-cuerpo-pequeno border-b border-borde-sutil px-4 py-3 text-texto-secundario">
+                    {t.sinCategorias}
+                  </li>
+                ) : null}
+              </ul>
               {g.sistema || g.archivado ? null : (
-                <li>
+                <div>
                   <EnlaceFinn
                     href={`${RAIZ}/categorias/nueva?grupo=${g.id}`}
                     className={ENLACE_ANCHO}
@@ -192,9 +191,9 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
                     {t.nuevaCategoria}
                     <span className="sr-only"> {t.agregarCategoria(g.nombre)}</span>
                   </EnlaceFinn>
-                </li>
+                </div>
               )}
-            </ul>
+            </div>
           </section>
         ))}
         <EnlaceFinn

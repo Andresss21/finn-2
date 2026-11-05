@@ -176,7 +176,7 @@ test.describe('PRU-E2E-META pantalla de metas', () => {
     await expect(page.getByText('Todavía no tenés metas')).toBeVisible();
     await page.getByRole('link', { name: 'Crear una meta' }).click();
     await expect(page).toHaveURL(/\/metas\/nueva\?categoria=[0-9a-f-]+$/);
-    await expect(page.getByRole('heading', { name: 'Nueva meta', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Meta para Viaje', level: 1 })).toBeVisible();
   });
 
   test('PRU-E2E-META-130 [CA-17.1] sin metas, la lista de categorías sin meta enlaza a crear la meta de cada una y todo control mide al menos 44 px', async ({
