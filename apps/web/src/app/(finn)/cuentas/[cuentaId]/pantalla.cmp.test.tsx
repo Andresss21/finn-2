@@ -147,7 +147,7 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
     const montos = [...(b?.querySelectorAll('[data-centavos]') ?? [])].map((m) =>
       m.getAttribute('data-centavos'),
     );
-    expect(montos).toEqual(['700', '7700', '0', '7000', '250000', '5000', '2700', '0', '7700']);
+    expect(montos).toEqual(['700', '7000', '7700', '0', '250000', '5000', '2700', '0', '7700']);
     expect(b?.textContent).toContain('16/02/2027 al 15/03/2027');
     expect(b?.textContent).toContain('3.08%');
   });
@@ -228,8 +228,12 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
       ...(raiz.querySelector('[data-bloque="inversion"]')?.querySelectorAll('[data-centavos]') ??
         []),
     ].map((m) => m.getAttribute('data-centavos'));
-    expect(montos).toEqual(['300000', '100000', '50000', '-2000']);
-    expect(raiz.querySelector('[data-identidad="inversion"] dt')?.textContent).toBe('Valor');
+    expect(montos).toEqual(['100000', '50000', '-2000']);
+    const cabecera = raiz.querySelector('[data-identidad="inversion"]');
+    expect(cabecera?.querySelector('dt')?.textContent).toBe('Valor');
+    expect(cabecera?.querySelector('dd [data-centavos]')?.getAttribute('data-centavos')).toBe(
+      '300000',
+    );
   });
 
   it('PRU-CMP-CTA-104 [CA-52.2, ESC-47] la conciliación de la tarjeta muestra la diferencia aceptada $2.00, la diferencia actual $5.00 con su aviso y el cambio posterior de A', () => {
@@ -304,8 +308,8 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
     expect(raiz.querySelector('[data-conciliacion="c2"] h3')?.textContent).toContain(
       'Verificación de saldo',
     );
-    expect(raiz.querySelector('[data-conciliacion="c2"] [data-estado]')).toBeNull();
     expect(raiz.querySelector('[data-estado="advertencia"]')).toBeNull();
+    expect(raiz.querySelector('[data-conciliacion="c2"]')?.textContent).toContain('Igual');
   });
 
   it('PRU-CMP-CTA-104 [CA-52.4] una cuenta archivada deshabilita Pagar, Cuota, Conciliar y Registrar con el motivo en texto y ofrece Desarchivar', () => {
@@ -562,6 +566,43 @@ describe('PRU-CMP-CTA-260 detalle de cuenta portado del export (CH-142)', () => 
     expect(cara?.querySelector('[data-chip]')).not.toBeNull();
     expect(cara?.querySelector('[data-centavos]')?.getAttribute('data-centavos')).toBe('64218');
     expect(raiz.querySelector('[data-estado="advertencia"]')).toBeNull();
+  });
+
+  it('PRU-CMP-CTA-263 [Q-detalleCuenta] el préstamo muestra la próxima cuota con Pagar, cuántas lleva pagadas y las condiciones, y archivado no ofrece pagar la cuota', () => {
+    const prestamo = {
+      condiciones: {
+        contraparte: 'Banco',
+        montoOriginal: 600000,
+        cuotaPactada: 21000,
+        plazoCuotas: 36,
+      },
+      capitalPendiente: 421000,
+      comparacion: null,
+      costoFinanciero: { interes: 1200, seguro: 300 },
+      amortizacion: [1, 2, 3].map((n) => ({
+        numero: n,
+        fecha: `2027-0${n}-20`,
+        interes: 5000,
+        seguro: 350,
+        capital: 15650,
+        saldo: 400000 - n * 1000,
+        estado: n < 3 ? 'pagada' : 'pendiente',
+        pagado: n < 3 ? 21000 : 0,
+      })),
+    };
+    const activo = mostrar(dto({ cuenta: cuentaDe('prestamo'), prestamo }));
+    const proxima = activo.querySelector('[data-bloque="proxima-cuota"]');
+    expect(proxima?.textContent).toContain('Próxima cuota · 3 de 36');
+    expect(proxima?.textContent).toContain('Cuotas pagadas 2 de 36');
+    expect(proxima?.querySelector('a')?.getAttribute('href')).toBe('/cuentas/k/cuota');
+    expect(
+      activo.querySelector('[data-bloque="prestamo"]')?.querySelector('a')?.getAttribute('href'),
+    ).toBe('/cuentas/k/condiciones');
+    expect(activo.querySelector('tbody tr[aria-current="step"]')?.textContent).toContain(
+      'Pendiente',
+    );
+    const vieja = mostrar(dto({ cuenta: cuentaDe('prestamo', { archivada: true }), prestamo }));
+    expect(vieja.querySelector('[data-bloque="proxima-cuota"]')).toBeNull();
   });
 
   it('PRU-CMP-CTA-262 [CA-52.5] la fila de un movimiento dice la fecha, con qué se relaciona y su estado, y una cuenta sin movimientos ofrece Registrar con esta cuenta', () => {
