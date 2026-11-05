@@ -12,6 +12,7 @@ import type { BusquedaDePagina } from '../../../../servidor/parametros';
 import { bandeja as t } from '../../../../textos/bandeja';
 import { soloActivos } from '../activos';
 import { ListaBandeja } from '../lista';
+import { SelectorVista } from '../selector-vista';
 
 export const metadata: Metadata = { title: t.revisar.titulo };
 
@@ -43,12 +44,15 @@ export default async function PaginaMovimiento({
       movimientoId={movimientoId}
       traspaso={traspaso === '1'}
       lateral={
-        <ListaBandeja
-          contadores={dto.contadores}
-          elegibles={dto.elegiblesAprobarTodos}
-          movimientos={movimientos}
-          actual={movimientoId}
-        />
+        <>
+          <SelectorVista activa="activos" porRevisar={dto.bandejaPorRevisar} />
+          <ListaBandeja
+            contadores={dto.contadores}
+            elegibles={dto.elegiblesAprobarTodos}
+            movimientos={movimientos}
+            actual={movimientoId}
+          />
+        </>
       }
       {...(navegacion === undefined ? {} : { navegacion })}
     />
