@@ -4,7 +4,17 @@
 // después aprueba (OP-37); con la fecha en un período cerrado el servidor pide confirmar con AV-01. Es un flujo largo: siempre
 // página completa (05 §1.4). No calcula montos (PF-3): la suma de las partes la valida el servidor. CH-136 lo porta del export (S4): encabezado,
 // campos con selección nativa y líneas compactas, y el pie fijo con «Aprobar $X» y las salidas del movimiento.
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
 import { useFieldArray } from 'react-hook-form';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
@@ -29,6 +39,7 @@ import { TextoDelSms } from './texto-sms';
 import type { CuentaDelMovimiento } from './campos-movimiento';
 import type { ResumenDelMovimiento } from './encabezado';
 import type { DuplicadoDe } from './estados';
+import { PanelDeLaBandeja, type NavegacionDelPanel } from './panel-navegacion';
 import { camposIniciales, contrato, entradaDeEdicion, ofreceRecordar, type Campos } from './campos';
 
 interface Referencia {
@@ -54,6 +65,10 @@ export interface PropsFormularioMovimiento {
     /** Solo en un SMS con error: lo que necesita «Intentar de nuevo» (OP-49). */
     readonly reproceso?: { readonly smsId: string; readonly intentoVisto: number };
   };
+  /** Computadora: la lista de la Bandeja a la izquierda del flujo (S4 del export, CH-137). */
+  readonly lateral?: ReactNode;
+  /** Computadora: «1 de N» y las flechas del panel, si el movimiento sigue en la lista. */
+  readonly navegacion?: NavegacionDelPanel;
   /** Viene de la fila de la lista (05 §4.15): se vuelve a aprobar para mostrar el mensaje o la confirmación. */
   readonly traspaso: boolean;
   readonly cuentas: readonly CuentaDelMovimiento[];
@@ -92,27 +107,46 @@ const SinCuentasDeMovimiento = lazy(() => import('./sin-cuentas-movimiento'));
 
 const ID_FORMULARIO = 'formulario-revisar-movimiento';
 
+/** El marco de la página, el mismo en todas las pantallas del flujo: título y ruta padre. */
+type Marco = Omit<ComponentProps<typeof PaginaFlujoDeRuta>, 'children' | 'acciones'>;
+
 export function FormularioMovimiento(props: PropsFormularioMovimiento) {
   // Si al abrir ya está aprobado o descartado se muestra su estado; si no, el flujo sigue montado aunque la revalidación
   // cambie su estado al aprobar (el resultado es suyo).
   const [abierto] = useState(() => !FINALES.includes(props.movimiento.estado));
-  const m = props.movimiento;
-  if (abierto) return <Flujo {...props} />;
+  const { lateral, navegacion, movimiento: m } = props;
+  const marco: Marco = { titulo: t.revisar.titulo, rutaPadre: '/bandeja' };
   return (
-    <Suspense fallback={null}>
-      <YaResuelto
-        aprobado={m.estado === 'aprobado'}
-        movimientoId={m.id}
-        sms={m.sms}
-        nota={m.nota}
-        resumen={m.resumen}
-      />
-    </Suspense>
+    <PanelDeLaBandeja lateral={lateral} navegacion={navegacion}>
+      {abierto ? (
+        <Flujo {...props} marco={marco} />
+      ) : (
+        <Suspense fallback={null}>
+          <YaResuelto
+            marco={marco}
+            aprobado={m.estado === 'aprobado'}
+            movimientoId={m.id}
+            sms={m.sms}
+            nota={m.nota}
+            resumen={m.resumen}
+          />
+        </Suspense>
+      )}
+    </PanelDeLaBandeja>
   );
 }
 
-function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFormularioMovimiento) {
+function Flujo({
+  movimiento,
+  cuentas,
+  categorias,
+  deudores,
+  traspaso,
+  marco,
+  navegacion,
+}: PropsFormularioMovimiento & { readonly marco: Marco }) {
   const [aMano, setAMano] = useState(false); // «Registrar a mano»: un SMS que no se leyó pasa a sus campos
+  const [siguienteId] = useState(() => navegacion?.siguiente); // el que seguía al abrir: la lista ya no trae este movimiento al aprobar
   const conCoincidencia = movimiento.estado === 'con_coincidencia';
   const sinLeer = movimiento.estado === 'no_reconocido' || movimiento.estado === 'error';
   // Sin «Aprobar»: un posible duplicado y un SMS que no se leyó se resuelven con las decisiones del pie (S4 del export)
@@ -212,23 +246,22 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
   if (aprobar.estado === 'listo' && aprobar.exito !== undefined) {
     const valor = aprobar.exito.valor as ValorAprobado;
     return (
-      <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
-        <Suspense fallback={null}>
-          <ResultadoDeAprobar valor={valor} />
-        </Suspense>
-      </PaginaFlujoDeRuta>
+      <Suspense fallback={null}>
+        <ResultadoDeAprobar marco={marco} valor={valor} siguienteId={siguienteId} />
+      </Suspense>
     );
   }
 
   if (descartado) {
     const { comercio, monto } = movimiento.esperado;
     return (
-      <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
+      <PaginaFlujoDeRuta {...marco}>
         <Suspense fallback={null}>
           <Descartado
             movimientoId={movimiento.id}
             comercio={typeof comercio === 'string' ? comercio : null}
             monto={typeof monto === 'number' ? monto : null}
+            siguienteId={siguienteId}
           />
         </Suspense>
       </PaginaFlujoDeRuta>
@@ -237,7 +270,7 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
 
   if (aprobar.estado === 'confirmando')
     return (
-      <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
+      <PaginaFlujoDeRuta {...marco}>
         <Suspense fallback={null}>
           <ConfirmacionImpacto
             titulo={t.revisar.revisarImpacto}
@@ -290,7 +323,7 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
 
   if (propio)
     return (
-      <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja" acciones={salidas}>
+      <PaginaFlujoDeRuta {...marco} acciones={salidas}>
         <div className="flex flex-col gap-5">
           <Suspense fallback={null}>
             <Encabezado resumen={movimiento.resumen} />
@@ -310,7 +343,7 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
 
   if (cuentas.length === 0)
     return (
-      <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja">
+      <PaginaFlujoDeRuta {...marco}>
         <Suspense fallback={null}>
           <SinCuentasDeMovimiento texto={movimiento.sms} />
         </Suspense>
@@ -342,7 +375,7 @@ function Flujo({ movimiento, cuentas, categorias, deudores, traspaso }: PropsFor
   );
 
   return (
-    <PaginaFlujoDeRuta titulo={t.revisar.titulo} rutaPadre="/bandeja" acciones={pie}>
+    <PaginaFlujoDeRuta {...marco} acciones={pie}>
       <form
         id={ID_FORMULARIO}
         onSubmit={(e) => void alEnviar(conCoincidencia)(e)}

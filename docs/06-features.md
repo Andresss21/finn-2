@@ -128,7 +128,7 @@ Este documento traduce el diseño técnico aprobado (01 a 05) a funciones que el
 | FD-29 **[B1]** | Cantidad mínima de períodos según el uso: 1 en la asignación rápida, 3 en los reportes de patrón | 3.14 |
 | FD-30 **[R3]** | Arrastre a una categoría: una sola operación, pulsación larga en el teléfono, panel de destinos, carga diferida y teclado | 0.13, FT-78 |
 | FD-31 **[R4]** | Qué monto puede llevar un push: el de un movimiento o de un cambio ya ocurrido, nunca un saldo | 0.15, 3.8, 3.16 |
-| FD-32 **[E]** | Revisión lateral de la Bandeja en computadora: resumen de solo lectura con las acciones de un toque; "Editar" abre el flujo largo | 5.7 |
+| FD-32 **[E]** **[CH-151]** | Revisión lateral de la Bandeja en computadora: Revisar movimiento como panel derecho, con «1 de N» y flechas; es la página `/bandeja/[movimientoId]`, no una ruta interceptada | 5.7 |
 
 ### 0.7 Registro de cambios propuestos
 
@@ -4531,7 +4531,7 @@ Cada recorrido encadena las features en el orden en que el usuario las vive. Sir
 | S4 Bandeja | Lista compacta con estados y acciones por fila | FT-35 a FT-38 | **Coincide** con 05 §4.15 y 06 §2.5. "Descartar" en un posible duplicado es OP-40 `es_duplicado` (con "Restaurar") |
 | S4 Bandeja | "→ Supermercado (por regla)" | FT-35 | **CF-25:** `MovimientoDto` trae la categoría sugerida pero no si salió de una regla o del historial. Se agrega `porRegla`, calculado con las reglas vigentes como en BE-43 |
 | S4 Bandeja | Nota "Tocá un movimiento para revisarlo completo. Arrastrar a una categoría es un atajo; los botones siempre están." | FT-78 | **Se conserva** (5.5) |
-| S4 Bandeja | Computadora: la revisión del movimiento a la derecha de la lista, con Aprobar · Editar · Descartar | FT-35, FT-78 | **Precisión (FD-32):** el panel lateral es un **resumen de solo lectura** del movimiento elegido (datos de `bandeja()`), con las acciones de un toque de la fila. "Editar" abre `/bandeja/[movimientoId]` a pantalla completa, porque 05 FE-04 no intercepta flujos largos. Mientras dura un arrastre, ese mismo panel muestra los destinos (FD-30) |
+| S4 Bandeja | Computadora: la revisión del movimiento a la derecha de la lista, con Aprobar · Editar · Descartar | FT-35, FT-78 | **Precisión (FD-32, enmendada por CH-151):** el panel lateral es **Revisar movimiento** (`/bandeja/[movimientoId]`) con su formulario, no un resumen de solo lectura; la lista queda a la izquierda con el movimiento marcado. Es una página propia, con la lista y el orden de `bandeja()`, porque 05 FE-04 no intercepta flujos largos. Mientras dura un arrastre, ese mismo panel muestra los destinos (FD-30) |
 | S5 Registrar | Cuenta propuesta "la cuenta que más usás en PRICESMART" | FT-21 | **Ajuste del diseño:** "Propuesta: la cuenta de tu último gasto." (`cuentaPropuesta`, 04 §6.14.4) |
 | S5 Registrar | Dividir con líneas, deudor "(me lo debe)", suma "$148.60 de $148.60" | FT-21 | **Coincide.** La suma es la ayuda permitida por PF-3 |
 | S5 Registrar | Bloque "Antes de guardar" con valor actual → valor nuevo de la deuda y de cada categoría | FT-21 | **Ajuste del diseño (P6-27 a, [R5]):** el bloque se quita. Sin previsualización; `ConfirmacionImpacto` solo con AV-01 y, después de guardar, el resultado con un enlace a cada categoría tocada (CA-21.12) |
@@ -4609,7 +4609,7 @@ Requisitos comunes: tres señales en todo estado (05 §10.3); tocables de 44 × 
 
 ### 5.7 Decisión de esta sección
 
-**FD-32. Revisión lateral de la Bandeja en computadora.** El panel derecho de la Bandeja en computadora es un resumen de solo lectura del movimiento elegido, con las acciones de un toque de la fila; "Editar" abre el flujo largo a pantalla completa. *Justificación:* sigue el diseño sin contradecir 05 FE-04 (los flujos largos nunca se interceptan) y sin otra consulta (los datos ya están en `bandeja()`). *Alternativa descartada:* el flujo `/bandeja/[movimientoId]` dentro del panel, que exige un CF a FE-04 y dos instancias de un formulario con borrador.
+**FD-32. Revisión lateral de la Bandeja en computadora. [Enmendada por CH-151]** El panel derecho de la Bandeja en computadora es Revisar movimiento: el flujo completo de `/bandeja/[movimientoId]` (editar, aprobar, descartar), con «1 de N» y las flechas anterior y siguiente en el encabezado del panel, y «Siguiente movimiento» después de aprobar o descartar. Es una sola página con la lista a la izquierda, no una ruta interceptada ni una segunda instancia del formulario; en teléfono sigue siendo la pantalla completa. *Justificación:* es lo que dibuja el diseño del export (S4) y lo que decidió CH-136 (c); no contradice 05 FE-04 (los flujos largos nunca se interceptan) porque cada movimiento es su propia página, con una sola instancia del formulario. *Texto anterior (reemplazado):* el panel era un resumen de solo lectura con las acciones de un toque de la fila y «Editar» abría el flujo largo; nunca se implementó así.
 
 ### 5.8 CF-25 y las preguntas de esta sección **[R5]**
 

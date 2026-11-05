@@ -68,17 +68,14 @@ const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement => {
 const tocar = async (nodo: HTMLElement, texto: string): Promise<void> => {
   await userEvent.click(boton(nodo, texto));
 };
-/** La opción `opcion` del grupo de radios cuya etiqueta contiene `grupo`. */
-const radio = (nodo: HTMLElement, grupo: string, opcion: string): HTMLElement => {
-  const etiqueta = [...nodo.querySelectorAll('label[id]')].find((l) =>
-    l.textContent.includes(grupo),
-  );
-  const g = nodo.querySelector(`[role="radiogroup"][aria-labelledby="${etiqueta?.id}"]`);
-  const r = [...(g?.querySelectorAll<HTMLElement>('[role="radio"]') ?? [])].find((x) =>
-    x.closest('label')?.textContent.includes(opcion),
-  );
-  if (r === undefined) throw new Error(`no hay «${opcion}» en «${grupo}»`);
-  return r;
+/** Elige `opcion` en el `<select>` nativo cuya etiqueta contiene `grupo`. */
+const elegir = async (nodo: HTMLElement, grupo: string, opcion: string): Promise<void> => {
+  const etiqueta = [...nodo.querySelectorAll('label')].find((l) => l.textContent.includes(grupo));
+  const select = nodo.querySelector<HTMLSelectElement>(`select[id="${etiqueta?.htmlFor}"]`);
+  if (select === null) throw new Error(`no hay «${grupo}»`);
+  const o = [...select.options].find((x) => x.text === opcion);
+  if (o === undefined) throw new Error(`no hay «${opcion}» en «${grupo}»`);
+  await userEvent.selectOptions(select, o.value);
 };
 
 describe('PRU-CMP-CATEG', () => {
@@ -123,7 +120,7 @@ describe('PRU-CMP-CATEG', () => {
     expect(accion).not.toHaveBeenCalled();
     expect(nodo.textContent).toContain(t.elegir);
 
-    await userEvent.click(radio(nodo, 'Programada', t.desactivar));
+    await elegir(nodo, 'Programada', t.desactivar);
     await tocar(nodo, t.archivar);
     expect(accion).toHaveBeenCalledTimes(1);
     expect(accion).toHaveBeenLastCalledWith({
@@ -145,8 +142,8 @@ describe('PRU-CMP-CATEG', () => {
         programadas={[{ id: PROGRAMADA, comercio: 'Gimnasio', monto: 3000 as never }]}
       />,
     );
-    await userEvent.click(radio(nodo, 'Mandar', 'Salidas'));
-    await userEvent.click(radio(nodo, 'Programada', t.reasignarA('Salidas')));
+    await elegir(nodo, 'Mandar', 'Salidas');
+    await elegir(nodo, 'Programada', t.reasignarA('Salidas'));
     await tocar(nodo, t.archivar);
     expect(accion).toHaveBeenLastCalledWith({
       categoriaId: ID,

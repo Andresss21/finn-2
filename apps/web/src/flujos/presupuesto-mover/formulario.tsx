@@ -8,7 +8,7 @@ import { useCallback, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Seleccion, type Opcion } from '../../componentes/base/seleccion';
+import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import {
   CerrarFlujoAlMontar,
@@ -22,6 +22,7 @@ import { useOperacion, type AccionEscritura } from '../../formularios/use-operac
 import { moverDinero } from '../../servidor/acciones/presupuesto';
 import { formularios } from '../../textos/formularios';
 import { presupuestoMover as t } from '../../textos/presupuesto-mover';
+import { PieDeHoja } from '../pie-de-hoja';
 
 export interface CategoriaParaMover {
   readonly id: string;
@@ -106,14 +107,17 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
       </>
     );
 
-  const opciones: readonly Opcion[] = p.categorias.map((k) => ({
+  const opciones: readonly OpcionNativa[] = p.categorias.map((k) => ({
     valor: k.id,
-    etiqueta: t.categoriaConDisponible(k.nombre, formatearMonto(k.disponible)),
+    etiqueta: k.nombre,
+    detalle: t.disponibleDe(formatearMonto(k.disponible)),
   }));
   const errores = formulario.formState.errors;
   return (
     <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
-      <Seleccion
+      <SeleccionNativa
+        alta
+        marcador={t.elegirCategoria}
         etiqueta={t.origen}
         opciones={opciones}
         valor={c.origenId}
@@ -122,7 +126,9 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
         }}
         {...(errores.origenId?.message === undefined ? {} : { error: errores.origenId.message })}
       />
-      <Seleccion
+      <SeleccionNativa
+        alta
+        marcador={t.elegirCategoria}
         etiqueta={t.destino}
         opciones={opciones}
         valor={c.destinoId}
@@ -143,6 +149,8 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
         }}
         error={errores.monto?.message}
         requerido
+        prefijo="$"
+        sinVistaPrevia
       />
       {estado === 'error' && fallo !== undefined ? (
         <AvisoEnLinea
@@ -184,17 +192,19 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
             : ''}
         </AvisoEnLinea>
       ) : null}
-      <Boton
-        tipo="submit"
-        enviando={estado === 'enviando'}
-        textoEnviando={t.moviendo}
-        deshabilitado={!operacion.enLinea}
-        {...(operacion.motivoSinEnvio === undefined
-          ? {}
-          : { motivoDeshabilitado: operacion.motivoSinEnvio })}
-      >
-        {t.mover}
-      </Boton>
+      <PieDeHoja rutaPadre={rutaPadre} superpuesto={superpuesto}>
+        <Boton
+          tipo="submit"
+          enviando={estado === 'enviando'}
+          textoEnviando={t.moviendo}
+          deshabilitado={!operacion.enLinea}
+          {...(operacion.motivoSinEnvio === undefined
+            ? {}
+            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+        >
+          {t.mover}
+        </Boton>
+      </PieDeHoja>
     </form>
   );
 }

@@ -109,6 +109,12 @@ export const bandeja = {
     falloTexto:
       'Algo falló al procesar este SMS. No se registró nada. Podés intentarlo de nuevo; si vuelve a fallar, guardá la referencia.',
     referenciaNota: 'La misma referencia aparece en Ajustes › Diagnóstico.',
+    siguiente: 'Siguiente movimiento',
     soloLectura: 'Solo lectura',
+    panel: {
+      posicion: (n: number, total: number) => `${n} de ${total}`,
+      anterior: 'Anterior',
+      siguiente: 'Siguiente',
+    },
   },
 } as const;
