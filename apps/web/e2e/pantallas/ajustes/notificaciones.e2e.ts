@@ -67,9 +67,11 @@ async function simular(
           return Promise.resolve('granted');
         },
       };
-      // [CH-104] Solo observa: la respuesta de OPT-02 sigue abierta después del resultado (transmite el árbol revalidado), así
-      // que ni su fin ni sus cabeceras dicen que la app ya lo leyó. Una copia de la respuesta cuenta `opt02-resultados`
-      // cuando llega la fila del resultado; la app recibe los mismos bytes en la misma tarea.
+      // [CH-104, CH-184] Solo observa: ni las cabeceras de OPT-02 ni el fin que ve Playwright dicen que la app ya leyó el
+      // resultado. El servidor cierra la respuesta en milisegundos (PRU-E2E-NOTIF-116), pero Chrome da el pedido por
+      // `net::ERR_ABORTED` después de recibir todos los bytes, y `response.finished()` solo se cumple con `requestfinished`.
+      // Una copia de la respuesta cuenta `opt02-resultados` cuando llega la fila del resultado; la app recibe los mismos
+      // bytes en la misma tarea.
       const fetchReal = window.fetch.bind(window);
       window.fetch = (entrada, init) => {
         const respuesta = fetchReal(entrada, init);
@@ -115,6 +117,31 @@ const contador = (page: Page, clave: string): Promise<number> =>
 async function abrir(page: Page, ruta: string): Promise<void> {
   await page.goto(ruta);
   await esperarHidratacion(page);
+}
+
+/**
+ * [CH-184] Repite con la sesión del contexto el pedido de una Server Action que hizo la página y lee la respuesta entera:
+ * `timeout` es el tope de toda la respuesta, cuerpo incluido. Desde el navegador no se puede medir: Chrome da el pedido de
+ * OPT-02 por `net::ERR_ABORTED` después de recibir todos los bytes, y `response.finished()` nunca se cumple.
+ */
+async function repetirEntera(
+  page: Page,
+  pedido: Request,
+): Promise<{ estado: number; revalidada: string | undefined; cuerpo: string }> {
+  const fuera = new Set(['cookie', 'content-length', 'host', 'connection', 'accept-encoding']);
+  const cabeceras = Object.fromEntries(
+    Object.entries(await pedido.allHeaders()).filter(([k]) => !fuera.has(k) && !k.startsWith(':')),
+  );
+  const r = await page.request.post(pedido.url(), {
+    headers: cabeceras,
+    data: pedido.postData() ?? '',
+    timeout: 10_000,
+  });
+  return {
+    estado: r.status(),
+    revalidada: r.headers()['x-action-revalidated'],
+    cuerpo: await r.text(),
+  };
 }
 
 const fila = (page: Page, agente: string) => page.getByRole('listitem').filter({ hasText: agente });
@@ -178,6 +205,35 @@ test.describe('PRU-E2E-NOTIF', () => {
       await abrir(page, '/ajustes');
       expect(acciones).toHaveLength(1);
       expect(await contador(page, 'pedidos')).toBe(0);
+    });
+  });
+
+  test.describe('respuesta de la acción', () => {
+    test.use({ userAgent: 'FinnE2E-NOTIF-116' });
+
+    test('PRU-E2E-NOTIF-116 [CA-06.3, V5-03] la respuesta de OPT-02 y la de una escritura con accion() terminan con el resultado y el árbol revalidado', async ({
+      page,
+    }) => {
+      await simular(page, 'granted', 'https://push.example.test/send/e2e-notif-116-0123456789');
+      const opt02 = page.waitForRequest(
+        (r) => r.method() === 'POST' && r.postData()?.includes('clave-p256dh') === true,
+      );
+      await abrir(page, '/');
+      const renovacion = await repetirEntera(page, await opt02);
+      expect(renovacion.estado).toBe(200);
+      expect(renovacion.revalidada).toBe('1');
+      expect(renovacion.cuerpo).toContain('"ok":true');
+
+      await abrir(page, '/pruebas/eco');
+      await page.getByLabel('Texto').fill('ch-184');
+      const eco = page.waitForRequest(
+        (r) => r.method() === 'POST' && r.postData()?.includes('ch-184') === true,
+      );
+      await page.getByRole('button', { name: 'Guardar' }).click();
+      const escritura = await repetirEntera(page, await eco);
+      expect(escritura.estado).toBe(200);
+      expect(escritura.revalidada).toBe('1');
+      expect(escritura.cuerpo).toContain('"ok":true');
     });
   });
 
