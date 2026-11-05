@@ -4,6 +4,7 @@ export const metas = {
   titulo: 'Metas',
   nuevaMeta: 'Nueva meta',
   tituloNueva: 'Nueva meta',
+  tituloPara: (categoria: string) => `Meta para ${categoria}`,
   vacioTitulo: 'Todavía no tenés metas',
   vacioTexto: 'Una meta dice cuánto falta asignar a una categoría. Nunca asigna sola.',
   crearUna: 'Crear una meta',
@@ -22,6 +23,9 @@ export const metas = {
   crear: 'Crear meta',
   creando: 'Creando…',
   creada: 'Meta creada',
+  otras: 'Otras metas',
+  sinMetaTitulo: 'Categorías sin meta',
+  sinMeta: 'Sin meta',
   vencida: {
     titulo: 'Meta vencida',
     texto: (categoria: string, fecha: string) =>

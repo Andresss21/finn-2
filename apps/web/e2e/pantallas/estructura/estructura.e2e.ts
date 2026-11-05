@@ -201,10 +201,29 @@ test.describe('PRU-E2E-CATEG', () => {
     await expect(
       page.getByRole('link', { name: t.agregarCategoria('Pagos de tarjeta') }),
     ).toHaveCount(0);
-    await page.getByRole('link', { name: t.nuevaCategoria, exact: true }).click();
+    await page.getByRole('link', { name: t.agregarCategoria('Gastos') }).click();
     await expect(nombre(page)).toBeVisible();
     await expect(page.getByRole('radio', { name: 'Pagos de tarjeta' })).toHaveCount(0);
     await expect(page.getByRole('radio', { name: 'Gastos' })).toBeChecked();
     await tactilEnMain(page);
+  });
+
+  test('PRU-E2E-PRES-260 la estructura se dibuja como el diseño: cada grupo con su rótulo y «Nueva categoría», «Nuevo grupo» al final y «Listo» en el pie lleva a Presupuesto, con todo control de al menos 44 px', async ({
+    page,
+  }) => {
+    await preparar([
+      { op: 'OP-07', categoria: 'Supermercado' },
+      { op: 'OP-07', categoria: 'Luz' },
+    ]);
+    await abrir(page);
+    await expect(page.getByRole('link', { name: t.agregarCategoria('Gastos') })).toBeVisible();
+    await expect(page.getByRole('link', { name: t.nuevoGrupo, exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: t.editar('Gastos'), exact: true })).toHaveText(
+      t.editarGrupo,
+    );
+    await expect(mover(page, t.bajarA('Supermercado'))).toBeVisible();
+    await tactilEnMain(page);
+    await page.getByRole('button', { name: t.listo, exact: true }).click();
+    await expect(page).toHaveURL(/\/presupuesto$/);
   });
 });

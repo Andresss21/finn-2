@@ -3,7 +3,6 @@
 import { bandeja } from '@finn/aplicacion/consultas/bandeja';
 import type { Metadata } from 'next';
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
-import { Pestanas } from '../../../componentes/navegacion/pestanas';
 import { consultar } from '../../../servidor/consultar';
 import { depsDeConsulta } from '../../../servidor/consultas';
 import type { BusquedaDePagina } from '../../../servidor/parametros';
@@ -11,6 +10,7 @@ import { bandeja as t } from '../../../textos/bandeja';
 import { soloActivos } from './activos';
 import { ListaDescartados, type Descartado } from './descartados';
 import { ListaBandeja } from './lista';
+import { SelectorVista } from './selector-vista';
 
 export const metadata: Metadata = { title: t.titulo };
 
@@ -34,13 +34,9 @@ export default async function PaginaBandeja({
     ),
   );
   const selector = (
-    <Pestanas
-      etiqueta={t.vistas.nombre}
-      activas={[descartados ? 'descartados' : 'activos']}
-      pestanas={[
-        { id: 'activos', etiqueta: t.vistas.activos, href: '/bandeja' },
-        { id: 'descartados', etiqueta: t.vistas.descartados, href: '/bandeja?vista=descartados' },
-      ]}
+    <SelectorVista
+      activa={descartados ? 'descartados' : 'activos'}
+      porRevisar={dto.bandejaPorRevisar}
     />
   );
   if (descartados)
@@ -59,6 +55,7 @@ export default async function PaginaBandeja({
                     cuenta: m.cuenta?.nombre ?? null,
                     fecha: m.fecha,
                     monto: m.monto,
+                    tipoPropuesto: m.tipoPropuesto,
                     comercio: m.comercio,
                   },
                 ]

@@ -148,18 +148,18 @@ test.describe('PRU-E2E-META pantalla de metas', () => {
     await esperarMonto(pedido(page, 'Viaje'), 5000);
   });
 
-  test('PRU-E2E-META-105 [ESC-38, AV-17] la meta de ESC-38 sin cumplirse en P5 muestra AV-17 con las dos acciones y su pedido de $200.00', async ({
+  test('PRU-E2E-META-105 [ESC-38, AV-17] la meta de ESC-38 sin cumplirse en P5 muestra AV-17 con las dos acciones y queda en «Otras metas» como vencida', async ({
     page,
   }) => {
     await sembrarOps(ESC38_PASO4B, '2027-01-25', '2027-05-21');
     await abrir(page, '/metas');
-    const laptop = meta(page, 'Laptop');
-    await expect(laptop.locator('[data-estado="advertencia"]').first()).toContainText(
-      'Meta vencida',
-    );
-    await expect(laptop.getByRole('link', { name: 'Extender la fecha' })).toBeVisible();
-    await expect(laptop.getByRole('link', { name: 'Ajustar el monto' })).toBeVisible();
-    await esperarMonto(pedido(page, 'Laptop'), 20000);
+    const aviso = page.locator('[data-aviso-meta]');
+    await expect(aviso).toContainText('Meta vencida');
+    await expect(aviso.getByRole('link', { name: 'Extender la fecha' })).toBeVisible();
+    await expect(aviso.getByRole('link', { name: 'Ajustar el monto' })).toBeVisible();
+    await expect(
+      page.locator('[data-meta][data-vencida="si"]').filter({ hasText: 'Laptop' }),
+    ).toContainText('Meta vencida');
   });
 
   test('PRU-E2E-META-106 sin metas la pantalla lo dice y ofrece crear una con una categoría sin meta', async ({
@@ -176,6 +176,35 @@ test.describe('PRU-E2E-META pantalla de metas', () => {
     await expect(page.getByText('Todavía no tenés metas')).toBeVisible();
     await page.getByRole('link', { name: 'Crear una meta' }).click();
     await expect(page).toHaveURL(/\/metas\/nueva\?categoria=[0-9a-f-]+$/);
-    await expect(page.getByRole('heading', { name: 'Nueva meta', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Meta para Viaje', level: 1 })).toBeVisible();
+  });
+
+  test('PRU-E2E-META-130 [CA-17.1] sin metas, la lista de categorías sin meta enlaza a crear la meta de cada una y todo control mide al menos 44 px', async ({
+    page,
+  }) => {
+    await sembrarOps(
+      [
+        { op: 'OP-01', cuenta: 'Ahorro' },
+        { op: 'OP-07', categoria: 'Viaje' },
+        { op: 'OP-07', categoria: 'Gasolina' },
+      ],
+      '2027-02-10',
+    );
+    await abrir(page, '/metas');
+    const fila = page.locator('[data-sin-meta]').filter({ hasText: 'Viaje' });
+    await expect(fila).toContainText('Sin meta');
+    const chicos = await page
+      .locator('main')
+      .locator('button, a')
+      .evaluateAll((nodos) =>
+        nodos.flatMap((n) => {
+          const { width, height } = n.getBoundingClientRect();
+          return width >= 44 && height >= 44 ? [] : [`${n.textContent} ${width}×${height}`];
+        }),
+      );
+    expect(chicos).toEqual([]);
+    await fila.getByRole('link').click();
+    await expect(page).toHaveURL(/\/metas\/nueva\?categoria=[0-9a-f-]+$/);
+    await expect(page.getByRole('heading', { name: 'Meta para Viaje', level: 1 })).toBeVisible();
   });
 });
