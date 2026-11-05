@@ -9,6 +9,11 @@ const diaYMes = (f: string): string => {
   return `${Number(d)} ${MESES[Number(m) - 1]}`;
 };
 
+/** `AAAA-MM-DD` → `oct` (etiqueta del eje de los reportes por período). */
+export function formatearMesCorto(f: string): string {
+  return MESES[Number(f.slice(5, 7)) - 1] ?? '';
+}
+
 /** `AAAA-MM-DD` → `5 oct 2026`. */
 export function formatearFechaTexto(f: string): string {
   return `${diaYMes(f)} ${f.slice(0, 4)}`;

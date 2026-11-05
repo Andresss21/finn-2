@@ -53,6 +53,9 @@ export const categoriaDetalle = {
     vacio: 'Todavía no hay períodos cerrados con esta categoría.',
     sePaso: (k: number, n: number) => `Se pasó ${k} de ${n}`,
     promedio: 'Promedio gastado',
+    leyendaGasto: 'Gasto',
+    leyendaSePaso: 'Se pasó',
+    leyendaAsignado: 'Asignado',
     columnas: ['Período', glosario.asignado, glosario.gastado, glosario.disponible],
   },
   meta: {

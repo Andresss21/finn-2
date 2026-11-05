@@ -14,6 +14,7 @@ export {
 export { formatearFecha, formatearPeriodo } from './fecha.ts';
 export {
   formatearFechaTexto,
+  formatearMesCorto,
   formatearPeriodoCorto,
   formatearPeriodoNumerico,
 } from './fecha-texto.ts';
