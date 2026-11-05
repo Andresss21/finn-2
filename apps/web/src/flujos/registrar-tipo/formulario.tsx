@@ -12,7 +12,7 @@ import { EntradaTexto } from '../../componentes/base/campo';
 import { Resultado } from '../../componentes/base/resultado';
 import { Seleccion } from '../../componentes/base/seleccion';
 import { Vacio } from '../../componentes/base/vacio';
-import { ConfirmacionImpactoDeVista as ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
+import { ConfirmacionImpactoDeVista as ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto-de-vista';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';

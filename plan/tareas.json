@@ -399,7 +399,7 @@
 
   "TA-305": { "estado": "terminada", "rama": "ta-305-metas-pantallas", "pr": 300 },
 
-  "TA-442": { "estado": "pendiente" },
+  "TA-442": { "estado": "terminada", "rama": "ta-442-metas-editar-main", "pr": 405 },
 
   "TA-449": { "estado": "terminada", "rama": "ta-449-coincidencias-2", "pr": 318 },
 
@@ -431,7 +431,7 @@
 
   "TA-400": { "estado": "terminada", "rama": "ta-400-listo-para-asignar", "pr": 279 },
 
-  "TA-401": { "estado": "terminada", "rama": "ta-401-reserva-excedente", "pr": 406 },
+  "TA-401": { "estado": "terminada", "rama": "ta-401-reserva-excedente", "pr": 408 },
 
   "TA-402": { "estado": "pendiente" },
 

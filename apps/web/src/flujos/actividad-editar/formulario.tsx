@@ -60,7 +60,7 @@ const DE_LAS_PARTES = [
 ];
 
 const ConfirmacionImpacto = lazy(() =>
-  import('../../componentes/formularios/confirmacion-impacto').then((m) => ({
+  import('../../componentes/formularios/confirmacion-impacto-de-vista').then((m) => ({
     default: m.ConfirmacionImpactoDeVista,
   })),
 );

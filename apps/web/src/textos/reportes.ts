@@ -58,6 +58,8 @@ export const reportes = {
   compras: (n: number) => (n === 1 ? '1 compra' : `${n} compras`),
   resumenDona: (mayor: string, porcentaje: string) => `la mayor es ${mayor}, con ${porcentaje}`,
   resumenDonaVacia: 'sin gastos',
+  /** Debajo del total al centro de la dona (export 04-reportes, CH-177). */
+  totalDona: 'gastado',
   leyenda: 'Leyenda',
   patrimonioHoy: 'Patrimonio neto hoy',
   resumenLinea: (primero: string, ultimo: string) => `de ${primero} a ${ultimo}`,

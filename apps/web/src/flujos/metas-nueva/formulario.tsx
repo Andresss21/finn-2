@@ -27,7 +27,7 @@ export interface PropsFormularioMeta {
 const TIPOS = ['mensual', 'semanal', 'anual', 'para_fecha'] as const;
 const MODOS = ['acumular', 'rellenar_hasta'] as const;
 
-const CONTRATO = z
+export const CONTRATO = z
   .object({
     categoriaId: z.string(),
     tipo: z.enum(TIPOS),
@@ -45,14 +45,15 @@ const CONTRATO = z
     if (c.categoriaId === '') falla('categoriaId', t.obligatorio);
     if (c.tipo === 'para_fecha' && c.fechaObjetivo === '') falla('fechaObjetivo', t.obligatorio);
   });
-type Campos = z.infer<typeof CONTRATO>;
+export type Campos = z.infer<typeof CONTRATO>;
 type Cruda = Campos & { modo: string; id?: string };
 
 const RUTA_PADRE = '/metas';
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
-const opciones = (m: Readonly<Record<string, string>>) =>
+export const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
+export const opciones = (m: Readonly<Record<string, string>>) =>
   Object.entries(m).map(([valor, etiqueta]) => ({ valor, etiqueta }));
-const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
+export const enSuCampo = (e: ErrorFinn): boolean =>
+  Object.values(e.campos ?? {}).includes(e.mensaje);
 
 export function FormularioMeta({ categorias, categoriaInicial }: PropsFormularioMeta) {
   const inicial: Campos = {
