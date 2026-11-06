@@ -229,7 +229,7 @@
     "fts": ["FT-41"]
   },
   { "patron": "apps/web/src/flujos/reglas-regla/**", "fts": ["FT-39"] },
-  { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03"] },
+  { "patron": "apps/web/src/servidor/acciones/ajustes.ts", "fts": ["FT-03", "FT-76"] },
   { "patron": "apps/web/src/servidor/acciones/notificaciones.ts", "fts": ["FT-06", "FT-08"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/notificaciones/**", "fts": ["FT-06"] },
   { "patron": "apps/web/src/app/(finn)/notificaciones/**", "fts": ["FT-69"] },
@@ -238,6 +238,8 @@
   { "patron": "apps/web/src/app/api/respaldo/**", "fts": ["FT-76"] },
   { "patron": "apps/web/src/app/api/exportar/**", "fts": ["FT-75"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/exportar/**", "fts": ["FT-75"] },
+  { "patron": "apps/web/src/app/(finn)/ajustes/respaldo/**", "fts": ["FT-76"] },
+  { "patron": "apps/web/src/app/(finn)/ajustes/diagnostico/**", "fts": ["FT-76"] },
   { "patron": "apps/web/src/app/api/notificaciones/**", "fts": ["FT-70"] },
   { "patron": "apps/web/vercel.json", "fts": [] },
   { "patron": "packages/aplicacion/src/operaciones/marco.ts", "fts": "marco" },

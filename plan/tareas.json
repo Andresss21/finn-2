@@ -523,7 +523,7 @@
 
   "TA-435": { "estado": "terminada", "rama": "ta-435-exportar", "pr": 288 },
 
-  "TA-436": { "estado": "pendiente" },
+  "TA-436": { "estado": "terminada", "rama": "ta-436-respaldo-diagnostico", "pr": 441 },
 
   "TA-437": { "estado": "terminada", "rama": "ta-437-pwa-instalar-sin-conexion", "pr": 287 },
 
