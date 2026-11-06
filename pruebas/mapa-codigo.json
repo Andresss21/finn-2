@@ -61,7 +61,10 @@
   { "patron": "apps/web/src/app/(finn)/ajustes/seguridad/factores/nuevo/**", "fts": ["FT-02"] },
   { "patron": "apps/web/src/flujos/ajustes-seguridad-factores-nuevo/**", "fts": ["FT-02"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/seguridad/*.tsx", "fts": ["FT-74"] },
-  { "patron": "apps/web/src/app/(finn)/ajustes/seguridad/factores/[factorId]/**", "fts": ["FT-74"] },
+  {
+    "patron": "apps/web/src/app/(finn)/ajustes/seguridad/factores/[factorId]/**",
+    "fts": ["FT-74"]
+  },
   { "patron": "apps/web/src/flujos/ajustes-seguridad-factores-quitar/**", "fts": ["FT-74"] },
   { "patron": "apps/web/src/servidor/acciones/seguridad.ts", "fts": ["FT-74"] },
   { "patron": "apps/web/src/app/ingresar/acceso.ts", "fts": ["FT-01", "FT-02"] },
