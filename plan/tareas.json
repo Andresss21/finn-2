@@ -433,7 +433,7 @@
 
   "TA-401": { "estado": "terminada", "rama": "ta-401-reserva-excedente", "pr": 408 },
 
-  "TA-402": { "estado": "pendiente" },
+  "TA-402": { "estado": "terminada", "rama": "ta-402-corte-pago-intereses", "pr": 416 },
 
   "TA-403": { "estado": "terminada", "rama": "ta-403-asignacion-rapida", "pr": 319 },
 
@@ -449,9 +449,9 @@
 
   "TA-408": { "estado": "terminada", "rama": "ta-408-por-cobrar-3", "pr": 386 },
 
-  "TA-409": { "estado": "pendiente" },
+  "TA-409": { "estado": "terminada", "rama": "ta-409-cobrar", "pr": 412 },
 
-  "TA-410": { "estado": "terminada", "rama": "ta-410-renombrar-deudor", "pr": 419 },
+  "TA-410": { "estado": "terminada", "rama": "ta-410-renombrar-deudor-2", "pr": 420 },
 
   "TA-411": { "estado": "terminada", "rama": "ta-411-reglas", "pr": 353 },
 

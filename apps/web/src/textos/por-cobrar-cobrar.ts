@@ -1,0 +1,38 @@
+// Textos de `/por-cobrar/cobrar` (FT-46; 06 FT-46; 05 §2, §12; 06-identidad-visual 09c). Voseo (05 §12.2). Los montos llegan ya
+// formateados (PF-3); los rechazos (`sin_saldo_abierto`, `evento_anterior_a_original`…) llegan compuestos en `mensaje`.
+export const porCobrarCobrar = {
+  tituloGenerico: 'Cobrar',
+  titulo: (deudor: string) => `Cobrar a ${deudor}`,
+  subtitulo: (comercio: string, abierto: string) => `${comercio} · abierto ${abierto}`,
+  partida: 'Partida',
+  marcadorPartida: 'Elegí la partida',
+  cuenta: 'Lo recibiste en',
+  marcadorCuenta: 'Elegí la cuenta',
+  saldo: (monto: string) => `Saldo ${monto}`,
+  deuda: (monto: string) => `Deuda ${monto}`,
+  fecha: 'Fecha',
+  monto: 'Monto',
+  elegirCuenta: 'Elegí dónde recibiste el dinero.',
+  completar: 'Completá este campo.',
+  reservar: (monto: string, tarjeta: string) => `Reservar ${monto} para ${tarjeta}`,
+  reservarLoCobrado: (tarjeta: string) => `Reservar lo cobrado para ${tarjeta}`,
+  reservarAyuda: 'La compra fue con tarjeta: así el pago de la tarjeta queda cubierto.',
+  cancelar: 'Cancelar',
+  cobrar: 'Cobrar',
+  cobrarMonto: (monto: string) => `Cobrar ${monto}`,
+  cobrando: 'Cobrando…',
+  revisar: 'Revisá el cobro',
+  confirmar: 'Confirmar',
+  volverAEditar: 'Volver a editar',
+  avisoPeriodoCerrado: 'La fecha es de un período cerrado: cambia el período activo.',
+  tituloListo: 'Cobro registrado',
+  guardado: (monto: string, deudor: string) => `Cobro guardado: ${monto} · ${deudor}`,
+  /** AV-22 (04 §3.5): el cobro no se asignó a la categoría de pago; se ofrece hacerlo. */
+  avisoAV22: (tarjeta: string) =>
+    `Ese dinero puede reservarse para ${tarjeta}: asignalo a su categoría de pago.`,
+  asignarA: (tarjeta: string) => `Asignar a la categoría de pago de ${tarjeta}`,
+  verCategoria: (tarjeta: string) => `Ver la categoría de pago de ${tarjeta}`,
+  volver: 'Volver a Por cobrar',
+  sinSaldoTitulo: 'Sin saldo por cobrar',
+  sinSaldoTexto: 'Esa partida ya no tiene saldo abierto, así que no se puede cobrar.',
+} as const;
