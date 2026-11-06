@@ -491,7 +491,7 @@
 
   "TA-423": { "estado": "terminada", "rama": "ta-423-ritmo-2", "pr": 433 },
 
-  "TA-424": { "estado": "en_curso", "rama": "ta-424-presupuesto-vs-realidad" },
+  "TA-424": { "estado": "terminada", "rama": "ta-424-presupuesto-vs-realidad", "pr": 436 },
 
   "TA-425": { "estado": "pendiente" },
 
