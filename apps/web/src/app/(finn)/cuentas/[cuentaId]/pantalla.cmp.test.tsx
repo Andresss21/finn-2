@@ -176,7 +176,7 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
       }),
     );
     expect(sin.querySelector('[data-bloque="prestamo"]')?.textContent).toContain(
-      'Sin modelo de cálculo',
+      'Este préstamo no tiene un modelo de cálculo',
     );
     expect(sin.querySelector('table')).toBeNull();
 
