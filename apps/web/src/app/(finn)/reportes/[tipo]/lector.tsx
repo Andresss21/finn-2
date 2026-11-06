@@ -43,12 +43,14 @@ export async function LectorReporte({
         ...(categoriaIds === undefined ? {} : { categoriaIds }),
       }
     : {
-    tipo: TIPOS[url],
-    ...(ventana === undefined ? {} : { ventana }),
-    ...(cuentaIds === undefined ? {} : { cuentaIds }),
-    ...(url === 'categorias' && grupo !== undefined && UUID.test(grupo) ? { grupoId: grupo } : {}),
-    ...(url === 'top-comercios' && limite !== undefined ? { limite: Number(limite) } : {}),
-  };
+        tipo: TIPOS[url],
+        ...(ventana === undefined ? {} : { ventana }),
+        ...(cuentaIds === undefined ? {} : { cuentaIds }),
+        ...(url === 'categorias' && grupo !== undefined && UUID.test(grupo)
+          ? { grupoId: grupo }
+          : {}),
+        ...(url === 'top-comercios' && limite !== undefined ? { limite: Number(limite) } : {}),
+      };
   const [dto, listaDeCuentas, arbol] = await Promise.all([
     consultar(async () => reporte(await depsDeConsulta(), solicitud)),
     consultar(async () => cuentas(await depsDeConsulta(), { incluirArchivadas: true })),

@@ -2,7 +2,7 @@
 // mismas semanas de los períodos anteriores. Dibuja lo que trae el DTO (PF-3): la referencia, el porcentaje y la diferencia las
 // calcula el motor. Las semanas futuras van sin barra y con su nota (05 §10.8).
 import type { ReporteDe } from '@finn/aplicacion/consultas/reporte';
-import { Centavos } from '@finn/dominio/valores';
+import type { Centavos } from '@finn/dominio/valores';
 import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { GraficoBarras } from '../../../../componentes/graficos/grafico-barras';
@@ -23,8 +23,8 @@ function Resumen({ c }: { readonly c: Categoria }) {
   const hoy = c.semanas.find((s) => s.k === c.semanaActual?.k) ?? ultima;
   const datos: [string, Centavos][] = [
     [g.asignado, c.asignado],
-    [g.gastado, ultima?.gastoAcumulado ?? Centavos.cero],
-    [g.referenciaHoy, hoy?.referenciaAcumulada ?? Centavos.cero],
+    [g.gastado, ultima?.gastoAcumulado ?? (0 as Centavos)],
+    [g.referenciaHoy, hoy?.referenciaAcumulada ?? (0 as Centavos)],
   ];
   return (
     <dl data-resumen className="grid grid-cols-3 gap-3 rounded-contenedor bg-superficie p-4">
@@ -53,7 +53,7 @@ function Estado({ c }: { readonly c: Categoria }) {
         <p data-diferencia className="text-cuerpo-pequeno text-texto-secundario">
           {dif >= 0
             ? g.porDebajo(formatearMonto(dif))
-            : g.porEncima(formatearMonto(Centavos.negar(dif)))}
+            : g.porEncima(formatearMonto(Math.abs(dif) as Centavos))}
         </p>
       )}
     </>
@@ -62,7 +62,7 @@ function Estado({ c }: { readonly c: Categoria }) {
 
 function PorCategoria({ c, nombre }: { readonly c: Categoria; readonly nombre: string }) {
   const acumulados = c.semanas.filter((s) => !s.futura);
-  const gastado = acumulados.at(-1)?.gastoAcumulado ?? Centavos.cero;
+  const gastado = acumulados.at(-1)?.gastoAcumulado ?? (0 as Centavos);
   return (
     <section data-categoria={c.categoria} className="flex flex-col gap-3">
       <h3 className="text-titulo-seccion">{nombre}</h3>
@@ -115,7 +115,11 @@ function PorCategoria({ c, nombre }: { readonly c: Categoria; readonly nombre: s
                 id: 'semana',
                 celda: (s) =>
                   `S${s.k} ${corta(s.desde)}–${corta(s.hasta)}${
-                    s.futura ? ` (${g.futuraTabla})` : s.k === c.semanaActual?.k ? ` (${g.enCurso})` : ''
+                    s.futura
+                      ? ` (${g.futuraTabla})`
+                      : s.k === c.semanaActual?.k
+                        ? ` (${g.enCurso})`
+                        : ''
                   }`,
               },
               { id: 'gastado', celda: (s) => monto(s.gasto) },

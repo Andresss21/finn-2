@@ -103,7 +103,9 @@ function categoriasDe(
 ): PestanaDeEnlace[] {
   const elegidas = dto.categorias.map((c) => c.categoria);
   return nombres.categorias.map((c) => {
-    const quedan = elegidas.includes(c.id) ? elegidas.filter((x) => x !== c.id) : [...elegidas, c.id];
+    const quedan = elegidas.includes(c.id)
+      ? elegidas.filter((x) => x !== c.id)
+      : [...elegidas, c.id];
     return {
       id: c.id,
       etiqueta: c.nombre,
