@@ -102,7 +102,7 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(page.locator('[data-movimiento]')).toHaveCount(0);
   });
 
-  test('PRU-E2E-BAND-131 [CA-35.6] «Confirmar» una coincidencia con una ocurrencia ya registrada por el registro automático no crea otra transacción', async ({
+  test('PRU-E2E-BAND-131 [CA-35.6, CA-42.6] «Confirmar» una coincidencia con una ocurrencia ya registrada por el registro automático no crea otra transacción', async ({
     page,
   }) => {
     await preparar([...BASE, programada(true), { op: 'OP-43', modo: 'automatico' }, SMS]);
