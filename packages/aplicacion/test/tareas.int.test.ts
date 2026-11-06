@@ -239,7 +239,7 @@ describe('PRU-INT-PROG', () => {
     });
   });
 
-  it('PRU-INT-PROG-101 10.1: la puesta al día corre los pasos con inicio y fin de la misma ejecución; no se lanza si hay una de hoy terminada, ni con un inicio de menos de 5 minutos', async () => {
+  it('PRU-INT-PROG-101 [CA-42.5] 10.1: la puesta al día corre los pasos con inicio y fin de la misma ejecución; no se lanza si hay una de hoy terminada, ni con un inicio de menos de 5 minutos', async () => {
     // 1. Sin eventos de hoy: corre, con el inicio antes y el fin después, con la misma `ejecucion`: los pasos 1 y 2 y el aviso de cuota del paso 4 (10.1, CF-24)
     const primera = await ponerAlDia(deps(10));
     expect(primera).toMatchObject({ ejecutada: true });

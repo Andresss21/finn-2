@@ -467,7 +467,7 @@
 
   "TA-414": { "estado": "terminada", "rama": "ta-414-proximos-pagos", "pr": 410 },
 
-  "TA-415": { "estado": "pendiente" },
+  "TA-415": { "estado": "en_curso", "rama": "ta-415-registro-automatico" },
 
   "TA-416": { "estado": "pendiente" },
 
