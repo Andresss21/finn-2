@@ -148,7 +148,12 @@ test.describe('PRU-E2E-ACCESO', () => {
       const pushManager = { getSubscription: () => Promise.resolve(suscripcion) };
       Object.defineProperty(navigator, 'serviceWorker', {
         configurable: true,
-        value: { ready: Promise.resolve({ pushManager }) },
+        value: {
+          ready: Promise.resolve({ pushManager }),
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+          register: () => Promise.reject(new Error('sin service worker')),
+        },
       });
     });
     await entrarAal2(context, baseURL ?? '');
