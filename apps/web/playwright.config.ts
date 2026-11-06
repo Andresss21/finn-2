@@ -3,6 +3,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import { SECRETO_RESPALDO_E2E } from '../../tools/pruebas/e2e/respaldo.ts';
 import { ARCHIVO_RELOJ } from '../../tools/pruebas/e2e/reloj.ts';
+import { SECRETO_TAREA_E2E } from './e2e/ayudas/tarea-diaria.ts';
 
 const enCI = process.env['CI'] !== undefined && process.env['CI'] !== '';
 const PUERTO = 3100;
@@ -38,6 +39,7 @@ export default defineConfig({
     env: {
       FINN_ENTORNO: 'pruebas',
       FINN_RELOJ_ARCHIVO: ARCHIVO_RELOJ,
+      CRON_SECRET: SECRETO_TAREA_E2E,
       RESPALDO_SECRET: SECRETO_RESPALDO_E2E,
       NEXT_TELEMETRY_DISABLED: '1',
     },
