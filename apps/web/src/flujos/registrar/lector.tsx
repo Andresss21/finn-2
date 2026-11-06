@@ -9,6 +9,7 @@ import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
+import { registrarTarjeta as k } from '../../textos/registrar-tarjeta';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const FILA = `flex min-h-14 flex-col justify-center rounded-control bg-superficie px-4 py-2 ${FOCO}`;
@@ -32,6 +33,15 @@ export async function LectorRegistrar() {
             detalle: t.tipoTransferenciaDetalle,
           },
         ]
+      : []),
+    ...(dto.tarjetas.length >= 1
+      ? [{ href: '/registrar/entrada-tarjeta', ...k.tipos.entrada }]
+      : []),
+    ...(dto.tarjetas.length >= 1 && dto.efectivo.length >= 1
+      ? [{ href: '/registrar/avance', ...k.tipos.avance }]
+      : []),
+    ...(dto.tarjetas.length >= 2
+      ? [{ href: '/registrar/transferencia-deuda', ...k.tipos.deuda }]
       : []),
   ];
   return (

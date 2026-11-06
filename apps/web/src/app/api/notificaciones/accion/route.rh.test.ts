@@ -181,4 +181,31 @@ describe('PRU-SEG-NOTIF', () => {
       ).status,
     ).toBe(422);
   });
+
+  it('PRU-RH-NOTIF-101 [CA-70.4] una petición sin la cabecera X-Finn-Accion, o con el Origin de otro sitio, se rechaza con 403 y no toca el movimiento', async () => {
+    const antes = await columna('estado', A_RECHAZAR);
+    expect((await accion({ origin: ORIGEN })).status).toBe(403);
+    expect((await accion({ origin: 'https://otro.example', 'x-finn-accion': '1' })).status).toBe(
+      403,
+    );
+    expect(h.despues).toHaveLength(0);
+    expect(await columna('estado', A_RECHAZAR)).toBe(antes);
+  });
+
+  it('PRU-RH-NOTIF-101 [CA-70.3] «Confirmar» con la sesión vigente responde 200, sin sesión 401 (el service worker abre /bandeja) y con el movimiento ya cambiado un rechazo, 409 o 422, que abren /bandeja/[movimientoId] (04 §11.5)', async () => {
+    // A_CONFIRMAR ya quedó aprobado por la prueba anterior: confirmarlo otra vez es el mismo resultado
+    const confirmar = {
+      notificacionId: NOTIFICACION,
+      movimientoId: A_CONFIRMAR,
+      decision: 'confirmar',
+    };
+    expect((await accion(VALIDAS, confirmar)).status).toBe(200);
+    h.aal = null;
+    expect((await accion(VALIDAS, confirmar)).status).toBe(401);
+    h.aal = 'aal2';
+    // El movimiento cambió desde que salió la notificación: ya está aprobado y ahora se pide rechazar la coincidencia
+    // 409 si choca el id de creación y 422 si la transición ya no es posible (aquí, rechazar un aprobado)
+    expect((await accion(VALIDAS, { ...confirmar, decision: 'rechazar' })).status).toBe(422);
+    expect(await columna('estado', A_CONFIRMAR)).toBe('aprobado');
+  });
 });
