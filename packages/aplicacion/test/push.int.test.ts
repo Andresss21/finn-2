@@ -1167,7 +1167,7 @@ describe('PRU-INT-NOTIF', () => {
   };
   const conCierre = (hoy: string): DepsMarco & DepsEnvio & { cargar: typeof cargarHechos } => ({
     ...deps(hoy),
-    cargar: (async () => hechosDeCierre()) as unknown as typeof cargarHechos,
+    cargar: () => Promise.resolve(hechosDeCierre()),
   });
 
   it('PRU-INT-NOTIF-106 [CA-71.1] el cierre del 21/09 al 20/10 con $50.00 de reducción por sobregiros y una meta vencida envía un solo push con el texto de 04 §11.4 y destino Presupuesto de ese período', async () => {
@@ -1207,7 +1207,7 @@ describe('PRU-INT-NOTIF', () => {
     expect(recibidos.filter((x) => x.urgencia === 'low')).toHaveLength(1);
   });
 
-  it('PRU-INT-NOTIF-106 [CA-71.4] con el respaldo sin correr hace 37 horas la tarea envía respaldo_atrasado con destino Ajustes > Diagnóstico', async () => {
+  it('PRU-INT-NOTIF-106 [CA-71.4] con el respaldo sin correr hace 37 horas la tarea envía respaldo_atrasado con destino la pantalla Diagnóstico de Ajustes', async () => {
     await suscribir('ok');
     await sql(`UPDATE finn.estado_respaldo SET ultimo_respaldo_en = now() - interval '37 hours'`);
     await pasoAvisos.ejecutar(deps());
