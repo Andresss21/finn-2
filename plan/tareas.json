@@ -507,7 +507,7 @@
 
   "TA-430": { "estado": "terminada", "rama": "ta-430-push-programadas-sistema", "pr": 439 },
 
-  "TA-431": { "estado": "pendiente" },
+  "TA-431": { "estado": "en_curso", "rama": "ta-431-push-sistema" },
 
   "TA-432": { "estado": "terminada", "rama": "ta-432-ciclo", "pr": 348 },
 

@@ -2,6 +2,7 @@
 // La pila local y el usuario de prueba los levanta `pnpm test:e2e` (tools/pruebas/e2e.mjs, TA-219).
 import { defineConfig, devices } from '@playwright/test';
 import { ARCHIVO_RELOJ } from '../../tools/pruebas/e2e/reloj.ts';
+import { SECRETO_TAREA_E2E } from './e2e/ayudas/tarea-diaria.ts';
 
 const enCI = process.env['CI'] !== undefined && process.env['CI'] !== '';
 const PUERTO = 3100;
@@ -37,6 +38,7 @@ export default defineConfig({
     env: {
       FINN_ENTORNO: 'pruebas',
       FINN_RELOJ_ARCHIVO: ARCHIVO_RELOJ,
+      CRON_SECRET: SECRETO_TAREA_E2E,
       NEXT_TELEMETRY_DISABLED: '1',
     },
   },
