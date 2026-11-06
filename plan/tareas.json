@@ -503,7 +503,7 @@
 
   "TA-428": { "estado": "terminada", "rama": "ta-428-notificaciones", "pr": 358 },
 
-  "TA-429": { "estado": "en_curso", "rama": "ta-429-push-bandeja" },
+  "TA-429": { "estado": "terminada", "rama": "ta-429-push-bandeja", "pr": 432 },
 
   "TA-430": { "estado": "pendiente" },
 
