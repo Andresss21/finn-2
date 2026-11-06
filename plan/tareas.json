@@ -477,7 +477,7 @@
 
   "TA-418": { "estado": "pendiente" },
 
-  "TA-419": { "estado": "pendiente" },
+  "TA-419": { "estado": "terminada", "rama": "ta-419-condiciones-amortizacion", "pr": 423 },
 
   "TA-420": { "estado": "pendiente" },
 
