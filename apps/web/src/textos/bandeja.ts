@@ -64,6 +64,20 @@ export const bandeja = {
       pago_sin_origen: 'Elegí de qué cuenta salió el pago.',
     } as Readonly<Record<string, string>>,
   },
+  // FT-78: arrastrar un movimiento a una categoría (CF-21, CF-22, FD-30)
+  arrastre: {
+    asa: (detalle: string) => `Arrastrar ${detalle} a una categoría`,
+    instrucciones:
+      'Para arrastrar, presioná Espacio. Mientras arrastrás, usá las flechas para elegir una categoría, Espacio para soltar o Escape para cancelar.',
+    tomaste: (comercio: string) => `Tomaste ${comercio}.`,
+    sobre: (categoria: string) => `Sobre ${categoria}.`,
+    soltaste: (comercio: string, categoria: string) => `Soltaste ${comercio} en ${categoria}.`,
+    cancelado: 'Arrastre cancelado.',
+    panel: 'Destinos del arrastre',
+    sugerida: (categoria: string) => `Sugerida: ${categoria}`,
+    otra: 'Otra categoría…',
+    sinComercio: 'el movimiento',
+  },
   revisar: {
     titulo: 'Revisar movimiento',
     sms: 'Texto del SMS',
