@@ -7,6 +7,7 @@ import { consultar, type DepsConsulta, type Encabezado } from '../comun.ts';
 import { archivar } from './archivar.ts';
 import { asignar } from './asignar.ts';
 import { cobrar } from './cobrar.ts';
+import { conciliar } from './conciliar.ts';
 import { condonar } from './condonar.ts';
 import { cuenta } from './cuenta.ts';
 import { cuota } from './cuota.ts';
@@ -38,6 +39,7 @@ interface Cuerpos {
   readonly fusionar: Awaited<ReturnType<typeof fusionar>>;
   readonly formato: Awaited<ReturnType<typeof formato>>;
   readonly programada: Awaited<ReturnType<typeof programada>>;
+  readonly conciliar: Awaited<ReturnType<typeof conciliar>>;
   readonly verificar_saldo: Awaited<ReturnType<typeof verificar>>;
 }
 
@@ -87,6 +89,8 @@ export function formulario(d: DepsConsulta, parametros: unknown): Promise<Formul
             return fusionar(c, p);
           case 'programada':
             return programada(c, p);
+          case 'conciliar':
+            return conciliar(c, p);
           case 'verificar_saldo':
             return verificar(c, p);
         }

@@ -93,3 +93,11 @@ export function instanteDeLaPeticion(
   const desfaseMs = relojDePrueba(env, fuentes)?.desfaseMs ?? 0;
   return new Date(fuentes.ahoraMs() + desfaseMs).toISOString() as Instante;
 }
+
+/** Lo mismo que `instanteDeLaPeticion`, en milisegundos: para el vencimiento de la carga firmada (04 §9.6), un control técnico. */
+export function ahoraMsDeLaPeticion(
+  env: Entorno = process.env,
+  fuentes: FuentesDeReloj = FUENTES_REALES,
+): number {
+  return fuentes.ahoraMs() + (relojDePrueba(env, fuentes)?.desfaseMs ?? 0);
+}

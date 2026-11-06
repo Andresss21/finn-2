@@ -41,6 +41,7 @@ import { presupuestoMover } from './presupuesto-mover.ts';
 import { primerosPasos } from './primeros-pasos.ts';
 import { registrarGasto } from './registrar-gasto.ts';
 import { registrarTipo } from './registrar-tipo.ts';
+import { conciliar } from './conciliar.ts';
 import { reportes } from './reportes.ts';
 import { transaccion } from './transaccion.ts';
 import { verificarSaldo } from './verificar-saldo.ts';
@@ -90,6 +91,7 @@ export {
   registrarTipo,
   reportes,
   transaccion,
+  conciliar,
   verificarSaldo,
 };
 
@@ -137,5 +139,6 @@ export const areas = [
   ['registrarTipo', registrarTipo],
   ['reportes', reportes],
   ['transaccion', transaccion],
+  ['conciliar', conciliar],
   ['verificarSaldo', verificarSaldo],
 ] as const;

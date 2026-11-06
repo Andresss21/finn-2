@@ -1,5 +1,6 @@
-// Textos de `/por-cobrar` (FT-45; 05 §2, §7.2, §12). Voseo (05 §12.2). Sin errores propios (06 FT-45). Cobrar, condonar y
-// renombrar son de FT-46, FT-47 y FT-48: acá solo los enlaces.
+// Textos de `/por-cobrar` (FT-45) y de renombrar un deudor (FT-48; 05 §2, §7.2, §12). Voseo (05 §12.2). `/por-cobrar` no tiene
+// errores propios (06 FT-45); los de renombrar (`nombre_repetido`, `conflicto_desactualizado`) los trae el servidor en `mensaje`.
+// Cobrar y condonar son de FT-46 y FT-47: acá solo sus enlaces.
 import { glosario } from './glosario.ts';
 
 export const porCobrar = {
@@ -30,4 +31,15 @@ export const porCobrar = {
   vacioTitulo: 'Nadie te debe nada',
   vacioTexto: 'Cuando pagues por otra persona, dividí el gasto y marcá su parte como por cobrar.',
   verCerrados: 'Ver los cerrados',
+} as const;
+
+export const porCobrarRenombrar = {
+  titulo: 'Renombrar deudor',
+  nombre: 'Nombre',
+  obligatorio: 'Completá este campo.',
+  guardar: 'Guardar nombre',
+  guardando: 'Guardando…',
+  guardado: 'Nombre guardado',
+  sinCambios: 'Todavía no cambiaste el nombre.',
+  usarValorActual: 'Usar el valor actual',
 } as const;
