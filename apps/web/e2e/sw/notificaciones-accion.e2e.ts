@@ -98,7 +98,7 @@ test.describe('PRU-SW-NOTIF', () => {
       const fetchOriginal = g.fetch.bind(g);
       g.fetch = async (entrada, init) => {
         const respuesta = await fetchOriginal(entrada, init);
-        if (String(entrada).includes('/api/notificaciones/accion'))
+        if (respuesta.url.includes('/api/notificaciones/accion'))
           g.accionesPorFinn.push(respuesta.status);
         return respuesta;
       };
