@@ -148,6 +148,7 @@
   { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/verificar-saldo/**", "fts": ["FT-44"] },
   { "patron": "apps/web/src/flujos/cuentas-verificar-saldo/**", "fts": ["FT-44"] },
   { "patron": "apps/web/src/servidor/acciones/conciliacion.ts", "fts": ["FT-43", "FT-44"] },
+  { "patron": "apps/web/src/servidor/conciliacion.ts", "fts": ["FT-43"] },
   { "patron": "apps/web/src/app/(finn)/cuentas/[cuentaId]/editar/**", "fts": ["FT-53"] },
   { "patron": "apps/web/src/app/(finn)/cuentas/ordenar/**", "fts": ["FT-53"] },
   { "patron": "apps/web/src/flujos/cuentas-editar/**", "fts": ["FT-53"] },
