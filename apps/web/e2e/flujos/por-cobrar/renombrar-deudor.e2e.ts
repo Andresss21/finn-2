@@ -59,7 +59,7 @@ test.describe('PRU-E2E-COBRO flujo de renombrar un deudor', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-COBRO-141 [CA-48.1, RUTA-/por-cobrar/deudores/[deudorId]/renombrar] "Carlso" con dos partidas pasa a "Carlos" y ninguna cifra cambia', async ({
+  test('PRU-E2E-COBRO-141 [CA-48.1] "Carlso" con dos partidas pasa a "Carlos" y ninguna cifra cambia RUTA-/por-cobrar/deudores/[deudorId]/renombrar', async ({
     page,
   }) => {
     await sembrarOps(CARLSO);
