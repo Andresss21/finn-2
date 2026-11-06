@@ -10,6 +10,7 @@ import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
 import { registrarInversion as inv } from '../../textos/registrar-inversion';
+import { registrarDesembolso as d } from '../../textos/registrar-desembolso';
 import { registrarTarjeta as k } from '../../textos/registrar-tarjeta';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
@@ -67,6 +68,9 @@ export async function LectorRegistrar() {
       : []),
     ...(dto.tarjetas.length >= 2
       ? [{ href: '/registrar/transferencia-deuda', ...k.tipos.deuda }]
+      : []),
+    ...(dto.prestamos.length >= 1 && dto.efectivo.length >= 1
+      ? [{ href: '/registrar/desembolso', ...d.tipo }]
       : []),
   ];
   return (

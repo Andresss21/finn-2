@@ -491,7 +491,7 @@
 
   "TA-423": { "estado": "terminada", "rama": "ta-423-ritmo-2", "pr": 433 },
 
-  "TA-424": { "estado": "pendiente" },
+  "TA-424": { "estado": "terminada", "rama": "ta-424-presupuesto-vs-realidad-2", "pr": 438 },
 
   "TA-425": { "estado": "pendiente" },
 
@@ -505,9 +505,9 @@
 
   "TA-429": { "estado": "terminada", "rama": "ta-429-push-bandeja", "pr": 432 },
 
-  "TA-430": { "estado": "pendiente" },
+  "TA-430": { "estado": "terminada", "rama": "ta-430-push-programadas-sistema", "pr": 439 },
 
-  "TA-431": { "estado": "pendiente" },
+  "TA-431": { "estado": "terminada", "rama": "ta-431-push-2", "pr": 444 },
 
   "TA-432": { "estado": "terminada", "rama": "ta-432-ciclo", "pr": 348 },
 
@@ -523,11 +523,11 @@
 
   "TA-435": { "estado": "terminada", "rama": "ta-435-exportar", "pr": 288 },
 
-  "TA-436": { "estado": "pendiente" },
+  "TA-436": { "estado": "terminada", "rama": "ta-436-respaldo-diagnostico", "pr": 441 },
 
   "TA-437": { "estado": "terminada", "rama": "ta-437-pwa-instalar-sin-conexion", "pr": 287 },
 
-  "TA-438": { "estado": "pendiente" },
+  "TA-438": { "estado": "terminada", "rama": "ta-438-arrastrar-categoria", "pr": 440 },
 
   "TA-439": { "estado": "pendiente" },
 
@@ -537,7 +537,7 @@
 
   "TA-470": { "estado": "pendiente" },
 
-  "TA-500": { "estado": "pendiente" },
+  "TA-500": { "estado": "terminada", "rama": "ta-500-desembolso-prestamo", "pr": 437 },
 
   "TA-501": { "estado": "bloqueada", "motivo": "diferida CH-119" },
 

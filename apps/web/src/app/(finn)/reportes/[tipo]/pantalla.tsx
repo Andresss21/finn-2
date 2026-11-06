@@ -10,6 +10,7 @@ import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { SelectorPeriodo } from '../../../../componentes/navegacion/selector-periodo';
 import { reportes as t } from '../../../../textos/reportes';
 import { TIPOS, TIPOS_DE_URL, type TipoDeUrl } from './tipos';
+import type { AccionesRealidad } from './realidad-hallazgos';
 import { cuerpoDe } from './vistas';
 import type { Nombres } from './vistas-detalle';
 
@@ -121,6 +122,7 @@ export function PantallaReporte({
   nombres,
   parametros,
   asignar,
+  realidad,
 }: {
   readonly url: TipoDeUrl;
   readonly dto: ReporteDto;
@@ -128,14 +130,17 @@ export function PantallaReporte({
   readonly parametros: Parametros;
   /** `asignarEnCategoria` (OP-14): la propuesta de un toque de `ritmo`; la pone el lector. */
   readonly asignar?: AccionEscritura;
+  /** Los ajustes de un toque de `realidad` (OP-14 y OP-18) con lo vigente que vio la pantalla; los pone el lector. */
+  readonly realidad?: AccionesRealidad;
 }) {
-  const cuerpo = cuerpoDe(TIPOS[url], dto, nombres, asignar);
+  const cuerpo = cuerpoDe(TIPOS[url], dto, nombres, asignar, realidad);
   const compartidos = Object.fromEntries(
     Object.entries(parametros).filter(([k]) => (COMPARTIDOS as readonly string[]).includes(k)),
   );
   const semanal = url === 'gasto-semanal' ? (dto as ReporteDe<'gasto_semanal'>) : null;
-  // `ritmo` es siempre del período activo (05 §2.10): sin ventana ni cuentas.
-  const filtros = semanal === null && url !== 'ritmo' ? filtrosDe(url, parametros, nombres) : [];
+  // `ritmo` y `realidad` son siempre del período activo (05 §2.10): sin ventana ni cuentas.
+  const delActivo = url === 'ritmo' || url === 'realidad';
+  const filtros = semanal === null && !delActivo ? filtrosDe(url, parametros, nombres) : [];
   const [ventana, ...otros] = filtros;
   // Sin movimientos, la salida del diseño es mirar más períodos; si ya se miran 3 o más, no hay a dónde ampliar.
   const ampliar =

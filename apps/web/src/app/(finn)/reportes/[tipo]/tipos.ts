@@ -9,6 +9,7 @@ export const TIPOS = {
   patrimonio: 'patrimonio',
   ritmo: 'ritmo',
   'gasto-semanal': 'gasto_semanal',
+  realidad: 'realidad',
 } as const;
 
 export type TipoDeUrl = keyof typeof TIPOS;

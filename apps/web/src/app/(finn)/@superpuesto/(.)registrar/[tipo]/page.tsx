@@ -8,6 +8,8 @@ import { tipoDeTarjeta } from '../../../../../flujos/registrar-tipo/campos-tarje
 import { LectorRegistrarTarjeta } from '../../../../../flujos/registrar-tipo/lector-tarjeta';
 import { tipoDeRegistro } from '../../../../../flujos/registrar-tipo/campos';
 import { LectorRegistrarTipo } from '../../../../../flujos/registrar-tipo/lector';
+import { esDesembolso } from '../../../../../flujos/registrar-tipo/campos-desembolso';
+import { LectorDesembolso } from '../../../../../flujos/registrar-tipo/lector-desembolso';
 import type { BusquedaDePagina } from '../../../../../servidor/parametros';
 
 export default async function RegistrarTipoInterceptado({
@@ -24,6 +26,7 @@ export default async function RegistrarTipoInterceptado({
   const tipo = tipoDeRegistro(url);
   if (tipo !== undefined)
     return <LectorRegistrarTipo tipo={tipo} busqueda={await searchParams} superpuesto />;
+  if (esDesembolso(url)) return <LectorDesembolso busqueda={await searchParams} superpuesto />;
   const deTarjeta = tipoDeTarjeta(url);
   if (deTarjeta === undefined) return <AbrirComoPagina />;
   return <LectorRegistrarTarjeta tipo={deTarjeta} busqueda={await searchParams} superpuesto />;

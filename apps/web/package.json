@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@dnd-kit/core": "6.3.1",
     "@finn/aplicacion": "workspace:*",
     "@finn/dominio": "workspace:*",
     "@hookform/resolvers": "5.9.1",

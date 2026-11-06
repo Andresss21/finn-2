@@ -3,7 +3,7 @@
 // cada acción con su propio `useOperacion`. Si el servidor pide confirmar o datos al aprobar, traspasa al flujo
 // `/bandeja/[movimientoId]`; si no, el resultado dice lo que se hizo (CP-15) y, al descartar, ofrece «Restaurar» (OP-39).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
 import { Boton } from '../../../componentes/base/boton';
 import { Resultado } from '../../../componentes/base/resultado';
@@ -30,11 +30,25 @@ import {
 import { bandeja as t } from '../../../textos/bandeja';
 import { formularios } from '../../../textos/formularios';
 
+/** Al soltar sobre una categoría, estos dos se quedan en la fila: el flujo no los arregla (FT-78). */
+const DE_LA_FILA = ['arrastre_no_permitido', 'conflicto_desactualizado'];
 /** Los rechazos que necesitan datos del usuario pasan al flujo; el resto se queda en la fila (05 §4.15). */
-const necesitaElFlujo = (e: ErrorFinn): boolean =>
-  e.categoria === 'VALIDACION' ||
-  e.categoria === 'CONFLICTO' ||
-  (e.categoria === 'DOMINIO' && e.codigo !== 'movimiento_estado_no_valido');
+const necesitaElFlujo = (e: ErrorFinn, porArrastre: boolean): boolean =>
+  !(porArrastre && DE_LA_FILA.includes(e.codigo)) &&
+  (e.categoria === 'VALIDACION' ||
+    e.categoria === 'CONFLICTO' ||
+    (e.categoria === 'DOMINIO' && e.codigo !== 'movimiento_estado_no_valido'));
+/** Las líneas que vio la lista (CF-21): el servidor las compara con las de ahora (`conflicto_desactualizado`). */
+const lineasVistas = (m: MovimientoDto): unknown[] => {
+  const l = m.esperado?.['lineas'];
+  return Array.isArray(l) ? (l as unknown[]) : [];
+};
+
+/** Una categoría soltada sobre esta fila; `n` distingue una suelta de la siguiente. */
+export interface Soltado {
+  readonly categoriaId: string;
+  readonly n: number;
+}
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 
 interface Props {
@@ -43,6 +57,9 @@ interface Props {
   readonly resultado: ResultadoFila | undefined;
   readonly alIniciar: (id: string) => void;
   readonly alTerminar: (id: string, valor: ResultadoFila | undefined) => void;
+  /** FT-78: la fila reserva el lugar del asa; `ContextoArrastre` la monta cuando llega la librería. */
+  readonly conArrastre?: boolean;
+  readonly soltado?: Soltado;
 }
 
 export function FilaBandeja({
@@ -51,6 +68,8 @@ export function FilaBandeja({
   resultado,
   alIniciar,
   alTerminar,
+  conArrastre,
+  soltado,
 }: Props) {
   const operacion = useOperacion({ accion: aprobarMovimiento, creacion: true });
   const descartar = useOperacion({ accion: descartarMovimiento });
@@ -58,16 +77,37 @@ export function FilaBandeja({
   const legitimo = useOperacion({ accion: resolverCoincidencia });
   const reprocesar = useOperacion({ accion: reprocesarSms }); // OP-49 (FT-38)
   const { copia, copiar } = useCopiarReferencia();
-  const { estado, error, exito } = operacion;
+  const { estado, error, exito, enviar } = operacion;
+  const ultimoSoltado = useRef(0);
+  const porArrastre = useRef<string | undefined>(undefined);
+  const origenId = m.origenPropuesto?.id;
+
+  // FT-78: soltar sobre una categoría es una sola llamada a OP-37 con `{ categoriaId }` y las líneas que vio la lista
+  useEffect(() => {
+    if (soltado === undefined || soltado.n === ultimoSoltado.current) return;
+    ultimoSoltado.current = soltado.n;
+    porArrastre.current = soltado.categoriaId;
+    alIniciar(m.id);
+    void enviar({
+      movimientoId: m.id,
+      ...(origenId === undefined ? {} : { origenId }),
+      categoriaId: soltado.categoriaId,
+      esperado: { lineas: lineasVistas(m) },
+    });
+  }, [soltado, m, origenId, enviar, alIniciar]);
 
   useEffect(() => {
-    // Traspaso al flujo (05 §4.15): allí se vuelve a aprobar y el servidor repite su mensaje o su confirmación
+    // Traspaso al flujo (05 §4.15): allí se vuelve a aprobar y el servidor repite su mensaje o su confirmación.
+    // Si venía de un arrastre, el flujo recibe también la categoría soltada (FT-78).
     const traspasar = (): void => {
-      window.location.assign(`${hrefRevisar}?traspaso=1`);
+      const categoria = porArrastre.current;
+      window.location.assign(
+        `${hrefRevisar}?traspaso=1${categoria === undefined ? '' : `&categoria=${categoria}`}`,
+      );
     };
     if (estado === 'confirmando') traspasar();
     else if (estado === 'error' && error !== undefined) {
-      if (necesitaElFlujo(error)) traspasar();
+      if (necesitaElFlujo(error, porArrastre.current !== undefined)) traspasar();
       else alTerminar(m.id, undefined);
     } else if (estado === 'listo' && exito !== undefined)
       alTerminar(m.id, { tipo: 'aprobado', valor: exito.valor as ValorAprobado });
@@ -117,6 +157,7 @@ export function FilaBandeja({
   const referencia = referenciaDe(m.procesamiento?.errorDetalle);
   const alAccionar = (accion: AccionBandeja): void => {
     if (accion === 'aprobar') {
+      porArrastre.current = undefined;
       alIniciar(m.id);
       void operacion.enviar({
         movimientoId: m.id,
@@ -136,12 +177,17 @@ export function FilaBandeja({
     (o) =>
       o.estado === 'error' &&
       o.error !== undefined &&
-      !(o === operacion && necesitaElFlujo(o.error)),
+      !(o === operacion && necesitaElFlujo(o.error, porArrastre.current !== undefined)),
   );
   const mensaje = fallida?.error;
   return (
     <>
-      <MovimientoBandeja movimiento={m} hrefRevisar={hrefRevisar} alAccionar={alAccionar} />
+      <MovimientoBandeja
+        movimiento={m}
+        hrefRevisar={hrefRevisar}
+        alAccionar={alAccionar}
+        ranuraAsa={conArrastre === true && m.aprobacion.arrastrable === true}
+      />
       {reprocesar.estado === 'listo' || copia !== 'nada' ? (
         <p role="status" className="px-4 pb-3.5 text-cuerpo-pequeno text-texto-secundario">
           {copia === 'copiada'

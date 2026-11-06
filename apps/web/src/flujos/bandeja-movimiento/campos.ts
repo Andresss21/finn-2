@@ -57,6 +57,16 @@ export function camposIniciales(esperado: Readonly<Record<string, unknown>>): Ca
   };
 }
 
+/** FT-78: el movimiento con su única línea hacia la categoría que se soltó; lo demás queda como estaba. */
+export function conCategoriaSoltada(c: Campos, categoriaId: string): Campos {
+  if (c.tipo !== 'gasto' || c.lineas.length > 1) return c;
+  const parte = c.lineas[0] ?? { ...parteVacia(), monto: c.total };
+  return {
+    ...c,
+    lineas: [{ ...parte, destino: 'categoria', categoriaId, deudorId: '', deudorNuevo: '' }],
+  };
+}
+
 const vacioANulo = (texto: string): string | null => (texto.trim() === '' ? null : texto.trim());
 
 /** La entrada de OP-36 con lo que cambió respecto de `base`; `undefined` si no cambió nada. */

@@ -37,14 +37,20 @@ export function Tabla<F>({
   columnas,
   filas,
   clave,
+  enfocable = false,
 }: {
   readonly titulo: string;
+  /** Una tabla ancha que se desplaza: el teclado llega a ella para recorrerla (axe: scrollable-region-focusable). */
+  readonly enfocable?: boolean;
   readonly columnas: readonly Columna<NoInfer<F>>[];
   readonly filas: readonly F[];
   readonly clave: (fila: F) => string;
 }) {
   return (
-    <div className="overflow-x-auto in-[.sr-only]:overflow-visible">
+    <div
+      className="overflow-x-auto in-[.sr-only]:overflow-visible"
+      {...(enfocable ? { tabIndex: 0, role: 'region', 'aria-label': titulo } : {})}
+    >
       <table data-tabla-reporte className="w-full text-cuerpo-pequeno">
         <caption className="sr-only">{titulo}</caption>
         <thead>
