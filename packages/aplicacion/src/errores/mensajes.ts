@@ -17,6 +17,7 @@ export const MENSAJES_RECHAZO: Readonly<Record<string, string | ((d: Datos) => s
   codigo_incorrecto: 'El código no es correcto. Revisá que sea el de Finn en tu app.',
   codigo_vencido: 'El código venció. Escribí el que muestra ahora tu app.',
   inscripcion_no_permitida: 'Ya tenés un factor. Ingresá con tu código.',
+  factor_unico: 'Agregá otro factor antes de quitar este.',
   // Comunes
   fecha_posterior_a_hoy: 'La fecha no puede ser posterior a hoy ({hoy}).',
   fecha_anterior_a_apertura:

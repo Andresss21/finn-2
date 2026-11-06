@@ -31,7 +31,8 @@ jobs:
   rapido:
     name: rapido
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    # CH-206: margen para el espejo de Ubuntu en `navegadores` (apt de Playwright); 25 cortó #423.
+    timeout-minutes: 35
     # CH-16: statuses: write solo aquí, para el estado de commit `integracion`
     permissions:
       contents: read
@@ -184,7 +185,8 @@ jobs:
     needs: [rapido, e2e]
     if: ${{ !cancelled() && needs.rapido.result == 'success' && needs.rapido.outputs.cierre == 'true' && needs.e2e.result != 'failure' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # CH-206: `playwright install --with-deps` depende del espejo de Ubuntu (3 s a más de 9 min); 10 cortaba el job.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }

@@ -51,6 +51,7 @@ describe('PRU-CMP-AJUS-140 índice de Ajustes', () => {
       ['Formatos bancarios', '/ajustes/formatos'],
       ['Instituciones', '/ajustes/instituciones'],
       ['Notificaciones', '/ajustes/notificaciones'],
+      ['Seguridad', '/ajustes/seguridad'],
       ['Exportar tus datos', '/ajustes/exportar'],
       ['Apariencia', '/ajustes/apariencia'],
     ]);

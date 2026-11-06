@@ -8,6 +8,7 @@ import { ajustesExportar } from '../../../textos/ajustes-exportar';
 import { ajustesFormatos } from '../../../textos/ajustes-formatos';
 import { ajustesWebhook } from '../../../textos/ajustes-webhook';
 import { notificaciones } from '../../../textos/notificaciones';
+import { seguridad } from '../../../textos/seguridad';
 
 const FILAS: readonly { href: string; icono: NombreIcono; texto: string }[] = [
   { href: '/ajustes/ciclo', icono: 'cal', texto: ajustesCiclo.enlace },
@@ -15,6 +16,7 @@ const FILAS: readonly { href: string; icono: NombreIcono; texto: string }[] = [
   { href: '/ajustes/formatos', icono: 'list', texto: ajustesFormatos.enlace },
   { href: '/ajustes/instituciones', icono: 'bank', texto: ajustesFormatos.instituciones },
   { href: '/ajustes/notificaciones', icono: 'bell', texto: notificaciones.enlace },
+  { href: '/ajustes/seguridad', icono: 'lock', texto: seguridad.titulo },
   { href: '/ajustes/exportar', icono: 'send', texto: ajustesExportar.titulo },
   { href: '/ajustes/apariencia', icono: 'gear', texto: ajustesApariencia.enlace },
 ];

@@ -29,7 +29,7 @@ test.describe('PRU-E2E-AJUS', () => {
     await irAlDocumentoFinal(page, '/ajustes');
     await esperarContenido(page);
     const filas = page.locator('[data-rol="lista-ajustes"] a');
-    await expect(filas).toHaveCount(7);
+    await expect(filas).toHaveCount(8);
     for (const fila of await filas.all()) {
       const caja = await fila.boundingBox();
       expect(caja?.height ?? 0).toBeGreaterThanOrEqual(44);
