@@ -199,4 +199,30 @@ describe('FT-25 detalle de una transacción', () => {
     for (const enlace of nodo.querySelectorAll('a'))
       expect(enlace.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
   });
+  it('PRU-CMP-TX-500 [CA-28.9] cada evento del detalle trae su enlace «Eliminar» a `/eventos/eliminar` con `?tipo-evento=` y `?evento=` de su id, y ninguno si la compra no tiene eventos', () => {
+    const evento = (id: string) => ({ transaccionId: id, fecha: '2027-02-23', monto: 500 });
+    const nodo = mostrar(
+      dto({
+        lineas: [
+          {
+            id: 'l1',
+            orden: 1,
+            monto: 2250,
+            destino: { categoria: { id: 'k1', nombre: 'Farmacia' } },
+            reparto: { cubierto: 2250, noCubierto: 0 },
+            cobros: [],
+            condonaciones: [{ id: 'k9', fecha: '2027-02-24', monto: 300 }],
+            devoluciones: [{ ...evento('d1'), caso: 'D-1' }],
+          },
+        ],
+      }),
+    );
+    const enlaces = [...nodo.querySelectorAll('a')].filter((a) => a.textContent === 'Eliminar');
+    const hrefs = enlaces
+      .map((a) => a.getAttribute('href') ?? '')
+      .filter((h) => h.includes('/eventos/'));
+    expect(hrefs).toHaveLength(2);
+    expect(hrefs[0]).toMatch(/\/eventos\/eliminar\?tipo-evento=condonacion&evento=k9$/);
+    expect(hrefs[1]).toMatch(/\/eventos\/eliminar\?tipo-evento=devolucion&evento=d1$/);
+  });
 });

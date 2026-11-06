@@ -38,6 +38,14 @@ export interface PropsFormularioActividadEliminar {
   }[];
   /** `restricciones.motivoNoEliminar` ya compuesto; sin él se puede eliminar. */
   readonly bloqueo?: string;
+  /** Eliminar un evento de la compra (FT-28, OP-34): sus textos y la entrada que se envía en lugar de `transaccionId`. */
+  readonly textos?: {
+    readonly titulo: string;
+    readonly pregunta: string;
+    readonly nota: string;
+    readonly confirmar: string;
+  };
+  readonly entrada?: Readonly<Record<string, string>>;
 }
 
 interface Vista extends VistaDeImpacto {
@@ -45,10 +53,16 @@ interface Vista extends VistaDeImpacto {
 }
 
 export function FormularioActividadEliminar(p: PropsFormularioActividadEliminar) {
-  const { accion, transaccionId, nombre, detalle, eventos, bloqueo } = p;
+  const { accion, transaccionId, nombre, detalle, eventos, bloqueo, entrada } = p;
+  const x = p.textos ?? {
+    titulo: t.eliminarTitulo,
+    pregunta: t.eliminarPregunta(nombre),
+    nota: t.eliminarNota,
+    confirmar: t.eliminar,
+  };
   const enviar = useCallback<AccionEscritura>(
-    (payload) => accion({ ...(payload as object), transaccionId }),
-    [accion, transaccionId],
+    (payload) => accion({ ...(payload as object), ...(entrada ?? { transaccionId }) }),
+    [accion, transaccionId, entrada],
   );
   const operacion = useOperacion({ accion: enviar, previsualizarPrimero: true });
   const { estado, error: fallo } = operacion;
@@ -56,20 +70,20 @@ export function FormularioActividadEliminar(p: PropsFormularioActividadEliminar)
 
   if (estado === 'listo')
     return (
-      <PaginaFlujoDeRuta titulo={t.eliminarTitulo} rutaPadre={detalle}>
-        <CerrarFlujoAlMontar rutaPadre={RUTA_AL_TERMINAR} />
+      <PaginaFlujoDeRuta titulo={x.titulo} rutaPadre={detalle}>
+        <CerrarFlujoAlMontar rutaPadre={entrada === undefined ? RUTA_AL_TERMINAR : detalle} />
       </PaginaFlujoDeRuta>
     );
 
   if (estado === 'confirmando')
     return (
-      <PaginaFlujoDeRuta titulo={t.eliminarTitulo} rutaPadre={detalle}>
+      <PaginaFlujoDeRuta titulo={x.titulo} rutaPadre={detalle}>
         <ConfirmacionImpactoDeVista
           titulo={t.revisar}
           {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
           vista={vista}
           avisos={(vista.avisos ?? []).map((a) => t.avisosEliminar[a.codigo] ?? a.codigo)}
-          textoConfirmar={t.eliminar}
+          textoConfirmar={x.confirmar}
           textoVolver={t.cancelar}
           enviando={false}
           alConfirmar={() => void operacion.confirmar()}
@@ -79,7 +93,7 @@ export function FormularioActividadEliminar(p: PropsFormularioActividadEliminar)
     );
 
   return (
-    <PaginaFlujoDeRuta titulo={t.eliminarTitulo} rutaPadre={detalle}>
+    <PaginaFlujoDeRuta titulo={x.titulo} rutaPadre={detalle}>
       <div className="flex flex-col gap-5">
         {bloqueo !== undefined ? (
           <>
@@ -101,8 +115,8 @@ export function FormularioActividadEliminar(p: PropsFormularioActividadEliminar)
           </>
         ) : (
           <>
-            <h2 className="text-titulo-seccion">{t.eliminarPregunta(nombre)}</h2>
-            <p>{t.eliminarNota}</p>
+            <h2 className="text-titulo-seccion">{x.pregunta}</h2>
+            <p>{x.nota}</p>
             {estado === 'error' && fallo !== undefined ? (
               <AvisoEnLinea
                 estado="problema"

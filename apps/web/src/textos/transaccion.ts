@@ -92,4 +92,15 @@ export const transaccion = {
   quedaPorDevolver: 'Queda por devolver',
   volverATransaccion: 'Volver a la transacción',
   corregiMonto: (parte: string) => `Corregí el monto de ${parte}.`,
+  // FT-28: eliminar un evento de la compra (OP-34); 05 §2.6.
+  eliminarEventoTitulo: 'Eliminar evento',
+  eliminarEventoPregunta: {
+    cobro: '¿Eliminar este cobro?',
+    condonacion: '¿Eliminar esta condonación?',
+    devolucion: '¿Eliminar esta devolución?',
+  } as const,
+  eliminarEventoNota: 'La compra vuelve al estado anterior a registrarlo.',
+  eliminarEvento: 'Eliminar evento',
+  eliminarEventoDe: (rotulo: string, fecha: string) =>
+    `Eliminar ${rotulo.toLowerCase()} del ${fecha}`,
 } as const;
