@@ -3,9 +3,9 @@
 // cortos de los movimientos de tarjeta que no son compras. La entrada y el avance se guardan en un solo viaje (05 §4.4); la
 // transferencia de deuda pide primero la previsualización porque AV-24 (el cambio en «te falta reservar» de las dos tarjetas) trae
 // sus valores en el aviso. No calcula montos (PF-3): todo lo que muestra lo trae el servidor.
-import { mensajeDeRechazo, type ErrorFinn } from '@finn/aplicacion/errores';
+import { mensajeDeRechazo } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Resultado } from '../../componentes/base/resultado';
@@ -15,7 +15,6 @@ import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
-import { PaginaFlujoDeRuta, SuperpuestoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -30,6 +29,7 @@ import {
   type Campos,
   type TipoDeTarjeta,
 } from './campos-tarjeta';
+import { ENLACE, Marco, REINTENTABLES, enSuCampo } from './formulario';
 
 type Cuenta = { readonly id: string; readonly nombre: string };
 
@@ -48,31 +48,6 @@ type DatosAv24 = Readonly<
   Record<'origenId' | 'destinoId', string> &
     Record<'origenAntes' | 'origenDespues' | 'destinoAntes' | 'destinoDespues', number>
 >;
-
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
-/** Un enlace con el aspecto de un botón principal (05 §10.7): al menos 44 px de alto (05 §11.5). */
-const ENLACE =
-  'inline-flex min-h-12 items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-/** Un rechazo cuyo mensaje ya se muestra en su campo no se repite como aviso del formulario. */
-const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
-
-function Marco({
-  superpuesto,
-  titulo,
-  children,
-}: {
-  readonly superpuesto: boolean;
-  readonly titulo: string;
-  readonly children: ReactNode;
-}) {
-  return superpuesto ? (
-    <SuperpuestoDeRuta titulo={titulo}>{children}</SuperpuestoDeRuta>
-  ) : (
-    <PaginaFlujoDeRuta titulo={titulo} rutaPadre="/registrar">
-      {children}
-    </PaginaFlujoDeRuta>
-  );
-}
 
 export function FormularioRegistrarTarjeta({
   tipo,

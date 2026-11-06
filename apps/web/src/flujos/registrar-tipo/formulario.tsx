@@ -44,16 +44,17 @@ interface Previsualizacion extends VistaDeImpacto {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
+export const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const ACCIONES = { ingreso: registrarIngreso, transferencia: transferirEntreCuentas } as const;
 /** Un enlace con el aspecto de un botón principal (05 §10.7): al menos 44 px de alto (05 §11.5). */
-const ENLACE =
+export const ENLACE =
   'inline-flex min-h-12 items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 /** Un rechazo cuyo mensaje ya se muestra en su campo no se repite como aviso del formulario. */
-const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
+export const enSuCampo = (e: ErrorFinn): boolean =>
+  Object.values(e.campos ?? {}).includes(e.mensaje);
 
 /** El marco del flujo: el superpuesto de la ruta interceptada o la página completa. */
-function Marco({
+export function Marco({
   superpuesto,
   titulo,
   children,
