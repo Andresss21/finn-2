@@ -445,7 +445,7 @@
 
   "TA-480": { "estado": "terminada", "rama": "ta-480-devoluciones-2", "pr": 414 },
 
-  "TA-407": { "estado": "pendiente" },
+  "TA-407": { "estado": "terminada", "rama": "ta-407-condonar", "pr": 420 },
 
   "TA-408": { "estado": "terminada", "rama": "ta-408-por-cobrar-3", "pr": 386 },
 
