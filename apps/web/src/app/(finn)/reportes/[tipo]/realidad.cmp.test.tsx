@@ -68,6 +68,8 @@ const fila = (id: string, nombre: string, completa: boolean) => ({
 const mostrar = (datos: ReporteDto): HTMLElement => {
   document.body.style.cssText = 'background: var(--fondo); color: var(--texto)';
   const nodo = document.createElement('div');
+  // Ancho de teléfono: las tablas se desplazan, y la CI corre en otro tamaño que el local.
+  nodo.style.width = '320px';
   document.body.append(nodo);
   const raiz = createRoot(nodo);
   act(() => {

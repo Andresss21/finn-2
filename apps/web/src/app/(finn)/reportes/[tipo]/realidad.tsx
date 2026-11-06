@@ -28,6 +28,7 @@ function Periodos({ fila }: { readonly fila: Fila }) {
         {t.realidad.periodosDe(fila.categoria.nombre)}
       </summary>
       <Tabla<Fila['periodos'][number]>
+        enfocable
         titulo={t.realidad.periodosDe(fila.categoria.nombre)}
         clave={(p) => p.periodo}
         filas={fila.periodos}
@@ -100,6 +101,7 @@ export function Realidad({
       <section className="flex flex-col gap-2">
         <h3 className="text-titulo-seccion">{t.realidad.porCategoria}</h3>
         <Tabla<Fila>
+          enfocable
           titulo={t.realidad.porCategoria}
           clave={(f) => f.categoria.id}
           filas={dto.categorias}
