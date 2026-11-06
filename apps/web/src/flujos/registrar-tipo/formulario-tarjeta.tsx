@@ -29,7 +29,7 @@ import {
   valoresIniciales,
   type Campos,
   type TipoDeTarjeta,
-} from './campos';
+} from './campos-tarjeta';
 
 type Cuenta = { readonly id: string; readonly nombre: string };
 

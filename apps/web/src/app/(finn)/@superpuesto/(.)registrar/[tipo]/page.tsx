@@ -2,8 +2,8 @@
 // dinámico también atrapa `/registrar/gasto` (un flujo largo, siempre página completa) y los valores que no son de este flujo: esos
 // se vuelven a abrir como página completa, que es la que decide si existe (`/registrar/gasto`) o da `notFound()`.
 import { AbrirComoPagina } from '../../../../../componentes/navegacion/flujo-de-ruta';
-import { tipoDeTarjeta } from '../../../../../flujos/registrar-tarjeta/campos';
-import { LectorRegistrarTarjeta } from '../../../../../flujos/registrar-tarjeta/lector';
+import { tipoDeTarjeta } from '../../../../../flujos/registrar-tipo/campos-tarjeta';
+import { LectorRegistrarTarjeta } from '../../../../../flujos/registrar-tipo/lector-tarjeta';
 import { tipoDeRegistro } from '../../../../../flujos/registrar-tipo/campos';
 import { LectorRegistrarTipo } from '../../../../../flujos/registrar-tipo/lector';
 import type { BusquedaDePagina } from '../../../../../servidor/parametros';

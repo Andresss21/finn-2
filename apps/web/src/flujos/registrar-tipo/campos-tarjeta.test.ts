@@ -9,7 +9,7 @@ import {
   tipoDeTarjeta,
   valoresIniciales,
   type Campos,
-} from './campos';
+} from './campos-tarjeta';
 
 const ID = '00000000-0000-4000-8000-000000000001';
 const T = '00000000-0000-4000-8000-0000000000a1';
@@ -58,7 +58,8 @@ describe('PRU-DOM-TX', () => {
       tarjetaDestinoId: U,
     });
     for (const e of [avance, deuda]) {
-      const { modo: _modo, ...sinModo } = e;
+      const { modo, ...sinModo } = e;
+      expect(modo).toBeDefined();
       expect(op27.safeParse(sinModo).success).toBe(true);
     }
     const faltan = (tipo: Parameters<typeof contratoDe>[0]) => {
