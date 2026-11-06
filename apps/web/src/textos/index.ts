@@ -33,6 +33,7 @@ import { navegacion } from './navegacion.ts';
 import { plantilla } from './plantilla.ts';
 import { porCobrar } from './por-cobrar.ts';
 import { porCobrarCobrar } from './por-cobrar-cobrar.ts';
+import { porCobrarCondonar } from './por-cobrar-condonar.ts';
 import { presupuesto } from './presupuesto.ts';
 import { presupuestoAsignar } from './presupuesto-asignar.ts';
 import { presupuestoAutoAsignar } from './presupuesto-auto-asignar.ts';
@@ -41,6 +42,7 @@ import { primerosPasos } from './primeros-pasos.ts';
 import { registrarGasto } from './registrar-gasto.ts';
 import { registrarTarjeta } from './registrar-tarjeta.ts';
 import { registrarTipo } from './registrar-tipo.ts';
+import { conciliar } from './conciliar.ts';
 import { reportes } from './reportes.ts';
 import { transaccion } from './transaccion.ts';
 import { verificarSaldo } from './verificar-saldo.ts';
@@ -80,6 +82,7 @@ export {
   plantilla,
   porCobrar,
   porCobrarCobrar,
+  porCobrarCondonar,
   presupuesto,
   presupuestoAsignar,
   presupuestoAutoAsignar,
@@ -90,6 +93,7 @@ export {
   registrarTipo,
   reportes,
   transaccion,
+  conciliar,
   verificarSaldo,
 };
 
@@ -107,6 +111,7 @@ export const areas = [
   ['plantilla', plantilla],
   ['porCobrar', porCobrar],
   ['porCobrarCobrar', porCobrarCobrar],
+  ['porCobrarCondonar', porCobrarCondonar],
   ['presupuesto', presupuesto],
   ['presupuestoAsignar', presupuestoAsignar],
   ['presupuestoAutoAsignar', presupuestoAutoAsignar],
@@ -137,5 +142,6 @@ export const areas = [
   ['registrarTipo', registrarTipo],
   ['reportes', reportes],
   ['transaccion', transaccion],
+  ['conciliar', conciliar],
   ['verificarSaldo', verificarSaldo],
 ] as const;
