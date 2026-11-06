@@ -141,4 +141,39 @@ describe('PRU-CMP-TX eliminar una transacción', () => {
     expect(nodo.textContent).toContain('La cuenta está archivada.');
     expect(boton(nodo, t.verCambios)).toBeTruthy();
   });
+  it('PRU-CMP-TX-501 [CA-28.9] eliminar un evento usa sus textos y envía la entrada de OP-34 en lugar de la transacción, previsualizando primero', async () => {
+    const accion = vi.fn((entrada: unknown) =>
+      (entrada as { modo: string }).modo === 'previsualizar' ? ok(vista()) : ok({}),
+    );
+    const nodo = await montar(
+      <FormularioActividadEliminar
+        {...base}
+        accion={accion}
+        textos={{
+          titulo: t.eliminarEventoTitulo,
+          pregunta: t.eliminarEventoPregunta.devolucion,
+          nota: t.eliminarEventoNota,
+          confirmar: t.eliminarEvento,
+        }}
+        entrada={{ tipo: 'devolucion', transaccionId: 'd1' }}
+      />,
+    );
+    expect(nodo.textContent).toContain(t.eliminarEventoPregunta.devolucion);
+    expect(nodo.textContent).toContain(t.eliminarEventoNota);
+    await userEvent.click(boton(nodo, t.verCambios));
+    expect(accion).toHaveBeenLastCalledWith({
+      tipo: 'devolucion',
+      transaccionId: 'd1',
+      modo: 'previsualizar',
+    });
+    await userEvent.click(boton(nodo, t.eliminarEvento));
+    expect(accion).toHaveBeenLastCalledWith({
+      tipo: 'devolucion',
+      transaccionId: 'd1',
+      modo: 'confirmar',
+      revisionVista: 'r1',
+      huellaImpacto: 'h1',
+    });
+    expect(replace).toHaveBeenCalledWith('/actividad/t1');
+  });
 });
