@@ -1006,4 +1006,71 @@ describe('PRU-INT-NOTIF', () => {
     for (const periodo of anteriores) expect(periodo < ultimo).toBe(true);
     expect(new Set(anteriores).size).toBe(anteriores.length);
   });
+
+  /** Guarda un SMS de la tarjeta reconocida y lo procesa como lo hace `POST /api/sms` (04 §8.2 paso 6). */
+  const recibirCompra = async (comercio: string, monto: string): Promise<string> => {
+    const { id } = await escribirSms(
+      (tx) =>
+        guardarSms(tx, {
+          texto: `VISA 1234: has realizado una compra por USD ${monto} en el comercio ${comercio} 2027/02/04`,
+          remitente: 'BAC',
+        }),
+      { reloj: { hoy: HOY, desfaseMs: 0 } },
+    );
+    await procesar(id, deps());
+    return id;
+  };
+
+  it('PRU-INT-NOTIF-105 [CA-70.1] una compra en SUPER SELECTOS por $45.00 registra una notificación y el push dice «Compra en SUPER SELECTOS por $45.00. Revisala en la bandeja.», sin el texto del SMS ni saldos', async () => {
+    await suscribir('ok');
+    await recibirCompra('SUPER SELECTOS', '45.00');
+
+    expect(await cuenta(`SELECT count(*) FROM finn.notificaciones WHERE aviso = 'AV-23'`)).toBe(1);
+    expect(recibidos).toHaveLength(1);
+    const [r] = recibidos as [Recibido];
+    expect(r.carga['cuerpo']).toBe('Compra en SUPER SELECTOS por $45.00. Revisala en la bandeja.');
+    const viaja = JSON.stringify(r.carga);
+    for (const texto of ['VISA 1234', 'has realizado', 'saldo', 'USD'])
+      expect(viaja).not.toContain(texto);
+  });
+
+  it('PRU-INT-NOTIF-105 [CA-70.2] cinco SMS en pocos minutos: el quinto sale como un solo push agregado con la misma etiqueta, que reemplaza al anterior, y el centro tiene cinco registros', async () => {
+    await suscribir('ok');
+    for (const [n, comercio] of ['UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO'].entries())
+      await recibirCompra(comercio, `${n + 1}.00`);
+
+    expect(await cuenta('SELECT count(*) FROM finn.notificaciones')).toBe(5);
+    expect(recibidos).toHaveLength(5);
+    const quinto = recibidos[4] as Recibido;
+    expect(quinto.carga['cuerpo']).toBe('Tenés 5 movimientos nuevos en la bandeja');
+    expect(quinto.carga['destino']).toEqual({ pantalla: 'bandeja' });
+    // La misma etiqueta y tema que los anteriores: el dispositivo muestra una sola notificación
+    expect(new Set(recibidos.map((x) => x.carga['etiqueta']))).toEqual(new Set(['sms']));
+    expect(new Set(recibidos.map((x) => x.topic))).toEqual(new Set(['sms']));
+  });
+
+  it('PRU-INT-NOTIF-105 [CA-70.5] una suscripción que el servicio responde 410 se elimina y la notificación queda en el centro', async () => {
+    await suscribir('410');
+    await recibirCompra('TIENDA DEL BARRIO', '45.00');
+
+    expect(recibidos).toHaveLength(1);
+    expect(await cuenta('SELECT count(*) FROM finn.suscripciones_push')).toBe(0);
+    expect(
+      await cuenta(`SELECT count(*) FROM finn.notificaciones WHERE push_error = 'push_410'`),
+    ).toBe(1);
+  });
+
+  it('PRU-INT-NOTIF-105 [CA-70.6] un SMS idéntico al de hace pocos minutos queda autodescartado y no registra notificación ni envía push', async () => {
+    await suscribir('ok');
+    const primero = await recibirCompra('LIBRERIA LUZ', '45.00');
+    expect(recibidos).toHaveLength(1);
+
+    const segundo = await recibirCompra('LIBRERIA LUZ', '45.00');
+    const estado = (smsId: string) =>
+      sql(`SELECT estado FROM finn.movimientos WHERE sms_id = '${smsId}'`);
+    expect(await estado(primero)).not.toEqual(['autodescartado']);
+    expect(await estado(segundo)).toEqual(['autodescartado']);
+    expect(await cuenta('SELECT count(*) FROM finn.notificaciones')).toBe(1);
+    expect(recibidos).toHaveLength(1);
+  });
 });
