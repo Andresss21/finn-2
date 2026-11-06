@@ -6,15 +6,19 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import webpush from 'web-push';
 import {
+  cargarHechos,
   escribir,
   escribirSms,
+  leer,
+  noLeidasDeAviso,
+  notificacionesRecientes,
   escribirTecnico,
   guardarSms,
   guardarSuscripcion,
   Memoria,
   type NuevoEvento,
 } from '@finn/db';
-import type { Instante } from '@finn/dominio';
+import type { Hechos, Instante } from '@finn/dominio';
 import { FechaLocal } from '@finn/dominio/valores';
 import { consultar, crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY } from '../../db/test/ayudantes/hechos-prueba.ts';
@@ -27,6 +31,7 @@ import {
 } from '../src/push/enviar.ts';
 import { MOTIVOS, esMotivo, type MotivoNotificacion } from '../src/push/motivos.ts';
 import { peticionDe } from '../src/push/politica.ts';
+import { registrarCambioRetroactivo } from '../src/push/registro.ts';
 import { procesar } from '../src/sms/procesar.ts';
 import {
   ejecutarDiaria,
@@ -1072,5 +1077,176 @@ describe('PRU-INT-NOTIF', () => {
     expect(await estado(segundo)).toEqual(['autodescartado']);
     expect(await cuenta('SELECT count(*) FROM finn.notificaciones')).toBe(1);
     expect(recibidos).toHaveLength(1);
+  });
+
+  // FT-71 (1 de 2): cierre, metas, respaldo, cambio retroactivo y pago de tarjeta (06 FT-71, CA-71.1 a CA-71.7)
+
+  /** Ciclo del día 21: en el período 21/09 al 20/10 «super» tiene $100.00 y gasta $150.00 (SobD = $50.00) y una meta vence el 05/10. */
+  const hechosDeCierre = (): Hechos => {
+    const f = (t: string) => FechaLocal.desdeTexto(t);
+    const mov = (tx: string, tipo: string, fecha: string, monto: number, categoria?: string) => ({
+      transaccion: {
+        id: tx,
+        tipo,
+        fecha: f(fecha),
+        claveOrden: `${fecha}T12:00:00.000Z`,
+        secuencia: tx === 'si' ? '1' : '2',
+        estadoBancario: 'confirmada',
+        comercio: null,
+        total: Math.abs(monto) * 100,
+        lineaCobradaId: null,
+      },
+      efecto: {
+        id: `ef-${tx}`,
+        transaccionId: tx,
+        cuentaId: 'ef',
+        monto: monto * 100,
+        interes: null,
+        seguro: null,
+      },
+      lineas:
+        categoria === undefined
+          ? []
+          : [
+              {
+                id: `l-${tx}`,
+                transaccionId: tx,
+                orden: 1,
+                monto: Math.abs(monto) * 100,
+                categoriaId: categoria,
+                deudorId: null,
+                lineaOriginalId: null,
+              },
+            ],
+    });
+    const movs = [
+      mov('si', 'saldo_inicial', '2027-09-21', 1000),
+      mov('g', 'gasto', '2027-10-10', -150, 'super'),
+    ];
+    const categoria = (id: string, orden: number) => ({
+      id,
+      grupoId: 'g1',
+      nombre: id,
+      orden,
+      clase: 'normal',
+      tarjetaId: null,
+      archivada: false,
+    });
+    return {
+      vigencias_ciclo: [{ id: 'v1', diaInicio: 21, rigeDesde: null, revision: null }],
+      cuentas: [{ id: 'ef', tipo: 'efectivo', nombre: 'Efectivo', archivada: false }],
+      tarjetas: [],
+      prestamos: [],
+      inversiones: [],
+      grupos: [{ id: 'g1', nombre: 'Hogar', orden: 1, archivado: false, claveSistema: null }],
+      categorias: [categoria('super', 1), categoria('viaje', 2)],
+      asignaciones: [
+        { id: 'a1', categoriaId: 'super', periodoInicio: f('2027-09-21'), monto: 10000 },
+      ],
+      deudores: [],
+      transacciones: movs.map((m) => m.transaccion),
+      efectos: movs.map((m) => m.efecto),
+      lineas: movs.flatMap((m) => m.lineas),
+      condonaciones: [],
+      metas: [
+        {
+          id: 'm-viaje',
+          categoriaId: 'viaje',
+          tipo: 'para_fecha',
+          modo: null,
+          monto: 50000,
+          fechaObjetivo: f('2027-10-05'),
+          fechaCreacion: f('2027-09-01'),
+        },
+      ],
+      programadas: [],
+      programada_lineas: [],
+      ocurrencias_resueltas: [],
+      conciliaciones: [],
+    } as unknown as Hechos;
+  };
+  const conCierre = (hoy: string): DepsMarco & DepsEnvio & { cargar: typeof cargarHechos } => ({
+    ...deps(hoy),
+    cargar: (async () => hechosDeCierre()) as unknown as typeof cargarHechos,
+  });
+
+  it('PRU-INT-NOTIF-106 [CA-71.1] el cierre del 21/09 al 20/10 con $50.00 de reducción por sobregiros y una meta vencida envía un solo push con el texto de 04 §11.4 y destino Presupuesto de ese período', async () => {
+    await suscribir('ok');
+    expect((await pasoCierre.ejecutar(conCierre('2027-10-25'))).cantidad).toBe(1);
+
+    expect(recibidos).toHaveLength(1);
+    const [r] = recibidos as [Recibido];
+    expect(r.carga['cuerpo']).toBe(
+      'Cerró el período del 21/09 al 20/10. Listo para asignar bajó $50.00 por sobregiros. Una meta venció.',
+    );
+    expect(r.carga['destino']).toEqual({ pantalla: 'presupuesto', periodoInicio: '2027-09-21' });
+    expect(r.topic).toBe('cierre');
+  });
+
+  it('PRU-INT-NOTIF-106 [CA-71.2] la tarea corre dos veces el mismo día: el push de cierre sale una vez (clave cierre:<inicio>) y queda una sola notificación', async () => {
+    await suscribir('ok');
+    expect((await pasoCierre.ejecutar(conCierre('2027-10-25'))).cantidad).toBe(1);
+    expect((await pasoCierre.ejecutar(conCierre('2027-10-25'))).cantidad).toBe(0);
+
+    expect(recibidos).toHaveLength(1);
+    expect(
+      await sql(`SELECT datos->>'clave' FROM finn.notificaciones WHERE motivo = 'cierre_periodo'`),
+    ).toEqual(['cierre:2027-09-21']);
+  });
+
+  it('PRU-INT-NOTIF-106 [CA-71.3] una meta vencida notifica una sola vez por meta y fecha objetivo aunque la tarea corra varios días', async () => {
+    await suscribir('ok');
+    for (const hoy of ['2027-10-06', '2027-10-07', '2027-10-08'])
+      await pasoAvisos.ejecutar(conCierre(hoy));
+
+    expect(
+      await sql(
+        `SELECT motivo || '|' || aviso || '|' || (datos->>'clave') FROM finn.notificaciones WHERE motivo = 'meta_vencida'`,
+      ),
+    ).toEqual(['meta_vencida|AV-17|av17:m-viaje:2027-10-05']);
+    expect(recibidos.filter((x) => x.urgencia === 'low')).toHaveLength(1);
+  });
+
+  it('PRU-INT-NOTIF-106 [CA-71.4] con el respaldo sin correr hace 37 horas la tarea envía respaldo_atrasado con destino Ajustes > Diagnóstico', async () => {
+    await suscribir('ok');
+    await sql(`UPDATE finn.estado_respaldo SET ultimo_respaldo_en = now() - interval '37 hours'`);
+    await pasoAvisos.ejecutar(deps());
+
+    expect(await sql(`SELECT motivo FROM finn.notificaciones`)).toEqual(['respaldo_atrasado']);
+    expect(recibidos).toHaveLength(1);
+    const [r] = recibidos as [Recibido];
+    expect(r.carga['destino']).toEqual({ pantalla: 'diagnostico' });
+    expect(r.topic).toBe('sistema');
+  });
+
+  it('PRU-INT-NOTIF-106 [CA-71.5] un cambio retroactivo confirmado no envía push aunque haya una suscripción; la notificación AV-01 queda en Inicio (no leída) y en el centro', async () => {
+    await suscribir('ok');
+    const opciones = { reloj: { hoy: HOY, desfaseMs: 0 } };
+    const retro = await escribir(
+      (tx) => registrarCambioRetroactivo(tx, { titulo: 'Cambio retroactivo', cuerpo: 'Resumen' }),
+      opciones,
+    );
+
+    expect(retro.conPush).toBe(false);
+    expect(recibidos).toEqual([]);
+    const centro = await leer((tx) => notificacionesRecientes(tx), opciones);
+    expect(centro.find((n) => n.id === retro.id)).toMatchObject({
+      aviso: 'AV-01',
+      pushEnviadaEn: null,
+      leidaEn: null,
+    });
+    const inicio = await leer((tx) => noLeidasDeAviso(tx, 'AV-01'), opciones);
+    expect(inicio.map((n) => n.id)).toContain(retro.id);
+  });
+
+  it('PRU-INT-NOTIF-106 [CA-71.7] el push de pago_tarjeta_proximo no tiene montos y abre la tarjeta', async () => {
+    await suscribir('ok');
+    const [tarjetaId] = await sql(`SELECT id FROM finn.cuentas WHERE tipo = 'tarjeta'`);
+    await pasoAvisos.ejecutar(deps('2027-03-04'));
+
+    const push = recibidos.find((r) => r.carga['etiqueta'] === 'tarjetas') as Recibido;
+    expect(push).toBeDefined();
+    expect(push.carga['destino']).toEqual({ pantalla: 'cuenta', cuentaId: tarjetaId });
+    expect(JSON.stringify(push.carga)).not.toMatch(/[$€]|\d[.,]\d{2}|USD/);
   });
 });

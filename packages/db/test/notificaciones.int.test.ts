@@ -69,7 +69,7 @@ const EVENTO =
 
 describe('PRU-INT-NOTIF', () => {
   const base = crearBasePrueba();
-  it('PRU-INT-NOTIF-001 [V6-04, CF-16] las 35 inserciones del catálogo (18 motivos, con aviso nulo, y 17 eventos) entran como finn_app; un aviso AV-1 y un origen inexistente siguen rechazados', async () => {
+  it('PRU-INT-NOTIF-001 [V6-04, CF-16, CA-71.6] las 35 inserciones del catálogo (18 motivos, con aviso nulo, y 17 eventos) entran como finn_app; un aviso AV-1 y un origen inexistente siguen rechazados', async () => {
     const c = new pg.Client({ connectionString: base.url });
     await c.connect();
     try {
