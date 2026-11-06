@@ -652,6 +652,33 @@ describe('PRU-INT-NOTIF', () => {
     );
   });
 
+  it('PRU-INT-NOTIF-103 [CA-33.3, CF-16] con la fecha de pago dentro de 3 días la tarea diaria dos veces el mismo día y una al día siguiente deja una sola notificación pago_tarjeta_proximo para esa tarjeta y fecha, con aviso nulo', async () => {
+    const filas = () =>
+      sql(
+        `SELECT (datos->>'clave') || '|' || (aviso IS NULL) FROM finn.notificaciones WHERE motivo = 'pago_tarjeta_proximo'`,
+      );
+    // El pago de la Visa cae el 05/03: el 02/03 faltan 3 días
+    await pasoAvisos.ejecutar(deps('2027-03-02'));
+    await pasoAvisos.ejecutar(deps('2027-03-02'));
+    await pasoAvisos.ejecutar(deps('2027-03-03'));
+    expect(await filas()).toEqual([expect.stringMatching(/^pago_tarjeta:.+:2027-03-05\|true$/)]);
+  });
+
+  it('PRU-INT-NOTIF-103 [CA-33.5, 04 §11.4] el texto de la notificación y el del push de pago_tarjeta_proximo no traen ningún monto', async () => {
+    await suscribir('ok');
+    await pasoAvisos.ejecutar(deps('2027-03-04'));
+    const [fila] = await sql(
+      `SELECT titulo || '|' || cuerpo FROM finn.notificaciones WHERE motivo = 'pago_tarjeta_proximo'`,
+    );
+    expect(fila).toBeDefined();
+    const monto = /[$€]|\d[.,]\d{2}|USD/;
+    expect(fila).not.toMatch(monto);
+    const push = recibidos.find((r) => r.carga['etiqueta'] === 'tarjetas') as Recibido;
+    expect(push).toBeDefined();
+    expect(`${String(push.carga['titulo'])}|${String(push.carga['cuerpo'])}`).not.toMatch(monto);
+    expect(JSON.stringify(push.carga)).not.toMatch(monto);
+  });
+
   it('PRU-INT-NOTIF-102 TAREA-pasos3y4 (avisos de sistema): respaldo de más de 36 h, restauración de más de 35 días, deriva informada y el disparador por egreso, una vez por clave; recientes no avisan; un nulo o la falta de fila miden el mismo plazo desde el primer hecho (CH-47)', async () => {
     const motivos = () =>
       sql(`SELECT motivo FROM finn.notificaciones WHERE motivo IN

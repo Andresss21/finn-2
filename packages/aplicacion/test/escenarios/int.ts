@@ -865,7 +865,7 @@ export async function copiarEstadoA(s: Estado, destino: string): Promise<void> {
  * `'primera_transaccion'` apunta a la primera transacción que dejaron las operaciones. `leida` y `creadaEn` fijan su estado y orden.
  */
 export interface NotificacionSembrada {
-  readonly aviso: string;
+  readonly aviso: string | null;
   readonly motivo: string;
   readonly titulo: string;
   readonly cuerpo: string;
@@ -895,7 +895,7 @@ export async function sembrarNotificaciones(
     await consultarSql(
       s.base.urlAdmin,
       `INSERT INTO finn.notificaciones (id, aviso, motivo, titulo, cuerpo, datos, creada_en, leida_en)
-       VALUES (gen_random_uuid(), ${literal(f.aviso)}, ${literal(f.motivo)}, ${literal(f.titulo)}, ${literal(f.cuerpo)},
+       VALUES (gen_random_uuid(), ${f.aviso === null ? 'NULL' : literal(f.aviso)}, ${literal(f.motivo)}, ${literal(f.titulo)}, ${literal(f.cuerpo)},
                ${literal(JSON.stringify({ destino }))}::jsonb,
                ${f.creadaEn === undefined ? 'now()' : `${literal(f.creadaEn)}::timestamptz`},
                ${f.leida === true ? 'now()' : 'NULL'})`,
