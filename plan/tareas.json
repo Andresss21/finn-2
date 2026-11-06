@@ -433,7 +433,7 @@
 
   "TA-401": { "estado": "terminada", "rama": "ta-401-reserva-excedente", "pr": 408 },
 
-  "TA-402": { "estado": "pendiente" },
+  "TA-402": { "estado": "terminada", "rama": "ta-402-corte-pago-intereses", "pr": 416 },
 
   "TA-403": { "estado": "terminada", "rama": "ta-403-asignacion-rapida", "pr": 319 },
 

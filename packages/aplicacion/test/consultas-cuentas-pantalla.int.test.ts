@@ -9,6 +9,7 @@ import { escribirHechosDePrueba, HOY, RELOJ } from '../../db/test/ayudantes/hech
 import type { ClaimsSesion, SesionServidor } from '../src/autenticacion/autorizar.ts';
 import type { DepsConsulta } from '../src/consultas/comun.ts';
 import { cuentas } from '../src/consultas/cuentas.ts';
+import { detalleCuenta } from '../src/consultas/detalle-cuenta.ts';
 import { inicio } from '../src/consultas/inicio.ts';
 import { OP01, OP04 } from '../src/operaciones/cuentas/index.ts';
 import { confirmar, type DefinicionOperacion, type DepsMarco } from '../src/operaciones/marco.ts';
@@ -112,5 +113,26 @@ describe('PRU-INT-CTA', () => {
     expect(despues.saldoConfirmado - despues.saldo).toBe(
       antes.saldoConfirmado - antes.saldo + 4000,
     );
+  });
+
+  it('PRU-INT-CTA-104 [CA-33.6] una deuda de $1,500.00 con un límite de $2,000.00 da un uso del límite de 7,500 puntos básicos en Cuentas y en el detalle de la tarjeta', async () => {
+    expect(
+      await ejecutar(OP01, {
+        id: uuid(1130),
+        tipo: 'tarjeta',
+        nombre: 'Tarjeta 33',
+        saldo: '1500.00',
+        limiteCredito: '2000.00',
+        diaCorte: 15,
+        diaPago: 5,
+      }),
+    ).toMatchObject({ ok: true });
+    const enLista = (await cuentas(deps())).tarjetas.find((x) => x.cuenta.id === uuid(1130));
+    expect(enLista).toMatchObject({ deuda: 150000, limite: 200000, usoLimite: 7500 });
+    expect((await detalleCuenta(deps(), { cuentaId: uuid(1130) })).tarjeta).toMatchObject({
+      deuda: 150000,
+      limite: 200000,
+      usoLimite: 7500,
+    });
   });
 });
