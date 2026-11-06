@@ -345,7 +345,7 @@
 
   "TA-262": { "estado": "terminada", "rama": "ta-262-control-dinero-2", "pr": 322 },
 
-  "TA-263": { "estado": "pendiente" },
+  "TA-263": { "estado": "en_curso", "rama": "ta-263-restauracion" },
 
   "TA-280": { "estado": "terminada", "rama": "ta-280-ingresar-2", "pr": 233 },
 

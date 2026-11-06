@@ -32,6 +32,8 @@ interface Caso {
   body?: string;
   diffPruebas?: string; // salida de `git diff -U0` de los archivos de prueba
   contenidos?: Record<string, string>; // 'ref:ruta' → contenido para `git show`
+  etiquetas?: string | null; // salida de `git ls-remote --tags` (null: falla)
+  contienen?: string[]; // commits de etiqueta que tienen al de emergencia como ancestro
 }
 const MIRAR = 'Qué mirar: tools/plan/x.ts:1-10 — el cálculo del exceso';
 const COMMIT = '2026-10-20T10:00:00-06:00';
@@ -78,6 +80,14 @@ function simular(c: Caso) {
     if (l.startsWith('gh api') && l.includes('/activity'))
       return ok('[{"activity_type":"branch_creation"},{"activity_type":"push"}]');
     if (l.startsWith('gh repo view')) return ok('{"nameWithOwner":"yo/finn-2"}');
+    if (l.startsWith('git ls-remote --tags origin'))
+      return c.etiquetas === null
+        ? { status: 2, stdout: '', stderr: 'sin red' }
+        : ok(c.etiquetas ?? '');
+    if (l.startsWith('git merge-base --is-ancestor'))
+      return (c.contienen ?? []).includes(args.at(-1) ?? '')
+        ? ok('')
+        : { status: 1, stdout: '', stderr: '' };
     return ok('');
   };
   return { run, llamadas };
@@ -208,6 +218,46 @@ describe('mergear: paso 5 y 6, resumen y --dry-run', () => {
     expect(r.merge).toBeUndefined();
     expect(r.texto).toContain('pushes: 2');
     expect(r.texto).toContain('despliegue de emergencia pendiente: ninguno');
+  });
+
+  it('un despliegue de emergencia sigue pendiente hasta que una etiqueta de desplegar lo contenga (07 §31.5, TA-263)', () => {
+    const fila = (fecha: string, commit: string, nota: string): string =>
+      `| PRU-MAN-OPER-002 | ${fecha} | PC con Windows | pasa | Andres | ${commit} | ${nota} |`;
+    const resultados = [
+      fila('2026-11-10', 'aaa1111', 'ensayo'),
+      fila('2026-12-03', 'bbb2222', 'error de dinero en la reserva'),
+    ].join('\n');
+    // La etiqueta vigente es la de mayor corrida e intento, no la última de la lista
+    const etiquetas = [
+      'e10\trefs/tags/desplegado-10-1',
+      'e9\trefs/tags/desplegado-9-2',
+      'e11\trefs/tags/desplegado-11-1',
+      'x\trefs/tags/otra',
+    ].join('\n');
+    const caso = (c: Partial<Caso>) =>
+      correr(
+        { contenidos: { 'cabeza:pruebas/manuales/resultados.md': resultados }, etiquetas, ...c },
+        { dryRun: true },
+      ).texto;
+    // Una corrida de ci.yml en main en verde no basta: puede no haber desplegado (sin integracion, docs)
+    expect(caso({ contienen: ['e10'] })).toContain(
+      'despliegue de emergencia pendiente: commit bbb2222 del 2026-12-03, sin una corrida completa de desplegar que lo contenga',
+    );
+    expect(caso({ contienen: ['e11'] })).toContain('despliegue de emergencia pendiente: ninguno');
+    expect(caso({ etiquetas: null })).toContain(
+      'despliegue de emergencia pendiente: sin comprobar: commit bbb2222 del 2026-12-03',
+    );
+    // El ensayo previo a la puerta no deja nada pendiente
+    expect(
+      correr(
+        {
+          contenidos: {
+            'cabeza:pruebas/manuales/resultados.md': fila('2026-11-10', 'aaa1111', 'ensayo'),
+          },
+        },
+        { dryRun: true },
+      ).texto,
+    ).toContain('despliegue de emergencia pendiente: ninguno');
   });
 
   it('el resumen lista las pruebas cuyo archivo de datos cambió (RS7-09)', () => {
