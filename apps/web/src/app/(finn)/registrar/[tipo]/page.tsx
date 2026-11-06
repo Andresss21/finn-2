@@ -4,6 +4,9 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { tipoDeRegistro } from '../../../../flujos/registrar-tipo/campos';
 import { LectorRegistrarTipo } from '../../../../flujos/registrar-tipo/lector';
+import { esDesembolso } from '../../../../flujos/registrar-tipo/campos-desembolso';
+import { LectorDesembolso } from '../../../../flujos/registrar-tipo/lector-desembolso';
+import { registrarDesembolso } from '../../../../textos/registrar-desembolso';
 import { tipoDeTarjeta } from '../../../../flujos/registrar-tipo/campos-tarjeta';
 import { LectorRegistrarTarjeta } from '../../../../flujos/registrar-tipo/lector-tarjeta';
 import type { BusquedaDePagina } from '../../../../servidor/parametros';
@@ -17,6 +20,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const url = (await params).tipo;
+  if (esDesembolso(url)) return { title: registrarDesembolso.titulo };
   const deTarjeta = tipoDeTarjeta(url);
   if (deTarjeta !== undefined) return { title: registrarTarjeta.flujos[deTarjeta].titulo };
   return {
@@ -31,6 +35,7 @@ export default async function PaginaRegistrarTipo({ params, searchParams }: Prop
   const url = (await params).tipo;
   const tipo = tipoDeRegistro(url);
   if (tipo !== undefined) return <LectorRegistrarTipo tipo={tipo} busqueda={await searchParams} />;
+  if (esDesembolso(url)) return <LectorDesembolso busqueda={await searchParams} />;
   const deTarjeta = tipoDeTarjeta(url);
   if (deTarjeta === undefined) notFound();
   return <LectorRegistrarTarjeta tipo={deTarjeta} busqueda={await searchParams} />;
