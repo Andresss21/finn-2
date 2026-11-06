@@ -543,7 +543,7 @@
 
   "TA-502": { "estado": "pendiente" },
 
-  "TA-503": { "estado": "en_curso", "rama": "ta-503-gastos-hormiga" },
+  "TA-503": { "estado": "terminada", "rama": "ta-503-gastos-hormiga", "pr": 447 },
 
   "TA-504": { "estado": "pendiente" },
 
