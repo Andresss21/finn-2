@@ -95,7 +95,7 @@ test.describe('PRU-E2E-TX flujo de inversiones', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-TX-520 [CA-57.1, ESC-41] RUTA-/registrar/aporte-inversion con el paso 1 de ESC-41 aporto $200.00: el efectivo y Listo para asignar quedan en $300.00, la categoría en $0.00 y la inversión en $200.00', async ({
+  test('PRU-E2E-TX-530 [CA-57.1, ESC-41] RUTA-/registrar/aporte-inversion con el paso 1 de ESC-41 aporto $200.00: el efectivo y Listo para asignar quedan en $300.00, la categoría en $0.00 y la inversión en $200.00', async ({
     page,
   }) => {
     await sembrarOps(ESC41_PASO1, '2027-02-10');
@@ -122,7 +122,7 @@ test.describe('PRU-E2E-TX flujo de inversiones', () => {
     await esperarMonto(disponible(page, 'Aporte inversión'), 0);
   });
 
-  test('PRU-E2E-TX-521 [CA-57.2, ESC-40] RUTA-/registrar/retiro-inversion con el paso 1 de ESC-40 retiro $1,000.00: Listo para asignar es $6,000.00 como otras entradas y la inversión vale $2,000.00', async ({
+  test('PRU-E2E-TX-531 [CA-57.2, ESC-40] RUTA-/registrar/retiro-inversion con el paso 1 de ESC-40 retiro $1,000.00: Listo para asignar es $6,000.00 como otras entradas y la inversión vale $2,000.00', async ({
     page,
   }) => {
     await sembrarOps(ESC40_PASO1, '2027-02-10');
@@ -140,7 +140,7 @@ test.describe('PRU-E2E-TX flujo de inversiones', () => {
     await esperarMonto(saldoDe(page, 'inversion'), 200000);
   });
 
-  test('PRU-E2E-TX-522 [CA-57.3, ESC-40] con una inversión de $2,000.00, retirar $2,500.00 se rechaza con «La inversión vale $2,000.00.» y no se guarda nada', async ({
+  test('PRU-E2E-TX-532 [CA-57.3, ESC-40] con una inversión de $2,000.00, retirar $2,500.00 se rechaza con «La inversión vale $2,000.00.» y no se guarda nada', async ({
     page,
   }) => {
     await sembrarOps(INVERSION_DE_2000, '2027-02-10');
@@ -152,7 +152,7 @@ test.describe('PRU-E2E-TX flujo de inversiones', () => {
     await esperarMonto(saldoDe(page, 'inversion'), 200000);
   });
 
-  test('PRU-E2E-TX-523 [CA-57.4, ESC-41] RUTA-/registrar/ajuste-inversion un ajuste de +$75.60 sube el valor de la inversión a $75.60 y Listo para asignar y la categoría siguen igual', async ({
+  test('PRU-E2E-TX-533 [CA-57.4, ESC-41] RUTA-/registrar/ajuste-inversion un ajuste de +$75.60 sube el valor de la inversión a $75.60 y Listo para asignar y la categoría siguen igual', async ({
     page,
   }) => {
     await sembrarOps(ESC41_PASO1, '2027-02-10');

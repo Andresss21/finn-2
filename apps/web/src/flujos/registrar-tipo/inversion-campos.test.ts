@@ -21,7 +21,7 @@ const con = (extra: Partial<Campos>): Campos => ({
 });
 
 describe('PRU-DOM-TX', () => {
-  it('PRU-DOM-TX-520 la entrada de un aporte lleva inversión, cuenta, categoría, fecha y monto normalizado, y OP-25 la acepta', () => {
+  it('PRU-DOM-TX-530 la entrada de un aporte lleva inversión, cuenta, categoría, fecha y monto normalizado, y OP-25 la acepta', () => {
     const entrada = aEntradaDeAccion('aporte-inversion', {
       ...con({ inversionId: INV, cuentaId: EFE, categoriaId: CAT, total: '200,5' }),
       modo: 'confirmar',
@@ -42,7 +42,7 @@ describe('PRU-DOM-TX', () => {
     expect(op25.safeParse(sinModo).success).toBe(true);
   });
 
-  it('PRU-DOM-TX-520 el retiro lleva la cuenta que recibe y no la categoría, y OP-25 la acepta', () => {
+  it('PRU-DOM-TX-530 el retiro lleva la cuenta que recibe y no la categoría, y OP-25 la acepta', () => {
     const entrada = aEntradaDeAccion('retiro-inversion', {
       ...con({ inversionId: INV, cuentaId: EFE, categoriaId: CAT, total: '1000' }),
       id: ID,
@@ -52,7 +52,7 @@ describe('PRU-DOM-TX', () => {
     expect(op25.safeParse(entrada).success).toBe(true);
   });
 
-  it('PRU-DOM-TX-520 el ajuste lleva el signo en el total y ninguna cuenta, y OP-25 acepta +75.60 y −75.60', () => {
+  it('PRU-DOM-TX-530 el ajuste lleva el signo en el total y ninguna cuenta, y OP-25 acepta +75.60 y −75.60', () => {
     const sube = aEntradaDeAccion('ajuste-inversion', {
       ...con({ inversionId: INV, cuentaId: EFE, total: '75.60' }),
       id: ID,
@@ -68,7 +68,7 @@ describe('PRU-DOM-TX', () => {
     expect(op25.safeParse(baja).success).toBe(true);
   });
 
-  it('PRU-DOM-TX-520 el contrato pide lo que cada tipo necesita y el tipo de la URL elige el del formulario', () => {
+  it('PRU-DOM-TX-530 el contrato pide lo que cada tipo necesita y el tipo de la URL elige el del formulario', () => {
     const vacio = (t: Parameters<typeof contratoDe>[0]) =>
       contratoDe(t)
         .safeParse(con({}))
