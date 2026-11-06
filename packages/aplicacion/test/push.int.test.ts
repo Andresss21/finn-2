@@ -664,7 +664,7 @@ describe('PRU-INT-NOTIF', () => {
     expect(await filas()).toEqual([expect.stringMatching(/^pago_tarjeta:.+:2027-03-05\|true$/)]);
   });
 
-  it('PRU-INT-NOTIF-103 [CA-33.5, 04 §11.4] el texto de la notificación y el del push de pago_tarjeta_proximo no traen ningún monto', async () => {
+  it('PRU-INT-NOTIF-103 [CA-33.5] el texto de la notificación y el del push de pago_tarjeta_proximo no traen ningún monto', async () => {
     await suscribir('ok');
     await pasoAvisos.ejecutar(deps('2027-03-04'));
     const [fila] = await sql(
