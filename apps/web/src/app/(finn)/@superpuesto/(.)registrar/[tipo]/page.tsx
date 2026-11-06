@@ -4,6 +4,8 @@
 import { AbrirComoPagina } from '../../../../../componentes/navegacion/flujo-de-ruta';
 import { tipoDeInversion } from '../../../../../flujos/registrar-tipo/inversion-campos';
 import { LectorRegistrarInversion } from '../../../../../flujos/registrar-tipo/inversion-lector';
+import { tipoDeTarjeta } from '../../../../../flujos/registrar-tipo/campos-tarjeta';
+import { LectorRegistrarTarjeta } from '../../../../../flujos/registrar-tipo/lector-tarjeta';
 import { tipoDeRegistro } from '../../../../../flujos/registrar-tipo/campos';
 import { LectorRegistrarTipo } from '../../../../../flujos/registrar-tipo/lector';
 import type { BusquedaDePagina } from '../../../../../servidor/parametros';
@@ -20,6 +22,9 @@ export default async function RegistrarTipoInterceptado({
   if (inversion !== undefined)
     return <LectorRegistrarInversion tipo={inversion} busqueda={await searchParams} superpuesto />;
   const tipo = tipoDeRegistro(url);
-  if (tipo === undefined) return <AbrirComoPagina />;
-  return <LectorRegistrarTipo tipo={tipo} busqueda={await searchParams} superpuesto />;
+  if (tipo !== undefined)
+    return <LectorRegistrarTipo tipo={tipo} busqueda={await searchParams} superpuesto />;
+  const deTarjeta = tipoDeTarjeta(url);
+  if (deTarjeta === undefined) return <AbrirComoPagina />;
+  return <LectorRegistrarTarjeta tipo={deTarjeta} busqueda={await searchParams} superpuesto />;
 }
