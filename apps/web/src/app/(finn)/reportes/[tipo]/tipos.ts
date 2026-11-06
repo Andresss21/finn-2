@@ -10,6 +10,7 @@ export const TIPOS = {
   ritmo: 'ritmo',
   'gasto-semanal': 'gasto_semanal',
   realidad: 'realidad',
+  tarjetas: 'tarjetas',
 } as const;
 
 export type TipoDeUrl = keyof typeof TIPOS;
