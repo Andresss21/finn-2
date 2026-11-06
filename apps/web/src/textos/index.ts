@@ -6,6 +6,8 @@ import { ajustesFormatos } from './ajustes-formatos.ts';
 import { ajustesInstituciones } from './ajustes-instituciones.ts';
 import { ajustesExportar } from './ajustes-exportar.ts';
 import { ajustesApariencia } from './ajustes-apariencia.ts';
+import { ajustesDiagnostico } from './ajustes-diagnostico.ts';
+import { ajustesRespaldo } from './ajustes-respaldo.ts';
 import { ajustesWebhook } from './ajustes-webhook.ts';
 import { autenticacion } from './autenticacion.ts';
 import { bandeja } from './bandeja.ts';
@@ -55,6 +57,8 @@ export {
   ajustesInstituciones,
   ajustesExportar,
   ajustesApariencia,
+  ajustesDiagnostico,
+  ajustesRespaldo,
   ajustesWebhook,
   autenticacion,
   alcanceReserva,
@@ -107,6 +111,8 @@ export const areas = [
   ['ajustesInstituciones', ajustesInstituciones],
   ['ajustesExportar', ajustesExportar],
   ['ajustesApariencia', ajustesApariencia],
+  ['ajustesDiagnostico', ajustesDiagnostico],
+  ['ajustesRespaldo', ajustesRespaldo],
   ['ajustesWebhook', ajustesWebhook],
   ['inicio', inicio],
   ['instalacion', instalacion],
