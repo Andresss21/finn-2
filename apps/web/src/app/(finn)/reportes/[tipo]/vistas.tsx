@@ -10,6 +10,8 @@ import { formatearFecha, formatearMesCorto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
 import type { TipoDeReporte } from './tipos';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
+import { Realidad } from './realidad';
+import type { AccionesRealidad } from './realidad-hallazgos';
 import { Ritmo } from './ritmo';
 import { Categorias, Cumplimiento, TopComercios, type Nombres } from './vistas-detalle';
 import { GastoSemanal } from './vistas-semanal';
@@ -116,8 +118,15 @@ export function cuerpoDe(
   dto: unknown,
   nombres: Nombres,
   asignar?: AccionEscritura,
+  realidad?: AccionesRealidad,
 ): ReactNode {
   switch (tipo) {
+    case 'realidad': {
+      const d = dto as ReporteDe<'realidad'>;
+      return d.categorias.length === 0 ? null : (
+        <Realidad dto={d} {...(realidad === undefined ? {} : { acciones: realidad })} />
+      );
+    }
     case 'ritmo': {
       const d = dto as ReporteDe<'ritmo'>;
       return d.categorias.length === 0 ? null : (

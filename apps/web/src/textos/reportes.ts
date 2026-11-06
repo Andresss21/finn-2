@@ -11,6 +11,7 @@ export const reportes = {
     patrimonio: 'Patrimonio',
     ritmo: 'Ritmo',
     'gasto-semanal': 'Gasto semanal',
+    realidad: 'Realidad',
   },
   titulos: {
     tendencia: 'Tendencia de ingresos y gastos',
@@ -22,6 +23,7 @@ export const reportes = {
     patrimonio: 'Tu patrimonio',
     ritmo: 'Ritmo de gasto',
     'gasto-semanal': 'Gasto semanal por categoría',
+    realidad: 'Presupuesto contra la realidad',
   },
   explicacionRemanente:
     'Ingresos del período menos lo que gastaste, incluidas las compras con tarjeta',
@@ -57,6 +59,10 @@ export const reportes = {
     semana: 'Semana',
     referencia: 'Referencia',
     anteriores: 'Mismas semanas, períodos anteriores',
+    promedioGastado: 'Promedio gastado',
+    sugerido: 'Sugerido',
+    gastoComparado: 'Este período',
+    variacion: 'Variación',
   },
   ritmo: {
     cierre: (fin: string) => `Si seguís así, al cerrar el ${fin}:`,
@@ -72,6 +78,28 @@ export const reportes = {
     sinProyeccion: 'Todavía no hay suficientes compras para proyectar',
     asignando: 'Asignando…',
     asignado: (monto: string, categoria: string) => `Asignaste ${monto} a ${categoria}.`,
+  },
+  realidad: {
+    pasas: (promedio: string, categoria: string, asignado: string, sugerido: string) =>
+      `En los últimos 3 períodos gastaste en promedio ${promedio} en ${categoria} y asignaste ${asignado}. ¿Ajustar a ${sugerido}?`,
+    sobra: (promedio: string, categoria: string, sugerido: string) =>
+      `En los últimos 3 períodos gastaste en promedio ${promedio} en ${categoria} y te sobró dinero cada vez. ¿Ajustar a ${sugerido}?`,
+    ajustar: (sugerido: string) => `Ajustar a ${sugerido}`,
+    ajustarMeta: (sugerido: string) => `Ajustar la meta a ${sugerido}`,
+    ajustando: 'Ajustando…',
+    ajustado: (sugerido: string, categoria: string) => `Ajustaste ${categoria} a ${sugerido}.`,
+    metaAjustada: (sugerido: string, categoria: string) =>
+      `Ajustaste la meta de ${categoria} a ${sugerido}.`,
+    seccionRealidad: 'Lo que asignás contra lo que gastás',
+    seccionPromedio: 'Comparación con tu promedio',
+    sinHallazgosRealidad: 'Tus asignaciones van acordes con lo que gastás.',
+    sinHallazgosPromedio: 'Ninguna categoría se aleja mucho de su promedio.',
+    camino: (categoria: string, gasto: string, variacion: string, mas: boolean, promedio: string) =>
+      `En ${categoria} vas camino a ${gasto} este período, ${variacion} ${mas ? 'más' : 'menos'} que tu promedio de ${promedio}.`,
+    revisar: (categoria: string) => `Revisar ${categoria}`,
+    porCategoria: 'Categoría por categoría',
+    sinHistoria: 'Hace falta historia de 3 períodos para comparar.',
+    periodosDe: (categoria: string) => `Períodos de ${categoria}`,
   },
   gastoSemanal: {
     categorias: 'Categorías',

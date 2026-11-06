@@ -3,12 +3,16 @@
 // todavía no entrega `filtros`. Un parámetro que la consulta rechaza llega como `VALIDACION` y `consultar()` redirige a la misma
 // ruta sin él (05 §2.2, CP-13).
 import { cuentas } from '@finn/aplicacion/consultas/cuentas';
+import { metas } from '@finn/aplicacion/consultas/metas';
+import { presupuesto } from '@finn/aplicacion/consultas/presupuesto';
 import { estructura } from '@finn/aplicacion/consultas/estructura';
 import { reporte } from '@finn/aplicacion/consultas/reporte';
-import { asignarEnCategoria } from '../../../../servidor/acciones/presupuesto.ts';
+import { centavosATextoDecimal } from '../../../../formato';
+import { asignarEnCategoria, gestionarMeta } from '../../../../servidor/acciones/presupuesto.ts';
 import { consultar } from '../../../../servidor/consultar';
 import { depsDeConsulta } from '../../../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../../../servidor/parametros';
+import type { AccionesRealidad } from './realidad-hallazgos';
 import { PantallaReporte, type Nombres, type Parametros } from './pantalla';
 import { TIPOS, type TipoDeUrl } from './tipos';
 
@@ -24,6 +28,31 @@ const CON_CATEGORIAS: ReadonlySet<TipoDeUrl> = new Set([
 const texto = (v: string | readonly string[] | undefined): string | undefined =>
   (typeof v === 'string' ? v : v?.[0]) || undefined;
 
+/**
+ * Los ajustes de `realidad` (OP-14 y OP-18) con el `esperado` que exigen: lo asignado del período activo y el monto de cada meta,
+ * tal como los dicen `presupuesto()` y `metas()`. El DTO de `realidad` no los trae, y la interfaz no los calcula (PF-3).
+ */
+async function accionesDeRealidad(): Promise<AccionesRealidad> {
+  const [vista, listaDeMetas] = await Promise.all([
+    consultar(async () => presupuesto(await depsDeConsulta())),
+    consultar(async () => metas(await depsDeConsulta())),
+  ]);
+  return {
+    asignar: asignarEnCategoria,
+    meta: gestionarMeta,
+    esperados: {
+      asignado: Object.fromEntries(
+        vista.grupos.flatMap((g) =>
+          g.categorias.map((c) => [c.categoria.id, centavosATextoDecimal(c.asignadoEsperado)]),
+        ),
+      ),
+      meta: Object.fromEntries(
+        listaDeMetas.metas.map((m) => [m.id, centavosATextoDecimal(m.monto)]),
+      ),
+    },
+  };
+}
+
 export async function LectorReporte({
   url,
   busqueda,
@@ -37,7 +66,7 @@ export async function LectorReporte({
   const limite = texto(busqueda['limite']);
   const semanal = url === 'gasto-semanal';
   // `ritmo` mira el período activo: su contrato no lleva ventana ni cuentas.
-  const filtrado = url !== 'ritmo';
+  const filtrado = url !== 'ritmo' && url !== 'realidad';
   const { periodoInicio, categoriaIds } = consulta;
   const solicitud = semanal
     ? {
@@ -85,6 +114,7 @@ export async function LectorReporte({
     ...(semanal && periodo !== undefined ? { periodo } : {}),
     ...(semanal && categorias !== undefined ? { categorias } : {}),
   };
+  const realidad = url === 'realidad' ? await accionesDeRealidad() : undefined;
   return (
     <PantallaReporte
       url={url}
@@ -92,6 +122,7 @@ export async function LectorReporte({
       nombres={nombres}
       parametros={parametros}
       {...(url === 'ritmo' ? { asignar: asignarEnCategoria } : {})}
+      {...(realidad === undefined ? {} : { realidad })}
     />
   );
 }
