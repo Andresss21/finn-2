@@ -136,6 +136,9 @@ export async function levantarPila(): Promise<Record<string, string>> {
     NEXT_PUBLIC_SUPABASE_URL: url,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: clavePublica,
     FINN_USUARIO_ID: usuario.id,
+    // Claves de la carga firmada de la conciliación (04 §9.6): de prueba, solo para la pila local
+    FINN_CONCILIACION_CLAVES: `k1:${Buffer.alloc(32, 7).toString('base64')}`,
+    FINN_CONCILIACION_CLAVE_ACTIVA: 'k1',
     E2E_EMAIL: usuario.email,
     E2E_CLAVE: usuario.clave,
     E2E_TOTP_SECRETO: usuario.secretoTotp,

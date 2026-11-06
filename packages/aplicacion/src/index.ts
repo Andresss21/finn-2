@@ -1,5 +1,6 @@
 export { errorDeBase } from './errores-de-base.ts';
 export {
+  ahoraMsDeLaPeticion,
   hayVariableDeReloj,
   instanteDeLaPeticion,
   relojDePrueba,

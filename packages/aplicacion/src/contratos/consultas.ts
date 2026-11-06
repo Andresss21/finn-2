@@ -226,6 +226,10 @@ export const parametrosFormulario = z.discriminatedUnion(
       fechaEsperada: fechaLocal.optional(),
     }),
     z.object({
+      operacion: z.literal('conciliar'),
+      cuentaId: uuid,
+    }),
+    z.object({
       operacion: z.literal('verificar_saldo'),
       cuentaId: uuid,
       fecha: fechaLocal.optional(),
