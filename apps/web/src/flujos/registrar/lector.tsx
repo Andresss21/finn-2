@@ -9,6 +9,7 @@ import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
+import { registrarInversion as inv } from '../../textos/registrar-inversion';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const FILA = `flex min-h-14 flex-col justify-center rounded-control bg-superficie px-4 py-2 ${FOCO}`;
@@ -30,6 +31,30 @@ export async function LectorRegistrar() {
             href: '/registrar/transferencia',
             titulo: t.tipoTransferencia,
             detalle: t.tipoTransferenciaDetalle,
+          },
+        ]
+      : []),
+    // FT-57: sin inversiones no se ofrece ninguno de los tres (05 §7); aportar y retirar también piden efectivo.
+    ...(dto.inversiones.length >= 1 && dto.efectivo.length >= 1
+      ? [
+          {
+            href: '/registrar/aporte-inversion',
+            titulo: inv.tipoAporte,
+            detalle: inv.tipoAporteDetalle,
+          },
+          {
+            href: '/registrar/retiro-inversion',
+            titulo: inv.tipoRetiro,
+            detalle: inv.tipoRetiroDetalle,
+          },
+        ]
+      : []),
+    ...(dto.inversiones.length >= 1
+      ? [
+          {
+            href: '/registrar/ajuste-inversion',
+            titulo: inv.tipoAjuste,
+            detalle: inv.tipoAjusteDetalle,
           },
         ]
       : []),

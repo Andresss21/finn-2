@@ -479,7 +479,7 @@
 
   "TA-419": { "estado": "pendiente" },
 
-  "TA-420": { "estado": "pendiente" },
+  "TA-420": { "estado": "en_curso", "rama": "ta-420-inversiones" },
 
   "TA-421": { "estado": "terminada", "rama": "ta-421-reportes-base", "pr": 316 },
 
