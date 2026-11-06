@@ -40,7 +40,14 @@ import type { CuentaDelMovimiento } from './campos-movimiento';
 import type { ResumenDelMovimiento } from './encabezado';
 import type { DuplicadoDe } from './estados';
 import { PanelDeLaBandeja, type NavegacionDelPanel } from './panel-navegacion';
-import { camposIniciales, contrato, entradaDeEdicion, ofreceRecordar, type Campos } from './campos';
+import {
+  camposIniciales,
+  conCategoriaSoltada,
+  contrato,
+  entradaDeEdicion,
+  ofreceRecordar,
+  type Campos,
+} from './campos';
 
 interface Referencia {
   readonly id: string;
@@ -71,6 +78,8 @@ export interface PropsFormularioMovimiento {
   readonly navegacion?: NavegacionDelPanel;
   /** Viene de la fila de la lista (05 §4.15): se vuelve a aprobar para mostrar el mensaje o la confirmación. */
   readonly traspaso: boolean;
+  /** FT-78: la categoría que se soltó sobre la fila; se pone en la línea y el traspaso envía la variante de OP-37. */
+  readonly categoriaSoltada?: string;
   readonly cuentas: readonly CuentaDelMovimiento[];
   readonly categorias: readonly Referencia[];
   readonly deudores: readonly Referencia[];
@@ -142,6 +151,7 @@ function Flujo({
   categorias,
   deudores,
   traspaso,
+  categoriaSoltada,
   marco,
   navegacion,
 }: PropsFormularioMovimiento & { readonly marco: Marco }) {
@@ -163,6 +173,12 @@ function Flujo({
     ? coincide
     : aprobarSolo;
   const inicial = useMemo(() => camposIniciales(movimiento.esperado), [movimiento.esperado]);
+  // Con una categoría soltada, el formulario la muestra en la línea; `base` sigue siendo lo que hay en el servidor
+  const valores = useMemo(
+    () =>
+      categoriaSoltada === undefined ? inicial : conCategoriaSoltada(inicial, categoriaSoltada),
+    [inicial, categoriaSoltada],
+  );
   const base = useRef(inicial); // lo último guardado en el servidor, para saber qué cambió
   const visto = useRef(movimiento.esperado); // lo que vio la persona (FE-09), para OP-36
   // lo que se aprueba (o confirma, OP-40) al terminar de guardar
@@ -178,7 +194,7 @@ function Flujo({
   }, []);
   const formulario = useFormularioFinn<Campos>({
     contrato,
-    valoresIniciales: inicial,
+    valoresIniciales: valores,
     operacion: editar,
   });
   const { control } = formulario;
@@ -196,10 +212,18 @@ function Flujo({
 
   // El traspaso de la lista (05 §4.15): se vuelve a aprobar y el servidor repite su mensaje o su confirmación
   const { id: movimientoId, origenId } = movimiento;
+  const lineasDelServidor = useRef((movimiento.esperado as { lineas?: unknown }).lineas);
   useEffect(() => {
     if (traspaso)
-      void aprobarAhora({ movimientoId, ...(origenId === undefined ? {} : { origenId }) });
-  }, [traspaso, movimientoId, origenId, aprobarAhora]);
+      void aprobarAhora({
+        movimientoId,
+        ...(origenId === undefined ? {} : { origenId }),
+        // Un arrastre confirma o completa con la misma variante (CF-21), con las líneas que vio la lista
+        ...(categoriaSoltada === undefined
+          ? {}
+          : { categoriaId: categoriaSoltada, esperado: { lineas: lineasDelServidor.current } }),
+      });
+  }, [traspaso, movimientoId, origenId, categoriaSoltada, aprobarAhora]);
 
   // Terminó de guardar los cambios: se aprueba lo que se guardó
   useEffect(() => {

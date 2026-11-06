@@ -80,6 +80,7 @@ export default async function PaginaBandeja({
         contadores={dto.contadores}
         elegibles={dto.elegiblesAprobarTodos}
         movimientos={movimientos}
+        destinos={dto.destinosArrastre}
       />
     </main>
   );

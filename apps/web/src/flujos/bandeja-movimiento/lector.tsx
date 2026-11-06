@@ -14,12 +14,15 @@ import type { NavegacionDelPanel } from './panel-navegacion';
 export async function LectorMovimiento({
   movimientoId,
   traspaso,
+  categoriaSoltada,
   lateral,
   navegacion,
 }: {
   readonly movimientoId: string;
   /** Viene de la fila de la lista, que no pudo aprobar con un toque (05 §4.15). */
   readonly traspaso: boolean;
+  /** Viene de un arrastre (FT-78): la categoría soltada, que el flujo pone en la línea y envía con la variante de OP-37. */
+  readonly categoriaSoltada?: string;
   /** Computadora: la lista de la Bandeja a la izquierda y el lugar del movimiento en ella (CH-137). */
   readonly lateral?: ReactNode;
   readonly navegacion?: NavegacionDelPanel;
@@ -99,6 +102,9 @@ export async function LectorMovimiento({
       categorias={categorias}
       deudores={deudores}
       traspaso={traspaso}
+      {...(categoriaSoltada !== undefined && categorias.some((c) => c.id === categoriaSoltada)
+        ? { categoriaSoltada }
+        : {})}
       {...(lateral === undefined ? {} : { lateral })}
       {...(navegacion === undefined ? {} : { navegacion })}
     />
