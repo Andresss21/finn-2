@@ -519,7 +519,7 @@
 
   "TA-472": { "estado": "terminada", "rama": "ta-472-probar-formato-3", "pr": 389 },
 
-  "TA-434": { "estado": "en_curso", "rama": "ta-434-factores-sesiones" },
+  "TA-434": { "estado": "terminada", "rama": "ta-434-factores-sesiones", "pr": 435 },
 
   "TA-435": { "estado": "terminada", "rama": "ta-435-exportar", "pr": 288 },
 
