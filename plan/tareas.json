@@ -451,7 +451,7 @@
 
   "TA-409": { "estado": "terminada", "rama": "ta-409-cobrar", "pr": 412 },
 
-  "TA-410": { "estado": "pendiente" },
+  "TA-410": { "estado": "terminada", "rama": "ta-410-renombrar-deudor-2", "pr": 422 },
 
   "TA-411": { "estado": "terminada", "rama": "ta-411-reglas", "pr": 353 },
 
