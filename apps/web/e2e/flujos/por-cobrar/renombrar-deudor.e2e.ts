@@ -54,12 +54,12 @@ const deudor = (page: Page, nombre: string) =>
 const renombrar = (page: Page, nombre: string) =>
   page.getByRole('link', { name: `Renombrar a ${nombre}` }).click();
 
-test.describe('PRU-E2E-RENOM flujo de renombrar un deudor', () => {
+test.describe('PRU-E2E-COBRO flujo de renombrar un deudor', () => {
   test.beforeEach(async ({ context, baseURL }) => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-RENOM-501 [CA-48.1, RUTA-/por-cobrar/deudores/[deudorId]/renombrar] "Carlso" con dos partidas pasa a "Carlos" y ninguna cifra cambia', async ({
+  test('PRU-E2E-COBRO-141 [CA-48.1, RUTA-/por-cobrar/deudores/[deudorId]/renombrar] "Carlso" con dos partidas pasa a "Carlos" y ninguna cifra cambia', async ({
     page,
   }) => {
     await sembrarOps(CARLSO);
@@ -86,7 +86,7 @@ test.describe('PRU-E2E-RENOM flujo de renombrar un deudor', () => {
     await esperarMonto(page.locator('[data-total-abierto] [data-centavos]'), 4000);
   });
 
-  test('PRU-E2E-RENOM-502 [CA-48.2] renombrar "Carlso" a "carlos" se rechaza con «Ya existe un deudor llamado carlos.» y no cambia nada', async ({
+  test('PRU-E2E-COBRO-142 [CA-48.2] renombrar "Carlso" a "carlos" se rechaza con «Ya existe un deudor llamado carlos.» y no cambia nada', async ({
     page,
   }) => {
     await sembrarOps(DOS_DEUDORES);
@@ -102,7 +102,7 @@ test.describe('PRU-E2E-RENOM flujo de renombrar un deudor', () => {
     await expect(deudor(page, 'Carlso')).toHaveCount(1);
   });
 
-  test('PRU-E2E-RENOM-503 [CA-48.3] si otra pestaña ya lo renombró, enviar responde conflicto y «Usar el valor actual» deja guardar lo escrito', async ({
+  test('PRU-E2E-COBRO-143 [CA-48.3] si otra pestaña ya lo renombró, enviar responde conflicto y «Usar el valor actual» deja guardar lo escrito', async ({
     page,
     context,
   }) => {
