@@ -151,7 +151,7 @@ export function proyeccionDelCierre(
 
 export type AccionDeRitmo =
   | { readonly tipo: 'mover'; readonly origen: Ref; readonly monto: Centavos }
-  | { readonly tipo: 'asignar'; readonly montoNuevo: Centavos }
+  | { readonly tipo: 'asignar'; readonly montoNuevo: Centavos; readonly esperado: Centavos }
   | { readonly tipo: 'revisar'; readonly categoriaId: Uuid };
 
 /** Hallazgo de ritmo sin texto ni propuesta: los arma la aplicación (04 §7.10). */
@@ -281,7 +281,11 @@ export function ritmo(i: Instantanea): RitmoSel {
         origen !== undefined
           ? { tipo: 'mover', origen: nom.categoria(origen.c.id), monto: x.r.exceso }
           : i.lpa.total >= x.r.exceso
-            ? { tipo: 'asignar', montoNuevo: Centavos.sumar(x.celda.asignado, x.r.exceso) }
+            ? {
+                tipo: 'asignar',
+                montoNuevo: Centavos.sumar(x.celda.asignado, x.r.exceso),
+                esperado: x.celda.asignado,
+              }
             : { tipo: 'revisar', categoriaId: x.c.id };
       return {
         tipo: 'ritmo',

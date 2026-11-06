@@ -9,6 +9,8 @@ import { Monto } from '../../../../componentes/dominio/monto';
 import { formatearFecha, formatearMesCorto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
 import type { TipoDeReporte } from './tipos';
+import type { AccionEscritura } from '../../../../formularios/use-operacion';
+import { Ritmo } from './ritmo';
 import { Categorias, Cumplimiento, TopComercios, type Nombres } from './vistas-detalle';
 
 interface Columna<F> {
@@ -108,8 +110,19 @@ function Serie<F extends { readonly periodo: string }>({
 const sinMovimiento = (cifras: readonly Centavos[]): boolean => cifras.every((c) => c === 0);
 
 /** El cuerpo del reporte, o `null` si la ventana no tiene movimientos (05 §2.10). */
-export function cuerpoDe(tipo: TipoDeReporte, dto: unknown, nombres: Nombres): ReactNode {
+export function cuerpoDe(
+  tipo: TipoDeReporte,
+  dto: unknown,
+  nombres: Nombres,
+  asignar?: AccionEscritura,
+): ReactNode {
   switch (tipo) {
+    case 'ritmo': {
+      const d = dto as ReporteDe<'ritmo'>;
+      return d.categorias.length === 0 ? null : (
+        <Ritmo dto={d} {...(asignar === undefined ? {} : { asignar })} />
+      );
+    }
     case 'tendencia': {
       const { periodos } = dto as ReporteDe<'tendencia'>;
       if (sinMovimiento(periodos.flatMap((p) => [p.ingresos, p.gastos, p.otrasEntradas])))

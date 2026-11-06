@@ -489,7 +489,7 @@
 
   "TA-422": { "estado": "pendiente" },
 
-  "TA-423": { "estado": "pendiente" },
+  "TA-423": { "estado": "en_curso", "rama": "ta-423-ritmo-proyeccion" },
 
   "TA-424": { "estado": "pendiente" },
 
