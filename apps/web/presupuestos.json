@@ -26,6 +26,8 @@
     "/cuentas/[cuentaId]/archivar": "/cuentas/00000000-0000-4000-8000-000000000001/archivar",
     "/cuentas/[cuentaId]/eliminar": "/cuentas/00000000-0000-4000-8000-000000000001/eliminar",
     "/metas/[metaId]": "/metas/00000000-0000-4000-8000-000000000001",
+    "/por-cobrar/condonar/[lineaId]": "/por-cobrar/condonar/00000000-0000-4000-8000-000000000001",
+    "/por-cobrar/deudores/[deudorId]/renombrar": "/por-cobrar/deudores/00000000-0000-4000-8000-000000000001/renombrar",
     "/presupuesto/categorias/[categoriaId]": "/presupuesto/categorias/00000000-0000-4000-8000-000000000001",
     "/presupuesto/categorias/[categoriaId]/archivar": "/presupuesto/categorias/00000000-0000-4000-8000-000000000001/archivar",
     "/presupuesto/categorias/[categoriaId]/sacar": "/presupuesto/categorias/00000000-0000-4000-8000-000000000001/sacar",
