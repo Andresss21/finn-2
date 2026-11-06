@@ -553,7 +553,7 @@
 
   "TA-549": { "estado": "bloqueada", "motivo": "CF-03" },
 
-  "TA-550": { "estado": "en_curso", "rama": "ta-550-rendimiento-pantallas" },
+  "TA-550": { "estado": "terminada", "rama": "ta-550-rendimiento-pantallas", "pr": 445 },
 
   "TA-551": { "estado": "terminada", "rama": "ta-551-billete-selector-periodo", "pr": 231 },
 
