@@ -8,7 +8,7 @@ import { depsDeConsulta } from '../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
 import { registrarInversion as t } from '../../textos/registrar-inversion';
 import { tipoDeFormulario, type TipoDeInversion } from './inversion-campos';
-import { FormularioRegistrarInversion } from './inversion-formulario';
+import { FormularioRegistrarInversion } from './inversion-formulario-diferido';
 
 export async function LectorRegistrarInversion({
   tipo,
