@@ -205,7 +205,11 @@ describe('PRU-DOM-REP', () => {
       ['rest', c(5), c(-25)],
       ['ocio', c(30), c(170)],
     ]);
-    expect(r.hallazgos[0]?.accion).toEqual({ tipo: 'asignar', montoNuevo: c(125) });
+    expect(r.hallazgos[0]?.accion).toEqual({
+      tipo: 'asignar',
+      montoNuevo: c(125),
+      esperado: c(100),
+    });
   });
 
   it('PRU-DOM-REP-103 REP-ritmo (CF-06) ritmo: un consumo que resolvió una ocurrencia no es variable y menos de 3 consumos no se proyectan', () => {

@@ -6,6 +6,7 @@ import { Vacio } from '../../../../componentes/base/vacio';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
 import { Pestanas, type PestanaDeEnlace } from '../../../../componentes/navegacion/pestanas';
+import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { SelectorPeriodo } from '../../../../componentes/navegacion/selector-periodo';
 import { reportes as t } from '../../../../textos/reportes';
 import { TIPOS, TIPOS_DE_URL, type TipoDeUrl } from './tipos';
@@ -119,18 +120,22 @@ export function PantallaReporte({
   dto,
   nombres,
   parametros,
+  asignar,
 }: {
   readonly url: TipoDeUrl;
   readonly dto: ReporteDto;
   readonly nombres: Nombres;
   readonly parametros: Parametros;
+  /** `asignarEnCategoria` (OP-14): la propuesta de un toque de `ritmo`; la pone el lector. */
+  readonly asignar?: AccionEscritura;
 }) {
-  const cuerpo = cuerpoDe(TIPOS[url], dto, nombres);
+  const cuerpo = cuerpoDe(TIPOS[url], dto, nombres, asignar);
   const compartidos = Object.fromEntries(
     Object.entries(parametros).filter(([k]) => (COMPARTIDOS as readonly string[]).includes(k)),
   );
   const semanal = url === 'gasto-semanal' ? (dto as ReporteDe<'gasto_semanal'>) : null;
-  const filtros = semanal === null ? filtrosDe(url, parametros, nombres) : [];
+  // `ritmo` es siempre del período activo (05 §2.10): sin ventana ni cuentas.
+  const filtros = semanal === null && url !== 'ritmo' ? filtrosDe(url, parametros, nombres) : [];
   const [ventana, ...otros] = filtros;
   // Sin movimientos, la salida del diseño es mirar más períodos; si ya se miran 3 o más, no hay a dónde ampliar.
   const ampliar =
