@@ -3,6 +3,7 @@
 // a un archivo válido (como en el prototipo verificado, docs/anexos/07-pruebas-verificacion/…/seg/barreras.mjs).
 import { describe, expect, it } from 'vitest';
 import {
+  ahoraMsDeLaPeticion,
   hayVariableDeReloj,
   instanteDeLaPeticion,
   relojDePrueba,
@@ -133,6 +134,14 @@ describe('PRU-SEG-RELOJ', () => {
     // Sin la lista de permitidos, el reloj real, sin leer el archivo
     expect(instanteDeLaPeticion({ ...permitido, VERCEL_ENV: 'preview' }, valido)).toBe(
       new Date(FIJADO_EN + 5_000).toISOString(),
+    );
+  });
+
+  it('PRU-SEG-RELOJ-002 CT-01: ahoraMsDeLaPeticion() es instanteDeLaPeticion() en milisegundos, con el mismo desfase y las mismas barreras', () => {
+    const permitido = { FINN_ENTORNO: 'pruebas', FINN_RELOJ_ARCHIVO: ARCHIVO };
+    expect(ahoraMsDeLaPeticion(permitido, valido)).toBe(Date.parse('2027-02-20T18:00:05.000Z'));
+    expect(ahoraMsDeLaPeticion({ ...permitido, VERCEL_ENV: 'preview' }, valido)).toBe(
+      FIJADO_EN + 5_000,
     );
   });
 });

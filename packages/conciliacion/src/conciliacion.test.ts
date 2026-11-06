@@ -56,7 +56,7 @@ describe('PRU-DOM-CONC', () => {
     // Los dos "Detalle de Estado Bancario" se distinguen por la segunda firma (PRU-DOM-CONC-102).
   });
 
-  it('PRU-DOM-CONC-102 adaptador CONC-BAC-tarjeta (⚠ S6-1): BAC tarjeta (muestra sintética): cargo negativo, pago positivo, deuda negativa', () => {
+  it('PRU-DOM-CONC-102 [CA-43.10] adaptador CONC-BAC-tarjeta (⚠ S6-1): BAC tarjeta (muestra sintética): cargo negativo, pago positivo, deuda negativa', () => {
     expect(leerEstado(bytes(MUESTRA_BAC))).toEqual({
       formato: 'bac_tarjeta',
       fechaEstado: '2026-10-15',
@@ -81,7 +81,7 @@ describe('PRU-DOM-CONC', () => {
     expect(leerEstado(bytes(monto))).toMatchObject({ error: 'fila_invalida', fila: 5 });
   });
 
-  it('PRU-DOM-CONC-102 adaptadores CONC-BAC-debito y CONC-Agricola (⚠ S6-1): cada adaptador extrae fecha, monto, descripción, fecha del estado y saldo final; cero o dos firmas se rechazan', () => {
+  it('PRU-DOM-CONC-102 [CA-43.10] adaptadores CONC-BAC-debito y CONC-Agricola (⚠ S6-1): cada adaptador extrae fecha, monto, descripción, fecha del estado y saldo final; cero o dos firmas se rechazan', () => {
     // Muestras SINTÉTICAS (TU-13 y TU-14 pendientes).
     const bacDebito = [
       'Detalle de Estado Bancario',
