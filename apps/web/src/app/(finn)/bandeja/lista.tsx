@@ -2,14 +2,18 @@
 // La lista de `/bandeja` (06-identidad-visual §7): resumen con los contadores, las filas compactas (`MovimientoBandeja`) y,
 // sin movimientos, el vacío «Bandeja al día». Lo que muestra es lo que devolvió `bandeja()`, salvo la fila que se aprobó con
 // un toque: la revalidación la saca de la lista y su resultado queda en su lugar (FT-35, 05 §4.15).
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Vacio } from '../../../componentes/base/vacio';
 import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
 import { bandeja as t } from '../../../textos/bandeja';
 import type { ResultadoFila } from '../../../flujos/bandeja-movimiento/descarte';
 import { aprobarTodos } from '../../../servidor/acciones/bandeja';
 import { AprobarTodos } from './aprobar-todos';
-import { FilaBandeja } from './fila';
+import type { DestinosArrastre } from './arrastre';
+import { FilaBandeja, type Soltado } from './fila';
+
+/** La librería de arrastre llega aparte, después de hidratar (FD-30, V6-08): hasta entonces los botones hacen todo. */
+type Arrastre = typeof import('./arrastre');
 
 interface Contadores {
   readonly pendientes: number;
@@ -40,13 +44,56 @@ export function ListaBandeja({
   elegibles,
   movimientos,
   actual,
+  destinos,
 }: {
   readonly contadores: Contadores;
   readonly elegibles: readonly string[];
   readonly movimientos: readonly MovimientoDto[];
   /** El movimiento que se revisa a la derecha, en computadora (CH-137): queda marcado en la lista. */
   readonly actual?: string;
+  /** `destinosArrastre` de `bandeja()` (CF-22): sin ellos no hay arrastre. */
+  readonly destinos?: DestinosArrastre;
 }) {
+  const [arrastre, setArrastre] = useState<Arrastre | null>(null);
+  const [soltado, setSoltado] = useState<(Soltado & { readonly movimientoId: string }) | null>(
+    null,
+  );
+  const pedida = useRef(false);
+  const contador = useRef(0);
+  const cargar = useCallback(() => {
+    if (pedida.current) return;
+    pedida.current = true;
+    void import('./arrastre').then(setArrastre);
+  }, []);
+  const alSoltar = useCallback((movimientoId: string, categoriaId: string) => {
+    contador.current += 1;
+    setSoltado({ movimientoId, categoriaId, n: contador.current });
+  }, []);
+  const hayArrastrables = movimientos.some((m) => m.aprobacion.arrastrable === true);
+  // Después de `load` y en el primer momento libre, con tope de 2 s (05 §13.3); antes, si hay un primer toque o tecla
+  useEffect(() => {
+    if (!hayArrastrables || destinos === undefined) return;
+    let libre: (() => void) | undefined;
+    const programar = (): void => {
+      if (typeof window.requestIdleCallback === 'function') {
+        const id = window.requestIdleCallback(cargar, { timeout: 2000 });
+        libre = () => {
+          window.cancelIdleCallback(id);
+        };
+      } else {
+        const id = window.setTimeout(cargar, 200);
+        libre = () => {
+          window.clearTimeout(id);
+        };
+      }
+    };
+    if (document.readyState === 'complete') programar();
+    else window.addEventListener('load', programar, { once: true });
+    return () => {
+      window.removeEventListener('load', programar);
+      libre?.();
+    };
+  }, [hayArrastrables, destinos, cargar]);
   const [retenidas, setRetenidas] = useState<Readonly<Record<string, Retenida>>>({});
   const alIniciar = useCallback(
     (id: string) => {
@@ -72,7 +119,7 @@ export function ListaBandeja({
     if ((r.enCurso || r.resultado !== undefined) && !filas.some((m) => m.id === r.movimiento.id))
       filas.splice(Math.min(r.indice, filas.length), 0, r.movimiento);
   // «Aprobar todos» ocupa siempre el mismo lugar: su resultado sobrevive a que la lista quede vacía (FT-36)
-  return (
+  const cuerpo = (
     <>
       {filas.length === 0 ? null : (
         <p className="flex flex-wrap items-baseline justify-between gap-x-3">
@@ -88,6 +135,8 @@ export function ListaBandeja({
           <div
             role="list"
             aria-label={t.lista}
+            onPointerDownCapture={cargar}
+            onKeyDownCapture={cargar}
             className="divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1"
           >
             {filas.map((m) => (
@@ -104,12 +153,27 @@ export function ListaBandeja({
                   resultado={retenidas[m.id]?.resultado}
                   alIniciar={alIniciar}
                   alTerminar={alTerminar}
+                  {...(destinos === undefined ? {} : { conArrastre: true })}
+                  {...(soltado?.movimientoId === m.id ? { soltado } : {})}
                 />
               </div>
             ))}
           </div>
           <p className="text-cuerpo-pequeno text-texto-terciario">{t.nota}</p>
         </>
+      )}
+    </>
+  );
+  // El contexto de arrastre es un hermano del cuerpo, no su envoltura: al llegar la librería las filas no se vuelven a montar
+  return (
+    <>
+      {cuerpo}
+      {arrastre === null || destinos === undefined ? null : (
+        <arrastre.ContextoArrastre
+          movimientos={movimientos}
+          destinos={destinos}
+          alSoltar={alSoltar}
+        />
       )}
     </>
   );

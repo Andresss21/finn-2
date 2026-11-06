@@ -23,7 +23,7 @@ export default async function PaginaMovimiento({
   readonly params: Promise<{ movimientoId: string }>;
   readonly searchParams: Promise<BusquedaDePagina>;
 }) {
-  const { traspaso } = await searchParams;
+  const { traspaso, categoria } = await searchParams;
   const { movimientoId } = await params;
   const dto = await consultar(async () => bandeja(await depsDeConsulta()));
   const movimientos = soloActivos(dto.movimientos);
@@ -43,6 +43,7 @@ export default async function PaginaMovimiento({
     <LectorMovimiento
       movimientoId={movimientoId}
       traspaso={traspaso === '1'}
+      {...(typeof categoria === 'string' ? { categoriaSoltada: categoria } : {})}
       lateral={
         <>
           <SelectorVista activa="activos" porRevisar={dto.bandejaPorRevisar} />
@@ -51,6 +52,7 @@ export default async function PaginaMovimiento({
             elegibles={dto.elegiblesAprobarTodos}
             movimientos={movimientos}
             actual={movimientoId}
+            destinos={dto.destinosArrastre}
           />
         </>
       }

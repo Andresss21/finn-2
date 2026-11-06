@@ -41,7 +41,8 @@ const MA = uuid(2001), // pendiente, sin líneas: CF-21
   MD = uuid(2004), // con coincidencia sobre la transacción 8 ya registrada
   ME = uuid(2005), // posible duplicado de la transacción 4
   MF = uuid(2006), // pago de tarjeta pendiente
-  MG = uuid(2007); // con coincidencia sobre una ocurrencia sin resolver
+  MG = uuid(2007), // con coincidencia sobre una ocurrencia sin resolver
+  MH = uuid(2008); // pendiente, una línea a Comida, con un comercio cuya transacción no se puede escribir: CA-78.3
 const INSTANTE = `${HOY}T12:00:00.000Z` as Instante;
 const FECHA = '2027-02-04';
 
@@ -113,6 +114,7 @@ describe('PRU-INT-BAND', () => {
        ${sembrar(5, 'posible_duplicado', E1, '2027-01-22', 1250, 'Super', 'gasto', { columnas: ', duplicado_transaccion_id', valores: `, '${TX4}'` })}
        ${sembrar(6, 'pendiente', T1, FECHA, 20000, 'Pago Visa', 'pago_tarjeta')}
        ${sembrar(7, 'con_coincidencia', E1, '2027-03-25', 1500, 'Netflix', 'gasto', { columnas: ', esperada_programada_id, esperada_fecha', valores: `, '${PG1}', date '2027-03-25'` })}
+       ${sembrar(8, 'pendiente', E1, FECHA, 600, 'Falla', 'gasto', { linea: 600 })}
        COMMIT;`,
     );
   });
@@ -255,7 +257,7 @@ describe('PRU-INT-BAND', () => {
     });
   });
 
-  it('PRU-INT-BAND-102 [CF-21] OP-37 variante { categoriaId }: aprueba arrastrando en una sola operación; líneas viejas son conflicto_desactualizado y un movimiento que no es un gasto pendiente es arrastre_no_permitido', async () => {
+  it('PRU-INT-BAND-102 [CF-21, CA-78.4] OP-37 variante { categoriaId }: aprueba arrastrando en una sola operación; líneas viejas son conflicto_desactualizado y un movimiento que no es un gasto pendiente es arrastre_no_permitido', async () => {
     const entrada = { movimientoId: MA, id: uuid(3010), categoriaId: C2, esperado: { lineas: [] } };
     expect(await aprobar(OP37, entrada)).toMatchObject({
       ok: true,
@@ -313,6 +315,36 @@ describe('PRU-INT-BAND', () => {
         esperado: { lineas: [] },
       }),
     ).toMatchObject({ ok: false, error: { categoria: 'VALIDACION' } });
+  });
+
+  it('PRU-INT-BAND-190 [CA-78.3, CF-21] OP-37 variante { categoriaId }: si la escritura de la transacción falla después de reemplazar las líneas, el movimiento sigue pendiente con sus líneas originales (una sola transacción de base de datos)', async () => {
+    await consultar(
+      base.urlAdmin,
+      `CREATE FUNCTION finn.falla_de_prueba() RETURNS trigger LANGUAGE plpgsql AS $f$ BEGIN RAISE EXCEPTION 'falla de prueba'; END $f$;
+       CREATE TRIGGER falla_de_prueba BEFORE INSERT ON finn.transacciones FOR EACH ROW WHEN (NEW.comercio = 'Falla') EXECUTE FUNCTION finn.falla_de_prueba();`,
+    );
+    try {
+      const antes = (await movimiento(MH)).lineas.map((l) => [l.monto, l.categoriaId]);
+      expect(antes).toEqual([[600, C1]]);
+      const entrada = {
+        movimientoId: MH,
+        id: uuid(3020),
+        categoriaId: C2,
+        esperado: {
+          lineas: [{ monto: 600, categoriaId: C1, deudorId: null, lineaOriginalId: null }],
+        },
+      };
+      const salida = await ejecutar(OP37, entrada);
+      expect(salida).toMatchObject({ ok: false, error: { categoria: 'INTERNO', codigo: 'P0001' } });
+      const despues = await movimiento(MH);
+      expect(despues.estado).toBe('pendiente');
+      expect(despues.lineas.map((l) => [l.monto, l.categoriaId])).toEqual(antes);
+    } finally {
+      await consultar(
+        base.urlAdmin,
+        'DROP TRIGGER falla_de_prueba ON finn.transacciones; DROP FUNCTION finn.falla_de_prueba();',
+      );
+    }
   });
 
   it('PRU-INT-BAND-102 [INV-13] OP-37: recordar la categoría para el comercio crea la regla con el comercio del movimiento', async () => {

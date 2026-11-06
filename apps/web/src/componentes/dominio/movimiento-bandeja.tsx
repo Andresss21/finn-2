@@ -27,13 +27,21 @@ export interface MovimientoDto {
   /** El tipo que propone el servidor (04 §6.8); decide el signo del monto. `null`: aún sin tipo. */
   readonly tipoPropuesto?: string | null;
   readonly comercio: string | null;
-  readonly categoriaSugerida: { readonly nombre: string; readonly porRegla: boolean } | null;
+  readonly categoriaSugerida: {
+    readonly id?: string;
+    readonly nombre: string;
+    readonly porRegla: boolean;
+  } | null;
   readonly aprobacion: {
     readonly posible: boolean;
     readonly faltantes: readonly string[];
     /** Por qué `bandeja()` no lo incluye en «Aprobar todos» (FT-36); ausente si es elegible. */
     readonly motivoNoElegible?: string;
+    /** Solo un gasto pendiente con una línea hacia una categoría o sin destino se arrastra (FT-78, CF-22). */
+    readonly arrastrable?: boolean;
   };
+  /** Los valores vigentes (04 §6.8): sus líneas son las que ve la lista al arrastrar (CF-21). */
+  readonly esperado?: Readonly<Record<string, unknown>>;
   /** Solo en un pago de tarjeta (BE-41): la cuenta de la que salió el último pago. */
   readonly origenPropuesto?: { readonly id: string };
 }
@@ -84,9 +92,11 @@ interface Props {
   readonly movimiento: MovimientoDto;
   readonly hrefRevisar: string;
   readonly alAccionar?: (accion: AccionBandeja, id: string) => void;
+  /** FT-78: el lugar del asa de arrastre, reservado desde el principio; la librería la monta ahí cuando llega. */
+  readonly ranuraAsa?: boolean;
 }
 
-export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar }: Props) {
+export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar, ranuraAsa }: Props) {
   const vista = vistaDe(m);
   const estado = ESTADO[vista];
   const comercio = m.comercio ?? t.sinComercio;
@@ -96,6 +106,10 @@ export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar }: Pr
     m.categoriaSugerida === null
       ? null
       : `→ ${m.categoriaSugerida.nombre}${m.categoriaSugerida.porRegla ? ` (${t.porRegla})` : ''}`;
+  const ranura =
+    ranuraAsa === true ? (
+      <span data-ranura-asa={m.id} className="inline-flex min-h-11 min-w-11" />
+    ) : null;
   const contenido: ReactNode = (
     <>
       <span
@@ -148,6 +162,7 @@ export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar }: Pr
       ) : null}
       {conAcciones ? (
         <div className="mt-2 ml-13 flex flex-wrap items-center gap-2">
+          {ranura}
           {acciones.map(([accion, texto], i) => (
             <Boton
               key={accion}
@@ -165,7 +180,9 @@ export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar }: Pr
             {ENLACE[vista] ?? t.revisar}
           </EnlaceFinn>
         </div>
-      ) : null}
+      ) : ranura === null ? null : (
+        <div className="mt-1 ml-13 flex">{ranura}</div>
+      )}
     </article>
   );
 }
