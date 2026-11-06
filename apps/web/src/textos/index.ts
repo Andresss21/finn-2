@@ -34,6 +34,7 @@ import { navegacion } from './navegacion.ts';
 import { plantilla } from './plantilla.ts';
 import { porCobrar } from './por-cobrar.ts';
 import { porCobrarCobrar } from './por-cobrar-cobrar.ts';
+import { porCobrarCondonar } from './por-cobrar-condonar.ts';
 import { presupuesto } from './presupuesto.ts';
 import { presupuestoAsignar } from './presupuesto-asignar.ts';
 import { presupuestoAutoAsignar } from './presupuesto-auto-asignar.ts';
@@ -81,6 +82,7 @@ export {
   plantilla,
   porCobrar,
   porCobrarCobrar,
+  porCobrarCondonar,
   presupuesto,
   presupuestoAsignar,
   presupuestoAutoAsignar,
@@ -107,6 +109,7 @@ export const areas = [
   ['plantilla', plantilla],
   ['porCobrar', porCobrar],
   ['porCobrarCobrar', porCobrarCobrar],
+  ['porCobrarCondonar', porCobrarCondonar],
   ['presupuesto', presupuesto],
   ['presupuestoAsignar', presupuestoAsignar],
   ['presupuestoAutoAsignar', presupuestoAutoAsignar],
