@@ -5,6 +5,7 @@
 import { cuentas } from '@finn/aplicacion/consultas/cuentas';
 import { estructura } from '@finn/aplicacion/consultas/estructura';
 import { reporte } from '@finn/aplicacion/consultas/reporte';
+import { asignarEnCategoria } from '../../../../servidor/acciones/presupuesto.ts';
 import { consultar } from '../../../../servidor/consultar';
 import { depsDeConsulta } from '../../../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../../../servidor/parametros';
@@ -35,6 +36,8 @@ export async function LectorReporte({
   const grupo = texto(busqueda['grupo']);
   const limite = texto(busqueda['limite']);
   const semanal = url === 'gasto-semanal';
+  // `ritmo` mira el período activo: su contrato no lleva ventana ni cuentas.
+  const filtrado = url !== 'ritmo';
   const { periodoInicio, categoriaIds } = consulta;
   const solicitud = semanal
     ? {
@@ -44,8 +47,8 @@ export async function LectorReporte({
       }
     : {
         tipo: TIPOS[url],
-        ...(ventana === undefined ? {} : { ventana }),
-        ...(cuentaIds === undefined ? {} : { cuentaIds }),
+        ...(!filtrado || ventana === undefined ? {} : { ventana }),
+        ...(!filtrado || cuentaIds === undefined ? {} : { cuentaIds }),
         ...(url === 'categorias' && grupo !== undefined && UUID.test(grupo)
           ? { grupoId: grupo }
           : {}),
@@ -82,5 +85,13 @@ export async function LectorReporte({
     ...(semanal && periodo !== undefined ? { periodo } : {}),
     ...(semanal && categorias !== undefined ? { categorias } : {}),
   };
-  return <PantallaReporte url={url} dto={dto} nombres={nombres} parametros={parametros} />;
+  return (
+    <PantallaReporte
+      url={url}
+      dto={dto}
+      nombres={nombres}
+      parametros={parametros}
+      {...(url === 'ritmo' ? { asignar: asignarEnCategoria } : {})}
+    />
+  );
 }

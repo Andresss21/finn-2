@@ -489,7 +489,7 @@
 
   "TA-422": { "estado": "terminada", "rama": "ta-422-gasto-semanal", "pr": 428 },
 
-  "TA-423": { "estado": "pendiente" },
+  "TA-423": { "estado": "terminada", "rama": "ta-423-ritmo-2", "pr": 433 },
 
   "TA-424": { "estado": "pendiente" },
 

@@ -7,6 +7,7 @@ export const TIPOS = {
   'top-comercios': 'top_comercios',
   cumplimiento: 'cumplimiento',
   patrimonio: 'patrimonio',
+  ritmo: 'ritmo',
   'gasto-semanal': 'gasto_semanal',
 } as const;
 
