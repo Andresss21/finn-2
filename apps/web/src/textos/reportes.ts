@@ -9,6 +9,7 @@ export const reportes = {
     'top-comercios': 'Comercios',
     cumplimiento: 'Cumplimiento',
     patrimonio: 'Patrimonio',
+    ritmo: 'Ritmo',
     'gasto-semanal': 'Gasto semanal',
   },
   titulos: {
@@ -19,6 +20,7 @@ export const reportes = {
     'top-comercios': 'Dónde más gastás',
     cumplimiento: 'Cumplimiento del presupuesto',
     patrimonio: 'Tu patrimonio',
+    ritmo: 'Ritmo de gasto',
     'gasto-semanal': 'Gasto semanal por categoría',
   },
   explicacionRemanente:
@@ -50,9 +52,26 @@ export const reportes = {
     gastado: 'Gastado',
     porcentaje: 'Porcentaje',
     asignado: 'Asignado',
+    disponible: 'Disponible',
+    alCierre: 'Al cierre',
     semana: 'Semana',
     referencia: 'Referencia',
     anteriores: 'Mismas semanas, períodos anteriores',
+  },
+  ritmo: {
+    cierre: (fin: string) => `Si seguís así, al cerrar el ${fin}:`,
+    sobregiradas: (n: number) =>
+      n === 1 ? '1 categoría sobregirada' : `${n} categorías sobregiradas`,
+    reduccion: 'Listo para asignar bajaría',
+    faltaReservar: 'Te faltaría reservar',
+    paraTarjeta: (tarjeta: string) => `para ${tarjeta}`,
+    sobrante: 'Te sobrarían',
+    enOtras: 'en otras categorías',
+    hallazgos: 'Para corregirlo',
+    porCategoria: 'Categoría por categoría',
+    sinProyeccion: 'Todavía no hay suficientes compras para proyectar',
+    asignando: 'Asignando…',
+    asignado: (monto: string, categoria: string) => `Asignaste ${monto} a ${categoria}.`,
   },
   gastoSemanal: {
     categorias: 'Categorías',
