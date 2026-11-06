@@ -66,7 +66,7 @@ test.describe('PRU-E2E-AJUS', () => {
     fijarRelojServidor('2027-02-12T00:00:00-06:00');
     await abrir(page, '/ajustes');
     await expect(page.getByText(r.atrasadoEnIndice)).toBeVisible();
-    await page.getByRole('link', { name: r.enlace, exact: true }).click();
+    await page.locator('a[href="/ajustes/respaldo"]').click();
     await expect(page).toHaveURL(/\/ajustes\/respaldo$/);
     await esperarContenido(page);
     await expect(page.getByRole('heading', { level: 1, name: r.titulo })).toBeVisible();

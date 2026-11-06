@@ -65,7 +65,10 @@ export default async function PaginaRespaldo() {
           atrasado={respaldo.restauracionAtrasada}
           aviso={t.restauracionAtrasada}
         />
-        <EnlaceFinn href="/ajustes/diagnostico" className="text-cuerpo font-semibold">
+        <EnlaceFinn
+          href="/ajustes/diagnostico"
+          className="inline-flex min-h-12 min-w-11 items-center justify-center rounded-control bg-accion-tonal px-5 text-base font-semibold text-accion no-underline hover:bg-superficie-hundida focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
+        >
           {t.verDiagnostico}
         </EnlaceFinn>
       </div>
