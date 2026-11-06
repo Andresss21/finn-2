@@ -6,7 +6,7 @@ import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
 import { TIPOS, type TipoDeTarjeta } from './campos-tarjeta';
-import { FormularioRegistrarTarjeta } from './formulario-tarjeta';
+import { FormularioRegistrarTarjeta } from './formulario-tarjeta-diferido';
 
 export async function LectorRegistrarTarjeta({
   tipo,
