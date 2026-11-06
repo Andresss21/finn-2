@@ -77,8 +77,8 @@ const mostrar = (datos: ReporteDto): HTMLElement => {
   return nodo;
 };
 
-describe('PRU-CMP-REP-190 tarjetas en el tiempo', () => {
-  it('PRU-CMP-REP-190 [FT-66, CA-66.1, CA-66.2] con arrastre 0 dice «Con Visa pagás el total cada mes.» sin hallazgo; la tabla trae corte, fecha de pago, deuda, pagado o acreditado a tiempo y arrastre del DTO', () => {
+describe('PRU-CMP-REP tarjetas en el tiempo', () => {
+  it('PRU-CMP-REP-200 [FT-66, CA-66.1, CA-66.2] con arrastre 0 dice «Con Visa pagás el total cada mes.» sin hallazgo; la tabla trae corte, fecha de pago, deuda, pagado o acreditado a tiempo y arrastre del DTO', () => {
     const raiz = mostrar(
       dto(
         [
@@ -107,7 +107,7 @@ describe('PRU-CMP-REP-190 tarjetas en el tiempo', () => {
     expect(encabezados).toContain('Pagado o acreditado a tiempo');
   });
 
-  it('PRU-CMP-REP-191 [FT-66] con arrastre el hallazgo dice «quedaron … sin pagar del corte del …: esa deuda puede generar intereses.» y, sin nada que reservar, enlaza a pagar la tarjeta; sin violaciones de axe en claro ni en oscuro', async () => {
+  it('PRU-CMP-REP-201 [FT-66] con arrastre el hallazgo dice «quedaron … sin pagar del corte del …: esa deuda puede generar intereses.» y, sin nada que reservar, enlaza a pagar la tarjeta; sin violaciones de axe en claro ni en oscuro', async () => {
     const datos = dto(
       [
         {

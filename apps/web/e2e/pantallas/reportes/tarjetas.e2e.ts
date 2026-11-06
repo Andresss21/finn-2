@@ -82,7 +82,7 @@ test.describe('PRU-E2E-REP tarjetas en el tiempo', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-REP-190 [CA-66.1] con un corte de $500.00, un pago de $300.00 y una devolución de $50.00 antes de la fecha de pago, «Pagado o acreditado a tiempo» es $350.00, el arrastre $150.00 y el hallazgo es el de ese corte', async ({
+  test('PRU-E2E-REP-200 [CA-66.1] con un corte de $500.00, un pago de $300.00 y una devolución de $50.00 antes de la fecha de pago, «Pagado o acreditado a tiempo» es $350.00, el arrastre $150.00 y el hallazgo es el de ese corte', async ({
     page,
   }) => {
     await sembrarSemilla(SEMILLA, HOY);
@@ -98,7 +98,7 @@ test.describe('PRU-E2E-REP tarjetas en el tiempo', () => {
     await expect(page.getByText(t.tarjetas.pagaElTotal('Visa'))).toHaveCount(0);
   });
 
-  test('PRU-E2E-REP-191 [CA-66.2] el ciclo con corte el 15/03 cuya fecha de pago (05/04) todavía no pasó no figura entre los ciclos evaluados, ni mirando el período actual', async ({
+  test('PRU-E2E-REP-201 [CA-66.2] el ciclo con corte el 15/03 cuya fecha de pago (05/04) todavía no pasó no figura entre los ciclos evaluados, ni mirando el período actual', async ({
     page,
   }) => {
     await sembrarSemilla(SEMILLA, HOY);
@@ -111,7 +111,7 @@ test.describe('PRU-E2E-REP tarjetas en el tiempo', () => {
     await expect(page.locator('[data-sin-ciclos]')).toHaveText(t.tarjetas.sinCiclos('Visa'));
   });
 
-  test('PRU-E2E-REP-192 [CA-66.3] con $80.00 por reservar, «Reservar $80.00» sube lo asignado a Pago Visa $80.00 y «Te falta reservar» queda en $0.00; «Deshacer» lo devuelve', async ({
+  test('PRU-E2E-REP-202 [CA-66.3] con $80.00 por reservar, «Reservar $80.00» sube lo asignado a Pago Visa $80.00 y «Te falta reservar» queda en $0.00; «Deshacer» lo devuelve', async ({
     page,
   }) => {
     await sembrarSemilla(SEMILLA, HOY);
@@ -136,7 +136,7 @@ test.describe('PRU-E2E-REP tarjetas en el tiempo', () => {
     ).toBeVisible();
   });
 
-  test('PRU-E2E-REP-193 [CA-66.4] con día de pago 31, el ciclo de febrero paga el 28/02/2027 y el de abril el 30/04/2027', async ({
+  test('PRU-E2E-REP-203 [CA-66.4] con día de pago 31, el ciclo de febrero paga el 28/02/2027 y el de abril el 30/04/2027', async ({
     page,
   }) => {
     await sembrarSemilla(SEMILLA_DIA_31, '2027-05-25');
