@@ -68,6 +68,11 @@ export const ingresar = conCookies(acceso.ingresar);
 export const verificarFactor = conCookies(acceso.verificarFactor);
 export const iniciarInscripcion = conCookies(acceso.iniciarInscripcion);
 export const completarInscripcion = conCookies(acceso.completarInscripcion);
+export const quitarFactor = conCookies(acceso.quitarFactor);
+export const cerrarOtrasSesiones = conCookies(acceso.cerrarOtrasSesiones);
+/** CP-4: la lista de factores de Ajustes > Seguridad. Lanza `ExcepcionFinn`; la página la pasa por `consultar()`. */
+export const estadoSeguridad = async (): Promise<acceso.EstadoSeguridad> =>
+  acceso.estadoSeguridad(await clienteAuth(), usuarioPermitido());
 export const estadoAcceso = async (): Promise<acceso.EstadoAcceso> =>
   acceso.estadoAcceso(await clienteAuth(), usuarioPermitido());
 export const salir = async (): ReturnType<typeof acceso.salir> => acceso.salir(await clienteAuth());

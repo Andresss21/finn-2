@@ -1,0 +1,25 @@
+// Textos de Ajustes > Seguridad (FT-74; 05 §9.6; export de diseño, pantalla 11 «Seguridad»). Los errores son los de 05 §9.7.
+export const seguridad = {
+  titulo: 'Seguridad',
+  factores: 'Factores',
+  sesiones: 'Sesiones',
+  alta: (fecha: string) => `Alta ${fecha}`,
+  verificado: 'verificado',
+  sinTerminar: 'Inscripción sin terminar',
+  sinNombre: 'Factor',
+  quitar: 'Quitar',
+  agregar: 'Agregar un factor de respaldo',
+  esteDispositivo: 'Este dispositivo',
+  activaAhora: 'Activa ahora',
+  cerrarOtras: 'Cerrar las otras sesiones',
+  cerrandoOtras: 'Cerrando…',
+  otrasCerradas: 'Cerraste las otras sesiones.',
+  salir: 'Salir',
+  saliendo: 'Saliendo…',
+  tituloQuitar: 'Quitar un factor',
+  preguntaQuitar: (nombre: string) =>
+    `¿Quitar ${nombre}? Con ese factor ya no vas a poder ingresar.`,
+  quitando: 'Quitando…',
+  volver: 'Volver a Seguridad',
+  intentarDeNuevo: 'Intentar de nuevo',
+} as const;
