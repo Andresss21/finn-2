@@ -1,10 +1,13 @@
 // Funciones de 04 §12.2 con un `ClienteAuth` falso. El cliente real corre en PRU-E2E-ACCESO-101.
 import { describe, expect, it } from 'vitest';
 import {
+  cerrarOtrasSesiones,
   completarInscripcion,
   estadoAcceso,
+  estadoSeguridad,
   iniciarInscripcion,
   ingresar,
+  quitarFactor,
   salir,
   verificarFactor,
   type ClienteAuth,
@@ -237,5 +240,68 @@ describe('PRU-SEG-ACCESO', () => {
     ).toBe(svg);
     expect(await qrSvgDe(svg)).toBe(svg);
     expect(await qrSvgDe('data:image/png;base64,AAAA')).toBe('interno');
+  });
+
+  it('PRU-SEG-ACCESO-109 [CA-74.1] [CA-74.2] [CA-74.3] estadoSeguridad lista los factores; quitarFactor protege al único verificado; cerrarOtrasSesiones conserva esta', async () => {
+    const respaldo = {
+      id: 'f4',
+      factor_type: 'totp',
+      status: 'verified',
+      friendly_name: 'Respaldo',
+    };
+    const f1 = { ...verificado, created_at: '2026-03-03T10:00:00Z' };
+    const f2 = { ...colgado, created_at: '2026-04-01T10:00:00Z' };
+    expect(await estadoSeguridad(falso({ aal: 'aal2', factores: [f2, f1] }).auth, FINN)).toEqual({
+      aal: 'aal2',
+      factores: [
+        {
+          id: 'f1',
+          nombre: 'Autenticador',
+          creadoEn: '2026-03-03T10:00:00Z',
+          estado: 'verificado',
+        },
+        { id: 'f2', nombre: null, creadoEn: '2026-04-01T10:00:00Z', estado: 'sin_verificar' },
+      ],
+    });
+    await expect(estadoSeguridad(falso({ aal: 'aal1' }).auth, FINN)).rejects.toMatchObject({
+      error: { categoria: 'NO_AUTORIZADO' },
+    });
+
+    // CA-74.1: el único verificado no se quita; el colgado sí
+    const unico = falso({ aal: 'aal2', factores: [verificado, colgado] });
+    const negado = await quitarFactor(unico.auth, FINN, { factorId: 'f1' });
+    expect(negado).toMatchObject({
+      ok: false,
+      error: { codigo: 'factor_unico', mensaje: 'Agregá otro factor antes de quitar este.' },
+    });
+    expect(unico.llamadas.some((l) => l.startsWith('unenroll'))).toBe(false);
+    expect(await quitarFactor(unico.auth, FINN, { factorId: 'f2' })).toMatchObject({ ok: true });
+    expect(unico.llamadas).toContain('unenroll:f2');
+
+    // CA-74.2: con dos verificados se quita uno; con AAL1 o un id ajeno, no
+    const dos = falso({ aal: 'aal2', factores: [verificado, respaldo] });
+    expect(await quitarFactor(dos.auth, FINN, { factorId: 'f4' })).toMatchObject({ ok: true });
+    expect(dos.llamadas).toContain('unenroll:f4');
+    expect(codigoDe(await quitarFactor(dos.auth, FINN, { factorId: 'nadie' }))).toBe(
+      'no_encontrado',
+    );
+    expect(
+      await quitarFactor(falso({ aal: 'aal1', factores: [verificado, respaldo] }).auth, FINN, {
+        factorId: 'f4',
+      }),
+    ).toMatchObject({ ok: false, error: { categoria: 'NO_AUTORIZADO' } });
+    expect(await quitarFactor(dos.auth, FINN, {})).toMatchObject({
+      ok: false,
+      error: { categoria: 'VALIDACION' },
+    });
+
+    // CA-74.3
+    const otras = falso({ aal: 'aal2', factores: [verificado] });
+    expect(await cerrarOtrasSesiones(otras.auth, FINN, {})).toMatchObject({ ok: true });
+    expect(otras.llamadas).toContain('signOut:others');
+    expect(otras.llamadas).not.toContain('signOut:local');
+    expect(
+      await cerrarOtrasSesiones(falso({ aal: 'aal1', factores: [verificado] }).auth, FINN, {}),
+    ).toMatchObject({ ok: false, error: { categoria: 'NO_AUTORIZADO' } });
   });
 });

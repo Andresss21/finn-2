@@ -2,13 +2,19 @@
 // (04 §1.3): el cliente llega por `ClienteAuth`, como `SesionServidor`. Sin idempotencia: no crean hechos de Finn.
 import * as z from 'zod';
 import {
+  ExcepcionFinn,
   errorDeValidacion,
   mensajeDeRechazo,
   mensajeInterno,
   type ErrorFinn,
   type ResultadoAccion,
 } from '../errores/index.ts';
-import { errorNoAutorizado, exigirSesionEscritura, type SesionServidor } from './autorizar.ts';
+import {
+  errorNoAutorizado,
+  exigirSesionEscritura,
+  exigirSesionLectura,
+  type SesionServidor,
+} from './autorizar.ts';
 
 export interface ErrorAuth {
   readonly name?: string;
@@ -26,12 +32,13 @@ interface FactorAuth {
   readonly friendly_name?: string | undefined;
   readonly factor_type: string;
   readonly status: string;
+  readonly created_at?: string | undefined;
 }
 
 /** Lo que estas funciones usan de `supabase.auth`; el cliente real la cumple sin adaptador. */
 export interface ClienteAuth {
   signInWithPassword(c: { email: string; password: string }): Promise<Respuesta<ConUsuario>>;
-  signOut(o: { scope: 'local' }): Promise<{ error: ErrorAuth | null }>;
+  signOut(o: { scope: 'local' | 'others' }): Promise<{ error: ErrorAuth | null }>;
   getClaims(): Promise<Respuesta<{ claims: { sub?: string; aal?: unknown } } | null>>;
   getUser(): Promise<Respuesta<ConUsuario>>;
   mfa: {
@@ -244,3 +251,57 @@ export async function salir(auth: ClienteAuth): Promise<ResultadoAccion<Vacio>> 
   const { error } = await auth.signOut({ scope: 'local' });
   return error === null || error.name === 'AuthSessionMissingError' ? ok({}) : falla(interno());
 }
+
+export interface EstadoSeguridad {
+  readonly aal: 'aal1' | 'aal2';
+  readonly factores: readonly {
+    id: string;
+    nombre: string | null;
+    creadoEn: string;
+    estado: 'verificado' | 'sin_verificar';
+  }[];
+}
+
+/** CP-4: la lista de Ajustes > Seguridad. Lee Auth, no la base de Finn; como una consulta, lanza `ExcepcionFinn`. */
+export async function estadoSeguridad(
+  auth: ClienteAuth,
+  permitido: string,
+): Promise<EstadoSeguridad> {
+  const sesion = sesionDeCliente(auth);
+  const r = await exigirSesionLectura(sesion, permitido);
+  if (!r.ok) throw new ExcepcionFinn(r.error);
+  const lista = await factores(auth);
+  if (lista === null) throw new ExcepcionFinn(interno());
+  const de = (f: FactorAuth, estado: 'verificado' | 'sin_verificar') => ({
+    id: f.id,
+    nombre: f.friendly_name ?? null,
+    creadoEn: f.created_at ?? '',
+    estado,
+  });
+  const todos = [
+    ...lista.verificados.map((f) => de(f, 'verificado')),
+    ...lista.sinVerificar.map((f) => de(f, 'sin_verificar')),
+  ].sort((a, b) => a.creadoEn.localeCompare(b.creadoEn));
+  return { aal: 'aal2', factores: todos };
+}
+
+/** Solo con AAL2 y, si el factor está verificado, solo si queda otro verificado (04 §12.2). Uno sin verificar siempre se quita. */
+export const quitarFactor = conUsuario(
+  z.object({ factorId: z.string().min(1) }),
+  async (auth, { entrada, sesion, lista }) => {
+    if (sesion === 'aal1') return falla(errorNoAutorizado('aal1'));
+    const esVerificado = lista.verificados.some((f) => f.id === entrada.factorId);
+    if (esVerificado && lista.verificados.length < 2) return falla(propio('factor_unico'));
+    if (!esVerificado && !lista.sinVerificar.some((f) => f.id === entrada.factorId))
+      return falla(propio('no_encontrado'));
+    const { error } = await auth.mfa.unenroll({ factorId: entrada.factorId });
+    return error === null ? ok({}) : falla(interno());
+  },
+);
+
+/** `signOut({ scope: 'others' })`: esta sesión sigue (05 §9.6). Sin vista previa ni cuerpo. */
+export const cerrarOtrasSesiones = conUsuario(z.object({}), async (auth, { sesion }) => {
+  if (sesion === 'aal1') return falla(errorNoAutorizado('aal1'));
+  const { error } = await auth.signOut({ scope: 'others' });
+  return error === null ? ok({}) : falla(interno());
+});
