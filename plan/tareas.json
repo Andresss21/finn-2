@@ -487,7 +487,7 @@
 
   "TA-457": { "estado": "terminada", "rama": "ta-457-editar-transaccion-2", "pr": 335 },
 
-  "TA-422": { "estado": "en_curso", "rama": "ta-422-gasto-semanal" },
+  "TA-422": { "estado": "terminada", "rama": "ta-422-gasto-semanal", "pr": 428 },
 
   "TA-423": { "estado": "pendiente" },
 
