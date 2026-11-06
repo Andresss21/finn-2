@@ -1,11 +1,12 @@
 // `/reportes/[tipo]` (FT-60; 05 §2.10, §7.2): navegación entre reportes y filtros como enlaces (`Pestanas`, 05 §10.7), y el reporte con
 // su gráfico y su tabla equivalente. Dibuja lo que trae el DTO: no calcula montos (PF-3). Sin movimientos en la ventana:
 // «No hay movimientos en estos períodos». `remanente` siempre con su título y su explicación (04 §6.9.5).
-import type { ReporteDto } from '@finn/aplicacion/consultas/reporte';
+import type { ReporteDe, ReporteDto } from '@finn/aplicacion/consultas/reporte';
 import { Vacio } from '../../../../componentes/base/vacio';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
 import { Pestanas, type PestanaDeEnlace } from '../../../../componentes/navegacion/pestanas';
+import { SelectorPeriodo } from '../../../../componentes/navegacion/selector-periodo';
 import { reportes as t } from '../../../../textos/reportes';
 import { TIPOS, TIPOS_DE_URL, type TipoDeUrl } from './tipos';
 import { cuerpoDe } from './vistas';
@@ -15,7 +16,7 @@ export type { Nombres } from './vistas-detalle';
 
 /** Lo que la URL pidió y la consulta aceptó: la ventana en la forma del contrato (`ultimos_3`) y el resto como texto. */
 export type Parametros = Readonly<
-  Partial<Record<'ventana' | 'cuentas' | 'grupo' | 'limite', string>>
+  Partial<Record<'ventana' | 'cuentas' | 'grupo' | 'limite' | 'periodo' | 'categorias', string>>
 >;
 
 type Ventana = keyof typeof t.ventanas;
@@ -94,6 +95,23 @@ function filtrosDe(url: TipoDeUrl, p: Parametros, nombres: Nombres): Filtro[] {
   return filtros;
 }
 
+/** Las categorías para marcar: las del DTO y las que el árbol trae; cada enlace agrega o quita una. */
+function categoriasDe(
+  dto: ReporteDe<'gasto_semanal'>,
+  p: Parametros,
+  nombres: Nombres,
+): PestanaDeEnlace[] {
+  const elegidas = dto.categorias.map((c) => c.categoria);
+  return nombres.categorias.map((c) => {
+    const quedan = elegidas.includes(c.id) ? elegidas.filter((x) => x !== c.id) : [...elegidas, c.id];
+    return {
+      id: c.id,
+      etiqueta: c.nombre,
+      href: hrefDe('gasto-semanal', p, { categorias: quedan.join(',') }),
+    };
+  });
+}
+
 export function PantallaReporte({
   url,
   dto,
@@ -109,7 +127,8 @@ export function PantallaReporte({
   const compartidos = Object.fromEntries(
     Object.entries(parametros).filter(([k]) => (COMPARTIDOS as readonly string[]).includes(k)),
   );
-  const filtros = filtrosDe(url, parametros, nombres);
+  const semanal = url === 'gasto-semanal' ? (dto as ReporteDe<'gasto_semanal'>) : null;
+  const filtros = semanal === null ? filtrosDe(url, parametros, nombres) : [];
   const [ventana, ...otros] = filtros;
   // Sin movimientos, la salida del diseño es mirar más períodos; si ya se miran 3 o más, no hay a dónde ampliar.
   const ampliar =
@@ -143,6 +162,30 @@ export function PantallaReporte({
               {t.explicacionRemanente}
             </p>
           ) : null}
+          {semanal === null ? null : (
+            <>
+              <SelectorPeriodo
+                periodo={semanal.periodo}
+                periodoActivo={dto.periodoActivo}
+                {...(semanal.navegacion.anterior === undefined
+                  ? {}
+                  : { anterior: semanal.navegacion.anterior })}
+                {...(semanal.navegacion.siguiente === undefined
+                  ? {}
+                  : { siguiente: semanal.navegacion.siguiente })}
+                ruta="/reportes/gasto-semanal"
+                parametros={
+                  parametros.categorias === undefined ? {} : { categorias: parametros.categorias }
+                }
+              />
+              <Pestanas
+                etiqueta={t.gastoSemanal.categorias}
+                pestanas={categoriasDe(semanal, parametros, nombres)}
+                activas={semanal.categorias.map((c) => c.categoria)}
+                marca="true"
+              />
+            </>
+          )}
           {ventana === undefined ? null : (
             <div className="flex flex-col gap-1.5">
               <span className="text-etiqueta text-texto">{ventana.etiqueta}</span>
