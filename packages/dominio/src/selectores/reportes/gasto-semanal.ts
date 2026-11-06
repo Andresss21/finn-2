@@ -3,10 +3,11 @@
 // ACUMULADO: RefAcum(k) = redondeo mitad arriba de Asig × días acumulados / dur, Ref(k) = RefAcum(k) −
 // RefAcum(k − 1), así la suma de las semanas es exactamente Asig (V-22). Con Asig < 0 es 0 (R3).
 import { asignado } from '../../calculo/d2';
-import { duracion, type Periodo, periodoDe } from '../../calculo/periodos';
+import { duracion, periodoDe } from '../../calculo/periodos';
 import type { Instantanea, Uuid } from '../../hechos';
 import { Centavos } from '../../valores/centavos';
 import { FechaLocal } from '../../valores/fecha-local';
+import { type PeriodoDto, periodoDto } from '../comunes';
 import { medidor, puntosBasicos, type Rango } from './comunes';
 import { existiaEn } from './existia-en';
 
@@ -74,7 +75,9 @@ export interface GastoSemanalDeCategoria {
 }
 
 export interface GastoSemanal {
-  readonly periodo: Periodo;
+  readonly periodo: PeriodoDto;
+  /** CP-9: inicios de los períodos vecinos; no se navega a uno que todavía no empezó. */
+  readonly navegacion: { readonly anterior?: FechaLocal; readonly siguiente?: FechaLocal };
   readonly categorias: readonly GastoSemanalDeCategoria[];
 }
 
@@ -142,5 +145,17 @@ export function gastoSemanal(
           }),
     };
   });
-  return { periodo: p, categorias };
+  const vecinos = i.presupuesto.periodos;
+  const k = vecinos.findIndex((q) => q.inicio === p.inicio);
+  const anterior = k > 0 ? vecinos[k - 1]?.inicio : undefined;
+  const proximo = k >= 0 ? vecinos[k + 1] : undefined;
+  const siguiente = proximo !== undefined && proximo.inicio <= i.hoy ? proximo.inicio : undefined;
+  return {
+    periodo: periodoDto(i, p),
+    navegacion: {
+      ...(anterior === undefined ? {} : { anterior }),
+      ...(siguiente === undefined ? {} : { siguiente }),
+    },
+    categorias,
+  };
 }
