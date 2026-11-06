@@ -286,7 +286,12 @@ export function mergear(
   );
 }
 
-/** 07 §31.5: el último despliegue de emergencia (sin contar ensayos) sigue pendiente hasta una corrida verde de main que lo contenga. */
+/**
+ * 07 §31.5 (TA-263): el último despliegue de emergencia (sin contar ensayos) sigue pendiente hasta que `desplegar`
+ * complete, E2E incluida, una corrida de main que lo contenga. La señal es la etiqueta `desplegado-<corrida>-<intento>`,
+ * que `desplegar` crea al terminar; una corrida verde de ci.yml no basta, porque sin `integracion` salta `desplegar`.
+ * main es lineal (squash): si la etiqueta vigente no contiene el commit, ninguna anterior lo contiene.
+ */
 function emergencia(
   resultados: string,
   sh: (linea: string, ...extra: string[]) => string | null,
@@ -298,14 +303,19 @@ function emergencia(
       .sort((a, b) => `${a[2]}`.localeCompare(`${b[2]}`))
       .at(-1) ?? [];
   if (!fecha) return 'ninguno';
-  const corridas = sh(
-    'gh run list --workflow ci.yml --branch main --status success --json headSha --limit 50',
-  );
-  if (corridas === null) return `sin comprobar: commit ${commit} del ${fecha} (gh run list falló)`;
-  const verde = (JSON.parse(corridas) as { headSha: string }[]).some(
-    (c) => sh(`git merge-base --is-ancestor ${commit} ${c.headSha}`) !== null,
-  );
-  return verde ? 'ninguno' : `commit ${commit} del ${fecha}, sin corrida completa de main en verde`;
+  const remotas = sh('git ls-remote --tags origin refs/tags/desplegado-*');
+  if (remotas === null) return `sin comprobar: commit ${commit} del ${fecha} (git ls-remote falló)`;
+  const [vigente] = [...remotas.matchAll(/^(\S+)\trefs\/tags\/desplegado-(\d+)-(\d+)$/gm)]
+    .map(([, sha = '', corrida, intento]) => ({
+      sha,
+      corrida: Number(corrida),
+      intento: Number(intento),
+    }))
+    .sort((a, b) => b.corrida - a.corrida || b.intento - a.intento);
+  const hecho = !!vigente && sh(`git merge-base --is-ancestor ${commit} ${vigente.sha}`) !== null;
+  return hecho
+    ? 'ninguno'
+    : `commit ${commit} del ${fecha}, sin una corrida completa de desplegar que lo contenga`;
 }
 
 if (import.meta.main) {

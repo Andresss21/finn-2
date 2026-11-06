@@ -1,5 +1,5 @@
-// PRU-SEG-OPER-104 (TA-261; 02 ADR-22; 04 §16.1 a §16.3; 07 §6.1, §32.3; DT-17): lee .github/workflows/respaldo.yml, y
-// comprueba con dobles que tools/respaldo/subir.mjs no registra un respaldo que no subió. Ninguna prueba toca B2, la
+// PRU-SEG-OPER-104 (TA-261; 02 ADR-22; 04 §16.1 a §16.3; 07 §6.1, §32.3; DT-17): lee .github/workflows/respaldo.yml y,
+// desde TA-263, .github/workflows/restauracion.yml (04 §16.1, §16.4; CT-09), y comprueba con dobles que tools/respaldo/subir.mjs no registra un respaldo que no subió. Ninguna prueba toca B2, la
 // base ni la app.
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -38,9 +38,72 @@ const paso = (sub: string): Paso => {
   if (!p) throw new Error(`respaldo.yml no llama a subir.mjs ${sub}`);
   return p;
 };
+const crudoRestauracion = readFileSync(
+  join(raiz, '.github', 'workflows', 'restauracion.yml'),
+  'utf8',
+);
+
+/** TA-263 (04 §16.1, §16.4; ADR-22; CT-09; 07 §32.3, §32.4): la prueba de restauración, sin modo ni condiciones. */
+function revisarRestauracion(): void {
+  const r = load(crudoRestauracion) as Wf;
+  const job = r.jobs['restauracion'];
+  const ps = job?.steps ?? [];
+  const id = (x: string): number => ps.findIndex((p) => p.id === x);
+  const de = (x: string): Paso => ps[id(x)] ?? {};
+  // No lee el modo de M4 ni restaura su caché, y nada lo saltea ni deja seguir tras un fallo (07 §32.3)
+  expect(crudoRestauracion).not.toMatch(/ci-modo|ahorro|minutos\.ts|recortes|actions\/cache/);
+  expect(Object.keys(r.jobs)).toEqual(['restauracion']);
+  expect(job?.if).toBeUndefined();
+  expect(job?.['continue-on-error']).toBeUndefined();
+  for (const p of ps) {
+    expect(p.if, p.run ?? p.uses).toBeUndefined();
+    expect(p['continue-on-error'], p.run ?? p.uses).toBeUndefined();
+  }
+  // CT-09: el semanal de las 8 semanas (se quita en TU-18) y el mensual de 04 §16.1; minutos.ts lee el primero
+  expect(r.on['schedule']).toEqual([{ cron: '0 9 * * 0' }, { cron: '0 9 1 * *' }]);
+  expect(/cron:\s*['"]([^'"]+)['"]/.exec(crudoRestauracion)?.[1]).toBe('0 9 * * 0');
+  expect(Object.keys(r.on).sort()).toEqual(['schedule', 'workflow_dispatch']);
+  expect(job?.['runs-on']).toBe('ubuntu-24.04');
+  expect(r.concurrency).toEqual({ group: 'respaldo', 'cancel-in-progress': false });
+  expect(r.permissions).toEqual({ contents: 'read' });
+  // El commit desplegado antes de instalar; después el Postgres efímero, bajar, descifrar, restaurar y, al final, OPT-09
+  const orden = ['desplegado', 'herramientas', 'pg-efimero', 'bajar', 'descifrar', 'restaurar'];
+  const pos = [...orden, 'registrar'].map(id);
+  expect(pos.every((i) => i >= 0)).toBe(true);
+  expect(pos).toEqual([...pos].sort((a, b) => a - b));
+  expect(id('registrar')).toBe(ps.length - 1);
+  const instalar = ps.findIndex((p) => p.run === 'pnpm install --frozen-lockfile');
+  expect(id('desplegado')).toBeLessThan(instalar);
+  expect(de('desplegado').run).toContain("git tag --list --sort=-v:refname 'desplegado-*'");
+  // 03 §12.2: restaurar.sh con la fecha del volcado como `hoy` del motor (04 §16.4)
+  expect(de('restaurar').run).toMatch(
+    /tools\/respaldo\/restaurar\.sh .+steps\.bajar\.outputs\.fecha/,
+  );
+  expect(de('bajar').run).toContain('diarios/');
+  expect(de('pg-efimero').run).toContain('PG_IMAGEN_DIGEST');
+  for (const t of ['infra/versiones.env', 'apt.postgresql.org.sh', 'postgresql-client-${PG_MAYOR}'])
+    expect(de('herramientas').run).toContain(t);
+  expect(de('herramientas').run).toMatch(/\bage\b/);
+  // Cada paso, solo sus secretos; nunca una URL de la base de producción: se restaura en el runner
+  const secretos = (p: Paso): string[] => Object.keys(p.env ?? {}).sort();
+  expect(secretos(de('bajar'))).toEqual([
+    'B2_APPLICATION_KEY',
+    'B2_BUCKET',
+    'B2_ENDPOINT',
+    'B2_KEY_ID',
+  ]);
+  expect(secretos(de('descifrar'))).toEqual(['AGE_PRIVATE_KEY']);
+  expect(secretos(de('registrar'))).toEqual(['FINN_URL', 'RESPALDO_SECRET']);
+  for (const p of ps.filter((x) => !['bajar', 'descifrar', 'registrar'].includes(x.id ?? '')))
+    expect(p.env, p.run ?? p.uses).toBeUndefined();
+  expect(crudoRestauracion).not.toMatch(/RESPALDO_DB_URL|DIRECT_URL|DATABASE_URL|AGE_PUBLIC|R2_/);
+  expect(de('registrar').run).toContain('/api/respaldo/restauracion');
+  for (const p of ps.filter((x) => x.uses !== undefined))
+    expect(p.uses).toMatch(/^[\w.-]+\/[\w.-]+(\/[\w.-]+)?@[0-9a-f]{40}$/);
+}
 
 describe('PRU-SEG-OPER', () => {
-  it('PRU-SEG-OPER-104 [M4] respaldo fuera de M4 (DP-36, WF-respaldo; ADR-22, 07 §32.3): respaldo.yml no lee el modo de ahorro ni tiene condiciones, corre a las 07:30 UTC y llama a OPT-09 solo después de subir el volcado', () => {
+  it('PRU-SEG-OPER-104 [M4] respaldo y restauración fuera de M4 (DP-36, WF-respaldo, WF-restauracion, CT-09; ADR-22, 07 §32.3): respaldo.yml no lee el modo de ahorro ni tiene condiciones, corre a las 07:30 UTC y llama a OPT-09 solo después de subir el volcado; restauracion.yml tampoco tiene condiciones, corre semanal (CT-09) y mensual, restaura el último respaldo y registra la restauración al final', () => {
     // No lee el modo ni restaura su caché, y nada lo saltea ni deja seguir tras un fallo (07 §32.3; 04 §16.3 paso 6)
     expect(crudo).not.toMatch(/ci-modo|ahorro|minutos\.ts|recortes|actions\/cache/);
     expect(Object.keys(wf.jobs)).toEqual(['respaldo']);
@@ -106,6 +169,7 @@ describe('PRU-SEG-OPER', () => {
     expect(herramientas).toContain('apt.postgresql.org.sh');
     expect(herramientas).toContain('postgresql-client-${PG_MAYOR}');
     expect(herramientas).toMatch(/\bage\b/);
+    revisarRestauracion();
   });
 
   it('PRU-SEG-OPER-113 [M4] etiqueta vigente (CH-106; 04 §16.3 paso 5): el comando de catalogo-desplegado, ejecutado en un repositorio con desplegado-9-1, -10-1 y -10-2, devuelve desplegado-10-2, y lo que restaura existe', () => {
