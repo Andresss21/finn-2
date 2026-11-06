@@ -18,6 +18,7 @@ const CON_CATEGORIAS: ReadonlySet<TipoDeUrl> = new Set([
   'categorias',
   'cumplimiento',
   'top-comercios',
+  'gasto-semanal',
 ]);
 
 const texto = (v: string | readonly string[] | undefined): string | undefined =>
@@ -34,15 +35,25 @@ export async function LectorReporte({
   const { ventana, cuentaIds } = consulta;
   const grupo = texto(busqueda['grupo']);
   const limite = texto(busqueda['limite']);
+  const semanal = url === 'gasto-semanal';
   // `ritmo` mira el período activo: su contrato no lleva ventana ni cuentas.
   const filtrado = url !== 'ritmo';
-  const solicitud = {
-    tipo: TIPOS[url],
-    ...(!filtrado || ventana === undefined ? {} : { ventana }),
-    ...(!filtrado || cuentaIds === undefined ? {} : { cuentaIds }),
-    ...(url === 'categorias' && grupo !== undefined && UUID.test(grupo) ? { grupoId: grupo } : {}),
-    ...(url === 'top-comercios' && limite !== undefined ? { limite: Number(limite) } : {}),
-  };
+  const { periodoInicio, categoriaIds } = consulta;
+  const solicitud = semanal
+    ? {
+        tipo: TIPOS[url],
+        ...(periodoInicio === undefined ? {} : { periodoInicio }),
+        ...(categoriaIds === undefined ? {} : { categoriaIds }),
+      }
+    : {
+        tipo: TIPOS[url],
+        ...(!filtrado || ventana === undefined ? {} : { ventana }),
+        ...(!filtrado || cuentaIds === undefined ? {} : { cuentaIds }),
+        ...(url === 'categorias' && grupo !== undefined && UUID.test(grupo)
+          ? { grupoId: grupo }
+          : {}),
+        ...(url === 'top-comercios' && limite !== undefined ? { limite: Number(limite) } : {}),
+      };
   const [dto, listaDeCuentas, arbol] = await Promise.all([
     consultar(async () => reporte(await depsDeConsulta(), solicitud)),
     consultar(async () => cuentas(await depsDeConsulta(), { incluirArchivadas: true })),
@@ -64,11 +75,15 @@ export async function LectorReporte({
     categorias: arbol?.grupos.flatMap((g) => g.categorias.map((c) => c.categoria)) ?? [],
   };
   const marcadas = texto(busqueda['cuentas']);
+  const periodo = texto(busqueda['periodo']);
+  const categorias = texto(busqueda['categorias']);
   const parametros: Parametros = {
     ...(typeof ventana === 'string' ? { ventana } : {}),
     ...(marcadas === undefined ? {} : { cuentas: marcadas }),
     ...(url === 'categorias' && grupo !== undefined ? { grupo } : {}),
     ...(url === 'top-comercios' && limite !== undefined ? { limite } : {}),
+    ...(semanal && periodo !== undefined ? { periodo } : {}),
+    ...(semanal && categorias !== undefined ? { categorias } : {}),
   };
   return (
     <PantallaReporte

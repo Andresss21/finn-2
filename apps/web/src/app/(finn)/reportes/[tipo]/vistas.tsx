@@ -12,6 +12,7 @@ import type { TipoDeReporte } from './tipos';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { Ritmo } from './ritmo';
 import { Categorias, Cumplimiento, TopComercios, type Nombres } from './vistas-detalle';
+import { GastoSemanal } from './vistas-semanal';
 
 interface Columna<F> {
   readonly id: keyof typeof t.columnas;
@@ -186,6 +187,10 @@ export function cuerpoDe(
     case 'cumplimiento': {
       const d = dto as ReporteDe<'cumplimiento'>;
       return d.filas.length === 0 ? null : <Cumplimiento dto={d} nombres={nombres} />;
+    }
+    case 'gasto_semanal': {
+      const d = dto as ReporteDe<'gasto_semanal'>;
+      return d.categorias.length === 0 ? null : <GastoSemanal dto={d} nombres={nombres} />;
     }
     case 'patrimonio': {
       const { serie, posicionHoy } = dto as ReporteDe<'patrimonio'>;

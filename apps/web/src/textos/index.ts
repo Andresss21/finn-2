@@ -41,6 +41,7 @@ import { presupuestoAutoAsignar } from './presupuesto-auto-asignar.ts';
 import { presupuestoMover } from './presupuesto-mover.ts';
 import { primerosPasos } from './primeros-pasos.ts';
 import { registrarGasto } from './registrar-gasto.ts';
+import { registrarTarjeta } from './registrar-tarjeta.ts';
 import { registrarTipo } from './registrar-tipo.ts';
 import { conciliar } from './conciliar.ts';
 import { reportes } from './reportes.ts';
@@ -90,6 +91,7 @@ export {
   presupuestoMover,
   primerosPasos,
   registrarGasto,
+  registrarTarjeta,
   registrarTipo,
   reportes,
   transaccion,
@@ -139,6 +141,7 @@ export const areas = [
   ['ingreso', ingreso],
   ['navegacion', navegacion],
   ['registrarGasto', registrarGasto],
+  ['registrarTarjeta', registrarTarjeta],
   ['registrarTipo', registrarTipo],
   ['reportes', reportes],
   ['transaccion', transaccion],
