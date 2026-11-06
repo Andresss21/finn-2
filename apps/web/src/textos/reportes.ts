@@ -12,6 +12,7 @@ export const reportes = {
     ritmo: 'Ritmo',
     'gasto-semanal': 'Gasto semanal',
     realidad: 'Realidad',
+    hormiga: 'Hormiga',
   },
   titulos: {
     tendencia: 'Tendencia de ingresos y gastos',
@@ -24,6 +25,7 @@ export const reportes = {
     ritmo: 'Ritmo de gasto',
     'gasto-semanal': 'Gasto semanal por categoría',
     realidad: 'Presupuesto contra la realidad',
+    hormiga: 'Gastos hormiga',
   },
   explicacionRemanente:
     'Ingresos del período menos lo que gastaste, incluidas las compras con tarjeta',
@@ -63,6 +65,9 @@ export const reportes = {
     sugerido: 'Sugerido',
     gastoComparado: 'Este período',
     variacion: 'Variación',
+    grupo: 'Grupo de compras',
+    compras: 'Compras',
+    total: 'Total',
   },
   ritmo: {
     cierre: (fin: string) => `Si seguís así, al cerrar el ${fin}:`,
@@ -100,6 +105,17 @@ export const reportes = {
     porCategoria: 'Categoría por categoría',
     sinHistoria: 'Hace falta historia de 3 períodos para comparar.',
     periodosDe: (categoria: string) => `Períodos de ${categoria}`,
+  },
+  hormiga: {
+    porCategoria: (n: number, categoria: string, total: string) =>
+      `${n} compras pequeñas en ${categoria} este período: ${total}.`,
+    porComercio: (n: number, comercio: string, total: string) =>
+      `${n} compras en ${comercio} este período: ${total}.`,
+    verCompras: 'Ver las compras',
+    sinGrupos: 'No encontramos compras pequeñas repetidas en este período.',
+    grupos: 'Compras pequeñas repetidas',
+    deComercio: 'Comercio',
+    deCategoria: 'Categoría',
   },
   gastoSemanal: {
     categorias: 'Categorías',
