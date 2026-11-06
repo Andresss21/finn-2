@@ -1,6 +1,7 @@
 // Proyectos de Playwright de 07 §3.2 (DP-08). Los resultados de `webkit-parcial` no bloquean (§7.3).
 // La pila local y el usuario de prueba los levanta `pnpm test:e2e` (tools/pruebas/e2e.mjs, TA-219).
 import { defineConfig, devices } from '@playwright/test';
+import { SECRETO_RESPALDO_E2E } from '../../tools/pruebas/e2e/respaldo.ts';
 import { ARCHIVO_RELOJ } from '../../tools/pruebas/e2e/reloj.ts';
 
 const enCI = process.env['CI'] !== undefined && process.env['CI'] !== '';
@@ -37,6 +38,7 @@ export default defineConfig({
     env: {
       FINN_ENTORNO: 'pruebas',
       FINN_RELOJ_ARCHIVO: ARCHIVO_RELOJ,
+      RESPALDO_SECRET: SECRETO_RESPALDO_E2E,
       NEXT_TELEMETRY_DISABLED: '1',
     },
   },
