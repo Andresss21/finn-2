@@ -138,7 +138,8 @@ export const cuentaDetalle = {
     plazoValor: (n: number) => `${n} cuotas`,
     interesPagado: 'Interés pagado',
     seguroPagado: 'Seguro pagado',
-    sinModelo: 'Sin modelo de cálculo: no hay tabla de amortización.',
+    sinModelo:
+      'Este préstamo no tiene un modelo de cálculo; el capital pendiente es el que registraste.',
     amortizacion: 'Amortización',
     numero: 'N.º',
     fecha: 'Fecha',
