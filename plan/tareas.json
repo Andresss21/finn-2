@@ -475,7 +475,7 @@
 
   "TA-445": { "estado": "terminada", "rama": "ta-445-verificar-saldo", "pr": 307 },
 
-  "TA-418": { "estado": "en_curso", "rama": "ta-418-cashback-avance-transferencia" },
+  "TA-418": { "estado": "terminada", "rama": "ta-418-cashback-avance-transferencia", "pr": 429 },
 
   "TA-419": { "estado": "terminada", "rama": "ta-419-condiciones-amortizacion", "pr": 423 },
 
