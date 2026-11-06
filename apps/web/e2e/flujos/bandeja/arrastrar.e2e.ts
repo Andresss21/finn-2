@@ -88,12 +88,50 @@ async function arrastrarAl(page: Page, origen: Locator, categoria: string): Prom
   await page.mouse.up();
 }
 
+/** Empieza un arrastre con el ratón y lo deja en curso, sobre el panel de destinos, sin soltar. */
+async function empezarArrastre(page: Page, origen: Locator): Promise<{ x: number; y: number }> {
+  await expect(origen).toBeVisible();
+  const caja = await origen.boundingBox();
+  if (caja === null) throw new Error('el asa no tiene caja');
+  const x = caja.x + caja.width / 2;
+  const y = caja.y + caja.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 12, y + 12, { steps: 4 });
+  await expect(page.locator('[data-panel-destinos]')).toBeVisible();
+  return { x, y };
+}
+
+/** Las llamadas de escritura (Server Actions) que sale de la página. */
+function contarEscrituras(page: Page): string[] {
+  const llamadas: string[] = [];
+  page.on('request', (r) => {
+    if (r.method() === 'POST' && r.headers()['next-action'] !== undefined)
+      llamadas.push(r.postData() ?? '');
+  });
+  return llamadas;
+}
+
+// Más categorías, cada una con un gasto aprobado antes, para que el panel tenga de dónde sacar las frecuentes
+const OTRAS = ['Mascota', 'Transporte', 'Hogar', 'Ropa'];
+const MAS_CATEGORIAS: Op[] = OTRAS.flatMap((c): Op[] => [
+  { op: 'OP-07', categoria: c },
+  { op: 'OP-14', categoria: c, monto: 50, periodo: 'P1' },
+]);
+const HISTORIAL_AMPLIO: Op[] = [
+  ...HISTORIAL,
+  ...['Supermercado', ...OTRAS].flatMap((c, i): Op[] => [
+    sms(`h${i}`, `Tienda ${c}`, 11 + i, `10:0${i}`),
+    { op: 'OP-37', etiqueta: `h${i}`, categoria: c, aprobado: `${DIA_20}T10:3${i}` },
+  ]),
+];
+
 test.describe('PRU-E2E-BAND', () => {
   test.beforeEach(async ({ context, baseURL }) => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-BAND-001 [V6-08] con la librería de arrastre sin cargar, la fila no tiene asa y los botones funcionan; con ella cargada, el asa aparece sin quitar «Aprobar»', async ({
+  test('PRU-E2E-BAND-001 [V6-08, CA-78.13] con la librería de arrastre sin cargar, la fila no tiene asa y los botones funcionan; con ella cargada, el asa aparece sin quitar «Aprobar»', async ({
     page,
   }) => {
     await preparar([...HISTORIAL, sms('pizza', 'La Pizza', 18, '15:00')]);
@@ -312,5 +350,99 @@ test.describe('PRU-E2E-BAND', () => {
       t.aprobado('Selectos', '$35.00', 'T', 'Supermercado'),
     );
     await expect(page.getByRole('button', { name: cuentas.bandeja.aprobar })).toHaveCount(0);
+  });
+
+  test('PRU-E2E-BAND-227 [CA-78.9] con un arrastre en curso, Escape o soltar fuera del panel no envía ninguna operación y la fila queda como estaba', async ({
+    page,
+  }) => {
+    await preparar([sms('nuevo', 'Selectos', 35, '15:00')]);
+    await abrirBandeja(page);
+    const f = fila(page, 'Selectos');
+    const llamadas = contarEscrituras(page);
+    const panel = page.locator('[data-panel-destinos]');
+
+    // Escape cancela y el panel se va
+    await empezarArrastre(page, asa(f));
+    await page.keyboard.press('Escape');
+    await expect(panel).toHaveCount(0);
+    await page.mouse.up();
+
+    // Soltar fuera del panel (la esquina superior izquierda) también cancela
+    await empezarArrastre(page, asa(f));
+    await page.mouse.move(2, 2, { steps: 6 });
+    await page.mouse.up();
+    await expect(panel).toHaveCount(0);
+
+    expect(llamadas).toHaveLength(0);
+    await expect(page.getByTestId('resultado')).toHaveCount(0);
+    await expect(f).toBeVisible();
+    await expect(asa(f)).toHaveCount(1);
+    // Sin categoría la fila no trae «Aprobar»: su enlace a la revisión sigue ahí (WCAG 2.5.7)
+    await expect(f.getByRole('link')).toBeVisible();
+  });
+
+  test('PRU-E2E-BAND-228 [CA-78.10] el panel de destinos muestra primero «Sugerida: Restaurantes», después hasta 5 frecuentes distintas de la sugerida y al final «Otra categoría…»', async ({
+    page,
+  }) => {
+    await preparar([...MAS_CATEGORIAS, ...HISTORIAL_AMPLIO, sms('pizza', 'La Pizza', 18, '15:00')]);
+    await abrirBandeja(page);
+    await empezarArrastre(page, asa(fila(page, 'La Pizza')));
+
+    const textos = await page.locator('[data-panel-destinos] > ul > li').allTextContents();
+    expect(textos[0]).toBe(t.arrastre.sugerida('Restaurantes'));
+    expect(textos.at(-1)).toBe(t.arrastre.otra);
+    const frecuentes = textos.slice(1, -1);
+    expect(frecuentes).toHaveLength(5);
+    expect(new Set(frecuentes).size).toBe(5);
+    expect(frecuentes).not.toContain('Restaurantes');
+    await page.keyboard.press('Escape');
+    await page.mouse.up();
+  });
+
+  test('PRU-E2E-BAND-229 [CA-78.11] soltar sobre «Otra categoría…» termina el arrastre sin aprobar y abre el selector; elegir Mascota aprueba el movimiento en Mascota sin volver a arrastrar', async ({
+    page,
+  }) => {
+    await preparar([...MAS_CATEGORIAS, sms('nuevo', 'Selectos', 35, '15:00')]);
+    await abrirBandeja(page);
+    const llamadas = contarEscrituras(page);
+
+    await arrastrarAl(page, asa(fila(page, 'Selectos')), t.arrastre.otra);
+    await expect(page.locator('[data-panel-destinos]')).toHaveCount(0);
+    await expect(page.getByRole('dialog', { name: t.arrastre.selector.titulo })).toBeVisible();
+    expect(llamadas).toHaveLength(0);
+    await expect(page.getByTestId('resultado')).toHaveCount(0);
+
+    await elegirOpcion(page, t.arrastre.selector.etiqueta, 'Mascota');
+    await expect(page.getByTestId('resultado')).toContainText(
+      t.aprobado('Selectos', '$35.00', 'T', 'Mascota'),
+    );
+    expect(llamadas.filter((c) => c.includes('categoriaId'))).toHaveLength(1);
+  });
+
+  test('PRU-E2E-BAND-230 [CA-78.14] con dos pestañas, si una edita las líneas del movimiento y la otra lo suelta sobre una categoría, la segunda responde conflicto_desactualizado y la fila lo dice', async ({
+    page,
+    context,
+  }) => {
+    // Fecha en un período cerrado: aprobar con cambios guarda la edición y se detiene en la confirmación de AV-01
+    await preparar([sms('cerrado', 'Selectos', 30, '19:00')], '2027-02-21T08:00:00');
+    await abrirBandeja(page);
+    const f = fila(page, 'Selectos');
+    await expect(asa(f)).toHaveCount(1);
+
+    const otra = await context.newPage();
+    await otra.goto('/bandeja');
+    await esperarContenido(otra);
+    await fila(otra, 'Selectos').getByRole('link').click();
+    await expect(otra.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
+    await elegirOpcion(otra, g.categoriaDeParte('1'), 'Farmacia');
+    await otra.getByRole('button', { name: t.revisar.aprobar }).click();
+    await expect(otra.getByRole('heading', { name: t.revisar.revisarImpacto })).toBeVisible();
+    await otra.close();
+
+    // La primera pestaña sigue con las líneas que vio: soltar lo rechaza y la fila lo dice, sin traspaso
+    await arrastrarAl(page, asa(f), 'Supermercado');
+    await expect(page.getByText(/cambió mientras lo editabas/)).toBeVisible();
+    await expect(page).toHaveURL(/\/bandeja$/);
+    await expect(page.getByTestId('resultado')).toHaveCount(0);
   });
 });

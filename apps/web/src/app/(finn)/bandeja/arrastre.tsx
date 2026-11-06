@@ -94,10 +94,13 @@ export function ContextoArrastre({
   movimientos,
   destinos,
   alSoltar,
+  alElegirOtra,
 }: {
   readonly movimientos: readonly MovimientoDto[];
   readonly destinos: DestinosArrastre;
   readonly alSoltar: (movimientoId: string, categoriaId: string) => void;
+  /** Soltar sobre «Otra categoría…» termina el arrastre sin aprobar y abre el selector (CA-78.11). */
+  readonly alElegirOtra: (movimientoId: string) => void;
 }) {
   const [activo, setActivo] = useState<string | null>(null);
   const [sobre, setSobre] = useState<string | null>(null);
@@ -198,9 +201,10 @@ export function ContextoArrastre({
         const destino = over === null ? '' : String(over.id);
         setActivo(null);
         setSobre(null);
-        // Soltar sobre una categoría aprueba; fuera del panel o sobre «Otra categoría…» no envía nada
+        // Soltar sobre una categoría aprueba; sobre «Otra categoría…» abre el selector; fuera del panel no envía nada
         if (destino.startsWith('f:') || destino.startsWith('g:'))
           alSoltar(String(active.id), destino.slice(2));
+        else if (destino === OTRA) alElegirOtra(String(active.id));
       }}
       onDragCancel={() => {
         setActivo(null);

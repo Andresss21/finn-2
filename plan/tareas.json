@@ -529,7 +529,7 @@
 
   "TA-438": { "estado": "terminada", "rama": "ta-438-arrastrar-categoria", "pr": 440 },
 
-  "TA-439": { "estado": "pendiente" },
+  "TA-439": { "estado": "en_curso", "rama": "ta-439-arrastre-2" },
 
   "TA-446": { "estado": "pendiente" },
 
