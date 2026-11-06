@@ -41,8 +41,9 @@ describe('PRU-INT-PROG registro automático (FT-42)', () => {
   });
   const tarea = (): DepsTarea => ({ ...deps(), nuevoIdError: () => 'E-PRUEBA' });
   const hechos = (): Promise<Hechos> => leer((t) => cargarHechos(t), RELOJ);
-  const crear = async (def: unknown) =>
+  const crear = async (def: unknown) => {
     expect(await confirmar(OP42, def, deps())).toMatchObject({ ok: true });
+  };
   const resueltas = async (id: Uuid) =>
     (await hechos()).ocurrencias_resueltas
       .filter((o) => o.programadaId === id)
@@ -56,7 +57,7 @@ describe('PRU-INT-PROG registro automático (FT-42)', () => {
     process.env['DATABASE_URL'] = base.url; // el cliente del proceso (04 §2.5)
   });
 
-  it('PRU-INT-PROG-110 [CA-42.1, ESC-50, PR-3, AV-23] la tarea registra la ocurrencia del período abierto y deja pendiente la del cerrado con una notificación', async () => {
+  it('PRU-INT-PROG-110 [CA-42.1, ESC-50, AV-23] la tarea registra la ocurrencia del período abierto y deja pendiente la del cerrado con una notificación', async () => {
     const P = uuid(9301);
     // quincenal desde el 10 ene: 10 ene (período cerrado) y 24 ene (activo); la siguiente, 7 feb, es futura
     await crear(programada(P, { frecuencia: 'quincenal', primeraFecha: '2027-01-10' }));

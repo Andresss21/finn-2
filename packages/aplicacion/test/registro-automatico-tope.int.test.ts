@@ -4,7 +4,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Hechos, Instante, Uuid } from '@finn/dominio';
 import { cargarHechos, leer, Memoria } from '@finn/db';
-import { consultar, crearBasePrueba } from '../../db/test/ayudantes/base.ts';
+import { crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY, RELOJ } from '../../db/test/ayudantes/hechos-prueba.ts';
 import { confirmar, type DepsMarco } from '../src/operaciones/marco.ts';
 import { OP42 } from '../src/operaciones/programadas/index.ts';
@@ -32,7 +32,6 @@ const programada = (id: Uuid, extra: Record<string, unknown>) => ({
 
 describe('PRU-INT-PROG registro automático, tope por ejecución (FT-42)', () => {
   const base = crearBasePrueba();
-  const sql = (texto: string) => consultar(base.urlAdmin, texto);
   const deps = (): DepsMarco => ({
     memoria: new Memoria(),
     opciones: () => RELOJ,
@@ -40,15 +39,14 @@ describe('PRU-INT-PROG registro automático, tope por ejecución (FT-42)', () =>
   });
   const tarea = (): DepsTarea => ({ ...deps(), nuevoIdError: () => 'E-PRUEBA' });
   const hechos = (): Promise<Hechos> => leer((t) => cargarHechos(t), RELOJ);
-  const crear = async (def: unknown) =>
+  const crear = async (def: unknown) => {
     expect(await confirmar(OP42, def, deps())).toMatchObject({ ok: true });
+  };
   const resueltas = async (id: Uuid) =>
     (await hechos()).ocurrencias_resueltas
       .filter((o) => o.programadaId === id)
       .map((o) => o.fechaEsperada)
       .sort();
-  const claves = (motivo: string) =>
-    sql(`SELECT datos->>'clave' FROM finn.notificaciones WHERE motivo = '${motivo}' ORDER BY id`);
 
   beforeAll(async () => {
     await escribirHechosDePrueba(base);
