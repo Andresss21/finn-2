@@ -4,8 +4,10 @@ import { Icono, type NombreIcono } from '../../../componentes/base/icono';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { ajustesApariencia } from '../../../textos/ajustes-apariencia';
 import { ajustesCiclo } from '../../../textos/ajustes-ciclo';
+import { ajustesDiagnostico } from '../../../textos/ajustes-diagnostico';
 import { ajustesExportar } from '../../../textos/ajustes-exportar';
 import { ajustesFormatos } from '../../../textos/ajustes-formatos';
+import { ajustesRespaldo } from '../../../textos/ajustes-respaldo';
 import { ajustesWebhook } from '../../../textos/ajustes-webhook';
 import { notificaciones } from '../../../textos/notificaciones';
 import { seguridad } from '../../../textos/seguridad';
@@ -18,10 +20,13 @@ const FILAS: readonly { href: string; icono: NombreIcono; texto: string }[] = [
   { href: '/ajustes/notificaciones', icono: 'bell', texto: notificaciones.enlace },
   { href: '/ajustes/seguridad', icono: 'lock', texto: seguridad.titulo },
   { href: '/ajustes/exportar', icono: 'send', texto: ajustesExportar.titulo },
+  { href: '/ajustes/respaldo', icono: 'refresh', texto: ajustesRespaldo.enlace },
+  { href: '/ajustes/diagnostico', icono: 'activity', texto: ajustesDiagnostico.enlace },
   { href: '/ajustes/apariencia', icono: 'gear', texto: ajustesApariencia.enlace },
 ];
 
-export function ListaAjustes() {
+/** `respaldoAtrasado`: `AjustesDto.respaldo` (CA-76.1); sin él, la fila de Respaldo no avisa nada. */
+export function ListaAjustes({ respaldoAtrasado = false }: { respaldoAtrasado?: boolean }) {
   return (
     <ul
       data-rol="lista-ajustes"
@@ -39,7 +44,14 @@ export function ListaAjustes() {
             >
               <Icono nombre={f.icono} tamano={20} />
             </span>
-            <span className="text-cuerpo font-semibold text-texto">{f.texto}</span>
+            <span className="flex flex-col">
+              <span className="text-cuerpo font-semibold text-texto">{f.texto}</span>
+              {respaldoAtrasado && f.href === '/ajustes/respaldo' ? (
+                <span className="text-cuerpo-pequeno font-semibold text-problema-texto">
+                  {ajustesRespaldo.atrasadoEnIndice}
+                </span>
+              ) : null}
+            </span>
             <Icono nombre="chevR" tamano={16} className="text-texto-secundario" />
           </EnlaceFinn>
         </li>

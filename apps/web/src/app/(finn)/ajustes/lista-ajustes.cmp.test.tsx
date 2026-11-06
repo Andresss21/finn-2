@@ -29,13 +29,13 @@ afterEach(() => {
   document.documentElement.removeAttribute('data-theme');
 });
 
-function montar(): HTMLElement {
+function montar(respaldoAtrasado = false): HTMLElement {
   document.body.style.cssText = 'background: var(--fondo); color: var(--texto)';
   const nodo = document.createElement('main');
   document.body.append(nodo);
   const raiz = createRoot(nodo);
   act(() => {
-    raiz.render(<ListaAjustes />);
+    raiz.render(<ListaAjustes respaldoAtrasado={respaldoAtrasado} />);
   });
   montado = { raiz, nodo };
   return nodo;
@@ -53,12 +53,22 @@ describe('PRU-CMP-AJUS-140 índice de Ajustes', () => {
       ['Notificaciones', '/ajustes/notificaciones'],
       ['Seguridad', '/ajustes/seguridad'],
       ['Exportar tus datos', '/ajustes/exportar'],
+      ['Respaldo', '/ajustes/respaldo'],
+      ['Diagnóstico', '/ajustes/diagnostico'],
       ['Apariencia', '/ajustes/apariencia'],
     ]);
     for (const a of filas) {
       expect(a.querySelectorAll('svg')).toHaveLength(2);
       expect(a.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     }
+  });
+
+  it('PRU-CMP-AJUS-154 [CA-76.1] con el respaldo atrasado, la fila de Respaldo lo dice; al día, no dice nada', () => {
+    const alDia = montar(false);
+    expect(alDia.textContent).not.toContain('Respaldo atrasado');
+    const atrasada = montar(true);
+    const fila = atrasada.querySelector('a[href="/ajustes/respaldo"]');
+    expect(fila?.textContent).toContain('Respaldo atrasado');
   });
 
   it.each(['claro', 'oscuro'] as const)(
