@@ -14,6 +14,8 @@ import { Hormiga } from './hormiga';
 import { Realidad } from './realidad';
 import type { AccionesRealidad } from './realidad-hallazgos';
 import { Ritmo } from './ritmo';
+import { Suscripciones } from './suscripciones';
+import type { AccionesSuscripciones } from './suscripciones-hallazgos';
 import { Tarjetas } from './tarjetas';
 import { Categorias, Cumplimiento, TopComercios, type Nombres } from './vistas-detalle';
 import { GastoSemanal } from './vistas-semanal';
@@ -121,8 +123,17 @@ export function cuerpoDe(
   nombres: Nombres,
   asignar?: AccionEscritura,
   realidad?: AccionesRealidad,
+  suscripciones?: AccionesSuscripciones,
 ): ReactNode {
   switch (tipo) {
+    case 'suscripciones':
+      // Siempre dibuja: con menos de 4 períodos cerrados dice su propio estado (06 FT-65), no «No hay movimientos».
+      return (
+        <Suscripciones
+          dto={dto as ReporteDe<'suscripciones'>}
+          {...(suscripciones === undefined ? {} : { acciones: suscripciones })}
+        />
+      );
     case 'hormiga':
       // Siempre dibuja: sin grupos dice su propio estado (06 FT-64), no «No hay movimientos».
       return <Hormiga dto={dto as ReporteDe<'hormiga'>} />;

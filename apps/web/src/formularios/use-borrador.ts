@@ -7,9 +7,10 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { almacen } from '../cliente/almacen';
 import { instanteActual } from '../formato/instante';
+import { claveDeBorrador, PREFIJO_BORRADOR } from './clave-borrador';
 import type { Operacion } from './use-operacion';
 
-export const PREFIJO_BORRADOR = 'finn:borrador:';
+export { claveDeBorrador, PREFIJO_BORRADOR };
 const ESPERA_MS = 500;
 
 interface Guardado {
@@ -20,10 +21,6 @@ interface Guardado {
   readonly esperado: Readonly<Record<string, unknown>> | undefined;
   readonly revisionAlAbrir: string | null;
 }
-
-/** Clave de 4.11: la ruta sin parámetros de búsqueda y el id de la entidad, si la hay. */
-export const claveDeBorrador = (ruta: string, entidad = ''): string =>
-  `${PREFIJO_BORRADOR}v1:${ruta.split('?')[0] ?? ruta}:${entidad}`;
 
 /** Al salir de la sesión (4.11): se borran todos los borradores de la pestaña. */
 export const borrarBorradores = (): void => {
