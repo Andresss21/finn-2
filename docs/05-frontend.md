@@ -1290,7 +1290,9 @@ Catálogo completo (la regla T9 de V5-18 rechaza cualquier parámetro de §1.3 o
 | `?texto=` | Texto a buscar en comercio y nota | Texto | Actividad |
 | `?monto-desde=`, `?monto-hasta=` | Rango del total | `montoTexto` | Actividad |
 | `?desde=`, `?hasta=` | Rango de **fechas de negocio** | `FechaLocal` | Actividad |
-| `?fecha=` | Fecha de la operación que se registra | `FechaLocal` | Cobrar, cuota |
+| `?fecha=` | Fecha de la operación que se registra | `FechaLocal` | Cobrar, cuota; **[CH-212]** registrar gasto, ingreso y entrada a la tarjeta (valor inicial) |
+| `?total=` **[CH-212]** | Total inicial de la operación que se registra | `montoTexto` | Registrar gasto, ingreso y entrada a la tarjeta (valor inicial) |
+| `?comercio=` **[CH-212]** | Comercio inicial de la operación que se registra | Texto, 80 caracteres como máximo | Registrar gasto, ingreso y entrada a la tarjeta (valor inicial) |
 | `?linea=` | Una línea por cobrar | Uuid | Cobrar |
 | `?deudor=` | Un deudor | Uuid | Cobrar |
 | `?modalidad=` | Modalidad de pago de un préstamo | `cuota`, `abono` | Cuota |
@@ -1307,6 +1309,7 @@ Catálogo completo (la regla T9 de V5-18 rechaza cualquier parámetro de §1.3 o
 
 Notas:
 - **[R2] `?volver=` también para el regreso de los detalles.** El ajuste 1 pidió un nombre distinto de `?desde=`, que ya es el filtro de fechas de Actividad. Se usa `?volver=` y no un tercer nombre (por ejemplo `?regreso=`) porque su significado es el mismo que el de las rutas de `ingresar` (la ruta interna a la que se vuelve) y se valida igual. Dos nombres para un mismo significado también se evitan.
+- **[CH-212] Valores iniciales de la propuesta de ajuste.** `?fecha=`, `?total=` y `?comercio=` llevan los valores iniciales de la propuesta de ajuste de AV-21 (FD-06) a `/registrar/entrada-tarjeta`, `/registrar/gasto` y `/registrar/ingreso`, tanto desde Conciliar (FT-43) como desde Verificar saldo (FT-44). Un valor con otra forma se ignora y el formulario abre con los de siempre; el servidor valida la entrada de nuevo. Hecho en `/registrar/entrada-tarjeta` desde Conciliar (#512); **pendientes** `/registrar/gasto`, `/registrar/ingreso` y los enlaces de Verificar saldo, que siguen con solo `?cuenta=`.
 - **[R2] Otros renombres por la misma regla:**
   - `?periodos=` pasa a `?historial=`: era casi igual a `?periodo=` con otro significado;
   - `?origen=` y `?destino=` de Mover pasan a `?categoria-origen=` y `?categoria-destino=`, porque `?origen=` ya es el origen de una transacción en Actividad;
