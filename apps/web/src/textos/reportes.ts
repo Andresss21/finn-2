@@ -12,6 +12,7 @@ export const reportes = {
     ritmo: 'Ritmo',
     'gasto-semanal': 'Gasto semanal',
     realidad: 'Realidad',
+    tarjetas: 'Tarjetas',
     hormiga: 'Hormiga',
   },
   titulos: {
@@ -25,6 +26,7 @@ export const reportes = {
     ritmo: 'Ritmo de gasto',
     'gasto-semanal': 'Gasto semanal por categoría',
     realidad: 'Presupuesto contra la realidad',
+    tarjetas: 'Tarjetas en el tiempo',
     hormiga: 'Gastos hormiga',
   },
   explicacionRemanente:
@@ -65,6 +67,14 @@ export const reportes = {
     sugerido: 'Sugerido',
     gastoComparado: 'Este período',
     variacion: 'Variación',
+    corte: 'Corte',
+    fechaPago: 'Fecha de pago',
+    deudaEstado: 'Deuda del estado',
+    pagadoATiempo: 'Pagado o acreditado a tiempo',
+    arrastre: 'Arrastre',
+    cargos: 'Cargos',
+    pagos: 'Pagos',
+    deudaAlFin: 'Deuda al fin',
     grupo: 'Grupo de compras',
     compras: 'Compras',
     total: 'Total',
@@ -105,6 +115,20 @@ export const reportes = {
     porCategoria: 'Categoría por categoría',
     sinHistoria: 'Hace falta historia de 3 períodos para comparar.',
     periodosDe: (categoria: string) => `Períodos de ${categoria}`,
+  },
+  tarjetas: {
+    arrastro: (tarjeta: string, arrastre: string, corte: string) =>
+      `Con ${tarjeta} quedaron ${arrastre} sin pagar del corte del ${corte}: esa deuda puede generar intereses.`,
+    pagaElTotal: (tarjeta: string) => `Con ${tarjeta} pagás el total cada mes.`,
+    sinCiclos: (tarjeta: string) => `Con ${tarjeta} todavía no hay ciclos vencidos para evaluar.`,
+    reservar: (monto: string) => `Reservar ${monto}`,
+    reservando: 'Reservando…',
+    reservado: (monto: string, tarjeta: string) => `Reservaste ${monto} para pagar ${tarjeta}.`,
+    pagar: (tarjeta: string) => `Pagar ${tarjeta}`,
+    ciclos: (tarjeta: string) => `Ciclos de ${tarjeta}`,
+    periodos: (tarjeta: string) => `Cargos y pagos de ${tarjeta} por período`,
+    resumenBarras: (n: number) =>
+      `Cargos por período, con los pagos como referencia: ${n} períodos`,
   },
   hormiga: {
     porCategoria: (n: number, categoria: string, total: string) =>
