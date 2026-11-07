@@ -529,15 +529,15 @@
 
   "TA-438": { "estado": "terminada", "rama": "ta-438-arrastrar-categoria", "pr": 440 },
 
-  "TA-439": { "estado": "pendiente" },
+  "TA-439": { "estado": "terminada", "rama": "ta-439-arrastre-3", "pr": 514 },
 
   "TA-446": { "estado": "pendiente" },
 
   "TA-447": { "estado": "terminada", "rama": "ta-447-recorridos-movil", "pr": 509 },
 
-  "TA-470": { "estado": "pendiente" },
+  "TA-470": { "estado": "retirada", "motivo": "CH-210: descartada, sin cuentas en Banco Agrícola" },
 
-  "TA-485": { "estado": "terminada", "rama": "ta-485-pruebas-puerta", "pr": 515 },
+  "TA-485": { "estado": "en_curso", "rama": "ta-485-pruebas-puerta-2" },
 
   "TA-500": { "estado": "terminada", "rama": "ta-500-desembolso-prestamo", "pr": 437 },
 

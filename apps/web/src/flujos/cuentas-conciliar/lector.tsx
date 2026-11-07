@@ -3,7 +3,11 @@
 // los traduce `consultar()`; una cuenta archivada o de otro tipo no abre el flujo (05 §7.7).
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { notFound } from 'next/navigation';
-import { iniciarConciliacion, terminarConciliacion } from '../../servidor/acciones/conciliacion';
+import {
+  agregarDesdeEstado,
+  iniciarConciliacion,
+  terminarConciliacion,
+} from '../../servidor/acciones/conciliacion';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { FormularioConciliar } from './formulario';
@@ -15,10 +19,16 @@ export async function LectorConciliar({ cuentaId }: { readonly cuentaId: string 
   const dto = await consultar(async () =>
     formulario(await depsDeConsulta(), { operacion: 'conciliar', cuentaId }),
   );
+  const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((g) =>
+    g.categorias.map((x) => ({ id: x.categoria.id, nombre: x.categoria.nombre })),
+  );
   return (
     <FormularioConciliar
       iniciar={iniciarConciliacion}
       terminar={terminarConciliacion}
+      agregar={agregarDesdeEstado}
+      categorias={categorias}
+      tiposAlta={dto.contexto.tiposAlta}
       cuentaId={cuentaId}
       cuenta={dto.contexto.cuenta.cuenta.nombre}
     />
