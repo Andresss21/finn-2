@@ -2,8 +2,8 @@
 // período 21/09 a 20/10) con las operaciones reales (DP-17) y encadena las pantallas de sus fichas con el reloj de prueba alineado
 // (07 §4.1). El estado de partida lleva la regla «SELECTOS → Supermercado» (04 OP-41, precondición del paso 1) y los últimos 4
 // dígitos de Visa Oro, para que el SMS la encuentre. Los números los pone el motor (PF-3). Huecos del plan: (1) el paso 1 usa el
-// token de FT-03 generado en Ajustes (06 no lo nombra en 4.2); (2) el paso 6 dice que Inicio asigna de un toque, pero Inicio solo
-// enlaza a la pantalla de asignar y la propuesta con «Deshacer» vive en /reportes/ritmo (FT-62): se recorre ahí; (3) el paso 7 dice
+// token de FT-03 generado en Ajustes (06 no lo nombra en 4.2); (2) [CH-215] el paso 6 se recorre en Inicio, que
+// asigna de un toque con el mismo componente del reporte de ritmo (FT-62); (3) el paso 7 dice
 // «en efectivo», pero A.7 no tiene cuenta de efectivo: se usa Cuenta corriente; (4) el push (paso 1) se comprueba por su
 // notificación en el centro, no por la entrega real (CA-70.7, lista manual).
 import { expect, test } from '../configuracion/semilla.ts';
@@ -185,15 +185,8 @@ test.describe('PRU-E2E-BAND recorrido 4.2 un día típico', () => {
       ti.hallazgo.ya('$26.30', 'Restaurantes', '$55.56', '20/10'),
     );
 
-    // Paso 6: «Asignar $55.56». Inicio enlaza el hallazgo a la pantalla de asignar de Restaurantes; la propuesta de un toque, con
-    // «Deshacer», vive en el reporte de ritmo (FT-62, CA-62.3): se toca ahí. Restaurantes sube $55.56 y su número es el mismo
-    // en Inicio, Presupuesto y el reporte (CA-62.6).
-    await hallazgo(page, 'Restaurantes')
-      .getByRole('link', { name: ti.hallazgo.asignar('$55.56') })
-      .click();
-    await expect(page).toHaveURL(/\/presupuesto\/asignar\//);
-    await esperarContenido(page);
-    await abrir(page, '/reportes/ritmo');
+    // Paso 6: «Asignar $55.56» en Inicio, de un toque y con «Deshacer» (CA-62.3, CH-215). Restaurantes sube $55.56 y su número es
+    // el mismo en Inicio, Presupuesto y el reporte (CA-62.6).
     await hallazgo(page, 'Restaurantes')
       .getByRole('button', { name: ti.hallazgo.asignar('$55.56'), exact: true })
       .click();
