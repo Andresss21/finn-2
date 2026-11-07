@@ -545,7 +545,7 @@
 
   "TA-503": { "estado": "terminada", "rama": "ta-503-gastos-hormiga", "pr": 447 },
 
-  "TA-504": { "estado": "pendiente" },
+  "TA-504": { "estado": "en_curso", "rama": "ta-504-suscripciones" },
 
   "TA-505": { "estado": "pendiente" },
 
