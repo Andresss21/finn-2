@@ -11,7 +11,7 @@ const h = (tipo: Hallazgo['tipo'], clave: string, impacto: number) => ({
 });
 
 describe('PRU-DOM-REP', () => {
-  it('PRU-DOM-REP-230 [FT-67, CA-67.1] con 8 hallazgos en 6 claves queda uno por clave (el de mayor impacto), por impacto descendente y solo 5', () => {
+  it('PRU-DOM-REP-230 [FT-67, CA-67.1] con 8 hallazgos en 6 claves queda uno por clave (el de mayor impacto; el promedio cede), por impacto descendente y solo 5', () => {
     const o = ordenarHallazgos([
       h('promedio', 'categoria:rest', 9000),
       h('ritmo', 'categoria:rest', 5556),
@@ -23,20 +23,28 @@ describe('PRU-DOM-REP', () => {
       h('realidad', 'categoria:ocio', 100),
     ]);
     expect(o.map((x) => [x.tipo, x.clave])).toEqual([
-      ['promedio', 'categoria:rest'],
       ['tarjeta', 'tarjeta:visa'],
+      ['ritmo', 'categoria:rest'],
       ['realidad', 'categoria:gas'],
       ['hormiga', 'categoria:cafe'],
       ['hormiga', 'comercio:uber'],
     ]);
-    expect(o.map((x) => x.impacto)).toEqual([9000, 7000, 4000, 3000, 2000].map(c));
+    expect(o.map((x) => x.impacto)).toEqual([7000, 5556, 4000, 3000, 2000].map(c));
   });
 
-  it('PRU-DOM-REP-231 [FT-67, CA-67.2] a igual clave e impacto queda el de menor orden de tipo: el de ritmo gana al de promedio', () => {
+  it('PRU-DOM-REP-231 [FT-67] a igual clave e impacto queda el de menor orden de tipo: el de ritmo gana al de promedio', () => {
     const o = ordenarHallazgos([
       h('promedio', 'categoria:rest', 5556),
       h('ritmo', 'categoria:rest', 5556),
     ]);
     expect(o.map((x) => x.tipo)).toEqual(['ritmo']);
+  });
+
+  it('PRU-DOM-REP-232 [FT-67, CA-67.2, CH-214] con A.7, Restaurantes con ritmo de $55.56 y promedio de $63.61 queda con el de ritmo', () => {
+    const o = ordenarHallazgos([
+      h('promedio', 'categoria:rest', 6361),
+      h('ritmo', 'categoria:rest', 5556),
+    ]);
+    expect(o.map((x) => [x.tipo, x.impacto])).toEqual([['ritmo', c(5556)]]);
   });
 });

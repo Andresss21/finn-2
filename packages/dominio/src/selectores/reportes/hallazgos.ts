@@ -39,8 +39,8 @@ type Ordenable = Pick<Hallazgo, 'tipo' | 'clave' | 'impacto'>;
 const menor = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
- * Una fila por clave (la de mayor impacto; a igual impacto, la de menor orden de tipo), por impacto
- * descendente, después orden de tipo y después clave; como máximo `HALLAZGOS_MAX`.
+ * Una fila por clave (la de mayor impacto; a igual impacto, la de menor orden de tipo; el promedio cede
+ * siempre ante otro de su clave, CH-214), por impacto descendente, después orden de tipo y después clave; como máximo `HALLAZGOS_MAX`.
  */
 export function ordenarHallazgos<T extends Ordenable>(
   hs: readonly T[],
@@ -50,10 +50,12 @@ export function ordenarHallazgos<T extends Ordenable>(
   const mejor = new Map<string, T>();
   for (const h of hs) {
     const otro = mejor.get(h.clave);
+    const cede = (x: T) => x.tipo === 'promedio';
     if (
       otro === undefined ||
-      h.impacto > otro.impacto ||
-      (h.impacto === otro.impacto && orden(h) < orden(otro))
+      (cede(otro) && !cede(h)) ||
+      (cede(otro) === cede(h) &&
+        (h.impacto > otro.impacto || (h.impacto === otro.impacto && orden(h) < orden(otro))))
     )
       mejor.set(h.clave, h);
   }

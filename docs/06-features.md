@@ -980,7 +980,7 @@ interface TarjetasDto extends Encabezado {
 #### 3.5.11 Hallazgos (FD-17)
 
 El reporte `hallazgos` junta los de ritmo, realidad, comparación con el promedio, hormiga, suscripciones y tarjetas del período activo:
-- **Una fila por clave:** si una clave tiene varios hallazgos, queda el de mayor impacto; a igual impacto, el de menor orden de tipo. **[R1]** Antes, los hallazgos de hormiga de comercio y de categoría que comparten compras ya se deduplicaron con el mismo criterio (3.5.8).
+- **Una fila por clave:** si una clave tiene varios hallazgos, queda el de mayor impacto; a igual impacto, el de menor orden de tipo. **[CH-214]** El hallazgo de promedio cede siempre ante cualquier otro de la misma clave (ritmo, tarjeta, realidad, suscripción, hormiga), sin importar el impacto; la regla de mayor impacto vale entre los demás tipos. **[R1]** Antes, los hallazgos de hormiga de comercio y de categoría que comparten compras ya se deduplicaron con el mismo criterio (3.5.8).
 - **Impacto:** ritmo, el exceso; realidad, |Sugerido − Asig(c, A)|; promedio, |gasto − promedio|; hormiga, el total; suscripción, el costo mensual; tarjeta, el arrastre.
 - **Orden:** impacto descendente; después, orden de tipo (ritmo, tarjeta, realidad, suscripción, hormiga, promedio); después, la clave.
 - **Máximo:** `HALLAZGOS_MAX`.
