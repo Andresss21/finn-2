@@ -29,7 +29,7 @@ const periodo = (
   fechas: { ingreso: string; restaurantes: string; super: string },
 ): Op[] => {
   const hoy = INICIOS[k] ?? HOY;
-  const p = PERIODOS[k] ?? 'P1';
+  const p = PERIODOS[k];
   return [
     ...(k === 0
       ? ([
