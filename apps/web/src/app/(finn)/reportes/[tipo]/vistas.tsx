@@ -10,6 +10,7 @@ import { formatearFecha, formatearMesCorto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
 import type { TipoDeReporte } from './tipos';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
+import { Hormiga } from './hormiga';
 import { Realidad } from './realidad';
 import type { AccionesRealidad } from './realidad-hallazgos';
 import { Ritmo } from './ritmo';
@@ -121,6 +122,9 @@ export function cuerpoDe(
   realidad?: AccionesRealidad,
 ): ReactNode {
   switch (tipo) {
+    case 'hormiga':
+      // Siempre dibuja: sin grupos dice su propio estado (06 FT-64), no «No hay movimientos».
+      return <Hormiga dto={dto as ReporteDe<'hormiga'>} />;
     case 'realidad': {
       const d = dto as ReporteDe<'realidad'>;
       return d.categorias.length === 0 ? null : (
