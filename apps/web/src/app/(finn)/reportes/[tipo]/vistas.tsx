@@ -10,6 +10,7 @@ import { formatearFecha, formatearMesCorto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
 import type { TipoDeReporte } from './tipos';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
+import { Flujo } from './flujo';
 import { Hormiga } from './hormiga';
 import { Realidad } from './realidad';
 import type { AccionesRealidad } from './realidad-hallazgos';
@@ -151,6 +152,21 @@ export function cuerpoDe(
           periodoInicio={d.periodoActivo.inicio}
           {...(realidad === undefined ? {} : { acciones: realidad })}
         />
+      );
+    }
+    case 'flujo_efectivo': {
+      const d = dto as ReporteDe<'flujo_efectivo'>;
+      // Sin movimientos: ni saldos, ni filas, ni compras con tarjeta en ningún período de la ventana.
+      const sin = sinMovimiento(
+        d.periodos.flatMap((p) => [
+          p.saldoInicial,
+          p.saldoFinal,
+          p.comprasConTarjeta,
+          ...p.filas.map((f) => f.monto),
+        ]),
+      );
+      return sin ? null : (
+        <Flujo dto={d} {...(realidad === undefined ? {} : { acciones: realidad })} />
       );
     }
     case 'ritmo': {

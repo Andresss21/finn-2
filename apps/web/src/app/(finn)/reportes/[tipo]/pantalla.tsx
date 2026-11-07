@@ -179,6 +179,11 @@ export function PantallaReporte({
       >
         <div data-reporte-filtros className="flex flex-col gap-5">
           <h2 className="text-titulo-seccion">{t.titulos[url]}</h2>
+          {url === 'flujo-efectivo' ? (
+            <p data-explicacion className="text-cuerpo-pequeno text-texto-secundario">
+              {t.explicacionFlujo}
+            </p>
+          ) : null}
           {url === 'remanente' ? (
             <p data-explicacion className="text-cuerpo-pequeno text-texto-secundario">
               {t.explicacionRemanente}
