@@ -137,7 +137,8 @@ jobs:
     needs: rapido
     if: needs.rapido.outputs.e2e == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # CH-208: en main tarda de 22m29 a 27m40; 30 cortó #446.
+    timeout-minutes: 45
     # 07 §7.3: issues: write solo aquí, para el issue `prueba-inestable` de cada prueba flaky
     permissions:
       contents: read

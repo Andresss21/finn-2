@@ -34,6 +34,23 @@ export function clienteConFrasco() {
   return { cliente, frasco };
 }
 
+type ClienteAuthE2E = ReturnType<typeof clienteConFrasco>['cliente']['auth'];
+
+/**
+ * El factor del secreto de `codigoTotp` (CH-208). Con un respaldo (FT-02, FT-74) hay dos verificados, y `verificarFactor` sin
+ * `factorId` reta al primero que lista Auth, sin orden fijo: el código del usuario iba al respaldo y fallaba. El del usuario es
+ * el más antiguo: los respaldos siempre se agregan después.
+ */
+export async function factorPrincipal(auth: ClienteAuthE2E): Promise<string> {
+  const { data, error } = await auth.mfa.listFactors();
+  if (error !== null) throw new Error('no se pudieron listar los factores del usuario de prueba');
+  const [primero] = data.all
+    .filter((f) => f.factor_type === 'totp' && f.status === 'verified')
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  if (primero === undefined) throw new Error('el usuario de prueba no tiene factor verificado');
+  return primero.id;
+}
+
 export async function entrarAal2(context: BrowserContext, baseURL: string): Promise<void> {
   const { cliente, frasco } = clienteConFrasco();
   const finn = variable('FINN_USUARIO_ID');
@@ -42,7 +59,10 @@ export async function entrarAal2(context: BrowserContext, baseURL: string): Prom
     contrasena: variable('E2E_CLAVE'),
   });
   if (!paso.ok) throw new Error('el usuario de prueba no pudo ingresar');
-  const factor = await verificarFactor(cliente.auth, finn, { codigo: codigoTotp() });
+  const factor = await verificarFactor(cliente.auth, finn, {
+    factorId: await factorPrincipal(cliente.auth),
+    codigo: codigoTotp(),
+  });
   if (!factor.ok) throw new Error('el factor TOTP del usuario de prueba no se verificó');
   await context.clearCookies();
   await context.addCookies([...frasco].map(([name, value]) => ({ name, value, url: baseURL })));

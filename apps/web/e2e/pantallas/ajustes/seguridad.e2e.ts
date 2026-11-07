@@ -1,9 +1,16 @@
 // FT-74 Factores y sesiones (06 §2.2; 05 §9.6; 07 §17: una pantalla, una navegación o un flujo). El usuario de prueba termina con
-// su factor de siempre; las pruebas que agregan un respaldo lo quitan. «Cerrar las otras sesiones» mata la sesión compartida de
-// `inicio-sesion.setup.ts`: la última prueba deja en su archivo la sesión que sigue viva, como `inscribir.e2e.ts`.
+// su factor de siempre: antes del grupo y después de cada prueba se quitan los respaldos que quedaran, aunque una prueba falle a
+// la mitad (CH-208: un respaldo colgado hacía que `entrarAal2` retara al factor equivocado y tumbaba las pantallas siguientes).
+// «Cerrar las otras sesiones» mata la sesión compartida de `inicio-sesion.setup.ts`: apenas cierra, y otra vez al terminar, la
+// prueba deja en su archivo la sesión que sigue viva, como `inscribir.e2e.ts`.
 import { expect, test } from '../../configuracion/semilla.ts';
 import { esperarHidratacion } from '../../ayudas/esperas.ts';
-import { clienteAal1, clienteAal2, listarFactores } from '../../ayudas/factores.ts';
+import {
+  clienteAal1,
+  clienteAal2,
+  listarFactores,
+  quitarRespaldos,
+} from '../../ayudas/factores.ts';
 import { entrarAal2, variable } from '../../ayudas/sesion.ts';
 import { codigoDe } from '../../ayudas/totp.ts';
 import {
@@ -48,6 +55,8 @@ async function abrirSeguridad(page: Page): Promise<void> {
 
 test.describe('PRU-E2E-ACCESO', () => {
   test.describe.configure({ mode: 'serial' });
+  test.beforeAll(quitarRespaldos);
+  test.afterEach(quitarRespaldos);
 
   test('PRU-E2E-ACCESO-113 [CA-74.1] con un solo factor verificado, Quitar lo explica con el enlace a agregar otro y quitarFactor responde factor_unico', async ({
     page,
@@ -115,6 +124,8 @@ test.describe('PRU-E2E-ACCESO', () => {
     await abrirSeguridad(page);
     await page.getByRole('button', { name: t.cerrarOtras }).click();
     await expect(page.getByText(t.otrasCerradas)).toBeVisible();
+    // La sesión compartida del setup murió: queda esta, ya ahora por si algo de abajo falla, y otra vez al final con sus cookies
+    await page.context().storageState({ path: ARCHIVO_SESION });
 
     // Esta sigue: una escritura (que verifica con `getUser()`) vuelve a funcionar
     await page.getByRole('button', { name: t.cerrarOtras }).click();
@@ -127,7 +138,7 @@ test.describe('PRU-E2E-ACCESO', () => {
     await otra.waitForURL('**/ingresar**');
     await otraContexto.close();
 
-    await page.context().storageState({ path: ARCHIVO_SESION }); // la sesión compartida del setup murió: queda esta
+    await page.context().storageState({ path: ARCHIVO_SESION });
   });
 
   test('PRU-E2E-ACCESO-116 [CA-74.4] Salir pide ingresar al volver, borra los borradores de la pestaña y deja la suscripción push', async ({

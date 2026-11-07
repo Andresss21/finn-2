@@ -479,7 +479,7 @@
 
   "TA-419": { "estado": "terminada", "rama": "ta-419-condiciones-amortizacion", "pr": 423 },
 
-  "TA-420": { "estado": "pendiente" },
+  "TA-420": { "estado": "terminada", "rama": "ta-420-inversiones-3", "pr": 507 },
 
   "TA-421": { "estado": "terminada", "rama": "ta-421-reportes-base", "pr": 316 },
 
@@ -533,7 +533,7 @@
 
   "TA-446": { "estado": "pendiente" },
 
-  "TA-447": { "estado": "pendiente" },
+  "TA-447": { "estado": "terminada", "rama": "ta-447-recorridos-movil", "pr": 509 },
 
   "TA-470": { "estado": "pendiente" },
 
@@ -543,7 +543,7 @@
 
   "TA-502": { "estado": "pendiente" },
 
-  "TA-503": { "estado": "pendiente" },
+  "TA-503": { "estado": "terminada", "rama": "ta-503-gastos-hormiga", "pr": 447 },
 
   "TA-504": { "estado": "pendiente" },
 
@@ -553,7 +553,7 @@
 
   "TA-549": { "estado": "bloqueada", "motivo": "CF-03" },
 
-  "TA-550": { "estado": "pendiente" },
+  "TA-550": { "estado": "terminada", "rama": "ta-550-rendimiento-pantallas", "pr": 445 },
 
   "TA-551": { "estado": "terminada", "rama": "ta-551-billete-selector-periodo", "pr": 231 },
 

@@ -138,10 +138,15 @@ export function PantallaReporte({
     Object.entries(parametros).filter(([k]) => (COMPARTIDOS as readonly string[]).includes(k)),
   );
   const semanal = url === 'gasto-semanal' ? (dto as ReporteDe<'gasto_semanal'>) : null;
+  // `hormiga` también elige un período (`?periodo=`) y se filtra solo por cuentas.
+  const deHormiga = url === 'hormiga' ? (dto as ReporteDe<'hormiga'>) : null;
+  const conPeriodo = semanal ?? deHormiga;
   // `ritmo` y `realidad` son siempre del período activo (05 §2.10): sin ventana ni cuentas.
   const delActivo = url === 'ritmo' || url === 'realidad';
-  const filtros = semanal === null && !delActivo ? filtrosDe(url, parametros, nombres) : [];
-  const [ventana, ...otros] = filtros;
+  const todos = semanal === null && !delActivo ? filtrosDe(url, parametros, nombres) : [];
+  // `hormiga` elige su período con el selector: no lleva la ventana, solo las cuentas.
+  const [primero, ...otros] = todos;
+  const ventana = deHormiga === null ? primero : undefined;
   // Sin movimientos, la salida del diseño es mirar más períodos; si ya se miran 3 o más, no hay a dónde ampliar.
   const ampliar =
     parametros.ventana === 'ultimos_3' ||
@@ -174,22 +179,27 @@ export function PantallaReporte({
               {t.explicacionRemanente}
             </p>
           ) : null}
+          {conPeriodo === null ? null : (
+            <SelectorPeriodo
+              periodo={conPeriodo.periodo}
+              periodoActivo={dto.periodoActivo}
+              {...(conPeriodo.navegacion.anterior === undefined
+                ? {}
+                : { anterior: conPeriodo.navegacion.anterior })}
+              {...(conPeriodo.navegacion.siguiente === undefined
+                ? {}
+                : { siguiente: conPeriodo.navegacion.siguiente })}
+              ruta={`/reportes/${url}`}
+              parametros={{
+                ...(parametros.categorias === undefined
+                  ? {}
+                  : { categorias: parametros.categorias }),
+                ...(parametros.cuentas === undefined ? {} : { cuentas: parametros.cuentas }),
+              }}
+            />
+          )}
           {semanal === null ? null : (
             <>
-              <SelectorPeriodo
-                periodo={semanal.periodo}
-                periodoActivo={dto.periodoActivo}
-                {...(semanal.navegacion.anterior === undefined
-                  ? {}
-                  : { anterior: semanal.navegacion.anterior })}
-                {...(semanal.navegacion.siguiente === undefined
-                  ? {}
-                  : { siguiente: semanal.navegacion.siguiente })}
-                ruta="/reportes/gasto-semanal"
-                parametros={
-                  parametros.categorias === undefined ? {} : { categorias: parametros.categorias }
-                }
-              />
               <Pestanas
                 etiqueta={t.gastoSemanal.categorias}
                 pestanas={categoriasDe(semanal, parametros, nombres)}
