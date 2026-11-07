@@ -11,6 +11,7 @@ import { COLOR_TEXTO } from '../../../../componentes/dominio/indicador-estado';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { centavosATextoDecimal, formatearFecha, formatearMonto } from '../../../../formato';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
+import { ConfirmacionUnToque } from '../../../../formularios/confirmacion-un-toque';
 import { useUnToque } from '../../../../formularios/use-un-toque';
 import { inicio as ti } from '../../../../textos/inicio';
 import { reportes as t } from '../../../../textos/reportes';
@@ -139,6 +140,7 @@ export function HallazgosRitmo({
           </div>
         );
       })}
+      <ConfirmacionUnToque un={un} />
       {un.salida === null ? null : (
         <div data-ritmo-asignado>
           <AvisoEnLinea
