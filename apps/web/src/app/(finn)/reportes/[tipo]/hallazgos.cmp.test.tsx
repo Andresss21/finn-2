@@ -117,7 +117,7 @@ const mostrar = (datos: ReporteDto): HTMLElement => {
 };
 
 describe('PRU-CMP-REP hallazgos accionables', () => {
-  it('PRU-CMP-REP-232 [FT-67, CA-67.1] dibuja los hallazgos del DTO en su orden, uno por clave, cada uno con la acción de su reporte; sin violaciones de axe en claro ni en oscuro', async () => {
+  it('PRU-CMP-REP-250 [FT-67, CA-67.1] dibuja los hallazgos del DTO en su orden, uno por clave, cada uno con la acción de su reporte; sin violaciones de axe en claro ni en oscuro', async () => {
     const datos = dto([tarjeta, ritmo, promedio, suscripcion]);
     for (const tema of ['claro', 'oscuro']) {
       document.documentElement.setAttribute('data-theme', tema);
@@ -153,7 +153,7 @@ describe('PRU-CMP-REP hallazgos accionables', () => {
     }
   });
 
-  it('PRU-CMP-REP-233 [FT-67] sin hallazgos dice «Todo en orden: no encontramos nada que ajustar este período.»', () => {
+  it('PRU-CMP-REP-251 [FT-67] sin hallazgos dice «Todo en orden: no encontramos nada que ajustar este período.»', () => {
     const raiz = mostrar(dto([]));
     expect(raiz.querySelector('[data-sin-hallazgos]')?.textContent).toBe(
       'Todo en orden: no encontramos nada que ajustar este período.',

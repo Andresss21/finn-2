@@ -40,7 +40,7 @@ describe('PRU-DOM-REP', () => {
     expect(o.map((x) => x.tipo)).toEqual(['ritmo']);
   });
 
-  it('PRU-DOM-REP-232 [FT-67, CA-67.2, CH-214] con A.7, Restaurantes con ritmo de $55.56 y promedio de $63.61 queda con el de ritmo', () => {
+  it('PRU-DOM-REP-232 [FT-67, CA-67.2] con A.7, Restaurantes con ritmo de $55.56 y promedio de $63.61 queda con el de ritmo', () => {
     const o = ordenarHallazgos([
       h('promedio', 'categoria:rest', 6361),
       h('ritmo', 'categoria:rest', 5556),
