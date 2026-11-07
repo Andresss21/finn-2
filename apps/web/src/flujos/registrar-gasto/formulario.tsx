@@ -217,7 +217,11 @@ export function FormularioRegistrarGasto({
       {...(estado === 'confirmando'
         ? {}
         : {
-            acciones: <div className="w-full md:ml-auto md:w-[calc(50%-1.125rem)]">{guardar}</div>,
+            acciones: (
+              <div className="w-full @[996px]:ml-auto @[996px]:w-[calc(50%-1.125rem)]">
+                {guardar}
+              </div>
+            ),
           })}
     >
       {estado === 'confirmando' ? (
@@ -244,8 +248,8 @@ export function FormularioRegistrarGasto({
           <Suspense fallback={null}>
             <BorradorGasto campos={c} inicial={inicial} operacion={operacion} reset={reset} />
           </Suspense>
-          <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:items-start md:gap-x-9">
-            <div className="flex flex-col gap-4.5 md:col-start-1 md:row-start-1">
+          <div className="flex flex-col gap-6 @[996px]:grid @[996px]:grid-cols-2 @[996px]:items-start @[996px]:gap-x-9">
+            <div className="flex flex-col gap-4.5 @[996px]:col-start-1 @[996px]:row-start-1">
               <SeleccionNativa
                 etiqueta={t.cuenta}
                 alta
@@ -294,7 +298,7 @@ export function FormularioRegistrarGasto({
                 </Suspense>
               ) : null}
             </div>
-            <div className="md:col-start-2 md:row-span-2 md:row-start-1">
+            <div className="@[996px]:col-start-2 @[996px]:row-span-2 @[996px]:row-start-1">
               <Suspense fallback={null}>
                 <LineasDeGasto
                   lineas={c.lineas}
@@ -316,7 +320,7 @@ export function FormularioRegistrarGasto({
                 />
               </Suspense>
             </div>
-            <div className="md:col-start-1 md:row-start-2">
+            <div className="@[996px]:col-start-1 @[996px]:row-start-2">
               <EntradaTexto etiqueta={t.nota} autoComplete="off" {...formulario.register('nota')} />
             </div>
           </div>

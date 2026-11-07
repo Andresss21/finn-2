@@ -60,7 +60,9 @@ function FilaDetallada({
         <span className="truncate text-cuerpo font-semibold text-texto">
           {fila.comercio ?? dominio.sinComercio}
         </span>
-        <span className="text-cuerpo-pequeno text-texto-secundario">{detalle.subtitulo}</span>
+        <span className="truncate text-cuerpo-pequeno text-texto-secundario">
+          {detalle.subtitulo}
+        </span>
         <span className="flex flex-wrap gap-2">
           {fila.estadoBancario === 'pendiente' ? (
             <span className={PENDIENTE}>

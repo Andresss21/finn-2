@@ -83,9 +83,21 @@ body {
     right: 3.75rem;
     font-size: 1.625rem;
   }
+  /* [CH-227] Pantalla de Más secciones: solo la campana a la derecha (44 + margen), el título no se trunca. */
+  #contenido[data-barra='secundaria'] h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
+    right: 4rem;
+  }
   /* «Más acciones» (tres puntos) suma un botón de 44 a la derecha de la campana. */
-  #contenido[data-barra='hija'][data-acciones] h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
+  #contenido[data-barra='hija'][data-acciones] h1.text-titulo-pantalla:not([data-pagina-flujo] *),
+  #contenido[data-barra='secundaria'][data-acciones]
+    h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
     right: 6.75rem;
+  }
+  /* [CH-227] Teléfono angosto: Registrar queda solo con su ícono (44 × 44), y al título le toca el resto. */
+  @media (width < 25rem) {
+    #contenido[data-barra='principal'] h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
+      right: 10rem;
+    }
   }
   /* Flujo largo a pantalla completa: sin la barra superior ni la inferior. */
   body:has([data-pagina-flujo]) [data-marco-barra] {
@@ -98,10 +110,18 @@ body {
 
 /* Computadora: a la izquierda, padding 32 48 48, `--ancho-pantalla` (o todo el ancho), título de 2.5 rem y lugar para la campana. */
 @media (width >= 48rem) {
+  /* [CH-220] Contenedor de las rejillas de dos columnas: colapsan por el ancho del contenedor y no por el de la ventana. */
+  #contenido {
+    container-type: inline-size;
+  }
   #contenido > main {
     margin-inline: 0;
-    max-width: var(--ancho-pantalla, none);
+    /* [CH-220 c] 1144 px; Inicio fija su `--ancho-pantalla`; flujos y listas de Más secciones, 720 px. */
+    max-width: var(--ancho-pantalla, 71.5rem);
     padding: 2rem 3rem 3rem;
+  }
+  #contenido[data-lista] > main {
+    --ancho-pantalla: 45rem;
   }
   #contenido h1.text-titulo-pantalla {
     font-size: 2.5rem;

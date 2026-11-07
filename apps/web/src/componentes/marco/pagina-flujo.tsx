@@ -20,9 +20,9 @@ export interface PropsPaginaFlujo {
 // Clases literales (L13).
 const ANCHO = {
   normal:
-    'mx-auto flex min-h-dvh max-w-xl flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:42rem]',
+    'mx-auto flex min-h-dvh max-w-xl flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:45rem]',
   ancha:
-    'mx-auto flex min-h-dvh max-w-270 flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:73.5rem]',
+    'mx-auto flex min-h-dvh max-w-270 flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:71.5rem]',
 } as const;
 
 export function PaginaFlujo({

@@ -122,6 +122,125 @@ test.describe('PRU-E2E-PWA', () => {
     await expect(page).toHaveURL('/notificaciones');
   });
 
+  test('PRU-E2E-PWA-300 [] en 1440 × 900 el contenido mide como máximo 1144 px y un flujo y la lista de Ajustes, 720; con 860 px de contenedor las dos columnas de Inicio pasan a una', async ({
+    page,
+  }) => {
+    await sembrarBase();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const ancho = async (ruta: string): Promise<number> => {
+      await abrir(page, ruta);
+      return (await page.locator('#contenido > main').boundingBox())?.width ?? 0;
+    };
+    expect(await ancho('/presupuesto')).toBeLessThanOrEqual(1144);
+    expect(await ancho('/cuentas/nueva')).toBeLessThanOrEqual(720);
+    expect(await ancho('/ajustes')).toBeLessThanOrEqual(720);
+    expect(await ancho('/ajustes')).toBeGreaterThan(600);
+
+    // Inicio: dos columnas a 1440; con 860 px de contenedor (ventana − 248 de la barra lateral) una sola.
+    const columnas = async (): Promise<number> =>
+      page
+        .locator('#contenido > main')
+        .evaluate((m) => getComputedStyle(m).gridTemplateColumns.split(' ').length);
+    await abrir(page, '/');
+    expect(await columnas()).toBe(2);
+    await page.setViewportSize({ width: 860 + 248, height: 900 });
+    expect(await columnas()).toBe(1);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+  });
+
+  test('PRU-E2E-PWA-301 [] en 390 × 844, Programadas, Reglas y Ajustes llevan la campana y no Registrar ni ☰; Presupuesto conserva los tres y el título no lleva puntos suspensivos', async ({
+    page,
+  }) => {
+    test.skip(test.info().project.name !== 'movil', 'mide la barra del teléfono');
+    await sembrarBase();
+    await page.setViewportSize({ width: 390, height: 844 });
+    const campana = barra(page).getByRole('link', { name: /^Notificaciones/ });
+    const registrar = barra(page).getByRole('link', { name: navegacion.registrar });
+    const menu = barra(page).getByRole('button', { name: navegacion.secundarias });
+    const sinPuntos = async (): Promise<boolean> =>
+      titulo(page).evaluate((h) => h.scrollWidth <= h.clientWidth);
+    for (const ruta of ['/programadas', '/reglas', '/ajustes']) {
+      await abrir(page, ruta);
+      await expect(campana).toBeVisible();
+      await expect(registrar).toHaveCount(0);
+      await expect(menu).toHaveCount(0);
+      expect(await sinPuntos()).toBe(true);
+    }
+    await abrir(page, '/presupuesto');
+    await expect(campana).toBeVisible();
+    await expect(menu).toBeVisible();
+    await expect(registrar).toBeVisible();
+    // Con el título largo, Registrar queda solo con su ícono de 44 × 44 y conserva su nombre.
+    expect(await registrar.boundingBox()).toMatchObject({ width: 44, height: 44 });
+    expect(await sinPuntos()).toBe(true);
+  });
+
+  test('PRU-E2E-PWA-302 [] a 390 px los valores del detalle de categoría no se parten y el título de una fila de Actividad va en una línea con puntos suspensivos', async ({
+    page,
+  }) => {
+    test.skip(test.info().project.name !== 'movil', 'mide el teléfono');
+    fijarRelojServidor(`${HOY}T10:00:00-06:00`);
+    await sembrar(
+      {
+        id: 'SEM-MARCO-302',
+        titulo: 'Semilla de filas del marco',
+        refs: [],
+        hoy: HOY,
+        estadoInicial: [
+          { op: 'OP-01', cuenta: 'Ahorro' },
+          { op: 'OP-07', categoria: 'Ropa' },
+          { op: 'OP-21', monto: 300 },
+          { op: 'OP-14', categoria: 'Ropa', monto: 100, periodo: 'P1' },
+          { op: 'OP-20', cuenta: 'Ahorro', monto: 20, categoria: 'Ropa', fecha: '2027-02-05' },
+        ],
+        pasos: [],
+      },
+      HOY,
+    );
+    await page.setViewportSize({ width: 390, height: 844 });
+    const id = await (async (): Promise<string> => {
+      await abrir(page, '/presupuesto');
+      return (
+        (await page.locator('[data-fila-categoria]').first().getAttribute('data-fila-categoria')) ??
+        ''
+      );
+    })();
+    await abrir(page, `/presupuesto/categorias/${id}`);
+    // Cada valor de la rejilla cabe en una línea: su alto no pasa de 1.6 veces su tamaño de letra.
+    const valores = await page.locator('[data-numeros] dd, [data-centavos]').evaluateAll((els) =>
+      els.map((e) => {
+        const estilo = getComputedStyle(e);
+        return {
+          alto: e.getBoundingClientRect().height,
+          letra: Number.parseInt(estilo.fontSize, 10),
+        };
+      }),
+    );
+    expect(valores.length).toBeGreaterThan(0);
+    for (const v of valores) expect(v.alto).toBeLessThanOrEqual(v.letra * 1.6);
+
+    await abrir(page, '/actividad');
+    const fila = page.locator('[data-fila-transaccion]').first();
+    const lineas = await fila.locator('span.truncate').evaluateAll((els) =>
+      els.map((e) => {
+        const estilo = getComputedStyle(e);
+        return {
+          nowrap: estilo.whiteSpace,
+          elipsis: estilo.textOverflow,
+          alto: e.getBoundingClientRect().height,
+          interlinea: Number.parseInt(estilo.lineHeight, 10),
+        };
+      }),
+    );
+    expect(lineas.length).toBeGreaterThanOrEqual(2);
+    for (const l of lineas) {
+      expect(l).toMatchObject({ nowrap: 'nowrap', elipsis: 'ellipsis' });
+      expect(l.alto).toBeLessThanOrEqual(l.interlinea * 1.1);
+    }
+  });
+
   test('PRU-E2E-PWA-182 [V5-17] NO_ENCONTRADO de una consulta muestra «Esto ya no existe.» con el glifo de búsqueda, no el de positivo', async ({
     page,
   }) => {

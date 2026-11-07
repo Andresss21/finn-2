@@ -132,17 +132,17 @@ export function PantallaDetalleCategoria({
   const numero = (rotulo: string, centavos: Centavos) => (
     <div key={rotulo} className="flex min-w-0 flex-col gap-0.5">
       <dt className="text-rotulo text-texto-secundario">{rotulo}</dt>
-      <dd className="font-semibold">
+      <dd className="whitespace-nowrap font-semibold">
         <Monto centavos={centavos} />
       </dd>
     </div>
   );
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-6 px-5 py-4 md:grid md:grid-cols-[1fr_1.6fr] md:items-start md:gap-x-8">
+    <main className="mx-auto flex max-w-5xl flex-col gap-6 px-5 py-4 @[996px]:grid @[996px]:grid-cols-[1fr_1.6fr] @[996px]:items-start @[996px]:gap-x-9">
       <PublicarEncabezado encabezado={dto} />
       <PublicarAcciones titulo={categoria.nombre} acciones={menu} />
-      <div className="flex flex-col gap-3 md:col-span-2">
+      <div className="flex flex-col gap-3 @[996px]:col-span-2">
         {volver}
         <SelectorPeriodo
           periodo={periodo}
@@ -236,7 +236,7 @@ export function PantallaDetalleCategoria({
         )}
       </div>
 
-      <div className="flex flex-col gap-6 md:row-span-2">
+      <div className="flex flex-col gap-6 @[996px]:row-span-2">
         <ConsumosYCalendario
           consumos={dto.consumos}
           calendario={dto.calendario}
@@ -313,7 +313,7 @@ export function PantallaDetalleCategoria({
           </Seccion>
         )}
       </div>
-      <nav aria-label={t.acciones.etiqueta} className="flex flex-col gap-2 md:col-start-1">
+      <nav aria-label={t.acciones.etiqueta} className="flex flex-col gap-2 @[996px]:col-start-1">
         {acciones.puedeAsignar && !cerrado ? (
           <div className="grid grid-cols-2 gap-2">
             <EnlaceFinn href={hrefAsignar} className={PRINCIPAL}>
