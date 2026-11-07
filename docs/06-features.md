@@ -520,7 +520,7 @@ La columna "Piezas principales" es orientativa; la trazabilidad completa está e
 | FT-56 | Desembolso de préstamo | P | Ocasional; un préstamo en curso se crea con su saldo (P13) | OP-26 |
 | FT-57 | Inversiones: aporte, retiro y ajuste | M | Mensual en algunos casos; no bloquea el presupuesto | OP-25 |
 | FT-58 | Modelos de préstamo de otros bancos | P | 01 Anexo A solo define Banco Agrícola. **Diferida [CH-119]** | — |
-| FT-59 | Proyección de inversiones | P | 01 A.3 no tiene modelo de rendimiento | — |
+| FT-59 | Proyección de inversiones | P | 01 A.3 no tiene modelo de rendimiento. **Diferida [CH-213]** | — |
 
 #### Reportes
 
@@ -3701,6 +3701,8 @@ Reglas comunes a todas las fichas:
 
 #### FT-59 Proyección de inversiones [P]
 
+**Diferida [CH-213].** CA-59.2 depende de un modelo de rendimiento que no existe (01 Anexo A.3); la ficha queda diferida y TA-502 `bloqueada` («diferida CH-213») hasta que exista un modelo aprobado, como FT-58 (CH-119). CA-59.1 y CA-59.3 ya los muestra la cabecera de inversión de FT-57 y se citan cuando se levante la diferida. Los CA siguen como están.
+
 **Objetivo.** Mostrar cuánto crecería una inversión según su rendimiento, cuando exista un modelo de proyección aprobado (01 A.3).
 
 **Historias.** Quiero ver cuánto valdrá mi depósito a plazo al vencer.
@@ -4341,7 +4343,7 @@ Reglas comunes a las fichas de reportes:
 - **CA-76.1** Dado el último respaldo hace más de 36 h, cuando abro `/ajustes`, entonces el índice dice "Respaldo atrasado" y `/ajustes/respaldo` muestra la fecha del último.
 - **CA-76.2** Dado la última restauración hace más de 35 días, cuando abro `/ajustes/respaldo`, entonces se marca como atrasada.
 - **CA-76.3** Dado un error con su referencia, cuando la busco en `/ajustes/diagnostico`, entonces encuentro el evento entre los 50 últimos.
-- **CA-76.4** Dado que toco "Ejecutar tareas ahora", cuando termina, entonces hay un evento `tarea_diaria` nuevo y una segunda ejecución inmediata no duplica ningún hecho (04 §10.3).
+- **CA-76.4** **[CH-207]** Dado que toco "Ejecutar tareas ahora", cuando termina, entonces la pantalla avisa que terminó y una segunda ejecución inmediata no duplica ningún hecho (04 §10.3). (Decía «hay un evento `tarea_diaria` nuevo», pero Diagnóstico solo muestra eventos `aviso` o `error`: 04 §6.11, §15.4.)
 
 **Escenarios.** — **Avisos.** —
 

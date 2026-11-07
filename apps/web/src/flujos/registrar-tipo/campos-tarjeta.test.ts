@@ -7,6 +7,7 @@ import {
   contratoDe,
   TIPOS,
   tipoDeTarjeta,
+  valoresDeUrl,
   valoresIniciales,
   type Campos,
 } from './campos-tarjeta';
@@ -77,5 +78,38 @@ describe('PRU-DOM-TX', () => {
     expect(tipoDeTarjeta('avance')).toBe('avance');
     expect(tipoDeTarjeta('ingreso')).toBeUndefined();
     expect(tipoDeTarjeta('gasto')).toBeUndefined();
+  });
+
+  it('PRU-DOM-TX-523 [CA-43.4] la propuesta de ajuste de la conciliación llega por la URL como fecha, monto y comercio, y OP-27 acepta la entrada con ese comercio', () => {
+    const url = valoresDeUrl({
+      fecha: '2027-02-15',
+      total: '2.00',
+      comercio: 'Ajuste de conciliación',
+    });
+    expect(url).toEqual({ fecha: '2027-02-15', total: '2.00', comercio: 'Ajuste de conciliación' });
+    expect(valoresIniciales('2027-02-16', T, url)).toMatchObject({
+      tarjetaId: T,
+      fecha: '2027-02-15',
+      total: '2.00',
+    });
+    const entrada = aEntradaDeAccion(
+      'entrada-tarjeta',
+      { ...valoresIniciales('2027-02-16', T, url), modo: 'confirmar', id: ID },
+      url.comercio,
+    );
+    expect(entrada).toMatchObject({ total: '2.00', comercio: 'Ajuste de conciliación' });
+    const { modo, ...sinModo } = entrada;
+    expect(modo).toBe('confirmar');
+    expect(op27.safeParse(sinModo).success).toBe(true);
+  });
+
+  it('PRU-DOM-TX-524 [CA-43.4] un valor de la URL con otra forma se ignora y el formulario abre con los valores de siempre', () => {
+    expect(valoresDeUrl({ fecha: 'ayer', total: '-3', comercio: '   ' })).toEqual({});
+    expect(valoresIniciales('2027-02-16', undefined, valoresDeUrl({ total: '1,5' }))).toMatchObject(
+      {
+        fecha: '2027-02-16',
+        total: '',
+      },
+    );
   });
 });

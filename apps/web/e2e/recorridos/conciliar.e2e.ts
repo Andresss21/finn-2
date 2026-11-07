@@ -1,9 +1,8 @@
 // Recorrido 4.5 «Conciliar» de 06 (REC-4.5; 07 §17: un recorrido es una E2E). Parte de ESC-47 paso 0 (hoy 16/02: T con A $40.00, B $25.00
 // y C $12.00; el estado al 15/02 trae A, B y D $10.00) con las operaciones reales (DP-17) y encadena las pantallas de sus fichas con el
-// reloj de prueba alineado (07 §4.1). Los números los pone el motor (PF-3). Dos pasos de 06 no se recorren porque la interfaz todavía
-// no los tiene: el paso 2 («Agrega D como gasto», OP-46, CA-43.5: la pantalla de conciliar dice que «Agregar» no está en la parte de
-// FT-43 que entregó TA-416) y los valores iniciales del paso 4 (CA-43.4: el enlace «Crear el ajuste» lleva solo `?cuenta=`); en el
-// paso 4 la prueba escribe a mano el monto y la fecha del estado. El paso 6 usa Ahorro: 06 nombra la cuenta de una financiera, que
+// reloj de prueba alineado (07 §4.1). Los números los pone el motor (PF-3). El paso 2 («Agrega D como gasto», OP-46, CA-43.5) y los
+// valores iniciales del paso 4 (CA-43.4) ya los tiene la interfaz desde TA-416 parte C, pero este recorrido todavía no los recorre:
+// el paso 4 escribe a mano el monto y la fecha del estado. El paso 6 usa Ahorro: 06 nombra la cuenta de una financiera, que
 // el estado de partida de 4.5 no tiene.
 import { expect, test, sembrar } from '../configuracion/semilla.ts';
 import { entrarAal2 } from '../ayudas/sesion.ts';
@@ -107,7 +106,9 @@ test.describe('PRU-E2E-CONC recorrido 4.5 conciliar', () => {
 
     // Paso 4: toca la propuesta de ajuste: la entrada a la tarjeta T, con el monto y la fecha del estado
     await page.getByRole('link', { name: t.crearAjuste }).click();
-    await expect(page).toHaveURL(new RegExp(`/registrar/entrada-tarjeta\\?cuenta=${T}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`/registrar/entrada-tarjeta\\?cuenta=${T}&fecha=2027-02-15&total=2\\.00`),
+    );
     await esperarContenido(page);
     await expect(
       page

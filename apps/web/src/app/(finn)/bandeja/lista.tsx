@@ -11,6 +11,7 @@ import { aprobarTodos } from '../../../servidor/acciones/bandeja';
 import { AprobarTodos } from './aprobar-todos';
 import type { DestinosArrastre } from './arrastre';
 import { FilaBandeja, type Soltado } from './fila';
+import { OtraCategoria } from './otra-categoria';
 
 /** La librería de arrastre llega aparte, después de hidratar (FD-30, V6-08): hasta entonces los botones hacen todo. */
 type Arrastre = typeof import('./arrastre');
@@ -58,6 +59,7 @@ export function ListaBandeja({
   const [soltado, setSoltado] = useState<(Soltado & { readonly movimientoId: string }) | null>(
     null,
   );
+  const [otra, setOtra] = useState<string | null>(null);
   const pedida = useRef(false);
   const contador = useRef(0);
   const cargar = useCallback(() => {
@@ -68,6 +70,9 @@ export function ListaBandeja({
   const alSoltar = useCallback((movimientoId: string, categoriaId: string) => {
     contador.current += 1;
     setSoltado({ movimientoId, categoriaId, n: contador.current });
+  }, []);
+  const elegirOtra = useCallback((movimientoId: string) => {
+    setOtra(movimientoId);
   }, []);
   const hayArrastrables = movimientos.some((m) => m.aprobacion.arrastrable === true);
   // Después de `load` y en el primer momento libre, con tope de 2 s (05 §13.3); antes, si hay un primer toque o tecla
@@ -173,6 +178,19 @@ export function ListaBandeja({
           movimientos={movimientos}
           destinos={destinos}
           alSoltar={alSoltar}
+          alElegirOtra={elegirOtra}
+        />
+      )}
+      {otra === null || destinos === undefined ? null : (
+        <OtraCategoria
+          grupos={destinos.grupos}
+          alElegir={(categoriaId) => {
+            alSoltar(otra, categoriaId);
+            setOtra(null);
+          }}
+          alCerrar={() => {
+            setOtra(null);
+          }}
         />
       )}
     </>

@@ -28,10 +28,12 @@ import {
   valoresIniciales,
   type Campos,
   type TipoDeTarjeta,
+  type ValoresDeUrl,
 } from './campos-tarjeta';
 import { ENLACE, Marco, REINTENTABLES, enSuCampo } from './formulario';
 
 type Cuenta = { readonly id: string; readonly nombre: string };
+const SIN_VALORES: ValoresDeUrl = {};
 
 export interface PropsFormularioRegistrarTarjeta {
   readonly tipo: TipoDeTarjeta;
@@ -39,6 +41,8 @@ export interface PropsFormularioRegistrarTarjeta {
   readonly tarjetas: readonly Cuenta[];
   readonly efectivo: readonly Cuenta[];
   readonly tarjetaPropuesta: string | undefined;
+  /** Valores iniciales que deja la propuesta de ajuste de la conciliación (AV-21, FD-06); solo la entrada a una tarjeta. */
+  readonly desdeUrl?: ValoresDeUrl;
   /** Interceptado sobre la pantalla de origen (05 §1.4): hoja o panel; sin él, página completa. */
   readonly superpuesto?: boolean;
 }
@@ -55,15 +59,20 @@ export function FormularioRegistrarTarjeta({
   tarjetas,
   efectivo,
   tarjetaPropuesta,
+  desdeUrl = SIN_VALORES,
   superpuesto = false,
 }: PropsFormularioRegistrarTarjeta) {
+  const comercio = tipo === 'entrada-tarjeta' ? desdeUrl.comercio : undefined;
   const esAvance = tipo === 'avance';
   const esDeuda = tipo === 'transferencia-deuda';
   const { titulo, listo, guardar } = t.flujos[tipo];
   const enviar: AccionEscritura = (payload) =>
-    registrarMovimientoTarjeta(aEntradaDeAccion(tipo, payload));
+    registrarMovimientoTarjeta(aEntradaDeAccion(tipo, payload, comercio));
   const operacion = useOperacion({ accion: enviar, creacion: true, previsualizarPrimero: esDeuda });
-  const inicial = useMemo(() => valoresIniciales(hoy, tarjetaPropuesta), [hoy, tarjetaPropuesta]);
+  const inicial = useMemo(
+    () => valoresIniciales(hoy, tarjetaPropuesta, desdeUrl),
+    [hoy, tarjetaPropuesta, desdeUrl],
+  );
   const contrato = useMemo(() => contratoDe(tipo), [tipo]);
   const formulario = useFormularioFinn<Campos>({ contrato, valoresIniciales: inicial, operacion });
   const [cambios, setCambios] = useState<readonly string[]>([]);
@@ -201,6 +210,7 @@ export function FormularioRegistrarTarjeta({
           noValidate
           className="flex flex-col gap-5"
         >
+          {comercio === undefined ? null : <p data-comercio>{comercio}</p>}
           {selecciones.map((x) => (
             <Seleccion
               key={x.campo}

@@ -35,6 +35,12 @@ export const iniciar: OperacionAccionable<unknown> = operacionLote((cruda, deps)
   conciliacion().iniciar(cruda, deps),
 );
 
+/** OP-46 Agregar desde el estado: el alta elegida con la carga firmada; AV-01 pide confirmar como en cualquier alta. */
+export const agregar: OperacionAccionable<unknown> = {
+  previsualizar: (entrada) => operacion(conciliacion().OP46).previsualizar(entrada),
+  confirmar: (entrada) => operacion(conciliacion().OP46).confirmar(entrada),
+};
+
 export const terminar: OperacionAccionable<unknown> = {
   previsualizar: (entrada) => operacion(conciliacion().OP47).previsualizar(entrada),
   confirmar: (entrada) => operacion(conciliacion().OP47).confirmar(entrada),
