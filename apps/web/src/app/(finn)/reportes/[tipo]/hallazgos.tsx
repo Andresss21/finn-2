@@ -29,6 +29,9 @@ const AUSENTE =
 
 const DE_UN_TOQUE: ReadonlySet<Hallazgo['tipo']> = new Set(['ritmo', 'tarjeta', 'realidad']);
 
+/** Identifica el componente: tras ejecutar un ritmo, la misma clave puede quedar con el de promedio y no debe reemplazarlo. */
+const idDe = (h: Hallazgo): string => `${h.tipo}:${h.clave}`;
+
 function AvisoSuscripcion({ hallazgo: h }: { readonly hallazgo: Suscripcion }) {
   const mensual = formatearMonto(h.mensual);
   return (
@@ -66,19 +69,19 @@ export function Hallazgos({
   // Los de un toque que se vieron: siguen montados tras revalidar (ver arriba).
   const [vistos, setVistos] = useState<ReadonlyMap<string, Hallazgo>>(new Map());
   const nuevos = dto.hallazgos.filter((h) => DE_UN_TOQUE.has(h.tipo));
-  if (nuevos.some((h) => vistos.get(h.clave) !== h))
-    setVistos(new Map([...vistos, ...nuevos.map((h): [string, Hallazgo] => [h.clave, h])]));
+  if (nuevos.some((h) => vistos.get(idDe(h)) !== h))
+    setVistos(new Map([...vistos, ...nuevos.map((h): [string, Hallazgo] => [idDe(h), h])]));
   if (dto.hallazgos.length === 0 && vistos.size === 0)
     return (
       <p data-sin-hallazgos className="text-cuerpo-pequeno text-texto-secundario">
         {t.hallazgos.sinHallazgos}
       </p>
     );
-  const presentes = new Set(dto.hallazgos.map((h) => h.clave));
-  const ausentes = [...vistos.values()].filter((h) => !presentes.has(h.clave));
+  const presentes = new Set(dto.hallazgos.map(idDe));
+  const ausentes = [...vistos.values()].filter((h) => !presentes.has(idDe(h)));
   const inicio = dto.periodo.inicio;
   const fila = (h: Hallazgo, ausente: boolean) => (
-    <div key={h.clave} data-hallazgo-fila={h.clave} className={ausente ? AUSENTE : undefined}>
+    <div key={idDe(h)} data-hallazgo-fila={h.clave} className={ausente ? AUSENTE : undefined}>
       {h.tipo === 'ritmo' ? (
         <HallazgosRitmo
           hallazgos={[h]}
@@ -108,8 +111,8 @@ export function Hallazgos({
   );
   return (
     <div data-hallazgos className="flex flex-col gap-2.5">
-      {dto.hallazgos.map((h) => fila(h, false))}
-      {ausentes.map((h) => fila(h, true))}
+      {/* Una sola lista: al pasar a ausente, el componente conserva su estado (y su «Deshacer»). */}
+      {[...dto.hallazgos.map((h) => fila(h, false)), ...ausentes.map((h) => fila(h, true))]}
     </div>
   );
 }
