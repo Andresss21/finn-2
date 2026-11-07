@@ -531,7 +531,7 @@
 
   "TA-439": { "estado": "terminada", "rama": "ta-439-arrastre-3", "pr": 514 },
 
-  "TA-446": { "estado": "pendiente" },
+  "TA-446": { "estado": "en_curso", "rama": "ta-446-recorridos-41-43" },
 
   "TA-447": { "estado": "terminada", "rama": "ta-447-recorridos-movil", "pr": 509 },
 
