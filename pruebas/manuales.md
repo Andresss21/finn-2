@@ -1,6 +1,6 @@
 # Procedimientos manuales
 
-Los 15 procedimientos de `docs/07-pruebas.md` §22.1, con los pasos de §29.2, §31.4, §31.5 y 04 §8.8 y §17.2 (DP-20). La matriz (`pnpm pruebas:matriz`, M10) exige en cada uno **Disparador**, **Pasos** numerados y **Resultado esperado**.
+Los 16 procedimientos de `docs/07-pruebas.md` §22.1, con los pasos de §29.2, §31.4, §31.5 y 04 §8.8 y §17.2 (DP-20). La matriz (`pnpm pruebas:matriz`, M10) exige en cada uno **Disparador**, **Pasos** numerados y **Resultado esperado**.
 
 - Cada ejecución se registra como una fila en `pruebas/manuales/resultados.md` (formato de 07 §22.2), con un commit firmado por el usuario (P7-18, P7-20). Los agentes no escriben ese archivo y un PR no puede tocarlo.
 - Vale el último resultado de cada manual. Una falla posterior reabre el pendiente (M16).
@@ -104,6 +104,37 @@ Los 15 procedimientos de `docs/07-pruebas.md` §22.1, con los pasos de §29.2, �
 **Resultado esperado:** la 1.0 no responde; la 2.0 sigue igual; queda libre el segundo cupo de Supabase.
 
 **Registro:** fila firmada en `resultados.md`.
+
+### PRU-MAN-OPER-004 [CH-220, TU-18] Reinicio de producción como primera vez
+
+**Dispositivo:** la PC, con GitHub, el panel de Supabase de la 2.0 y la app; el teléfono con MacroDroid, la app instalada y la app de autenticación.
+
+**Disparador:** una sola vez, antes de la fila `puerta abierta` y de las 8 semanas (TU-18, CH-220). Se conserva el usuario de Supabase Auth (correo, contraseña y `auth.users.id`, así que `FINN_USUARIO_ID` no cambia en Vercel); se borran todos los datos del usuario en `finn` y sus factores TOTP.
+
+**Pasos:**
+
+1. **Respaldo.** En GitHub, Actions → `respaldo.yml` → "Run workflow" sobre `main`. Esperar a que termine en verde. Es la vuelta atrás: restaurarlo (03 §12.2) devuelve los datos de antes.
+2. **Vaciar `finn`.** En el panel de Supabase, SQL Editor, con el rol `postgres`: pegar el contenido completo de `tools/db/reinicio-primera-vez.sql` de `main` y ejecutarlo. Debe terminar con "Success". Si da un error (por ejemplo, `lock_timeout` porque la app estaba escribiendo), no cambió nada: volver a ejecutarlo. El script vacía las 28 tablas de datos del usuario, deja la vigencia (día 21) y el grupo "Pagos de tarjeta" como en una base recién sembrada y conserva `instituciones`, `formatos_bancarios`, `estado_respaldo`, `eventos_sistema`, `revision` y `_prisma_migrations`.
+3. **Borrar los factores TOTP.** Primero, en la app de la PC, `/ajustes/seguridad` → "Cerrar las otras sesiones" y después "Salir". Después, en el panel de Supabase, Authentication → Users → el usuario → la sección de MFA: borrar cada factor. Si el panel no lo permite, en el SQL Editor: `DELETE FROM auth.mfa_factors WHERE user_id = '<FINN_USUARIO_ID>';` (sus desafíos se borran en cascada). Comprobar que `SELECT count(*) FROM auth.mfa_factors WHERE user_id = '<FINN_USUARIO_ID>';` da 0. Borrar también las entradas viejas de Finn en la app de autenticación y en el gestor de contraseñas.
+4. **Inscribir el TOTP nuevo, con su respaldo.** Entrar en la app con el correo y la contraseña de siempre: con 0 factores, la sesión AAL1 lleva a `/ingresar/inscribir` (FT-02). Escanear el QR, guardar el secreto en el gestor y verificar el código. En la pantalla de cierre, seguir la recomendación: `/ajustes/seguridad/factores/nuevo` para el factor "Respaldo" (FT-74).
+5. **Primer uso guiado (FT-04).** Inicio muestra los Primeros pasos con los tres pasos sin marcar y sin "Ocultar por ahora". Crear las cuentas con su saldo de hoy (`/cuentas/nueva`) y las categorías desde la plantilla (`/presupuesto/estructura/plantilla`).
+6. **Token del webhook (FT-03).** `/ajustes/webhook` dice que todavía no hay token. "Generar token", copiarlo y pegarlo en la acción HTTP de MacroDroid. Mandar un SMS de prueba y comprobar que llega a la Bandeja. Los SMS del banco que lleguen entre el paso 2 y este paso responden 401 con el token viejo: revisarlos en el historial de MacroDroid y registrarlos a mano si hace falta.
+7. **Push (FT-06).** En el teléfono, `/ajustes/notificaciones` → "Activar notificaciones" y aceptar el permiso. La lista muestra solo este dispositivo. Lo mismo en la PC si se quiere.
+8. **Comprobar Ajustes.** `/ajustes/diagnostico` muestra el commit desplegado y abre sin error (puede listar eventos de antes del reinicio: `eventos_sistema` se conserva y se purga a los 90 días); `/ajustes/respaldo` muestra la fecha del respaldo del paso 1, sin "Respaldo atrasado".
+9. **Registrar.** Fila firmada en `resultados.md` (texto abajo).
+
+**Resultado esperado:**
+
+- la app entra como la primera vez: inscripción del TOTP, Primeros pasos sin marcar, `/ajustes/webhook` sin token y sin dispositivos de push hasta activarlos;
+- el usuario de Auth y `FINN_USUARIO_ID` no cambiaron;
+- el respaldo del paso 1 sigue en B2 y `/ajustes/respaldo` lo muestra;
+- al día siguiente, el control de dinero de `respaldo.yml` sigue en verde: la caída de los conteos por tabla es informativa (CH-91).
+
+**Registro:** fila firmada en `resultados.md`, antes de la de `puerta abierta`:
+
+`| PRU-MAN-OPER-004 | <AAAA-MM-DD> | PC con Windows y Android | pasa | Andrés | <commit desplegado> | reinicio a primera vez (CH-220): respaldo <id de la ejecución de respaldo.yml>; TOTP y respaldo inscritos; token nuevo en MacroDroid; push activo |`
+
+**No verificado aquí:** el panel de Supabase (si la ficha del usuario permite borrar los factores) y el `DELETE` sobre `auth.mfa_factors` con el rol `postgres`; la prueba PRU-INT-OPER-101 corre el script en PostgreSQL 17 como superusuario, no con el `postgres` de Supabase, que lo ejecuta con la concesión temporal de CH-53, igual que `tools/db/bootstrap.sql`.
 
 ### PRU-MAN-BAND-001 [CA-03.5, SP-04] Prueba del teléfono con MacroDroid
 
