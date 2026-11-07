@@ -541,7 +541,7 @@
 
   "TA-501": { "estado": "bloqueada", "motivo": "diferida CH-119" },
 
-  "TA-502": { "estado": "pendiente" },
+  "TA-502": { "estado": "bloqueada", "motivo": "diferida CH-213" },
 
   "TA-503": { "estado": "terminada", "rama": "ta-503-gastos-hormiga", "pr": 447 },
 
