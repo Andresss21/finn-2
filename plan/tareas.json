@@ -571,7 +571,7 @@
 
   "TA-319": { "estado": "terminada", "rama": "ta-319-detalle-categoria-4", "pr": 286 },
 
-  "TA-486": { "estado": "en_curso", "rama": "ta-486-fixes-visuales-registro" },
+  "TA-486": { "estado": "terminada", "rama": "ta-486-fixes-visuales-registro", "pr": 529 },
 
   "TA-487": { "estado": "pendiente" },
 
