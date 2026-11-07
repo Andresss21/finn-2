@@ -30,7 +30,7 @@ test.describe('PRU-REN-BAND', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-REN-BAND-001 [V6-07, V6-08, CA-78.12] la librería de arrastre no se descarga antes de `load` en /bandeja: llega como un trozo aparte después de hidratar y pesa menos de 20 KB gzip', async ({
+  test('PRU-REN-BAND-001 [V6-07, V6-08, CA-78.12] la librería de arrastre no se descarga antes de «load» en /bandeja: llega como un trozo aparte después de hidratar y pesa menos de 20 KB gzip', async ({
     page,
   }) => {
     fijarRelojServidor(`${DIA_20}T20:00:00-06:00`);

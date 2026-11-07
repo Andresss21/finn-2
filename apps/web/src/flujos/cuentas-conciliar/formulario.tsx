@@ -2,7 +2,7 @@
 // `/cuentas/[cuentaId]/conciliar` (FT-43, OP-45 y OP-47; 06 FT-43; 05 §2.7, §4.11): subir el CSV, ver la clasificación que dice el
 // servidor, marcar las coincidencias y terminar. La carga firmada vive solo en el estado del componente; el borrador guarda la
 // huella SHA-256 del archivo y las marcas, y las restaura si se vuelve a subir el mismo archivo (CA-43.7). No calcula montos (PF-3).
-// «Agregar» desde el estado (OP-46) no está en esta parte de la ficha.
+// «Agregar» desde el estado (OP-46) lo arma `agregar.tsx`.
 import type { SalidaOp45 } from '@finn/aplicacion/operaciones/conciliacion';
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -13,24 +13,32 @@ import { Monto } from '../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { almacen } from '../../cliente/almacen';
-import { formatearFecha, formatearMonto } from '../../formato';
+import { centavosATextoDecimal, formatearFecha, formatearMonto } from '../../formato';
 import { claveDeBorrador } from '../../formularios/use-borrador';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { conciliar as t } from '../../textos/conciliar';
 import { dominio } from '../../textos/dominio';
 import { formularios } from '../../textos/formularios';
+import { ALTAS_SOPORTADAS, Agregar, type TipoAlta } from './agregar';
 
 export interface PropsFormularioConciliar {
   /** `iniciarConciliacion` (OP-45) y `terminarConciliacion` (OP-47): las pone el lector, así el formulario se prueba sin servidor. */
   readonly iniciar: AccionEscritura;
   readonly terminar: AccionEscritura;
+  /** `agregarDesdeEstado` (OP-46). */
+  readonly agregar: AccionEscritura;
   readonly cuentaId: string;
   readonly cuenta: string;
+  readonly categorias: readonly { readonly id: string; readonly nombre: string }[];
+  /** Los tipos de alta que admite un movimiento de esta cuenta según su signo (04 §6.14.4, CP-16). */
+  readonly tiposAlta: { readonly cargo: readonly string[]; readonly abono: readonly string[] };
 }
 
 interface Ajuste {
   readonly operacion: string;
   readonly monto: Centavos;
+  readonly fecha: string;
+  readonly comercio: string;
 }
 interface Borrador {
   readonly version: 1;
@@ -70,6 +78,8 @@ function leerBorrador(clave: string): Borrador | null {
 }
 
 const CAJA = 'flex min-h-11 items-center gap-3 rounded-contenedor bg-superficie px-3.5';
+const CAJA_AGREGAR =
+  'flex min-h-11 flex-wrap items-center gap-3 rounded-contenedor bg-superficie px-3.5';
 
 function Fila({
   comercio,
@@ -102,8 +112,11 @@ function Fila({
 export function FormularioConciliar({
   iniciar,
   terminar,
+  agregar,
   cuentaId,
   cuenta,
+  categorias,
+  tiposAlta,
 }: PropsFormularioConciliar) {
   const rutaPadre = `/cuentas/${cuentaId}`;
   const claveBorrador = claveDeBorrador(`${rutaPadre}/conciliar`);
@@ -187,7 +200,12 @@ export function FormularioConciliar({
       setAjuste(
         datos === undefined
           ? undefined
-          : { operacion: String(datos['operacion']), monto: datos['monto'] as Centavos },
+          : {
+              operacion: String(datos['operacion']),
+              monto: datos['monto'] as Centavos,
+              fecha: String(datos['fechaEstado']),
+              comercio: String(datos['comercio']),
+            },
       );
     } catch {
       setAjuste(undefined);
@@ -225,6 +243,16 @@ export function FormularioConciliar({
   if (fin.estado === 'listo' && leida !== undefined) {
     const ruta = ajuste === undefined ? undefined : RUTA_AJUSTE[ajuste.operacion];
     const monto = ajuste === undefined ? '' : formatearMonto(ajuste.monto);
+    // Valores iniciales del alta (FD-06): la cuenta, la fecha del estado, el monto y el comercio que fija el servidor
+    const valores =
+      ajuste === undefined
+        ? ''
+        : new URLSearchParams({
+            cuenta: cuentaId,
+            fecha: ajuste.fecha,
+            total: centavosATextoDecimal(ajuste.monto),
+            comercio: ajuste.comercio,
+          }).toString();
     const texto =
       ajuste?.operacion === 'OP-21'
         ? t.ajusteIngreso(monto)
@@ -253,7 +281,7 @@ export function FormularioConciliar({
               aparecioDespues
               accion={
                 <EnlaceFinn
-                  href={`/registrar/${ruta}?cuenta=${cuentaId}`}
+                  href={`/registrar/${ruta}?${valores}`}
                   className="inline-flex min-h-11 items-center font-bold text-enlace underline"
                 >
                   {t.crearAjuste}
@@ -321,9 +349,23 @@ export function FormularioConciliar({
               <ul className="flex flex-col gap-1">
                 {c.soloEnEstado.map((i) => {
                   const m = leida.movimientos.find((x) => x.indice === i);
-                  return m === undefined ? null : (
-                    <li key={i} data-solo-en-estado={i} className={CAJA}>
+                  if (m === undefined) return null;
+                  const tipo = ALTAS_SOPORTADAS.find((a: TipoAlta) =>
+                    (m.monto < 0 ? tiposAlta.cargo : tiposAlta.abono).includes(a),
+                  );
+                  return (
+                    <li key={i} data-solo-en-estado={i} className={CAJA_AGREGAR}>
                       <Fila comercio={m.descripcion} fecha={m.fecha} monto={m.monto} />
+                      {tipo === undefined ? null : (
+                        <Agregar
+                          agregar={agregar}
+                          cuentaId={cuentaId}
+                          carga={leida.carga}
+                          movimiento={m}
+                          tipo={tipo}
+                          categorias={categorias}
+                        />
+                      )}
                     </li>
                   );
                 })}

@@ -77,6 +77,11 @@ export const bandeja = {
     sugerida: (categoria: string) => `Sugerida: ${categoria}`,
     otra: 'Otra categoría…',
     sinComercio: 'el movimiento',
+    selector: {
+      titulo: 'Otra categoría',
+      etiqueta: 'Categoría',
+      marcador: 'Elegí una categoría',
+    },
   },
   revisar: {
     titulo: 'Revisar movimiento',
