@@ -62,9 +62,15 @@ Archivos: `tokens.css`, `tokens.json`, `AGENTES.md` (guía para el agente de fro
 | oscuro | advertencia-texto sobre cuenta-banco | 9.68:1 | 4.5:1 | ✓ |
 | ambos | tarjeta-oro-texto sobre el tono más claro de tarjeta-oro | 4.85:1 | 4.5:1 | ✓ |
 | ambos | tarjeta-plata-texto sobre el tono más claro de tarjeta-plata | 5.31:1 | 4.5:1 | ✓ |
+| ambos | tarjeta-grafito-texto sobre el tono más claro de tarjeta-grafito **[CH-225]** | 11.81:1 | 4.5:1 | ✓ |
+| ambos | tarjeta-zafiro-texto sobre el tono más claro de tarjeta-zafiro **[CH-225]** | 7.17:1 | 4.5:1 | ✓ |
+| ambos | tarjeta-rubi-texto sobre el tono más claro de tarjeta-rubi **[CH-225]** | 8.85:1 | 4.5:1 | ✓ |
+| ambos | tarjeta-esmeralda-texto sobre el tono más claro de tarjeta-esmeralda **[CH-225]** | 7.05:1 | 4.5:1 | ✓ |
+| ambos | tarjeta-amatista-texto sobre el tono más claro de tarjeta-amatista **[CH-225]** | 8.77:1 | 4.5:1 | ✓ |
+| ambos | tarjeta-cobre-texto sobre el tono más claro de tarjeta-cobre **[CH-225]** | 7.03:1 | 4.5:1 | ✓ |
 | ambos | marca-icono-figura sobre marca-icono-fondo | 16.45:1 | 3:1 | ✓ |
 
-Decorativos (sin requisito de contraste porque nunca llevan información): `marca-grabado`, `cuenta-*`, `cuenta-motivo`, `cuenta-disco`, `tarjeta-oro`, `tarjeta-plata`, `velo`.
+Decorativos (sin requisito de contraste porque nunca llevan información): `marca-grabado`, `cuenta-*`, `cuenta-motivo`, `cuenta-disco`, `tarjeta-oro`, `tarjeta-plata`, **[CH-225]** `tarjeta-grafito`, `tarjeta-zafiro`, `tarjeta-rubi`, `tarjeta-esmeralda`, `tarjeta-amatista`, `tarjeta-cobre`, `velo`.
 La paleta categórica pasa además el validador de gráficos en los dos temas: banda de luminosidad, croma ≥ 0.10, separación con daltonismo entre vecinas (protan/deutan ≥ 13) y con visión normal (≥ 16). Se asigna en orden fijo; “Otras” va en `grafico-otras` con patrón rayado y nunca toma un noveno color.
 
 ### Lo agregado (A.10)
@@ -81,8 +87,8 @@ La paleta categórica pasa además el validador de gráficos en los dos temas: b
 | `patron-sin-reservar` | rayado 135° de deuda-sin-respaldo-borde sobre -fondo | Segunda señal (forma) de lo no reservado en barras. |
 | `cuenta-banco · -ahorro · -prestamo · -inversion` | cuatro tonos por tema | Decorativos: fondo de la identidad de cada tipo de cuenta. Texto encima: texto / texto-secundario. |
 | `cuenta-motivo · cuenta-disco` | transparencias | Decorativos: líneas de libreta, anillos, escalones y el disco del ícono. |
-| `tarjeta-oro · tarjeta-plata` | degradados oscuros | Decorativos: cara de las tarjetas de crédito en la billetera. |
-| `tarjeta-oro-texto · tarjeta-plata-texto` | #F7F1E3 · #F2F4F6 | Texto sobre la cara de la tarjeta. |
+| `tarjeta-oro · tarjeta-plata` | degradados oscuros | Decorativos: cara de las tarjetas de crédito en la billetera. **[CH-225]** Más `tarjeta-grafito · -zafiro · -rubi · -esmeralda · -amatista · -cobre`, de `docs/anexos/finn-fixes-visuales/estilos/tokens-propuesta.css`. |
+| `tarjeta-oro-texto · tarjeta-plata-texto` | #F7F1E3 · #F2F4F6 | Texto sobre la cara de la tarjeta. **[CH-225]** Y el `-texto` de cada color nuevo (#F2F4F6, #F2F5FF, #FFF1F2, #EEFBF4, #F6F1FF, #FFF4EC). |
 | `duracion-transicion · duracion-ambiental` | 340ms · 5000ms | Cambio de pantalla y hojas; bucles decorativos (brillo, halo). |
 | `curva-entrada · curva-salida · curva-enfasis` | cubic-bezier(.2,.9,.25,1) · (.4,0,1,1) · (.3,1.4,.5,1) | Entrar y salir de hojas y pantallas; aparecer un resultado. |
 | `espacio-1 … espacio-16` | múltiplos de 4 px | Escala de espaciado. |
@@ -266,14 +272,14 @@ Nombre 600 + número principal a la derecha ("Te falta reservar" en `--deuda-sin
 
 #### 2.8 Billete "Listo para asignar"
 - Contenedor `--marca`, `--radio-contenedor`, padding 22 20 20, con el guilloché: dos `repeating-radial-gradient` de `--marca-grabado` (anillos de 7–8 px y 9–10 px desde esquinas opuestas) que se desplazan muy lento (40 s, decorativo).
-- Contenido en `--texto-sobre-marca`: "Listo para asignar" `.t-rotulo` al 80 %; el monto en Archivo 800, ancho 72 %, 3.25rem (cifras que ruedan una vez al entrar, 1.4 s, 90 ms entre dígitos); línea con glifo `informacion` y "En camino $40.00 · Carlos te debe".
+- Contenido en `--texto-sobre-marca`: "Listo para asignar" `.t-rotulo` al 80 %; el monto en Archivo 800, ancho 72 %, 3.25rem (cifras que ruedan una vez al entrar, 1.4 s, 90 ms entre dígitos; **[CH-220]** una vez por sesión, no en cada entrada a Inicio); línea con glifo `informacion` y "En camino $40.00 · Carlos te debe".
 - Detrás: un resplandor de `--accion` difuminado (blur 22 px) que respira (6 s). Un brillo cruza cada 7 s.
 - Debajo, separado 12: botón principal de 52 px a todo el ancho, "Asignar $312.40" (abre la hoja Asignar).
 - Estados: cero → indicador `cero` "Todo asignado"; negativo → indicador `problema` "Asignaste más de lo que tenés" y botón "Quitar $86.15 de una categoría".
 - Versión franja (Presupuesto): `--marca`, `--radio-contenedor`, padding 12 14; rótulo + monto `.t-cifra` 1.75rem + "En camino $40.00"; botón "Asignar" de 44 a la derecha.
 
 #### 2.9 Tarjeta de crédito (cara) y billetera
-- **Cara**: alto 206, `--radio-tarjeta`, padding 18 20, fondo `--tarjeta-oro` (Visa Oro) o `--tarjeta-plata` (Mastercard Clásica) más un guilloché de anillos blancos al 7 %, sombra `0 22px 40px -18px rgba(0,0,0,.6)` y luz interior `inset 0 1px 0 rgba(255,255,255,.2)`. Texto en `--tarjeta-oro-texto` / `--tarjeta-plata-texto`.
+- **Cara**: alto 206, `--radio-tarjeta`, padding 18 20, fondo `--tarjeta-oro` (Visa Oro) o `--tarjeta-plata` (Mastercard Clásica) (**[CH-225]** o cualquiera de los 8: oro, plata, grafito, zafiro, rubí, esmeralda, amatista y cobre, según el `color` guardado de la tarjeta, nunca por orden; nulo, oro; se elige al crear con la cara de vista previa en vivo) más un guilloché de anillos blancos al 7 %, sombra `0 22px 40px -18px rgba(0,0,0,.6)` y luz interior `inset 0 1px 0 rgba(255,255,255,.2)`. Texto en `--tarjeta-oro-texto` / `--tarjeta-plata-texto` (**[CH-225]** el `-texto` de su color).
   - Arriba: nombre en `.t-titulo-seccion` 1.25rem (una línea, con puntos suspensivos) · banco en `.t-rotulo` al 80 %.
   - A 20 px: chip (40 × 30, radio 7, degradado dorado o plateado con líneas) + ícono sin contacto.
   - Abajo: "Deuda" `.t-rotulo` + monto `.t-cifra` 1.75rem · a la derecha "•••• 4821" (espaciado .14em, 600) + "Visa · crédito" `.t-rotulo`.
@@ -291,10 +297,13 @@ Tarjetas con fondo propio (decorativo) y un motivo dibujado; texto en `--texto` 
 - Encabezado: disco de 38 px, radio 12, fondo `--cuenta-disco`, con el ícono del tipo (20 px, `--texto`).
 - Abajo: nombre `.t-cuerpo` 700 · banco y últimos dígitos `.t-cuerpo-pequeno` `--texto-secundario` · saldo `.t-cifra`.
 
+**[CH-224]** En efectivo, la fila sale del subtipo guardado (`subtipo_efectivo`: corriente, ahorro o billetera), nunca del nombre.
+
 | Tipo | Fondo | Ícono | Motivo |
 |---|---|---|---|
 | Cuenta corriente | `--cuenta-banco` | `bank` | Líneas de libreta horizontales (1 px cada 14 px) en `--cuenta-motivo`, en el 70 % derecho, desvanecidas hacia la izquierda |
 | Cuenta de ahorro | `--cuenta-ahorro` | `coins` | Anillos concéntricos (cada 11 px) en un círculo de 150 px que sale por la esquina superior derecha |
+| Billetera **[CH-224]** | `--cuenta-banco` | `wallet` | Sin motivo (provisorio: el diseño no tiene identidad de billetera) |
 | Préstamo | `--cuenta-prestamo` | `ticket` | Forma de boleto: columnas `[1fr][103px]`, línea punteada vertical de 2 px y dos muescas de 22 px (color `--fondo`) arriba y abajo de la línea. El talón dice "Cuota" `.t-rotulo` + número en Big Shoulders 800 2.75rem + "20/10" 700 + "$210.00" |
 | Inversión | `--cuenta-inversion` | `trend` | Seis barras redondeadas que suben, en `--cuenta-motivo`, abajo a la derecha. Diseño horizontal: disco + nombre y saldo |
 
@@ -371,6 +380,7 @@ Siempre dentro de un contenedor (padding 18 16), con: una **cifra grande** arrib
 - **Barra superior** (alto mínimo 60, padding 0 8 0 20): título `.t-titulo-pantalla` (2rem; 1.625rem cuando hay "atrás" o "cerrar"; una línea con puntos suspensivos) · botón "Registrar" (44 de alto, padding 0 14 0 10, `--accion`, ícono `plus` 18 trazo 2.2, `.t-etiqueta` 700) · campana de 44 con contador (círculo de 17 px `--accion`, texto 10.5 px 700, anillo de 2 px `--fondo`) · menú ☰ de 44 ("Más secciones").
   - En pantallas hijas: flecha "Volver a <padre>" a la izquierda (44, margen −8) y, a la derecha, campana + "Más acciones" (`more`).
   - En flujos largos: "Cerrar" (`x`) a la izquierda y sin acciones a la derecha.
+  - **[CH-227]** En las pantallas que se abren desde Más secciones (Programadas, Metas, Por cobrar, Reglas, Reportes y Ajustes): solo la campana a la derecha, sin "Registrar" ni ☰; el título no se trunca. En las principales, si el título no entra, "Registrar" queda solo con su ícono (44 × 44).
 - La barra superior y la inferior quedan **fijas**; solo el contenido se desplaza (sin barra de desplazamiento visible).
 - **Barra inferior** (padding 6 4 22, fondo `--superficie`, línea superior `--borde-sutil`): Inicio · Presupuesto · **Bandeja** · Actividad · Cuentas.
   - Pestaña: ícono 22 + nombre .75rem, alto mínimo 56; activa en `--texto` 700 con una raya de 28 × 3 px `--accion` arriba (radio inferior 3) que se dibuja desde el centro (400 ms); inactiva en `--texto-secundario` 500.
@@ -379,7 +389,7 @@ Siempre dentro de un contenedor (padding 18 16), con: una **cifra grande** arrib
 
 #### 3.2 Computadora (1440 px)
 - **Barra lateral** de 248 px (padding 24 14, fondo `--superficie`, línea derecha `--borde-sutil`): marca (cuadro de 34 px `--marca` con la "F" o el símbolo + "Finn" `.t-titulo-seccion`) · botón principal "Registrar" a todo el ancho · navegación principal (filas de 44, radio `--radio-control`; activa con fondo `--superficie-hundida`, texto 700 y raya lateral de 3 px `--accion`; Bandeja con contador `--marca`) · "Más" `.t-rotulo` `--texto-terciario` + secundarias (filas de 44 (05 §11.5, FE-47) **[CH-109]**, Notificaciones con contador).
-- **Contenido**: padding 32 48 48, separación 28. Encabezado: (enlace "atrás" `.t-cuerpo-pequeno` si corresponde) + título 2.5rem; a la derecha acciones y la campana en círculo de 44 con fondo `--superficie-hundida`.
+- **Contenido**: padding 32 48 48, separación 28. **[CH-220]** `max-width: 1144px`, padding `32px 48px` arriba y `20px 48px 48px` en el cuerpo, columnas con separación 36 que colapsan a una debajo de unos 900 px de contenedor (`@container`); flujos, formularios y listas de Más secciones (Ajustes, Reglas, Metas, Programadas, Por cobrar) con `max-width: 720px` y el pie alineado al contenido. Encabezado: (enlace "atrás" `.t-cuerpo-pequeno` si corresponde) + título 2.5rem; a la derecha acciones y la campana en círculo de 44 con fondo `--superficie-hundida`.
 - Los flujos cortos se abren como **panel lateral** en lugar de hoja inferior.
 
 ---
@@ -393,9 +403,9 @@ Capturas: `S1-Inicio__*`. Datos: A.7 Inicio.
 3. "Próximos 7 días" + enlace "Programadas": filas simples con insignia de fecha (17 oct Netflix, Visa Oro · se registra sola, −$15.49; 20 oct Cuota del préstamo, Cuenta de ahorro, −$210.00).
 4. "Recientes" + enlace "Actividad": 15 SUPER SELECTOS ESCALON −$35.00 · 14 PUMA SANTA ELENA −$30.00 · 12 Salario quincena +$925.00.
 5. Fila "Patrimonio neto" (contenedor, 64 px): "Activos $6,520.20 · Deudas $4,852.18" + $1,668.02 + `chevR` → Cuentas.
-Entrada: los bloques aparecen de arriba abajo con 90 ms entre sí (600 ms, `--curva-estandar`).
+Entrada: los bloques aparecen de arriba abajo con 90 ms entre sí (600 ms, `--curva-estandar`). **[CH-220]** Reemplazado por el catálogo de la entrega 3: `fz-item` en 400 ms `--curva-estandar` con 60 ms entre bloques (90 ms entre las columnas de computadora) y tope de 8.
 
-**Computadora**: dos columnas iguales (separación 40, máximo 1080 px): izquierda billete (monto 3.75rem) + Necesita tu atención; derecha Próximos 7 días, Recientes y Patrimonio neto.
+**Computadora**: dos columnas iguales (separación 40, máximo 1080 px; **[CH-220]** separación 36 dentro del máximo de 1144 px del contenido, §3.2): izquierda billete (monto 3.75rem) + Necesita tu atención; derecha Próximos 7 días, Recientes y Patrimonio neto.
 
 **Estados**:
 - *Primer uso (sin cuentas)*: "Empecemos" `.t-rotulo` + "Tu dinero, con un trabajo para cada dólar" (2.25rem) + texto; contenedor con 3 pasos (círculo de 40 px, el primero en `--marca`): "1. Agregá tu primera cuenta", "2. Sumá tus tarjetas", "3. Asigná lo que tenés"; botón de 52 "Agregar una cuenta".
@@ -512,6 +522,8 @@ Lógica completa en `referencia/prototipo-logica.js`. Resumen:
 | Campana | Panel de notificaciones | Cae desde arriba (360 ms); avisos escalonados (60 ms); al cerrar sube (200 ms) |
 | Tarjeta de atrás (Cuentas) | Pasa al frente | 500 ms, `--curva-entrada` |
 | Filtros, Gráfico / Tabla, Aprobar, Guardar | Cambio en el lugar | Sin transición de pantalla; el resultado aparece con `--curva-enfasis` |
+
+**[CH-220]** Las duraciones de esta tabla las reemplaza el catálogo de movimiento de la entrega 3 (`docs/anexos/finn-fixes-visuales/FIXES-VISUALES.md` §3): pestaña, fundido de 220 ms; hija, desde la derecha en 320 ms `--curva-entrada` (volver, desde la izquierda; flujo, sube); velo, 200 ms; hoja, abre en 380 ms `--curva-entrada` y cierra en 200 ms `--curva-salida` y recién entonces se desmonta (en computadora, el panel lateral con `translateX`); panel de notificaciones, baja y sube en 200 ms, avisos a 120 ms + 60 ms × i; menú K2, cierra en 120 ms (`opacity 0; scale(.96)`); opciones de Más secciones, 300 ms con 40 ms × i; presionado `scale(.97)` en 120 ms; filas tocables en computadora, fondo al 6 % y flecha 4 px. La tarjeta de atrás de Cuentas sigue en 500 ms. Toda duración sale de un token de `tokens.css`.
 
 Microinteracciones: el botón principal de Inicio tiene un destello al pasar (700 ms) y se hunde al presionar; las filas tocables cambian el fondo a 6 % y mueven su flecha 4 px. Ninguna animación transmite información y todas se apagan con "reducir movimiento".
 
@@ -1206,3 +1218,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 
 - **CT-07** (Fase 7, aprobado en la revisión de la Parte C de `07-pruebas.md`). Los datos de las pantallas son los de A.7 corregido en `05-frontend.md` (semilla `estado-a7` pasada por el motor). Cambian "Sin intereses" ($370.63), la deuda del estado *Categoría de pago de tarjeta* ($642.18) y el historial de Restaurantes. El diseño no se rehace: las pantallas usan los números nuevos al implementarse (Fase 8). Marcas **[F7]** en §2.9 y §6. Detalle en `07-pruebas.md` §28.2.
 - **CH-109** (corrección posterior a TA-212). §3.1: el título de la barra del teléfono es el `h1` de la pantalla; la campana abre el panel desde arriba hasta que exista el centro de notificaciones (FT-69). §3.2: la marca de la barra lateral es la «F apilada» en un cuadro de 32 px (D4 de la entrega 2), y las secundarias miden 44 px y no 40 (05 §11.5, FE-47). 2.19: un error («Esto ya no existe.») usa el círculo `--superficie-hundida` con el glifo `search` (pantalla 14 de la entrega 2); el `--positivo-fondo` queda para los vacíos de lo que está al día. Detalle en `08-tareas.md` CH-109.
+- **CH-220 a CH-227** (Fase 8, decididos por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). La entrega 3 del diseño (`docs/anexos/finn-fixes-visuales/`) entra en las fuentes de verdad después de este documento (08 §0.3); manda este documento salvo lo que enmienda CH-220. §2.8: las cifras del billete ruedan una vez por sesión (1.4 s y 90 ms se mantienen). §3.2 y §4: contenido de computadora a 1144 px, flujos y listas de Más secciones a 720 px, columnas que colapsan con `@container` y separación 36 (CH-220; enmienda CH-109). §11 y la entrada de §4: el catálogo de movimiento de la entrega 3 (CH-220). Las secundarias de la barra lateral siguen en 44 px. §2.10: billetera e identidad por subtipo (CH-224). §1 y §2.9: 8 colores de tarjeta con su contraste (CH-225). §3.1: la barra de las pantallas de Más secciones solo con la campana (CH-227). Marcas **[CH-nnn]** en cada lugar.

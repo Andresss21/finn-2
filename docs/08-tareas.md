@@ -19,7 +19,7 @@ Este documento convierte lo aprobado en 00 a 07 en tareas que un agente de progr
 
 ### 0.3 Precedencia
 
-1. `00-decisiones.md` > `01-dominio.md` > `02-tecnologias.md` > `03-base-de-datos.md` > `04-backend.md` > `05-frontend.md` > `06-features.md` > `07-pruebas.md`, cada uno con sus enmiendas; después, `06-identidad-visual.md`.
+1. `00-decisiones.md` > `01-dominio.md` > `02-tecnologias.md` > `03-base-de-datos.md` > `04-backend.md` > `05-frontend.md` > `06-features.md` > `07-pruebas.md`, cada uno con sus enmiendas; después, `06-identidad-visual.md`. **[CH-220]** Después de `06-identidad-visual.md`, la entrega 3 del diseño (`docs/anexos/finn-fixes-visuales/`: `FIXES-VISUALES.md` y su auditoría): en caso de conflicto manda el documento numerado, salvo lo que enmienda CH-220.
 2. Este documento manda sobre el orden y la forma de las tareas. No manda sobre ninguna regla de los anteriores.
 3. Una contradicción no se resuelve aquí: se plantea como P8-n o CH-nn.
 
@@ -212,6 +212,7 @@ Textos en español neutro; voseo en lo que se le habla al usuario.
 | TA-280 a TA-399 | B6 Features [I] | C |
 | TA-400 a TA-499 | B7 Features [M] | D |
 | TA-500 a TA-549 | B8 Features [P] y FT-49 (bloqueada) | D |
+| TA-486 a TA-499 y TA-507 a TA-512 | **[CH-220]** B9 Fixes visuales (entrega 3, HT-10): usa los huecos libres de los rangos de B7 y B8, con los números que fijó el usuario. Una parte de una tarea de B9 recibe el siguiente libre de esos huecos | Posterior |
 
 - El número identifica; **el campo `orden` decide la secuencia**. Así una tarea de operación (B5) puede ir entre dos de features sin renumerar.
 - Si una tarea se parte después de aprobada, la primera parte conserva el número y la segunda recibe el siguiente libre del rango.
@@ -484,6 +485,16 @@ tu: TU-14, TU-16, TU-17
 **Criterio:** `pnpm pruebas:puerta` abierta (07 §30, con CH-03): los 465 CA, SP-01 completo, SP-02, SP-04, firmas y el ensayo de la condición 6 (TU-17). **[D]** Además: ~~F-2 de Banco Agrícola activo (TA-470, TU-14)~~ **[CH-210]** las seis filas de exclusión de Banco Agrícola y Cuscatlán firmadas en `resultados.md` (TU-14), con F-2 y F-3 inactivos; y ningún pendiente de punta a punta salvo [P]. El bloque lista las 69 fichas [I] y [M] y encadena HT-4 a HT-8 (DT-30). Con esto empieza el paso de la 1.0 a la 2.0 (TU-18).
 
 **Las fichas [P] y FT-49** quedan después de HT-9 y no forman parte de ningún hito (supuesto 5 del Paso 1).
+
+### HT-10 Fixes visuales **[CH-220]**
+
+```hito
+despues: TA-512
+requiere: TA-486, TA-487, TA-488, TA-489, TA-490, TA-491, TA-492, TA-493, TA-494, TA-495, TA-496, TA-497, TA-498, TA-499, TA-507, TA-508, TA-509, TA-510, TA-511, TA-512
+tu: —
+```
+
+**Criterio:** las 20 tareas de B9 (§29b) en `terminada`, cada una con su informe de ids (hecho, hecho en parte o bloqueado) y sus capturas de antes y después en `C:/finn/capturas/TA-nnn/`; `pnpm ci:local` y la E2E en verde en `main`. No encadena HT-9: los fixes no esperan a la puerta, que sigue siendo la de 07 §30 y no cambia.
 
 **Justificación.** Los hitos siguen las fronteras de 07 §1 (cada nivel tiene su hito) y separan lo que depende de vos (HT-4, HT-5, HT-6, HT-9) de lo que no. Así se ve en qué hito el plan espera por una TU. *Alternativa descartada:* un hito por bloque de tareas (no dice qué se puede usar).
 
@@ -1585,7 +1596,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-107** | Se suma el export en código del diseño A.10 a los anexos. (a) **Origen:** el 2026-11-03 el usuario consiguió que Claude Design exportara el diseño aprobado de la entrega A.10 como código (`finn-diseno-export.zip`, en `C:\finn\_entrada\`). El agente de diseño declaró que no cambió el diseño: solo pasó a `var(--token)` los colores que existen en `tokens.css`, y verificó píxeles idénticos en sus 153 páginas con y sin tokens. (b) **Contenido:** `pantallas/` (58 HTML, uno por variante de captura), `componentes/` (93 HTML de K2 a K5, claro y oscuro), `prototipo/` (v2 ejecutable, con `fuente/`), `estilos/`, `fuentes/` (Archivo y Big Shoulders Display con licencia OFL) e `INDICE.md` propio. (c) **Ubicación:** `docs/anexos/finn-diseno-export/` (167 archivos). Su `referencia/` (66 capturas y `prototipo-logica.js`) no se copia: los 67 archivos son idénticos por SHA-256 a `docs/anexos/finn-entrega/referencia/`. Es la fuente de «portar desde anexos» para las correcciones visuales y las pantallas de las fichas pendientes; PANTALLAS.md y 06-identidad-visual siguen mandando en caso de diferencia. (d) **Diferencias que reportó el agente de diseño** (su `INDICE.md` §7, se exportaron tal cual): D1 botón secundario tonal solo en estado normal; D2 Gasto semanal con la paleta categórica anterior en las pastillas; D3 filtros de Presupuesto cortados por `overflow: hidden`; D4 barra lateral con una «F» y no el símbolo de A.9; D5 a D9 límites del prototipo (hoja Asignar fija, «Volver a Reportes» lleva a Inicio, Actividad mínima, controles sin acción, panel lateral solo de presentación); D10 esquinas del marco del teléfono oscuro con otro fondo que las capturas; D11 `color-scheme: dark` en `tokens.css` que el canvas no declaraba. Los valores fuera de los tokens están en su §8. No se exportó lo que no existe en el diseño: revisión de un movimiento de la Bandeja a pantalla completa, Actividad, Reportes, selector de fecha y secciones secundarias. (e) **Discrepancia menor:** el encargo hablaba de 241 archivos y 15 MB; el zip trae 234 (167 sin `referencia/`) y 16 MB descomprimidos. Sin código de producción ni pruebas | `docs/anexos/INDICE.md`, `docs/anexos/finn-entrega/ENTREGA.md`; 06-identidad-visual | Pedido por el usuario el 2026-11-03; **aplicado [CH-107]** en docs/anexos y 08 |
 | **CH-110** | `IndicadorEstado` sin cajita, portado del export de diseño (corrección posterior a TA-206). (a) **Síntoma:** la auditoría visual del 2026-11-03 (§1 punto 3, §2.2 #2, §2.3 #4, §2.4 #11) halló que el indicador de estado se ve como pastilla con borde y fondo en Inicio, Presupuesto, Detalle, Cuentas y Bandeja, cuando A.6 §2.4 lo define «sin cajita». (b) **Causa:** `indicador-estado.tsx` pintaba `bg-*-fondo border-*-borde rounded-pastilla px-2 py-0.5` sobre todo el conjunto; el diseño pone el fondo del estado solo en un círculo de 20 px con el glifo de 13 px y deja la etiqueta (0,875 rem, 600) coloreada y sin caja. (c) **Resolución:** el indicador pasa a ser el círculo de 20 px (`bg-*-fondo`, glifo en el texto del estado) más la etiqueta en el color de texto del estado, con separación de 8 px (la regla L14 solo admite tokens; el export usa 7 px), como en `componentes/K3-Dominio-A__indicador-de-estado__*` del export (CH-107). Se conservan la API, `data-estado`, el texto, la variante solo para lector de pantalla y las tres señales (color, glifo y etiqueta). Se suma la propiedad opcional `sobreMarca`: sobre el grafito del billete la etiqueta va en `texto-sobre-marca` (el export usa allí `texto-secundario`, de contraste insuficiente sobre `--marca`; PF-2 y 06 §3 mandan) y el círculo conserva su color; `billete.tsx` solo pasa esa propiedad. Ningún otro uso ponía caja por fuera. Los avisos con fondo de estado son `aviso.tsx` y no se tocan. (d) **Archivos:** `apps/web/src/componentes/dominio/{indicador-estado,billete}.tsx`, `dominio.cmp.test.tsx` y esta fila. (e) **Prueba:** PRU-CMP-VAL-190 (nueva, proyecto `componentes`) exige en los siete estados, en tema claro, que el indicador no tenga borde, fondo ni relleno propios, que el círculo mida 20 px y contenga el glifo y que la etiqueta lleve el color del estado; con la pastilla falla. PRU-CMP-VAL-005 sigue igual | A.6 §2.4; 06 §3.12; 08 TA-206, CH-107 | Delegado por el orquestador; **aplicado [CH-110]** en 08 |
 | **CH-108** | Se suma la segunda entrega del export de diseño en código a los anexos. (a) **Origen:** el 2026-11-03, tras la auditoría visual, el usuario pidió a Claude Design la entrega 2 del export y la dejó en `C:\finn\_entrada\finn-diseno-export-2.zip` (69 MB). El agente de diseño declaró que no apareció ningún valor nuevo de color, espaciado, radio o letra respecto de la entrega 1. (b) **Contenido:** `pantallas/` (483 HTML y 483 PNG en 21 carpetas: 161 estados en teléfono claro, teléfono oscuro y computadora claro), `componentes/` (hojas P1-01 a P1-05, 10 HTML y 10 PNG, claro y oscuro), `estilos/tokens-propuesta.css`, `fuentes/` e `INDICE.md` propio. (c) **Ubicación:** `docs/anexos/finn-diseno-export-2/` (993 archivos, 83,9 MB; el mayor, un PNG de 437 KB; sin secretos ni URLs externas salvo licencias OFL). No se copian `estilos/tokens.css`, `tokens.json`, `finn.css` ni `fuentes.css`: son idénticos por SHA-256 a los de `finn-diseno-export/estilos/` y ningún HTML los referencia (cada página lleva su CSS adentro). Las fuentes también son idénticas pero se copian, porque los HTML las cargan por `../../fuentes/` y sin ellas no abren bien. Propuesta sin decidir: si el peso del repositorio molesta, omitir los PNG de computadora (18,4 MB); por defecto se copió todo. (d) **Qué resuelve:** D1 (botón secundario tonal con todos los estados), D2 (Gasto semanal con `grafico-serie-1…8`), D3 (filtros del Presupuesto con desplazamiento horizontal) y D4 (símbolo «F apilada» en la barra lateral); EntradaFecha con campo dd/mm/aaaa, calendario y atajos Hoy y Ayer; estados cargando y error de campos, selecciones y botones; «Más acciones» en Detalle de categoría, de cuenta y de transacción; y las 15 pantallas de la parte 2 (Revisar movimiento, Actividad, Detalle de transacción y de cuenta, flujos del presupuesto, Reportes, Listo para asignar, Estructura y plantilla, Metas, Programadas, Por cobrar, Reglas, Notificaciones, Ajustes, Registrar, Acceso, Sin conexión/404/error, piezas nuevas de Inicio y Presupuesto). **La propuesta de tokens de `tokens-propuesta.css` NO se aplica a `tokens.css`:** queda como propuesta (`--espacio-0-5`, `--espacio-1-5`, `--radio-fino`, `--despeje-barra-inferior`, duraciones de gráfico, bucle y pulso, y roles tipográficos nuevos); aplicarla pide su propio CH. (e) **Criterio propio del agente de diseño** (su `INDICE.md` §6): escribió en voseo los textos que la ficha no trae (hallazgos, coincidencia, plantilla, resúmenes de Ajustes), fijó cuáles flujos son cortos o largos, puso «Eliminar» en `peligro` con el efecto a la vista y usó un QR ilustrativo; el canvas no se actualizó. Sin código de producción ni pruebas | `docs/anexos/INDICE.md`, `docs/anexos/finn-entrega/ENTREGA.md`; 06-identidad-visual | Pedido por el usuario el 2026-11-03; **aplicado [CH-108]** en docs/anexos y 08 |
-| **CH-109** | Marco y navegación portados del export de diseño, y 404 raíz en español (corrección posterior a TA-212, "Marco y navegación"; 1 de 2). (a) **Síntoma:** la auditoría visual de solo lectura del 2026-11-03 (§1 punto 1, §2.1 diferencias 1 a 9, §2.8) encontró que el marco no era el del diseño en ninguna pantalla: en teléfono la barra superior llevaba el logotipo y el título bajaba al contenido; las pantallas hijas no tenían «Volver a…» en la barra; Registrar gasto y Revisar movimiento conservaban las dos barras; en computadora el título medía 32 px y el contenido iba centrado a 1024 px; la barra inferior tenía `6 4 8`, el botón Bandeja no tenía halos y el anillo activo no era el fondo `accion`; las secundarias de la barra lateral medían 44 px con texto de 16 px y los contadores no tenían los colores del diseño; la hoja «Más secciones» no tenía `chevR`, separadores ni el contador a la derecha; la campana enlazaba a `/notificaciones`, que no existe (FT-69), y la app mostraba el 404 de Next en inglés porque `app/` no tenía `not-found.tsx`; el `not-found` de `(finn)` usaba el glifo `positivo`. (b) **Causa:** TA-212 armó el marco antes del export en código (CH-107) a partir de las capturas, con el logotipo en la barra y el `h1` en cada página; la campana apuntaba a la ruta de FT-69 sin construir; `Vacio` solo tenía el círculo `positivo-fondo`. (c) **Resolución:** se portó el marcado de `docs/anexos/finn-diseno-export/pantallas/K1-*.html`, `componentes/K5-Nuevos__campana-con-contador__*` y, para D4, `docs/anexos/finn-diseno-export-2/componentes/P1-05-…`. Teléfono: el título de la barra es el `h1` de la página, que `globals.css` dibuja dentro de la barra fija (llega del servidor con la página, sin esperar a hidratar y sin tocar cada pantalla); en una pantalla hija, la flecha «Volver a <sección>» de 44 px (margen −8) con la `rutaPadre` de 05 §3.3 o `?volver=` si es interna ([R2], validada como 3.6), el título en 1.625 rem y la campana, sin Registrar ni ☰; `volverDeRuta()` es función pura en `secciones.ts`. Flujos (`PaginaFlujo`, `data-pagina-flujo`): en teléfono a pantalla completa, sin barra superior ni inferior (`body:has(...)`), «Cerrar» a la izquierda y pie fijo `12 16 26` en `superficie` con línea superior. Computadora: contenido alineado a la izquierda con padding `32 48 48`, todo el ancho salvo que la pantalla fije `--ancho-pantalla` (Inicio: 1080 + padding, 06 §4; flujos: 42 rem), título de 2.5 rem y la campana en el círculo de 44 arriba a la derecha. Barra inferior con zona segura `6 4 22`; Bandeja con radio 18, fondo `accion` si está activa y dos halos de 2 px desfasados 1.4 s mientras hay movimientos por revisar (se apagan con movimiento reducido). Barra lateral: marca D4 de 32 px, principales de 44 en `cuerpo` (raya de 3 px en el borde), secundarias con ícono 18 y `cuerpo-pequeno` pero de 44 px y no de 40 (06 §3.2 pide 40; 05 §11.5, FE-47, exige 44 salvo excepción registrada por el diseño, y PRU-E2E-PWA-007 lo mide: contradicción 06 §3.2 / 05 §11.5 resuelta por el orquestador con (b): 06 §3.2 pasa a «filas de 44», sin excepciones en `revisarTactil`), contador de Bandeja en `marca` (24 px) y de Notificaciones en `accion` (20 px). Hoja «Más secciones»: filas de 52 con separador, ícono 20, contador a la derecha y `chevR`. 404: `app/not-found.tsx` nuevo con `Vacio` (A.6 §2.19) en el tono neutro nuevo (`superficie-hundida`), glifo `search` y «Ir a Inicio», como la pantalla 14 de la entrega 2; el de `(finn)` usa el mismo glifo y tono. **Campana:** se eligió que abra el panel diferido existente (`SuperpuestoDiferido` desde arriba, la forma de CF-23) con el pie de 06 §2.17, en lugar de un ícono sin acción: conserva un acceso con el contador en su nombre (N7), no lleva a una ruta que no existe ni construye FT-69, y no suma JS al compartido (el panel se descarga al abrirlo). Cuando FT-69 exista, la campana vuelve a ser el enlace a `/notificaciones` interceptado (05 §1.4 [F6]). **Partición (DT-02):** «Más acciones» de la barra hija (disparador, contenedor del menú de K2 y `PublicarAcciones` para que cada pantalla pase sus acciones, `docs/anexos/finn-diseno-export-2/componentes/P1-04-…` y `pantallas/MA-…`) llevaba la parte de producción a 587 líneas; va en **CH-115**, que parte del parche de esta tarea, con su prueba de componente. Las filas «Volver a…» que cada pantalla hija tiene en su contenido siguen ahí hasta la corrección de cada pantalla. (d) **Archivos:** `apps/web/src/componentes/marco/marco.tsx`, `marca.tsx`, `pagina-flujo.tsx`; `componentes/navegacion/navegacion-app.tsx`, `contador.tsx`, `secciones.ts`; `componentes/base/vacio.tsx`; `app/globals.css`, `app/not-found.tsx` (nuevo), `app/(finn)/not-found.tsx`, `app/(finn)/pantalla-inicio.tsx` (el `h1` deja de ser `sr-only`); `textos/navegacion.ts`; 06-identidad-visual (enmienda) y 08. (e) **Prueba:** PRU-E2E-PWA-180 (título en la barra sin logotipo, hija con «Volver» de 44 y título de 26 px, flujo largo sin barras, zona segura de 22 px; en computadora padding `32px 48px 48px`, margen 0 y título de 40 px), PRU-E2E-PWA-181 (ruta inexistente en español con glifo `search` y «Ir a Inicio», axe, y la campana abre su panel sin cambiar la URL), PRU-E2E-PWA-182 [V5-17] (`notFound()` de una consulta con glifo `search`, nunca `positivo`), PRU-CMP-PWA-180 (`rutaPadre` con el mismo período, `?volver=` interno y uno externo descartado, principal sin «Volver», flujo sin «Volver») y PRU-CMP-PWA-181 (campana: botón con `aria-haspopup="dialog"`, panel desde arriba con el pie, Escape devuelve el foco). PRU-E2E-PWA-103 y 009 buscan la campana como botón (mismo nombre con el contador); PRU-E2E-TX-410 toma el «Volver» de la pantalla (`main`), y PRU-E2E-PRES-114 exige el período en los dos «Volver a Presupuesto» (barra y pantalla). Bytes (PRU-REN-PWA-002): compartido 162.89 → 163.82 KB (medido sobre main con CH-110), `/registrar/gasto` 49.75 → 49.89 KB, `/cuentas/nueva` 49.65 → 49.79 KB | 06-identidad-visual §3 y 2.19; 05 §1.4, §3.3; 08 TA-212, CH-107, CH-108 | Delegado por el orquestador; **aplicado [CH-109]** en apps/web, 06 y 08 |
+| **CH-109** | Marco y navegación portados del export de diseño, y 404 raíz en español (corrección posterior a TA-212, "Marco y navegación"; 1 de 2). (a) **Síntoma:** la auditoría visual de solo lectura del 2026-11-03 (§1 punto 1, §2.1 diferencias 1 a 9, §2.8) encontró que el marco no era el del diseño en ninguna pantalla: en teléfono la barra superior llevaba el logotipo y el título bajaba al contenido; las pantallas hijas no tenían «Volver a…» en la barra; Registrar gasto y Revisar movimiento conservaban las dos barras; en computadora el título medía 32 px y el contenido iba centrado a 1024 px; la barra inferior tenía `6 4 8`, el botón Bandeja no tenía halos y el anillo activo no era el fondo `accion`; las secundarias de la barra lateral medían 44 px con texto de 16 px y los contadores no tenían los colores del diseño; la hoja «Más secciones» no tenía `chevR`, separadores ni el contador a la derecha; la campana enlazaba a `/notificaciones`, que no existe (FT-69), y la app mostraba el 404 de Next en inglés porque `app/` no tenía `not-found.tsx`; el `not-found` de `(finn)` usaba el glifo `positivo`. (b) **Causa:** TA-212 armó el marco antes del export en código (CH-107) a partir de las capturas, con el logotipo en la barra y el `h1` en cada página; la campana apuntaba a la ruta de FT-69 sin construir; `Vacio` solo tenía el círculo `positivo-fondo`. (c) **Resolución:** se portó el marcado de `docs/anexos/finn-diseno-export/pantallas/K1-*.html`, `componentes/K5-Nuevos__campana-con-contador__*` y, para D4, `docs/anexos/finn-diseno-export-2/componentes/P1-05-…`. Teléfono: el título de la barra es el `h1` de la página, que `globals.css` dibuja dentro de la barra fija (llega del servidor con la página, sin esperar a hidratar y sin tocar cada pantalla); en una pantalla hija, la flecha «Volver a <sección>» de 44 px (margen −8) con la `rutaPadre` de 05 §3.3 o `?volver=` si es interna ([R2], validada como 3.6), el título en 1.625 rem y la campana, sin Registrar ni ☰; `volverDeRuta()` es función pura en `secciones.ts`. Flujos (`PaginaFlujo`, `data-pagina-flujo`): en teléfono a pantalla completa, sin barra superior ni inferior (`body:has(...)`), «Cerrar» a la izquierda y pie fijo `12 16 26` en `superficie` con línea superior. Computadora: contenido alineado a la izquierda con padding `32 48 48`, todo el ancho salvo que la pantalla fije `--ancho-pantalla` (Inicio: 1080 + padding, 06 §4; flujos: 42 rem; **[CH-220]** reemplazado: contenido con `max-width: 1144px` y flujos, formularios y listas de Más secciones a 720 px, CH-220 c), título de 2.5 rem y la campana en el círculo de 44 arriba a la derecha. Barra inferior con zona segura `6 4 22`; Bandeja con radio 18, fondo `accion` si está activa y dos halos de 2 px desfasados 1.4 s mientras hay movimientos por revisar (se apagan con movimiento reducido). Barra lateral: marca D4 de 32 px, principales de 44 en `cuerpo` (raya de 3 px en el borde), secundarias con ícono 18 y `cuerpo-pequeno` pero de 44 px y no de 40 (06 §3.2 pide 40; 05 §11.5, FE-47, exige 44 salvo excepción registrada por el diseño, y PRU-E2E-PWA-007 lo mide: contradicción 06 §3.2 / 05 §11.5 resuelta por el orquestador con (b): 06 §3.2 pasa a «filas de 44», sin excepciones en `revisarTactil`), contador de Bandeja en `marca` (24 px) y de Notificaciones en `accion` (20 px). Hoja «Más secciones»: filas de 52 con separador, ícono 20, contador a la derecha y `chevR`. 404: `app/not-found.tsx` nuevo con `Vacio` (A.6 §2.19) en el tono neutro nuevo (`superficie-hundida`), glifo `search` y «Ir a Inicio», como la pantalla 14 de la entrega 2; el de `(finn)` usa el mismo glifo y tono. **Campana:** se eligió que abra el panel diferido existente (`SuperpuestoDiferido` desde arriba, la forma de CF-23) con el pie de 06 §2.17, en lugar de un ícono sin acción: conserva un acceso con el contador en su nombre (N7), no lleva a una ruta que no existe ni construye FT-69, y no suma JS al compartido (el panel se descarga al abrirlo). Cuando FT-69 exista, la campana vuelve a ser el enlace a `/notificaciones` interceptado (05 §1.4 [F6]). **Partición (DT-02):** «Más acciones» de la barra hija (disparador, contenedor del menú de K2 y `PublicarAcciones` para que cada pantalla pase sus acciones, `docs/anexos/finn-diseno-export-2/componentes/P1-04-…` y `pantallas/MA-…`) llevaba la parte de producción a 587 líneas; va en **CH-115**, que parte del parche de esta tarea, con su prueba de componente. Las filas «Volver a…» que cada pantalla hija tiene en su contenido siguen ahí hasta la corrección de cada pantalla. (d) **Archivos:** `apps/web/src/componentes/marco/marco.tsx`, `marca.tsx`, `pagina-flujo.tsx`; `componentes/navegacion/navegacion-app.tsx`, `contador.tsx`, `secciones.ts`; `componentes/base/vacio.tsx`; `app/globals.css`, `app/not-found.tsx` (nuevo), `app/(finn)/not-found.tsx`, `app/(finn)/pantalla-inicio.tsx` (el `h1` deja de ser `sr-only`); `textos/navegacion.ts`; 06-identidad-visual (enmienda) y 08. (e) **Prueba:** PRU-E2E-PWA-180 (título en la barra sin logotipo, hija con «Volver» de 44 y título de 26 px, flujo largo sin barras, zona segura de 22 px; en computadora padding `32px 48px 48px`, margen 0 y título de 40 px), PRU-E2E-PWA-181 (ruta inexistente en español con glifo `search` y «Ir a Inicio», axe, y la campana abre su panel sin cambiar la URL), PRU-E2E-PWA-182 [V5-17] (`notFound()` de una consulta con glifo `search`, nunca `positivo`), PRU-CMP-PWA-180 (`rutaPadre` con el mismo período, `?volver=` interno y uno externo descartado, principal sin «Volver», flujo sin «Volver») y PRU-CMP-PWA-181 (campana: botón con `aria-haspopup="dialog"`, panel desde arriba con el pie, Escape devuelve el foco). PRU-E2E-PWA-103 y 009 buscan la campana como botón (mismo nombre con el contador); PRU-E2E-TX-410 toma el «Volver» de la pantalla (`main`), y PRU-E2E-PRES-114 exige el período en los dos «Volver a Presupuesto» (barra y pantalla). Bytes (PRU-REN-PWA-002): compartido 162.89 → 163.82 KB (medido sobre main con CH-110), `/registrar/gasto` 49.75 → 49.89 KB, `/cuentas/nueva` 49.65 → 49.79 KB | 06-identidad-visual §3 y 2.19; 05 §1.4, §3.3; 08 TA-212, CH-107, CH-108 | Delegado por el orquestador; **aplicado [CH-109]** en apps/web, 06 y 08 |
 | **CH-91** | EXECUTE de `finn.hoy()` para `finn_respaldo`. (a) 07 §31.1 y DP-29 piden que el control de dinero, con `finn_respaldo`, cargue los hechos «por la misma consulta que la app», pero `leer()` (`packages/db/src/transacciones.ts`) llama a `finn.hoy()`, y 03 §8.3 y `m_seguridad` daban `EXECUTE` de `hoy()` solo a `finn_app`. (b) En 03 §8.3, `hoy()` da `EXECUTE` también a `finn_respaldo`; `tomar_bloqueo()` y `eliminar_conciliaciones_de_cuenta(uuid)` siguen en «—». `hoy()` es `STABLE` y no escribe, y la sesión de `finn_respaldo` sigue con `default_transaction_read_only = on`. (c) Migración de expansión (DP-31) `20261103000000_m_hoy_respaldo` con `GRANT EXECUTE ON FUNCTION finn.hoy() TO finn_respaldo`, sin editar migraciones aplicadas, y la línea correspondiente en `catalogo-esperado.txt`. (d) TA-262 pasa a `migraciones=1`, con la migración y `catalogo-esperado.txt` en sus archivos, y sigue de revisión obligatoria. (e) La comparación de conteos contra el día anterior es informativa: las diferencias se registran en el artefacto, pero solo los invariantes hacen fallar el job (07 §31.1). (f) Para bajar el artefacto del día anterior, `respaldo.yml` pasa a `permissions: { contents: read, actions: read }`, y PRU-SEG-OPER-104 lo comprueba. (g) PRU-RES-RESP-102 demuestra que, como `finn_respaldo`, `leer()` funciona y una escritura sigue fallando | 03 §8.3, 07 §31.1, 08 TA-262 | Aprobado por el usuario el 2026-11-03; **aplicado [CH-91]** en 03, 07 y 08 |
 | **CH-93** | Partición de TA-421 por tamaño (DT-02), con precedente en CH-72, CH-79 y CH-82 a CH-88. (a) El alcance completo de FT-60 midió prod≈890 en 11 archivos de producción (total≈1.100) contra una estimación de 360 y 10: pasa el +30 % de las tareas normales (520); las pantallas de las últimas fichas midieron entre 1,7 y 2,1 veces la estimación. (b) Se parte en dos: TA-421 conserva `/reportes` (redirección a `/reportes/tendencia`) y `/reportes/[tipo]` con `tendencia`, `ingresos-gastos`, `remanente` y `patrimonio`, la ventana (`?ventana=`), `Pestanas` como enlaces (05 §10.7), la tabla equivalente con el selector Gráfico / Tabla, «No hay movimientos en estos períodos» y «Lo que te quedó del período» con su explicación (CA-60.1, CA-60.2, CA-60.3, CA-60.4, CA-60.8; prod=415 medido, se declara 400, 10 archivos); TA-453, nueva (B7, HT-8, normal, sonnet, orden 741; TA-446, TA-447, TA-470 y TA-550 pasan a 742, 743, 744 y 745 para dejarle el lugar que E5 y E7 exigen), lleva `categorias` con `GraficoDona` (8 porciones y «Otras»), `top-comercios`, `cumplimiento`, el filtro de cuentas (`?cuentas=`), el de grupo (`?grupo=`) y el límite (`?limite=`), con CA-60.5, CA-60.6, CA-60.7, CA-60.9 y CA-60.10 (prod≈480 estimado, se declara 400, 9 archivos), y cierra la ficha. TA-453 depende de TA-421 y de las mismas tareas; HT-8 la exige. Criterio de dependientes: TA-422, TA-423, TA-424, TA-425, TA-426, TA-503, TA-504 y TA-505 usan `/reportes/[tipo]`, no `categorias`, `top-comercios` ni `cumplimiento`, así que siguen dependiendo de TA-421. (c) `Pestanas` (05 §10.7) no existía en `componentes/`: TA-421 la crea en `componentes/navegacion/pestanas.tsx` como enlaces con `aria-current` y la usa también para la ventana; TA-453 la reusa para los filtros. `GraficoDona` (05 §10.8) tampoco existía: lo crea TA-453. (d) El DTO de `reporte()` no trae `filtros` (CP-12, 04 §6.9; el comentario de `reporte.ts` lo marca «PENDIENTE DE DOMINIO»): TA-453 toma los nombres de cuentas, grupos y categorías de `cuentas({ incluirArchivadas })` y `estructura()` en el lector de la página, sin tocar `@finn/aplicacion`. Si se prefiere el campo `filtros` del DTO, es una tarea de B3. (e) El código de TA-453 queda en la rama local `ta-453-reportes-2-local`. (f) Mientras TA-453 no se mergee, `/reportes/[tipo]` responde `notFound()` para `categorias`, `top-comercios` y `cumplimiento`, y la barra de Reportes lista solo los cuatro tipos de TA-421 | 08 TA-421, TA-453, HT-8 y 05 §2.10, §10.7, §10.8 | Delegado por el orquestador; **aplicado [CH-93]** en 08 |
 | **CH-97** | El service worker se invalida con cada escritura (corrección posterior al primer despliegue). (a) **Síntoma:** en producción (Vercel, 2026-11-03), después de una escritura, `GET /serwist/sw.js` dio `ERR_MODULE_NOT_FOUND: next/dist/server/config.js` con caché `REVALIDATED`, motivo «Tag-based deletion» e invocación de función ISR; respondió 200 solo porque se sirvió la copia anterior. (b) **Causa:** `/serwist/sw.js` se prerenderiza con `initialRevalidateSeconds: false` y etiquetas `_N_T_/layout,_N_T_/serwist/layout,…` (`.next/server/app/serwist/sw.js.meta`); Next agrega `_N_T_/layout` a toda ruta (`getDerivedTags`, `next/dist/server/lib/implicit-tags.js`). `accion()` y `rotarTokenWebhook()` llamaban a `revalidatePath('/', 'layout')`, que invalida esa etiqueta, así que Vercel regeneraba el service worker en runtime; `createSerwistRoute` (`@serwist/turbopack`) llama al cargar a `validateInjectManifestOptions` y a `loadNextConfig`, que importa `next/dist/server/config.js` con `webpackIgnore`: el módulo no se rastrea y la regeneración falla. Recompilar en runtime contradice además 05 §8.1 (FE-52, «servido estático»). Descartados: `outputFileTracingIncludes` (frágil: necesitaría SWC, esbuild nativo y `.next/static`) y servir los bytes de la compilación (`sw.js.body` no entra en el rastreo). (c) **Resolución:** `revalidatePath('/(finn)', 'layout')`, con la ruta en una constante (`ARBOL_CON_DATOS`, `apps/web/src/servidor/revalidar.ts`); se invalida el árbol de `(finn)`, donde están todas las páginas con datos, y las rutas estáticas (`/serwist/[path]`, `manifest`, `/sin-conexion`) no se invalidan. Fuera de `(finn)` solo quedan `/ingresar`, `/ingresar/inscribir`, `/ingresar/verificar`, `/sin-conexion` y las páginas de error de Next, que no leen datos del motor (05 §1.2). La caché del enrutador del cliente se descarta entera con cualquier revalidación, así que V5-03a y V5-06b no cambian. (d) **Archivos:** `apps/web/src/servidor/accion.ts`, `apps/web/src/servidor/acciones/ajustes.ts`, `apps/web/src/servidor/revalidar.ts` (nuevo), `apps/web/e2e/pwa-revalidacion.e2e.ts` (nuevo); 04 §2.2.2 y §5.8, 05 V5-03, §4.13 y §6.3, 06 V6-05 y §3.9.1 (tandas). (e) **Prueba:** PRU-E2E-PWA-109 lee la compilación de la E2E: ningún `.meta` prerenderizado lleva la etiqueta que invalida `accion()`, toda página de `(finn)` la lleva y fuera de `(finn)` solo están las páginas sin datos; todo `revalidatePath(…, 'layout')` del código usa la constante; y después de una escritura por `/pruebas/eco`, que actualiza la página sin recargar, `/serwist/sw.js` responde con los mismos bytes y sin `STALE`. Sin el arreglo falla en las dos partes | 04 §2.2.2, §5.8; 05 V5-03, §4.13, §6.3; 06 V6-05, §3.9.1 | Aprobado por el usuario el 2026-11-03; **aplicado [CH-97]** en 04, 05, 06 y 08 |
@@ -1617,7 +1628,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-142** | Detalle de cuenta (`/cuentas/[cuentaId]`) portado del export de diseño, parte 1 de 2 (corrección posterior a TA-313, FT-52; el trabajo completo midió prod≈940 contra 520 con el 30 %, y se parte en CH-142 y CH-157). (a) **Síntoma:** el detalle seguía con el formulario genérico: título y saldo sueltos, once enlaces subrayados como acciones, filas con «Efecto en la cuenta» y «Saldo después» en líneas aparte, sin la identidad de la cuenta ni la cara de la tarjeta. (b) **Causa:** TA-313, TA-317 y TA-318 se construyeron desde 06 FT-52 y 05, sin partir de `pantallas/06-detalle-de-cuenta/` del export. (c) **Resolución, parte 1:** `cabecera.tsx` (nuevo) dibuja la identidad con rótulo, banco · últimos dígitos y saldo (efectivo, préstamo, inversión, archivada) y, en una tarjeta, su cara (`Cara` de `billetera.tsx` pasa a exportarse con `DatosCara`); `acciones.tsx` deja como botones solo lo diario (Verificar saldo o Pagar tarjeta, y Registrar, de 48 px) y publica el resto en «Más acciones» con `PublicarAcciones` (Editar, Condiciones, Verificar saldo, Conciliar con estado de cuenta, Ordenar cuentas, Archivar, Eliminar), con el motivo de cada bloqueo armado con los textos de `cuentas-gestion` y lo que trae el DTO; una archivada conserva Pagar, Cuota, Conciliar y Registrar deshabilitadas con su motivo (CA-52.4) y «Desarchivar»; `conciliaciones.tsx` agrega el aviso «Diferencia con el estado de cuenta» (AV-21) sobre las acciones con «Ver conciliación»; `movimientos.tsx` dibuja cada fila como en el export (comercio; fecha · categoría, partes o contraparte · conciliada; efecto en la cuenta y «Saldo $X»), «Ver en Actividad» y, sin movimientos, «Registrar con esta cuenta»; `pantalla.tsx` pone en computadora la cuenta a la izquierda y el historial a la derecha. **Queda fuera, sin dato o contra un documento:** (i) las fechas van `05/10/2026` (05 §5.4), no `05/10`; (ii) «Reservado $X de $Y · 97.10 %» con barra: el DTO no trae esa proporción y la interfaz no calcula (PF-3), así que la tarjeta sigue con sus filas de texto; (iii) «Pago 15/11» y «Pagá antes del 15/11»: `detalleCuenta()` no trae la fecha de pago, queda el ciclo; (iv) «archivada el 02/09/2026» y «abierta hoy»: el DTO no trae la fecha de archivo; (v) Aporte, Retiro y Ajuste de la inversión: sus flujos no existen; (vi) «Tasa anual» y «Modelo de cálculo» del préstamo: sin formato ni texto en el catálogo; (vii) las descripciones del menú («Nombre, límite, tasa, corte y pago», «Archivo CSV del banco») piden un campo nuevo en `AccionPantalla` y en el marco, es decir, JS compartido, y `/cuentas/nueva` está en 49,98 de 50 KB (05 §13.1); (viii) «Movimientos del ciclo» de la tarjeta: la lista trae todo el historial, el título queda «Movimientos»; (ix) el selector de período y los filtros se conservan (CA-52.3) aunque el export no los dibuja, y el pendiente de que sin `?periodo=` el selector muestre el período activo mientras la lista trae todo sigue igual: el export no lo aclara y alinearlo cambia el contrato de 04 §6.6; (x) el texto de la cuenta archivada es el del catálogo («solo podés mirarla»). (d) **Archivos:** `apps/web/src/app/(finn)/cuentas/[cuentaId]/{cabecera,acciones,conciliaciones,movimientos,pantalla}.tsx`, `pantalla.cmp.test.tsx`, `apps/web/src/componentes/dominio/billetera.tsx`, `apps/web/src/textos/cuenta-detalle.ts`, `apps/web/e2e/pantallas/cuentas/detalle-cuenta.e2e.ts` y esta fila. (e) **Prueba:** PRU-CMP-CTA-260 (el menú por tipo y sus motivos), 261 (la identidad de efectivo, la cara de la tarjeta y el aviso de diferencia) y 262 (la fila del movimiento y el vacío con acción), y PRU-E2E-CTA-260 (dos columnas en computadora, una en teléfono, botones de 44 px y «Más acciones»); PRU-CMP-CTA-104 se ajusta a la fila, a la cabecera y a las acciones nuevas | 06 FT-52; 05 §5.4, §11.5, §13.1; 08 TA-313, TA-317, TA-318, CH-122 | Delegado por el orquestador; **aplicado [CH-142]** en 08 |
 | **CH-157** | Detalle de cuenta (`/cuentas/[cuentaId]`) portado del export de diseño, parte 2 de 2 (continuación de CH-142, autorizada de antemano por el orquestador). Lleva lo que CH-142 dejó con el marcado anterior: `por-tipo.tsx` (la tarjeta en dos contenedores, «Para no generar intereses» como filas con línea; el préstamo con la tarjeta de próxima cuota «Próxima cuota · n de N» con «Pagar» y «Cuotas pagadas n de N», «Condiciones» con «Editar» y la amortización con la próxima cuota resaltada; la inversión con valor, aportes, retiros y ajustes dentro de la cabecera), `conciliaciones.tsx` (cada conciliación como fila con la insignia «Diferencia» o «Igual», el resumen «fecha · diferencia aceptada · actual», sin el aviso repetido por fila, y los cambios posteriores dentro de la fila) y las programadas como filas con su ícono. Sin dato no se dibuja (PF-3). **Queda fuera, sin dato:** «Reservado $X de $Y» con barra (el DTO no trae la proporción, PF-3), la fecha de pago de la tarjeta y la tasa anual del préstamo. (d) **Archivos:** `apps/web/src/app/(finn)/cuentas/[cuentaId]/{por-tipo,conciliaciones,cabecera,acciones,pantalla}.tsx`, `pantalla.cmp.test.tsx`, `apps/web/src/textos/cuenta-detalle.ts`, `apps/web/e2e/pantallas/cuentas/detalle-cuenta.e2e.ts` y esta fila. (e) **Prueba:** PRU-CMP-CTA-263 (próxima cuota, condiciones y amortización del préstamo) y PRU-E2E-CTA-261 (el préstamo con sus controles de 44 px); PRU-CMP-CTA-104, 116 y la de conciliaciones se ajustan a la fila con insignia y a la inversión en la cabecera. Estado: **aplicado [CH-157]** | 06 FT-52; 08 CH-142 | Delegado por el orquestador; **aplicado [CH-157]** en 08 |
 | **CH-141** | Actividad (`/actividad`) portada del export de diseño (corrección posterior a TA-308, FT-24; #381). (a) **Síntoma:** la auditoría visual del 2026-11-03 halló en `/actividad` filas sin el círculo de ícono ni la segunda línea «cuenta · categoría», sin las marcas con su texto, el día como fecha numérica («05/10/2026») en lugar de «Hoy · jueves 15/10», los filtros como `<select>` del navegador sin estilo, sin fichas de filtros activos y sin «Borrar búsqueda»; y sin estado de carga propio (usaba el genérico). (b) **Causa:** TA-308 construyó la pantalla desde 05 §2.6 y 06 FT-24 sin partir del HTML de `pantallas/02-actividad/` del export (CH-107). (c) **Resolución:** se porta el marcado y las medidas conservando la lógica, los textos del catálogo, los roles y los `data-*` (`data-dia`, `data-fila-transaccion`). `FilaTransaccion` acepta `detalle` opcional (círculo de 36 px con el ícono del tipo, «cuenta · categoría», «cuenta · 3 partes» u «origen → destino», el pendiente en ficha punteada y cada marca con ícono y texto; son nombres y el conteo de líneas del DTO, ningún monto); las demás pantallas siguen con la fila compacta. Rótulo del día en `formato/rotulo-de-dia.ts` («Hoy · jueves 15/10», «Ayer · …», «Domingo 11/10»; el año solo si no es el de hoy). `filtros.tsx`: cinco `SeleccionNativa` (nuevo prop `nombre`, que viaja en el formulario GET; sin Radix) y el resumen como pastilla «Filtros · n». `chips.tsx`: fichas de los filtros activos, cada una un enlace sin ese parámetro. `buscador.tsx`: lupa y «Borrar búsqueda» de 48 px. `loading.tsx`: esqueleto de la lista con «Cargando la pantalla». Los estados vacío y sin resultados son los del catálogo (`Vacio`, `VacioSinResultados`). (d) **Diferencias del prototipo, rige el documento:** el marcador del buscador es «Buscá por comercio o nota», no «…o monto», porque 04 §6.7.1 busca el texto en comercio y nota y el monto es un filtro aparte; los textos de los estados vacío y sin resultados del prototipo no se copian (06 FT-24: «Sin textos nuevos»; mandan los del catálogo); la hoja de filtros con radios del prototipo no se porta (Radix; mandó la orden de filtros nativos con `SeleccionNativa`). **Fuera, PF-3:** «5 transacciones · −$229.09» y los totales por día no existen en el DTO y la interfaz no suma; con «Cargar más» el conteo de la página tampoco es el total; quedan fuera hasta que un CH agregue el dato a `actividad()`. (e) **Archivos:** `apps/web/src/app/(finn)/actividad/{pantalla.tsx,filtros.tsx,buscador.tsx,chips.tsx,detalle-de-fila.ts,loading.tsx,pantalla.cmp.test.tsx}`, `apps/web/src/componentes/{dominio/fila-transaccion.tsx,base/seleccion-nativa.tsx}`, `apps/web/src/formato/rotulo-de-dia.ts`, `apps/web/src/textos/actividad.ts`, `apps/web/e2e/pantallas/actividad/actividad.e2e.ts` y esta fila. (f) **Prueba:** PRU-CMP-TX-460 (nuevas, `componentes`) exige los rótulos de día, la segunda línea de la fila y las marcas con texto, las fichas de filtros con su enlace de quitar, los select nativos con nombre y valor de la URL, y el estado de carga; PRU-E2E-TX-460 recorre rótulo, filtro de lista y ficha en el navegador. PRU-CMP-TX-400 y PRU-E2E-TX-400 a 403 no cambian ninguna cifra. PRU-REN-PWA-002: `/actividad` 5,28 KB; `/cuentas/nueva` 49,98 KB, sin cambio | 06 FT-24; 04 §6.7.1; 05 §11.5, §13.1; 08 TA-308, CH-107 | Delegado por el orquestador; **aplicado [CH-141]** en 08 |
-| **CH-140** | Detalle de categoría (`/presupuesto/categorias/[categoriaId]`) portado del export de diseño (corrección posterior a TA-290 y TA-319, FT-14; como CH-120, CH-122 y CH-126). (a) **Síntoma:** frente a `docs/anexos/finn-diseno-export/pantallas/S3-Detalle__*.html` la fecha de cada consumo era un `dd/mm` suelto, la rejilla de cifras no traía el Sobregiro y las acciones de Asignar y Mover iban antes de los consumos en el teléfono. (b) **Resolución:** cada consumo lleva la insignia de fecha del diseño (mes abreviado de la tabla propia de `formatearFechaTexto`, sobre el día de dos cifras); la rejilla suma una sexta cifra con el total del sobregiro del DTO («Sobregiro»), o «Con tarjeta» con `parteTarjeta` si el sobregiro es solo de tarjeta; el orden en el teléfono es cifras, sobregiro, meta, consumos, calendario, historial, programadas, reglas y, al final, Asignar y Mover (en computadora las acciones siguen bajo el sobregiro, en la columna izquierda). «Más acciones» (CH-115) no se toca. (c) **Fuera, por PF-3 y por lo aprobado:** la barrita de cobertura de cada consumo (el DTO no trae proporciones, CF-25); la frase «Pagaste con {tarjeta} $X más de lo asignado» bajo el indicador (CA-14.6: el encabezado no trae montos del sobregiro; el desglose ya los da); el título del aviso con el total («Sobregiro con débito o efectivo · $26.30»), porque el aviso por parte se conserva; el texto «Sin consumos en este período» del diseño (manda el catálogo: «Sin gastos en este período»); el «Archivar» deshabilitado con su motivo al pie, que vive en «Más acciones» (CH-115). La categoría de pago de tarjeta no cambia. Sin migración; los `data-*` y los roles no cambian (se suma `data-insignia-fecha`). (d) **Archivos:** `[categoriaId]/{pantalla,consumos}.tsx`, `textos/categoria-detalle.ts`. (e) **Pruebas:** PRU-CMP-PRES-240 a PRU-CMP-PRES-243 y PRU-E2E-PRES-240. | 06 FT-14, S3; 05 §11.5 | Delegado por el orquestador; **aplicado [CH-140]** en apps/web y 08 |
+| **CH-140** | Detalle de categoría (`/presupuesto/categorias/[categoriaId]`) portado del export de diseño (corrección posterior a TA-290 y TA-319, FT-14; como CH-120, CH-122 y CH-126). (a) **Síntoma:** frente a `docs/anexos/finn-diseno-export/pantallas/S3-Detalle__*.html` la fecha de cada consumo era un `dd/mm` suelto, la rejilla de cifras no traía el Sobregiro y las acciones de Asignar y Mover iban antes de los consumos en el teléfono. (b) **Resolución:** cada consumo lleva la insignia de fecha del diseño (mes abreviado de la tabla propia de `formatearFechaTexto`, sobre el día de dos cifras); la rejilla suma una sexta cifra con el total del sobregiro del DTO («Sobregiro»), o «Con tarjeta» con `parteTarjeta` si el sobregiro es solo de tarjeta; el orden en el teléfono es cifras, sobregiro, meta, consumos, calendario, historial, programadas, reglas y, al final, Asignar y Mover (en computadora las acciones siguen bajo el sobregiro, en la columna izquierda). «Más acciones» (CH-115) no se toca. (c) **Fuera, por PF-3 y por lo aprobado:** la barrita de cobertura de cada consumo (el DTO no trae proporciones, CF-25; **[CH-223]** la suma CH-223 con `cubiertoBp`); la frase «Pagaste con {tarjeta} $X más de lo asignado» bajo el indicador (CA-14.6: el encabezado no trae montos del sobregiro; el desglose ya los da); el título del aviso con el total («Sobregiro con débito o efectivo · $26.30»), porque el aviso por parte se conserva; el texto «Sin consumos en este período» del diseño (manda el catálogo: «Sin gastos en este período»); el «Archivar» deshabilitado con su motivo al pie, que vive en «Más acciones» (CH-115). La categoría de pago de tarjeta no cambia. Sin migración; los `data-*` y los roles no cambian (se suma `data-insignia-fecha`). (d) **Archivos:** `[categoriaId]/{pantalla,consumos}.tsx`, `textos/categoria-detalle.ts`. (e) **Pruebas:** PRU-CMP-PRES-240 a PRU-CMP-PRES-243 y PRU-E2E-PRES-240. | 06 FT-14, S3; 05 §11.5 | Delegado por el orquestador; **aplicado [CH-140]** en apps/web y 08 |
 | **CH-145** | Metas y Estructura portadas del export de diseño, parte 1 de 3 (corrección posterior a TA-305 y TA-442 para `/metas` y `/metas/nueva`, y a TA-283 y TA-316 para la estructura; FT-17, FT-18). El trabajo completo midió prod=633 contra 520 con el 30 %, y se parte en CH-145, CH-166 (Plantilla inicial) y CH-167 (detalle de Listo para asignar), autorizadas de antemano por el orquestador. (a) **Síntoma:** las dos pantallas seguían con el formulario genérico: listas de enlaces subrayados y «Subir» y «Bajar» como texto. (b) **Causa:** se construyeron desde las fichas 06 y 05, sin partir de `pantallas/09a-metas/` y `08-estructura-y-plantilla-inicial/` del export. (c) **Resolución:** `/metas` dibuja las metas vigentes en una tarjeta con su resumen y las vencidas como filas con estado y flecha en «Otras metas», con AV-17 arriba, y sin metas la lista «Categorías sin meta» con el enlace a crear cada una; `/metas/nueva?categoria=` titula «Meta para <categoría>» y no repite el selector; `/presupuesto/estructura` dibuja cada grupo con rótulo y «Editar grupo», filas con flechas de ícono de 44 px, «Nueva categoría» dentro de la tarjeta, «Nuevo grupo» al final, «Listo» en el pie y el vacío «Todavía no hay categorías» con la lista sugerida. `indicadorDeMeta` se exporta de `resumen-meta.tsx`. (d) **Queda fuera, sin dato o contra un documento:** (i) «Sin fondos suficientes en Listo para asignar» y «Meta cubierta» en las tarjetas del prototipo: `metas()` no trae si hay fondos y el estado de cada tarjeta lo dice `ResumenMeta`; (ii) «Meta mensual $350.00» en las filas de la estructura: `estructura()` no trae la meta; (iii) «Del sistema: sin archivar ni eliminar» queda con el texto del catálogo «Lo administra Finn»; (iv) «Asignar» y «Tener disponible» del modo de la meta y «Guardar meta»: manda el catálogo («Acumular», «Rellenar hasta», «Crear meta»), y la nota «La meta no asigna sola…» no está en el catálogo; (v) la Plantilla inicial (`plantilla*`) y el detalle de Listo para asignar (`05-detalle-de-listo-para-asignar`) quedan para CH-166 y CH-167; (vi) `estructura-movida` y `editar-categoria` siguen con el marcado anterior. (e) **Prueba:** PRU-CMP-META-130 a 132, PRU-E2E-META-130 y PRU-E2E-PRES-260; PRU-E2E-META-105 pasa a comprobar AV-17 arriba y la fila vencida (el «pide» de la vencida se ve en el detalle de la categoría). No toca `confirmacion-impacto.tsx`. |
 | **CH-167** | Detalle de Listo para asignar (`/presupuesto/listo-para-asignar`) portado del export de diseño, parte 3 de 3 de CH-145 (corrección posterior a TA-305, FT-08 y FT-10; export `pantallas/05-detalle-de-listo-para-asignar/`). (a) **Síntoma:** la pantalla mostraba el monto suelto y avisos de línea, sin el billete de Inicio. (b) **Causa:** se construyó desde la ficha 06, sin partir del export. (c) **Resolución:** el título y debajo `ResumenListoParaAsignar` en variante `billete`, con «En camino» y la acción «Asignar $x» (LPA positivo) o «Quitar $x de una categoría» (negativo) y ninguna con cero; la descomposición y la reducción proyectada, cada una en su tarjeta con el título como rótulo; la nota del historial como aviso informativo. (d) **Queda fuera:** el enlace del billete va siempre a `/presupuesto` (P6-26 a): `DetalleLpaDto` no trae si hay categorías sin fondos, así que no se puede elegir `/presupuesto?filtro=sin-fondos`; el dato queda para quien amplíe la consulta. (e) **Prueba:** PRU-CMP-PRES-275 y 276; PRU-CMP-PRES-106 pasa a los nuevos marcadores `data-en-camino` y `data-grafico`. No toca `confirmacion-impacto.tsx`. |
 | **CH-166** | Plantilla inicial (`/presupuesto/estructura/plantilla`) portada del export de diseño, parte 2 de 3 de CH-145 (corrección posterior a TA-286, FT-04; export `pantallas/08-estructura-y-plantilla-inicial/`). (a) **Síntoma:** la plantilla seguía con el formulario genérico: «Quitar» como texto, listas sin tarjeta, «Crear» al final del cuerpo y, cortada la creación, solo «Seguir creando…». (b) **Causa:** se construyó desde la ficha 06, sin partir del export. (c) **Resolución:** cada grupo con su rótulo y sus categorías en una tarjeta, con «Agregar categoría» dentro; quitar una categoría la tacha y la cambia por «Deshacer» a un toque (un grupo quitado sí desaparece); «Crear n categorías» y «Seguir creando» pasan al pie fijo; cortada la creación se ve «Creadas n · Faltan …» sin repetir lo creado; el aviso «Podés salir…» mientras se aplica. (d) **Queda fuera:** nada. (e) **Prueba:** PRU-CMP-PRES-270 y 271. No toca `confirmacion-impacto.tsx`. |
@@ -1649,6 +1660,14 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-215** | «Asignar» de un toque en Inicio (corrección posterior de TA-299). (a) **Síntoma:** 06 §4.2 paso 6 y CA-62.3 piden que en Inicio la propuesta de ritmo «Asignar $55.56» asigne de un toque, con «Deshacer», pero Inicio solo enlazaba a `/presupuesto/asignar/[categoriaId]` y el toque vivía solo en `/reportes/ritmo`; la E2E REC-4.2 lo recorría ahí (hallazgo de TA-446). (b) **Resolución:** Inicio usa el mismo componente de los hallazgos de ritmo del reporte (`reportes/[tipo]/ritmo-hallazgos.tsx`, con `useUnToque`), con el `montoNuevo` y el `esperado` que ya trae `hallazgosRitmo` (PF-3); sin la acción del lector, o con «Mover» y «Revisar», sigue el enlace. (c) **Archivos:** `apps/web/src/app/(finn)/pantalla-inicio.tsx`, PRU-CMP-INICIO-226, PRU-E2E-INICIO-135 y 148, y el paso 6 de `apps/web/e2e/recorridos/un-dia-tipico.e2e.ts` | 06 §4.2 (paso 6), CA-62.3, CA-08.6; 05 §4.14; 08 TA-299 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-215]** en TA-299 |
 | **CH-218** | Recorrido 4.5 de Conciliar sin «Agregar» en la secuencia (corrección posterior de TA-447). (a) **Síntoma:** en 06 §4.5, si el paso 2 («Agrega D como gasto», OP-46) se hace dentro de la secuencia, la diferencia deja de dar +$2.00 (pasos 1 y 3) y +$5.00 (paso 5), que fijan ESC-47, CA-25.3 y CA-52.2. (b) **Resolución:** «Agregar D» sale de la secuencia principal y pasa a ser una variante aparte, ya cubierta por PRU-E2E-CONC-156 [CA-43.5]; los números +$2.00 y +$5.00 no cambian. (c) **Archivos:** 06 §4.5 (paso 2) y `apps/web/e2e/recorridos/conciliar.e2e.ts` (PRU-E2E-CONC-450: el paso 4 usa los valores iniciales del enlace «Crear el ajuste» y el paso 2 deja la nota) | 06 §4.5, CA-43.5, CA-25.3, CA-52.2; 08 TA-447 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-218]** en 06 §4.5 |
 | **CH-219** | PRU-MAN-CONC-001 y PRU-MAN-CTA-001 pasan al uso diario y no bloquean la puerta (decisión del usuario, 2026-11-07; corrección posterior de TA-485, dueña de la puerta, y de TA-009, dueña de M16). (a) **Origen:** el usuario va a ejecutar PRU-MAN-CONC-001 (detección de formato de CSV con muestras reales, FT-43) y PRU-MAN-CTA-001 (tabla de amortización contra un estado de cuenta real, FT-55) durante el uso diario, después de abrir la puerta, y vuelve con feedback si encuentra algo. 07 §30 las exigía en "pasa" (condición 2 y, por M16, FT-43 y FT-55 en la condición 1). (b) **Mecanismo:** una ficha de `pruebas/manuales.md` puede llevar el campo `**Diferida al uso diario:** <motivo>`. `manuales()` (`tools/pruebas/reglas.ts`) lo lee; M16 no cuenta como pendiente una manual diferida **sin ninguna fila** en `resultados.md` y la informa como aviso; `pruebas:puerta` no la exige en la condición 2 y lista las diferidas al final. No se registra ningún "pasa" ni hace falta una fila firmada del usuario: la diferida se declara en el repositorio, a la vista en cada PR. Un resultado "falla" posterior vuelve a bloquear, y un "pasa" la cierra como a cualquier manual. (c) **PRU-MAN-CTA-001** se hace con el estado de cuenta del préstamo que el usuario tiene en Banco Agrícola (modelo `banco_agricola` de 01 Anexo A.2). (d) **CH-210:** en Banco Agrícola «sin cuentas» quiere decir sin cuentas que generen SMS o CSV (solo un préstamo); las exclusiones no cambian. (e) **Archivos:** `tools/pruebas/reglas.ts`, `tools/pruebas/puerta.ts`, `tools/pruebas/matriz.test.ts`, `tools/pruebas/puerta.test.ts`, `pruebas/manuales.md`, 07 §22.1, §22.2, §29.2 y §30, y esta tabla. (f) **Pruebas:** PRU-SEG-OPER-121 (M16: la diferida sin resultado no bloquea, una no diferida sin resultado sí, y una diferida con "falla" también) y PRU-SEG-OPER-122 (puerta, condición 2: lo mismo con PRU-MAN-CONC-001) | 07 §22.1, §22.2, §29.2, §30; `pruebas/manuales.md`; 08 CH-210, TA-485, TA-009 | Decidido por el usuario el 2026-11-07; **aplicado [CH-219]** en 07, `pruebas/manuales.md`, CH-210, TA-485 y el código |
+| **CH-220** | Entrega 3 del diseño (fixes visuales) como fuente, anchos, movimiento y hito HT-10 (2026-11-07). (a) **Origen:** el diseñador entregó `finn-fixes-visuales.zip`: `FIXES-VISUALES.md`, una auditoría de 75 hallazgos (`auditoria/AUDITORIA.md`, 236 capturas), la demo navegable (`demo/finn-demo.html`) y los estilos. La auditoría se hizo **sobre la demo, no sobre la app**: el orquestador comparó cada id con la app; lo que ya está hecho o no se aplica va en CH-221, lo que cambia un documento en este CH y en CH-222 a CH-227, y el resto son las fichas de B9 (§29b). (b) **Fuente:** el paquete entra como anexo en `docs/anexos/finn-fixes-visuales/` (sin `PROMPT-AGENTES.md`, que reemplazan las fichas, ni `fuentes/`, idénticas por SHA-1 a `apps/web/src/fuentes/`; `docs/anexos/INDICE.md`) y en las fuentes de verdad **después de `06-identidad-visual.md`** (§0.3): en un conflicto manda el documento numerado, salvo lo que enmienda este CH. `CLAUDE.md` no cambia: ya pone `docs/anexos/` detrás de los documentos. (c) **Anchos (enmienda CH-109 y 06-identidad-visual §3.2 y §4):** en computadora el contenido va con `max-width: 1144px`, relleno `32px 48px` arriba y `20px 48px 48px` en el cuerpo, y columnas con separación 36 (Inicio deja los 1080 px y la separación 40); los flujos, los formularios y las listas de Más secciones (Ajustes, Reglas, Metas, Programadas, Por cobrar) van con `max-width: 720px` y el pie alineado al contenido; las columnas colapsan a una debajo de unos 900 px de contenedor (`@container`, no por el ancho de la ventana). (d) **Movimiento (reemplaza las duraciones de 06-identidad-visual §11 y la entrada de §4):** el catálogo de FIXES §3. Pestaña: fundido de 220 ms. Hija: entra desde la derecha en 320 ms `--curva-entrada`; volver, desde la izquierda; flujo, sube. Velo: 200 ms. Panel de notificaciones: baja y sube en 200 ms, avisos a 120 ms + 60 ms × i. Hoja: abre en 380 ms `--curva-entrada`; cierra en 200 ms `--curva-salida` y **recién entonces se desmonta** (en computadora, el panel lateral en `translateX`). Menú K2: cierra en 120 ms (`opacity 0; scale(.96)`). Entrada escalonada: `fz-item` en 400 ms `--curva-estandar` con 60 ms entre bloques (90 ms en las columnas de computadora) y tope de 8. Opciones de Más secciones: 300 ms con 40 ms × i. Presionado: `scale(.97)` en 120 ms. Con «reducir movimiento» nada se anima, tampoco lo que se mueve por JS (consulta `matchMedia` y salta al estado final). Cada duración sale de un token de `tokens.css`; las que faltan se agregan ahí, nunca sueltas. (e) **Billete (06-identidad-visual §2.8):** las cifras ruedan **una vez por sesión**, no en cada entrada a Inicio; la duración de 1.4 s con 90 ms entre dígitos se mantiene (FIXES §3 dice 600 ms por carácter y 60–90 ms; manda 06-identidad-visual). (f) **Barra lateral:** las secundarias siguen en 44 px (CH-109; 05 §11.5, FE-47), no en los 40 de FIXES §2. (g) **Plan:** hito HT-10 «Fixes visuales» después de HT-9 (§2) y bloque B9 (§29b) con TA-486 a TA-499 y TA-507 a TA-512 en los huecos libres de B7 y B8 (§1.2); TA-494 entra en el grupo de migraciones de §31. Toda ficha de interfaz de B9 se verifica con FIXES §6 y deja capturas de antes y después por id. (h) **Archivos:** `docs/anexos/finn-fixes-visuales/**`, `docs/anexos/INDICE.md`, `.gitleaks.toml` (el token inventado de la demo, `fn_live_…`: solo ese valor y solo en ese archivo), 06-identidad-visual §2.8, §3.2, §4, §11 y «Enmiendas posteriores», 08 (§0.3, §1.2, HT-10, CH-109, §29b, §31 y esta tabla), `plan/objetivos.txt` y `plan/tareas.json`. Sin código de la app | 06-identidad-visual §2.8, §3.2, §4, §11; 08 §0.3, §1.2, §2, CH-109, §31 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-220]** en 06-identidad-visual, 08 y `docs/anexos/` |
+| **CH-221** | Hallazgos de la entrega 3 que no se aplican o que ya están hechos (parte de CH-220). (a) **Origen:** la auditoría de la demo (CH-220 a) trae hallazgos que en la app ya están resueltos o que chocan con un documento aprobado. (b) **No se aplican, con su motivo:** **C6 / D2**, el código TOTP en seis casillas que avanzan solas y se envían al completarse: 05 §9.4 y FE-38 piden un solo campo de 6 dígitos, sin envío automático (WCAG 2.2, 3.2.2), y pegar ya funciona; solo se agregan el temblor `fz-jitter` en el error y el check al verificar (TA-498). **«Aprobar sin Deshacer»:** ya se cumple (05 §4.14, PB-2). **A36**, la opción «Lo que falta para la meta» preseleccionada en Asignar: choca con 06 CA-12.1 (la asignación rápida se toca; no viene elegida); solo se agrega el foco automático en el campo (TA-512). **Secundarias de la barra lateral de 40 px:** siguen en 44 (CH-109, CH-220 f). **A22**, horizonte de 90 días en Programadas: 04 BE-37 fija 7 y 30 (la insignia de fecha sí, TA-512). **A6**, «Archivar» deshabilitado al pie del detalle: vive en «Más acciones» (CH-115). **B4, B5, el escalado `fitDevice` de B3 y las etiquetas «DISEÑADA EN LA DEMO» de A27 y A28** son de la demo, no de la app. (c) **Ya hechos en la app, sin tarea:** A1, A2 / E1, A3, A7, A13, A15, A20, A21, A25, A29, A30 / B9, A32, A33, A34 / E2, B1, B10, B11, D3, D5, D7, D10, D12, E3, E4 y FIXES §2.1 (Archivo autoalojada con el eje `wdth`). (d) **Sin decisión en este registro:** A4 (la tabla de Presupuesto en computadora, que CH-120 ya portó) y D6 (la acción siguiente de Primeros pasos duplicada debajo del resultado) no figuran ni como hechos ni en una ficha; quedan fuera de B9 hasta que el orquestador los compare con la app. (e) **Archivos:** esta tabla. Sin código | 05 §4.14, §9.4, FE-38; 06 CA-12.1; 04 BE-37; 08 CH-109, CH-115, CH-120 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-221]** en 08 |
+| **CH-222** | «Reservar $X» con el monto cargado en la categoría de pago y en el detalle de la tarjeta (A8, D11, A17). (a) **Origen:** la categoría de pago y el detalle de la tarjeta muestran «Te falta reservar $X», pero la acción es «Asignar» sin monto o un enlace suelto; el diseño pide un botón principal «Reservar $X» que deja la reserva completa, y la interfaz no puede calcular ese monto (PF-3). (b) **Operación:** variante nueva de OP-16, `reservar_falta`: δ = S(t), lo que falta reservar de la tarjeta t (01 §4.8), sobre c = pago(t), calculado por el dominio en el servidor como las otras variantes (`asignacionRapida`). Se ofrece solo en categorías de pago (`clase = 'pago'`) en el período activo y con S(t) > 0, y se aplica con las reglas de OP-14, incluido AV-11. (c) **Interfaz:** el botón «Reservar $X» lleva el monto que ya trae el DTO (`tarjetaHoy.faltaReservar` o `tarjeta.faltaReservar`) y abre Asignar de la categoría de pago con la variante elegida; con S(t) = 0, el principal de la categoría de pago es «Pagar la tarjeta» (FT-30). (d) **DTO:** `DetalleCuentaDto.tarjeta` suma `categoriaPago: Ref` (la categoría de pago de la tarjeta, BE-35), para que el detalle de la tarjeta enlace a Asignar sin otra consulta; `formulario('asignar')` suma `rapida.reservarFalta?: Centavos` (04 §6.14.4). (e) **FT-29** conserva su historial (Asignado / Disponible) y las cinco cifras de «Tarjeta hoy»; el detalle de la tarjeta suma «Para no generar intereses» con `desgloseAlPagar` y su lista pasa a «Movimientos del ciclo» (A17). (f) **Tareas:** TA-491 (dominio, contrato y DTO; obligatoria) y TA-492 (interfaz). (g) **Archivos de documentos:** 01 «Enmiendas posteriores» (OP-16), 04 OP-16, §6.0.5 (`asignacionRapida`), §6.6 y §6.14.4, 06 FT-29 y «Enmiendas posteriores» | 01 OP-16; 04 OP-16, §6.0.5, §6.6, §6.14.4; 06 FT-29 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-222]** en 01, 04 y 06 |
+| **CH-223** | Barrita cubierto / no cubierto por consumo en el detalle de categoría (A6). (a) **Origen:** el diseño pone en cada consumo la nota «cubierto» o «cubierto $X · no cubierto $Y» y una barrita de 5 px; CH-140 (c) la dejó fuera porque el DTO no trae proporciones y la interfaz no las calcula (CF-25, PF-3). (b) **Resolución:** cada elemento de `DetalleCategoriaDto.consumos` suma `cubiertoBp: number`, la parte cubierta en puntos básicos (cubierto × 10.000 / montoNeto, con la regla de redondeo de `barra` de CF-25; 0 si montoNeto ≤ 0 y tope 10.000), calculada en el servidor con los `cubierto` y `noCubierto` que el DTO ya trae (reparto D2, 01 §4.5). La barrita dibuja `cubiertoBp` sin recalcular; la nota usa los dos montos del DTO. Enmienda lo que CH-140 dejó fuera. (c) **Tarea:** TA-497. (d) **Archivos de documentos:** 04 §6.3 | 04 §6.3; 08 CH-140 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-223]** en 04 y CH-140 |
+| **CH-224** | Cuenta de efectivo con subtipo Corriente · Ahorro · Billetera (D1, A16). (a) **Origen:** el diseño distingue cuenta corriente, de ahorro y billetera (identidades de 06-identidad-visual §2.10, `nueva-tipo` de la entrega 2), pero 03 §3.4 decía que una cuenta de efectivo no tiene subtipo y 06 S6 y §7.3 lo dejaban fuera de fase: todas usaban la identidad `cuenta-banco` y `cuenta-ahorro` quedaba sin uso. (b) **Base (03 §3.4):** enum nuevo `subtipo_efectivo` (`corriente`, `ahorro`, `billetera`) y columna `cuentas.subtipo_efectivo`, nula, con `CHECK ((tipo = 'efectivo') = (subtipo_efectivo IS NOT NULL))` y `CHECK (subtipo_efectivo IS DISTINCT FROM 'billetera' OR (institucion_id IS NULL AND ultimos4 IS NULL))`. Una sola migración manual (`-- finn:manual`; escribe datos, así que llama antes a `finn.tomar_bloqueo()`): agrega la columna, deja las cuentas de efectivo existentes en `corriente` y recién entonces agrega las dos CHECK (expansión, DP-31). (c) **Operaciones (04):** OP-01 recibe `subtipoEfectivo: 'corriente' \| 'ahorro' \| 'billetera'`, obligatorio en efectivo y prohibido en los otros tipos (contrato); una billetera no lleva `institucionId` ni `ultimos4` (contrato). OP-02 lo puede cambiar, con su valor en `esperado`; pasar a billetera exige quitar institución y últimos 4 en la misma edición. (d) **DTO:** `cuentas()` (§6.5), `DetalleCuentaDto.cuenta` (§6.6) y `formulario('cuenta')` traen `subtipoEfectivo` en las cuentas de efectivo. (e) **BE-41:** al proponer el origen de un pago de tarjeta (movimiento por SMS y `formulario('pagar_tarjeta')`), se saltan los pagos anteriores cuyo origen es una cuenta de ahorro; si no queda ninguno, no hay propuesta. (f) **Identidad (06-identidad-visual §2.10):** corriente → `--cuenta-banco` con la libreta; ahorro → `--cuenta-ahorro` con los anillos; billetera → `--cuenta-banco` con el ícono `wallet` y sin motivo (provisorio: el diseño no tiene identidad de billetera). La identidad sale del subtipo guardado, nunca del nombre. (g) **06:** la fila S6 «Identidad distinta para corriente y ahorro» pasa a **Coincide** y §7.3 deja de listar los subtipos fuera de fase. **01 §1.2:** la cuenta de efectivo tiene un subtipo (corriente, ahorro o billetera) que solo cambia la presentación y la propuesta de origen; ninguna regla del motor depende de él. (h) **Tareas:** TA-494 (migración, OP-01 y OP-02, DTO y BE-41; obligatoria) y TA-495 (interfaz). (i) **Archivos de documentos:** 01 §1.2 y «Enmiendas posteriores», 03 §3.4 y «Enmiendas posteriores», 04 OP-01, OP-02, BE-41, §6.5 y §6.6, 06 S6 y §7.3, 06-identidad-visual §2.10 | 01 §1.2; 03 §3.4; 04 OP-01, OP-02, BE-41, §6.5, §6.6; 06 S6, §7.3; 06-identidad-visual §2.10 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-224]** en 01, 03, 04, 06 y 06-identidad-visual |
+| **CH-225** | Tarjetas de crédito con 8 colores y cara por el color guardado. (a) **Origen:** el diseño aprobó 8 colores de tarjeta (oro, plata, grafito, zafiro, rubí, esmeralda, amatista y cobre; `estilos/tokens-propuesta.css` del anexo) que se eligen al crear con una vista previa en vivo. Además hay un **defecto**: el detalle de la tarjeta no pasa `color` a `Cara`, y `Cara` compara un nombre (`'plata'`) contra el hex que guarda la base, así que toda tarjeta sale oro; la lista de Cuentas reparte la cara por orden (06 S6, precisión). (b) **Tokens:** los 6 nuevos entran a `tokens.css` y `tokens.json` en los dos temas, con su texto (`--tarjeta-<color>` y `--tarjeta-<color>-texto`) y la regla de contraste de 06-identidad-visual §1, texto sobre el tono más claro del degradado ≥ 4.5:1: grafito 11.81, zafiro 7.17, rubí 8.85, esmeralda 7.05, amatista 8.77 y cobre 7.03 (medidos con la fórmula de WCAG). Son decorativos como oro y plata. (c) **Valor guardado, sin migración:** `tarjetas.color` ya es `text` con `CHECK (color ~ '^#[0-9A-F]{6}$')` (03 §3.5) y OP-01 y OP-02 ya validan ese formato; cada color se guarda con un hex canónico en mayúsculas, el tono más claro de su degradado, como ya guarda el formulario oro (`#7E6638`) y plata (`#5C6670`): grafito `#2E3138`, zafiro `#24509A`, rubí `#7E2231`, esmeralda `#1A6043`, amatista `#52308C` y cobre `#7C4626`. El CHECK los admite. La tabla hex → nombre vive en un solo módulo de la interfaz como identificador, no como color de estilo: la cara se pinta con `var(--tarjeta-<nombre>)`. (d) **Cara:** se decide por el color guardado, no por el orden; un color nulo o un hex fuera de la tabla (tarjetas anteriores) sale oro. El detalle pasa `color` a `Cara`. (e) **Crear y editar:** se elige uno de los 8 y la red, con la cara de vista previa actualizada en vivo; el selector empieza en oro. (f) **Tarea:** TA-496. (g) **Archivos de documentos:** 06 S6, 06-identidad-visual §1 (contraste, decorativos y lo agregado) y §2.9 | 06 S6; 06-identidad-visual §1, §2.9; 03 §3.5 (sin cambio) | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-225]** en 06 y 06-identidad-visual |
+| **CH-226** | Tendencia con tope de asignado y Devolución «Elegí la compra» en Revisar. (a) **Tendencia (A26):** el gráfico del diseño lleva una línea punteada con lo asignado de cada período en `--grafico-referencia` y la leyenda «Períodos cerrados · Período actual · Asignado», y el DTO no lo trae. Cada período de `reporte('tendencia')` (04 §6.9.2) suma `asignado` = Σ Asig(c, q) de las categorías normales (sin las de pago), calculado por el selector del reporte; la escala del servidor lo ubica (05 FE-44). La barra proporcional de Top de comercios también la ubica esa escala sobre `monto`, sin campo nuevo. Tarea: TA-509. (b) **Devolución en Revisar (A12, D8):** OP-37 acepta `transaccionOriginalId?: Uuid`, solo con `tipo_propuesto = 'devolucion'`: la compra que se devuelve, elegida con la búsqueda de compras de CP-3 (6.14.3). Con él, OP-37 ejecuta OP-33a sobre esa compra con el reparto de las líneas del movimiento, cada una con el `lineaOriginalId` de una línea de esa compra (las precondiciones de OP-33a rigen igual; `linea_sin_destino` si una línea no lo tiene); sin él, OP-33b como hoy. Tarea: TA-507 (obligatoria). (c) **Archivos de documentos:** 04 §6.9.2 y OP-37; 01 «Enmiendas posteriores» (OP-37) | 04 §6.9.2, OP-37; 01 OP-37 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-226]** en 01 y 04 |
+| **CH-227** | Barra de las pantallas de Más secciones, buscador de Reglas y último SMS. (a) **Barra (B6):** las pantallas que se abren desde Más secciones (Programadas, Metas, Por cobrar, Reglas, Reportes y Ajustes) llevan solo la campana a la derecha de la barra del teléfono, sin Registrar ni ☰, y su título no se trunca. Cumple 05 §3.2: N1 pide Registrar en las pantallas principales, y la Bandeja (N2) y Más secciones (N5) siguen a una interacción desde la barra inferior. Enmienda 06-identidad-visual §3.1. Tarea: TA-487. (b) **Reglas (A24):** `/reglas` suma un buscador relleno con `?q=` (texto del comercio de la regla o de su categoría): el lector de la página filtra la lista de `reglas()` sin cambiar la consulta, y sin coincidencias dice «Ninguna regla con ese texto»; las filas son tocables (60 px, `chevR`) y «+ Nueva regla» es un botón tonal a todo el ancho. Enmienda 05 §2.8 (fila de `/reglas`) y §2.2 (catálogo de parámetros). (c) **Conectar los SMS (A27):** con el token configurado, la pantalla dice «Conectado. El último SMS llegó {fecha}»; `AjustesDto.webhook` suma `ultimoSmsEn?: Instante`, el `recibido_en` más reciente de `sms` (03 §3.17), sin leer el texto. Enmienda 04 §6.11. Tarea de (b) y (c): TA-511 | 06-identidad-visual §3.1; 05 §2.2, §2.8; 04 §6.11 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-227]** en 04, 05 y 06-identidad-visual |
 
 ---
 
@@ -11678,6 +11697,735 @@ fichas: FT-49
 
 ---
 
+## 29b. Bloque B9 — Fixes visuales (HT-10) **[CH-220]**
+
+Las correcciones de la entrega 3 del diseño (`docs/anexos/finn-fixes-visuales/`), con las decisiones de CH-220 a CH-227. La auditoría del paquete se hizo sobre la **demo**, no sobre la app: cada ficha nombra los ids que le tocan (A1… E4) y lo que la app ya tiene queda en CH-221. Los ids de la auditoría no son objetivos del catálogo: van en el texto de la ficha; `cubre` lleva los CH (decisiones, que cubre la revisión) y `pru`, las pruebas nuevas, que cada agente escribe primero.
+
+**Para toda ficha de interfaz de este bloque.**
+- Se copia el comportamiento de la demo y las medidas de `AUDITORIA.md`, no su código (la demo es HTML de una pieza). Manda el documento numerado; la demo y la auditoría, después (§0.3).
+- Solo tokens: ningún hex ni duración suelta fuera de `apps/web/src/app/tokens.css` (`grep -E "#[0-9a-fA-F]{3,6}|[0-9]+ms"` sobre el diff). Si falta un valor, se agrega como token en `tokens.css` y `tokens.json`. La interfaz no calcula montos (PF-3).
+- **Verificación (FIXES §6), en «Terminada cuando» de cada ficha:** cada id en teléfono (390 × 844) y computadora (1440 × 900), en claro y en oscuro; con «reducir movimiento» todo llega al estado final sin animar; tocables ≥ 44; contraste del texto nuevo ≥ 4.5:1. Capturas de antes y después por id en las dos vistas, guardadas en `C:/finn/capturas/TA-nnn/` (no se commitean). En el informe, una línea por id: **hecho**, **hecho en parte** (qué falta) o **bloqueado** (por qué).
+- Las estimaciones de `tamano` llevan margen (las pantallas midieron entre 1,5 y 2,7 veces lo estimado). Si el diff real no entra, la tarea se parte con el siguiente número libre de los huecos de B9 (§1.2).
+
+**Paralelismo.** `apps/web/src/app/globals.css` lo tocan TA-487 a TA-490: TA-488 define las utilidades y los keyframes compartidos, y TA-489 y TA-490 dependen de ella; TA-487 no corre junto a ninguna de las tres. Las demás comparten pantallas como dice su `paralelo`. TA-494 es la única migración (§31).
+
+#### TA-486 Fixes visuales: registro de CH-220 a CH-227, anexo, HT-10 y fichas **[CH-220]**
+
+```tarea
+orden: 750
+bloque: B9
+hito: HT-10
+depende: —
+tu: —
+revision: normal
+modelo: opus
+paralelo: no
+tamano: prod=10 archivos=1 ca=0 migraciones=0 total=1200
+cubre: CH-220, CH-221
+pru: —
+compartido: —
+```
+
+**Qué construir.**
+- El anexo `docs/anexos/finn-fixes-visuales/` con el paquete del diseñador (sin `PROMPT-AGENTES.md` ni `fuentes/`) y su sección en `docs/anexos/INDICE.md`; `.gitleaks.toml` exceptúa el token inventado de la demo, solo ese valor en ese archivo.
+- CH-220 a CH-227 en la tabla de §7 y sus enmiendas, con la marca `[CH-nnn]`, en 01, 03, 04, 05, 06, 06-identidad-visual y 08 (§0.3, §1.2, CH-109, CH-140, §31).
+- HT-10 (§2), este bloque y sus fichas; los objetivos nuevos en `plan/objetivos.txt` y las tareas en `plan/tareas.json` (`pendiente`).
+
+**Leer.** 08 §1.2, §1.3, §1.5, §2 (HT-9), §7 (CH-109, CH-115, CH-140, CH-151, CH-210, CH-219); 05 §1.4, §2.2, §2.8, §4.14, §9.4; 06 S6, §7.3, FT-29, CA-12.1; 06-identidad-visual §2.8, §2.9, §3.1, §11; 03 §3.4 y §3.5; 04 OP-01, OP-02, OP-16, OP-37, BE-37, BE-41, §6.9.2; `FIXES-VISUALES.md` y `AUDITORIA.md` del paquete.
+
+**Archivos.** `docs/anexos/finn-fixes-visuales/**`, `docs/anexos/INDICE.md`, `docs/*.md`, `.gitleaks.toml`, `plan/objetivos.txt`, `plan/tareas.json`.
+
+**Pruebas primero.** Ninguna: documentos y plan. Las comprobaciones son `plan:verificar` (§9) y `docs:comprobar` en `rapido`.
+
+**Comandos.** `pnpm plan:verificar`; `pnpm plan:anexos`; `pnpm ci:local`.
+
+**Terminada cuando.** `plan:verificar` pasa con las fichas nuevas y HT-10; cada CH está en su documento con su marca y su línea en «Enmiendas posteriores»; el anexo está en `docs/anexos/` con su sección del índice. **Tamaño:** el anexo es dato (`docs/**`, §1.1) pero lleva el total medido a unas 4.000 líneas, por encima de 1.200: la excepción de tamaño la autorizó el orquestador (delegado por el usuario) y va en «Desvíos»; la producción es solo `.gitleaks.toml`.
+
+#### TA-487 Fixes visuales: anchos, columnas que colapsan y barra de Más secciones **[CH-220, CH-227]**
+
+```tarea
+orden: 751
+bloque: B9
+hito: HT-10
+depende: TA-212, TA-213
+tu: —
+revision: normal
+paralelo: con TA-488, TA-489, TA-490
+tamano: prod=320 archivos=10 ca=0 migraciones=0 total=800
+cubre: CH-220-anchos, CH-227a
+pru: PRU-E2E-PWA-300, PRU-E2E-PWA-301, PRU-E2E-PWA-302, PRU-CMP-PWA-300
+compartido: —
+```
+
+**Qué construir.**
+- **B2 y anchos (CH-220 c):** en computadora el contenido va con `max-width: 1144px` y relleno `32px 48px` arriba y `20px 48px 48px` en el cuerpo; Inicio deja `--ancho-pantalla` de 1080. Flujos (`PaginaFlujo`), formularios y las listas de Ajustes, Reglas, Metas, Programadas y Por cobrar van a 720 px, con el pie alineado al contenido y no al borde.
+- **B3:** las rejillas de dos columnas (Inicio, detalles de categoría y de cuenta, Registrar en dos columnas) colapsan a una debajo de unos 900 px de **contenedor** (`@container`), con separación 36 entre columnas en los detalles.
+- **B6 (CH-227 a):** en el teléfono, Programadas, Metas, Por cobrar, Reglas, Reportes y Ajustes llevan solo la campana a la derecha (sin Registrar ni ☰) y su título no se trunca. En las principales, si el título no entra, Registrar queda solo con su ícono en 44 × 44 y nombre accesible.
+- **B7:** en las filas de valor (impacto, «Después de aprobar», rejillas de cifras), el valor no se parte (`white-space: nowrap`), la etiqueta cede (`min-width: 0`); el valor anterior en `--texto-secundario` 400 y el nuevo en `--texto` 700. En el indicador, la versión que no se parte.
+- **B8:** filas de varias líneas (Actividad, detalle de cuenta): título en una línea con elipsis y subtítulo `.t-cuerpo-pequeno` en una línea.
+
+**Leer.** FIXES §2, §4 y las filas B1 a B8 de §5; AUDITORIA B2, B3, B6, B7 y B8; 06-identidad-visual §3.1, §3.2 y §4 (con **[CH-220]** y **[CH-227]**); 05 §3.2 y §3.3; CH-109, CH-220, CH-227.
+
+**Archivos.** `apps/web/src/app/globals.css`, `apps/web/src/componentes/marco/{marco.tsx,pagina-flujo.tsx}`, `apps/web/src/componentes/navegacion/{navegacion-app.tsx,secciones.ts,acceso-registrar.tsx}`, `apps/web/src/componentes/dominio/{fila-transaccion.tsx,indicador-estado.tsx}`, `apps/web/src/componentes/formularios/confirmacion-impacto.tsx`, `apps/web/src/app/(finn)/pantalla-inicio.tsx`, `apps/web/src/componentes/marco/marco.cmp.test.tsx` (prueba), `apps/web/e2e/marco.e2e.ts` (prueba).
+
+**Pruebas primero.**
+- **PRU-E2E-PWA-300** [CH-220] en 1440 × 900 el contenido mide como máximo 1144 px y un flujo y la lista de Ajustes, 720; a 860 px de contenedor las dos columnas de Inicio pasan a una.
+- **PRU-E2E-PWA-301** [CH-227] en 390 × 844, Programadas, Reglas y Ajustes tienen la campana y no Registrar ni ☰; Presupuesto conserva los tres y el título no lleva puntos suspensivos.
+- **PRU-E2E-PWA-302** [CH-220] valores de impacto y de la rejilla en una sola línea a 390 px y título de fila de Actividad en una línea con elipsis.
+- **PRU-CMP-PWA-300** [CH-227] `secciones.ts`: las secundarias no publican Registrar ni el menú en la barra del teléfono.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-PWA-300"`; `pnpm test:e2e -g "PRU-E2E-PWA-30"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para B2, B3, B6, B7 y B8, con las capturas en `C:/finn/capturas/TA-487/` y una línea por id en el informe.
+
+#### TA-488 Fixes visuales: utilidades de movimiento compartidas **[CH-220]**
+
+```tarea
+orden: 752
+bloque: B9
+hito: HT-10
+depende: TA-205, TA-212
+tu: —
+revision: normal
+paralelo: con TA-487
+tamano: prod=300 archivos=10 ca=0 migraciones=0 total=800
+cubre: CH-220-movimiento
+pru: PRU-CMP-PWA-310, PRU-CMP-PWA-311, PRU-CMP-PWA-312, PRU-CMP-PWA-313
+compartido: —
+```
+
+**Qué construir.**
+- En `globals.css`, los keyframes y utilidades que usan TA-489, TA-490, TA-493 y TA-498: `fz-item`, `fz-pop-in`, `fz-jitter`, `fz-barup`, `fz-grow`, `fz-pill` y la salida de hojas y velo, con las duraciones y curvas de CH-220 d como tokens (`tokens.css` y `tokens.json`; las que falten, como el escalonado de 60 y 90 ms, se agregan como token).
+- **C5:** entrada escalonada de los bloques de pantalla (60 ms; 90 ms entre columnas de computadora) y de las filas de lista (60 ms, tope de 8), por una variable de índice que pone el servidor, sin JS.
+- **C7:** presionado `:active { transform: scale(.97) }` en 120 ms en botones, pastillas y segmentos; fondo y color con transición de 220 ms; el indicador del selector segmentado es un elemento que se desliza (`translateX`, 220 ms `--curva-estandar`) en lugar de repintar la opción.
+- **C11:** en computadora, las filas tocables cambian el fondo al 6 % de `--texto` y su `chevR` se mueve 4 px.
+- **C9:** en `Vacio`, el disco con `fz-pop-in` 400 ms `--curva-enfasis` y el texto con `fz-item` y 80 ms de retraso.
+- **C8:** las opciones de la hoja Más secciones con `fz-item` 300 ms y 40 ms × i; los avisos del panel de notificaciones, 120 ms + 60 ms × i.
+- Un hook `useMovimientoReducido()` (lee `matchMedia('(prefers-reduced-motion: reduce)')` y escucha sus cambios) para lo que se mueve por JS (TA-490, TA-493, TA-498).
+
+**Leer.** FIXES §1 (reducir movimiento), §3 y las filas C5, C7, C8, C9 y C11; AUDITORIA §C (encabezado), C5, C7, C8, C9 y C11; 06-identidad-visual §11 con **[CH-220]**; CH-220 d.
+
+**Archivos.** `apps/web/src/app/globals.css`, `apps/web/src/app/tokens.css`, `apps/web/src/app/tokens.json`, `apps/web/src/componentes/base/{boton.tsx,pastillas.tsx,selector-segmentado.tsx,vacio.tsx}`, `apps/web/src/componentes/navegacion/{navegacion-app.tsx,hoja-diferida.tsx}`, `apps/web/src/componentes/marco/tarjeta-notificaciones.tsx`, `apps/web/src/componentes/movimiento/*` (nuevo: el hook), `apps/web/src/componentes/base/movimiento.cmp.test.tsx` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-PWA-310** [CH-220] los bloques y las filas reciben su retraso escalonado con tope de 8, y con movimiento reducido no hay `animation` activa.
+- **PRU-CMP-PWA-311** [CH-220] el indicador del segmentado se desplaza a la opción elegida (posición y ancho) y el presionado aplica `scale(.97)`.
+- **PRU-CMP-PWA-312** [CH-220] `useMovimientoReducido` refleja `matchMedia` y su cambio.
+- **PRU-CMP-PWA-313** [CH-220] `Vacio` entra con el disco y el texto escalonados; las opciones de Más secciones con 40 ms × i.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-PWA-31"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde, ningún keyframe ni duración nueva fuera de los tokens, y la verificación de este bloque completa para C5, C7, C8, C9 y C11, con las capturas en `C:/finn/capturas/TA-488/` y una línea por id en el informe.
+
+#### TA-489 Fixes visuales: hojas, menús y panel que cierran animados **[CH-220]**
+
+```tarea
+orden: 753
+bloque: B9
+hito: HT-10
+depende: TA-488, TA-205
+tu: —
+revision: normal
+paralelo: con TA-487, TA-490
+tamano: prod=260 archivos=8 ca=0 migraciones=0 total=700
+cubre: CH-220-cierre
+pru: PRU-CMP-PWA-320, PRU-CMP-PWA-321, PRU-CMP-PWA-322, PRU-E2E-PWA-320
+compartido: —
+```
+
+**Qué construir.**
+- **C1:** `Superpuesto` (hoja inferior, panel lateral de computadora y la variante «desde arriba»), el menú «Más acciones» (K2) y la hoja Más secciones se cierran animados y **recién después se desmontan**: hoja `translateY(100%)` en 200 ms `--curva-salida`, velo en 200 ms, panel de notificaciones sube en 200 ms, menú `opacity 0; scale(.96)` en 120 ms. El cierre espera `animationend` (con un tope igual a la duración del token, nunca un número suelto) y con movimiento reducido desmonta en el acto.
+- **C12:** la hoja abre en 380 ms `--curva-entrada` y el velo en 200 ms (CH-220 d); al cambiar de período en Presupuesto el contenido entra desde el lado que corresponde (320 ms).
+- **Rutas interceptadas (05 §1.4):** el cierre animado corre antes de `cerrarFlujo()`; `router.back()` o `router.replace(rutaPadre)` se llaman al terminar la salida, una sola vez, y Escape, el velo y el botón siguen cerrando igual. Una navegación a otra ruta mientras la hoja sale no deja el slot `@superpuesto` montado.
+
+**Leer.** FIXES §3 (hoja, velo, menú, panel) y las filas C1 y C12; AUDITORIA C1 y C12; 05 §1.4 (flujos cortos, `cerrarFlujo`, excepción de notificaciones); 06-identidad-visual §2.17 y §11 con **[CH-220]**; CH-109 (campana) y CH-115 (menú).
+
+**Archivos.** `apps/web/src/componentes/marco/{superpuesto.tsx,mas-acciones.tsx,tarjeta-notificaciones.tsx}`, `apps/web/src/componentes/navegacion/{hoja-diferida.tsx,flujo-de-ruta.tsx,selector-periodo.tsx}`, `apps/web/src/componentes/base/dialogo.tsx`, `apps/web/src/app/globals.css`, `apps/web/src/componentes/base/superpuestos-avisos.cmp.test.tsx` (prueba), `apps/web/e2e/navegacion.e2e.ts` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-PWA-320** [CH-220] cerrar la hoja con el botón, Escape o el velo deja el diálogo montado durante la salida y lo desmonta al terminar; con movimiento reducido, en el acto.
+- **PRU-CMP-PWA-321** [CH-220] el menú «Más acciones» cierra con su salida y devuelve el foco al disparador.
+- **PRU-CMP-PWA-322** [CH-220] `cerrarFlujo()` se llama una sola vez, después de la salida.
+- **PRU-E2E-PWA-320** [CH-220] Asignar abierto desde Presupuesto: al cerrar, la URL vuelve a `/presupuesto` sin recargar y el slot queda vacío.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-PWA-32"`; `pnpm test:e2e -g "PRU-E2E-PWA-320"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para C1 y C12, con las capturas en `C:/finn/capturas/TA-489/` y una línea por id en el informe.
+
+#### TA-490 Fixes visuales: destello de montos, billete y entrada de gráficos **[CH-220]**
+
+```tarea
+orden: 754
+bloque: B9
+hito: HT-10
+depende: TA-488, TA-298, TA-209
+tu: —
+revision: normal
+paralelo: con TA-487, TA-489
+tamano: prod=300 archivos=9 ca=0 migraciones=0 total=750
+cubre: CH-220-billete
+pru: PRU-CMP-PWA-330, PRU-CMP-INICIO-300, PRU-CMP-REP-300
+compartido: —
+```
+
+**Qué construir.**
+- **C3:** un monto marcado (billete, Disponible de la categoría, pagos de tarjeta y totales) que cambió desde la última vez que se dibujó en la pantalla hace un destello de 600 ms: sube 4 px en `--positivo-texto` si aumentó y baja en `--problema-texto` si bajó. Compara el valor que trae el servidor con el anterior en la misma pantalla montada; no calcula ni guarda montos (PF-3, sin caché del motor).
+- **C4:** el billete conserva el guilloché que deriva (40 s), el resplandor que respira y el brillo; las cifras ruedan **una vez por sesión** (CH-220 e, `sessionStorage` envuelto en try/catch) con 1.4 s y 90 ms entre dígitos (06-identidad-visual §2.8). Con movimiento reducido, el monto aparece entero.
+- **C10:** barras que crecen desde la base (`fz-barup` 700 ms, 80 ms entre barras), la dona que se dibuja por `stroke-dashoffset` en 800 ms y las barras horizontales con `fz-grow` 800 ms, en `componentes/graficos/`.
+
+**Leer.** FIXES §3 (billete, montos, gráficos) y las filas C3, C4 y C10; AUDITORIA C3, C4 y C10; 06-identidad-visual §2.8 y §2.18 con **[CH-220]**; 05 PF-3 y FE-44.
+
+**Archivos.** `apps/web/src/componentes/dominio/{billete.tsx,monto.tsx,fila-pago.tsx,fila-categoria.tsx}`, `apps/web/src/componentes/graficos/{grafico-barras.tsx,grafico-dona.tsx,grafico-lineas.tsx}`, `apps/web/src/app/globals.css`, `apps/web/src/componentes/movimiento/*`, `apps/web/src/componentes/dominio/montos-color-signo.cmp.test.tsx` (prueba), `apps/web/src/app/(finn)/inicio.cmp.test.tsx` (prueba), `apps/web/src/componentes/graficos/contenedor-grafico.cmp.test.tsx` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-PWA-330** [CH-220] un monto que sube destella en `--positivo-texto`, uno que baja en `--problema-texto`, uno igual no destella; con movimiento reducido, ninguno.
+- **PRU-CMP-INICIO-300** [CH-220] el billete rueda en la primera entrada de la sesión y no en la segunda; sin `sessionStorage`, se dibuja entero sin error.
+- **PRU-CMP-REP-300** [CH-220] barras y dona con su animación de entrada escalonada; con movimiento reducido, dibujadas desde el inicio.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-PWA-330|PRU-CMP-INICIO-300|PRU-CMP-REP-300"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para C3, C4 y C10, con las capturas en `C:/finn/capturas/TA-490/` y una línea por id en el informe.
+
+#### TA-491 «Reservar $X»: variante `reservar_falta` de OP-16 y `categoriaPago` en el detalle de la tarjeta **[CH-222]**
+
+```tarea
+orden: 755
+bloque: B9
+hito: HT-10
+depende: TA-136, TA-192, TA-171, TA-174
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=200 archivos=8 ca=0 migraciones=0 total=650
+cubre: CH-222
+pru: PRU-DOM-PRES-310, PRU-DOM-PRES-311, PRU-INT-PRES-310, PRU-INT-CTA-310
+compartido: OP-16@dom (variante nueva), OP-16 (variante nueva), Q-detalleCuenta (categoriaPago), FORM-asignar (rapida.reservarFalta)
+```
+
+**Qué construir.**
+- **Dominio:** `asignacionRapida(c, p)` y el comando de OP-16 suman la variante `reservar_falta`: δ = S(t) sobre c = pago(t); solo en categorías de pago, en el período activo y con S(t) > 0; con las reglas de OP-14, incluido AV-11 (01 OP-16 y «Enmiendas posteriores» [CH-222]).
+- **Aplicación:** el contrato de OP-16 acepta la variante; `formulario('asignar')` trae `rapida.reservarFalta`; `DetalleCuentaDto.tarjeta.categoriaPago` (04 §6.6).
+
+**Leer.** 01 OP-16, §4.8 y «Enmiendas posteriores» [CH-222]; 04 OP-14, OP-16, §6.0.5, §6.6, §6.14.4 con **[CH-222]**; 06 FT-29 con **[CH-222]**; CF-25 (cubrir el sobregiro, como modelo de variante).
+
+**Archivos.** `packages/dominio/src/operaciones/op-16.ts`, `packages/dominio/src/selectores/**`, `packages/dominio/src/hechos/operaciones.ts`, `packages/aplicacion/src/contratos/presupuesto.ts`, `packages/aplicacion/src/operaciones/presupuesto/OP-16-asignacion-rapida.ts`, `packages/aplicacion/src/consultas/{detalle-cuenta.ts,formulario/**}`, `packages/dominio/src/operaciones/*.test.ts` (prueba), `packages/aplicacion/test/**` (prueba).
+
+**Pruebas primero.**
+- **PRU-DOM-PRES-310** [CH-222, OP-16@dom] con S(t) = $18.75, `reservar_falta` asigna $18.75 a pago(t) y S queda en $0.00; con S = 0 o en una categoría normal no se ofrece.
+- **PRU-DOM-PRES-311** [CH-222] la variante deja LPA negativo y pide AV-11 como OP-14.
+- **PRU-INT-PRES-310** [CH-222, OP-16] la operación en PostgreSQL con la variante y su `esperado`.
+- **PRU-INT-CTA-310** [CH-222, Q-detalleCuenta] el detalle de una tarjeta trae `categoriaPago` igual a su categoría de pago (BE-35).
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-PRES-31"`; `pnpm test:integracion -t "PRU-INT-PRES-310|PRU-INT-CTA-310"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde; el diferencial y los escenarios del motor sin cambios en ningún número.
+
+#### TA-492 «Reservar $X» en la categoría de pago y en el detalle de la tarjeta **[CH-222]**
+
+```tarea
+orden: 756
+bloque: B9
+hito: HT-10
+depende: TA-491, TA-291, TA-312, TA-403
+tu: —
+revision: normal
+paralelo: con TA-496, TA-497, TA-499
+tamano: prod=320 archivos=9 ca=0 migraciones=0 total=850
+cubre: CH-222-ui
+pru: PRU-CMP-PRES-310, PRU-CMP-PRES-311, PRU-CMP-CTA-310, PRU-E2E-PRES-480
+compartido: —
+```
+
+**Qué construir.**
+- **A8 / D11:** la categoría de pago (`pago.tsx`) con el héroe «Te falta reservar $X» en `--deuda-sin-respaldo-texto` (o «Pago reservado» en positivo), la rejilla Deuda · Reservado · Te falta, «Para no generar intereses» (contado y mínimo, `desgloseAlPagar`) y el botón principal de 52 px «Reservar $X», que abre Asignar con la variante `reservar_falta`; con todo reservado, «Pagar la tarjeta». FT-29 conserva el historial (Asignado / Disponible) y las cinco cifras de «Tarjeta hoy» (CH-222 e).
+- **A17 / D11:** en el detalle de la tarjeta, «Reservar $X» como principal en la cabecera del contenedor (con `categoriaPago`), el contenedor «Para no generar intereses» (Deuda al corte anterior · Cargos del ciclo actual · Ya pagado en el ciclo · Pagá antes del …) y la lista «Movimientos del ciclo».
+- Asignar (`presupuesto-asignar-categoria`) muestra la variante con su monto como las otras rápidas.
+
+**Leer.** FIXES §5 (Detalle de categoría A8 / D11; Cuentas A16 a A19); AUDITORIA A8, A17 y D11; 06 FT-29 y FT-30 con **[CH-222]**; 06-identidad-visual §2.9 y §6 (estado «Categoría de pago de tarjeta»); CH-222.
+
+**Archivos.** `apps/web/src/app/(finn)/presupuesto/categorias/[categoriaId]/{pago.tsx,pantalla.tsx}`, `apps/web/src/app/(finn)/cuentas/[cuentaId]/{por-tipo.tsx,cabecera.tsx,movimientos.tsx}`, `apps/web/src/flujos/presupuesto-asignar-categoria/{rapida.tsx,formulario.tsx}`, `apps/web/src/textos/{categoria-pago.ts,cuenta-detalle.ts}`, `apps/web/src/**/*.cmp.test.tsx` (prueba), `apps/web/e2e/pantallas/presupuesto/*` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-PRES-310** [CH-222] la categoría de pago con S > 0 muestra «Reservar $18.75» con el monto del DTO y enlaza a Asignar con la variante; con S = 0, «Pagar la tarjeta».
+- **PRU-CMP-PRES-311** [CH-222] la rejilla Deuda · Reservado · Te falta y «Para no generar intereses» con los valores del DTO; el historial sigue.
+- **PRU-CMP-CTA-310** [CH-222] el detalle de la tarjeta lleva «Reservar $X» a la `categoriaPago` y la lista se llama «Movimientos del ciclo».
+- **PRU-E2E-PRES-480** [CH-222] desde el detalle de Visa Oro, «Reservar» deja «Te falta reservar $0.00» en la tarjeta, en Presupuesto y en Inicio.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-PRES-31|PRU-CMP-CTA-310"`; `pnpm test:e2e -g "PRU-E2E-PRES-480"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para A8, A17 y D11, con las capturas en `C:/finn/capturas/TA-492/` y una línea por id en el informe.
+
+#### TA-493 Fixes visuales: Bandeja con aprobar en el lugar, panel en computadora y acciones por fila **[CH-220]**
+
+```tarea
+orden: 757
+bloque: B9
+hito: HT-10
+depende: TA-488, TA-295, TA-296, TA-301
+tu: —
+revision: normal
+paralelo: con TA-507
+tamano: prod=380 archivos=10 ca=0 migraciones=0 total=950
+cubre: —
+pru: PRU-CMP-BAND-310, PRU-CMP-BAND-311, PRU-E2E-BAND-480, PRU-E2E-BAND-481
+compartido: —
+```
+
+**Qué construir.**
+- **C2:** aprobar de un toque: la fila sale (`opacity → 0; translateX(24px)` en 240 ms `--curva-salida`), el alto colapsa y el resultado entra **en el mismo lugar** con `fz-pop-in` 340 ms `--curva-enfasis` (05 §4.14 regla 4; sin «Deshacer», PB-2: la salida es «Ver transacción»). El contador de la Bandeja rebota (escala .85 → 1). Usa las utilidades de TA-488; con movimiento reducido, el resultado aparece sin animar.
+- **A11:** `/bandeja` en computadora con la lista a la izquierda y, a la derecha, el panel de Revisar del primer movimiento por defecto (o del elegido), fijo al desplazar; la fila elegida con fondo `--superficie-hundida` y marca de 3 px `--accion`. Respeta CH-151 y FD-32: el panel es Revisar movimiento (`/bandeja/[movimientoId]`, página propia con la lista y el orden de `bandeja()`), no un resumen; el flujo largo no se intercepta (05 FE-04).
+- **A10:** cada fila con las acciones de su clase en la lista, no solo «Listo»: falta categoría («Elegir categoría»), coincidencia («Ver la programada» / confirmar o rechazar), no reconocido (SMS citado + «Registrar a mano»), con error («Intentar de nuevo» + «Copiar referencia») y posible duplicado («Es otro gasto» + «Descartar»), con las operaciones de un toque de 05 §4.14.
+
+**Leer.** FIXES §3 (Aprobar en la Bandeja) y la tabla «Bandeja y Revisar»; AUDITORIA A10, A11, C2 y D6; 05 §1.4 [R1], §4.14, §4.15; 06 S4 (FD-32 con CH-151); 06-identidad-visual §2.12, §2.13 y §7; CH-139, CH-151.
+
+**Archivos.** `apps/web/src/app/(finn)/bandeja/{lista.tsx,fila.tsx,page.tsx,selector-vista.tsx}`, `apps/web/src/app/(finn)/bandeja/[movimientoId]/page.tsx`, `apps/web/src/componentes/dominio/movimiento-bandeja.tsx`, `apps/web/src/flujos/bandeja-movimiento/panel-navegacion.tsx`, `apps/web/src/componentes/navegacion/contador.tsx`, `apps/web/src/textos/bandeja.ts`, `apps/web/src/app/globals.css`, `apps/web/src/**/*.cmp.test.tsx` (prueba), `apps/web/e2e/pantallas/bandeja/*` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-BAND-310** [CH-220] aprobar deja el resultado en la posición de la fila, con «Ver transacción» y sin «Deshacer».
+- **PRU-CMP-BAND-311** cada clase de fila muestra sus acciones (falta categoría, coincidencia, no reconocido, con error, posible duplicado).
+- **PRU-E2E-BAND-480** en 1440 × 900 `/bandeja` abre con el panel del primero, la fila marcada y el panel fijo al desplazar la lista.
+- **PRU-E2E-BAND-481** aprobar de un toque: el contador baja y rebota y el resultado queda donde estaba la fila.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-BAND-31"`; `pnpm test:e2e -g "PRU-E2E-BAND-48"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para A10, A11 y C2, con las capturas en `C:/finn/capturas/TA-493/` y una línea por id en el informe.
+
+#### TA-494 Subtipo de la cuenta de efectivo: migración, OP-01, OP-02, DTO y BE-41 **[CH-224]**
+
+```tarea
+orden: 758
+bloque: B9
+hito: HT-10
+depende: TA-114, TA-162, TA-171, TA-173, TA-232
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=300 archivos=11 ca=0 migraciones=1 total=850
+cubre: CH-224, MIG-16
+pru: PRU-ESQ-ESQ-110, PRU-DOM-CTA-320, PRU-INT-CTA-320, PRU-INT-CTA-321, PRU-INT-BAND-200
+compartido: OP-01 (subtipo), OP-02 (subtipo), OP-01@dom (subtipo), OP-02@dom (subtipo), BE-41 (sin ahorro), Q-cuentas (subtipo), Q-detalleCuenta (subtipo), FORM-cuenta (subtipo)
+```
+
+**Qué construir.**
+- **Migración** `m_cuentas_subtipo_efectivo` (03 §3.4 [CH-224]): enum `subtipo_efectivo`, columna `cuentas.subtipo_efectivo`, las cuentas de efectivo existentes en `corriente` y las dos CHECK; `-- finn:manual` y `finn.tomar_bloqueo()` antes de escribir; `schema.prisma` y `catalogo-esperado.txt`.
+- **OP-01 / OP-02** (04 [CH-224]) con `subtipoEfectivo` y la regla de la billetera, en el dominio y en el contrato.
+- **DTO:** `cuentas()`, `detalleCuenta()` y `formulario('cuenta')` con el subtipo.
+- **BE-41:** el origen propuesto de un pago de tarjeta salta los pagos cuyo origen es una cuenta de ahorro.
+
+**Leer.** 03 §3.4 y «Enmiendas posteriores» [CH-224], §10 y §11 (migraciones manuales); 04 OP-01, OP-02, BE-41, §6.5, §6.6, §6.14.4 con **[CH-224]**; 01 §1.2 [CH-224]; CH-224; `CLAUDE.md` (migraciones).
+
+**Archivos.** `packages/db/prisma/migrations/*_m_cuentas_subtipo_efectivo/migration.sql`, `packages/db/prisma/schema.prisma`, `packages/db/prisma/catalogo-esperado.txt`, `packages/dominio/src/hechos/**`, `packages/dominio/src/operaciones/{cuentas.ts,comunes.ts}`, `packages/dominio/src/selectores/**`, `packages/aplicacion/src/contratos/cuentas.ts`, `packages/aplicacion/src/operaciones/cuentas/{OP-01-crear-cuenta.ts,OP-02-editar-cuenta.ts}`, `packages/aplicacion/src/consultas/{cuentas.ts,detalle-cuenta.ts,bandeja.ts,formulario/**}`, `packages/db/test/**` (prueba), `packages/aplicacion/test/**` (prueba), `packages/dominio/src/operaciones/cuentas.test.ts` (prueba).
+
+**Pruebas primero.**
+- **PRU-ESQ-ESQ-110** [CH-224, MIG-16] la columna y sus CHECK: efectivo sin subtipo, tarjeta con subtipo y billetera con institución o últimos 4 fallan; las cuentas de efectivo anteriores quedan en `corriente`.
+- **PRU-DOM-CTA-320** [CH-224, OP-01@dom] crear y editar con cada subtipo; pasar a billetera sin quitar institución lo rechaza el contrato.
+- **PRU-INT-CTA-320** [CH-224, OP-01] OP-01 y OP-02 con el subtipo en PostgreSQL.
+- **PRU-INT-CTA-321** [CH-224, Q-cuentas] `cuentas()` y `detalleCuenta()` traen `subtipoEfectivo`.
+- **PRU-INT-BAND-200** [CH-224, BE-41] con el último pago desde una cuenta de ahorro, la propuesta es el pago anterior desde una corriente; si solo hay de ahorro, no hay propuesta.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-CTA-320"`; `pnpm test:integracion -t "PRU-ESQ-ESQ-110|PRU-INT-CTA-32|PRU-INT-BAND-200"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde, la migración pasa C2 a C6 y R1 a R15, y ningún número del motor cambia.
+
+#### TA-495 Subtipo de la cuenta de efectivo en la interfaz **[CH-224]**
+
+```tarea
+orden: 759
+bloque: B9
+hito: HT-10
+depende: TA-494, TA-282, TA-312
+tu: —
+revision: normal
+paralelo: con TA-496, TA-499, TA-508
+tamano: prod=320 archivos=9 ca=0 migraciones=0 total=850
+cubre: CH-224-ui
+pru: PRU-CMP-CTA-320, PRU-CMP-CTA-321, PRU-E2E-CTA-480
+compartido: —
+```
+
+**Qué construir.**
+- **D1:** en Nueva cuenta → Efectivo, el segmentado Corriente · Ahorro · Billetera con su ayuda debajo; el nombre se propone según el subtipo; billetera oculta Institución y Últimos 4; Institución y Últimos 4 no se precargan (placeholder «Opcional»). Editar cuenta permite cambiar el subtipo.
+- **Identidad (06-identidad-visual §2.10 [CH-224]):** corriente → libreta, ahorro → anillos (`--cuenta-ahorro`), billetera → `wallet` sin motivo sobre `--cuenta-banco` (provisorio), siempre por el subtipo del DTO, nunca por el nombre.
+- **A16:** detalle de corriente y de ahorro con la identidad horizontal, «Saldo» `.t-rotulo` + `.t-cifra-principal`, el aviso de diferencia de conciliación, Conciliaciones, Programadas de esta cuenta y «Ver en Actividad»; el de ahorro con su identidad.
+
+**Leer.** FIXES §5 (Cuentas, D1 y A16); AUDITORIA D1, A16 y A28; 06-identidad-visual §2.10 con **[CH-224]**; 06 S6 [CH-224]; 04 §6.5 y §6.6 [CH-224]; CH-224.
+
+**Archivos.** `apps/web/src/flujos/cuentas-nueva/{formulario.tsx,campos.ts,lector.tsx}`, `apps/web/src/flujos/cuentas-editar/*`, `apps/web/src/componentes/dominio/identidad-cuenta.tsx`, `apps/web/src/app/(finn)/cuentas/{pantalla.tsx,[cuentaId]/cabecera.tsx,[cuentaId]/por-tipo.tsx}`, `apps/web/src/textos/{cuentas-nueva.ts,cuenta-detalle.ts}`, `apps/web/src/flujos/cuentas-nueva/campos.test.ts` (prueba), `apps/web/src/componentes/dominio/cuentas.cmp.test.tsx` (prueba), `apps/web/e2e/flujos/cuentas/*` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-CTA-320** [CH-224] el segmentado cambia el nombre propuesto y la billetera oculta Institución y Últimos 4; sin precarga de últimos 4.
+- **PRU-CMP-CTA-321** [CH-224] la identidad sale del subtipo del DTO: libreta, anillos y `wallet` sin motivo.
+- **PRU-E2E-CTA-480** [CH-224] crear una billetera y una cuenta de ahorro y verlas en Cuentas y en su detalle con su identidad.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-CTA-32"`; `pnpm test:e2e -g "PRU-E2E-CTA-480"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para D1 y A16, con las capturas en `C:/finn/capturas/TA-495/` y una línea por id en el informe.
+
+#### TA-496 Tarjetas con 8 colores y cara por el color guardado **[CH-225]**
+
+```tarea
+orden: 760
+bloque: B9
+hito: HT-10
+depende: TA-201, TA-282, TA-312
+tu: —
+revision: normal
+paralelo: con TA-492, TA-495
+tamano: prod=300 archivos=9 ca=0 migraciones=0 total=750
+cubre: CH-225
+pru: PRU-CMP-CTA-330, PRU-CMP-CTA-331, PRU-E2E-CTA-490
+compartido: —
+```
+
+**Qué construir.**
+- **Tokens:** `--tarjeta-{grafito,zafiro,rubi,esmeralda,amatista,cobre}` y su `-texto` en `tokens.css` y `tokens.json`, en los dos temas, copiados de `docs/anexos/finn-fixes-visuales/estilos/tokens-propuesta.css`, con sus pares en la regla de contraste que mide PRU-DOM-PWA-001 (06-identidad-visual §1 [CH-225]).
+- **Color guardado:** un solo módulo con la tabla hex canónico → nombre de CH-225 c (los hex son el identificador que guarda `tarjetas.color`, no un color de estilo); `Cara` se pinta con `var(--tarjeta-<nombre>)` y decide por el color guardado; nulo o desconocido → oro. Corrige el defecto: el detalle pasa `color` a `Cara` y la lista de Cuentas deja de repartir por orden.
+- **Crear y editar la tarjeta:** el selector de los 8 colores y la red, con la cara de vista previa que se actualiza en vivo; empieza en oro.
+
+**Leer.** CH-225; FIXES §5 (Cuentas, «Tarjeta de crédito»); 06-identidad-visual §1 (contraste y decorativos) y §2.9 con **[CH-225]**; 06 S6 [CH-225]; 03 §3.5 (`tarjetas.color`, sin cambio); 04 OP-01 (`color`).
+
+**Archivos.** `apps/web/src/app/tokens.css`, `apps/web/src/app/tokens.json`, `apps/web/src/componentes/dominio/billetera.tsx`, `apps/web/src/componentes/dominio/colores-tarjeta.ts` (nuevo), `apps/web/src/app/(finn)/cuentas/{pantalla.tsx,[cuentaId]/cabecera.tsx}`, `apps/web/src/flujos/cuentas-nueva/{formulario.tsx,campos.ts}`, `apps/web/src/flujos/cuentas-editar/*`, `apps/web/src/textos/cuentas-nueva.ts`, `tools/pruebas/contraste.py`, `apps/web/src/componentes/dominio/cuentas.cmp.test.tsx` (prueba), `apps/web/e2e/flujos/cuentas/*` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-CTA-330** [CH-225] la cara de cada uno de los 8 hex usa su token; nulo y un hex desconocido salen oro; el detalle respeta el color guardado.
+- **PRU-CMP-CTA-331** [CH-225] el selector cambia la vista previa en vivo y envía el hex canónico.
+- **PRU-E2E-CTA-490** [CH-225] crear una tarjeta zafiro y verla zafiro en Cuentas y en su detalle, en claro y en oscuro.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-CTA-33"`; `pnpm test:unidad -t "PRU-DOM-PWA-001"`; `pnpm test:e2e -g "PRU-E2E-CTA-490"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde, PRU-DOM-PWA-001 con los 6 pares nuevos, sin migración, y la verificación de este bloque completa para la tarjeta de crédito de FIXES §5 (Cuentas), con las capturas en `C:/finn/capturas/TA-496/` y una línea en el informe.
+
+#### TA-497 Fixes visuales: detalle de categoría con barrita de cobertura, historial sin datos y meta **[CH-223]**
+
+```tarea
+orden: 761
+bloque: B9
+hito: HT-10
+depende: TA-170, TA-290, TA-319
+tu: —
+revision: normal
+paralelo: con TA-492, TA-499, TA-512
+tamano: prod=300 archivos=8 ca=0 migraciones=0 total=800
+cubre: CH-223
+pru: PRU-INT-PRES-320, PRU-CMP-PRES-320, PRU-CMP-PRES-321, PRU-CMP-PRES-322
+compartido: Q-detalleCategoria (cubiertoBp)
+```
+
+**Qué construir.**
+- **CH-223 / A6:** el selector del detalle de categoría suma `cubiertoBp` a cada consumo (04 §6.3 [CH-223]); cada consumo lleva la nota «cubierto» o «cubierto $X · no cubierto $Y» (en `--problema-texto`) y la barrita de 5 px (lo cubierto en `--texto-secundario`, lo no cubierto con el rayado de `--problema-borde` sobre `--problema-fondo`), sin recalcular. Si el cálculo cae en `packages/dominio/src/calculo/**`, la tarea pasa a obligatoria (`pr:mergear` lo detecta).
+- **D9:** sin períodos anteriores, el historial muestra la caja «Gráfico sin datos» (`--superficie-hundida`, radio 16, 180 px, ícono `chart`); no se muestra en categorías de ahorro con meta y sin gasto (la de pago es de TA-492).
+- **A9:** con meta, el resumen («$1,350.00 de $3,000.00 · 45 %», «Pide $X este período · falta $Y») y el botón principal «Asignar $Y» con el `falta` del DTO, que abre Asignar con «Lo que falta para la meta» (sin preseleccionarla, CH-221).
+
+**Leer.** FIXES §5 (Detalle de categoría A6, A9, D9); AUDITORIA A6, A9 y D9; 04 §6.3 con **[CH-223]**; CH-140 (c) y CH-223; 06 FT-14, FT-17; 06-identidad-visual §6 y §2.19.
+
+**Archivos.** `packages/dominio/src/selectores/detalle-categoria.ts`, `packages/aplicacion/src/consultas/detalle-categoria.ts`, `apps/web/src/app/(finn)/presupuesto/categorias/[categoriaId]/{consumos.tsx,historial.tsx,pantalla.tsx}`, `apps/web/src/componentes/dominio/resumen-meta.tsx`, `apps/web/src/textos/categoria-detalle.ts`, `packages/aplicacion/test/**` (prueba), `apps/web/src/app/(finn)/presupuesto/categorias/[categoriaId]/*.cmp.test.tsx` (prueba).
+
+**Pruebas primero.**
+- **PRU-INT-PRES-320** [CH-223, Q-detalleCategoria] `cubiertoBp` de un consumo con $20.50 cubierto y $7.80 no cubierto, de uno totalmente cubierto y de uno con montoNeto ≤ 0.
+- **PRU-CMP-PRES-320** [CH-223] la barrita usa `cubiertoBp` y la nota los dos montos del DTO.
+- **PRU-CMP-PRES-321** sin historial, «Gráfico sin datos»; en ahorro con meta y sin gasto, sin historial.
+- **PRU-CMP-PRES-322** con meta, el botón dice «Asignar» con el `falta` del DTO y la opción no viene elegida.
+
+**Comandos.** `pnpm test:integracion -t "PRU-INT-PRES-320"`; `pnpm test:componentes -t "PRU-CMP-PRES-32"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para A6, A9 y D9, con las capturas en `C:/finn/capturas/TA-497/` y una línea por id en el informe.
+
+#### TA-498 Fixes visuales: TOTP con temblor en el error y check al verificar **[CH-221]**
+
+```tarea
+orden: 762
+bloque: B9
+hito: HT-10
+depende: TA-488, TA-281, TA-284
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=120 archivos=4 ca=0 migraciones=0 total=350
+cubre: CH-221-totp
+pru: PRU-CMP-ACCESO-110, PRU-CMP-ACCESO-111
+compartido: —
+```
+
+**Qué construir.**
+- En `/ingresar/verificar` y en la inscripción, sobre el **campo único** de 05 §9.4 (FE-38; sin casillas, sin envío automático, pegar ya funciona): con código incorrecto, el campo hace `fz-jitter` 380 ms con borde `--problema-borde`, queda vacío y con el foco; al verificar, un check con `fz-pop-in` 400 ms y la navegación a `volver` a los 650 ms (token), después del envío del usuario. Con movimiento reducido, ni temblor ni espera: el mensaje y la navegación directa.
+- Área de seguridad (autenticación, AAL2): obligatoria; no toca `verificarFactor` ni la sesión.
+
+**Leer.** CH-221 (b); 05 §9.4 y §9.5, FE-38; FIXES §3 (Código TOTP: error y correcto); AUDITORIA C6 y D2.
+
+**Archivos.** `apps/web/src/app/ingresar/verificar/formulario-verificar.tsx`, `apps/web/src/app/ingresar/codigo.ts`, `apps/web/src/app/ingresar/inscribir/page.tsx`, `apps/web/src/textos/autenticacion.ts`, `apps/web/src/app/ingresar/*.cmp.test.tsx` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-ACCESO-110** [CH-221] código incorrecto: temblor, campo vacío con el foco y el mensaje; con movimiento reducido, sin temblor.
+- **PRU-CMP-ACCESO-111** [CH-221] verificado: el check aparece y la navegación ocurre después de la espera del token; seis dígitos escritos no envían solos.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-ACCESO-11"`; `pnpm test:e2e -g "ACCESO"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde, las E2E de acceso sin cambios, y la verificación de este bloque completa para C6 y D2 (lo que se aplica), con las capturas en `C:/finn/capturas/TA-498/` y una línea por id en el informe.
+
+#### TA-499 Fixes visuales: «Ver las N», «Volver a…» duplicados y banda sin conexión **[CH-220]**
+
+```tarea
+orden: 763
+bloque: B9
+hito: HT-10
+depende: TA-487, TA-298, TA-437
+tu: —
+revision: normal
+paralelo: con TA-492, TA-495, TA-497, TA-508
+tamano: prod=300 archivos=12 ca=0 migraciones=0 total=750
+cubre: —
+pru: PRU-CMP-INICIO-310, PRU-E2E-PWA-340, PRU-CMP-PWA-340
+compartido: —
+```
+
+**Qué construir.**
+- **A31:** en Inicio, los enlaces de encabezado («Programadas», «Actividad» y «Ver las N →» de «Necesita tu atención» cuando hay más que las mostradas, 06-features §5.2) con `arrowR` que se mueve al pasar. Las piezas nuevas de §5 que no están en la demo («Ritmo alto», «Pagos de tarjeta próximos») quedan fuera: CH-113 (d) las dejó para un CH propio.
+- **A5:** las pantallas hijas quitan la fila «Volver a…» que todavía tienen **dentro del contenido**; la barra (CH-109) ya lleva la flecha en la fila del título. Las E2E que tomaban el «Volver» de `main` pasan a la barra.
+- **A35:** sin conexión como banda compacta `--texto` sobre `--fondo` con la nube tachada (`radio-control`, 10 14) y el error de pantalla en una tarjeta `--elevacion-1` con `info`, «Referencia» + copiar y «Intentar de nuevo».
+
+**Leer.** FIXES §5 (Inicio A31; Marco A5; Más secciones A35); AUDITORIA A5, A31 y A35; CH-109 (c), CH-113 (d), CH-148; 06-features §5.2; 06-identidad-visual §2.19.
+
+**Archivos.** `apps/web/src/app/(finn)/{pantalla-inicio.tsx,inicio-secciones.tsx}`, `apps/web/src/app/(finn)/**/pantalla.tsx`, `apps/web/src/app/sin-conexion/*`, `apps/web/src/componentes/base/error-pantalla.tsx`, `apps/web/src/componentes/navegacion/error-de-pantalla.tsx`, `apps/web/src/componentes/marco/reintentar-sin-conexion.tsx`, `apps/web/src/textos/*`, `apps/web/src/**/*.cmp.test.tsx` (prueba), `apps/web/e2e/**` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-INICIO-310** «Ver las N →» aparece solo con más sobregiradas que las mostradas y lleva `arrowR`.
+- **PRU-E2E-PWA-340** ninguna pantalla hija tiene un «Volver a…» dentro de `main`; el de la barra conserva su `rutaPadre`.
+- **PRU-CMP-PWA-340** la banda sin conexión y la tarjeta del error de pantalla con su referencia copiable.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-INICIO-310|PRU-CMP-PWA-340"`; `pnpm test:e2e -g "PRU-E2E-PWA-340"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para A5, A31 y A35, con las capturas en `C:/finn/capturas/TA-499/` y una línea por id en el informe.
+
+#### TA-507 Fixes visuales: Revisar movimiento con atajos de fecha, origen del pago y «Elegí la compra» **[CH-226]**
+
+```tarea
+orden: 764
+bloque: B9
+hito: HT-10
+depende: TA-121, TA-178, TA-296, TA-193
+tu: —
+revision: obligatoria
+paralelo: con TA-493
+tamano: prod=360 archivos=10 ca=0 migraciones=0 total=900
+cubre: CH-226b
+pru: PRU-DOM-BAND-120, PRU-INT-BAND-210, PRU-CMP-BAND-320, PRU-E2E-BAND-490
+compartido: OP-37 (transaccionOriginalId), OP-37@dom (devolución vinculada)
+```
+
+**Qué construir.**
+- **A12:** en Revisar, el selector Tipo (Gasto · Ingreso · Pago · Devolución, segmentado de 36 con su área de 44) entre Comercio y Categoría, y la Fecha con `EntradaFecha` (botón de calendario de 44) más los atajos «Hoy» y «Ayer» (fechas de negocio del servidor, no del reloj del cliente).
+- **D8 / Pago:** con tipo Pago, el origen visible y elegible, preseleccionado con `origenPropuesto` (BE-41, con CH-224 e si TA-494 ya está en `main`).
+- **D8 / Devolución (CH-226 b):** «Elegí la compra» con la búsqueda de compras de CP-3; OP-37 acepta `transaccionOriginalId` y ejecuta OP-33a con el reparto de las líneas del movimiento; sin compra, OP-33b. Toca la operación (obligatoria).
+
+**Leer.** CH-226 (b); 04 OP-33, OP-36, OP-37 con **[CH-226]**, BE-41, §6.8, §6.14.3 (CP-3); 01 OP-33, OP-37 y «Enmiendas posteriores»; FIXES §5 (Bandeja y Revisar A12, D8); AUDITORIA A12 y D8; 06 FT-35, FT-37; CH-137, CH-151.
+
+**Archivos.** `packages/aplicacion/src/contratos/bandeja.ts`, `packages/aplicacion/src/operaciones/bandeja/{OP-37-aprobar.ts,comunes.ts}`, `packages/dominio/src/operaciones/**`, `apps/web/src/flujos/bandeja-movimiento/{campos-movimiento.tsx,campos.ts,formulario.tsx,edicion.tsx}`, `apps/web/src/componentes/formularios/entrada-fecha.tsx`, `apps/web/src/textos/bandeja.ts`, `packages/dominio/src/operaciones/bandeja.test.ts` (prueba), `packages/aplicacion/test/**` (prueba), `apps/web/src/flujos/bandeja-movimiento/*.cmp.test.tsx` (prueba), `apps/web/e2e/flujos/bandeja/*` (prueba).
+
+**Pruebas primero.**
+- **PRU-DOM-BAND-120** [CH-226, OP-37@dom] aprobar una devolución con `transaccionOriginalId` aplica OP-33a con el reparto; una línea sin `lineaOriginalId` da `linea_sin_destino`; sin compra, OP-33b.
+- **PRU-INT-BAND-210** [CH-226, OP-37] lo mismo en PostgreSQL, con las precondiciones de OP-33a.
+- **PRU-CMP-BAND-320** [CH-226] el selector Tipo muestra el origen en Pago y «Elegí la compra» en Devolución; «Hoy» y «Ayer» ponen las fechas del servidor.
+- **PRU-E2E-BAND-490** [CH-226] un SMS revisado como devolución de una compra queda vinculado a ella en el detalle de la transacción.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-BAND-120"`; `pnpm test:integracion -t "PRU-INT-BAND-210"`; `pnpm test:componentes -t "PRU-CMP-BAND-320"`; `pnpm test:e2e -g "PRU-E2E-BAND-490"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para A12 y D8, con las capturas en `C:/finn/capturas/TA-507/` y una línea por id en el informe.
+
+#### TA-508 Fixes visuales: Devolución en Registrar y acciones del detalle de inversión **[CH-220]**
+
+```tarea
+orden: 765
+bloque: B9
+hito: HT-10
+depende: TA-406, TA-480, TA-420, TA-292
+tu: —
+revision: normal
+paralelo: con TA-495, TA-499
+tamano: prod=280 archivos=9 ca=0 migraciones=0 total=700
+cubre: —
+pru: PRU-CMP-TX-510, PRU-CMP-CTA-340, PRU-E2E-TX-600
+compartido: —
+```
+
+**Qué construir.**
+- **D4:** en `/registrar`, los tipos según las cuentas (Inversión si hay una; Desembolso si hay un préstamo; Avance y Transferencia de deuda con una o dos tarjetas) y Devolución conectada: pide la compra original (búsqueda de CP-3) y registra OP-33a, o OP-33b sin compra, con los flujos de FT-28. Títulos de cada tarjeta del selector en `.t-cuerpo` 700.
+- **A19:** el detalle de inversión con «Valor» grande, la rejilla Aportado · Retirado · Ajustes (`inversion` del DTO) y los botones Aporte (principal), Retiro y Ajuste (tonales), que abren los flujos de FT-57; la lista «Aportes, retiros y ajustes».
+
+**Leer.** FIXES §5 (Registrar D4; Cuentas A19); AUDITORIA D4 y A19; 06 FT-28, FT-57; 04 OP-33, §6.6 (`inversion`), §6.14.3; 05 §2 (rutas de registrar).
+
+**Archivos.** `apps/web/src/flujos/registrar-tipo/{lector.tsx,formulario.tsx,campos.ts}`, `apps/web/src/flujos/registrar/lector.tsx`, `apps/web/src/flujos/actividad-devolver/*`, `apps/web/src/app/(finn)/registrar/**`, `apps/web/src/app/(finn)/cuentas/[cuentaId]/{por-tipo.tsx,acciones.tsx}`, `apps/web/src/textos/{registrar-tipo.ts,cuenta-detalle.ts}`, `apps/web/src/**/*.cmp.test.tsx` (prueba), `apps/web/e2e/flujos/transacciones/*` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-TX-510** el selector muestra los tipos según las cuentas del catálogo; Devolución pide la compra.
+- **PRU-CMP-CTA-340** el detalle de inversión con Valor, la rejilla del DTO y los tres botones a sus flujos.
+- **PRU-E2E-TX-600** registrar una devolución desde `/registrar` vinculada a una compra.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-TX-510|PRU-CMP-CTA-340"`; `pnpm test:e2e -g "PRU-E2E-TX-600"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para D4 y A19, con las capturas en `C:/finn/capturas/TA-508/` y una línea por id en el informe.
+
+#### TA-509 Fixes visuales: Tendencia con tope de asignado y barras de Top de comercios **[CH-226]**
+
+```tarea
+orden: 766
+bloque: B9
+hito: HT-10
+depende: TA-490, TA-141, TA-230, TA-421, TA-453
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=260 archivos=8 ca=0 migraciones=0 total=700
+cubre: CH-226a
+pru: PRU-DOM-REP-300, PRU-CMP-REP-310, PRU-CMP-REP-311
+compartido: REP-tendencia (asignado)
+```
+
+**Qué construir.**
+- **CH-226 a / A26:** el selector de `tendencia` suma `asignado` por período (04 §6.9.2 [CH-226]); el gráfico lo dibuja como tope punteado en `--grafico-referencia` con la leyenda «Períodos cerrados · Período actual · Asignado», y la tabla equivalente suma la columna.
+- **A26 / Top de comercios:** cada fila con «N compras · Categoría» y una barra de 6 px en `--texto` que ubica la escala del servidor (05 FE-44) sobre `monto`, sin cálculo en el cliente.
+
+**Leer.** CH-226 (a); 04 §6.9.1 y §6.9.2 con **[CH-226]**; 05 FE-44, §10.8; FIXES §5 (Reportes A26 / C10); AUDITORIA A26; 06 FT-60.
+
+**Archivos.** `packages/dominio/src/selectores/reportes/{tendencia.ts,index.ts}`, `packages/aplicacion/src/consultas/reporte.ts`, `apps/web/src/app/(finn)/reportes/[tipo]/{vistas.tsx,pantalla.tsx}`, `apps/web/src/componentes/graficos/{grafico-barras.tsx,leyenda-grafico.tsx,tabla-equivalente.tsx}`, `packages/dominio/src/selectores/reportes/*.test.ts` (prueba), `apps/web/src/app/(finn)/reportes/[tipo]/*.cmp.test.tsx` (prueba).
+
+**Pruebas primero.**
+- **PRU-DOM-REP-300** [CH-226, REP-tendencia] `asignado` por período es Σ Asig de las categorías normales, sin las de pago, en una ventana de 3 períodos.
+- **PRU-CMP-REP-310** [CH-226] el tope punteado y la leyenda con los tres rótulos; la tabla con la columna Asignado.
+- **PRU-CMP-REP-311** Top de comercios con «N compras · Categoría» y la barra de la escala del servidor.
+
+**Comandos.** `pnpm test:unidad -t "PRU-DOM-REP-300"`; `pnpm test:componentes -t "PRU-CMP-REP-31"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para A26, con las capturas en `C:/finn/capturas/TA-509/` y una línea en el informe.
+
+#### TA-510 Fixes visuales: Actividad con la columna de filtros en computadora **[CH-220]**
+
+```tarea
+orden: 767
+bloque: B9
+hito: HT-10
+depende: TA-487, TA-307
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=240 archivos=6 ca=0 migraciones=0 total=600
+cubre: —
+pru: PRU-CMP-TX-520, PRU-E2E-TX-610
+compartido: —
+```
+
+**Qué construir.**
+- **A14:** el buscador relleno con su línea (`inset 0 -2px 0 var(--borde-control)`, radio `10px 10px 4px 4px`); filas con el título en una línea, «Cuenta · Categoría» en una línea y la línea de metadatos con glifo de 12 + etiqueta (Pendiente con borde punteado, Programada, Conciliada, Por cobrar, Con devoluciones), con los datos de `TransaccionFila`; «Cargar más» tonal centrado con `siguienteCursor`. En computadora, una columna fija de filtros de 260 px a la izquierda y la lista hasta 760 px.
+
+**Leer.** FIXES §5 (Actividad A14, B8); AUDITORIA A14 y B8; 04 §6.7.1; 05 §2.2 (parámetros de Actividad); 06 FT-22.
+
+**Archivos.** `apps/web/src/app/(finn)/actividad/{pantalla.tsx,buscador.tsx,filtros.tsx,chips.tsx,detalle-de-fila.ts}`, `apps/web/src/componentes/dominio/fila-transaccion.tsx`, `apps/web/src/app/(finn)/actividad/pantalla.cmp.test.tsx` (prueba), `apps/web/e2e/pantallas/actividad/*` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-TX-520** la fila con la línea de metadatos de cada estado y «Cargar más» con el cursor.
+- **PRU-E2E-TX-610** en 1440 × 900, los filtros en su columna fija de 260 px y los filtros por URL de 05 §2.2 sin cambio.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-TX-520"`; `pnpm test:e2e -g "PRU-E2E-TX-610"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para A14, con las capturas en `C:/finn/capturas/TA-510/` y una línea en el informe.
+
+#### TA-511 Fixes visuales: buscador de Reglas y último SMS en Conectar los SMS **[CH-227]**
+
+```tarea
+orden: 768
+bloque: B9
+hito: HT-10
+depende: TA-411, TA-172, TA-197
+tu: —
+revision: normal
+paralelo: libre
+tamano: prod=220 archivos=8 ca=0 migraciones=0 total=600
+cubre: CH-227b, CH-227c
+pru: PRU-CMP-AJUS-160, PRU-INT-AJUS-110, PRU-E2E-AJUS-160
+compartido: Q-ajustes (ultimoSmsEn)
+```
+
+**Qué construir.**
+- **CH-227 b / A24:** en `/reglas`, el buscador relleno con `?q=` que filtra en el lector de la página la lista de `reglas()` (05 §2.8 y §2.2 [CH-227]), «Ninguna regla con ese texto», filas tocables de 60 px con `chevR` y el estado «No se aplica: la categoría está archivada», y «+ Nueva regla» tonal a todo el ancho.
+- **CH-227 c / A27:** `ajustes()` trae `webhook.ultimoSmsEn` (04 §6.11 [CH-227]) y Conectar los SMS dice «Conectado. El último SMS llegó {fecha}» con el formato de fechas de la interfaz; sin SMS todavía, solo «Conectado».
+
+**Leer.** CH-227 (b) y (c); 05 §2.2 y §2.8 con **[CH-227]**; 04 §6.11 con **[CH-227]**, §8; 03 §3.17 (`sms.recibido_en`); FIXES §5 (A21–A25, A27); AUDITORIA A24 y A27; 06 FT-39.
+
+**Archivos.** `apps/web/src/app/(finn)/reglas/{pantalla.tsx,lector.tsx,page.tsx}`, `apps/web/src/flujos/ajustes-webhook/{conexion.tsx,lector.tsx}`, `packages/aplicacion/src/consultas/ajustes.ts`, `packages/dominio/src/selectores/**`, `apps/web/src/textos/{reglas.ts,ajustes-webhook.ts}`, `apps/web/src/flujos/ajustes-webhook/conexion.cmp.test.tsx` (prueba), `packages/aplicacion/test/**` (prueba), `apps/web/e2e/flujos/reglas/*` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-AJUS-160** [CH-227] Conectar los SMS con `ultimoSmsEn` dice «Conectado. El último SMS llegó …»; sin él, «Conectado».
+- **PRU-INT-AJUS-110** [CH-227, Q-ajustes] `ultimoSmsEn` es el `recibido_en` más reciente y no expone el texto ni el token.
+- **PRU-E2E-AJUS-160** [CH-227] `/reglas?q=super` deja solo las reglas que coinciden y sin coincidencias muestra el vacío.
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-AJUS-160"`; `pnpm test:integracion -t "PRU-INT-AJUS-110"`; `pnpm test:e2e -g "PRU-E2E-AJUS-160"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para A24 y A27, con las capturas en `C:/finn/capturas/TA-511/` y una línea por id en el informe.
+
+#### TA-512 Fixes visuales: foco en Asignar y repaso de préstamo, Programadas y Por cobrar **[CH-221]**
+
+```tarea
+orden: 769
+bloque: B9
+hito: HT-10
+depende: TA-289, TA-419, TA-413, TA-408
+tu: —
+revision: normal
+paralelo: con TA-497
+tamano: prod=220 archivos=8 ca=0 migraciones=0 total=550
+cubre: —
+pru: PRU-CMP-PRES-330, PRU-CMP-CTA-350, PRU-CMP-PROG-130, PRU-CMP-COBRO-130
+compartido: —
+```
+
+**Qué construir.**
+- **A36:** al abrir Asignar, el campo del monto toma el foco y lleva el relleno `--superficie` con el foco del diseño; la opción «Lo que falta para la meta» **no** se preselecciona (CH-221, 06 CA-12.1).
+- **A18:** en el detalle del préstamo, «Ver tabla completa» de la amortización (y la fila de la cuota actual sobre `--superficie-hundida`), con los datos de `prestamo.amortizacion`.
+- **A22:** en Programadas, la insignia de fecha con el mes `.t-rotulo` arriba y el día en Archivo 800 72 % 1.5rem abajo; el horizonte queda en 7 y 30 días (CH-221, BE-37).
+- **A23:** en Por cobrar, el encabezado del deudor con «Renombrar» y la fila «Te debe $X» en `--positivo-texto` con el total del DTO; cada compra con «Cobrar» (tonal) y «Condonar» (enlace), y el aviso «En camino» arriba.
+- Lo que ya esté en la app se informa como hecho, con su captura.
+
+**Leer.** CH-221; FIXES §5 (A18, A21–A25, A36); AUDITORIA A18, A22, A23 y A36; 06 CA-12.1, FT-40, FT-45, FT-55; 04 BE-37, §6.12.
+
+**Archivos.** `apps/web/src/flujos/presupuesto-asignar-categoria/{formulario.tsx,rapida.tsx}`, `apps/web/src/componentes/formularios/entrada-monto.tsx`, `apps/web/src/app/(finn)/cuentas/[cuentaId]/por-tipo.tsx`, `apps/web/src/app/(finn)/programadas/**`, `apps/web/src/app/(finn)/por-cobrar/**`, `apps/web/src/textos/*`, `apps/web/src/**/*.cmp.test.tsx` (prueba).
+
+**Pruebas primero.**
+- **PRU-CMP-PRES-330** [CH-221] Asignar abre con el foco en el monto y ninguna opción rápida elegida.
+- **PRU-CMP-CTA-350** el préstamo muestra «Ver tabla completa» y la cuota actual marcada.
+- **PRU-CMP-PROG-130** la insignia de fecha con el mes arriba y el día abajo.
+- **PRU-CMP-COBRO-130** «Te debe» con el total del DTO, «Renombrar», «Cobrar» y «Condonar».
+
+**Comandos.** `pnpm test:componentes -t "PRU-CMP-PRES-330|PRU-CMP-CTA-350|PRU-CMP-PROG-130|PRU-CMP-COBRO-130"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la verificación de este bloque completa para A18, A22, A23 y A36, con las capturas en `C:/finn/capturas/TA-512/` y una línea por id en el informe.
+
+**Mapa de B9.** 20 tareas; **4 de revisión obligatoria** (TA-491, TA-494, TA-498 y TA-507); una migración (TA-494).
+
+| Orden | Tarea | Revisión | Título | Prod. | Mig. |
+|---|---|---|---|---|---|
+| 750 | TA-486 | normal | Registro de CH-220 a CH-227, anexo, HT-10 y fichas | 10 | 0 |
+| 751 | TA-487 | normal | Anchos, columnas que colapsan y barra de Más secciones | 320 | 0 |
+| 752 | TA-488 | normal | Utilidades de movimiento compartidas | 300 | 0 |
+| 753 | TA-489 | normal | Hojas, menús y panel que cierran animados | 260 | 0 |
+| 754 | TA-490 | normal | Destello de montos, billete y entrada de gráficos | 300 | 0 |
+| 755 | TA-491 | obligatoria | Variante `reservar_falta` de OP-16 y `categoriaPago` | 200 | 0 |
+| 756 | TA-492 | normal | «Reservar $X» en la categoría de pago y en la tarjeta | 320 | 0 |
+| 757 | TA-493 | normal | Bandeja: aprobar en el lugar, panel y acciones por fila | 380 | 0 |
+| 758 | TA-494 | obligatoria | Subtipo de efectivo: migración, OP-01, OP-02, DTO y BE-41 | 300 | 1 |
+| 759 | TA-495 | normal | Subtipo de efectivo en la interfaz | 320 | 0 |
+| 760 | TA-496 | normal | Tarjetas con 8 colores y cara por el color guardado | 300 | 0 |
+| 761 | TA-497 | normal | Detalle de categoría: cobertura, historial sin datos y meta | 300 | 0 |
+| 762 | TA-498 | obligatoria | TOTP: temblor en el error y check al verificar | 120 | 0 |
+| 763 | TA-499 | normal | «Ver las N», «Volver a…» duplicados y sin conexión | 300 | 0 |
+| 764 | TA-507 | obligatoria | Revisar: fecha, origen del pago y «Elegí la compra» | 360 | 0 |
+| 765 | TA-508 | normal | Devolución en Registrar y acciones de inversión | 280 | 0 |
+| 766 | TA-509 | normal | Tendencia con tope y barras de Top de comercios | 260 | 0 |
+| 767 | TA-510 | normal | Actividad con la columna de filtros | 240 | 0 |
+| 768 | TA-511 | normal | Buscador de Reglas y último SMS | 220 | 0 |
+| 769 | TA-512 | normal | Foco en Asignar, préstamo, Programadas y Por cobrar | 220 | 0 |
+
+
+---
+
 ## 30. CA pendientes de punta a punta (P8-19.1)
 
 ### 30.1 Lista
@@ -11731,7 +12479,7 @@ La tabla de pares de §1.8 queda así para todo el plan:
 
 | Grupo | Tareas | Regla |
 |---|---|---|
-| Migraciones | TA-051, TA-053, TA-054, TA-055, TA-056, TA-057, TA-058, TA-181, TA-470 | Una a la vez (C2 rechaza el orden de carpetas cruzado); además, TA-051 a TA-059 son `paralelo: no` |
+| Migraciones | TA-051, TA-053, TA-054, TA-055, TA-056, TA-057, TA-058, TA-181, TA-470, TA-494 **[CH-224]** | Una a la vez (C2 rechaza el orden de carpetas cruzado); además, TA-051 a TA-059 son `paralelo: no` |
 | `paralelo: no` | TA-050, TA-051, TA-052, TA-053, TA-054, TA-055, TA-056, TA-057, TA-058, TA-059, TA-200, TA-470 | Ninguna otra en paralelo |
 | Dependencias npm nuevas | TA-200, TA-201, TA-204, TA-246, TA-209, TA-210, TA-214, TA-219, TA-222, TA-223, TA-438 | Una a la vez: `pnpm-lock.yaml` choca. Una tarea que no figura aquí y necesita una dependencia la agrega como desvío (§1.5) y espera a que no corra otra del grupo |
 | E2E local | Desde TA-219, todas | El candado de `pnpm test:e2e` (DT-22) ordena las corridas; las tareas van en paralelo |
@@ -11865,7 +12613,7 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 - **Las dependencias de B7 salen de las tablas de 06** (DT-28), no de una lista escrita a mano. Así, una ficha [M] no puede quedar antes de la operación que usa: si pasara, el verificador lo marca como dependencia posterior (E5).
 - **`/ajustes/diagnostico`** la citan FT-42 y FT-76. La posee FT-76 (DT-23); FT-42 agrega su sección "puesta al día".
 - **Ningún pendiente de punta a punta depende de una ficha [P]** (§30.1), así que la regla de [P] de P8-19.1 hoy no se usa: queda para los que aparezcan al construir.
-- **El tamaño de las tareas de fichas es una estimación uniforme**, como en B6. `pr:mergear` parte la que no entre (TA-230 a TA-249 o, en B7, TA-448 a TA-469 y TA-471 a TA-499).
+- **El tamaño de las tareas de fichas es una estimación uniforme**, como en B6. `pr:mergear` parte la que no entre (TA-230 a TA-249 o, en B7, TA-448 a TA-469 y TA-471 a TA-485; **[CH-220]** TA-486 a TA-499 son de B9).
 - **Carga de revisión total: 71 de 243 tareas obligatorias.** Por parte: A 8 de 15 (con TA-014 y TA-015), B 51 de 112, C 11 de 65 y D 1 de 51 (TA-470). Las fichas [M] y [P] son todas normales (DT-20).
 
 ### 34.3 Riesgos de la Parte D
