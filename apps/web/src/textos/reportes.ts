@@ -113,12 +113,6 @@ export const reportes = {
   },
   hallazgos: {
     sinHallazgos: 'Todo en orden: no encontramos nada que ajustar este período.',
-    suscripcion: (comercio: string, mensual: string, anual: string) =>
-      `${comercio} te cobra ${mensual} cada mes (${anual} al año) y no la tenés programada.`,
-    suscripcionDesactivada: (comercio: string, mensual: string) =>
-      `${comercio} te sigue cobrando ${mensual} cada mes, pero su programada está desactivada.`,
-    programarla: 'Programarla',
-    reactivarla: 'Reactivarla',
   },
   realidad: {
     pasas: (promedio: string, categoria: string, asignado: string, sugerido: string) =>
