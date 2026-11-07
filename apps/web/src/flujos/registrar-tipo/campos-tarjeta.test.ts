@@ -2,12 +2,12 @@
 // que sale de lo escrito.
 import { describe, expect, it } from 'vitest';
 import { op27 } from '@finn/aplicacion/contratos';
+import { valoresDeUrl } from '../../formularios/valores-de-url';
 import {
   aEntradaDeAccion,
   contratoDe,
   TIPOS,
   tipoDeTarjeta,
-  valoresDeUrl,
   valoresIniciales,
   type Campos,
 } from './campos-tarjeta';

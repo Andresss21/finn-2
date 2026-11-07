@@ -5,7 +5,8 @@ import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
-import { TIPOS, valoresDeUrl, type TipoDeTarjeta } from './campos-tarjeta';
+import { valoresDeUrl } from '../../formularios/valores-de-url';
+import { TIPOS, type TipoDeTarjeta } from './campos-tarjeta';
 import { FormularioRegistrarTarjeta } from './formulario-tarjeta-diferido';
 
 export async function LectorRegistrarTarjeta({

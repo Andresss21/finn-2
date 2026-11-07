@@ -15,7 +15,7 @@ import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { useReemplazarBusqueda } from '../../componentes/navegacion/use-reemplazar-busqueda';
-import { formatearFecha, formatearMonto } from '../../formato';
+import { centavosATextoDecimal, formatearFecha, formatearMonto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { dominio } from '../../textos/dominio';
@@ -153,6 +153,14 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
           : ajuste?.datos?.['operacion'] === 'OP-27'
             ? t.ajusteEntrada(formatearMonto(monto))
             : t.ajusteGasto(formatearMonto(monto));
+    // Valores iniciales del alta (CH-212, FD-06): la cuenta, la fecha del estado, el monto y el comercio que fija el servidor
+    const datos = ajuste?.datos;
+    const valores = new URLSearchParams({
+      cuenta: cuentaId,
+      fecha: typeof datos?.['fechaEstado'] === 'string' ? datos['fechaEstado'] : c.fecha,
+      ...(monto === undefined ? {} : { total: centavosATextoDecimal(monto) }),
+      ...(typeof datos?.['comercio'] === 'string' ? { comercio: datos['comercio'] } : {}),
+    }).toString();
     return (
       <PaginaFlujoDeRuta titulo={t.tituloListo} rutaPadre={rutaPadre}>
         <div className="flex flex-col gap-4">
@@ -163,7 +171,7 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
               aparecioDespues
               accion={
                 <EnlaceFinn
-                  href={`/registrar/${ruta}?cuenta=${cuentaId}`}
+                  href={`/registrar/${ruta}?${valores}`}
                   className="inline-flex min-h-11 items-center font-bold text-enlace underline"
                 >
                   {t.crearAjuste}

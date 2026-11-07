@@ -3,6 +3,7 @@
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
+import { valoresDeUrl } from '../../formularios/valores-de-url';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
 import type { TipoDeRegistro } from './campos';
 import { FormularioRegistrarTipo } from './formulario';
@@ -36,6 +37,7 @@ export async function LectorRegistrarTipo({
       hoy={dto.hoy}
       cuentas={efectivo}
       cuentaPropuesta={efectivo.some((c) => c.id === propuesta) ? propuesta : undefined}
+      desdeUrl={valoresDeUrl(busqueda)}
     />
   );
 }

@@ -2,6 +2,7 @@
 // Los valores del formulario son texto, como los escribe la persona (05 §4.2); el contrato completo lo aplica el servidor.
 import * as z from 'zod';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import type { ValoresDeUrl } from '../../formularios/valores-de-url';
 import { registrarTipo as t } from '../../textos/registrar-tipo';
 
 export const TIPOS_DE_REGISTRO = ['ingreso', 'transferencia'] as const;
@@ -64,11 +65,15 @@ export function aEntradaDeAccion(tipo: TipoDeRegistro, payload: unknown): Record
 }
 
 /** Los valores con que abre el formulario: la fecha es el `hoy` del servidor, nunca la del dispositivo (05 §5.5). */
-export const valoresIniciales = (hoy: string, cuentaPropuesta: string | undefined): Campos => ({
+export const valoresIniciales = (
+  hoy: string,
+  cuentaPropuesta: string | undefined,
+  inicial: ValoresDeUrl = {},
+): Campos => ({
   cuentaId: cuentaPropuesta ?? '',
   origenId: cuentaPropuesta ?? '',
   destinoId: '',
-  fecha: hoy,
-  total: '',
-  descripcion: '',
+  fecha: inicial.fecha ?? hoy,
+  total: inicial.total ?? '',
+  descripcion: inicial.comercio ?? '',
 });
