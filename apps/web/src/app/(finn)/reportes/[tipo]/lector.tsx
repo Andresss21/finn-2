@@ -146,7 +146,7 @@ export async function LectorReporte({
       parametros={parametros}
       {...(url === 'ritmo' || url === 'hallazgos' ? { asignar: asignarEnCategoria } : {})}
       {...(realidad === undefined ? {} : { realidad })}
-      {...(url === 'suscripciones'
+      {...(url === 'suscripciones' || url === 'hallazgos'
         ? { suscripciones: { gestionar: gestionarProgramada, eliminar: eliminarProgramada } }
         : {})}
     />
