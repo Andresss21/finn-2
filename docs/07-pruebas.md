@@ -1309,9 +1309,9 @@ En `verificaciones-previas.json`, los H tienen como `destino` la prueba de CI cu
 | PRU-MAN-BAND-002 | CA-78.15 (CT-03) | Android | Antes de terminar FT-78 | La pulsación larga sobre el asa no abre el menú contextual ni selecciona texto; desplazar la lista sigue funcionando |
 | PRU-MAN-NOTIF-001 | CA-70.7 (CT-03) | Android con la app instalada | Antes de terminar FT-70; al cambiar el service worker | El push real llega, con sus acciones, y el toque abre la ruta |
 | PRU-MAN-BAND-003 | CA-34.14 ⚠ (S6-1) | — (muestras reales, §23) | Cuando lleguen las muestras de SP-01 | El tipo propuesto de depósito, pago a tarjeta y devolución es el esperado con los SMS reales |
-| PRU-MAN-CONC-001 | CA-43.10 ⚠ (S6-1) | — (muestras reales) | Ídem | La detección elige el formato correcto con los CSV anonimizados |
+| PRU-MAN-CONC-001 | CA-43.10 ⚠ (S6-1) | — (muestras reales) | ~~Ídem~~ **[CH-219]** Diferida al uso diario: la ejecuta el usuario con sus CSV después de abrir la puerta | La detección elige el formato correcto con los CSV anonimizados |
 | PRU-MAN-BAND-004 | CA-73.6 ⚠ (S6-1) | — (muestras reales) | Ídem (FX-1) | Cada formato reescrito pasa la política y reconoce sus muestras |
-| PRU-MAN-CTA-001 | CA-55.1 ⚠, CA-55.2 ⚠ | Un estado de cuenta real de Banco Agrícola | Antes de terminar FT-55 | El modelo de A.2 coincide con el estado de cuenta, o se registra cada diferencia (01 Anexo A) |
+| PRU-MAN-CTA-001 | CA-55.1 ⚠, CA-55.2 ⚠ | Un estado de cuenta real de Banco Agrícola (**[CH-219]** el del préstamo del usuario, modelo `banco_agricola` de 01 Anexo A.2) | ~~Antes de terminar FT-55~~ **[CH-219]** Diferida al uso diario, después de abrir la puerta | El modelo de A.2 coincide con el estado de cuenta, o se registra cada diferencia (01 Anexo A) |
 | PRU-MAN-CTA-002 **[F8]** (CH-04) | §31.1 | Android o PC con la app de cada banco | Semanal, entre `F` y `fin_primeras_semanas` (§31.4) | Verificar saldo (FT-44) de cada cuenta con su banco: diferencia cero, o explicada en FT-44 |
 | PRU-MAN-PWA-001 | 05 §11.10 (CT-03) | Android con TalkBack y Chrome | Antes de cerrar cada entrega de la Fase 8 | Registrar un gasto, asignar, aprobar en la bandeja, conciliar e ingresar con TOTP se completan con TalkBack |
 | PRU-MAN-PWA-002 | 05 §11.10 (CT-03) | Windows con NVDA, en Chrome o Firefox | Ídem | Lo mismo con NVDA |
@@ -1331,6 +1331,8 @@ En `verificaciones-previas.json`, los H tienen como `destino` la prueba de CI cu
 ```
 
 **Qué cuenta.** Vale el último resultado de cada manual. Una falla posterior reabre el pendiente (M16).
+
+**Manuales diferidas al uso diario [CH-219].** Una manual cuya ficha en `pruebas/manuales.md` tiene el campo `**Diferida al uso diario:** <motivo>` no se registra como "pasa": mientras no tenga ninguna fila en `resultados.md`, M16 la informa como aviso y no deja su ficha "con manual pendiente", y `pruebas:puerta` no la exige. El usuario la ejecuta durante el uso diario y registra su resultado como cualquier otra fila firmada; si el último resultado es "falla", vuelve a bloquear como cualquier manual. Hoy son dos: PRU-MAN-CONC-001 y PRU-MAN-CTA-001. Diferir una manual es una decisión del usuario registrada con un CH; un agente no la agrega por su cuenta.
 
 **Cómo se garantiza que solo los registre el usuario.** Los agentes pueden editar cualquier archivo del repositorio, y en GitHub Free no hay protección de rama (6.3). Por eso la garantía es criptográfica: **commits firmados con una clave SSH que solo tiene el usuario**.
 - `pruebas/firmantes-permitidos` tiene la clave pública del usuario.
@@ -1591,6 +1593,8 @@ Regla de P7-19, punto 5: **todo ejemplo numérico de los documentos sale de una 
 
 **Registro:** esta primera ejecución se registra como la primera fila de `resultados.md`, firmada.
 
+**[CH-219]** Una manual diferida al uso diario (§22.2) no necesita fila firmada para la puerta: la diferida se declara en `pruebas/manuales.md`, nunca con una fila "pasa" en `resultados.md`. Cuando el usuario la ejecuta, su fila se firma como las demás.
+
 **No verificado aquí:** Windows. Este entorno es Linux, y V7-12 y V7-17 probaron el mecanismo con OpenSSH 9 y Git 2.43. **Si la firma desde Windows no funciona en la práctica, se avisa al usuario antes de buscar otra alternativa** (P7-20). El punto con más riesgo es el paso 3: qué `ssh-keygen` usa Git y si pide la contraseña en la terminal.
 
 ---
@@ -1601,8 +1605,8 @@ Regla de P7-19, punto 5: **todo ejemplo numérico de los documentos sale de una 
 
 | # | Condición | Cómo se comprueba |
 |---|---|---|
-| 1 | Los **465 CA [I] y [M]** tienen sus pruebas automáticas en verde en la última corrida verde de `main`, o su manual con resultado "pasa" | `matriz --puerta --resultados <informes de esa corrida>` sin errores (M1 a M17), con ninguna ficha [I] o [M] "con manual pendiente" |
-| 2 | **SP-01:** muestras reales recibidas, anonimizadas (§23) y con PRU-MAN-BAND-003, PRU-MAN-BAND-004 y PRU-MAN-CONC-001 en "pasa"; los CA ⚠ (S6-1) con sus pruebas automáticas reescritas. **[F8] (CH-03):** (a) **SMS:** un formato activo reescrito con muestras reales por cada institución de 03 §9.4 que se use: el BAC ~~y Banco Agrícola~~; Cuscatlán excluido con la fila firmada `exclusión SP-01 \| institucion:Cuscatlán \| sin cuentas` y F-3 inactivo. (b) **CSV:** muestras de cada formato de ADR-17 de las instituciones usadas, o su exclusión firmada: los del BAC con muestras; ~~los de Banco Agrícola con muestras si el banco ofrece CSV, y si no, excluidos con su fila firmada y verificados con FT-44;~~ el de Cuscatlán, excluido. **[CH-210]** Sin cuentas en Banco Agrícola: se excluye como Cuscatlán, con F-2 inactivo y una fila firmada por institución y por formato de CSV (`institucion:Banco Agrícola`, `csv:ba_tarjeta_portal`, `csv:ba_tarjeta_pdf_csv`, `csv:ba_debito`; la lista literal está en 08 TU-14). La condición no espera SMS ni CSV de Agrícola ni de Cuscatlán | `resultados.md`, M11 y `pruebas:puerta`, que cruza `pruebas/muestras-cobertura.json` con las filas de exclusión |
+| 1 | Los **465 CA [I] y [M]** tienen sus pruebas automáticas en verde en la última corrida verde de `main`, o su manual con resultado "pasa". **[CH-219]** Una manual diferida al uso diario (§22.2) sin resultado no deja su ficha "con manual pendiente" | `matriz --puerta --resultados <informes de esa corrida>` sin errores (M1 a M17), con ninguna ficha [I] o [M] "con manual pendiente" |
+| 2 | **SP-01:** muestras reales recibidas, anonimizadas (§23) y con PRU-MAN-BAND-003, PRU-MAN-BAND-004 ~~y PRU-MAN-CONC-001~~ en "pasa" (**[CH-219]** PRU-MAN-CONC-001 queda diferida al uso diario, §22.2); los CA ⚠ (S6-1) con sus pruebas automáticas reescritas. **[F8] (CH-03):** (a) **SMS:** un formato activo reescrito con muestras reales por cada institución de 03 §9.4 que se use: el BAC ~~y Banco Agrícola~~; Cuscatlán excluido con la fila firmada `exclusión SP-01 \| institucion:Cuscatlán \| sin cuentas` y F-3 inactivo. (b) **CSV:** muestras de cada formato de ADR-17 de las instituciones usadas, o su exclusión firmada: los del BAC con muestras; ~~los de Banco Agrícola con muestras si el banco ofrece CSV, y si no, excluidos con su fila firmada y verificados con FT-44;~~ el de Cuscatlán, excluido. **[CH-210]** Sin cuentas en Banco Agrícola (**[CH-219]** sin cuentas que generen SMS o CSV: solo un préstamo): se excluye como Cuscatlán, con F-2 inactivo y una fila firmada por institución y por formato de CSV (`institucion:Banco Agrícola`, `csv:ba_tarjeta_portal`, `csv:ba_tarjeta_pdf_csv`, `csv:ba_debito`; la lista literal está en 08 TU-14). La condición no espera SMS ni CSV de Agrícola ni de Cuscatlán | `resultados.md`, M11 y `pruebas:puerta`, que cruza `pruebas/muestras-cobertura.json` con las filas de exclusión |
 | 3 | **SP-02:** prueba de humo H-01 a H-12 aprobada (PRU-MAN-ESQ-001 en "pasa"), con el disparador de P7-12 resuelto (§32.1) | `resultados.md` |
 | 4 | **SP-04:** prueba en el teléfono con MacroDroid (PRU-MAN-BAND-001 en "pasa"), con la variante y el plan de reintentos registrados en la nota | `resultados.md` |
 | 5 | Los resultados de 2 a 4 están firmados con la clave del usuario | M17 |
@@ -1613,7 +1617,8 @@ Regla de P7-19, punto 5: **todo ejemplo numérico de los documentos sale de una 
 - las fichas [P] y FT-49 (diferida);
 - WebKit parcial (§3.2);
 - los presupuestos de tiempo del nocturno, que bloquean solo por persistencia (6.6);
-- los 8 avisos de M11 sin S6-1 (CA-55.1 y CA-55.2 tienen su manual, PRU-MAN-CTA-001, que **sí** cuenta porque FT-55 es [M]).
+- los 8 avisos de M11 sin S6-1 (CA-55.1 y CA-55.2 tienen su manual, PRU-MAN-CTA-001, que ~~**sí** cuenta porque FT-55 es [M]~~ **[CH-219]** queda diferida al uso diario, §22.2);
+- **[CH-219]** las manuales diferidas al uso diario sin resultado (§22.2): PRU-MAN-CONC-001 y PRU-MAN-CTA-001.
 
 Con la puerta abierta empieza el paso de la 1.0 a la 2.0 y rige §31.
 

@@ -797,6 +797,50 @@ describe('matriz: M15 y M16, cierre de fichas y manuales pendientes (P7-18, V7-1
     expect(i.puertaAbierta).toBe(true);
   });
 
+  it('PRU-SEG-OPER-121 [M16] CH-219: una manual diferida al uso diario sin resultado no bloquea; una no diferida sin resultado y una diferida que falló siguen bloqueando', () => {
+    const e = completo();
+    const dif = manualDe(e, 'CA-02.5');
+    const otra = manualDe(e, 'CA-34.14');
+    const sinFila = (id: string): void => {
+      e.resultadosManuales = e.resultadosManuales
+        .split('\n')
+        .filter((l) => !l.includes(`| ${id} |`))
+        .join('\n');
+    };
+    sinFila(dif);
+    sinFila(otra);
+    e.manuales = e.manuales.replace(
+      `### ${dif} [CA-02.5] procedimiento\n`,
+      `### ${dif} [CA-02.5] procedimiento\n\n**Diferida al uso diario:** la ejecuta el usuario después de abrir la puerta (CH-219).\n`,
+    );
+    const r = verificar(e);
+    expect(r.man.find((m) => m.id === dif)?.diferida).toBe(
+      'la ejecuta el usuario después de abrir la puerta (CH-219).',
+    );
+    expect(r.man.find((m) => m.id === otra)?.diferida).toBeUndefined();
+    // La diferida no bloquea y queda como aviso; la otra, sin resultado, sigue bloqueando
+    expect(r.errores).toEqual([`M16 FT-34 con manual pendiente: ${otra} (sin resultado)`]);
+    expect(r.avisos).toContain(
+      `M16 FT-02: ${dif} diferida al uso diario, no bloquea (la ejecuta el usuario después de abrir la puerta (CH-219).)`,
+    );
+    const i = informe(r);
+    expect(i.fichasConManualPendiente).toEqual(['FT-34']);
+    expect(i.filas.find((f) => f.ft === 'FT-02')?.estado).toBe('cubierta');
+    expect(i.puertaAbierta).toBe(false);
+    // Una falla registrada de la diferida reabre el pendiente: diferir no oculta una falla
+    e.resultadosManuales += `
+| ${dif} | 2027-03-01 | Android 15 | falla | Andrés | def5678 | |`;
+    expect(verificar(e).errores).toContain(
+      `M16 FT-02 con manual pendiente: ${dif} (falló el 2027-03-01)`,
+    );
+    // Sin la otra pendiente y con un "pasa" de la diferida, la puerta abre
+    e.resultadosManuales += `
+| ${dif} | 2027-03-02 | Android 15 | pasa | Andrés | def5679 | |`;
+    e.resultadosManuales += `
+| ${otra} | 2027-03-02 | Android 15 | pasa | Andrés | def5679 | |`;
+    expect(informe(verificar(e)).puertaAbierta).toBe(true);
+  });
+
   it('M15: dentro de un describe, Vitest une fullName con espacios y el id sale del título', () => {
     const dir = mkdtempSync(join(tmpdir(), 'finn-resultados-'));
     try {

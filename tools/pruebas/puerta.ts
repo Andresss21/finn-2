@@ -26,6 +26,7 @@ export interface EntradasPuerta {
   // `matriz.ts verificar` en modo puerta: errores (M1 a M18), fichas con manual pendiente y si tuvo --resultados
   matriz: { errores: string[]; fichasConManualPendiente: string[]; conCorrida: boolean };
   resultados: string; // pruebas/manuales/resultados.md (solo lectura)
+  diferidas: Record<string, string>; // [CH-219] manuales diferidas al uso diario (pruebas/manuales.md) y su motivo
   cobertura: Cobertura | null; // pruebas/muestras-cobertura.json; null si todavía no existe
   existe: (ruta: string) => boolean;
   migraciones: string[]; // migration.sql de packages/db/prisma/migrations, en orden
@@ -83,6 +84,7 @@ function manual(
   exige: [RegExp, string][] = [],
 ): Motivo[] {
   const f = ultimo(e.resultados, id);
+  if (!f && e.diferidas[id]) return []; // [CH-219] diferida al uso diario: sin resultado no bloquea; una falla sí
   if (!f) return [pendiente(`${id} sin resultado en resultados.md (${cuando})`)];
   if (f.resultado !== 'pasa')
     return [falla(`${id}: el último resultado (${f.fecha}) es "${f.resultado}"`)];
@@ -277,6 +279,7 @@ if (import.meta.main) {
       fichasConManualPendiente: informe(r).fichasConManualPendiente,
       conCorrida: dir !== undefined,
     },
+    diferidas: Object.fromEntries(r.man.flatMap((m) => (m.diferida ? [[m.id, m.diferida]] : []))),
     resultados: existsSync('pruebas/manuales/resultados.md')
       ? readFileSync('pruebas/manuales/resultados.md', 'utf8')
       : '',
@@ -295,6 +298,8 @@ if (import.meta.main) {
     for (const m of c.motivos.slice(0, MAX)) console.log(`    - ${m}`);
     if (c.motivos.length > MAX) console.log(`    … y ${c.motivos.length - MAX} más`);
   }
+  for (const [id, motivo] of Object.entries(e.diferidas))
+    if (!ultimo(e.resultados, id)) console.log(`diferida al uso diario (CH-219): ${id}, ${motivo}`);
   const n = (s: Estado): number => cs.filter((c) => c.estado === s).length;
   const abierta = n('pasa') === cs.length;
   console.log(
