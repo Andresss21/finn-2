@@ -569,5 +569,45 @@
 
   "TA-318": { "estado": "terminada", "rama": "ta-318-bloques-tipo-2", "pr": 278 },
 
-  "TA-319": { "estado": "terminada", "rama": "ta-319-detalle-categoria-4", "pr": 286 }
+  "TA-319": { "estado": "terminada", "rama": "ta-319-detalle-categoria-4", "pr": 286 },
+
+  "TA-486": { "estado": "terminada", "rama": "ta-486-fixes-visuales-registro", "pr": 529 },
+
+  "TA-487": { "estado": "pendiente" },
+
+  "TA-488": { "estado": "pendiente" },
+
+  "TA-489": { "estado": "pendiente" },
+
+  "TA-490": { "estado": "pendiente" },
+
+  "TA-491": { "estado": "pendiente" },
+
+  "TA-492": { "estado": "pendiente" },
+
+  "TA-493": { "estado": "pendiente" },
+
+  "TA-494": { "estado": "pendiente" },
+
+  "TA-495": { "estado": "pendiente" },
+
+  "TA-496": { "estado": "pendiente" },
+
+  "TA-497": { "estado": "pendiente" },
+
+  "TA-498": { "estado": "pendiente" },
+
+  "TA-499": { "estado": "pendiente" },
+
+  "TA-507": { "estado": "pendiente" },
+
+  "TA-508": { "estado": "pendiente" },
+
+  "TA-509": { "estado": "pendiente" },
+
+  "TA-510": { "estado": "pendiente" },
+
+  "TA-511": { "estado": "pendiente" },
+
+  "TA-512": { "estado": "pendiente" }
 }

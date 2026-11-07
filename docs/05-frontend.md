@@ -1288,6 +1288,7 @@ Catálogo completo (la regla T9 de V5-18 rechaza cualquier parámetro de §1.3 o
 | `?origen=` | Origen de la **transacción** (`OrigenTransaccion`) | `sms`, `manual`, `importada`, `programada` | Actividad |
 | `?estado=` | Estado **bancario** | `pendiente`, `confirmada`, `conciliada` | Actividad, detalle de cuenta |
 | `?texto=` | Texto a buscar en comercio y nota | Texto | Actividad |
+| `?q=` **[CH-227]** | Texto a buscar en el comercio de una regla o en el nombre de su categoría | Texto | Reglas |
 | `?monto-desde=`, `?monto-hasta=` | Rango del total | `montoTexto` | Actividad |
 | `?desde=`, `?hasta=` | Rango de **fechas de negocio** | `FechaLocal` | Actividad |
 | `?fecha=` | Fecha de la operación que se registra | `FechaLocal` | Cobrar, cuota; **[CH-212]** registrar gasto, ingreso y entrada a la tarjeta (valor inicial) |
@@ -1433,7 +1434,7 @@ Notas:
 | `/programadas/nueva` | [L] | `formulario({ operacion: 'programada' })` | OP-42 (crear); `sugerencia` (CP-3) | — | Borrador (4.11) |
 | `/programadas/[programadaId]` | [L] | `formulario({ operacion: 'programada', programadaId })` | OP-42 (editar), OP-51 (eliminar, si `puedeEliminar`), [1T] OP-42 (`activa`) | — | Con `calendarioEditable = false`, los campos de calendario se muestran sin edición y con el motivo |
 | `/programadas/[programadaId]/ocurrencias/[fechaEsperada]` | [C] | `formulario({ operacion: 'programada', programadaId, fechaEsperada })` (CP-10b) | OP-43 (registro de un toque, con los campos editables de su tipo), OP-44 (omitir) | AV-01 (antes, si la fecha es de un período cerrado) | Destino de `registro_automatico_fallido` y `ocurrencia_en_periodo_cerrado` (CP-1). Ocurrencia ya resuelta: lo dice y enlaza a la transacción |
-| `/reglas` | [S] | `reglas()` | [C] nueva y edición | — | Las reglas hacia categorías archivadas, marcadas (B-10). Sin reglas: explica que se crean al aprobar |
+| `/reglas` | [S] | `reglas()`; **[CH-227]** `?q=` filtra en el lector de la página, sin cambiar la consulta | [C] nueva y edición | — | Las reglas hacia categorías archivadas, marcadas (B-10). Sin reglas: explica que se crean al aprobar. **[CH-227]** Buscador relleno; sin coincidencias: "Ninguna regla con ese texto" |
 | `/reglas/nueva` | [C] | `formulario({ operacion: 'regla' })` (CP-10c) | OP-41 (crear) | — | — |
 | `/reglas/[reglaId]` | [C] | `formulario({ operacion: 'regla', reglaId })` (CP-10c) | OP-41 (editar y eliminar) | — | — |
 
@@ -3518,3 +3519,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CF-01, CF-02, CF-04 a CF-08, CF-10 a CF-13, CF-15, CF-17 a CF-19 y CF-21 a CF-23** (Fase 6, aprobados en las revisiones de `06-features.md`): verificar saldo, flujo de efectivo y reportes accionables, propuestas que abren un flujo, Inicio (hallazgos, pagos próximos y primeros pasos), destino `cuenta`, plantilla de categorías en lote, tema y variables de la identidad visual, roles tipográficos, componentes visuales propios, signo menos U+2212, "categoría nueva", arrastrar a una categoría y notificaciones interceptadas. Tabla en 0.13; detalle en `06-features.md` §0.7, §0.13, §0.14, §3 y §5. CF-03 queda diferido.
 - **CF-25** (Fase 6, aprobado en la revisión de la Parte E): los componentes de 10.8.1 dibujan las proporciones que trae el DTO, sin recalcular. Detalle en `06-features.md` §5.8.
 - **CT-01, CT-03, CT-04, CT-07 y CT-08** (Fase 7, aprobados en las revisiones de las partes A a D de `07-pruebas.md`). Reloj de E2E (14.1); lector de pantalla con TalkBack y NVDA, registrado por el usuario (11.10); nivel de componentes con el modo navegador de Vitest (14.1); A.7 como semilla ejecutada por el motor, con los números corregidos (A.7). **CT-08:** fila de `/presupuesto/estructura/plantilla` en §2.3, que CF-08 citaba y faltaba, y tablas 15.1 y 15.2 regeneradas con `trazabilidad.py` actualizado (marcas en la celda de la ruta, OP-53 y `verificar_saldo`); con eso pasan `trazabilidad.py --comprobar` y `cobertura.py`. Marcas **[F7]** en cada sección. Detalle en `07-pruebas.md` §3, §4, §22, §28 y §34.
+- **CH-227** (Fase 8, decidido por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). `/reglas` con buscador y el parámetro nuevo `?q=` (2.2 y 2.8). Marcas **[CH-227]**. Las duraciones y anchos de la entrega 3 (CH-220) no cambian este documento: viven en `06-identidad-visual.md`.

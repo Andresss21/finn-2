@@ -1,0 +1,37 @@
+/* Finn 2.0 · propuesta de tokens nuevos (entrega 2). NO forman parte de tokens.css todavía:
+   si se aprueban, se agregan a :root sin cambiar ningún valor existente. Ver INDICE.md §3.3. */
+:root {
+  /* Espaciado: los dos valores fuera de escala que se repiten miles de veces y tienen una función clara */
+  --espacio-0-5: 2px;            /* separación entre segmentos de barras y gráficos */
+  --espacio-1-5: 6px;            /* etiqueta ↔ control y glifo ↔ texto en indicadores */
+  --despeje-barra-inferior: 120px; /* aire al pie del contenido para que la barra inferior no lo tape */
+
+  /* Radio */
+  --radio-fino: 4px;             /* esquinas inferiores del campo relleno, barras, esqueletos y grilla del código */
+
+  /* Movimiento */
+  --duracion-grafico: 800ms;     /* entrada de barras, anillos y números */
+  --duracion-bucle: 1400ms;      /* esqueletos y dibujos de carga */
+  --duracion-pulso: 2800ms;      /* halo de la Bandeja */
+}
+/* Roles tipográficos propuestos (mismas familias y pesos de A.5) */
+.t-titulo-pantalla-hija { font-family: var(--fuente-titulo); font-weight: 800; font-size: 1.625rem; line-height: 1.05; letter-spacing: .01em; text-transform: uppercase; }
+.t-titulo-pantalla-computadora { font-family: var(--fuente-titulo); font-weight: 800; font-size: 2.5rem; line-height: 1.05; letter-spacing: .01em; text-transform: uppercase; }
+.t-cifra-destacada { font-family: var(--fuente-cuerpo); font-weight: 700; font-stretch: 80%; font-size: 1.75rem; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.t-cifra-heroe { font-family: var(--fuente-cuerpo); font-weight: 800; font-stretch: 72%; font-size: 3.25rem; line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* Propuesta: colores de tarjeta adicionales (texto verificado ≥ 4.5:1 contra el tono más claro) */
+:root {
+  --tarjeta-grafito: linear-gradient(135deg, #08090B 0%, #16181C 40%, #24272D 78%, #2E3138 100%);
+  --tarjeta-grafito-texto: #F2F4F6;
+  --tarjeta-zafiro: linear-gradient(135deg, #06142E 0%, #0D2652 40%, #1B3F82 78%, #24509A 100%);
+  --tarjeta-zafiro-texto: #F2F5FF;
+  --tarjeta-rubi: linear-gradient(135deg, #1E0609 0%, #3F0D15 40%, #6E1A28 78%, #7E2231 100%);
+  --tarjeta-rubi-texto: #FFF1F2;
+  --tarjeta-esmeralda: linear-gradient(135deg, #03170F 0%, #0A2E20 40%, #145238 78%, #1A6043 100%);
+  --tarjeta-esmeralda-texto: #EEFBF4;
+  --tarjeta-amatista: linear-gradient(135deg, #140A24 0%, #2A1548 40%, #45267A 78%, #52308C 100%);
+  --tarjeta-amatista-texto: #F6F1FF;
+  --tarjeta-cobre: linear-gradient(135deg, #1A0D06 0%, #3B1D0E 40%, #6B3A1E 78%, #7C4626 100%);
+  --tarjeta-cobre-texto: #FFF4EC;
+}

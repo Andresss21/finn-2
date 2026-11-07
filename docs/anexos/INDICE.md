@@ -690,3 +690,28 @@ cargando y error, "Más acciones" y 15 pantallas de la parte 2. PANTALLAS.md y 0
 - Revisado antes de commitear: sin secretos ni datos personales; sin URLs externas salvo las de las licencias OFL; sin scripts
   externos. 993 archivos, 83,9 MB; el mayor pesa 437 KB (PNG), muy por debajo de los 50 MB de GitHub.
 - Detalle por archivo: el `INDICE.md` del propio export.
+
+## Anexo posterior: `finn-fixes-visuales/` [CH-220]
+
+Tercera entrega del diseño (`finn-fixes-visuales.zip`, recibido el 2026-11-07 en la carpeta de descargas del usuario, no en
+`C:\finn\_entrada\`): los fixes visuales que salen de una auditoría de 75 hallazgos hecha **sobre la demo navegable, no sobre la
+app**. El orquestador comparó cada id con la app y las decisiones están en `08-tareas.md` CH-220 a CH-227 y en el bloque B9.
+En caso de conflicto manda el documento numerado (`06-identidad-visual.md` incluido), salvo lo que enmienda CH-220 (08 §0.3).
+
+| Carpeta o archivo | Contenido |
+|---|---|
+| `FIXES-VISUALES.md` | Qué corregir, por pantalla, con su id (A1… E4), la prioridad, el catálogo de movimiento (§3) y cómo verificar cada fix (§6) |
+| `auditoria/AUDITORIA.md` | Los 75 hallazgos con qué se ve, la referencia y el arreglo con medidas |
+| `auditoria/capturas/` | 236 PNG de evidencia, con el id del hallazgo o la ruta de la demo en el nombre |
+| `demo/finn-demo.html` | La demo navegable con los fixes aplicados (referencia de movimiento y flujos; se abre sin servidor) |
+| `demo/capturas-despues/` | 10 PNG de la demo corregida en los puntos nuevos |
+| `estilos/` | `tokens.css` (idéntico por SHA-1 a `apps/web/src/app/tokens.css`), `tokens-propuesta.css` (propuestas; los 6 colores de tarjeta los aprueba CH-225) y `fuentes.css` |
+
+- **No se copiaron** `PROMPT-AGENTES.md` (instrucciones del diseñador para agentes; las reemplazan las fichas de B9) ni
+  `fuentes/`: los cinco archivos son idénticos por SHA-1 a los de `apps/web/src/fuentes/` (con otro nombre). `fuentes.css` los
+  busca en `../fuentes/` y queda sin ellos; la demo no los usa (carga Archivo y Big Shoulders Display de Google Fonts).
+- Revisado antes de commitear: sin secretos ni datos personales. La demo trae un token de ejemplo inventado
+  (`fn_live_…`, datos de la demo) y una URL de ejemplo `finn.app/api/sms`; `.gitleaks.toml` exceptúa solo ese valor en ese archivo.
+  Las únicas URLs externas son las de Google Fonts de la demo. 252 archivos, 22 MB; el mayor pesa 297 KB (PNG).
+- Detalle por archivo: `FIXES-VISUALES.md` §7 y el índice por pantalla de `AUDITORIA.md`. Esta tabla no los repite y
+  `pnpm plan:anexos` no los cita.

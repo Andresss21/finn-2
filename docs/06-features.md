@@ -2436,10 +2436,10 @@ Reglas comunes a todas las fichas:
 **Flujo.**
 1. Presupuesto → grupo "Pagos de tarjeta": `FilaPagoTarjeta` con "Te falta reservar" y los indicadores de pago excedente o reserva excedente.
 2. Detalle (`/presupuesto/categorias/[categoriaId]` con `clase = 'pago'`): números del período, tarjeta hoy (deuda, saldo a favor, reservado, te falta reservar, reserva excedente), pago excedente por causa, traslados por categoría, pagos, pagos implícitos, devoluciones, desglose al pagar e historial.
-3. Acciones: asignar (FT-10), pagar (FT-30), devolver la reserva excedente (FT-31).
+3. Acciones: asignar (FT-10), pagar (FT-30), devolver la reserva excedente (FT-31). **[CH-222]** Con "te falta reservar" > 0, la acción principal es "Reservar $X" (OP-16 `reservar_falta`, con el monto del DTO); con todo reservado, "Pagar la tarjeta" (FT-30). El historial y las cifras de "tarjeta hoy" no cambian.
 
 **Piezas.**
-- Operaciones: enlaces a OP-14, OP-23; propuesta AV-08.
+- Operaciones: enlaces a OP-14, OP-23; propuesta AV-08; **[CH-222]** OP-16 `reservar_falta`.
 - Consultas: `presupuesto()`, `detalleCategoria()` (`DetallePagoTarjetaDto`), `cuentas()`.
 - Rutas: `/presupuesto`, `/presupuesto/categorias/[categoriaId]`.
 - Componentes: `FilaPagoTarjeta`, `TarjetaCredito`, `Monto`, `IndicadorEstado`, `Aviso`.
@@ -4539,9 +4539,9 @@ Cada recorrido encadena las features en el orden en que el usuario las vive. Sir
 | S5 Registrar | Bloque "Antes de guardar" con valor actual → valor nuevo de la deuda y de cada categoría | FT-21 | **Ajuste del diseño (P6-27 a, [R5]):** el bloque se quita. Sin previsualización; `ConfirmacionImpacto` solo con AV-01 y, después de guardar, el resultado con un enlace a cada categoría tocada (CA-21.12) |
 | S5 Registrar | Estados: suma distinta, monto mal escrito, fecha en período cerrado, guardando, guardado | FT-21, FT-27 | **Coincide** (mensajes de 05 §5.2 y 04 §3.0.6) |
 | S6 Cuentas | Posición neta con barras de activos y deudas | FT-51 | **CF-25 [R5]:** las dos barras vienen del DTO con escala relativa a la mayor (`barras`), así que ninguna pasa de 100 % |
-| S6 Cuentas | Billetera: cara de cada tarjeta en oro o plata | FT-51 | **Precisión:** las caras son decorativas y se asignan por orden (primera oro, segunda plata, y así). El `color` de la tarjeta (03 §3.5) se usa como acento del chip; no transmite información |
+| S6 Cuentas | Billetera: cara de cada tarjeta en oro o plata | FT-51 | ~~**Precisión:** las caras son decorativas y se asignan por orden (primera oro, segunda plata, y así). El `color` de la tarjeta (03 §3.5) se usa como acento del chip; no transmite información~~ **[CH-225]** La cara sale del `color` guardado (03 §3.5), uno de 8 (oro, plata, grafito, zafiro, rubí, esmeralda, amatista, cobre), elegido al crear con vista previa; nulo o desconocido, oro. Sigue siendo decorativa: no transmite información |
 | S6 Cuentas | Detalle de la tarjeta: te falta reservar, confirmado, uso del límite con la parte sin reservar rayada, corte, pago, sin intereses | FT-33, FT-51 | **Coincide**, salvo la parte sin reservar de la barra: **CF-25** (`usoSinReservar` en puntos básicos) |
-| S6 Cuentas | Identidad distinta para "Cuenta corriente" y "Cuenta de ahorro" | FT-51 | **Ajuste del diseño:** 03 no distingue subtipos de cuenta de efectivo (01 §1.2). Todas usan la identidad `cuenta-banco`; `cuenta-ahorro` queda sin uso. Distinguirlas sería una columna nueva en 03 (fuera de esta fase, §7.3) |
+| S6 Cuentas | Identidad distinta para "Cuenta corriente" y "Cuenta de ahorro" | FT-51 | ~~**Ajuste del diseño:** 03 no distingue subtipos de cuenta de efectivo (01 §1.2). Todas usan la identidad `cuenta-banco`; `cuenta-ahorro` queda sin uso. Distinguirlas sería una columna nueva en 03 (fuera de esta fase, §7.3)~~ **[CH-224] Coincide:** `cuentas.subtipo_efectivo` (corriente, ahorro o billetera, 03 §3.4) decide la identidad: corriente `cuenta-banco`, ahorro `cuenta-ahorro`, billetera `cuenta-banco` con `wallet` (provisorio) |
 | S6 Cuentas | Cuenta de ahorro "BAC · confirmado igual" | FT-51 | **Ajuste del diseño:** "Confirmado $X" siempre. Decir "igual" exige comparar dos montos en la interfaz |
 | S6 Cuentas | Talón del préstamo "Cuota 14 · 20/10 · $210.00" | FT-51, FT-55 | **Coincide** con `proximaCuota` (04 §6.5). Sin modelo de cálculo: el talón dice "Sin modelo" **(nuevo)** |
 | S7 Gasto semanal | Resumen "Referencia hoy $326.67" | FT-61 | **Ajuste del diseño:** "Referencia a esta semana". $326.67 es la referencia acumulada al final de la semana 4, no la de hoy (CA-61.1) |
@@ -4916,7 +4916,7 @@ Lo que el script **no** comprueba: que una ficha use bien la operación que cita
 
 ### 7.3 Fuera de esta fase
 
-- **Subtipos de cuenta de efectivo** (corriente y de ahorro con identidad propia, 5.2): una columna nueva en 03 y un campo en OP-01. Se puede proponer cuando se pida.
+- ~~**Subtipos de cuenta de efectivo** (corriente y de ahorro con identidad propia, 5.2): una columna nueva en 03 y un campo en OP-01. Se puede proponer cuando se pida.~~ **[CH-224]** Entran: corriente, ahorro y billetera (03 §3.4, 04 OP-01).
 - **Unir deudores** (CF-03): diseñado en 3.4 y diferido; en la primera versión se renombra (FT-48).
 - **Avisos del diseño que no entran** (P6-25): corte de tarjeta, meta cubierta y regla aplicada.
 
@@ -4959,3 +4959,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 
 - **CT-03 y CT-07** (Fase 7, aprobados en las revisiones de las partes C y D de `07-pruebas.md`). CA-78.15 y CA-70.7 sin iPhone (riesgo aceptado, P7-9); 3.5.12 y el recorrido 4.2 sobre la semilla `estado-a7`, sin cambio en ningún número citado por los CA. Marcas **[F7]** en cada lugar. Detalle en `07-pruebas.md` §22 y §28.
 - **CH-07** (Fase 8, aprobado en la revisión de la Parte C de `08-tareas.md`, aplicado al cerrarla el 23 de octubre de 2026). Dependencias de construcción y de datos (2.0) y las de datos de FT-03, FT-04, FT-08, FT-16, FT-19, FT-34, FT-35 y FT-54. Los CA no cambian. Marcas **[F8]**.
+- **CH-222, CH-224 y CH-225** (Fase 8, decididos por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). FT-29: acción principal "Reservar $X" con la variante `reservar_falta` de OP-16 (CH-222). S6: la identidad de la cuenta de efectivo por su subtipo y §7.3 sin los subtipos fuera de fase (CH-224); la cara de la tarjeta por su color guardado, uno de 8 (CH-225). Los CA no cambian. Marcas **[CH-nnn]** en cada lugar.

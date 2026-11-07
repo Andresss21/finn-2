@@ -1849,6 +1849,7 @@ No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; c�
   - Tarjeta: `limiteCredito: MontoTexto`, `tasaAnual?: string` (porcentaje con hasta 4 decimales, convertido a millonésimas, DB-13), `diaCorte: 1..31`, `diaPago: 1..31`, `red?: 'visa' | 'mastercard' | 'otra'`, `color?: /^#[0-9A-F]{6}$/`.
   - Préstamo: `contraparte`, `montoOriginal`, `tasaNominalAnual?`, `tipoTasa`, `seguroPrimerMes?`, `comision?`, `frecuencia`, `frecuenciaDias?`, `cuotaPactada`, `plazoCuotas`, `modeloCalculo?: 'banco_agricola'`, `cuotasPagadasAlCrear` (03 §3.6). `saldo` = capital pendiente (≥ 0).
   - Inversión: `rendimientoAnualEsperado?`. `saldo` = valor (≥ 0).
+  - **[CH-224]** Efectivo: `subtipoEfectivo: 'corriente' | 'ahorro' | 'billetera'`, obligatorio (y prohibido en los otros tipos, contrato). Una billetera no lleva `institucionId` ni `ultimos4` (contrato); F3 `cuentas.subtipo_efectivo` (03 §3.4).
 - **Idempotencia:** creación, `cuentas.id`.
 - **Confirmación:** AV-01 si `fechaApertura` cae en un período cerrado.
 - **Precondiciones:** `fechaApertura ≤ hoy` (`fecha_posterior_a_hoy`); (`institucionId`, `ultimos4`) único (`ultimos4_repetidos`); en una tarjeta, ninguna otra tarjeta, **abierta o archivada** (**[R2]**), con el mismo nombre sin mayúsculas, porque su categoría de pago lleva ese nombre y 03 exige nombres únicos por grupo (`nombre_repetido`, BE-35); atributos obligatorios del tipo (contrato).
@@ -1864,7 +1865,7 @@ No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; c�
 
 #### OP-02 Editar cuenta
 
-- **Entrada:** `cuentaId`; campos editables de OP-01 salvo `tipo`; `fechaApertura?`; `esperado` con los valores vistos de cada campo que cambia.
+- **Entrada:** `cuentaId`; campos editables de OP-01 salvo `tipo`; `fechaApertura?`; `esperado` con los valores vistos de cada campo que cambia. **[CH-224]** `subtipoEfectivo` es editable en efectivo; pasar a billetera exige quitar `institucionId` y `ultimos4` en la misma edición (contrato).
 - **Idempotencia:** valor absoluto.
 - **Confirmación:** AV-01 si el saldo inicial cambia de período.
 - **Precondiciones:** la nueva apertura no es posterior a ninguna transacción salvo el saldo inicial (`apertura_posterior_a_movimientos`); (`institucionId`, `ultimos4`) sigue siendo único; `fechaApertura ≤ hoy`.
@@ -2000,7 +2001,8 @@ No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; c�
 
 #### OP-16 Asignación rápida
 
-- **Entrada:** `categoriaId`, `periodoInicio`, `variante: 'falta_meta' | 'igual_periodo_anterior' | 'promedio_gasto'`, `esperado: { monto }`, `revisionVista?`, `huellaImpacto?`.
+- **Entrada:** `categoriaId`, `periodoInicio`, `variante: 'falta_meta' | 'igual_periodo_anterior' | 'promedio_gasto' | 'reservar_falta'` **[CH-222]**, `esperado: { monto }`, `revisionVista?`, `huellaImpacto?`.
+- **[CH-222] `reservar_falta`:** solo en la categoría de pago c = pago(t) (`clase = 'pago'`), en el período activo y con S(t) > 0: `montoNuevo` = Asig(c, A) + S(t), con S calculado por el dominio (01 §4.8). No se ofrece en otro caso (la entrada se rechaza como cualquier variante que no aplica).
 - **Comportamiento:** la aplicación pide al dominio el valor (selector de la instantánea) y ejecuta OP-14 con `montoNuevo` = ese valor. Variantes de 01 OP-16.
 - **Idempotencia, confirmación, errores:** los de OP-14.
 
@@ -2204,7 +2206,7 @@ El flujo HTTP completo (autenticación, códigos 401/5xx/200, configuración de 
 
 #### OP-37 Aprobar movimiento
 
-- **Entrada:** `movimientoId`; `id` (para la transacción nueva; no se usa si se vincula a una registrada); `origenId?: Uuid` (obligatorio si `tipo_propuesto = 'pago_tarjeta'`: la cuenta de efectivo de la que salió el pago, que el SMS no informa); `recordarRegla?: boolean`; `revisionVista?`, `huellaImpacto?`.
+- **Entrada:** `movimientoId`; `id` (para la transacción nueva; no se usa si se vincula a una registrada); `origenId?: Uuid` (obligatorio si `tipo_propuesto = 'pago_tarjeta'`: la cuenta de efectivo de la que salió el pago, que el SMS no informa); `recordarRegla?: boolean`; `revisionVista?`, `huellaImpacto?`. **[CH-226]** `transaccionOriginalId?: Uuid`, solo con `tipo_propuesto = 'devolucion'`: la compra que se devuelve (elegida con la búsqueda de compras de CP-3, 6.14.3); con él se ejecuta OP-33a sobre esa compra con el reparto de las líneas del movimiento, cada una con el `lineaOriginalId` de una línea de esa compra (`linea_sin_destino` si alguna no lo tiene; rigen las precondiciones de OP-33a); sin él, OP-33b.
 - **Idempotencia:** natural: si el movimiento ya está `aprobado` con la transacción de este mismo `id`, `ya_aplicada` con su `transaccion_id`; si está aprobado con otra transacción, `movimiento_estado_no_valido` **[CH-99]** (OP-40 `confirmar_coincidencia` sobre una registrada conserva `ya_aplicada`: su `id` no se usa); además, creación sobre `transacciones.id`.
 - **Confirmación:** la de la operación que ejecuta (AV-01 si la fecha es de un período cerrado, como en ESC-46); AV-16 si vincula a una registrada conciliada y cambia su monto.
 - **Precondiciones:**
@@ -2498,7 +2500,7 @@ Catálogo cerrado de `seleccionar.*` (2.4). Cada uno implementa una fórmula de 
 | **[R3]** `comerciosRecientes(reglas, limite)` | Comercios distintos de los gastos, por último uso, con su categoría sugerida | §4.17 + 6.14.3 |
 | **[R3]** `capacidadDevolucion(transaccion)` | Por línea: lo que queda por devolver; total restante | inv. 9 a 11 (01 OP-33a) |
 | **[R3]** `porCobrarAbiertos(fecha?)` | Líneas por cobrar con saldo abierto a una fecha | §4.10 |
-| **[R3]** `asignacionRapida(c, p)` | Valores de las tres variantes de OP-16 | 01 OP-16 |
+| **[R3]** `asignacionRapida(c, p)` | Valores de las ~~tres~~ variantes de OP-16 (**[CH-222]** con `reservar_falta` en las categorías de pago) | 01 OP-16 |
 | **[R3]** `desglosePropuesto(prestamo, fecha)` | Desglose del modelo para un pago en esa fecha y la cuota emparejada | Anexo A.2 punto 8 |
 | **[R3]** `categoriaUltimaCuota(prestamo)` | Categoría de la última cuota o abono a ese préstamo | 6.14.4 |
 | **[R3]** `impedimentosArchivo(c)` y `resumenFusion(origen)` | Datos para OP-09 y OP-12 | 6.14.4 |
@@ -2632,6 +2634,7 @@ interface DetalleCategoriaDto extends Encabezado {
     origen: { transaccionId: Uuid } | { condonacionId: Uuid };
     fecha: FechaLocal; comercio: string | null; cuenta: Ref;
     medio: 'tarjeta' | 'debito'; montoNeto: Centavos; cubierto: Centavos; noCubierto: Centavos;
+    cubiertoBp: number;                            // [CH-223] cubierto × 10.000 / montoNeto (redondeo de `barra`, CF-25); 0 si montoNeto ≤ 0; tope 10.000
   }[];
   entradasDelPeriodo: { transaccionId: Uuid; fecha: FechaLocal; monto: Centavos; caso: 'D-2' | 'D-3' | 'D-4' }[];
   meta: {
@@ -2706,7 +2709,8 @@ La suma de la descomposición es exactamente `lpa` (lo verifica una prueba de pr
 
 ```ts
 interface CuentasDto extends Encabezado {
-  efectivo: { cuenta: Ref; institucion?: string; ultimos4?: string; saldo; saldoConfirmado: Centavos;
+  efectivo: { cuenta: Ref; subtipoEfectivo: 'corriente' | 'ahorro' | 'billetera';   // [CH-224]
+              institucion?: string; ultimos4?: string; saldo; saldoConfirmado: Centavos;
               ultimaConciliacion?: { fechaEstado: FechaLocal; diferenciaActual: Centavos } }[];
   tarjetas: { cuenta: Ref; institucion?: string; ultimos4?: string; red?: string; color?: string;
               deuda; saldoAFavor; limite: Centavos; usoLimite: number /* puntos básicos */;
@@ -2737,7 +2741,8 @@ interface CuentasDto extends Encabezado {
 
 ```ts
 interface DetalleCuentaDto extends Encabezado {
-  cuenta: Ref & { tipo: TipoCuenta; institucion?: string; ultimos4?: string; fechaApertura: FechaLocal; archivada: boolean };
+  cuenta: Ref & { tipo: TipoCuenta; institucion?: string; ultimos4?: string; fechaApertura: FechaLocal; archivada: boolean;
+                  subtipoEfectivo?: 'corriente' | 'ahorro' | 'billetera' };   // [CH-224] solo en efectivo
   periodo: PeriodoDto;                                            // [CH-71] el de periodoInicio, o el activo: lo que `SelectorPeriodo` necesita (05 §3.4)
   saldo: Centavos; saldoConfirmado: Centavos;
   navegacion: { anterior?: FechaLocal; siguiente?: FechaLocal };   // [F5] CP-9: vecinos de periodoInicio, o del activo (selector periodos)
@@ -2753,6 +2758,7 @@ interface DetalleCuentaDto extends Encabezado {
   }[];
   programadas: { programada: Ref; rol: 'origen' | 'destino'; activa: boolean }[];
   tarjeta?: { deuda; saldoAFavor; reservado; faltaReservar; reservaExcedente; limite: Centavos; usoLimite: number;
+              categoriaPago: Ref;                                 // [CH-222] la categoría de pago de la tarjeta (BE-35)
               cicloFacturacion: { desde: FechaLocal; hasta: FechaLocal };
               desgloseAlPagar: { deudaAnterior; cargosDelCiclo; yaPagado; paraNoGenerarIntereses: Centavos } };
   prestamo?: {
@@ -2877,7 +2883,7 @@ interface MovimientoDto {
 
 **BE-41. Cuenta de origen propuesta para un pago de tarjeta (ajuste 3).** Para un movimiento con `tipo_propuesto = 'pago_tarjeta'` y cuenta t:
 1. Entre las transacciones de tipo `pago_tarjeta` cuyo efecto positivo es sobre t, se toma la última por (`fecha`, `clave_orden`, `secuencia`).
-2. `origenPropuesto` es la cuenta de su efecto negativo (efectivo), si sigue abierta.
+2. `origenPropuesto` es la cuenta de su efecto negativo (efectivo), si sigue abierta. **[CH-224]** Se saltan los pagos cuyo origen es una cuenta de efectivo de subtipo `ahorro`: se toma el último de los restantes.
 3. Si no hay pagos anteriores a t o esa cuenta está archivada, no hay propuesta y la aprobación exige elegirla (`faltantes` incluye `origen`).
 
 Se deriva de los hechos, sin columna nueva. La interfaz envía `origenPropuesto` preseleccionado en `origenId` de OP-37, así que la aprobación individual es de un toque; OP-38 sigue excluyendo estos movimientos. *Alternativa descartada:* la cuenta de efectivo con más pagos a esa tarjeta (cambia más lento cuando el usuario cambia de cuenta de pago).
@@ -2905,7 +2911,7 @@ Los reportes de producto §10 no tienen fórmula en 01; estas son las que implem
 
 | `tipo` | Parámetros extra | Devuelve | Fórmula [Propio] |
 |---|---|---|---|
-| `tendencia` | — | Por período de W: `{ periodo, ingresos, gastos, otrasEntradas, gastosPorGrupo: { grupo, monto }[] }` | Definiciones de 6.9.1 |
+| `tendencia` | — | Por período de W: `{ periodo, ingresos, gastos, otrasEntradas, gastosPorGrupo: { grupo, monto }[], asignado }` **[CH-226]** | Definiciones de 6.9.1. **[CH-226]** `asignado` = Σ Asig(c, q) de las categorías normales (sin las de pago): el tope punteado del gráfico |
 | `categorias` | `grupoId?` | `{ categoria, grupo, gastado, porcentaje }[]`, `conDevolucionNeta: { categoria, gastado }[]`, `total` y `montoOtras` **[CH-177]** | Gastado acumulado en W por categoría normal (incluidas las archivadas con actividad). La dona usa las de gastado > 0; `porcentaje` = gastado / Σ positivos, en puntos básicos. Las de gastado ≤ 0 van aparte. **[CH-177]** `total` (Centavos) = Σ positivos, el centro de la dona: todas las de gastado > 0, también las que la dona agrupa en «Otras»; 0 si no hay ninguna. `montoOtras` (Centavos) = Σ gastado de las que siguen a las 8 primeras en el orden del DTO, las que la dona junta en «Otras» (CA-60.5, 05 §10.8); 0 con 8 o menos. La interfaz no los suma (PF-3) |
 | `ingresos_gastos` | — | Por período: `{ periodo, ingresos, gastos, diferencia, otrasEntradas, restituciones }` | `diferencia` = Ingresos − Gastos; otras entradas y restituciones se muestran aparte (H13, D1) |
 | `remanente` **[R3]** (producto §10, "Cashflow") | — | Por período: `{ periodo, neto, acumulado }` | `neto` = Ingresos − Gastos (lo que queda del dinero nuevo del período); `acumulado` = suma en W. Otras entradas no cuentan: un desembolso es deuda (H13). **No es un flujo de caja** (6.9.5) |
@@ -3028,7 +3034,8 @@ interface MetasDto extends Encabezado {
 ```ts
 interface AjustesDto extends Encabezado {
   ciclo: { diaInicioVigente: number; vigenciaFutura?: { diaInicio: number; rigeDesde: FechaLocal } };
-  webhook: { configurado: boolean; rotadoEn?: Instante };                // token_webhook (nunca el hash)
+  webhook: { configurado: boolean; rotadoEn?: Instante;                 // token_webhook (nunca el hash)
+             ultimoSmsEn?: Instante };                                   // [CH-227] el recibido_en más reciente de sms (03 §3.17), sin el texto
   formatos: { id: Uuid; institucion: Ref; nombre: string; tipoMovimiento: TipoMovimientoBancario;
               activo: boolean; usos: number; ultimoUso?: Instante }[];   // usos = procesamientos con ese formato
   instituciones: Ref[];
@@ -3233,10 +3240,10 @@ interface Catalogos {
 | `cobrar` | `{ lineas: { lineaId; transaccionId; deudor; fechaOrigen; comercio; monto; abierto; medio: 'tarjeta' \| 'debito'; tarjeta?: Ref; propuestaAV22: boolean }[] }`: las líneas por cobrar con saldo abierto a `fecha ?? hoy`, filtradas por `lineaId` o `deudorId`. `propuestaAV22` = por cobrar con tarjeta (la asignación se ofrece si el cobro entra en efectivo) | `porCobrarAbiertos(fecha)` (§4.10) |
 | `condonar` | `{ linea: { lineaId; deudor; abierto; medio; fechaOrigen }; categoriaPropuesta?: Ref }` | `porCobrar(linea)`; propuesta de 01 OP-32 |
 | `devolver` | Sin `transaccionOriginalId`: `{ candidatas: { transaccionId; fecha; comercio; cuenta; total; restante }[] }` (hasta 20 gastos con `restante > 0`, filtrados por `busqueda` con las reglas de Actividad, 6.7.1). Con `transaccionOriginalId`: `{ compra: { transaccionId; fecha; comercio; cuenta; total; devuelto; restante }; lineas: { lineaId; destino; monto; devuelto; capacidad }[] }`, donde `capacidad` = monto − devuelto en una línea de categoría y el saldo abierto en una por cobrar | `capacidadDevolucion` (inv. 9 a 11) |
-| `asignar` | `{ categoria: Ref; periodo; asignado; disponible; asignadoEsperado; meta?: { pedido; falta }; rapida: { faltaMeta?; igualPeriodoAnterior; promedioGasto?: { monto: Centavos; periodos: 1 \| 2 \| 3 }; cubrirSobregiro?: Centavos } }` (**[F6]** CF-25: `cubrirSobregiro` = Asig + máx(0, −Disp), solo si Disp < 0; variante "Cubrir el sobregiro" de 01 OP-16) (**[F6]** CF-17: promedio de los últimos 3 períodos cerrados en que existía c, o de los que haya; sin ninguno, no viene) | `categoria(c, p)`, `meta(c, p)`, `asignacionRapida(c, p)` (variantes de 01 OP-16, como valor de Asig resultante) |
+| `asignar` | `{ categoria: Ref; periodo; asignado; disponible; asignadoEsperado; meta?: { pedido; falta }; rapida: { faltaMeta?; igualPeriodoAnterior; promedioGasto?: { monto: Centavos; periodos: 1 \| 2 \| 3 }; cubrirSobregiro?: Centavos; reservarFalta?: Centavos /* [CH-222] S(t), solo en pago(t) */ } }` (**[F6]** CF-25: `cubrirSobregiro` = Asig + máx(0, −Disp), solo si Disp < 0; variante "Cubrir el sobregiro" de 01 OP-16) (**[F6]** CF-17: promedio de los últimos 3 períodos cerrados en que existía c, o de los que haya; sin ninguno, no viene) | `categoria(c, p)`, `meta(c, p)`, `asignacionRapida(c, p)` (variantes de 01 OP-16, como valor de Asig resultante) |
 | `archivar_categoria` | `{ categoria; disponible (Disp(c, A)); sobregiro; asignacionesFuturas: { periodo; monto }[]; programadasActivas: { programada: Ref; comercio; monto; montoHaciaCategoria; frecuencia }[]; meta?: Ref; asignadoEsperado }` | `impedimentosArchivo(c)`: Disp, asignaciones futuras y programadas activas con líneas hacia c (lo que pide OP-09) |
 | `fusionar` | `{ origen: Ref; destinosValidos: Ref[] (normales, activas, ≠ origen); resumen: { periodosConAsignacion: number; transacciones: number; condonaciones: number; programadas: number; reglas: number; meta?: { tipo; monto } } }` | `resumenFusion(origen)`; el impacto por período lo da la previsualización (AV-13) |
-| `cuenta` | Crear: `{ instituciones: Ref[]; nombresTarjetaUsados: { nombre; archivada }[]; modelosPrestamo: ['banco_agricola'] }`. Editar: además, todos los campos de la cuenta y de su subtipo con `esperado`, y `fechaAperturaMaxima` (la fecha de la primera transacción que no es saldo inicial) | Hechos; `nombresTarjetaUsados` sirve para avisar antes de enviar (BE-35) |
+| `cuenta` | Crear: `{ instituciones: Ref[]; nombresTarjetaUsados: { nombre; archivada }[]; modelosPrestamo: ['banco_agricola'] }`. **[CH-224]** Editar trae `subtipoEfectivo` en las cuentas de efectivo. Editar: además, todos los campos de la cuenta y de su subtipo con `esperado`, y `fechaAperturaMaxima` (la fecha de la primera transacción que no es saldo inicial) | Hechos; `nombresTarjetaUsados` sirve para avisar antes de enviar (BE-35) |
 | `programada` | Crear: `{ prestamosConModelo: Uuid[] }` (QB-1). Editar: además, todos los campos con `esperado`, `calendarioEditable` y las próximas 5 ocurrencias | Hechos; [H] para `calendarioEditable` (6.12.1) |
 | `movimiento` | El `MovimientoDto` de la bandeja (6.8) y, si `tipo_propuesto = 'devolucion'`, las `candidatas` de `devolver` filtradas por la cuenta del movimiento, por `restante` ≥ su monto y por compras con fecha ≤ la del movimiento, las más recientes primero y hasta 20 **[CH-30]** | Bandeja + `capacidadDevolucion` |
 | `formato` | `{ formato?: { id; institucion; nombre; tipoMovimiento; patron; banderas; montoSeparadorMiles; montoSeparadorDecimal; formatosFecha; activo; esperado }; instituciones: Ref[]; smsParaProbar: { smsId; texto; recibidoEn; estado }[] }` (los 20 SMS más recientes en `no_reconocido` o `error`) | [H] e [I] |
@@ -4427,3 +4434,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CT-09** (Fase 7, aprobado en la revisión de la Parte D de `07-pruebas.md`). Despliegue de emergencia como única excepción al despliegue desde el job de `main` (14.1) y evento `despliegue_emergencia` en el catálogo (15.2). Marcas **[F7]** en cada sección. Detalle en `07-pruebas.md` §31.5.
 - **CH-03** (Fase 8, aprobado en la revisión de la Parte A de `08-tareas.md`, aplicado al cerrarla el 23 de octubre de 2026). SP-01 se verifica en la puerta de 07 §30 con `pruebas/muestras-cobertura.json` y las filas de exclusión firmadas: el BAC y Banco Agrícola con muestras; Cuscatlán excluido y F-3 inactivo. El requisito de SP-01 no cambia. Sin marcas en el texto.
 - **CH-210** (decisión del usuario del 6 de noviembre de 2026, `08-tareas.md` §7). El usuario no tiene cuentas en Banco Agrícola ni en Cuscatlán: los dos quedan excluidos de la puerta con filas firmadas (08 TU-14) y F-2 y F-3 inactivos; solo el BAC trae muestras. Reemplaza lo que CH-03 decía de Banco Agrícola. El requisito de SP-01 no cambia. Sin marcas en el texto.
+- **CH-222 a CH-227** (Fase 8, decididos por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). Variante `reservar_falta` de OP-16 con `rapida.reservarFalta` y `DetalleCuentaDto.tarjeta.categoriaPago` (CH-222; OP-16, 6.0.5, 6.6, 6.14.4); `cubiertoBp` en los consumos del detalle de categoría (CH-223; 6.3); `subtipoEfectivo` en OP-01, OP-02, `cuentas()`, `detalleCuenta()` y `formulario('cuenta')`, y BE-41 sin cuentas de ahorro (CH-224); `asignado` por período en `tendencia` y `transaccionOriginalId` en OP-37 (CH-226; 6.9.2, OP-37); `webhook.ultimoSmsEn` en `ajustes()` (CH-227; 6.11). Marcas **[CH-nnn]** en cada sección.
