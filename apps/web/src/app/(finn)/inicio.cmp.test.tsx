@@ -251,4 +251,60 @@ describe('PRU-CMP-INICIO', () => {
     const chevron = [...(fila?.querySelectorAll('svg') ?? [])].at(-1);
     expect(rect(chevron).left).toBeGreaterThanOrEqual(rect(neto).right);
   });
+
+  it('PRU-CMP-INICIO-226 [CA-08.6, CA-62.3] con la acción del lector, "Asignar" del hallazgo de ritmo es un botón que manda OP-14 con el monto nuevo y lo asignado del DTO, y después ofrece "Deshacer"', async () => {
+    const accion = vi.fn(() =>
+      Promise.resolve({ ok: true as const, valor: {}, avisos: [], yaAplicada: false }),
+    );
+    const nodo = montar(
+      <PantallaInicio
+        asignar={accion}
+        dto={dto({
+          atencion: {
+            hallazgosRitmo: [
+              {
+                clave: 'h-1',
+                categoria: { id: 'c-2', nombre: 'Gama' },
+                estado: 'advertencia',
+                exceso: centavos(10500),
+                sobregiroActual: centavos(0),
+                fin: '2027-02-20',
+                accion: { tipo: 'asignar', montoNuevo: centavos(25500), esperado: centavos(15000) },
+              },
+            ],
+          },
+        })}
+      />,
+    );
+    const boton = (texto: string) => {
+      const b = [...nodo.querySelectorAll('button')].find((x) => x.textContent.includes(texto));
+      if (b === undefined) throw new Error(`no hay botón «${texto}»`);
+      return b;
+    };
+    expect(nodo.querySelector('[data-hallazgo] a[href^="/presupuesto/asignar"]')).toBeNull();
+    await act(async () => {
+      boton(t.hallazgo.asignar('$105.00')).click();
+      await Promise.resolve();
+    });
+    expect(accion).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        categoriaId: 'c-2',
+        periodoInicio: '2027-01-21',
+        montoNuevo: '255.00',
+        esperado: { monto: '150.00' },
+      }),
+    );
+    await act(async () => {
+      boton(t.deshacer).click();
+      await Promise.resolve();
+    });
+    expect(accion).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        categoriaId: 'c-2',
+        periodoInicio: '2027-01-21',
+        montoNuevo: '150.00',
+        esperado: { monto: '255.00' },
+      }),
+    );
+  });
 });

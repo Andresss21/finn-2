@@ -6,7 +6,6 @@ import type { ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Icono } from '../../componentes/base/icono';
 import { ResumenListoParaAsignar } from '../../componentes/dominio/billete';
-import { COLOR_TEXTO } from '../../componentes/dominio/indicador-estado';
 import { Monto } from '../../componentes/dominio/monto';
 import { PublicarEncabezado } from '../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
@@ -14,6 +13,7 @@ import { CirculoEstado, FOCO, FilaAtencion, TextoDeFila } from './fila-atencion'
 import { SacarDeUnToque } from './presupuesto/sacar-un-toque';
 import { MarcarLeido } from './marcar-leido';
 import { hrefDeOcurrencia, ProximosPagos, Recientes, TodoAlDia } from './inicio-secciones';
+import { HallazgosRitmo } from './reportes/[tipo]/ritmo-hallazgos';
 import { ReservaExcedente } from './reserva-excedente';
 import { formatearFecha, formatearMonto } from '../../formato';
 import type { AccionEscritura } from '../../formularios/use-operacion';
@@ -91,42 +91,6 @@ function Sobregiro({ fila }: { readonly fila: InicioDto['atencion']['sobregirada
         </EnlaceFinn>
       </div>
     </details>
-  );
-}
-
-/** El texto y la acción del hallazgo salen del catálogo con los campos del selector (04 §7.10): ningún monto se calcula acá. */
-type HallazgoDeRitmo = InicioDto['atencion']['hallazgosRitmo'][number];
-
-function Hallazgo({ h }: { readonly h: HallazgoDeRitmo }) {
-  const exceso = formatearMonto(h.exceso);
-  const fin = formatearFecha(h.fin).slice(0, 5);
-  const texto =
-    h.sobregiroActual === 0
-      ? t.hallazgo.camino(exceso, h.categoria.nombre, fin)
-      : t.hallazgo.ya(formatearMonto(h.sobregiroActual), h.categoria.nombre, exceso, fin);
-  const { accion } = h;
-  const [href, etiqueta] =
-    accion.tipo === 'mover'
-      ? (['/presupuesto/mover', t.hallazgo.mover(exceso, accion.origen.nombre)] as const)
-      : accion.tipo === 'asignar'
-        ? ([`/presupuesto/asignar/${h.categoria.id}`, t.hallazgo.asignar(exceso)] as const)
-        : ([
-            `/presupuesto/categorias/${accion.categoriaId}`,
-            t.hallazgo.revisar(h.categoria.nombre),
-          ] as const);
-  return (
-    <div data-hallazgo={h.clave}>
-      <AvisoEnLinea
-        estado={h.estado}
-        accion={
-          <EnlaceFinn href={href} className={[BASE_ENLACE, COLOR_TEXTO[h.estado]].join(' ')}>
-            {etiqueta}
-          </EnlaceFinn>
-        }
-      >
-        {texto}
-      </AvisoEnLinea>
-    </div>
   );
 }
 
@@ -216,9 +180,12 @@ export function PantallaInicio({
                 </AvisoEnLinea>
               </div>
             ))}
-            {a.hallazgosRitmo.map((h) => (
-              <Hallazgo key={h.clave} h={h} />
-            ))}
+            {/* El mismo componente que /reportes/ritmo (CH-215): «Asignar» de un toque con «Deshacer»; sin `asignar`, enlace. */}
+            <HallazgosRitmo
+              hallazgos={a.hallazgosRitmo}
+              periodoInicio={dto.periodoActivo.inicio}
+              {...(asignar === undefined ? {} : { asignar })}
+            />
             {asignar === undefined ? null : (
               <ReservaExcedente filas={a.reservaExcedente} accion={asignar} />
             )}
