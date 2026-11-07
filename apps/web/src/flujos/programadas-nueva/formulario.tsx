@@ -5,7 +5,7 @@
 // No calcula montos (PF-3): la suma de las partes la valida el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
-import type { ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
@@ -53,6 +53,8 @@ export interface PropsFormularioProgramada {
   /** Desactivar y reactivar (solo al editar): lo arma el lector. */
   readonly activar?: ReactNode;
 }
+
+const BorradorProgramada = lazy(() => import('./borrador'));
 
 const RUTA_PADRE = '/programadas';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
@@ -131,6 +133,16 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
       rutaPadre={RUTA_PADRE}
     >
       <form onSubmit={(e) => void alEnviar(e)} noValidate className="flex flex-col gap-5">
+        {edita ? null : (
+          <Suspense fallback={null}>
+            <BorradorProgramada
+              campos={c}
+              inicial={inicial}
+              operacion={operacion}
+              reset={formulario.reset}
+            />
+          </Suspense>
+        )}
         {edita ? null : (
           <SelectorSegmentado
             etiqueta={t.tipo}

@@ -495,7 +495,7 @@
 
   "TA-425": { "estado": "terminada", "rama": "ta-425-tarjetas-tiempo-2", "pr": 510 },
 
-  "TA-426": { "estado": "en_curso", "rama": "ta-426-hallazgos-accionables" },
+  "TA-426": { "estado": "terminada", "rama": "ta-426-hallazgos-accionables", "pr": 519 },
 
   "TA-427": { "estado": "terminada", "rama": "ta-427-notificaciones-dispositivo", "pr": 294 },
 
@@ -531,11 +531,11 @@
 
   "TA-439": { "estado": "terminada", "rama": "ta-439-arrastre-3", "pr": 514 },
 
-  "TA-446": { "estado": "pendiente" },
+  "TA-446": { "estado": "terminada", "rama": "ta-446-recorridos-41-43", "pr": 520 },
 
   "TA-447": { "estado": "terminada", "rama": "ta-447-recorridos-movil", "pr": 509 },
 
-  "TA-470": { "estado": "pendiente" },
+  "TA-470": { "estado": "retirada", "motivo": "CH-210: descartada, sin cuentas en Banco Agrícola" },
 
   "TA-500": { "estado": "terminada", "rama": "ta-500-desembolso-prestamo", "pr": 437 },
 
@@ -545,9 +545,9 @@
 
   "TA-503": { "estado": "terminada", "rama": "ta-503-gastos-hormiga", "pr": 447 },
 
-  "TA-504": { "estado": "pendiente" },
+  "TA-504": { "estado": "terminada", "rama": "ta-504-suscripciones", "pr": 516 },
 
-  "TA-505": { "estado": "pendiente" },
+  "TA-505": { "estado": "terminada", "rama": "ta-505-flujo-efectivo-3", "pr": 521 },
 
   "TA-506": { "estado": "terminada", "rama": "ta-506-apariencia-2", "pr": 285 },
 

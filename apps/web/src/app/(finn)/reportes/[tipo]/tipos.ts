@@ -11,8 +11,10 @@ export const TIPOS = {
   'gasto-semanal': 'gasto_semanal',
   realidad: 'realidad',
   tarjetas: 'tarjetas',
+  'flujo-efectivo': 'flujo_efectivo',
   hormiga: 'hormiga',
   hallazgos: 'hallazgos',
+  suscripciones: 'suscripciones',
 } as const;
 
 export type TipoDeUrl = keyof typeof TIPOS;

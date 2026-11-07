@@ -22,13 +22,11 @@
   { "ca": "CA-37.4", "completa": "FT-41" },
   { "ca": "CA-37.5", "completa": "FT-41" },
   { "ca": "CA-08.8", "completa": "FT-41" },
-  { "ca": "REC-4.1", "completa": "TA-446" },
   { "ca": "CA-25.4", "completa": "FT-43" },
   { "ca": "CA-25.5", "completa": "FT-28" },
   { "ca": "CA-25.6", "completa": "FT-46" },
   { "ca": "CA-26.3", "completa": "FT-41" },
   { "ca": "CA-26.4", "completa": "FT-46" },
   { "ca": "CA-26.6", "completa": "FT-43" },
-  { "ca": "CA-16.5", "completa": "FT-71" },
-  { "ca": "REC-4.3", "completa": "TA-446" }
+  { "ca": "CA-16.5", "completa": "FT-71" }
 ]

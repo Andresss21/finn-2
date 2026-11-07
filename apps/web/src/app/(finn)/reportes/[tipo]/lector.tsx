@@ -9,6 +9,10 @@ import { estructura } from '@finn/aplicacion/consultas/estructura';
 import { reporte } from '@finn/aplicacion/consultas/reporte';
 import { centavosATextoDecimal } from '../../../../formato';
 import { asignarEnCategoria, gestionarMeta } from '../../../../servidor/acciones/presupuesto.ts';
+import {
+  eliminarProgramada,
+  gestionarProgramada,
+} from '../../../../servidor/acciones/programadas.ts';
 import { consultar } from '../../../../servidor/consultar';
 import { depsDeConsulta } from '../../../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../../../servidor/parametros';
@@ -75,7 +79,8 @@ export async function LectorReporte({
   const semanal = url === 'gasto-semanal';
   const deHormiga = url === 'hormiga';
   // `ritmo` mira el período activo: su contrato no lleva ventana ni cuentas.
-  const filtrado = url !== 'ritmo' && url !== 'realidad' && url !== 'hallazgos';
+  const filtrado =
+    url !== 'ritmo' && url !== 'realidad' && url !== 'hallazgos' && url !== 'suscripciones';
   const { periodoInicio, categoriaIds } = consulta;
   const solicitud = semanal
     ? {
@@ -130,7 +135,7 @@ export async function LectorReporte({
     ...(semanal && categorias !== undefined ? { categorias } : {}),
   };
   const realidad =
-    url === 'realidad' || url === 'tarjetas' || url === 'hallazgos'
+    url === 'realidad' || url === 'tarjetas' || url === 'hallazgos' || url === 'flujo-efectivo'
       ? await accionesDeRealidad()
       : undefined;
   return (
@@ -141,6 +146,9 @@ export async function LectorReporte({
       parametros={parametros}
       {...(url === 'ritmo' || url === 'hallazgos' ? { asignar: asignarEnCategoria } : {})}
       {...(realidad === undefined ? {} : { realidad })}
+      {...(url === 'suscripciones'
+        ? { suscripciones: { gestionar: gestionarProgramada, eliminar: eliminarProgramada } }
+        : {})}
     />
   );
 }
