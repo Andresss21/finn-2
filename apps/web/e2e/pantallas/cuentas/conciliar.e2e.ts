@@ -259,7 +259,7 @@ test.describe('PRU-E2E-CONC conciliar con estado de cuenta', () => {
     await expect(page.locator('[data-conciliacion]')).toContainText('2 transacciones');
   });
 
-  test('PRU-E2E-CONC-155 [CA-43.4, FD-06] RUTA-/registrar/entrada-tarjeta al tocar la propuesta de ajuste de una tarjeta se abre la entrada con la tarjeta, la fecha del estado, $2.00 y el comercio «Ajuste de conciliación», y al guardarla la diferencia actual queda en $0.00', async ({
+  test('PRU-E2E-CONC-155 [CA-43.4] RUTA-/registrar/entrada-tarjeta al tocar la propuesta de ajuste de una tarjeta se abre la entrada con la tarjeta, la fecha del estado, $2.00 y el comercio «Ajuste de conciliación», y al guardarla la diferencia actual queda en $0.00', async ({
     page,
   }) => {
     await conciliarConAyB(page);
