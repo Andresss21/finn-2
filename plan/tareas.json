@@ -547,7 +547,7 @@
 
   "TA-504": { "estado": "pendiente" },
 
-  "TA-505": { "estado": "en_curso", "rama": "ta-505-flujo-efectivo-2" },
+  "TA-505": { "estado": "terminada", "rama": "ta-505-flujo-efectivo-2", "pr": 517 },
 
   "TA-506": { "estado": "terminada", "rama": "ta-506-apariencia-2", "pr": 285 },
 
