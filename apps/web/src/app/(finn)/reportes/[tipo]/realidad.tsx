@@ -12,6 +12,10 @@ import { HallazgosRealidad, type AccionesRealidad } from './realidad-hallazgos';
 import { Tabla } from './vistas-detalle';
 
 type Fila = ReporteDe<'realidad'>['categorias'][number];
+export type HallazgoPromedio = Extract<
+  ReporteDe<'realidad'>['hallazgos'][number],
+  { tipo: 'promedio' }
+>;
 
 const ENLACE =
   'inline-flex min-h-11 items-center gap-1.5 text-etiqueta font-bold no-underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
@@ -39,6 +43,33 @@ function Periodos({ fila }: { readonly fila: Fila }) {
         ]}
       />
     </details>
+  );
+}
+
+/** La comparación con el promedio de una categoría y su enlace; también la dibuja el reporte `hallazgos`. */
+export function AvisoPromedio({ hallazgo: h }: { readonly hallazgo: HallazgoPromedio }) {
+  return (
+    <div data-hallazgo-promedio={h.clave}>
+      <AvisoEnLinea
+        estado={h.estado}
+        accion={
+          <EnlaceFinn
+            href={`/presupuesto/categorias/${h.accion.categoriaId}`}
+            className={[ENLACE, COLOR_TEXTO[h.estado]].join(' ')}
+          >
+            {t.realidad.revisar(h.categoria.nombre)}
+          </EnlaceFinn>
+        }
+      >
+        {t.realidad.camino(
+          h.categoria.nombre,
+          formatearMonto(h.gasto),
+          formatearPorcentaje(Math.abs(h.variacion)),
+          h.variacion >= 0,
+          formatearMonto(h.promedio),
+        )}
+      </AvisoEnLinea>
+    </div>
   );
 }
 
@@ -75,27 +106,7 @@ export function Realidad({
           </p>
         ) : null}
         {dePromedio.map((h) => (
-          <div key={h.clave} data-hallazgo-promedio={h.clave}>
-            <AvisoEnLinea
-              estado={h.estado}
-              accion={
-                <EnlaceFinn
-                  href={`/presupuesto/categorias/${h.accion.categoriaId}`}
-                  className={[ENLACE, COLOR_TEXTO[h.estado]].join(' ')}
-                >
-                  {t.realidad.revisar(h.categoria.nombre)}
-                </EnlaceFinn>
-              }
-            >
-              {t.realidad.camino(
-                h.categoria.nombre,
-                formatearMonto(h.gasto),
-                formatearPorcentaje(Math.abs(h.variacion)),
-                h.variacion >= 0,
-                formatearMonto(h.promedio),
-              )}
-            </AvisoEnLinea>
-          </div>
+          <AvisoPromedio key={h.clave} hallazgo={h} />
         ))}
       </section>
       <section className="flex flex-col gap-2">

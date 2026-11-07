@@ -75,7 +75,7 @@ export async function LectorReporte({
   const semanal = url === 'gasto-semanal';
   const deHormiga = url === 'hormiga';
   // `ritmo` mira el período activo: su contrato no lleva ventana ni cuentas.
-  const filtrado = url !== 'ritmo' && url !== 'realidad';
+  const filtrado = url !== 'ritmo' && url !== 'realidad' && url !== 'hallazgos';
   const { periodoInicio, categoriaIds } = consulta;
   const solicitud = semanal
     ? {
@@ -130,14 +130,16 @@ export async function LectorReporte({
     ...(semanal && categorias !== undefined ? { categorias } : {}),
   };
   const realidad =
-    url === 'realidad' || url === 'tarjetas' ? await accionesDeRealidad() : undefined;
+    url === 'realidad' || url === 'tarjetas' || url === 'hallazgos'
+      ? await accionesDeRealidad()
+      : undefined;
   return (
     <PantallaReporte
       url={url}
       dto={dto}
       nombres={nombres}
       parametros={parametros}
-      {...(url === 'ritmo' ? { asignar: asignarEnCategoria } : {})}
+      {...(url === 'ritmo' || url === 'hallazgos' ? { asignar: asignarEnCategoria } : {})}
       {...(realidad === undefined ? {} : { realidad })}
     />
   );

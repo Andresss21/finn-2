@@ -495,7 +495,7 @@
 
   "TA-425": { "estado": "terminada", "rama": "ta-425-tarjetas-tiempo-2", "pr": 510 },
 
-  "TA-426": { "estado": "pendiente" },
+  "TA-426": { "estado": "en_curso", "rama": "ta-426-hallazgos-accionables" },
 
   "TA-427": { "estado": "terminada", "rama": "ta-427-notificaciones-dispositivo", "pr": 294 },
 

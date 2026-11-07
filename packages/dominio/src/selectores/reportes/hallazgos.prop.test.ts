@@ -129,7 +129,7 @@ const tipoArb = fc.constantFrom<Hallazgo['tipo']>(
 );
 
 describe('PRU-PROP-REP', () => {
-  it('PRU-PROP-REP-004 [V6-11] REP-hallazgos (CF-04) hallazgos: una fila por clave con el mayor impacto, ordenados por impacto, máximo HALLAZGOS_MAX y sin depender del orden de entrada', () => {
+  it('PRU-PROP-REP-004 [V6-11, CA-67.4] REP-hallazgos (CF-04) hallazgos: una fila por clave con el mayor impacto, ordenados por impacto, máximo HALLAZGOS_MAX y sin depender del orden de entrada', () => {
     const hallazgo = fc.record({
       tipo: tipoArb,
       clave: fc.constantFrom('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'),

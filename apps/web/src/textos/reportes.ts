@@ -14,6 +14,7 @@ export const reportes = {
     realidad: 'Realidad',
     tarjetas: 'Tarjetas',
     hormiga: 'Hormiga',
+    hallazgos: 'Hallazgos',
   },
   titulos: {
     tendencia: 'Tendencia de ingresos y gastos',
@@ -28,6 +29,7 @@ export const reportes = {
     realidad: 'Presupuesto contra la realidad',
     tarjetas: 'Tarjetas en el tiempo',
     hormiga: 'Gastos hormiga',
+    hallazgos: 'Qué ajustar este período',
   },
   explicacionRemanente:
     'Ingresos del período menos lo que gastaste, incluidas las compras con tarjeta',
@@ -93,6 +95,15 @@ export const reportes = {
     sinProyeccion: 'Todavía no hay suficientes compras para proyectar',
     asignando: 'Asignando…',
     asignado: (monto: string, categoria: string) => `Asignaste ${monto} a ${categoria}.`,
+  },
+  hallazgos: {
+    sinHallazgos: 'Todo en orden: no encontramos nada que ajustar este período.',
+    suscripcion: (comercio: string, mensual: string, anual: string) =>
+      `${comercio} te cobra ${mensual} cada mes (${anual} al año) y no la tenés programada.`,
+    suscripcionDesactivada: (comercio: string, mensual: string) =>
+      `${comercio} te sigue cobrando ${mensual} cada mes, pero su programada está desactivada.`,
+    programarla: 'Programarla',
+    reactivarla: 'Reactivarla',
   },
   realidad: {
     pasas: (promedio: string, categoria: string, asignado: string, sugerido: string) =>

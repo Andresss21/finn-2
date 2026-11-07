@@ -144,8 +144,8 @@ export function PantallaReporte({
   // `hormiga` también elige un período (`?periodo=`) y se filtra solo por cuentas.
   const deHormiga = url === 'hormiga' ? (dto as ReporteDe<'hormiga'>) : null;
   const conPeriodo = semanal ?? deHormiga;
-  // `ritmo` y `realidad` son siempre del período activo (05 §2.10): sin ventana ni cuentas.
-  const delActivo = url === 'ritmo' || url === 'realidad';
+  // `ritmo`, `realidad` y `hallazgos` son siempre del período activo (05 §2.10): sin ventana ni cuentas.
+  const delActivo = url === 'ritmo' || url === 'realidad' || url === 'hallazgos';
   const todos = semanal === null && !delActivo ? filtrosDe(url, parametros, nombres) : [];
   // `hormiga` elige su período con el selector: no lleva la ventana, solo las cuentas.
   const [primero, ...otros] = todos;
