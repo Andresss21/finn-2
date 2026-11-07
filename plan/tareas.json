@@ -533,7 +533,7 @@
 
   "TA-446": { "estado": "pendiente" },
 
-  "TA-447": { "estado": "en_curso", "rama": "ta-447-recorridos-movil" },
+  "TA-447": { "estado": "terminada", "rama": "ta-447-recorridos-movil", "pr": 509 },
 
   "TA-470": { "estado": "pendiente" },
 
