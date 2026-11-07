@@ -4,6 +4,7 @@ Los 15 procedimientos de `docs/07-pruebas.md` §22.1, con los pasos de §29.2, �
 
 - Cada ejecución se registra como una fila en `pruebas/manuales/resultados.md` (formato de 07 §22.2), con un commit firmado por el usuario (P7-18, P7-20). Los agentes no escriben ese archivo y un PR no puede tocarlo.
 - Vale el último resultado de cada manual. Una falla posterior reabre el pendiente (M16).
+- **[CH-219]** Un procedimiento con el campo `**Diferida al uso diario:** <motivo>` lo ejecuta el usuario después de abrir la puerta: sin resultado no bloquea M16 ni la puerta, y nunca se registra como "pasa" sin ejecutarlo (07 §22.2).
 - Los manuales complementan a las pruebas automáticas de los mismos CA; no las reemplazan.
 - iPhone, iPad y VoiceOver no tienen procedimiento: son riesgo aceptado (P7-9).
 
@@ -180,7 +181,9 @@ Los 15 procedimientos de `docs/07-pruebas.md` §22.1, con los pasos de §29.2, �
 
 **Dispositivo:** ninguno: se usan las muestras reales de estados de cuenta en CSV (07 §23).
 
-**Disparador:** cuando lleguen las muestras de SP-01.
+**Disparador:** ~~cuando lleguen las muestras de SP-01~~ **[CH-219]** durante el uso diario, después de abrir la puerta, con los CSV que el usuario descargue de sus cuentas.
+
+**Diferida al uso diario:** decisión del usuario (CH-219); la ejecuta con sus CSV reales en el uso diario y, si algo no coincide, vuelve con feedback. No bloquea la puerta mientras no tenga resultado (07 §22.2, §30).
 
 **Pasos:**
 
@@ -192,7 +195,7 @@ Los 15 procedimientos de `docs/07-pruebas.md` §22.1, con los pasos de §29.2, �
 
 **Resultado esperado:** la detección elige el formato correcto con los CSV anonimizados.
 
-**Registro:** fila firmada en `resultados.md`. Cuenta para la condición 2 de la puerta (§30); las exclusiones llevan su fila firmada.
+**Registro:** fila firmada en `resultados.md`. ~~Cuenta para la condición 2 de la puerta (§30); las exclusiones llevan su fila firmada.~~ **[CH-219]** Diferida: no cuenta para la condición 2 mientras no tenga resultado; un resultado "falla" sí bloquea. Las exclusiones de SP-01 siguen llevando su fila firmada.
 
 ### PRU-MAN-BAND-004 [CA-73.6, S6-1] Formatos reescritos con muestras reales
 
@@ -213,9 +216,11 @@ Los 15 procedimientos de `docs/07-pruebas.md` §22.1, con los pasos de §29.2, �
 
 ### PRU-MAN-CTA-001 [CA-55.1, CA-55.2] Tabla de amortización contra un estado de cuenta real
 
-**Dispositivo:** un estado de cuenta real de Banco Agrícola.
+**Dispositivo:** un estado de cuenta real de Banco Agrícola: **[CH-219]** el del préstamo que el usuario tiene ahí (modelo `banco_agricola` de 01 Anexo A.2). No tiene cuentas de depósito ni tarjetas en ese banco.
 
-**Disparador:** antes de terminar FT-55.
+**Disparador:** ~~antes de terminar FT-55~~ **[CH-219]** durante el uso diario, después de abrir la puerta, con el estado de cuenta de ese préstamo.
+
+**Diferida al uso diario:** decisión del usuario (CH-219); la ejecuta con el estado de cuenta de su préstamo de Banco Agrícola y, si encuentra diferencias, vuelve con feedback. No bloquea la puerta mientras no tenga resultado (07 §22.2, §30).
 
 **Pasos:**
 
@@ -226,7 +231,7 @@ Los 15 procedimientos de `docs/07-pruebas.md` §22.1, con los pasos de §29.2, �
 
 **Resultado esperado:** el modelo de A.2 coincide con el estado de cuenta, o se registra cada diferencia (01 Anexo A).
 
-**Registro:** fila firmada en `resultados.md`, con las diferencias en la Nota. Cuenta para la puerta porque FT-55 es [M].
+**Registro:** fila firmada en `resultados.md`, con las diferencias en la Nota. ~~Cuenta para la puerta porque FT-55 es [M].~~ **[CH-219]** Diferida: no deja FT-55 "con manual pendiente" mientras no tenga resultado; un resultado "falla" sí bloquea.
 
 ### PRU-MAN-CTA-002 [CH-04, §31.1] Verificar saldo semanal con cada banco
 
