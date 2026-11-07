@@ -9,6 +9,7 @@ import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Boton } from '../../../../componentes/base/boton';
 import { centavosATextoDecimal, formatearMonto } from '../../../../formato';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
+import { ConfirmacionUnToque } from '../../../../formularios/confirmacion-un-toque';
 import { useUnToque } from '../../../../formularios/use-un-toque';
 import { inicio as ti } from '../../../../textos/inicio';
 import { reportes as t } from '../../../../textos/reportes';
@@ -144,6 +145,7 @@ export function HallazgosRealidad({
           </div>
         );
       })}
+      <ConfirmacionUnToque un={un} />
       {un.salida === null ? null : (
         <div data-realidad-ajustado>
           <AvisoEnLinea

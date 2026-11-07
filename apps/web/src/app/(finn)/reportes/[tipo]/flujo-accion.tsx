@@ -10,6 +10,7 @@ import { Boton } from '../../../../componentes/base/boton';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { centavosATextoDecimal, formatearMonto } from '../../../../formato';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
+import { ConfirmacionUnToque } from '../../../../formularios/confirmacion-un-toque';
 import { useUnToque } from '../../../../formularios/use-un-toque';
 import { inicio as ti } from '../../../../textos/inicio';
 import { reportes as t } from '../../../../textos/reportes';
@@ -116,6 +117,7 @@ export function AccionFlujo({
           </AvisoEnLinea>
         </div>
       )}
+      <ConfirmacionUnToque un={un} />
       {un.salida === null ? null : (
         <div data-flujo-reservado>
           <AvisoEnLinea
