@@ -8,6 +8,7 @@ import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import type { Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import { inicio as t } from '../../../src/textos/inicio.ts';
+import { reportes as tr } from '../../../src/textos/reportes.ts';
 import { listoParaAsignar } from '../../../src/textos/listo-para-asignar.ts';
 import type { Page } from '@playwright/test';
 
@@ -320,10 +321,24 @@ test.describe('PRU-E2E-INICIO', () => {
     );
     await expect(hallazgos.nth(2)).toContainText(t.hallazgo.camino('$105.00', 'Gama', '20/02'));
     await expect(
-      hallazgos.nth(0).getByRole('link', { name: t.hallazgo.asignar('$167.00') }),
+      hallazgos.nth(0).getByRole('button', { name: t.hallazgo.asignar('$167.00'), exact: true }),
     ).toBeVisible();
     await expect(page.getByText('Alfa', { exact: false })).toHaveCount(0);
     await expect(page.getByText('Beta', { exact: false })).toHaveCount(0);
+  });
+
+  test('PRU-E2E-INICIO-148 [CA-08.6, CA-62.3] "Asignar $167.00" en el hallazgo de Epsilon asigna de un toque desde Inicio, con "Deshacer" que lo devuelve', async ({
+    page,
+  }) => {
+    await sembrarOps(OPS_RITMO, HOY_RITMO);
+    await abrir(page);
+    const epsilon = page.locator('[data-hallazgo]').filter({ hasText: 'Epsilon' });
+    await epsilon.getByRole('button', { name: t.hallazgo.asignar('$167.00'), exact: true }).click();
+    const salida = page.locator('[data-ritmo-asignado]');
+    await expect(salida).toContainText(tr.ritmo.asignado('$167.00', 'Epsilon'));
+    await expect(page.locator('[data-hallazgo]').filter({ hasText: 'Epsilon' })).toHaveCount(0);
+    await salida.getByRole('button', { name: t.deshacer, exact: true }).click();
+    await expect(page.locator('[data-hallazgo]').filter({ hasText: 'Epsilon' })).toHaveCount(1);
   });
 
   test('PRU-E2E-INICIO-136 RUTA-/presupuesto/listo-para-asignar desde el billete de Inicio se abre el detalle de Listo para asignar', async ({
