@@ -1,14 +1,19 @@
 // FT-43 Conciliar con estado de cuenta CSV, parte 1 (06 FT-43; 05 §2.7; 07 §17: una pantalla o un flujo es una E2E). Cada prueba parte
 // de una base sembrada con operaciones reales (DP-17), con el paso 0 de ESC-47 (hoy 16 feb), y del reloj del servidor fijo (DP-04);
 // sube un CSV sintético como la persona. La clasificación, los saldos y la diferencia los pone el servidor: la prueba solo comprueba
-// que la pantalla los dibuja (PF-3). Agregar desde el estado (CA-43.4, CA-43.5) y los pendientes que completa la ficha son de TA-483.
+// que la pantalla los dibuja (PF-3). La parte C cierra la ficha: «Agregar» desde el estado (CA-43.5), la propuesta de ajuste con sus
+// valores iniciales (CA-43.4) y los CA de otras fichas que solo se prueban pasando por Conciliar (CA-25.4, CA-26.6, CA-52.2; DT-27).
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { conciliar as t } from '../../../src/textos/conciliar.ts';
 import { registrarGasto as g } from '../../../src/textos/registrar-gasto.ts';
+import { registrarTarjeta as rt } from '../../../src/textos/registrar-tarjeta.ts';
+import { registrarTipo as rtipo } from '../../../src/textos/registrar-tipo.ts';
 import { transaccion as tx } from '../../../src/textos/transaccion.ts';
+import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
+import { formatearFechaTexto } from '../../../src/formato/index.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
 
@@ -31,6 +36,7 @@ const ESC47_PASO_0: Op[] = [
   { op: 'OP-01', cuenta: 'Ahorro' },
   { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta' },
   { op: 'OP-07', categoria: 'Super' },
+  { op: 'OP-07', categoria: 'Casa' },
   { op: 'OP-21', monto: 100, fecha: '2027-02-01', hoy: '2027-02-01' },
   { op: 'OP-14', categoria: 'Super', monto: 100, periodo: 'P1', hoy: '2027-02-01' },
   gastoT(40, 'A', '2027-02-03'),
@@ -92,6 +98,31 @@ async function editarMonto(page: Page, texto: string, nuevo: string): Promise<vo
   await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toHaveCount(0);
 }
 
+/** Sube el CSV y termina con A y B marcadas (pasos 1 y 3 de 06 §4.5). */
+async function conciliarConAyB(page: Page): Promise<void> {
+  await abrir(page, conciliar);
+  await subir(page, CSV);
+  await expect(coincidencias(page)).toHaveCount(2);
+  await terminar(page).click();
+  await expect(page.getByTestId('resultado')).toContainText(t.guardado('T', '15/02/2027', 2));
+}
+
+/** Abre la edición de la compra de Actividad que muestra `texto` (FT-25). */
+async function irAEditar(page: Page, texto: string): Promise<void> {
+  await abrir(page, '/actividad');
+  await page.locator('[data-fila-transaccion]').filter({ hasText: texto }).first().click();
+  await page.getByRole('link', { name: tx.editar }).click();
+  await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toBeVisible();
+}
+
+/** Guarda la edición de una compra conciliada: AV-16 antes y confirmación (P12). */
+async function guardarConciliada(page: Page): Promise<void> {
+  await page.getByRole('button', { name: tx.guardar }).click();
+  await expect(page.getByText(tx.avisos['AV-16'] ?? '')).toBeVisible();
+  await page.getByRole('button', { name: tx.confirmar }).click();
+  await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toHaveCount(0);
+}
+
 test.describe('PRU-E2E-CONC conciliar con estado de cuenta', () => {
   test.beforeEach(async ({ context, baseURL }) => {
     await entrarAal2(context, baseURL ?? '');
@@ -128,7 +159,7 @@ test.describe('PRU-E2E-CONC conciliar con estado de cuenta', () => {
     await expect(page.getByText(t.ajusteEntrada('$2.00'))).toBeVisible();
     await expect(page.getByRole('link', { name: t.crearAjuste })).toHaveAttribute(
       'href',
-      `/registrar/entrada-tarjeta?cuenta=${T}`,
+      `/registrar/entrada-tarjeta?cuenta=${T}&fecha=2027-02-15&total=2.00&comercio=Ajuste+de+conciliaci%C3%B3n`,
     );
     await abrir(page, `/cuentas/${T}`);
     const conciliacion = page.locator('[data-conciliacion]');
@@ -226,5 +257,107 @@ test.describe('PRU-E2E-CONC conciliar con estado de cuenta', () => {
     await esperarContenido(page);
     await expect(page.locator('[data-fila-transaccion]')).toHaveCount(antes);
     await expect(page.locator('[data-conciliacion]')).toContainText('2 transacciones');
+  });
+
+  test('PRU-E2E-CONC-155 [CA-43.4] RUTA-/registrar/entrada-tarjeta al tocar la propuesta de ajuste de una tarjeta se abre la entrada con la tarjeta, la fecha del estado, $2.00 y el comercio «Ajuste de conciliación», y al guardarla la diferencia actual queda en $0.00', async ({
+    page,
+  }) => {
+    await conciliarConAyB(page);
+    await page.getByRole('link', { name: t.crearAjuste }).click();
+    await expect(
+      page.getByRole('heading', { name: rt.flujos['entrada-tarjeta'].titulo }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('radiogroup', { name: rt.tarjetaEntrada })
+        .getByRole('radio', { name: 'T', exact: true }),
+    ).toBeChecked();
+    await expect(page.getByLabel(rtipo.fecha, { exact: true })).toHaveValue('15/02/2027');
+    await expect(page.getByLabel(rtipo.total, { exact: true })).toHaveValue(/^2[.,]00$/);
+    await expect(page.locator('[data-comercio]')).toHaveText('Ajuste de conciliación');
+    await page.getByRole('button', { name: rt.flujos['entrada-tarjeta'].guardar }).click();
+    await expect(page.getByRole('dialog').getByTestId('resultado')).toHaveText(
+      rt.entradaGuardada('$2.00', 'T'),
+    );
+    await abrir(page, `/cuentas/${T}`);
+    await expect(
+      page.locator('[data-conciliacion] [data-diferencia="aceptada"] [data-centavos]'),
+    ).toHaveAttribute('data-centavos', '200');
+    await expect(
+      page.locator('[data-conciliacion] [data-diferencia="actual"] [data-centavos]'),
+    ).toHaveAttribute('data-centavos', '0');
+  });
+
+  test('PRU-E2E-CONC-156 [CA-43.5, ESC-47] RUTA-/cuentas/[cuentaId]/conciliar al agregar D como gasto con su categoría, la transacción es importada, confirmada y de la fecha del estado', async ({
+    page,
+  }) => {
+    await abrir(page, conciliar);
+    await subir(page, CSV);
+    const filaD = page.locator('[data-solo-en-estado]');
+    await expect(filaD).toContainText('COMPRA D');
+    await filaD
+      .getByRole('radiogroup', { name: t.categoriaDe('COMPRA D') })
+      .getByRole('radio', { name: 'Super', exact: true })
+      .click();
+    await filaD.getByRole('button', { name: t.agregar, exact: true }).click();
+    await expect(filaD).toContainText(t.agregadoComo.gasto);
+    await abrir(page, '/actividad');
+    await page.locator('[data-fila-transaccion]').filter({ hasText: 'COMPRA D' }).first().click();
+    await expect(page.getByText(tx.desde('Importada'))).toBeVisible();
+    await expect(page.getByText('Confirmada', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText(formatearFechaTexto('2027-02-12')).first()).toBeVisible();
+    await expect(page.getByText('−$10.00').first()).toBeVisible();
+  });
+
+  test('PRU-E2E-CONC-157 [CA-25.4, P12] después de conciliar A y B, al cambiar solo la categoría de A sigue conciliada y no se registra un cambio posterior', async ({
+    page,
+  }) => {
+    await conciliarConAyB(page);
+    await irAEditar(page, '$40.00');
+    await elegirOpcion(page, g.categoriaDeParte('1'), 'Casa');
+    await guardarConciliada(page);
+    await expect(page.getByText('Conciliada con el estado de cuenta')).toBeVisible();
+    await expect(page.locator('[data-cambios-posteriores]')).toHaveCount(0);
+    await abrir(page, `/cuentas/${T}`);
+    await expect(page.locator('[data-conciliacion]')).toContainText('2 transacciones');
+    await expect(page.locator('[data-cambio-posterior]')).toHaveCount(0);
+  });
+
+  test('PRU-E2E-CONC-158 [CA-26.6, AV-16] después de conciliar A y B, al eliminar A veo AV-16 antes y la conciliación registra un cambio posterior', async ({
+    page,
+  }) => {
+    await conciliarConAyB(page);
+    await abrir(page, '/actividad');
+    await page.locator('[data-fila-transaccion]').filter({ hasText: '$40.00' }).first().click();
+    await page.getByRole('button', { name: 'Más acciones' }).click();
+    await page.getByRole('menuitem', { name: tx.eliminar }).click();
+    await page.getByRole('button', { name: tx.verCambios }).click();
+    await expect(page.getByText(tx.avisosEliminar['AV-16'] ?? '')).toBeVisible();
+    await page.getByRole('button', { name: tx.eliminar }).click();
+    await expect(page).toHaveURL(/\/actividad$/);
+    await abrir(page, `/cuentas/${T}`);
+    await expect(page.locator('[data-cambio-posterior]')).toHaveCount(1);
+  });
+
+  test('PRU-E2E-CONC-159 [CA-52.2, ESC-47] después de conciliar, editar C a $10.00 y A a $45.00, la conciliación de la tarjeta muestra diferencia aceptada +$2.00, diferencia actual +$5.00 y un cambio posterior de A', async ({
+    page,
+  }) => {
+    await conciliarConAyB(page);
+    await page.locator('[data-solo-en-finn]').getByRole('link', { name: t.editar }).click();
+    await page.getByRole('textbox', { name: g.total, exact: true }).fill('10');
+    await page.getByRole('button', { name: tx.guardar }).click();
+    await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toHaveCount(0);
+    await irAEditar(page, '$40.00');
+    await page.getByRole('textbox', { name: g.total, exact: true }).fill('45');
+    await guardarConciliada(page);
+    await abrir(page, `/cuentas/${T}`);
+    const conciliacion = page.locator('[data-conciliacion]');
+    await expect(
+      conciliacion.locator('[data-diferencia="aceptada"] [data-centavos]'),
+    ).toHaveAttribute('data-centavos', '200');
+    await expect(
+      conciliacion.locator('[data-diferencia="actual"] [data-centavos]'),
+    ).toHaveAttribute('data-centavos', '500');
+    await expect(conciliacion.locator('[data-cambio-posterior]')).toHaveCount(1);
   });
 });
