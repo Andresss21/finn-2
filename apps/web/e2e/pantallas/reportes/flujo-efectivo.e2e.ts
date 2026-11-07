@@ -44,23 +44,23 @@ const SEMILLA_RESERVAR: Op[] = [
   { op: 'OP-01', cuenta: 'Ahorro' },
   { op: 'OP-01', cuenta: 'Visa', tipo: 'tarjeta', saldo: 0 },
   { op: 'OP-07', categoria: 'Super' },
-  { op: 'OP-21', monto: 3000, fecha: '2027-02-22', hoy: '2027-02-22' },
-  { op: 'OP-14', categoria: 'Super', monto: 250, periodo: 'P2' },
+  { op: 'OP-21', monto: 3000 },
+  { op: 'OP-14', categoria: 'Super', monto: 250, periodo: 'P1' },
   {
     op: 'OP-20',
     cuenta: 'Visa',
     monto: 400,
     categoria: 'Super',
-    fecha: '2027-02-23',
-    hoy: '2027-02-23',
+    fecha: '2027-02-01',
+    hoy: '2027-02-01',
   },
   {
     op: 'OP-23',
     tarjeta: 'Visa',
     monto: 250,
     origen: 'Ahorro',
-    fecha: '2027-02-24',
-    hoy: '2027-02-24',
+    fecha: '2027-02-03',
+    hoy: '2027-02-03',
   },
 ];
 
@@ -131,7 +131,8 @@ test.describe('PRU-E2E-REP flujo de efectivo', () => {
   test('PRU-E2E-REP-232 [CA-68.3] con $400.00 en compras con tarjeta, $250.00 pagados y $150.00 por reservar, el reporte termina con «Reservar $150.00 para Visa»; el toque reserva y «Deshacer» lo devuelve', async ({
     page,
   }) => {
-    await sembrarSemilla(SEMILLA_RESERVAR, HOY);
+    // Todo en P1 (21/01 a 20/02), el período activo el 10/02.
+    await sembrarSemilla(SEMILLA_RESERVAR, '2027-02-10');
     await abrir(page, '/reportes/flujo-efectivo');
     await esperarMonto(monto(page, 'pagos_tarjeta'), -25000);
     await expect(page.locator('[data-compras-tarjeta]')).toContainText(
