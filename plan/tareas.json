@@ -587,7 +587,7 @@
 
   "TA-493": { "estado": "pendiente" },
 
-  "TA-494": { "estado": "pendiente" },
+  "TA-494": { "estado": "en_curso", "rama": "ta-494-subtipo-efectivo" },
 
   "TA-495": { "estado": "pendiente" },
 

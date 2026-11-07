@@ -36,6 +36,7 @@ const ESPECIFICACION: Especificacion = {
     ['nombre', 'texto'],
     ['institucionId', 'texto'],
     ['ultimos4', 'texto'],
+    ['subtipoEfectivo', 'texto'], // [CH-224] lo usa BE-41
     ['fechaApertura', 'fecha'],
     ['orden', 'entero'],
     ['archivada', 'logico'],

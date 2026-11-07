@@ -361,6 +361,7 @@ describe('PRU-DOM-CTA', () => {
     expect(lista.efectivo).toEqual([
       {
         cuenta: { id: id('ef'), nombre: 'Efectivo' },
+        subtipoEfectivo: 'corriente', // [CH-224] sin subtipo en los hechos armados a mano
         saldo: c(1830),
         saldoConfirmado: c(1830),
         ultimaConciliacion: { fechaEstado: f('2027-04-10'), diferenciaActual: c(-30) },
@@ -368,6 +369,7 @@ describe('PRU-DOM-CTA', () => {
       // Sin conciliaciones no hay `ultimaConciliacion`.
       {
         cuenta: { id: id('vacia'), nombre: 'Vacía' },
+        subtipoEfectivo: 'corriente',
         saldo: c(0),
         saldoConfirmado: c(0),
       },
@@ -458,6 +460,7 @@ describe('PRU-DOM-CTA', () => {
       tipo: 'efectivo',
       fechaApertura: f('2027-01-01'),
       archivada: false,
+      subtipoEfectivo: 'corriente', // [CH-224]
     });
     expect(ef.conciliaciones).toEqual([
       {

@@ -23,6 +23,10 @@ import { cuentas } from '../src/consultas/cuentas.ts';
 import { detalleCuenta } from '../src/consultas/detalle-cuenta.ts';
 import { detalleTransaccion } from '../src/consultas/detalle-transaccion.ts';
 import { ExcepcionFinn } from '../src/errores/index.ts';
+import { formulario } from '../src/consultas/formulario/index.ts';
+import { confirmar } from '../src/operaciones/marco.ts';
+import { OP01 } from '../src/operaciones/cuentas/index.ts';
+import type { Instante } from '@finn/dominio';
 
 const USUARIO = 'usuario-unico';
 const sesionDe = (claims: ClaimsSesion | null): SesionServidor => ({
@@ -47,6 +51,7 @@ const COMIDA = uuid(11);
 const CONCILIACION = uuid(15);
 const TX_SMS = uuid(104); // gasto 'Super', nota 'compra', origen sms, moneda original
 const INEXISTENTE = uuid(255);
+const INSTANTE = `${HOY}T12:00:00.000Z` as Instante;
 
 describe('PRU-INT-CTA', () => {
   const base = crearBasePrueba();
@@ -232,5 +237,48 @@ describe('PRU-INT-CTA', () => {
       detalleTransaccion(sinSesion, { transaccionId: TX_SMS }),
     ])
       expect((await lanzado(consulta)).categoria).toBe('NO_AUTORIZADO');
+  });
+
+  it('PRU-INT-CTA-321 [CH-224, Q-cuentas, Q-detalleCuenta, FORM-cuenta] cuentas(), detalleCuenta() y formulario(cuenta) traen el subtipoEfectivo guardado de cada cuenta de efectivo, y solo de ellas', async () => {
+    const deps: DepsConsulta = {
+      memoria: new Memoria(),
+      sesion: sesionDe({ sub: USUARIO, aal: 'aal2' }),
+      usuarioPermitido: USUARIO,
+      opciones: () => RELOJ,
+    };
+    // Una cuenta de efectivo propia, de ahorro, creada con OP-01 (la de la siembra de prueba es corriente)
+    const AHORRO = uuid(1400);
+    const marco = { memoria: new Memoria(), opciones: () => RELOJ, instante: () => INSTANTE };
+    const entrada = { id: AHORRO, tipo: 'efectivo', nombre: 'Alcancía', saldo: '0' };
+    expect(await confirmar(OP01, { ...entrada, subtipoEfectivo: 'ahorro' }, marco)).toMatchObject({
+      ok: true,
+    });
+
+    const cta = await cuentas(deps);
+    const subtipos = Object.fromEntries(cta.efectivo.map((e) => [e.cuenta.id, e.subtipoEfectivo]));
+    expect(subtipos).toMatchObject({ [EFECTIVO]: 'corriente', [AHORRO]: 'ahorro' });
+    expect(cta.tarjetas[0]).not.toHaveProperty('subtipoEfectivo');
+
+    expect((await detalleCuenta(deps, { cuentaId: AHORRO })).cuenta).toMatchObject({
+      tipo: 'efectivo',
+      subtipoEfectivo: 'ahorro',
+    });
+    expect((await detalleCuenta(deps, { cuentaId: EFECTIVO })).cuenta.subtipoEfectivo).toBe(
+      'corriente',
+    );
+    expect((await detalleCuenta(deps, { cuentaId: VISA })).cuenta).not.toHaveProperty(
+      'subtipoEfectivo',
+    );
+
+    // Editar trae el subtipo con su valor en `esperado` (para OP-02); crear y otros tipos, no
+    const editar = (await formulario(deps, { operacion: 'cuenta', cuentaId: AHORRO })).contexto as {
+      cuenta?: Record<string, unknown> & { esperado: Record<string, unknown> };
+    };
+    expect(editar.cuenta).toMatchObject({ subtipoEfectivo: 'ahorro' });
+    expect(editar.cuenta?.esperado).toMatchObject({ subtipoEfectivo: 'ahorro' });
+    const tarjeta = (await formulario(deps, { operacion: 'cuenta', cuentaId: VISA })).contexto as {
+      cuenta?: object;
+    };
+    expect(tarjeta.cuenta).not.toHaveProperty('subtipoEfectivo');
   });
 });

@@ -48,6 +48,7 @@ const cuenta = (
   nombre,
   institucionId: null,
   ultimos4: null,
+  subtipoEfectivo: tipo === 'efectivo' ? 'corriente' : null, // [CH-224]
   fechaApertura: f(apertura),
   orden: 1,
   archivada: false,
@@ -698,5 +699,70 @@ describe('PRU-DOM-CTA-102: aplicar, operaciones de cuentas (01 §5.1, 04 §3.1)'
     expect(rechazos(ejecutar(base(), { operacion: 'OP-06', cuentaId: id('NO') }))[0]?.codigo).toBe(
       'no_encontrado',
     );
+  });
+});
+
+describe('PRU-DOM-CTA-320: subtipo de la cuenta de efectivo (CH-224; 04 OP-01, OP-02)', () => {
+  const editar = (cuentaId: string, campos: object) =>
+    ejecutar(base(), {
+      operacion: 'OP-02',
+      cuentaId: id(cuentaId),
+      instante: INSTANTE,
+      ids: contador(),
+      campos,
+    });
+  const subtipoDe = (r: ResultadoAplicar, k: string) =>
+    exito(r).hechosNuevos.cuentas.find((x) => x.id === k)?.subtipoEfectivo;
+
+  it('PRU-DOM-CTA-320 [CH-224, OP-01@dom] crear con cada subtipo; sin subtipo, corriente (CH-229); fuera del efectivo, null; una billetera con institución o últimos 4 no llega al dominio', () => {
+    for (const s of ['corriente', 'ahorro', 'billetera'] as const) {
+      const r = ejecutar(base(), crear('N', 'efectivo', {}, { subtipoEfectivo: s }));
+      expect(exito(r).cambios[0]).toEqual({
+        tipo: 'insertar',
+        tabla: 'cuentas',
+        fila: cuenta('N', 'efectivo', '2027-03-15', { subtipoEfectivo: s, orden: 5 }),
+      });
+      expect(subtipoDe(r, 'N')).toBe(s);
+    }
+    // CH-229: mientras la interfaz no lo envía, el contrato completa `corriente`; el dominio también
+    expect(subtipoDe(ejecutar(base(), crear('N', 'efectivo')), 'N')).toBe('corriente');
+    expect(subtipoDe(ejecutar(base(), crear('U', 'tarjeta')), 'U')).toBeNull();
+    // Lo que el contrato prohíbe es un error de quien llama
+    expect(() =>
+      ejecutar(base(), crear('U', 'tarjeta', {}, { subtipoEfectivo: 'ahorro' })),
+    ).toThrow(TypeError);
+    for (const extra of [{ ultimos4: '9999' }, { institucionId: id('BAC') }])
+      expect(() =>
+        ejecutar(base(), crear('N', 'efectivo', {}, { subtipoEfectivo: 'billetera', ...extra })),
+      ).toThrow(TypeError);
+  });
+
+  it('PRU-DOM-CTA-320 [CH-224, OP-02@dom] editar a cada subtipo; sin subtipo conserva el actual; pasar a billetera exige quitar institución y últimos 4 en la misma edición', () => {
+    const ahorro = editar('E', { subtipoEfectivo: 'ahorro' });
+    expect(exito(ahorro).cambios).toEqual([
+      { tipo: 'actualizar', tabla: 'cuentas', id: 'E', campos: { subtipoEfectivo: 'ahorro' } },
+    ]);
+    const billetera = { subtipoEfectivo: 'billetera', institucionId: null, ultimos4: null };
+    const r = editar('E', billetera);
+    expect(exito(r).cambios).toEqual([
+      { tipo: 'actualizar', tabla: 'cuentas', id: 'E', campos: billetera },
+    ]);
+    expect(subtipoDe(r, 'E')).toBe('billetera');
+    expect(subtipoDe(editar('X', { subtipoEfectivo: 'corriente' }), 'X')).toBe('corriente');
+    // Sin subtipo en la edición: conserva el actual
+    const nombre = editar('E', { nombre: 'Banco' });
+    expect(exito(nombre).cambios).toEqual([
+      { tipo: 'actualizar', tabla: 'cuentas', id: 'E', campos: { nombre: 'Banco' } },
+    ]);
+    expect(subtipoDe(nombre, 'E')).toBe('corriente');
+    // Sin quitar la institución o los últimos 4, o en otro tipo de cuenta: el contrato no lo deja pasar
+    for (const campos of [
+      { subtipoEfectivo: 'billetera' },
+      { subtipoEfectivo: 'billetera', institucionId: null },
+      { subtipoEfectivo: 'billetera', ultimos4: null },
+      { subtipoEfectivo: null },
+    ])
+      expect(() => editar('E', campos)).toThrow(TypeError);
+    expect(() => editar('T', { subtipoEfectivo: 'ahorro' })).toThrow(TypeError);
   });
 });
