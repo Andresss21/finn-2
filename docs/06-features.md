@@ -4458,7 +4458,7 @@ Cada recorrido encadena las features en el orden en que el usuario las vive. Sir
 | # | Acción | Pantalla | Operación o consulta | Resultado verificable | FT |
 |---|---|---|---|---|---|
 | 1 | Sube el CSV | `/cuentas/[cuentaId]/conciliar` | OP-45 | A y B coinciden, D solo en el estado, C solo en Finn, diferencia propuesta +$2.00 (CA-43.1) | FT-43 |
-| 2 | Agrega D como gasto | `/cuentas/[cuentaId]/conciliar` | OP-46 | Transacción `importada`, `confirmada` (CA-43.5) | FT-43 |
+| 2 | **[CH-218]** Variante fuera de la secuencia: agregar D como gasto (si se hiciera aquí, la diferencia dejaría de dar +$2.00 y +$5.00 de los pasos 1, 3 y 5) | `/cuentas/[cuentaId]/conciliar` | OP-46 | Transacción `importada`, `confirmada`; cubierta por CA-43.5 | FT-43 |
 | 3 | Termina con A y B | `/cuentas/[cuentaId]/conciliar` | OP-47 | A y B conciliadas; AV-21 con la diferencia (CA-43.2) | FT-43 |
 | 4 | Toca la propuesta de ajuste | `/registrar/entrada-tarjeta` | OP-27b | Valores iniciales: tarjeta, fecha del estado, monto y "Ajuste de conciliación" (CA-43.4) | FT-43, FT-32 |
 | 5 | Edita A a $45.00 | `/actividad/[transaccionId]/editar` | OP-28 | AV-16 antes; cambio posterior; diferencia actual +$5.00 (CA-25.3, CA-52.2) | FT-25, FT-52 |
