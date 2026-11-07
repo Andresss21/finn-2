@@ -8,6 +8,7 @@ import type { ReporteDto } from '@finn/aplicacion/consultas/reporte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../../globals.css';
 import { PantallaReporte, type Nombres } from './pantalla';
+import type { AccionesSuscripciones } from './suscripciones-hallazgos';
 
 vi.mock('next/link', async () => {
   const { createElement } = await import('react');
@@ -92,8 +93,25 @@ const suscripcion = {
   mensual: 1549,
   anual: 18588,
   desactivada: false,
-  accion: { tipo: 'abrir_flujo', valores: {} },
+  accion: {
+    tipo: 'programar',
+    valores: {
+      cuentaId: 'c-visa',
+      comercio: 'NETFLIX',
+      monto: 1549,
+      tolerancia: 0,
+      frecuencia: 'mensual',
+      primeraFecha: '2027-03-17',
+      categoriaId: 'cat1',
+      registroAutomatico: false,
+    },
+  },
 };
+const gestionar = vi.fn((entrada: unknown) =>
+  Promise.resolve({ ok: true as const, valor: { id: (entrada as { id?: string }).id ?? 'p9' } }),
+);
+const eliminar = vi.fn(() => Promise.resolve({ ok: true as const, valor: {} }));
+const acciones = { gestionar, eliminar } as unknown as AccionesSuscripciones;
 
 const mostrar = (datos: ReporteDto): HTMLElement => {
   document.body.style.cssText = 'background: var(--fondo); color: var(--texto)';
@@ -109,6 +127,7 @@ const mostrar = (datos: ReporteDto): HTMLElement => {
         nombres={NOMBRES}
         parametros={{}}
         asignar={() => Promise.reject(new Error('Sin servidor en la CMP'))}
+        suscripciones={acciones}
       />,
     );
   });
@@ -159,5 +178,49 @@ describe('PRU-CMP-REP hallazgos accionables', () => {
       'Todo en orden: no encontramos nada que ajustar este período.',
     );
     expect(raiz.querySelector('[data-hallazgo-fila]')).toBeNull();
+  });
+
+  it('PRU-CMP-REP-252 [FT-67] el hallazgo de suscripción lleva «Programarla» de un toque (OP-42 crear) y «Deshacer» (OP-51); con una programada desactivada, «Reactivarla» y su inversa', async () => {
+    const tocar = async (el: Element | null | undefined): Promise<void> => {
+      await act(async () => {
+        (el as HTMLElement).click();
+        await Promise.resolve();
+      });
+    };
+    const boton = (raiz: HTMLElement, texto: string) =>
+      [...raiz.querySelectorAll('button')].find((b) => b.textContent === texto);
+    const raiz = mostrar(dto([suscripcion]));
+    const fila = raiz.querySelector('[data-hallazgo-fila="comercio:netflix"]');
+    expect(fila?.querySelector('a')).toBeNull();
+    await tocar(boton(raiz, 'Programarla'));
+    expect(gestionar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accion: 'crear',
+        comercio: 'NETFLIX',
+        monto: '15.49',
+        frecuencia: 'mensual',
+        lineas: [{ monto: '15.49', categoriaId: 'cat1' }],
+      }),
+    );
+    expect(fila?.querySelector('[data-suscripciones-hecho]')?.textContent).toContain(
+      'Programaste NETFLIX: $15.49 cada mes.',
+    );
+    await tocar(boton(raiz, 'Deshacer'));
+    expect(eliminar).toHaveBeenCalledTimes(1);
+    expect(fila?.querySelector('[data-suscripciones-hecho]')).toBeNull();
+
+    const otra = mostrar(
+      dto([
+        { ...suscripcion, desactivada: true, accion: { tipo: 'reactivar', programadaId: 'p7' } },
+      ]),
+    );
+    await tocar(boton(otra, 'Reactivarla'));
+    expect(gestionar).toHaveBeenLastCalledWith(
+      expect.objectContaining({ accion: 'activar', programadaId: 'p7', activa: true }),
+    );
+    await tocar(boton(otra, 'Deshacer'));
+    expect(gestionar).toHaveBeenLastCalledWith(
+      expect.objectContaining({ accion: 'activar', programadaId: 'p7', activa: false }),
+    );
   });
 });

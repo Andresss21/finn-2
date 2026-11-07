@@ -145,6 +145,7 @@ export function cuerpoDe(
           dto={dto as ReporteDe<'hallazgos'>}
           {...(asignar === undefined ? {} : { asignar })}
           {...(realidad === undefined ? {} : { acciones: realidad })}
+          {...(suscripciones === undefined ? {} : { suscripciones })}
         />
       );
     case 'realidad': {
