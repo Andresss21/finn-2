@@ -473,8 +473,8 @@ tu: —
 ### HT-9 Puerta de salida
 
 ```hito
-despues: TA-550
-requiere: TA-550
+despues: TA-485
+requiere: TA-550, TA-485
 hitos: HT-4, HT-5, HT-6, HT-7, HT-8
 fichas: FT-01, FT-02, FT-03, FT-04, FT-05, FT-06, FT-08, FT-09, FT-10, FT-11, FT-12, FT-13, FT-14, FT-15, FT-16, FT-17, FT-18, FT-19, FT-20, FT-21, FT-22, FT-23, FT-24, FT-25, FT-26, FT-27, FT-28, FT-29, FT-30, FT-31, FT-32, FT-33, FT-34, FT-35, FT-36, FT-37, FT-38, FT-39, FT-40, FT-41, FT-42, FT-43, FT-44, FT-45, FT-46, FT-47, FT-48, FT-50, FT-51, FT-52, FT-53, FT-54, FT-55, FT-57, FT-60, FT-61, FT-62, FT-63, FT-66, FT-67, FT-69, FT-70, FT-71, FT-72, FT-73, FT-74, FT-75, FT-76, FT-78
 sin_pendientes: si
@@ -1639,6 +1639,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-205** | Partición de TA-416 (FT-43) en tres PR, con precedente en CH-86 y CH-191. (a) **Parte A** (#418): la consulta `formulario({ operacion: 'conciliar' })` en `@finn/aplicacion`, el servidor y las Server Actions de conciliación, más `ahoraMsDeLaPeticion` en `packages/aplicacion/src/reloj-prueba.ts`. (b) **Parte B** (#425): la pantalla `/cuentas/[cuentaId]/conciliar` y las E2E PRU-E2E-CONC-148 a PRU-E2E-CONC-154. (c) **Parte C** (#512, CH-200): Agregar (CA-43.4 y CA-43.5), los valores iniciales del ajuste y las E2E de CA-25.4, CA-26.6 y CA-52.2. (d) Las tres van bajo TA-416: TA-483 y TA-484 no se crean ni entran en `plan/tareas.json`; TA-416 guarda en `plan/tareas.json` el PR de su última parte. Sin migración | 08 TA-416 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-205]** en 08 TA-416 |
 | **CH-207** | CA-76.4 (06 FT-76) sin evento `tarea_diaria` visible. (a) **Síntoma:** CA-76.4 decía «hay un evento `tarea_diaria` nuevo», pero Diagnóstico solo muestra eventos `aviso` o `error` (04 §6.11, §15.4), así que el CA no se podía verificar en la pantalla. (b) **Resolución:** CA-76.4 pasa a «Dado que toco "Ejecutar tareas ahora", cuando termina, entonces la pantalla avisa que terminó y una segunda ejecución inmediata no duplica ningún hecho (04 §10.3)». 04 no cambia | 06 FT-76 (CA-76.4); 04 §6.11, §15.4, §10.3 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-207]** en 06 CA-76.4 |
 | **CH-209** | Identificadores de las E2E de recorridos. (a) **Síntoma:** TA-446 y TA-447 pedían `PRU-E2E-REC-…`, pero 07 §2.2 no tiene el área `REC`, así que la matriz rechazaría el identificador. (b) **Resolución:** cada recorrido usa un área existente de 07 §2.2, la de su paso principal (por ejemplo PRU-E2E-CTA-440, PRU-E2E-CONC-450 y PRU-E2E-PRES-460 de #509), con `[REC-4.n]` en el título; `-g "REC-"` las sigue encontrando. 07 no cambia. (c) El encargo nombraba también TA-445, pero TA-445 (FT-44, 2 de 2) no pide recorridos | 07 §2.2; 08 TA-446, TA-447 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-209]** en 08 TA-446 y TA-447 |
+| **CH-211** | `pnpm pruebas:puerta` sin dueña (hueco del plan). (a) **Origen:** 07 §30, el criterio de HT-9 y TA-470 usan `pnpm pruebas:puerta` para decidir si se abre la puerta, pero ninguna tarea lo tenía en `cubre`, no estaba en `plan/objetivos.txt` ni en `package.json`; lo detectó el agente de CH-210 (#511). (b) **Resolución:** TA-485, nueva (orden 746, B7, HT-9, obligatoria), dueña de `tools/pruebas/puerta.ts` y del objetivo `PUERTA-07-30`; HT-9 la exige y pasa a cerrar con ella (`despues: TA-485`, porque no queda un orden libre antes de TA-550). (c) **Qué evalúa:** las 7 condiciones de 07 §30 por separado, cada una con `pasa`, `falla` o `manual pendiente` y sus motivos; la condición 2 cruza `muestras-cobertura.json` con las filas de exclusión firmadas (CH-03, CH-210). (d) **`--simular`**, que 07 §30 no definía y TA-470 usaba: misma evaluación con salida 0; lo que espera un registro del usuario o un artefacto de CI fuera del repositorio queda `manual pendiente`. Sin `--simular`, eso cuenta como falla. (e) No cambia ninguna condición de 07 §30 | 08 HT-9, TA-485; `plan/objetivos.txt`; 07 §30 | Delegado por el orquestador; **aplicado [CH-211]** en 08 |
 | **CH-212** | Valores iniciales por URL de la propuesta de ajuste. (a) **Síntoma:** 05 §2.2 define `?fecha=` solo para Cobrar y cuota y no define `?total=` ni `?comercio=`, pero 05 §4.13 (CF-05) abre una propuesta `abrir_flujo` con la entrada como valores iniciales y 06 CA-43.4 pide la tarjeta, la fecha del estado, el monto y el comercio «Ajuste de conciliación» (#512). (b) **Resolución:** 05 §2.2 suma `?total=` (`montoTexto`) y `?comercio=` (texto, 80 caracteres como máximo) y extiende `?fecha=`, como valores iniciales de la propuesta de ajuste de AV-21 (FD-06) para `/registrar/entrada-tarjeta`, `/registrar/gasto` y `/registrar/ingreso`, desde Conciliar (FT-43) y Verificar saldo (FT-44). (c) **Hecho:** `/registrar/entrada-tarjeta` desde Conciliar (#512, CH-200). (d) **Pendientes, sin tarea creada:** `/registrar/gasto` y `/registrar/ingreso` (ajuste de efectivo) y los enlaces de Verificar saldo (FT-44, `apps/web/src/flujos/cuentas-verificar-saldo/formulario.tsx`), que siguen con solo `?cuenta=` | 05 §2.2, §4.13; 06 FD-06, CA-43.4, FT-44; 08 TA-416 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-212]** en 05 §2.2; pendientes (d) |
 | **CH-213** | FT-59 (Proyección de inversiones) diferida hasta que exista un modelo de rendimiento aprobado (TA-502), como FT-58 (CH-119). (a) **Origen:** 06 CA-59.2 parte de «un modelo aprobado», y 01 Anexo A.3 no tiene modelo de rendimiento (06 §2, fila de FT-59), así que CA-59.2 no se puede cumplir ni verificar. (b) **Efecto:** `plan/tareas.json` pone TA-502 en `bloqueada` con el motivo «diferida CH-213» y `plan:siguiente` no la ofrece. Ya era [P], con `hito: —`, fuera de las 69 fichas de la puerta: no frena HT-8 ni HT-9 y no hace falta tocar `tools/` ni `pruebas/features.json` (FT-59 sigue `pendiente`). Los CA no cambian. (c) CA-59.1 y CA-59.3 ya los muestra la cabecera de inversión de FT-57 (TA-420); se citan cuando se levante la diferida. (d) **Qué la reactiva:** un modelo de rendimiento aprobado en 01 Anexo A.3; con eso un CH saca a TA-502 de `bloqueada`. (e) **Archivos:** `docs/06-features.md` (nota en FT-59 y fila de la tabla de fichas), `docs/08-tareas.md` (esta fila, TA-502, §1 y §26.5), `plan/tareas.json` | 06 FT-59 y CA-59.1 a CA-59.3; 06 §2; 01 Anexo A.3; 08 TA-502, DT-31 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-213]** en 06 FT-59, 08 TA-502, §1 y §26.5 y en `plan/tareas.json` |
 | **CH-210** | Sin cuentas en Banco Agrícola ni en Cuscatlán (decisión del usuario, 2026-11-06). (a) **Origen:** P8-13 y CH-03 asumían «Banco Agrícola sí»: la puerta esperaba sus SMS, TA-470 reescribía y activaba F-2 y TU-14 traía sus muestras; el usuario ya no tiene cuentas en ninguno de los dos bancos, así que sus muestras y formatos se descartan. (b) **SMS:** F-2 (Agrícola) y F-3 (Cuscatlán) quedan inactivos, como los dejó TA-181 (§6.1); no hay migración `_m_formatos_agricola`. (c) **CSV:** los tres formatos de Agrícola de ADR-17 y el de Cuscatlán quedan excluidos; la conciliación no los ofrece y FT-44 sigue disponible para cualquier cuenta. (d) **Puerta (07 §30, condición 2):** no espera SMS ni CSV de esas instituciones; `pruebas:puerta` las da por cubiertas con seis filas firmadas en `resultados.md`, con el texto literal de TU-14: `exclusión SP-01 \| institucion:Banco Agrícola \| sin cuentas`, `exclusión SP-01 \| institucion:Cuscatlán \| sin cuentas`, `exclusión SP-01 \| csv:ba_tarjeta_portal \| sin cuentas`, `exclusión SP-01 \| csv:ba_tarjeta_pdf_csv \| sin cuentas`, `exclusión SP-01 \| csv:ba_debito \| sin cuentas` y `exclusión SP-01 \| csv:cuscatlan_tarjeta \| sin cuentas`. Las claves son las de `anonimizar.ts` (`institucion:` con el nombre de 03 §9.4; `csv:` con el id de `@finn/conciliacion`), no `csv:agricola_<formato>` como decía TU-14. (e) **TA-470:** `retirada` en `plan/tareas.json` (el estado ya existe, 08 §1.4; sin PR), `hito: —` y fuera de `requiere` de HT-9, que queda con TA-550; sigue siendo dueña de `SP-01-Agricola` en `plan/objetivos.txt`, que se cumple con la exclusión. No hace falta tocar `tools/`: `plan:verificar` exige que una tarea con `hito: HT-9` esté en `requiere` (E7-hito), y con `hito: —` ya no. (f) **TU-14** se reduce a las seis filas, en un commit firmado del usuario (M17). (g) **Pendiente, fuera de este cambio:** `pnpm pruebas:puerta` no existe todavía (ni en `package.json` ni en `tools/`) y ninguna tarea lo tiene en `cubre`; el formato de las filas queda fijado por este documento y por TU-14, no por un lector. (h) **Archivos:** 08 (P8-6, P8-13 en §0.7 y §10, HT-9, TU-14, §6.1, CH-03, TA-470, mapa de la Parte D, RD-2 y esta fila), 07 §30 (condición 2), 04 «Enmiendas posteriores» y `plan/tareas.json`. Sin migración ni código | 08 P8-6, P8-13, CH-03, HT-9, TU-14, TA-470, §6.1; 07 §30; 04 SP-01 (Enmiendas) | Decidido por el usuario el 2026-11-06; **aplicado [CH-210]** en 08, 07 §30, 04 y `plan/tareas.json` |
@@ -11349,6 +11350,44 @@ compartido: —
 
 **Terminada cuando.** La política pasa con F-2 activo y `pruebas:puerta` ya no marca la condición 2 de 07 §30 por los SMS de Agrícola.
 
+#### TA-485 `pnpm pruebas:puerta`, la puerta de 07 §30 **[CH-211]**
+
+```tarea
+orden: 746
+bloque: B7
+hito: HT-9
+depende: TA-007, TA-009, TA-015, TA-180
+tu: —
+revision: obligatoria
+paralelo: no
+tamano: prod=330 archivos=3 ca=0 migraciones=0 total=900
+cubre: PUERTA-07-30
+pru: PRU-SEG-OPER-114, PRU-SEG-OPER-115, PRU-SEG-OPER-116, PRU-SEG-OPER-117, PRU-SEG-OPER-118, PRU-SEG-OPER-119, PRU-SEG-OPER-120
+compartido: —
+```
+
+**Qué construir.**
+- `tools/pruebas/puerta.ts` y el script `pruebas:puerta`: evalúa una por una las 7 condiciones de 07 §30 con lo que hay en el repositorio y da, por cada una, `pasa`, `falla` o `manual pendiente` con sus motivos. Sale con 1 si alguna no pasa.
+- Condiciones 1 y 7: `matriz.ts` en modo puerta (`--resultados <informes de la última corrida verde de main>`); M18 va a la 7 y el resto de los errores a la 1. Condición 2: PRU-MAN-BAND-003, PRU-MAN-BAND-004 y PRU-MAN-CONC-001 en "pasa", sin errores de M11, y el cruce de `muestras-cobertura.json` con las filas `exclusión SP-01 | institucion:… | …` y `exclusión SP-01 | csv:… | …` de `resultados.md` (CH-03, CH-210), con F-n inactivo en las migraciones para cada institución excluida. Condiciones 3, 4 y 6: el último resultado de PRU-MAN-ESQ-001, PRU-MAN-BAND-001 y PRU-MAN-OPER-002 y lo que su nota tiene que decir. Condición 5: `firmas.sh` (M17).
+- `--simular`: la misma evaluación, siempre con salida 0; lo que espera un registro del usuario (una fila de `resultados.md`, una TU) o un artefacto de CI que no está en el repositorio queda como `manual pendiente`, sin inventar datos.
+
+**Leer.** 07 §22.2, §27, §29, §30; CH-03, CH-210 y CH-211; TU-14, TU-17; `tools/pruebas/matriz.ts`, `reglas.ts`, `pendientes.ts`, `firmas.sh` y `anonimizar.ts`.
+
+**Archivos.** `tools/pruebas/puerta.ts`, `tools/pruebas/puerta.test.ts` (pruebas), `tools/pruebas/anonimizar.ts` (exporta las listas de instituciones y formatos), `package.json`.
+
+**Pruebas primero.** Una por condición, con casos que pasan y que fallan sobre datos de prueba (nunca el `resultados.md` real); `[fila n]` es la fila de la tabla de 07 §30:
+- **PRU-SEG-OPER-114** [fila 1] errores de la matriz, fichas con manual pendiente y corrida de main.
+- **PRU-SEG-OPER-115** [fila 2] manuales de SP-01, M11 y el cruce de muestras con las exclusiones.
+- **PRU-SEG-OPER-116** [fila 3] SP-02 y el disparador de P7-12.
+- **PRU-SEG-OPER-117** [fila 4] SP-04 con variante y reintentos.
+- **PRU-SEG-OPER-118** [fila 5] firmas (M17).
+- **PRU-SEG-OPER-119** [fila 6] el ensayo de TU-17.
+- **PRU-SEG-OPER-120** [fila 7] pendientes de punta a punta (M18).
+
+**Comandos.** `pnpm test:unidad -t "PRU-SEG-OPER-11|PRU-SEG-OPER-120"`; `pnpm pruebas:puerta --simular`; `pnpm ci:local`.
+
+**Terminada cuando.** `pnpm pruebas:puerta --simular` evalúa las 7 condiciones sobre `main` y `pnpm pruebas:puerta` sale con 1 mientras alguna no pase.
+
 
 ---
 
@@ -11786,6 +11825,7 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 743 | TA-447 | B7 | HT-8 | normal | Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta | 40 | 0 |
 | 744 | TA-470 | B7 | — | obligatoria | Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03). **Retirada [CH-210]** | 80 | 1 |
 | 745 | TA-550 | B6 | HT-9 | obligatoria | Presupuestos de rendimiento sobre las pantallas reales **[CH-51]** | 150 |
+| 746 | TA-485 | B7 | HT-9 | obligatoria | `pnpm pruebas:puerta`, la puerta de 07 §30 **[CH-211]** | 330 | 0 |
 | 691 | TA-466 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: formulario de formatos, crear y editar (2a de 3) **[CH-125, CH-131]** | 400 | 0 |
 | 692 | TA-467 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: instituciones (3 de 3) **[CH-125]** | 240 | 0 |
 | 693 | TA-472 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: formulario de formatos, probar contra un SMS (2b de 3) **[CH-125, CH-131]** | 160 | 0 |

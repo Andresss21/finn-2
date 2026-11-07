@@ -17,12 +17,12 @@ export interface Config {
 const SMS_DIR = 'packages/sms/pruebas/muestras';
 const CSV_DIR = 'packages/conciliacion/pruebas/muestras';
 const COBERTURA = 'pruebas/muestras-cobertura.json';
-const INSTITUCIONES: Record<string, string> = {
+export const INSTITUCIONES: Record<string, string> = {
   bac: 'BAC',
   agricola: 'Banco Agrícola',
   cuscatlan: 'Cuscatlán',
 }; // 03 §9.4
-const FORMATOS: Record<string, string> = {
+export const FORMATOS: Record<string, string> = {
   bac_tarjeta: 'BAC',
   bac_debito: 'BAC',
   ba_tarjeta_portal: 'Banco Agrícola',

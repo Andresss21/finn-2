@@ -1306,6 +1306,7 @@ REC-4.5 | D | 06 §4.5 (recorrido con fichas [M]) [C]
 REC-4.6 | D | 06 §4.6 (recorrido con fichas [M]) [C]
 SP-01-Agricola | D | 04 SP-01, CH-03: formatos de Banco Agrícola reescritos y F-2 activo (TU-14) [D]
 DT-27 | D | 08 §27.1: CA pendientes de punta a punta en la matriz (P8-19.1) [D]
+PUERTA-07-30 | D | 07 §30: `pnpm pruebas:puerta`, las 7 condiciones y --simular (CH-211) [D]
 WF-respaldo | C | 07 §6.1
 WF-restauracion | C | 07 §6.1
 WF-desplegar | C | 07 §6.1
