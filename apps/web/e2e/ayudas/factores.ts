@@ -5,7 +5,7 @@ import {
   ingresar,
   verificarFactor,
 } from '../../../../packages/aplicacion/src/autenticacion/supabase.ts';
-import { clienteConFrasco, variable } from './sesion.ts';
+import { clienteConFrasco, factorPrincipal, variable } from './sesion.ts';
 import { codigoDe, codigoTotp, guardarSecreto } from './totp.ts';
 
 type Cliente = ReturnType<typeof clienteConFrasco>['cliente'];
@@ -31,10 +31,22 @@ export async function listarFactores(cliente: Cliente) {
 export async function clienteAal2(): Promise<Cliente> {
   const cliente = await clienteAal1();
   const verificado = await verificarFactor(cliente.auth, variable('FINN_USUARIO_ID'), {
+    factorId: await factorPrincipal(cliente.auth),
     codigo: codigoTotp(),
   });
   if (!verificado.ok) throw new Error('el factor del usuario de prueba no se verificó');
   return cliente;
+}
+
+/** Deja al usuario solo con su factor (CH-208): quita los respaldos y los sin verificar que una prueba dejó al fallar. */
+export async function quitarRespaldos(): Promise<void> {
+  const cliente = await clienteAal2();
+  const principal = await factorPrincipal(cliente.auth);
+  for (const { id } of await listarFactores(cliente)) {
+    if (id === principal) continue;
+    const { error } = await cliente.auth.mfa.unenroll({ factorId: id });
+    if (error !== null) throw new Error('no se pudo quitar un respaldo del usuario de prueba');
+  }
 }
 
 /** Quita todos los factores: el próximo ingreso con contraseña queda en AAL1 sin factores verificados. */
