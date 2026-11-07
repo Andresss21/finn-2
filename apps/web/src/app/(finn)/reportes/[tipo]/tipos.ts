@@ -13,6 +13,7 @@ export const TIPOS = {
   tarjetas: 'tarjetas',
   'flujo-efectivo': 'flujo_efectivo',
   hormiga: 'hormiga',
+  hallazgos: 'hallazgos',
   suscripciones: 'suscripciones',
 } as const;
 

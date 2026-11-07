@@ -10,7 +10,7 @@ import { centavosATextoDecimal, formatearMonto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
 import { Tabla } from './vistas-detalle';
 
-type Hallazgo = ReporteDe<'hormiga'>['hallazgos'][number];
+export type Hallazgo = ReporteDe<'hormiga'>['hallazgos'][number];
 type Grupo = ReporteDe<'hormiga'>['grupos'][number];
 
 const ENLACE =
@@ -35,6 +35,27 @@ function frase(h: Hallazgo): string {
     : t.hormiga.porComercio(h.compras, h.etiqueta, total);
 }
 
+/** Un hallazgo de hormiga con su enlace a las compras; también lo dibuja el reporte `hallazgos`. */
+export function AvisoHormiga({ hallazgo: h }: { readonly hallazgo: Hallazgo }) {
+  return (
+    <div data-hallazgo-hormiga={h.clave}>
+      <AvisoEnLinea
+        estado={h.estado}
+        accion={
+          <EnlaceFinn
+            href={enlaceDeCompras(h)}
+            className={[ENLACE, COLOR_TEXTO[h.estado]].join(' ')}
+          >
+            {t.hormiga.verCompras}
+          </EnlaceFinn>
+        }
+      >
+        {frase(h)}
+      </AvisoEnLinea>
+    </div>
+  );
+}
+
 export function Hormiga({ dto }: { readonly dto: ReporteDe<'hormiga'> }) {
   if (dto.grupos.length === 0)
     return (
@@ -47,21 +68,7 @@ export function Hormiga({ dto }: { readonly dto: ReporteDe<'hormiga'> }) {
       {dto.hallazgos.length === 0 ? null : (
         <div className="flex flex-col gap-2.5">
           {dto.hallazgos.map((h) => (
-            <div key={h.clave} data-hallazgo-hormiga={h.clave}>
-              <AvisoEnLinea
-                estado={h.estado}
-                accion={
-                  <EnlaceFinn
-                    href={enlaceDeCompras(h)}
-                    className={[ENLACE, COLOR_TEXTO[h.estado]].join(' ')}
-                  >
-                    {t.hormiga.verCompras}
-                  </EnlaceFinn>
-                }
-              >
-                {frase(h)}
-              </AvisoEnLinea>
-            </div>
+            <AvisoHormiga key={h.clave} hallazgo={h} />
           ))}
         </div>
       )}

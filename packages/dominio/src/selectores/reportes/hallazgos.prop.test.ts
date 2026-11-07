@@ -129,7 +129,7 @@ const tipoArb = fc.constantFrom<Hallazgo['tipo']>(
 );
 
 describe('PRU-PROP-REP', () => {
-  it('PRU-PROP-REP-004 [V6-11] REP-hallazgos (CF-04) hallazgos: una fila por clave con el mayor impacto, ordenados por impacto, máximo HALLAZGOS_MAX y sin depender del orden de entrada', () => {
+  it('PRU-PROP-REP-004 [V6-11, CA-67.4] REP-hallazgos (CF-04) hallazgos: una fila por clave con el mayor impacto (el promedio cede ante otro tipo), ordenados por impacto, máximo HALLAZGOS_MAX y sin depender del orden de entrada', () => {
     const hallazgo = fc.record({
       tipo: tipoArb,
       clave: fc.constantFrom('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'),
@@ -141,15 +141,15 @@ describe('PRU-PROP-REP', () => {
         expect(o.length).toBeLessThanOrEqual(HALLAZGOS_MAX);
         expect(new Set(o.map((x) => x.clave)).size).toBe(o.length);
         expect(o.every((x, k) => k === 0 || (o[k - 1]?.impacto ?? 0) >= x.impacto)).toBe(true);
-        // Cada fila conserva el mayor impacto de su clave.
-        for (const x of o)
-          expect(x.impacto).toBe(
-            Math.max(...hs.filter((y) => y.clave === x.clave).map((y) => y.impacto)),
-          );
+        // Cada fila conserva el mayor impacto de su clave; el promedio cede ante cualquier otro tipo (CH-214).
+        const impactoDe = (k: string) => {
+          const de = hs.filter((y) => y.clave === k);
+          const otros = de.filter((y) => y.tipo !== 'promedio');
+          return Math.max(...(otros.length > 0 ? otros : de).map((y) => y.impacto));
+        };
+        for (const x of o) expect(x.impacto).toBe(impactoDe(x.clave));
         // Si hay más claves que el máximo, las que quedan son las de mayor impacto.
-        const mejores = [...new Map(hs.map((x) => [x.clave, 0])).keys()].map((k) =>
-          Math.max(...hs.filter((y) => y.clave === k).map((y) => y.impacto)),
-        );
+        const mejores = [...new Map(hs.map((x) => [x.clave, 0])).keys()].map(impactoDe);
         expect(o.map((x) => x.impacto)).toEqual(
           mejores.sort((a, b) => b - a).slice(0, HALLAZGOS_MAX),
         );

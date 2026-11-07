@@ -15,6 +15,7 @@ export const reportes = {
     tarjetas: 'Tarjetas',
     'flujo-efectivo': 'Flujo',
     hormiga: 'Hormiga',
+    hallazgos: 'Hallazgos',
     suscripciones: 'Suscripciones',
   },
   titulos: {
@@ -31,6 +32,7 @@ export const reportes = {
     tarjetas: 'Tarjetas en el tiempo',
     'flujo-efectivo': 'Flujo de efectivo',
     hormiga: 'Gastos hormiga',
+    hallazgos: 'Qué ajustar este período',
     suscripciones: 'Suscripciones detectadas',
   },
   explicacionFlujo: 'Cuánto cambió el dinero de tus cuentas y por qué.',
@@ -108,6 +110,15 @@ export const reportes = {
     sinProyeccion: 'Todavía no hay suficientes compras para proyectar',
     asignando: 'Asignando…',
     asignado: (monto: string, categoria: string) => `Asignaste ${monto} a ${categoria}.`,
+  },
+  hallazgos: {
+    sinHallazgos: 'Todo en orden: no encontramos nada que ajustar este período.',
+    suscripcion: (comercio: string, mensual: string, anual: string) =>
+      `${comercio} te cobra ${mensual} cada mes (${anual} al año) y no la tenés programada.`,
+    suscripcionDesactivada: (comercio: string, mensual: string) =>
+      `${comercio} te sigue cobrando ${mensual} cada mes, pero su programada está desactivada.`,
+    programarla: 'Programarla',
+    reactivarla: 'Reactivarla',
   },
   realidad: {
     pasas: (promedio: string, categoria: string, asignado: string, sugerido: string) =>
