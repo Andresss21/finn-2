@@ -1,8 +1,7 @@
 // Recorrido 4.5 «Conciliar» de 06 (REC-4.5; 07 §17: un recorrido es una E2E). Parte de ESC-47 paso 0 (hoy 16/02: T con A $40.00, B $25.00
 // y C $12.00; el estado al 15/02 trae A, B y D $10.00) con las operaciones reales (DP-17) y encadena las pantallas de sus fichas con el
-// reloj de prueba alineado (07 §4.1). Los números los pone el motor (PF-3). El paso 2 («Agrega D como gasto», OP-46, CA-43.5) y los
-// valores iniciales del paso 4 (CA-43.4) ya los tiene la interfaz desde TA-416 parte C, pero este recorrido todavía no los recorre:
-// el paso 4 escribe a mano el monto y la fecha del estado. El paso 6 usa Ahorro: 06 nombra la cuenta de una financiera, que
+// reloj de prueba alineado (07 §4.1). Los números los pone el motor (PF-3). El paso 2 («Agrega D como gasto», OP-46, CA-43.5) queda
+// fuera de la secuencia (CH-218) y el paso 4 usa los valores iniciales del enlace (CA-43.4). El paso 6 usa Ahorro: 06 nombra la cuenta de una financiera, que
 // el estado de partida de 4.5 no tiene.
 import { expect, test, sembrar } from '../configuracion/semilla.ts';
 import { entrarAal2 } from '../ayudas/sesion.ts';
@@ -12,7 +11,6 @@ import type { Escenario, Op } from '../../../../packages/dominio/escenarios/tipo
 import { conciliar as t } from '../../src/textos/conciliar.ts';
 import { registrarGasto as g } from '../../src/textos/registrar-gasto.ts';
 import { registrarTarjeta as rt } from '../../src/textos/registrar-tarjeta.ts';
-import { registrarTipo as c0 } from '../../src/textos/registrar-tipo.ts';
 import { transaccion as tx } from '../../src/textos/transaccion.ts';
 import { verificarSaldo as vs } from '../../src/textos/verificar-saldo.ts';
 import type { Page } from '@playwright/test';
@@ -98,6 +96,7 @@ test.describe('PRU-E2E-CONC recorrido 4.5 conciliar', () => {
     await expect(page.locator('[data-solo-en-finn]')).toContainText('−$12.00');
     await expect(page.getByText(t.diferencia('+$2.00'))).toBeVisible();
 
+    // Paso 2: CH-218: Agregar va fuera del recorrido; lo cubre PRU-E2E-CONC-156
     // Paso 3: termina con A y B marcadas: conciliadas, diferencia aceptada +$2.00 y la propuesta de ajuste (AV-21)
     await expect(coincidencias(page).first().getByRole('checkbox')).toBeChecked();
     await page.getByRole('button', { name: t.terminar }).click();
@@ -115,8 +114,6 @@ test.describe('PRU-E2E-CONC recorrido 4.5 conciliar', () => {
         .getByRole('radiogroup', { name: rt.tarjetaEntrada })
         .getByRole('radio', { name: 'T', exact: true }),
     ).toBeChecked();
-    await page.getByLabel(c0.total, { exact: true }).fill('2');
-    await page.getByLabel(c0.fecha, { exact: true }).fill('2027-02-15');
     await page.getByRole('button', { name: rt.flujos['entrada-tarjeta'].guardar }).click();
     await expect(page.getByRole('dialog').getByTestId('resultado')).toHaveText(
       rt.entradaGuardada('$2.00', 'T'),
