@@ -52,7 +52,7 @@ Textos en español neutro; voseo en lo que se le habla al usuario.
 | P8-3 | a). Límites de tamaño propuestos | DT-01 |
 | P8-4 | a). Push solo con las suites locales afectadas en verde, 2 o menos por PR; calcular los dos supuestos | DT-07, V8-02 |
 | P8-5 | b). Dos agentes, como máximo tres; la E2E local de a uno | DT-10, campo `paralelo` de cada tarea |
-| P8-6 | SP-01 temprano y parcial: SMS del BAC y CSV. Formatos sin muestras inactivos; confirmar que no abre la puerta en falso; TU para las muestras de BAC y para las de Agrícola | §6, DT-12, CH-03, TU-13, TU-14 |
+| P8-6 | SP-01 temprano y parcial: SMS del BAC y CSV. Formatos sin muestras inactivos; confirmar que no abre la puerta en falso; TU para las muestras de BAC y para las de Agrícola. **[CH-210]** Sin cuentas en Agrícola: su TU queda en las filas de exclusión firmadas | §6, DT-12, CH-03, TU-13, TU-14, CH-210 |
 | P8-7 | a). Dos hitos: infraestructura real verificada y primer despliegue | HT-4, HT-5 |
 | P8-8 | a). Seguir 04 §1.2, CH a 07 §13.6 | CH-01 |
 | P8-9 | b). CH a 07: `main` en rojo avisa con el correo de GitHub; el uso por job queda como artefacto | CH-02 |
@@ -82,7 +82,7 @@ Textos en español neutro; voseo en lo que se le habla al usuario.
 | # | Respuesta | Dónde se aplica |
 |---|---|---|
 | P8-12 | a). Zips y `.md` de 01 a 07 como archivos; repetir V8-01 y V8-03 contra los documentos en disco | Los `.md` están en disco y V8-01 y V8-03 corren contra ellos (§9, §17). **Los zips no llegaron** (§8.2, P8-15) |
-| P8-13 | Sin Cuscatlán (opción a); Banco Agrícola sí, y la puerta espera sus SMS (opción b); CSV solo del BAC; TU-14 comprueba si Agrícola ofrece CSV y, si no, exclusión firmada y FT-44; CH-03 aprobado | CH-03, TU-14, §6 |
+| P8-13 | Sin Cuscatlán (opción a); Banco Agrícola sí, y la puerta espera sus SMS (opción b); CSV solo del BAC; TU-14 comprueba si Agrícola ofrece CSV y, si no, exclusión firmada y FT-44; CH-03 aprobado. **[CH-210]** Reemplazada en lo que toca a Agrícola: el usuario ya no tiene cuentas ni en Agrícola ni en Cuscatlán; los dos quedan excluidos con filas firmadas, F-2 y F-3 inactivos, TA-470 retirada | CH-03, TU-14, §6, CH-210 |
 | P8-14 | No aplica; TU-02 pasa a verificación; TU-19 exporta los datos de la 1.0 antes de apagarla | TU-02, TU-19 |
 | Credenciales | Token de grano fino solo para `finn-2` en la configuración local de Claude Code; tu `gh` completo aparte o la web; Vercel sin sesión guardada y con tokens de vida corta; prueba de humo en una terminal tuya; permisos de Claude Code como barrera técnica con su prueba | TU-01, TU-07, TU-09, TU-12, TA-002, §4, §4.1, DT-13 |
 | TU-03 | Memoria de WSL2 con una regla (la mitad de la RAM, mínimo 6 GB) | TU-03 |
@@ -474,14 +474,14 @@ tu: —
 
 ```hito
 despues: TA-550
-requiere: TA-470, TA-550
+requiere: TA-550
 hitos: HT-4, HT-5, HT-6, HT-7, HT-8
 fichas: FT-01, FT-02, FT-03, FT-04, FT-05, FT-06, FT-08, FT-09, FT-10, FT-11, FT-12, FT-13, FT-14, FT-15, FT-16, FT-17, FT-18, FT-19, FT-20, FT-21, FT-22, FT-23, FT-24, FT-25, FT-26, FT-27, FT-28, FT-29, FT-30, FT-31, FT-32, FT-33, FT-34, FT-35, FT-36, FT-37, FT-38, FT-39, FT-40, FT-41, FT-42, FT-43, FT-44, FT-45, FT-46, FT-47, FT-48, FT-50, FT-51, FT-52, FT-53, FT-54, FT-55, FT-57, FT-60, FT-61, FT-62, FT-63, FT-66, FT-67, FT-69, FT-70, FT-71, FT-72, FT-73, FT-74, FT-75, FT-76, FT-78
 sin_pendientes: si
 tu: TU-14, TU-16, TU-17
 ```
 
-**Criterio:** `pnpm pruebas:puerta` abierta (07 §30, con CH-03): los 465 CA, SP-01 completo, SP-02, SP-04, firmas y el ensayo de la condición 6 (TU-17). **[D]** Además: F-2 de Banco Agrícola activo (TA-470, TU-14) y ningún pendiente de punta a punta salvo [P]. El bloque lista las 69 fichas [I] y [M] y encadena HT-4 a HT-8 (DT-30). Con esto empieza el paso de la 1.0 a la 2.0 (TU-18).
+**Criterio:** `pnpm pruebas:puerta` abierta (07 §30, con CH-03): los 465 CA, SP-01 completo, SP-02, SP-04, firmas y el ensayo de la condición 6 (TU-17). **[D]** Además: ~~F-2 de Banco Agrícola activo (TA-470, TU-14)~~ **[CH-210]** las seis filas de exclusión de Banco Agrícola y Cuscatlán firmadas en `resultados.md` (TU-14), con F-2 y F-3 inactivos; y ningún pendiente de punta a punta salvo [P]. El bloque lista las 69 fichas [I] y [M] y encadena HT-4 a HT-8 (DT-30). Con esto empieza el paso de la 1.0 a la 2.0 (TU-18).
 
 **Las fichas [P] y FT-49** quedan después de HT-9 y no forman parte de ningún hito (supuesto 5 del Paso 1).
 
@@ -1394,14 +1394,23 @@ Número reservado (DT-02).
 
 ### TU-14 Muestras de Banco Agrícola y exclusiones (SP-01, parte 2)
 
-- **Cuándo:** cuando tengas los SMS de Banco Agrícola. **Bloquea:** TA-470 (reescritura y activación de F-2, Parte D) y, por CH-03, la puerta (HT-9).
-- **Pasos [A2]:**
-  1. SMS de Banco Agrícola: el mismo procedimiento de TU-13, con `C:\finn\_privado\sms\agricola.txt`.
-  2. **CSV de Banco Agrícola:** comprobá en su banca en línea si permite descargar estados de cuenta en CSV, para tarjeta y para débito o ahorro.
-     - Si lo permite: descargalos y seguí el procedimiento de TU-13.
-     - Si no lo permite: fila firmada en `resultados.md`, `exclusión SP-01 | csv:agricola_<formato> | el banco no ofrece CSV`, una por cada formato de Agrícola de ADR-17 que no tengas (tarjeta del portal, CSV convertido desde PDF, débito o ahorro). Esas cuentas se verifican con FT-44 (verificar saldo).
-  3. **Cuscatlán (P8-13):** dos filas firmadas, `exclusión SP-01 | institucion:Cuscatlán | sin cuentas` y `exclusión SP-01 | csv:cuscatlan_tarjeta | sin cuentas`. F-3 queda inactivo (§6).
-- **Registro:** las filas de exclusión en `resultados.md` y las muestras en `muestras-cobertura.json`. `pruebas:puerta` las cruza (CH-03).
+**[CH-210]** El usuario ya no tiene cuentas en Banco Agrícola ni en Cuscatlán: no hay SMS ni CSV que entregar, TA-470 queda retirada y esta TU se reduce a las filas de exclusión. Los pasos originales quedan abajo, tachados en lo que deja de regir.
+
+- **Cuándo:** antes de HT-9. **Bloquea:** por CH-03 y CH-210, la puerta (HT-9). ~~TA-470 (reescritura y activación de F-2, Parte D)~~.
+- **Pasos [CH-210]:** agregá a `pruebas/manuales/resultados.md`, en un commit firmado (M17), estas seis filas, una por línea y con este texto literal:
+  1. `exclusión SP-01 | institucion:Banco Agrícola | sin cuentas` (SMS: F-2 inactivo)
+  2. `exclusión SP-01 | institucion:Cuscatlán | sin cuentas` (SMS: F-3 inactivo)
+  3. `exclusión SP-01 | csv:ba_tarjeta_portal | sin cuentas` (ADR-17: Banco Agrícola tarjeta, portal)
+  4. `exclusión SP-01 | csv:ba_tarjeta_pdf_csv | sin cuentas` (ADR-17: Banco Agrícola, CSV convertido desde PDF)
+  5. `exclusión SP-01 | csv:ba_debito | sin cuentas` (ADR-17: Banco Agrícola débito o ahorro)
+  6. `exclusión SP-01 | csv:cuscatlan_tarjeta | sin cuentas` (ADR-17: Cuscatlán tarjeta)
+
+  Las claves son las de `tools/pruebas/anonimizar.ts`: `institucion:` lleva el nombre de 03 §9.4 tal como lo escribe `muestras-cobertura.json`, y `csv:` el id del formato en `@finn/conciliacion` (`packages/conciliacion/src/registro.ts`). El BAC no se excluye: sus muestras son las de TU-13.
+- ~~**Pasos [A2]:**~~ *(no rigen desde CH-210)*
+  1. ~~SMS de Banco Agrícola: el mismo procedimiento de TU-13, con `C:\finn\_privado\sms\agricola.txt`.~~
+  2. ~~**CSV de Banco Agrícola:** comprobá en su banca en línea si permite descargar estados de cuenta en CSV, para tarjeta y para débito o ahorro. Si lo permite, descargalos y seguí el procedimiento de TU-13; si no, una fila firmada por formato, `exclusión SP-01 | csv:agricola_<formato> | el banco no ofrece CSV`, y esas cuentas se verifican con FT-44.~~
+  3. ~~**Cuscatlán (P8-13):** dos filas firmadas.~~ Son las filas 2 y 6 de la lista de arriba. F-3 queda inactivo (§6).
+- **Registro:** las filas de exclusión en `resultados.md`. `pruebas:puerta` las cruza con `muestras-cobertura.json` (CH-03), que solo trae el BAC.
 
 ### TU-15 MacroDroid y prueba en el teléfono (SP-04)
 
@@ -1455,7 +1464,7 @@ Número reservado (DT-02).
 | Formatos de SMS | Migración `_m_formatos_bac`: reescribe F-1 con las muestras (pasa la política de 04 §8.5) y agrega filas para los tipos del BAC que tengan muestras (depósito, pago, devolución) | La **misma** migración pone F-2 y F-3 en `activo = false` (DB-17: los formatos no se eliminan) |
 | Adaptadores de CSV | Se implementa `extraer` solo para los formatos con muestras (04 §9.2) | El adaptador no se registra; un CSV de ese banco se rechaza con "formato no reconocido" (OP-45). FT-44 (verificar saldo) cubre esas cuentas |
 | SMS en producción | Se interpretan | Llegan como `no_reconocido` (CA-73.5) y se registran a mano (FT-38) |
-| Más adelante (TU-14) | — | Migración `_m_formatos_<banco>` que reescribe y reactiva |
+| Más adelante (TU-14) | — | ~~Migración `_m_formatos_<banco>` que reescribe y reactiva~~ **[CH-210]** No hay: sin cuentas en Agrícola ni en Cuscatlán, F-2 y F-3 quedan inactivos y los adaptadores sin registrar; TU-14 deja solo las filas de exclusión |
 
 La desactivación va en una migración y no con OPT-05, que es lo que pediste. El motivo: `politica-patrones` corre en la base de CI construida desde las migraciones, **antes** del primer despliegue, cuando todavía no hay app para usar OPT-05. Después del despliegue, OPT-05 puede reactivar un formato solo si pasa `validarFormato`; los de 03 §9.5 no pasan (CA-73.1), así que no hay forma de reactivarlos por error sin reescribirlos.
 
@@ -1487,7 +1496,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 |---|---|---|---|
 | **CH-01** | Suites afectadas por la estructura de 04 §1.2. 07 §13.6, punto 1, y el supuesto 2 de 07 §16.2 pasan a: "una operación vive en `packages/aplicacion/src/operaciones/<area>/OP-nn-*.ts` y una consulta en `packages/aplicacion/src/consultas/<pantalla>.ts` (04 §1.2)". El script resuelve la operación por el patrón `**/OP-nn-*.ts` | 07 §13.6, §16.2 | **Aprobado** (revisión de la Parte A) |
 | **CH-02** | `main` en rojo y uso por job sin escribir en la app. En 07 §6.3, la tercera barrera pasa a "Si `ci.yml` falla en `main`, GitHub envía el correo de workflow fallido (TU-01, paso 4); no hay push ni evento". En 07 §6.5, el último párrafo pasa a "el nocturno sube el uso real por job como artefacto `minutos-AAAAMM` (90 días); la Parte D fija los valores con esos datos". Sin cambios en 03 ni 04 | 07 §6.3, §6.5 | **Aprobado** (revisión de la Parte A) |
-| **CH-03** | Cobertura verificable de SP-01 en la puerta (§6.2). `pruebas/muestras-cobertura.json` lo genera `anonimizar.ts` (TA-180). La condición 2 de 07 §30 pasa a exigir: (a) **SMS:** un formato activo reescrito con muestras reales por cada institución de 03 §9.4 que se use. Hoy: el BAC (TU-13) y Banco Agrícola (TU-14); la puerta espera las muestras de Agrícola. Cuscatlán queda excluido con la fila firmada `exclusión SP-01 \| institucion:Cuscatlán \| sin cuentas` y F-3 queda inactivo. (b) **CSV:** muestras de cada formato de ADR-17 de las instituciones usadas, o su exclusión firmada: los del BAC con muestras; los de Agrícola con muestras si el banco ofrece CSV, y si no, excluidos con su fila firmada y verificados con FT-44; el de Cuscatlán, excluido. `pruebas:puerta` cruza `muestras-cobertura.json` con las filas de exclusión. 04 SP-01 recibe una línea en sus Enmiendas sin cambiar el requisito | 07 §23, §30; 04 SP-01 | **Aprobado** (P8-13) |
+| **CH-03** | Cobertura verificable de SP-01 en la puerta (§6.2). `pruebas/muestras-cobertura.json` lo genera `anonimizar.ts` (TA-180). La condición 2 de 07 §30 pasa a exigir: (a) **SMS:** un formato activo reescrito con muestras reales por cada institución de 03 §9.4 que se use. Hoy: el BAC (TU-13) y Banco Agrícola (TU-14); la puerta espera las muestras de Agrícola. Cuscatlán queda excluido con la fila firmada `exclusión SP-01 \| institucion:Cuscatlán \| sin cuentas` y F-3 queda inactivo. (b) **CSV:** muestras de cada formato de ADR-17 de las instituciones usadas, o su exclusión firmada: los del BAC con muestras; los de Agrícola con muestras si el banco ofrece CSV, y si no, excluidos con su fila firmada y verificados con FT-44; el de Cuscatlán, excluido. `pruebas:puerta` cruza `muestras-cobertura.json` con las filas de exclusión. 04 SP-01 recibe una línea en sus Enmiendas sin cambiar el requisito | 07 §23, §30; 04 SP-01 | **Aprobado** (P8-13); lo que dice de Banco Agrícola lo reemplaza **CH-210** |
 | **CH-04** | Falta un procedimiento: 07 §31.1 cita **PRU-MAN-CTA-002** (verificar saldo semanal durante 8 semanas, firmado), pero 07 §22.1 no lo lista y la matriz lo rechazaría (M7, referencia inexistente; M16, manual inexistente). Se agrega a §22.1: cubre §31.1; Android o PC con la app de cada banco; disparador semanal entre `F` y `fin_primeras_semanas`; resultado esperado: diferencia cero o explicada en FT-44 | 07 §22.1 | **Aprobado** (revisión de la Parte A) |
 | **CH-05** **[A2]** | Identificadores completos para la suite del pooler. En 07 §5.3, POOL-01 a POOL-05 pasan a **PRU-INT-POOL-001**, **PRU-INT-POOL-002**, **PRU-INT-POOL-003**, **PRU-INT-POOL-004** y **PRU-INT-POOL-005** (002 y 004 ya se citaban así en 07 §19.5 y §21); PRU-INT-POOL-006 (V-05) no cambia. Sin cambio de contenido | 07 §5.3 | **Aprobado** (revisión de la Parte B) |
 | **CH-06** | **Contradicción entre 07 y 04 (§16.5).** 07 §19.1 define PRU-SEG-NOTIF-001 como "`X-Finn-Accion` con firma alterada, vencida o de clave retirada: rechazada (V-26)", y 07 §18 (área `NOTIF`) habla de "la carga firmada de las acciones (HMAC, vencimiento, versión de clave; V-26)". En 04, las acciones de notificación no llevan firma: el Route Handler exige `Origin`, la cabecera `X-Finn-Accion` y sesión AAL2 con `getUser()` (04 §11.5, BE-54). V-26 verificó la **carga firmada de la conciliación** (04 §9.6, BE-49). Propuesta: (a) PRU-SEG-NOTIF-001 pasa a "acción de notificación sin `Origin` de la app, sin `X-Finn-Accion` o sin AAL2: rechazada (BE-54)", sin cita a V-26; (b) prueba nueva **PRU-SEG-CONC-001**: "carga firmada de la conciliación válida, de otra cuenta, alterada, vencida, con la clave anterior y con una versión retirada (BE-49, V-26)"; (c) en 07 §20.1, V-26 pasa a tener como destino PRU-SEG-CONC-001; (d) en 07 §18, la fila `NOTIF` pierde la cita a la carga firmada y la fila `CONC` la gana | 07 §18, §19.1, §20.1 | **Aprobado** (P8-16): 04 manda; sin firma HMAC en las acciones de notificación |
@@ -1626,6 +1635,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-201** | OP-45 devuelve el detalle de las transacciones de la conciliación (corrección posterior a TA-184, dueña de OP-45; el selector es de TA-123). (a) **Síntoma:** TA-416 (FT-43) se detuvo: 04 §6.12.6 dice que la pantalla no tiene consulta propia y muestra la salida de OP-45, pero `Clasificacion` solo traía ids (`coincidencias: { transaccionId, movimientoIndice }[]`, `soloEnFinn: Uuid[]`). El diseño `conciliar-resultado` muestra de cada transacción el comercio, la fecha, el estado bancario y el monto («LA PAMPA · 11/10 · solo en Finn · pendiente · –$28.30») y CA-43.3 pide editar C; la interfaz no puede inventarlos (PF-3). (b) **Resolución:** cada elemento de `coincidencias` trae `{ transaccionId, movimientoIndice, fecha, comercio, monto, estadoBancario }` y cada uno de `soloEnFinn`, `{ transaccionId, fecha, comercio, monto, estadoBancario }`, con `monto` = efecto en la cuenta (el de la candidata). `clasificarConciliacion` los toma de las filas de la instantánea que OP-45 ya carga en `leer()`, en un solo recorrido: sin consulta nueva ni N+1. OP-46 sigue buscando el par por `movimientoIndice` y OP-47 no usa `Clasificacion` (reclasifica con las candidatas): ninguno cambia de comportamiento. 04 §3.8 (OP-45), §6.12.6 y §9.5 llevan el texto normativo. (c) **Ajuste del diseño (para TA-416):** «Fecha de corte» y «Saldo final del estado» no son campos de entrada, porque OP-45 los saca del CSV (`fechaEstado`, `saldoFinal`); si la pantalla los muestra, van como solo lectura después de subir el archivo. (d) **Dependencia:** TA-416 ya depende de TA-184 en su bloque y `plan/tareas.json` guarda solo estado, rama y PR, así que la dependencia de esta corrección queda aquí: TA-416 no empieza hasta que CH-201 esté en `main`. (e) **Archivos:** `docs/04-backend.md` (§3.8, §6.12.6, §9.5), `packages/dominio/src/selectores/conciliacion.ts`, `packages/dominio/src/selectores/index.ts` (exporta `TransaccionConciliacion`), `packages/aplicacion/src/operaciones/conciliacion/OP-45-iniciar.ts` (comentario de la salida) y esta fila. (f) **Pruebas:** PRU-DOM-CONC-105 (ESC-47 más LA PAMPA −$28.30 y un pago de $30.00 de Ef a T: detalle de A, B, C, L y P; el pago aparece con +$30.00 en T y −$30.00 en Ef; cada dato es el de la fila y su efecto) y PRU-INT-CONC-101 (OP-45 contra PostgreSQL con los hechos de prueba: LA PAMPA −$37.19 y la devolución +$2.50 coinciden; el cobro +$10.00 y la cuota −$50.00 quedan solo en Finn; saldo de Finn $882.81 y diferencia $105.31). PRU-DOM-CONC-101 pasa a comparar por subconjunto la forma nueva; sus cifras no cambian. | 04 §3.8, §6.12.6, §9.5; 06 FT-43 (CA-43.3); 08 TA-123, TA-184, TA-416 | Delegado por el orquestador; **aplicado [CH-201]** en 04, dominio, aplicación y 08 |
 | **CH-206** | Límites de tiempo de `cierre` y `rapido` en `ci.yml` (corrección posterior a TA-012, dueña del workflow). (a) **Síntoma:** `cierre` (`timeout-minutes: 10`) se cortó en #426 y #430 (10m16 y 10m17) y tardó entre 1m45 y 9m43 en los demás PR de B7; `rapido` (25) se cortó una vez en #423, con 6 a 8 min de costumbre. El corte obliga a relanzar la CI completa: el token de los agentes no relanza un job suelto. (b) **Causa, medida en los registros de los jobs:** casi todo el tiempo variable es `playwright install --with-deps chromium`, que corre `apt-get update` e `apt-get install` contra el espejo de Ubuntu (en `cierre`, primer paso de `ci:cierre`; en `rapido`, el grupo `navegadores`). Con el espejo de Azure sano, los 21,1 MB de paquetes bajan en 3 s (#429, `cierre` en 1m43); lento, en 8 min 8 s a 43 kB/s (#428, `cierre` en 9m43); cuando `azure.archive.ubuntu.com` no responde, apt cae a `archive.ubuntu.com` y queda sin salida hasta el corte (#430: 9 min 20 s; #423, en `rapido`: 23 min). Ningún documento fija estos límites (07 §6.1 da duraciones estimadas, no topes). (c) **Resolución:** `cierre` pasa a 20 min y `rapido` a 35; `workflows.test.ts` y `minutos.ts` no los comprueban. (d) **Pendiente, fuera de este cambio:** acotar apt (`Acquire::http::Timeout` y `Acquire::Retries` en `/etc/apt/apt.conf.d` antes de instalar) o no instalar dependencias del sistema donde no se lanza el navegador (`cierre` solo lista pruebas; la imagen `ubuntu-24.04` ya trae las de Chrome). Un cuelgue de apt más largo que el nuevo límite sigue cortando el job |
 | **CH-208** | Aislar las E2E de seguridad de FT-74 y límite de tiempo del job `e2e` (corrección posterior a TA-434, dueña de `seguridad.e2e.ts`; el límite es de TA-012, como CH-206). (a) **Síntoma:** en #443 (runs 42298967369 y 42304423110, proyecto `movil`) falló PRU-E2E-ACCESO-114, después PRU-E2E-ACCESO-113 en su reintento y decenas de pruebas de las pantallas siguientes en 150-170 ms, alternando falla y reintento verde hasta que el job se cortó; main con #441 y #444 pasaba. (b) **Causa, reproducida en local:** `entrarAal2` y `clienteAal2` (`apps/web/e2e/ayudas/`) llamaban a `verificarFactor` sin `factorId`, que reta a `verificados[0]` en el orden en que Auth lista los factores, sin orden fijo. Con un solo factor da igual; con un respaldo (PRU-E2E-ACCESO-114 lo agrega antes de entrar) el código del usuario iba al respaldo, la prueba fallaba antes de quitarlo y el respaldo quedaba colgado: desde ahí cada ingreso fallaba o no según el orden del momento (`el factor TOTP del usuario de prueba no se verificó`). #443 no tiene la causa: sus pruebas, que corren antes, cambian ese orden; con #443 y sin esta corrección la E2E local dio 154 fallas, y con ella 501 verdes. Las cookies `chunked` y `validation_failed` del registro son de `estados/sesion.e2e.ts` y no tienen que ver. (c) **Resolución:** las dos ayudas retan siempre al factor del usuario (`factorPrincipal`, el verificado más antiguo: los respaldos se agregan después); `seguridad.e2e.ts` quita los respaldos antes del grupo y después de cada prueba (`quitarRespaldos`), y PRU-E2E-ACCESO-115 guarda la sesión que sigue viva apenas cierra las otras, además de al final. Sin cambios de producción. (d) **Límite del job `e2e`:** de 30 a 45 min; en main tardó 22m29, 22m31, 23m16 y 27m40, y 30 cortó #446 (run 42305606327). Una cascada como la de (a) suma unos 3 s por prueba fallida y su reintento: también alarga la corrida |
+| **CH-210** | Sin cuentas en Banco Agrícola ni en Cuscatlán (decisión del usuario, 2026-11-06). (a) **Origen:** P8-13 y CH-03 asumían «Banco Agrícola sí»: la puerta esperaba sus SMS, TA-470 reescribía y activaba F-2 y TU-14 traía sus muestras; el usuario ya no tiene cuentas en ninguno de los dos bancos, así que sus muestras y formatos se descartan. (b) **SMS:** F-2 (Agrícola) y F-3 (Cuscatlán) quedan inactivos, como los dejó TA-181 (§6.1); no hay migración `_m_formatos_agricola`. (c) **CSV:** los tres formatos de Agrícola de ADR-17 y el de Cuscatlán quedan excluidos; la conciliación no los ofrece y FT-44 sigue disponible para cualquier cuenta. (d) **Puerta (07 §30, condición 2):** no espera SMS ni CSV de esas instituciones; `pruebas:puerta` las da por cubiertas con seis filas firmadas en `resultados.md`, con el texto literal de TU-14: `exclusión SP-01 \| institucion:Banco Agrícola \| sin cuentas`, `exclusión SP-01 \| institucion:Cuscatlán \| sin cuentas`, `exclusión SP-01 \| csv:ba_tarjeta_portal \| sin cuentas`, `exclusión SP-01 \| csv:ba_tarjeta_pdf_csv \| sin cuentas`, `exclusión SP-01 \| csv:ba_debito \| sin cuentas` y `exclusión SP-01 \| csv:cuscatlan_tarjeta \| sin cuentas`. Las claves son las de `anonimizar.ts` (`institucion:` con el nombre de 03 §9.4; `csv:` con el id de `@finn/conciliacion`), no `csv:agricola_<formato>` como decía TU-14. (e) **TA-470:** `retirada` en `plan/tareas.json` (el estado ya existe, 08 §1.4; sin PR), `hito: —` y fuera de `requiere` de HT-9, que queda con TA-550; sigue siendo dueña de `SP-01-Agricola` en `plan/objetivos.txt`, que se cumple con la exclusión. No hace falta tocar `tools/`: `plan:verificar` exige que una tarea con `hito: HT-9` esté en `requiere` (E7-hito), y con `hito: —` ya no. (f) **TU-14** se reduce a las seis filas, en un commit firmado del usuario (M17). (g) **Pendiente, fuera de este cambio:** `pnpm pruebas:puerta` no existe todavía (ni en `package.json` ni en `tools/`) y ninguna tarea lo tiene en `cubre`; el formato de las filas queda fijado por este documento y por TU-14, no por un lector. (h) **Archivos:** 08 (P8-6, P8-13 en §0.7 y §10, HT-9, TU-14, §6.1, CH-03, TA-470, mapa de la Parte D, RD-2 y esta fila), 07 §30 (condición 2), 04 «Enmiendas posteriores» y `plan/tareas.json`. Sin migración ni código | 08 P8-6, P8-13, CH-03, HT-9, TU-14, TA-470, §6.1; 07 §30; 04 SP-01 (Enmiendas) | Decidido por el usuario el 2026-11-06; **aplicado [CH-210]** en 08, 07 §30, 04 y `plan/tareas.json` |
 
 ---
 
@@ -1675,7 +1685,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | # | Respuesta | Dónde quedó |
 |---|---|---|
 | P8-12 | a): zips y `.md` de 01 a 07 como archivos | Los `.md` están en disco (§8.2) y V8-01 y V8-03 corren contra ellos. Los zips no llegaron: P8-15 |
-| P8-13 | Sin cuentas de Cuscatlán (F-3 inactivo, excluido con fila firmada); Banco Agrícola sí, y la puerta espera sus SMS; CSV solo del BAC, y TU-14 comprueba si Agrícola ofrece CSV | CH-03 aprobado, TU-14, §6 |
+| P8-13 | Sin cuentas de Cuscatlán (F-3 inactivo, excluido con fila firmada); Banco Agrícola sí, y la puerta espera sus SMS; CSV solo del BAC, y TU-14 comprueba si Agrícola ofrece CSV. **[CH-210]** Agrícola también queda excluido (sin cuentas): F-2 inactivo y TA-470 retirada | CH-03 aprobado, TU-14, §6, CH-210 |
 | P8-14 | No aplica: la 1.0 no tiene workflows. TU-02 queda como verificación; TU-19 exporta los datos de la 1.0 antes de apagarla | TU-02, TU-19 |
 
 ---
@@ -11298,10 +11308,12 @@ compartido: —
 
 #### TA-470 Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03)
 
+**Retirada [CH-210].** El usuario no tiene cuentas en Banco Agrícola: no hay muestras que reescriban F-2, que queda inactivo con su exclusión firmada (TU-14). La tarea conserva su número y su ficha (08 §0.4), queda `retirada` en `plan/tareas.json` y sale de HT-9 (`hito: —`); `SP-01-Agricola` se cumple con la exclusión, no con esta tarea. No la tomes.
+
 ```tarea
 orden: 744
 bloque: B7
-hito: HT-9
+hito: —
 depende: TA-181, TA-176, TA-180, TA-433
 tu: TU-14
 revision: obligatoria
@@ -11762,7 +11774,7 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 740 | TA-445 | B7 | HT-8 | normal | FT-44 Verificar saldo: ajuste de AV-21 y borrador (2 de 2) **[CH-86]** | 120 | 0 |
 | 742 | TA-446 | B7 | HT-8 | normal | Recorridos de 06 §4.1, §4.2, §4.3 de punta a punta | 40 | 0 |
 | 743 | TA-447 | B7 | HT-8 | normal | Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta | 40 | 0 |
-| 744 | TA-470 | B7 | HT-9 | obligatoria | Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03) | 80 | 1 |
+| 744 | TA-470 | B7 | — | obligatoria | Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03). **Retirada [CH-210]** | 80 | 1 |
 | 745 | TA-550 | B6 | HT-9 | obligatoria | Presupuestos de rendimiento sobre las pantallas reales **[CH-51]** | 150 |
 | 691 | TA-466 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: formulario de formatos, crear y editar (2a de 3) **[CH-125, CH-131]** | 400 | 0 |
 | 692 | TA-467 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: instituciones (3 de 3) **[CH-125]** | 240 | 0 |
@@ -11805,7 +11817,7 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | # | Riesgo | Prob. | Impacto | Mitigación |
 |---|---|---|---|---|
 | RD-1 | Aparecen más CA pendientes de punta a punta al construir las fichas [I] | Media | Bajo | El agente los agrega como `pendiente` y los informa como desvío; E12 obliga a cerrarlos antes de HT-8 |
-| RD-2 | Las muestras de Banco Agrícola no llegan | Media | Alto | TA-470 bloquea solo HT-9 (CH-03): el resto del plan sigue |
+| RD-2 | Las muestras de Banco Agrícola no llegan | Media | Alto | TA-470 bloquea solo HT-9 (CH-03): el resto del plan sigue. **[CH-210]** Cerrado: sin cuentas en Agrícola, TA-470 retirada |
 | RD-3 | FT-71 o FT-78 pasan del tamaño aun partidas | Media | Bajo | `pr:mergear` las parte otra vez |
 | RD-4 | Las E2E de los recorridos son lentas en `main` | Media | Medio | Corren en `main` y en el nocturno, no en cada PR (07 §6) |
 
