@@ -537,6 +537,8 @@
 
   "TA-470": { "estado": "pendiente" },
 
+  "TA-485": { "estado": "en_curso", "rama": "ta-485-pruebas-puerta" },
+
   "TA-500": { "estado": "terminada", "rama": "ta-500-desembolso-prestamo", "pr": 437 },
 
   "TA-501": { "estado": "bloqueada", "motivo": "diferida CH-119" },

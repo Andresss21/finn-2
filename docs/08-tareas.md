@@ -473,8 +473,8 @@ tu: —
 ### HT-9 Puerta de salida
 
 ```hito
-despues: TA-550
-requiere: TA-470, TA-550
+despues: TA-485
+requiere: TA-470, TA-550, TA-485
 hitos: HT-4, HT-5, HT-6, HT-7, HT-8
 fichas: FT-01, FT-02, FT-03, FT-04, FT-05, FT-06, FT-08, FT-09, FT-10, FT-11, FT-12, FT-13, FT-14, FT-15, FT-16, FT-17, FT-18, FT-19, FT-20, FT-21, FT-22, FT-23, FT-24, FT-25, FT-26, FT-27, FT-28, FT-29, FT-30, FT-31, FT-32, FT-33, FT-34, FT-35, FT-36, FT-37, FT-38, FT-39, FT-40, FT-41, FT-42, FT-43, FT-44, FT-45, FT-46, FT-47, FT-48, FT-50, FT-51, FT-52, FT-53, FT-54, FT-55, FT-57, FT-60, FT-61, FT-62, FT-63, FT-66, FT-67, FT-69, FT-70, FT-71, FT-72, FT-73, FT-74, FT-75, FT-76, FT-78
 sin_pendientes: si
@@ -1626,6 +1626,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-201** | OP-45 devuelve el detalle de las transacciones de la conciliación (corrección posterior a TA-184, dueña de OP-45; el selector es de TA-123). (a) **Síntoma:** TA-416 (FT-43) se detuvo: 04 §6.12.6 dice que la pantalla no tiene consulta propia y muestra la salida de OP-45, pero `Clasificacion` solo traía ids (`coincidencias: { transaccionId, movimientoIndice }[]`, `soloEnFinn: Uuid[]`). El diseño `conciliar-resultado` muestra de cada transacción el comercio, la fecha, el estado bancario y el monto («LA PAMPA · 11/10 · solo en Finn · pendiente · –$28.30») y CA-43.3 pide editar C; la interfaz no puede inventarlos (PF-3). (b) **Resolución:** cada elemento de `coincidencias` trae `{ transaccionId, movimientoIndice, fecha, comercio, monto, estadoBancario }` y cada uno de `soloEnFinn`, `{ transaccionId, fecha, comercio, monto, estadoBancario }`, con `monto` = efecto en la cuenta (el de la candidata). `clasificarConciliacion` los toma de las filas de la instantánea que OP-45 ya carga en `leer()`, en un solo recorrido: sin consulta nueva ni N+1. OP-46 sigue buscando el par por `movimientoIndice` y OP-47 no usa `Clasificacion` (reclasifica con las candidatas): ninguno cambia de comportamiento. 04 §3.8 (OP-45), §6.12.6 y §9.5 llevan el texto normativo. (c) **Ajuste del diseño (para TA-416):** «Fecha de corte» y «Saldo final del estado» no son campos de entrada, porque OP-45 los saca del CSV (`fechaEstado`, `saldoFinal`); si la pantalla los muestra, van como solo lectura después de subir el archivo. (d) **Dependencia:** TA-416 ya depende de TA-184 en su bloque y `plan/tareas.json` guarda solo estado, rama y PR, así que la dependencia de esta corrección queda aquí: TA-416 no empieza hasta que CH-201 esté en `main`. (e) **Archivos:** `docs/04-backend.md` (§3.8, §6.12.6, §9.5), `packages/dominio/src/selectores/conciliacion.ts`, `packages/dominio/src/selectores/index.ts` (exporta `TransaccionConciliacion`), `packages/aplicacion/src/operaciones/conciliacion/OP-45-iniciar.ts` (comentario de la salida) y esta fila. (f) **Pruebas:** PRU-DOM-CONC-105 (ESC-47 más LA PAMPA −$28.30 y un pago de $30.00 de Ef a T: detalle de A, B, C, L y P; el pago aparece con +$30.00 en T y −$30.00 en Ef; cada dato es el de la fila y su efecto) y PRU-INT-CONC-101 (OP-45 contra PostgreSQL con los hechos de prueba: LA PAMPA −$37.19 y la devolución +$2.50 coinciden; el cobro +$10.00 y la cuota −$50.00 quedan solo en Finn; saldo de Finn $882.81 y diferencia $105.31). PRU-DOM-CONC-101 pasa a comparar por subconjunto la forma nueva; sus cifras no cambian. | 04 §3.8, §6.12.6, §9.5; 06 FT-43 (CA-43.3); 08 TA-123, TA-184, TA-416 | Delegado por el orquestador; **aplicado [CH-201]** en 04, dominio, aplicación y 08 |
 | **CH-206** | Límites de tiempo de `cierre` y `rapido` en `ci.yml` (corrección posterior a TA-012, dueña del workflow). (a) **Síntoma:** `cierre` (`timeout-minutes: 10`) se cortó en #426 y #430 (10m16 y 10m17) y tardó entre 1m45 y 9m43 en los demás PR de B7; `rapido` (25) se cortó una vez en #423, con 6 a 8 min de costumbre. El corte obliga a relanzar la CI completa: el token de los agentes no relanza un job suelto. (b) **Causa, medida en los registros de los jobs:** casi todo el tiempo variable es `playwright install --with-deps chromium`, que corre `apt-get update` e `apt-get install` contra el espejo de Ubuntu (en `cierre`, primer paso de `ci:cierre`; en `rapido`, el grupo `navegadores`). Con el espejo de Azure sano, los 21,1 MB de paquetes bajan en 3 s (#429, `cierre` en 1m43); lento, en 8 min 8 s a 43 kB/s (#428, `cierre` en 9m43); cuando `azure.archive.ubuntu.com` no responde, apt cae a `archive.ubuntu.com` y queda sin salida hasta el corte (#430: 9 min 20 s; #423, en `rapido`: 23 min). Ningún documento fija estos límites (07 §6.1 da duraciones estimadas, no topes). (c) **Resolución:** `cierre` pasa a 20 min y `rapido` a 35; `workflows.test.ts` y `minutos.ts` no los comprueban. (d) **Pendiente, fuera de este cambio:** acotar apt (`Acquire::http::Timeout` y `Acquire::Retries` en `/etc/apt/apt.conf.d` antes de instalar) o no instalar dependencias del sistema donde no se lanza el navegador (`cierre` solo lista pruebas; la imagen `ubuntu-24.04` ya trae las de Chrome). Un cuelgue de apt más largo que el nuevo límite sigue cortando el job |
 | **CH-208** | Aislar las E2E de seguridad de FT-74 y límite de tiempo del job `e2e` (corrección posterior a TA-434, dueña de `seguridad.e2e.ts`; el límite es de TA-012, como CH-206). (a) **Síntoma:** en #443 (runs 42298967369 y 42304423110, proyecto `movil`) falló PRU-E2E-ACCESO-114, después PRU-E2E-ACCESO-113 en su reintento y decenas de pruebas de las pantallas siguientes en 150-170 ms, alternando falla y reintento verde hasta que el job se cortó; main con #441 y #444 pasaba. (b) **Causa, reproducida en local:** `entrarAal2` y `clienteAal2` (`apps/web/e2e/ayudas/`) llamaban a `verificarFactor` sin `factorId`, que reta a `verificados[0]` en el orden en que Auth lista los factores, sin orden fijo. Con un solo factor da igual; con un respaldo (PRU-E2E-ACCESO-114 lo agrega antes de entrar) el código del usuario iba al respaldo, la prueba fallaba antes de quitarlo y el respaldo quedaba colgado: desde ahí cada ingreso fallaba o no según el orden del momento (`el factor TOTP del usuario de prueba no se verificó`). #443 no tiene la causa: sus pruebas, que corren antes, cambian ese orden; con #443 y sin esta corrección la E2E local dio 154 fallas, y con ella 501 verdes. Las cookies `chunked` y `validation_failed` del registro son de `estados/sesion.e2e.ts` y no tienen que ver. (c) **Resolución:** las dos ayudas retan siempre al factor del usuario (`factorPrincipal`, el verificado más antiguo: los respaldos se agregan después); `seguridad.e2e.ts` quita los respaldos antes del grupo y después de cada prueba (`quitarRespaldos`), y PRU-E2E-ACCESO-115 guarda la sesión que sigue viva apenas cierra las otras, además de al final. Sin cambios de producción. (d) **Límite del job `e2e`:** de 30 a 45 min; en main tardó 22m29, 22m31, 23m16 y 27m40, y 30 cortó #446 (run 42305606327). Una cascada como la de (a) suma unos 3 s por prueba fallida y su reintento: también alarga la corrida |
+| **CH-211** | `pnpm pruebas:puerta` sin dueña (hueco del plan). (a) **Origen:** 07 §30, el criterio de HT-9 y TA-470 usan `pnpm pruebas:puerta` para decidir si se abre la puerta, pero ninguna tarea lo tenía en `cubre`, no estaba en `plan/objetivos.txt` ni en `package.json`; lo detectó el agente de CH-210 (#511). (b) **Resolución:** TA-485, nueva (orden 746, B7, HT-9, obligatoria), dueña de `tools/pruebas/puerta.ts` y del objetivo `PUERTA-07-30`; HT-9 la exige y pasa a cerrar con ella (`despues: TA-485`, porque no queda un orden libre antes de TA-550). (c) **Qué evalúa:** las 7 condiciones de 07 §30 por separado, cada una con `pasa`, `falla` o `manual pendiente` y sus motivos; la condición 2 cruza `muestras-cobertura.json` con las filas de exclusión firmadas (CH-03, CH-210). (d) **`--simular`**, que 07 §30 no definía y TA-470 usaba: misma evaluación con salida 0; lo que espera un registro del usuario o un artefacto de CI fuera del repositorio queda `manual pendiente`. Sin `--simular`, eso cuenta como falla. (e) No cambia ninguna condición de 07 §30 | 08 HT-9, TA-485; `plan/objetivos.txt`; 07 §30 | Delegado por el orquestador; **aplicado [CH-211]** en 08 |
 
 ---
 
@@ -11328,6 +11329,44 @@ compartido: —
 
 **Terminada cuando.** La política pasa con F-2 activo y `pruebas:puerta` ya no marca la condición 2 de 07 §30 por los SMS de Agrícola.
 
+#### TA-485 `pnpm pruebas:puerta`, la puerta de 07 §30 **[CH-211]**
+
+```tarea
+orden: 746
+bloque: B7
+hito: HT-9
+depende: TA-007, TA-009, TA-015, TA-180
+tu: —
+revision: obligatoria
+paralelo: no
+tamano: prod=330 archivos=3 ca=0 migraciones=0 total=900
+cubre: PUERTA-07-30
+pru: PRU-SEG-OPER-114, PRU-SEG-OPER-115, PRU-SEG-OPER-116, PRU-SEG-OPER-117, PRU-SEG-OPER-118, PRU-SEG-OPER-119, PRU-SEG-OPER-120
+compartido: —
+```
+
+**Qué construir.**
+- `tools/pruebas/puerta.ts` y el script `pruebas:puerta`: evalúa una por una las 7 condiciones de 07 §30 con lo que hay en el repositorio y da, por cada una, `pasa`, `falla` o `manual pendiente` con sus motivos. Sale con 1 si alguna no pasa.
+- Condiciones 1 y 7: `matriz.ts` en modo puerta (`--resultados <informes de la última corrida verde de main>`); M18 va a la 7 y el resto de los errores a la 1. Condición 2: PRU-MAN-BAND-003, PRU-MAN-BAND-004 y PRU-MAN-CONC-001 en "pasa", sin errores de M11, y el cruce de `muestras-cobertura.json` con las filas `exclusión SP-01 | institucion:… | …` y `exclusión SP-01 | csv:… | …` de `resultados.md` (CH-03, CH-210), con F-n inactivo en las migraciones para cada institución excluida. Condiciones 3, 4 y 6: el último resultado de PRU-MAN-ESQ-001, PRU-MAN-BAND-001 y PRU-MAN-OPER-002 y lo que su nota tiene que decir. Condición 5: `firmas.sh` (M17).
+- `--simular`: la misma evaluación, siempre con salida 0; lo que espera un registro del usuario (una fila de `resultados.md`, una TU) o un artefacto de CI que no está en el repositorio queda como `manual pendiente`, sin inventar datos.
+
+**Leer.** 07 §22.2, §27, §29, §30; CH-03, CH-210 y CH-211; TU-14, TU-17; `tools/pruebas/matriz.ts`, `reglas.ts`, `pendientes.ts`, `firmas.sh` y `anonimizar.ts`.
+
+**Archivos.** `tools/pruebas/puerta.ts`, `tools/pruebas/puerta.test.ts` (pruebas), `tools/pruebas/anonimizar.ts` (exporta las listas de instituciones y formatos), `package.json`.
+
+**Pruebas primero.** Una por condición, con casos que pasan y que fallan sobre datos de prueba (nunca el `resultados.md` real); `[fila n]` es la fila de la tabla de 07 §30:
+- **PRU-SEG-OPER-114** [fila 1] errores de la matriz, fichas con manual pendiente y corrida de main.
+- **PRU-SEG-OPER-115** [fila 2] manuales de SP-01, M11 y el cruce de muestras con las exclusiones.
+- **PRU-SEG-OPER-116** [fila 3] SP-02 y el disparador de P7-12.
+- **PRU-SEG-OPER-117** [fila 4] SP-04 con variante y reintentos.
+- **PRU-SEG-OPER-118** [fila 5] firmas (M17).
+- **PRU-SEG-OPER-119** [fila 6] el ensayo de TU-17.
+- **PRU-SEG-OPER-120** [fila 7] pendientes de punta a punta (M18).
+
+**Comandos.** `pnpm test:unidad -t "PRU-SEG-OPER-11|PRU-SEG-OPER-120"`; `pnpm pruebas:puerta --simular`; `pnpm ci:local`.
+
+**Terminada cuando.** `pnpm pruebas:puerta --simular` evalúa las 7 condiciones sobre `main` y `pnpm pruebas:puerta` sale con 1 mientras alguna no pase.
+
 
 ---
 
@@ -11764,6 +11803,7 @@ Sos el agente de la tarea {id} de Finn 2.0. Seguí `CLAUDE.md` (se carga solo). 
 | 743 | TA-447 | B7 | HT-8 | normal | Recorridos de 06 §4.4, §4.5, §4.6 de punta a punta | 40 | 0 |
 | 744 | TA-470 | B7 | HT-9 | obligatoria | Formatos de Banco Agrícola reescritos y F-2 activo (SP-01, CH-03) | 80 | 1 |
 | 745 | TA-550 | B6 | HT-9 | obligatoria | Presupuestos de rendimiento sobre las pantallas reales **[CH-51]** | 150 |
+| 746 | TA-485 | B7 | HT-9 | obligatoria | `pnpm pruebas:puerta`, la puerta de 07 §30 **[CH-211]** | 330 | 0 |
 | 691 | TA-466 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: formulario de formatos, crear y editar (2a de 3) **[CH-125, CH-131]** | 400 | 0 |
 | 692 | TA-467 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: instituciones (3 de 3) **[CH-125]** | 240 | 0 |
 | 693 | TA-472 | B7 | HT-8 | normal | FT-73 Formatos bancarios e instituciones: formulario de formatos, probar contra un SMS (2b de 3) **[CH-125, CH-131]** | 160 | 0 |

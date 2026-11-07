@@ -20,6 +20,7 @@
     "pruebas:afectadas": "node tools/pruebas/afectadas.ts",
     "pruebas:informe": "node tools/pruebas/matriz.ts informe",
     "pruebas:resumen": "node tools/pruebas/resumen.ts",
+    "pruebas:puerta": "node tools/pruebas/puerta.ts",
     "plan:verificar": "node tools/plan/estado.ts verificar",
     "plan:siguiente": "node tools/plan/estado.ts siguiente",
     "plan:anexos": "node tools/plan/anexos.ts --plan docs/08-tareas.md --anexos docs/anexos --negativo",
