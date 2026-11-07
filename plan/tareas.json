@@ -537,7 +537,7 @@
 
   "TA-470": { "estado": "pendiente" },
 
-  "TA-485": { "estado": "en_curso", "rama": "ta-485-pruebas-puerta" },
+  "TA-485": { "estado": "terminada", "rama": "ta-485-pruebas-puerta", "pr": 515 },
 
   "TA-500": { "estado": "terminada", "rama": "ta-500-desembolso-prestamo", "pr": 437 },
 
