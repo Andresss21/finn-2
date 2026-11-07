@@ -8,6 +8,7 @@ import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { inicio as ti } from '../../../src/textos/inicio.ts';
 import { reportes as t } from '../../../src/textos/reportes.ts';
+import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
 
 const HOY_A7 = '2026-10-15';
@@ -72,5 +73,85 @@ test.describe('PRU-E2E-REP hallazgos accionables', () => {
       page.locator('[data-resumen-asignar] [data-campo="asignado"] [data-centavos]'),
       12000,
     );
+  });
+
+  // Una suscripción sin programar (como CA-65.1 de FT-65): cobros de NETFLIX en 3 de los 4 períodos cerrados, con hoy el 25/05/2027.
+  const ingreso = (hoy: string): Op => ({ op: 'OP-21', monto: 10, hoy });
+  const cobro = (fecha: string): Op[] => [
+    {
+      op: 'OP-35',
+      etiqueta: `netflix-${fecha}`,
+      cuenta: 'T',
+      monto: 15.49,
+      comercio: 'NETFLIX',
+      recibido: `${fecha}T10:00`,
+      fecha,
+      hoy: fecha,
+    },
+    {
+      op: 'OP-37',
+      etiqueta: `netflix-${fecha}`,
+      categoria: 'Streaming',
+      aprobado: `${fecha}T12:00`,
+      hoy: fecha,
+    },
+  ];
+  async function sembrarSuscripcion(): Promise<void> {
+    fijarRelojServidor('2027-05-25T10:00:00-06:00');
+    const escenario: Escenario = {
+      id: 'SEM-REP-HALLAZGOS-SUSCRIPCION',
+      titulo: 'Semilla de FT-67 con una suscripción sin programar',
+      refs: [],
+      hoy: '2027-01-25',
+      estadoInicial: [
+        { op: 'OP-01', cuenta: 'Ahorro' },
+        { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta', ultimos4: '1234' },
+        { op: 'OP-07', categoria: 'Streaming' },
+        { op: 'OP-21', monto: 1000 },
+        ...cobro('2027-02-17'),
+        ingreso('2027-02-22'),
+        ...cobro('2027-03-17'),
+        ingreso('2027-03-22'),
+        ingreso('2027-04-22'),
+        ...cobro('2027-05-18'),
+        ingreso('2027-05-22'),
+      ],
+      pasos: [],
+    };
+    await sembrar(escenario, '2027-01-25');
+  }
+  const suscripcion = (page: Page) => page.locator('[data-hallazgo-fila="comercio:netflix"]');
+  const netflix = (page: Page) => page.locator('[data-programada]').filter({ hasText: 'NETFLIX' });
+
+  test('PRU-E2E-REP-236 [FT-67] el hallazgo de una suscripción sin programar trae «Programarla»; al tocarla se crea la programada y queda «Deshacer»', async ({
+    page,
+  }) => {
+    await sembrarSuscripcion();
+    await abrir(page, '/reportes/hallazgos');
+    const h = suscripcion(page);
+    await expect(h).toContainText(t.suscripciones.sinProgramar('NETFLIX', '$15.49', '$185.88'));
+    await h.getByRole('button', { name: t.suscripciones.programarla, exact: true }).click();
+    await expect(h.locator('[data-suscripciones-hecho]')).toContainText(
+      t.suscripciones.programada('NETFLIX', '$15.49'),
+    );
+    await abrir(page, '/programadas');
+    await expect(netflix(page)).toHaveCount(1);
+  });
+
+  test('PRU-E2E-REP-237 [FT-67, CA-67.3] «Deshacer» tras «Programarla» elimina la programada y el hallazgo de la suscripción reaparece', async ({
+    page,
+  }) => {
+    await sembrarSuscripcion();
+    await abrir(page, '/reportes/hallazgos');
+    const h = suscripcion(page);
+    await h.getByRole('button', { name: t.suscripciones.programarla, exact: true }).click();
+    const hecho = h.locator('[data-suscripciones-hecho]');
+    await expect(hecho).toBeVisible();
+    await expect(h.locator('[data-hallazgo-suscripcion]')).toBeHidden();
+    await hecho.getByRole('button', { name: ti.deshacer, exact: true }).click();
+    await expect(hecho).toHaveCount(0);
+    await expect(h.locator('[data-hallazgo-suscripcion]')).toBeVisible();
+    await abrir(page, '/programadas');
+    await expect(netflix(page)).toHaveCount(0);
   });
 });
