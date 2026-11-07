@@ -12,3 +12,4 @@ exclusión SP-01 | csv:cuscatlan_tarjeta | sin cuentas
 | PRU-MAN-NOTIF-001 | 2026-11-07 | Android con la PWA instalada | pasa | Andres | 13cd66a | Push entregado |
 | PRU-MAN-BAND-003 | 2026-11-07 | Muestras reales del BAC | pasa | Andres | 13cd66a | Intérprete de SMS |
 | PRU-MAN-BAND-004 | 2026-11-07 | Muestras reales del BAC | pasa | Andres | 13cd66a | Formatos reescritos |
+| PRU-MAN-OPER-002 | 2026-11-07 | PC con Windows, CLI de Vercel con token temporal | pasa | Andres | cf61e88 | ensayo: suites rapido, integracion y politica-patrones en verde; barrera 1b; deploy --prod; token revocado; evento en eventos_sistema |
