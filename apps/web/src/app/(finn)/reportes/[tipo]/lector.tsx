@@ -130,7 +130,7 @@ export async function LectorReporte({
     ...(semanal && categorias !== undefined ? { categorias } : {}),
   };
   const realidad =
-    url === 'realidad' || url === 'tarjetas' ? await accionesDeRealidad() : undefined;
+    url === 'realidad' || url === 'tarjetas' || url === 'flujo-efectivo' ? await accionesDeRealidad() : undefined;
   return (
     <PantallaReporte
       url={url}

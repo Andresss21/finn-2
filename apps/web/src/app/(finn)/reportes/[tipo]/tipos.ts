@@ -11,6 +11,7 @@ export const TIPOS = {
   'gasto-semanal': 'gasto_semanal',
   realidad: 'realidad',
   tarjetas: 'tarjetas',
+  'flujo-efectivo': 'flujo_efectivo',
   hormiga: 'hormiga',
 } as const;
 

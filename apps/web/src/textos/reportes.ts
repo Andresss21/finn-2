@@ -13,6 +13,7 @@ export const reportes = {
     'gasto-semanal': 'Gasto semanal',
     realidad: 'Realidad',
     tarjetas: 'Tarjetas',
+    'flujo-efectivo': 'Flujo',
     hormiga: 'Hormiga',
   },
   titulos: {
@@ -27,8 +28,10 @@ export const reportes = {
     'gasto-semanal': 'Gasto semanal por categoría',
     realidad: 'Presupuesto contra la realidad',
     tarjetas: 'Tarjetas en el tiempo',
+    'flujo-efectivo': 'Flujo de efectivo',
     hormiga: 'Gastos hormiga',
   },
+  explicacionFlujo: 'Cuánto cambió el dinero de tus cuentas y por qué.',
   explicacionRemanente:
     'Ingresos del período menos lo que gastaste, incluidas las compras con tarjeta',
   sinMovimientos: 'No hay movimientos en estos períodos',
@@ -75,6 +78,11 @@ export const reportes = {
     cargos: 'Cargos',
     pagos: 'Pagos',
     deudaAlFin: 'Deuda al fin',
+    concepto: 'Concepto',
+    monto: 'Monto',
+    saldoInicial: 'Saldo inicial',
+    saldoFinal: 'Saldo final',
+    comprasConTarjeta: 'Compras con tarjeta',
     grupo: 'Grupo de compras',
     compras: 'Compras',
     total: 'Total',
@@ -129,6 +137,34 @@ export const reportes = {
     periodos: (tarjeta: string) => `Cargos y pagos de ${tarjeta} por período`,
     resumenBarras: (n: number) =>
       `Cargos por período, con los pagos como referencia: ${n} períodos`,
+  },
+  flujo: {
+    filas: {
+      saldoInicial: 'Saldo inicial',
+      saldos_iniciales: 'Cuentas nuevas',
+      ingresos: 'Ingresos',
+      restituciones: 'Restituciones',
+      devoluciones: 'Devoluciones',
+      otras_entradas: 'Otras entradas',
+      gastos_debito: 'Gastos con débito',
+      por_cobrar_debito: 'Por cobrar con débito',
+      pagos_tarjeta: 'Pagos de tarjeta',
+      prestamos_inversiones: 'Préstamos e inversiones',
+      transferencias: 'Transferencias',
+      saldoFinal: 'Saldo final',
+    },
+    periodo: (inicio: string) => `Período desde el ${inicio}`,
+    filasDe: (inicio: string) => `Flujo de efectivo del período desde el ${inicio}`,
+    comprasConTarjetaDe: (monto: string) =>
+      `Con tarjeta compraste ${monto}: por eso tu efectivo bajó menos de lo que gastaste.`,
+    porPeriodo: 'Efectivo y compras con tarjeta por período',
+    resumenBarras: (n: number) => `Compras con tarjeta por período: ${n} períodos`,
+    reservar: (monto: string, tarjeta: string) => `Reservar ${monto} para ${tarjeta}`,
+    reservando: 'Reservando…',
+    reservado: (monto: string, tarjeta: string) => `Reservaste ${monto} para pagar ${tarjeta}.`,
+    hallazgo: (compras: string, pagos: string, tarjeta: string, falta: string) =>
+      `Con tarjeta compraste ${compras} y pagaste ${pagos} de tarjetas en este período: te falta reservar ${falta} para ${tarjeta}.`,
+    verRemanente: 'Ver Lo que te quedó del período',
   },
   hormiga: {
     porCategoria: (n: number, categoria: string, total: string) =>
