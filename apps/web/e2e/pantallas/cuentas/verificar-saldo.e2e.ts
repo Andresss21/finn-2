@@ -6,6 +6,8 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarHidratacion } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
+import { registrarGasto as rg } from '../../../src/textos/registrar-gasto.ts';
+import { registrarTipo as rt } from '../../../src/textos/registrar-tipo.ts';
 import { verificarSaldo as t } from '../../../src/textos/verificar-saldo.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
@@ -105,9 +107,9 @@ test.describe('PRU-E2E-CONC', () => {
     // Al tocarla, el ingreso abre con la fecha del estado, el monto y el comercio ya puestos
     await enlace.click();
     await esperarHidratacion(page);
-    await expect(page.locator('input[name="fecha"]')).toHaveValue('2027-10-15');
-    await expect(campo(page, 'Monto')).toHaveValue('12.00');
-    await expect(campo(page, 'Descripción (opcional)')).toHaveValue('Ajuste de conciliación');
+    await expect(campo(page, rt.fecha)).toHaveValue('15/10/2027');
+    await expect(campo(page, rt.total)).toHaveValue('12.00');
+    await expect(page.getByLabel(rt.descripcion)).toHaveValue('Ajuste de conciliación');
   });
 
   test('PRU-E2E-CONC-146 [CA-44.3, AV-21] en una tarjeta con $300.00 de deuda en Finn, escribo $290.00 de deuda: la diferencia es +$10.00 y la propuesta es una entrada a la tarjeta', async ({
@@ -132,8 +134,8 @@ test.describe('PRU-E2E-CONC', () => {
     // Al tocarla, la entrada a la tarjeta abre con la fecha, el monto y el comercio del ajuste
     await enlace.click();
     await esperarHidratacion(page);
-    await expect(page.locator('input[name="fecha"]')).toHaveValue('2027-10-20');
-    await expect(campo(page, 'Monto')).toHaveValue('10.00');
+    await expect(campo(page, rt.fecha)).toHaveValue('20/10/2027');
+    await expect(campo(page, rt.total)).toHaveValue('10.00');
     await expect(page.locator('[data-comercio]')).toHaveText('Ajuste de conciliación');
   });
 
@@ -149,11 +151,11 @@ test.describe('PRU-E2E-CONC', () => {
     await page.getByRole('link', { name: t.crearAjuste }).click();
     await esperarHidratacion(page);
     await expect(page).toHaveURL(
-      new RegExp(`/registrar/gasto\?cuenta=${CUENTA}&fecha=2027-10-15&total=10\.00`),
+      new RegExp(`/registrar/gasto\\?cuenta=${CUENTA}&fecha=2027-10-15&total=10\\.00`),
     );
-    await expect(page.locator('input[name="fecha"]')).toHaveValue('2027-10-15');
-    await expect(campo(page, 'Total')).toHaveValue('10.00');
-    await expect(campo(page, 'Comercio (opcional)')).toHaveValue('Ajuste de conciliación');
+    await expect(campo(page, rt.fecha)).toHaveValue('15/10/2027');
+    await expect(page.getByLabel(rg.total)).toHaveValue('10.00');
+    await expect(page.getByLabel(rg.comercio)).toHaveValue('Ajuste de conciliación');
   });
 
   test('PRU-E2E-CONC-147 [CA-44.5] una verificación hecha aparece en el detalle de la cuenta como "Verificación de saldo"', async ({
