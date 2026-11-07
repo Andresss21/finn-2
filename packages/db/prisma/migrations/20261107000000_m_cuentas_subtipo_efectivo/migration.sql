@@ -6,18 +6,21 @@
 -- El enum y la columna son de Prisma (schema.prisma), pero van aquí para que el relleno quede antes de las
 -- CHECK en una sola migración (CH-224); C4 compara el resultado con schema.prisma.
 -- [CH-23] El bloqueo y el relleno van en un mismo DO. Con `prisma migrate deploy` cada sentencia de afuera es
--- su propia transacción: las CHECK se agregan cuando los diferidos del relleno ya se verificaron.
+-- su propia transacción: las CHECK se agregan cuando los diferidos del relleno ya se verificaron. Sin cuentas
+-- de efectivo (una base nueva) no se escribe nada: la revisión de la siembra queda como estaba (03 §9.1).
 CREATE TYPE "finn"."subtipo_efectivo" AS ENUM ('corriente', 'ahorro', 'billetera');
 
 ALTER TABLE "finn"."cuentas" ADD COLUMN "subtipo_efectivo" "finn"."subtipo_efectivo";
 
 DO $$
 BEGIN
-  PERFORM finn.tomar_bloqueo();
+  IF EXISTS (SELECT 1 FROM finn.cuentas WHERE tipo = 'efectivo') THEN
+    PERFORM finn.tomar_bloqueo();
 
-  UPDATE finn.cuentas
-  SET subtipo_efectivo = 'corriente'
-  WHERE tipo = 'efectivo' AND subtipo_efectivo IS NULL;
+    UPDATE finn.cuentas
+    SET subtipo_efectivo = 'corriente'
+    WHERE tipo = 'efectivo' AND subtipo_efectivo IS NULL;
+  END IF;
 END $$;
 
 ALTER TABLE finn.cuentas
