@@ -50,7 +50,7 @@ export function ConfirmacionImpacto({
       )}
       <ul className="divide-y divide-borde-sutil rounded-contenedor bg-superficie px-4 py-1 shadow-elevacion-1 empty:hidden">
         {impacto.map((linea, i) => (
-          <li key={i} className="py-2.5">
+          <li key={i} className="min-w-0 py-2.5 [&_[data-centavos]]:whitespace-nowrap">
             {linea}
           </li>
         ))}

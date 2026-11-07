@@ -114,6 +114,39 @@ describe('PRU-CMP-PWA', () => {
     expect(enlaceVolver(montar('/cuentas/nueva', '', <main />))).toBeNull();
   });
 
+  it('PRU-CMP-PWA-300 [] las secundarias de Más secciones (Programadas, Metas, Por cobrar, Reglas, Reportes, Ajustes) no publican Registrar ni el menú en la barra del teléfono y sí la campana; las principales conservan los tres', () => {
+    for (const secundaria of [
+      '/programadas',
+      '/metas',
+      '/por-cobrar',
+      '/reglas',
+      '/reportes/tendencia',
+      '/ajustes',
+    ]) {
+      const nodo = montar(secundaria, '', <main />);
+      expect(nodo.querySelector('#contenido')?.getAttribute('data-barra')).toBe('secundaria');
+      expect(nodo.querySelector('header a[href="/registrar"]')).toBeNull();
+      expect(
+        nodo.querySelector(`header button[aria-label="${navegacion.secundarias}"]`),
+      ).toBeNull();
+      expect(nodo.querySelector('header a[href="/notificaciones"]')).not.toBeNull();
+    }
+    for (const principal of ['/', '/presupuesto', '/actividad', '/cuentas']) {
+      const nodo = montar(principal, '', <main />);
+      expect(nodo.querySelector('#contenido')?.getAttribute('data-barra')).toBe('principal');
+      expect(nodo.querySelector('header a[href="/registrar"]')).not.toBeNull();
+      expect(
+        nodo.querySelector(`header button[aria-label="${navegacion.secundarias}"]`),
+      ).not.toBeNull();
+    }
+    // Las hijas de una secundaria siguen con su «Volver».
+    expect(
+      montar('/ajustes/seguridad', '', <main />)
+        .querySelector('#contenido')
+        ?.getAttribute('data-barra'),
+    ).toBe('hija');
+  });
+
   it('PRU-CMP-PWA-181 [] la campana de la barra es un enlace a /notificaciones con el contador en su nombre (CF-23): la ruta se intercepta como panel desde otra pantalla y es página completa al abrirla directamente', () => {
     const nodo = montar('/presupuesto', '', <main />);
     const campana = nodo.querySelector<HTMLAnchorElement>('header a[href="/notificaciones"]');

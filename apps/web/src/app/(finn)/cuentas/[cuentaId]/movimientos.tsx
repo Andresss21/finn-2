@@ -162,7 +162,7 @@ export function Movimientos({
                   <span className="truncate font-semibold">
                     {m.comercio ?? dominio.sinComercio}
                   </span>
-                  <span className="text-cuerpo-pequeno text-texto-secundario">
+                  <span className="truncate text-cuerpo-pequeno text-texto-secundario">
                     {subtitulo(m, id)}
                   </span>
                 </span>
