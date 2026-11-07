@@ -2,6 +2,8 @@
 // dinámico también atrapa `/registrar/gasto` (un flujo largo, siempre página completa) y los valores que no son de este flujo: esos
 // se vuelven a abrir como página completa, que es la que decide si existe (`/registrar/gasto`) o da `notFound()`.
 import { AbrirComoPagina } from '../../../../../componentes/navegacion/flujo-de-ruta';
+import { tipoDeInversion } from '../../../../../flujos/registrar-tipo/inversion-campos';
+import { LectorRegistrarInversion } from '../../../../../flujos/registrar-tipo/inversion-lector';
 import { tipoDeTarjeta } from '../../../../../flujos/registrar-tipo/campos-tarjeta';
 import { LectorRegistrarTarjeta } from '../../../../../flujos/registrar-tipo/lector-tarjeta';
 import { tipoDeRegistro } from '../../../../../flujos/registrar-tipo/campos';
@@ -18,6 +20,9 @@ export default async function RegistrarTipoInterceptado({
   readonly searchParams: Promise<BusquedaDePagina>;
 }) {
   const url = (await params).tipo;
+  const inversion = tipoDeInversion(url);
+  if (inversion !== undefined)
+    return <LectorRegistrarInversion tipo={inversion} busqueda={await searchParams} superpuesto />;
   const tipo = tipoDeRegistro(url);
   if (tipo !== undefined)
     return <LectorRegistrarTipo tipo={tipo} busqueda={await searchParams} superpuesto />;
