@@ -12,15 +12,11 @@ import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { formatearMonto } from '../../../../formato';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { reportes as t } from '../../../../textos/reportes';
-import { AvisoHormiga, type Hallazgo as HallazgoHormiga } from './hormiga';
+import { AvisoHormiga } from './hormiga';
 import { AvisoPromedio } from './realidad';
-import {
-  HallazgosRealidad,
-  type AccionesRealidad,
-  type HallazgoRealidad,
-} from './realidad-hallazgos';
-import { HallazgosRitmo, type Hallazgo as HallazgoRitmo } from './ritmo-hallazgos';
-import { HallazgosTarjetas, type HallazgoTarjeta } from './tarjetas-hallazgos';
+import { HallazgosRealidad, type AccionesRealidad } from './realidad-hallazgos';
+import { HallazgosRitmo } from './ritmo-hallazgos';
+import { HallazgosTarjetas } from './tarjetas-hallazgos';
 
 type Hallazgo = ReporteDe<'hallazgos'>['hallazgos'][number];
 type Suscripcion = Extract<Hallazgo, { tipo: 'suscripcion' }>;
@@ -85,24 +81,24 @@ export function Hallazgos({
     <div key={h.clave} data-hallazgo-fila={h.clave} className={ausente ? AUSENTE : undefined}>
       {h.tipo === 'ritmo' ? (
         <HallazgosRitmo
-          hallazgos={[h as HallazgoRitmo]}
+          hallazgos={[h]}
           periodoInicio={inicio}
           {...(asignar === undefined ? {} : { asignar })}
         />
       ) : h.tipo === 'tarjeta' ? (
         <HallazgosTarjetas
-          hallazgos={[h as HallazgoTarjeta]}
+          hallazgos={[h]}
           periodoInicio={inicio}
           {...(acciones === undefined ? {} : { acciones })}
         />
       ) : h.tipo === 'realidad' ? (
         <HallazgosRealidad
-          hallazgos={[h as HallazgoRealidad]}
+          hallazgos={[h]}
           periodoInicio={inicio}
           {...(acciones === undefined ? {} : { acciones })}
         />
       ) : h.tipo === 'hormiga' ? (
-        <AvisoHormiga hallazgo={h as HallazgoHormiga} />
+        <AvisoHormiga hallazgo={h} />
       ) : h.tipo === 'suscripcion' ? (
         <AvisoSuscripcion hallazgo={h} />
       ) : (
