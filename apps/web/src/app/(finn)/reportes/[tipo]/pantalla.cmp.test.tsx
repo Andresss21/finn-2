@@ -86,10 +86,10 @@ const enlace = (raiz: HTMLElement, nombre: string): HTMLAnchorElement => {
 };
 
 describe('PRU-CMP-REP-150 reportes: plantilla común', () => {
-  it('PRU-CMP-REP-150 [FT-60] las once pestañas son enlaces de 44 px con el activo en la tinta de la marca, y los períodos una barra de cinco opciones iguales con la elegida marcada', () => {
+  it('PRU-CMP-REP-150 [FT-60] las doce pestañas son enlaces de 44 px con el activo en la tinta de la marca, y los períodos una barra de cinco opciones iguales con la elegida marcada', () => {
     const raiz = mostrar(dto([periodo(92500, 63560)]), { ventana: 'ultimos_6' });
     const nav = raiz.querySelector('nav[aria-label="Reportes"]');
-    expect(nav?.querySelectorAll('a')).toHaveLength(11);
+    expect(nav?.querySelectorAll('a')).toHaveLength(12);
     const activa = enlace(raiz, 'Ingresos y gastos');
     expect(activa.getAttribute('aria-current')).toBe('page');
     expect(activa.className).toContain('bg-marca');

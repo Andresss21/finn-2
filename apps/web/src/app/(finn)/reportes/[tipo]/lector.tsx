@@ -29,7 +29,7 @@ const texto = (v: string | readonly string[] | undefined): string | undefined =>
   (typeof v === 'string' ? v : v?.[0]) || undefined;
 
 /**
- * Los ajustes de `realidad` (OP-14 y OP-18) con el `esperado` que exigen: lo asignado del período activo y el monto de cada meta,
+ * Los ajustes de `realidad` y `tarjetas` (OP-14 y OP-18) con el `esperado` que exigen: lo asignado del período activo y el monto de cada meta,
  * tal como los dicen `presupuesto()` y `metas()`. El DTO de `realidad` no los trae, y la interfaz no los calcula (PF-3).
  */
 async function accionesDeRealidad(): Promise<AccionesRealidad> {
@@ -41,11 +41,19 @@ async function accionesDeRealidad(): Promise<AccionesRealidad> {
     asignar: asignarEnCategoria,
     meta: gestionarMeta,
     esperados: {
-      asignado: Object.fromEntries(
-        vista.grupos.flatMap((g) =>
-          g.categorias.map((c) => [c.categoria.id, centavosATextoDecimal(c.asignadoEsperado)]),
+      asignado: Object.fromEntries([
+        ...vista.grupos.flatMap((g) =>
+          g.categorias.map((c): [string, string] => [
+            c.categoria.id,
+            centavosATextoDecimal(c.asignadoEsperado),
+          ]),
         ),
-      ),
+        // Las categorías de pago de tarjeta: «Reservar» de `tarjetas` asigna en ellas.
+        ...vista.pagosTarjeta.map((p): [string, string] => [
+          p.categoria.id,
+          centavosATextoDecimal(p.asignado),
+        ]),
+      ]),
       meta: Object.fromEntries(
         listaDeMetas.metas.map((m) => [m.id, centavosATextoDecimal(m.monto)]),
       ),
@@ -121,7 +129,8 @@ export async function LectorReporte({
     ...((semanal || deHormiga) && periodo !== undefined ? { periodo } : {}),
     ...(semanal && categorias !== undefined ? { categorias } : {}),
   };
-  const realidad = url === 'realidad' ? await accionesDeRealidad() : undefined;
+  const realidad =
+    url === 'realidad' || url === 'tarjetas' ? await accionesDeRealidad() : undefined;
   return (
     <PantallaReporte
       url={url}

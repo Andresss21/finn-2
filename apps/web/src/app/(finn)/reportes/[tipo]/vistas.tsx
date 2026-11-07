@@ -14,6 +14,7 @@ import { Hormiga } from './hormiga';
 import { Realidad } from './realidad';
 import type { AccionesRealidad } from './realidad-hallazgos';
 import { Ritmo } from './ritmo';
+import { Tarjetas } from './tarjetas';
 import { Categorias, Cumplimiento, TopComercios, type Nombres } from './vistas-detalle';
 import { GastoSemanal } from './vistas-semanal';
 
@@ -129,6 +130,16 @@ export function cuerpoDe(
       const d = dto as ReporteDe<'realidad'>;
       return d.categorias.length === 0 ? null : (
         <Realidad dto={d} {...(realidad === undefined ? {} : { acciones: realidad })} />
+      );
+    }
+    case 'tarjetas': {
+      const d = dto as ReporteDe<'tarjetas'>;
+      return d.tarjetas.length === 0 ? null : (
+        <Tarjetas
+          dto={d}
+          periodoInicio={d.periodoActivo.inicio}
+          {...(realidad === undefined ? {} : { acciones: realidad })}
+        />
       );
     }
     case 'ritmo': {

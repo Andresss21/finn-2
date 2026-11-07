@@ -27,11 +27,14 @@ const LIMITES = ['5', '10', '20'] as const;
 // Qué parámetros pasan de un reporte a otro: el grupo y el límite son de un solo reporte.
 const COMPARTIDOS = ['ventana', 'cuentas'] as const;
 
-/** La URL de un reporte con estos parámetros; `ultimos_3` va como `ultimos-3` (05 §2.2) y `actual` no lleva parámetro. */
+/** La ventana que la consulta usa sin `?ventana=`: `ultimos_6` en `tarjetas` (04 §6.9.3) y `actual` en los demás. */
+const predeterminada = (url: TipoDeUrl): Ventana => (url === 'tarjetas' ? 'ultimos_6' : 'actual');
+
+/** La URL de un reporte con estos parámetros; `ultimos_3` va como `ultimos-3` (05 §2.2) y la ventana predeterminada no lleva parámetro. */
 function hrefDe(url: TipoDeUrl, p: Parametros, cambios: Parametros = {}): string {
   const q = new URLSearchParams();
   for (const [clave, valor] of Object.entries({ ...p, ...cambios })) {
-    if (valor === '' || (clave === 'ventana' && valor === 'actual')) continue;
+    if (valor === '' || (clave === 'ventana' && valor === predeterminada(url))) continue;
     q.set(clave, clave === 'ventana' ? valor.replace('_', '-') : valor);
   }
   const s = q.toString();
@@ -60,7 +63,7 @@ function filtrosDe(url: TipoDeUrl, p: Parametros, nombres: Nombres): Filtro[] {
         etiqueta: t.ventanas[v],
         href: hrefDe(url, p, { ventana: v }),
       })),
-      activas: [p.ventana ?? 'actual'],
+      activas: [p.ventana ?? predeterminada(url)],
     },
     {
       etiqueta: t.filtros.cuentas,
@@ -148,10 +151,8 @@ export function PantallaReporte({
   const [primero, ...otros] = todos;
   const ventana = deHormiga === null ? primero : undefined;
   // Sin movimientos, la salida del diseño es mirar más períodos; si ya se miran 3 o más, no hay a dónde ampliar.
-  const ampliar =
-    parametros.ventana === 'ultimos_3' ||
-    parametros.ventana === 'ultimos_6' ||
-    parametros.ventana === 'ultimos_12';
+  const efectiva = parametros.ventana ?? predeterminada(url);
+  const ampliar = efectiva === 'ultimos_3' || efectiva === 'ultimos_6' || efectiva === 'ultimos_12';
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4 md:max-w-6xl">
       <PublicarEncabezado encabezado={dto} />
