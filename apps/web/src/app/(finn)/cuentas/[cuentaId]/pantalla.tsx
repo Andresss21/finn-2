@@ -48,7 +48,7 @@ export function PantallaDetalleCuenta({
         </EnlaceFinn>
         <h1 className="text-titulo-pantalla">{cuenta.nombre}</h1>
       </div>
-      <div className="flex flex-col gap-6 md:grid md:grid-cols-[1fr_1.6fr] md:items-start md:gap-x-8">
+      <div className="flex flex-col gap-6 @[996px]:grid @[996px]:grid-cols-[1fr_1.6fr] @[996px]:items-start @[996px]:gap-x-9">
         <div className="flex flex-col gap-6">
           <Cabecera dto={dto} />
           {cuenta.archivada ? (

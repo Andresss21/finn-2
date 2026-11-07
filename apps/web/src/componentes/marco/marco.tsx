@@ -21,7 +21,13 @@ import {
 } from '../navegacion/enlace-finn';
 import { useRefrescar } from '../navegacion/use-refrescar';
 import { MasSecciones, NavegacionApp } from '../navegacion/navegacion-app';
-import { SECCIONES, seccionDeRuta, volverDeRuta } from '../navegacion/secciones';
+import {
+  barraDeRuta,
+  esListaAngosta,
+  SECCIONES,
+  seccionDeRuta,
+  volverDeRuta,
+} from '../navegacion/secciones';
 import { ContextoAcciones, type AccionesPublicadas } from './publicar-acciones';
 import { ProveedorEncabezado, useEncabezado } from './proveedor-encabezado';
 
@@ -99,6 +105,7 @@ function CuerpoDelMarco({
   const comun = { secciones: SECCIONES, seccionActiva: seccionDeRuta(pathname), contadores };
   const ruta = rutaRegistrar(pathname);
   const volver = volverDeRuta(pathname, busqueda);
+  const tipoBarra = barraDeRuta(pathname, busqueda);
   const conAcciones = acciones !== null && acciones.acciones.length > 0;
 
   return (
@@ -128,7 +135,8 @@ function CuerpoDelMarco({
       <div
         id="contenido"
         tabIndex={-1}
-        data-barra={volver === null ? 'principal' : 'hija'}
+        data-barra={tipoBarra}
+        data-lista={esListaAngosta(pathname) ? '' : undefined}
         data-acciones={conAcciones ? '' : undefined}
         className="relative pt-15 pb-28 outline-none md:pt-0 md:pb-0 md:pl-62"
       >
@@ -146,8 +154,8 @@ function CuerpoDelMarco({
             </EnlaceFinn>
           )}
           <span className="flex-1 md:hidden" />
-          {volver === null ? (
-            <span className="flex w-27.5 justify-end md:hidden">
+          {tipoBarra === 'principal' ? (
+            <span className="flex w-27.5 justify-end max-[25rem]:w-11 md:hidden">
               <AccesoRegistrar ruta={ruta} variante="barra" />
             </span>
           ) : null}
@@ -157,7 +165,7 @@ function CuerpoDelMarco({
             </Suspense>
           ) : null}
           <Campana valor={contadores.notificaciones} />
-          {volver === null ? (
+          {tipoBarra === 'principal' ? (
             <span className="md:hidden">
               <MasSecciones {...comun} />
             </span>

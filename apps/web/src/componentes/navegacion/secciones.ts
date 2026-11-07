@@ -86,3 +86,38 @@ export function volverDeRuta(
   const id = seccionDeRuta(ruta.split('?')[0] ?? ruta);
   return { ruta, etiqueta: navegacion.volverA(id === null ? null : navegacion.secciones[id]) };
 }
+
+// [CH-227] Las pantallas que se abren desde «Más secciones»: en el teléfono llevan solo la campana (sin Registrar ni ☰).
+const SOLO_CAMPANA: readonly IdSeccion[] = [
+  'reportes',
+  'metas',
+  'programadas',
+  'por-cobrar',
+  'reglas',
+  'ajustes',
+];
+
+// [CH-220 c] Las listas de Más secciones van a 720 px en computadora (Reportes lleva gráficos y no entra).
+const LISTAS_720: readonly IdSeccion[] = [
+  'metas',
+  'programadas',
+  'por-cobrar',
+  'reglas',
+  'ajustes',
+];
+
+/** La barra del teléfono: `hija` (flecha y título), `secundaria` (solo la campana) o `principal` (Registrar, campana y ☰). */
+export function barraDeRuta(
+  pathname: string,
+  busqueda: Pick<URLSearchParams, 'get'>,
+): 'principal' | 'secundaria' | 'hija' {
+  if (volverDeRuta(pathname, busqueda) !== null) return 'hija';
+  const id = seccionDeRuta(pathname);
+  return id !== null && SOLO_CAMPANA.includes(id) ? 'secundaria' : 'principal';
+}
+
+/** [CH-220 c] `true` si la ruta es una lista de Más secciones, que en computadora mide como máximo 720 px. */
+export function esListaAngosta(pathname: string): boolean {
+  const id = seccionDeRuta(pathname);
+  return id !== null && LISTAS_720.includes(id);
+}
