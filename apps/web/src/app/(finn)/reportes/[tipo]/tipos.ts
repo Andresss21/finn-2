@@ -13,6 +13,7 @@ export const TIPOS = {
   tarjetas: 'tarjetas',
   'flujo-efectivo': 'flujo_efectivo',
   hormiga: 'hormiga',
+  suscripciones: 'suscripciones',
 } as const;
 
 export type TipoDeUrl = keyof typeof TIPOS;

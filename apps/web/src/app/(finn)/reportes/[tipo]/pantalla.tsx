@@ -11,6 +11,7 @@ import { SelectorPeriodo } from '../../../../componentes/navegacion/selector-per
 import { reportes as t } from '../../../../textos/reportes';
 import { TIPOS, TIPOS_DE_URL, type TipoDeUrl } from './tipos';
 import type { AccionesRealidad } from './realidad-hallazgos';
+import type { AccionesSuscripciones } from './suscripciones-hallazgos';
 import { cuerpoDe } from './vistas';
 import type { Nombres } from './vistas-detalle';
 
@@ -126,6 +127,7 @@ export function PantallaReporte({
   parametros,
   asignar,
   realidad,
+  suscripciones,
 }: {
   readonly url: TipoDeUrl;
   readonly dto: ReporteDto;
@@ -135,8 +137,10 @@ export function PantallaReporte({
   readonly asignar?: AccionEscritura;
   /** Los ajustes de un toque de `realidad` (OP-14 y OP-18) con lo vigente que vio la pantalla; los pone el lector. */
   readonly realidad?: AccionesRealidad;
+  /** Las acciones de un toque de `suscripciones` (OP-42 y OP-51); las pone el lector. */
+  readonly suscripciones?: AccionesSuscripciones;
 }) {
-  const cuerpo = cuerpoDe(TIPOS[url], dto, nombres, asignar, realidad);
+  const cuerpo = cuerpoDe(TIPOS[url], dto, nombres, asignar, realidad, suscripciones);
   const compartidos = Object.fromEntries(
     Object.entries(parametros).filter(([k]) => (COMPARTIDOS as readonly string[]).includes(k)),
   );
@@ -144,8 +148,8 @@ export function PantallaReporte({
   // `hormiga` también elige un período (`?periodo=`) y se filtra solo por cuentas.
   const deHormiga = url === 'hormiga' ? (dto as ReporteDe<'hormiga'>) : null;
   const conPeriodo = semanal ?? deHormiga;
-  // `ritmo` y `realidad` son siempre del período activo (05 §2.10): sin ventana ni cuentas.
-  const delActivo = url === 'ritmo' || url === 'realidad';
+  // `ritmo` y `realidad` miran el período activo y `suscripciones` los 4 cerrados (05 §2.10): ninguno lleva ventana ni cuentas.
+  const delActivo = url === 'ritmo' || url === 'realidad' || url === 'suscripciones';
   const todos = semanal === null && !delActivo ? filtrosDe(url, parametros, nombres) : [];
   // `hormiga` elige su período con el selector: no lleva la ventana, solo las cuentas.
   const [primero, ...otros] = todos;

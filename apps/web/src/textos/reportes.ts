@@ -15,6 +15,7 @@ export const reportes = {
     tarjetas: 'Tarjetas',
     'flujo-efectivo': 'Flujo',
     hormiga: 'Hormiga',
+    suscripciones: 'Suscripciones',
   },
   titulos: {
     tendencia: 'Tendencia de ingresos y gastos',
@@ -30,6 +31,7 @@ export const reportes = {
     tarjetas: 'Tarjetas en el tiempo',
     'flujo-efectivo': 'Flujo de efectivo',
     hormiga: 'Gastos hormiga',
+    suscripciones: 'Suscripciones detectadas',
   },
   explicacionFlujo: 'Cuánto cambió el dinero de tus cuentas y por qué.',
   explicacionRemanente:
@@ -86,6 +88,11 @@ export const reportes = {
     grupo: 'Grupo de compras',
     compras: 'Compras',
     total: 'Total',
+    comercio: 'Comercio',
+    frecuencia: 'Frecuencia',
+    mensual: 'Por mes',
+    anual: 'Por año',
+    programada: 'Programada',
   },
   ritmo: {
     cierre: (fin: string) => `Si seguís así, al cerrar el ${fin}:`,
@@ -176,6 +183,23 @@ export const reportes = {
     grupos: 'Compras pequeñas repetidas',
     deComercio: 'Comercio',
     deCategoria: 'Categoría',
+  },
+  suscripciones: {
+    insuficiente: 'Necesitamos 4 períodos cerrados para detectar suscripciones.',
+    sinDetectadas: 'No encontramos suscripciones sin programar.',
+    sinProgramar: (comercio: string, mensual: string, anual: string) =>
+      `${comercio} te cobra ${mensual} cada mes (${anual} al año) y no la tenés programada.`,
+    desactivada: (comercio: string, mensual: string) =>
+      `${comercio} te sigue cobrando ${mensual} cada mes, pero su programada está desactivada.`,
+    programarla: 'Programarla',
+    programando: 'Programando…',
+    reactivarla: 'Reactivarla',
+    reactivando: 'Reactivando…',
+    programada: (comercio: string, mensual: string) =>
+      `Programaste ${comercio}: ${mensual} cada mes.`,
+    reactivada: (comercio: string) => `Reactivaste ${comercio}.`,
+    yaProgramadas: 'Ya programadas',
+    revisar: (comercio: string) => `Revisar ${comercio}`,
   },
   gastoSemanal: {
     categorias: 'Categorías',
