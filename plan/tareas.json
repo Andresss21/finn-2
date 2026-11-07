@@ -573,7 +573,7 @@
 
   "TA-486": { "estado": "terminada", "rama": "ta-486-fixes-visuales-registro", "pr": 529 },
 
-  "TA-487": { "estado": "en_curso", "rama": "ta-487-fixes-anchos-columnas" },
+  "TA-487": { "estado": "terminada", "rama": "ta-487-fixes-anchos-columnas", "pr": 530 },
 
   "TA-488": { "estado": "pendiente" },
 
