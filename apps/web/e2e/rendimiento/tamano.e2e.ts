@@ -1,7 +1,7 @@
 // Presupuestos de bytes (05 §13.1 y §13.4, FE-48; 07 §6.6): en `e2e` de `main` bloquean siempre. Se mide en el navegador,
-// cada ruta en un contexto nuevo y con el service worker bloqueado. Las rutas salen del manifiesto de la compilación: una
-// pantalla nueva entra sola. Sin sesión (hasta que `configuracion` sea dependencia, DT-23) ninguna ruta de `(finn)` es
-// medible: se mide `/`, que redirige, como piso del compartido. Con sesión, una ruta que no se pueda medir hace fallar.
+// cada ruta en un contexto nuevo, con la sesión AAL2 del proyecto `configuracion` y con el service worker bloqueado. Las rutas
+// salen del manifiesto de la compilación: una pantalla nueva entra sola. Sin la sesión, o con una ruta que no se pueda medir
+// (TA-550, CH-51), fallan las dos pruebas.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { expect, test, type Browser } from '@playwright/test';
@@ -22,11 +22,11 @@ const SESION = 'test-results/sesion.json'; // ARCHIVO_SESION de configuracion/in
 const SALIDA = 'test-results/rendimiento/tamanos.json';
 const BASE_MAIN = '../../test-results/tamanos-main/tamanos.json'; // la caché de ci.yml; fuera de lo que Playwright limpia
 
-async function medir(browser: Browser, origen: string, url: string, conSesion: boolean) {
+async function medir(browser: Browser, origen: string, url: string) {
   const contexto = await browser.newContext({
     baseURL: origen,
     serviceWorkers: 'block',
-    ...(conSesion ? { storageState: SESION } : {}),
+    storageState: SESION,
   });
   const page = await contexto.newPage();
   const respuestas: {
@@ -74,19 +74,15 @@ async function recorrer(browser: Browser, origen: string): Promise<Recorrido> {
   const sinMedir: string[] = [];
   const ajenos: string[] = [];
   let flujos = 0;
-  const conSesion = existsSync(SESION);
-  if (!conSesion) {
-    const m = await medir(browser, origen, '/', false);
-    medidas.push({ ruta: `piso:${m.final}`, formulario: false, scripts: m.scripts });
-    ajenos.push(...m.ajenos);
-  } else {
+  if (!existsSync(SESION)) sinMedir.push(`todas: falta ${SESION}, la sesión AAL2 de configuracion`);
+  else
     for (const { clave, ruta } of rutas) {
       const url = urlDe(ruta, P.ejemplosDeRuta);
       if (url === null) {
         sinMedir.push(`${ruta}: falta su ejemplo en presupuestos.json (ejemplosDeRuta)`);
         continue;
       }
-      const m = await medir(browser, origen, url, true);
+      const m = await medir(browser, origen, url);
       ajenos.push(...m.ajenos);
       if (m.final.startsWith('/ingresar') || m.estado !== 200) {
         sinMedir.push(`${ruta}: respondió ${m.estado} y terminó en ${m.final}`);
@@ -97,10 +93,7 @@ async function recorrer(browser: Browser, origen: string): Promise<Recorrido> {
         medidas.push({ ruta, formulario: m.formulario, scripts: m.scripts });
       } // si no, redirige a otra pantalla (reportes/page.tsx, 1.3): no tiene JS propio
     }
-  }
-  const nota = conSesion
-    ? `${medidas.length} rutas medidas con sesión.`
-    : `Sin sesión: piso del compartido medido en \`/\`; ${rutas.length} rutas de (finn) sin medir.`;
+  const nota = `${medidas.length} rutas medidas con sesión.`;
   return {
     c: clasificar(medidas, P),
     conFormulario: medidas.filter((m) => m.formulario).length,
@@ -136,11 +129,9 @@ test.describe('PRU-REN-PWA tamaño', () => {
 
   test('PRU-REN-PWA-001 [V5-13, V5-35] la biblioteca de formularios no supera su presupuesto de 05 §13.1', () => {
     expect(r.sinMedir).toEqual([]);
-    // Si React Hook Form perdiera la firma, ninguna ruta tendría formulario: con flujos reales, eso falla
-    expect(r.conFormulario > 0 || r.flujos === 0, 'hay flujos y ninguno carga la biblioteca').toBe(
-      true,
-    );
-    test.skip(r.conFormulario === 0, 'Ninguna ruta con formulario todavía (flujos/, 05 §1.4)');
+    // Si React Hook Form perdiera la firma, ninguna ruta tendría formulario: con los flujos de 05 §1.4, eso falla
+    expect(r.flujos, 'rutas de flujos/ medidas').toBeGreaterThan(0);
+    expect(r.conFormulario, 'hay flujos y ninguno carga la biblioteca').toBeGreaterThan(0);
     expect(r.c.formulariosKb).toBeGreaterThan(0);
     expect(r.c.formulariosKb).toBeLessThanOrEqual(P.formulariosKb);
   });
