@@ -479,7 +479,7 @@
 
   "TA-419": { "estado": "terminada", "rama": "ta-419-condiciones-amortizacion", "pr": 423 },
 
-  "TA-420": { "estado": "pendiente" },
+  "TA-420": { "estado": "terminada", "rama": "ta-420-inversiones-3", "pr": 507 },
 
   "TA-421": { "estado": "terminada", "rama": "ta-421-reportes-base", "pr": 316 },
 
@@ -507,7 +507,7 @@
 
   "TA-430": { "estado": "terminada", "rama": "ta-430-push-programadas-sistema", "pr": 439 },
 
-  "TA-431": { "estado": "pendiente" },
+  "TA-431": { "estado": "terminada", "rama": "ta-431-push-2", "pr": 444 },
 
   "TA-432": { "estado": "terminada", "rama": "ta-432-ciclo", "pr": 348 },
 
@@ -543,7 +543,7 @@
 
   "TA-502": { "estado": "pendiente" },
 
-  "TA-503": { "estado": "pendiente" },
+  "TA-503": { "estado": "terminada", "rama": "ta-503-gastos-hormiga", "pr": 447 },
 
   "TA-504": { "estado": "pendiente" },
 

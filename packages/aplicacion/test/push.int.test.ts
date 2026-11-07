@@ -3,7 +3,7 @@
 import { createDecipheriv, createECDH, hkdfSync, randomBytes } from 'node:crypto';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import webpush from 'web-push';
 import {
   cargarHechos,
@@ -1248,5 +1248,189 @@ describe('PRU-INT-NOTIF', () => {
     expect(push).toBeDefined();
     expect(push.carga['destino']).toEqual({ pantalla: 'cuenta', cuentaId: tarjetaId });
     expect(JSON.stringify(push.carga)).not.toMatch(/[$€]|\d[.,]\d{2}|USD/);
+  });
+
+  // FT-71 (2 de 2): aviso de la cuota próxima de un préstamo (06 FT-71, CA-71.8 a CA-71.14; CF-24, CF-20). Las fechas son de marzo
+  // de 2027 (las de octubre del texto, con los mismos días) para quedar dentro de los períodos de las semillas.
+  const PROG = (n: number) => `00000000-0000-4000-8000-0000000071${String(n).padStart(2, '0')}`;
+  const LINEA = (n: number) => `00000000-0000-4000-8000-0000000072${String(n).padStart(2, '0')}`;
+  const OCURRENCIA = (n: number) =>
+    `00000000-0000-4000-8000-0000000073${String(n).padStart(2, '0')}`;
+  const sembrados: number[] = [];
+  const conOcurrencia = new Set<number>();
+  const opcionesBase = { reloj: { hoy: HOY, desfaseMs: 0 } };
+
+  /** Una cuota de $210.00 del Préstamo personal, mensual desde el 20/03, sin registro automático salvo que se pida. */
+  const cuotaPrestamo = async (
+    n: number,
+    extra: Record<string, unknown> = {},
+    resuelta?: { estado: 'registrada' | 'emparejada' | 'omitida'; fecha: string },
+  ): Promise<void> => {
+    const [cuentaId] = await sql(`SELECT cuenta_id FROM finn.programadas WHERE tipo = 'gasto'`);
+    const [prestamoId] = await sql('SELECT cuenta_id FROM finn.prestamos');
+    const [categoriaId] = await sql(
+      `SELECT id FROM finn.categorias WHERE clase = 'normal' LIMIT 1`,
+    );
+    let transaccionId: string | null = null;
+    if (resuelta !== undefined && resuelta.estado !== 'omitida')
+      transaccionId =
+        (
+          await sql(
+            `SELECT id FROM finn.transacciones WHERE id NOT IN
+               (SELECT transaccion_id FROM finn.ocurrencias_resueltas WHERE transaccion_id IS NOT NULL)
+             ORDER BY id LIMIT 1`,
+          )
+        )[0] ?? null;
+    sembrados.push(n);
+    await escribir(
+      (tx) =>
+        tx.aplicarCambios([
+          {
+            tipo: 'insertar' as const,
+            tabla: 'programadas' as const,
+            fila: {
+              id: PROG(n),
+              tipo: 'cuota_prestamo',
+              cuentaId,
+              cuentaDestinoId: prestamoId,
+              comercio: 'Préstamo personal',
+              monto: 21000,
+              tolerancia: 0,
+              frecuencia: 'mensual',
+              frecuenciaDias: null,
+              primeraFecha: FechaLocal.desdeTexto('2027-03-20'),
+              fechaFin: null,
+              registroAutomatico: false,
+              activa: true,
+              reactivadaDesde: null,
+              ...extra,
+            } as never,
+          },
+          {
+            tipo: 'insertar' as const,
+            tabla: 'programada_lineas' as const,
+            fila: {
+              id: LINEA(n),
+              programadaId: PROG(n),
+              orden: 1,
+              monto: 21000,
+              categoriaId,
+            } as never,
+          },
+        ]),
+      opcionesBase,
+    );
+    if (resuelta !== undefined) {
+      conOcurrencia.add(n);
+      await escribir(
+        (tx) =>
+          tx.aplicarCambios([
+            {
+              tipo: 'insertar' as const,
+              tabla: 'ocurrencias_resueltas' as const,
+              fila: {
+                id: OCURRENCIA(n),
+                programadaId: PROG(n),
+                fechaEsperada: FechaLocal.desdeTexto(resuelta.fecha),
+                estado: resuelta.estado,
+                transaccionId,
+              } as never,
+            },
+          ]),
+        opcionesBase,
+      );
+    }
+  };
+  const cuotas = () =>
+    sql(
+      `SELECT cuerpo || '|' || (datos->>'clave') || '|' || (aviso IS NULL) FROM finn.notificaciones
+        WHERE motivo = 'cuota_proxima' ORDER BY datos->>'clave'`,
+    );
+  afterEach(async () => {
+    const hechos = sembrados.splice(0);
+    if (hechos.length === 0) return;
+    await escribir(
+      (tx) =>
+        tx.aplicarCambios(
+          hechos.flatMap((n) => [
+            ...(conOcurrencia.has(n)
+              ? [
+                  {
+                    tipo: 'eliminar' as const,
+                    tabla: 'ocurrencias_resueltas' as const,
+                    id: OCURRENCIA(n),
+                  },
+                ]
+              : []),
+            { tipo: 'eliminar' as const, tabla: 'programada_lineas' as const, id: LINEA(n) },
+            { tipo: 'eliminar' as const, tabla: 'programadas' as const, id: PROG(n) },
+          ]) as never,
+        ),
+      opcionesBase,
+    );
+  });
+
+  it('PRU-INT-NOTIF-107 [CA-71.8] una cuota de $210.00 del Préstamo personal sin registro automático, pendiente el 20 y con hoy el 17: se registra cuota_proxima con aviso nulo y el push dice «Cuota de Préstamo personal por $210.00 el 20/03. Registrala cuando la pagues.» con la etiqueta programadas', async () => {
+    await suscribir('ok');
+    await cuotaPrestamo(1);
+    await pasoAvisos.ejecutar(deps('2027-03-17'));
+
+    expect(await cuotas()).toEqual([
+      `Cuota de Préstamo personal por $210.00 el 20/03. Registrala cuando la pagues.|cuota:${PROG(1)}:2027-03-20|true`,
+    ]);
+    const push = recibidos.find((r) => r.carga['titulo'] === 'Cuota próxima') as Recibido;
+    expect(push.carga['cuerpo']).toBe(
+      'Cuota de Préstamo personal por $210.00 el 20/03. Registrala cuando la pagues.',
+    );
+    expect(push.carga['etiqueta']).toBe('programadas');
+  });
+
+  it('PRU-INT-NOTIF-107 [CA-71.9] la tarea dos veces el mismo día, la puesta al día después y la tarea otra vez el 18 dejan una sola notificación para esa programada y esa fecha', async () => {
+    await cuotaPrestamo(2);
+    await pasoAvisos.ejecutar(deps('2027-03-17'));
+    await pasoAvisos.ejecutar(deps('2027-03-17'));
+    await pasoCuotaProxima.ejecutar(deps('2027-03-17'));
+    await pasoAvisos.ejecutar(deps('2027-03-18'));
+
+    expect(await cuotas()).toHaveLength(1);
+  });
+
+  it('PRU-INT-NOTIF-107 [CA-71.10] la misma cuota con registro automático no genera cuota_proxima el 17', async () => {
+    await suscribir('ok');
+    await cuotaPrestamo(3, { registroAutomatico: true });
+    await pasoAvisos.ejecutar(deps('2027-03-17'));
+
+    expect(await cuotas()).toEqual([]);
+    expect(recibidos.filter((r) => r.carga['titulo'] === 'Cuota próxima')).toEqual([]);
+  });
+
+  it('PRU-INT-NOTIF-107 [CA-71.11] con la ocurrencia del 20 ya registrada de un toque, emparejada con un SMS u omitida, la tarea del 17 no notifica', async () => {
+    await cuotaPrestamo(4, {}, { estado: 'registrada', fecha: '2027-03-20' });
+    await cuotaPrestamo(5, {}, { estado: 'emparejada', fecha: '2027-03-20' });
+    await cuotaPrestamo(6, {}, { estado: 'omitida', fecha: '2027-03-20' });
+    await pasoAvisos.ejecutar(deps('2027-03-17'));
+
+    expect(await cuotas()).toEqual([]);
+  });
+
+  it('PRU-INT-NOTIF-107 [CA-71.12, CF-20] una cuota reactivada el 18 con una ocurrencia del 20/02 sin resolver no notifica la anterior a reactivada_desde y sí la del 20/03 a 2 días', async () => {
+    await cuotaPrestamo(7, {
+      primeraFecha: FechaLocal.desdeTexto('2027-02-20'),
+      reactivadaDesde: FechaLocal.desdeTexto('2027-03-18'),
+    });
+    await pasoAvisos.ejecutar(deps('2027-03-18'));
+
+    expect(await cuotas()).toEqual([
+      expect.stringMatching(new RegExp(`\\|cuota:${PROG(7)}:2027-03-20\\|true$`)),
+    ]);
+  });
+
+  it('PRU-INT-NOTIF-107 [CA-71.14] una ocurrencia del 20 sin notificación previa y con hoy el 21 no envía cuota_proxima', async () => {
+    await suscribir('ok');
+    await cuotaPrestamo(8);
+    await pasoAvisos.ejecutar(deps('2027-03-21'));
+
+    expect(await cuotas()).toEqual([]);
+    expect(recibidos.filter((r) => r.carga['titulo'] === 'Cuota próxima')).toEqual([]);
   });
 });

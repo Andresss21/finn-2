@@ -73,6 +73,7 @@ export async function LectorReporte({
   const grupo = texto(busqueda['grupo']);
   const limite = texto(busqueda['limite']);
   const semanal = url === 'gasto-semanal';
+  const deHormiga = url === 'hormiga';
   // `ritmo` mira el período activo: su contrato no lleva ventana ni cuentas.
   const filtrado = url !== 'ritmo' && url !== 'realidad';
   const { periodoInicio, categoriaIds } = consulta;
@@ -82,15 +83,21 @@ export async function LectorReporte({
         ...(periodoInicio === undefined ? {} : { periodoInicio }),
         ...(categoriaIds === undefined ? {} : { categoriaIds }),
       }
-    : {
-        tipo: TIPOS[url],
-        ...(!filtrado || ventana === undefined ? {} : { ventana }),
-        ...(!filtrado || cuentaIds === undefined ? {} : { cuentaIds }),
-        ...(url === 'categorias' && grupo !== undefined && UUID.test(grupo)
-          ? { grupoId: grupo }
-          : {}),
-        ...(url === 'top-comercios' && limite !== undefined ? { limite: Number(limite) } : {}),
-      };
+    : deHormiga
+      ? {
+          tipo: TIPOS[url],
+          ...(periodoInicio === undefined ? {} : { periodo: periodoInicio }),
+          ...(cuentaIds === undefined ? {} : { cuentaIds }),
+        }
+      : {
+          tipo: TIPOS[url],
+          ...(!filtrado || ventana === undefined ? {} : { ventana }),
+          ...(!filtrado || cuentaIds === undefined ? {} : { cuentaIds }),
+          ...(url === 'categorias' && grupo !== undefined && UUID.test(grupo)
+            ? { grupoId: grupo }
+            : {}),
+          ...(url === 'top-comercios' && limite !== undefined ? { limite: Number(limite) } : {}),
+        };
   const [dto, listaDeCuentas, arbol] = await Promise.all([
     consultar(async () => reporte(await depsDeConsulta(), solicitud)),
     consultar(async () => cuentas(await depsDeConsulta(), { incluirArchivadas: true })),
@@ -119,7 +126,7 @@ export async function LectorReporte({
     ...(marcadas === undefined ? {} : { cuentas: marcadas }),
     ...(url === 'categorias' && grupo !== undefined ? { grupo } : {}),
     ...(url === 'top-comercios' && limite !== undefined ? { limite } : {}),
-    ...(semanal && periodo !== undefined ? { periodo } : {}),
+    ...((semanal || deHormiga) && periodo !== undefined ? { periodo } : {}),
     ...(semanal && categorias !== undefined ? { categorias } : {}),
   };
   const realidad =
