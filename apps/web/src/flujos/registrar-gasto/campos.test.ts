@@ -1,6 +1,7 @@
 // Los campos de `/registrar/gasto` (FT-21): el contrato del formulario y la entrada de OP-20 que sale de lo escrito.
 import { describe, expect, it } from 'vitest';
 import { op20 } from '@finn/aplicacion/contratos';
+import { valoresDeUrl } from '../../formularios/valores-de-url';
 import {
   aEntradaDeAccion,
   contrato,
@@ -177,5 +178,34 @@ describe('PRU-DOM-TX', () => {
     expect(textoDeAviso('AV-07')).toBe('La deuda de esa tarjeta queda como «Te falta reservar».');
     expect(textoDeAviso('AV-01')).toContain('período cerrado');
     expect(textoDeAviso('AV-99')).toBe('AV-99');
+  });
+
+  it('PRU-DOM-TX-542 [CA-44.3, CA-43.4] el ajuste llega a /registrar/gasto por la URL como fecha, monto y comercio, con una sola parte por el total, y un valor con otra forma se ignora', () => {
+    const url = valoresDeUrl({
+      fecha: '2027-02-15',
+      total: '10.00',
+      comercio: 'Ajuste de conciliación',
+    });
+    const inicial = valoresIniciales('2027-02-16', CUENTA, url);
+    expect(inicial).toMatchObject({
+      fecha: '2027-02-15',
+      total: '10.00',
+      comercio: 'Ajuste de conciliación',
+      lineas: [{ monto: '10.00' }],
+    });
+    const completo = {
+      ...inicial,
+      lineas: inicial.lineas.map((l) => ({ ...l, categoriaId: SUPER })),
+    };
+    const entrada = aEntradaDeAccion({ ...completo, modo: 'confirmar', id: ID });
+    const { modo, ...sinModo } = entrada;
+    expect(modo).toBe('confirmar');
+    expect(op20.safeParse(sinModo).success).toBe(true);
+    const ignorado = valoresIniciales(
+      '2027-02-16',
+      CUENTA,
+      valoresDeUrl({ fecha: 'ayer', total: '-3' }),
+    );
+    expect(ignorado).toMatchObject({ fecha: '2027-02-16', total: '', lineas: [{ monto: '' }] });
   });
 });

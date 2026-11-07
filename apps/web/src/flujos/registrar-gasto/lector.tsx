@@ -5,6 +5,7 @@ import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { formatearMonto } from '../../formato';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
+import { valoresDeUrl } from '../../formularios/valores-de-url';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
 import { FormularioRegistrarGasto } from './formulario';
@@ -48,6 +49,7 @@ export async function LectorRegistrarGasto({ busqueda }: { readonly busqueda: Bu
       categorias={categorias}
       deudores={deudores}
       cuentaPropuesta={cuentas.some((c) => c.id === propuesta) ? propuesta : undefined}
+      desdeUrl={valoresDeUrl(busqueda)}
     />
   );
 }

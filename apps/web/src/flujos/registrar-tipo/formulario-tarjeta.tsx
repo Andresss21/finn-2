@@ -17,6 +17,7 @@ import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
+import type { ValoresDeUrl } from '../../formularios/valores-de-url';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { registrarMovimientoTarjeta } from '../../servidor/acciones/transacciones';
 import { formularios } from '../../textos/formularios';
@@ -28,7 +29,6 @@ import {
   valoresIniciales,
   type Campos,
   type TipoDeTarjeta,
-  type ValoresDeUrl,
 } from './campos-tarjeta';
 import { ENLACE, Marco, REINTENTABLES, enSuCampo } from './formulario';
 

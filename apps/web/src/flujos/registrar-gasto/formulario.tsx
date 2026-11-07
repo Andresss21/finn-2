@@ -17,6 +17,7 @@ import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
 import { faltaRepartir, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import type { ValoresDeUrl } from '../../formularios/valores-de-url';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { registrarGasto } from '../../servidor/acciones/transacciones';
@@ -50,12 +51,15 @@ export interface PropsFormularioRegistrarGasto {
   readonly categorias: readonly Referencia[];
   readonly deudores: readonly Referencia[];
   readonly cuentaPropuesta: string | undefined;
+  /** `?fecha=`, `?total=` y `?comercio=` de la propuesta de ajuste de AV-21 (CH-212). */
+  readonly desdeUrl?: ValoresDeUrl;
 }
 
 interface Previsualizacion extends VistaDeImpacto {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
+const SIN_VALORES: ValoresDeUrl = {};
 const ID_FORMULARIO = 'formulario-registrar-gasto';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 /** Los rechazos de negocio que se muestran junto al campo de las partes (CA-21.5), no como aviso del formulario. */
@@ -101,10 +105,14 @@ export function FormularioRegistrarGasto({
   categorias,
   deudores,
   cuentaPropuesta,
+  desdeUrl = SIN_VALORES,
 }: PropsFormularioRegistrarGasto) {
   const enviar: AccionEscritura = (payload) => registrarGasto(aEntradaDeAccion(payload));
   const operacion = useOperacion({ accion: enviar, creacion: true });
-  const inicial = useMemo(() => valoresIniciales(hoy, cuentaPropuesta), [hoy, cuentaPropuesta]);
+  const inicial = useMemo(
+    () => valoresIniciales(hoy, cuentaPropuesta, desdeUrl),
+    [hoy, cuentaPropuesta, desdeUrl],
+  );
   const formulario = useFormularioFinn<Campos>({
     contrato,
     valoresIniciales: inicial,

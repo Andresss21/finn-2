@@ -2,6 +2,7 @@
 // los escribe la persona (05 §4.2); el contrato completo (suma de las partes, cuenta, fecha…) lo aplica el servidor.
 import * as z from 'zod';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import type { ValoresDeUrl } from '../../formularios/valores-de-url';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
 
 /** Valor de `deudorId` que significa «otra persona»: la parte lleva `deudorNuevo` con el nombre escrito. */
@@ -101,13 +102,18 @@ export const parteVacia = (): Parte => ({
 });
 
 /** Los valores con que abre el formulario: la fecha es el `hoy` del servidor, nunca la del dispositivo (05 §5.5). */
-export const valoresIniciales = (hoy: string, cuentaPropuesta: string | undefined): Campos => ({
+export const valoresIniciales = (
+  hoy: string,
+  cuentaPropuesta: string | undefined,
+  inicial: ValoresDeUrl = {},
+): Campos => ({
   cuentaId: cuentaPropuesta ?? '',
-  fecha: hoy,
-  total: '',
-  comercio: '',
+  fecha: inicial.fecha ?? hoy,
+  total: inicial.total ?? '',
+  comercio: inicial.comercio ?? '',
   nota: '',
-  lineas: [parteVacia()],
+  // El ajuste es un gasto de una sola parte: el monto de la parte es el de la propuesta, copiado tal cual (PF-3)
+  lineas: [{ ...parteVacia(), monto: inicial.total ?? '' }],
 });
 
 /** Los nombres de deudor que ya existían y que la persona volvió a escribir como «otra persona» (04 §3.0.2). */

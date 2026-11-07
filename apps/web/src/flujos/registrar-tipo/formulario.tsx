@@ -18,6 +18,7 @@ import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta, SuperpuestoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMontoTexto } from '../../formato';
+import type { ValoresDeUrl } from '../../formularios/valores-de-url';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { registrarIngreso, transferirEntreCuentas } from '../../servidor/acciones/transacciones';
@@ -38,12 +39,15 @@ export interface PropsFormularioRegistrarTipo {
   readonly cuentaPropuesta: string | undefined;
   /** Interceptado sobre la pantalla de origen (05 §1.4): hoja o panel; sin él, página completa. */
   readonly superpuesto?: boolean;
+  /** `?fecha=`, `?total=` y `?comercio=` de la propuesta de ajuste de AV-21 (CH-212). */
+  readonly desdeUrl?: ValoresDeUrl;
 }
 
 interface Previsualizacion extends VistaDeImpacto {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
+const SIN_VALORES: ValoresDeUrl = {};
 export const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const ACCIONES = { ingreso: registrarIngreso, transferencia: transferirEntreCuentas } as const;
 /** Un enlace con el aspecto de un botón principal (05 §10.7): al menos 44 px de alto (05 §11.5). */
@@ -78,12 +82,16 @@ export function FormularioRegistrarTipo({
   cuentas,
   cuentaPropuesta,
   superpuesto = false,
+  desdeUrl = SIN_VALORES,
 }: PropsFormularioRegistrarTipo) {
   const esIngreso = tipo === 'ingreso';
   const titulo = esIngreso ? t.tituloIngreso : t.tituloTransferencia;
   const enviar: AccionEscritura = (payload) => ACCIONES[tipo](aEntradaDeAccion(tipo, payload));
   const operacion = useOperacion({ accion: enviar, creacion: true });
-  const inicial = useMemo(() => valoresIniciales(hoy, cuentaPropuesta), [hoy, cuentaPropuesta]);
+  const inicial = useMemo(
+    () => valoresIniciales(hoy, cuentaPropuesta, desdeUrl),
+    [hoy, cuentaPropuesta, desdeUrl],
+  );
   const contrato = useMemo(() => contratoDe(tipo), [tipo]);
   const formulario = useFormularioFinn<Campos>({
     contrato,

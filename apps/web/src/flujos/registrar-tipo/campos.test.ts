@@ -2,6 +2,7 @@
 // OP-21 y OP-22 que sale de lo escrito.
 import { describe, expect, it } from 'vitest';
 import { op21, op22 } from '@finn/aplicacion/contratos';
+import { valoresDeUrl } from '../../formularios/valores-de-url';
 import {
   aEntradaDeAccion,
   contratoDe,
@@ -86,6 +87,35 @@ describe('PRU-DOM-TX', () => {
       cuentaId: A,
       origenId: A,
       destinoId: '',
+    });
+  });
+
+  it('PRU-DOM-TX-540 [CA-44.2, CA-43.4] el ajuste llega a /registrar/ingreso por la URL como fecha, monto y comercio, y OP-21 acepta la entrada', () => {
+    const url = valoresDeUrl({
+      fecha: ['2027-02-15'],
+      total: '12.00',
+      comercio: 'Ajuste de conciliación',
+    });
+    const inicial = valoresIniciales('2027-02-16', A, url);
+    expect(inicial).toMatchObject({
+      cuentaId: A,
+      fecha: '2027-02-15',
+      total: '12.00',
+      descripcion: 'Ajuste de conciliación',
+    });
+    const entrada = aEntradaDeAccion('ingreso', { ...inicial, modo: 'confirmar', id: ID });
+    const { modo, ...sinModo } = entrada;
+    expect(modo).toBe('confirmar');
+    expect(op21.safeParse(sinModo).success).toBe(true);
+  });
+
+  it('PRU-DOM-TX-541 [CA-44.2] un valor de la URL con otra forma se ignora en el ingreso y el formulario abre con los de siempre', () => {
+    const url = valoresDeUrl({ fecha: '15/02', total: '1e3', comercio: 'x'.repeat(81) });
+    expect(url).toEqual({});
+    expect(valoresIniciales('2027-02-16', A, url)).toMatchObject({
+      fecha: '2027-02-16',
+      total: '',
+      descripcion: '',
     });
   });
 });
