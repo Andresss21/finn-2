@@ -8,6 +8,7 @@ export interface Manual {
   id: string;
   refs: string[];
   completo: boolean;
+  diferida?: string; // [CH-219] `**Diferida al uso diario:** <motivo>`: sin resultado no bloquea M16 ni la puerta
 }
 export interface Previa {
   id: string;
@@ -62,7 +63,9 @@ export function manuales(texto: string): Manual[] {
     .filter((b) => b.startsWith('PRU-MAN'))
     .map((b) => {
       const m = b.match(/^(PRU-MAN-[A-Z0-9]+-\d{3})\s+\[([^\]]*)\]/);
+      const diferida = /\*\*Diferida al uso diario:\*\*[ \t]*(\S[^\n]*)/.exec(b)?.[1]?.trim();
       return {
+        ...(diferida ? { diferida } : {}),
         id: m?.[1] ?? b.split(/\s/)[0] ?? '',
         refs: (m?.[2] ?? '')
           .split(',')
@@ -206,8 +209,13 @@ export function cobertura(e: Entradas, lista: Prueba[], ids: Set<string>) {
   for (const f of fs) {
     if (!ex(f.ft)) continue;
     const cas = casDe(f.ft);
-    const pend = man
-      .filter((m) => m.refs.some((r) => cas.has(r)) && ult.get(m.id)?.resultado !== 'pasa')
+    const suyos = man.filter((m) => m.refs.some((r) => cas.has(r)));
+    // [CH-219] Una manual diferida al uso diario sin resultado no bloquea; una falla registrada sí
+    const diferidas = suyos.filter((m) => m.diferida && !ult.has(m.id));
+    for (const m of diferidas)
+      avisos.push(`M16 ${f.ft}: ${m.id} diferida al uso diario, no bloquea (${m.diferida})`);
+    const pend = suyos
+      .filter((m) => ult.get(m.id)?.resultado !== 'pasa' && !diferidas.includes(m))
       .map((m) => {
         const u = ult.get(m.id);
         return `${m.id} (${u ? `falló el ${u.fecha}` : 'sin resultado'})`;

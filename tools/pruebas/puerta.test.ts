@@ -1,4 +1,5 @@
-// PRU-SEG-OPER-114 a PRU-SEG-OPER-120 (TA-485, CH-211): `pnpm pruebas:puerta`, una prueba por condición de 07 §30.
+// PRU-SEG-OPER-114 a PRU-SEG-OPER-120 (TA-485, CH-211): `pnpm pruebas:puerta`, una prueba por condición de 07 §30;
+// PRU-SEG-OPER-122 (CH-219): manuales diferidas al uso diario.
 // Todo sale de datos de prueba armados acá: nunca lee pruebas/manuales/resultados.md ni muestras-cobertura.json reales.
 import { describe, expect, it } from 'vitest';
 import { evaluar } from './puerta.ts';
@@ -28,6 +29,7 @@ const MIGRACION =
 /** La puerta abierta: cada prueba rompe una sola cosa sobre esta base. */
 const base = (): EntradasPuerta => ({
   matriz: { errores: [], fichasConManualPendiente: [], conCorrida: true },
+  diferidas: {},
   resultados: [
     '| Manual | Fecha | Dispositivo | Resultado | Quién | Versión | Nota |',
     ...FILAS,
@@ -249,5 +251,22 @@ describe('PRU-SEG-OPER pruebas:puerta', () => {
     // Otros errores de la matriz son de la condición 1
     const m1 = { ...e, matriz: { ...e.matriz, errores: ['M1 CA-10.1 sin prueba activa'] } };
     expect(c(m1, 7).estado).toBe('pasa');
+  });
+  it('PRU-SEG-OPER-122 [fila 2] CH-219: PRU-MAN-CONC-001 diferida al uso diario sin resultado no bloquea; sin diferir, o con una falla registrada, sigue bloqueando', () => {
+    const sinConc = sin(base(), 'PRU-MAN-CONC-001');
+    expect(c(sinConc, 2).estado).toBe('falla');
+    expect(c(sinConc, 2, true).estado).toBe('manual pendiente');
+    const diferida = { ...sinConc, diferidas: { 'PRU-MAN-CONC-001': 'uso diario (CH-219)' } };
+    expect(c(diferida, 2).estado).toBe('pasa');
+    expect(evaluar(diferida, false).map((x) => x.estado)).toEqual(Array(7).fill('pasa'));
+    // Diferir una manual no exime a las demás de SP-01
+    const sin003 = sin(diferida, 'PRU-MAN-BAND-003');
+    expect(c(sin003, 2).estado).toBe('falla');
+    expect(motivos(sin003, 2)).toContain('PRU-MAN-BAND-003 sin resultado');
+    expect(motivos(sin003, 2)).not.toContain('PRU-MAN-CONC-001');
+    // Una falla registrada de la diferida falla, también al simular
+    const fallo = con(diferida, fila('PRU-MAN-CONC-001', 'falla', 'no reconoce', '2026-11-06'));
+    expect(c(fallo, 2, true).estado).toBe('falla');
+    expect(motivos(fallo, 2)).toContain('PRU-MAN-CONC-001: el último resultado');
   });
 });
