@@ -239,7 +239,7 @@ describe('PRU-INT-CTA', () => {
       expect((await lanzado(consulta)).categoria).toBe('NO_AUTORIZADO');
   });
 
-  it('PRU-INT-CTA-321 [CH-224, Q-cuentas, Q-detalleCuenta, FORM-cuenta] cuentas(), detalleCuenta() y formulario(cuenta) traen el subtipoEfectivo guardado de cada cuenta de efectivo, y solo de ellas', async () => {
+  it('PRU-INT-CTA-321 [Q-cuentas, Q-detalleCuenta, FORM-cuenta] CH-224: cuentas(), detalleCuenta() y formulario(cuenta) traen el subtipoEfectivo guardado de cada cuenta de efectivo, y solo de ellas', async () => {
     const deps: DepsConsulta = {
       memoria: new Memoria(),
       sesion: sesionDe({ sub: USUARIO, aal: 'aal2' }),

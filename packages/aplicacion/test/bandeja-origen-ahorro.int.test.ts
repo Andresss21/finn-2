@@ -78,7 +78,7 @@ describe('PRU-INT-BAND', () => {
     );
   });
 
-  it('PRU-INT-BAND-200 [CH-224, BE-41] con el último pago desde una cuenta de ahorro, la propuesta es el pago anterior desde una corriente; si solo hay pagos desde el ahorro, no hay propuesta y la aprobación pide el origen', async () => {
+  it('PRU-INT-BAND-200 CH-224 BE-41: con el último pago desde una cuenta de ahorro, la propuesta es el pago anterior desde una corriente; si solo hay pagos desde el ahorro, no hay propuesta y la aprobación pide el origen', async () => {
     const lista = await bandeja(consulta);
     const visa = lista.movimientos.find((m) => m.id === uuid(5201));
     const master = lista.movimientos.find((m) => m.id === uuid(5202));

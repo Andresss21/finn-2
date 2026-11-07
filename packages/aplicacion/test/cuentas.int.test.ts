@@ -584,7 +584,7 @@ describe('PRU-INT-CTA', () => {
     return b.id;
   };
 
-  it('PRU-INT-CTA-320 [CH-224, OP-01] OP-01 guarda cada subtipo de efectivo; sin subtipo queda corriente (CH-229) y la repetición es ya aplicada; el contrato rechaza la billetera con institución o últimos 4 y el subtipo fuera del efectivo', async () => {
+  it('PRU-INT-CTA-320 CH-224 OP-01: OP-01 guarda cada subtipo de efectivo; sin subtipo queda corriente (CH-229) y la repetición es ya aplicada; el contrato rechaza la billetera con institución o últimos 4 y el subtipo fuera del efectivo', async () => {
     for (const [n, s] of [
       [1320, 'corriente'],
       [1321, 'ahorro'],
@@ -621,7 +621,7 @@ describe('PRU-INT-CTA', () => {
     expect(await subtipoDe(1325)).toBeUndefined();
   });
 
-  it('PRU-INT-CTA-320 [CH-224, OP-02] OP-02 cambia el subtipo con lo esperado y conserva el actual si no llega; pasar a billetera exige quitar institución y últimos 4 en la misma edición', async () => {
+  it('PRU-INT-CTA-320 CH-224 OP-02: OP-02 cambia el subtipo con lo esperado y conserva el actual si no llega; pasar a billetera exige quitar institución y últimos 4 en la misma edición', async () => {
     const institucionId = await bac();
     await ejecutar(OP01, efectivo(1330, { institucionId, ultimos4: '4321' }));
     const cuentaId = uuid(1330);

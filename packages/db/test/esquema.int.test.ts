@@ -403,7 +403,7 @@ async function rechazo(c: pg.Client, sql: string): Promise<string> {
 
 describe('PRU-ESQ-ESQ', () => {
   const base = crearBasePrueba();
-  it('PRU-ESQ-ESQ-110 [CH-224, MIG-16] m_cuentas_subtipo_efectivo: las cuentas de efectivo anteriores quedan en corriente; efectivo sin subtipo, tarjeta con subtipo y billetera con institución o últimos 4 fallan por sus CHECK', async () => {
+  it('PRU-ESQ-ESQ-110 CH-224 MIG-16 m_cuentas_subtipo_efectivo: las cuentas de efectivo anteriores quedan en corriente; efectivo sin subtipo, tarjeta con subtipo y billetera con institución o últimos 4 fallan por sus CHECK', async () => {
     const dir = fileURLToPath(new URL('../prisma/migrations/', import.meta.url));
     const carpeta = readdirSync(dir).filter((d) => d.endsWith('_m_cuentas_subtipo_efectivo'));
     expect(carpeta).toHaveLength(1);

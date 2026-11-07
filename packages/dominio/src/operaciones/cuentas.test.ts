@@ -714,7 +714,7 @@ describe('PRU-DOM-CTA-320: subtipo de la cuenta de efectivo (CH-224; 04 OP-01, O
   const subtipoDe = (r: ResultadoAplicar, k: string) =>
     exito(r).hechosNuevos.cuentas.find((x) => x.id === k)?.subtipoEfectivo;
 
-  it('PRU-DOM-CTA-320 [CH-224, OP-01@dom] crear con cada subtipo; sin subtipo, corriente (CH-229); fuera del efectivo, null; una billetera con institución o últimos 4 no llega al dominio', () => {
+  it('PRU-DOM-CTA-320 CH-224 OP-01@dom: crear con cada subtipo; sin subtipo, corriente (CH-229); fuera del efectivo, null; una billetera con institución o últimos 4 no llega al dominio', () => {
     for (const s of ['corriente', 'ahorro', 'billetera'] as const) {
       const r = ejecutar(base(), crear('N', 'efectivo', {}, { subtipoEfectivo: s }));
       expect(exito(r).cambios[0]).toEqual({
@@ -737,7 +737,7 @@ describe('PRU-DOM-CTA-320: subtipo de la cuenta de efectivo (CH-224; 04 OP-01, O
       ).toThrow(TypeError);
   });
 
-  it('PRU-DOM-CTA-320 [CH-224, OP-02@dom] editar a cada subtipo; sin subtipo conserva el actual; pasar a billetera exige quitar institución y últimos 4 en la misma edición', () => {
+  it('PRU-DOM-CTA-320 CH-224 OP-02@dom: editar a cada subtipo; sin subtipo conserva el actual; pasar a billetera exige quitar institución y últimos 4 en la misma edición', () => {
     const ahorro = editar('E', { subtipoEfectivo: 'ahorro' });
     expect(exito(ahorro).cambios).toEqual([
       { tipo: 'actualizar', tabla: 'cuentas', id: 'E', campos: { subtipoEfectivo: 'ahorro' } },
