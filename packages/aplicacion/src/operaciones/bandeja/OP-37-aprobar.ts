@@ -40,6 +40,9 @@ export const OP37: DefinicionOperacion<EntradaOp37, Resuelto, SalidaAprobada> = 
     operacion: 'OP-37',
     ...aprobacionDe(r, r.entrada, instante, ids),
     ...(r.entrada.categoriaId === undefined ? {} : { categoriaId: r.entrada.categoriaId }),
+    ...(r.entrada.transaccionOriginalId === undefined
+      ? {}
+      : { transaccionOriginalId: r.entrada.transaccionOriginalId }),
   }),
   salida: (resultado, { movimiento }) =>
     salidaAprobada(resultado.hechosNuevos, {

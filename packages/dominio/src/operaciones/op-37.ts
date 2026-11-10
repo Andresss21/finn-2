@@ -79,18 +79,21 @@ function ejecutarTipo(
         tarjetaId: cuentaId,
       });
     case 'devolucion': {
-      // OP-33a si las líneas traen `lineaOriginalId` (todas de la misma compra); si no, OP-33b.
+      // CH-226: con la compra elegida, OP-33a sobre ella con el reparto de las líneas; si no, la de las líneas que traen
+      // `lineaOriginalId` (todas de la misma compra) y, sin ninguna, OP-33b.
       const [l, ...resto] = lineas;
-      const original = antes.hechos.lineas.find((y) => y.id === l?.lineaOriginalId);
-      if (original === undefined) {
+      const transaccionOriginalId =
+        x.transaccionOriginalId ??
+        antes.hechos.lineas.find((y) => y.id === l?.lineaOriginalId)?.transaccionId;
+      if (transaccionOriginalId === undefined) {
         if (l?.categoriaId == null || resto.length > 0)
           return { codigo: 'linea_sin_destino', datos: { lineaId: (resto[0] ?? l)?.id ?? v.id } };
         return op33(antes, { operacion: 'OP-33', ...comun, cuentaId, categoriaId: l.categoriaId });
       }
       const sin = lineas.find((y) => y.lineaOriginalId === null);
-      if (sin !== undefined) return { codigo: 'linea_sin_destino', datos: { lineaId: sin.id } };
+      if (sin !== undefined || l === undefined)
+        return { codigo: 'linea_sin_destino', datos: { lineaId: sin?.id ?? v.id } };
       const reparto = lineas.map((y) => ({ lineaId: y.lineaOriginalId as H.Uuid, monto: y.monto }));
-      const transaccionOriginalId = original.transaccionId;
       return op33(antes, {
         operacion: 'OP-33',
         ...comun,

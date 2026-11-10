@@ -735,3 +735,41 @@ describe('PRU-DOM-BAND-103: aprobar todos, descartar, reglas, reprocesar y crear
     expect(deQ).toMatchObject([{ fechaEsperada: f('2027-03-12'), estado: 'emparejada' }]);
   });
 });
+
+// ── PRU-DOM-BAND-120: devolución por SMS vinculada a la compra elegida (04 OP-37, CH-226) ──
+
+describe('PRU-DOM-BAND-120: OP-37 devolución con la compra elegida', () => {
+  it('PRU-DOM-BAND-120 [] (CH-226, OP-37) con transaccionOriginalId aplica OP-33a con el reparto de las líneas; una línea sin lineaOriginalId da linea_sin_destino; sin compra, OP-33b', () => {
+    const lineaR = H0.lineas.find((l) => l.transaccionId === 'R')?.id as Uuid;
+    const dev = mov('pendiente', { tipoPropuesto: 'devolucion', monto: c(20) });
+    const conCompra = { transaccionOriginalId: id('R') };
+    const sobreR = (monto: number) => linea(monto, { categoriaId: null, lineaOriginalId: lineaR });
+    const filas = (r: ResultadoAplicar) =>
+      en(r, 'lineas').map((x) => (x.tipo === 'insertar' ? x.fila : undefined));
+    // OP-33a: la devolución queda vinculada a R, con una línea por cada línea del movimiento
+    const r = ap(H0, aprobar(dev, [sobreR(20)], conCompra));
+    expect(en(r, 'transacciones')[0]).toMatchObject({
+      fila: { id: 'TX', tipo: 'devolucion', origen: 'sms', total: c(20), horaRegistro: RECIBIDO },
+    });
+    expect(filas(r)).toMatchObject([
+      { transaccionId: 'TX', monto: c(20), categoriaId: null, lineaOriginalId: lineaR },
+    ]);
+    expect(PM(r)[0]).toMatchObject({ campos: { estado: 'aprobado', transaccionId: 'TX' } });
+    // Con la compra elegida, una línea sin lineaOriginalId no tiene destino
+    expect(rechazo(ap(H0, aprobar(dev, [linea(20)], conCompra)))).toEqual({
+      codigo: 'linea_sin_destino',
+      datos: { lineaId: 'ML1' },
+    });
+    // Rigen las precondiciones de OP-33a: más que lo que queda de la compra
+    const grande = mov('pendiente', { tipoPropuesto: 'devolucion', monto: c(60) });
+    expect(codigo(ap(H0, aprobar(grande, [sobreR(60)], conCompra)))).toBe(
+      'devolucion_mayor_que_total',
+    );
+    // Sin compra: OP-33b, una línea a la categoría
+    const b = ap(H0, aprobar(dev, [linea(20)]));
+    expect(en(b, 'transacciones')[0]).toMatchObject({
+      fila: { tipo: 'devolucion', total: c(20) },
+    });
+    expect(filas(b)).toMatchObject([{ monto: c(20), categoriaId: 'SUPER', lineaOriginalId: null }]);
+  });
+});

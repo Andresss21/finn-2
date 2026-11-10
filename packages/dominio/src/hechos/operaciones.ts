@@ -481,6 +481,8 @@ export interface AprobacionMovimiento {
 export interface ComandoOp37 extends MovimientoConLineas, AprobacionMovimiento {
   readonly operacion: 'OP-37';
   readonly categoriaId?: Uuid;
+  /** CH-226: solo en una devolución, la compra que se devuelve (OP-33a con el reparto de las líneas). */
+  readonly transaccionOriginalId?: Uuid;
 }
 /** OP-40: para rechazar una coincidencia, la bandeja y el texto del SMS (duplicados, §4.17). */
 export type ComandoOp40 = MovimientoConLineas & { readonly operacion: 'OP-40' } & (

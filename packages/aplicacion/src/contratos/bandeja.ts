@@ -70,12 +70,14 @@ const APROBACION = {
 
 /**
  * OP-37 Aprobar movimiento. Con `categoriaId` es la variante "aprobar con categoría" (CF-21): trae las líneas que vio la
- * lista en `esperado` y no admite `recordarRegla`.
+ * lista en `esperado` y no admite `recordarRegla`. **[CH-226]** `transaccionOriginalId`, solo en una devolución: la compra
+ * que se devuelve.
  */
 export const op37 = z
   .object({
     ...APROBACION,
     categoriaId: uuid.optional(),
+    transaccionOriginalId: uuid.optional(),
     esperado: z.object({ lineas: z.array(lineaVista) }).optional(),
   })
   .superRefine((e, ctx) => {

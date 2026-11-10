@@ -8,6 +8,7 @@ import { vistaDe } from '../../componentes/dominio/vista-movimiento';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
+import { aCandidata } from './campos';
 import { FormularioMovimiento } from './formulario';
 import type { NavegacionDelPanel } from './panel-navegacion';
 
@@ -101,6 +102,11 @@ export async function LectorMovimiento({
       cuentas={cuentas}
       categorias={categorias}
       deudores={deudores}
+      // CH-226: «Hoy» y «Ayer» son fechas de negocio del servidor; las candidatas, las de una devolución (CH-30)
+      hoy={dto.hoy}
+      candidatas={('candidatas' in dto.contexto ? (dto.contexto.candidatas ?? []) : []).map(
+        aCandidata,
+      )}
       traspaso={traspaso}
       {...(categoriaSoltada !== undefined && categorias.some((c) => c.id === categoriaSoltada)
         ? { categoriaSoltada }
