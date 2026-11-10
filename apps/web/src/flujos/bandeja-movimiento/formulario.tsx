@@ -15,6 +15,7 @@ import {
   type ComponentProps,
   type ReactNode,
 } from 'react';
+import type { FechaLocal } from '@finn/dominio/valores';
 import { useFieldArray } from 'react-hook-form';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
@@ -30,6 +31,7 @@ import {
   editarMovimiento,
   resolverCoincidencia,
 } from '../../servidor/acciones/bandeja';
+import { buscarComprasDevolucion } from '../../servidor/lecturas/interactivas';
 import { bandeja as t } from '../../textos/bandeja';
 import { formularios } from '../../textos/formularios';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
@@ -45,8 +47,10 @@ import {
   conCategoriaSoltada,
   contrato,
   entradaDeEdicion,
+  extrasDeAprobar,
   ofreceRecordar,
   type Campos,
+  type CompraCandidata,
 } from './campos';
 
 interface Referencia {
@@ -83,6 +87,10 @@ export interface PropsFormularioMovimiento {
   readonly cuentas: readonly CuentaDelMovimiento[];
   readonly categorias: readonly Referencia[];
   readonly deudores: readonly Referencia[];
+  /** CH-226 (A12): el `hoy` del servidor, del que salen «Hoy» y «Ayer». */
+  readonly hoy: FechaLocal;
+  /** CH-226 (D8): las compras candidatas de una devolución, ya formateadas. */
+  readonly candidatas: readonly CompraCandidata[];
 }
 
 interface Previsualizacion extends VistaDeImpacto {
@@ -154,6 +162,8 @@ function Flujo({
   categoriaSoltada,
   marco,
   navegacion,
+  hoy,
+  candidatas,
 }: PropsFormularioMovimiento & { readonly marco: Marco }) {
   const [aMano, setAMano] = useState(false); // «Registrar a mano»: un SMS que no se leyó pasa a sus campos
   const [siguienteId] = useState(() => navegacion?.siguiente); // el que seguía al abrir: la lista ya no trae este movimiento al aprobar
@@ -172,7 +182,10 @@ function Flujo({
   const aprobar = ['enviando', 'confirmando', 'listo'].includes(coincide.estado)
     ? coincide
     : aprobarSolo;
-  const inicial = useMemo(() => camposIniciales(movimiento.esperado), [movimiento.esperado]);
+  const inicial = useMemo(
+    () => camposIniciales(movimiento.esperado, movimiento.origenId),
+    [movimiento.esperado, movimiento.origenId],
+  );
   // Con una categoría soltada, el formulario la muestra en la línea; `base` sigue siendo lo que hay en el servidor
   const valores = useMemo(
     () =>
@@ -206,7 +219,8 @@ function Flujo({
   const entradaDeAprobar = (campos: Campos, confirmando: boolean): Record<string, unknown> => ({
     ...(confirmando ? { decision: 'confirmar_coincidencia' } : {}),
     movimientoId: movimiento.id,
-    ...(movimiento.origenId === undefined ? {} : { origenId: movimiento.origenId }),
+    // El origen elegido de un pago (BE-41, preseleccionado) o la compra de una devolución (CH-226)
+    ...extrasDeAprobar(campos),
     ...(recordar && ofreceRecordar(campos) ? { recordarRegla: true } : {}),
   });
 
@@ -429,6 +443,9 @@ function Flujo({
             deudores={deudores}
             deLasPartes={deLasPartes}
             ayuda={ayuda}
+            hoy={hoy}
+            candidatas={candidatas}
+            buscarCompras={buscarComprasDevolucion}
           />
         </Suspense>
         {ofreceRecordar(c) ? (

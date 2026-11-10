@@ -48,17 +48,24 @@ export async function cargarMovimiento(tx: LectorTx, id: Uuid): Promise<Contexto
 
 /**
  * `resolver`: un movimiento inexistente solo llega de `previsualizar` (`confirmar` responde `no_encontrado` antes). Si
- * se aprueba, un pago de tarjeta pide la cuenta de la que salió, que el SMS no informa (04 OP-37).
+ * se aprueba, un pago de tarjeta pide la cuenta de la que salió, que el SMS no informa (04 OP-37), y solo una devolución
+ * se vincula a una compra (CH-226).
  */
 export async function resolverMovimiento(
   tx: LectorTx,
   id: Uuid,
-  aprobando?: { readonly origenId?: Uuid | undefined },
+  aprobando?: {
+    readonly origenId?: Uuid | undefined;
+    readonly transaccionOriginalId?: Uuid | undefined;
+  },
 ): Promise<ContextoMovimiento> {
   const c = await cargarMovimiento(tx, id);
   if (c === null) throw new ErrorValidacion('movimientoId', 'Este movimiento ya no existe.');
-  if (aprobando && c.movimiento.tipoPropuesto === 'pago_tarjeta' && !aprobando.origenId)
+  const tipo = c.movimiento.tipoPropuesto;
+  if (aprobando && tipo === 'pago_tarjeta' && !aprobando.origenId)
     throw new ErrorValidacion('origenId', 'Elegí de qué cuenta salió el pago.');
+  if (aprobando?.transaccionOriginalId !== undefined && tipo !== 'devolucion')
+    throw new ErrorValidacion('transaccionOriginalId', 'Solo una devolución va con su compra.');
   return c;
 }
 
