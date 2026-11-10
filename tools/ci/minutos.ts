@@ -126,7 +126,10 @@ export function renRojo(desde: string | null, hoy: Date): string | null {
  * CH-233 (07 §6.6): CT temporal. Hasta `hasta` inclusive (día UTC), FINN_REN_ROJO de más de 7 días avisa en `rapido`
  * en lugar de fallar; desde el día siguiente vuelve a fallar sin tocar nada. Los presupuestos no cambian (TA-554).
  */
-export const PRORROGA_REN_ROJO: { hasta: string; ch: string } = { hasta: '2026-11-24', ch: 'CH-233' };
+export const PRORROGA_REN_ROJO: { hasta: string; ch: string } = {
+  hasta: '2026-11-24',
+  ch: 'CH-233',
+};
 
 /** `rapido`: null sin rojo persistente; si no, el texto y si falla (después de la prórroga) o solo avisa. */
 export function renRojoEnRapido(
