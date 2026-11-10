@@ -1321,6 +1321,7 @@ CH-224 | D | 08 §7, 03 §3.4, 04 OP-01/02, BE-41: subtipo de la cuenta de efect
 CH-224-ui | D | 08 CH-224 (f): segmentado, billetera e identidad por subtipo [CH-224]
 MIG-16 | D | 03 §3.4 y Enmiendas: m_cuentas_subtipo_efectivo (CH-224)
 CH-225 | D | 08 §7, 06-identidad-visual §2.9: 8 colores de tarjeta y cara por el color guardado [CH-225]
+CH-228 | D | 08 §7, 04 §6.6: color de la tarjeta en el detalle de cuenta; el color se elige solo al crear [CH-228]
 CH-226a | D | 08 CH-226 (a), 04 §6.9.2: asignado por período en tendencia [CH-226]
 CH-226b | D | 08 CH-226 (b), 04 OP-37: transaccionOriginalId en la devolución de Revisar [CH-226]
 CH-227a | D | 08 CH-227 (a), 06-identidad-visual §3.1: barra de las pantallas de Más secciones [CH-227]

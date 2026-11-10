@@ -2,6 +2,7 @@
 // Una fila de `/bandeja` con «Aprobar», «Es otro gasto» y «Descartar» de un toque (FT-35, FT-37, FE-24, FE-25, 05 §4.14, §4.15),
 // cada acción con su propio `useOperacion`. Si el servidor pide confirmar o datos al aprobar, traspasa al flujo
 // `/bandeja/[movimientoId]`; si no, el resultado dice lo que se hizo (CP-15) y, al descartar, ofrece «Restaurar» (OP-39).
+// [CH-220 C2] Al aprobar, la fila sale (240 ms) y el resultado entra en el mismo lugar con `fz-pop-in`; sin «Deshacer».
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import { useEffect, useRef } from 'react';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
@@ -12,6 +13,7 @@ import {
   type AccionBandeja,
   type MovimientoDto,
 } from '../../../componentes/dominio/movimiento-bandeja';
+import { useSalida } from '../../../componentes/movimiento/use-salida';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { textoAprobado, type ValorAprobado } from '../../../flujos/bandeja-movimiento/aprobado';
 import { textoDescartado, type ResultadoFila } from '../../../flujos/bandeja-movimiento/descarte';
@@ -81,6 +83,15 @@ export function FilaBandeja({
   const ultimoSoltado = useRef(0);
   const porArrastre = useRef<string | undefined>(undefined);
   const origenId = m.origenPropuesto?.id;
+  // El resultado de aprobar espera a que la fila termine de salir.
+  const aprobado = useRef<ResultadoFila | undefined>(undefined);
+  const salida = useSalida(() => {
+    alTerminar(m.id, aprobado.current);
+  }, '--duracion-salida-fila');
+  const salirFila = useRef(salida.salir);
+  useEffect(() => {
+    salirFila.current = salida.salir;
+  });
 
   // FT-78: soltar sobre una categoría es una sola llamada a OP-37 con `{ categoriaId }` y las líneas que vio la lista
   useEffect(() => {
@@ -109,8 +120,10 @@ export function FilaBandeja({
     else if (estado === 'error' && error !== undefined) {
       if (necesitaElFlujo(error, porArrastre.current !== undefined)) traspasar();
       else alTerminar(m.id, undefined);
-    } else if (estado === 'listo' && exito !== undefined)
-      alTerminar(m.id, { tipo: 'aprobado', valor: exito.valor as ValorAprobado });
+    } else if (estado === 'listo' && exito !== undefined) {
+      aprobado.current = { tipo: 'aprobado', valor: exito.valor as ValorAprobado };
+      salirFila.current();
+    }
   }, [estado, error, exito, m.id, hrefRevisar, alTerminar]);
 
   // Descartar deja el resultado en el lugar de la fila; restaurar lo quita (la revalidación la devuelve a la lista)
@@ -124,14 +137,16 @@ export function FilaBandeja({
 
   if (resultado?.tipo === 'aprobado')
     return (
-      <Resultado
-        texto={textoAprobado(resultado.valor)}
-        enlace={
-          <EnlaceFinn href={`/actividad/${resultado.valor.transaccionId}`}>
-            {t.verTransaccion}
-          </EnlaceFinn>
-        }
-      />
+      <div data-resultado-entra className="fz-resultado-entra">
+        <Resultado
+          texto={textoAprobado(resultado.valor)}
+          enlace={
+            <EnlaceFinn href={`/actividad/${resultado.valor.transaccionId}`}>
+              {t.verTransaccion}
+            </EnlaceFinn>
+          }
+        />
+      </div>
     );
   if (resultado?.tipo === 'descartado')
     return (
@@ -182,12 +197,17 @@ export function FilaBandeja({
   const mensaje = fallida?.error;
   return (
     <>
-      <MovimientoBandeja
-        movimiento={m}
-        hrefRevisar={hrefRevisar}
-        alAccionar={alAccionar}
-        ranuraAsa={conArrastre === true && m.aprobacion.arrastrable === true}
-      />
+      <div
+        {...(salida.saliendo ? { 'data-saliendo': '', className: 'fz-fila-sale' } : {})}
+        onAnimationEnd={salida.saliendo ? salida.alTerminarAnimacion : undefined}
+      >
+        <MovimientoBandeja
+          movimiento={m}
+          hrefRevisar={hrefRevisar}
+          alAccionar={alAccionar}
+          ranuraAsa={conArrastre === true && m.aprobacion.arrastrable === true}
+        />
+      </div>
       {reprocesar.estado === 'listo' || copia !== 'nada' ? (
         <p role="status" className="px-4 pb-3.5 text-cuerpo-pequeno text-texto-secundario">
           {copia === 'copiada'

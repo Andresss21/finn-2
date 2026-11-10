@@ -213,8 +213,43 @@ describe('PRU-CMP-PWA', () => {
     await sinAct(async () => {
       await userEvent.keyboard('{Escape}');
     });
-    expect(nodo.querySelector('[role=menu]')).toBeNull();
+    // [CH-220 C1] El menú sale con su animación y recién después se desmonta.
+    await vi.waitFor(() => {
+      expect(nodo.querySelector('[role=menu]')).toBeNull();
+    });
     expect(boton?.getAttribute('aria-expanded')).toBe('false');
     expect(document.activeElement).toBe(boton);
+  });
+});
+
+describe('PRU-CMP-PWA sin conexión', () => {
+  it('PRU-CMP-PWA-340 [] sin conexión, la banda compacta va en --texto sobre --fondo con la nube tachada y el radio de control', () => {
+    const enLinea = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const raiz = montar(
+      '/presupuesto',
+      '',
+      <main>
+        <h1>Presupuesto</h1>
+      </main>,
+    );
+    const banda = raiz.querySelector('[data-sin-conexion]') as HTMLElement;
+    expect(banda.getAttribute('role')).toBe('status');
+    expect(banda.textContent).toBe(navegacion.sinConexion);
+    expect(banda.querySelector('[data-icono="wifioff"]')).not.toBeNull();
+    const sonda = document.createElement('span');
+    sonda.style.cssText = 'color: var(--texto); background-color: var(--fondo)';
+    document.body.append(sonda);
+    const e = getComputedStyle(banda);
+    expect(e.backgroundColor).toBe(getComputedStyle(sonda).color);
+    expect(e.color).toBe(getComputedStyle(sonda).backgroundColor);
+    sonda.remove();
+    const radio = document.createElement('span');
+    radio.style.borderRadius = 'var(--radio-control)';
+    document.body.append(radio);
+    expect(e.borderTopLeftRadius).toBe(getComputedStyle(radio).borderTopLeftRadius);
+    radio.remove();
+    expect(e.paddingTop).toBe('10px');
+    expect(e.paddingLeft).toBe('14px');
+    enLinea.mockRestore();
   });
 });

@@ -2,6 +2,7 @@ import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import '../../../../app/globals.css';
 import { menuDe } from './acciones';
 import { PantallaDetalleCuenta } from './pantalla';
@@ -652,5 +653,51 @@ describe('PRU-CMP-CTA-260 detalle de cuenta portado del export (CH-142)', () => 
       (a) => a.textContent === 'Registrar con esta cuenta',
     );
     expect(registrar?.getAttribute('href')).toBe('/registrar/gasto?cuenta=k');
+  });
+});
+
+describe('PRU-CMP-CTA tabla de amortización', () => {
+  it('PRU-CMP-CTA-350 [] el préstamo muestra las cuotas alrededor de la actual, marcada sobre la superficie hundida, y «Ver tabla completa» las muestra todas', async () => {
+    const prestamo = {
+      condiciones: {
+        contraparte: 'Banco',
+        montoOriginal: 600000,
+        cuotaPactada: 21000,
+        plazoCuotas: 12,
+      },
+      capitalPendiente: 421000,
+      comparacion: null,
+      costoFinanciero: { interes: 1200, seguro: 300 },
+      amortizacion: Array.from({ length: 12 }, (_, i) => ({
+        numero: i + 1,
+        fecha: '2027-01-20',
+        interes: 5000,
+        seguro: 350,
+        capital: 15650,
+        saldo: 400000 - i * 1000,
+        estado: i < 5 ? 'pagada' : 'pendiente',
+        pagado: i < 5 ? 21000 : 0,
+      })),
+    };
+    const raiz = mostrar(dto({ cuenta: cuentaDe('prestamo'), prestamo }));
+    const filas = () => [...raiz.querySelectorAll('[data-bloque="prestamo"] tbody tr')];
+    // Seis cuotas (de la 5 a la 10) y la fila del botón.
+    expect(filas()).toHaveLength(7);
+    expect(filas()[0]?.querySelector('td')?.textContent).toBe('5');
+    const actual = raiz.querySelector('tbody tr[aria-current="step"]') as HTMLElement;
+    expect(actual.querySelector('td')?.textContent).toBe('6');
+    const sonda = document.createElement('span');
+    sonda.style.backgroundColor = 'var(--superficie-hundida)';
+    document.body.append(sonda);
+    expect(getComputedStyle(actual).backgroundColor).toBe(getComputedStyle(sonda).backgroundColor);
+    sonda.remove();
+    const ver = [...raiz.querySelectorAll('button')].find((b) =>
+      b.textContent.startsWith('Ver tabla completa'),
+    ) as HTMLButtonElement;
+    expect(ver.textContent).toBe('Ver tabla completa (12 cuotas)');
+    await act(async () => {
+      await userEvent.click(ver);
+    });
+    expect(filas()).toHaveLength(12);
   });
 });

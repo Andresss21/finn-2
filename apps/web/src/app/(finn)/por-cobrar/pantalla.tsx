@@ -111,7 +111,7 @@ function TarjetaDeudor({ d }: { readonly d: Deudor }) {
           {primera === undefined ? '' : ` · ${t.desde(formatearFecha(primera.fechaOrigen))}`}
         </span>
         <span data-deuda-abierta>
-          <Monto centavos={d.abierto} rol="cifra" estado="informacion" presentacion="absoluto" />
+          <Monto centavos={d.abierto} rol="cifra" estado="positivo" presentacion="absoluto" />
         </span>
       </p>
       <ul className="flex flex-col">

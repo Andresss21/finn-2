@@ -13,22 +13,13 @@ import { formatearFechaTexto } from '../../../formato';
 import { gestionarProgramada } from '../../../servidor/acciones/programadas';
 import { programadas as t } from '../../../textos/programadas';
 import { Activar } from './activar';
+import { InsigniaDeFecha } from '../../../componentes/dominio/insignia-fecha';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const CONTENEDOR =
   'flex flex-col divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1';
 const FILA = `flex min-h-17 items-center gap-3 px-4 py-3 ${FOCO}`;
 const BOTON = `inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-control bg-superficie-hundida px-4 font-semibold text-texto ${FOCO}`;
-
-function InsigniaDeFecha({ fecha }: { readonly fecha: string }) {
-  const [dia, mes] = formatearFechaTexto(fecha).split(' ');
-  return (
-    <span className="flex w-10 shrink-0 flex-col items-center leading-tight" aria-hidden="true">
-      <span className="text-rotulo uppercase">{mes}</span>
-      <span className="text-cifra">{dia}</span>
-    </span>
-  );
-}
 
 export function PantallaProgramadas({
   dto,

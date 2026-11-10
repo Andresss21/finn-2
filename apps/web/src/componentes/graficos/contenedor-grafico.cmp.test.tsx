@@ -1,7 +1,7 @@
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { Centavos } from '@finn/dominio/valores';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import '../../app/globals.css';
 import { Monto } from '../dominio/monto';
@@ -17,6 +17,7 @@ import { VistaGrafico } from './vista-grafico';
 
 const montados: { raiz: Root; nodo: HTMLElement }[] = [];
 afterEach(async () => {
+  vi.restoreAllMocks();
   await page.viewport(414, 896);
   for (const { raiz, nodo } of montados.splice(0)) {
     act(() => {
@@ -144,5 +145,48 @@ describe('PRU-CMP-CTA contenedor de gráfico', () => {
       f === undefined ? '' : getComputedStyle(f).backgroundColor;
     expect(fondo(filas[1])).not.toBe(fondo(filas[0]));
     expect(filas[1]?.className).toContain('font-semibold');
+  });
+});
+
+describe('PRU-CMP-REP entrada de los gráficos', () => {
+  const segundos = (v: string) => Number(v.replace('s', ''));
+  it('PRU-CMP-REP-300 [] las barras crecen desde la base con 80 ms entre barras y la dona se dibuja por stroke-dashoffset en 800 ms', () => {
+    const raiz = montar(
+      <>
+        <GraficoBarras titulo="Barras" resumen="x" puntos={puntos} />
+        <GraficoDona titulo="Dona" resumen="x" porciones={porciones} />
+      </>,
+      390,
+    );
+    const barras = [...raiz.querySelectorAll('[data-punto] > g.fz-barra-sube')];
+    expect(barras).toHaveLength(2);
+    expect(barras.map((b) => getComputedStyle(b).animationName)).toEqual(['fz-barup', 'fz-barup']);
+    expect(
+      barras.map((b) => Math.round(segundos(getComputedStyle(b).animationDelay) * 1000)),
+    ).toEqual([0, 80]);
+    expect(segundos(getComputedStyle(barras[0] as Element).animationDuration)).toBeCloseTo(0.7, 3);
+    // Crece desde la base: el origen es el borde inferior de la propia barra.
+    expect(getComputedStyle(barras[0] as Element).transformBox).toBe('fill-box');
+    const revela = raiz.querySelector('mask circle.fz-dona-revela') as Element;
+    expect(getComputedStyle(revela).animationName).toBe('fz-dona');
+    expect(segundos(getComputedStyle(revela).animationDuration)).toBeCloseTo(0.8, 3);
+    expect(
+      raiz.querySelector('[data-grafico="dona"] g[mask]')?.querySelectorAll('[data-porcion]'),
+    ).toHaveLength(2);
+  });
+
+  it('PRU-CMP-REP-300 [] con movimiento reducido las barras y la dona están dibujadas desde el inicio', () => {
+    const anula = [...document.styleSheets]
+      .flatMap((h) => [...h.cssRules])
+      .filter((r): r is CSSMediaRule => r instanceof CSSMediaRule)
+      .find((r) => r.conditionText.includes('prefers-reduced-motion: reduce'));
+    const regla = anula?.cssRules[0] as CSSStyleRule;
+    expect(regla.style.getPropertyValue('animation-name')).toBe('none');
+    expect(regla.style.getPropertyPriority('animation-name')).toBe('important');
+    // Sin animación, la máscara queda con stroke-dashoffset 0: la dona entera.
+    const raiz = montar(<GraficoDona titulo="Dona" resumen="x" porciones={porciones} />, 390);
+    const revela = raiz.querySelector('mask circle.fz-dona-revela') as SVGCircleElement;
+    revela.style.animation = 'none';
+    expect(getComputedStyle(revela).strokeDashoffset).toBe('0px');
   });
 });

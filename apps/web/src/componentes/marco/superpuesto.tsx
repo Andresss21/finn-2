@@ -46,6 +46,7 @@ export function Superpuesto({
       titulo={titulo}
       alCerrar={alCerrar}
       forma={FORMAS[forma]}
+      movimiento={forma}
       {...(descripcion === undefined ? {} : { descripcion })}
       {...(agarradera === undefined ? {} : { agarradera })}
       {...(acciones === undefined ? {} : { acciones })}

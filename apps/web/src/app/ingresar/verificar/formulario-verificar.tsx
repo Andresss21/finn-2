@@ -1,11 +1,16 @@
 'use client';
 // `/ingresar/verificar` (05 §9.4, FE-38): el código de 6 dígitos. Sin envío automático al completarlo (WCAG 3.2.2): se
 // envía con el botón o con Enter. Con varios factores se elige por su nombre, con el primero preseleccionado.
-import { useEffect } from 'react';
+// [CH-221 b] Código incorrecto: el campo tiembla (380 ms) con el borde de problema. Verificado: un check y la navegación al
+// terminar la espera del token (650 ms). Con movimiento reducido, ni temblor ni espera.
+import { useEffect, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
 import { Boton } from '../../../componentes/base/boton';
 import { EntradaTexto } from '../../../componentes/base/campo';
+import { Icono } from '../../../componentes/base/icono';
+import { useMovimientoReducido } from '../../../componentes/movimiento/use-movimiento-reducido';
+import { duracionToken } from '../../../componentes/movimiento/use-salida';
 import { Seleccion } from '../../../componentes/base/seleccion';
 import { useFormularioFinn } from '../../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../../formularios/use-operacion';
@@ -54,12 +59,31 @@ export function FormularioVerificar({
   const { estado, error } = operacion;
   const pendiente = estado === 'enviando' || estado === 'listo';
 
+  const reducido = useMovimientoReducido();
   useEffect(() => {
-    if (estado === 'listo') window.location.assign(rutas.destino);
-  }, [estado, rutas]);
+    if (estado !== 'listo') return;
+    const reloj = setTimeout(
+      () => {
+        window.location.assign(rutas.destino);
+      },
+      reducido ? 0 : duracionToken('--espera-verificado'),
+    );
+    return () => {
+      clearTimeout(reloj);
+    };
+  }, [estado, rutas, reducido]);
   useEffect(() => {
     if (salida.estado === 'listo') window.location.assign(rutas.ingresar);
   }, [salida.estado, rutas]);
+
+  // Cada respuesta de error es un objeto nuevo: cada una vuelve a hacer temblar el campo (alterna dos nombres de animación).
+  const errorDeCodigo = error !== undefined && CODIGOS_DE_CODIGO.includes(error.codigo);
+  const [errorPrevio, setErrorPrevio] = useState(error);
+  const [temblores, setTemblores] = useState(0);
+  if (error !== errorPrevio) {
+    setErrorPrevio(error);
+    if (errorDeCodigo) setTemblores(temblores + 1);
+  }
 
   // CA-01.3: con un código incorrecto o vencido, el campo queda vacío y con el foco.
   useEffect(() => {
@@ -98,20 +122,44 @@ export function FormularioVerificar({
           }}
         />
       ) : null}
-      <EntradaTexto
-        etiqueta={t.codigo}
-        requerido
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        pattern="\d{6}"
-        {...(errorCodigo === undefined ? {} : { error: errorCodigo })}
-        {...register('codigo', {
-          setValueAs: normalizarCodigo,
-          onChange: (e: { target: HTMLInputElement }) => {
-            e.target.value = normalizarCodigo(e.target.value);
-          },
-        })}
-      />
+      <div
+        data-temblor={errorDeCodigo && temblores > 0 ? temblores : undefined}
+        className={
+          errorDeCodigo && temblores > 0 && !reducido
+            ? temblores % 2 === 1
+              ? 'fz-sacudida'
+              : 'fz-sacudida-otra'
+            : undefined
+        }
+      >
+        <EntradaTexto
+          etiqueta={t.codigo}
+          {...(errorDeCodigo ? { className: 'border-2 border-problema-borde' } : {})}
+          requerido
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="\d{6}"
+          {...(errorCodigo === undefined ? {} : { error: errorCodigo })}
+          {...register('codigo', {
+            setValueAs: normalizarCodigo,
+            onChange: (e: { target: HTMLInputElement }) => {
+              e.target.value = normalizarCodigo(e.target.value);
+            },
+          })}
+        />
+      </div>
+      {estado === 'listo' ? (
+        <p
+          role="status"
+          data-verificado
+          className="flex items-center gap-2 text-cuerpo font-semibold text-positivo-texto"
+        >
+          <span className="fz-pop-in inline-flex size-8 items-center justify-center rounded-pastilla bg-positivo-fondo">
+            <Icono nombre="check" tamano={18} />
+          </span>
+          {t.verificado}
+        </p>
+      ) : null}
       <Boton tipo="submit" enviando={pendiente} textoEnviando={t.verificando}>
         {t.verificar}
       </Boton>

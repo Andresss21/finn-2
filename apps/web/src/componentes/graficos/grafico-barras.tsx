@@ -7,6 +7,7 @@ import type { Centavos } from '@finn/dominio/valores';
 import { formatearMonto } from '../../formato';
 import { cuentas } from '../../textos/cuentas';
 import { Icono } from '../base/icono';
+import { indice } from '../movimiento/indice';
 
 export interface PuntoBarra {
   readonly clave: string;
@@ -63,7 +64,7 @@ export function GraficoBarras({ titulo, resumen, puntos }: PropsGraficoBarras) {
       data-grafico="barras"
     >
       <line x1="0" x2={ANCHO} y1={BASE} y2={BASE} className="stroke-grafico-rejilla" />
-      {puntos.map((p) => {
+      {puntos.map((p, i) => {
         const centro = (x(p.clave) ?? 0) + x.bandwidth() / 2;
         const izq = centro - ancho / 2;
         const alto = Math.max(0, BASE - y(p.valor));
@@ -87,21 +88,24 @@ export function GraficoBarras({ titulo, resumen, puntos }: PropsGraficoBarras) {
               />
             ) : (
               <>
-                <rect
-                  x={izq}
-                  y={y(p.valor)}
-                  width={ancho}
-                  height={alto}
-                  rx="8"
-                  className={relleno}
-                />
-                <rect
-                  x={izq}
-                  y={BASE - Math.min(8, alto)}
-                  width={ancho}
-                  height={Math.min(8, alto)}
-                  className={relleno}
-                />
+                {/* [CH-220 C10] La barra crece desde la base (700 ms, 80 ms entre barras). */}
+                <g className="fz-barra-sube" style={indice(i)}>
+                  <rect
+                    x={izq}
+                    y={y(p.valor)}
+                    width={ancho}
+                    height={alto}
+                    rx="8"
+                    className={relleno}
+                  />
+                  <rect
+                    x={izq}
+                    y={BASE - Math.min(8, alto)}
+                    width={ancho}
+                    height={Math.min(8, alto)}
+                    className={relleno}
+                  />
+                </g>
                 <text
                   x={centro}
                   y={Math.min(y(p.valor), y(p.referencia ?? p.valor)) - 7}
