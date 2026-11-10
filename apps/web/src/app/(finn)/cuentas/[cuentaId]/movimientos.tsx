@@ -128,7 +128,9 @@ export function Movimientos({
   return (
     <section data-movimientos className="flex flex-col gap-3">
       <div className="flex min-h-11 items-center justify-between gap-3">
-        <h2 className="text-titulo-seccion">{t.titulo}</h2>
+        <h2 className="text-titulo-seccion">
+          {dto.inversion === undefined ? t.titulo : cuentaDetalle.inversion.movimientos}
+        </h2>
         <EnlaceFinn href={`/actividad?cuenta=${id}`} className={ENLACE_ACTIVIDAD}>
           {cuentaDetalle.acciones.verEnActividad}
         </EnlaceFinn>

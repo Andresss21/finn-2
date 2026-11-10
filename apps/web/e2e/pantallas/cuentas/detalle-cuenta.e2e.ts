@@ -177,7 +177,7 @@ test.describe('PRU-E2E-CTA', () => {
     await esperarContenido(page);
     const cabecera = page.locator('[data-identidad="inversion"]');
     await esperarMonto(cabecera.locator('dd [data-centavos]').first(), 300000);
-    await expect(page.locator('[data-bloque="inversion"]')).toContainText('Aportes');
+    await expect(page.locator('[data-bloque="inversion"]')).toContainText('Aportado');
   });
 
   test('PRU-E2E-CTA-261 [Q-detalleCuenta] el detalle de un préstamo muestra la próxima cuota con Pagar, las condiciones con Editar, con controles de 44 px', async ({

@@ -165,8 +165,13 @@ export const cuentaDetalle = {
   inversion: {
     titulo: 'Inversión',
     valor: 'Valor',
-    aportes: 'Aportes',
-    retiros: 'Retiros',
+    aportes: 'Aportado',
+    retiros: 'Retirado',
     ajustes: 'Ajustes',
+    // A19: las tres acciones de FT-57 y el título de su lista
+    aporte: 'Aporte',
+    retiro: 'Retiro',
+    ajuste: 'Ajuste',
+    movimientos: 'Aportes, retiros y ajustes',
   },
 } as const;

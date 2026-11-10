@@ -1,6 +1,7 @@
 // Lector de `/registrar` (05 §2.4): llama a `cuentas()` y ofrece solo los tipos de registro que tienen la cuenta que necesitan: el gasto
 // pide una cuenta de efectivo o una tarjeta, el ingreso una de efectivo y la transferencia dos de efectivo. Sin cuentas, enlaza a
-// `/cuentas/nueva`. Los demás tipos (pagar tarjeta, cuota, cobro…) los agregan sus fichas. Lo único que traduce los errores de la
+// `/cuentas/nueva`. La devolución pide una cuenta de efectivo o una tarjeta (D4). Los demás tipos (pagar tarjeta, cuota, cobro…)
+// los agregan sus fichas. Lo único que traduce los errores de la
 // consulta es `consultar()`.
 import { cuentas } from '@finn/aplicacion/consultas/cuentas';
 import { Vacio } from '../../componentes/base/vacio';
@@ -12,6 +13,7 @@ import { registrarGasto as t } from '../../textos/registrar-gasto';
 import { registrarInversion as inv } from '../../textos/registrar-inversion';
 import { registrarDesembolso as d } from '../../textos/registrar-desembolso';
 import { registrarTarjeta as k } from '../../textos/registrar-tarjeta';
+import { registrarDevolucion as dev } from '../../textos/registrar-devolucion';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const FILA = `flex min-h-14 flex-col justify-center rounded-control bg-superficie px-4 py-2 ${FOCO}`;
@@ -72,6 +74,8 @@ export async function LectorRegistrar() {
     ...(dto.prestamos.length >= 1 && dto.efectivo.length >= 1
       ? [{ href: '/registrar/desembolso', ...d.tipo }]
       : []),
+    // FT-28 (D4): la devolución vuelve a una cuenta de efectivo o a una tarjeta, con o sin la compra original.
+    ...(conDinero >= 1 ? [{ href: '/registrar/devolucion', ...dev.tipo }] : []),
   ];
   return (
     <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre="/">
@@ -92,7 +96,7 @@ export async function LectorRegistrar() {
             {tipos.map((x) => (
               <li key={x.href}>
                 <EnlaceFinn href={x.href} className={FILA}>
-                  <span className="font-semibold">{x.titulo}</span>
+                  <span className="text-cuerpo font-bold">{x.titulo}</span>
                   <span className="text-cuerpo-pequeno text-texto-secundario">{x.detalle}</span>
                 </EnlaceFinn>
               </li>
