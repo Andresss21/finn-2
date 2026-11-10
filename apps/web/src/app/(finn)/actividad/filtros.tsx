@@ -71,7 +71,12 @@ export function FormularioFiltros({
       etiqueta,
     }));
   return (
-    <details open={activos > 0} className="group flex flex-col gap-3">
+    // A14: en computadora la columna de filtros siempre está abierta (`::details-content` visible); en teléfono se despliega.
+    <details
+      open={activos > 0}
+      data-filtros
+      className="group flex flex-col gap-3 @[996px]:[&::details-content]:[content-visibility:visible]"
+    >
       <summary className={RESUMEN} aria-label={activos > 0 ? t.filtrosActivos(activos) : t.filtros}>
         <Icono nombre="filter" tamano={20} />
         {activos > 0 ? `${t.filtros} · ${activos}` : t.filtros}

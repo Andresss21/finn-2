@@ -1,5 +1,5 @@
 // Fila de transacción (05 §10.8; 06-identidad-visual 2.16). Cada marca es un icono con nombre accesible, nunca
-// solo icono. El monto es `montoPresentado`: ya viene con signo del DTO.
+// solo icono. A14/B8: título y «Cuenta · Categoría» en una línea cada uno, y la línea de metadatos con glifo de 12 y su etiqueta. El monto es `montoPresentado`: ya viene con signo del DTO.
 import type { Centavos } from '@finn/dominio/valores';
 import { dominio } from '../../textos/dominio';
 import { Icono, type NombreIcono } from '../base/icono';
@@ -63,16 +63,16 @@ function FilaDetallada({
         <span className="truncate text-cuerpo-pequeno text-texto-secundario">
           {detalle.subtitulo}
         </span>
-        <span className="flex flex-wrap gap-2">
+        <span data-metadatos className="flex flex-wrap gap-2">
           {fila.estadoBancario === 'pendiente' ? (
             <span className={PENDIENTE}>
-              <Icono nombre="clock" tamano={14} />
+              <Icono nombre="clock" tamano={12} />
               {dominio.estadoBancario.pendiente}
             </span>
           ) : null}
           {marcas.map((m) => (
             <span key={m} className={MARCA}>
-              <Icono nombre={ICONO_MARCA[m]} tamano={14} />
+              <Icono nombre={ICONO_MARCA[m]} tamano={12} />
               {dominio.marcas[m]}
             </span>
           ))}

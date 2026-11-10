@@ -284,6 +284,44 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
     expect(lista('Tipo')?.value).toBe('');
   });
 
+  it('PRU-CMP-TX-422 [CA-24.4] cada fila lleva título y «cuenta · categoría» en una línea y la línea de metadatos con glifo de 12; «Cargar más» es tonal, centrado y lleva el cursor', () => {
+    const conMarcas = {
+      ...fila('t1', 'gasto', 'RESTAURANTE EL ZOCALO MUY LARGO', -2830),
+      cuentas: [{ cuenta: { id: 'k1', nombre: 'Ahorro' }, monto: -2830 }],
+      lineas: [{ destino: { tipo: 'categoria', nombre: 'Restaurantes' } }],
+      estadoBancario: 'pendiente',
+      marcas: {
+        ...MARCAS,
+        programada: true,
+        conciliada: true,
+        porCobrar: true,
+        conDevoluciones: true,
+      },
+    };
+    const raiz = mostrar(dto([{ fecha: '2027-02-10', transacciones: [conMarcas] }], 'cur-2'));
+    const f = raiz.querySelector('[data-fila-transaccion="t1"]') as HTMLElement;
+    const [titulo, subtitulo] = [...f.querySelectorAll(':scope > span:nth-child(2) > span')];
+    expect(titulo?.className).toContain('truncate');
+    expect(subtitulo?.className).toContain('truncate');
+    expect(subtitulo?.textContent).toBe('Ahorro · Restaurantes');
+    const metadatos = f.querySelector('[data-metadatos]') as HTMLElement;
+    expect(metadatos.textContent).toContain('Pendiente');
+    for (const marca of ['Programada', 'Conciliada', 'Por cobrar', 'Con devoluciones'])
+      expect(metadatos.textContent).toContain(marca);
+    expect(
+      [...metadatos.querySelectorAll('svg')].every((s) => s.getAttribute('width') === '12'),
+    ).toBe(true);
+    expect(metadatos.querySelector('.border-dashed')?.textContent).toContain('Pendiente');
+
+    const mas = raiz.querySelector<HTMLAnchorElement>('[data-cargar-mas]');
+    expect(mas?.getAttribute('href')).toBe('/actividad?cursor=cur-2');
+    expect(mas?.className).toContain('bg-accion-tonal');
+    expect(mas?.parentElement?.className).toContain('justify-center');
+    // Los filtros van en su propia columna y la búsqueda con la lista
+    expect(raiz.querySelector('[data-columna-filtros] details[data-filtros]')).not.toBeNull();
+    expect(raiz.querySelector('[data-columna-lista] [role="search"]')).not.toBeNull();
+  });
+
   it('PRU-CMP-TX-460 el estado de carga anuncia «Cargando la pantalla» una vez y no dibuja números', () => {
     const nodo = document.createElement('div');
     document.body.append(nodo);
