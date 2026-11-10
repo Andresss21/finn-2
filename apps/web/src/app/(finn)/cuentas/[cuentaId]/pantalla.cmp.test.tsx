@@ -802,7 +802,7 @@ describe('PRU-CMP-CTA «Reservar $X» en el detalle de la tarjeta', () => {
       'Deuda al corte anterior',
       'Cargos del ciclo actual',
       'Ya pagado en el ciclo',
-      'Pago de contado',
+      'Para no generar intereses',
     ]);
     expect(raiz.querySelector('[data-movimientos] h2')?.textContent).toBe('Movimientos del ciclo');
     // Con todo reservado no hay «Reservar» y la cabecera dice «Pago reservado»

@@ -126,7 +126,7 @@ export const cuentaDetalle = {
     deudaAnterior: 'Deuda al corte anterior',
     cargosDelCiclo: 'Cargos del ciclo actual',
     yaPagado: 'Ya pagado en el ciclo',
-    sinIntereses: 'Pago de contado',
+    sinIntereses: 'Para no generar intereses',
     // [CH-222 A17] La acción principal de la cabecera del contenedor y su estado sin falta.
     reservar: 'Reservar',
     pagoReservado: 'Pago reservado',
