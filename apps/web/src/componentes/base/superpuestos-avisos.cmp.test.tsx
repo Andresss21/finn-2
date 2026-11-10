@@ -365,7 +365,22 @@ describe('PRU-CMP-VAL-103 superpuestos, avisos, resultados y vacíos', () => {
 });
 
 describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
+  // Salidas largas: la prueba termina la animación con `animationend` y no depende del reloj ni de la carga de la máquina.
+  const SALIDAS = ['--duracion-salida', '--duracion-rapida'];
+  const salidasLargas = (): void => {
+    for (const t of SALIDAS) document.documentElement.style.setProperty(t, '60s');
+  };
+  afterEach(() => {
+    for (const t of SALIDAS) document.documentElement.style.removeProperty(t);
+  });
+  const terminarAnimacion = (el: Element): void => {
+    act(() => {
+      el.dispatchEvent(new AnimationEvent('animationend', { bubbles: true }));
+    });
+  };
+
   it('PRU-CMP-PWA-320 [] cerrar la hoja con el botón, Escape o el velo deja el diálogo montado durante la salida y lo desmonta al terminar; con movimiento reducido, en el acto', async () => {
+    salidasLargas();
     for (const via of ['boton', 'escape', 'velo'] as const) {
       const cerrar = vi.fn();
       const raiz = montar(<HojaQueSeDesmonta desde="abajo" alCerrar={cerrar} />);
@@ -383,17 +398,19 @@ describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
       const d = dialogo();
       expect(d.hasAttribute('data-saliendo')).toBe(true);
       expect(getComputedStyle(d).animationName).toBe('fz-sh-out');
-      expect(getComputedStyle(d).animationDuration).toBe('0.2s');
       const velo = document.querySelector('[data-testid=velo]') as HTMLElement;
       expect(getComputedStyle(velo).animationName).toBe('fz-v-out');
-      await vi.waitFor(() => {
-        expect(document.querySelector('[role=dialog]')).toBeNull();
-      });
+      terminarAnimacion(d);
+      expect(document.querySelector('[role=dialog]')).toBeNull();
       expect(cerrar).toHaveBeenCalledTimes(1);
       expect(raiz.textContent).toBe('Pantalla de origen');
     }
 
-    // La hoja abre con su entrada (380 ms, curva de entrada) y el velo en 200 ms.
+    // La hoja abre con su entrada (380 ms, curva de entrada) y el velo en 200 ms; la salida dura 200 ms.
+    for (const t of SALIDAS) document.documentElement.style.removeProperty(t);
+    expect(
+      getComputedStyle(document.documentElement).getPropertyValue('--duracion-salida').trim(),
+    ).toBe('200ms');
     montar(<Hoja desde="abajo" alCerrar={() => {}} />);
     expect(getComputedStyle(dialogo()).animationName).toBe('fz-sh-in');
     expect(getComputedStyle(dialogo()).animationDuration).toBe('0.38s');
@@ -424,6 +441,7 @@ describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
       />,
     );
     const disparador = raiz.querySelector('button') as HTMLButtonElement;
+    salidasLargas();
     await sinAct(async () => {
       await userEvent.click(disparador);
     });
@@ -436,11 +454,9 @@ describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
     const saliendo = raiz.querySelector('[role=menu]') as HTMLElement;
     expect(saliendo.hasAttribute('data-saliendo')).toBe(true);
     expect(getComputedStyle(saliendo).animationName).toBe('fz-menu-out');
-    expect(getComputedStyle(saliendo).animationDuration).toBe('0.12s');
     expect(document.activeElement).toBe(disparador);
-    await vi.waitFor(() => {
-      expect(raiz.querySelector('[role=menu]')).toBeNull();
-    });
+    terminarAnimacion(saliendo);
+    expect(raiz.querySelector('[role=menu]')).toBeNull();
     expect(disparador.getAttribute('aria-expanded')).toBe('false');
     // Se vuelve a abrir sin quedar en salida.
     await sinAct(async () => {
@@ -451,17 +467,18 @@ describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
 
   it('PRU-CMP-PWA-322 [] cerrarFlujo() se llama una sola vez, después de la salida, aunque se cierre dos veces', async () => {
     const cerrarFlujo = vi.fn();
+    salidasLargas();
     montar(<Hoja desde="abajo" alCerrar={cerrarFlujo} />);
     await sinAct(async () => {
       await userEvent.keyboard('{Escape}');
       await userEvent.keyboard('{Escape}');
     });
     expect(cerrarFlujo).not.toHaveBeenCalled();
-    await vi.waitFor(() => {
-      expect(cerrarFlujo).toHaveBeenCalledTimes(1);
-    });
-    // El tope (la duración del token) y `animationend` no lo llaman de nuevo.
-    dialogo().dispatchEvent(new AnimationEvent('animationend', { bubbles: true }));
+    const d = dialogo();
+    terminarAnimacion(d);
+    expect(cerrarFlujo).toHaveBeenCalledTimes(1);
+    // Otro `animationend` (o el tope de la duración del token) no lo llama de nuevo.
+    terminarAnimacion(d);
     expect(cerrarFlujo).toHaveBeenCalledTimes(1);
   });
 });
