@@ -30,6 +30,7 @@ export function Icono({ nombre, etiqueta, tamano = 20, className }: PropsIcono) 
       strokeWidth={trazo}
       strokeLinecap="square"
       strokeLinejoin="miter"
+      data-icono={nombre}
       className={className}
       {...(etiqueta === undefined
         ? { 'aria-hidden': true, focusable: false }

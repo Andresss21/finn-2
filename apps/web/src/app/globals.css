@@ -157,3 +157,233 @@ body {
     opacity: 0;
   }
 }
+
+/* Movimiento compartido [CH-220 d, FIXES §3]: keyframes y utilidades; toda duración y curva sale de tokens.css, y con movimiento
+   reducido la regla de arriba los anula. `--n` es el índice que pone quien dibuja (servidor, sin JS), con tope en --tope-escalonado. */
+/* El índice no se hereda: cada bloque o fila trae el suyo. */
+@property --n {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@keyframes fz-item {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fz-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fz-jitter {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+@keyframes fz-barup {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes fz-grow {
+  from {
+    width: 0;
+  }
+}
+@keyframes fz-pill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes fz-sh-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes fz-right-out {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes fz-dr-out {
+  to {
+    transform: translateY(-100%);
+  }
+}
+@keyframes fz-v-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes fz-menu-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.fz-item {
+  animation: fz-item var(--duracion-lenta) var(--curva-estandar) both;
+  animation-delay: calc(min(var(--n, 0), var(--tope-escalonado)) * var(--escalonado-bloque));
+}
+/* Dos columnas de computadora: 90 ms entre bloques. */
+.fz-item-columna {
+  animation-delay: calc(min(var(--n, 0), var(--tope-escalonado)) * var(--escalonado-columna));
+}
+.fz-opcion {
+  animation: fz-item var(--duracion-opcion) var(--curva-estandar) both;
+  animation-delay: calc(min(var(--n, 0), var(--tope-escalonado)) * var(--escalonado-opcion));
+}
+.fz-aviso {
+  animation: fz-item var(--duracion-opcion) var(--curva-estandar) both;
+  animation-delay: calc(
+    var(--retraso-aviso) + min(var(--n, 0), var(--tope-escalonado)) * var(--escalonado-aviso)
+  );
+}
+.fz-vacio-disco {
+  animation: fz-pop-in var(--duracion-lenta) var(--curva-enfasis) both;
+}
+.fz-vacio-texto {
+  animation: fz-item var(--duracion-normal) var(--curva-estandar) var(--retraso-vacio) both;
+}
+.fz-pop-in {
+  animation: fz-pop-in var(--duracion-lenta) var(--curva-enfasis) both;
+}
+.fz-sacudida {
+  animation: fz-jitter var(--duracion-sacudida) var(--curva-estandar) both;
+}
+.fz-barra-sube {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: fz-barup var(--duracion-barra) var(--curva-estandar) both;
+  animation-delay: calc(var(--n, 0) * var(--escalonado-barra));
+}
+.fz-barra-crece {
+  animation: fz-grow var(--duracion-crecer) var(--curva-estandar) both;
+}
+.fz-marca-activa {
+  transform-origin: left;
+  animation: fz-pill var(--duracion-lenta) var(--curva-estandar) both;
+}
+/* Salida de hojas, velo, panel y menú: terminan antes de desmontarse (FIXES §3). */
+.fz-hoja-salida {
+  animation: fz-sh-out var(--duracion-salida) var(--curva-salida) both;
+}
+.fz-lateral-salida {
+  animation: fz-right-out var(--duracion-salida) var(--curva-salida) both;
+}
+.fz-panel-salida {
+  animation: fz-dr-out var(--duracion-salida) var(--curva-salida) both;
+}
+.fz-velo-salida {
+  animation: fz-v-out var(--duracion-salida) ease both;
+}
+.fz-menu-salida {
+  animation: fz-menu-out var(--duracion-rapida) var(--curva-salida) both;
+}
+
+/* C5: los bloques de cada pantalla, debajo del encabezado (que lleva el `h1` fijo en teléfono y no se anima), entran de arriba
+   abajo. Un flujo largo a pantalla completa no, para no mover su pie fijo. */
+#contenido > main:not([data-pagina-flujo]) > :not(:first-child) {
+  animation: fz-item var(--duracion-lenta) var(--curva-estandar) both;
+  animation-delay: calc(min(var(--n), var(--tope-escalonado)) * var(--escalonado-bloque));
+}
+#contenido > main:not([data-pagina-flujo]) > :nth-child(2) {
+  --n: 0;
+}
+#contenido > main:not([data-pagina-flujo]) > :nth-child(3) {
+  --n: 1;
+}
+#contenido > main:not([data-pagina-flujo]) > :nth-child(4) {
+  --n: 2;
+}
+#contenido > main:not([data-pagina-flujo]) > :nth-child(5) {
+  --n: 3;
+}
+#contenido > main:not([data-pagina-flujo]) > :nth-child(6) {
+  --n: 4;
+}
+#contenido > main:not([data-pagina-flujo]) > :nth-child(7) {
+  --n: 5;
+}
+#contenido > main:not([data-pagina-flujo]) > :nth-child(8) {
+  --n: 6;
+}
+#contenido > main:not([data-pagina-flujo]) > :nth-child(9) {
+  --n: 7;
+}
+#contenido > main:not([data-pagina-flujo]) > :nth-child(n + 10) {
+  --n: 8;
+}
+
+/* C7: presionado y transición de botones, pastillas y segmentos. */
+:is(button, [role='radio'], .fz-presion) {
+  transition:
+    background-color var(--duracion-normal) var(--curva-estandar),
+    color var(--duracion-normal) var(--curva-estandar),
+    transform var(--duracion-rapida) var(--curva-estandar);
+}
+:is(button:not(:disabled):not([aria-disabled='true']), [role='radio'], .fz-presion):active {
+  transform: scale(0.97);
+}
+/* El indicador del selector segmentado se desliza: la opción elegida deja de pintar su propio fondo. */
+[role='radiogroup'][data-indicador] > [role='radio'][data-state='checked'] {
+  background-color: transparent;
+  box-shadow: none;
+}
+.fz-segmento-indicador {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  transition:
+    transform var(--duracion-normal) var(--curva-estandar),
+    width var(--duracion-normal) var(--curva-estandar),
+    height var(--duracion-normal) var(--curva-estandar);
+}
+
+/* C11: en computadora, las filas tocables (las que llevan `chevR`) cambian el fondo al 6 % de `--texto` (`--fila-hover`) y mueven la flecha 4 px. */
+@media (hover: hover) and (width >= 48rem) {
+  :is(a, button):has([data-icono='chevR']) {
+    transition: background-color var(--duracion-normal) var(--curva-estandar);
+  }
+  :is(a, button):has([data-icono='chevR']):hover {
+    background-color: var(--fila-hover);
+  }
+  :is(a, button) [data-icono='chevR'] {
+    transition: transform var(--duracion-normal) var(--curva-estandar);
+  }
+  :is(a, button):hover [data-icono='chevR'] {
+    transform: translateX(4px);
+  }
+}

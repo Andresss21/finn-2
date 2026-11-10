@@ -38,7 +38,7 @@ export function Pastillas({ etiqueta, opciones, valor, alCambiar, reemplazar }: 
               href={o.href}
               {...(reemplazar === true ? { replace: true } : {})}
               {...(activa ? { 'aria-current': 'true' as const } : {})}
-              className={cn(buttonVariants({ variant: 'filter' }), activa && ACTIVA)}
+              className={cn(buttonVariants({ variant: 'filter' }), 'fz-presion', activa && ACTIVA)}
             >
               {o.etiqueta}
             </EnlaceFinn>
