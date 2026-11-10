@@ -217,6 +217,7 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
         }}
         conSigno
         sinVistaPrevia
+        autoFoco
         signo={c.signo}
         alCambiarSigno={(s) => {
           formulario.setValue('signo', s, { shouldDirty: true });

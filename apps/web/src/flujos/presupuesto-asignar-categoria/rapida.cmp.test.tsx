@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
+import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { OpcionesRapidas, type DatosRapida, type PropsOpcionesRapidas } from './rapida';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -93,5 +94,41 @@ describe('PRU-CMP-PRES', () => {
     const quieto = vi.fn();
     const apagado = cuando({}, { alElegir: quieto, deshabilitado: true });
     expect(apagado.querySelector('button')?.disabled).toBe(true);
+  });
+});
+
+describe('PRU-CMP-PRES foco de Asignar', () => {
+  it('PRU-CMP-PRES-330 [CA-12.1] Asignar abre con el foco en el campo del monto, con relleno de superficie, y ninguna opción rápida viene elegida', () => {
+    const elegir = vi.fn();
+    const nodo = montar(
+      <>
+        <OpcionesRapidas
+          rapida={{ igualPeriodoAnterior: dolares(50), faltaMeta: dolares(20) }}
+          faltaDeLaMeta={dolares(20)}
+          deshabilitado={false}
+          alElegir={elegir}
+        />
+        <EntradaMonto
+          nombre="monto"
+          etiqueta="Nuevo asignado"
+          valor=""
+          alCambiar={() => undefined}
+          autoFoco
+        />
+      </>,
+    );
+    const campo = nodo.querySelector('input[name="monto"]') as HTMLInputElement;
+    expect(document.activeElement).toBe(campo);
+    const sonda = document.createElement('span');
+    sonda.style.backgroundColor = 'var(--superficie)';
+    document.body.append(sonda);
+    expect(getComputedStyle(campo).backgroundColor).toBe(getComputedStyle(sonda).backgroundColor);
+    sonda.remove();
+    // «Lo que falta para la meta» se ofrece, pero no viene elegida ni se envía sola (CH-221).
+    expect(nodo.querySelectorAll('button').length).toBeGreaterThan(1);
+    expect(
+      nodo.querySelector('[aria-pressed="true"], [aria-checked="true"], [data-state="checked"]'),
+    ).toBeNull();
+    expect(elegir).not.toHaveBeenCalled();
   });
 });

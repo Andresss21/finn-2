@@ -9,6 +9,7 @@ import { Monto } from '../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { formatearFecha, formatearPorcentaje } from '../../../../formato';
 import { cuentaDetalle } from '../../../../textos/cuenta-detalle';
+import { FilasAmortizacion } from './filas-amortizacion';
 
 const TARJETA = 'flex flex-col gap-3.5 rounded-contenedor bg-superficie p-4 shadow-elevacion-1';
 const TARJETA_TABLA =
@@ -204,8 +205,13 @@ export function BloquePrestamo({
                   </th>
                 </tr>
               </thead>
-              <tbody>
-                {prestamo.amortizacion.map((q) => (
+              <FilasAmortizacion
+                columnas={8}
+                actual={Math.max(
+                  0,
+                  prestamo.amortizacion.findIndex((q) => q.numero === proxima),
+                )}
+                filas={prestamo.amortizacion.map((q) => (
                   <tr
                     key={q.numero}
                     {...(q.numero === proxima ? { 'aria-current': 'step' as const } : {})}
@@ -221,7 +227,7 @@ export function BloquePrestamo({
                     <td className="px-1 py-2">{t.estados[q.estado]}</td>
                   </tr>
                 ))}
-              </tbody>
+              />
             </table>
           </div>
         )}

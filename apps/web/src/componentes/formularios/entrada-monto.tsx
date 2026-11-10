@@ -36,6 +36,8 @@ export interface PropsEntradaMonto {
   readonly sinVistaPrevia?: boolean;
   /** Fila compacta de una línea de gasto: etiqueta solo para lectores de pantalla y monto a la derecha (K4). */
   readonly compacto?: boolean;
+  /** [A36] Toma el foco al montarse (Asignar: el campo del monto es lo primero que se escribe). */
+  readonly autoFoco?: boolean;
 }
 
 const MENSAJE: Record<MotivoInvalido, string> = {
@@ -61,6 +63,7 @@ export function EntradaMonto({
   prefijo,
   sinVistaPrevia = false,
   compacto = false,
+  autoFoco = false,
 }: PropsEntradaMonto) {
   const resultado = normalizarMontoEscrito(valor);
   const errorLocal =
@@ -109,6 +112,7 @@ export function EntradaMonto({
         autoComplete="off"
         enterKeyHint={enterKeyHint}
         value={valor}
+        {...(autoFoco ? { autoFocus: true } : {})}
         disabled={deshabilitado}
         className={compacto ? 'tabular-nums text-right' : 'tabular-nums'}
         onChange={alEscribir}

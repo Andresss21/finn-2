@@ -167,3 +167,27 @@ describe('PRU-CMP-COBRO-101 por cobrar', () => {
     }
   });
 });
+
+describe('PRU-CMP-COBRO por deudor', () => {
+  it('PRU-CMP-COBRO-130 [CA-45.3] el deudor lleva «Renombrar» y «Te debe» en positivo con el total del DTO; cada compra, «Cobrar» tonal y «Condonar» como enlace', () => {
+    const raiz = mostrar(
+      <PantallaPorCobrar dto={dto([ana([partida()], 1500)])} cerrados={false} />,
+    );
+    const deudor = raiz.querySelector('[data-deudor="d1"]') as HTMLElement;
+    expect(deudor.querySelector('a[href="/por-cobrar/deudores/d1/renombrar"]')?.textContent).toBe(
+      'Renombrar',
+    );
+    expect(deudor.textContent).toContain('Te debe');
+    const total = deudor.querySelector('[data-deuda-abierta] [data-centavos]') as HTMLElement;
+    expect(total.getAttribute('data-centavos')).toBe('1500');
+    const sonda = document.createElement('span');
+    sonda.style.cssText = 'color: var(--positivo-texto); background-color: var(--accion-tonal)';
+    document.body.append(sonda);
+    expect(getComputedStyle(total).color).toBe(getComputedStyle(sonda).color);
+    const cobrar = deudor.querySelector('a[href="/por-cobrar/cobrar?linea=l1"]') as HTMLElement;
+    const condonar = deudor.querySelector('a[href="/por-cobrar/condonar/l1"]') as HTMLElement;
+    expect(getComputedStyle(cobrar).backgroundColor).toBe(getComputedStyle(sonda).backgroundColor);
+    expect(getComputedStyle(condonar).backgroundColor).toBe('rgba(0, 0, 0, 0)');
+    sonda.remove();
+  });
+});

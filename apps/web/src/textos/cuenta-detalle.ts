@@ -130,6 +130,7 @@ export const cuentaDetalle = {
     reservadoDe: 'Reservado',
   },
   prestamo: {
+    verTablaCompleta: (n: number) => `Ver tabla completa (${String(n)} cuotas)`,
     titulo: 'Préstamo',
     contraparte: 'Contraparte',
     capitalPendiente: 'Capital pendiente',
