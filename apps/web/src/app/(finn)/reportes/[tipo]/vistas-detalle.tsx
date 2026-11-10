@@ -174,13 +174,16 @@ export function Categorias({
 export function TopComercios({
   dto,
   nombres,
+  anchos,
 }: {
   readonly dto: ReporteDe<'top_comercios'>;
   readonly nombres: Nombres;
+  /** [CH-226] El ancho de la barra de cada comercio, en el orden del DTO: lo ubica la escala del servidor (FE-44). */
+  readonly anchos: readonly number[];
 }) {
   return (
     <ol className="flex flex-col gap-3">
-      {dto.comercios.map((c) => (
+      {dto.comercios.map((c, k) => (
         <li
           key={c.clave}
           data-comercio={c.clave}
@@ -192,10 +195,17 @@ export function TopComercios({
                 {c.clave === '(sin comercio)' ? t.sinComercio : c.etiqueta}
               </h3>
               <p className="text-cuerpo-pequeno text-texto-secundario">
-                {nombreDe(nombres.categorias, c.categoriaPrincipal)} · {t.compras(c.frecuencia)}
+                {t.compras(c.frecuencia)} · {nombreDe(nombres.categorias, c.categoriaPrincipal)}
               </p>
             </div>
             <span data-monto-comercio>{monto(c.monto)}</span>
+          </div>
+          <div
+            aria-hidden="true"
+            data-barra-comercio
+            className="flex h-1.5 overflow-hidden rounded-pastilla bg-superficie-hundida"
+          >
+            <span style={{ width: `${anchos[k] ?? 0}%` }} className="bg-texto" />
           </div>
           {c.variantes.length > 1 ? (
             <ul aria-label={t.variantes} className="flex flex-col gap-1 text-cuerpo-pequeno">

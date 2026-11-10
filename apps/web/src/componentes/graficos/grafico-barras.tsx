@@ -25,6 +25,8 @@ export interface PuntoBarra {
 
 export interface PropsGraficoBarras {
   readonly titulo: string;
+  /** Cómo se dibuja la referencia: la marca con sus extremos (gasto semanal) o el tope punteado a lo ancho (tendencia, CH-226). */
+  readonly tope?: 'marca' | 'punteado';
   /** El dato principal; junto al título da el nombre accesible. */
   readonly resumen: string;
   readonly puntos: readonly PuntoBarra[];
@@ -35,7 +37,24 @@ const ANCHO = 320;
 const BASE = 128;
 const TOPE = 26;
 
-export function GraficoBarras({ titulo, resumen, puntos }: PropsGraficoBarras) {
+/**
+ * El ancho de cada barra proporcional, en porcentaje, con la escala de d3 en el servidor (FE-44): la que usa Top de comercios
+ * (CH-226). No es un monto: es la posición de la marca sobre la escala.
+ */
+export function anchosProporcionales(valores: readonly Centavos[]): number[] {
+  const x = scaleLinear()
+    .domain([0, Math.max(1, ...valores)])
+    .range([0, 100])
+    .clamp(true);
+  return valores.map((v) => x(v));
+}
+
+export function GraficoBarras({
+  titulo,
+  resumen,
+  puntos,
+  tope: forma = 'marca',
+}: PropsGraficoBarras) {
   if (puntos.length === 0) {
     return (
       <div
@@ -118,7 +137,21 @@ export function GraficoBarras({ titulo, resumen, puntos }: PropsGraficoBarras) {
                 </text>
               </>
             )}
-            {p.referencia === undefined ? null : (
+            {p.referencia === undefined ? null : forma === 'punteado' ? (
+              <path
+                data-tope
+                d={
+                  tope([
+                    [x(p.clave) ?? 0, y(p.referencia)],
+                    [(x(p.clave) ?? 0) + x.bandwidth(), y(p.referencia)],
+                  ]) ?? ''
+                }
+                strokeWidth="2"
+                strokeDasharray="4 4"
+                fill="none"
+                className="stroke-grafico-referencia"
+              />
+            ) : (
               <>
                 <path
                   d={

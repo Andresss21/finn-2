@@ -159,7 +159,7 @@ class Libro {
  * Dos cuentas (efectivo `ef`, tarjeta `vi`), un por cobrar con cobro de excedente, una devolución D-1,
  * una categoría archivada con actividad y una asignación negativa.
  */
-function estado() {
+function estado(ademas: (l: Libro) => void = () => undefined) {
   const l = new Libro();
   l.cuenta('ef', 'efectivo');
   l.cuenta('vi', 'tarjeta');
@@ -241,6 +241,7 @@ function estado() {
   l.mov('g-abr-3', 'gasto', '2027-04-15', [['ef', -10]], [{ cat: 'super', monto: 10 }], {
     comercio: 'SUPER SELECTOS ESCALON',
   });
+  ademas(l);
   return calcular(l.hechos(), f('2027-04-15'));
 }
 
@@ -263,6 +264,7 @@ describe('PRU-DOM-REP', () => {
           { grupo: 'hogar', monto: m(80) },
           { grupo: 'ocio', monto: m(60) },
         ],
+        asignado: m(150),
       },
       {
         periodo: inicio('2027-02-01'),
@@ -273,6 +275,7 @@ describe('PRU-DOM-REP', () => {
           { grupo: 'hogar', monto: m(90) },
           { grupo: 'ocio', monto: m(30) },
         ],
+        asignado: m(150),
       },
       {
         periodo: inicio('2027-03-01'),
@@ -283,6 +286,7 @@ describe('PRU-DOM-REP', () => {
           { grupo: 'hogar', monto: m(300) },
           { grupo: 'ocio', monto: m(25) },
         ],
+        asignado: m(400),
       },
     ]);
 
@@ -419,6 +423,24 @@ describe('PRU-DOM-REP', () => {
     tablas();
     ventanaYFiltro();
     existencia();
+  });
+
+  it('PRU-DOM-REP-300 [FT-60] (CH-226, REP-tendencia) asignado por período es la Σ de Asig de las categorías normales, sin las de pago, en una ventana de 3 períodos (04 §6.9.2)', () => {
+    // Una asignación a la categoría de pago de la tarjeta en cada período: no entra en el tope.
+    const conPago = estado((l) => {
+      for (const p of ['2027-01-01', '2027-02-01', '2027-03-01', '2027-04-01'])
+        l.asignar('pago-vi', p, 75);
+    });
+    // Enero y febrero: súper 100 + cine 50; marzo: súper 100 + renta 300.
+    expect(
+      tendencia(conPago, { ventana: 'ultimos_3' }).map((x) => [x.periodo, x.asignado]),
+    ).toEqual([
+      [inicio('2027-01-01'), m(150)],
+      [inicio('2027-02-01'), m(150)],
+      [inicio('2027-03-01'), m(400)],
+    ]);
+    // Abril (actual): súper 350 + viaje 100 + la desasignación de ajuste, −20.
+    expect(tendencia(conPago).map((x) => x.asignado)).toEqual([m(430)]);
   });
 
   it('PRU-DOM-REP-150 [FT-60] REP-categorias trae el total gastado para el centro de la dona y el monto de «Otras», con la ventana y los filtros (04 §6.9.2, CH-177)', () => {

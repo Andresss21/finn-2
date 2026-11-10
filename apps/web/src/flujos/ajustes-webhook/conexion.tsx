@@ -14,6 +14,8 @@ export interface PropsConexionMacroDroid {
   readonly configurado: boolean;
   /** Instante ISO de la última rotación (`AjustesDto.webhook.rotadoEn`). */
   readonly rotadoEn?: string;
+  /** [CH-227] Instante ISO del último SMS recibido (`AjustesDto.webhook.ultimoSmsEn`). */
+  readonly ultimoSmsEn?: string;
   /** La variante del cuerpo que acepta el servidor (`FINN_WEBHOOK_FORMATO`, BE-61). */
   readonly formato: 'json' | 'texto';
   /** La Server Action de OPT-01: la pasa el lector, para que este módulo se pruebe sin el servidor. */
@@ -98,7 +100,13 @@ function Instrucciones({
   );
 }
 
-export function PanelConexion({ configurado, rotadoEn, formato, rotar }: PropsConexionMacroDroid) {
+export function PanelConexion({
+  configurado,
+  rotadoEn,
+  ultimoSmsEn,
+  formato,
+  rotar,
+}: PropsConexionMacroDroid) {
   const operacion = useOperacion({ accion: rotar });
   const [avisando, setAvisando] = useState(false);
   const url = `${useSyncExternalStore(sinSuscripcion, origen, () => '')}/api/sms`;
@@ -117,6 +125,16 @@ export function PanelConexion({ configurado, rotadoEn, formato, rotar }: PropsCo
     <div className="flex flex-col gap-5">
       {token === undefined ? (
         <>
+          {configurado ? (
+            // [CH-227] A27: conectado, con la fecha del último SMS si ya llegó alguno.
+            <div data-conexion>
+              <AvisoEnLinea estado="positivo">
+                {ultimoSmsEn === undefined
+                  ? t.conectado
+                  : t.conectadoConSms(formatearInstante(ultimoSmsEn))}
+              </AvisoEnLinea>
+            </div>
+          ) : null}
           <p className="text-cuerpo-pequeno text-texto">
             {configurado && rotadoEn !== undefined
               ? t.conToken(formatearInstante(rotadoEn))

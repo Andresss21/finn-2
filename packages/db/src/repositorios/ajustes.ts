@@ -1,6 +1,7 @@
 // Lectura de Ajustes (04 §6.11): `formatos_bancarios` e `instituciones` [H], el conteo de `sms_procesamientos` por
-// formato [I] y [T] (`token_webhook`, `suscripciones_push`, `estado_respaldo`, `eventos_sistema`). Nunca devuelve el
-// hash del token ni las claves de las suscripciones. Instantes como texto ISO UTC (04 §13.1).
+// formato y, [CH-227], el último `recibido_en` de `sms_recibidos` [I], y [T] (`token_webhook`, `suscripciones_push`,
+// `estado_respaldo`, `eventos_sistema`). Nunca devuelve el hash del token, el texto de un SMS ni las claves de las
+// suscripciones. Instantes como texto ISO UTC (04 §13.1).
 import { endpointCorto } from '@finn/dominio/valores';
 import { ahoraDb } from '../ahora.ts';
 import { instanteDeDate } from '../mapeo/fechas.ts';
@@ -21,6 +22,8 @@ export async function leerAjustesTecnicos(tx: LectorTx) {
   const p = txPrisma(tx);
   const ahora = await ahoraDb(tx);
   const token = await p.tokenWebhook.findUnique({ where: { id: 1 } });
+  // [CH-227] Solo el instante del último SMS: nunca su texto.
+  const ultimoSms = await p.smsRecibido.aggregate({ _max: { recibidoEn: true } });
   const instituciones = await p.institucion.findMany({
     orderBy: [{ nombre: 'asc' }, { id: 'asc' }],
   });
@@ -47,6 +50,7 @@ export async function leerAjustesTecnicos(tx: LectorTx) {
     en === null || en === undefined || ahora.getTime() - en.getTime() > plazoMs;
   return {
     webhook: token === null ? null : { rotadoEn: instanteDeDate(token.creadoEn) },
+    ultimoSmsEn: instanteONulo(ultimoSms._max.recibidoEn),
     instituciones: instituciones.map((i) => ({ id: i.id, nombre: i.nombre })),
     formatos: formatos.map((f) => {
       const u = usos.find((x) => x.formatoId === f.id);

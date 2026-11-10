@@ -133,7 +133,13 @@ const accion = (menu: HTMLElement, texto: string) =>
     a.textContent.includes(texto),
   );
 
-const consumo = (fecha: string, medio: 'debito' | 'tarjeta', neto: number, cubierto: number) => ({
+const consumo = (
+  fecha: string,
+  medio: 'debito' | 'tarjeta',
+  neto: number,
+  cubierto: number,
+  cubiertoBp = 10_000,
+) => ({
   origen: { transaccionId: `t-${fecha}-${medio}` },
   fecha,
   comercio: `Comercio ${fecha}`,
@@ -142,6 +148,7 @@ const consumo = (fecha: string, medio: 'debito' | 'tarjeta', neto: number, cubie
   montoNeto: neto,
   cubierto,
   noCubierto: neto - cubierto,
+  cubiertoBp,
 });
 const periodoCerrado = (inicio: string) => ({
   inicio,
@@ -250,7 +257,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
   it('PRU-CMP-PRES-105 [CA-14.1] los consumos salen en el orden del DTO con su medio, lo cubierto y lo no cubierto', () => {
     const consumos = [
       consumo('2027-02-10', 'debito', 6000, 6000),
-      consumo('2027-02-10', 'tarjeta', 7000, 4000),
+      consumo('2027-02-10', 'tarjeta', 7000, 4000, 5714),
     ];
     const raiz = mostrar(dto({ consumos }));
     const filas = [...raiz.querySelectorAll('[data-consumo]')].map((f) => sinEspacios(f));
@@ -592,5 +599,43 @@ describe('Detalle de categoría: historial sin datos y meta (D9, A9)', () => {
     // Sin faltante, el principal vuelve a «Asignar» a secas.
     const cubierta = mostrar(dto());
     expect(sinEspacios(enlace(cubierta, 'Asignar'))).toBe('Asignar');
+  });
+});
+
+describe('Detalle de categoría: cobertura de cada consumo (A6)', () => {
+  it('PRU-CMP-PRES-320 [FT-14] (CH-223) la barrita de cada consumo dibuja el cubiertoBp del DTO y la nota dice los montos del DTO; cubierto entero, sin rayado', () => {
+    const raiz = mostrar(
+      dto({
+        consumos: [
+          consumo('2027-02-11', 'tarjeta', 2830, 2050, 7244),
+          consumo('2027-02-12', 'tarjeta', 1000, 1000, 10_000),
+        ],
+      }),
+    );
+    const [parcial, entero] = [...raiz.querySelectorAll<HTMLElement>('[data-consumo]')];
+    const barrita = (fila: HTMLElement | undefined) =>
+      fila?.querySelector('[data-barrita-cobertura]') as HTMLElement;
+
+    expect(sinEspacios(parcial?.querySelector('[data-nota-cobertura]'))).toBe(
+      'cubierto $20.50 · no cubierto $7.80',
+    );
+    expect(parcial?.querySelector('[data-nota-cobertura]')?.className).toContain(
+      'text-problema-texto',
+    );
+    expect(getComputedStyle(barrita(parcial)).height).toBe('5px');
+    const cubierto = barrita(parcial).querySelector('[data-segmento="cubierto"]') as HTMLElement;
+    expect(cubierto.style.width).toBe('72.44%');
+    expect(cubierto.className).toContain('bg-texto-secundario');
+    const sinCubrir = barrita(parcial).querySelector(
+      '[data-segmento="no-cubierto"]',
+    ) as HTMLElement;
+    expect(getComputedStyle(sinCubrir).backgroundImage).toContain('repeating-linear-gradient');
+
+    // Cubierto entero: la nota dice lo cubierto, como CA-14.1 (ver «Contradicciones» del PR), y la barrita va llena.
+    expect(sinEspacios(entero?.querySelector('[data-nota-cobertura]'))).toBe('cubierto $10.00');
+    expect(
+      (barrita(entero).querySelector('[data-segmento="cubierto"]') as HTMLElement).style.width,
+    ).toBe('100%');
+    expect(barrita(entero).querySelector('[data-segmento="no-cubierto"]')).toBeNull();
   });
 });

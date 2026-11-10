@@ -1,6 +1,6 @@
 // Consumos del detalle de categoría (FT-14, CA-14.1 a CA-14.3; 06-identidad-visual §6): salen del DTO en el orden D2, cada uno con
-// su medio, lo cubierto y lo no cubierto. La cobertura va en texto: el DTO no trae proporciones para una barrita (CF-25) y
-// calcularlas violaría PF-3. Dibuja lo que trae el DTO: no suma ni calcula montos.
+// su medio, lo cubierto y lo no cubierto. [CH-223] La nota dice «cubierto $X» (CA-14.1) o «cubierto $X · no cubierto $Y» con los montos del DTO
+// y la barrita de 5 px dibuja el `cubiertoBp` del DTO (A6). Dibuja lo que trae el DTO: no suma ni calcula montos (PF-3).
 import type { DetalleCategoria } from '@finn/dominio/selectores';
 import type { ReactNode } from 'react';
 import { Vacio } from '../../../../../componentes/base/vacio';
@@ -63,15 +63,38 @@ export function Consumos({
                   <span className="text-cuerpo-pequeno text-texto-secundario">
                     {x.medio === 'tarjeta' ? t.tarjeta : t.debito} · {x.cuenta.nombre}
                   </span>
-                  <span className="text-cuerpo-pequeno">
-                    {t.cubierto} <Monto centavos={x.cubierto} />
-                    {x.noCubierto === 0 ? null : (
-                      <span className="text-problema-texto">
-                        {' · '}
-                        {t.noCubierto} <Monto centavos={x.noCubierto} estado="problema" />
-                      </span>
-                    )}
-                  </span>
+                  {x.noCubierto === 0 ? (
+                    <span data-nota-cobertura className="text-cuerpo-pequeno">
+                      {t.cubierto} <Monto centavos={x.cubierto} />
+                    </span>
+                  ) : (
+                    <span data-nota-cobertura className="text-cuerpo-pequeno text-problema-texto">
+                      {t.cubierto} <Monto centavos={x.cubierto} estado="problema" />
+                      {' · '}
+                      {t.noCubierto} <Monto centavos={x.noCubierto} estado="problema" />
+                    </span>
+                  )}
+                  {x.montoNeto > 0 ? (
+                    <span
+                      aria-hidden="true"
+                      data-barrita-cobertura
+                      className="mt-1.5 flex h-[5px] overflow-hidden rounded-pastilla bg-superficie-hundida"
+                    >
+                      {x.cubiertoBp > 0 ? (
+                        <span
+                          data-segmento="cubierto"
+                          style={{ width: `${x.cubiertoBp / 100}%` }}
+                          className="bg-texto-secundario"
+                        />
+                      ) : null}
+                      {x.noCubierto === 0 ? null : (
+                        <span
+                          data-segmento="no-cubierto"
+                          className="flex-1 bg-[repeating-linear-gradient(135deg,var(--problema-borde)_0_3px,var(--problema-fondo)_3px_6px)]"
+                        />
+                      )}
+                    </span>
+                  ) : null}
                 </span>
                 <Monto centavos={x.montoNeto} rol="cifra" presentacion="salida" />
               </li>
