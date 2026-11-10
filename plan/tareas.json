@@ -565,7 +565,7 @@
 
   "TA-554": { "estado": "pendiente" },
 
-  "TA-555": { "estado": "pendiente" },
+  "TA-555": { "estado": "terminada", "rama": "ta-555-ci-main-reutiliza-e2e", "pr": 549 },
 
   "TA-316": { "estado": "terminada", "rama": "ta-316-estructura-editar", "pr": 258 },
 

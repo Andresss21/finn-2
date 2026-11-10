@@ -60,11 +60,80 @@ const job = (n: string): Job => {
 const lista = (x: string | string[] | undefined): string[] =>
   x === undefined ? [] : Array.isArray(x) ? x : [x];
 
+// TA-555: evalúa el `if` de un job como GitHub, sin eval: `!cancelled()`, `needs.<job>.result`,
+// `needs.<job>.outputs.<x>` (la que falta es ''), `github.<x>`, cadenas, `==`, `!=`, `!`, `&&`, `||` y paréntesis.
+type Need = { result: string; outputs?: Record<string, string> };
+const ok = (outputs: Record<string, string> = {}): Need => ({
+  result: 'success',
+  outputs: { integracion: 'true', ...outputs },
+});
+const PR = { event_name: 'pull_request', ref: 'refs/pull/7/merge' };
+function cumple(
+  expr: string | undefined,
+  needs: Record<string, Need>,
+  github: Record<string, string> = {},
+  cancelado = false,
+): boolean {
+  const gh: Record<string, string> = { event_name: 'push', ref: 'refs/heads/main', ...github };
+  const fichas = (expr ?? '')
+    .replace(/^\$\{\{\s*|\s*\}\}$/g, '')
+    .match(/'[^']*'|!=|==|&&|\|\||!|\(|\)|cancelled\(\)|[\w.-]+/g);
+  if (fichas === null) throw new Error(`if vacío: ${expr}`);
+  const t = fichas;
+  let i = 0;
+  const valor = (x: string): string | boolean => {
+    if (x === 'cancelled()') return cancelado;
+    if (x.startsWith("'")) return x.slice(1, -1);
+    const [raiz = '', a = '', b = '', c = ''] = x.split('.');
+    if (raiz === 'github') return gh[a] ?? '';
+    if (raiz === 'needs' && b === 'result') return needs[a]?.result ?? '';
+    if (raiz === 'needs' && b === 'outputs') return needs[a]?.outputs?.[c] ?? '';
+    throw new Error(`término desconocido en el if: ${x}`);
+  };
+  const primario = (): string | boolean => {
+    const x = t[i++] ?? '';
+    if (x === '!') return !primario();
+    if (x === '(') {
+      const v = o();
+      i++;
+      return v;
+    }
+    const v = valor(x);
+    if (t[i] === '==' || t[i] === '!=') {
+      const op = t[i++];
+      const w = valor(t[i++] ?? '');
+      return op === '==' ? v === w : v !== w;
+    }
+    return v;
+  };
+  const y = (): string | boolean => {
+    let v = primario();
+    while (t[i] === '&&') {
+      i++;
+      const w = primario();
+      v = Boolean(v) && w;
+    }
+    return v;
+  };
+  const o = (): string | boolean => {
+    let v = y();
+    while (t[i] === '||') {
+      i++;
+      const w = y();
+      v = Boolean(v) || w;
+    }
+    return v;
+  };
+  const r = o();
+  if (i !== t.length) throw new Error(`if sin evaluar entero: ${expr}`);
+  return r === true;
+}
+
 const LECTURA = { contents: 'read', actions: 'read', 'pull-requests': 'read' };
 const INSTALAR = 'pnpm install --frozen-lockfile';
 // Lo único que cada job ejecuta, además de la instalación (DP-34). `rapido` lleva `integracion` por M5 (DP-33).
 const SCRIPTS: Record<string, string[]> = {
-  rapido: ['ci:rapido', 'ci:integracion'],
+  rapido: ['ci:reutiliza-e2e', 'ci:rapido', 'ci:integracion'],
   'e2e-fragmento': ['ci:e2e'],
   e2e: ['ci:e2e-unir'],
   cierre: ['ci:cierre'],
@@ -101,11 +170,88 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
   it('workflows: desplegar solo en main, con todo en verde en la misma corrida e integracion dentro de rapido (07 §6.1, M5)', () => {
     const d = job('desplegar');
     expect(lista(d.needs).sort()).toEqual(['cierre', 'e2e', 'rapido']);
-    expect(d.if).toContain("github.event_name == 'push'");
-    expect(d.if).toContain("github.ref == 'refs/heads/main'");
-    expect(d.if).toContain("needs.rapido.outputs.integracion == 'true'");
-    // Sin función de estado GitHub agrega success(): un need rojo o saltado no despliega
-    expect(d.if).not.toMatch(/always\(\)|cancelled\(\)|failure\(\)|success\(\)/);
+    const verde = { rapido: ok(), e2e: ok(), cierre: ok() };
+    expect(cumple(d.if, verde)).toBe(true);
+    expect(cumple(d.if, verde, PR)).toBe(false);
+    expect(cumple(d.if, verde, { ref: 'refs/heads/otra' })).toBe(false);
+    expect(cumple(d.if, { ...verde, rapido: ok({ integracion: 'false' }) })).toBe(false);
+    for (const r of ['failure', 'cancelled', 'skipped']) {
+      expect(cumple(d.if, { ...verde, rapido: { ...ok(), result: r } }), r).toBe(false);
+      expect(cumple(d.if, { ...verde, e2e: { result: r } }), r).toBe(false);
+      expect(cumple(d.if, { ...verde, cierre: { result: r } }), r).toBe(false);
+    }
+    expect(cumple(d.if, verde, {}, true)).toBe(false);
+  });
+
+  it('workflows: desplegar acepta e2e saltado solo con reutiliza_e2e, y nunca e2e rojo ni cierre sin correr (TA-555)', () => {
+    const d = job('desplegar').if;
+    const reusa = ok({ reutiliza_e2e: '4242' });
+    expect(cumple(d, { rapido: reusa, e2e: { result: 'skipped' }, cierre: ok() })).toBe(true);
+    expect(cumple(d, { rapido: ok(), e2e: { result: 'skipped' }, cierre: ok() })).toBe(false);
+    expect(cumple(d, { rapido: reusa, e2e: { result: 'failure' }, cierre: ok() })).toBe(false);
+    expect(cumple(d, { rapido: reusa, e2e: { result: 'cancelled' }, cierre: ok() })).toBe(false);
+    for (const r of ['skipped', 'failure'])
+      expect(cumple(d, { rapido: reusa, e2e: { result: 'skipped' }, cierre: { result: r } })).toBe(
+        false,
+      );
+  });
+
+  it('workflows: cierre de main baja informes-e2e de la corrida reutilizada, solo con reutiliza_e2e (TA-555)', () => {
+    const pasos = job('cierre').steps;
+    const bajadas = pasos.filter((p) => p.uses?.startsWith('actions/download-artifact@'));
+    expect(bajadas.map((p) => p.if)).toEqual([
+      undefined,
+      "needs.rapido.outputs.reutiliza_e2e != ''",
+    ]);
+    expect(bajadas[1]?.with).toEqual({
+      name: 'informes-e2e',
+      path: 'test-results/informes',
+      'run-id': '${{ needs.rapido.outputs.reutiliza_e2e }}',
+      'github-token': '${{ github.token }}',
+    });
+    expect(pasos.indexOf(bajadas[1] as Paso)).toBeLessThan(
+      pasos.findIndex((p) => p.run === 'pnpm ci:cierre'),
+    );
+    // Lo lee con el permiso actions: read del workflow, sin escribir nada (pruebas:puerta y M15 no cambian)
+    expect(job('cierre').permissions).toBeUndefined();
+    expect(wf.permissions['actions']).toBe('read');
+    expect(pkg.scripts['ci:cierre']).toContain(
+      'matriz.ts verificar --resultados test-results/informes',
+    );
+  });
+
+  it('workflows: cierre corre con reutiliza_e2e en main y, en un PR, con cierre o con la E2E completa en verde (CH-237)', () => {
+    const c = job('cierre').if;
+    const main = {
+      rapido: ok({ cierre: 'true', reutiliza_e2e: '4242' }),
+      e2e: { result: 'skipped' },
+    };
+    expect(cumple(c, main)).toBe(true);
+    expect(cumple(c, { ...main, e2e: { result: 'failure' } })).toBe(false);
+    const pr = (grep: string, e2e: string, cierre = 'false'): boolean =>
+      cumple(c, { rapido: ok({ cierre, grep_e2e: grep }), e2e: { result: e2e } }, PR);
+    expect(pr('todas', 'success')).toBe(true);
+    expect(pr('todas', 'skipped')).toBe(false);
+    expect(pr('todas', 'failure')).toBe(false);
+    expect(pr('PRU-E2E-INI-001', 'success')).toBe(false);
+    expect(pr('^$', 'skipped')).toBe(false);
+    expect(pr('PRU-E2E-INI-001', 'success', 'true')).toBe(true);
+    expect(pr('^$', 'skipped', 'true')).toBe(true);
+    const rojo = { ...ok({ cierre: 'true' }), result: 'failure' };
+    expect(cumple(c, { rapido: rojo, e2e: ok() })).toBe(false);
+  });
+
+  it('workflows: ci:reutiliza-e2e corre solo en main, antes de ci:rapido y es el único paso de rapido con el token (TA-555)', () => {
+    const pasos = job('rapido').steps;
+    const i = pasos.findIndex((p) => p.run === 'pnpm ci:reutiliza-e2e');
+    expect(pasos[i]?.if).toBe("github.event_name == 'push'");
+    expect(pasos[i]?.env).toEqual({ GITHUB_TOKEN: '${{ github.token }}' });
+    expect(i).toBeLessThan(pasos.findIndex((p) => p.run === 'pnpm ci:rapido'));
+    expect(pasos.find((p) => p.run === 'pnpm ci:rapido')?.env).toBeUndefined();
+    expect(job('rapido').outputs?.['reutiliza_e2e']).toBe(
+      '${{ steps.rapido.outputs.reutiliza_e2e }}',
+    );
+    expect(pkg.scripts['ci:reutiliza-e2e']).toBe('node tools/ci/reutiliza-e2e.ts');
   });
 
   it('workflows: desplegar corre politica-patrones sin secretos y da los secretos solo a ci:desplegar, sin guardia que lo saltee (TA-260)', () => {
@@ -238,6 +384,8 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     });
     expect(bajar).toBeLessThan(unir);
     expect(pasos[unir]?.env?.['FINN_E2E_FRAGMENTOS']).toBe('${{ needs.e2e-fragmento.result }}');
+    // El filtro usado queda en e2e-completa.json para que main sepa si la E2E fue completa (TA-555)
+    expect(pasos[unir]?.env?.['FINN_E2E_GREP']).toBe('${{ needs.rapido.outputs.grep_e2e }}');
     const subir = pasos.find((p) => p.uses?.startsWith('actions/upload-artifact@'));
     expect(subir?.with).toMatchObject({ name: 'informes-e2e', path: 'apps/web/test-results/' });
     expect(subir?.if).toBe('${{ !cancelled() }}');
@@ -574,6 +722,28 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
       expect(s.status, r).toBe(1);
       expect(s.stderr).toMatch(/los fragmentos terminaron/);
     }
+  });
+
+  it('workflows: en main, con la corrida que dejó ci:reutiliza-e2e, e2e=false y reutiliza_e2e=<run_id>; en PR o con un id inválido, nada (TA-555)', () => {
+    const conReutiliza = (contenido: string): void => {
+      const f = join(cwd, 'test-results', 'reutiliza-e2e.json');
+      mkdirSync(dirname(f), { recursive: true });
+      writeFileSync(f, contenido);
+    };
+    expect(decidir('push', '', ['docs/x.md'])).toMatchObject({ e2e: true, reutiliza_e2e: '' });
+    conReutiliza(JSON.stringify({ reutiliza: true, run_id: 4242 }));
+    expect(decidir('push', '', ['apps/web/src/x.tsx'])).toMatchObject({
+      integracion: true,
+      e2e: false,
+      cierre: true,
+      reutiliza_e2e: '4242',
+    });
+    expect(decidir('pull_request', 'false', ['apps/web/src/x.tsx'])).toMatchObject({
+      e2e: true,
+      reutiliza_e2e: '',
+    });
+    conReutiliza(JSON.stringify({ run_id: '42; rm -rf' }));
+    expect(decidir('push', '', ['docs/x.md'])).toMatchObject({ e2e: true, reutiliza_e2e: '' });
   });
 
   it('workflows: en main corren integracion, e2e y cierre siempre', () => {

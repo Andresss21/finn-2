@@ -11,12 +11,21 @@
 // pull_request), FINN_BASE (por defecto origin/main; en main, el commit anterior al push). Con GITHUB_OUTPUT, las
 // decisiones quedan como salidas del paso. M4 (07 §6.5): el modo sale del estado que ci.yml restauró de la caché.
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { afectadas } from '../pruebas/afectadas.ts';
 import { ESTADO, e2eDePr, recortesAplicables } from './minutos.ts';
+import { COMPLETA, REUTILIZA, registroE2e } from './reutiliza-e2e.ts';
 import { cargarEntradas, verificar } from '../pruebas/matriz.ts';
 import { cambiosDeEstado } from '../pruebas/resumen.ts';
 
@@ -80,28 +89,38 @@ function e2eSegunModo() {
   );
 }
 
+/** CH-231 c (TA-555): en main, la corrida del PR cuya E2E completa se reutiliza; la deja `ci:reutiliza-e2e` en REUTILIZA. */
+function reutilizada() {
+  if (evento !== 'push' || !existsSync(REUTILIZA)) return '';
+  const id = String(JSON.parse(readFileSync(REUTILIZA, 'utf8')).run_id ?? '');
+  return /^\d+$/.test(id) ? id : '';
+}
+
 /** M1: integracion con afecta_db o PR listo. M2: e2e en PR listo con afecta_web. En main, todo (07 §6.1).
  * El PR que pasa una ficha a `terminada`, y `ci:local` con esa ficha, corren e2e aunque no esté listo ni toque la web
  * (07 §13.2, paso 4; M15 lo exige en `cierre`; CH-70).
  * afecta_docs: el diff toca docs/ o tools/docs/ y `rapido` corre docs:comprobar (07 §13.7).
  * solo_interfaz (CH-231): todo el diff es interfaz (INTERFAZ) y no toca la base; `ci:local` usa el modo corto.
  * e2e_completa (CH-231): en CI, un cambio de CI corre la suite E2E completa, no solo las afectadas (`^$` casi siempre):
- * así un cambio del workflow o del arnés se prueba entero en el PR. En local, como antes. */
+ * así un cambio del workflow o del arnés se prueba entero en el PR. En local, como antes.
+ * reutiliza_e2e (CH-231 c, TA-555): en main, sin E2E propia si `reutilizada()` da la corrida de un PR con el mismo árbol. */
 function decidir(archivos, b) {
   const db = archivos.some((a) => CI.test(a) || DB.test(a));
   const web = archivos.some((a) => CI.test(a) || WEB.test(a));
   const enMain = evento === 'push';
   const listo = evento === 'pull_request' && env('FINN_BORRADOR') !== 'true';
   const cierra = aTerminada(b).length > 0;
+  const reutiliza = reutilizada();
   return {
     afecta_db: db,
     afecta_web: web,
     integracion: enMain || listo || db,
-    e2e: enMain || cierra || ((listo || evento === '') && web && e2eSegunModo()),
+    e2e: enMain ? reutiliza === '' : cierra || ((listo || evento === '') && web && e2eSegunModo()),
     cierre: enMain || cierra,
     afecta_docs: archivos.some((a) => DOCS.test(a)),
     solo_interfaz: archivos.length > 0 && !db && !cierra && archivos.every((a) => INTERFAZ.test(a)),
     e2e_completa: evento !== '' && archivos.some((a) => CI.test(a)),
+    reutiliza_e2e: reutiliza,
   };
 }
 
@@ -201,7 +220,8 @@ function e2e(archivos, sinMarco = false) {
 }
 
 /** Job `e2e` (CH-231): une los blobs de los fragmentos en el informe JSON de siempre (`apps/web/test-results/
- * informe.json`, el que leen `cierre` e `inestables`) y pasa solo si todos los fragmentos pasaron. */
+ * informe.json`, el que leen `cierre` e `inestables`) y pasa solo si todos los fragmentos pasaron. Deja al lado
+ * COMPLETA con el filtro y las pruebas: `main` reutiliza esa E2E solo si fue la suite completa (TA-555). */
 function e2eUnir() {
   const blobs = 'test-results/e2e-blob';
   const fragmentos = env('FINN_E2E_FRAGMENTOS');
@@ -211,6 +231,12 @@ function e2eUnir() {
     process.env.PLAYWRIGHT_JSON_OUTPUT_FILE = resolve('apps/web/test-results/informe.json');
     const unir = `pnpm --dir apps/web exec playwright merge-reports --reporter json ${resolve(blobs)}`;
     ok = correr([['unir', unir]]) && inestables();
+    const informe = 'apps/web/test-results/informe.json';
+    if (existsSync(informe)) {
+      const filtro = evento === 'push' ? 'todas' : env('FINN_E2E_GREP');
+      const r = registroE2e(JSON.parse(readFileSync(informe, 'utf8')), filtro, fragmentos);
+      writeFileSync(`apps/web/test-results/${COMPLETA}`, `${JSON.stringify(r)}\n`);
+    }
   } else console.log('e2e: ningún fragmento dejó informe (sin suites afectadas)');
   if (fragmentos !== 'success') {
     console.error(`✗ e2e: los fragmentos terminaron en «${fragmentos || 'sin resultado'}»`);
