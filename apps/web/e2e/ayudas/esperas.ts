@@ -75,6 +75,23 @@ export async function esperarContenido(page: Page): Promise<void> {
       '[aria-busy="true"], template[id^="B:"], div[hidden][id^="S:"]:has(> :not(template))',
     ),
   ).toHaveCount(0);
+  await esperarAnimaciones(page);
+}
+
+/**
+ * [CH-220] Espera, por evento, a que terminen las animaciones finitas de entrada y salida (bloques que entran, vacíos, hojas,
+ * destellos): axe y las medidas de 44 px ven el estado final y no un cuadro intermedio con opacidad o desplazamiento. Las
+ * infinitas (halo, guilloché, resplandor) no terminan nunca y se excluyen; una cancelada cuenta como terminada.
+ */
+export async function esperarAnimaciones(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    Promise.allSettled(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+        .map((a) => a.finished),
+    ).then(() => undefined),
+  );
 }
 
 /** Espera a que `data-revision` cambie después de una escritura o de un refresco (6.3, 6.7). */
