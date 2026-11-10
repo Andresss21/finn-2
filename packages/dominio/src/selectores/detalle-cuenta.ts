@@ -194,6 +194,8 @@ export function detalleCuenta(i: Instantanea, cuentaId: Uuid, o: DetalleCuentaOp
       ...(k.ultimos4 === null ? {} : { ultimos4: k.ultimos4 }),
       fechaApertura: k.fechaApertura,
       archivada: k.archivada,
+      // [CH-224] solo en efectivo
+      ...(k.tipo === 'efectivo' ? { subtipoEfectivo: k.subtipoEfectivo ?? 'corriente' } : {}),
     },
     // [CH-71] el período de los movimientos (el elegido o el activo): lo necesita `SelectorPeriodo` (05 §3.4)
     periodo: periodoDto(i, periodos[pos] as (typeof periodos)[number]),

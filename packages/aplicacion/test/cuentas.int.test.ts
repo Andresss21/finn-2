@@ -574,4 +574,107 @@ describe('PRU-INT-CTA', () => {
     expect(h.cuentas.some((c) => c.id === uuid(1059))).toBe(true);
     expect(h.efectos.filter((f) => f.cuentaId === uuid(1059))).toEqual([]);
   });
+
+  const subtipoDe = async (n: number) =>
+    (await hechos()).cuentas.find((c) => c.id === uuid(n))?.subtipoEfectivo;
+  const bac = async (): Promise<Uuid> => {
+    const lista = await leer((t) => leerInstituciones(t), RELOJ);
+    const b = lista.find((x) => x.nombre === 'BAC');
+    if (b === undefined) throw new Error('falta la institución BAC de la siembra (03 §9)');
+    return b.id;
+  };
+
+  it('PRU-INT-CTA-320 CH-224 OP-01: OP-01 guarda cada subtipo de efectivo; sin subtipo queda corriente (CH-229) y la repetición es ya aplicada; el contrato rechaza la billetera con institución o últimos 4 y el subtipo fuera del efectivo', async () => {
+    for (const [n, s] of [
+      [1320, 'corriente'],
+      [1321, 'ahorro'],
+      [1322, 'billetera'],
+    ] as const) {
+      expect(await ejecutar(OP01, efectivo(n, { subtipoEfectivo: s }))).toMatchObject({
+        ok: true,
+        valor: { id: uuid(n) },
+      });
+      expect(await subtipoDe(n)).toBe(s);
+    }
+    // CH-229 (expandir): la interfaz de hoy no envía el subtipo; el contrato completa `corriente`
+    expect(await ejecutar(OP01, efectivo(1323))).toMatchObject({ ok: true, yaAplicada: false });
+    expect(await subtipoDe(1323)).toBe('corriente');
+    expect(await ejecutar(OP01, efectivo(1323))).toMatchObject({ ok: true, yaAplicada: true });
+    expect(await ejecutar(OP01, efectivo(1323, { subtipoEfectivo: 'ahorro' }))).toMatchObject({
+      ok: false,
+      error: { codigo: 'conflicto_id' },
+    });
+    expect(await ejecutar(OP01, tarjeta(1324))).toMatchObject({ ok: true });
+    expect(await subtipoDe(1324)).toBeNull();
+
+    const institucionId = await bac();
+    for (const [entrada, campo] of [
+      [efectivo(1325, { subtipoEfectivo: 'billetera', ultimos4: '1234' }), 'ultimos4'],
+      [efectivo(1325, { subtipoEfectivo: 'billetera', institucionId }), 'institucionId'],
+      [efectivo(1325, { subtipoEfectivo: 'plazo_fijo' }), 'subtipoEfectivo'],
+      [tarjeta(1325, { subtipoEfectivo: 'corriente' }), 'subtipoEfectivo'],
+    ] as const)
+      expect(await ejecutar(OP01, entrada)).toMatchObject({
+        ok: false,
+        error: { categoria: 'VALIDACION', campos: { [campo]: texto } },
+      });
+    expect(await subtipoDe(1325)).toBeUndefined();
+  });
+
+  it('PRU-INT-CTA-320 CH-224 OP-02: OP-02 cambia el subtipo con lo esperado y conserva el actual si no llega; pasar a billetera exige quitar institución y últimos 4 en la misma edición', async () => {
+    const institucionId = await bac();
+    await ejecutar(OP01, efectivo(1330, { institucionId, ultimos4: '4321' }));
+    const cuentaId = uuid(1330);
+    const sinQuitar = await ejecutar(OP02, {
+      cuentaId,
+      subtipoEfectivo: 'billetera',
+      esperado: { subtipoEfectivo: 'corriente' },
+    });
+    expect(sinQuitar).toMatchObject({
+      ok: false,
+      error: { categoria: 'VALIDACION', campos: { institucionId: texto, ultimos4: texto } },
+    });
+    const billetera = {
+      cuentaId,
+      subtipoEfectivo: 'billetera',
+      institucionId: null,
+      ultimos4: null,
+      esperado: { subtipoEfectivo: 'corriente', institucionId, ultimos4: '4321' },
+    };
+    expect(await ejecutar(OP02, billetera)).toMatchObject({ ok: true, yaAplicada: false });
+    expect((await hechos()).cuentas.find((c) => c.id === cuentaId)).toMatchObject({
+      subtipoEfectivo: 'billetera',
+      institucionId: null,
+      ultimos4: null,
+    });
+    expect(await ejecutar(OP02, billetera)).toMatchObject({ ok: true, yaAplicada: true });
+
+    const ahorro = {
+      cuentaId,
+      subtipoEfectivo: 'ahorro',
+      esperado: { subtipoEfectivo: 'billetera' },
+    };
+    expect(await ejecutar(OP02, ahorro)).toMatchObject({ ok: true, yaAplicada: false });
+    expect(await subtipoDe(1330)).toBe('ahorro');
+    expect(await ejecutar(OP02, { ...ahorro, subtipoEfectivo: 'corriente' })).toMatchObject({
+      ok: false,
+      error: {
+        codigo: 'conflicto_desactualizado',
+        datos: { actuales: { subtipoEfectivo: 'ahorro' } },
+      },
+    });
+    // Sin subtipo en la edición: conserva el actual
+    const nombre = { cuentaId, nombre: 'Alcancía', esperado: { nombre: 'Cuenta 1330' } };
+    expect(await ejecutar(OP02, nombre)).toMatchObject({ ok: true });
+    expect(await subtipoDe(1330)).toBe('ahorro');
+    // Una tarjeta no tiene subtipo de efectivo: error de quien llama, como un campo de otro tipo
+    await ejecutar(OP01, tarjeta(1331));
+    expect(
+      await ejecutar(OP02, {
+        cuentaId: uuid(1331),
+        subtipoEfectivo: 'ahorro',
+        esperado: { subtipoEfectivo: null },
+      }),
+    ).toMatchObject({ ok: false, error: { categoria: 'INTERNO' } });
+  });
 });

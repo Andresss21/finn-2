@@ -255,7 +255,10 @@ async function entradaDe(s: Estado, op: Op, hoy: string): Promise<{ def: Def; en
         ...(bac && { institucionId: bac.id, ultimos4: op.ultimos4 }),
       };
       const saldo = dolares(op.saldo ?? 0);
-      if (tipo === 'efectivo' || tipo === 'inversion') return como(OP01, { ...comun, tipo, saldo });
+      // [CH-224] explícito: cuando el contrato lo exija (TA-495, CH-229) la siembra no cambia
+      if (tipo === 'efectivo')
+        return como(OP01, { ...comun, tipo, subtipoEfectivo: 'corriente', saldo });
+      if (tipo === 'inversion') return como(OP01, { ...comun, tipo, saldo });
       if (tipo === 'tarjeta')
         return como(OP01, {
           ...comun,

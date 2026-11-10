@@ -28,6 +28,16 @@ enum TipoCuenta {
   @@schema("finn")
 }
 
+// [CH-224] Solo en efectivo (03 §3.4); lo crea m_cuentas_subtipo_efectivo
+enum SubtipoEfectivo {
+  corriente
+  ahorro
+  billetera
+
+  @@map("subtipo_efectivo")
+  @@schema("finn")
+}
+
 enum ClaseCategoria {
   normal
   pago
@@ -241,15 +251,16 @@ model Institucion {
 
 /// [M] 3.4
 model Cuenta {
-  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tipo          TipoCuenta
-  nombre        String
-  institucionId String?    @map("institucion_id") @db.Uuid
-  ultimos4      String?
-  fechaApertura DateTime   @map("fecha_apertura") @db.Date
-  orden         Int        @default(0)
-  archivada     Boolean    @default(false)
-  revision      BigInt     @default(0)
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipo            TipoCuenta
+  nombre          String
+  institucionId   String?          @map("institucion_id") @db.Uuid
+  ultimos4        String?
+  subtipoEfectivo SubtipoEfectivo? @map("subtipo_efectivo") // [CH-224]
+  fechaApertura   DateTime         @map("fecha_apertura") @db.Date
+  orden           Int              @default(0)
+  archivada       Boolean          @default(false)
+  revision        BigInt           @default(0)
 
   institucion        Institucion?       @relation(fields: [institucionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cuentas_institucion")
   tarjeta            Tarjeta?

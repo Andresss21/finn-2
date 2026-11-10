@@ -54,6 +54,8 @@ const cuentaDe = (e: EntradaOp01) => ({
   nombre: e.nombre,
   institucionId: e.institucionId ?? null,
   ultimos4: e.ultimos4 ?? null,
+  // [CH-224] el contrato ya lo completó con `corriente` si faltaba (CH-229)
+  subtipoEfectivo: e.tipo === 'efectivo' ? e.subtipoEfectivo : null,
   ...(e.fechaApertura === undefined ? {} : { fechaApertura: e.fechaApertura }),
 });
 

@@ -221,6 +221,7 @@ export function generarPeriodos(op: OpcionesVolumen): PeriodoVolumen[] {
           nombre,
           institucionId: null,
           ultimos4: null,
+          subtipoEfectivo: tipo === 'efectivo' ? 'corriente' : null, // [CH-224] 03 §3.4
           fechaApertura: inicio0,
           orden,
           archivada: false,

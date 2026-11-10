@@ -28,6 +28,7 @@ const COLUMNAS: { readonly [T in TablaEscribible]: Record<keyof FilasPorTabla[T]
     nombre: true,
     institucionId: true,
     ultimos4: true,
+    subtipoEfectivo: true,
     fechaApertura: true,
     orden: true,
     archivada: true,
