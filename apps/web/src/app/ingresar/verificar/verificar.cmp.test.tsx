@@ -20,7 +20,23 @@ afterEach(() => {
     });
     nodo.remove();
   }
+  vi.restoreAllMocks();
 });
+
+/** «Reducir movimiento» encendido: `matchMedia` de la preferencia responde `true`. */
+function conMovimientoReducido(): void {
+  const original = window.matchMedia.bind(window);
+  vi.spyOn(window, 'matchMedia').mockImplementation((consulta: string) =>
+    consulta === '(prefers-reduced-motion: reduce)'
+      ? ({
+          matches: true,
+          media: consulta,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+        } as unknown as MediaQueryList)
+      : original(consulta),
+  );
+}
 
 function montar(ui: ReactNode): HTMLElement {
   const nodo = document.createElement('main');
@@ -46,13 +62,13 @@ const codigoIncorrecto = (): ResultadoAccion<unknown> => ({
   },
 });
 
-function pantalla(accion: Accion) {
+function pantalla(accion: Accion, rutas = RUTAS) {
   const nodo = montar(
     <FormularioVerificar
       accion={accion}
       accionSalir={() => Promise.resolve({ ok: true, valor: {}, yaAplicada: false, avisos: [] })}
       factores={FACTORES}
-      rutas={RUTAS}
+      rutas={rutas}
     />,
   );
   const campo = nodo.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]');
@@ -117,5 +133,114 @@ describe('PRU-CMP-ACCESO', () => {
         expect(campo.value).toBe(''); // el error de código vacía el campo (CA-01.3)
       });
     }
+  });
+});
+
+describe('PRU-CMP-ACCESO movimiento del código', () => {
+  const verificado = (): ResultadoAccion<unknown> => ({
+    ok: true,
+    valor: {},
+    yaAplicada: false,
+    avisos: [],
+  });
+  // El destino es un ancla: la navegación cambia el `hash` sin dejar la página de prueba.
+  const conAncla = (ancla: string) => ({ ...RUTAS, destino: `#${ancla}` });
+
+  it('PRU-CMP-ACCESO-110 [CA-01.3] código incorrecto: el campo tiembla con el borde de problema, queda vacío y con el foco, y con el mensaje', async () => {
+    const accion = vi.fn<Accion>(() => Promise.resolve(codigoIncorrecto()));
+    const { nodo, campo } = pantalla(accion);
+    await userEvent.click(campo);
+    await userEvent.keyboard('123456');
+    await act(async () => {
+      await userEvent.keyboard('{Enter}');
+    });
+    await vi.waitFor(() => {
+      expect(nodo.querySelector('[data-temblor]')).not.toBeNull();
+    });
+    const envoltura = nodo.querySelector('[data-temblor]') as HTMLElement;
+    expect(getComputedStyle(envoltura).animationName).toBe('fz-jitter');
+    expect(getComputedStyle(envoltura).animationDuration).toBe('0.38s');
+    expect(nodo.textContent).toContain(autenticacion.codigo_incorrecto);
+    await vi.waitFor(() => {
+      expect(campo.value).toBe('');
+      expect(document.activeElement).toBe(campo);
+    });
+    // Sin el foco (que pinta su propio borde), el campo queda con el borde de problema.
+    campo.blur();
+    const borde = document.createElement('span');
+    borde.style.color = 'var(--problema-borde)';
+    document.body.append(borde);
+    expect(getComputedStyle(campo).borderBottomColor).toBe(getComputedStyle(borde).color);
+    borde.remove();
+    await userEvent.click(campo);
+    // Un segundo error vuelve a temblar (otro nombre de animación, el mismo campo).
+    await userEvent.keyboard('654321');
+    await act(async () => {
+      await userEvent.keyboard('{Enter}');
+    });
+    await vi.waitFor(() => {
+      expect(getComputedStyle(nodo.querySelector('[data-temblor]') as Element).animationName).toBe(
+        'fz-jitter-otra',
+      );
+    });
+    expect(nodo.querySelector('input[autocomplete="one-time-code"]')).toBe(campo);
+  });
+
+  it('PRU-CMP-ACCESO-110 [CA-01.3] con movimiento reducido el código incorrecto no tiembla', async () => {
+    conMovimientoReducido();
+    const accion = vi.fn<Accion>(() => Promise.resolve(codigoIncorrecto()));
+    const { nodo, campo } = pantalla(accion);
+    await userEvent.click(campo);
+    await userEvent.keyboard('123456');
+    await act(async () => {
+      await userEvent.keyboard('{Enter}');
+    });
+    await vi.waitFor(() => {
+      expect(nodo.textContent).toContain(autenticacion.codigo_incorrecto);
+    });
+    const envoltura = nodo.querySelector('[data-temblor]');
+    expect(envoltura === null ? 'none' : getComputedStyle(envoltura).animationName).toBe('none');
+  });
+
+  it('PRU-CMP-ACCESO-111 [CA-01.4] verificado: el check aparece y la navegación ocurre después de la espera del token; seis dígitos escritos no envían solos', async () => {
+    const accion = vi.fn<Accion>(() => Promise.resolve(verificado()));
+    const { nodo, campo, boton } = pantalla(accion, conAncla('verificado-111'));
+    await userEvent.click(campo);
+    await userEvent.keyboard('123456');
+    await act(() => Promise.resolve());
+    expect(accion).not.toHaveBeenCalled();
+    await act(async () => {
+      await userEvent.click(boton);
+    });
+    await vi.waitFor(() => {
+      expect(nodo.querySelector('[data-verificado]')).not.toBeNull();
+    });
+    // El check entra con fz-pop-in; la navegación todavía no ocurrió.
+    const check = nodo.querySelector('[data-verificado] .fz-pop-in') as Element;
+    expect(getComputedStyle(check).animationName).toBe('fz-pop-in');
+    expect(window.location.hash).not.toBe('#verificado-111');
+    await vi.waitFor(() => {
+      expect(window.location.hash).toBe('#verificado-111');
+    });
+    expect(
+      getComputedStyle(document.documentElement).getPropertyValue('--espera-verificado').trim(),
+    ).toBe('650ms');
+  });
+
+  it('PRU-CMP-ACCESO-111 [CA-01.4] con movimiento reducido la navegación no espera', async () => {
+    conMovimientoReducido();
+    const accion = vi.fn<Accion>(() => Promise.resolve(verificado()));
+    const { campo, boton } = pantalla(accion, conAncla('verificado-reducido'));
+    await userEvent.click(campo);
+    await userEvent.keyboard('123456');
+    await act(async () => {
+      await userEvent.click(boton);
+    });
+    await vi.waitFor(
+      () => {
+        expect(window.location.hash).toBe('#verificado-reducido');
+      },
+      { timeout: 300 },
+    );
   });
 });

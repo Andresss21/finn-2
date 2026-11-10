@@ -18,6 +18,7 @@ export const ingreso = {
   factor: 'Factor',
   verificar: 'Verificar',
   verificando: 'Verificando…',
+  verificado: 'Código correcto',
   usarOtraCuenta: 'Usar otra cuenta',
   saliendo: 'Saliendo…',
   tituloInscribir: 'Protegé tu cuenta',
