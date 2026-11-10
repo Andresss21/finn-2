@@ -4,6 +4,7 @@
 // montada, destella (C3). Con movimiento reducido no se anima nada (regla global de globals.css). No calcula montos (PF-3).
 import type { Centavos } from '@finn/dominio/valores';
 import { useLayoutEffect, useRef, useState } from 'react';
+import { almacen } from '../../cliente/almacen';
 import { formatearMonto, formatearMontoAccesible } from '../../formato';
 import { Destello } from '../movimiento/destello';
 
@@ -11,13 +12,10 @@ export const CLAVE_BILLETE_VISTO = 'finn:billete-rodo';
 
 /** `true` si el billete ya rodó en esta sesión; sin `sessionStorage` (bloqueado o privado) también, para no animar. */
 function yaRodo(): boolean {
-  try {
-    if (window.sessionStorage.getItem(CLAVE_BILLETE_VISTO) !== null) return true;
-    window.sessionStorage.setItem(CLAVE_BILLETE_VISTO, '1');
-    return false;
-  } catch {
-    return true;
-  }
+  if (almacen.leer(CLAVE_BILLETE_VISTO) !== null) return true;
+  almacen.escribir(CLAVE_BILLETE_VISTO, '1');
+  // Si no quedó escrito, no hay almacenamiento: tampoco se anima.
+  return almacen.leer(CLAVE_BILLETE_VISTO) === null;
 }
 
 export function CifrasBillete({

@@ -9,9 +9,10 @@ import { useMovimientoReducido } from './use-movimiento-reducido';
 export function duracionToken(nombre: string): number {
   if (typeof window === 'undefined') return 0;
   const valor = getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
-  const n = Number.parseFloat(valor);
-  if (!Number.isFinite(n)) return 0;
-  return valor.endsWith('ms') ? n : n * 1000;
+  const partes = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(valor);
+  if (partes === null) return 0;
+  const n = Number(partes[1]);
+  return partes[2] === 'ms' ? n : n * 1000;
 }
 
 export interface Salida {

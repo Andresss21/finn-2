@@ -5,7 +5,10 @@
 import { useState, type ReactNode } from 'react';
 import { useMovimientoReducido } from './use-movimiento-reducido';
 
-const CLASE = { sube: 'fz-destello-sube', baja: 'fz-destello-baja' } as const;
+const CLASE = {
+  sube: 'inline-block fz-destello-sube',
+  baja: 'inline-block fz-destello-baja',
+} as const;
 
 export function Destello({
   valor,
@@ -30,7 +33,7 @@ export function Destello({
     <span
       key={cambio.n}
       data-destello={cambio.hacia}
-      className={`inline-block ${CLASE[cambio.hacia]}`}
+      className={CLASE[cambio.hacia]}
       onAnimationEnd={() => {
         setCambio(null);
       }}
