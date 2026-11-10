@@ -349,6 +349,29 @@ body {
   stroke-dasharray: 1;
   animation: fz-dona var(--duracion-crecer) var(--curva-estandar) both;
 }
+/* C2: aprobar en la Bandeja. La fila sale a la derecha, el resultado entra en su lugar y el contador rebota. */
+@keyframes fz-fila-sale {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes fz-rebote {
+  from {
+    transform: scale(0.85);
+  }
+}
+.fz-fila-sale {
+  pointer-events: none;
+  animation: fz-fila-sale var(--duracion-salida-fila) var(--curva-salida) both;
+}
+.fz-resultado-entra {
+  animation: fz-pop-in var(--duracion-transicion) var(--curva-enfasis) both;
+}
+.fz-rebote {
+  animation: fz-rebote var(--duracion-transicion) var(--curva-enfasis);
+}
+
 /* C3: el monto que cambió sube 4 px en verde o baja en rojo (600 ms); el tinte va en el monto, que trae su propio color. */
 @keyframes fz-destello-sube {
   from {
