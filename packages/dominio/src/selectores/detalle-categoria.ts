@@ -54,6 +54,8 @@ export interface DetalleCategoria {
     readonly montoNeto: Centavos;
     readonly cubierto: Centavos;
     readonly noCubierto: Centavos;
+    /** [CH-223] cubierto × 10.000 / montoNeto (redondeo de `barra`, CF-25); 0 si montoNeto ≤ 0; tope 10.000. */
+    readonly cubiertoBp: number;
   }[];
   readonly entradasDelPeriodo: readonly {
     readonly transaccionId: Uuid;
@@ -250,6 +252,8 @@ export function detalleCategoria(
         montoNeto: k2.neto,
         cubierto: x.cubierto,
         noCubierto: x.noCubierto,
+        cubiertoBp:
+          k2.neto <= 0 ? 0 : Math.max(0, Math.min(10_000, puntosBasicos(x.cubierto, k2.neto))),
       };
     }),
     entradasDelPeriodo: aportes
