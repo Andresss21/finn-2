@@ -2,7 +2,7 @@
 // que el gráfico ya dibuja; los textos (y las cifras, como «Referencia $81.67») los da quien la usa, desde el DTO (PF-3).
 import { cuentas } from '../../textos/cuentas';
 
-export type FormaDeLeyenda = 'barra' | 'actual' | 'excedido' | 'referencia';
+export type FormaDeLeyenda = 'barra' | 'actual' | 'excedido' | 'referencia' | 'tope';
 
 export interface ItemDeLeyenda {
   readonly forma: FormaDeLeyenda;
@@ -29,7 +29,19 @@ export function LeyendaGrafico({ items }: { readonly items: readonly ItemDeLeyen
           data-leyenda-forma={i.forma}
           className="flex min-h-6 items-center gap-1.5"
         >
-          {i.forma === 'referencia' ? (
+          {i.forma === 'tope' ? (
+            <svg aria-hidden="true" width="16" height="8" viewBox="0 0 16 8" className="shrink-0">
+              <line
+                x1="0"
+                x2="16"
+                y1="4"
+                y2="4"
+                strokeWidth="2"
+                strokeDasharray="4 4"
+                className="stroke-grafico-referencia"
+              />
+            </svg>
+          ) : i.forma === 'referencia' ? (
             <svg aria-hidden="true" width="16" height="8" viewBox="0 0 16 8" className="shrink-0">
               <line
                 x1="2"

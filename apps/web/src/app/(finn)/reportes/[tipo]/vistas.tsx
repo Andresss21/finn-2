@@ -3,7 +3,12 @@
 import type { ReactNode } from 'react';
 import type { ReporteDe } from '@finn/aplicacion/consultas/reporte';
 import type { Centavos } from '@finn/dominio/valores';
+import {
+  anchosProporcionales,
+  GraficoBarras,
+} from '../../../../componentes/graficos/grafico-barras';
 import { GraficoLineas } from '../../../../componentes/graficos/grafico-lineas';
+import { LeyendaGrafico } from '../../../../componentes/graficos/leyenda-grafico';
 import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { formatearFecha, formatearMesCorto } from '../../../../formato';
@@ -44,37 +49,41 @@ interface Linea<F> {
   readonly valor: (fila: F) => Centavos;
 }
 
-/** Un reporte con una fila por período: sus líneas y la tabla con una columna por cifra. */
+/** Un reporte con una fila por período: sus líneas (o el gráfico que traiga) y la tabla con una columna por cifra. */
 function Serie<F extends { readonly periodo: string }>({
   titulo,
   filas,
-  lineas,
+  lineas = [],
+  grafico,
   columnas,
 }: {
   readonly titulo: string;
   readonly filas: readonly F[];
-  readonly lineas: readonly Linea<NoInfer<F>>[];
+  readonly lineas?: readonly Linea<NoInfer<F>>[];
+  readonly grafico?: ReactNode;
   readonly columnas: readonly Columna<NoInfer<F>>[];
 }) {
   const etiquetas = filas.map((f) => formatearFecha(f.periodo));
   return (
     <VistaGrafico
       grafico={
-        <div className="flex flex-col gap-4">
-          {lineas.map((l) => (
-            <GraficoLineas
-              key={l.titulo}
-              titulo={l.titulo}
-              resumen={t.resumenLinea(etiquetas[0] ?? '', etiquetas[etiquetas.length - 1] ?? '')}
-              etiquetasTodas
-              puntos={filas.map((f) => ({
-                clave: f.periodo,
-                etiqueta: formatearMesCorto(f.periodo),
-                valor: l.valor(f),
-              }))}
-            />
-          ))}
-        </div>
+        grafico ?? (
+          <div className="flex flex-col gap-4">
+            {lineas.map((l) => (
+              <GraficoLineas
+                key={l.titulo}
+                titulo={l.titulo}
+                resumen={t.resumenLinea(etiquetas[0] ?? '', etiquetas[etiquetas.length - 1] ?? '')}
+                etiquetasTodas
+                puntos={filas.map((f) => ({
+                  clave: f.periodo,
+                  etiqueta: formatearMesCorto(f.periodo),
+                  valor: l.valor(f),
+                }))}
+              />
+            ))}
+          </div>
+        )
       }
       tabla={
         <div className="overflow-x-auto in-[.sr-only]:overflow-visible">
@@ -186,18 +195,39 @@ export function cuerpoDe(
       );
     }
     case 'tendencia': {
-      const { periodos } = dto as ReporteDe<'tendencia'>;
+      const { periodos, periodoActivo } = dto as ReporteDe<'tendencia'>;
       if (sinMovimiento(periodos.flatMap((p) => [p.ingresos, p.gastos, p.otrasEntradas])))
         return null;
+      const etiquetas = periodos.map((f) => formatearFecha(f.periodo));
+      // [CH-226] Lo gastado por período con lo asignado como tope punteado (A26); el período activo es la barra actual.
       return (
         <Serie
           titulo={t.titulos.tendencia}
           filas={periodos}
-          lineas={[
-            { titulo: t.serieIngresos, valor: (f) => f.ingresos },
-            { titulo: t.serieGastos, valor: (f) => f.gastos },
-          ]}
-          columnas={[campo('ingresos'), campo('gastos'), campo('otrasEntradas')]}
+          grafico={
+            <div className="flex flex-col gap-3">
+              <GraficoBarras
+                titulo={t.serieGastos}
+                resumen={t.resumenLinea(etiquetas[0] ?? '', etiquetas.at(-1) ?? '')}
+                tope="punteado"
+                puntos={periodos.map((f) => ({
+                  clave: f.periodo,
+                  etiqueta: formatearMesCorto(f.periodo),
+                  valor: f.gastos,
+                  referencia: f.asignado,
+                  actual: f.periodo === periodoActivo.inicio,
+                }))}
+              />
+              <LeyendaGrafico
+                items={[
+                  { forma: 'barra', texto: t.leyendaTendencia.cerrados },
+                  { forma: 'actual', texto: t.leyendaTendencia.actual },
+                  { forma: 'tope', texto: t.leyendaTendencia.asignado },
+                ]}
+              />
+            </div>
+          }
+          columnas={[campo('ingresos'), campo('gastos'), campo('otrasEntradas'), campo('asignado')]}
         />
       );
     }
@@ -243,7 +273,14 @@ export function cuerpoDe(
     }
     case 'top_comercios': {
       const d = dto as ReporteDe<'top_comercios'>;
-      return d.comercios.length === 0 ? null : <TopComercios dto={d} nombres={nombres} />;
+      // [CH-226] La escala del servidor ubica la barra de cada comercio sobre su monto (FE-44).
+      return d.comercios.length === 0 ? null : (
+        <TopComercios
+          dto={d}
+          nombres={nombres}
+          anchos={anchosProporcionales(d.comercios.map((c) => c.monto))}
+        />
+      );
     }
     case 'cumplimiento': {
       const d = dto as ReporteDe<'cumplimiento'>;

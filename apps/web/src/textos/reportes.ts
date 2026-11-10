@@ -235,6 +235,12 @@ export const reportes = {
   conDevolucionNeta: 'Con devolución neta',
   sinPorcentaje: '—',
   compras: (n: number) => (n === 1 ? '1 compra' : `${n} compras`),
+  /** [CH-226] La leyenda del gráfico de tendencia (A26). */
+  leyendaTendencia: {
+    cerrados: 'Períodos cerrados',
+    actual: 'Período actual',
+    asignado: 'Asignado',
+  },
   resumenDona: (mayor: string, porcentaje: string) => `la mayor es ${mayor}, con ${porcentaje}`,
   resumenDonaVacia: 'sin gastos',
   /** Debajo del total al centro de la dona (export 04-reportes, CH-177). */
