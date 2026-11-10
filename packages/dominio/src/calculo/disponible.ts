@@ -3,12 +3,19 @@
 // reparto D2 de las categorías normales, su Disponible, el de las categorías de pago (que reciben los
 // traslados del reparto) y el arrastre al período siguiente. Una categoría archivada sigue las
 // mismas reglas (N5): no se filtra en ningún paso.
-import type { Categoria, Hechos, Transaccion, Uuid } from '../hechos';
+import type { Categoria, Hechos, Linea, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { actividadDePago, actividadNormal } from './actividad';
 import { asignado, type RepartoD2, repartoD2, trasladoA } from './d2';
-import { type Aporte, aportesDe, type HechosDeConsumo, movimientos } from './devoluciones';
+import {
+  type Aporte,
+  aportesDe,
+  type HechosDeConsumo,
+  movimientos,
+  porId,
+  transaccionesDe,
+} from './devoluciones';
 import { mutante } from './mutantes';
 import {
   type Ciclo,
@@ -81,15 +88,18 @@ export function agrupar<T, K>(xs: readonly T[], claveDe: (x: T) => K | undefined
   return m;
 }
 
-/** Las filas de `xs` por celda: [inicio del período, categoría o tarjeta]. Sin período no entran. */
+/** Las filas de `xs` por celda: [inicio del período, categoría o tarjeta]. Sin período no entran.
+ * La celda sale de dos funciones y no de un par, que costaba un arreglo por fila [CH-233]. */
 function porCelda<T>(
   xs: readonly T[],
-  celda: (x: T) => readonly [FechaLocal | undefined, Uuid | null],
+  inicioDe: (x: T) => FechaLocal | undefined,
+  idDe: (x: T) => Uuid | null,
 ) {
   const m = new Map<FechaLocal, Map<Uuid | null, T[]>>();
   for (const x of xs) {
-    const [inicio, id] = celda(x);
+    const inicio = inicioDe(x);
     if (inicio === undefined) continue;
+    const id = idDe(x);
     let deP = m.get(inicio);
     if (deP === undefined) m.set(inicio, (deP = new Map<Uuid | null, T[]>()));
     const ys = deP.get(id);
@@ -153,6 +163,7 @@ export function presupuesto(
   pagosImplicitos: readonly PagoImplicito[] = [],
   proyectados = 0,
   m = movimientos(h, c),
+  deLinea: readonly (Transaccion | undefined)[] = transaccionesDe(h.lineas, porId(h.transacciones)),
 ): Presupuesto {
   const periodos = rango(h, c, hoy, pagosImplicitos, proyectados);
   const normales = h.categorias.filter((x) => x.clase === 'normal');
@@ -166,15 +177,29 @@ export function presupuesto(
   // Índices de una pasada [BE-23]: cada celda lee sus filas de un Map por período y categoría (o
   // tarjeta). Las fórmulas son las mismas y siguen filtrando: solo reciben las filas de su celda.
   const inicio = (fecha: FechaLocal) => inicioEn(periodos, fecha);
-  const consumosDe = porCelda(ks, (k) => [inicio(k.fecha), k.categoriaId]);
-  const asignacionesDe = porCelda(h.asignaciones, (a) => [a.periodoInicio, a.categoriaId]);
-  const implicitosDe = porCelda(pagosImplicitos, (i) => [inicio(i.fecha), i.tarjetaId]);
-  const pagos = new Map(
-    h.transacciones.filter((t) => t.tipo === 'pago_tarjeta').map((t) => [t.id, t]),
+  const consumosDe = porCelda(
+    ks,
+    (k) => inicio(k.fecha),
+    (k) => k.categoriaId,
   );
+  const asignacionesDe = porCelda(
+    h.asignaciones,
+    (a) => a.periodoInicio,
+    (a) => a.categoriaId,
+  );
+  const implicitosDe = porCelda(
+    pagosImplicitos,
+    (i) => inicio(i.fecha),
+    (i) => i.tarjetaId,
+  );
+  // Las líneas de los pagos de tarjeta, por su posición en `h.lineas`: su transacción es `deLinea[i]`.
+  const conPago: number[] = [];
+  for (let i = 0; i < h.lineas.length; i++)
+    if (deLinea[i]?.tipo === 'pago_tarjeta') conPago.push(i);
   const lineasDePago = porCelda(
-    h.lineas.filter((l) => pagos.has(l.transaccionId)),
-    (l) => [inicio((pagos.get(l.transaccionId) as Transaccion).fecha), l.categoriaId],
+    conPago,
+    (i) => inicio((deLinea[i] as Transaccion).fecha),
+    (i) => (h.lineas[i] as Linea).categoriaId,
   );
   const devolucionesDe = agrupar(devoluciones, (d) => d.periodo);
   // A_L de una D-3 sale de las D-3 anteriores de su L (§4.4): las de L, en orden cronológico.
@@ -254,8 +279,9 @@ export function presupuesto(
           .map((i) => i.monto),
       );
       const traslado = t === null ? Centavos.cero : trasladoA(delPeriodo, t, p);
-      const lineas = deCelda(lineasDePago, x.id);
-      const transacciones = lineas.map((l) => pagos.get(l.transaccionId) as Transaccion);
+      const deX = deCelda(lineasDePago, x.id);
+      const lineas = deX.map((i) => h.lineas[i] as Linea);
+      const transacciones = deX.map((i) => deLinea[i] as Transaccion);
       const act = Centavos.sumar(
         Centavos.restar(traslado, implicito),
         actividadDePago({ transacciones, lineas }, aportesEn.get(t) ?? [], x, p),

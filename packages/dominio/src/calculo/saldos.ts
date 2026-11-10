@@ -53,6 +53,29 @@ export function saldoYConfirmado(
   return { saldo: total, confirmado };
 }
 
+/**
+ * `saldoYConfirmado` de cada cuenta con efectos, en una sola pasada por todos los efectos
+ * [CH-233]. `deEfecto`: la transacción de cada efecto, en el orden de `h.efectos`
+ * (`transaccionesDe`). Una cuenta sin efectos no aparece: su saldo es 0.
+ */
+export function saldosPorCuenta(
+  h: Pick<HechosDeSaldo, 'efectos'>,
+  deEfecto: readonly (Transaccion | undefined)[],
+): Map<Uuid, { saldo: Centavos; confirmado: Centavos }> {
+  const r = new Map<Uuid, { saldo: Centavos; confirmado: Centavos }>();
+  for (let i = 0; i < h.efectos.length; i++) {
+    const e = h.efectos[i] as HechosDeSaldo['efectos'][number];
+    const t = deEfecto[i];
+    if (t === undefined) throw new RangeError(`efecto ${e.id} sin su transacción`);
+    let s = r.get(e.cuentaId);
+    if (s === undefined)
+      r.set(e.cuentaId, (s = { saldo: Centavos.cero, confirmado: Centavos.cero }));
+    s.saldo = Centavos.sumar(s.saldo, e.monto);
+    if (t.estadoBancario !== 'pendiente') s.confirmado = Centavos.sumar(s.confirmado, e.monto);
+  }
+  return r;
+}
+
 /** saldo(k, f): solo los efectos de transacciones con fecha ≤ f. */
 export const saldoAl = (h: HechosDeSaldo, cuentaId: Uuid, f: FechaLocal): Centavos =>
   saldo(h, cuentaId, { hasta: f });

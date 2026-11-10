@@ -1,10 +1,10 @@
 // Clasificación para reportes (01 §4.13; N9, Q3, Q7, H13, D1, O1, H6): gasto por categoría, neto de
 // devoluciones; cobros, de `porCobrar` (§4.10). Fuera de §4.13 quedan sin clase el ajuste de valor
 // de una inversión (OP-25, sin efecto presupuestario) y las devoluciones a un por cobrar.
-import type { TipoTransaccion, Transaccion, Uuid } from '../hechos';
+import type { Efecto, TipoTransaccion, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import { type HechosDeConsumo, movimientos, porId } from './devoluciones';
+import { type HechosDeConsumo, movimientos, porId, transaccionesDe } from './devoluciones';
 import type { Ciclo } from './periodos';
 import type { PorCobrar } from './por-cobrar';
 
@@ -58,10 +58,12 @@ export function clasificacion(
   cobros: readonly PorCobrar[],
   m = movimientos(h, c),
   txs: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
+  deEfecto: readonly (Transaccion | undefined)[] = transaccionesDe(h.efectos, txs),
 ): Clasificacion {
   const partidas: Partida[] = [];
   const agregar = (x: Origen, clase: ClaseDeReporte, monto: Centavos, cat: Uuid | null = null) =>
-    partidas.push({ id: x.id, fecha: x.fecha, clase, categoriaId: cat, monto });
+    // Nace congelada: `congelar` de calcular no la vuelve a recorrer [CH-233].
+    partidas.push(Object.freeze({ id: x.id, fecha: x.fecha, clase, categoriaId: cat, monto }));
 
   for (const t of h.transacciones) {
     const clase = POR_TOTAL[t.tipo];
@@ -81,8 +83,9 @@ export function clasificacion(
   // Una pasada por los efectos: el saldo inicial, con el signo de su cuenta (el efecto de la
   // transacción), y los costos financieros de las cuotas, cada uno en su lista y en su orden.
   const costosFinancieros: CostoFinanciero[] = [];
-  for (const e of h.efectos) {
-    const t = txs.get(e.transaccionId);
+  for (let i = 0; i < h.efectos.length; i++) {
+    const e = h.efectos[i] as Efecto;
+    const t = deEfecto[i];
     if (t?.tipo === 'saldo_inicial') agregar(t, 'saldo_inicial', e.monto);
     else if (t?.tipo === 'cuota_prestamo' && (e.interes !== null || e.seguro !== null))
       costosFinancieros.push({

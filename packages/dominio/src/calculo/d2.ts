@@ -29,8 +29,8 @@ export interface EntradaD2 {
   readonly arrastre: Centavos;
   /** Asig(c, p). */
   readonly asignado: Centavos;
-  /** `true` si `consumos` ya va en el orden de `cronologico` (un filtro de `consumos()`): no se
-   * reordena, porque ordenar un arreglo ya ordenado lo deja igual. */
+  /** `true` si `consumos` son ya los de c en p, en el orden de `cronologico` (los de la celda en
+   * `presupuesto`): no se filtran ni se reordenan, porque filtrar y ordenar los dejaría igual [CH-233]. */
   readonly ordenados?: boolean;
 }
 
@@ -79,7 +79,10 @@ export const asignado = (
 export function repartoD2(e: EntradaD2): RepartoD2 {
   const ent = entradas(e.aportes, e.categoriaId, e.periodo);
   const fondo = Centavos.sumar(Centavos.sumar(e.arrastre, e.asignado), ent);
-  const deC = e.consumos.filter((k) => k.categoriaId === e.categoriaId && en(e.periodo, k.fecha));
+  const deC =
+    e.ordenados === true
+      ? e.consumos
+      : e.consumos.filter((k) => k.categoriaId === e.categoriaId && en(e.periodo, k.fecha));
   // Mutante 'orden' (07 §19.4): reparte por id y no en orden cronológico.
   const deCp = mutante('orden')
     ? [...deC].sort((a, b) => (a.id < b.id ? -1 : 1))
@@ -91,7 +94,13 @@ export function repartoD2(e: EntradaD2): RepartoD2 {
   const partes = deCp.map((k): Parte => {
     const cubierto = Centavos.max(Centavos.cero, Centavos.min(k.neto, restante));
     restante = Centavos.restar(restante, cubierto);
-    return { consumo: k, cubierto, noCubierto: Centavos.restar(k.neto, cubierto) };
+    // Congelada al nacer, con su consumo (sus campos son valores): `congelar` de calcular no la
+    // recorre [CH-233]. Un consumo de `movimientos` ya nace congelado.
+    return Object.freeze({
+      consumo: Object.freeze(k),
+      cubierto,
+      noCubierto: Centavos.restar(k.neto, cubierto),
+    });
   });
 
   const traslados = new Map<Uuid, Centavos>();
