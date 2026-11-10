@@ -8,6 +8,9 @@ export const reglas = {
   vacioTitulo: 'Todavía no hay reglas',
   vacioTexto:
     'Las reglas se crean al aprobar un movimiento con «Recordar esta categoría», o desde acá.',
+  buscar: 'Buscar reglas',
+  buscarMarcador: 'Comercio o categoría',
+  sinCoincidencias: 'Ninguna regla con ese texto',
   noSeAplica: 'No se aplica: la categoría está archivada',
   hacia: (categoria: string) => `→ ${categoria}`,
   archivadaEnLista: (categoria: string) => `${categoria} (archivada)`,

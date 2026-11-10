@@ -115,3 +115,35 @@ describe('PRU-CMP-BAND-150 reglas', () => {
     expect(resultado.violations.map((v) => v.id)).toEqual([]);
   });
 });
+
+describe('PRU-CMP-BAND buscador de reglas', () => {
+  it('PRU-CMP-BAND-312 [CA-39.3] el buscador relleno envía ?q= a /reglas, conserva el texto y sin coincidencias dice «Ninguna regla con ese texto» con «Nueva regla» a la vista', () => {
+    const raiz = mostrar(<PantallaReglas dto={dto([])} q="zzz" total={2} />);
+    const form = raiz.querySelector('form[role="search"]') as HTMLFormElement;
+    expect(form.getAttribute('action')).toBe('/reglas');
+    expect(form.getAttribute('method')).toBe('get');
+    const campo = form.querySelector('input[name="q"]') as HTMLInputElement;
+    expect(campo.value).toBe('zzz');
+    expect(raiz.querySelector('[data-sin-coincidencias]')?.textContent).toBe(t.sinCoincidencias);
+    expect(raiz.textContent).not.toContain(t.vacioTitulo);
+    expect([...raiz.querySelectorAll('a')].some((a) => a.textContent.includes(t.nuevaRegla))).toBe(
+      true,
+    );
+    const sonda = document.createElement('span');
+    sonda.style.backgroundColor = 'var(--superficie)';
+    document.body.append(sonda);
+    expect(getComputedStyle(campo).backgroundColor).toBe(getComputedStyle(sonda).backgroundColor);
+    sonda.remove();
+    // Con coincidencias, las filas tocables miden 60 px de alto como mínimo y llevan chevR.
+    const lista = mostrar(
+      <PantallaReglas
+        dto={dto([regla('r1', 'SUPER SELECTOS', 'Supermercado')])}
+        q="super"
+        total={2}
+      />,
+    );
+    const fila = lista.querySelector('[data-regla] a') as HTMLElement;
+    expect(fila.getBoundingClientRect().height).toBeGreaterThanOrEqual(60);
+    expect(fila.querySelector('[data-icono="chevR"]')).not.toBeNull();
+  });
+});
