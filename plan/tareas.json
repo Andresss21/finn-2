@@ -563,7 +563,7 @@
 
   "TA-553": { "estado": "terminada", "rama": "ta-553-bandeja-graficos", "pr": 241 },
 
-  "TA-554": { "estado": "pendiente" },
+  "TA-554": { "estado": "en_curso", "rama": "ta-554-rendimiento" },
 
   "TA-555": { "estado": "pendiente" },
 

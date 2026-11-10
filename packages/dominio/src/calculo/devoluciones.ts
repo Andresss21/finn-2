@@ -1,7 +1,7 @@
 // Consumos, consumo neto y clasificación D-1 a D-4 de las devoluciones (01 §4.4; §4.1 conv. 2 y 6;
 // CB-06, CB-32). Todo sale del estado actual de los hechos (inv. 26): el medio de pago y la cuenta
 // de una línea son los de su transacción hoy, así que un cambio de medio reclasifica (CB-32).
-import type { BigintTexto, Hechos, Instante, Linea, Transaccion, Uuid } from '../hechos';
+import type { BigintTexto, Efecto, Hechos, Instante, Linea, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
 import { destinoDe } from './destino';
@@ -122,18 +122,34 @@ export function porId<T extends { readonly id: Uuid }>(xs: readonly T[]): Map<Uu
   return m;
 }
 
+/**
+ * La transacción de cada fila (un efecto o una línea), en el orden de `xs`; `undefined` si no
+ * existe. Una búsqueda por fila y por cálculo, que comparten las fórmulas [CH-233]: buscar el id de
+ * una fila compara el texto entero del uuid, y después basta el `id` de la transacción, que es la
+ * misma clave de `porId`.
+ */
+export const transaccionesDe = (
+  xs: readonly { readonly transaccionId: Uuid }[],
+  transacciones: ReadonlyMap<Uuid, Transaccion>,
+): readonly (Transaccion | undefined)[] => xs.map((x) => transacciones.get(x.transaccionId));
+
 /** El medio de cada transacción: la cuenta de efectivo o tarjeta de sus efectos (la última). Las
- * transacciones de una misma cuenta comparten su `Medio`, que es inmutable. */
-export function mediosDe(h: Pick<Hechos, 'cuentas' | 'efectos'>): Map<Uuid, Medio> {
+ * transacciones de una misma cuenta comparten su `Medio`, que es inmutable. `deEfecto`, de
+ * `transaccionesDe(h.efectos)`, solo cambia la clave por el `id` de la transacción [CH-233]. */
+export function mediosDe(
+  h: Pick<Hechos, 'cuentas' | 'efectos'>,
+  deEfecto?: readonly (Transaccion | undefined)[],
+): Map<Uuid, Medio> {
   const deCuenta = new Map<Uuid, Medio>();
   for (const k of h.cuentas)
     if (k.tipo === 'efectivo' || k.tipo === 'tarjeta')
       deCuenta.set(k.id, { cuentaId: k.id, tarjetaId: k.tipo === 'tarjeta' ? k.id : null });
     else deCuenta.delete(k.id);
   const m = new Map<Uuid, Medio>();
-  for (const e of h.efectos) {
+  for (let i = 0; i < h.efectos.length; i++) {
+    const e = h.efectos[i] as Efecto;
     const x = deCuenta.get(e.cuentaId);
-    if (x !== undefined) m.set(e.transaccionId, x);
+    if (x !== undefined) m.set(deEfecto?.[i]?.id ?? e.transaccionId, x);
   }
   return m;
 }
@@ -142,6 +158,7 @@ function indice(
   h: HechosDeConsumo,
   transacciones: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
   medios: ReadonlyMap<Uuid, Medio> = mediosDe(h),
+  deLinea: readonly (Transaccion | undefined)[] = transaccionesDe(h.lineas, transacciones),
 ) {
   const cuentas = new Set(h.cuentas.map((k) => k.id));
   for (const e of h.efectos)
@@ -150,7 +167,7 @@ function indice(
   const buscadas = new Set<Uuid>(h.condonaciones.map((x) => x.lineaId));
   for (const l of h.lineas) if (l.lineaOriginalId !== null) buscadas.add(l.lineaOriginalId);
   const lineas = new Map<Uuid, Linea>();
-  for (const l of h.lineas) if (buscadas.has(l.id)) lineas.set(l.id, l);
+  if (buscadas.size > 0) for (const l of h.lineas) if (buscadas.has(l.id)) lineas.set(l.id, l);
   const tx = (id: Uuid): Transaccion => {
     const t = transacciones.get(id);
     if (t === undefined) throw new RangeError(`transacción ${id} desconocida`);
@@ -161,11 +178,15 @@ function indice(
     if (m === undefined) throw new RangeError(`transacción ${id} sin cuenta de efectivo o tarjeta`);
     return m;
   };
-  const momento = (l: Linea): Momento => {
-    const t = tx(l.transaccionId);
-    return { fecha: t.fecha, claveOrden: t.claveOrden, secuencia: t.secuencia, orden: l.orden };
-  };
-  return { transacciones, tx, medio, momento, lineas, linea: (id: Uuid) => lineas.get(id) };
+  /** `tx(l.transaccionId)` de la línea i de `h.lineas`, sin buscarla otra vez. */
+  const txDe = (i: number): Transaccion => deLinea[i] ?? tx((h.lineas[i] as Linea).transaccionId);
+  const momento = (l: Linea, t = tx(l.transaccionId)): Momento => ({
+    fecha: t.fecha,
+    claveOrden: t.claveOrden,
+    secuencia: t.secuencia,
+    orden: l.orden,
+  });
+  return { deLinea, tx, txDe, medio, momento, lineas, linea: (id: Uuid) => lineas.get(id) };
 }
 
 /** Las devoluciones a categoría con su caso D-1 a D-4, en orden cronológico. */
@@ -173,14 +194,18 @@ export const clasificar = (h: HechosDeConsumo, c: Ciclo): Devolucion[] =>
   clasificarCon(h, c, indice(h));
 
 function clasificarCon(h: HechosDeConsumo, c: Ciclo, ix: ReturnType<typeof indice>): Devolucion[] {
-  const devoluciones = h.lineas.flatMap((e) => {
+  const devoluciones: Devolucion[] = [];
+  for (let i = 0; i < h.lineas.length; i++) {
+    const e = h.lineas[i] as Linea;
     // Una línea de una transacción conocida que no es devolución no entra, sea cual sea su destino.
-    const t = ix.transacciones.get(e.transaccionId);
-    if (t !== undefined && t.tipo !== 'devolucion') return [];
+    const conocida = ix.deLinea[i];
+    if (conocida !== undefined && conocida.tipo !== 'devolucion') continue;
     const { categoriaId } = destinoDe(e, ix.lineas);
-    if (categoriaId === null || ix.tx(e.transaccionId).tipo !== 'devolucion') return [];
-    const m = ix.momento(e);
-    const k = ix.medio(e.transaccionId);
+    if (categoriaId === null) continue;
+    const t = ix.txDe(i);
+    if (t.tipo !== 'devolucion') continue;
+    const m = ix.momento(e, t);
+    const k = ix.medio(t.id);
     const q = periodoDe(c, m.fecha).inicio;
     const original = e.lineaOriginalId === null ? undefined : ix.linea(e.lineaOriginalId);
     const L = original?.categoriaId === null ? undefined : original;
@@ -194,19 +219,17 @@ function clasificarCon(h: HechosDeConsumo, c: Ciclo, ix: ReturnType<typeof indic
           : misma
             ? 'D-3'
             : 'D-4';
-    return [
-      {
-        ...m,
-        ...k,
-        lineaId: e.id,
-        categoriaId,
-        monto: e.monto,
-        periodo: q,
-        lineaOriginalId: L?.id ?? null,
-        caso,
-      },
-    ];
-  });
+    devoluciones.push({
+      ...m,
+      ...k,
+      lineaId: e.id,
+      categoriaId,
+      monto: e.monto,
+      periodo: q,
+      lineaOriginalId: L?.id ?? null,
+      caso,
+    });
+  }
   return cronologico(devoluciones);
 }
 
@@ -224,8 +247,9 @@ export function movimientos(
   c: Ciclo,
   transacciones: ReadonlyMap<Uuid, Transaccion> = porId(h.transacciones),
   medios: ReadonlyMap<Uuid, Medio> = mediosDe(h),
+  deLinea: readonly (Transaccion | undefined)[] = transaccionesDe(h.lineas, transacciones),
 ): Movimientos {
-  const ix = indice(h, transacciones, medios);
+  const ix = indice(h, transacciones, medios, deLinea);
   const devoluciones = clasificarCon(h, c, ix);
   const neteado = new Map<Uuid, Centavos>();
   for (const d of devoluciones)
@@ -236,25 +260,29 @@ export function movimientos(
       );
   // Cada consumo se arma de una vez, sin los objetos de `momento` y `medio` [BE-23].
   const todos: Consumo[] = [];
-  for (const l of h.lineas) {
+  for (let i = 0; i < h.lineas.length; i++) {
+    const l = h.lineas[i] as Linea;
     if (l.categoriaId === null) continue;
-    const t = ix.tx(l.transaccionId);
+    const t = ix.txDe(i);
     if (!TIPOS_DE_CONSUMO.has(t.tipo)) continue;
     const neto = Centavos.restar(l.monto, neteado.get(l.id) ?? Centavos.cero);
-    const k = ix.medio(l.transaccionId);
-    todos.push({
-      fecha: t.fecha,
-      claveOrden: t.claveOrden,
-      secuencia: t.secuencia,
-      orden: l.orden,
-      cuentaId: k.cuentaId,
-      tarjetaId: k.tarjetaId,
-      id: l.id,
-      fuente: 'linea',
-      categoriaId: l.categoriaId,
-      monto: l.monto,
-      neto,
-    });
+    const k = ix.medio(t.id);
+    // Nace congelado (sus campos son valores): `congelar` de calcular no lo vuelve a recorrer [CH-233].
+    todos.push(
+      Object.freeze({
+        fecha: t.fecha,
+        claveOrden: t.claveOrden,
+        secuencia: t.secuencia,
+        orden: l.orden,
+        cuentaId: k.cuentaId,
+        tarjetaId: k.tarjetaId,
+        id: l.id,
+        fuente: 'linea',
+        categoriaId: l.categoriaId,
+        monto: l.monto,
+        neto,
+      }),
+    );
   }
   for (const x of h.condonaciones) {
     const porCobrar = ix.linea(x.lineaId);

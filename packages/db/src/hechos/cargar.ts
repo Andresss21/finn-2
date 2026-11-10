@@ -234,37 +234,58 @@ export function consultaDe(tabla: TablaMotor): string {
 const INSTANTE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 const ENTERO_SIN_SIGNO = /^\d{1,19}$/;
 
-function convertir(clase: Clase, v: unknown, ubicacion: string): unknown {
+const mal = (clase: Clase, v: unknown, ubicacion: string): never => {
+  throw new TypeError(`${ubicacion}: valor inesperado ${JSON.stringify(v)} para ${clase}`);
+};
+
+/**
+ * `fechas`: las fechas ya validadas de esta carga, por su texto. Una carga de 10 años tiene unas
+ * 3.650 fechas distintas en ~60.000 celdas: cada una se valida una vez y las filas comparten el
+ * mismo texto [CH-233].
+ */
+function convertir(
+  clase: Clase,
+  v: unknown,
+  ubicacion: string,
+  fechas: Map<string, FechaLocal>,
+): unknown {
   if (v === null) return null;
-  const mal = (): never => {
-    throw new TypeError(`${ubicacion}: valor inesperado ${JSON.stringify(v)} para ${clase}`);
-  };
   switch (clase) {
     case 'texto':
-      return typeof v === 'string' ? v : mal();
+      return typeof v === 'string' ? v : mal(clase, v, ubicacion);
     case 'entero':
-      return typeof v === 'number' && Number.isSafeInteger(v) ? v : mal();
+      return typeof v === 'number' && Number.isSafeInteger(v) ? v : mal(clase, v, ubicacion);
     case 'logico':
-      return typeof v === 'boolean' ? v : mal();
+      return typeof v === 'boolean' ? v : mal(clase, v, ubicacion);
     case 'centavos':
-      return typeof v === 'number' ? Centavos.desdeEntero(v) : mal();
-    case 'fecha':
-      return typeof v === 'string' ? FechaLocal.desdeTexto(v) : mal();
+      return typeof v === 'number' ? Centavos.desdeEntero(v) : mal(clase, v, ubicacion);
+    case 'fecha': {
+      if (typeof v !== 'string') return mal(clase, v, ubicacion);
+      let f = fechas.get(v);
+      if (f === undefined) fechas.set(v, (f = FechaLocal.desdeTexto(v)));
+      return f;
+    }
     case 'instante':
-      return typeof v === 'string' && INSTANTE.test(v) ? v : mal();
+      return typeof v === 'string' && INSTANTE.test(v) ? v : mal(clase, v, ubicacion);
     case 'bigint':
-      return typeof v === 'string' && ENTERO_SIN_SIGNO.test(v) ? v : mal();
+      return typeof v === 'string' && ENTERO_SIN_SIGNO.test(v) ? v : mal(clase, v, ubicacion);
   }
 }
 
-function filasDe<T extends TablaMotor>(tabla: T, json: string): FilasPorTabla[T][] {
+function filasDe<T extends TablaMotor>(
+  tabla: T,
+  json: string,
+  fechas: Map<string, FechaLocal>,
+): FilasPorTabla[T][] {
   const cols = ESPECIFICACION[tabla] as readonly (readonly [string, Clase])[];
+  const ubicaciones = cols.map(([campo]) => `${tabla}.${campo}`);
   const arreglos = JSON.parse(json) as unknown[][];
   return arreglos.map((fila) => {
     const obj: Record<string, unknown> = {};
-    cols.forEach(([campo, clase], i) => {
-      obj[campo] = convertir(clase, fila[i], `${tabla}.${campo}`);
-    });
+    for (let i = 0; i < cols.length; i++) {
+      const [campo, clase] = cols[i] as readonly [string, Clase];
+      obj[campo] = convertir(clase, fila[i], ubicaciones[i] as string, fechas);
+    }
     // `monto_original` no se carga (informativo, 03 §3.12): el motor nunca lo lee
     if (tabla === 'transacciones') obj['montoOriginal'] = null;
     return obj as unknown as FilasPorTabla[T];
@@ -278,10 +299,23 @@ function filasDe<T extends TablaMotor>(tabla: T, json: string): FilasPorTabla[T]
 export async function cargarHechos(tx: LectorTx): Promise<Hechos> {
   const prisma = txPrisma(tx);
   const hechos: Partial<Record<TablaMotor, unknown>> = {};
-  for (const tabla of Object.keys(ESPECIFICACION) as TablaMotor[]) {
-    const [r] = await prisma.$queryRaw<{ filas: string }[]>(Prisma.raw(consultaDe(tabla)));
+  const fechas = new Map<string, FechaLocal>();
+  const tablas = Object.keys(ESPECIFICACION) as TablaMotor[];
+  const consultar = (tabla: TablaMotor) => {
+    const p = prisma.$queryRaw<{ filas: string }[]>(Prisma.raw(consultaDe(tabla)));
+    p.catch(() => undefined); // si falla la conversión anterior, su rechazo no queda sin manejar
+    return p;
+  };
+  // [CH-233] En tubería: la consulta de la tabla siguiente sale antes de convertir la actual, así la base
+  // arma su JSON mientras Node lee el anterior. Misma conexión y misma instantánea: las consultas corren en
+  // orden dentro de la transacción de `leer()`.
+  let siguiente = consultar(tablas[0] as TablaMotor);
+  for (let i = 0; i < tablas.length; i++) {
+    const tabla = tablas[i] as TablaMotor;
+    const [r] = await siguiente;
+    if (i + 1 < tablas.length) siguiente = consultar(tablas[i + 1] as TablaMotor);
     if (!r) throw new Error(`La consulta de ${tabla} no devolvió fila`);
-    hechos[tabla] = filasDe(tabla, r.filas);
+    hechos[tabla] = filasDe(tabla, r.filas, fechas);
   }
   return hechos as Hechos;
 }

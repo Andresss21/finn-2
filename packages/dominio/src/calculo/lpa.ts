@@ -2,10 +2,10 @@
 // detalle. Las reducciones salen de las celdas de `presupuesto` (§4.6) y el dinero en camino y las
 // entradas de cobros, de `porCobrar` (§4.10). `b` y `cobros` deben salir de los mismos hechos, con
 // `presupuesto(h, c, hoy, pagosImplicitos(cobros))`.
-import type { Hechos, TipoTransaccion, Transaccion, Uuid } from '../hechos';
+import type { Efecto, Hechos, TipoTransaccion, Transaccion, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
-import { porId } from './devoluciones';
+import { porId, transaccionesDe } from './devoluciones';
 import { type Celda, type Presupuesto, reduccionDe } from './disponible';
 import { mutante } from './mutantes';
 import type { Periodo } from './periodos';
@@ -68,11 +68,13 @@ export interface EntradaDeEfecto {
 export function entradasDeEfectos(
   h: Pick<Hechos, 'cuentas' | 'efectos'>,
   txs: ReadonlyMap<Uuid, Transaccion>,
+  deEfecto: readonly (Transaccion | undefined)[] = transaccionesDe(h.efectos, txs),
 ): EntradaDeEfecto[] {
   const efectivo = new Set(h.cuentas.filter((k) => k.tipo === 'efectivo').map((k) => k.id));
   const r: EntradaDeEfecto[] = [];
-  for (const e of h.efectos) {
-    const t = txs.get(e.transaccionId);
+  for (let i = 0; i < h.efectos.length; i++) {
+    const e = h.efectos[i] as Efecto;
+    const t = deEfecto[i];
     const clase = t === undefined ? undefined : CLASE[t.tipo];
     if (t !== undefined && clase !== undefined && efectivo.has(e.cuentaId))
       r.push({ fecha: t.fecha, clase, monto: e.monto });

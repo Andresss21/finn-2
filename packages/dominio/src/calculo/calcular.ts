@@ -12,18 +12,18 @@
 // mes), uso del límite (proyección de 04 §6), tabla de amortización (Anexo A) y avisos de estado
 // (TA-110). Los calculan los selectores con las mismas fórmulas.
 import type { Cuenta, Hechos, Instantanea, TablaMotor, Uuid } from '../hechos';
-import type { Centavos } from '../valores/centavos';
+import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
 import { type Clasificacion, clasificacion } from './clasificacion';
-import { mediosDe, movimientos, porId } from './devoluciones';
-import { agrupar, type Presupuesto, presupuesto } from './disponible';
+import { mediosDe, movimientos, porId, transaccionesDe } from './devoluciones';
+import { type Presupuesto, presupuesto } from './disponible';
 import { type DetalleLpa, entradasDeEfectos, historialLpa, listoParaAsignar } from './lpa';
 import { type EvaluacionDeMeta, evaluarMeta } from './metas';
 import { type OcurrenciaPendiente, pendientes } from './ocurrencias';
 import { type PatrimonioNeto, patrimonioNeto } from './patrimonio';
 import { type Ciclo, ciclo, type Periodo } from './periodos';
 import { pagosImplicitos, type PorCobrar, porCobrar } from './por-cobrar';
-import { saldo, saldoYConfirmado } from './saldos';
+import { saldosPorCuenta } from './saldos';
 import { reduccionProyectada, sobregiroConTarjetaDelActivo } from './sobregiros';
 import { type EstadoDeTarjeta, estadoDeTarjeta } from './tarjetas';
 
@@ -79,27 +79,41 @@ export interface Derivados {
   readonly ocurrencias: readonly OcurrenciaPendiente[];
 }
 
-/** El id de una fila; los subtipos de cuenta (tarjeta, préstamo, inversión) se identifican por su cuenta. */
-const clave = (x: object): string =>
-  'id' in x ? String(x.id) : String((x as { readonly cuentaId: Uuid }).cuentaId);
+/** El id de una fila; los subtipos de cuenta (tarjeta, préstamo, inversión) se identifican por su
+ * cuenta. Una función por tabla, sin preguntar a cada fila qué campo tiene [CH-233]. */
+const POR_CUENTA: ReadonlySet<string> = new Set(['tarjetas', 'prestamos', 'inversiones']);
+const porSuId = (x: object): string => (x as { readonly id: Uuid }).id;
+const porSuCuenta = (x: object): string => (x as { readonly cuentaId: Uuid }).cuentaId;
 
-/** Tablas y filas ordenadas por nombre e id: la forma canónica de unos hechos (inv. 26). */
+/**
+ * Tablas y filas ordenadas por nombre e id: la forma canónica de unos hechos (inv. 26). Cada fila
+ * se congela en la misma pasada que lee su clave, así `congelar` no vuelve a recorrer las ~200.000
+ * filas del volumen alto [CH-233].
+ */
 function canonicos(h: Hechos): Hechos {
   // La clave de cada fila se calcula una vez, no en cada comparación. Si ya están en orden (los
   // hechos de una instantánea anterior), el orden estable las deja igual: basta copiarlas.
-  const ordenar = (xs: readonly object[]) => {
-    const ks = xs.map(clave);
+  const ordenar = (xs: readonly object[], clave: (x: object) => string) => {
     let enOrden = true;
-    for (let i = 1; enOrden && i < ks.length; i++)
-      enOrden = (ks[i - 1] as string) <= (ks[i] as string);
+    let previa = '';
+    for (let i = 0; i < xs.length; i++) {
+      const x = xs[i] as object;
+      if (!Object.isFrozen(x)) congelar(x);
+      const k = clave(x);
+      if (i > 0 && previa > k) enOrden = false;
+      previa = k;
+    }
     if (enOrden) return [...xs];
+    const ks = xs.map(clave);
     return xs
       .map((x, i) => [ks[i] as string, x] as const)
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
       .map(([, x]) => x);
   };
   const tablas = (Object.keys(h) as TablaMotor[]).sort();
-  return Object.fromEntries(tablas.map((t) => [t, ordenar(h[t])])) as unknown as Hechos;
+  return Object.fromEntries(
+    tablas.map((t) => [t, ordenar(h[t], POR_CUENTA.has(t) ? porSuCuenta : porSuId)]),
+  ) as unknown as Hechos;
 }
 
 /** `Object.freeze` en profundidad. Un `Map` queda congelado como objeto, no en sus entradas. */
@@ -127,43 +141,47 @@ export function calcular(hechos: Hechos, hoy: FechaLocal): Instantanea {
   // §4.2: períodos; §4.3: saldos.
   const c = ciclo(h.vigencias_ciclo);
   const txs = porId(h.transacciones);
-  // saldo(k) con solo los efectos de k y las transacciones por id: lo mismo que saldo(h, k).
-  const efectosDe = agrupar(h.efectos, (e) => e.cuentaId);
-  const deK = (k: Uuid) => ({ transacciones: [], efectos: efectosDe.get(k) ?? [] });
-  // saldo(k) se pide en cuentas, tarjetas y patrimonio: se suma una vez por cuenta y llamada.
-  const saldos = new Map<Uuid, Centavos>();
-  const saldoDe = (k: Uuid): Centavos => {
-    let s = saldos.get(k);
-    if (s === undefined) saldos.set(k, (s = saldo(deK(k), k, {}, txs)));
-    return s;
-  };
+  // La transacción de cada efecto y de cada línea, buscada una sola vez [CH-233].
+  const deEfecto = transaccionesDe(h.efectos, txs);
+  const deLinea = transaccionesDe(h.lineas, txs);
+  // saldo(k) y el confirmado de todas las cuentas en una pasada: saldo(k) se pide en cuentas,
+  // tarjetas y patrimonio.
+  const saldos = saldosPorCuenta(h, deEfecto);
+  const saldoDe = (k: Uuid): Centavos => saldos.get(k)?.saldo ?? Centavos.cero;
   const cuentas = h.cuentas.map((k) => {
-    const s = saldoYConfirmado(deK(k.id), k.id, txs);
-    if (!saldos.has(k.id)) saldos.set(k.id, s.saldo);
-    return { cuentaId: k.id, tipo: k.tipo, saldo: s.saldo, confirmado: s.confirmado };
+    const s = saldos.get(k.id);
+    return {
+      cuentaId: k.id,
+      tipo: k.tipo,
+      saldo: s?.saldo ?? Centavos.cero,
+      confirmado: s?.confirmado ?? Centavos.cero,
+    };
   });
   // §4.10 antes que §4.6: los pagos implícitos de los cobros entran en Disp(pago(t)).
   // El medio de cada transacción, uno para por cobrar y para los consumos.
-  const medios = mediosDe(h);
+  const medios = mediosDe(h, deEfecto);
   const cobros = porCobrar(h, undefined, txs, medios);
   // §4.4 a §4.6 en el orden de §4.1 conv. 4: D2, normales, pago y arrastre, período a período,
   // con la proyección al final.
   // Consumos y devoluciones clasificadas, una vez para §4.4 a §4.6 y para §4.13.
-  const m = movimientos(h, c, txs, medios);
-  const b = presupuesto(h, c, hoy, pagosImplicitos(cobros), PERIODOS_PROYECTADOS, m);
+  const m = movimientos(h, c, txs, medios, deLinea);
+  const b = presupuesto(h, c, hoy, pagosImplicitos(cobros), PERIODOS_PROYECTADOS, m, deLinea);
   const tarjetas = h.cuentas
     .filter((k) => k.tipo === 'tarjeta')
     .map((k) => estadoDeTarjeta(h, b, k.id, saldoDe));
   // Los efectos que son entradas de §4.9, una vez para LPA y su historial.
-  const deEfectos = entradasDeEfectos(h, txs);
+  const deEfectos = entradasDeEfectos(h, txs, deEfecto);
   const categorias = new Map(h.categorias.map((x) => [x.id, x]));
   const metas = h.metas.map((m) => {
     const x = categorias.get(m.categoriaId);
     if (x === undefined) throw new RangeError(`la meta ${m.id} no tiene categoría (inv. 25)`);
     return { metaId: m.id, categoriaId: m.categoriaId, evaluacion: evaluarMeta(m, x, b, c, hoy) };
   });
+  // Las filas ya están congeladas (canonicos): basta congelar cada tabla y los hechos, al final,
+  // para que el cálculo recorra arreglos normales.
+  for (const xs of Object.values(h)) Object.freeze(xs);
   return congelar({
-    hechos: h,
+    hechos: Object.freeze(h),
     hoy,
     ciclo: c,
     cuentas,
@@ -175,7 +193,7 @@ export function calcular(hechos: Hechos, hoy: FechaLocal): Instantanea {
     lpa: listoParaAsignar(h, b, cobros, txs, deEfectos),
     historialLpa: historialLpa(h, b, cobros, txs, deEfectos),
     metas,
-    clasificacion: clasificacion(h, c, cobros, m, txs),
+    clasificacion: clasificacion(h, c, cobros, m, txs, deEfecto),
     patrimonio: patrimonioNeto(h, cobros, saldoDe),
     ocurrencias: pendientes(h, hoy, HORIZONTE_OCURRENCIAS),
   });
