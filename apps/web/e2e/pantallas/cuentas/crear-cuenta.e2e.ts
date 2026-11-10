@@ -7,6 +7,7 @@ import { esperarHidratacion } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { cuentasNueva as t } from '../../../src/textos/cuentas-nueva.ts';
+import { cuentaSubtipo as s } from '../../../src/textos/cuenta-subtipo.ts';
 import { glosario } from '../../../src/textos/glosario.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
@@ -141,18 +142,18 @@ test.describe('PRU-E2E-CTA', () => {
   }) => {
     await preparar('2027-02-05');
     await abrir(page);
-    await expect(campo(page, t.nombre)).toHaveValue(t.nombresPorSubtipo.corriente);
-    await page.getByRole('radio', { name: t.subtipos.billetera }).click();
-    await expect(campo(page, t.nombre)).toHaveValue(t.nombresPorSubtipo.billetera);
-    await expect(page.getByText(t.ayudasSubtipo.billetera)).toBeVisible();
+    await expect(campo(page, t.nombre)).toHaveValue(s.nombres.corriente);
+    await page.getByRole('radiogroup', { name: s.etiqueta }).getByRole('radio', { name: s.opciones.billetera }).click();
+    await expect(campo(page, t.nombre)).toHaveValue(s.nombres.billetera);
+    await expect(page.getByText(s.ayudas.billetera)).toBeVisible();
     await expect(campo(page, t.ultimos4)).toHaveCount(0);
     await campo(page, t.saldo.efectivo).fill('40');
     await crear(page).click();
     await alTerminar(page);
 
     await abrir(page);
-    await page.getByRole('radio', { name: t.subtipos.ahorro }).click();
-    await expect(campo(page, t.nombre)).toHaveValue(t.nombresPorSubtipo.ahorro);
+    await page.getByRole('radiogroup', { name: s.etiqueta }).getByRole('radio', { name: s.opciones.ahorro }).click();
+    await expect(campo(page, t.nombre)).toHaveValue(s.nombres.ahorro);
     await expect(campo(page, t.ultimos4)).toHaveValue('');
     await campo(page, t.saldo.efectivo).fill('500');
     await crear(page).click();
@@ -160,12 +161,9 @@ test.describe('PRU-E2E-CTA', () => {
 
     const tarjeta = (nombre: string) =>
       page.locator('[data-identidad="efectivo"]').filter({ hasText: nombre });
-    await expect(tarjeta(t.nombresPorSubtipo.billetera)).toHaveAttribute(
-      'data-subtipo',
-      'billetera',
-    );
-    await expect(tarjeta(t.nombresPorSubtipo.ahorro)).toHaveAttribute('data-subtipo', 'ahorro');
-    await tarjeta(t.nombresPorSubtipo.ahorro).click();
+    await expect(tarjeta(s.nombres.billetera)).toHaveAttribute('data-subtipo', 'billetera');
+    await expect(tarjeta(s.nombres.ahorro)).toHaveAttribute('data-subtipo', 'ahorro');
+    await tarjeta(s.nombres.ahorro).click();
     await expect(page).toHaveURL(/\/cuentas\/[^/]+$/);
     await expect(page.locator('header[data-identidad="efectivo"]')).toHaveAttribute(
       'data-subtipo',

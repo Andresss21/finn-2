@@ -18,7 +18,7 @@ import { useBorrador } from '../../formularios/use-borrador';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { cuentasGestion } from '../../textos/cuentas-gestion';
-import { cuentasNueva } from '../../textos/cuentas-nueva';
+import { cuentaSubtipo as s } from '../../textos/cuenta-subtipo';
 import { formularios } from '../../textos/formularios';
 
 const t = cuentasGestion.editar;
@@ -203,17 +203,17 @@ function Cuerpo({
         {c.subtipoEfectivo === '' ? null : (
           <div className="flex flex-col gap-2">
             <SelectorSegmentado
-              etiqueta={cuentasNueva.subtipo}
+              etiqueta={s.etiqueta}
               opciones={SUBTIPOS.map((valor) => ({
                 valor,
-                etiqueta: cuentasNueva.subtipos[valor],
+                etiqueta: s.opciones[valor],
               }))}
               valor={c.subtipoEfectivo}
               alCambiar={poner('subtipoEfectivo')}
               llena
             />
             <p className="text-cuerpo-pequeno text-texto-secundario">
-              {cuentasNueva.ayudasSubtipo[c.subtipoEfectivo as (typeof SUBTIPOS)[number]]}
+              {s.ayudas[c.subtipoEfectivo as (typeof SUBTIPOS)[number]]}
             </p>
           </div>
         )}
@@ -233,7 +233,7 @@ function Cuerpo({
               inputMode="numeric"
               maxLength={4}
               autoComplete="off"
-              placeholder={cuentasNueva.opcional}
+              placeholder={s.opcional}
               {...conError('ultimos4')}
               {...formulario.register('ultimos4')}
             />

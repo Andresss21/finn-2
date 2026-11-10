@@ -6,7 +6,7 @@ import { devolver } from '../../servidor/acciones/eventos';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { buscarComprasDevolucion } from '../../servidor/lecturas/interactivas';
-import { FormularioDevolucion } from './devolucion';
+import { FormularioDevolucion } from './devolucion-diferida';
 
 export async function LectorDevolucion() {
   const deps = await depsDeConsulta();

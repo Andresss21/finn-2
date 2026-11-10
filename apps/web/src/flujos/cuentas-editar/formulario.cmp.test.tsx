@@ -7,7 +7,7 @@ import { userEvent } from 'vitest/browser';
 import type { FechaLocal } from '@finn/dominio/valores';
 import '../../app/globals.css';
 import { cuentasGestion } from '../../textos/cuentas-gestion';
-import { cuentasNueva } from '../../textos/cuentas-nueva';
+import { cuentaSubtipo } from '../../textos/cuenta-subtipo';
 import { FormularioCuentasEditar } from './formulario';
 
 // `next/link` y `next/navigation` necesitan `process` y el enrutador de Next: se simulan (el enrutado se prueba en E2E).
@@ -78,16 +78,16 @@ describe('PRU-CMP-CTA-400 editar el subtipo de efectivo', () => {
         esperado={esperado}
       />,
     );
-    expect(nodo.querySelector(`[role=radiogroup][aria-label="${cuentasNueva.subtipo}"]`)).not.toBe(
-      null,
-    );
+    expect(
+      nodo.querySelector(`[role=radiogroup][aria-label="${cuentaSubtipo.etiqueta}"]`),
+    ).not.toBe(null);
     expect(opcion(nodo, 'Corriente')?.getAttribute('aria-checked')).toBe('true');
     expect(nodo.querySelector('input[maxlength="4"]')).not.toBe(null);
 
     await userEvent.click(opcion(nodo, 'Billetera') as HTMLElement);
-    expect(nodo.textContent).toContain(cuentasNueva.ayudasSubtipo.billetera);
+    expect(nodo.textContent).toContain(cuentaSubtipo.ayudas.billetera);
     expect(nodo.querySelector('input[maxlength="4"]')).toBe(null);
-    expect(nodo.textContent).not.toContain(cuentasNueva.institucion);
+    expect(nodo.textContent).not.toContain('Institución');
 
     await userEvent.click(guardar(nodo));
     expect(accion).toHaveBeenCalledTimes(1);
@@ -117,9 +117,9 @@ describe('PRU-CMP-CTA-400 editar el subtipo de efectivo', () => {
         }}
       />,
     );
-    expect(nodo.querySelector(`[aria-label="${cuentasNueva.subtipo}"]`)).toBe(null);
+    expect(nodo.querySelector(`[aria-label="${cuentaSubtipo.etiqueta}"]`)).toBe(null);
     expect(nodo.querySelector('input[maxlength="4"]')?.getAttribute('placeholder')).toBe(
-      cuentasNueva.opcional,
+      cuentaSubtipo.opcional,
     );
   });
 });

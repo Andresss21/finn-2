@@ -1,6 +1,7 @@
 // Los campos de `/cuentas/nueva` (FT-50): el contrato del formulario y la entrada de OP-01 que sale de lo escrito.
 import { describe, expect, it } from 'vitest';
 import { op01 } from '@finn/aplicacion/contratos';
+import { cuentaSubtipo } from '../../textos/cuenta-subtipo';
 import {
   CONTRATO,
   aEntradaDeAccion,
@@ -18,6 +19,7 @@ const con = (tipo: TipoCuenta, extra: Partial<Campos>): Campos => ({
   ...extra,
 });
 const ID = '00000000-0000-4000-8000-000000000001';
+const N = cuentaSubtipo.nombres;
 
 describe('PRU-DOM-CTA', () => {
   it('PRU-DOM-CTA-106 [CA-50.1, CB-28] la entrada de un ahorro y la de una tarjeta que debe pasan por el contrato de OP-01; la deuda va positiva y a favor, negativa', () => {
@@ -150,15 +152,14 @@ describe('PRU-DOM-CTA', () => {
   });
 
   it('PRU-DOM-CTA-400 [CA-50.1] el subtipo propone el nombre sin pisar lo escrito, y una billetera no envía institución ni últimos 4', () => {
-    expect(con('efectivo', {}).nombre).toBe('Cuenta corriente');
     expect(con('efectivo', {}).ultimos4).toBe('');
     expect(con('efectivo', {}).institucionId).toBe('ninguna');
     expect(con('tarjeta', {}).nombre).toBe('');
-    expect(nombrePropuesto('Cuenta corriente', 'efectivo', 'ahorro')).toBe('Cuenta de ahorro');
-    expect(nombrePropuesto('', 'efectivo', 'billetera')).toBe('Billetera');
-    expect(nombrePropuesto('Mi caja', 'efectivo', 'ahorro')).toBeUndefined();
-    expect(nombrePropuesto('Billetera', 'tarjeta', 'billetera')).toBe('');
-    expect(nombrePropuesto('Billetera', 'efectivo', 'billetera')).toBeUndefined();
+    expect(nombrePropuesto(N, 'Cuenta corriente', 'efectivo', 'ahorro')).toBe('Cuenta de ahorro');
+    expect(nombrePropuesto(N, '', 'efectivo', 'billetera')).toBe('Billetera');
+    expect(nombrePropuesto(N, 'Mi caja', 'efectivo', 'ahorro')).toBeUndefined();
+    expect(nombrePropuesto(N, 'Billetera', 'tarjeta', 'billetera')).toBe('');
+    expect(nombrePropuesto(N, 'Billetera', 'efectivo', 'billetera')).toBeUndefined();
 
     const billetera = con('efectivo', {
       subtipoEfectivo: 'billetera',

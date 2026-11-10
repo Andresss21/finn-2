@@ -18,20 +18,17 @@ import { useBorrador } from '../../formularios/use-borrador';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { crearCuenta } from '../../servidor/acciones/cuentas';
-import { cuentasNueva as t } from '../../textos/cuentas-nueva';
+import { cuentasNuevaBase as t } from '../../textos/cuentas-nueva-base';
+import type { TextosSubtipo } from '../../textos/cuenta-subtipo';
 import { formularios } from '../../textos/formularios';
 import {
-  CAMPOS_DE_TIPO,
   CONTRATO,
-  SUBTIPOS,
   aEntradaDeAccion,
   avisoDeNombreRepetido,
   conBanco,
   nombrePropuesto,
   valoresIniciales,
-  visible,
   type Campos,
-  type Descriptor,
   type TipoCuenta,
 } from './campos';
 
@@ -43,13 +40,16 @@ const ConfirmacionImpacto = lazy(() =>
     default: m.ConfirmacionImpacto,
   })),
 );
-const ColorTarjeta = lazy(() =>
-  import('./color-tarjeta').then((m) => ({ default: m.ColorTarjeta })),
+// Los campos de tarjeta, préstamo e inversión (y el selector de color) van en su propio módulo: con efectivo no se cargan.
+const CamposDeTipo = lazy(() =>
+  import('./campos-de-tipo').then((m) => ({ default: m.CamposDeTipo })),
 );
 
 export interface PropsFormularioCuentaNueva {
   readonly hoy: FechaLocal;
   readonly tipoInicial: TipoCuenta;
+  /** [CH-224] Los textos del subtipo de efectivo: los pasa el lector, fuera del JS de la ruta. */
+  readonly subtipo: TextosSubtipo;
   readonly instituciones: readonly { readonly id: string; readonly nombre: string }[];
   readonly nombresTarjetaUsados: readonly {
     readonly nombre: string;
@@ -77,9 +77,18 @@ export function FormularioCuentaNueva({
   tipoInicial,
   instituciones,
   nombresTarjetaUsados,
+  subtipo,
 }: PropsFormularioCuentaNueva) {
   const operacion = useOperacion({ accion: enviarCuenta, creacion: true });
-  const inicial = useMemo(() => valoresIniciales(hoy, tipoInicial), [hoy, tipoInicial]);
+  const inicial = useMemo(
+    () =>
+      valoresIniciales(
+        hoy,
+        tipoInicial,
+        tipoInicial === 'efectivo' ? subtipo.nombres['corriente'] : '',
+      ),
+    [hoy, tipoInicial, subtipo],
+  );
   const formulario = useFormularioFinn<Campos>({
     contrato: CONTRATO,
     valoresIniciales: inicial,
@@ -107,7 +116,12 @@ export function FormularioCuentaNueva({
   const ponerYProponer = (n: 'tipo' | 'subtipoEfectivo') => (valor: string) => {
     poner(n)(valor);
     const siguiente = { ...c, [n]: valor };
-    const nombre = nombrePropuesto(c.nombre, siguiente.tipo, siguiente.subtipoEfectivo);
+    const nombre = nombrePropuesto(
+      subtipo.nombres,
+      c.nombre,
+      siguiente.tipo,
+      siguiente.subtipoEfectivo,
+    );
     if (nombre !== undefined) poner('nombre')(nombre);
   };
   const error = (n: keyof Campos): string | undefined => formState.errors[n]?.message;
@@ -120,60 +134,6 @@ export function FormularioCuentaNueva({
 
   const { estado, error: fallo, exito } = operacion;
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
-
-  function campo(x: Descriptor) {
-    if (!visible(x, c)) return null;
-    const mensaje = error(x.n);
-    if (x.clase === 'monto')
-      return (
-        <EntradaMonto
-          key={x.n}
-          nombre={x.n}
-          etiqueta={x.etiqueta}
-          valor={c[x.n]}
-          alCambiar={poner(x.n)}
-          error={mensaje}
-          requerido={x.requerido}
-        />
-      );
-    if (x.n === 'color')
-      return (
-        <Suspense key={x.n} fallback={<div className="min-h-60" aria-hidden="true" />}>
-          <ColorTarjeta
-            valor={c.color}
-            alCambiar={poner('color')}
-            vista={{
-              nombre: c.nombre,
-              red: t.redes[c.red as keyof typeof t.redes],
-              ...(c.ultimos4.trim() === '' ? {} : { ultimos4: c.ultimos4.trim() }),
-              ...(institucionElegida === undefined ? {} : { institucion: institucionElegida }),
-            }}
-          />
-        </Suspense>
-      );
-    if (x.clase === 'opciones')
-      return (
-        <Seleccion
-          key={x.n}
-          etiqueta={x.etiqueta}
-          opciones={opciones(x.opciones ?? {})}
-          valor={c[x.n]}
-          alCambiar={poner(x.n)}
-          {...(mensaje === undefined ? {} : { error: mensaje })}
-        />
-      );
-    return (
-      <EntradaTexto
-        key={x.n}
-        etiqueta={x.etiqueta}
-        requerido={x.requerido}
-        inputMode={x.clase === 'texto' ? 'text' : x.clase === 'entero' ? 'numeric' : 'decimal'}
-        autoComplete="off"
-        {...(mensaje === undefined ? {} : { error: mensaje })}
-        {...formulario.register(x.n)}
-      />
-    );
-  }
 
   // Terminó: `cerrarFlujo()` a la ruta padre (05 §1.4). Cuentas ya trae la cuenta nueva y su estado (la tarjeta con deuda, AV-07).
   if (estado === 'listo' && exito !== undefined)
@@ -235,14 +195,17 @@ export function FormularioCuentaNueva({
           {c.tipo === 'efectivo' ? (
             <div className="flex flex-col gap-2">
               <SelectorSegmentado
-                etiqueta={t.subtipo}
-                opciones={SUBTIPOS.map((valor) => ({ valor, etiqueta: t.subtipos[valor] }))}
+                etiqueta={subtipo.etiqueta}
+                opciones={Object.entries(subtipo.opciones).map(([valor, etiqueta]) => ({
+                  valor,
+                  etiqueta,
+                }))}
                 valor={c.subtipoEfectivo}
                 alCambiar={ponerYProponer('subtipoEfectivo')}
                 llena
               />
               <p className="text-cuerpo-pequeno text-texto-secundario">
-                {t.ayudasSubtipo[c.subtipoEfectivo as (typeof SUBTIPOS)[number]]}
+                {subtipo.ayudas[c.subtipoEfectivo]}
               </p>
             </div>
           ) : null}
@@ -274,7 +237,7 @@ export function FormularioCuentaNueva({
                 inputMode="numeric"
                 maxLength={4}
                 autoComplete="off"
-                placeholder={t.opcional}
+                placeholder={subtipo.opcional}
                 {...conError('ultimos4')}
                 {...formulario.register('ultimos4')}
               />
@@ -306,7 +269,17 @@ export function FormularioCuentaNueva({
                 }
               : {})}
           />
-          {CAMPOS_DE_TIPO[c.tipo].map(campo)}
+          {c.tipo === 'efectivo' ? null : (
+            <Suspense fallback={<div className="min-h-60" aria-hidden="true" />}>
+              <CamposDeTipo
+                c={c}
+                poner={poner}
+                error={error}
+                register={formulario.register}
+                institucion={institucionElegida}
+              />
+            </Suspense>
+          )}
           {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
             <AvisoEnLinea
               estado="problema"
