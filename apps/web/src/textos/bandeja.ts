@@ -92,10 +92,25 @@ export const bandeja = {
     tipos: {
       gasto: 'Gasto',
       ingreso: 'Ingreso',
-      pago_tarjeta: 'Pago de tarjeta',
+      pago_tarjeta: 'Pago', // A12: el segmentado de cuatro dice «Pago»
       devolucion: 'Devolución',
     },
     monto: 'Monto',
+    // CH-226 (A12, D8): atajos de la fecha, origen de un pago y la compra de una devolución
+    hoy: 'Hoy',
+    ayer: 'Ayer',
+    origen: 'Sale de',
+    elegirOrigen: 'Elegí de qué cuenta salió el pago.',
+    compra: 'Compra que se devuelve',
+    elegirCompra: 'Elegí la compra',
+    buscarCompra: 'Buscar por comercio o nota',
+    sinCompras: 'No hay compras para devolver con esos datos.',
+    cambiarCompra: 'Cambiar compra',
+    compraSinComercio: 'Compra sin comercio',
+    sinCompra: 'Sin compra: va a una categoría',
+    queda: (monto: string) => `Queda ${monto}`,
+    compraDe: (fecha: string, cuenta: string, queda: string) =>
+      `${fecha} · ${cuenta} · Queda ${queda}`,
     aprobar: 'Aprobar',
     // CH-136: el pie fijo dice cuánto se aprueba, como «Guardar $X» de Registrar gasto
     aprobarMonto: (monto: string) => `Aprobar ${monto}`,
