@@ -996,6 +996,26 @@ describe('afectadas (07 §13.6, DP-19, CH-01)', () => {
     expect(a.grepE2E).toBeNull();
   });
 
+  it('CH-231: con sinMarco (ci:local corto) el marco no expande a la suite completa; las pruebas cambiadas siguen', () => {
+    const a = afectadas(e, r, ['apps/web/src/app/(finn)/layout.tsx'], [], true);
+    // Sin marco quedan solo las fichas que el archivo resuelve por sus piezas (aquí, las de la ruta `/`)
+    expect(a.todo).toBe(false);
+    expect(a.grepE2E).not.toBeNull();
+    expect(quien('apps/web/src/app/(finn)/layout.tsx').grepE2E).toBeNull();
+    const archivo = 'apps/web/e2e/rendimiento/tamano.e2e.ts';
+    const ren = { id: 'PRU-REN-PWA-002', nivel: 'REN', area: 'PWA', refs: [], archivo };
+    const con = afectadas(
+      e,
+      { ...r, activas: [...r.activas, ren] },
+      ['apps/web/src/app/(finn)/layout.tsx', archivo],
+      [],
+      true,
+    );
+    expect(con.grepE2E?.split('|')).toContain('PRU-REN-PWA-002');
+    // Una ficha que se cierra sigue dando la suite completa (CH-70): el modo corto no aplica a ese diff
+    expect(afectadas(e, r, ['pruebas/features.json'], ['FT-30'], true).grepE2E).toBeNull();
+  });
+
   it('dominio y db no disparan E2E por sí mismos', () => {
     const a = quien('packages/dominio/src/periodos.ts');
     expect(a).toMatchObject({ todo: false, fts: [], grepE2E: '^$', total: 0 });
