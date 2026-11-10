@@ -143,7 +143,10 @@ test.describe('PRU-E2E-CTA', () => {
     await preparar('2027-02-05');
     await abrir(page);
     await expect(campo(page, t.nombre)).toHaveValue(s.nombres.corriente);
-    await page.getByRole('radiogroup', { name: s.etiqueta }).getByRole('radio', { name: s.opciones.billetera }).click();
+    await page
+      .getByRole('radiogroup', { name: s.etiqueta })
+      .getByRole('radio', { name: s.opciones.billetera })
+      .click();
     await expect(campo(page, t.nombre)).toHaveValue(s.nombres.billetera);
     await expect(page.getByText(s.ayudas.billetera)).toBeVisible();
     await expect(campo(page, t.ultimos4)).toHaveCount(0);
@@ -152,7 +155,10 @@ test.describe('PRU-E2E-CTA', () => {
     await alTerminar(page);
 
     await abrir(page);
-    await page.getByRole('radiogroup', { name: s.etiqueta }).getByRole('radio', { name: s.opciones.ahorro }).click();
+    await page
+      .getByRole('radiogroup', { name: s.etiqueta })
+      .getByRole('radio', { name: s.opciones.ahorro })
+      .click();
     await expect(campo(page, t.nombre)).toHaveValue(s.nombres.ahorro);
     await expect(campo(page, t.ultimos4)).toHaveValue('');
     await campo(page, t.saldo.efectivo).fill('500');
