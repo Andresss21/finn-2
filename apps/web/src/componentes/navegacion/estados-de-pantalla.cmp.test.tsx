@@ -117,7 +117,7 @@ describe('PRU-CMP-AJUS-144 página sin conexión', () => {
 });
 
 describe('PRU-CMP-PWA error de pantalla con su glifo', () => {
-  it('PRU-CMP-PWA-340 [] el error de pantalla es una tarjeta con elevación 1, el glifo info, la referencia copiable e «Intentar de nuevo»', () => {
+  it('PRU-CMP-PWA-341 [] el error de pantalla es una tarjeta con elevación 1, el glifo info, la referencia copiable e «Intentar de nuevo»', () => {
     const raiz = montar(
       <ErrorDeLaPantalla
         error={Object.assign(new Error('x'), { digest: 'E-XYZ987' })}

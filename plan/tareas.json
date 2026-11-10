@@ -575,39 +575,39 @@
 
   "TA-487": { "estado": "terminada", "rama": "ta-487-fixes-anchos-columnas", "pr": 530 },
 
-  "TA-488": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-488": { "estado": "terminada", "rama": "ta-488-fixes-visuales", "pr": 532 },
 
-  "TA-489": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-489": { "estado": "pendiente" },
 
-  "TA-490": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-490": { "estado": "pendiente" },
 
   "TA-491": { "estado": "pendiente" },
 
   "TA-492": { "estado": "pendiente" },
 
-  "TA-493": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-493": { "estado": "pendiente" },
 
   "TA-494": { "estado": "terminada", "pr": 531 },
 
   "TA-495": { "estado": "pendiente" },
 
-  "TA-496": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-496": { "estado": "terminada", "rama": "ta-488-fixes-visuales", "pr": 532 },
 
-  "TA-497": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-497": { "estado": "pendiente" },
 
-  "TA-498": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-498": { "estado": "pendiente" },
 
-  "TA-499": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-499": { "estado": "pendiente" },
 
   "TA-507": { "estado": "pendiente" },
 
-  "TA-508": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-508": { "estado": "pendiente" },
 
   "TA-509": { "estado": "pendiente" },
 
-  "TA-510": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-510": { "estado": "pendiente" },
 
-  "TA-511": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" },
+  "TA-511": { "estado": "pendiente" },
 
-  "TA-512": { "estado": "en_curso", "rama": "ta-488-fixes-visuales" }
+  "TA-512": { "estado": "terminada", "rama": "ta-488-fixes-visuales", "pr": 532 }
 }
