@@ -2,11 +2,17 @@
 // Inscribir un factor TOTP (05 §9.5, FE-37): lo usan `/ingresar/inscribir` (primero) y `/ajustes/seguridad/factores/nuevo`
 // (respaldo). Al abrir llama a `iniciarInscripcion()`; el QR y el secreto viven solo en el estado de este componente: nada
 // va al borrador, a `sessionStorage` ni a un evento. Sin envío automático del código (WCAG 3.2.2), como en 9.4.
+// [CH-221 b] Como en `/ingresar/verificar`: código incorrecto, el campo tiembla (380 ms) con el borde de problema; confirmado, un
+// check y el cierre al terminar la espera del token (650 ms). Con movimiento reducido, ni temblor ni espera. Solo presentación:
+// `completarInscripcion` y la sesión no cambian.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
+import { Icono } from '../../componentes/base/icono';
+import { useMovimientoReducido } from '../../componentes/movimiento/use-movimiento-reducido';
+import { duracionToken } from '../../componentes/movimiento/use-salida';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -126,9 +132,30 @@ function PasoCodigo({
   const { register, formState, setValue, setFocus } = formulario;
   const { estado, error } = operacion;
 
+  const reducido = useMovimientoReducido();
+  const terminar = useRef(alTerminar);
+  terminar.current = alTerminar;
   useEffect(() => {
-    if (estado === 'listo') alTerminar();
-  }, [estado, alTerminar]);
+    if (estado !== 'listo') return;
+    const reloj = setTimeout(
+      () => {
+        terminar.current();
+      },
+      reducido ? 0 : duracionToken('--espera-verificado'),
+    );
+    return () => {
+      clearTimeout(reloj);
+    };
+  }, [estado, reducido]);
+
+  // Cada respuesta de error es un objeto nuevo: cada una vuelve a hacer temblar el campo (alterna dos nombres de animación).
+  const errorDeCodigo = error !== undefined && CODIGOS_DE_CODIGO.includes(error.codigo);
+  const [errorPrevio, setErrorPrevio] = useState(error);
+  const [temblores, setTemblores] = useState(0);
+  if (error !== errorPrevio) {
+    setErrorPrevio(error);
+    if (errorDeCodigo) setTemblores(temblores + 1);
+  }
 
   // Código incorrecto o vencido: el campo queda vacío y con el foco, como en 9.4
   useEffect(() => {
@@ -186,21 +213,49 @@ function PasoCodigo({
           {error.mensaje}
         </AvisoEnLinea>
       )}
-      <EntradaTexto
-        etiqueta={t.codigo}
-        requerido
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        pattern="\d{6}"
-        {...(errorCodigo === undefined ? {} : { error: errorCodigo })}
-        {...register('codigo', {
-          setValueAs: quitarEspacios,
-          onChange: (e: { target: HTMLInputElement }) => {
-            e.target.value = quitarEspacios(e.target.value);
-          },
-        })}
-      />
-      <Boton tipo="submit" enviando={estado === 'enviando'} textoEnviando={t.confirmando}>
+      <div
+        data-temblor={errorDeCodigo && temblores > 0 ? temblores : undefined}
+        className={
+          errorDeCodigo && temblores > 0 && !reducido
+            ? temblores % 2 === 1
+              ? 'fz-sacudida'
+              : 'fz-sacudida-otra'
+            : undefined
+        }
+      >
+        <EntradaTexto
+          etiqueta={t.codigo}
+          {...(errorDeCodigo ? { className: 'border-2 border-problema-borde' } : {})}
+          requerido
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="\d{6}"
+          {...(errorCodigo === undefined ? {} : { error: errorCodigo })}
+          {...register('codigo', {
+            setValueAs: quitarEspacios,
+            onChange: (e: { target: HTMLInputElement }) => {
+              e.target.value = quitarEspacios(e.target.value);
+            },
+          })}
+        />
+      </div>
+      {estado === 'listo' ? (
+        <p
+          role="status"
+          data-verificado
+          className="flex items-center gap-2 text-cuerpo font-semibold text-positivo-texto"
+        >
+          <span className="fz-pop-in inline-flex size-8 items-center justify-center rounded-pastilla bg-positivo-fondo">
+            <Icono nombre="check" tamano={18} />
+          </span>
+          {t.verificado}
+        </p>
+      ) : null}
+      <Boton
+        tipo="submit"
+        enviando={estado === 'enviando' || estado === 'listo'}
+        textoEnviando={t.confirmando}
+      >
         {t.confirmar}
       </Boton>
     </form>
