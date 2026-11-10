@@ -130,6 +130,12 @@ export function PantallaDetalleCategoria({
         },
   ];
   const hrefAsignar = conPeriodo(`/presupuesto/asignar/${categoria.id}`);
+  const faltaMeta = meta !== null && meta.falta > 0 ? meta.falta : undefined;
+  // D9: una categoría de ahorro (meta con progreso) que nunca tuvo gasto no muestra historial de gasto.
+  const ahorroSinGasto =
+    meta?.progresoBp !== undefined &&
+    numeros.gastado === 0 &&
+    dto.historial.every((h) => h.gastado === 0);
   const numero = (rotulo: string, centavos: Centavos) => (
     <div key={rotulo} className="flex min-w-0 flex-col gap-0.5">
       <dt className="text-rotulo text-texto-secundario">{rotulo}</dt>
@@ -228,11 +234,6 @@ export function PantallaDetalleCategoria({
         {meta === null ? null : (
           <Seccion titulo={t.meta.titulo} atributo="meta">
             <ResumenMeta meta={meta} conseguido={numeros.disponible} />
-            {acciones.puedeAsignar && !cerrado && meta.falta > 0 ? (
-              <EnlaceFinn href={hrefAsignar} className={TONAL}>
-                {t.meta.asignar} <Monto centavos={meta.falta} />
-              </EnlaceFinn>
-            ) : null}
           </Seccion>
         )}
       </div>
@@ -265,16 +266,18 @@ export function PantallaDetalleCategoria({
             </ul>
           </Seccion>
         )}
-        <Seccion
-          titulo={
-            dto.historial.length === 0
-              ? t.historial.generico
-              : t.historial.titulo(dto.historial.length)
-          }
-          atributo="historial"
-        >
-          <Historial historial={dto.historial} resumen={dto.historialResumen} />
-        </Seccion>
+        {ahorroSinGasto ? null : (
+          <Seccion
+            titulo={
+              dto.historial.length === 0
+                ? t.historial.generico
+                : t.historial.titulo(dto.historial.length)
+            }
+            atributo="historial"
+          >
+            <Historial historial={dto.historial} resumen={dto.historialResumen} />
+          </Seccion>
+        )}
         {dto.programadas.length === 0 ? null : (
           <Seccion titulo={t.programadas.titulo} atributo="programadas">
             <ul className={CONTENEDOR}>
@@ -319,6 +322,13 @@ export function PantallaDetalleCategoria({
           <div className="grid grid-cols-2 gap-2">
             <EnlaceFinn href={hrefAsignar} className={PRINCIPAL}>
               {t.acciones.asignar}
+              {/* A9: con meta, el principal lleva lo que falta del DTO; Asignar no preselecciona la opción (CH-221) */}
+              {faltaMeta === undefined ? null : (
+                <>
+                  {' '}
+                  <Monto centavos={faltaMeta} />
+                </>
+              )}
             </EnlaceFinn>
             <EnlaceFinn
               href={conPeriodo(`/presupuesto/mover?categoria-origen=${categoria.id}`)}
