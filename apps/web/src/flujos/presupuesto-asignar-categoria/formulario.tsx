@@ -23,6 +23,7 @@ import { asignarEnCategoria, asignarRapido } from '../../servidor/acciones/presu
 import { formularios } from '../../textos/formularios';
 import { presupuestoAsignar as t } from '../../textos/presupuesto-asignar';
 import { PieDeHoja } from '../pie-de-hoja';
+import { CampoConFoco } from './campo-con-foco';
 import { OpcionesRapidas, type DatosRapida, type VarianteRapida } from './rapida';
 
 export interface PropsFormularioAsignar {
@@ -205,26 +206,27 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
           alElegir={(variante) => void operacion.enviar({ variante })}
         />
       )}
-      <EntradaMonto
-        nombre="monto"
-        etiqueta={t.nuevoAsignado}
-        valor={c.monto}
-        alCambiar={(v) => {
-          formulario.setValue('monto', v, {
-            shouldDirty: true,
-            shouldValidate: formulario.formState.isSubmitted,
-          });
-        }}
-        conSigno
-        sinVistaPrevia
-        autoFoco
-        signo={c.signo}
-        alCambiarSigno={(s) => {
-          formulario.setValue('signo', s, { shouldDirty: true });
-        }}
-        error={formulario.formState.errors.monto?.message}
-        requerido
-      />
+      <CampoConFoco>
+        <EntradaMonto
+          nombre="monto"
+          etiqueta={t.nuevoAsignado}
+          valor={c.monto}
+          alCambiar={(v) => {
+            formulario.setValue('monto', v, {
+              shouldDirty: true,
+              shouldValidate: formulario.formState.isSubmitted,
+            });
+          }}
+          conSigno
+          sinVistaPrevia
+          signo={c.signo}
+          alCambiarSigno={(s) => {
+            formulario.setValue('signo', s, { shouldDirty: true });
+          }}
+          error={formulario.formState.errors.monto?.message}
+          requerido
+        />
+      </CampoConFoco>
       {estado === 'error' && fallo !== undefined ? (
         <AvisoEnLinea
           estado="problema"

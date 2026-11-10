@@ -65,7 +65,8 @@ export const CAMPOS_DE_TIPO: Readonly<Record<TipoCuenta, readonly Descriptor[]>>
     d('diaCorte', t.diaCorte, 'entero', true),
     d('diaPago', t.diaPago, 'entero', true),
     d('red', t.red, 'opciones', true, { opciones: t.redes }),
-    d('color', t.color, 'opciones', false, { opciones: t.colores }),
+    // El color lo dibuja el selector diferido `color-tarjeta.tsx`, con sus 8 colores (CH-225).
+    d('color', t.color, 'opciones', false),
   ],
   prestamo: [
     d('contraparte', t.contraparte, 'texto', true),

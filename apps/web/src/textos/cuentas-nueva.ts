@@ -30,17 +30,6 @@ export const cuentasNueva = {
   red: 'Red',
   redes: { visa: 'Visa', mastercard: 'Mastercard', otra: 'Otra' },
   color: 'Color de la tarjeta',
-  // Los 8 colores de 06-identidad-visual (§2.9, CH-225), con su hex canónico como #RRGGBB
-  colores: {
-    '#7E6638': 'Oro',
-    '#5C6670': 'Plata',
-    '#2E3138': 'Grafito',
-    '#24509A': 'Zafiro',
-    '#7E2231': 'Rubí',
-    '#1A6043': 'Esmeralda',
-    '#52308C': 'Amatista',
-    '#7C4626': 'Cobre',
-  } as Readonly<Record<string, string>>,
   vistaPrevia: 'Tu tarjeta',
   modelo: 'Modelo de cálculo',
   modelos: { ninguno: 'Sin modelo', banco_agricola: 'Banco Agrícola' },

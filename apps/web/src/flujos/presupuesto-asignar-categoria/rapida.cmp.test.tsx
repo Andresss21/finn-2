@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { CampoConFoco } from './campo-con-foco';
 import { OpcionesRapidas, type DatosRapida, type PropsOpcionesRapidas } from './rapida';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -108,13 +109,14 @@ describe('PRU-CMP-PRES foco de Asignar', () => {
           deshabilitado={false}
           alElegir={elegir}
         />
-        <EntradaMonto
-          nombre="monto"
-          etiqueta="Nuevo asignado"
-          valor=""
-          alCambiar={() => undefined}
-          autoFoco
-        />
+        <CampoConFoco>
+          <EntradaMonto
+            nombre="monto"
+            etiqueta="Nuevo asignado"
+            valor=""
+            alCambiar={() => undefined}
+          />
+        </CampoConFoco>
       </>,
     );
     const campo = nodo.querySelector('input[name="monto"]') as HTMLInputElement;
