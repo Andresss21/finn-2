@@ -43,7 +43,7 @@ describe('PRU-CMP-PROG insignia de fecha', () => {
     const mes = nodo.querySelector('[data-mes]') as HTMLElement;
     const dia = nodo.querySelector('[data-dia]') as HTMLElement;
     expect(dia.textContent).toBe('10');
-    expect(mes.textContent?.length).toBeGreaterThan(0);
+    expect(mes.textContent.length).toBeGreaterThan(0);
     // El mes va antes (arriba) que el día.
     expect(mes.getBoundingClientRect().bottom).toBeLessThanOrEqual(
       dia.getBoundingClientRect().top + 1,
@@ -51,7 +51,7 @@ describe('PRU-CMP-PROG insignia de fecha', () => {
     const e = getComputedStyle(dia);
     expect(e.fontWeight).toBe('800');
     expect(e.fontSize).toBe('24px');
-    expect(e.fontStretch).toBe('72%');
+    expect(e.getPropertyValue('font-stretch')).toBe('72%');
     expect(e.fontVariantNumeric).toContain('tabular-nums');
     expect(nodo.firstElementChild?.getAttribute('aria-hidden')).toBe('true');
   });

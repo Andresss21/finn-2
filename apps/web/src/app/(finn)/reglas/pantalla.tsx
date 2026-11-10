@@ -12,7 +12,7 @@ const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visib
 const FILA = `grid min-h-15 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 ${FOCO}`;
 const BOTON = `inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-control bg-accion-tonal px-5 font-semibold text-accion ${FOCO}`;
 
-const BUSCADOR = `min-h-12 w-full rounded-t-control rounded-b-sm bg-superficie pr-3 pl-10 text-base text-texto shadow-[inset_0_-2px_0_var(--borde-control)] placeholder:text-texto-terciario ${FOCO}`;
+const BUSCADOR = `min-h-12 w-full rounded-t-control rounded-b-sm bg-superficie pr-3 pl-10 text-base text-texto border-b-2 border-borde-control placeholder:text-texto-terciario ${FOCO}`;
 
 export function PantallaReglas({
   dto,
