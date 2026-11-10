@@ -583,7 +583,7 @@
 
   "TA-490": { "estado": "pendiente" },
 
-  "TA-491": { "estado": "pendiente" },
+  "TA-491": { "estado": "terminada", "rama": "ta-491-reservar-falta-2", "pr": 536 },
 
   "TA-492": { "estado": "pendiente" },
 

@@ -551,6 +551,7 @@ describe('PRU-DOM-CTA', () => {
     const vi = detalleCuenta(i, id('vi'), aux);
     expect(vi.cuenta).toMatchObject({ institucion: 'Banco Uno', ultimos4: '1234' });
     expect(vi.tarjeta).toEqual({
+      categoriaPago: { id: id('pago-vi'), nombre: 'Pago Visa' }, // CH-222
       color: '#112233',
       deuda: c(170),
       saldoAFavor: c(0),

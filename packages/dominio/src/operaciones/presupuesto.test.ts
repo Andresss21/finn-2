@@ -494,8 +494,15 @@ const op19 = (diaInicio: number): ComandoDominio => ({
   diaInicio,
   ids: contador(),
 });
-/** Un gasto en efectivo de E hacia la categoría x, registrado con OP-20. */
-function gasto(h: Hechos, x: string, fecha: FechaLocal, monto: Centavos, hoy: FechaLocal) {
+/** Un gasto en efectivo de E (o de la cuenta que se diga) hacia la categoría x, registrado con OP-20. */
+function gasto(
+  h: Hechos,
+  x: string,
+  fecha: FechaLocal,
+  monto: Centavos,
+  hoy: FechaLocal,
+  cuenta = 'E',
+) {
   const ids = contador();
   const comando: ComandoDominio = {
     operacion: 'OP-20',
@@ -504,7 +511,7 @@ function gasto(h: Hechos, x: string, fecha: FechaLocal, monto: Centavos, hoy: Fe
     ids,
     fecha,
     total: monto,
-    cuentaId: id('E'),
+    cuentaId: id(cuenta),
     lineas: [{ monto, destino: { categoriaId: id(x) } }],
   };
   return exito(ejecutar(h, comando, hoy)).hechosNuevos;
@@ -774,5 +781,46 @@ describe('PRU-DOM-PRES-109: asignación rápida, CA de FT-12 (CF-17, 3.14)', () 
       ]),
     );
     expect(tres.promedio).toBe(c(90));
+  });
+});
+
+// CH-222: «Reservar $X», la variante `reservar_falta` de OP-16 sobre la categoría de pago (01 OP-16, 04 OP-16).
+describe('PRU-DOM-PRES-310: asignación rápida «reservar lo que falta» de la tarjeta (01 OP-16, 04 §6.14.4)', () => {
+  /** Un gasto de $18.75 con la tarjeta T en Ropa, sin nada asignado: S(T) = $18.75. */
+  const conFalta = (h: Hechos) =>
+    gasto(h, 'ROPA', f('2027-03-05'), Centavos.desdeEntero(1875), HOY, 'T');
+  const faltaReservar = (h: Hechos) =>
+    calcular(h, HOY).tarjetas.find((t) => t.tarjetaId === id('T'))?.sinRespaldo;
+
+  it('PRU-DOM-PRES-310 CH-222: con S(t) = $18.75, reservar_falta asigna $18.75 a pago(t) y S queda en $0.00; con S = 0, en una categoría normal o fuera del activo no se ofrece', () => {
+    const h = conFalta(base());
+    expect(faltaReservar(h)).toBe(Centavos.desdeEntero(1875));
+    expect(rapida(h, 'P', MAR).reservarFalta).toBe(Centavos.desdeEntero(1875));
+    // Solo en pago(t) y en el período activo.
+    expect(rapida(h, 'ROPA', MAR).reservarFalta).toBeUndefined();
+    expect(rapida(h, 'P', ABR).reservarFalta).toBeUndefined();
+    expect(() => ejecutar(h, op16('ROPA', MAR, 'reservar_falta'))).toThrow(TypeError);
+    expect(() => ejecutar(h, op16('P', ABR, 'reservar_falta'))).toThrow(TypeError);
+
+    const r = exito(ejecutar(h, op16('P', MAR, 'reservar_falta')));
+    expect(asig(r.hechosNuevos, 'P', MAR)).toBe(Centavos.desdeEntero(1875));
+    expect(faltaReservar(r.hechosNuevos)).toBe(c(0));
+    expect(lpa(r.hechosNuevos)).toBe(Centavos.desdeEntero(98125));
+    expect(r.avisos.find((a) => a.codigo === 'AV-11')).toBeUndefined();
+    // Con S = 0 ya no se ofrece.
+    expect(rapida(r.hechosNuevos, 'P', MAR).reservarFalta).toBeUndefined();
+    expect(() => ejecutar(r.hechosNuevos, op16('P', MAR, 'reservar_falta'))).toThrow(TypeError);
+    // Sin ningún gasto con la tarjeta, S = 0 desde el principio.
+    expect(rapida(base(), 'P', MAR).reservarFalta).toBeUndefined();
+  });
+
+  it('PRU-DOM-PRES-311 [AV-11] CH-222: reservar_falta con S(t) mayor que LPA deja LPA negativo y pide AV-11 antes de confirmar, igual que OP-14 con el mismo monto', () => {
+    // LPA = 1.000 − 990 = 10; S(T) = 18.75 → LPA queda en −8.75.
+    const h = conFalta(base([asignacion('SUPER', MAR, 990)]));
+    const r = ejecutar(h, op16('P', MAR, 'reservar_falta'));
+    expect(aviso(r, 'AV-11')?.datos).toEqual({ lpa: Centavos.desdeEntero(-875) });
+    expect(aviso(r, 'AV-11')?.requiereConfirmacion).toBe(true);
+    expect(exito(r).avisos).toEqual(exito(ejecutar(h, op14('P', MAR, 18.75))).avisos);
+    expect(asig(exito(r).hechosNuevos, 'P', MAR)).toBe(Centavos.desdeEntero(1875));
   });
 });
