@@ -57,19 +57,21 @@ export function fichasPorPiezas(archivo: string, ps: Piezas[]): string[] {
 }
 
 /** `terminadas`: las fichas que el PR pasa a `terminada`. Con alguna corre `cierre`, y M15 exige el resultado de todas
- * las fichas terminadas: la E2E corre completa (07 §13.2, paso 4; CH-70). */
+ * las fichas terminadas: la E2E corre completa (07 §13.2, paso 4; CH-70). `sinMarco`: el modo corto de `ci:local`
+ * (CH-231) no expande el marco a la suite completa; esa queda para la CI del PR. */
 export function afectadas(
   e: Entradas,
   r: Resultado,
   cambiados: string[],
   terminadas: string[] = [],
+  sinMarco = false,
 ) {
   const ps = piezas(e.d06);
   const fts = new Set<string>(terminadas);
   let todo = terminadas.length > 0;
   for (const f of cambiados) {
     const deMapa = e.mapa.filter((m) => globARegex(m.patron).test(f));
-    if (deMapa.some((m) => m.fts === 'marco')) todo = true;
+    if (!sinMarco && deMapa.some((m) => m.fts === 'marco')) todo = true;
     const porPiezas = fichasPorPiezas(f, ps);
     const resueltas = porPiezas.length
       ? porPiezas

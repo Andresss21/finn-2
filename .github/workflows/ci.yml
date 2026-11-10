@@ -132,21 +132,22 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-  e2e:
-    name: e2e
+  # CH-231: la E2E corre en 4 fragmentos (`--shard i/4`), cada uno con su pila, su usuario de prueba y su siembra en su
+  # runner; el job `e2e` une los informes y es el check que leen `cierre`, `desplegar` y `pr:mergear`.
+  e2e-fragmento:
+    name: e2e-fragmento-${{ matrix.fragmento }}
     needs: rapido
     if: needs.rapido.outputs.e2e == 'true'
     runs-on: ubuntu-24.04
     # CH-208: en main tarda de 22m29 a 27m40; 30 cortó #446.
     timeout-minutes: 45
-    # 07 §7.3: issues: write solo aquí, para el issue `prueba-inestable` de cada prueba flaky
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-      issues: write
+    strategy:
+      fail-fast: false
+      matrix:
+        fragmento: [1, 2, 3, 4]
     env:
       FINN_E2E_GREP: ${{ needs.rapido.outputs.grep_e2e }}
+      FINN_E2E_FRAGMENTO: ${{ matrix.fragmento }}/4
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0, persist-credentials: false }
@@ -164,15 +165,56 @@ jobs:
           path: test-results/tamanos-main
           key: tamanos-main-${{ github.run_id }}
           restore-keys: tamanos-main-
-      - env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: pnpm ci:e2e
-      - if: ${{ github.event_name == 'push' }}
+      - run: pnpm ci:e2e
+      # Solo el fragmento que corrió tamano.e2e.ts tiene la medida
+      - if: ${{ github.event_name == 'push' && hashFiles('test-results/tamanos-main/tamanos.json') != '' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: test-results/tamanos-main
           key: tamanos-main-${{ github.run_id }}
-      # El informe JSON para cierre; las trazas solo existen si una prueba falló (07 §6.4: 3 días)
+      # El blob para el job `e2e`; las trazas solo existen si una prueba falló (07 §6.4: 3 días)
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-blob-${{ matrix.fragmento }}
+          path: test-results/e2e-blob/
+          if-no-files-found: ignore
+          retention-days: 3
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-trazas-${{ matrix.fragmento }}
+          path: apps/web/test-results/
+          if-no-files-found: ignore
+          retention-days: 3
+
+  # CH-231: pasa solo si pasaron los 4 fragmentos; une sus blobs en el informe JSON de siempre (`informes-e2e`, con
+  # apps/web/test-results/informe.json) para `cierre` y avisa las inestables.
+  e2e:
+    name: e2e
+    needs: [rapido, e2e-fragmento]
+    if: ${{ !cancelled() && needs.rapido.outputs.e2e == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # 07 §7.3: issues: write solo aquí, para el issue `prueba-inestable` de cada prueba flaky
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { pattern: e2e-blob-*, merge-multiple: true, path: test-results/e2e-blob }
+      - env:
+          GITHUB_TOKEN: ${{ github.token }}
+          FINN_E2E_FRAGMENTOS: ${{ needs.e2e-fragmento.result }}
+        run: pnpm ci:e2e-unir
       - if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

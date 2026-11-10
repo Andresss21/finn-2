@@ -2,15 +2,18 @@
 //   node tools/ci/afecta.mjs [--archivos a,b]  JSON con afecta_db, afecta_web, integracion, e2e y cierre
 //   node tools/ci/afecta.mjs rapido            `pnpm ci:rapido`: controles fijos, matriz y suites de `rapido`
 //   node tools/ci/afecta.mjs e2e               `pnpm ci:e2e`: en main o con `cierre`, la suite completa de `movil`; si no, las afectadas
-//   node tools/ci/afecta.mjs local             `pnpm ci:local` (DT-07): rapido y, según el diff, integracion y e2e
+//                                              (en CI, el fragmento FINN_E2E_FRAGMENTO=i/n; CH-231)
+//   node tools/ci/afecta.mjs e2e-unir          `pnpm ci:e2e-unir`: une los fragmentos; FINN_E2E_FRAGMENTOS = su resultado
+//   node tools/ci/afecta.mjs local             `pnpm ci:local` (DT-07): rapido y, según el diff, integracion y e2e; con
+//                                              un diff solo de interfaz, modo corto (CH-231)
 //   node tools/ci/afecta.mjs nocturno          `pnpm ci:nocturno` (TA-013): las suites del nocturno que ya existen
 // Entorno: FINN_EVENTO (pull_request | push; vacío en local), FINN_BORRADOR (true | false), FINN_ACCION (la acción del
 // pull_request), FINN_BASE (por defecto origin/main; en main, el commit anterior al push). Con GITHUB_OUTPUT, las
 // decisiones quedan como salidas del paso. M4 (07 §6.5): el modo sale del estado que ci.yml restauró de la caché.
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, readFileSync, rmSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { afectadas } from '../pruebas/afectadas.ts';
 import { ESTADO, e2eDePr, recortesAplicables } from './minutos.ts';
@@ -26,6 +29,9 @@ const DB =
 const WEB = /^(apps\/web\/|packages\/(?!.*\.test\.ts$))/;
 // Los documentos y los scripts de las fases anteriores (07 §13.7, TA-252): docs:comprobar solo si cambian
 const DOCS = /^(docs\/|tools\/docs\/)/;
+// CH-231: lo que es solo interfaz para el modo corto de `ci:local`. Sin la configuración de Playwright, los ayudantes
+// de e2e/, package.json ni lo que DB toma (api/ y servidor/): con cualquiera de esos, el modo es el completo.
+const INTERFAZ = /^apps\/web\/(src\/|public\/|tailwind\.css$|e2e\/.*\.e2e\.ts$)/;
 const NAVEGADORES = 'pnpm exec playwright install --with-deps chromium';
 
 const env = (k) => process.env[k] ?? '';
@@ -77,7 +83,10 @@ function e2eSegunModo() {
 /** M1: integracion con afecta_db o PR listo. M2: e2e en PR listo con afecta_web. En main, todo (07 §6.1).
  * El PR que pasa una ficha a `terminada`, y `ci:local` con esa ficha, corren e2e aunque no esté listo ni toque la web
  * (07 §13.2, paso 4; M15 lo exige en `cierre`; CH-70).
- * afecta_docs: el diff toca docs/ o tools/docs/ y `rapido` corre docs:comprobar (07 §13.7). */
+ * afecta_docs: el diff toca docs/ o tools/docs/ y `rapido` corre docs:comprobar (07 §13.7).
+ * solo_interfaz (CH-231): todo el diff es interfaz (INTERFAZ) y no toca la base; `ci:local` usa el modo corto.
+ * e2e_completa (CH-231): en CI, un cambio de CI corre la suite E2E completa, no solo las afectadas (`^$` casi siempre):
+ * así un cambio del workflow o del arnés se prueba entero en el PR. En local, como antes. */
 function decidir(archivos, b) {
   const db = archivos.some((a) => CI.test(a) || DB.test(a));
   const web = archivos.some((a) => CI.test(a) || WEB.test(a));
@@ -91,6 +100,8 @@ function decidir(archivos, b) {
     e2e: enMain || cierra || ((listo || evento === '') && web && e2eSegunModo()),
     cierre: enMain || cierra,
     afecta_docs: archivos.some((a) => DOCS.test(a)),
+    solo_interfaz: archivos.length > 0 && !db && !cierra && archivos.every((a) => INTERFAZ.test(a)),
+    e2e_completa: evento !== '' && archivos.some((a) => CI.test(a)),
   };
 }
 
@@ -132,9 +143,10 @@ function secretos(b) {
 }
 
 /** Filtro `-g` de las E2E afectadas (07 §6.1): `todas` (marco o una ficha que se cierra, CH-70), `^$` o los identificadores. */
-function grepE2E(archivos) {
+function grepE2E(archivos, sinMarco = false) {
+  if (d.e2e_completa) return 'todas';
   const e = cargarEntradas();
-  return afectadas(e, verificar(e), archivos, aTerminada(b)).grepE2E ?? 'todas';
+  return afectadas(e, verificar(e), archivos, aTerminada(b), sinMarco).grepE2E ?? 'todas';
 }
 
 function rapido(archivos, b, d) {
@@ -167,17 +179,44 @@ function rapido(archivos, b, d) {
   return ok;
 }
 
-function e2e(archivos) {
-  const grep = evento === 'push' ? 'todas' : env('FINN_E2E_GREP') || grepE2E(archivos);
+/** CH-231: en CI, `e2e-fragmento` corre un fragmento `i/n` de Playwright (`--shard`) con su propia pila; el informe
+ * blob lo une el job `e2e` (`e2eUnir`), que también avisa las inestables. */
+function e2e(archivos, sinMarco = false) {
+  const grep = evento === 'push' ? 'todas' : env('FINN_E2E_GREP') || grepE2E(archivos, sinMarco);
   if (grep === '^$') return console.log('e2e: ninguna suite afectada por el diff') === undefined;
+  const fragmento = env('FINN_E2E_FRAGMENTO');
+  if (fragmento !== '' && !/^\d+\/\d+$/.test(fragmento)) {
+    console.error(`e2e: FINN_E2E_FRAGMENTO=${fragmento} no es i/n`);
+    return false;
+  }
   // e2e.mjs pasa por la consola en Windows: ahí el `|` del filtro va entre comillas
   const filtro = grep === 'todas' ? '' : ` -g ${windows ? `"${grep}"` : grep}`;
+  const shard = fragmento === '' ? '' : ` --shard=${fragmento}`;
   const navegadores = enCi ? [['navegadores', NAVEGADORES]] : [];
   const ok = correr([
     ...navegadores,
-    ['e2e', `node tools/pruebas/e2e.mjs --project=movil${filtro}`],
+    ['e2e', `node tools/pruebas/e2e.mjs --project=movil${filtro}${shard}`],
   ]);
-  return inestables() && ok;
+  return (fragmento !== '' || inestables()) && ok;
+}
+
+/** Job `e2e` (CH-231): une los blobs de los fragmentos en el informe JSON de siempre (`apps/web/test-results/
+ * informe.json`, el que leen `cierre` e `inestables`) y pasa solo si todos los fragmentos pasaron. */
+function e2eUnir() {
+  const blobs = 'test-results/e2e-blob';
+  const fragmentos = env('FINN_E2E_FRAGMENTOS');
+  let ok = true;
+  if (existsSync(blobs) && readdirSync(blobs).some((f) => f.endsWith('.zip'))) {
+    mkdirSync('apps/web/test-results', { recursive: true });
+    process.env.PLAYWRIGHT_JSON_OUTPUT_FILE = resolve('apps/web/test-results/informe.json');
+    const unir = `pnpm --dir apps/web exec playwright merge-reports --reporter json ${resolve(blobs)}`;
+    ok = correr([['unir', unir]]) && inestables();
+  } else console.log('e2e: ningún fragmento dejó informe (sin suites afectadas)');
+  if (fragmentos !== 'success') {
+    console.error(`✗ e2e: los fragmentos terminaron en «${fragmentos || 'sin resultado'}»`);
+    return false;
+  }
+  return ok;
 }
 
 /** 07 §7.3: en CI, al terminar Playwright, los `flaky` abren o actualizan su issue `prueba-inestable`. */
@@ -284,13 +323,24 @@ salidas(d);
 let ok = true;
 if (modo === 'rapido') ok = rapido(archivos, b, d);
 else if (modo === 'e2e') ok = e2e(archivos);
+else if (modo === 'e2e-unir') ok = e2eUnir();
 else if (modo === 'local') {
+  // CH-231: con un diff solo de interfaz, la E2E local es la de los archivos cambiados y la del mapa, sin expandir el
+  // marco; la suite completa la corre la CI del PR. Con cualquier otro diff, como siempre (DT-07).
+  console.log(
+    d.solo_interfaz
+      ? 'ci:local: modo CORTO (el diff toca solo la interfaz): E2E de las pruebas cambiadas y de las fichas afectadas, sin expandir el marco; la suite completa corre en la CI del PR'
+      : 'ci:local: modo COMPLETO (el diff toca algo más que la interfaz)',
+  );
   ok = rapido(archivos, b, d);
   if (ok && d.afecta_db) ok = correr([['integracion', 'pnpm ci:integracion']]);
-  if (ok && d.e2e) ok = e2e(archivos);
+  if (ok && d.e2e) ok = e2e(archivos, d.solo_interfaz);
+  console.log(`ci:local: modo ${d.solo_interfaz ? 'corto' : 'completo'}, ${ok ? 'verde' : 'rojo'}`);
 } else if (modo === 'nocturno') ok = nocturno();
 else if (modo !== 'decidir') {
-  console.error(`afecta: modo desconocido ${modo} (decidir, rapido, e2e, local, nocturno)`);
+  console.error(
+    `afecta: modo desconocido ${modo} (decidir, rapido, e2e, e2e-unir, local, nocturno)`,
+  );
   ok = false;
 }
 process.exit(ok ? 0 : 1);

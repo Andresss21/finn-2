@@ -7,6 +7,12 @@ import { SECRETO_TAREA_E2E } from './e2e/ayudas/tarea-diaria.ts';
 
 const enCI = process.env['CI'] !== undefined && process.env['CI'] !== '';
 const PUERTO = 3100;
+// CH-231: un fragmento de la CI (`--shard i/n`) deja un blob; el job `e2e` los une en test-results/informe.json
+const FRAGMENTO = process.env['FINN_E2E_FRAGMENTO'] ?? '';
+const BLOB = {
+  outputDir: '../../test-results/e2e-blob',
+  fileName: `e2e-${FRAGMENTO.replace('/', 'de')}.zip`,
+};
 
 export default defineConfig({
   testDir: './e2e',
@@ -16,7 +22,11 @@ export default defineConfig({
   fullyParallel: false,
   retries: enCI ? 1 : 0,
   forbidOnly: enCI,
-  reporter: enCI ? [['list'], ['json', { outputFile: 'test-results/informe.json' }]] : 'list',
+  reporter: !enCI
+    ? 'list'
+    : FRAGMENTO
+      ? [['list'], ['blob', BLOB]]
+      : [['list'], ['json', { outputFile: 'test-results/informe.json' }]],
   // 07 §7.1: el navegador usa America/El_Salvador, salvo el proyecto zona-distinta.
   use: {
     baseURL: `http://localhost:${PUERTO}`,

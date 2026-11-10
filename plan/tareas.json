@@ -565,6 +565,8 @@
 
   "TA-554": { "estado": "pendiente" },
 
+  "TA-555": { "estado": "pendiente" },
+
   "TA-316": { "estado": "terminada", "rama": "ta-316-estructura-editar", "pr": 258 },
 
   "TA-317": { "estado": "terminada", "rama": "ta-317-acciones", "pr": 273 },
@@ -583,7 +585,7 @@
 
   "TA-490": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 },
 
-  "TA-491": { "estado": "pendiente" },
+  "TA-491": { "estado": "terminada", "rama": "ta-491-reservar-falta-2", "pr": 536 },
 
   "TA-492": { "estado": "pendiente" },
 

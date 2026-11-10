@@ -158,6 +158,7 @@ const ESPECIES = [
         igual_periodo_anterior: valores.igualPeriodoAnterior,
         promedio_gasto: valores.promedioGasto,
         cubrir_sobregiro: valores.cubrirSobregiro,
+        reservar_falta: valores.reservarFalta, // CH-222: solo en pago(t), que aquí no se elige
       }[variante];
       if (ofrecida === undefined) return undefined;
       return { operacion: 'OP-16', categoriaId: c.id, periodoInicio, variante, ids: s.ids() };

@@ -48,6 +48,7 @@ const VISA = uuid(3);
 const PRESTAMO = uuid(4);
 const FONDO = uuid(5);
 const COMIDA = uuid(11);
+const PAGO_VISA = uuid(13); // la categoría de pago de Visa
 const CONCILIACION = uuid(15);
 const TX_SMS = uuid(104); // gasto 'Super', nota 'compra', origen sms, moneda original
 const INEXISTENTE = uuid(255);
@@ -237,6 +238,19 @@ describe('PRU-INT-CTA', () => {
       detalleTransaccion(sinSesion, { transaccionId: TX_SMS }),
     ])
       expect((await lanzado(consulta)).categoria).toBe('NO_AUTORIZADO');
+  });
+
+  // CH-222: el detalle de la tarjeta enlaza «Reservar $X» a su categoría de pago (04 §6.6, BE-35).
+  it('PRU-INT-CTA-310 [Q-detalleCuenta] CH-222: el detalle de una tarjeta trae categoriaPago igual a su categoría de pago; una cuenta que no es tarjeta no trae el bloque', async () => {
+    const deps: DepsConsulta = {
+      memoria: new Memoria(),
+      sesion: sesionDe({ sub: USUARIO, aal: 'aal2' }),
+      usuarioPermitido: USUARIO,
+      opciones: () => RELOJ,
+    };
+    const visa = await detalleCuenta(deps, { cuentaId: VISA });
+    expect(visa.tarjeta?.categoriaPago).toEqual({ id: PAGO_VISA, nombre: 'Visa' });
+    expect(await detalleCuenta(deps, { cuentaId: EFECTIVO })).not.toHaveProperty('tarjeta');
   });
 
   it('PRU-INT-CTA-321 [Q-cuentas, Q-detalleCuenta, FORM-cuenta] CH-224: cuentas(), detalleCuenta() y formulario(cuenta) traen el subtipoEfectivo guardado de cada cuenta de efectivo, y solo de ellas', async () => {

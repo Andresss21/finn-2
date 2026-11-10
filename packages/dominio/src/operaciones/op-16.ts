@@ -1,4 +1,4 @@
-// OP-16 Asignación rápida (01 §5.3, CF-17, CF-25; 04 §3.3, §6.14.4): el dominio calcula el valor de
+// OP-16 Asignación rápida (01 §5.3, CF-17, CF-25, CH-222; 04 §3.3, §6.14.4): el dominio calcula el valor de
 // Asig(c, p) de la variante y lo aplica con las reglas de OP-14, incluido AV-11. `asignacionRapida`
 // da los valores de las variantes que se ofrecen (el `rapida` del contexto de `asignar`).
 import { evaluarMeta } from '../calculo/metas';
@@ -22,6 +22,8 @@ export interface AsignacionRapida {
   readonly promedioGasto?: { readonly monto: Centavos; readonly periodos: 1 | 2 | 3 };
   /** CF-25: Asig + máx(0, −Disp(c, p)); solo si Disp(c, p) < 0. */
   readonly cubrirSobregiro?: Centavos;
+  /** CH-222: Asig + S(t); solo en pago(t), en el período activo y con S(t) > 0 (§4.8). */
+  readonly reservarFalta?: Centavos;
 }
 
 /** Suma / n en centavos, mitad hacia arriba y simétrico en negativos (como `detalleCategoria`). */
@@ -61,11 +63,18 @@ export function asignacionRapida(i: Instantanea, categoriaId: Uuid, p: Periodo):
   const celda = celdas.find((x) => x.categoriaId === categoriaId && x.periodo.inicio === p.inicio);
   const disponible = celda?.disponible ?? Centavos.cero;
   const periodos = historial.length as 1 | 2 | 3;
+  // S(t) se calcula solo en el activo (inv. 2): `i.tarjetas` es el estado de cada tarjeta en A.
+  const tarjeta =
+    c.clase === 'pago' && p.inicio === activo.inicio
+      ? i.tarjetas.find((t) => t.tarjetaId === c.tarjetaId)
+      : undefined;
+  const falta = tarjeta?.sinRespaldo ?? Centavos.cero;
   return {
     ...(e ? { faltaMeta: Centavos.sumar(asig, e.falta) } : {}),
     igualPeriodoAnterior: asignado(i, categoriaId, anterior.inicio),
     ...(periodos > 0 ? { promedioGasto: { monto: promedio(gastado, periodos), periodos } } : {}),
     ...(disponible < 0 ? { cubrirSobregiro: Centavos.restar(asig, disponible) } : {}),
+    ...(falta > 0 ? { reservarFalta: Centavos.sumar(asig, falta) } : {}),
   };
 }
 
@@ -74,6 +83,7 @@ const CAMPO = {
   igual_periodo_anterior: 'igualPeriodoAnterior',
   promedio_gasto: 'promedioGasto',
   cubrir_sobregiro: 'cubrirSobregiro',
+  reservar_falta: 'reservarFalta',
 } as const satisfies Record<VarianteAsignacionRapida, keyof AsignacionRapida>;
 
 export function op16(antes: Instantanea, x: ComandoOp16): Efecto | Rechazo {
