@@ -3,6 +3,9 @@ export const ajustesWebhook = {
   titulo: 'Conectar los SMS',
   sinToken: 'Todavía no conectaste tus SMS. Generá un token y pegalo en MacroDroid.',
   conToken: (fecha: string) => `Token generado el ${fecha}.`,
+  /** [CH-227] Con el token configurado (A27). */
+  conectado: 'Conectado',
+  conectadoConSms: (fecha: string) => `Conectado. El último SMS llegó el ${fecha}.`,
   generar: 'Generar token',
   generando: 'Generando…',
   cambiar: 'Cambiar token',

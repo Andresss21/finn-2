@@ -239,3 +239,27 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     await expect(regla(page, 'PIZZA')).toContainText(r.hacia('Restaurantes'));
   });
 });
+
+test.describe('PRU-E2E-AJUS buscador de reglas', () => {
+  test.beforeEach(async ({ context, baseURL }) => {
+    await entrarAal2(context, baseURL ?? '');
+  });
+
+  test('PRU-E2E-AJUS-160 [FT-39] (CH-227) RUTA-/reglas con ?q=super quedan solo las reglas cuyo comercio o categoría coinciden, y sin coincidencias dice «Ninguna regla con ese texto»', async ({
+    page,
+  }) => {
+    await preparar([]);
+    await crearRegla(page, 'SUPER', 'Supermercado');
+    await crearRegla(page, 'PIZZA', 'Restaurantes');
+    await expect(page.locator('[data-regla]')).toHaveCount(2);
+
+    await abrir(page, '/reglas?q=super');
+    await expect(page.locator('[data-regla]')).toHaveCount(1);
+    await expect(regla(page, 'SUPER')).toContainText(r.hacia('Supermercado'));
+    await expect(regla(page, 'PIZZA')).toHaveCount(0);
+
+    await abrir(page, '/reglas?q=farmacia');
+    await expect(page.locator('[data-regla]')).toHaveCount(0);
+    await expect(page.getByText(r.sinCoincidencias)).toBeVisible();
+  });
+});

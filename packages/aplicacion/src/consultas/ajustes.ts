@@ -19,7 +19,12 @@ export interface AjustesDto extends Encabezado {
     readonly diaInicioVigente: number;
     readonly vigenciaFutura?: { readonly diaInicio: number; readonly rigeDesde: FechaLocal };
   };
-  readonly webhook: { readonly configurado: boolean; readonly rotadoEn?: string };
+  readonly webhook: {
+    readonly configurado: boolean;
+    readonly rotadoEn?: string;
+    /** [CH-227] El `recibido_en` más reciente de `sms` (03 §3.17), sin el texto. */
+    readonly ultimoSmsEn?: string;
+  };
   readonly formatos: readonly {
     readonly id: string;
     readonly institucion: Ref;
@@ -74,10 +79,12 @@ export function ajustes(d: DepsConsulta): Promise<AjustesDto> {
             ? {}
             : { vigenciaFutura: { diaInicio: futura.diaInicio, rigeDesde: futura.rigeDesde } }),
         },
-        webhook:
-          t.webhook === null
+        webhook: {
+          ...(t.webhook === null
             ? { configurado: false }
-            : { configurado: true, rotadoEn: t.webhook.rotadoEn },
+            : { configurado: true, rotadoEn: t.webhook.rotadoEn }),
+          ...(t.ultimoSmsEn === null ? {} : { ultimoSmsEn: t.ultimoSmsEn }),
+        },
         formatos: t.formatos.map((f) => ({
           id: f.id,
           institucion: institucion(f.institucionId),

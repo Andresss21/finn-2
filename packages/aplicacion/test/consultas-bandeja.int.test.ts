@@ -178,7 +178,8 @@ describe('PRU-INT-BAND', () => {
       diaInicioVigente: inicial?.diaInicio,
       vigenciaFutura: { diaInicio: 15, rigeDesde: '2027-04-21' },
     });
-    expect(sin.webhook).toEqual({ configurado: false });
+    // [CH-227] Los SMS de la bandeja ya llegaron: el último, a las 10:07 UTC, aunque todavía no haya token.
+    expect(sin.webhook).toEqual({ configurado: false, ultimoSmsEn: '2027-02-04T10:07:00.000Z' });
     expect(sin.suscripcionesPush).toEqual([]);
     expect(sin.diagnostico).toEqual([]);
     expect(sin.respaldo).toEqual({ respaldoAtrasado: true, restauracionAtrasada: true });
@@ -203,7 +204,11 @@ describe('PRU-INT-BAND', () => {
     await sembrarAjustesTecnicos(base);
     await fijarRespaldo(base, '40 hours', '3 days');
     const con = await ajustes(deps);
-    expect(con.webhook).toEqual({ configurado: true, rotadoEn: '2027-02-01T12:00:00.000Z' });
+    expect(con.webhook).toEqual({
+      configurado: true,
+      rotadoEn: '2027-02-01T12:00:00.000Z',
+      ultimoSmsEn: '2027-02-04T10:07:00.000Z',
+    });
     // [CH-73] cada suscripción trae su id (uuid) y nunca claves
     expect(con.suscripcionesPush[0]?.id).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,

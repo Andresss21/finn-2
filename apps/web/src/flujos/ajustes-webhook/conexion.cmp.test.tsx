@@ -154,3 +154,37 @@ describe('PRU-CMP-BAND', () => {
     expect(violations.map((v) => v.id)).toEqual([]);
   });
 });
+
+describe('PRU-CMP-AJUS', () => {
+  it('PRU-CMP-AJUS-160 [FT-03] (CH-227) Conectar los SMS con ultimoSmsEn dice «Conectado. El último SMS llegó …» con la fecha de la interfaz; sin SMS todavía, solo «Conectado»', () => {
+    const conSms = montar(
+      <PanelConexion
+        configurado
+        rotadoEn="2027-02-01T12:00:00.000Z"
+        ultimoSmsEn="2027-02-04T10:07:00.000Z"
+        formato="json"
+        rotar={rotarOk()}
+      />,
+    );
+    const aviso = conSms.nodo.querySelector('[data-conexion]') as HTMLElement;
+    expect(aviso.querySelector('[data-estado="positivo"]')).not.toBeNull();
+    expect(aviso.textContent).toContain(t.conectadoConSms('04/02/2027 04:07'));
+    expect(t.conectadoConSms('04/02/2027 04:07')).toMatch(/^Conectado\. El último SMS llegó /);
+
+    const sinSms = montar(
+      <PanelConexion
+        configurado
+        rotadoEn="2027-02-01T12:00:00.000Z"
+        formato="json"
+        rotar={rotarOk()}
+      />,
+    );
+    const solo = sinSms.nodo.querySelector('[data-conexion]') as HTMLElement;
+    expect(solo.textContent).toContain(t.conectado);
+    expect(solo.textContent).not.toContain('último SMS');
+
+    // Sin token no está conectado: no hay aviso.
+    const sinToken = montar(<PanelConexion configurado={false} formato="json" rotar={rotarOk()} />);
+    expect(sinToken.nodo.querySelector('[data-conexion]')).toBeNull();
+  });
+});
