@@ -196,7 +196,10 @@ describe('FT-25 detalle de una transacción', () => {
     expect(carlos?.textContent).toContain('Cobrado $10.00 · por cobrar $20.00');
     expect(nodo.querySelector('main')?.textContent).toContain('dividido en 2 partes');
     expect(nodo.querySelector('[aria-hidden="true"] span')).not.toBeNull();
-    for (const enlace of nodo.querySelectorAll('a'))
+    // A5: en teléfono el «Volver» de la fila del título no se dibuja (va en la barra); se miden los enlaces a la vista.
+    for (const enlace of [...nodo.querySelectorAll('a')].filter(
+      (a) => a.getClientRects().length > 0,
+    ))
       expect(enlace.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
   });
   it('PRU-CMP-TX-500 [CA-28.9] cada evento del detalle trae su enlace «Eliminar» a `/eventos/eliminar` con `?tipo-evento=` y `?evento=` de su id, y ninguno si la compra no tiene eventos', () => {

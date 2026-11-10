@@ -150,7 +150,8 @@ export function PantallaDetalleCategoria({
       <PublicarEncabezado encabezado={dto} />
       <PublicarAcciones titulo={categoria.nombre} acciones={menu} />
       <div className="flex flex-col gap-3 @[996px]:col-span-2">
-        {volver}
+        {/* A5: en teléfono «Volver» va en la barra (CH-109), con el mismo `?periodo=`; acá solo desde computadora */}
+        <div className="hidden md:block">{volver}</div>
         <SelectorPeriodo
           periodo={periodo}
           periodoActivo={periodoActivo}

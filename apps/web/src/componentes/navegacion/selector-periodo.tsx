@@ -3,6 +3,7 @@
 import { formatearPeriodoNumerico } from '../../formato';
 import { dominio } from '../../textos/dominio';
 import { Icono, type NombreIcono } from '../base/icono';
+import { EnlacePeriodo } from './direccion-periodo';
 import { EnlaceFinn } from './enlace-finn';
 
 export interface PeriodoDto {
@@ -71,13 +72,15 @@ export function SelectorPeriodo({
         {anterior === undefined ? (
           <span aria-hidden="true" className="size-11 shrink-0" />
         ) : (
-          <EnlaceFinn
+          <EnlacePeriodo
             href={hrefDe(anterior)}
+            inicio={anterior}
+            direccion="anterior"
             className={CIRCULO}
             aria-label={dominio.periodo.anterior}
           >
             <Icono nombre="arrowL" />
-          </EnlaceFinn>
+          </EnlacePeriodo>
         )}
         <div className="flex min-w-0 flex-col items-center text-center">
           <p className="text-cuerpo font-bold">{formatearPeriodoNumerico(periodo)}</p>
@@ -89,13 +92,15 @@ export function SelectorPeriodo({
         {siguiente === undefined ? (
           <span aria-hidden="true" className="size-11 shrink-0" />
         ) : (
-          <EnlaceFinn
+          <EnlacePeriodo
             href={hrefDe(siguiente)}
+            inicio={siguiente}
+            direccion="siguiente"
             className={CIRCULO}
             aria-label={dominio.periodo.siguiente}
           >
             <Icono nombre="arrowR" />
-          </EnlaceFinn>
+          </EnlacePeriodo>
         )}
       </div>
       {esActivo ? null : (

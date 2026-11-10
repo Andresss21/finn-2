@@ -150,9 +150,12 @@ export function PantallaListoParaAsignar({ dto }: { readonly dto: DetalleLpaDto 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4">
       <PublicarEncabezado encabezado={dto} />
-      <EnlaceFinn href="/presupuesto" className={ENLACE}>
-        {t.volver}
-      </EnlaceFinn>
+      {/* A5: en teléfono «Volver» va en la barra (CH-109); acá solo desde computadora */}
+      <div className="hidden md:block">
+        <EnlaceFinn href="/presupuesto" className={ENLACE}>
+          {t.volver}
+        </EnlaceFinn>
+      </div>
       <h1 className="text-titulo-pantalla">{t.titulo}</h1>
       <ResumenListoParaAsignar
         variante="billete"
