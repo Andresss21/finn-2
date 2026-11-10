@@ -173,9 +173,13 @@ export type ComandoOp18 = { readonly operacion: 'OP-18' } & (
   | { readonly accion: 'eliminar'; readonly metaId: Uuid }
 );
 // ── TA-136: asignación rápida y cambiar el ciclo (04 §3.3).
-/** Variantes de 01 OP-16; `cubrir_sobregiro` es la de CF-25. */
+/** Variantes de 01 OP-16; `cubrir_sobregiro` es la de CF-25 y `reservar_falta`, la de CH-222. */
 export type VarianteAsignacionRapida =
-  'falta_meta' | 'igual_periodo_anterior' | 'promedio_gasto' | 'cubrir_sobregiro';
+  | 'falta_meta'
+  | 'igual_periodo_anterior'
+  | 'promedio_gasto'
+  | 'cubrir_sobregiro'
+  | 'reservar_falta';
 /** OP-16: el dominio calcula el valor y lo aplica con OP-14. */
 export interface ComandoOp16 {
   readonly operacion: 'OP-16';

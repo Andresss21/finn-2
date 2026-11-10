@@ -34,7 +34,13 @@ export type EntradaOp15 = z.output<typeof op15>;
 export const op16 = z.object({
   categoriaId: uuid,
   periodoInicio: fechaLocal,
-  variante: z.enum(['falta_meta', 'igual_periodo_anterior', 'promedio_gasto', 'cubrir_sobregiro']),
+  variante: z.enum([
+    'falta_meta',
+    'igual_periodo_anterior',
+    'promedio_gasto',
+    'cubrir_sobregiro',
+    'reservar_falta', // CH-222: solo en pago(t), en el activo y con S(t) > 0
+  ]),
   esperado: z.object({ monto: montoTextoConSigno }),
 });
 export type EntradaOp16 = z.output<typeof op16>;

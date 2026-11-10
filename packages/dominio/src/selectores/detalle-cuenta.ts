@@ -162,6 +162,8 @@ export function detalleCuenta(i: Instantanea, cuentaId: Uuid, o: DetalleCuentaOp
 
   const tarjeta = h.tarjetas.find((t) => t.cuentaId === cuentaId);
   const estadoT = i.tarjetas.find((t) => t.tarjetaId === cuentaId);
+  // Toda tarjeta tiene su categoría de pago (BE-35): `estadoT` existe solo si la tiene.
+  const pagoT = h.categorias.find((g) => g.clase === 'pago' && g.tarjetaId === cuentaId);
   const prestamo = h.prestamos.find((p) => p.cuentaId === cuentaId);
   const amortizacion = prestamo === undefined ? null : amortizacionDe(i, prestamo);
   const efectosDe = h.efectos.filter((e) => e.cuentaId === cuentaId);
@@ -241,10 +243,11 @@ export function detalleCuenta(i: Instantanea, cuentaId: Uuid, o: DetalleCuentaOp
       rol: p.cuentaId === cuentaId ? ('origen' as const) : ('destino' as const),
       activa: p.activa,
     })),
-    ...(tarjeta === undefined || estadoT === undefined
+    ...(tarjeta === undefined || estadoT === undefined || pagoT === undefined
       ? {}
       : {
           tarjeta: {
+            categoriaPago: nombres(i).categoria(pagoT.id), // CH-222: pago(t), BE-35
             deuda: estadoT.deuda,
             saldoAFavor: Centavos.max(Centavos.cero, s.saldo),
             reservado: estadoT.reservado,
