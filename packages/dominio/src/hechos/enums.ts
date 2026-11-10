@@ -1,6 +1,7 @@
 // Enumerados de 03 §10.3 que usan las filas de los hechos. Mismos valores que los enums de Prisma.
 
 export type TipoCuenta = 'efectivo' | 'tarjeta' | 'prestamo' | 'inversion';
+export type SubtipoEfectivo = 'corriente' | 'ahorro' | 'billetera'; // [CH-224] 03 §3.4
 export type ClaseCategoria = 'normal' | 'pago';
 export type TipoTransaccion =
   | 'gasto'

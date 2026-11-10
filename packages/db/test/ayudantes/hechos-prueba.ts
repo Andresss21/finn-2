@@ -54,6 +54,7 @@ function escritos(
       nombre,
       institucionId: null,
       ultimos4: null,
+      subtipoEfectivo: tipo === 'efectivo' ? ('corriente' as const) : null, // [CH-224]
       fechaApertura: fecha('2027-01-21'),
       orden,
       archivada: false,
