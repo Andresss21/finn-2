@@ -544,6 +544,8 @@ El primer mes de la Fase 8 sirve de calibración: el nocturno sube el uso real p
 
 Un presupuesto de tiempo superado no bloquea el despliegue del día: los runners compartidos tienen ruido, y P7-5 pidió no aflojarlos en silencio, pero tampoco tratar el ruido como un error. Lo que bloquea es la **persistencia**: con `FINN_REN_ROJO` activo más de 7 días, `rapido` falla hasta que se corrija o se apruebe un CT.
 
+**[CH-233]** Un CT puede ser también una **prórroga temporal y con vencimiento** de esta persistencia, sin cambiar ningún presupuesto: hasta la fecha de la prórroga, `rapido` avisa (`::warning::`) en lugar de fallar, y desde el día siguiente vuelve a fallar solo. La fecha y el CH viven en una constante de `tools/ci/minutos.ts` (`PRORROGA_REN_ROJO`), nunca en una variable de entorno. Vigente: CH-233, hasta el **2026-11-24**, para el `FINN_REN_ROJO` activo desde el 2026-11-02; la corrección la investiga TA-554. El nocturno sigue midiendo, avisando y fijando `FINN_REN_ROJO`.
+
 ---
 
 ## 7. Pruebas inestables (DP-11)
@@ -1986,3 +1988,4 @@ No quedan preguntas abiertas de la Fase 7.
 Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el detalle; en el texto, las marcas **[F8]** señalan dónde rige.
 
 - **CH-01 a CH-06 y CH-08** (Fase 8, aprobados en las revisiones de `08-tareas.md`, aplicados al cerrarla el 23 de octubre de 2026). CH-01: rutas de operaciones y consultas por la estructura de 04 §1.2 (13.6, 16.2). CH-02: `main` en rojo avisa con el correo de GitHub y el uso por job queda como artefacto (6.3, 6.5). CH-03: cobertura verificable de SP-01 en la puerta (23, 30). CH-04: PRU-MAN-CTA-002 en la lista manual (22.1). CH-05: identificadores completos de la suite del pooler (5.3). CH-06: las acciones de notificación sin firma (BE-54) y V-26 a PRU-SEG-CONC-001 (18, 19.1, 20.1). CH-08: CA pendientes de punta a punta, M18 y su condición en el terminado y en la puerta (13.2, 13.3, 27, 30). Texto de cada cambio en `08-tareas.md` §7.
+- **CH-233** (Fase 8, decidido por el orquestador y aprobado por el usuario con su "mergeá", 10 de noviembre de 2026, `08-tareas.md` §7). Prórroga temporal de la persistencia de `FINN_REN_ROJO` hasta el 2026-11-24, sin cambiar ningún presupuesto; la corrección, en TA-554 (6.6). Marca **[CH-233]**.
