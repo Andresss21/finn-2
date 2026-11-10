@@ -127,6 +127,7 @@ export const cuentaDetalle = {
     cargosDelCiclo: 'Cargos del ciclo actual',
     yaPagado: 'Ya pagado en el ciclo',
     sinIntereses: 'Para no generar intereses',
+    pagaAntesDel: (dia: string, mes: string) => `Pagá antes del ${dia}/${mes}`, // [CH-234 A17]
     // [CH-222 A17] La acción principal de la cabecera del contenedor y su estado sin falta.
     reservar: 'Reservar',
     pagoReservado: 'Pago reservado',

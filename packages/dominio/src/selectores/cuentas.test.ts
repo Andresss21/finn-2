@@ -566,6 +566,7 @@ describe('PRU-DOM-CTA', () => {
         cargosDelCiclo: c(50),
         yaPagado: c(80),
         paraNoGenerarIntereses: c(120),
+        proximoPago: f('2027-04-17'), // [CH-234]
       },
     });
     expect(vi.acciones.bloqueosArchivo).toEqual([
@@ -750,5 +751,18 @@ describe('PRU-DOM-CTA', () => {
     const i = estado();
     expect(detalleCuenta(i, id('vi')).tarjeta?.color).toBe('#112233');
     expect(detalleCuenta(i, id('mc')).tarjeta).not.toHaveProperty('color');
+  });
+
+  it('PRU-DOM-CTA-550 [Q-detalleCuenta] el desglose al pagar del detalle de la tarjeta trae la fecha de pago de cuentas(): 17/04 de Visa y 20/04 de la otra tarjeta, con hoy 15/04 (CH-234)', () => {
+    const i = estado();
+    const lista = cuentas(i).tarjetas;
+    for (const [t, fecha] of [
+      [id('vi'), '2027-04-17'],
+      [id('mc'), '2027-04-20'],
+    ] as const) {
+      const pago = detalleCuenta(i, t).tarjeta?.desgloseAlPagar.proximoPago;
+      expect(pago).toBe(f(fecha));
+      expect(pago).toBe(lista.find((x) => x.cuenta.id === t)?.proximoPago);
+    }
   });
 });

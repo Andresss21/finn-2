@@ -89,7 +89,13 @@ describe('PRU-INT-PROG registro automático (FT-42)', () => {
     const ARCH = uuid(9310),
       PA = uuid(9311),
       PB = uuid(9312);
-    const alta = { id: ARCH, tipo: 'efectivo', nombre: 'Cuenta vieja', saldo: '0' };
+    const alta = {
+      id: ARCH,
+      tipo: 'efectivo',
+      subtipoEfectivo: 'corriente',
+      nombre: 'Cuenta vieja',
+      saldo: '0',
+    };
     expect(await confirmar(OP01, alta, deps())).toMatchObject({ ok: true });
     await crear(programada(PA, { cuentaId: ARCH, primeraFecha: '2027-02-01' }));
     await crear(programada(PB, { primeraFecha: '2027-02-02' }));

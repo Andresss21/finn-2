@@ -2760,7 +2760,8 @@ interface DetalleCuentaDto extends Encabezado {
   tarjeta?: { color?: string /* [CH-228] el hex guardado */; deuda; saldoAFavor; reservado; faltaReservar; reservaExcedente; limite: Centavos; usoLimite: number;
               categoriaPago: Ref;                                 // [CH-222] la categoría de pago de la tarjeta (BE-35)
               cicloFacturacion: { desde: FechaLocal; hasta: FechaLocal };
-              desgloseAlPagar: { deudaAnterior; cargosDelCiclo; yaPagado; paraNoGenerarIntereses: Centavos } };
+              desgloseAlPagar: { deudaAnterior; cargosDelCiclo; yaPagado; paraNoGenerarIntereses: Centavos;
+                                 proximoPago: FechaLocal } };   // [CH-234] el proximoPago de 6.5
   prestamo?: {
     condiciones: CondicionesPrestamoDto;                 // columnas de prestamos (03 §3.6)
     capitalPendiente: Centavos;
@@ -4435,3 +4436,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-03** (Fase 8, aprobado en la revisión de la Parte A de `08-tareas.md`, aplicado al cerrarla el 23 de octubre de 2026). SP-01 se verifica en la puerta de 07 §30 con `pruebas/muestras-cobertura.json` y las filas de exclusión firmadas: el BAC y Banco Agrícola con muestras; Cuscatlán excluido y F-3 inactivo. El requisito de SP-01 no cambia. Sin marcas en el texto.
 - **CH-210** (decisión del usuario del 6 de noviembre de 2026, `08-tareas.md` §7). El usuario no tiene cuentas en Banco Agrícola ni en Cuscatlán: los dos quedan excluidos de la puerta con filas firmadas (08 TU-14) y F-2 y F-3 inactivos; solo el BAC trae muestras. Reemplaza lo que CH-03 decía de Banco Agrícola. El requisito de SP-01 no cambia. Sin marcas en el texto.
 - **CH-222 a CH-227** (Fase 8, decididos por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). Variante `reservar_falta` de OP-16 con `rapida.reservarFalta` y `DetalleCuentaDto.tarjeta.categoriaPago` (CH-222; OP-16, 6.0.5, 6.6, 6.14.4); `cubiertoBp` en los consumos del detalle de categoría (CH-223; 6.3); `subtipoEfectivo` en OP-01, OP-02, `cuentas()`, `detalleCuenta()` y `formulario('cuenta')`, y BE-41 sin cuentas de ahorro (CH-224); `asignado` por período en `tendencia` y `transaccionOriginalId` en OP-37 (CH-226; 6.9.2, OP-37); `webhook.ultimoSmsEn` en `ajustes()` (CH-227; 6.11). Marcas **[CH-nnn]** en cada sección.
+- **CH-234** (Fase 8, decidido por el orquestador con delegación del usuario, 10 de noviembre de 2026, `08-tareas.md` §7). `DetalleCuentaDto.tarjeta.desgloseAlPagar` trae `proximoPago`, la misma fecha que `cuentas()` (6.5) y el detalle de la categoría de pago: la fila «Pagá antes del…» del detalle de la tarjeta (AUDITORIA A17). Lectura sin regla nueva (6.6). Marca **[CH-234]**.

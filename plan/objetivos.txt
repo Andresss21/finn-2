@@ -1329,6 +1329,7 @@ CH-227b | D | 08 CH-227 (b), 05 §2.2 y §2.8: buscador de /reglas con ?q= [CH-2
 CH-227c | D | 08 CH-227 (c), 04 §6.11: último SMS en Conectar los SMS [CH-227]
 CH-231 | D | 08 §7, §1.7, 07 §6.1: E2E de CI en fragmentos, ci:local corto y main sin repetir la E2E (TA-555) [CH-231]
 CH-233 | D | 08 §7, 07 §6.6: prórroga de FINN_REN_ROJO hasta 2026-11-24 y los tres presupuestos dentro (TA-554) [CH-233]
+CH-234 | D | 08 §7, 04 §6.6: proximoPago en el desglose al pagar del detalle de la tarjeta (A17) [CH-234]
 WF-respaldo | C | 07 §6.1
 WF-restauracion | C | 07 §6.1
 WF-desplegar | C | 07 §6.1

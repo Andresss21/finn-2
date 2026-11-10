@@ -140,6 +140,7 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
             cargosDelCiclo: 2700,
             yaPagado: 0,
             paraNoGenerarIntereses: 7700,
+            proximoPago: '2027-04-05',
           },
         },
       }),
@@ -616,6 +617,7 @@ describe('PRU-CMP-CTA-260 detalle de cuenta portado del export (CH-142)', () => 
             cargosDelCiclo: 42978,
             yaPagado: -30000,
             paraNoGenerarIntereses: 51240,
+            proximoPago: '2027-04-05',
           },
         },
       }),
@@ -777,6 +779,7 @@ describe('PRU-CMP-CTA «Reservar $X» en el detalle de la tarjeta', () => {
       cargosDelCiclo: 42978,
       yaPagado: 30000,
       paraNoGenerarIntereses: 21240,
+      proximoPago: '2027-04-05',
     },
   });
 
@@ -812,5 +815,16 @@ describe('PRU-CMP-CTA «Reservar $X» en el detalle de la tarjeta', () => {
     const cab = alDia.querySelector('[data-cabecera-tarjeta]') as HTMLElement;
     expect(cab.querySelector('a')).toBeNull();
     expect(cab.textContent).toContain('Pago reservado');
+  });
+
+  it('PRU-CMP-CTA-550 [FT-52] «Para no generar intereses» dice «Pagá antes del 05/04» con desgloseAlPagar.proximoPago tal cual y conserva sus cuatro filas', () => {
+    const raiz = mostrar(
+      dto({ cuenta: cuentaDe('tarjeta', { nombre: 'Visa Oro' }), tarjeta: tarjeta(1875) }),
+    );
+    const intereses = raiz.querySelector('[aria-labelledby="al-pagar"]') as HTMLElement;
+    const fecha = intereses.querySelector('[data-proximo-pago]') as HTMLElement;
+    expect(fecha.getAttribute('data-proximo-pago')).toBe('2027-04-05');
+    expect(fecha.textContent).toBe('Pagá antes del 05/04');
+    expect(intereses.querySelectorAll('dt')).toHaveLength(4);
   });
 });

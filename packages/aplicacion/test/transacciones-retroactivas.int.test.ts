@@ -53,6 +53,7 @@ describe('PRU-INT-TX', () => {
     const entrada = {
       id: VIEJA,
       tipo: 'efectivo',
+      subtipoEfectivo: 'corriente',
       nombre: 'Vieja',
       saldo: '100.00',
       fechaApertura: '2026-12-10',

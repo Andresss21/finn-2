@@ -38,6 +38,7 @@ describe('PRU-INT-CTA', () => {
   const efectivo = (n: number, extra: Record<string, unknown> = {}) => ({
     id: uuid(n),
     tipo: 'efectivo',
+    subtipoEfectivo: 'corriente', // [CH-229] obligatorio en efectivo
     nombre: `Cuenta ${n}`,
     saldo: '0',
     ...extra,
@@ -584,7 +585,7 @@ describe('PRU-INT-CTA', () => {
     return b.id;
   };
 
-  it('PRU-INT-CTA-320 CH-224 OP-01: OP-01 guarda cada subtipo de efectivo; sin subtipo queda corriente (CH-229) y la repetición es ya aplicada; el contrato rechaza la billetera con institución o últimos 4 y el subtipo fuera del efectivo', async () => {
+  it('PRU-INT-CTA-320 CH-224 OP-01: OP-01 guarda cada subtipo de efectivo y la repetición es ya aplicada; el contrato rechaza la billetera con institución o últimos 4 y el subtipo fuera del efectivo', async () => {
     for (const [n, s] of [
       [1320, 'corriente'],
       [1321, 'ahorro'],
@@ -596,7 +597,6 @@ describe('PRU-INT-CTA', () => {
       });
       expect(await subtipoDe(n)).toBe(s);
     }
-    // CH-229 (expandir): la interfaz de hoy no envía el subtipo; el contrato completa `corriente`
     expect(await ejecutar(OP01, efectivo(1323))).toMatchObject({ ok: true, yaAplicada: false });
     expect(await subtipoDe(1323)).toBe('corriente');
     expect(await ejecutar(OP01, efectivo(1323))).toMatchObject({ ok: true, yaAplicada: true });
@@ -619,6 +619,18 @@ describe('PRU-INT-CTA', () => {
         error: { categoria: 'VALIDACION', campos: { [campo]: texto } },
       });
     expect(await subtipoDe(1325)).toBeUndefined();
+  });
+
+  it('PRU-INT-CTA-322 [FT-50] OP-01 de efectivo sin subtipoEfectivo se rechaza con VALIDACION en ese campo y no escribe (CH-229, contraer)', async () => {
+    const sinSubtipo = { id: uuid(1326), tipo: 'efectivo', nombre: 'Cuenta 1326', saldo: '10.00' };
+    const antes = await revision();
+    for (const intento of [preparar, ejecutar])
+      expect(await intento(OP01, sinSubtipo)).toMatchObject({
+        ok: false,
+        error: { categoria: 'VALIDACION', campos: { subtipoEfectivo: texto } },
+      });
+    expect(await revision()).toBe(antes);
+    expect(await subtipoDe(1326)).toBeUndefined();
   });
 
   it('PRU-INT-CTA-320 CH-224 OP-02: OP-02 cambia el subtipo con lo esperado y conserva el actual si no llega; pasar a billetera exige quitar institución y últimos 4 en la misma edición', async () => {

@@ -20,6 +20,7 @@ import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
 import { claveDe, filaDe, indice, paginar, type TransaccionFila } from './actividad';
 import { nombres, periodoDto } from './comunes';
+import { proxima } from './cuentas';
 import { puntosBasicos } from './reportes/comunes';
 
 /** Lo que no está en los hechos del motor: tablas [H]. */
@@ -270,6 +271,7 @@ export function detalleCuenta(i: Instantanea, cuentaId: Uuid, o: DetalleCuentaOp
               cargosDelCiclo,
               yaPagado,
               paraNoGenerarIntereses,
+              proximoPago: proxima(tarjeta.diaPago, i.hoy), // [CH-234] el de cuentas() (§6.5)
             }))(desgloseAlPagar(h, tarjeta, i.hoy)),
           },
         }),
