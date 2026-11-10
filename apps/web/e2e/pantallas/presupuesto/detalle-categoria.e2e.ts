@@ -378,6 +378,38 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await expect(volver).toHaveAttribute('href', `/presupuesto?periodo=${P1}`);
   });
 
+  test('PRU-E2E-PRES-451 [CA-14.1] en 1440 × 900 la flecha «Volver a Presupuesto» va en la fila del título, es la única a la vista y conserva el ?periodo=', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await sembrarOps(
+      [
+        { op: 'OP-01', cuenta: 'Ahorro' },
+        { op: 'OP-07', categoria: 'Super' },
+        { op: 'OP-21', monto: 1000, hoy: '2027-02-10' },
+        { op: 'OP-14', categoria: 'Super', monto: 300, periodo: 'P1', hoy: '2027-02-10' },
+      ],
+      '2027-02-21',
+    );
+    await abrirDetalle(page, 'Super', `?periodo=${P1}`);
+    const volver = page
+      .getByRole('link', { name: 'Volver a Presupuesto' })
+      .filter({ visible: true });
+    await expect(volver).toHaveCount(1);
+    await expect(volver).toHaveAttribute('href', `/presupuesto?periodo=${P1}`);
+    await expect(
+      page.locator('main').getByRole('link', { name: 'Volver a Presupuesto' }),
+    ).toBeVisible();
+    // A5: sin una fila «Volver a…» aparte: la flecha y el título comparten la fila
+    const flecha = await volver.boundingBox();
+    const titulo = await page.getByRole('heading', { level: 1, name: 'Super' }).boundingBox();
+    const centro = (c: { y: number; height: number } | null): number =>
+      (c?.y ?? 0) + (c?.height ?? 0) / 2;
+    expect(Math.abs(centro(flecha) - centro(titulo))).toBeLessThanOrEqual(8);
+    expect(Math.min(flecha?.width ?? 0, flecha?.height ?? 0)).toBeGreaterThanOrEqual(44);
+    await expect(page.locator('main').getByText(/^Volver a/)).toHaveCount(0);
+  });
+
   test('PRU-E2E-PRES-115 [ESC-44, AV-14] una categoría archivada con $25.00 ofrece sacar el dinero y desarchivar, y al desarchivar vuelve a ofrecer asignar', async ({
     page,
   }) => {
