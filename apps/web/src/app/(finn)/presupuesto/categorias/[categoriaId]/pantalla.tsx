@@ -16,6 +16,7 @@ import {
 } from '../../../../../componentes/marco/publicar-acciones';
 import { PublicarEncabezado } from '../../../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
+import { VolverEnTitulo } from '../../../../../componentes/navegacion/volver-en-titulo';
 import { SelectorPeriodo } from '../../../../../componentes/navegacion/selector-periodo';
 import { formatearFecha, formatearMonto } from '../../../../../formato';
 import { categoriaDetalle as t } from '../../../../../textos/categoria-detalle';
@@ -58,11 +59,6 @@ export function PantallaDetalleCategoria({
   const { categoria, periodoActivo } = dto;
   const conPeriodo = (ruta: string): string =>
     dto.periodo.inicio === periodoActivo.inicio ? ruta : `${ruta}?periodo=${dto.periodo.inicio}`;
-  const volver = (
-    <EnlaceFinn href={conPeriodo('/presupuesto')} className={ENLACE}>
-      {t.volver}
-    </EnlaceFinn>
-  );
   const raiz = `/presupuesto/categorias/${categoria.id}`;
   if (dto.clase === 'pago') return <PantallaPagoTarjeta dto={dto} />;
 
@@ -150,8 +146,6 @@ export function PantallaDetalleCategoria({
       <PublicarEncabezado encabezado={dto} />
       <PublicarAcciones titulo={categoria.nombre} acciones={menu} />
       <div className="flex flex-col gap-3 @[996px]:col-span-2">
-        {/* A5: en teléfono «Volver» va en la barra (CH-109), con el mismo `?periodo=`; acá solo desde computadora */}
-        <div className="hidden md:block">{volver}</div>
         <SelectorPeriodo
           periodo={periodo}
           periodoActivo={periodoActivo}
@@ -168,7 +162,11 @@ export function PantallaDetalleCategoria({
       <div className="flex flex-col gap-6">
         <header className="flex flex-col gap-2">
           <p className="text-rotulo text-texto-secundario">{dto.grupo.nombre}</p>
-          <h1 className="text-titulo-pantalla">{categoria.nombre}</h1>
+          {/* A5: la flecha va en la fila del título (en teléfono, en la barra, CH-109), con el mismo `?periodo=` */}
+          <div className="-ml-2 flex items-center gap-1">
+            <VolverEnTitulo href={conPeriodo('/presupuesto')} etiqueta={t.volver} />
+            <h1 className="min-w-0 flex-1 text-titulo-pantalla">{categoria.nombre}</h1>
+          </div>
           {archivada ? <p className="text-etiqueta">{t.archivada}</p> : null}
           <div>
             <p className="text-cuerpo-pequeno">{t.numeros.disponible}</p>

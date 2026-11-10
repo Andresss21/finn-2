@@ -129,7 +129,11 @@ export function Movimientos({
     <section data-movimientos className="flex flex-col gap-3">
       <div className="flex min-h-11 items-center justify-between gap-3">
         <h2 className="text-titulo-seccion">
-          {dto.inversion === undefined ? t.titulo : cuentaDetalle.inversion.movimientos}
+          {dto.inversion !== undefined
+            ? cuentaDetalle.inversion.movimientos
+            : dto.tarjeta !== undefined
+              ? cuentaDetalle.tarjeta.movimientosDelCiclo
+              : t.titulo}
         </h2>
         <EnlaceFinn href={`/actividad?cuenta=${id}`} className={ENLACE_ACTIVIDAD}>
           {cuentaDetalle.acciones.verEnActividad}

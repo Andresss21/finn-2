@@ -6,7 +6,7 @@ import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta
 import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { PublicarAcciones } from '../../../../componentes/marco/publicar-acciones';
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
-import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
+import { VolverEnTitulo } from '../../../../componentes/navegacion/volver-en-titulo';
 import { SelectorPeriodo } from '../../../../componentes/navegacion/selector-periodo';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { cuentaDetalle as t } from '../../../../textos/cuenta-detalle';
@@ -15,9 +15,6 @@ import { Cabecera } from './cabecera';
 import { AvisoDiferencia, Conciliaciones } from './conciliaciones';
 import { Movimientos, type FiltrosDetalle } from './movimientos';
 import { BloquePrestamo, BloqueTarjeta, ProximaCuota } from './por-tipo';
-
-const ENLACE =
-  'inline-flex min-h-11 items-center rounded-control px-2 text-cuerpo-pequeno text-texto-secundario focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
 export function PantallaDetalleCuenta({
   dto,
@@ -42,14 +39,10 @@ export function PantallaDetalleCuenta({
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-5 py-4">
       <PublicarEncabezado encabezado={dto} />
       <PublicarAcciones titulo={cuenta.nombre} acciones={menuDe(dto)} />
-      <div className="flex flex-col gap-1">
-        {/* A5: en teléfono «Volver» va en la barra (CH-109); acá solo desde computadora */}
-        <div className="hidden md:block">
-          <EnlaceFinn href="/cuentas" className={ENLACE}>
-            {t.volver}
-          </EnlaceFinn>
-        </div>
-        <h1 className="text-titulo-pantalla">{cuenta.nombre}</h1>
+      {/* A5: la flecha va en la fila del título; en teléfono, en la barra (CH-109) */}
+      <div className="-ml-2 flex items-center gap-1">
+        <VolverEnTitulo href="/cuentas" etiqueta={t.volver} />
+        <h1 className="min-w-0 flex-1 text-titulo-pantalla">{cuenta.nombre}</h1>
       </div>
       <div className="flex flex-col gap-6 @[996px]:grid @[996px]:grid-cols-[1fr_1.6fr] @[996px]:items-start @[996px]:gap-x-9">
         <div className="flex flex-col gap-6">

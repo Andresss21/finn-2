@@ -581,13 +581,13 @@
 
   "TA-488": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 },
 
-  "TA-489": { "estado": "pendiente" },
+  "TA-489": { "estado": "terminada", "pr": 545 },
 
   "TA-490": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 },
 
   "TA-491": { "estado": "terminada", "rama": "ta-491-reservar-falta-2", "pr": 536 },
 
-  "TA-492": { "estado": "pendiente" },
+  "TA-492": { "estado": "terminada", "rama": "ta-492-fixes-visuales-3", "pr": 545 },
 
   "TA-493": { "estado": "pendiente" },
 
@@ -601,7 +601,7 @@
 
   "TA-498": { "estado": "terminada", "rama": "ta-497-fixes-visuales-3", "pr": 544 },
 
-  "TA-499": { "estado": "pendiente" },
+  "TA-499": { "estado": "terminada", "pr": 545 },
 
   "TA-507": { "estado": "terminada", "rama": "ta-507-revisar-movimiento-2", "pr": 537 },
 

@@ -4,6 +4,7 @@
 import type { ReactNode } from 'react';
 import type { Centavos } from '@finn/dominio/valores';
 import { formatearFecha } from '../../formato';
+import { bandeja } from '../../textos/bandeja';
 import { cuentas } from '../../textos/cuentas';
 import { Icono } from '../base/icono';
 import { Boton } from '../base/boton';
@@ -72,6 +73,9 @@ const FONDO: Readonly<Record<EstadoFinanciero, string>> = {
 const ENLACE: Readonly<Partial<Record<Vista, string>>> = {
   noReconocido: t.registrarAMano,
   faltaOtro: t.completarDatos,
+  // [CH-220 A10] Falta la categoría y con coincidencia también llevan su acción en la lista, no solo la flecha.
+  falta: bandeja.fila.elegirCategoria,
+  coincidencia: bandeja.fila.verLaProgramada,
 };
 const ACCIONES: Readonly<Partial<Record<Vista, readonly (readonly [AccionBandeja, string])[]>>> = {
   listo: [
@@ -94,14 +98,26 @@ interface Props {
   readonly alAccionar?: (accion: AccionBandeja, id: string) => void;
   /** FT-78: el lugar del asa de arrastre, reservado desde el principio; la librería la monta ahí cuando llega. */
   readonly ranuraAsa?: boolean;
+  /**
+   * [CH-220 A10] «Elegir categoría» de un toque (05 §4.14): abre el selector de categorías de la lista, que aprueba con la misma
+   * variante de OP-37 que soltar sobre ella (FT-78). Sin él, «Elegir categoría» lleva a Revisar.
+   */
+  readonly alElegirCategoria?: () => void;
 }
 
-export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar, ranuraAsa }: Props) {
+export function MovimientoBandeja({
+  movimiento: m,
+  hrefRevisar,
+  alAccionar,
+  ranuraAsa,
+  alElegirCategoria,
+}: Props) {
   const vista = vistaDe(m);
   const estado = ESTADO[vista];
   const comercio = m.comercio ?? t.sinComercio;
   const acciones = ACCIONES[vista] ?? [];
-  const conAcciones = acciones.length > 0 || vista === 'noReconocido' || vista === 'faltaOtro';
+  const elegir = vista === 'falta' ? alElegirCategoria : undefined;
+  const conAcciones = acciones.length > 0 || ENLACE[vista] !== undefined;
   const pista =
     m.categoriaSugerida === null
       ? null
@@ -163,6 +179,15 @@ export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar, ranu
       {conAcciones ? (
         <div className="mt-2 ml-13 flex flex-wrap items-center gap-2">
           {ranura}
+          {elegir === undefined ? null : (
+            <Boton
+              variante="pastilla"
+              aria-label={t.accionDe(bandeja.fila.elegirCategoria, comercio)}
+              onClick={elegir}
+            >
+              {bandeja.fila.elegirCategoria}
+            </Boton>
+          )}
           {acciones.map(([accion, texto], i) => (
             <Boton
               key={accion}
@@ -177,7 +202,7 @@ export function MovimientoBandeja({ movimiento: m, hrefRevisar, alAccionar, ranu
             href={hrefRevisar}
             className="inline-flex min-h-11 min-w-11 items-center px-2 text-enlace font-semibold underline"
           >
-            {ENLACE[vista] ?? t.revisar}
+            {elegir === undefined ? (ENLACE[vista] ?? t.revisar) : t.revisar}
           </EnlaceFinn>
         </div>
       ) : ranura === null ? null : (

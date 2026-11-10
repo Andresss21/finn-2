@@ -12,13 +12,11 @@ import { GraficoLineas } from '../../../../componentes/graficos/grafico-lineas';
 import { TablaEquivalente } from '../../../../componentes/graficos/tabla-equivalente';
 import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
-import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
+import { VolverEnTitulo } from '../../../../componentes/navegacion/volver-en-titulo';
 import { formatearMonto, formatearPeriodoCorto } from '../../../../formato';
 import { inicio } from '../../../../textos/inicio';
 import { listoParaAsignar as t } from '../../../../textos/listo-para-asignar';
 
-const ENLACE =
-  'inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const LISTA = 'flex flex-col divide-y divide-borde-sutil';
 const TARJETA = 'flex flex-col gap-3 rounded-contenedor bg-superficie p-4 shadow-elevacion-1';
 
@@ -150,13 +148,11 @@ export function PantallaListoParaAsignar({ dto }: { readonly dto: DetalleLpaDto 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4">
       <PublicarEncabezado encabezado={dto} />
-      {/* A5: en teléfono «Volver» va en la barra (CH-109); acá solo desde computadora */}
-      <div className="hidden md:block">
-        <EnlaceFinn href="/presupuesto" className={ENLACE}>
-          {t.volver}
-        </EnlaceFinn>
+      {/* A5: la flecha va en la fila del título; en teléfono, en la barra (CH-109) */}
+      <div className="-ml-2 flex items-center gap-1">
+        <VolverEnTitulo href="/presupuesto" etiqueta={t.volver} />
+        <h1 className="min-w-0 flex-1 text-titulo-pantalla">{t.titulo}</h1>
       </div>
-      <h1 className="text-titulo-pantalla">{t.titulo}</h1>
       <ResumenListoParaAsignar
         variante="billete"
         lpa={dto.lpa}

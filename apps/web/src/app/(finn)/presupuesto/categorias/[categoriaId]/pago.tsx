@@ -9,6 +9,7 @@ import { Monto } from '../../../../../componentes/dominio/monto';
 import { PublicarEncabezado } from '../../../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
 import { SelectorPeriodo } from '../../../../../componentes/navegacion/selector-periodo';
+import { VolverEnTitulo } from '../../../../../componentes/navegacion/volver-en-titulo';
 import { formatearFecha } from '../../../../../formato';
 import { categoriaDetalle } from '../../../../../textos/categoria-detalle';
 import { categoriaPago as t } from '../../../../../textos/categoria-pago';
@@ -17,9 +18,11 @@ type DetallePago = Extract<DetalleCategoriaDto, { readonly clase: 'pago' }>;
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline ${FOCO}`;
-const PRINCIPAL = `inline-flex min-h-12 items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion ${FOCO}`;
+const PRINCIPAL = `inline-flex min-h-13 w-full items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion ${FOCO}`;
 const TONAL = `inline-flex min-h-12 items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion ${FOCO}`;
 const CONTENEDOR = 'flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie';
+const CONTENEDOR_ELEVADO =
+  'flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie shadow-elevacion-1';
 
 function Seccion({
   titulo,
@@ -151,9 +154,6 @@ export function PantallaPagoTarjeta({ dto }: { readonly dto: DetallePago }) {
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4">
       <PublicarEncabezado encabezado={dto} />
       <div className="flex flex-col gap-3">
-        <EnlaceFinn href={conPeriodo('/presupuesto')} className={ENLACE}>
-          {categoriaDetalle.volver}
-        </EnlaceFinn>
         <SelectorPeriodo
           periodo={periodo}
           periodoActivo={periodoActivo}
@@ -172,24 +172,65 @@ export function PantallaPagoTarjeta({ dto }: { readonly dto: DetallePago }) {
 
       <header className="flex flex-col gap-2">
         <p className="text-rotulo text-texto-secundario">{t.titulo}</p>
-        <h1 className="text-titulo-pantalla">{categoria.nombre}</h1>
+        <div className="-ml-2 flex items-center gap-1">
+          <VolverEnTitulo href={conPeriodo('/presupuesto')} etiqueta={categoriaDetalle.volver} />
+          <h1 className="min-w-0 flex-1 text-titulo-pantalla">{categoria.nombre}</h1>
+        </div>
         <EnlaceFinn href={`/cuentas/${tarjeta.id}`} className={ENLACE}>
           {t.deLaTarjeta(tarjeta.nombre)}
         </EnlaceFinn>
-        {activo ? (
-          <div data-falta-reservar={tarjetaHoy.faltaReservar}>
-            <p className="text-cuerpo-pequeno">{t.principal.teFaltaReservar}</p>
+        {activo && faltaReservar ? (
+          // [CH-222 A8] Héroe: lo que falta reservar, en `--deuda-sin-respaldo-texto`.
+          <div data-falta-reservar={tarjetaHoy.faltaReservar} className="flex flex-col gap-1">
+            <p className="text-rotulo text-texto-secundario">{t.principal.teFaltaReservar}</p>
             <p>
               <Monto
                 centavos={tarjetaHoy.faltaReservar}
                 rol="cifra-principal"
-                {...(faltaReservar ? { estado: 'deuda-sin-respaldo' as const } : {})}
+                estado="deuda-sin-respaldo"
               />
             </p>
-            {faltaReservar ? null : (
-              <p className="text-cuerpo-pequeno text-texto-secundario">{t.principal.alDiaTexto}</p>
-            )}
           </div>
+        ) : activo ? (
+          // Con todo reservado, «Pago reservado» en positivo; lo que falta ($0.00) queda como línea secundaria.
+          <div className="flex flex-col gap-1">
+            <p className="text-rotulo text-texto-secundario">{t.principal.pagoReservado}</p>
+            <p data-pago-reservado>
+              <Monto
+                centavos={tarjetaHoy.reservado}
+                rol="cifra-principal"
+                {...(tarjetaHoy.reservado > 0 ? { estado: 'positivo' as const } : {})}
+              />
+            </p>
+            <p
+              data-falta-reservar={tarjetaHoy.faltaReservar}
+              className="text-cuerpo-pequeno text-texto-secundario"
+            >
+              {t.principal.teFaltaReservar} <Monto centavos={tarjetaHoy.faltaReservar} />.{' '}
+              {t.principal.alDiaTexto}
+            </p>
+          </div>
+        ) : null}
+        {activo ? (
+          <dl
+            data-rejilla-pago
+            className="grid grid-cols-3 gap-2.5 rounded-contenedor bg-superficie-hundida px-4 py-3.5"
+          >
+            {(
+              [
+                ['deuda', t.rejilla.deuda, tarjetaHoy.deuda],
+                ['reservado', t.rejilla.reservado, tarjetaHoy.reservado],
+                ['te-falta', t.rejilla.teFalta, tarjetaHoy.faltaReservar],
+              ] as const
+            ).map(([clave, rotulo, centavos]) => (
+              <div key={clave} data-rejilla={clave} className="flex min-w-0 flex-col gap-0.5">
+                <dt className="text-rotulo text-texto-secundario">{rotulo}</dt>
+                <dd className="font-bold">
+                  <Monto centavos={centavos} />
+                </dd>
+              </div>
+            ))}
+          </dl>
         ) : null}
       </header>
 
@@ -209,24 +250,87 @@ export function PantallaPagoTarjeta({ dto }: { readonly dto: DetallePago }) {
         <Excedentes dto={dto} />
       )}
 
-      <nav aria-label={t.acciones.etiqueta} className="grid grid-cols-2 gap-2">
-        {!cerrado ? (
-          <EnlaceFinn href={hrefAsignar} className={PRINCIPAL}>
-            {faltaReservar ? (
-              <>
-                {t.acciones.reservar} <Monto centavos={tarjetaHoy.faltaReservar} />
-              </>
-            ) : (
-              t.acciones.asignar
-            )}
+      {/* [CH-222] Con «te falta reservar» > 0 el principal es «Reservar $X» (Asignar con `reservar_falta`); con todo
+          reservado, «Pagar la tarjeta». El monto es el del DTO (PF-3). */}
+      <nav aria-label={t.acciones.etiqueta} className="flex flex-col gap-2">
+        {activo && faltaReservar ? (
+          <EnlaceFinn
+            href={hrefAsignar}
+            data-variante="reservar_falta"
+            data-accion-principal
+            className={PRINCIPAL}
+          >
+            {t.acciones.reservar}&nbsp;
+            <Monto centavos={tarjetaHoy.faltaReservar} />
+          </EnlaceFinn>
+        ) : activo ? (
+          <EnlaceFinn
+            href={`/cuentas/${tarjeta.id}/pagar`}
+            data-accion-principal
+            className={PRINCIPAL}
+          >
+            {t.acciones.pagarLaTarjeta}
           </EnlaceFinn>
         ) : null}
-        {activo ? (
-          <EnlaceFinn href={`/cuentas/${tarjeta.id}/pagar`} className={TONAL}>
-            {t.acciones.pagar}
-          </EnlaceFinn>
-        ) : null}
+        <div className="grid grid-cols-2 gap-2">
+          {cerrado ? null : (
+            <EnlaceFinn href={hrefAsignar} className={activo ? TONAL : PRINCIPAL}>
+              {t.acciones.asignar}
+            </EnlaceFinn>
+          )}
+          {activo && faltaReservar ? (
+            <EnlaceFinn href={`/cuentas/${tarjeta.id}/pagar`} className={TONAL}>
+              {t.acciones.pagar}
+            </EnlaceFinn>
+          ) : null}
+        </div>
       </nav>
+
+      {activo ? (
+        // [CH-222 A8] «Para no generar intereses»: el pago de contado y su fecha, con el desglose de `desgloseAlPagar`.
+        <Seccion titulo={t.alPagar.titulo} atributo="al-pagar">
+          <dl className={CONTENEDOR_ELEVADO}>
+            <div
+              data-numero="sin-intereses"
+              className="flex items-center justify-between gap-3 px-4 py-3"
+            >
+              <dt className="flex flex-col">
+                <span className="font-semibold">{t.alPagar.contado}</span>
+                <span
+                  data-proximo-pago={corte.proximoPago}
+                  className="text-cuerpo-pequeno text-texto-secundario"
+                >
+                  {t.alPagar.pagaAntesDel(
+                    corte.proximoPago.slice(8),
+                    corte.proximoPago.slice(5, 7),
+                  )}
+                </span>
+              </dt>
+              <dd className="font-bold">
+                <Monto centavos={corte.paraNoGenerarIntereses} />
+              </dd>
+            </div>
+            {(
+              [
+                ['deuda-anterior', t.alPagar.deudaAnterior, corte.deudaAnterior],
+                ['cargos-del-ciclo', t.alPagar.cargosDelCiclo, corte.cargosDelCiclo],
+                ['ya-pagado', t.alPagar.yaPagado, corte.yaPagado],
+              ] as const
+            ).map(([clave, rotulo, centavos]) => (
+              <div
+                key={clave}
+                data-numero={clave}
+                className="flex min-h-11 items-center justify-between gap-3 px-4 py-2"
+              >
+                <dt className="text-cuerpo-pequeno text-texto-secundario">{rotulo}</dt>
+                <dd className="font-semibold">
+                  <Monto centavos={centavos} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Seccion>
+      ) : null}
 
       <Seccion titulo={t.numeros.titulo} atributo="numeros-periodo">
         <Numeros
@@ -300,23 +404,6 @@ export function PantallaPagoTarjeta({ dto }: { readonly dto: DetallePago }) {
         filas={dto.devoluciones.map((d) => ({ ...d, nota: t.movimientos.caso[d.caso] }))}
         volver={conPeriodo(raiz)}
       />
-
-      {activo ? (
-        <Seccion titulo={t.alPagar.titulo} atributo="al-pagar">
-          <Numeros
-            atributo="al-pagar"
-            filas={[
-              ['deuda-anterior', t.alPagar.deudaAnterior, corte.deudaAnterior],
-              ['cargos-del-ciclo', t.alPagar.cargosDelCiclo, corte.cargosDelCiclo],
-              ['ya-pagado', t.alPagar.yaPagado, corte.yaPagado],
-              ['sin-intereses', t.alPagar.sinIntereses, corte.paraNoGenerarIntereses],
-            ]}
-          />
-          <p data-proximo-pago={corte.proximoPago} className="font-semibold">
-            {t.alPagar.pagaAntesDel(corte.proximoPago.slice(8), corte.proximoPago.slice(5, 7))}
-          </p>
-        </Seccion>
-      ) : null}
 
       {dto.historial.length === 0 ? null : (
         <Seccion titulo={t.historial.titulo} atributo="historial">

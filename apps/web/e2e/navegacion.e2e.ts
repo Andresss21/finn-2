@@ -3,8 +3,10 @@
 // `movil` y `escritorio`: la forma cambia (barra inferior y hoja «Más secciones» / barra lateral), el contenido no (N6).
 import { entrarAal2 } from './ayudas/sesion.ts';
 import { revisarAccesibilidad } from './ayudas/accesibilidad.ts';
-import { esperarHidratacion } from './ayudas/esperas.ts';
-import { expect, test } from './configuracion/semilla.ts';
+import { esperarContenido, esperarHidratacion } from './ayudas/esperas.ts';
+import { expect, sembrar, test } from './configuracion/semilla.ts';
+import { fijarRelojServidor } from '../../../tools/pruebas/e2e/reloj.ts';
+import type { Op } from '../../../packages/dominio/escenarios/tipos.ts';
 import { SECCIONES, seccionDeRuta } from '../src/componentes/navegacion/secciones.ts';
 import { navegacion } from '../src/textos/index.ts';
 
@@ -100,6 +102,54 @@ test.describe('PRU-E2E-PWA', () => {
       await page.goto(ORIGEN);
       await esperarHidratacion(page);
       await revisarAccesibilidad(page);
+    }
+  });
+
+  test('PRU-E2E-PWA-450 [FT-10] Asignar abierto desde Presupuesto se cierra con su salida: con «Cancelar» y con Escape la URL vuelve a /presupuesto sin recargar y el slot queda vacío', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    const hoy = '2027-02-05';
+    const ops: Op[] = [
+      { op: 'OP-01', cuenta: 'Ahorro' },
+      { op: 'OP-07', categoria: 'Super' },
+      { op: 'OP-21', monto: 1000 },
+    ];
+    await entrarAal2(context, baseURL ?? '');
+    fijarRelojServidor(`${hoy}T10:00:00-06:00`);
+    await sembrar(
+      {
+        id: 'SEM-PWA-CIERRE',
+        titulo: 'Semilla del cierre animado',
+        refs: [],
+        hoy,
+        estadoInicial: ops,
+        pasos: [],
+      },
+      hoy,
+    );
+    await page.goto('/presupuesto');
+    await esperarContenido(page);
+    // Una marca en la ventana: si la página se recargara, desaparecería.
+    await page.evaluate(() => {
+      (window as unknown as { __sinRecargar?: boolean }).__sinRecargar = true;
+    });
+    const asignar = page.getByRole('link', { name: 'Asignar a Super' });
+    for (const cerrar of ['boton', 'escape'] as const) {
+      await asignar.click();
+      const hoja = page.getByRole('dialog');
+      await expect(hoja).toBeVisible();
+      await expect(page).toHaveURL(/\/presupuesto\/asignar\//);
+      await esperarHidratacion(page);
+      if (cerrar === 'boton')
+        await hoja.getByRole('button', { name: 'Cancelar', exact: true }).click();
+      else await page.keyboard.press('Escape');
+      await expect(hoja).toHaveCount(0);
+      await expect(page).toHaveURL(/\/presupuesto$/);
+      expect(
+        await page.evaluate(() => (window as unknown as { __sinRecargar?: boolean }).__sinRecargar),
+      ).toBe(true);
     }
   });
 });

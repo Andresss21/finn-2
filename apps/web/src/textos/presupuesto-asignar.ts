@@ -31,6 +31,7 @@ export const presupuestoAsignar = {
     faltaMeta: 'Lo que falta para la meta',
     periodoPasado: 'Lo mismo que el período pasado',
     cubrirSobregiro: 'Cubrir el sobregiro',
+    reservarFalta: 'Reservar lo que falta',
     promedio: (periodos: number) =>
       periodos >= 3
         ? 'Tu promedio de gasto'

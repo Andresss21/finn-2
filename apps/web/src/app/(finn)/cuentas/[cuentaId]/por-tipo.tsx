@@ -16,6 +16,8 @@ const TARJETA_TABLA =
   'flex flex-col gap-3.5 rounded-contenedor bg-superficie p-4 shadow-elevacion-1 overflow-x-auto';
 const PAGAR =
   'inline-flex min-h-12 flex-none items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+const RESERVAR =
+  'inline-flex min-h-11 items-center justify-center rounded-pastilla bg-accion px-4 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE =
   'inline-flex min-h-11 items-center font-bold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
@@ -45,12 +47,30 @@ export function BloqueTarjeta({
   return (
     <div data-bloque="tarjeta" className="flex flex-col gap-4">
       <section aria-label={t.titulo} className={TARJETA}>
-        {tarjeta.faltaReservar > 0 ? (
-          <p className="flex flex-wrap items-center gap-2">
-            <IndicadorEstado estado="deuda-sin-respaldo" etiqueta={t.faltaReservar} />
-            <Monto centavos={tarjeta.faltaReservar} estado="deuda-sin-respaldo" rol="cifra" />
-          </p>
-        ) : null}
+        {/* [CH-222 A17, D11] La cabecera del contenedor: el estado a la izquierda y «Reservar $X» a la derecha, que abre Asignar
+            en la categoría de pago (`categoriaPago`) con la variante `reservar_falta`; el monto es el del DTO (PF-3). */}
+        <div data-cabecera-tarjeta className="flex flex-wrap items-center justify-between gap-2.5">
+          {tarjeta.faltaReservar > 0 ? (
+            <p className="flex flex-wrap items-center gap-2">
+              <IndicadorEstado estado="deuda-sin-respaldo" etiqueta={t.faltaReservar} />
+              <Monto centavos={tarjeta.faltaReservar} estado="deuda-sin-respaldo" rol="cifra" />
+            </p>
+          ) : tarjeta.deuda > 0 ? (
+            <IndicadorEstado estado="positivo" etiqueta={t.pagoReservado} />
+          ) : (
+            <p className="font-semibold">{t.sinDeuda}</p>
+          )}
+          {tarjeta.faltaReservar > 0 ? (
+            <EnlaceFinn
+              href={`/presupuesto/asignar/${tarjeta.categoriaPago.id}`}
+              data-variante="reservar_falta"
+              className={RESERVAR}
+            >
+              {t.reservar}&nbsp;
+              <Monto centavos={tarjeta.faltaReservar} />
+            </EnlaceFinn>
+          ) : null}
+        </div>
         {tarjeta.reservaExcedente > 0 ? (
           <IndicadorEstado estado="informacion" etiqueta={t.reservaExcedente} />
         ) : null}

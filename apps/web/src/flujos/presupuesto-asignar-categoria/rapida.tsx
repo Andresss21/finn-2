@@ -6,7 +6,11 @@ import { Monto } from '../../componentes/dominio/monto';
 import { presupuestoAsignar as t } from '../../textos/presupuesto-asignar';
 
 export type VarianteRapida =
-  'falta_meta' | 'igual_periodo_anterior' | 'promedio_gasto' | 'cubrir_sobregiro';
+  | 'falta_meta'
+  | 'igual_periodo_anterior'
+  | 'promedio_gasto'
+  | 'cubrir_sobregiro'
+  | 'reservar_falta';
 
 /** El `rapida` del contexto de `formulario({ operacion: 'asignar' })`: una variante que no se ofrece no viene. */
 export interface DatosRapida {
@@ -14,6 +18,8 @@ export interface DatosRapida {
   readonly igualPeriodoAnterior: Centavos;
   readonly promedioGasto?: { readonly monto: Centavos; readonly periodos: 1 | 2 | 3 };
   readonly cubrirSobregiro?: Centavos;
+  /** [CH-222] Solo en la categoría de pago, en el activo y con «te falta reservar» > 0. */
+  readonly reservarFalta?: Centavos;
 }
 
 export interface PropsOpcionesRapidas {
@@ -37,6 +43,13 @@ export function OpcionesRapidas({
   alElegir,
 }: PropsOpcionesRapidas) {
   const opciones: Opcion[] = [];
+  // [CH-222] En la categoría de pago, «Reservar lo que falta» va primero: es la acción que abre «Reservar $X».
+  if (rapida.reservarFalta !== undefined)
+    opciones.push({
+      variante: 'reservar_falta',
+      texto: t.rapida.reservarFalta,
+      monto: rapida.reservarFalta,
+    });
   if (rapida.faltaMeta !== undefined && faltaDeLaMeta !== undefined && faltaDeLaMeta > 0)
     opciones.push({ variante: 'falta_meta', texto: t.rapida.faltaMeta, monto: rapida.faltaMeta });
   opciones.push({

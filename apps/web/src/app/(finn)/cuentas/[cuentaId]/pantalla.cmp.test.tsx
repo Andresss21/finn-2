@@ -126,6 +126,7 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
           archivada: false,
         },
         tarjeta: {
+          categoriaPago: { id: 'pago-visa', nombre: 'Visa' },
           deuda: 7700,
           saldoAFavor: 0,
           reservado: 7000,
@@ -148,7 +149,19 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
     const montos = [...(b?.querySelectorAll('[data-centavos]') ?? [])].map((m) =>
       m.getAttribute('data-centavos'),
     );
-    expect(montos).toEqual(['700', '7000', '7700', '0', '250000', '5000', '2700', '0', '7700']);
+    // [CH-222] «Reservar $7.00» repite lo que falta en la cabecera del contenedor
+    expect(montos).toEqual([
+      '700',
+      '700',
+      '7000',
+      '7700',
+      '0',
+      '250000',
+      '5000',
+      '2700',
+      '0',
+      '7700',
+    ]);
     expect(b?.textContent).toContain('16/02/2027 al 15/03/2027');
     expect(b?.textContent).toContain('3.08%');
   });
@@ -589,6 +602,7 @@ describe('PRU-CMP-CTA-260 detalle de cuenta portado del export (CH-142)', () => 
         cuenta: cuentaDe('tarjeta', { nombre: 'Visa Oro', ultimos4: '4821' }),
         saldo: -64218,
         tarjeta: {
+          categoriaPago: { id: 'pago-visa-oro', nombre: 'Visa Oro' },
           deuda: 64218,
           saldoAFavor: 0,
           reservado: 62343,
@@ -744,5 +758,59 @@ describe('PRU-CMP-CTA tabla de amortización', () => {
       await userEvent.click(ver);
     });
     expect(filas()).toHaveLength(12);
+  });
+});
+
+describe('PRU-CMP-CTA «Reservar $X» en el detalle de la tarjeta', () => {
+  const tarjeta = (faltaReservar: number, deuda = 64218) => ({
+    categoriaPago: { id: 'pago-visa-oro', nombre: 'Visa Oro' },
+    deuda,
+    saldoAFavor: 0,
+    reservado: deuda - faltaReservar,
+    faltaReservar,
+    reservaExcedente: 0,
+    limite: 250000,
+    usoLimite: 2569,
+    cicloFacturacion: { desde: '2027-02-16', hasta: '2027-03-15' },
+    desgloseAlPagar: {
+      deudaAnterior: 51240,
+      cargosDelCiclo: 42978,
+      yaPagado: 30000,
+      paraNoGenerarIntereses: 21240,
+    },
+  });
+
+  it('PRU-CMP-CTA-450 [FT-52] «Reservar $18.75» va en la cabecera del contenedor a la categoría de pago, «Para no generar intereses» trae sus cuatro filas y la lista se llama «Movimientos del ciclo»', () => {
+    const raiz = mostrar(
+      dto({
+        cuenta: cuentaDe('tarjeta', { nombre: 'Visa Oro', ultimos4: '4821' }),
+        saldo: -64218,
+        tarjeta: tarjeta(1875),
+        movimientos: [fila('a', -64218)],
+      }),
+    );
+    const cabecera = raiz.querySelector('[data-cabecera-tarjeta]') as HTMLElement;
+    const reservar = cabecera.querySelector('a') as HTMLAnchorElement;
+    expect(reservar.getAttribute('href')).toBe('/presupuesto/asignar/pago-visa-oro');
+    expect(reservar.getAttribute('data-variante')).toBe('reservar_falta');
+    expect(reservar.querySelector('[data-centavos]')?.getAttribute('data-centavos')).toBe('1875');
+    expect(reservar.textContent).toContain('Reservar');
+    expect(reservar.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    const intereses = raiz.querySelector('[aria-labelledby="al-pagar"]') as HTMLElement;
+    expect(intereses.querySelector('h2')?.textContent).toBe('Para no generar intereses');
+    expect([...intereses.querySelectorAll('dt')].map((x) => x.textContent)).toEqual([
+      'Deuda al corte anterior',
+      'Cargos del ciclo actual',
+      'Ya pagado en el ciclo',
+      'Para no generar intereses',
+    ]);
+    expect(raiz.querySelector('[data-movimientos] h2')?.textContent).toBe('Movimientos del ciclo');
+    // Con todo reservado no hay «Reservar» y la cabecera dice «Pago reservado»
+    const alDia = mostrar(
+      dto({ cuenta: cuentaDe('tarjeta', { nombre: 'Visa Oro' }), tarjeta: tarjeta(0) }),
+    );
+    const cab = alDia.querySelector('[data-cabecera-tarjeta]') as HTMLElement;
+    expect(cab.querySelector('a')).toBeNull();
+    expect(cab.textContent).toContain('Pago reservado');
   });
 });

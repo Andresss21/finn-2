@@ -6,6 +6,8 @@ export const bandeja = {
   titulo: 'Bandeja',
   porRevisar: (n: number) => `${n} por revisar`,
   lista: 'Movimientos por revisar',
+  // [CH-220 A10] Las acciones de la fila que no estaban en `cuentas.bandeja`.
+  fila: { elegirCategoria: 'Elegir categoría', verLaProgramada: 'Ver la programada' },
   desglose: {
     pendientes: (n: number) => plural(n, 'pendiente', 'pendientes'),
     conCoincidencia: (n: number) => plural(n, 'con coincidencia', 'con coincidencia'),
