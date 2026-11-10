@@ -5,7 +5,9 @@ import {
   CONTRATO,
   aEntradaDeAccion,
   avisoDeNombreRepetido,
+  conBanco,
   entradaDeOp01,
+  nombrePropuesto,
   valoresIniciales,
   type Campos,
   type TipoCuenta,
@@ -23,6 +25,7 @@ describe('PRU-DOM-CTA', () => {
     expect(ahorro).toEqual({
       tipo: 'efectivo',
       nombre: 'Ahorro',
+      subtipoEfectivo: 'corriente', // [CH-229] la interfaz lo envía siempre en efectivo
       fechaApertura: '2027-02-05',
       saldo: '1000.5',
     });
@@ -143,6 +146,36 @@ describe('PRU-DOM-CTA', () => {
     });
     expect(aEntradaDeAccion({ ...campos, modo: 'confirmar', id: ID })).not.toHaveProperty(
       'revisionVista',
+    );
+  });
+
+  it('PRU-DOM-CTA-400 [CA-50.1] el subtipo propone el nombre sin pisar lo escrito, y una billetera no envía institución ni últimos 4', () => {
+    expect(con('efectivo', {}).nombre).toBe('Cuenta corriente');
+    expect(con('efectivo', {}).ultimos4).toBe('');
+    expect(con('efectivo', {}).institucionId).toBe('ninguna');
+    expect(con('tarjeta', {}).nombre).toBe('');
+    expect(nombrePropuesto('Cuenta corriente', 'efectivo', 'ahorro')).toBe('Cuenta de ahorro');
+    expect(nombrePropuesto('', 'efectivo', 'billetera')).toBe('Billetera');
+    expect(nombrePropuesto('Mi caja', 'efectivo', 'ahorro')).toBeUndefined();
+    expect(nombrePropuesto('Billetera', 'tarjeta', 'billetera')).toBe('');
+    expect(nombrePropuesto('Billetera', 'efectivo', 'billetera')).toBeUndefined();
+
+    const billetera = con('efectivo', {
+      subtipoEfectivo: 'billetera',
+      nombre: 'Billetera',
+      saldo: '40',
+      institucionId: ID,
+      ultimos4: '3310',
+    });
+    expect(conBanco(billetera)).toBe(false);
+    const entrada = entradaDeOp01(billetera);
+    expect(entrada).toMatchObject({ subtipoEfectivo: 'billetera' });
+    expect(entrada).not.toHaveProperty('institucionId');
+    expect(entrada).not.toHaveProperty('ultimos4');
+    expect(op01.safeParse({ ...entrada, id: ID }).success).toBe(true);
+    // Fuera de efectivo no va el subtipo: OP-01 lo rechazaría.
+    expect(entradaDeOp01(con('inversion', { nombre: 'Fondo', saldo: '1' }))).not.toHaveProperty(
+      'subtipoEfectivo',
     );
   });
 });

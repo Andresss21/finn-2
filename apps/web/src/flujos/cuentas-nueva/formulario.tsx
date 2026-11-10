@@ -9,6 +9,7 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
+import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
@@ -22,8 +23,11 @@ import { formularios } from '../../textos/formularios';
 import {
   CAMPOS_DE_TIPO,
   CONTRATO,
+  SUBTIPOS,
   aEntradaDeAccion,
   avisoDeNombreRepetido,
+  conBanco,
+  nombrePropuesto,
   valoresIniciales,
   visible,
   type Campos,
@@ -98,6 +102,13 @@ export function FormularioCuentaNueva({
   });
   const poner = (n: keyof Campos) => (valor: string) => {
     setValue(n, valor as never, { shouldDirty: true, shouldValidate: formState.isSubmitted });
+  };
+  /** [CH-224] Cambiar el tipo o el subtipo propone el nombre, salvo que la persona ya haya escrito uno (D1). */
+  const ponerYProponer = (n: 'tipo' | 'subtipoEfectivo') => (valor: string) => {
+    poner(n)(valor);
+    const siguiente = { ...c, [n]: valor };
+    const nombre = nombrePropuesto(c.nombre, siguiente.tipo, siguiente.subtipoEfectivo);
+    if (nombre !== undefined) poner('nombre')(nombre);
   };
   const error = (n: keyof Campos): string | undefined => formState.errors[n]?.message;
   const conError = (n: keyof Campos): { error?: string } => {
@@ -219,8 +230,22 @@ export function FormularioCuentaNueva({
             etiqueta={t.tipo}
             opciones={opciones(t.tipos)}
             valor={c.tipo}
-            alCambiar={poner('tipo')}
+            alCambiar={ponerYProponer('tipo')}
           />
+          {c.tipo === 'efectivo' ? (
+            <div className="flex flex-col gap-2">
+              <SelectorSegmentado
+                etiqueta={t.subtipo}
+                opciones={SUBTIPOS.map((valor) => ({ valor, etiqueta: t.subtipos[valor] }))}
+                valor={c.subtipoEfectivo}
+                alCambiar={ponerYProponer('subtipoEfectivo')}
+                llena
+              />
+              <p className="text-cuerpo-pequeno text-texto-secundario">
+                {t.ayudasSubtipo[c.subtipoEfectivo as (typeof SUBTIPOS)[number]]}
+              </p>
+            </div>
+          ) : null}
           <EntradaTexto
             etiqueta={t.nombre}
             requerido
@@ -233,23 +258,28 @@ export function FormularioCuentaNueva({
               {avisoDeNombre}
             </AvisoEnLinea>
           )}
-          <Seleccion
-            etiqueta={t.institucion}
-            opciones={[
-              { valor: 'ninguna', etiqueta: t.sinInstitucion },
-              ...instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre })),
-            ]}
-            valor={c.institucionId}
-            alCambiar={poner('institucionId')}
-          />
-          <EntradaTexto
-            etiqueta={t.ultimos4}
-            inputMode="numeric"
-            maxLength={4}
-            autoComplete="off"
-            {...conError('ultimos4')}
-            {...formulario.register('ultimos4')}
-          />
+          {conBanco(c) ? (
+            <>
+              <Seleccion
+                etiqueta={t.institucion}
+                opciones={[
+                  { valor: 'ninguna', etiqueta: t.sinInstitucion },
+                  ...instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre })),
+                ]}
+                valor={c.institucionId}
+                alCambiar={poner('institucionId')}
+              />
+              <EntradaTexto
+                etiqueta={t.ultimos4}
+                inputMode="numeric"
+                maxLength={4}
+                autoComplete="off"
+                placeholder={t.opcional}
+                {...conError('ultimos4')}
+                {...formulario.register('ultimos4')}
+              />
+            </>
+          ) : null}
           <EntradaFecha
             nombre="fechaApertura"
             etiqueta={t.apertura}

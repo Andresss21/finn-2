@@ -11,6 +11,20 @@ export const cuentasNueva = {
     inversion: 'Inversión',
   },
   nombre: 'Nombre',
+  // [CH-224] D1: subtipo de la cuenta de efectivo, su ayuda y el nombre que se propone
+  subtipo: 'Tipo de cuenta de efectivo',
+  subtipos: { corriente: 'Corriente', ahorro: 'Ahorro', billetera: 'Billetera' },
+  ayudasSubtipo: {
+    corriente: 'La que usás para el día a día y para pagar tus tarjetas.',
+    ahorro: 'Dinero guardado en el banco; se ve con el motivo de anillos.',
+    billetera: 'Efectivo en mano, sin banco ni últimos 4.',
+  },
+  nombresPorSubtipo: {
+    corriente: 'Cuenta corriente',
+    ahorro: 'Cuenta de ahorro',
+    billetera: 'Billetera',
+  },
+  opcional: 'Opcional',
   institucion: 'Institución',
   sinInstitucion: 'Sin institución',
   ultimos4: 'Últimos 4 dígitos',

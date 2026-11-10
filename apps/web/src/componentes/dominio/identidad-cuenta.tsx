@@ -1,6 +1,7 @@
 // Identidad por tipo de cuenta (05 §10.8.1; 06-identidad-visual 2.10; export K5). Fondo y motivo son decorativos: la
-// información va en texto. Una identidad para toda cuenta de efectivo (06-features, ajuste del diseño: 03 no distingue
-// subtipos); préstamo con talón; inversión; archivada. Sin rótulos: nombre, banco · últimos dígitos y el saldo.
+// información va en texto. [CH-224] En efectivo, la identidad sale del subtipo del DTO, nunca del nombre: corriente con
+// libreta, ahorro con anillos y billetera con `wallet` sin motivo; préstamo con talón; inversión; archivada. Sin rótulos:
+// nombre, banco · últimos dígitos y el saldo.
 import type { Centavos } from '@finn/dominio/valores';
 import type { CSSProperties, ReactNode } from 'react';
 import { formatearFecha } from '../../formato';
@@ -18,7 +19,9 @@ interface Base {
   readonly institucion?: string;
   readonly ultimos4?: string;
 }
+export type SubtipoEfectivo = 'corriente' | 'ahorro' | 'billetera';
 export interface FilaEfectivo extends Base {
+  readonly subtipoEfectivo?: SubtipoEfectivo;
   readonly saldo: Centavos;
   readonly saldoConfirmado: Centavos;
   readonly ultimaConciliacion?: { readonly diferenciaActual: Centavos };
@@ -63,6 +66,46 @@ const LIBRETA: CSSProperties = {
     'repeating-linear-gradient(180deg, transparent 0 13px, var(--cuenta-motivo) 13px 14px)',
   maskImage: 'linear-gradient(to left, #000 30%, transparent)',
 };
+// Motivo de la cuenta de ahorro: anillos concéntricos cada 11 px en un círculo de 150 px que sale por la esquina.
+const ANILLOS: CSSProperties = {
+  backgroundImage:
+    'repeating-radial-gradient(circle, transparent 0 9px, var(--cuenta-motivo) 9px 11px)',
+};
+
+/** [CH-224] Fondo, ícono y motivo de una cuenta de efectivo según su subtipo (06-identidad-visual 2.10). */
+export function identidadEfectivo(subtipo: SubtipoEfectivo = 'corriente'): {
+  readonly fondo: string;
+  readonly icono: NombreIcono;
+  readonly motivo: ReactNode;
+} {
+  if (subtipo === 'ahorro')
+    return {
+      fondo: 'bg-cuenta-ahorro',
+      icono: 'coins',
+      motivo: (
+        <span
+          aria-hidden="true"
+          data-motivo="anillos"
+          style={ANILLOS}
+          className="absolute -top-10 -right-10 size-[150px] rounded-full"
+        />
+      ),
+    };
+  if (subtipo === 'billetera') return { fondo: 'bg-cuenta-banco', icono: 'wallet', motivo: null };
+  return {
+    fondo: 'bg-cuenta-banco',
+    icono: 'bank',
+    motivo: (
+      <span
+        aria-hidden="true"
+        data-motivo="libreta"
+        style={LIBRETA}
+        className="absolute inset-y-0 right-0 w-[70%]"
+      />
+    ),
+  };
+}
+
 const BARRAS = [
   [0, 46, 14],
   [22, 36, 24],
@@ -72,9 +115,9 @@ const BARRAS = [
   [110, 0, 60],
 ] as const;
 
-const Disco = ({ tipo }: { tipo: PropsIdentidadCuenta['tipo'] }) => (
+const Disco = ({ tipo, icono }: { tipo: PropsIdentidadCuenta['tipo']; icono?: NombreIcono }) => (
   <span className="relative flex size-9.5 flex-none items-center justify-center rounded-xl bg-cuenta-disco">
-    <Icono nombre={ICONO[tipo]} tamano={20} />
+    <Icono nombre={icono ?? ICONO[tipo]} tamano={20} />
   </span>
 );
 
@@ -105,13 +148,15 @@ export function IdentidadCuenta(props: PropsIdentidadCuenta) {
   if (props.tipo === 'efectivo') {
     const f = props.fila;
     const dif = f.ultimaConciliacion?.diferenciaActual ?? 0;
+    const id = identidadEfectivo(f.subtipoEfectivo);
     return (
       <article
         data-identidad={tipo}
-        className={[BASE, FONDO[tipo], 'flex min-h-42 flex-col gap-3 p-4'].join(' ')}
+        data-subtipo={f.subtipoEfectivo ?? 'corriente'}
+        className={[BASE, id.fondo, 'flex min-h-42 flex-col gap-3 p-4'].join(' ')}
       >
-        <span aria-hidden="true" style={LIBRETA} className="absolute inset-y-0 right-0 w-[70%]" />
-        <Disco tipo={tipo} />
+        {id.motivo}
+        <Disco tipo={tipo} icono={id.icono} />
         <Datos
           clase="mt-auto"
           nombre={f.cuenta.nombre}

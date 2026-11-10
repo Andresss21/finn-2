@@ -12,6 +12,7 @@ export type TipoCuenta = (typeof TIPOS)[number];
 
 const CLAVES = [
   'nombre',
+  'subtipoEfectivo',
   'institucionId',
   'ultimos4',
   'fechaApertura',
@@ -85,6 +86,29 @@ export const CAMPOS_DE_TIPO: Readonly<Record<TipoCuenta, readonly Descriptor[]>>
   inversion: [d('rendimientoAnualEsperado', t.rendimiento, 'porcentaje', false)],
 };
 
+/** [CH-224] Los subtipos de una cuenta de efectivo, en el orden del segmentado (D1). */
+export const SUBTIPOS = ['corriente', 'ahorro', 'billetera'] as const;
+export type SubtipoEfectivo = (typeof SUBTIPOS)[number];
+
+/** [CH-224] Una billetera no lleva institución ni últimos 4 (03 §3.4): el formulario no los muestra ni los envía. */
+export const conBanco = (c: Pick<Campos, 'tipo' | 'subtipoEfectivo'>): boolean =>
+  c.tipo !== 'efectivo' || c.subtipoEfectivo !== 'billetera';
+
+/**
+ * El nombre que se propone (D1): en efectivo, el del subtipo; en los otros tipos, ninguno. Solo reemplaza un nombre vacío o
+ * uno que también era una propuesta: lo que la persona escribió no se toca.
+ */
+export function nombrePropuesto(
+  actual: string,
+  tipo: TipoCuenta,
+  subtipo: string,
+): string | undefined {
+  const nombres: Readonly<Record<string, string>> = t.nombresPorSubtipo;
+  if (actual.trim() !== '' && !Object.values(nombres).includes(actual.trim())) return undefined;
+  const nuevo = tipo === 'efectivo' ? (nombres[subtipo] ?? '') : '';
+  return nuevo === actual ? undefined : nuevo;
+}
+
 export const visible = (x: Descriptor, c: Readonly<Record<Clave, string>>): boolean =>
   x.cuando === undefined || c[x.cuando[0]] === x.cuando[1];
 
@@ -118,8 +142,10 @@ export function entradaDeOp01(c: Campos): Record<string, unknown> {
     fechaApertura: c.fechaApertura,
     saldo: aplicarSigno(monto(c.saldo), c.tipo === 'tarjeta' ? c.signo : 'positivo'),
   };
-  if (c.institucionId !== 'ninguna') salida['institucionId'] = c.institucionId;
-  if (c.ultimos4.trim() !== '') salida['ultimos4'] = c.ultimos4.trim();
+  // [CH-224] [CH-229] en efectivo el subtipo va siempre; una billetera no envía institución ni últimos 4
+  if (c.tipo === 'efectivo') salida['subtipoEfectivo'] = c.subtipoEfectivo;
+  if (conBanco(c) && c.institucionId !== 'ninguna') salida['institucionId'] = c.institucionId;
+  if (conBanco(c) && c.ultimos4.trim() !== '') salida['ultimos4'] = c.ultimos4.trim();
   for (const x of CAMPOS_DE_TIPO[c.tipo]) {
     const v = c[x.n].trim();
     if (v === '' || v === SIN_ELEGIR || !visible(x, c)) continue;
@@ -156,6 +182,8 @@ export const valoresIniciales = (hoy: string, tipo: TipoCuenta): Campos => ({
   ...(Object.fromEntries(CLAVES.map((k) => [k, ''])) as Record<Clave, string>),
   tipo,
   signo: 'positivo',
+  subtipoEfectivo: 'corriente',
+  nombre: tipo === 'efectivo' ? t.nombresPorSubtipo.corriente : '',
   institucionId: 'ninguna',
   fechaApertura: hoy,
   red: 'otra',

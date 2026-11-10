@@ -135,4 +135,41 @@ test.describe('PRU-E2E-CTA', () => {
     await crear(page).click();
     await alTerminar(page);
   });
+
+  test('PRU-E2E-CTA-400 [CA-50.1] creo una billetera y una cuenta de ahorro; Cuentas y su detalle las dibujan con la identidad de su subtipo', async ({
+    page,
+  }) => {
+    await preparar('2027-02-05');
+    await abrir(page);
+    await expect(campo(page, t.nombre)).toHaveValue(t.nombresPorSubtipo.corriente);
+    await page.getByRole('radio', { name: t.subtipos.billetera }).click();
+    await expect(campo(page, t.nombre)).toHaveValue(t.nombresPorSubtipo.billetera);
+    await expect(page.getByText(t.ayudasSubtipo.billetera)).toBeVisible();
+    await expect(campo(page, t.ultimos4)).toHaveCount(0);
+    await campo(page, t.saldo.efectivo).fill('40');
+    await crear(page).click();
+    await alTerminar(page);
+
+    await abrir(page);
+    await page.getByRole('radio', { name: t.subtipos.ahorro }).click();
+    await expect(campo(page, t.nombre)).toHaveValue(t.nombresPorSubtipo.ahorro);
+    await expect(campo(page, t.ultimos4)).toHaveValue('');
+    await campo(page, t.saldo.efectivo).fill('500');
+    await crear(page).click();
+    await alTerminar(page);
+
+    const tarjeta = (nombre: string) =>
+      page.locator('[data-identidad="efectivo"]').filter({ hasText: nombre });
+    await expect(tarjeta(t.nombresPorSubtipo.billetera)).toHaveAttribute(
+      'data-subtipo',
+      'billetera',
+    );
+    await expect(tarjeta(t.nombresPorSubtipo.ahorro)).toHaveAttribute('data-subtipo', 'ahorro');
+    await tarjeta(t.nombresPorSubtipo.ahorro).click();
+    await expect(page).toHaveURL(/\/cuentas\/[^/]+$/);
+    await expect(page.locator('header[data-identidad="efectivo"]')).toHaveAttribute(
+      'data-subtipo',
+      'ahorro',
+    );
+  });
 });

@@ -9,6 +9,7 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
+import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
@@ -17,12 +18,14 @@ import { useBorrador } from '../../formularios/use-borrador';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { cuentasGestion } from '../../textos/cuentas-gestion';
+import { cuentasNueva } from '../../textos/cuentas-nueva';
 import { formularios } from '../../textos/formularios';
 
 const t = cuentasGestion.editar;
 const n = cuentasGestion.comunes;
 const SIN_INSTITUCION = 'ninguna';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
+const SUBTIPOS = ['corriente', 'ahorro', 'billetera'] as const;
 
 export interface PropsFormularioCuentasEditar {
   /** `editarCuenta` (OP-02): la pone el lector, así el formulario se prueba sin servidor. */
@@ -36,6 +39,7 @@ export interface PropsFormularioCuentasEditar {
 
 const CONTRATO = z.object({
   nombre: z.string().refine((v) => v.trim() !== '', { error: n.obligatorio }),
+  subtipoEfectivo: z.string(), // [CH-224] vacío fuera de efectivo
   institucionId: z.string(),
   ultimos4: z.string(), // los cuatro dígitos los valida el servidor y vuelve en su campo (4.7)
   fechaApertura: z.string(),
@@ -55,6 +59,7 @@ interface Vista {
 /** Lo que vio la persona, como los campos del formulario. */
 const camposDe = (e: Record<string, string | null>): Campos => ({
   nombre: e['nombre'] ?? '',
+  subtipoEfectivo: e['subtipoEfectivo'] ?? '',
   institucionId: e['institucionId'] ?? SIN_INSTITUCION,
   ultimos4: e['ultimos4'] ?? '',
   fechaApertura: e['fechaApertura'] ?? '',
@@ -81,13 +86,21 @@ function Cuerpo({
       const cambia = (k: keyof Campos, valor: string) => (visto[k] ?? '') !== valor;
       const nombre = c.nombre.trim();
       const ultimos4 = c.ultimos4.trim();
+      // [CH-224] pasar a billetera quita la institución y los últimos 4 en la misma edición (OP-02)
+      const subtipo = c.subtipoEfectivo !== '' && cambia('subtipoEfectivo', c.subtipoEfectivo);
+      const aBilletera = subtipo && c.subtipoEfectivo === 'billetera';
       return accion({
         cuentaId,
         ...(cambia('nombre', nombre) ? { nombre } : {}),
-        ...(c.institucionId !== SIN_INSTITUCION && cambia('institucionId', c.institucionId)
-          ? { institucionId: c.institucionId }
-          : {}),
-        ...(ultimos4 !== '' && cambia('ultimos4', ultimos4) ? { ultimos4 } : {}),
+        ...(subtipo ? { subtipoEfectivo: c.subtipoEfectivo } : {}),
+        ...(aBilletera
+          ? { institucionId: null, ultimos4: null }
+          : {
+              ...(c.institucionId !== SIN_INSTITUCION && cambia('institucionId', c.institucionId)
+                ? { institucionId: c.institucionId }
+                : {}),
+              ...(ultimos4 !== '' && cambia('ultimos4', ultimos4) ? { ultimos4 } : {}),
+            }),
         ...(cambia('fechaApertura', c.fechaApertura) ? { fechaApertura: c.fechaApertura } : {}),
         esperado: visto,
         modo,
@@ -187,23 +200,45 @@ function Cuerpo({
           {...conError('nombre')}
           {...formulario.register('nombre')}
         />
-        <Seleccion
-          etiqueta={n.institucion}
-          opciones={[
-            { valor: SIN_INSTITUCION, etiqueta: n.sinInstitucion },
-            ...instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre })),
-          ]}
-          valor={c.institucionId}
-          alCambiar={poner('institucionId')}
-        />
-        <EntradaTexto
-          etiqueta={n.ultimos4}
-          inputMode="numeric"
-          maxLength={4}
-          autoComplete="off"
-          {...conError('ultimos4')}
-          {...formulario.register('ultimos4')}
-        />
+        {c.subtipoEfectivo === '' ? null : (
+          <div className="flex flex-col gap-2">
+            <SelectorSegmentado
+              etiqueta={cuentasNueva.subtipo}
+              opciones={SUBTIPOS.map((valor) => ({
+                valor,
+                etiqueta: cuentasNueva.subtipos[valor],
+              }))}
+              valor={c.subtipoEfectivo}
+              alCambiar={poner('subtipoEfectivo')}
+              llena
+            />
+            <p className="text-cuerpo-pequeno text-texto-secundario">
+              {cuentasNueva.ayudasSubtipo[c.subtipoEfectivo as (typeof SUBTIPOS)[number]]}
+            </p>
+          </div>
+        )}
+        {c.subtipoEfectivo === 'billetera' ? null : (
+          <>
+            <Seleccion
+              etiqueta={n.institucion}
+              opciones={[
+                { valor: SIN_INSTITUCION, etiqueta: n.sinInstitucion },
+                ...instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre })),
+              ]}
+              valor={c.institucionId}
+              alCambiar={poner('institucionId')}
+            />
+            <EntradaTexto
+              etiqueta={n.ultimos4}
+              inputMode="numeric"
+              maxLength={4}
+              autoComplete="off"
+              placeholder={cuentasNueva.opcional}
+              {...conError('ultimos4')}
+              {...formulario.register('ultimos4')}
+            />
+          </>
+        )}
         <EntradaFecha
           nombre="fechaApertura"
           etiqueta={n.apertura}
