@@ -31,6 +31,7 @@ import {
   type Descriptor,
   type TipoCuenta,
 } from './campos';
+import { ColorTarjeta } from './color-tarjeta';
 
 export interface PropsFormularioCuentaNueva {
   readonly hoy: FechaLocal;
@@ -93,6 +94,7 @@ export function FormularioCuentaNueva({
     const mensaje = error(n);
     return mensaje === undefined ? {} : { error: mensaje };
   };
+  const institucionElegida = instituciones.find((i) => i.id === c.institucionId)?.nombre;
   const avisoDeNombre = avisoDeNombreRepetido(c.tipo, c.nombre, nombresTarjetaUsados);
 
   const { estado, error: fallo, exito } = operacion;
@@ -111,6 +113,20 @@ export function FormularioCuentaNueva({
           alCambiar={poner(x.n)}
           error={mensaje}
           requerido={x.requerido}
+        />
+      );
+    if (x.n === 'color')
+      return (
+        <ColorTarjeta
+          key={x.n}
+          valor={c.color}
+          alCambiar={poner('color')}
+          vista={{
+            nombre: c.nombre,
+            red: t.redes[c.red as keyof typeof t.redes],
+            ...(c.ultimos4.trim() === '' ? {} : { ultimos4: c.ultimos4.trim() }),
+            ...(institucionElegida === undefined ? {} : { institucion: institucionElegida }),
+          }}
         />
       );
     if (x.clase === 'opciones')

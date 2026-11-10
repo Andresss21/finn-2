@@ -2,10 +2,12 @@
 Portado de `prototipos/tokens.py` de 05-frontend-verificacion-D (CH-09), pero lee `tokens.json` de la entrega
 del diseño en vez de generar los tokens. Uso: python contraste.py [ruta/a/tokens.json]. Sale con 1 si algún par falla."""
 import json
+import re
 import sys
 
 RUTA = 'apps/web/src/app/tokens.json'
 TEMAS = ('claro', 'oscuro')
+TARJETAS = ['grafito', 'zafiro', 'rubi', 'esmeralda', 'amatista', 'cobre']  # CH-225
 ESTADOS = ['positivo', 'cero', 'advertencia', 'problema', 'deuda', 'deuda-sin-respaldo', 'informacion']
 SUPERFICIES = ['fondo', 'superficie', 'superficie-elevada', 'superficie-hundida']
 TRES = ['fondo', 'superficie', 'superficie-elevada']
@@ -44,11 +46,21 @@ def pares():
     r += [('accion', 'accion-tonal', 4.5), ('marca-icono-figura', 'marca-icono-fondo', 3.0)]
     r += [('texto-secundario', f'cuenta-{c}', 4.5) for c in ['banco', 'ahorro', 'prestamo', 'inversion']]
     r += [('advertencia-texto', 'cuenta-banco', 4.5)]
+    r += [(f'tarjeta-{n}-texto', f'tarjeta-{n}-tono-claro', 4.5) for n in TARJETAS]  # CH-225
     return r
 
 
+def tono_claro(degradado):
+    """El último tono del degradado, el más claro (CH-225): fondo del par de texto de la cara de tarjeta."""
+    return re.findall(r'#[0-9A-Fa-f]{6}', degradado)[-1]
+
+
 def principal(ruta):
-    color = json.load(open(ruta, encoding='utf-8'))['color']
+    tokens = json.load(open(ruta, encoding='utf-8'))
+    color = tokens['color']
+    for n in TARJETAS:
+        t = tono_claro(tokens['otros'][f'tarjeta-{n}'])
+        color[f'tarjeta-{n}-tono-claro'] = {tema: t for tema in TEMAS}
     fallos = 0
     total = 0
     for tema in TEMAS:

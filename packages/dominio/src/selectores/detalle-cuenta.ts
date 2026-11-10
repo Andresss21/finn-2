@@ -245,6 +245,7 @@ export function detalleCuenta(i: Instantanea, cuentaId: Uuid, o: DetalleCuentaOp
       ? {}
       : {
           tarjeta: {
+            ...(tarjeta.color === null ? {} : { color: tarjeta.color }), // [CH-228] el hex guardado; la cara lo traduce
             deuda: estadoT.deuda,
             saldoAFavor: Centavos.max(Centavos.cero, s.saldo),
             reservado: estadoT.reservado,

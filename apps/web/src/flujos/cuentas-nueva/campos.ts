@@ -1,6 +1,7 @@
 // Los campos de `/cuentas/nueva` (FT-50) por tipo de cuenta, el contrato del formulario y la entrada de OP-01. Los valores del
 // formulario son texto, como los escribe la persona (05 §4.2); el contrato completo lo aplica el servidor (`op01`).
 import * as z from 'zod';
+import { COLOR_ORO } from '../../componentes/dominio/colores-tarjeta';
 import { aplicarSigno, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { cuentasNueva as t } from '../../textos/cuentas-nueva';
 
@@ -157,7 +158,7 @@ export const valoresIniciales = (hoy: string, tipo: TipoCuenta): Campos => ({
   institucionId: 'ninguna',
   fechaApertura: hoy,
   red: 'otra',
-  color: SIN_ELEGIR,
+  color: COLOR_ORO, // el selector de CH-225 empieza en oro
   modeloCalculo: SIN_ELEGIR,
   tipoTasa: 'fija',
   frecuencia: 'mensual',

@@ -591,7 +591,7 @@
 
   "TA-495": { "estado": "pendiente" },
 
-  "TA-496": { "estado": "pendiente" },
+  "TA-496": { "estado": "en_curso", "rama": "ta-496-tarjetas-8-colores" },
 
   "TA-497": { "estado": "pendiente" },
 

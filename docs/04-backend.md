@@ -2757,7 +2757,7 @@ interface DetalleCuentaDto extends Encabezado {
                           foto: { fecha: FechaLocal; montoEfecto: Centavos; comercio?: string } }[];
   }[];
   programadas: { programada: Ref; rol: 'origen' | 'destino'; activa: boolean }[];
-  tarjeta?: { deuda; saldoAFavor; reservado; faltaReservar; reservaExcedente; limite: Centavos; usoLimite: number;
+  tarjeta?: { color?: string /* [CH-228] el hex guardado */; deuda; saldoAFavor; reservado; faltaReservar; reservaExcedente; limite: Centavos; usoLimite: number;
               categoriaPago: Ref;                                 // [CH-222] la categoría de pago de la tarjeta (BE-35)
               cicloFacturacion: { desde: FechaLocal; hasta: FechaLocal };
               desgloseAlPagar: { deudaAnterior; cargosDelCiclo; yaPagado; paraNoGenerarIntereses: Centavos } };

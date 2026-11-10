@@ -71,6 +71,12 @@
   --color-cuenta-disco: var(--cuenta-disco);
   --color-tarjeta-oro-texto: var(--tarjeta-oro-texto);
   --color-tarjeta-plata-texto: var(--tarjeta-plata-texto);
+  --color-tarjeta-grafito-texto: var(--tarjeta-grafito-texto);
+  --color-tarjeta-zafiro-texto: var(--tarjeta-zafiro-texto);
+  --color-tarjeta-rubi-texto: var(--tarjeta-rubi-texto);
+  --color-tarjeta-esmeralda-texto: var(--tarjeta-esmeralda-texto);
+  --color-tarjeta-amatista-texto: var(--tarjeta-amatista-texto);
+  --color-tarjeta-cobre-texto: var(--tarjeta-cobre-texto);
   --radius-control: var(--radio-control);
   --radius-contenedor: var(--radio-contenedor);
   --radius-pastilla: var(--radio-pastilla);
