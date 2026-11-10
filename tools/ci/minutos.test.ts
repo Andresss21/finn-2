@@ -10,9 +10,11 @@ import {
   decidir,
   e2eDePr,
   minutosCobrados,
+  PRORROGA_REN_ROJO,
   recortesAplicables,
   recortesVigentes,
   renRojo,
+  renRojoEnRapido,
   reservaPendiente,
   sumarMes,
   type Estado,
@@ -200,5 +202,26 @@ describe('minutos: qué lee cada workflow del modo', () => {
     expect(renRojo(null, lunes)).toBeNull();
     expect(renRojo('2026-10-12T08:15:00Z', lunes)).toBeNull();
     expect(renRojo('2026-10-12T08:14:00Z', lunes)).toMatch(/FINN_REN_ROJO.*más de 7 días/);
+  });
+
+  it('minutos: CH-233, la prórroga avisa hasta el 2026-11-24 y falla desde el día siguiente (07 §6.6)', () => {
+    expect(PRORROGA_REN_ROJO).toEqual({ hasta: '2026-11-24', ch: 'CH-233' });
+    const desde = '2026-11-02';
+    const hoy = new Date('2026-11-10T00:46:59Z'); // la corrida de main 42730375827, en rojo sin la prórroga
+    expect(renRojo(desde, hoy)).toMatch(/más de 7 días/);
+    const antes = renRojoEnRapido(desde, hoy);
+    expect(antes?.falla).toBe(false);
+    expect(antes?.texto).toMatch(/FINN_REN_ROJO.*CH-233.*2026-11-24/);
+    expect(renRojoEnRapido(desde, new Date('2026-11-24T23:59:59Z'))?.falla).toBe(false);
+    const despues = renRojoEnRapido(desde, new Date('2026-11-25T00:00:00Z'));
+    expect(despues?.falla).toBe(true);
+    expect(despues?.texto).toBe(renRojo(desde, new Date('2026-11-25T00:00:00Z')));
+  });
+
+  it('minutos: CH-233, sin FINN_REN_ROJO o con 7 días o menos la prórroga no cambia nada', () => {
+    expect(renRojoEnRapido(null, new Date('2026-11-10T00:00:00Z'))).toBeNull();
+    expect(renRojoEnRapido(null, new Date('2026-11-25T00:00:00Z'))).toBeNull();
+    expect(renRojoEnRapido('2026-11-20', new Date('2026-11-25T00:00:00Z'))).toBeNull();
+    expect(renRojoEnRapido('2026-11-17', new Date('2026-11-25T00:00:01Z'))?.falla).toBe(true);
   });
 });

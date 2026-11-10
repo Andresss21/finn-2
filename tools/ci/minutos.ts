@@ -4,7 +4,8 @@
 // reserva fija, la proyección sin M5, el uso por job y el estado que restauran ci.yml y nocturno.yml.
 //   node tools/ci/minutos.ts calcular  primer paso del nocturno: suma los jobs del mes con el GITHUB_TOKEN del job
 //                                      (`actions: read`), decide el modo y escribe ESTADO y USO (artefacto minutos-AAAAMM)
-//   node tools/ci/minutos.ts rapido    en `rapido`: el aviso de la reserva y FINN_REN_ROJO (más de 7 días falla)
+//   node tools/ci/minutos.ts rapido    en `rapido`: el aviso de la reserva y FINN_REN_ROJO (más de 7 días falla;
+//                                      con la prórroga de CH-233, hasta su fecha solo avisa)
 // Solo sintaxis que Node 24 borra sin transformar. Las funciones exportadas reciben `hoy`: las pruebas no usan el reloj.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -121,6 +122,30 @@ export function renRojo(desde: string | null, hoy: Date): string | null {
   return `FINN_REN_ROJO activo desde ${desde}: más de 7 días. Corregir el rendimiento o aprobar un CT (07 §6.6)`;
 }
 
+/**
+ * CH-233 (07 §6.6): CT temporal. Hasta `hasta` inclusive (día UTC), FINN_REN_ROJO de más de 7 días avisa en `rapido`
+ * en lugar de fallar; desde el día siguiente vuelve a fallar sin tocar nada. Los presupuestos no cambian (TA-554).
+ */
+export const PRORROGA_REN_ROJO: { hasta: string; ch: string } = {
+  hasta: '2026-11-24',
+  ch: 'CH-233',
+};
+
+/** `rapido`: null sin rojo persistente; si no, el texto y si falla (después de la prórroga) o solo avisa. */
+export function renRojoEnRapido(
+  desde: string | null,
+  hoy: Date,
+  prorroga = PRORROGA_REN_ROJO,
+): { falla: boolean; texto: string } | null {
+  const rojo = renRojo(desde, hoy);
+  if (!rojo) return null;
+  if (hoy.toISOString().slice(0, 10) > prorroga.hasta) return { falla: true, texto: rojo };
+  return {
+    falla: false,
+    texto: `${rojo}. Prórroga ${prorroga.ch} hasta ${prorroga.hasta}: avisa, no falla`,
+  };
+}
+
 /** Los jobs de las corridas creadas desde el día 1 del mes, con su uso cobrado (CH-02: artefacto, no la app). */
 export async function sumarMes(api: Api, repo: string, hoy: Date) {
   const desde = `${hoy.toISOString().slice(0, 8)}01`;
@@ -209,11 +234,12 @@ if (import.meta.main) {
     );
     const k = anterior && r.length ? anterior.aviso_reserva : null;
     if (k) console.log(`::warning::La reserva del respaldo está en riesgo: ${k} minutos`);
-    const rojo = renRojo(env('FINN_REN_ROJO') || anterior?.ren_rojo_desde || null, hoy);
-    if (rojo) {
-      console.error(rojo);
+    const rojo = renRojoEnRapido(env('FINN_REN_ROJO') || anterior?.ren_rojo_desde || null, hoy);
+    if (rojo?.falla) {
+      console.error(rojo.texto);
       process.exit(1);
     }
+    if (rojo) console.log(`::warning::${rojo.texto}`);
   } else {
     console.error(`minutos: comando desconocido "${cmd}" (calcular, rapido)`);
     process.exit(2);
