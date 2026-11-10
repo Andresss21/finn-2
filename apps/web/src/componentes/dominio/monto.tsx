@@ -2,6 +2,7 @@
 // de accesibilidad; el lector oye "menos $X" (V5-25). Solo presenta: no calcula (PF-3).
 import type { Centavos } from '@finn/dominio/valores';
 import { formatearMonto, formatearMontoAccesible } from '../../formato';
+import { Destello } from '../movimiento/destello';
 import { COLOR_TEXTO, type EstadoFinanciero } from './indicador-estado';
 
 const ROL = {
@@ -19,6 +20,8 @@ interface PropsMonto {
    * signo menos, porque el tipo de la fila (un gasto, un consumo) dice que sale dinero, aunque el DTO traiga el valor positivo.
    */
   readonly presentacion?: 'con-signo' | 'absoluto' | 'salida';
+  /** [CH-220 C3] Destella si el valor cambió desde el dibujo anterior (Disponible, pagos de tarjeta y totales). */
+  readonly destello?: boolean;
 }
 
 export function Monto({
@@ -26,13 +29,14 @@ export function Monto({
   rol = 'cuerpo',
   estado,
   presentacion = 'con-signo',
+  destello = false,
 }: PropsMonto) {
   const absoluto = Math.abs(centavos);
   const mostrado = (
     presentacion === 'absoluto' ? absoluto : presentacion === 'salida' ? -absoluto : centavos
   ) as Centavos;
   const color = estado === undefined ? '' : COLOR_TEXTO[estado];
-  return (
+  const monto = (
     <span
       data-centavos={centavos}
       className={['whitespace-nowrap tabular-nums', ROL[rol], color].join(' ')}
@@ -41,4 +45,5 @@ export function Monto({
       <span className="sr-only">{formatearMontoAccesible(mostrado)}</span>
     </span>
   );
+  return destello ? <Destello valor={centavos}>{monto}</Destello> : monto;
 }

@@ -168,6 +168,7 @@ export function PantallaDetalleCategoria({
               <Monto
                 centavos={numeros.disponible}
                 rol="cifra-principal"
+                destello
                 {...(estadoDisponible ? { estado: estadoDisponible } : {})}
               />
             </p>

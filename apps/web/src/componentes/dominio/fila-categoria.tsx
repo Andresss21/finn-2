@@ -103,7 +103,7 @@ export function FilaCategoria({
         </span>
         <span className={C4}>
           <span className="sr-only">{dominio.disponible} </span>
-          <Monto centavos={fila.disponible} rol="cifra" {...(estado ? { estado } : {})} />
+          <Monto centavos={fila.disponible} rol="cifra" destello {...(estado ? { estado } : {})} />
         </span>
         <div className="col-span-2 empty:hidden md:hidden">
           <BarraGastado barra={fila.barra} metaCubierta={metaCubierta(fila)} />

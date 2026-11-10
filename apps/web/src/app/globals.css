@@ -317,6 +317,49 @@ body {
 .fz-barra-crece {
   animation: fz-grow var(--duracion-crecer) var(--curva-estandar) both;
 }
+/* C10: la máscara de la dona se dibuja por stroke-dashoffset; sin animación queda entera. */
+@keyframes fz-dona {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+.fz-dona-revela {
+  stroke-dasharray: 1;
+  animation: fz-dona var(--duracion-crecer) var(--curva-estandar) both;
+}
+/* C3: el monto que cambió sube 4 px en verde o baja en rojo (600 ms); el tinte va en el monto, que trae su propio color. */
+@keyframes fz-destello-sube {
+  from {
+    transform: translateY(4px);
+  }
+}
+@keyframes fz-destello-baja {
+  from {
+    transform: translateY(-4px);
+  }
+}
+@keyframes fz-tinte-sube {
+  from {
+    color: var(--positivo-texto);
+  }
+}
+@keyframes fz-tinte-baja {
+  from {
+    color: var(--problema-texto);
+  }
+}
+.fz-destello-sube {
+  animation: fz-destello-sube var(--duracion-destello) var(--curva-estandar);
+}
+.fz-destello-sube > * {
+  animation: fz-tinte-sube var(--duracion-destello) var(--curva-estandar);
+}
+.fz-destello-baja {
+  animation: fz-destello-baja var(--duracion-destello) var(--curva-estandar);
+}
+.fz-destello-baja > * {
+  animation: fz-tinte-baja var(--duracion-destello) var(--curva-estandar);
+}
 .fz-marca-activa {
   transform-origin: left;
   animation: fz-pill var(--duracion-lenta) var(--curva-estandar) both;

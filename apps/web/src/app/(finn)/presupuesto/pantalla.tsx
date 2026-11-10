@@ -262,7 +262,7 @@ export function PantallaPresupuesto({
                   <div key={etiqueta} className="flex min-w-0 flex-col gap-0.5">
                     <dt className="t-rotulo text-texto-secundario">{etiqueta}</dt>
                     <dd className="font-bold">
-                      <Monto centavos={centavos} />
+                      <Monto centavos={centavos} destello />
                     </dd>
                   </div>
                 ))}

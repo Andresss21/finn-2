@@ -8,6 +8,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../globals.css';
 import { ResumenListoParaAsignar } from '../../componentes/dominio/billete';
+import { CLAVE_BILLETE_VISTO } from '../../componentes/dominio/cifras-billete';
 import { ProveedorEncabezado } from '../../componentes/marco/proveedor-encabezado';
 import { inicio as t } from '../../textos/inicio';
 import { PantallaInicio } from './pantalla-inicio';
@@ -306,5 +307,53 @@ describe('PRU-CMP-INICIO', () => {
         esperado: { monto: '255.00' },
       }),
     );
+  });
+});
+
+describe('PRU-CMP-INICIO billete que rueda una vez por sesión', () => {
+  const billete = () => (
+    <ResumenListoParaAsignar
+      lpa={centavos(31240)}
+      enCamino={centavos(0)}
+      lpaNegativo={false}
+      variante="billete"
+    />
+  );
+  const digitos = (nodo: HTMLElement) => [
+    ...nodo.querySelectorAll<HTMLElement>('[data-centavos] [aria-hidden="true"] > span'),
+  ];
+
+  it('PRU-CMP-INICIO-300 [] el billete rueda en la primera entrada de la sesión y no en la segunda', () => {
+    sessionStorage.removeItem(CLAVE_BILLETE_VISTO);
+    const primera = montar(billete());
+    expect(primera.querySelector('[data-rueda]')).not.toBeNull();
+    expect(
+      digitos(primera)
+        .slice(0, 3)
+        .map((d) => d.style.animationDelay),
+    ).toEqual(['0ms', '90ms', '180ms']);
+    expect(getComputedStyle(digitos(primera)[1] as HTMLElement).animationName).toBe(
+      'finn-cifra-rueda',
+    );
+    expect(sessionStorage.getItem(CLAVE_BILLETE_VISTO)).not.toBeNull();
+    const segunda = montar(billete());
+    expect(segunda.querySelector('[data-rueda]')).toBeNull();
+    expect(getComputedStyle(digitos(segunda)[1] as HTMLElement).animationName).toBe('none');
+    expect(segunda.querySelector('.sr-only')?.textContent).toBe('$312.40');
+    sessionStorage.removeItem(CLAVE_BILLETE_VISTO);
+  });
+
+  it('PRU-CMP-INICIO-300 [] sin sessionStorage el billete se dibuja entero y sin error', () => {
+    const lectura = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('bloqueado', 'SecurityError');
+    });
+    const nodo = montar(billete());
+    expect(nodo.querySelector('[data-rueda]')).toBeNull();
+    expect(
+      digitos(nodo)
+        .map((d) => d.textContent)
+        .join(''),
+    ).toBe('$312.40');
+    lectura.mockRestore();
   });
 });

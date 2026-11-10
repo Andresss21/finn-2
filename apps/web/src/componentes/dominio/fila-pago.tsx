@@ -65,6 +65,7 @@ export function FilaPagoTarjeta({
       <span className="flex items-baseline justify-between gap-3">
         <span className="text-cuerpo font-semibold text-texto">{fila.tarjeta.nombre}</span>
         <Monto
+          destello
           centavos={p.centavos}
           rol="cifra"
           presentacion="absoluto"

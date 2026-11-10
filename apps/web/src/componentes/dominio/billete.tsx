@@ -6,6 +6,7 @@ import { formatearMonto, formatearMontoAccesible } from '../../formato';
 import { dominio } from '../../textos/dominio';
 import { Icono } from '../base/icono';
 import { EnlaceFinn } from '../navegacion/enlace-finn';
+import { CifrasBillete } from './cifras-billete';
 import { IndicadorEstado } from './indicador-estado';
 
 export interface ResumenListoParaAsignarProps {
@@ -26,34 +27,6 @@ const ENLACE_BOTON =
   'inline-flex min-h-11 items-center justify-center rounded-control bg-accion px-5 text-base font-semibold text-texto-sobre-accion hover:bg-accion-hover active:bg-accion-presionada focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE_BOTON_ANCHO =
   'inline-flex min-h-13 w-full items-center justify-center rounded-control bg-accion px-5 text-base font-bold text-texto-sobre-accion hover:bg-accion-hover active:bg-accion-presionada focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-
-// El texto visible va por dígitos para que rueden uno tras otro (90 ms); el accesible es una sola frase (V5-25).
-function Cifras({ centavos, grande }: { readonly centavos: Centavos; readonly grande: boolean }) {
-  const visible = formatearMonto(centavos);
-  return (
-    <span
-      data-centavos={centavos}
-      className={[
-        'whitespace-nowrap tabular-nums',
-        grande ? 'text-cifra-principal' : 'text-cifra',
-      ].join(' ')}
-      style={{ fontSize: grande ? '3.25rem' : '1.75rem' }}
-    >
-      <span aria-hidden="true">
-        {Array.from(visible).map((ch, i) => (
-          <span
-            key={i}
-            className="inline-block animate-[finn-cifra-rueda_1.4s_var(--curva-estandar)_backwards]"
-            style={{ animationDelay: `${i * 90}ms` }}
-          >
-            {ch}
-          </span>
-        ))}
-      </span>
-      <span className="sr-only">{formatearMontoAccesible(centavos)}</span>
-    </span>
-  );
-}
 
 function Estado({ lpa, lpaNegativo }: Pick<ResumenListoParaAsignarProps, 'lpa' | 'lpaNegativo'>) {
   if (lpaNegativo) {
@@ -118,7 +91,7 @@ export function ResumenListoParaAsignar({
         <Decoracion />
         <div className="relative z-10 flex flex-col gap-1">
           <p className="text-rotulo">{dominio.billete.rotulo}</p>
-          <Cifras centavos={lpa} grande={false} />
+          <CifrasBillete centavos={lpa} grande={false} />
           <Estado lpa={lpa} lpaNegativo={lpaNegativo} />
           <EnCamino enCamino={enCamino} />
         </div>
@@ -146,7 +119,7 @@ export function ResumenListoParaAsignar({
           <Decoracion />
           <p className="relative z-10 text-rotulo">{dominio.billete.rotulo}</p>
           <div className="relative z-10">
-            <Cifras centavos={lpa} grande />
+            <CifrasBillete centavos={lpa} grande />
           </div>
           <div className="relative z-10 flex flex-col gap-1.5">
             <Estado lpa={lpa} lpaNegativo={lpaNegativo} />

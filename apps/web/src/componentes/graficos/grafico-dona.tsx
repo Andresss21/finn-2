@@ -96,17 +96,31 @@ export function GraficoDona({
             <rect width="5" height="5" className="fill-superficie" />
             <rect width="1.8" height="5" className="fill-grafico-otras" />
           </pattern>
+          {/* [CH-220 C10] La dona se dibuja por `stroke-dashoffset` (800 ms): la máscara la revela en su sentido. */}
+          <mask id="finn-dona-revela">
+            <circle
+              r="45"
+              fill="none"
+              stroke="white"
+              strokeWidth="90"
+              pathLength={1}
+              transform="rotate(-90)"
+              className="fz-dona-revela"
+            />
+          </mask>
         </defs>
-        {reparto([...porciones]).map((a, i) => (
-          <path
-            key={a.data.clave}
-            d={arco(a) ?? ''}
-            data-porcion={a.data.clave}
-            data-porcentaje={a.data.porcentaje}
-            className={a.data.otras === true ? undefined : RELLENO[i % RELLENO.length]}
-            {...(a.data.otras === true ? { fill: 'url(#finn-rayado-otras)' } : {})}
-          />
-        ))}
+        <g mask="url(#finn-dona-revela)">
+          {reparto([...porciones]).map((a, i) => (
+            <path
+              key={a.data.clave}
+              d={arco(a) ?? ''}
+              data-porcion={a.data.clave}
+              data-porcentaje={a.data.porcentaje}
+              className={a.data.otras === true ? undefined : RELLENO[i % RELLENO.length]}
+              {...(a.data.otras === true ? { fill: 'url(#finn-rayado-otras)' } : {})}
+            />
+          ))}
+        </g>
         {total === undefined ? null : (
           <>
             <text

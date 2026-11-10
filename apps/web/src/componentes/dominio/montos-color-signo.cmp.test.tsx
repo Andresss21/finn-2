@@ -7,6 +7,7 @@ import '../../app/globals.css';
 import { Consumos } from '../../app/(finn)/presupuesto/categorias/[categoriaId]/consumos';
 import { BarraGastado } from './barra-gastado';
 import { FilaCategoria, type FilaCategoriaDto } from './fila-categoria';
+import { Monto } from './monto';
 import { MovimientoBandeja, type MovimientoDto } from './movimiento-bandeja';
 
 // `EnlaceFinn` envuelve `next/link`, el límite externo: acá es un `<a>`.
@@ -28,7 +29,23 @@ afterEach(() => {
     nodo.remove();
   }
   document.body.removeAttribute('style');
+  vi.restoreAllMocks();
 });
+
+/** «Reducir movimiento» encendido: `matchMedia` de la preferencia responde `true`. */
+function conMovimientoReducido(): void {
+  const original = window.matchMedia.bind(window);
+  vi.spyOn(window, 'matchMedia').mockImplementation((consulta: string) =>
+    consulta === '(prefers-reduced-motion: reduce)'
+      ? ({
+          matches: true,
+          media: consulta,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+        } as unknown as MediaQueryList)
+      : original(consulta),
+  );
+}
 
 function montar(ui: ReactNode): HTMLElement {
   document.body.style.cssText =
@@ -213,5 +230,62 @@ describe('PRU-CMP-PRES-202 signo de los consumos del detalle de categoría [CA-1
     expect(principal.querySelector('.sr-only')?.textContent).toBe('menos $42.10');
     // "cubierto $42.10" es una cifra de apoyo, sin signo
     expect(montos[0]?.querySelector('[aria-hidden="true"]')?.textContent).toBe('$42.10');
+  });
+});
+
+describe('PRU-CMP-PWA destello de montos', () => {
+  /** Monta un monto con destello y devuelve cómo volver a dibujarlo con otro valor (lo que trae el servidor). */
+  function conMonto(inicial: number): { nodo: HTMLElement; dibujar: (n: number) => void } {
+    const nodo = document.createElement('main');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    const dibujar = (n: number) => {
+      act(() => {
+        raiz.render(<Monto centavos={c(n)} rol="cifra" estado="positivo" destello />);
+      });
+    };
+    dibujar(inicial);
+    montados.push({ raiz, nodo });
+    return { nodo, dibujar };
+  }
+  const destello = (nodo: HTMLElement) => nodo.querySelector('[data-destello]');
+
+  it('PRU-CMP-PWA-330 [] un monto que sube destella en --positivo-texto, uno que baja en --problema-texto y uno igual no destella', () => {
+    const { nodo, dibujar } = conMonto(6285);
+    expect(destello(nodo)).toBeNull();
+    dibujar(6285);
+    expect(destello(nodo)).toBeNull();
+    dibujar(9000);
+    expect(destello(nodo)?.getAttribute('data-destello')).toBe('sube');
+    expect(estilo(destello(nodo)).animationName).toBe('fz-destello-sube');
+    expect(estilo(destello(nodo)).animationDuration).toBe('0.6s');
+    const monto = destello(nodo)?.querySelector('[data-centavos]');
+    expect(estilo(monto).animationName).toBe('fz-tinte-sube');
+    // El tinte arranca en el color del token, aunque el monto tenga el suyo.
+    const reglaSube = [...document.styleSheets]
+      .flatMap((h) => [...h.cssRules])
+      .find((r) => r instanceof CSSKeyframesRule && r.name === 'fz-tinte-sube') as CSSKeyframesRule;
+    expect(reglaSube.cssRules[0]?.cssText).toContain('var(--positivo-texto)');
+    dibujar(100);
+    expect(destello(nodo)?.getAttribute('data-destello')).toBe('baja');
+    expect(estilo(destello(nodo)?.querySelector('[data-centavos]')).animationName).toBe(
+      'fz-tinte-baja',
+    );
+    const reglaBaja = [...document.styleSheets]
+      .flatMap((h) => [...h.cssRules])
+      .find((r) => r instanceof CSSKeyframesRule && r.name === 'fz-tinte-baja') as CSSKeyframesRule;
+    expect(reglaBaja.cssRules[0]?.cssText).toContain('var(--problema-texto)');
+    // El texto accesible no cambia por el destello.
+    expect(destello(nodo)?.querySelector('.sr-only')?.textContent).toBe('$1.00');
+  });
+
+  it('PRU-CMP-PWA-330 [] con movimiento reducido ningún monto destella', () => {
+    conMovimientoReducido();
+    const { nodo, dibujar } = conMonto(6285);
+    dibujar(9000);
+    expect(destello(nodo)).toBeNull();
+    dibujar(100);
+    expect(destello(nodo)).toBeNull();
+    expect(nodo.querySelector('[data-centavos]')?.getAttribute('data-centavos')).toBe('100');
   });
 });
