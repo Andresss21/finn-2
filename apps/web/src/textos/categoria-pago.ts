@@ -9,7 +9,10 @@ export const categoriaPago = {
     teFaltaReservar: glosario.teFaltaReservar,
     alDia: 'Al día',
     alDiaTexto: 'No te falta reservar nada para esta tarjeta.',
+    pagoReservado: 'Pago reservado',
   },
+  // [CH-222 A8] La rejilla de la tarjeta hoy, arriba.
+  rejilla: { deuda: 'Deuda', reservado: glosario.reservado, teFalta: 'Te falta' },
   avisos: {
     'AV-04': ['Pagaste', 'más de lo reservado; reducirá Listo para asignar al cierre'],
     'AV-05': [
@@ -54,11 +57,11 @@ export const categoriaPago = {
     caso: { 'D-3': 'Con saldo a favor', 'D-4': 'Con deuda' },
   },
   alPagar: {
-    titulo: 'Al pagar',
-    deudaAnterior: 'Deuda anterior',
-    cargosDelCiclo: 'Cargos del ciclo',
-    yaPagado: 'Ya pagado',
-    sinIntereses: 'Para no generar intereses',
+    titulo: 'Para no generar intereses',
+    contado: 'Pago de contado',
+    deudaAnterior: 'Deuda al corte anterior',
+    cargosDelCiclo: 'Cargos del ciclo actual',
+    yaPagado: 'Ya pagado en el ciclo',
     pagaAntesDel: (dia: string, mes: string) => `Pagá antes del ${dia}/${mes}`,
   },
   historial: {
@@ -71,6 +74,7 @@ export const categoriaPago = {
     reservar: 'Reservar',
     asignar: 'Asignar',
     pagar: 'Pagar tarjeta',
+    pagarLaTarjeta: 'Pagar la tarjeta',
   },
   cerrado: 'Este período está cerrado: solo se puede mirar.',
   futuro: 'Período futuro: lo reservado se muestra solo en el período actual.',

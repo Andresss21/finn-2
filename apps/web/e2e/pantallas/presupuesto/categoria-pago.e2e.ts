@@ -94,6 +94,12 @@ const VISA_ORO: Op[] = [
   },
 ];
 
+// [CH-222] Visa Oro con $300.00 de deuda sin reservar y la cuenta corriente con $1,000.00 en Listo para asignar.
+const VISA_ORO_SIN_RESERVA: Op[] = [
+  { op: 'OP-01', cuenta: 'Cuenta corriente', saldo: 1000, apertura: '2027-02-05' },
+  { op: 'OP-01', cuenta: 'Visa Oro', tipo: 'tarjeta', saldo: 300 },
+];
+
 /** Siembra las operaciones con `hoy` y deja el reloj del servidor en `hoyServidor` (por defecto, el mismo día). */
 async function sembrarOps(ops: Op[], hoy: string, hoyServidor = hoy): Promise<void> {
   fijarRelojServidor(`${hoyServidor}T10:00:00-06:00`);
@@ -238,5 +244,39 @@ test.describe('PRU-E2E-PRES categoría de pago de tarjeta', () => {
     const fila = page.locator('[data-proximo-pago]');
     await expect(fila).toHaveAttribute('data-proximo-pago', '2026-11-15');
     await expect(fila).toHaveText('Pagá antes del 15/11');
+  });
+
+  test('PRU-E2E-PRES-450 [CA-29.5] desde Inicio y el detalle de Visa Oro, «Reservar $300.00» con la asignación rápida deja «Te falta reservar» en $0.00 en la tarjeta, en Presupuesto y en Inicio', async ({
+    page,
+  }) => {
+    await sembrarOps(VISA_ORO_SIN_RESERVA, '2027-02-05');
+    await abrir(page, '/');
+    const atencion = page
+      .locator('main a[href^="/cuentas/"]')
+      .filter({ hasText: 'Visa Oro' })
+      .filter({ hasText: 'Te falta reservar' });
+    await expect(atencion).toHaveCount(1);
+    const detalle = (await atencion.getAttribute('href')) ?? '';
+    await abrir(page, detalle);
+    const reservar = page.locator('[data-cabecera-tarjeta] a[data-variante="reservar_falta"]');
+    await esperarMonto(reservar.locator('[data-centavos]'), 30000);
+    await reservar.click();
+    const opcion = page
+      .locator('[data-asignacion-rapida]')
+      .getByRole('button', { name: /Reservar lo que falta/ });
+    await esperarMonto(opcion.locator('[data-centavos]'), 30000);
+    await opcion.click();
+    await expect(page).toHaveURL(new RegExp(`${detalle}$`));
+    await esperarContenido(page);
+    await expect(page.locator('[data-cabecera-tarjeta]')).toContainText('Pago reservado');
+    await expect(reservar).toHaveCount(0);
+    await abrirPago(page, 'Visa Oro');
+    await esperarMonto(faltaReservar(page), 0);
+    await expect(page.locator('[data-accion-principal]')).toHaveText('Pagar la tarjeta');
+    await abrir(page, '/');
+    await esperarContenido(page);
+    await expect(
+      page.locator(`main a[href="${detalle}"]`).filter({ hasText: 'Te falta reservar' }),
+    ).toHaveCount(0);
   });
 });

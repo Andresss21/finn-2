@@ -134,3 +134,20 @@ describe('PRU-CMP-PRES foco de Asignar', () => {
     expect(elegir).not.toHaveBeenCalled();
   });
 });
+
+describe('PRU-CMP-PRES asignación rápida de la categoría de pago', () => {
+  it('PRU-CMP-PRES-452 [CA-12.6] en la categoría de pago «Reservar lo que falta» va primero con el monto del contexto y envía la variante reservar_falta; sin el dato no se ofrece', async () => {
+    const alElegir = vi.fn();
+    const nodo = cuando(
+      { reservarFalta: dolares(642.18), igualPeriodoAnterior: dolares(600) },
+      { alElegir },
+    );
+    expect(opciones(nodo)).toEqual([
+      'Reservar lo que falta|64218',
+      'Lo mismo que el período pasado|60000',
+    ]);
+    await userEvent.click(nodo.querySelector('[data-variante="reservar_falta"]') as HTMLElement);
+    expect(alElegir).toHaveBeenCalledWith('reservar_falta');
+    expect(cuando({}).querySelector('[data-variante="reservar_falta"]')).toBeNull();
+  });
+});

@@ -386,7 +386,8 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     expect(enlace(raiz, 'Asignar')).toBeUndefined();
     expect(enlace(raiz, 'Mover dinero')).toBeUndefined();
     expect(raiz.querySelector('[data-selector-periodo="cerrado"]')).not.toBeNull();
-    expect(enlace(raiz, 'Volver a Presupuesto')?.getAttribute('href')).toBe(
+    // A5: la flecha de la fila del título se nombra con `aria-label`
+    expect(raiz.querySelector('a[aria-label="Volver a Presupuesto"]')?.getAttribute('href')).toBe(
       '/presupuesto?periodo=2027-01-21',
     );
   });

@@ -205,3 +205,78 @@ describe('PRU-CMP-PRES categoría de pago de tarjeta', () => {
     expect(r.violations.map((v) => v.id)).toEqual([]);
   });
 });
+
+describe('PRU-CMP-PRES «Reservar $X» en la categoría de pago', () => {
+  const visible = (n: Element | null): string =>
+    [...(n?.childNodes ?? [])]
+      .map((x) =>
+        x instanceof HTMLElement && x.classList.contains('sr-only')
+          ? ''
+          : x instanceof Element
+            ? visible(x)
+            : (x.textContent ?? ''),
+      )
+      .join('')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  it('PRU-CMP-PRES-450 [FT-29] con «te falta reservar» de $18.75 el principal es «Reservar $18.75» con el monto del DTO y abre Asignar con la variante; con todo reservado es «Pagar la tarjeta»', () => {
+    const n = mostrar(
+      dto({ tarjetaHoy: { ...hoyCero, deuda: 64218, reservado: 62343, faltaReservar: 1875 } }),
+    );
+    const principal = n.querySelector('[data-accion-principal]') as HTMLAnchorElement;
+    expect(visible(principal)).toBe('Reservar $18.75');
+    expect(principal.querySelector('[data-centavos]')?.getAttribute('data-centavos')).toBe('1875');
+    expect(principal.getAttribute('href')).toBe(`/presupuesto/asignar/${ID}`);
+    expect(principal.getAttribute('data-variante')).toBe('reservar_falta');
+    expect(principal.getBoundingClientRect().height).toBeGreaterThanOrEqual(52);
+    const alDia = mostrar(dto({ tarjetaHoy: { ...hoyCero, deuda: 64218, reservado: 64218 } }));
+    const pagar = alDia.querySelector('[data-accion-principal]') as HTMLAnchorElement;
+    expect(visible(pagar)).toBe('Pagar la tarjeta');
+    expect(pagar.getAttribute('href')).toBe(`/cuentas/${TARJETA}/pagar`);
+    expect(alDia.textContent).not.toContain('Reservar $');
+    expect(visible(alDia.querySelector('[data-pago-reservado]'))).toBe('$642.18');
+  });
+
+  it('PRU-CMP-PRES-451 [FT-29] la rejilla Deuda · Reservado · Te falta y «Para no generar intereses» llevan los valores del DTO; el historial y la tarjeta hoy siguen', () => {
+    const n = mostrar(
+      dto({
+        tarjetaHoy: { ...hoyCero, deuda: 64218, reservado: 62343, faltaReservar: 1875 },
+        desgloseAlPagar: {
+          deudaAnterior: 51240,
+          cargosDelCiclo: 42978,
+          yaPagado: 30000,
+          paraNoGenerarIntereses: 21240,
+          ultimoCorte: '2027-02-25',
+          proximoPago: '2027-03-15',
+        },
+        historial: [{ periodo: CERRADO, asignado: 12000, disponible: 0 }],
+      }),
+    );
+    const rejilla = [...n.querySelectorAll('[data-rejilla]')].map((c) => [
+      c.getAttribute('data-rejilla'),
+      c.querySelector('[data-centavos]')?.getAttribute('data-centavos'),
+    ]);
+    expect(rejilla).toEqual([
+      ['deuda', '64218'],
+      ['reservado', '62343'],
+      ['te-falta', '1875'],
+    ]);
+    const intereses = n.querySelector('[data-seccion="al-pagar"]') as HTMLElement;
+    expect(intereses.querySelector('h2')?.textContent).toBe('Para no generar intereses');
+    expect(
+      [...intereses.querySelectorAll('[data-numero]')].map((x) => [
+        x.getAttribute('data-numero'),
+        x.querySelector('[data-centavos]')?.getAttribute('data-centavos'),
+      ]),
+    ).toEqual([
+      ['sin-intereses', '21240'],
+      ['deuda-anterior', '51240'],
+      ['cargos-del-ciclo', '42978'],
+      ['ya-pagado', '30000'],
+    ]);
+    expect(intereses.textContent).toContain('Pagá antes del 15/03');
+    expect(n.querySelectorAll('[data-historial-periodo]')).toHaveLength(1);
+    expect(n.querySelectorAll('[data-seccion="tarjeta-hoy"] [data-numero]')).toHaveLength(5);
+  });
+});
