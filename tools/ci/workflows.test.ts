@@ -541,6 +541,16 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     expect(corto()).toBe(false);
   });
 
+  it('workflows: en CI un cambio de CI corre la E2E completa; en local y sin cambios de CI, como antes (CH-231)', () => {
+    const completa = (evento: string, ...a: string[]): boolean =>
+      decidir(evento, 'false', a)['e2e_completa'] ?? false;
+    expect(completa('pull_request', '.github/workflows/ci.yml')).toBe(true);
+    expect(completa('pull_request', 'tools/ci/afecta.mjs', 'docs/x.md')).toBe(true);
+    expect(completa('pull_request', 'apps/web/src/x.tsx')).toBe(false);
+    expect(completa('pull_request', 'packages/dominio/src/periodos.ts')).toBe(false);
+    expect(completa('', '.github/workflows/ci.yml')).toBe(false);
+  });
+
   it('workflows: ci:e2e-unir falla si algún fragmento no pasó y pasa sin blobs si todos pasaron (CH-231)', () => {
     const unir = (resultado: string) =>
       spawnSync(

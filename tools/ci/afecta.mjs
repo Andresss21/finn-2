@@ -84,7 +84,9 @@ function e2eSegunModo() {
  * El PR que pasa una ficha a `terminada`, y `ci:local` con esa ficha, corren e2e aunque no esté listo ni toque la web
  * (07 §13.2, paso 4; M15 lo exige en `cierre`; CH-70).
  * afecta_docs: el diff toca docs/ o tools/docs/ y `rapido` corre docs:comprobar (07 §13.7).
- * solo_interfaz (CH-231): todo el diff es interfaz (INTERFAZ) y no toca la base; `ci:local` usa el modo corto. */
+ * solo_interfaz (CH-231): todo el diff es interfaz (INTERFAZ) y no toca la base; `ci:local` usa el modo corto.
+ * e2e_completa (CH-231): en CI, un cambio de CI corre la suite E2E completa, no solo las afectadas (`^$` casi siempre):
+ * así un cambio del workflow o del arnés se prueba entero en el PR. En local, como antes. */
 function decidir(archivos, b) {
   const db = archivos.some((a) => CI.test(a) || DB.test(a));
   const web = archivos.some((a) => CI.test(a) || WEB.test(a));
@@ -99,6 +101,7 @@ function decidir(archivos, b) {
     cierre: enMain || cierra,
     afecta_docs: archivos.some((a) => DOCS.test(a)),
     solo_interfaz: archivos.length > 0 && !db && !cierra && archivos.every((a) => INTERFAZ.test(a)),
+    e2e_completa: evento !== '' && archivos.some((a) => CI.test(a)),
   };
 }
 
@@ -141,6 +144,7 @@ function secretos(b) {
 
 /** Filtro `-g` de las E2E afectadas (07 §6.1): `todas` (marco o una ficha que se cierra, CH-70), `^$` o los identificadores. */
 function grepE2E(archivos, sinMarco = false) {
+  if (d.e2e_completa) return 'todas';
   const e = cargarEntradas();
   return afectadas(e, verificar(e), archivos, aTerminada(b), sinMarco).grepE2E ?? 'todas';
 }
