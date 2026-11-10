@@ -184,7 +184,9 @@ test.describe('PRU-E2E-TX devolver', () => {
     const compra = page.locator('[data-compras] a').first();
     await esperarMonto(compra.locator('[data-centavos]'), 10000);
     await compra.click();
-    await expect(page.getByRole('heading', { level: 1, name: t.devolverTitulo })).toBeVisible();
+    // `/registrar/devolucion` también se titula «Registrar devolución» y tiene «Monto devuelto»: se espera la ruta nueva
+    await expect(page).toHaveURL(/\/actividad\/[^/]+\/devolver\?/);
+    await expect(page.getByRole('heading', { level: 2, name: t.repartoEntrePartes })).toBeVisible();
     await esperarHidratacion(page);
     await total(page).fill('100');
     await registrar(page).click();
