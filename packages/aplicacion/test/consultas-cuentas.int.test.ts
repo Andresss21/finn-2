@@ -241,7 +241,7 @@ describe('PRU-INT-CTA', () => {
   });
 
   // CH-222: el detalle de la tarjeta enlaza «Reservar $X» a su categoría de pago (04 §6.6, BE-35).
-  it('PRU-INT-CTA-310 [Q-detalleCuenta] el detalle de una tarjeta trae categoriaPago igual a su categoría de pago; una cuenta que no es tarjeta no trae el bloque', async () => {
+  it('PRU-INT-CTA-310 [Q-detalleCuenta] CH-222: el detalle de una tarjeta trae categoriaPago igual a su categoría de pago; una cuenta que no es tarjeta no trae el bloque', async () => {
     const deps: DepsConsulta = {
       memoria: new Memoria(),
       sesion: sesionDe({ sub: USUARIO, aal: 'aal2' }),

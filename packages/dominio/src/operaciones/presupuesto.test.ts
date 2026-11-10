@@ -792,7 +792,7 @@ describe('PRU-DOM-PRES-310: asignación rápida «reservar lo que falta» de la 
   const faltaReservar = (h: Hechos) =>
     calcular(h, HOY).tarjetas.find((t) => t.tarjetaId === id('T'))?.sinRespaldo;
 
-  it('PRU-DOM-PRES-310 [OP-16@dom] con S(t) = $18.75, reservar_falta asigna $18.75 a pago(t) y S queda en $0.00; con S = 0, en una categoría normal o fuera del activo no se ofrece', () => {
+  it('PRU-DOM-PRES-310 CH-222: con S(t) = $18.75, reservar_falta asigna $18.75 a pago(t) y S queda en $0.00; con S = 0, en una categoría normal o fuera del activo no se ofrece', () => {
     const h = conFalta(base());
     expect(faltaReservar(h)).toBe(Centavos.desdeEntero(1875));
     expect(rapida(h, 'P', MAR).reservarFalta).toBe(Centavos.desdeEntero(1875));
@@ -814,7 +814,7 @@ describe('PRU-DOM-PRES-310: asignación rápida «reservar lo que falta» de la 
     expect(rapida(base(), 'P', MAR).reservarFalta).toBeUndefined();
   });
 
-  it('PRU-DOM-PRES-311 [AV-11] reservar_falta con S(t) mayor que LPA deja LPA negativo y pide AV-11 antes de confirmar, igual que OP-14 con el mismo monto', () => {
+  it('PRU-DOM-PRES-311 [AV-11] CH-222: reservar_falta con S(t) mayor que LPA deja LPA negativo y pide AV-11 antes de confirmar, igual que OP-14 con el mismo monto', () => {
     // LPA = 1.000 − 990 = 10; S(T) = 18.75 → LPA queda en −8.75.
     const h = conFalta(base([asignacion('SUPER', MAR, 990)]));
     const r = ejecutar(h, op16('P', MAR, 'reservar_falta'));

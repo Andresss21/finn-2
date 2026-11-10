@@ -47,7 +47,7 @@ describe('PRU-INT-PRES', () => {
     process.env['DATABASE_URL'] = base.url; // el cliente del proceso (04 §2.5)
   });
 
-  it('PRU-INT-PRES-310 [OP-16, FORM-asignar] OP-16 reservar_falta en PostgreSQL: con S(Visa) = $18.75 asigna $18.75 a su categoría de pago con el esperado visto; un esperado viejo es conflicto y, con S = 0, la variante ya no se ofrece', async () => {
+  it('PRU-INT-PRES-310 [FORM-asignar] CH-222: OP-16 reservar_falta en PostgreSQL: con S(Visa) = $18.75 asigna $18.75 a su categoría de pago con el esperado visto; un esperado viejo es conflicto y, con S = 0, la variante ya no se ofrece', async () => {
     const A = (await estado()).presupuesto.activo.inicio;
     expect(await faltaReservar()).toBe(0);
     const gasto = {
