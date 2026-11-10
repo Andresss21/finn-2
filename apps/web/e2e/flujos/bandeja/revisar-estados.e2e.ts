@@ -332,4 +332,39 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(siguiente).toHaveAttribute('href', segundo ?? '');
     expect(await alto(siguiente)).toBeGreaterThanOrEqual(44);
   });
+
+  test('PRU-E2E-BAND-450 [FT-35] en 1440 × 900 la fila elegida lleva el fondo hundido y la marca de 3 px en acción, y el panel de Revisar queda fijo al desplazar la lista', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const muchos = Array.from({ length: 12 }, (_, i) =>
+      sms(`m${String(i)}`, `Comercio ${String(i)}`, 10 + i, `10:${String(10 + i)}`),
+    );
+    await preparar([...HISTORIAL, ...muchos]);
+    await page.goto('/bandeja');
+    await esperarContenido(page);
+    const primero = await filas(page).first().getByRole('link').first().getAttribute('href');
+    await page.goto(primero ?? '');
+    await esperarContenido(page);
+    const elegida = page.locator('[data-lista-lateral] [data-fila-elegida]');
+    await expect(elegida).toHaveCount(1);
+    const marca = await elegida.evaluate((el) => {
+      const antes = getComputedStyle(el, '::before');
+      const probe = document.createElement('span');
+      probe.style.color = 'var(--accion)';
+      document.body.append(probe);
+      const accion = getComputedStyle(probe).color;
+      probe.remove();
+      return { ancho: antes.width, color: antes.backgroundColor, accion };
+    });
+    expect(marca.ancho).toBe('3px');
+    expect(marca.color).toBe(marca.accion);
+    const arriba = (await panel(page).boundingBox())?.y ?? 0;
+    await page.mouse.wheel(0, 700);
+    await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+    const despues = (await panel(page).boundingBox())?.y ?? -1;
+    expect(despues).toBeGreaterThanOrEqual(0);
+    expect(despues).toBeLessThanOrEqual(Math.max(arriba, 32));
+    await expect(panel(page)).toBeInViewport();
+  });
 });

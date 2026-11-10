@@ -62,6 +62,8 @@ interface Props {
   /** FT-78: la fila reserva el lugar del asa; `ContextoArrastre` la monta cuando llega la librería. */
   readonly conArrastre?: boolean;
   readonly soltado?: Soltado;
+  /** [CH-220 A10] Abre el selector de categorías de la lista para este movimiento (solo los arrastrables, FT-78). */
+  readonly alElegirCategoria?: (id: string) => void;
 }
 
 export function FilaBandeja({
@@ -72,6 +74,7 @@ export function FilaBandeja({
   alTerminar,
   conArrastre,
   soltado,
+  alElegirCategoria,
 }: Props) {
   const operacion = useOperacion({ accion: aprobarMovimiento, creacion: true });
   const descartar = useOperacion({ accion: descartarMovimiento });
@@ -206,6 +209,13 @@ export function FilaBandeja({
           hrefRevisar={hrefRevisar}
           alAccionar={alAccionar}
           ranuraAsa={conArrastre === true && m.aprobacion.arrastrable === true}
+          {...(alElegirCategoria !== undefined && m.aprobacion.arrastrable === true
+            ? {
+                alElegirCategoria: () => {
+                  alElegirCategoria(m.id);
+                },
+              }
+            : {})}
         />
       </div>
       {reprocesar.estado === 'listo' || copia !== 'nada' ? (

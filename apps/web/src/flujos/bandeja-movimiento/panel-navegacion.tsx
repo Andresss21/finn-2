@@ -54,11 +54,12 @@ export function PanelNavegacion({ navegacion: n }: { readonly navegacion: Navega
   );
 }
 
-// Clases literales (L13): la lista a la izquierda y el flujo como tarjeta a la derecha (S4 del export). Es el envoltorio de la página, no de
+// Clases literales (L13): la lista a la izquierda y el flujo como tarjeta a la derecha (S4 del export), fija al desplazar la lista
+// ([CH-220 A11]). Es el envoltorio de la página, no de
 // `PaginaFlujo` (compartido: PRU-REN-PWA-002 cuida sus bytes); debajo de 1024 px no hay lista ni flechas y el flujo es la pantalla completa.
 const PANEL = {
   marco:
-    'relative lg:mx-auto lg:grid lg:max-w-270 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start lg:gap-8 lg:[&>main]:max-w-none lg:[&>main]:rounded-contenedor lg:[&>main]:bg-superficie lg:[&>main]:p-6',
+    'relative lg:mx-auto lg:grid lg:max-w-270 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start lg:gap-8 lg:[&>main]:max-w-none lg:[&>main]:sticky lg:[&>main]:top-6 lg:[&>main]:rounded-contenedor lg:[&>main]:bg-superficie lg:[&>main]:p-6',
   lista: 'hidden flex-col gap-4 lg:flex',
   navegacion: 'absolute top-8 right-6 z-40',
 } as const;

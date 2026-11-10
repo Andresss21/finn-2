@@ -149,7 +149,13 @@ export function ListaBandeja({
                 key={m.id}
                 role="listitem"
                 {...(m.id === actual
-                  ? { 'aria-current': 'true', className: 'bg-superficie-hundida' }
+                  ? // [CH-220 A11] La fila elegida: fondo hundido y la marca de 3 px en `--accion` a la izquierda
+                    {
+                      'aria-current': 'true',
+                      'data-fila-elegida': '',
+                      className:
+                        'relative bg-superficie-hundida before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:bg-accion',
+                    }
                   : {})}
               >
                 <FilaBandeja
@@ -158,7 +164,9 @@ export function ListaBandeja({
                   resultado={retenidas[m.id]?.resultado}
                   alIniciar={alIniciar}
                   alTerminar={alTerminar}
-                  {...(destinos === undefined ? {} : { conArrastre: true })}
+                  {...(destinos === undefined
+                    ? {}
+                    : { conArrastre: true, alElegirCategoria: elegirOtra })}
                   {...(soltado?.movimientoId === m.id ? { soltado } : {})}
                 />
               </div>

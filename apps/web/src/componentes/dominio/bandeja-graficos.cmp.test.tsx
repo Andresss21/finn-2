@@ -250,3 +250,48 @@ describe('PRU-CMP-CTA-102 bandeja y gráficos', () => {
     ).toEqual([]);
   });
 });
+
+describe('PRU-CMP-BAND acciones de cada fila de la Bandeja', () => {
+  it('PRU-CMP-BAND-450 [FT-35] cada clase de fila lleva sus acciones en la lista: falta la categoría, coincidencia, no reconocido, con error y posible duplicado, con un solo enlace a Revisar', () => {
+    const elegidas: string[] = [];
+    const [, falta] = SIETE[1] ?? [];
+    const raiz = montar(
+      <>
+        {SIETE.filter(([v]) => v !== 'listo' && v !== 'faltaOtro').map(([v, m]) => (
+          <MovimientoBandeja key={v} movimiento={{ ...m, id: v }} hrefRevisar={`/bandeja/${v}`} />
+        ))}
+        {falta === undefined ? null : (
+          <MovimientoBandeja
+            movimiento={{ ...falta, id: 'arrastrable' }}
+            hrefRevisar="/bandeja/arrastrable"
+            alElegirCategoria={() => elegidas.push('arrastrable')}
+          />
+        )}
+      </>,
+    );
+    const acciones = (id: string): string[] =>
+      [...(raiz.querySelector(`[data-movimiento="${id}"]`)?.querySelectorAll('a, button') ?? [])]
+        .filter((x) => x.closest('.ml-13') !== null)
+        .map((x) => `${x.tagName === 'A' ? 'a' : 'b'}:${x.textContent}`);
+    expect(acciones('falta')).toEqual(['a:Elegir categoría']);
+    expect(acciones('coincidencia')).toEqual(['a:Ver la programada']);
+    expect(acciones('noReconocido')).toEqual(['a:Registrar a mano']);
+    expect(acciones('error')).toEqual(['b:Intentar de nuevo', 'b:Copiar referencia', 'a:Revisar']);
+    expect(acciones('duplicado')).toEqual(['b:Es otro gasto', 'b:Descartar', 'a:Revisar']);
+    // Con el selector de la lista, «Elegir categoría» es de un toque y el enlace queda en «Revisar»
+    expect(acciones('arrastrable')).toEqual(['b:Elegir categoría', 'a:Revisar']);
+    act(() => {
+      raiz
+        .querySelector<HTMLButtonElement>('button[aria-label="Elegir categoría SUPER SELECTOS"]')
+        ?.click();
+    });
+    expect(elegidas).toEqual(['arrastrable']);
+    for (const fila of raiz.querySelectorAll('[data-movimiento]'))
+      expect(fila.querySelectorAll('a'), fila.getAttribute('data-movimiento') ?? '').toHaveLength(
+        1,
+      );
+    expect(
+      raiz.querySelector('[data-movimiento="noReconocido"] blockquote')?.textContent,
+    ).toContain('SUPER SELECTOS');
+  });
+});
