@@ -23,6 +23,7 @@ import { ConsumosYCalendario } from './calendario';
 import { Desarchivar } from './desarchivar';
 import { Historial } from './historial';
 import { PantallaPagoTarjeta } from './pago';
+import { MontoDestello } from '../../../../../componentes/dominio/monto-destello';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline ${FOCO}`;
@@ -165,10 +166,9 @@ export function PantallaDetalleCategoria({
           <div>
             <p className="text-cuerpo-pequeno">{t.numeros.disponible}</p>
             <p>
-              <Monto
+              <MontoDestello
                 centavos={numeros.disponible}
                 rol="cifra-principal"
-                destello
                 {...(estadoDisponible ? { estado: estadoDisponible } : {})}
               />
             </p>

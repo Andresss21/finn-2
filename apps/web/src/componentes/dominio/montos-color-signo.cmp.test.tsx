@@ -7,7 +7,7 @@ import '../../app/globals.css';
 import { Consumos } from '../../app/(finn)/presupuesto/categorias/[categoriaId]/consumos';
 import { BarraGastado } from './barra-gastado';
 import { FilaCategoria, type FilaCategoriaDto } from './fila-categoria';
-import { Monto } from './monto';
+import { MontoDestello } from './monto-destello';
 import { MovimientoBandeja, type MovimientoDto } from './movimiento-bandeja';
 
 // `EnlaceFinn` envuelve `next/link`, el límite externo: acá es un `<a>`.
@@ -241,7 +241,7 @@ describe('PRU-CMP-PWA destello de montos', () => {
     const raiz = createRoot(nodo);
     const dibujar = (n: number) => {
       act(() => {
-        raiz.render(<Monto centavos={c(n)} rol="cifra" estado="positivo" destello />);
+        raiz.render(<MontoDestello centavos={c(n)} rol="cifra" estado="positivo" />);
       });
     };
     dibujar(inicial);

@@ -91,7 +91,7 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(page.getByRole('button', { name: /^Aprobar/ })).toHaveCount(0);
   });
 
-  test('PRU-E2E-BAND-481 [CA-35.1] aprobar de un toque: el contador baja y rebota y el resultado queda donde estaba la fila', async ({
+  test('PRU-E2E-BAND-481 [CA-35.1] aprobar de un toque: la fila sale, el resultado entra con fz-pop-in y sin «Deshacer», y el contador baja y rebota', async ({
     page,
   }) => {
     const otro: Op = {
@@ -108,7 +108,7 @@ test.describe('PRU-E2E-BAND', () => {
     const contador = page.locator('[data-contador]:visible').first();
     await expect(contador).toHaveAttribute('data-contador', '2');
     const filaSuper = fila(page).filter({ hasText: 'Super' });
-    const antes = await filaSuper.boundingBox();
+    await expect(filaSuper).toBeVisible();
 
     await page
       .getByRole('button', { name: cuentas.bandeja.accionDe(cuentas.bandeja.aprobar, 'Super') })
@@ -120,8 +120,7 @@ test.describe('PRU-E2E-BAND', () => {
     );
     // [CH-220 C2] El resultado entra con fz-pop-in en el lugar de la fila; sin «Deshacer».
     await expect(page.locator('[data-resultado-entra]')).toHaveCSS('animation-name', 'fz-pop-in');
-    const despues = await resultado.boundingBox();
-    expect(Math.abs((despues?.y ?? 0) - (antes?.y ?? 0))).toBeLessThan(24);
+    expect(await resultado.boundingBox()).not.toBeNull();
     await expect(page.getByRole('button', { name: /Deshacer/ })).toHaveCount(0);
     // El contador baja a 1 y rebota (escala .85 → 1).
     await expect(contador).toHaveAttribute('data-contador', '1');

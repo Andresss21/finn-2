@@ -4,7 +4,7 @@
 // montos (PF-3): el impacto y los avisos los trae el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { useCallback, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useMemo } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
@@ -31,7 +31,12 @@ import {
   type Descriptor,
   type TipoCuenta,
 } from './campos';
-import { ColorTarjeta } from './color-tarjeta';
+
+// El selector de color y su cara de vista previa solo se usan con una tarjeta de crédito: se cargan al elegirla (05 §13.3),
+// fuera del JS de la ruta (presupuesto de 05 §13.1).
+const ColorTarjeta = lazy(() =>
+  import('./color-tarjeta').then((m) => ({ default: m.ColorTarjeta })),
+);
 
 export interface PropsFormularioCuentaNueva {
   readonly hoy: FechaLocal;
@@ -117,17 +122,18 @@ export function FormularioCuentaNueva({
       );
     if (x.n === 'color')
       return (
-        <ColorTarjeta
-          key={x.n}
-          valor={c.color}
-          alCambiar={poner('color')}
-          vista={{
-            nombre: c.nombre,
-            red: t.redes[c.red as keyof typeof t.redes],
-            ...(c.ultimos4.trim() === '' ? {} : { ultimos4: c.ultimos4.trim() }),
-            ...(institucionElegida === undefined ? {} : { institucion: institucionElegida }),
-          }}
-        />
+        <Suspense key={x.n} fallback={<div className="min-h-60" aria-hidden="true" />}>
+          <ColorTarjeta
+            valor={c.color}
+            alCambiar={poner('color')}
+            vista={{
+              nombre: c.nombre,
+              red: t.redes[c.red as keyof typeof t.redes],
+              ...(c.ultimos4.trim() === '' ? {} : { ultimos4: c.ultimos4.trim() }),
+              ...(institucionElegida === undefined ? {} : { institucion: institucionElegida }),
+            }}
+          />
+        </Suspense>
       );
     if (x.clase === 'opciones')
       return (

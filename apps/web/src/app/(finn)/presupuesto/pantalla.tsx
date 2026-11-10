@@ -18,6 +18,7 @@ import { SelectorPeriodo } from '../../../componentes/navegacion/selector-period
 import { dominio } from '../../../textos/dominio';
 import { glosario } from '../../../textos/glosario';
 import { presupuesto as t } from '../../../textos/presupuesto';
+import { MontoDestello } from '../../../componentes/dominio/monto-destello';
 
 /** Los valores de `?filtro=` en la URL (BE-39); sin ninguno, "todas". */
 export type FiltroDeUrl = 'sobregiradas' | 'sin-fondos' | 'cubiertas';
@@ -262,7 +263,7 @@ export function PantallaPresupuesto({
                   <div key={etiqueta} className="flex min-w-0 flex-col gap-0.5">
                     <dt className="t-rotulo text-texto-secundario">{etiqueta}</dt>
                     <dd className="font-bold">
-                      <Monto centavos={centavos} destello />
+                      <MontoDestello centavos={centavos} />
                     </dd>
                   </div>
                 ))}
