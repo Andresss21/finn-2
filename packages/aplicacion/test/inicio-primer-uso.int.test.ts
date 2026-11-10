@@ -46,7 +46,13 @@ describe('PRU-INT-INICIO', () => {
     expect(
       await confirmar(
         OP01,
-        { id: uuid(1), tipo: 'efectivo', nombre: 'Ahorro', saldo: '1000.00' },
+        {
+          id: uuid(1),
+          tipo: 'efectivo',
+          subtipoEfectivo: 'ahorro',
+          nombre: 'Ahorro',
+          saldo: '1000.00',
+        },
         depsMarco(),
       ),
     ).toMatchObject({ ok: true });
@@ -122,6 +128,7 @@ describe('PRU-INT-INICIO', () => {
     const deCuenta = {
       id: uuid(300),
       tipo: 'efectivo',
+      subtipoEfectivo: 'corriente',
       nombre: 'Efectivo',
       saldo: '10.00',
     } as const;

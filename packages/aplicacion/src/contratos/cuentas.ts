@@ -97,8 +97,8 @@ export const op01 = z.discriminatedUnion('tipo', [
     .object({
       ...comunes,
       tipo: z.literal('efectivo'),
-      // [CH-224] [CH-229] Expandir: sin subtipo es `corriente` hasta que la interfaz lo envíe (TA-495)
-      subtipoEfectivo: subtipoEfectivo.default('corriente'),
+      // [CH-224] [CH-229] Contraer (TA-495): obligatorio en efectivo, como dice 04 OP-01
+      subtipoEfectivo,
       saldo: montoTextoConSigno,
     })
     .superRefine((e, ctx) => {

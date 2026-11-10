@@ -58,6 +58,7 @@ describe('PRU-INT-CTA', () => {
       await ejecutar(OP01, {
         id: uuid(1100),
         tipo: 'efectivo',
+        subtipoEfectivo: 'ahorro',
         nombre: 'Ahorro 51',
         saldo: '1000.00',
       }),
@@ -79,7 +80,13 @@ describe('PRU-INT-CTA', () => {
 
   it('PRU-INT-CTA-104 [CA-51.4] una cuenta archivada no está en cuentas() y con incluirArchivadas aparece en archivadas', async () => {
     expect(
-      await ejecutar(OP01, { id: uuid(1110), tipo: 'efectivo', nombre: 'Vieja 51', saldo: '0' }),
+      await ejecutar(OP01, {
+        id: uuid(1110),
+        tipo: 'efectivo',
+        subtipoEfectivo: 'corriente',
+        nombre: 'Vieja 51',
+        saldo: '0',
+      }),
     ).toMatchObject({ ok: true });
     expect(await ejecutar(OP04, { cuentaId: uuid(1110) })).toMatchObject({ ok: true });
 

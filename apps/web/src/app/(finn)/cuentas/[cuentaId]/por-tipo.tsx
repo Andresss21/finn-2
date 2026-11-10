@@ -107,9 +107,15 @@ export function BloqueTarjeta({
         </dl>
       </section>
       <section aria-labelledby="al-pagar" className={TARJETA}>
-        <h2 id="al-pagar" className="text-rotulo text-texto-secundario">
-          {t.alPagar}
-        </h2>
+        {/* [CH-234 A17] La fecha de pago del DTO, tal cual, a la derecha del título */}
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 id="al-pagar" className="text-rotulo text-texto-secundario">
+            {t.alPagar}
+          </h2>
+          <span data-proximo-pago={d.proximoPago} className="text-cuerpo-pequeno font-semibold">
+            {t.pagaAntesDel(d.proximoPago.slice(8), d.proximoPago.slice(5, 7))}
+          </span>
+        </div>
         <Filas
           filas={[
             [t.deudaAnterior, m(d.deudaAnterior)],
