@@ -41,7 +41,28 @@ const PRESTAMO = {
   cuotasPagadasAlCrear: entero(0),
 };
 const INVERSION = { rendimientoAnualEsperado: porcentaje };
-const GENERALES = { nombre: textoLimpio, institucionId: uuid, ultimos4, fechaApertura: fechaLocal };
+/** [CH-224] Subtipo de una cuenta de efectivo (03 §3.4); solo en efectivo. */
+const subtipoEfectivo = z.enum(['corriente', 'ahorro', 'billetera'], {
+  error: 'Elegí corriente, ahorro o billetera.',
+});
+const GENERALES = {
+  nombre: textoLimpio,
+  institucionId: uuid,
+  ultimos4,
+  subtipoEfectivo,
+  fechaApertura: fechaLocal,
+};
+
+/** [CH-224] Una billetera no lleva institución ni últimos 4 (03 §3.4). */
+const BILLETERA = {
+  institucionId: 'Una billetera no lleva institución.',
+  ultimos4: 'Una billetera no lleva últimos 4.',
+} as const;
+
+/** [CH-224] El subtipo solo existe en efectivo: en los otros tipos, cualquier valor se rechaza. */
+const sinSubtipoEfectivo = {
+  subtipoEfectivo: z.never({ error: 'Solo una cuenta de efectivo tiene subtipo.' }).optional(),
+};
 
 /** Coherencia de un préstamo (03 §3.6): `frecuenciaDias` solo con `cada_n_dias`; pagadas ≤ plazo. */
 function coherentePrestamo(
@@ -72,9 +93,22 @@ const comunes = {
 
 /** OP-01 Crear cuenta. En una tarjeta, `saldo` es la deuda (positivo = debe). */
 export const op01 = z.discriminatedUnion('tipo', [
-  z.object({ ...comunes, tipo: z.literal('efectivo'), saldo: montoTextoConSigno }),
+  z
+    .object({
+      ...comunes,
+      tipo: z.literal('efectivo'),
+      // [CH-224] [CH-229] Expandir: sin subtipo es `corriente` hasta que la interfaz lo envíe (TA-495)
+      subtipoEfectivo: subtipoEfectivo.default('corriente'),
+      saldo: montoTextoConSigno,
+    })
+    .superRefine((e, ctx) => {
+      if (e.subtipoEfectivo !== 'billetera') return;
+      for (const k of ['institucionId', 'ultimos4'] as const)
+        if (e[k] !== undefined) ctx.addIssue({ code: 'custom', path: [k], message: BILLETERA[k] });
+    }),
   z.object({
     ...comunes,
+    ...sinSubtipoEfectivo,
     tipo: z.literal('tarjeta'),
     saldo: montoTextoConSigno,
     limiteCredito: TARJETA.limiteCredito,
@@ -87,6 +121,7 @@ export const op01 = z.discriminatedUnion('tipo', [
   z
     .object({
       ...comunes,
+      ...sinSubtipoEfectivo,
       tipo: z.literal('prestamo'),
       saldo: montoTexto,
       contraparte: PRESTAMO.contraparte,
@@ -105,6 +140,7 @@ export const op01 = z.discriminatedUnion('tipo', [
     .superRefine(coherentePrestamo),
   z.object({
     ...comunes,
+    ...sinSubtipoEfectivo,
     tipo: z.literal('inversion'),
     saldo: montoTexto,
     rendimientoAnualEsperado: INVERSION.rendimientoAnualEsperado.optional(),
@@ -123,11 +159,17 @@ function opcionales<F extends Record<string, z.ZodType>>(forma: F, nulos: boolea
   };
 }
 
-/** OP-02 Editar cuenta: los campos que cambian y, de cada uno, el valor que vio la interfaz (4.6.2). */
+/**
+ * OP-02 Editar cuenta: los campos que cambian y, de cada uno, el valor que vio la interfaz (4.6.2). [CH-224]
+ * `institucionId` y `ultimos4` admiten `null` para quitarlos: pasar a billetera exige quitar los dos en la
+ * misma edición, porque el contrato no ve la cuenta.
+ */
 export const op02 = z
   .object({
     cuentaId: uuid,
     ...(opcionales(EDITABLES, false) as { [K in keyof Editables]: z.ZodOptional<Editables[K]> }),
+    institucionId: uuid.nullable().optional(),
+    ultimos4: ultimos4.nullable().optional(),
     esperado: z.object(
       opcionales(EDITABLES, true) as {
         [K in keyof Editables]: z.ZodOptional<z.ZodNullable<Editables[K]>>;
@@ -142,6 +184,9 @@ export const op02 = z
           path: ['esperado', k],
           message: 'Falta el valor que viste.',
         });
+    if (e.subtipoEfectivo === 'billetera')
+      for (const k of ['institucionId', 'ultimos4'] as const)
+        if (e[k] !== null) ctx.addIssue({ code: 'custom', path: [k], message: BILLETERA[k] });
   });
 export type EntradaOp02 = z.output<typeof op02>;
 

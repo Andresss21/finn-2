@@ -82,16 +82,21 @@ const APROBABLES = new Set(['pendiente', 'con_coincidencia', 'no_reconocido', 'e
 
 /**
  * BE-41: la cuenta de efectivo del último pago a la tarjeta (por fecha, clave de orden y secuencia),
- * si sigue abierta. Sin pagos anteriores o con la cuenta archivada, no hay propuesta.
+ * si sigue abierta. Sin pagos anteriores o con la cuenta archivada, no hay propuesta. [CH-224] Se saltan los
+ * pagos desde una cuenta de ahorro: cuenta el último de los restantes, y sin ninguno no hay propuesta.
  */
 export function origenPropuestoPagoTarjeta(i: Instantanea, tarjetaId: Uuid): Ref | undefined {
   const x = indice(i);
   const efectos = (id: Uuid) => x.efectos.get(id) ?? [];
+  const ahorro = new Set(
+    i.hechos.cuentas.filter((k) => k.subtipoEfectivo === 'ahorro').map((k) => k.id),
+  );
   const [ultimo] = i.hechos.transacciones
     .filter(
       (t) =>
         t.tipo === 'pago_tarjeta' &&
-        efectos(t.id).some((e) => e.cuentaId === tarjetaId && e.monto > 0),
+        efectos(t.id).some((e) => e.cuentaId === tarjetaId && e.monto > 0) &&
+        !efectos(t.id).some((e) => e.monto < 0 && ahorro.has(e.cuentaId)),
     )
     .sort((a, b) => (claveDe(a) < claveDe(b) ? 1 : -1));
   const origen = ultimo === undefined ? undefined : efectos(ultimo.id).find((e) => e.monto < 0);

@@ -24,6 +24,9 @@ export interface Cuenta {
   readonly nombre: string;
   readonly institucionId: Uuid | null;
   readonly ultimos4: string | null;
+  /** [CH-224] Solo en efectivo (03 §3.4); la base siempre lo trae. Falta solo en hechos armados a mano, que
+   * valen como `corriente`, el valor de las cuentas de efectivo anteriores (m_cuentas_subtipo_efectivo). */
+  readonly subtipoEfectivo?: E.SubtipoEfectivo | null;
   readonly fechaApertura: FechaLocal;
   readonly orden: number;
   readonly archivada: boolean;

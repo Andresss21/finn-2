@@ -57,6 +57,7 @@ export function cuentas(
           )[0];
         return {
           ...comun(k),
+          subtipoEfectivo: k.subtipoEfectivo ?? ('corriente' as const), // [CH-224]
           saldo: saldoDe(k.id)?.saldo ?? Centavos.cero,
           saldoConfirmado: saldoDe(k.id)?.confirmado ?? Centavos.cero,
           ...(c === undefined

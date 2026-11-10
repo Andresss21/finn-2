@@ -178,7 +178,7 @@ describe('PRU-INT-ESQ', () => {
          RETURNING modo::text AS modo`;
       await con(base.url, async (app) => {
         await app.query(`BEGIN; SELECT finn.tomar_bloqueo();
-          INSERT INTO finn.cuentas (tipo, nombre, fecha_apertura) VALUES ('efectivo', 'Caja', finn.hoy());`);
+          INSERT INTO finn.cuentas (tipo, nombre, subtipo_efectivo, fecha_apertura) VALUES ('efectivo', 'Caja', 'corriente', finn.hoy());`);
         const porDefecto = await app.query<{ modo: string }>(insertar(''));
         const saldo = await app.query<{ modo: string }>(insertar('saldo'));
         await app.query('COMMIT');
@@ -236,7 +236,7 @@ describe('PRU-INT-ESQ', () => {
       // Una programada válida (gasto con una línea), como finn_app con bloqueo; los diferidos corren al COMMIT
       await con(base.url, async (app) => {
         await app.query(`BEGIN; SELECT finn.tomar_bloqueo();
-          INSERT INTO finn.cuentas (tipo, nombre, fecha_apertura) VALUES ('efectivo', 'Caja', finn.hoy());
+          INSERT INTO finn.cuentas (tipo, nombre, subtipo_efectivo, fecha_apertura) VALUES ('efectivo', 'Caja', 'corriente', finn.hoy());
           INSERT INTO finn.grupos (nombre) VALUES ('Casa');
           INSERT INTO finn.categorias (grupo_id, nombre) SELECT id, 'Luz' FROM finn.grupos WHERE nombre = 'Casa';
           INSERT INTO finn.programadas (tipo, cuenta_id, comercio, monto, frecuencia, primera_fecha)
@@ -366,6 +366,114 @@ describe('PRU-INT-ESQ', () => {
         }
         expect(con_filas).toEqual([]);
       });
+    });
+  });
+});
+
+/** Las sentencias de una migración como las aplica `prisma migrate deploy`: una por una (03 §11.3, CH-23). */
+function sentencias(sql: string): string[] {
+  const lista: string[] = [];
+  let actual = '';
+  let enCuerpo = false;
+  for (const linea of sql.split('\n')) {
+    if (!enCuerpo && linea.trimStart().startsWith('--')) continue;
+    actual += `${linea}\n`;
+    if ((linea.match(/\$\$/g) ?? []).length % 2 === 1) enCuerpo = !enCuerpo;
+    if (!enCuerpo && linea.trimEnd().endsWith(';')) {
+      lista.push(actual.trim());
+      actual = '';
+    }
+  }
+  return lista;
+}
+
+/** El SQLSTATE y la restricción con que falla `sql` en una transacción con bloqueo que se deshace, u `ok`. */
+async function rechazo(c: pg.Client, sql: string): Promise<string> {
+  await c.query('BEGIN; SELECT finn.tomar_bloqueo();');
+  try {
+    await c.query(sql);
+    return 'ok';
+  } catch (e) {
+    const { code, constraint } = e as { code?: string; constraint?: string };
+    return `${code ?? String(e)} ${constraint ?? ''}`.trim();
+  } finally {
+    await c.query('ROLLBACK');
+  }
+}
+
+describe('PRU-ESQ-ESQ', () => {
+  const base = crearBasePrueba();
+  it('PRU-ESQ-ESQ-110 CH-224 MIG-16 m_cuentas_subtipo_efectivo: las cuentas de efectivo anteriores quedan en corriente; efectivo sin subtipo, tarjeta con subtipo y billetera con institución o últimos 4 fallan por sus CHECK', async () => {
+    const dir = fileURLToPath(new URL('../prisma/migrations/', import.meta.url));
+    const carpeta = readdirSync(dir).filter((d) => d.endsWith('_m_cuentas_subtipo_efectivo'));
+    expect(carpeta).toHaveLength(1);
+    const sql = readFileSync(join(dir, carpeta[0] ?? '', 'migration.sql'), 'utf8');
+    expect(sql.startsWith('-- finn:manual')).toBe(true);
+    const columna = async (c: pg.Client): Promise<unknown[]> =>
+      (
+        await c.query<Record<string, unknown>>(
+          `SELECT udt_name, is_nullable, column_default FROM information_schema.columns
+           WHERE table_schema = 'finn' AND table_name = 'cuentas' AND column_name = 'subtipo_efectivo'`,
+        )
+      ).rows;
+    const COLUMNA = [{ udt_name: 'subtipo_efectivo', is_nullable: 'YES', column_default: null }];
+
+    // La base de antes de la migración, con dos cuentas de efectivo que ya existían; después, la migración
+    // tal cual está en disco, sentencia por sentencia como `migrate deploy` (cada una, su transacción)
+    await con(base.urlMigraciones, async (mig) => {
+      expect(await columna(mig)).toEqual(COLUMNA);
+      await mig.query(`ALTER TABLE finn.cuentas DROP CONSTRAINT ck_cuentas_billetera,
+        DROP CONSTRAINT ck_cuentas_subtipo_efectivo, DROP COLUMN subtipo_efectivo;
+        DROP TYPE finn.subtipo_efectivo;`);
+      expect(await columna(mig)).toEqual([]);
+      await mig.query(`DO $$ BEGIN
+          PERFORM finn.tomar_bloqueo();
+          INSERT INTO finn.cuentas (tipo, nombre, ultimos4, fecha_apertura)
+            VALUES ('efectivo', 'Caja', NULL, finn.hoy()), ('efectivo', 'Banco', '4321', finn.hoy());
+        END $$;`);
+      const lista = sentencias(sql);
+      expect(lista).toHaveLength(6);
+      for (const s of lista) await mig.query(s);
+      expect(await columna(mig)).toEqual(COLUMNA);
+      const { rows } = await mig.query<{ nombre: string; subtipo: string }>(
+        'SELECT nombre, subtipo_efectivo::text AS subtipo FROM finn.cuentas ORDER BY nombre',
+      );
+      expect(rows).toEqual([
+        { nombre: 'Banco', subtipo: 'corriente' },
+        { nombre: 'Caja', subtipo: 'corriente' },
+      ]);
+      const { rows: valores } = await mig.query<{ v: string }>(
+        'SELECT enum_range(NULL::finn.subtipo_efectivo)::text AS v',
+      );
+      expect(valores).toEqual([{ v: '{corriente,ahorro,billetera}' }]);
+    });
+
+    // Las CHECK, como finn_app
+    await con(base.url, async (app) => {
+      /** Una cuenta con su tipo, su subtipo y, si se da, una columna más con su valor SQL. */
+      const insertar = (tipo: string, subtipo: string | null, [columna, valor]: string[] = []) =>
+        `INSERT INTO finn.cuentas (tipo, nombre, subtipo_efectivo, fecha_apertura${columna ? `, ${columna}` : ''})
+         VALUES ('${tipo}', 'Prueba', ${subtipo === null ? 'NULL' : `'${subtipo}'`}, finn.hoy()${valor ? `, ${valor}` : ''})`;
+      const DE_SUBTIPO = '23514 ck_cuentas_subtipo_efectivo';
+      const DE_BILLETERA = '23514 ck_cuentas_billetera';
+      const institucion = '(SELECT id FROM finn.instituciones ORDER BY nombre LIMIT 1)';
+      expect(await rechazo(app, insertar('efectivo', null))).toBe(DE_SUBTIPO);
+      expect(await rechazo(app, insertar('tarjeta', 'corriente'))).toBe(DE_SUBTIPO);
+      expect(await rechazo(app, insertar('efectivo', 'billetera', ['ultimos4', "'1234'"]))).toBe(
+        DE_BILLETERA,
+      );
+      expect(
+        await rechazo(app, insertar('efectivo', 'billetera', ['institucion_id', institucion])),
+      ).toBe(DE_BILLETERA);
+      expect(
+        await rechazo(
+          app,
+          "UPDATE finn.cuentas SET subtipo_efectivo = 'billetera' WHERE nombre = 'Banco'",
+        ),
+      ).toBe(DE_BILLETERA);
+      for (const subtipo of ['corriente', 'ahorro', 'billetera'])
+        expect(await rechazo(app, insertar('efectivo', subtipo))).toBe('ok');
+      expect(await rechazo(app, insertar('efectivo', 'ahorro', ['ultimos4', "'1234'"]))).toBe('ok');
     });
   });
 });
