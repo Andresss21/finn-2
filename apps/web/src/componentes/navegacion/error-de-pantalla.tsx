@@ -25,7 +25,11 @@ export function ErrorDeLaPantalla({
         role="alert"
         className="mx-5 mt-1 flex flex-col items-start gap-2.5 rounded-contenedor bg-fondo p-4.5 shadow-elevacion-1"
       >
-        <p className="font-semibold text-texto">{estados.errorTitulo}</p>
+        {/* [A35] Con el glifo `info` del export, además del texto. */}
+        <p className="flex items-center gap-2 font-semibold text-texto">
+          <Icono nombre="info" tamano={20} />
+          {estados.errorTitulo}
+        </p>
         {digest === undefined ? null : (
           <div className="flex items-center gap-1.5">
             <span className="text-cuerpo-pequeno tabular-nums text-texto-secundario">

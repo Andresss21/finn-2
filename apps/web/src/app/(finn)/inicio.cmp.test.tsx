@@ -357,3 +357,49 @@ describe('PRU-CMP-INICIO billete que rueda una vez por sesión', () => {
     lectura.mockRestore();
   });
 });
+
+/** Reglas de las hojas de estilo cargadas, aplanadas dentro de `@media`, con su condición. */
+function reglasCss(): { selector: string; condicion: string; estilo: CSSStyleDeclaration }[] {
+  const salida: { selector: string; condicion: string; estilo: CSSStyleDeclaration }[] = [];
+  const recorrer = (lista: CSSRuleList, condicion: string) => {
+    for (const r of Array.from(lista)) {
+      if (r instanceof CSSStyleRule)
+        salida.push({ selector: r.selectorText, condicion, estilo: r.style });
+      else if (r instanceof CSSMediaRule) recorrer(r.cssRules, r.conditionText);
+      else if ('cssRules' in r) recorrer((r as CSSGroupingRule).cssRules, condicion);
+    }
+  };
+  for (const hoja of Array.from(document.styleSheets)) recorrer(hoja.cssRules, '');
+  return salida;
+}
+
+describe('PRU-CMP-INICIO enlaces de encabezado', () => {
+  it('PRU-CMP-INICIO-310 [] los enlaces de encabezado «Programadas» y «Actividad» llevan arrowR, que se mueve 4 px al pasar el puntero', () => {
+    const nodo = montar(
+      <PantallaInicio
+        dto={dto({
+          atencion: {
+            proximosPagos: [
+              {
+                programada: { id: 'p-1', nombre: 'Internet' },
+                fechaEsperada: '2027-02-10',
+                cuenta: { id: 'c-1', nombre: 'Ahorro' },
+                monto: centavos(3500),
+                registroAutomatico: false,
+              },
+            ],
+          },
+        })}
+      />,
+    );
+    const a = enlace(nodo, t.programadas);
+    expect(a.querySelector('[data-icono="arrowR"]')).not.toBeNull();
+    const hover = reglasCss().find(
+      (r) => r.selector.includes(':hover') && r.selector.includes('[data-icono="arrowR"]'),
+    );
+    expect(hover?.estilo.transform).toBe('translateX(4px)');
+    expect(hover?.condicion).toContain('hover: hover');
+    // Las flechas de los círculos del selector de período (con su propio nombre accesible) no se mueven.
+    expect(hover?.selector).toContain(':not([aria-label])');
+  });
+});

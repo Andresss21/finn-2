@@ -529,3 +529,12 @@ body {
     transform: translateX(4px);
   }
 }
+/* A31: los enlaces de encabezado («Programadas →», «Actividad →») mueven su `arrowR` 4 px al pasar. */
+@media (hover: hover) {
+  a:not([aria-label]) [data-icono='arrowR'] {
+    transition: transform var(--duracion-normal) var(--curva-estandar);
+  }
+  a:not([aria-label]):hover [data-icono='arrowR'] {
+    transform: translateX(4px);
+  }
+}
