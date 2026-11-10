@@ -34,6 +34,8 @@ type Job = {
   if?: string;
   permissions?: Record<string, string>;
   outputs?: Record<string, string>;
+  env?: Record<string, string>;
+  strategy?: { 'fail-fast'?: boolean; matrix?: Record<string, unknown[]> };
   steps: Paso[];
 };
 type Workflow = {
@@ -63,7 +65,8 @@ const INSTALAR = 'pnpm install --frozen-lockfile';
 // Lo único que cada job ejecuta, además de la instalación (DP-34). `rapido` lleva `integracion` por M5 (DP-33).
 const SCRIPTS: Record<string, string[]> = {
   rapido: ['ci:rapido', 'ci:integracion'],
-  e2e: ['ci:e2e'],
+  'e2e-fragmento': ['ci:e2e'],
+  e2e: ['ci:e2e-unir'],
   cierre: ['ci:cierre'],
   desplegar: ['ci:politica-patrones', 'ci:desplegar'],
 };
@@ -76,14 +79,22 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(Object.keys(wf.on).sort()).toEqual(['pull_request', 'push']);
   });
 
-  it('workflows: jobs rapido, e2e, cierre y desplegar; sin integracion aparte (M5)', () => {
-    expect(Object.keys(wf.jobs).sort()).toEqual(['cierre', 'desplegar', 'e2e', 'rapido']);
-    for (const [n, j] of Object.entries(wf.jobs)) expect(j.name).toBe(n);
+  it('workflows: jobs rapido, e2e-fragmento, e2e, cierre y desplegar; sin integracion aparte (M5, CH-231)', () => {
+    expect(Object.keys(wf.jobs).sort()).toEqual([
+      'cierre',
+      'desplegar',
+      'e2e',
+      'e2e-fragmento',
+      'rapido',
+    ]);
+    for (const [n, j] of Object.entries(wf.jobs))
+      expect(j.name).toBe(n === 'e2e-fragmento' ? `${n}-\${{ matrix.fragmento }}` : n);
   });
 
-  it('workflows: needs — e2e depende de rapido; cierre de rapido y e2e; rapido de nadie', () => {
+  it('workflows: needs — e2e-fragmento depende de rapido; e2e de los dos; cierre de rapido y e2e; rapido de nadie', () => {
     expect(lista(job('rapido').needs)).toEqual([]);
-    expect(lista(job('e2e').needs)).toEqual(['rapido']);
+    expect(lista(job('e2e-fragmento').needs)).toEqual(['rapido']);
+    expect(lista(job('e2e').needs).sort()).toEqual(['e2e-fragmento', 'rapido']);
     expect(lista(job('cierre').needs).sort()).toEqual(['e2e', 'rapido']);
   });
 
@@ -130,7 +141,8 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
       expect(r.outputs?.[s]).toBe(`\${{ steps.rapido.outputs.${s} }}`);
     const integ = r.steps.find((p) => p.run === 'pnpm ci:integracion');
     expect(integ?.if).toBe("steps.rapido.outputs.integracion == 'true'");
-    expect(job('e2e').if).toBe("needs.rapido.outputs.e2e == 'true'");
+    expect(job('e2e-fragmento').if).toBe("needs.rapido.outputs.e2e == 'true'");
+    expect(job('e2e').if).toBe("${{ !cancelled() && needs.rapido.outputs.e2e == 'true' }}");
     expect(job('cierre').if).toContain("needs.rapido.result == 'success'");
     expect(job('cierre').if).toContain("needs.rapido.outputs.cierre == 'true'");
     expect(job('cierre').if).toContain('!cancelled()');
@@ -154,7 +166,14 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
         n,
       ).toHaveLength(1);
     }
-    for (const s of ['ci:rapido', 'ci:integracion', 'ci:e2e', 'ci:cierre', 'ci:local'])
+    for (const s of [
+      'ci:rapido',
+      'ci:integracion',
+      'ci:e2e',
+      'ci:e2e-unir',
+      'ci:cierre',
+      'ci:local',
+    ])
       expect(pkg.scripts[s], s).toBeDefined();
     expect(pkg.scripts['ci:rapido']).toContain('tools/ci/afecta.mjs rapido');
     expect(pkg.scripts['ci:integracion']).toContain('publicar-resultados.mjs integracion');
@@ -182,8 +201,47 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(wf.permissions).toEqual(LECTURA);
     expect(job('rapido').permissions).toEqual({ ...LECTURA, statuses: 'write' });
     expect(job('e2e').permissions).toEqual({ ...LECTURA, issues: 'write' });
+    expect(job('e2e-fragmento').permissions).toBeUndefined();
     expect(job('cierre').permissions).toBeUndefined();
     expect(job('desplegar').permissions).toEqual({ contents: 'write' });
+  });
+
+  it('workflows: la E2E corre en fragmentos 1..n con --shard i/n, sin cortar a los demás si uno falla, y cada uno sube su blob (CH-231)', () => {
+    const f = job('e2e-fragmento');
+    const fragmentos = f.strategy?.matrix?.['fragmento'] ?? [];
+    expect(f.strategy?.['fail-fast']).toBe(false);
+    expect(fragmentos).toEqual(Array.from({ length: fragmentos.length }, (_, i) => i + 1));
+    expect(fragmentos.length).toBeGreaterThanOrEqual(3);
+    expect(f.env?.['FINN_E2E_FRAGMENTO']).toBe(`\${{ matrix.fragmento }}/${fragmentos.length}`);
+    expect(f.env?.['FINN_E2E_GREP']).toBe('${{ needs.rapido.outputs.grep_e2e }}');
+    const subidas = f.steps.filter((p) => p.uses?.startsWith('actions/upload-artifact@'));
+    expect(subidas.map((p) => [p.with?.['name'], p.with?.['path'], p.if])).toEqual([
+      ['e2e-blob-${{ matrix.fragmento }}', 'test-results/e2e-blob/', '${{ !cancelled() }}'],
+      ['e2e-trazas-${{ matrix.fragmento }}', 'apps/web/test-results/', '${{ !cancelled() }}'],
+    ]);
+    // Ningún artefacto de un fragmento entra en `cierre` (descarga `informes-*`)
+    for (const s of subidas) expect(String(s.with?.['name'])).not.toMatch(/^informes-/);
+    // La medida de tamaño (TA-222) la guarda solo el fragmento que corrió tamano.e2e.ts
+    const guardar = f.steps.find((p) => p.uses?.startsWith('actions/cache/save@'));
+    expect(guardar?.if).toContain("github.event_name == 'push'");
+    expect(guardar?.if).toContain("hashFiles('test-results/tamanos-main/tamanos.json') != ''");
+  });
+
+  it('workflows: el job e2e une los blobs, pasa solo con todos los fragmentos en verde y sube informes-e2e como antes (CH-231)', () => {
+    const pasos = job('e2e').steps;
+    const bajar = pasos.findIndex((p) => p.uses?.startsWith('actions/download-artifact@'));
+    const unir = pasos.findIndex((p) => p.run === 'pnpm ci:e2e-unir');
+    expect(pasos[bajar]?.with).toMatchObject({
+      pattern: 'e2e-blob-*',
+      'merge-multiple': true,
+      path: 'test-results/e2e-blob',
+    });
+    expect(bajar).toBeLessThan(unir);
+    expect(pasos[unir]?.env?.['FINN_E2E_FRAGMENTOS']).toBe('${{ needs.e2e-fragmento.result }}');
+    const subir = pasos.find((p) => p.uses?.startsWith('actions/upload-artifact@'));
+    expect(subir?.with).toMatchObject({ name: 'informes-e2e', path: 'apps/web/test-results/' });
+    expect(subir?.if).toBe('${{ !cancelled() }}');
+    expect(pkg.scripts['ci:e2e-unir']).toBe('node tools/ci/afecta.mjs e2e-unir');
   });
 
   it('workflows: rapido restaura el modo de M4 por prefijo antes de ci:rapido, sin guardarlo (07 §6.5)', () => {
@@ -214,7 +272,7 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(g?.run).toContain('releases/download/v${GITLEAKS_VERSION}/');
     expect(g?.run).toMatch(/echo "\$\{GITLEAKS_SHA256\} {2}\S+" \| sha256sum -c -/);
     expect(i).toBeLessThan(pasos.findIndex((p) => p.run === 'pnpm ci:rapido'));
-    for (const n of ['e2e', 'cierre'])
+    for (const n of ['e2e-fragmento', 'e2e', 'cierre'])
       expect(job(n).steps.some((p) => p.id === 'gitleaks' || /gitleaks/.test(p.run ?? ''))).toBe(
         false,
       );
@@ -457,6 +515,55 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     );
     writeFileSync(f, JSON.stringify(nuevo));
     expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({ e2e: true });
+  });
+
+  it('workflows: ci:local corto solo con un diff de interfaz: solo-interfaz, mixto, dominio, servidor y arnés (CH-231)', () => {
+    const corto = (...a: string[]): boolean => decidir('', '', a)['solo_interfaz'] ?? false;
+    expect(
+      corto(
+        'apps/web/src/componentes/monto.tsx',
+        'apps/web/src/app/(finn)/layout.tsx',
+        'apps/web/e2e/pantallas/inicio/inicio.e2e.ts',
+        'apps/web/tailwind.css',
+      ),
+    ).toBe(true);
+    expect(corto('apps/web/src/x.tsx', 'packages/dominio/src/periodos.ts')).toBe(false);
+    expect(corto('packages/dominio/src/periodos.ts')).toBe(false);
+    expect(corto('apps/web/src/x.tsx', 'packages/aplicacion/src/x.ts')).toBe(false);
+    expect(corto('apps/web/src/servidor/acciones/compras.ts')).toBe(false);
+    expect(corto('apps/web/src/app/api/tarea/route.ts')).toBe(false);
+    expect(corto('apps/web/src/x.tsx', 'tools/ci/afecta.mjs')).toBe(false);
+    expect(corto('apps/web/src/x.tsx', '.github/workflows/ci.yml')).toBe(false);
+    expect(corto('apps/web/playwright.config.ts')).toBe(false);
+    expect(corto('apps/web/e2e/ayudas/esperas.ts')).toBe(false);
+    expect(corto('apps/web/package.json')).toBe(false);
+    expect(corto('apps/web/src/x.tsx', 'docs/07-pruebas.md')).toBe(false);
+    expect(corto()).toBe(false);
+  });
+
+  it('workflows: ci:e2e-unir falla si algún fragmento no pasó y pasa sin blobs si todos pasaron (CH-231)', () => {
+    const unir = (resultado: string) =>
+      spawnSync(
+        process.execPath,
+        [
+          `--import=${RELOJ}`,
+          join(raiz, 'tools', 'ci', 'afecta.mjs'),
+          'e2e-unir',
+          '--archivos',
+          'x',
+        ],
+        {
+          cwd,
+          encoding: 'utf8',
+          env: { ...process.env, FINN_E2E_FRAGMENTOS: resultado, GITHUB_OUTPUT: '' },
+        },
+      );
+    expect(unir('success').status).toBe(0);
+    for (const r of ['failure', 'cancelled', 'skipped', '']) {
+      const s = unir(r);
+      expect(s.status, r).toBe(1);
+      expect(s.stderr).toMatch(/los fragmentos terminaron/);
+    }
   });
 
   it('workflows: en main corren integracion, e2e y cierre siempre', () => {

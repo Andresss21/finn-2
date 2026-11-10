@@ -565,6 +565,8 @@
 
   "TA-554": { "estado": "pendiente" },
 
+  "TA-555": { "estado": "pendiente" },
+
   "TA-316": { "estado": "terminada", "rama": "ta-316-estructura-editar", "pr": 258 },
 
   "TA-317": { "estado": "terminada", "rama": "ta-317-acciones", "pr": 273 },
