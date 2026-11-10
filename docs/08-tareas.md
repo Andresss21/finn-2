@@ -949,7 +949,7 @@ compartido: —
 - **CH-02:** el uso real por job se sube como artefacto `minutos-AAAAMM` (retención 90 días), no a `eventos_sistema`.
 - `ci.yml` restaura el modo. En `ahorro`, `e2e` de PR corre solo al pasar a listo y el nocturno, 1 vez por semana. Nunca toca `respaldo` ni `restauracion`.
 - `tools/pruebas/inestables.mjs` (07 §7.3): issue `prueba-inestable` por cada prueba `flaky` y entrada en `pruebas/cuarentena.json` a las 2 inestabilidades en 7 días. En `rapido`, una entrada vencida falla.
-- `FINN_REN_ROJO` (07 §6.6): `rapido` falla si lleva más de 7 días activo.
+- `FINN_REN_ROJO` (07 §6.6): `rapido` falla si lleva más de 7 días activo. **[CH-233]** Salvo durante una prórroga fechada (`PRORROGA_REN_ROJO`, hasta el 2026-11-24): entonces avisa y no falla.
 
 **Leer.** 07 §6.4 a §6.6, §7.3, §32.2, §32.3; CH-02.
 
@@ -1670,6 +1670,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-227** | Barra de las pantallas de Más secciones, buscador de Reglas y último SMS. (a) **Barra (B6):** las pantallas que se abren desde Más secciones (Programadas, Metas, Por cobrar, Reglas, Reportes y Ajustes) llevan solo la campana a la derecha de la barra del teléfono, sin Registrar ni ☰, y su título no se trunca. Cumple 05 §3.2: N1 pide Registrar en las pantallas principales, y la Bandeja (N2) y Más secciones (N5) siguen a una interacción desde la barra inferior. Enmienda 06-identidad-visual §3.1. Tarea: TA-487. (b) **Reglas (A24):** `/reglas` suma un buscador relleno con `?q=` (texto del comercio de la regla o de su categoría): el lector de la página filtra la lista de `reglas()` sin cambiar la consulta, y sin coincidencias dice «Ninguna regla con ese texto»; las filas son tocables (60 px, `chevR`) y «+ Nueva regla» es un botón tonal a todo el ancho. Enmienda 05 §2.8 (fila de `/reglas`) y §2.2 (catálogo de parámetros). (c) **Conectar los SMS (A27):** con el token configurado, la pantalla dice «Conectado. El último SMS llegó {fecha}»; `AjustesDto.webhook` suma `ultimoSmsEn?: Instante`, el `recibido_en` más reciente de `sms` (03 §3.17), sin leer el texto. Enmienda 04 §6.11. Tarea de (b) y (c): TA-511 | 06-identidad-visual §3.1; 05 §2.2, §2.8; 04 §6.11 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-227]** en 04, 05 y 06-identidad-visual |
 | **CH-228** | Color de la tarjeta en el detalle de cuenta; el color se elige solo al crear. Corrige el alcance de CH-225 y de TA-496. (a) **Hueco:** CH-225 d dice que "el detalle pasa `color` a `Cara`", pero `DetalleCuentaDto.tarjeta` (04 §6.6) no traía `color` y el detalle no podía pintar el color guardado; la lista sí lo trae (`CuentasDto.tarjetas[].color`, 04 §6.5). (b) **DTO:** `DetalleCuentaDto.tarjeta` agrega `color?: string`, el hex de `tarjetas.color` (03 §3.5, sin cambio y sin migración); lo arma `selectores/detalle-cuenta.ts` (omitido si es nulo) y la cara lo traduce con la tabla de CH-225 c. (c) **Alcance:** el color se elige solo al **crear** (selector en `cuentas-nueva`); editarlo queda fuera y OP-02 no cambia. (d) **Tarea:** TA-496 suma `packages/dominio/src/selectores/detalle-cuenta.ts` y su prueba; el resto de `packages/` sigue siendo de TA-494. | 04 §6.6; CH-225; TA-496 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-228]** en 04 §6.6, CH-225 y TA-496 |
 | **CH-229** | Subtipo de efectivo en dos pasos: expandir y contraer (ADR-10, 03 §11.4). (a) **Origen:** con `subtipoEfectivo` obligatorio en el contrato de OP-01 (CH-224), la interfaz de hoy (`apps/web/src/flujos/cuentas-nueva/campos.ts`, `entradaDeOp01`) manda OP-01 de efectivo sin subtipo y se rechazaría: PRU-E2E-CTA-101 fallaría en `main` entre TA-494 y TA-495, y el `ci:local` de TA-494 no lo muestra porque no toca la web. (b) **TA-494 (expandir):** en el contrato de OP-01, `subtipoEfectivo` es opcional en efectivo y se completa con `'corriente'` cuando falta; sigue prohibido en los otros tipos y la regla de la billetera (sin institución ni últimos 4) no cambia. El dominio y la base siempre reciben un valor; las CHECK de 03 §3.4 quedan como están. OP-02: si no llega, conserva el actual. (c) **TA-495 (contraer):** la interfaz envía siempre el subtipo y el contrato pasa a obligatorio, como dice 04 OP-01; TA-495 suma `packages/aplicacion/src/contratos/cuentas.ts` a sus archivos y una prueba que rechaza la falta. (d) **Archivos de TA-494:** además, `packages/dominio/src/operaciones/{op-01.ts,op-02.ts}` (OP-01 y OP-02 del dominio viven ahí), `packages/db/src/hechos/cargar.ts`, `tools/pruebas/volumen/generar.ts` y `packages/aplicacion/test/escenarios/int.ts`; sin `apps/web` | 04 OP-01; CH-224; TA-494; TA-495 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-229]** en 04 OP-01, CH-224, TA-494 y TA-495 |
+| **CH-233** | CT temporal: prórroga de `FINN_REN_ROJO` hasta el 2026-11-24 (corrección posterior a TA-013, dueña de `tools/ci/minutos.ts`). (a) **Síntoma:** `rapido` falla en `main` y en todos los PR en el paso `minutos` («FINN_REN_ROJO activo desde 2026-11-02: más de 7 días», 07 §6.6); la corrida de `main` 42730375827 (#531) quedó en rojo y `desplegar` no corre. (b) **Mediciones del nocturno** (mediana en el runner contra el presupuesto, que no cambia): 2026-11-02 (41499297262): PRU-REN-MOTOR-101 `calcular` 217,09 ms / 150, PRU-REN-MOTOR-001 carga con `json_agg` 811,97 ms / 500, PRU-REN-PWA-003 sin medir (omitida); 2026-11-04 (41865574136): 209,59 / 150 y 797,40 / 500, PRU-REN-PWA-003 falló antes de medir; 2026-11-06 (42247311811): `calcular` dentro, carga 564,93 / 500, PRU-REN-PWA-003 falló antes de medir; 2026-11-09 (42676689232): 191,37 / 150, 775,43 / 500 y LCP de la ruta más lenta (mediana de 3) 3.325,4 ms / 2.500. Cuatro noches seguidas en rojo; la del 2026-10-30 (41076884224) sin avisos. (c) **Resolución (CT de 07 §6.6, temporal y con vencimiento):** `tools/ci/minutos.ts` lleva la constante `PRORROGA_REN_ROJO = { hasta: '2026-11-24', ch: 'CH-233' }`; hasta ese día inclusive (UTC), con `FINN_REN_ROJO` de más de 7 días `rapido` avisa (`::warning::`) y no falla; desde el 2026-11-25 vuelve a fallar sin otro cambio. Sin variables de entorno nuevas ni interruptores sin fecha. Los presupuestos (2.500 / 150 / 500 ms y los demás de 07 §6.6) no cambian, y el nocturno sigue midiendo, avisando y fijando `FINN_REN_ROJO`. (d) **Corrección:** TA-554 (revisión obligatoria) investiga los tres presupuestos y los corrige, o propone un CT definitivo con datos, antes del 2026-11-24. (e) **Archivos:** `tools/ci/minutos.ts`, `tools/ci/minutos.test.ts`, 07 §6.6 y «Enmiendas posteriores», 08 (esta fila, TA-013 y TA-554), `plan/objetivos.txt` y `plan/tareas.json` (TA-554) | 07 §6.6; 08 TA-013, TA-554 | Decidido por el orquestador; lo aprueba el usuario con su «mergeá»; **aplicado [CH-233]** en 07 §6.6, TA-013 y TA-554 |
 
 ---
 
@@ -7350,6 +7351,40 @@ compartido: —
 **Comandos.** `pnpm test:e2e -- -g "PRU-REN-PWA-001"`; `FINN_REN=1 pnpm test:e2e -- -g "PRU-REN-PWA-00[34]"`; `pnpm ci:local`.
 
 **Terminada cuando.** PRU-REN-PWA-001 pasa en `e2e` de `main`; las de tiempo miden de verdad en una corrida del nocturno, sin omitirse.
+
+#### TA-554 Rendimiento: `calcular`, carga de hechos y LCP dentro de sus presupuestos **[CH-233]**
+
+```tarea
+orden: 770
+bloque: B6
+hito: —
+depende: TA-013, TA-156, TA-550
+tu: —
+revision: obligatoria
+paralelo: libre
+tamano: prod=300 archivos=8 ca=0 migraciones=0 total=700
+cubre: CH-233
+pru: —
+compartido: —
+```
+
+**Plazo.** Antes del **2026-11-24**, cuando vence la prórroga de CH-233 y `rapido` vuelve a fallar con `FINN_REN_ROJO`.
+
+**Qué construir.**
+- Investigar con perfiles (no con suposiciones) los tres presupuestos superados en el nocturno (datos en CH-233 b): PRU-REN-MOTOR-101 `calcular` a 10 años, volumen alto (191 a 217 ms contra 150); PRU-REN-MOTOR-001 carga de hechos con `json_agg` (565 a 812 ms contra 500); PRU-REN-PWA-003 LCP de la ruta más lenta (3.325 ms contra 2.500), y por qué PRU-REN-PWA-003 falló antes de medir el 2026-11-04 y el 2026-11-06.
+- Corregir el código para que las medianas del runner queden dentro del presupuesto. **Ningún presupuesto cambia** en esta tarea (07 §6.6, P7-5): si alguno no se puede cumplir, se para y se propone un CT definitivo con los datos (mediciones de al menos 3 noches, causa y alternativa), sin aplicarlo.
+- Con todo en verde, quitar la prórroga: `PRORROGA_REN_ROJO` deja de aplicar y sus dos pruebas pasan a comprobar que no hay prórroga vigente; la nota **[CH-233]** de 07 §6.6 dice que venció.
+- Los números de las pruebas de dominio no cambian (07 §12.1, DP-27): optimizar no cambia resultados.
+
+**Leer.** CH-233; 07 §6.6, §12.7; 04 §5.6 (BE-23); 05 §13.4; 02 §2.3; TA-156 y TA-550.
+
+**Archivos.** `packages/dominio/src/motor/**`, `packages/db/src/hechos/**`, la ruta más lenta de `apps/web/src/app/(finn)/**` que muestre el informe de Lighthouse, `apps/web/e2e/rendimiento/tiempos.e2e.ts` (solo si su fallo es de la prueba), `tools/ci/minutos.ts` y `tools/ci/minutos.test.ts` (quitar la prórroga), `docs/07-pruebas.md` (§6.6).
+
+**Pruebas primero.** Las existentes son la medida: PRU-REN-MOTOR-101, PRU-REN-MOTOR-001 y PRU-REN-PWA-003 en un `workflow_dispatch` del nocturno sobre la rama, con sus medianas en el informe. Ninguna prueba de dominio cambia de número.
+
+**Comandos.** `pnpm bench`; `pnpm test:integracion -t "PRU-REN"`; `FINN_REN=1 pnpm test:e2e -- -g "PRU-REN-PWA-003"`; `pnpm ci:local`; nocturno a mano sobre la rama.
+
+**Terminada cuando.** Un nocturno sobre la rama mide las tres dentro de su presupuesto sin `::warning::` de REN, y `FINN_REN_ROJO` se borra en la primera noche de `main` después del merge; o, si no se puede, el CT definitivo queda propuesto como contradicción en el informe antes del 2026-11-24.
 
 #### TA-223 Service worker, `/sin-conexion` e instalación
 
