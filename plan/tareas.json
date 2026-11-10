@@ -581,7 +581,7 @@
 
   "TA-489": { "estado": "pendiente" },
 
-  "TA-490": { "estado": "pendiente" },
+  "TA-490": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 },
 
   "TA-491": { "estado": "pendiente" },
 
@@ -595,7 +595,7 @@
 
   "TA-496": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 },
 
-  "TA-497": { "estado": "pendiente" },
+  "TA-497": { "estado": "en_curso", "rama": "ta-497-fixes-visuales-2" },
 
   "TA-498": { "estado": "pendiente" },
 
