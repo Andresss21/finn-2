@@ -4,12 +4,21 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
+import { MasAcciones } from '../marco/mas-acciones';
 import { Superpuesto, type DesdeSuperpuesto } from '../marco/superpuesto';
 import { PaginaFlujo } from '../marco/pagina-flujo';
 import { AvisoEnLinea, type EstadoFinanciero } from './aviso';
 import { ErrorPantalla } from './error-pantalla';
 import { Resultado } from './resultado';
 import { Vacio } from './vacio';
+
+// Solo el límite externo: `next/link` necesita el enrutador de Next (los enlaces de «Más acciones»).
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
+    createElement('a', { href, ...resto }, children);
+  return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
+});
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -23,7 +32,39 @@ afterEach(() => {
   }
   delete document.documentElement.dataset['theme'];
   document.body.removeAttribute('style');
+  vi.restoreAllMocks();
 });
+
+/** «Reducir movimiento» encendido: `matchMedia` de la preferencia responde `true`. */
+function conMovimientoReducido(): void {
+  const original = window.matchMedia.bind(window);
+  vi.spyOn(window, 'matchMedia').mockImplementation((consulta: string) =>
+    consulta === '(prefers-reduced-motion: reduce)'
+      ? ({
+          matches: true,
+          media: consulta,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+        } as unknown as MediaQueryList)
+      : original(consulta),
+  );
+}
+
+/** Superpuesto que se desmonta cuando `alCerrar` corre (como `cerrarFlujo()` en una ruta interceptada). */
+function HojaQueSeDesmonta({ desde, alCerrar }: { desde: DesdeSuperpuesto; alCerrar: () => void }) {
+  const [abierta, setAbierta] = useState(true);
+  return abierta ? (
+    <Hoja
+      desde={desde}
+      alCerrar={() => {
+        alCerrar();
+        setAbierta(false);
+      }}
+    />
+  ) : (
+    <p>Pantalla de origen</p>
+  );
+}
 
 function montar(ui: ReactNode): HTMLElement {
   document.body.style.cssText =
@@ -136,9 +177,12 @@ describe('PRU-CMP-VAL-103 superpuestos, avisos, resultados y vacíos', () => {
     expect(document.getElementById(d.getAttribute('aria-labelledby') ?? '')?.textContent).toBe(
       'Asignar',
     );
-    const r = d.getBoundingClientRect();
-    expect(Math.round(r.bottom)).toBe(window.innerHeight);
-    expect(Math.round(r.width)).toBe(document.documentElement.clientWidth);
+    // [CH-220] La hoja entra con su animación: se mide al terminar.
+    await vi.waitFor(() => {
+      const r = d.getBoundingClientRect();
+      expect(Math.round(r.bottom)).toBe(window.innerHeight);
+      expect(Math.round(r.width)).toBe(document.documentElement.clientWidth);
+    });
     expect(document.querySelector('[data-testid=velo]')).not.toBeNull();
     expect(enDialogo()).toBe(true);
 
@@ -153,13 +197,18 @@ describe('PRU-CMP-VAL-103 superpuestos, avisos, resultados y vacíos', () => {
       }
       await userEvent.keyboard('{Escape}');
     });
-    expect(cerrar).toHaveBeenCalledTimes(1);
+    // [CH-220] Cierra al terminar la salida.
+    await vi.waitFor(() => {
+      expect(cerrar).toHaveBeenCalledTimes(1);
+    });
 
     cerrar.mockClear();
     await sinAct(async () => {
       await userEvent.click(document.querySelector('[data-testid=velo]') as HTMLElement);
     });
-    expect(cerrar).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(cerrar).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('PRU-CMP-VAL-103 el panel lateral se pega a la derecha, cierra con el botón y devuelve el foco al disparador', async () => {
@@ -194,9 +243,11 @@ describe('PRU-CMP-VAL-103 superpuestos, avisos, resultados y vacíos', () => {
     await vi.waitFor(() => {
       expect(dialogo()).not.toBeNull();
     });
-    const r = dialogo().getBoundingClientRect();
-    expect(Math.round(r.right)).toBe(document.documentElement.clientWidth);
-    expect(Math.round(r.height)).toBe(window.innerHeight);
+    await vi.waitFor(() => {
+      const r = dialogo().getBoundingClientRect();
+      expect(Math.round(r.right)).toBe(document.documentElement.clientWidth);
+      expect(Math.round(r.height)).toBe(window.innerHeight);
+    });
     expect(enDialogo()).toBe(true);
     const cerrar = dialogo().querySelector('[aria-label=Cerrar]') as HTMLElement;
     expect(cerrar.getBoundingClientRect().width).toBeGreaterThanOrEqual(44);
@@ -310,5 +361,107 @@ describe('PRU-CMP-VAL-103 superpuestos, avisos, resultados y vacíos', () => {
       await userEvent.click(raiz.querySelector('[role=alert] button') as HTMLElement);
     });
     expect(reintentar).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
+  it('PRU-CMP-PWA-320 [] cerrar la hoja con el botón, Escape o el velo deja el diálogo montado durante la salida y lo desmonta al terminar; con movimiento reducido, en el acto', async () => {
+    for (const via of ['boton', 'escape', 'velo'] as const) {
+      const cerrar = vi.fn();
+      const raiz = montar(<HojaQueSeDesmonta desde="abajo" alCerrar={cerrar} />);
+      await sinAct(async () => {
+        if (via === 'boton')
+          await userEvent.click(dialogo().querySelector('[aria-label=Cerrar]') as HTMLElement);
+        else if (via === 'escape') await userEvent.keyboard('{Escape}');
+        else
+          await userEvent.click(document.querySelector('[data-testid=velo]') as HTMLElement, {
+            position: { x: 10, y: 10 },
+          });
+      });
+      // Durante la salida sigue montado, con la animación de salida de la hoja y del velo.
+      expect(cerrar).not.toHaveBeenCalled();
+      const d = dialogo();
+      expect(d.hasAttribute('data-saliendo')).toBe(true);
+      expect(getComputedStyle(d).animationName).toBe('fz-sh-out');
+      expect(getComputedStyle(d).animationDuration).toBe('0.2s');
+      const velo = document.querySelector('[data-testid=velo]') as HTMLElement;
+      expect(getComputedStyle(velo).animationName).toBe('fz-v-out');
+      await vi.waitFor(() => {
+        expect(document.querySelector('[role=dialog]')).toBeNull();
+      });
+      expect(cerrar).toHaveBeenCalledTimes(1);
+      expect(raiz.textContent).toBe('Pantalla de origen');
+    }
+
+    // La hoja abre con su entrada (380 ms, curva de entrada) y el velo en 200 ms.
+    montar(<Hoja desde="abajo" alCerrar={() => {}} />);
+    expect(getComputedStyle(dialogo()).animationName).toBe('fz-sh-in');
+    expect(getComputedStyle(dialogo()).animationDuration).toBe('0.38s');
+    const veloAbierto = document.querySelector('[data-testid=velo]') as HTMLElement;
+    expect(getComputedStyle(veloAbierto).animationName).toBe('fz-v-in');
+    expect(getComputedStyle(veloAbierto).animationDuration).toBe('0.2s');
+  });
+
+  it('PRU-CMP-PWA-320 [] con movimiento reducido la hoja se desmonta en el acto', async () => {
+    conMovimientoReducido();
+    const cerrar = vi.fn();
+    montar(<HojaQueSeDesmonta desde="lado" alCerrar={cerrar} />);
+    await sinAct(async () => {
+      await userEvent.keyboard('{Escape}');
+    });
+    expect(cerrar).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('[role=dialog]')).toBeNull();
+  });
+
+  it('PRU-CMP-PWA-321 [] el menú «Más acciones» cierra con su salida y devuelve el foco al disparador', async () => {
+    const raiz = montar(
+      <MasAcciones
+        titulo="Despensa"
+        acciones={[
+          { etiqueta: 'Editar', ruta: '/presupuesto/categorias/c1/editar', icono: 'edit' },
+          { etiqueta: 'Archivar', motivo: 'Tiene saldo', peligro: true },
+        ]}
+      />,
+    );
+    const disparador = raiz.querySelector('button') as HTMLButtonElement;
+    await sinAct(async () => {
+      await userEvent.click(disparador);
+    });
+    const menu = raiz.querySelector('[role=menu]') as HTMLElement;
+    expect(getComputedStyle(menu).animationName).toBe('fz-menu-in');
+    await sinAct(async () => {
+      await userEvent.keyboard('{Escape}');
+    });
+    // Sale con opacidad 0 y escala .96 en 120 ms; sigue montado hasta terminar.
+    const saliendo = raiz.querySelector('[role=menu]') as HTMLElement;
+    expect(saliendo.hasAttribute('data-saliendo')).toBe(true);
+    expect(getComputedStyle(saliendo).animationName).toBe('fz-menu-out');
+    expect(getComputedStyle(saliendo).animationDuration).toBe('0.12s');
+    expect(document.activeElement).toBe(disparador);
+    await vi.waitFor(() => {
+      expect(raiz.querySelector('[role=menu]')).toBeNull();
+    });
+    expect(disparador.getAttribute('aria-expanded')).toBe('false');
+    // Se vuelve a abrir sin quedar en salida.
+    await sinAct(async () => {
+      await userEvent.click(disparador);
+    });
+    expect(raiz.querySelector('[role=menu]')?.hasAttribute('data-saliendo')).toBe(false);
+  });
+
+  it('PRU-CMP-PWA-322 [] cerrarFlujo() se llama una sola vez, después de la salida, aunque se cierre dos veces', async () => {
+    const cerrarFlujo = vi.fn();
+    montar(<Hoja desde="abajo" alCerrar={cerrarFlujo} />);
+    await sinAct(async () => {
+      await userEvent.keyboard('{Escape}');
+      await userEvent.keyboard('{Escape}');
+    });
+    expect(cerrarFlujo).not.toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(cerrarFlujo).toHaveBeenCalledTimes(1);
+    });
+    // El tope (la duración del token) y `animationend` no lo llaman de nuevo.
+    dialogo().dispatchEvent(new AnimationEvent('animationend', { bubbles: true }));
+    expect(cerrarFlujo).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,8 +1,10 @@
 'use client';
 // Diálogo modal sobre Radix (05 §10.7, L16: `@radix-ui/*` solo aquí): rol `dialog` con `aria-modal`, nombre = título,
 // foco atrapado, Escape y velo cierran y al cerrar el foco vuelve al disparador (11.2). La forma la fija quien lo usa.
+// [CH-220 C1, C12] Abre con su entrada y cierra con su salida: `alCerrar` corre una sola vez, al terminar la salida.
 import * as Radix from '@radix-ui/react-dialog';
 import { useState, type ReactNode } from 'react';
+import { useSalida } from '../movimiento/use-salida';
 import { cn } from '../../components/ui/utils';
 import { base } from '../../textos/base';
 import { Icono } from './icono';
@@ -13,6 +15,8 @@ export interface PropsDialogo {
   readonly alCerrar: () => void;
   /** Clases de la forma (hoja, panel lateral o desde arriba): posición, radio y tamaño. */
   readonly forma: string;
+  /** Movimiento de entrada y salida (`globals.css`, `.fz-hoja[data-forma]`). */
+  readonly movimiento?: 'auto' | 'abajo' | 'lado' | 'arriba';
   /** Agarradera de la hoja inferior (06-identidad-visual 2.17). */
   readonly agarradera?: string;
   readonly children: ReactNode;
@@ -24,10 +28,13 @@ export function Dialogo({
   descripcion,
   alCerrar,
   forma,
+  movimiento = 'auto',
   agarradera,
   children,
   acciones,
 }: PropsDialogo) {
+  const { saliendo, salir, alTerminarAnimacion } = useSalida(alCerrar, '--duracion-salida');
+  const fase = saliendo ? { 'data-saliendo': '' } : {};
   // Se lee al montar, antes de que Radix mueva el foco al diálogo.
   const [disparador] = useState(() =>
     typeof document === 'undefined' ? null : document.activeElement,
@@ -36,13 +43,20 @@ export function Dialogo({
     <Radix.Root
       open
       onOpenChange={(abierto) => {
-        if (!abierto) alCerrar();
+        if (!abierto) salir();
       }}
     >
       <Radix.Portal>
-        <Radix.Overlay data-testid="velo" className="fixed inset-0 z-40 bg-velo" />
+        <Radix.Overlay
+          data-testid="velo"
+          {...fase}
+          className="fz-velo fixed inset-0 z-40 bg-velo"
+        />
         <Radix.Content
           aria-modal="true"
+          data-forma={movimiento}
+          {...fase}
+          onAnimationEnd={saliendo ? alTerminarAnimacion : undefined}
           onCloseAutoFocus={(evento) => {
             // Sin `Radix.Trigger` no sabe a dónde volver: vuelve al elemento que tenía el foco al abrirse.
             evento.preventDefault();
@@ -51,7 +65,7 @@ export function Dialogo({
           {...(descripcion === undefined ? { 'aria-describedby': undefined } : {})}
           className={cn(
             forma,
-            'fixed z-50 flex flex-col bg-superficie-elevada text-texto shadow-elevacion-3',
+            'fz-hoja fixed z-50 flex flex-col bg-superficie-elevada text-texto shadow-elevacion-3',
           )}
         >
           {agarradera === undefined ? null : (

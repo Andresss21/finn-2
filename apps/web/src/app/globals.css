@@ -240,6 +240,32 @@ body {
     transform: translateY(-100%);
   }
 }
+@keyframes fz-sh-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes fz-right-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes fz-dr-in {
+  from {
+    transform: translateY(-100%);
+  }
+}
+@keyframes fz-v-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fz-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
 @keyframes fz-v-out {
   to {
     opacity: 0;
@@ -295,20 +321,48 @@ body {
   transform-origin: left;
   animation: fz-pill var(--duracion-lenta) var(--curva-estandar) both;
 }
-/* Salida de hojas, velo, panel y menú: terminan antes de desmontarse (FIXES §3). */
-.fz-hoja-salida {
+/* C1 y C12: hojas, panel lateral, panel de notificaciones y velo entran con su curva y salen antes de desmontarse
+   (`useSalida`); `data-forma` lo pone `Dialogo` y `data-saliendo` marca la salida. */
+.fz-hoja {
+  animation: fz-sh-in var(--duracion-entrada-hoja) var(--curva-entrada) both;
+}
+.fz-hoja[data-forma='lado'] {
+  animation-name: fz-right-in;
+}
+.fz-hoja[data-forma='arriba'] {
+  animation: fz-dr-in var(--duracion-salida) var(--curva-entrada) both;
+}
+.fz-hoja[data-saliendo] {
+  pointer-events: none;
   animation: fz-sh-out var(--duracion-salida) var(--curva-salida) both;
 }
-.fz-lateral-salida {
-  animation: fz-right-out var(--duracion-salida) var(--curva-salida) both;
+.fz-hoja[data-saliendo][data-forma='lado'] {
+  animation-name: fz-right-out;
 }
-.fz-panel-salida {
-  animation: fz-dr-out var(--duracion-salida) var(--curva-salida) both;
+.fz-hoja[data-saliendo][data-forma='arriba'] {
+  animation-name: fz-dr-out;
 }
-.fz-velo-salida {
-  animation: fz-v-out var(--duracion-salida) ease both;
+@media (width >= 48rem) {
+  .fz-hoja[data-forma='auto'] {
+    animation-name: fz-right-in;
+  }
+  .fz-hoja[data-saliendo][data-forma='auto'] {
+    animation-name: fz-right-out;
+  }
 }
-.fz-menu-salida {
+.fz-velo {
+  animation: fz-v-in var(--duracion-salida) ease both;
+}
+.fz-velo[data-saliendo] {
+  animation-name: fz-v-out;
+}
+/* Menú «Más acciones» (K2): desde la esquina; al cerrar, opacidad 0 y escala .96 en 120 ms. */
+.fz-menu {
+  transform-origin: top right;
+  animation: fz-menu-in var(--duracion-rapida) var(--curva-entrada) both;
+}
+.fz-menu[data-saliendo] {
+  pointer-events: none;
   animation: fz-menu-out var(--duracion-rapida) var(--curva-salida) both;
 }
 
