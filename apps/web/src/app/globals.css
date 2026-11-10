@@ -503,6 +503,12 @@ body {
   background-color: transparent;
   box-shadow: none;
 }
+/* Hasta que el indicador se vuelve a medir tras un cambio de ancho (girar el teléfono, 320 px), su medida vieja no desborda
+   la página: el grupo lo recorta, con margen para el anillo de foco de las opciones (3 px de contorno + 2 px de separación). */
+[role='radiogroup'][data-indicador] {
+  overflow: clip;
+  overflow-clip-margin: 0.375rem;
+}
 .fz-segmento-indicador {
   position: absolute;
   top: 0;
