@@ -589,7 +589,7 @@
 
   "TA-492": { "estado": "terminada", "rama": "ta-492-fixes-visuales-3", "pr": 545 },
 
-  "TA-493": { "estado": "pendiente" },
+  "TA-493": { "estado": "terminada", "rama": "ta-493-cierre-ch-235", "pr": 548 },
 
   "TA-494": { "estado": "terminada", "pr": 531 },
 
