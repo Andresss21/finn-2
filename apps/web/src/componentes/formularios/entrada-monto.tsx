@@ -1,6 +1,7 @@
 'use client';
 // Entrada de montos (05 §5.2, FE-17): texto con teclado decimal, no `type="number"`. Normaliza al escribir y al
 // pegar, maneja el signo aparte y muestra la vista previa. No calcula nada (PF-3) y no evalúa expresiones (P5-12).
+import { useEffect, useRef } from 'react';
 import type { ChangeEvent, ClipboardEvent } from 'react';
 import { formatearMontoTexto } from '../../formato';
 import {
@@ -65,6 +66,11 @@ export function EntradaMonto({
   compacto = false,
   autoFoco = false,
 }: PropsEntradaMonto) {
+  // [A36] El foco va al campo al abrir (Asignar); dentro de un diálogo, antes de que Radix elija el primer control.
+  const caja = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (autoFoco) caja.current?.querySelector('input')?.focus();
+  }, [autoFoco]);
   const resultado = normalizarMontoEscrito(valor);
   const errorLocal =
     resultado.estado === 'incompleto'
@@ -98,7 +104,7 @@ export function EntradaMonto({
     .join(' ');
 
   return (
-    <div className="flex flex-col gap-2">
+    <div ref={caja} className="flex flex-col gap-2">
       <EntradaTexto
         etiqueta={etiqueta}
         {...(ayuda === '' ? {} : { descripcion: ayuda })}
@@ -112,7 +118,6 @@ export function EntradaMonto({
         autoComplete="off"
         enterKeyHint={enterKeyHint}
         value={valor}
-        {...(autoFoco ? { autoFocus: true } : {})}
         disabled={deshabilitado}
         className={compacto ? 'tabular-nums text-right' : 'tabular-nums'}
         onChange={alEscribir}

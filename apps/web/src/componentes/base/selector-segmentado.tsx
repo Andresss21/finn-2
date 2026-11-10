@@ -27,12 +27,8 @@ const INDICADOR_LLENO = 'fz-segmento-indicador rounded-lg bg-superficie shadow-e
 const INDICADOR_PASTILLA =
   'fz-segmento-indicador rounded-pastilla bg-superficie shadow-elevacion-1';
 
-interface Medida {
-  readonly x: number;
-  readonly y: number;
-  readonly ancho: number;
-  readonly alto: number;
-}
+/** Posición y tamaño de la opción elegida: x, y, ancho y alto. */
+type Medida = readonly [number, number, number, number];
 
 const SALTO: Readonly<Record<string, 1 | -1>> = {
   ArrowRight: 1,
@@ -66,16 +62,10 @@ export function SelectorSegmentado({
       setMedida(
         marcada === null
           ? null
-          : {
-              x: marcada.offsetLeft,
-              y: marcada.offsetTop,
-              ancho: marcada.offsetWidth,
-              alto: marcada.offsetHeight,
-            },
+          : [marcada.offsetLeft, marcada.offsetTop, marcada.offsetWidth, marcada.offsetHeight],
       );
     };
     medir();
-    if (typeof ResizeObserver === 'undefined') return;
     const observador = new ResizeObserver(medir);
     observador.observe(el);
     return () => {
@@ -112,9 +102,9 @@ export function SelectorSegmentado({
           data-segmento-indicador
           className={llena ? INDICADOR_LLENO : INDICADOR_PASTILLA}
           style={{
-            transform: `translate(${String(medida.x)}px, ${String(medida.y)}px)`,
-            width: medida.ancho,
-            height: medida.alto,
+            transform: `translate(${String(medida[0])}px, ${String(medida[1])}px)`,
+            width: medida[2],
+            height: medida[3],
           }}
         />
       )}
