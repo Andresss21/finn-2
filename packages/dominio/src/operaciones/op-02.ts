@@ -3,7 +3,15 @@
 import type * as H from '../hechos';
 import { FechaLocal } from '../valores/fecha-local';
 import type { Efecto } from './aplicar';
-import { buscarCuenta, nombreRepetido, pagoDe, SUBTIPO, ultimos4Repetidos } from './op-01';
+import {
+  buscarCuenta,
+  exigirBilletera,
+  nombreRepetido,
+  pagoDe,
+  SUBTIPO,
+  subtipoEfectivoDe,
+  ultimos4Repetidos,
+} from './op-01';
 import { esRechazo, rechazo } from './rechazos';
 
 const DIA_MS = 86_400_000;
@@ -31,7 +39,11 @@ export function op02(antes: H.Instantanea, x: H.ComandoOp02): Efecto | H.Rechazo
   const { hechos: h, hoy } = antes;
   const k = buscarCuenta(h, x.cuentaId);
   if (esRechazo(k)) return k;
+  const pedido = x.campos.subtipoEfectivo;
+  if (k.tipo === 'efectivo' ? pedido === null : pedido !== undefined)
+    throw new TypeError(`OP-02: subtipo ${String(pedido)} en la cuenta ${k.tipo} ${k.id}`);
   const nueva = { ...k, ...x.campos };
+  exigirBilletera({ ...nueva, subtipoEfectivo: subtipoEfectivoDe(k.tipo, nueva.subtipoEfectivo) });
   const apertura = nueva.fechaApertura;
   const efectos = new Map(
     h.efectos.filter((e) => e.cuentaId === k.id).map((e) => [e.transaccionId, e]),

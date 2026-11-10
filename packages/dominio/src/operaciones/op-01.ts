@@ -45,6 +45,25 @@ export function nombreRepetido(h: H.Hechos, tarjetaId: H.Uuid, nombre: string): 
   return { codigo: 'nombre_repetido', campo: 'nombre', datos };
 }
 
+/**
+ * [CH-224] El subtipo de una cuenta de efectivo: el pedido o `corriente`, el de las cuentas anteriores (CH-229);
+ * `null` en los otros tipos, donde uno pedido es un error de quien llama (el contrato lo prohíbe).
+ */
+export function subtipoEfectivoDe(
+  tipo: H.TipoCuenta,
+  pedido: H.SubtipoEfectivo | null | undefined,
+): H.SubtipoEfectivo | null {
+  if (tipo === 'efectivo') return pedido ?? 'corriente';
+  if (pedido != null) throw new TypeError(`OP-01/OP-02: subtipo ${pedido} en una cuenta ${tipo}`);
+  return null;
+}
+
+/** [CH-224] Una billetera no lleva institución ni últimos 4 (03 §3.4); el contrato ya lo exige. */
+export function exigirBilletera(k: H.Cuenta): void {
+  if (k.subtipoEfectivo === 'billetera' && (k.institucionId !== null || k.ultimos4 !== null))
+    throw new TypeError(`OP-01/OP-02: la billetera ${k.id} lleva institución o últimos 4`);
+}
+
 /** Tabla del subtipo de cada tipo de cuenta. */
 export const SUBTIPO = {
   tarjeta: 'tarjetas',
@@ -60,12 +79,14 @@ const NULOS = { conciliacionId: null, comercio: null, nota: null, lineaCobradaId
 export function op01(antes: H.Instantanea, x: H.ComandoOp01): Efecto | R {
   const { hechos: h, hoy } = antes;
   const { id, subtipo, ids, instante } = x;
-  const { fechaApertura = hoy, ...atributos } = x.cuenta;
+  const { fechaApertura = hoy, subtipoEfectivo: pedido, ...atributos } = x.cuenta;
   if ((subtipo?.tipo ?? 'efectivo') !== atributos.tipo)
     throw new TypeError(`OP-01: subtipo ${String(subtipo?.tipo)} en una cuenta ${atributos.tipo}`);
+  const subtipoEfectivo = subtipoEfectivoDe(atributos.tipo, pedido);
   if (fechaApertura > hoy) return rechazo('fecha_posterior_a_hoy', { fecha: fechaApertura, hoy });
   const orden = siguienteOrden(h.cuentas);
-  const cuenta: H.Cuenta = { id, ...atributos, fechaApertura, orden, ...NUEVA };
+  const cuenta: H.Cuenta = { id, ...atributos, subtipoEfectivo, fechaApertura, orden, ...NUEVA };
+  exigirBilletera(cuenta);
   const tarjeta = cuenta.tipo === 'tarjeta';
   const repetido =
     ultimos4Repetidos(h, cuenta) ?? (tarjeta ? nombreRepetido(h, id, cuenta.nombre) : undefined);

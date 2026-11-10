@@ -46,7 +46,10 @@ export interface ComandoOp01 {
   readonly id: Uuid;
   readonly instante: Instante;
   readonly ids: GeneradorIds;
-  readonly cuenta: Pick<Cuenta, 'tipo' | 'nombre' | 'institucionId' | 'ultimos4'> & {
+  readonly cuenta: Pick<
+    Cuenta,
+    'tipo' | 'nombre' | 'institucionId' | 'ultimos4' | 'subtipoEfectivo'
+  > & {
     readonly fechaApertura?: FechaLocal; // por defecto, hoy
   };
   readonly subtipo?: SubtipoCuenta; // falta solo en efectivo
@@ -57,7 +60,9 @@ export interface ComandoOp02 {
   readonly cuentaId: Uuid;
   readonly instante: Instante;
   readonly ids: GeneradorIds;
-  readonly campos: Partial<Pick<Cuenta, 'nombre' | 'institucionId' | 'ultimos4' | 'fechaApertura'>>;
+  readonly campos: Partial<
+    Pick<Cuenta, 'nombre' | 'institucionId' | 'ultimos4' | 'subtipoEfectivo' | 'fechaApertura'>
+  >; // [CH-224] subtipoEfectivo solo en efectivo
   readonly subtipo?: Editables<Tarjeta> | Editables<Prestamo> | Editables<Inversion>;
 }
 export interface ComandoOp03 {

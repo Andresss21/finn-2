@@ -517,6 +517,8 @@ function contextoCuenta(
     nombre: k.nombre,
     institucion: instituciones.find((x) => x.id === k.institucionId) ?? null,
     ultimos4: k.ultimos4,
+    // [CH-224] solo en efectivo; va también en `esperado` para OP-02
+    ...(k.tipo === 'efectivo' ? { subtipoEfectivo: k.subtipoEfectivo ?? 'corriente' } : {}),
     fechaApertura: k.fechaApertura,
     ...camposDeSubtipo,
   };

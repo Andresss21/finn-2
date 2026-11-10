@@ -59,8 +59,8 @@ describe('PRU-INT-RELOJ', () => {
       async (tx) => {
         const p = txPrisma(tx);
         // Lo que las filas necesitan, en SQL a mano: una cuenta con su conciliación y un grupo que se elimina
-        await p.$executeRaw`INSERT INTO finn.cuentas (tipo, nombre, fecha_apertura)
-        VALUES ('efectivo', 'Caja', finn.hoy())`;
+        await p.$executeRaw`INSERT INTO finn.cuentas (tipo, nombre, subtipo_efectivo, fecha_apertura)
+        VALUES ('efectivo', 'Caja', 'corriente', finn.hoy())`;
         const [conc] = await p.$queryRaw<{ id: string }[]>`INSERT INTO finn.conciliaciones
           (cuenta_id, fecha_estado, saldo_estado, terminada_en, diferencia_aceptada)
         SELECT id, finn.hoy(), 1000, finn.ahora(), 0 FROM finn.cuentas WHERE nombre = 'Caja'
