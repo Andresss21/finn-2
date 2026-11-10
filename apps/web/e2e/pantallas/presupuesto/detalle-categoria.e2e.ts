@@ -369,12 +369,13 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await expect(page.getByRole('link', { name: /^Asignar/ })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Mover dinero' })).toHaveCount(0);
     await expect(page.getByRole('link', { name: /^Cubrir|^Reservar/ })).toHaveCount(0);
-    // [CH-109] El de la pantalla y, en teléfono, también el de la barra del marco: los dos vuelven al período que se veía.
-    for (const volver of await page.getByRole('link', { name: 'Volver a Presupuesto' }).all())
-      await expect(volver).toHaveAttribute('href', `/presupuesto?periodo=${P1}`);
-    await expect(
-      page.getByRole('main').getByRole('link', { name: 'Volver a Presupuesto' }),
-    ).toHaveAttribute('href', `/presupuesto?periodo=${P1}`);
+    // [CH-109] A5: un solo «Volver a Presupuesto» a la vista (la barra en teléfono, el de la pantalla en computadora), y
+    // vuelve al período que se veía.
+    const volver = page
+      .getByRole('link', { name: 'Volver a Presupuesto' })
+      .filter({ visible: true });
+    await expect(volver).toHaveCount(1);
+    await expect(volver).toHaveAttribute('href', `/presupuesto?periodo=${P1}`);
   });
 
   test('PRU-E2E-PRES-115 [ESC-44, AV-14] una categoría archivada con $25.00 ofrece sacar el dinero y desarchivar, y al desarchivar vuelve a ofrecer asignar', async ({

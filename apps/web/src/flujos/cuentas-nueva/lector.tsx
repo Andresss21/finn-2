@@ -4,6 +4,7 @@ import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
+import { cuentaSubtipo } from '../../textos/cuenta-subtipo';
 import { TIPOS, type TipoCuenta } from './campos';
 import { FormularioCuentaNueva } from './formulario';
 
@@ -19,6 +20,7 @@ export async function LectorCuentaNueva({ busqueda }: { readonly busqueda: Busqu
       tipoInicial={tipo}
       instituciones={dto.contexto.instituciones}
       nombresTarjetaUsados={dto.contexto.nombresTarjetaUsados}
+      subtipo={cuentaSubtipo}
     />
   );
 }

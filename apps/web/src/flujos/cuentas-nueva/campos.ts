@@ -3,7 +3,7 @@
 import * as z from 'zod';
 import { COLOR_ORO } from '../../componentes/dominio/colores-tarjeta';
 import { aplicarSigno, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
-import { cuentasNueva as t } from '../../textos/cuentas-nueva';
+import { cuentasNuevaBase as t } from '../../textos/cuentas-nueva-base';
 
 /** Valor de una selección opcional sin elegir: no se envía. */
 const SIN_ELEGIR = 'ninguno';
@@ -12,6 +12,7 @@ export type TipoCuenta = (typeof TIPOS)[number];
 
 const CLAVES = [
   'nombre',
+  'subtipoEfectivo',
   'institucionId',
   'ultimos4',
   'fechaApertura',
@@ -41,49 +42,64 @@ const textos = Object.fromEntries(CLAVES.map((k) => [k, z.string()])) as Record<
 export type Clase = 'monto' | 'entero' | 'porcentaje' | 'texto' | 'opciones';
 export interface Descriptor {
   readonly n: Clave;
-  readonly etiqueta: string;
   readonly clase: Clase;
   readonly requerido: boolean;
-  readonly opciones?: Readonly<Record<string, string>>;
   /** Solo se muestra con este valor de otro campo (los días de "cada N días"). */
   readonly cuando?: readonly [Clave, string];
 }
 
 const d = (
   n: Clave,
-  etiqueta: string,
   clase: Clase,
   requerido: boolean,
-  extra: Pick<Descriptor, 'opciones' | 'cuando'> = {},
-): Descriptor => ({ n, etiqueta, clase, requerido, ...extra });
+  cuando?: readonly [Clave, string],
+): Descriptor => (cuando === undefined ? { n, clase, requerido } : { n, clase, requerido, cuando });
 
+// Las etiquetas y las opciones de cada campo las pone `campos-de-tipo.tsx`, el módulo diferido que los dibuja.
 export const CAMPOS_DE_TIPO: Readonly<Record<TipoCuenta, readonly Descriptor[]>> = {
   efectivo: [],
   tarjeta: [
-    d('limiteCredito', t.limiteCredito, 'monto', true),
-    d('tasaAnual', t.tasaAnual, 'porcentaje', false),
-    d('diaCorte', t.diaCorte, 'entero', true),
-    d('diaPago', t.diaPago, 'entero', true),
-    d('red', t.red, 'opciones', true, { opciones: t.redes }),
-    // El color lo dibuja el selector diferido `color-tarjeta.tsx`, con sus 8 colores (CH-225).
-    d('color', t.color, 'opciones', false),
+    d('limiteCredito', 'monto', true),
+    d('tasaAnual', 'porcentaje', false),
+    d('diaCorte', 'entero', true),
+    d('diaPago', 'entero', true),
+    d('red', 'opciones', true),
+    // El color lo dibuja el selector `color-tarjeta.tsx`, con sus 8 colores (CH-225).
+    d('color', 'opciones', false),
   ],
   prestamo: [
-    d('contraparte', t.contraparte, 'texto', true),
-    d('montoOriginal', t.montoOriginal, 'monto', true),
-    d('tasaNominalAnual', t.tasaAnual, 'porcentaje', false),
-    d('tipoTasa', t.tipoTasa, 'opciones', true, { opciones: t.tiposTasa }),
-    d('frecuencia', t.frecuencia, 'opciones', true, { opciones: t.frecuencias }),
-    d('frecuenciaDias', t.frecuenciaDias, 'entero', true, {
-      cuando: ['frecuencia', 'cada_n_dias'],
-    }),
-    d('cuotaPactada', t.cuotaPactada, 'monto', true),
-    d('plazoCuotas', t.plazoCuotas, 'entero', true),
-    d('cuotasPagadasAlCrear', t.cuotasPagadas, 'entero', true),
-    d('modeloCalculo', t.modelo, 'opciones', false, { opciones: t.modelos }),
+    d('contraparte', 'texto', true),
+    d('montoOriginal', 'monto', true),
+    d('tasaNominalAnual', 'porcentaje', false),
+    d('tipoTasa', 'opciones', true),
+    d('frecuencia', 'opciones', true),
+    d('frecuenciaDias', 'entero', true, ['frecuencia', 'cada_n_dias']),
+    d('cuotaPactada', 'monto', true),
+    d('plazoCuotas', 'entero', true),
+    d('cuotasPagadasAlCrear', 'entero', true),
+    d('modeloCalculo', 'opciones', false),
   ],
-  inversion: [d('rendimientoAnualEsperado', t.rendimiento, 'porcentaje', false)],
+  inversion: [d('rendimientoAnualEsperado', 'porcentaje', false)],
 };
+
+/** [CH-224] Una billetera no lleva institución ni últimos 4 (03 §3.4): el formulario no los muestra ni los envía. */
+export const conBanco = (c: Pick<Campos, 'tipo' | 'subtipoEfectivo'>): boolean =>
+  c.tipo !== 'efectivo' || c.subtipoEfectivo !== 'billetera';
+
+/**
+ * El nombre que se propone (D1): en efectivo, el del subtipo; en los otros tipos, ninguno. Solo reemplaza un nombre vacío o
+ * uno que también era una propuesta: lo que la persona escribió no se toca.
+ */
+export function nombrePropuesto(
+  nombres: Readonly<Record<string, string>>,
+  actual: string,
+  tipo: TipoCuenta,
+  subtipo: string,
+): string | undefined {
+  if (actual.trim() !== '' && !Object.values(nombres).includes(actual.trim())) return undefined;
+  const nuevo = tipo === 'efectivo' ? (nombres[subtipo] ?? '') : '';
+  return nuevo === actual ? undefined : nuevo;
+}
 
 export const visible = (x: Descriptor, c: Readonly<Record<Clave, string>>): boolean =>
   x.cuando === undefined || c[x.cuando[0]] === x.cuando[1];
@@ -92,8 +108,8 @@ export const CONTRATO = z
   .object({ tipo: z.enum(TIPOS), signo: z.enum(['positivo', 'negativo']), ...textos })
   .superRefine((c, ctx) => {
     const obligatorios: Descriptor[] = [
-      d('nombre', t.nombre, 'texto', true),
-      d('saldo', t.saldo[c.tipo], 'monto', true),
+      d('nombre', 'texto', true),
+      d('saldo', 'monto', true),
       ...CAMPOS_DE_TIPO[c.tipo].filter((x) => visible(x, c)),
     ];
     for (const { n, clase, requerido } of obligatorios) {
@@ -118,8 +134,10 @@ export function entradaDeOp01(c: Campos): Record<string, unknown> {
     fechaApertura: c.fechaApertura,
     saldo: aplicarSigno(monto(c.saldo), c.tipo === 'tarjeta' ? c.signo : 'positivo'),
   };
-  if (c.institucionId !== 'ninguna') salida['institucionId'] = c.institucionId;
-  if (c.ultimos4.trim() !== '') salida['ultimos4'] = c.ultimos4.trim();
+  // [CH-224] [CH-229] en efectivo el subtipo va siempre; una billetera no envía institución ni últimos 4
+  if (c.tipo === 'efectivo') salida['subtipoEfectivo'] = c.subtipoEfectivo;
+  if (conBanco(c) && c.institucionId !== 'ninguna') salida['institucionId'] = c.institucionId;
+  if (conBanco(c) && c.ultimos4.trim() !== '') salida['ultimos4'] = c.ultimos4.trim();
   for (const x of CAMPOS_DE_TIPO[c.tipo]) {
     const v = c[x.n].trim();
     if (v === '' || v === SIN_ELEGIR || !visible(x, c)) continue;
@@ -152,10 +170,12 @@ export function avisoDeNombreRepetido(
 }
 
 /** Los valores con que abre el formulario: la apertura es el `hoy` del servidor, nunca la fecha del dispositivo (05 §5.5). */
-export const valoresIniciales = (hoy: string, tipo: TipoCuenta): Campos => ({
+export const valoresIniciales = (hoy: string, tipo: TipoCuenta, nombre = ''): Campos => ({
   ...(Object.fromEntries(CLAVES.map((k) => [k, ''])) as Record<Clave, string>),
   tipo,
   signo: 'positivo',
+  subtipoEfectivo: 'corriente',
+  nombre,
   institucionId: 'ninguna',
   fechaApertura: hoy,
   red: 'otra',

@@ -45,6 +45,7 @@ export function ResumenMeta({
         <div className="flex flex-col gap-1">
           <p className="text-cuerpo-pequeno">
             <Monto centavos={conseguido} /> {t.de} <Monto centavos={meta.monto} />
+            <span data-progreso> · {formatearPorcentaje(bp)}</span>
           </p>
           <div
             role="progressbar"

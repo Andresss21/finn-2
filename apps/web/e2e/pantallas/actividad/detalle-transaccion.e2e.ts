@@ -62,8 +62,8 @@ test.describe('PRU-E2E-TX detalle de una transacción', () => {
     await expect(page.getByRole('heading', { name: t.origen })).toBeVisible();
     await expect(page.locator('blockquote')).toContainText('compra por USD 30.00');
 
-    // [CH-109] En teléfono la barra del marco también lleva «Volver a Actividad»: se usa el de la pantalla.
-    await page.getByRole('main').getByRole('link', { name: t.volver }).click();
+    // [CH-109] A5: en teléfono «Volver a Actividad» va solo en la barra del marco; en computadora, en la fila del título.
+    await page.getByRole('link', { name: t.volver }).filter({ visible: true }).first().click();
     await expect(page).toHaveURL(/\/actividad(\?.*)?$/);
   });
 });

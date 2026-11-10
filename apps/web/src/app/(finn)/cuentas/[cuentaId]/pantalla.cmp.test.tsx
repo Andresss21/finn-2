@@ -237,6 +237,51 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
     );
   });
 
+  it('PRU-CMP-CTA-402 [FT-57] una inversión ofrece Aporte (principal), Retiro y Ajuste a sus flujos, y su lista se llama «Aportes, retiros y ajustes»', () => {
+    const raiz = mostrar(
+      dto({
+        cuenta: {
+          id: 'i',
+          nombre: 'I',
+          tipo: 'inversion',
+          fechaApertura: '2027-01-21',
+          archivada: false,
+        },
+        inversion: { valor: 207560, aportes: 200000, retiros: 0, ajustes: 7560 },
+      }),
+    );
+    const accion = (n: string) => raiz.querySelector(`[data-accion="${n}"] a`);
+    expect(accion('aporte')?.textContent).toBe('Aporte');
+    expect(accion('aporte')?.getAttribute('href')).toBe('/registrar/aporte-inversion?cuenta=i');
+    expect(accion('aporte')?.className).toContain('bg-accion ');
+    for (const [n, texto] of [
+      ['retiro', 'Retiro'],
+      ['ajuste', 'Ajuste'],
+    ] as const) {
+      expect(accion(n)?.textContent).toBe(texto);
+      expect(accion(n)?.getAttribute('href')).toBe(`/registrar/${n}-inversion?cuenta=i`);
+      expect(accion(n)?.className).toContain('bg-accion-tonal');
+    }
+    expect(raiz.querySelector('[data-movimientos] h2')?.textContent).toBe(
+      'Aportes, retiros y ajustes',
+    );
+    expect(raiz.querySelector('[data-bloque="inversion"]')?.textContent).toContain('Aportado');
+    // Archivada, sin acciones que escriben
+    const archivada = mostrar(
+      dto({
+        cuenta: {
+          id: 'i',
+          nombre: 'I',
+          tipo: 'inversion',
+          fechaApertura: '2027-01-21',
+          archivada: true,
+        },
+        inversion: { valor: 0, aportes: 0, retiros: 0, ajustes: 0 },
+      }),
+    );
+    expect(archivada.querySelector('[data-accion="aporte"]')).toBeNull();
+  });
+
   it('PRU-CMP-CTA-104 [CA-52.2, ESC-47] la conciliación de la tarjeta muestra la diferencia aceptada $2.00, la diferencia actual $5.00 con su aviso y el cambio posterior de A', () => {
     const raiz = mostrar(
       dto({

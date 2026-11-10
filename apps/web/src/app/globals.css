@@ -289,6 +289,25 @@ body {
     opacity: 0;
   }
 }
+/* C12 (CH-220): el contenido de Presupuesto entra desde el lado del período al que se fue. */
+@keyframes fz-periodo-siguiente {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+  }
+}
+@keyframes fz-periodo-anterior {
+  from {
+    opacity: 0;
+    transform: translateX(-22px);
+  }
+}
+.fz-periodo-siguiente {
+  animation: fz-periodo-siguiente var(--duracion-periodo) var(--curva-entrada) both;
+}
+.fz-periodo-anterior {
+  animation: fz-periodo-anterior var(--duracion-periodo) var(--curva-entrada) both;
+}
 @keyframes fz-menu-out {
   to {
     opacity: 0;

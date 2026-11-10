@@ -14,6 +14,7 @@ import { ResumenListoParaAsignar } from '../../../componentes/dominio/billete';
 import { Monto } from '../../../componentes/dominio/monto';
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
+import { EntradaDePeriodo } from '../../../componentes/navegacion/direccion-periodo';
 import { SelectorPeriodo } from '../../../componentes/navegacion/selector-periodo';
 import { dominio } from '../../../textos/dominio';
 import { glosario } from '../../../textos/glosario';
@@ -112,6 +113,8 @@ export function PantallaPresupuesto({
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-4 md:gap-7">
       <PublicarEncabezado encabezado={dto} />
+      {/* C12: las categorías entran desde el lado del período al que se fue */}
+      <EntradaDePeriodo key={periodo.inicio} inicio={periodo.inicio} objetivo="categorias" />
       <h1 className="text-titulo-pantalla">{t.titulo}</h1>
       <div className="contents md:grid md:grid-cols-2 md:items-start md:gap-6">
         <div className={O1}>

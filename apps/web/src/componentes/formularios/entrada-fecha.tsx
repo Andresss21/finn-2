@@ -27,41 +27,6 @@ export interface PropsEntradaFecha {
   readonly sinVistaPrevia?: boolean;
   /** El `hoy` del servidor, para marcarlo en el calendario; sin él se toma el de `<html data-hoy>`. */
   readonly hoy?: FechaLocal;
-  /**
-   * A12: atajos debajo del campo («Hoy», «Ayer»), en días desde `hoy`: son fechas de negocio del servidor, nunca del reloj del
-   * dispositivo. Sin `hoy` no se muestran.
-   */
-  readonly atajos?: readonly { readonly etiqueta: string; readonly dias: number }[];
-}
-
-/** El campo con sus atajos debajo, si los hay: pastillas tonales con su área de 44. */
-export function EntradaFecha({ atajos, ...props }: PropsEntradaFecha) {
-  const { hoy } = props;
-  if (atajos === undefined || atajos.length === 0 || hoy === undefined) return <Campo {...props} />;
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <Campo {...props} />
-      <div className="flex flex-wrap gap-1.5">
-        {atajos.map((a) => {
-          const fecha = FechaLocal.sumarDias(hoy, a.dias);
-          return (
-            <button
-              key={a.etiqueta}
-              type="button"
-              aria-pressed={props.valor === fecha}
-              disabled={props.deshabilitado}
-              className="flex min-h-11 cursor-pointer items-center rounded-pastilla px-1 text-etiqueta text-accion focus-visible:outline-3 focus-visible:outline-foco disabled:cursor-default disabled:text-texto-deshabilitado [&>span]:rounded-pastilla [&>span]:bg-accion-tonal [&>span]:px-3 [&>span]:py-1.5 aria-pressed:[&>span]:font-bold"
-              onClick={() => {
-                props.alCambiar(fecha);
-              }}
-            >
-              <span>{a.etiqueta}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
 
 /** Lo escrito → `dd/mm/aaaa` con las barras puestas; acepta también un `AAAA-MM-DD` pegado completo. */
@@ -86,7 +51,7 @@ function leer(t: string): FechaLocal | undefined {
   }
 }
 
-function Campo({
+export function EntradaFecha({
   nombre,
   etiqueta,
   valor,
@@ -98,7 +63,7 @@ function Campo({
   deshabilitado = false,
   sinVistaPrevia = false,
   hoy,
-}: Omit<PropsEntradaFecha, 'atajos'>) {
+}: PropsEntradaFecha) {
   // El borrador se guarda aparte: el valor del formulario solo cambia con una fecha completa, que exista y dentro del rango.
   const [borrador, setBorrador] = useState<string>(formatearFecha(valor));
   const [anterior, setAnterior] = useState<string>(valor);

@@ -21,11 +21,17 @@ export function Historial({
   readonly resumen: DetalleCategoria['historialResumen'];
 }) {
   const n = historial.length;
+  // D9 (06-identidad-visual 2.19): sin períodos anteriores, la caja «Gráfico sin datos» en lugar de un gráfico vacío.
   if (n === 0)
     return (
-      <p data-historial="vacio" className="text-cuerpo-pequeno text-texto-secundario">
-        {t.vacio}
-      </p>
+      <div
+        data-historial="vacio"
+        className="flex h-45 flex-col items-center justify-center gap-2 rounded-2xl bg-superficie-hundida px-6 text-center text-texto-secundario"
+      >
+        <Icono nombre="chart" tamano={28} />
+        <p className="text-cuerpo-pequeno font-semibold text-texto">{t.sinDatos}</p>
+        <p className="max-w-70 text-cuerpo-pequeno">{t.vacio}</p>
+      </div>
     );
   const puntos: PuntoBarra[] = historial.map((h) => ({
     clave: h.periodo.inicio,

@@ -1,11 +1,14 @@
 // Los campos de `/cuentas/nueva` (FT-50): el contrato del formulario y la entrada de OP-01 que sale de lo escrito.
 import { describe, expect, it } from 'vitest';
 import { op01 } from '@finn/aplicacion/contratos';
+import { cuentaSubtipo } from '../../textos/cuenta-subtipo';
 import {
   CONTRATO,
   aEntradaDeAccion,
   avisoDeNombreRepetido,
+  conBanco,
   entradaDeOp01,
+  nombrePropuesto,
   valoresIniciales,
   type Campos,
   type TipoCuenta,
@@ -16,6 +19,7 @@ const con = (tipo: TipoCuenta, extra: Partial<Campos>): Campos => ({
   ...extra,
 });
 const ID = '00000000-0000-4000-8000-000000000001';
+const N = cuentaSubtipo.nombres;
 
 describe('PRU-DOM-CTA', () => {
   it('PRU-DOM-CTA-106 [CA-50.1, CB-28] la entrada de un ahorro y la de una tarjeta que debe pasan por el contrato de OP-01; la deuda va positiva y a favor, negativa', () => {
@@ -23,6 +27,7 @@ describe('PRU-DOM-CTA', () => {
     expect(ahorro).toEqual({
       tipo: 'efectivo',
       nombre: 'Ahorro',
+      subtipoEfectivo: 'corriente', // [CH-229] la interfaz lo envía siempre en efectivo
       fechaApertura: '2027-02-05',
       saldo: '1000.5',
     });
@@ -143,6 +148,35 @@ describe('PRU-DOM-CTA', () => {
     });
     expect(aEntradaDeAccion({ ...campos, modo: 'confirmar', id: ID })).not.toHaveProperty(
       'revisionVista',
+    );
+  });
+
+  it('PRU-DOM-CTA-400 [CA-50.1] el subtipo propone el nombre sin pisar lo escrito, y una billetera no envía institución ni últimos 4', () => {
+    expect(con('efectivo', {}).ultimos4).toBe('');
+    expect(con('efectivo', {}).institucionId).toBe('ninguna');
+    expect(con('tarjeta', {}).nombre).toBe('');
+    expect(nombrePropuesto(N, 'Cuenta corriente', 'efectivo', 'ahorro')).toBe('Cuenta de ahorro');
+    expect(nombrePropuesto(N, '', 'efectivo', 'billetera')).toBe('Billetera');
+    expect(nombrePropuesto(N, 'Mi caja', 'efectivo', 'ahorro')).toBeUndefined();
+    expect(nombrePropuesto(N, 'Billetera', 'tarjeta', 'billetera')).toBe('');
+    expect(nombrePropuesto(N, 'Billetera', 'efectivo', 'billetera')).toBeUndefined();
+
+    const billetera = con('efectivo', {
+      subtipoEfectivo: 'billetera',
+      nombre: 'Billetera',
+      saldo: '40',
+      institucionId: ID,
+      ultimos4: '3310',
+    });
+    expect(conBanco(billetera)).toBe(false);
+    const entrada = entradaDeOp01(billetera);
+    expect(entrada).toMatchObject({ subtipoEfectivo: 'billetera' });
+    expect(entrada).not.toHaveProperty('institucionId');
+    expect(entrada).not.toHaveProperty('ultimos4');
+    expect(op01.safeParse({ ...entrada, id: ID }).success).toBe(true);
+    // Fuera de efectivo no va el subtipo: OP-01 lo rechazaría.
+    expect(entradaDeOp01(con('inversion', { nombre: 'Fondo', saldo: '1' }))).not.toHaveProperty(
+      'subtipoEfectivo',
     );
   });
 });

@@ -1,5 +1,5 @@
 // `/registrar/[tipo]` (05 §2.4): ingreso (OP-21, FT-22), transferencia (OP-22, FT-23), los movimientos de tarjeta sin compra (OP-27, FT-32)
-// y aporte, retiro y ajuste de inversión (OP-25, FT-57). Los demás valores de `[tipo]` los agregan sus fichas; hasta entonces son `notFound()`.
+// aporte, retiro y ajuste de inversión (OP-25, FT-57) y la devolución (OP-33, FT-28). Los demás valores de `[tipo]` los agregan sus fichas; hasta entonces son `notFound()`.
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { modalidadDe, tipoDeInversion } from '../../../../flujos/registrar-tipo/inversion-campos';
@@ -8,6 +8,8 @@ import { tipoDeRegistro } from '../../../../flujos/registrar-tipo/campos';
 import { LectorRegistrarTipo } from '../../../../flujos/registrar-tipo/lector';
 import { esDesembolso } from '../../../../flujos/registrar-tipo/campos-desembolso';
 import { LectorDesembolso } from '../../../../flujos/registrar-tipo/lector-desembolso';
+import { LectorDevolucion } from '../../../../flujos/registrar-tipo/lector-devolucion';
+import { registrarDevolucion } from '../../../../textos/registrar-devolucion';
 import { registrarDesembolso } from '../../../../textos/registrar-desembolso';
 import { tipoDeTarjeta } from '../../../../flujos/registrar-tipo/campos-tarjeta';
 import { LectorRegistrarTarjeta } from '../../../../flujos/registrar-tipo/lector-tarjeta';
@@ -15,6 +17,9 @@ import type { BusquedaDePagina } from '../../../../servidor/parametros';
 import { registrarInversion } from '../../../../textos/registrar-inversion';
 import { registrarTarjeta } from '../../../../textos/registrar-tarjeta';
 import { registrarTipo } from '../../../../textos/registrar-tipo';
+
+/** `devolucion` (05 §2.4): OP-33b y la búsqueda de la compra para OP-33a. */
+const DEVOLUCION = 'devolucion';
 
 interface Props {
   readonly params: Promise<{ readonly tipo: string }>;
@@ -26,6 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const inversion = tipoDeInversion(url);
   if (inversion !== undefined) return { title: registrarInversion.titulo[modalidadDe(inversion)] };
   if (esDesembolso(url)) return { title: registrarDesembolso.titulo };
+  if (url === DEVOLUCION) return { title: registrarDevolucion.titulo };
   const deTarjeta = tipoDeTarjeta(url);
   if (deTarjeta !== undefined) return { title: registrarTarjeta.flujos[deTarjeta].titulo };
   return {
@@ -44,6 +50,7 @@ export default async function PaginaRegistrarTipo({ params, searchParams }: Prop
   const tipo = tipoDeRegistro(url);
   if (tipo !== undefined) return <LectorRegistrarTipo tipo={tipo} busqueda={await searchParams} />;
   if (esDesembolso(url)) return <LectorDesembolso busqueda={await searchParams} />;
+  if (url === DEVOLUCION) return <LectorDevolucion />;
   const deTarjeta = tipoDeTarjeta(url);
   if (deTarjeta === undefined) notFound();
   return <LectorRegistrarTarjeta tipo={deTarjeta} busqueda={await searchParams} />;

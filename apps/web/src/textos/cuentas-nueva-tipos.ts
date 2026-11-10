@@ -1,0 +1,31 @@
+// Textos de los campos propios de la tarjeta, el préstamo y la inversión en `/cuentas/nueva` (FT-50; 05 §12). Solo los carga el
+// módulo diferido de esos campos: con efectivo, el tipo por defecto, no van en el JS de la ruta (05 §13.1).
+export const cuentasNuevaTipos = {
+  limiteCredito: 'Límite de crédito',
+  tasaAnual: 'Tasa anual (%)',
+  diaCorte: 'Día de corte',
+  diaPago: 'Día de pago',
+  red: 'Red',
+  redes: { visa: 'Visa', mastercard: 'Mastercard', otra: 'Otra' },
+  color: 'Color de la tarjeta',
+  vistaPrevia: 'Tu tarjeta',
+  modelo: 'Modelo de cálculo',
+  modelos: { ninguno: 'Sin modelo', banco_agricola: 'Banco Agrícola' },
+  contraparte: 'Quién te prestó',
+  montoOriginal: 'Monto original',
+  tipoTasa: 'Tipo de tasa',
+  tiposTasa: { fija: 'Fija', variable: 'Variable' },
+  frecuencia: 'Frecuencia de las cuotas',
+  frecuencias: {
+    semanal: 'Semanal',
+    quincenal: 'Quincenal',
+    mensual: 'Mensual',
+    anual: 'Anual',
+    cada_n_dias: 'Cada cierta cantidad de días',
+  },
+  frecuenciaDias: 'Cada cuántos días',
+  cuotaPactada: 'Cuota pactada',
+  plazoCuotas: 'Cantidad de cuotas',
+  cuotasPagadas: 'Cuotas que ya pagaste',
+  rendimiento: 'Rendimiento anual esperado (%)',
+} as const;

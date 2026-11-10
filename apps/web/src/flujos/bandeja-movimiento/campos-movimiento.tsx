@@ -9,7 +9,7 @@ import type { UseFieldArrayReturn, UseFormReturn } from 'react-hook-form';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
-import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
+import { EntradaFechaConAtajos } from '../../componentes/formularios/entrada-fecha-atajos';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { bandeja as t } from '../../textos/bandeja';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
@@ -100,7 +100,7 @@ export default function CamposMovimiento({
         error={error('cuentaId')}
       />
       <div className="grid grid-cols-2 gap-2.5 [&>*]:min-w-0">
-        <EntradaFecha
+        <EntradaFechaConAtajos
           nombre="fecha"
           etiqueta={g.fecha}
           valor={c.fecha as FechaLocal}

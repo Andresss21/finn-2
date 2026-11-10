@@ -78,7 +78,32 @@ export function menuDe(dto: DetalleCuentaDto): AccionPantalla[] {
 
 /** Los dos botones del diseño: la acción propia del tipo (verificar saldo o pagar la tarjeta) y «Registrar». */
 export function AccionesPrincipales({ cuenta }: { readonly cuenta: Cuenta }) {
-  if (cuenta.archivada || (cuenta.tipo !== 'efectivo' && cuenta.tipo !== 'tarjeta')) return null;
+  if (cuenta.archivada) return null;
+  // A19: la inversión con Aporte (principal), Retiro y Ajuste (tonales), a los flujos cortos de FT-57
+  if (cuenta.tipo === 'inversion') {
+    const i = t.inversion;
+    const a = (tipo: string) => `/registrar/${tipo}-inversion?cuenta=${cuenta.id}`;
+    return (
+      <ul className="grid grid-cols-3 gap-2">
+        <li data-accion="aporte">
+          <EnlaceFinn href={a('aporte')} className={PRINCIPAL_ANCHO}>
+            {i.aporte}
+          </EnlaceFinn>
+        </li>
+        <li data-accion="retiro">
+          <EnlaceFinn href={a('retiro')} className={TONAL_ANCHO}>
+            {i.retiro}
+          </EnlaceFinn>
+        </li>
+        <li data-accion="ajuste">
+          <EnlaceFinn href={a('ajuste')} className={TONAL_ANCHO}>
+            {i.ajuste}
+          </EnlaceFinn>
+        </li>
+      </ul>
+    );
+  }
+  if (cuenta.tipo !== 'efectivo' && cuenta.tipo !== 'tarjeta') return null;
   const base = `/cuentas/${cuenta.id}`;
   const tarjeta = cuenta.tipo === 'tarjeta';
   return (

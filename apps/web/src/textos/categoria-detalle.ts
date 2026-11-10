@@ -50,6 +50,7 @@ export const categoriaDetalle = {
   historial: {
     titulo: (n: number) => `Últimos ${n} períodos`,
     generico: 'Historial',
+    sinDatos: 'Gráfico sin datos',
     vacio: 'Todavía no hay períodos cerrados con esta categoría.',
     sePaso: (k: number, n: number) => `Se pasó ${k} de ${n}`,
     promedio: 'Promedio gastado',

@@ -540,3 +540,57 @@ describe('Detalle de categoría: ajustes del diseño (CH-140)', () => {
     }
   });
 });
+
+describe('Detalle de categoría: historial sin datos y meta (D9, A9)', () => {
+  const conMeta = (parcial: Record<string, unknown> = {}) =>
+    dto({
+      numeros: { ...ceros, disponible: 135000 },
+      meta: {
+        id: 'meta-1',
+        tipo: 'para_fecha',
+        monto: 300000,
+        pedido: 17500,
+        falta: 7500,
+        estado: 'con_faltante',
+        progresoBp: 4500,
+      },
+      ...parcial,
+    });
+
+  it('PRU-CMP-PRES-400 [CA-14.5] sin períodos anteriores, la caja «Gráfico sin datos»; una categoría de ahorro con meta y sin gasto no lleva historial', () => {
+    const vacia = mostrar(dto());
+    const caja = vacia.querySelector('[data-historial="vacio"]');
+    expect(caja?.textContent).toContain('Gráfico sin datos');
+    expect(caja?.querySelector('[data-icono="chart"]')).not.toBeNull();
+    expect(caja?.className).toContain('bg-superficie-hundida');
+    expect(caja?.getBoundingClientRect().height).toBe(180);
+
+    expect(mostrar(conMeta()).querySelector('[data-seccion="historial"]')).toBeNull();
+    // Con gasto en algún período anterior, el historial vuelve.
+    const conGasto = mostrar(
+      conMeta({
+        historial: [hist('2027-01-21', 10000, 2000)],
+        historialResumen: { promedioGastado: 2000, periodosExcedidos: 0 },
+      }),
+    );
+    expect(conGasto.querySelector('[data-seccion="historial"]')).not.toBeNull();
+  });
+
+  it('PRU-CMP-PRES-401 [CA-14.10] con meta, «$1,350.00 de $3,000.00 · 45 %» y el principal «Asignar $75.00» con el `falta` del DTO, a Asignar sin opción elegida', () => {
+    const raiz = mostrar(conMeta());
+    expect(sinEspacios(raiz.querySelector('[data-resumen-meta]'))).toContain(
+      '$1,350.00 de $3,000.00 · 45%',
+    );
+    const nav = raiz.querySelector('nav[aria-label="Acciones de la categoría"]') as HTMLElement;
+    const principal = enlace(nav, 'Asignar');
+    expect(sinEspacios(principal)).toBe('Asignar $75.00');
+    expect(principal?.getAttribute('href')).toBe(`/presupuesto/asignar/${ID}`);
+    // El monto va una sola vez: la sección de la meta ya no repite el botón.
+    expect(enlace(raiz.querySelector('[data-seccion="meta"]') as HTMLElement, 'Asignar')).toBe(
+      undefined,
+    );
+    // Sin faltante, el principal vuelve a «Asignar» a secas.
+    const cubierta = mostrar(dto());
+    expect(sinEspacios(enlace(cubierta, 'Asignar'))).toBe('Asignar');
+  });
+});

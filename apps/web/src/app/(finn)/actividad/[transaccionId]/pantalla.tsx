@@ -226,7 +226,7 @@ export function PantallaDetalleTransaccion({
         <div className="-ml-2 flex items-center gap-1">
           <EnlaceFinn
             href={origen}
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-pastilla focus-visible:outline-3 focus-visible:outline-foco"
+            className="hidden size-11 shrink-0 items-center justify-center rounded-pastilla focus-visible:outline-3 focus-visible:outline-foco md:inline-flex"
           >
             <Icono nombre="arrowL" tamano={22} etiqueta={t.volver} />
           </EnlaceFinn>

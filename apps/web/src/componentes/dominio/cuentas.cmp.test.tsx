@@ -444,3 +444,48 @@ describe('PRU-CMP-CTA-331 selector de color de la tarjeta', () => {
     expect(nodo.textContent).toContain('Mi Visa');
   });
 });
+
+describe('PRU-CMP-CTA-401 identidad de efectivo por el subtipo', () => {
+  const fila = (subtipoEfectivo: 'corriente' | 'ahorro' | 'billetera') => ({
+    // El nombre dice «Ahorro» a propósito: la identidad nunca sale del nombre (CH-224).
+    cuenta: { id: `k-${subtipoEfectivo}`, nombre: 'Ahorro' },
+    subtipoEfectivo,
+    saldo: c(1000),
+    saldoConfirmado: c(1000),
+  });
+  const detalle = (subtipoEfectivo: 'corriente' | 'ahorro' | 'billetera') =>
+    ({
+      cuenta: { id: 'k', nombre: 'Ahorro', tipo: 'efectivo', archivada: false, subtipoEfectivo },
+      saldo: c(1000),
+      saldoConfirmado: c(1000),
+    }) as unknown as DetalleCuentaDto;
+  const esperado = {
+    corriente: { fondo: 'bg-cuenta-banco', icono: 'bank', motivo: 'libreta' },
+    ahorro: { fondo: 'bg-cuenta-ahorro', icono: 'coins', motivo: 'anillos' },
+    billetera: { fondo: 'bg-cuenta-banco', icono: 'wallet', motivo: null },
+  } as const;
+
+  it('PRU-CMP-CTA-401 [FT-51, FT-52] corriente con libreta, ahorro con anillos y billetera con `wallet` sin motivo, en la lista y en el detalle, por el subtipo del DTO', () => {
+    for (const s of ['corriente', 'ahorro', 'billetera'] as const) {
+      const lista = montar(<IdentidadCuenta tipo="efectivo" fila={fila(s)} />);
+      const cabecera = montar(<Cabecera dto={detalle(s)} />);
+      for (const nodo of [lista, cabecera]) {
+        const id = nodo.querySelector<HTMLElement>('[data-identidad="efectivo"]');
+        expect(id?.dataset['subtipo']).toBe(s);
+        expect(id?.className).toContain(esperado[s].fondo);
+        expect(id?.querySelector('[data-icono]')?.getAttribute('data-icono')).toBe(
+          esperado[s].icono,
+        );
+        expect(id?.querySelector('[data-motivo]')?.getAttribute('data-motivo') ?? null).toBe(
+          esperado[s].motivo,
+        );
+      }
+    }
+    // Sin subtipo (una fila de antes de CH-224), corriente.
+    const { cuenta, saldo, saldoConfirmado } = fila('ahorro');
+    const vieja = montar(
+      <IdentidadCuenta tipo="efectivo" fila={{ cuenta, saldo, saldoConfirmado }} />,
+    );
+    expect(vieja.querySelector('[data-motivo]')?.getAttribute('data-motivo')).toBe('libreta');
+  });
+});

@@ -21,6 +21,8 @@ export async function LectorCuentasEditar({ cuentaId }: { readonly cuentaId: str
       instituciones={dto.contexto.instituciones}
       esperado={{
         nombre: cuenta.nombre,
+        // [CH-224] solo una cuenta de efectivo tiene subtipo; va en `esperado` para OP-02
+        ...('subtipoEfectivo' in cuenta ? { subtipoEfectivo: cuenta.subtipoEfectivo } : {}),
         institucionId: cuenta.institucion?.id ?? null,
         ultimos4: cuenta.ultimos4,
         fechaApertura: cuenta.fechaApertura,

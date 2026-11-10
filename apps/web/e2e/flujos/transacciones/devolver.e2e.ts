@@ -173,6 +173,29 @@ test.describe('PRU-E2E-TX devolver', () => {
     await esperarMonto(disponible(page, 'Ropa'), 0);
   });
 
+  test('PRU-E2E-TX-420 [CA-28.1, ESC-25] RUTA-/registrar/[tipo] desde Registrar, «Devolución» lista la compra de $100.00 y lleva a devolverla; Ropa queda en $100.00', async ({
+    page,
+  }) => {
+    await preparar(ESC25, '2027-02-10', '2027-03-01');
+    await abrir(page, '/registrar');
+    await page.getByRole('link', { name: /^Devolución/ }).click();
+    await expect(page).toHaveURL(/\/registrar\/devolucion$/);
+    await esperarHidratacion(page);
+    const compra = page.locator('[data-compras] a').first();
+    await esperarMonto(compra.locator('[data-centavos]'), 10000);
+    await compra.click();
+    // `/registrar/devolucion` también se titula «Registrar devolución» y tiene «Monto devuelto»: se espera la ruta nueva
+    await expect(page).toHaveURL(/\/actividad\/[^/]+\/devolver\?/);
+    await expect(page.getByRole('heading', { level: 2, name: t.repartoEntrePartes })).toBeVisible();
+    await esperarHidratacion(page);
+    await total(page).fill('100');
+    await registrar(page).click();
+    await volvioAlDetalle(page);
+
+    await abrir(page, '/presupuesto');
+    await esperarMonto(disponible(page, 'Ropa'), 10000);
+  });
+
   test('PRU-E2E-TX-491 [CA-28.2, ESC-26] con el paso 1 de ESC-26, al devolver $30.00 y luego $20.00 el sobregiro con tarjeta pasa de $40.00 a $10.00 y a $0.00 y la deuda de T de $100.00 a $70.00 y a $50.00', async ({
     page,
   }) => {
