@@ -46,6 +46,7 @@ jobs:
       e2e: ${{ steps.rapido.outputs.e2e }}
       cierre: ${{ steps.rapido.outputs.cierre }}
       grep_e2e: ${{ steps.rapido.outputs.grep_e2e }}
+      reutiliza_e2e: ${{ steps.rapido.outputs.reutiliza_e2e }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0, persist-credentials: false }
@@ -75,6 +76,13 @@ jobs:
           path: test-results/ci-modo
           key: ci-modo-${{ github.run_id }}
           restore-keys: ci-modo-
+      # CH-231 c (TA-555): en main, si el commit es el squash de un PR con su mismo árbol que contiene el main anterior
+      # y cuya CI pasó entera con la E2E completa, `ci:rapido` publica e2e=false y reutiliza_e2e=<run_id de esa corrida>.
+      # Ante cualquier duda no deja nada y main corre todo. El token llega solo a este paso.
+      - if: github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: pnpm ci:reutiliza-e2e
       - id: rapido
         run: pnpm ci:rapido
       # CH-22: la imagen de PostgreSQL de integracion, por digest (infra/versiones.env), desde la caché, ECR
@@ -211,9 +219,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with: { pattern: e2e-blob-*, merge-multiple: true, path: test-results/e2e-blob }
+      # El filtro queda en e2e-completa.json, dentro de informes-e2e: main reutiliza solo una E2E sin filtro (TA-555)
       - env:
           GITHUB_TOKEN: ${{ github.token }}
           FINN_E2E_FRAGMENTOS: ${{ needs.e2e-fragmento.result }}
+          FINN_E2E_GREP: ${{ needs.rapido.outputs.grep_e2e }}
         run: pnpm ci:e2e-unir
       - if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -223,10 +233,11 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+  # CH-237: en un PR corre también con la E2E completa en verde, así esa corrida queda entera para que main la reutilice.
   cierre:
     name: cierre
     needs: [rapido, e2e]
-    if: ${{ !cancelled() && needs.rapido.result == 'success' && needs.rapido.outputs.cierre == 'true' && needs.e2e.result != 'failure' }}
+    if: ${{ !cancelled() && needs.rapido.result == 'success' && needs.e2e.result != 'failure' && (needs.rapido.outputs.cierre == 'true' || (needs.e2e.result == 'success' && needs.rapido.outputs.grep_e2e == 'todas')) }}
     runs-on: ubuntu-24.04
     # CH-206: `playwright install --with-deps` depende del espejo de Ubuntu (3 s a más de 9 min); 10 cortaba el job.
     timeout-minutes: 20
@@ -244,16 +255,24 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with: { pattern: informes-*, merge-multiple: true, path: test-results/informes }
+      # TA-555: con la E2E reutilizada, M15 lee el informe de la corrida del PR con el mismo árbol
+      - if: needs.rapido.outputs.reutiliza_e2e != ''
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: informes-e2e
+          path: test-results/informes
+          run-id: ${{ needs.rapido.outputs.reutiliza_e2e }}
+          github-token: ${{ github.token }}
       - run: pnpm ci:cierre
 
   # TA-260 (02 ADR-10, 03 §11.7, 07 §6.1, CH-64). `integracion` corre dentro de `rapido` (M5, DP-33): el `if` exige
-  # que haya corrido, y sin función de estado el `if` exige además que todos los `needs` terminen en `success`.
+  # que haya corrido, y cada `needs` en `success`; `e2e` saltado solo vale con reutiliza_e2e (TA-555, CH-231 c).
   # contents: write solo aquí, para la etiqueta del commit desplegado (04 §16.3, paso 5). Los secretos llegan solo al
   # paso que los usa; ningún guardia saltea el despliegue si faltan: el job falla.
   desplegar:
     name: desplegar
     needs: [rapido, e2e, cierre]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.rapido.outputs.integracion == 'true'
+    if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.rapido.result == 'success' && needs.rapido.outputs.integracion == 'true' && needs.cierre.result == 'success' && (needs.e2e.result == 'success' || (needs.e2e.result == 'skipped' && needs.rapido.outputs.reutiliza_e2e != '')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
