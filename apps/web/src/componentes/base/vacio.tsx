@@ -5,9 +5,9 @@ import { Icono, type NombreIcono } from './icono';
 // Mapa de clases literales (L13). Un error («Esto ya no existe.», entrega 2 del diseño) va en el círculo neutro.
 const TONOS = {
   positivo:
-    'flex size-18 items-center justify-center rounded-pastilla bg-positivo-fondo text-positivo-texto',
+    'fz-vacio-disco flex size-18 items-center justify-center rounded-pastilla bg-positivo-fondo text-positivo-texto',
   neutro:
-    'flex size-18 items-center justify-center rounded-pastilla bg-superficie-hundida text-texto',
+    'fz-vacio-disco flex size-18 items-center justify-center rounded-pastilla bg-superficie-hundida text-texto',
 } as const;
 
 export interface PropsVacio {
@@ -31,9 +31,9 @@ export function Vacio({
       <span data-glifo={icono} className={TONOS[tono]}>
         <Icono nombre={icono} tamano={32} />
       </span>
-      <h2 className="text-titulo-seccion text-texto">{titulo}</h2>
-      <p className="text-cuerpo-pequeno max-w-70 text-texto-secundario">{texto}</p>
-      {accion === undefined ? null : <div>{accion}</div>}
+      <h2 className="fz-vacio-texto text-titulo-seccion text-texto">{titulo}</h2>
+      <p className="fz-vacio-texto text-cuerpo-pequeno max-w-70 text-texto-secundario">{texto}</p>
+      {accion === undefined ? null : <div className="fz-vacio-texto">{accion}</div>}
     </div>
   );
 }

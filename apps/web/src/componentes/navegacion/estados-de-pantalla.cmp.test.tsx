@@ -115,3 +115,26 @@ describe('PRU-CMP-AJUS-144 página sin conexión', () => {
     },
   );
 });
+
+describe('PRU-CMP-PWA error de pantalla con su glifo', () => {
+  it('PRU-CMP-PWA-341 [] el error de pantalla es una tarjeta con elevación 1, el glifo info, la referencia copiable e «Intentar de nuevo»', () => {
+    const raiz = montar(
+      <ErrorDeLaPantalla
+        error={Object.assign(new Error('x'), { digest: 'E-XYZ987' })}
+        reset={() => undefined}
+      />,
+    );
+    const tarjeta = raiz.querySelector('[role=alert]') as HTMLElement;
+    expect(tarjeta.querySelector('[data-icono="info"]')).not.toBeNull();
+    const sonda = document.createElement('span');
+    sonda.style.boxShadow = 'var(--elevacion-1)';
+    document.body.append(sonda);
+    expect(getComputedStyle(tarjeta).boxShadow).toContain(getComputedStyle(sonda).boxShadow);
+    sonda.remove();
+    expect(tarjeta.textContent).toContain('E-XYZ987');
+    expect(tarjeta.querySelector('button[aria-label]')).not.toBeNull();
+    expect(
+      [...tarjeta.querySelectorAll('button')].some((b) => b.textContent === 'Intentar de nuevo'),
+    ).toBe(true);
+  });
+});

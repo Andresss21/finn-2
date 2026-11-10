@@ -8,6 +8,7 @@ import type {
 } from '@finn/aplicacion/consultas/notificaciones';
 import { Icono, type NombreIcono } from '../../../componentes/base/icono';
 import { Vacio } from '../../../componentes/base/vacio';
+import { indice } from '../../../componentes/movimiento/indice';
 import { RUTA_CENTRO, rutaDeDestino } from '../../../componentes/navegacion/destinos';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { formatearInstante } from '../../../formato';
@@ -20,7 +21,7 @@ const t = textos.centro;
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-enlace ${FOCO}`;
-const FILA = 'grid grid-cols-[2.5rem_minmax(0,1fr)_0.625rem] gap-3 px-3.5 py-3';
+const FILA = 'fz-aviso grid grid-cols-[2.5rem_minmax(0,1fr)_0.625rem] gap-3 px-3.5 py-3';
 const FILA_ENLACE =
   'grid grid-cols-[2.5rem_minmax(0,1fr)_0.625rem] gap-3 rounded-contenedor px-3.5 py-3 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
@@ -98,8 +99,13 @@ function Cuerpo({ n }: { readonly n: NotificacionCentroDto }) {
   );
 }
 
-function Fila({ n }: { readonly n: NotificacionCentroDto }) {
-  const atributos = { 'data-notificacion': n.id, 'data-leida': n.leida ? 'si' : 'no' };
+/** `i`: el lugar en su grupo; los avisos entran a 120 ms + 60 ms × i (CH-220, C8). */
+function Fila({ n, i }: { readonly n: NotificacionCentroDto; readonly i: number }) {
+  const atributos = {
+    'data-notificacion': n.id,
+    'data-leida': n.leida ? 'si' : 'no',
+    style: indice(i),
+  };
   if (!n.existeDestino)
     return (
       <li {...atributos} className={FILA}>
@@ -107,7 +113,7 @@ function Fila({ n }: { readonly n: NotificacionCentroDto }) {
       </li>
     );
   return (
-    <li {...atributos}>
+    <li {...atributos} className="fz-aviso">
       <EnlaceFinn href={rutaDeDestino(n.destino, n.id)} className={FILA_ENLACE}>
         <Cuerpo n={n} />
       </EnlaceFinn>
@@ -129,8 +135,8 @@ function Grupo({
         <h2 className="text-rotulo px-1 text-texto-terciario">{titulo}</h2>
       )}
       <ul className="flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie shadow-elevacion-1">
-        {filas.map((n) => (
-          <Fila key={n.id} n={n} />
+        {filas.map((n, i) => (
+          <Fila key={n.id} n={n} i={i} />
         ))}
       </ul>
     </section>

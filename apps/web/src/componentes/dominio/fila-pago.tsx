@@ -3,6 +3,7 @@ import type { Centavos } from '@finn/dominio/valores';
 import { dominio } from '../../textos/dominio';
 import { IndicadorEstado, type EstadoFinanciero } from './indicador-estado';
 import { Monto } from './monto';
+import { MontoDestello } from './monto-destello';
 
 export interface FilaPagoTarjetaDto {
   readonly tarjeta: { readonly id: string; readonly nombre: string };
@@ -64,7 +65,7 @@ export function FilaPagoTarjeta({
     >
       <span className="flex items-baseline justify-between gap-3">
         <span className="text-cuerpo font-semibold text-texto">{fila.tarjeta.nombre}</span>
-        <Monto
+        <MontoDestello
           centavos={p.centavos}
           rol="cifra"
           presentacion="absoluto"

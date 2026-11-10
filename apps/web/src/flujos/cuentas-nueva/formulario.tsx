@@ -4,12 +4,11 @@
 // montos (PF-3): el impacto y los avisos los trae el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { useCallback, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useMemo } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
-import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
@@ -31,6 +30,18 @@ import {
   type Descriptor,
   type TipoCuenta,
 } from './campos';
+
+// El selector de color y su cara de vista previa solo se usan con una tarjeta de crédito: se cargan al elegirla (05 §13.3),
+// fuera del JS de la ruta (presupuesto de 05 §13.1).
+// La confirmación solo aparece si el servidor la pide: también se carga cuando hace falta.
+const ConfirmacionImpacto = lazy(() =>
+  import('../../componentes/formularios/confirmacion-impacto').then((m) => ({
+    default: m.ConfirmacionImpacto,
+  })),
+);
+const ColorTarjeta = lazy(() =>
+  import('./color-tarjeta').then((m) => ({ default: m.ColorTarjeta })),
+);
 
 export interface PropsFormularioCuentaNueva {
   readonly hoy: FechaLocal;
@@ -93,6 +104,7 @@ export function FormularioCuentaNueva({
     const mensaje = error(n);
     return mensaje === undefined ? {} : { error: mensaje };
   };
+  const institucionElegida = instituciones.find((i) => i.id === c.institucionId)?.nombre;
   const avisoDeNombre = avisoDeNombreRepetido(c.tipo, c.nombre, nombresTarjetaUsados);
 
   const { estado, error: fallo, exito } = operacion;
@@ -112,6 +124,21 @@ export function FormularioCuentaNueva({
           error={mensaje}
           requerido={x.requerido}
         />
+      );
+    if (x.n === 'color')
+      return (
+        <Suspense key={x.n} fallback={<div className="min-h-60" aria-hidden="true" />}>
+          <ColorTarjeta
+            valor={c.color}
+            alCambiar={poner('color')}
+            vista={{
+              nombre: c.nombre,
+              red: t.redes[c.red as keyof typeof t.redes],
+              ...(c.ultimos4.trim() === '' ? {} : { ultimos4: c.ultimos4.trim() }),
+              ...(institucionElegida === undefined ? {} : { institucion: institucionElegida }),
+            }}
+          />
+        </Suspense>
       );
     if (x.clase === 'opciones')
       return (
@@ -148,25 +175,27 @@ export function FormularioCuentaNueva({
   return (
     <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={RUTA_PADRE}>
       {estado === 'confirmando' ? (
-        <ConfirmacionImpacto
-          titulo={t.revisar}
-          {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
-          impacto={
-            vista.impacto
-              ? [
-                  t.impactoLpa(
-                    `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
-                  ),
-                ]
-              : []
-          }
-          avisos={(vista.avisos ?? []).map((a) => t.avisos[a.codigo] ?? a.codigo)}
-          textoConfirmar={t.confirmar}
-          textoVolver={t.volverAEditar}
-          enviando={false}
-          alConfirmar={() => void operacion.confirmar()}
-          alVolver={operacion.volverAEditar}
-        />
+        <Suspense fallback={null}>
+          <ConfirmacionImpacto
+            titulo={t.revisar}
+            {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
+            impacto={
+              vista.impacto
+                ? [
+                    t.impactoLpa(
+                      `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
+                    ),
+                  ]
+                : []
+            }
+            avisos={(vista.avisos ?? []).map((a) => t.avisos[a.codigo] ?? a.codigo)}
+            textoConfirmar={t.confirmar}
+            textoVolver={t.volverAEditar}
+            enviando={false}
+            alConfirmar={() => void operacion.confirmar()}
+            alVolver={operacion.volverAEditar}
+          />
+        </Suspense>
       ) : (
         <form
           onSubmit={(e) => void formulario.enviar(e)}

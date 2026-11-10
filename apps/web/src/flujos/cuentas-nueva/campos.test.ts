@@ -86,7 +86,8 @@ describe('PRU-DOM-CTA', () => {
       diaCorte: '15',
       diaPago: '5',
     });
-    expect(entradaDeOp01(tarjeta)).not.toHaveProperty('color');
+    expect(entradaDeOp01({ ...tarjeta, color: 'ninguno' })).not.toHaveProperty('color');
+    expect(entradaDeOp01(tarjeta)).toMatchObject({ color: '#7E6638' }); // [CH-225] empieza en oro
     const oro = entradaDeOp01({ ...tarjeta, color: '#7E6638' });
     expect(oro).toMatchObject({ color: '#7E6638' });
     expect(op01.safeParse({ ...oro, id: ID }).success).toBe(true);

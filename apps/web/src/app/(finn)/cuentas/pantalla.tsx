@@ -1,6 +1,6 @@
 // `/cuentas` (FT-51; 06-identidad-visual §9): posición neta, tarjetas en billetera, efectivo, préstamos, inversiones y, a pedido,
-// las archivadas. Dibuja lo que trae el DTO: no calcula montos (PF-3). Las caras de las tarjetas son decorativas y se asignan por
-// orden (primera oro, segunda plata, y así; 06 «Precisión»).
+// las archivadas. Dibuja lo que trae el DTO: no calcula montos (PF-3). La cara de cada tarjeta sale de su color guardado
+// (CH-225), decorativa.
 import type { CuentasDto } from '@finn/aplicacion/consultas/cuentas';
 import type { Centavos } from '@finn/dominio/valores';
 import type { ReactNode } from 'react';
@@ -53,10 +53,7 @@ export function PantallaCuentas({ dto }: { readonly dto: CuentasDto }) {
   const sinCuentas =
     dto.efectivo.length + dto.tarjetas.length + dto.prestamos.length + dto.inversiones.length ===
       0 && (archivadas ?? []).length === 0;
-  const tarjetas: readonly TarjetaDto[] = dto.tarjetas.map((x, i) => ({
-    ...x,
-    color: i % 2 === 0 ? 'oro' : 'plata',
-  }));
+  const tarjetas: readonly TarjetaDto[] = dto.tarjetas;
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-5 py-4">

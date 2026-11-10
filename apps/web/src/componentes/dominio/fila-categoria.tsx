@@ -6,6 +6,7 @@ import { EnlaceFinn } from '../navegacion/enlace-finn';
 import { BarraGastado, type BarraDto } from './barra-gastado';
 import { IndicadorEstado, type EstadoFinanciero } from './indicador-estado';
 import { Monto } from './monto';
+import { MontoDestello } from './monto-destello';
 
 export interface FilaCategoriaDto {
   readonly categoria: { readonly id: string; readonly nombre: string };
@@ -103,7 +104,7 @@ export function FilaCategoria({
         </span>
         <span className={C4}>
           <span className="sr-only">{dominio.disponible} </span>
-          <Monto centavos={fila.disponible} rol="cifra" {...(estado ? { estado } : {})} />
+          <MontoDestello centavos={fila.disponible} rol="cifra" {...(estado ? { estado } : {})} />
         </span>
         <div className="col-span-2 empty:hidden md:hidden">
           <BarraGastado barra={fila.barra} metaCubierta={metaCubierta(fila)} />

@@ -577,7 +577,7 @@
 
   "TA-487": { "estado": "terminada", "rama": "ta-487-fixes-anchos-columnas", "pr": 530 },
 
-  "TA-488": { "estado": "pendiente" },
+  "TA-488": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 },
 
   "TA-489": { "estado": "pendiente" },
 
@@ -593,7 +593,7 @@
 
   "TA-495": { "estado": "pendiente" },
 
-  "TA-496": { "estado": "pendiente" },
+  "TA-496": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 },
 
   "TA-497": { "estado": "pendiente" },
 
@@ -611,5 +611,5 @@
 
   "TA-511": { "estado": "pendiente" },
 
-  "TA-512": { "estado": "pendiente" }
+  "TA-512": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 }
 }

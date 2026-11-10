@@ -117,11 +117,14 @@ function CuerpoDelMarco({
         {navegacion.saltar}
       </a>
       {enLinea ? null : (
+        // [A35] Banda compacta `--texto` sobre `--fondo` con la nube tachada (radio de control, 10 × 14).
         <div
           role="status"
-          className="text-etiqueta fixed inset-x-0 top-15 z-40 bg-superficie-elevada px-5 py-2 text-center text-texto md:top-0 md:left-62"
+          data-sin-conexion
+          className="text-etiqueta fixed inset-x-4 top-16 z-40 flex items-center gap-2 rounded-control bg-texto px-3.5 py-2.5 text-fondo md:top-2 md:right-6 md:left-68"
         >
-          {bloqueada ? navegacion.sinConexionNavegacion : navegacion.sinConexion}
+          <Icono nombre="wifioff" tamano={18} />
+          <span>{bloqueada ? navegacion.sinConexionNavegacion : navegacion.sinConexion}</span>
         </div>
       )}
       {pendientes.size > 0 ? (

@@ -2,6 +2,7 @@
 // «Más acciones» de una pantalla hija (P1-04, CH-115): el menú de acciones de K2. Se carga diferido desde `marco.tsx`.
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { navegacion } from '../../textos/navegacion';
+import { useSalida } from '../movimiento/use-salida';
 import { Icono } from '../base/icono';
 import { EnlaceFinn } from '../navegacion/enlace-finn';
 import type { AccionesPublicadas } from './publicar-acciones';
@@ -23,6 +24,14 @@ const ITEMS = {
  */
 export function MasAcciones({ titulo, acciones }: AccionesPublicadas) {
   const [abierto, setAbierto] = useState(false);
+  // [CH-220 C1] El menú sale (opacidad 0, escala .96) y recién después se desmonta.
+  const { saliendo, salir, alTerminarAnimacion, reiniciar } = useSalida(() => {
+    setAbierto(false);
+  }, '--duracion-rapida');
+  const salirRef = useRef(salir);
+  useEffect(() => {
+    salirRef.current = salir;
+  });
   const boton = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
   const items = (): HTMLElement[] => [
@@ -33,7 +42,7 @@ export function MasAcciones({ titulo, acciones }: AccionesPublicadas) {
     items()[0]?.focus();
     const alTocar = (e: PointerEvent): void => {
       const dentro = e.target instanceof Node && menu.current?.parentElement?.contains(e.target);
-      if (dentro !== true) setAbierto(false);
+      if (dentro !== true) salirRef.current();
     };
     document.addEventListener('pointerdown', alTocar);
     return () => {
@@ -44,13 +53,13 @@ export function MasAcciones({ titulo, acciones }: AccionesPublicadas) {
     const lista = items();
     const i = lista.indexOf(document.activeElement as HTMLElement);
     if (e.key === 'Escape') {
-      setAbierto(false);
+      salir();
       boton.current?.focus();
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       const paso = e.key === 'ArrowDown' ? 1 : lista.length - 1;
       lista[(i + paso) % lista.length]?.focus();
-    } else if (e.key === 'Tab') setAbierto(false);
+    } else if (e.key === 'Tab') salir();
   };
   return (
     <div className="relative max-md:order-last">
@@ -61,7 +70,11 @@ export function MasAcciones({ titulo, acciones }: AccionesPublicadas) {
         aria-haspopup="menu"
         aria-expanded={abierto}
         onClick={() => {
-          setAbierto(!abierto);
+          if (abierto) salir();
+          else {
+            reiniciar();
+            setAbierto(true);
+          }
         }}
         className="text-etiqueta inline-flex size-11 items-center justify-center gap-2 rounded-pastilla font-bold text-texto aria-expanded:bg-superficie-hundida md:w-auto md:bg-superficie-hundida md:px-4"
       >
@@ -75,7 +88,9 @@ export function MasAcciones({ titulo, acciones }: AccionesPublicadas) {
           tabIndex={-1}
           aria-label={navegacion.masAcciones}
           onKeyDown={alTeclear}
-          className="absolute top-12 right-0 z-40 w-75 max-w-[calc(100vw-2rem)] overflow-hidden rounded-contenedor bg-superficie py-1 shadow-elevacion-2"
+          {...(saliendo ? { 'data-saliendo': '' } : {})}
+          onAnimationEnd={saliendo ? alTerminarAnimacion : undefined}
+          className="fz-menu absolute top-12 right-0 z-40 w-75 max-w-[calc(100vw-2rem)] overflow-hidden rounded-contenedor bg-superficie py-1 shadow-elevacion-2"
         >
           <p className="text-rotulo px-4 pt-3 pb-1 text-texto-secundario">{titulo}</p>
           {acciones.map((a) => {

@@ -8,6 +8,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../globals.css';
 import { ResumenListoParaAsignar } from '../../componentes/dominio/billete';
+import { CLAVE_BILLETE_VISTO } from '../../componentes/dominio/cifras-billete';
 import { ProveedorEncabezado } from '../../componentes/marco/proveedor-encabezado';
 import { inicio as t } from '../../textos/inicio';
 import { PantallaInicio } from './pantalla-inicio';
@@ -306,5 +307,99 @@ describe('PRU-CMP-INICIO', () => {
         esperado: { monto: '255.00' },
       }),
     );
+  });
+});
+
+describe('PRU-CMP-INICIO billete que rueda una vez por sesión', () => {
+  const billete = () => (
+    <ResumenListoParaAsignar
+      lpa={centavos(31240)}
+      enCamino={centavos(0)}
+      lpaNegativo={false}
+      variante="billete"
+    />
+  );
+  const digitos = (nodo: HTMLElement) => [
+    ...nodo.querySelectorAll<HTMLElement>('[data-centavos] [aria-hidden="true"] > span'),
+  ];
+
+  it('PRU-CMP-INICIO-300 [] el billete rueda en la primera entrada de la sesión y no en la segunda', () => {
+    sessionStorage.removeItem(CLAVE_BILLETE_VISTO);
+    const primera = montar(billete());
+    expect(primera.querySelector('[data-rueda]')).not.toBeNull();
+    expect(
+      digitos(primera)
+        .slice(0, 3)
+        .map((d) => d.style.animationDelay),
+    ).toEqual(['0ms', '90ms', '180ms']);
+    expect(getComputedStyle(digitos(primera)[1] as HTMLElement).animationName).toBe(
+      'finn-cifra-rueda',
+    );
+    expect(sessionStorage.getItem(CLAVE_BILLETE_VISTO)).not.toBeNull();
+    const segunda = montar(billete());
+    expect(segunda.querySelector('[data-rueda]')).toBeNull();
+    expect(getComputedStyle(digitos(segunda)[1] as HTMLElement).animationName).toBe('none');
+    expect(segunda.querySelector('.sr-only')?.textContent).toBe('$312.40');
+    sessionStorage.removeItem(CLAVE_BILLETE_VISTO);
+  });
+
+  it('PRU-CMP-INICIO-300 [] sin sessionStorage el billete se dibuja entero y sin error', () => {
+    const lectura = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('bloqueado', 'SecurityError');
+    });
+    const nodo = montar(billete());
+    expect(nodo.querySelector('[data-rueda]')).toBeNull();
+    expect(
+      digitos(nodo)
+        .map((d) => d.textContent)
+        .join(''),
+    ).toBe('$312.40');
+    lectura.mockRestore();
+  });
+});
+
+/** Reglas de las hojas de estilo cargadas, aplanadas dentro de `@media`, con su condición. */
+function reglasCss(): { selector: string; condicion: string; estilo: CSSStyleDeclaration }[] {
+  const salida: { selector: string; condicion: string; estilo: CSSStyleDeclaration }[] = [];
+  const recorrer = (lista: CSSRuleList, condicion: string) => {
+    for (const r of Array.from(lista)) {
+      if (r instanceof CSSStyleRule)
+        salida.push({ selector: r.selectorText, condicion, estilo: r.style });
+      else if (r instanceof CSSMediaRule) recorrer(r.cssRules, r.conditionText);
+      else if ('cssRules' in r) recorrer((r as CSSGroupingRule).cssRules, condicion);
+    }
+  };
+  for (const hoja of Array.from(document.styleSheets)) recorrer(hoja.cssRules, '');
+  return salida;
+}
+
+describe('PRU-CMP-INICIO enlaces de encabezado', () => {
+  it('PRU-CMP-INICIO-310 [] los enlaces de encabezado «Programadas» y «Actividad» llevan arrowR, que se mueve 4 px al pasar el puntero', () => {
+    const nodo = montar(
+      <PantallaInicio
+        dto={dto({
+          atencion: {
+            proximosPagos: [
+              {
+                programada: { id: 'p-1', nombre: 'Internet' },
+                fechaEsperada: '2027-02-10',
+                cuenta: { id: 'c-1', nombre: 'Ahorro' },
+                monto: centavos(3500),
+                registroAutomatico: false,
+              },
+            ],
+          },
+        })}
+      />,
+    );
+    const a = enlace(nodo, t.programadas);
+    expect(a.querySelector('[data-icono="arrowR"]')).not.toBeNull();
+    const hover = reglasCss().find(
+      (r) => r.selector.includes(':hover') && r.selector.includes('[data-icono="arrowR"]'),
+    );
+    expect(hover?.estilo.transform).toBe('translateX(4px)');
+    expect(hover?.condicion).toContain('hover: hover');
+    // Las flechas de los círculos del selector de período (con su propio nombre accesible) no se mueven.
+    expect(hover?.selector).toContain(':not([aria-label])');
   });
 });

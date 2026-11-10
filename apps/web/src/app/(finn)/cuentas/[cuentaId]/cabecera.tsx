@@ -4,7 +4,7 @@
 import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta';
 import type { CSSProperties } from 'react';
 import { Icono, type NombreIcono } from '../../../../componentes/base/icono';
-import { Cara } from '../../../../componentes/dominio/billetera';
+import { CaraConSaldo } from '../../../../componentes/dominio/billetera';
 import { IndicadorEstado } from '../../../../componentes/dominio/indicador-estado';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { cuentaDetalle as t } from '../../../../textos/cuenta-detalle';
@@ -33,11 +33,12 @@ export function Cabecera({ dto }: { readonly dto: DetalleCuentaDto }) {
   if (cuenta.tipo === 'tarjeta' && !cuenta.archivada)
     return (
       <div data-identidad="tarjeta">
-        <Cara
+        <CaraConSaldo
           tarjeta={{
             cuenta,
             ...(cuenta.institucion === undefined ? {} : { institucion: cuenta.institucion }),
             ...(cuenta.ultimos4 === undefined ? {} : { ultimos4: cuenta.ultimos4 }),
+            ...(dto.tarjeta?.color === undefined ? {} : { color: dto.tarjeta.color }),
             deuda: dto.tarjeta?.deuda ?? dto.saldo,
             saldoAFavor: dto.tarjeta?.saldoAFavor ?? dto.saldo,
           }}

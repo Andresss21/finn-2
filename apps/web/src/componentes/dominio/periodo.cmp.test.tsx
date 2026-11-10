@@ -137,6 +137,8 @@ const selectores = (
 
 describe('PRU-CMP-PRES-102 billete y selector de período [FE-31, CF-13]', () => {
   it('PRU-CMP-PRES-102 billete de LPA: positivo con En camino, cero, negativo y franja', () => {
+    // [CH-220 e] Las cifras ruedan en la primera entrada de la sesión: se prueba esa entrada.
+    sessionStorage.clear();
     const raiz = montar(billetes);
     const [pos, cero, neg, franja] = [...raiz.querySelectorAll('[data-resumen-lpa]')];
     expect(textoAccesible(pos)).toContain('Listo para asignar');

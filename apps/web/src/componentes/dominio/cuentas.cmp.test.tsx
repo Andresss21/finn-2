@@ -1,10 +1,15 @@
 import axe from 'axe-core';
-import { act, type ReactNode } from 'react';
+import { act, useState, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { Centavos } from '@finn/dominio/valores';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../app/globals.css';
-import { BilleteraTarjetas, type TarjetaDto } from './billetera';
+import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta';
+import { Cabecera } from '../../app/(finn)/cuentas/[cuentaId]/cabecera';
+import { ColorTarjeta } from '../../flujos/cuentas-nueva/color-tarjeta';
+import { aEntradaDeAccion, valoresIniciales, type Campos } from '../../flujos/cuentas-nueva/campos';
+import { BilleteraTarjetas, CaraConSaldo, type TarjetaDto } from './billetera';
+import { COLORES_TARJETA } from './colores-tarjeta';
 import { IdentidadCuenta } from './identidad-cuenta';
 import { PosicionNeta, type PosicionNetaDto } from './posicion-neta';
 
@@ -58,7 +63,7 @@ const visa: TarjetaDto = {
   institucion: 'BAC',
   ultimos4: '4821',
   red: 'Visa',
-  color: 'oro',
+  color: '#7E6638',
   deuda: c(60718),
   saldoConfirmado: c(60718),
   saldoAFavor: c(0),
@@ -77,7 +82,7 @@ const master: TarjetaDto = {
   institucion: 'Davivienda',
   ultimos4: '1102',
   red: 'Mastercard',
-  color: 'plata',
+  color: '#5C6670',
   deuda: c(0),
   faltaReservar: c(0),
   limite: c(100000),
@@ -351,5 +356,91 @@ describe('PRU-CMP-CTA-101 cuentas', () => {
     expect(
       violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
     ).toEqual([]);
+  });
+});
+
+describe('PRU-CMP-CTA-330 cara por el color guardado', () => {
+  const cara = (color: string | undefined) => {
+    const nodo = montar(
+      <CaraConSaldo tarjeta={{ ...visa, ...(color === undefined ? {} : { color }) }} />,
+    );
+    return nodo.querySelector('[data-tarjeta]') as HTMLElement;
+  };
+
+  it('PRU-CMP-CTA-330 [FT-51] la cara de cada uno de los 8 hex usa su token; nulo y un hex desconocido salen oro', () => {
+    for (const { nombre, hex } of COLORES_TARJETA) {
+      const el = cara(hex);
+      expect(el.getAttribute('style')).toContain(`var(--tarjeta-${nombre})`);
+      expect(el.getAttribute('style')).toContain(`var(--tarjeta-${nombre}-texto)`);
+      expect(el.dataset['color']).toBe(nombre);
+    }
+    expect(cara(undefined).dataset['color']).toBe('oro');
+    expect(cara('#123456').dataset['color']).toBe('oro');
+    expect(cara('plata').dataset['color']).toBe('oro');
+  });
+
+  it('PRU-CMP-CTA-330 [FT-51, FT-52] el detalle de la tarjeta pinta la cara con el color guardado, y la lista no la reparte por orden', () => {
+    const dto = {
+      cuenta: { id: 'visa', nombre: 'Visa', tipo: 'tarjeta', archivada: false },
+      saldo: c(0),
+      tarjeta: { color: '#24509A', deuda: c(100), saldoAFavor: c(0) },
+    } as unknown as DetalleCuentaDto;
+    const detalle = montar(<Cabecera dto={dto} />);
+    expect(detalle.querySelector('[data-tarjeta]')?.getAttribute('data-color')).toBe('zafiro');
+    const lista = montar(
+      <BilleteraTarjetas
+        tarjetas={[
+          { ...visa, color: '#2E3138' },
+          { ...master, color: '#2E3138' },
+        ]}
+      />,
+    );
+    expect(
+      [...lista.querySelectorAll('[data-tarjeta]')].map((e) => e.getAttribute('data-color')),
+    ).toEqual(['grafito', 'grafito']);
+  });
+});
+
+describe('PRU-CMP-CTA-331 selector de color de la tarjeta', () => {
+  it('PRU-CMP-CTA-331 [FT-50] el selector cambia la vista previa en vivo, empieza en oro y envía el hex canónico', () => {
+    let elegido = '';
+    function Prueba() {
+      const [valor, poner] = useState(valoresIniciales('2027-01-01', 'tarjeta').color);
+      elegido = valor;
+      return (
+        <ColorTarjeta valor={valor} alCambiar={poner} vista={{ nombre: 'Mi Visa', red: 'Visa' }} />
+      );
+    }
+    const nodo = montar(<Prueba />);
+    const previa = () =>
+      nodo.querySelector('[data-vista-previa] [data-color]')?.getAttribute('data-color');
+    expect(previa()).toBe('oro');
+    expect(nodo.querySelectorAll('input[type="radio"]')).toHaveLength(8);
+    for (const { nombre, hex } of COLORES_TARJETA) {
+      const radio = nodo.querySelector(`input[value="${hex}"]`) as HTMLInputElement;
+      act(() => {
+        radio.click();
+      });
+      expect(previa()).toBe(nombre);
+      expect(radio.checked).toBe(true);
+      expect(elegido).toBe(hex);
+    }
+    const zafiro = '#24509A';
+    act(() => {
+      (nodo.querySelector(`input[value="${zafiro}"]`) as HTMLInputElement).click();
+    });
+    const campos: Campos = {
+      ...valoresIniciales('2027-01-01', 'tarjeta'),
+      nombre: 'Mi Visa',
+      saldo: '0',
+      limiteCredito: '1500',
+      diaCorte: '15',
+      diaPago: '5',
+      color: elegido,
+    };
+    expect(aEntradaDeAccion({ ...campos, modo: 'crear', id: 'x' })).toMatchObject({
+      color: zafiro,
+    });
+    expect(nodo.textContent).toContain('Mi Visa');
   });
 });

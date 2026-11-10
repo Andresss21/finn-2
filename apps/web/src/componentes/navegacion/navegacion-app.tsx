@@ -7,6 +7,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { navegacion } from '../../textos/navegacion';
 import { Icono, type NombreIcono } from '../base/icono';
 import { Marca } from '../marco/marca';
+import { indice } from '../movimiento/indice';
 import { Contador } from './contador';
 import { EnlaceFinn } from './enlace-finn';
 import { precargar, SuperpuestoDiferido } from './hoja-diferida';
@@ -265,10 +266,10 @@ export function MasSecciones({ secciones, seccionActiva, contadores }: PropsNave
           <ul className="-mx-5 -mt-3 flex flex-col pb-4">
             {secciones
               .filter((s) => s.nivel === 'secundaria')
-              .map((s) => {
+              .map((s, i) => {
                 const { valor, nombre } = conContador(s.id, s.etiqueta, contadores);
                 return (
-                  <li key={s.id}>
+                  <li key={s.id} className="fz-opcion" style={indice(i)}>
                     <EnlaceFinn
                       href={s.ruta}
                       aria-label={nombre}

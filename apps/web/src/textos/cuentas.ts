@@ -1,4 +1,5 @@
 // Textos de los componentes de cuentas, bandeja y gráficos (05 §10.8; 06-identidad-visual 2.9 a 2.12 y 2.18).
+import { caraTarjeta } from './cara-tarjeta.ts';
 import { glosario } from './glosario.ts';
 
 export const cuentas = {
@@ -9,8 +10,8 @@ export const cuentas = {
     deudaDeTarjeta: 'Deuda de tarjeta',
     teFaltaReservar: glosario.teFaltaReservar,
     reservadoDeMas: glosario.reservadoDeMas,
-    credito: (red: string) => `${red} · crédito`,
-    ultimos4: (digitos: string) => `•••• ${digitos}`,
+    credito: caraTarjeta.credito,
+    ultimos4: caraTarjeta.ultimos4,
     traerAlFrente: 'Traer al frente',
     ayuda: 'Tocá la tarjeta de atrás para traerla al frente.',
     usoDelLimite: 'Uso del límite de',

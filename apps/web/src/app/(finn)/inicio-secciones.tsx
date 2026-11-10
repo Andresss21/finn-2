@@ -7,8 +7,8 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { FilaTransaccion } from '../../componentes/dominio/fila-transaccion';
 import { Monto } from '../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
-import { formatearFechaTexto } from '../../formato';
 import { inicio as t } from '../../textos/inicio';
+import { InsigniaDeFecha } from '../../componentes/dominio/insignia-fecha';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const CONTENEDOR =
@@ -44,17 +44,6 @@ function Seccion({
 /** El enlace de una ocurrencia a donde se registra o se resuelve (05 §2.3). */
 export const hrefDeOcurrencia = (o: InicioDto['atencion']['proximosPagos'][number]): string =>
   `/programadas/${o.programada.id}/ocurrencias/${o.fechaEsperada}`;
-
-/** La insignia de fecha: mes arriba y día debajo. */
-function InsigniaDeFecha({ fecha }: { readonly fecha: string }) {
-  const [dia, mes] = formatearFechaTexto(fecha).split(' ');
-  return (
-    <span className="flex w-10 shrink-0 flex-col items-center leading-tight" aria-hidden="true">
-      <span className="text-rotulo uppercase">{mes}</span>
-      <span className="text-cifra">{dia}</span>
-    </span>
-  );
-}
 
 export function ProximosPagos({
   pagos,

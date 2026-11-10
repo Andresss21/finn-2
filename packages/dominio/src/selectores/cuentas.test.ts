@@ -552,6 +552,7 @@ describe('PRU-DOM-CTA', () => {
     expect(vi.cuenta).toMatchObject({ institucion: 'Banco Uno', ultimos4: '1234' });
     expect(vi.tarjeta).toEqual({
       categoriaPago: { id: id('pago-vi'), nombre: 'Pago Visa' }, // CH-222
+      color: '#112233',
       deuda: c(170),
       saldoAFavor: c(0),
       reservado: c(0),
@@ -743,5 +744,11 @@ describe('PRU-DOM-CTA', () => {
     expect(cuentas(i).efectivo.map((x) => x.cuenta.id)).toEqual([id('vacia'), id('ef')]);
     // Con el mismo `orden` en todas, desempata el id (el de la base).
     expect(cuentas(base).efectivo.map((x) => x.cuenta.id)).toEqual([id('ef'), id('vacia')]);
+  });
+
+  it('PRU-DOM-CTA-171 [FT-52] el detalle de la tarjeta trae el color guardado y, sin color, lo omite', () => {
+    const i = estado();
+    expect(detalleCuenta(i, id('vi')).tarjeta?.color).toBe('#112233');
+    expect(detalleCuenta(i, id('mc')).tarjeta).not.toHaveProperty('color');
   });
 });
