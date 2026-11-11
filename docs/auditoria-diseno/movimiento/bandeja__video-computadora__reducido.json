@@ -1,0 +1,29 @@
+[
+ {
+  "momento": "entrar a la Bandeja (filas escalonadas)",
+  "esperado": "§2.12: las filas entran escalonadas (400 ms, 60 ms entre filas)",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "aprobar con un toque",
+  "esperado": "§2.13 y §11: el resultado aparece en el lugar con un rebote (300 ms, --curva-enfasis); sin transición de pantalla",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "aprobar otro",
+  "esperado": "igual; el contador de la Bandeja cambia",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": []
+ }
+]

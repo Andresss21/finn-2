@@ -1,0 +1,29 @@
+[
+ {
+  "momento": "escribir tres dígitos",
+  "esperado": "DECISIONES: casilla llena con línea de 3 px en --accion, sube 2 px y hace un pop; avanza a la siguiente",
+  "despues": {
+   "url": "/ingresar/verificar",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "completar con un código incorrecto",
+  "esperado": "DECISIONES: se verifica sola al sexto dígito; error: el grupo tiembla 380 ms y las casillas toman --problema-borde",
+  "despues": {
+   "url": "/ingresar/verificar",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "pegar el código correcto",
+  "esperado": "DECISIONES: pegar reparte los 6 dígitos; correcto: --positivo-fondo en cascada (40 ms), check con pop, sigue a los 650 ms",
+  "despues": {
+   "url": "/ingresar/verificar",
+   "dialogos": []
+  },
+  "animaciones": []
+ }
+]

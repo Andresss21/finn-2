@@ -1,0 +1,123 @@
+[
+ {
+  "momento": "entrada de Inicio y billete Listo para asignar (recarga)",
+  "esperado": "§2.8: cifras que ruedan una vez, 1.4 s, 90 ms entre dígitos; bloques escalonados",
+  "despues": {
+   "url": "/",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "pestaña a la derecha: Inicio → Presupuesto",
+  "esperado": "§11: entra desde 22 px a la derecha, opacidad 0→1, 320 ms, --curva-estandar",
+  "despues": {
+   "url": "/presupuesto",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "abrir un detalle: Presupuesto → categoría Restaurantes",
+  "esperado": "§11: entra desde 70 px a la derecha, 360 ms",
+  "despues": {
+   "url": "/presupuesto/categorias/00000000-0000-4000-8000-000000000011",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "volver: categoría → Presupuesto",
+  "esperado": "§11: entra desde 50 px a la izquierda, 360 ms",
+  "despues": {
+   "url": "/presupuesto",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "pestaña a la izquierda: Presupuesto → Inicio",
+  "esperado": "§11: igual desde la izquierda, 320 ms",
+  "despues": {
+   "url": "/",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "abrir Registrar (flujo largo)",
+  "esperado": "§11: sube desde abajo, 420 ms, --curva-entrada",
+  "despues": {
+   "url": "/registrar",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "cerrar Registrar",
+  "esperado": "§11: aparece con 8 px hacia arriba, 300 ms",
+  "despues": {
+   "url": "/",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "abrir la hoja Más secciones",
+  "esperado": "§11: velo 0→1 (280 ms), la hoja sube (380 ms, --curva-entrada), opciones escalonadas 40 ms",
+  "despues": {
+   "url": "/",
+   "dialogos": [
+    "Más secciones"
+   ]
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "cerrar la hoja Más secciones (Escape)",
+  "esperado": "§11: baja (200 ms, --curva-salida) y recién entonces se desmonta",
+  "despues": {
+   "url": "/",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "abrir el panel de notificaciones (campana)",
+  "esperado": "§11: cae desde arriba (360 ms), avisos escalonados 60 ms",
+  "despues": {
+   "url": "/notificaciones",
+   "dialogos": [
+    "Notificaciones"
+   ]
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "cerrar el panel de notificaciones (Escape)",
+  "esperado": "§11: sube (200 ms)",
+  "despues": {
+   "url": "/",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "abrir la hoja Asignar desde Inicio",
+  "esperado": "§11: velo (280 ms) y hoja que sube (380 ms); en computadora, panel lateral",
+  "despues": {
+   "url": "/presupuesto?filtro=sin-fondos",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "cerrar la hoja Asignar (Escape)",
+  "esperado": "§11: baja (200 ms, --curva-salida)",
+  "despues": {
+   "url": "/presupuesto?filtro=sin-fondos",
+   "dialogos": []
+  },
+  "animaciones": []
+ }
+]
