@@ -241,6 +241,45 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(cumple(c, { rapido: rojo, e2e: ok() })).toBe(false);
   });
 
+  it('workflows: en main, rapido y cierre restauran la base de la última E2E completa y solo cierre la guarda, tras ci:cierre (CH-239)', () => {
+    const restaura = (n: string): number =>
+      job(n).steps.findIndex(
+        (p) =>
+          p.uses?.startsWith('actions/cache/restore@') &&
+          p.with?.['path'] === 'test-results/e2e-base',
+      );
+    for (const n of ['rapido', 'cierre']) {
+      const pasos = job(n).steps;
+      const i = restaura(n);
+      expect(pasos[i]?.if, n).toBe("github.event_name == 'push'");
+      expect(pasos[i]?.with?.['restore-keys'], n).toBe('e2e-base-');
+      expect(i, n).toBeLessThan(pasos.findIndex((p) => p.run === `pnpm ci:${n}`));
+    }
+    expect(job('rapido').outputs?.['base_e2e']).toBe('${{ steps.rapido.outputs.base_e2e }}');
+    const pasos = job('cierre').steps;
+    const cierre = pasos.findIndex((p) => p.run === 'pnpm ci:cierre');
+    expect(pasos[cierre]?.id).toBe('cierre');
+    expect(pasos[cierre]?.env).toEqual({
+      FINN_E2E_GREP: '${{ needs.rapido.outputs.grep_e2e }}',
+      FINN_REUTILIZA_E2E: '${{ needs.rapido.outputs.reutiliza_e2e }}',
+      FINN_BASE_E2E: '${{ needs.rapido.outputs.base_e2e }}',
+    });
+    const guardar = Object.values(wf.jobs).flatMap((j) =>
+      j.steps.filter(
+        (p) => /cache\/save@/.test(p.uses ?? '') && p.with?.['path'] === 'test-results/e2e-base',
+      ),
+    );
+    expect(guardar).toHaveLength(1);
+    expect(pasos.indexOf(guardar[0] as Paso)).toBeGreaterThan(cierre);
+    expect(guardar[0]?.if).toBe(
+      "github.event_name == 'push' && steps.cierre.outputs.base_e2e_nueva != ''",
+    );
+    expect(guardar[0]?.with?.['key']).toBe('e2e-base-${{ github.run_id }}');
+    expect(pkg.scripts['ci:cierre']).toContain(
+      'node tools/ci/afecta.mjs cierre-previo && node tools/pruebas/matriz.ts verificar --resultados test-results/informes && node tools/ci/afecta.mjs cierre-guardar',
+    );
+  });
+
   it('workflows: ci:reutiliza-e2e corre solo en main, antes de ci:rapido y es el único paso de rapido con el token (TA-555)', () => {
     const pasos = job('rapido').steps;
     const i = pasos.findIndex((p) => p.run === 'pnpm ci:reutiliza-e2e');
@@ -685,8 +724,102 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     expect(corto('apps/web/playwright.config.ts')).toBe(false);
     expect(corto('apps/web/e2e/ayudas/esperas.ts')).toBe(false);
     expect(corto('apps/web/package.json')).toBe(false);
-    expect(corto('apps/web/src/x.tsx', 'docs/07-pruebas.md')).toBe(false);
+    // CH-239: documentos y plan no sacan del modo corto (toda tarea toca plan/tareas.json)
+    expect(corto('apps/web/src/x.tsx', 'docs/07-pruebas.md', 'plan/tareas.json')).toBe(true);
+    expect(corto('docs/07-pruebas.md')).toBe(false);
     expect(corto()).toBe(false);
+  });
+
+  it('workflows: la clase del diff sale en clase_e2e: color, color + plan, pantalla + docs, pantalla + base, dominio y desconocido (CH-239)', () => {
+    const clase = (evento: string, ...a: string[]): unknown =>
+      decidir(evento, 'false', a)['clase_e2e'];
+    const color = 'apps/web/src/app/tokens.css';
+    const pantalla = 'apps/web/src/app/(finn)/metas/pantalla.tsx';
+    for (const ev of ['pull_request', '']) {
+      expect(clase(ev, color)).toBe(1);
+      expect(clase(ev, color, 'plan/tareas.json')).toBe(1);
+      expect(clase(ev, pantalla, 'docs/08-tareas.md')).toBe(2);
+      expect(clase(ev, pantalla, 'apps/web/src/componentes/base/boton.tsx')).toBe(3);
+      expect(clase(ev, 'packages/dominio/src/periodos.ts')).toBe(3);
+      expect(clase(ev, 'algo/raro.txt')).toBe(3);
+      expect(clase(ev, 'plan/tareas.json')).toBe(0);
+    }
+    // En local, color + plan y pantalla + docs van en modo corto (CH-239)
+    expect(decidir('', '', [color, 'plan/tareas.json'])['solo_interfaz']).toBe(true);
+    expect(decidir('', '', [pantalla, 'docs/08-tareas.md'])['solo_interfaz']).toBe(true);
+    // En main sin la base de la última E2E completa (caché vacía), clase 3: la completa
+    expect(decidir('push', '', [color])).toMatchObject({ clase_e2e: 3, base_e2e: '' });
+  });
+
+  it('workflows: cierre de main con E2E parcial suma el informe de su base completa, y sin él falla (CH-239)', () => {
+    const SHA = 'a'.repeat(40);
+    const correr = (modo: string, env: Record<string, string>) =>
+      spawnSync(process.execPath, [join(raiz, 'tools', 'ci', 'afecta.mjs'), modo], {
+        cwd,
+        encoding: 'utf8',
+        env: { ...process.env, GITHUB_OUTPUT: '', FINN_REUTILIZA_E2E: '', ...env },
+      });
+    const parcial = { FINN_EVENTO: 'push', FINN_E2E_GREP: 'PRU-E2E-PWA-007', FINN_BASE_E2E: SHA };
+    const sumado = join(cwd, 'test-results', 'informes', 'e2e-base.json');
+    // En un PR, o en main con la completa (propia o reutilizada), no suma nada
+    for (const env of [
+      { FINN_EVENTO: 'pull_request', FINN_E2E_GREP: 'PRU-E2E-PWA-007' },
+      { FINN_EVENTO: 'push', FINN_E2E_GREP: 'todas' },
+      { ...parcial, FINN_REUTILIZA_E2E: '4242' },
+    ])
+      expect(correr('cierre-previo', env).status).toBe(0);
+    expect(existsSync(sumado)).toBe(false);
+    // Parcial sin base, o con otra base que la que eligió rapido: rojo
+    expect(correr('cierre-previo', parcial).status).toBe(1);
+    const base = join(cwd, 'test-results', 'e2e-base');
+    mkdirSync(base, { recursive: true });
+    writeFileSync(join(base, 'informe.json'), '{"suites":[]}');
+    writeFileSync(join(base, 'base.json'), JSON.stringify({ sha: 'b'.repeat(40) }));
+    expect(correr('cierre-previo', parcial).status).toBe(1);
+    expect(correr('cierre-previo', { ...parcial, FINN_E2E_GREP: '^$' }).status).toBe(1);
+    writeFileSync(join(base, 'base.json'), JSON.stringify({ sha: SHA }));
+    expect(correr('cierre-previo', parcial).status).toBe(0);
+    expect(readFileSync(sumado, 'utf8')).toBe('{"suites":[]}');
+  });
+
+  it('workflows: cierre de main con la E2E completa deja su informe y su commit como nueva base; con la parcial, no (CH-239)', () => {
+    const SHA = 'c'.repeat(40);
+    const informes = join(cwd, 'test-results', 'informes');
+    mkdirSync(informes, { recursive: true });
+    writeFileSync(join(informes, 'informe.json'), '{"suites":[1]}');
+    const salida = join(cwd, 'salida.txt');
+    const guardar = (env: Record<string, string>) => {
+      writeFileSync(salida, '');
+      const r = spawnSync(
+        process.execPath,
+        [join(raiz, 'tools', 'ci', 'afecta.mjs'), 'cierre-guardar'],
+        {
+          cwd,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            GITHUB_OUTPUT: salida,
+            GITHUB_SHA: SHA,
+            FINN_REUTILIZA_E2E: '',
+            ...env,
+          },
+        },
+      );
+      expect(r.status, r.stderr).toBe(0);
+      return readFileSync(salida, 'utf8');
+    };
+    const base = join(cwd, 'test-results', 'e2e-base', 'base.json');
+    expect(guardar({ FINN_EVENTO: 'push', FINN_E2E_GREP: 'PRU-E2E-PWA-007' })).toBe('');
+    expect(guardar({ FINN_EVENTO: 'pull_request', FINN_E2E_GREP: 'todas' })).toBe('');
+    expect(existsSync(base)).toBe(false);
+    expect(guardar({ FINN_EVENTO: 'push', FINN_E2E_GREP: '', FINN_REUTILIZA_E2E: '4242' })).toBe(
+      `base_e2e_nueva=${SHA}\n`,
+    );
+    expect(guardar({ FINN_EVENTO: 'push', FINN_E2E_GREP: 'todas' })).toBe(
+      `base_e2e_nueva=${SHA}\n`,
+    );
+    expect(JSON.parse(readFileSync(base, 'utf8'))).toEqual({ sha: SHA });
+    expect(readFileSync(join(dirname(base), 'informe.json'), 'utf8')).toBe('{"suites":[1]}');
   });
 
   it('workflows: en CI un cambio de CI corre la E2E completa; en local y sin cambios de CI, como antes (CH-231)', () => {

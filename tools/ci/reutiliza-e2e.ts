@@ -77,6 +77,29 @@ export function esCompleta(r: unknown): boolean {
   );
 }
 
+/** CH-239: la última E2E completa de `main` (`{ sha }` e `informe.json` al lado), que guarda `cierre` en la caché. */
+export const BASE_E2E = 'test-results/e2e-base/base.json';
+const VIGENCIA_BASE_S = 7 * 24 * 3600;
+
+/** El `sha` de un registro de BASE_E2E si es un commit completo; si no, ''. */
+export function shaDe(registro: unknown): string {
+  const sha = (registro as { sha?: unknown } | null)?.sha;
+  return typeof sha === 'string' && /^[0-9a-f]{40}$/.test(sha) ? sha : '';
+}
+
+/** CH-239: la base de la clase del diff en `main`: el commit de la última E2E completa, si es ancestro de HEAD y su
+ * commit tiene a lo sumo 7 días menos que el de HEAD (sin reloj). Si no, '' y `main` corre la completa. */
+export function baseE2e(registro: unknown, git: Git): string {
+  const sha = shaDe(registro);
+  if (sha === '' || !git('merge-base', '--is-ancestor', sha, 'HEAD').ok) return '';
+  const fecha = (r: string): number => {
+    const x = git('log', '-1', '--format=%ct', r);
+    return x.ok && /^\d+$/.test(x.salida.trim()) ? Number(x.salida.trim()) : NaN;
+  };
+  const dt = fecha('HEAD') - fecha(sha);
+  return dt >= 0 && dt <= VIGENCIA_BASE_S ? sha : '';
+}
+
 const no = (motivo: string): Decision => ({ reutiliza: false, motivo });
 
 export async function decidirReutilizacion(e: Entorno): Promise<Decision> {
