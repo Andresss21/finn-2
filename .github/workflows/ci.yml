@@ -47,6 +47,7 @@ jobs:
       cierre: ${{ steps.rapido.outputs.cierre }}
       grep_e2e: ${{ steps.rapido.outputs.grep_e2e }}
       reutiliza_e2e: ${{ steps.rapido.outputs.reutiliza_e2e }}
+      base_e2e: ${{ steps.rapido.outputs.base_e2e }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0, persist-credentials: false }
@@ -76,6 +77,14 @@ jobs:
           path: test-results/ci-modo
           key: ci-modo-${{ github.run_id }}
           restore-keys: ci-modo-
+      # CH-239: en main, la última E2E completa de main (commit e informe; la guarda `cierre`): la clase del diff se mide
+      # desde ella y, sin ella, main corre la E2E completa.
+      - if: github.event_name == 'push'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: test-results/e2e-base
+          key: e2e-base-${{ github.run_id }}
+          restore-keys: e2e-base-
       # CH-231 c (TA-555): en main, si el commit es el squash de un PR con su mismo árbol que contiene el main anterior
       # y cuya CI pasó entera con la E2E completa, `ci:rapido` publica e2e=false y reutiliza_e2e=<run_id de esa corrida>.
       # Ante cualquier duda no deja nada y main corre todo. El token llega solo a este paso.
@@ -263,7 +272,25 @@ jobs:
           path: test-results/informes
           run-id: ${{ needs.rapido.outputs.reutiliza_e2e }}
           github-token: ${{ github.token }}
-      - run: pnpm ci:cierre
+      # CH-239: con E2E parcial en main, M15 suma el informe de la última E2E completa de main (la que eligió `rapido`);
+      # con la completa y M15 en verde, esta corrida pasa a ser esa base.
+      - if: github.event_name == 'push'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: test-results/e2e-base
+          key: e2e-base-${{ github.run_id }}
+          restore-keys: e2e-base-
+      - id: cierre
+        env:
+          FINN_E2E_GREP: ${{ needs.rapido.outputs.grep_e2e }}
+          FINN_REUTILIZA_E2E: ${{ needs.rapido.outputs.reutiliza_e2e }}
+          FINN_BASE_E2E: ${{ needs.rapido.outputs.base_e2e }}
+        run: pnpm ci:cierre
+      - if: github.event_name == 'push' && steps.cierre.outputs.base_e2e_nueva != ''
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: test-results/e2e-base
+          key: e2e-base-${{ github.run_id }}
 
   # TA-260 (02 ADR-10, 03 §11.7, 07 §6.1, CH-64). `integracion` corre dentro de `rapido` (M5, DP-33): el `if` exige
   # que haya corrido, y cada `needs` en `success`; `e2e` saltado solo vale con reutiliza_e2e (TA-555, CH-231 c).

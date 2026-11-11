@@ -96,6 +96,44 @@ export function afectadas(
   };
 }
 
+// CH-239: clases de diff para elegir la E2E (07 §6.1), de menor a mayor; un diff es de la clase más alta de sus archivos.
+// 0: documentos y plan, sin E2E y sin subir la clase. 1: estilos. 2: pantallas, flujos y textos propios y sus pruebas,
+// sin lo que el mapa da como `marco`. 3: todo lo demás, también lo que no se sabe clasificar.
+export type Clase = 0 | 1 | 2 | 3;
+export type Mapa = Entradas['mapa'];
+const DOC = /^(docs\/|plan\/|pruebas\/(features|mapa-codigo)\.json$|pruebas\/manuales\.md$)/;
+const ESTILO = /^apps\/web\/(src\/app\/(tokens\.(css|json)|globals\.css)|tailwind\.css)$/;
+const PROPIO =
+  /^apps\/web\/(src\/(app\/(?!api\/)|flujos\/)|e2e\/(?!ayudas\/|configuracion\/).+\.e2e\.ts$)/;
+// textos/** es `marco` en el mapa; son propios los de una pantalla o un flujo, no los compartidos
+const TEXTO_PROPIO =
+  /^apps\/web\/src\/textos\/(?!(index|base|dominio|estados|formularios|glosario|navegacion)\.ts$)[\w-]+\.ts$/;
+/** Las de la clase 1: axe con contraste, tamaño táctil y reflujo a 320 px en cada ruta; movimiento reducido; tamaño
+ * de JS. El contraste de tokens (PRU-DOM-PWA-001) corre siempre en `rapido`. */
+export const E2E_ESTILOS = ['PRU-E2E-PWA-007', 'PRU-E2E-PWA-008', 'PRU-REN-PWA-002'];
+/** Además, en la clase 2: ingresar de punta a punta y cada ruta real de (finn) sin sesión, con AAL1 y con AAL2. */
+export const E2E_ACCESO = ['PRU-E2E-ACCESO-102', 'PRU-SEG-ACCESO-002'];
+
+export function clase(archivo: string, mapa: Mapa): Clase {
+  if (DOC.test(archivo)) return 0;
+  if (ESTILO.test(archivo)) return 1;
+  if (TEXTO_PROPIO.test(archivo)) return 2;
+  const marco = mapa.some((m) => m.fts === 'marco' && globARegex(m.patron).test(archivo));
+  return PROPIO.test(archivo) && !marco ? 2 : 3;
+}
+
+export const claseDe = (archivos: string[], mapa: Mapa): Clase =>
+  Math.max(0, ...archivos.map((a) => clase(a, mapa))) as Clase;
+
+/** El filtro `-g` de una clase. `grep`: el de `afectadas` (sin el marco en las clases 1 y 2); null es la suite completa
+ * (una ficha que se cierra, CH-70, o el marco en la clase 3) y manda en cualquier clase. */
+export function seleccionE2E(c: Clase, grep: string | null): string {
+  if (grep === null) return 'todas';
+  if (c === 0 || c === 3) return c === 0 ? '^$' : grep;
+  const propias = c === 2 && grep !== '^$' ? grep.split('|') : [];
+  return [...new Set([...propias, ...E2E_ESTILOS, ...(c === 2 ? E2E_ACCESO : [])])].join('|');
+}
+
 if (import.meta.main) {
   let cambiados = process.argv.slice(2);
   if (!cambiados.length) {

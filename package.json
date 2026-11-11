@@ -42,7 +42,7 @@
     "ci:e2e-unir": "node tools/ci/afecta.mjs e2e-unir",
     "ci:reutiliza-e2e": "node tools/ci/reutiliza-e2e.ts",
     "ci:nocturno": "node tools/ci/afecta.mjs nocturno",
-    "ci:cierre": "pnpm exec playwright install --with-deps chromium && pnpm pruebas:listar && node tools/pruebas/matriz.ts verificar --resultados test-results/informes",
+    "ci:cierre": "pnpm exec playwright install --with-deps chromium && pnpm pruebas:listar && node tools/ci/afecta.mjs cierre-previo && node tools/pruebas/matriz.ts verificar --resultados test-results/informes && node tools/ci/afecta.mjs cierre-guardar",
     "ci:local": "node tools/ci/afecta.mjs local",
     "ci:politica-patrones": "node tools/ci/politica-patrones.ts",
     "ci:desplegar": "node tools/ci/desplegar.mjs",
