@@ -50,11 +50,12 @@ Cada uno reúne hallazgos que varias secciones reportaron por separado. Los hall
 - **Arreglo:** usar `apps/web/src/componentes/base/resultado.tsx` (el mismo que la Bandeja) en `apps/web/src/flujos/presupuesto-asignar-categoria`, `presupuesto-mover`, `presupuesto-estructura` y `actividad-eliminar`, con `role="status"`.
 - **Cómo verificar:** tras cada acción, el resultado queda donde estaba el elemento, no desaparece solo, y `role="status"` > 0.
 
-### GLO-28 · El impacto «Antes de guardar» no está en vivo y la app agrega pasos «Revisá el impacto» — flujos · todas · alta
-- **Se ve:** en Registrar gasto el impacto aparece solo al pulsar Guardar (REG-10); los flujos cortos de Registrar no lo tienen (REG-05); Revisar no muestra «Después de aprobar» (BAN-14); archivar, fusionar, nueva cuenta, editar, eliminar y pagar agregan una pantalla «Revisá el impacto» que el diseño no tiene (CAT-22, CTA, ACT); y el aviso sale como código crudo «AV-07» / «AV-03» (ACT-26).
-- **Debería:** DECISIONES «Registrar gasto» (impacto «Antes de guardar» por línea); `docs/diseno/02-referencias/entrega-1/componentes/K4-Dominio-B__confirmacion-del-impacto__claro.html`; el impacto va en la misma pantalla del flujo.
-- **Arreglo:** `apps/web/src/componentes/formularios/confirmacion-impacto.tsx` calculado en vivo desde la vista del motor (sin calcular montos en la interfaz, PF-3), en la misma pantalla; textos AV-03 y AV-07 en `apps/web/src/textos/transaccion.ts`. Si el paso aparte se queda, es decisión de diseño (`PROMPT-DISENO.md` ítem 22).
-- **Cómo verificar:** al cambiar un monto el impacto cambia sin pulsar Guardar; ningún texto `AV-\d\d` visible.
+### GLO-28 · La confirmación del impacto muestra códigos crudos y no sigue el componente del diseño — flujos con confirmación · todas · alta
+- **Corrección del 11/11/2026:** la versión anterior pedía el impacto en vivo y quitar los pasos «Revisá el impacto». Era un error de la auditoría: esos pasos son el mecanismo aprobado de 05 §4.4 (FE-07, previsualizar y confirmar) y 06 P6-27 a) quita la previsualización de Registrar gasto. REG-10, REG-05, BAN-14, CAT-22, ACT-25 y V-07 quedan descartados.
+- **Se ve:** en el paso de confirmar (archivar, fusionar, nueva cuenta, editar, eliminar, eliminar evento, pagar) el aviso sale como código crudo «AV-07» / «AV-03» (ACT-26); el «−» se separa del número («cambia –⏎$76.45»); el impacto son frases sueltas bajo el título «Revisá el impacto» (`categoria-archivar__impacto`, `transaccion-eliminar__revisar`).
+- **Debería:** 05 §4.4: `ConfirmacionImpacto` con el impacto en el período activo, los avisos «antes» con su texto del servidor y los botones confirmar y volver a editar; su forma es `docs/diseno/02-referencias/entrega-1/componentes/K4-Dominio-B__confirmacion-del-impacto__claro.html` (filas valor actual → valor nuevo, menos U+2212 pegado al monto).
+- **Arreglo:** textos de AV-03 y AV-07 en `apps/web/src/textos/transaccion.ts` (`avisosEliminar` y `avisos`); `apps/web/src/componentes/formularios/confirmacion-impacto.tsx` con la forma de K4 y `white-space: nowrap` en los montos. No se agrega previsualización en vivo ni se quitan los pasos.
+- **Cómo verificar:** ningún texto `AV-\d\d` visible; el signo no queda solo al final de línea; el paso de confirmar coincide con K4 «confirmación del impacto».
 
 ### GLO-29 · Márgenes laterales de 16 px en vez de 20 — Bandeja, avisos globales, esqueletos · teléfono · alta
 - **Se ve:** 16 px laterales en Bandeja, Revisar y Registrar gasto (BAN-03), en el aviso global sin conexión (GLO-110) y en los esqueletos (GLO-122).

@@ -30,7 +30,6 @@ Una auditoría visual de la **app real** (la que corre, no la demo) comparó cad
 | D-8 ancho de la columna de filtros de Actividad | ACT-07 |
 | D-9 «Devolver a» o «Vuelve a» | ACT-29 |
 | D-10 tokens de movimiento propuestos | GLO-09, GLO-11, parte de GLO-20 |
-| Pasos «Revisá el impacto» (ítem 22 del prompt de diseño) | la parte de GLO-28 que quita esos pasos |
 | Pantallas sin diseño (`SIN-DISENO.md`) | no se tocan hasta tener referencia, salvo para cumplir tokens y marco |
 
 ## Bloque 1 · Global: tokens, fuentes, marco, componentes compartidos y movimiento
@@ -39,7 +38,7 @@ Primero, porque arreglan muchas pantallas a la vez y cambian lo que miden los bl
 
 1. **Tokens.** GLO-09 (incorporar los aprobados de la entrega 2, mapear los propios), GLO-10, GLO-11, GLO-12. Archivos: `apps/web/src/app/tokens.css`, `tokens.json`, `apps/web/tailwind.css` (generado), `apps/web/src/app/globals.css`.
 2. **Marco.** GLO-22 («Registrar» solo «+»), GLO-24 (barra según el tipo de pantalla; subpáginas de Ajustes como hijas), GLO-25 (título de la hija en la barra), GLO-29 (20 px), GLO-30 (tablas que desbordan), GLO-06, GLO-109 y GLO-110 (aviso sin conexión que tapa), REP-01 (Reportes marca Presupuesto), ACC-06 (acceso en tarjeta centrada en computadora). Archivos: `apps/web/src/componentes/marco/*`, `apps/web/src/componentes/navegacion/*`.
-3. **Componentes compartidos.** GLO-20 (6 casillas), GLO-23 (flujos cortos en hoja/panel), GLO-26 (botón tonal en vez de enlace), GLO-27 (resultado en el lugar), GLO-28 (impacto en vivo; textos AV-xx), GLO-31 (botón de peligro), GLO-32 (esqueletos), GLO-33 (pastillas, segmentados, selects, interruptores), GLO-34 (monto en el botón), ACT-17 (glifo de «Pendiente»), MAS-112 («undefined/undefined/» en fechas), errores de formulario con `role="alert"` (MAS-012, CAT-26), glifo de vacío (CAT-14). Archivos: `apps/web/src/componentes/base/*`, `componentes/formularios/*`, `componentes/dominio/*`.
+3. **Componentes compartidos.** GLO-20 (6 casillas), GLO-23 (flujos cortos en hoja/panel), GLO-26 (botón tonal en vez de enlace), GLO-27 (resultado en el lugar), GLO-28 (textos AV-xx y forma K4 del paso de confirmar; sin impacto en vivo, 05 §4.4 y P6-27), GLO-31 (botón de peligro), GLO-32 (esqueletos), GLO-33 (pastillas, segmentados, selects, interruptores), GLO-34 (monto en el botón), ACT-17 (glifo de «Pendiente»), MAS-112 («undefined/undefined/» en fechas), errores de formulario con `role="alert"` (MAS-012, CAT-26), glifo de vacío (CAT-14). Archivos: `apps/web/src/componentes/base/*`, `componentes/formularios/*`, `componentes/dominio/*`.
 4. **Entrega 3 · Salir a la vista.** GLO-21 completo, siguiendo `docs/diseno/entrega-3/PROMPT-DESARROLLO.md`, con GLO-107 (ícono `gear` de 8 dientes y `sun` en Apariencia).
 5. **Accesibilidad global.** GLO-07 y GLO-08 (foco con `--foco`), tocables < 44 que señala cada sección.
 6. **Movimiento.** GLO-01 (dirección de las transiciones de §11), GLO-02 (Registrar sube desde abajo), GLO-03 (tiempos del panel de notificaciones), GLO-04 (filas de la Bandeja escalonadas). Todo detrás de `prefers-reduced-motion` (hoy se respeta: no lo rompas). Verificá con `node tools/auditoria/correr.mjs casos/90-movimiento --project=video --project=video-computadora` y `node tools/auditoria/resumir-movimiento.mjs`.
@@ -51,8 +50,8 @@ Al cerrar el bloque 1, recapturá todas las secciones (`node tools/auditoria/cor
 En este orden (el de uso diario). Cada id está en `AUDITORIA-APP.md` con su arreglo y su archivo:
 
 1. **Acceso** (ACC): el resto de altas después de GLO-20 — ACC-15 (cierre de inscripción con aviso positivo y botón principal).
-2. **Bandeja y Revisar** (BAN): BAN-25 (crítica: devolución que desborda), BAN-01 (bloqueado por D-1), BAN-14, BAN-15, BAN-23, BAN-24, BAN-28 (confirmar primero si es la semilla del caso).
-3. **Registrar** (REG): REG-01 (selector en cuadrícula de 8 tarjetas con ícono), REG-02, REG-05, REG-10, REG-11.
+2. **Bandeja y Revisar** (BAN): BAN-25 (crítica: devolución que desborda), BAN-01 (bloqueado por D-1), BAN-15, BAN-23, BAN-24, BAN-28 (confirmar primero si es la semilla del caso).
+3. **Registrar** (REG): REG-01 (selector en cuadrícula de 8 tarjetas con ícono), REG-02, REG-11.
 4. **Inicio** (INI): INI-03, INI-07 (más los bloqueados INI-02 e INI-05).
 5. **Presupuesto** (PRE): PRE-30 (Asignar suma un monto, no edita el absoluto), PRE-35, PRE-64, PRE-73, PRE-75 (más los bloqueados PRE-37 y PRE-41).
 6. **Detalle de categoría** (CAT): CAT-21, CAT-31 (CAT-01 y CAT-32 van por GLO-25 y GLO-24/D-1).
@@ -71,3 +70,7 @@ Todo lo demás de `AUDITORIA-APP.md`, sección por sección en el mismo orden: t
 - Volvé a correr todo el arnés y el analizador en las tres variantes y en 360, 768 y 1024 (`casos/91-responsive`), la pasada de foco (`casos/92-foco`) y la de movimiento.
 - Actualizá en `AUDITORIA-APP.md` el estado de cada id (cerrado con su PR, bloqueado con su motivo).
 - Respondé con: ids cerrados por bloque, ids bloqueados y por qué, y cualquier diferencia nueva que hayas visto al recapturar.
+
+## Corrección del 11/11/2026
+
+No implementes impacto en vivo ni quites los pasos de confirmar. 05 §4.4 (FE-07) define previsualizar y confirmar, y 06 P6-27 a) / CA-21.12 quita «Antes de guardar» de Registrar gasto. REG-10, REG-05, BAN-14, CAT-22, ACT-25 y V-07 están descartados; GLO-28 quedó reducido a los textos AV-xx y la forma del paso de confirmar. Si el paquete de diseño (entrega 4: D-11 y CA-E4-21) pide lo contrario, es una contradicción: detenete y reportala.

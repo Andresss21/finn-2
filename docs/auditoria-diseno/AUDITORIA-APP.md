@@ -13,14 +13,14 @@ Finn 2.0 tal como corre, comparada pantalla por pantalla y estado por estado con
 
 ## Resumen
 
-**417 hallazgos; 361 netos** después de consolidar en 15 globales lo que varias secciones reportaron por separado (los absorbidos siguen listados con «Consolidado en: GLO-nn», como pantallas afectadas).
+**411 hallazgos; 359 netos** (corrección del 11/11/2026: 6 descartados al corregir GLO-28, ver allí) después de consolidar en 15 globales lo que varias secciones reportaron por separado (los absorbidos siguen listados con «Consolidado en: GLO-nn», como pantallas afectadas).
 
 | Severidad | Total | Netos |
 |---|---|---|
 | crítica | 12 | 6 |
-| alta | 102 | 70 |
-| media | 190 | 173 |
-| baja | 113 | 112 |
+| alta | 99 | 70 |
+| media | 189 | 173 |
+| baja | 111 | 110 |
 
 | Sección | | crítica | alta | media | baja | total | netos |
 |---|---|---|---|---|---|---|---|
@@ -29,10 +29,10 @@ Finn 2.0 tal como corre, comparada pantalla por pantalla y estado por estado con
 | GLO-1nn | Marco y estados globales (detalle por pantalla) | 3 | 6 | 9 | 7 | 25 | 15 |
 | INI | Inicio | 0 | 5 | 6 | 6 | 17 | 14 |
 | PRE | Presupuesto | 0 | 7 | 28 | 12 | 47 | 40 |
-| CAT | Detalle de categoría | 0 | 4 | 18 | 11 | 33 | 29 |
-| BAN | Bandeja y Revisar movimiento | 1 | 9 | 12 | 7 | 29 | 25 |
-| REG | Registrar | 0 | 5 | 9 | 4 | 18 | 16 |
-| ACT | Actividad y detalle de transacción | 1 | 14 | 16 | 7 | 38 | 32 |
+| CAT | Detalle de categoría | 0 | 4 | 17 | 11 | 32 | 29 |
+| BAN | Bandeja y Revisar movimiento | 1 | 8 | 12 | 7 | 28 | 25 |
+| REG | Registrar | 0 | 3 | 9 | 3 | 15 | 15 |
+| ACT | Actividad y detalle de transacción | 1 | 14 | 16 | 6 | 37 | 31 |
 | REP | Reportes | 0 | 7 | 9 | 7 | 23 | 22 |
 | CTA | Cuentas | 1 | 8 | 23 | 17 | 49 | 46 |
 | MAS | Metas, Programadas, Por cobrar, Reglas, Notificaciones | 1 | 10 | 26 | 15 | 52 | 44 |
@@ -55,7 +55,7 @@ Finn 2.0 tal como corre, comparada pantalla por pantalla y estado por estado con
 | 9 | GLO-25 | El título de la pantalla hija va dentro del contenido y se superpone a «Disponible» | alta |
 | 10 | GLO-22 | «Registrar» queda solo como «+» en el teléfono de 390 | alta |
 | 11 | REG-11 | Registrar gasto con la suma distinta del total: Guardar activo y sin aviso de problema | alta |
-| 12 | GLO-28 | El impacto «Antes de guardar» no está en vivo, la app agrega pasos «Revisá el impacto» y muestra códigos crudos «AV-07» | alta |
+| 12 | GLO-28 | La confirmación del impacto muestra códigos crudos «AV-07» y no sigue el componente K4 (corregido el 11/11: el impacto no va en vivo) | alta |
 | 13 | PRE-30 | Asignar edita el valor absoluto con un selector +/−; el diseño suma un monto con opciones rápidas | alta |
 | 14 | GLO-27 | Después de asignar, mover o eliminar no queda el resultado en el lugar con «Deshacer» o «Restaurar» | alta |
 | 15 | GLO-30 | Tablas que desbordan: tres reportes a 429 px en 390, con la barra superior fuera de pantalla | alta |
@@ -226,11 +226,12 @@ Formato: `### <ID> · <título> — <pantalla> · <variantes> · <severidad>`, c
 - **Arreglo:** usar `apps/web/src/componentes/base/resultado.tsx` (el mismo que la Bandeja) en `apps/web/src/flujos/presupuesto-asignar-categoria`, `presupuesto-mover`, `presupuesto-estructura` y `actividad-eliminar`, con `role="status"`.
 - **Cómo verificar:** tras cada acción, el resultado queda donde estaba el elemento, no desaparece solo, y `role="status"` > 0.
 
-#### GLO-28 · El impacto «Antes de guardar» no está en vivo y la app agrega pasos «Revisá el impacto» — flujos · todas · alta
-- **Se ve:** en Registrar gasto el impacto aparece solo al pulsar Guardar (REG-10); los flujos cortos de Registrar no lo tienen (REG-05); Revisar no muestra «Después de aprobar» (BAN-14); archivar, fusionar, nueva cuenta, editar, eliminar y pagar agregan una pantalla «Revisá el impacto» que el diseño no tiene (CAT-22, CTA, ACT); y el aviso sale como código crudo «AV-07» / «AV-03» (ACT-26).
-- **Debería:** DECISIONES «Registrar gasto» (impacto «Antes de guardar» por línea); `docs/diseno/02-referencias/entrega-1/componentes/K4-Dominio-B__confirmacion-del-impacto__claro.html`; el impacto va en la misma pantalla del flujo.
-- **Arreglo:** `apps/web/src/componentes/formularios/confirmacion-impacto.tsx` calculado en vivo desde la vista del motor (sin calcular montos en la interfaz, PF-3), en la misma pantalla; textos AV-03 y AV-07 en `apps/web/src/textos/transaccion.ts`. Si el paso aparte se queda, es decisión de diseño (`PROMPT-DISENO.md` ítem 22).
-- **Cómo verificar:** al cambiar un monto el impacto cambia sin pulsar Guardar; ningún texto `AV-\d\d` visible.
+#### GLO-28 · La confirmación del impacto muestra códigos crudos y no sigue el componente del diseño — flujos con confirmación · todas · alta
+- **Corrección del 11/11/2026:** la versión anterior pedía el impacto en vivo y quitar los pasos «Revisá el impacto». Era un error de la auditoría: esos pasos son el mecanismo aprobado de 05 §4.4 (FE-07, previsualizar y confirmar) y 06 P6-27 a) quita la previsualización de Registrar gasto. REG-10, REG-05, BAN-14, CAT-22, ACT-25 y V-07 quedan descartados.
+- **Se ve:** en el paso de confirmar (archivar, fusionar, nueva cuenta, editar, eliminar, eliminar evento, pagar) el aviso sale como código crudo «AV-07» / «AV-03» (ACT-26); el «−» se separa del número («cambia –⏎$76.45»); el impacto son frases sueltas bajo el título «Revisá el impacto» (`categoria-archivar__impacto`, `transaccion-eliminar__revisar`).
+- **Debería:** 05 §4.4: `ConfirmacionImpacto` con el impacto en el período activo, los avisos «antes» con su texto del servidor y los botones confirmar y volver a editar; su forma es `docs/diseno/02-referencias/entrega-1/componentes/K4-Dominio-B__confirmacion-del-impacto__claro.html` (filas valor actual → valor nuevo, menos U+2212 pegado al monto).
+- **Arreglo:** textos de AV-03 y AV-07 en `apps/web/src/textos/transaccion.ts` (`avisosEliminar` y `avisos`); `apps/web/src/componentes/formularios/confirmacion-impacto.tsx` con la forma de K4 y `white-space: nowrap` en los montos. No se agrega previsualización en vivo ni se quitan los pasos.
+- **Cómo verificar:** ningún texto `AV-\d\d` visible; el signo no queda solo al final de línea; el paso de confirmar coincide con K4 «confirmación del impacto».
 
 #### GLO-29 · Márgenes laterales de 16 px en vez de 20 — Bandeja, avisos globales, esqueletos · teléfono · alta
 - **Se ve:** 16 px laterales en Bandeja, Revisar y Registrar gasto (BAN-03), en el aviso global sin conexión (GLO-110) y en los esqueletos (GLO-122).
@@ -1108,6 +1109,7 @@ Lo inventado o roto en el camino: el párrafo «sin registro» (ACC-09), el cont
 - **Cómo verificar:** los seis bloques están en la misma pantalla, con el pie fijo «Archivar».
 
 #### CAT-22 · Archivar y fusionar: paso «Revisá el impacto» que el diseño no tiene — Archivar, Fusionar · teléfono · media
+- **Descartado (corrección del 11/11/2026):** no es una diferencia. 05 §4.4 (FE-07) descarta previsualizar siempre: el impacto aparece solo después de enviar, con `REQUIERE_CONFIRMACION`, o primero en la lista cerrada (archivar, fusionar, eliminar cuenta, auto-asignar, ciclo, verificar saldo); y 06 P6-27 a) / CA-21.12 quita el bloque «Antes de guardar» de Registrar gasto. Ambos mandan sobre el dibujo. El texto de abajo se conserva como registro.
 - **Consolidado en:** GLO-28 (se arregla allí; este id queda como pantalla afectada).
 - **Se ve:** al tocar «Archivar» o «Fusionar» aparece otra pantalla con el título de sección «Revisá el impacto», filas de texto («Listo para asignar: +$30.00») y «Volver a editar / Confirmar» (`categoria-archivar__impacto`, `categoria-fusionar__impacto`).
 - **Debería:** el impacto va en la misma pantalla antes de pulsar el botón del pie (07/archivar-categoria, 07/fusionar); no hay un segundo paso.
@@ -1265,6 +1267,7 @@ Lo inventado o roto en el camino: el párrafo «sin registro» (ACC-09), el cont
 - **Cómo verificar:** con A.7, Super Selectos aparece primero. Puede ser solo de datos si el orden de la app es por fecha.
 
 #### BAN-14 · Revisar: falta la confirmación del impacto «Después de aprobar» — Revisar movimiento · telefono-claro, telefono-oscuro y computadora-claro · alta
+- **Descartado (corrección del 11/11/2026):** no es una diferencia. 05 §4.4 (FE-07) descarta previsualizar siempre: el impacto aparece solo después de enviar, con `REQUIERE_CONFIRMACION`, o primero en la lista cerrada (archivar, fusionar, eliminar cuenta, auto-asignar, ciclo, verificar saldo); y 06 P6-27 a) / CA-21.12 quita el bloque «Antes de guardar» de Registrar gasto. Ambos mandan sobre el dibujo. El texto de abajo se conserva como registro.
 - **Consolidado en:** GLO-28 (se arregla allí; este id queda como pantalla afectada).
 - **Se ve:** `capturas/revisar__listo__telefono-claro.png`: después de la nota hay solo la casilla «Recordar esta categoría…» y el pie; no hay bloque de impacto antes de aprobar.
 - **Debería:** `01-revisar-movimiento/listo__telefono-claro.png`: contenedor «DESPUÉS DE APROBAR» con «Supermercado · Disponible $62.85 → $27.85» y «Visa Oro · deuda $642.18 → $677.18» (también `dividido__*`, `devolucion__*`, `pago-de-tarjeta__*`).
@@ -1389,6 +1392,7 @@ Lo inventado o roto en el camino: el párrafo «sin registro» (ACC-09), el cont
 - **Cómo verificar:** coinciden las dos columnas y el prefijo.
 
 #### REG-05 · Flujos cortos sin el impacto antes de guardar — Registrar (ingreso, transferencia, devolución, inversión, tarjeta, desembolso) · telefono-claro y computadora-claro · alta
+- **Descartado (corrección del 11/11/2026):** no es una diferencia. 05 §4.4 (FE-07) descarta previsualizar siempre: el impacto aparece solo después de enviar, con `REQUIERE_CONFIRMACION`, o primero en la lista cerrada (archivar, fusionar, eliminar cuenta, auto-asignar, ciclo, verificar saldo); y 06 P6-27 a) / CA-21.12 quita el bloque «Antes de guardar» de Registrar gasto. Ambos mandan sobre el dibujo. El texto de abajo se conserva como registro.
 - **Consolidado en:** GLO-28 (se arregla allí; este id queda como pantalla afectada).
 - **Se ve:** `capturas/registrar__ingreso__telefono-claro.png`, `registrar__transferencia__telefono-claro.png`: ninguna fila de impacto; solo el botón.
 - **Debería:** ingreso: contenedor «Listo para asignar $312.40 → $1,237.40»; transferencia: «No cambia el presupuesto.» (`12-…/ingreso__*`, `transferencia__*`).
@@ -1420,6 +1424,7 @@ Lo inventado o roto en el camino: el párrafo «sin registro» (ACC-09), el cont
 - **Cómo verificar:** el aviso trae título y período; botones «Cancelar»/«Confirmar y guardar».
 
 #### REG-10 · Registrar gasto: el impacto «Antes de guardar» solo aparece al pulsar Guardar — Registrar gasto · telefono-claro, telefono-oscuro y computadora-claro · alta
+- **Descartado (corrección del 11/11/2026):** no es una diferencia. 05 §4.4 (FE-07) descarta previsualizar siempre: el impacto aparece solo después de enviar, con `REQUIERE_CONFIRMACION`, o primero en la lista cerrada (archivar, fusionar, eliminar cuenta, auto-asignar, ciclo, verificar saldo); y 06 P6-27 a) / CA-21.12 quita el bloque «Antes de guardar» de Registrar gasto. Ambos mandan sobre el dibujo. El texto de abajo se conserva como registro.
 - **Consolidado en:** GLO-28 (se arregla allí; este id queda como pantalla afectada).
 - **Se ve:** `capturas/registrar-gasto__principal__telefono-claro.png` y `__computadora-claro.png`: con 3 líneas completas no hay bloque de impacto (`F/registrar-gasto/formulario.tsx:217-233` solo lo monta en estado `confirmando`).
 - **Debería:** `entrega-1/referencia/S5-Registrar__telefono-claro.png` y `__computadora-claro.png`: contenedor «ANTES DE GUARDAR» con «Visa Oro · deuda $642.18 → $790.78», «Supermercado $62.85 → −$33.25» con el indicador «Deuda sin reservar», «Farmacia $27.65 → $5.15», «Carlos te debe $40.00 → $70.00» (PANTALLAS §8.6, DECISIONES «Registrar gasto»).
@@ -1470,6 +1475,7 @@ Lo inventado o roto en el camino: el párrafo «sin registro» (ACC-09), el cont
 - **Sección:** REG · **Fuente:** verificación independiente
 
 #### V-07 · Registrar gasto en computadora: «Guardar» más cerca de la suma que de la tarjeta de impacto — Registrar gasto · computadora-claro · baja
+- **Descartado (corrección del 11/11/2026):** no es una diferencia. 05 §4.4 (FE-07) descarta previsualizar siempre: el impacto aparece solo después de enviar, con `REQUIERE_CONFIRMACION`, o primero en la lista cerrada (archivar, fusionar, eliminar cuenta, auto-asignar, ciclo, verificar saldo); y 06 P6-27 a) / CA-21.12 quita el bloque «Antes de guardar» de Registrar gasto. Ambos mandan sobre el dibujo. El texto de abajo se conserva como registro.
 - **Se ve:** `capturas/registrar-gasto__principal__computadora-claro.png`: «Guardar $148.60» a 52 px bajo la suma.
 - **Debería:** `S5-Registrar__computadora-claro.png`: el botón bajo la tarjeta de impacto, a 18 px de ella. Depende de REG-10 (el impacto en vivo todavía no existe).
 - **Arreglo:** `apps/web/src/flujos/registrar-gasto/formulario.tsx`: ordenar suma, tarjeta de impacto y botón con ese espaciado cuando se construya el impacto de REG-10.
@@ -1626,6 +1632,7 @@ Lo inventado o roto en el camino: el párrafo «sin registro» (ACC-09), el cont
 - **Cómo verificar:** el menú coincide con `mas-acciones__*` en las tres variantes.
 
 #### ACT-25 · [corregido por V-01: la captura salió sin campos; ver V-01] Edición: no se capturó una diferencia estructural; se anota el acceso — Editar · todas · baja
+- **Descartado (corrección del 11/11/2026):** no es una diferencia. 05 §4.4 (FE-07) descarta previsualizar siempre: el impacto aparece solo después de enviar, con `REQUIERE_CONFIRMACION`, o primero en la lista cerrada (archivar, fusionar, eliminar cuenta, auto-asignar, ciclo, verificar saldo); y 06 P6-27 a) / CA-21.12 quita el bloque «Antes de guardar» de Registrar gasto. Ambos mandan sobre el dibujo. El texto de abajo se conserva como registro.
 - **Se ve:** la edición abre como flujo largo con «Cerrar» (X), campos y «Guardar cambios» fijo (`pliegue/transaccion-editar__principal__telefono-claro.png`), tal como la referencia; falta el bloque «Antes de guardar» con el efecto previo («Farmacia · Disponible −$5.15 → $0.85»).
 - **Debería:** `03/editar__telefono-claro.png` incluye «Antes de guardar» con los efectos antes del botón.
 - **Arreglo:** `flujos/actividad-editar/formulario.tsx`: mostrar el efecto estimado (DTO) antes de «Guardar cambios».

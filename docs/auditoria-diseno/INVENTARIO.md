@@ -264,13 +264,13 @@ Rutas: `B` = `apps/web/src/app/(finn)/bandeja`, `F` = `apps/web/src/flujos`, `R`
 | registrar__avance-confirmar | idem | `componentes/formularios/confirmacion-impacto.tsx` | SIN DISEÑO (confirmación de avance) | sin diseño |
 | registrar__retroactivo | idem (fecha en período cerrado) | `confirmacion-impacto-de-vista.tsx` | 12-…/retroactivo | REG-09 |
 | registrar__no-encontrado, registrar__sin-cuentas | /registrar/[tipo] | `R/[tipo]/page.tsx` | SIN DISEÑO | sin diseño |
-| registrar-gasto__principal, registrar-gasto__inicial, registrar-gasto__otra-persona | /registrar/gasto | `F/registrar-gasto/formulario.tsx`, `lineas.tsx`, `parte.tsx` | entrega-1/referencia/S5-Registrar__telefono-claro y __computadora-claro | REG-10 REG-12 REG-13 REG-14 REG-16 |
-| registrar-gasto__una-linea | idem | idem | S5-Registrar__una-linea | familia principal (REG-10 REG-12) |
+| registrar-gasto__principal, registrar-gasto__inicial, registrar-gasto__otra-persona | /registrar/gasto | `F/registrar-gasto/formulario.tsx`, `lineas.tsx`, `parte.tsx` | entrega-1/referencia/S5-Registrar__telefono-claro y __computadora-claro | REG-12 REG-13 REG-14 REG-16 (REG-10 descartado) |
+| registrar-gasto__una-linea | idem | idem | S5-Registrar__una-linea | familia principal (REG-12) |
 | registrar-gasto__suma-distinta-del-total | idem | `formulario.tsx`, `lineas.tsx` | S5-Registrar__suma-distinta-del-total | REG-11 |
 | registrar-gasto__suma-rechazada | idem | idem | S5-Registrar__suma-distinta-del-total | REG-11 |
 | registrar-gasto__monto-mal-escrito | idem | `formulario.tsx` | S5-Registrar__monto-mal-escrito | familia principal (REG-12); sin diferencias propias en el análisis |
-| registrar-gasto__fecha-en-periodo-cerrado | idem | idem | S5-Registrar__fecha-en-periodo-cerrado | REG-10 (el aviso de período cerrado va dentro del impacto, que no se muestra antes de guardar) |
-| registrar-gasto__confirmar-periodo-cerrado | idem | `confirmacion-impacto-de-vista.tsx` | S5-Registrar__fecha-en-periodo-cerrado | REG-10 |
+| registrar-gasto__fecha-en-periodo-cerrado | idem | idem | S5-Registrar__fecha-en-periodo-cerrado | bien: AV-01 al confirmar, como CA-21.12 (REG-10 descartado) |
+| registrar-gasto__confirmar-periodo-cerrado | idem | `confirmacion-impacto-de-vista.tsx` | S5-Registrar__fecha-en-periodo-cerrado | bien (CA-21.12) |
 | registrar-gasto__guardando | idem | `formulario.tsx` | S5-Registrar__guardando | bien en estructura (análisis sin diferencias); REG-14 |
 | registrar-gasto__guardado | idem | `resultado-gasto.tsx` | S5-Registrar__guardado | REG-15 |
 | registrar-gasto__sugerencia-al-escribir | idem | `sugerencia-comercio.tsx` | S5-Registrar__sugerencia-al-escribir | familia principal; sin diferencias propias en el análisis |
