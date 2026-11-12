@@ -619,19 +619,19 @@
 
   "TA-561": { "estado": "en_curso", "rama": "ta-561-tokens-movimiento" },
 
-  "TA-562": { "estado": "pendiente" },
+  "TA-562": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
 
-  "TA-563": { "estado": "pendiente" },
+  "TA-563": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
 
-  "TA-564": { "estado": "pendiente" },
+  "TA-564": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
 
-  "TA-565": { "estado": "pendiente" },
+  "TA-565": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
 
-  "TA-566": { "estado": "pendiente" },
+  "TA-566": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
 
-  "TA-567": { "estado": "pendiente" },
+  "TA-567": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
 
-  "TA-568": { "estado": "pendiente" },
+  "TA-568": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
 
   "TA-569": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
 

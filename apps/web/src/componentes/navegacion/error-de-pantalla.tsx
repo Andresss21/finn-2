@@ -3,7 +3,7 @@
 // Components (`router.refresh()`) y reinicia el límite (`reset()`) dentro de una transición. Marcado del export de diseño,
 // pantalla 14 «Error de pantalla»: tarjeta con el mensaje, la referencia con «Copiar referencia» (06-identidad-visual 2.19) y el botón.
 import { useRouter } from 'next/navigation';
-import { startTransition, useState } from 'react';
+import { startTransition, useState, type ReactNode } from 'react';
 import { base } from '../../textos/base';
 import { estados } from '../../textos/estados';
 import { Boton } from '../base/boton';
@@ -12,15 +12,18 @@ import { Icono } from '../base/icono';
 export function ErrorDeLaPantalla({
   error,
   reset,
+  enPanel = false,
 }: {
   readonly error: Error & { digest?: string };
   readonly reset: () => void;
+  /** CF-23 / E6-9: dentro del panel de notificaciones no hay `main`: el error vive en el panel. */
+  readonly enPanel?: boolean;
 }) {
   const router = useRouter();
   const [copiada, setCopiada] = useState(false);
   const { digest } = error;
   return (
-    <main>
+    <Contenedor enPanel={enPanel}>
       <div
         role="alert"
         className="mx-5 mt-1 flex flex-col items-start gap-2.5 rounded-contenedor bg-fondo p-4.5 shadow-elevacion-1"
@@ -66,6 +69,16 @@ export function ErrorDeLaPantalla({
           {base.reintentar}
         </Boton>
       </div>
-    </main>
+    </Contenedor>
   );
+}
+
+function Contenedor({
+  enPanel,
+  children,
+}: {
+  readonly enPanel: boolean;
+  readonly children: ReactNode;
+}) {
+  return enPanel ? <div>{children}</div> : <main>{children}</main>;
 }

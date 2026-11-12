@@ -1,2 +1,2 @@
-// Estado de carga de `/registrar/gasto` (05 §7.1): el mismo de `(finn)`, sin números inventados.
-export { default } from '../../loading';
+// Estado de carga de un flujo o detalle (E6-1, GLO-32): esqueleto genérico, sin título ni números.
+export { EsqueletoGenerico as default } from '../../../../componentes/navegacion/esqueleto';

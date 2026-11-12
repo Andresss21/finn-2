@@ -5,7 +5,7 @@ import { cn } from './utils';
 
 // Variantes de shadcn con los tokens de Finn (05 §10.7): solo cambian los colores y las medidas.
 const buttonVariants = cva(
-  'inline-flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-control px-5 text-base font-semibold whitespace-nowrap transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco disabled:cursor-not-allowed disabled:bg-superficie-hundida disabled:text-texto-deshabilitado aria-disabled:cursor-progress',
+  'inline-flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-control px-5 text-base font-semibold whitespace-nowrap tabular-nums transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco disabled:cursor-not-allowed disabled:bg-superficie-hundida disabled:text-texto-deshabilitado aria-disabled:cursor-progress',
   {
     variants: {
       variant: {
