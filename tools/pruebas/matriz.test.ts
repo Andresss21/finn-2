@@ -27,6 +27,7 @@ const base = (): Entradas => ({
   d04: doc('04-backend.md'),
   d05: doc('05-frontend.md'),
   d06: doc('06-features.md'),
+  diseno4: doc('anexos/finn-diseno-entrega-4/PROMPT-DESARROLLO.md'),
   inventario: [
     {
       titulo: 'PRU-INT-TARJ > PRU-INT-TARJ-004 [CA-30.4, ESC-10, AV-04, P1] pago mayor',
@@ -174,6 +175,52 @@ describe('matriz: mutaciones (V7-09)', () => {
     expect(REF.test('Q-inicio')).toBe(true);
     expect(REF.test('Q-detalleLpa')).toBe(true);
     for (const mal of ['Q-', 'q-inicio', 'Q-1', 'Q-inicio2']) expect(REF.test(mal)).toBe(false);
+  });
+
+  it('PRU-SEG-OPER-123 [M7] CH-243: los CA del diseño (CA-E4-1, CA-ET4-2, CA-C-4…) se aceptan si existen; CA-E4-999 no existe y los mal formados no son referencia', () => {
+    for (const ok of [
+      'CA-E4-1',
+      'CA-E4-21b',
+      'CA-E2-3',
+      'CA-E3-2',
+      'CA-ET4-2',
+      'CA-E5-17b',
+      'CA-E6-22',
+      'CA-C-4',
+    ])
+      expect(REF.test(ok)).toBe(true);
+    for (const mal of [
+      'CA-E4-',
+      'CA-E4',
+      'CA-E1-1',
+      'CA-E7-1',
+      'ca-e4-1',
+      'CA-X-1',
+      'CA-ET4-1c9',
+      'CA-C-',
+    ])
+      expect(REF.test(mal)).toBe(false);
+    for (const ok of [
+      'CA-E4-1',
+      'CA-ET4-2',
+      'CA-C-4',
+      'CA-E2-1',
+      'CA-E3-1',
+      'CA-E5-22',
+      'CA-E6-22',
+    ]) {
+      const e = base();
+      fila(e, 0).titulo = fila(e, 0).titulo.replace('CA-30.4,', `CA-30.4, ${ok},`);
+      expect(verificar(e).errores).toEqual([]);
+    }
+    const e = base();
+    fila(e, 0).titulo = fila(e, 0).titulo.replace('CA-30.4,', 'CA-30.4, CA-E4-999,');
+    expect(verificar(e).errores).toEqual([
+      'M7 PRU-INT-TARJ-004 cita CA-E4-999, que no existe en los documentos',
+    ]);
+    const f = base();
+    fila(f, 0).titulo = fila(f, 0).titulo.replace('CA-30.4,', 'CA-30.4, CA-E4,');
+    expect(reglas(f)).toEqual(['M7']);
   });
 
   it('M8: identificador mal formado, nivel o área desconocidos', () => {
