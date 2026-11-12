@@ -1308,6 +1308,11 @@ Catálogo completo (la regla T9 de V5-18 rechaza cualquier parámetro de §1.3 o
 | `?cursor=` | Posición en una lista paginada (04 6.0.6) | Texto opaco | Bandeja, Actividad, detalle de cuenta, Notificaciones |
 | `?volver=` | **Ruta interna a la que se vuelve**: después de ingresar (3.6) o con el enlace "Volver" de un detalle (3.3) | Ruta interna, validada como en 3.6 | Rutas de `ingresar`, cualquier detalle [D] |
 | `?notificacion=` | Notificación que se abrió (se marca como leída, FE-32) | Uuid | Cualquier destino de 3.5 |
+| `?motivo=` **[CH-248]** | Por qué se llegó a `/ingresar`; con `sesion-vencida` la pantalla avisa que la sesión venció (7.5, 9.3) | `sesion-vencida` | `/ingresar` |
+| `?resultado=` **[CH-248]** | Resultado de un flujo corto que se cerró sobre el detalle (E2-13); la interfaz lo valida y dibuja, un valor mal formado no se muestra | `verificado:<FechaLocal>:<entero>` o `pagado:<montoTexto>:<0 o 1>` | Detalle de cuenta |
+| `?agregado=`, `?quitado=` **[CH-248]** | Nombre del factor que se acaba de agregar o quitar, para el aviso de resultado | Texto | Seguridad |
+| `?guardado=` **[CH-248]** | Formato que se acaba de guardar, para el aviso de resultado | Uuid | Formatos |
+| `?enfocar=` **[CH-248]** | Campo de la meta que se edita al abrir el detalle | `fecha`, `monto` | Detalle de meta |
 
 Notas:
 - **[R2] `?volver=` también para el regreso de los detalles.** El ajuste 1 pidió un nombre distinto de `?desde=`, que ya es el filtro de fechas de Actividad. Se usa `?volver=` y no un tercer nombre (por ejemplo `?regreso=`) porque su significado es el mismo que el de las rutas de `ingresar` (la ruta interna a la que se vuelve) y se valida igual. Dos nombres para un mismo significado también se evitan.
@@ -1874,6 +1879,7 @@ No se muestra ningún número guardado en el cliente: la app es solo en línea (
 
 - **Al leer:** la consulta responde `NO_AUTORIZADO` y `consultar()` redirige a `/ingresar?volver=…` o a `/ingresar/verificar?volver=…` (7.3).
 - **Al escribir:** la Server Action responde `NO_AUTORIZADO` (04 2.2.2) y `useOperacion` navega a `/ingresar?volver=<ruta del flujo>` (4.7). Los flujos largos conservan su borrador (4.11) y lo recuperan al volver.
+- **[CH-248]** Al llegar a `/ingresar` por una sesión vencida, `?motivo=sesion-vencida` (2.2) muestra el aviso de que la sesión venció; sin ese parámetro, la pantalla no dice nada. Lo implementó TA-596.
 - **Sin hacer nada:** no hay detección en segundo plano; el próximo pedido lo resuelve. `proxy.ts` redirige de forma optimista si la cookie ya no existe (04 12.4).
 
 ### 7.6 Versión nueva
@@ -1942,6 +1948,8 @@ Cada página de `ingresar` lee `estadoAcceso()` (CP-11) en el servidor y decide 
 - **Envío:** `ingresar({ email, contrasena })`. Con `siguiente`: `verificar` → `/ingresar/verificar?volver=`; `inscribir` → `/ingresar/inscribir?volver=`; `listo` no ocurre (siempre hay un segundo paso).
 - **Errores** (9.7): un solo mensaje para credenciales inválidas, sea el email, la contraseña o un usuario distinto del permitido, para no revelar cuál falló.
 - **Sin registro ni recuperación de contraseña en la app** (registro deshabilitado, ADR-08; recuperación desde el panel de Supabase, 04 12.6). **[D4]** (CH-05-9.3) Bajo el botón «Ingresar», una línea en `cuerpo-pequeno` y `--texto-secundario`, sin enlace: «¿Olvidaste la contraseña? Cambiala desde el panel de Supabase.» No hay control de «Primera vez» ni de «Olvidé mi contraseña».
+
+- **[CH-248]** Con `?motivo=sesion-vencida` (2.2), sobre el formulario va el aviso de que la sesión venció; el resto de la pantalla no cambia.
 
 ### 9.4 `/ingresar/verificar` (FE-38)
 
@@ -3529,3 +3537,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-241** (Fase 8, decidido por el orquestador con delegación del usuario, 11 de noviembre de 2026, `08-tareas.md` §7). Entrega 4 frente a lo que CH-220 copió de la entrega 3: el código TOTP va en seis casillas, sin envío automático, con el pegado del código completo, un solo nombre accesible para el grupo y `autocomplete="one-time-code"` (9.4, 9.5 y FE-38; E2-2 de la entrega 4). Retira el punto TOTP de CH-221 (b). Lo implementa TA-594, de revisión obligatoria, que no toca `verificarFactor` ni la sesión. Marcas **[CH-241]**.
 - **CH-E5-3** (diseño, entrega 4 · etapa 5; aplicado con la ficha de Ajustes de B10, CH-240 c, el 11 de noviembre de 2026). `/ajustes/webhook`, `/ajustes/formatos` e `/ajustes/instituciones` son [S] (1.3, 2.11) y OPT-01 vive en `/ajustes/webhook/token` [C], con su carpeta `flujos/ajustes-webhook-token/`; 15.1 y 15.2 se regeneraron con `trazabilidad.py`. El contrato de OPT-01 no cambia. Marcas **[CH-240]**.
 - **CH-242** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). «Salir» a la vista: `salir()` se invoca también desde la hoja «Más secciones», el pie de la barra lateral y `/ajustes`, y con borradores en la pestaña pregunta antes «Tenés N cambios sin enviar» (9.6 y 15.3). `salir()` no cambia. Marcas **[CH-242]**. Lo aplicó TA-596.
+- **CH-248** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). El catálogo de 2.2 suma los parámetros de resultado que ya existen en la interfaz: `?motivo=sesion-vencida` (`/ingresar`; 7.5 y 9.3), `?resultado=` (detalle de cuenta), `?agregado=` y `?quitado=` (Seguridad), `?guardado=` (Formatos) y `?enfocar=` (detalle de meta). Marcas **[CH-248]**. Documenta lo implementado; no cambia código.
