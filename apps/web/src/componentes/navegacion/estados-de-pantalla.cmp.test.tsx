@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../app/globals.css';
 import PaginaSinConexion from '../../app/sin-conexion/page';
 import { ErrorDeLaPantalla } from './error-de-pantalla';
+import { Barra, BloqueGrafico, Circulo, Esqueleto, SeccionEsqueleto } from './esqueleto';
 
 // Solo el límite externo: `next/navigation` necesita el enrutador de Next, que el navegador de prueba no tiene.
 const refrescar = vi.hoisted(() => vi.fn());
@@ -63,7 +64,7 @@ describe('PRU-CMP-AJUS-142 error de pantalla', () => {
     expect(alerta.textContent).toContain('Referencia: E-ABC234');
     const botones = [...alerta.querySelectorAll('button')];
     expect(botones.map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual([
-      'Copiar referencia',
+      'Copiar la referencia',
       'Intentar de nuevo',
     ]);
     for (const b of botones) expect(b.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
@@ -83,7 +84,7 @@ describe('PRU-CMP-AJUS-142 error de pantalla', () => {
     for (const tema of ['claro', 'oscuro'] as const) {
       document.documentElement.dataset['theme'] = tema;
       const raiz = montar(<ErrorDeLaPantalla error={new Error('x')} reset={() => undefined} />);
-      expect(raiz.querySelector('[aria-label="Copiar referencia"]')).toBeNull();
+      expect(raiz.querySelector('[aria-label="Copiar la referencia"]')).toBeNull();
       const { violations } = await axe.run(raiz, {
         runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
       });
@@ -136,5 +137,39 @@ describe('PRU-CMP-PWA error de pantalla con su glifo', () => {
     expect(
       [...tarjeta.querySelectorAll('button')].some((b) => b.textContent === 'Intentar de nuevo'),
     ).toBe(true);
+  });
+});
+
+describe('PRU-CMP-PWA esqueleto', () => {
+  it('PRU-CMP-PWA-721 [CA-E6-3] Esqueleto no tiene texto de datos, números ni roles de datos; lleva aria-busy, hijos aria-hidden y un solo anuncio «Cargando {pantalla}» fuera de la región; sin animation', () => {
+    const nodo = montar(
+      <Esqueleto pantalla="cuentas" titulo="Cuentas">
+        <BloqueGrafico />
+        <Circulo />
+        <Barra />
+        <SeccionEsqueleto filas={2} />
+      </Esqueleto>,
+    );
+    const anuncios = nodo.querySelectorAll('[role="status"]');
+    expect(anuncios).toHaveLength(1);
+    expect(anuncios[0]?.textContent).toBe('Cargando cuentas');
+    const ocupada = nodo.querySelector('[aria-busy="true"]') as HTMLElement;
+    expect(ocupada.contains(anuncios[0] as Node)).toBe(false);
+    expect(ocupada.children).toHaveLength(1);
+    expect(ocupada.children[0]?.getAttribute('aria-hidden')).toBe('true');
+    // Solo el título y el anuncio son texto: ni cifras ni roles de datos dentro de la región ocupada.
+    expect(ocupada.textContent).toBe('');
+    expect(ocupada.querySelector('[role],[data-centavos],table,li,img')).toBeNull();
+    expect(nodo.textContent).not.toMatch(/\d/);
+    // Medidas de E6-1: barras de 12 px con radio 4, gráfico de 168 px, `--superficie-hundida` y sin animación.
+    const barra = nodo.querySelector('span.rounded-sm') as HTMLElement;
+    expect(getComputedStyle(barra).height).toBe('12px');
+    expect(getComputedStyle(barra).borderTopLeftRadius).toBe('4px');
+    expect((nodo.querySelector('span.h-42') as HTMLElement).getBoundingClientRect().height).toBe(
+      168,
+    );
+    for (const e of nodo.querySelectorAll<HTMLElement>('span')) {
+      expect(getComputedStyle(e).animationName).toBe('none');
+    }
   });
 });

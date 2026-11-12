@@ -8,7 +8,7 @@ export const navegacion = {
   masRotulo: 'Más',
   registrar: 'Registrar',
   marca: 'Finn',
-  navegando: 'Navegando',
+  navegando: 'Abriendo la pantalla',
   sinConexion: 'Estás sin conexión',
   sinConexionNavegacion: 'Estás sin conexión. No se puede abrir esta pantalla.',
   // `/sin-conexion` (05 §8.5)
