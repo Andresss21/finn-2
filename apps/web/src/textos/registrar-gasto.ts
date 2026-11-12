@@ -18,9 +18,11 @@ export const registrarGasto = {
   sinTransferencia: 'con una sola cuenta de efectivo no hay transferencia entre tus cuentas',
   sinDesembolso: 'sin préstamos no hay desembolso',
   sinDeuda: 'con una sola tarjeta no hay transferencia de deuda',
-  sinCuentasTitulo: 'Todavía no tenés cuentas',
-  sinCuentasTexto: 'Para registrar movimientos primero creá la cuenta donde está tu dinero.',
-  crearCuenta: 'Crear una cuenta',
+  // [CH-240 E3-23] El vacío de PANTALLAS §2.19, igual en Registrar, `/registrar/gasto` y `/bandeja/[id]` sin cuentas
+  sinCuentasTitulo: 'Agregá tu primera cuenta',
+  sinCuentasTexto:
+    'Para registrar algo, Finn necesita saber de qué cuenta sale el dinero o a cuál entra.',
+  crearCuenta: 'Agregar una cuenta',
   cuenta: 'Cuenta o tarjeta',
   fecha: 'Fecha',
   total: 'Total del gasto',

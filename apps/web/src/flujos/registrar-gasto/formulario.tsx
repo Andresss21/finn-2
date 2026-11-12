@@ -246,7 +246,9 @@ export function FormularioRegistrarGasto({
         : {
             acciones: (
               // [CH-240 E6-21] La barra fija queda a 20 px de los bordes (16 del marco más 4)
-              <div className="w-full max-md:px-1 xl:ml-auto xl:w-[calc(50%-1.125rem)]">{guardar}</div>
+              <div className="w-full max-md:px-1 xl:ml-auto xl:w-[calc(50%-1.125rem)]">
+                {guardar}
+              </div>
             ),
           })}
     >

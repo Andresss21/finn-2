@@ -4,17 +4,20 @@
 // viaje (05 §4.4); con la fecha en un período cerrado el servidor pide confirmar con AV-01. No calcula montos (PF-3).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
+import { usePathname } from 'next/navigation';
 import { useMemo, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { NotaFija } from './nota-fija';
 import { Boton } from '../../componentes/base/boton';
 import { Resultado } from '../../componentes/base/resultado';
 import { Seleccion, type Opcion } from '../../componentes/base/seleccion';
+import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { Vacio } from '../../componentes/base/vacio';
 import { ConfirmacionImpactoDeVista as ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto-de-vista';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
+import { useIrA } from '../../componentes/navegacion/use-ir-a';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta, SuperpuestoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMontoTexto } from '../../formato';
@@ -49,6 +52,12 @@ interface Previsualizacion extends VistaDeImpacto {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
+/** La ruta de cada movimiento: el segmentado cambia de ruta con los mismos datos de la URL (las operaciones no cambian). */
+const RUTAS = {
+  aporte: 'aporte-inversion',
+  retiro: 'retiro-inversion',
+  ajuste: 'ajuste-inversion',
+} as const;
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 /** Un enlace con el aspecto de un botón principal (05 §10.7): al menos 44 px de alto (05 §11.5). */
 const ENLACE =
@@ -85,6 +94,8 @@ export function FormularioRegistrarInversion({
   superpuesto = false,
 }: PropsFormularioRegistrarInversion) {
   const modalidad = modalidadDe(tipo);
+  const irA = useIrA();
+  const ruta = usePathname();
   const [titulo, listo, guardar] = [t.titulo[modalidad], t.listo[modalidad], t.guardar[modalidad]];
   const enviar: AccionEscritura = (payload) => accion(aEntradaDeAccion(tipo, payload));
   const operacion = useOperacion({ accion: enviar, creacion: true });
@@ -178,6 +189,21 @@ export function FormularioRegistrarInversion({
           noValidate
           className="flex flex-col gap-5"
         >
+          <SelectorSegmentado
+            etiqueta={t.tipoEtiqueta}
+            llena
+            opciones={[
+              { valor: 'aporte', etiqueta: t.tipos.aporte },
+              { valor: 'retiro', etiqueta: t.tipos.retiro },
+              { valor: 'ajuste', etiqueta: t.tipos.ajuste },
+            ]}
+            valor={modalidad}
+            alCambiar={(m) => {
+              if (m === modalidad || !(m in RUTAS)) return;
+              const destino = ruta.replace(/[^/]+$/, RUTAS[m as keyof typeof RUTAS]);
+              irA(`${destino}${window.location.search}`);
+            }}
+          />
           <Seleccion
             etiqueta={t.inversion}
             opciones={inversiones}

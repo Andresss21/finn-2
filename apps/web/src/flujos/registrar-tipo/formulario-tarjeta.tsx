@@ -5,7 +5,8 @@
 // sus valores en el aviso. No calcula montos (PF-3): todo lo que muestra lo trae el servidor.
 import { mensajeDeRechazo } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
-import { useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { NotaFija } from './nota-fija';
 import { Boton } from '../../componentes/base/boton';
@@ -15,6 +16,7 @@ import { Vacio } from '../../componentes/base/vacio';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { useIrA } from '../../componentes/navegacion/use-ir-a';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -31,6 +33,7 @@ import {
   type Campos,
   type TipoDeTarjeta,
 } from './campos-tarjeta';
+import { recordarAvance } from '../registrar/avance-guardado';
 import { ENLACE, Marco, REINTENTABLES, enSuCampo } from './formulario';
 
 type Cuenta = { readonly id: string; readonly nombre: string };
@@ -110,6 +113,24 @@ export function FormularioRegistrarTarjeta({
   ];
 
   const { estado, error: fallo, exito } = operacion;
+  const irA = useIrA();
+  const ruta = usePathname();
+  // [CH-240 E3-22] Un avance guardado cierra la hoja y deja el resultado arriba del selector de Registrar
+  const avanceGuardado = esAvance && estado === 'listo' && exito !== undefined;
+  const idGuardado = (exito?.valor as { id?: unknown } | null | undefined)?.id;
+  const textoAvance = t.avanceResultado(
+    formatearMontoTexto(c.total),
+    nombreDe(c.tarjetaId),
+    nombreDe(c.cuentaId),
+  );
+  useEffect(() => {
+    if (!avanceGuardado) return;
+    recordarAvance({
+      texto: textoAvance,
+      ...(typeof idGuardado === 'string' ? { transaccionId: idGuardado } : {}),
+    });
+    if (ruta !== '/registrar') irA('/registrar');
+  }, [avanceGuardado, textoAvance, idGuardado, ruta, irA]);
   const vista = (operacion.previsualizacion ?? {}) as {
     readonly avisos?: readonly { readonly codigo: string; readonly datos?: unknown }[];
     readonly rechazos?: readonly Parameters<typeof mensajeDeRechazo>[0][];

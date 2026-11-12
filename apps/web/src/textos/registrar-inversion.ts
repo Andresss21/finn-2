@@ -7,6 +7,9 @@ export const registrarInversion = {
     ajuste: 'Ajustar el valor de una inversión',
   },
   inversion: 'Inversión',
+  // [CH-240 E3-21] Una sola hoja con un segmentado entre los tres movimientos de una inversión
+  tipoEtiqueta: 'Qué registrás',
+  tipos: { aporte: 'Aporte', retiro: 'Retiro', ajuste: 'Ajuste de valor' },
   valorDe: (monto: string) => `Valor ${monto}`,
   cuentaAporte: 'Sale de la cuenta',
   // [CH-240 E4-3] Notas fijas del retiro y del ajuste de valor

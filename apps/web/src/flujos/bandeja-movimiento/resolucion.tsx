@@ -26,6 +26,8 @@ interface Salida {
   readonly icono?: NombreIcono;
 }
 
+const ID_MOTIVO_DESCARTAR = 'motivo-descartar-aprobando';
+
 export default function Resolucion({
   movimientoId,
   estado,
@@ -132,7 +134,7 @@ export default function Resolucion({
             variante={propio && i === 0 ? 'principal' : 'secundaria'}
             deshabilitado={ocupado || sinConexion || (aprobando === true && b.icono === 'trash')}
             {...(aprobando === true && b.icono === 'trash'
-              ? { motivoDeshabilitado: t.revisar.descartarAprobando }
+              ? { 'aria-describedby': ID_MOTIVO_DESCARTAR }
               : {})}
             onClick={b.ejecutar}
             className={propio ? 'w-full' : 'flex-1'}
@@ -142,6 +144,17 @@ export default function Resolucion({
           </Boton>
         ))}
       </div>
+      {aprobando === true && salidas.some((b) => b.icono === 'trash') ? (
+        // [CH-240 E3-13] El motivo de «Descartar» lleva el ícono `clock`: espera a que termine de aprobar
+        <p
+          id={ID_MOTIVO_DESCARTAR}
+          data-rol="motivo-descartar"
+          className="flex items-center gap-1.5 text-sm text-texto-secundario"
+        >
+          <Icono nombre="clock" tamano={16} className="shrink-0" />
+          {t.revisar.descartarAprobando}
+        </p>
+      ) : null}
       {reprocesar.estado === 'listo' ? (
         <p role="status" className="text-cuerpo-pequeno text-texto-secundario">
           {t.reprocesado}

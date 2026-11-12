@@ -19,6 +19,9 @@ import LineasDeGasto from '../registrar-gasto/lineas';
 import { conCompra, type Campos, type CompraCandidata } from './campos';
 import type { BuscarCompras } from './eleccion-compra';
 
+/** Clases literales (L13): el borde del campo al que le falta un dato que el SMS no trae. */
+const BORDE_FALTANTE = '[&_input]:border-2 [&_input]:border-advertencia-texto';
+
 interface Referencia {
   readonly id: string;
   readonly nombre: string;
@@ -101,17 +104,20 @@ export default function CamposMovimiento({
         error={error('cuentaId')}
       />
       <div className="grid grid-cols-2 gap-2.5 [&>*]:min-w-0">
-        <EntradaFechaConAtajos
-          nombre="fecha"
-          etiqueta={g.fecha}
-          valor={c.fecha as FechaLocal}
-          alCambiar={poner('fecha')}
-          error={error('fecha')}
-          requerido
-          sinVistaPrevia
-          hoy={hoy}
-          atajos={ATAJOS}
-        />
+        {/* [CH-240 E3-13] El campo que falta lleva el borde de advertencia (`--advertencia-texto`) */}
+        <div className={c.fecha === '' ? BORDE_FALTANTE : ''}>
+          <EntradaFechaConAtajos
+            nombre="fecha"
+            etiqueta={g.fecha}
+            valor={c.fecha as FechaLocal}
+            alCambiar={poner('fecha')}
+            error={error('fecha')}
+            requerido
+            sinVistaPrevia
+            hoy={hoy}
+            atajos={ATAJOS}
+          />
+        </div>
         <EntradaMonto
           nombre="total"
           etiqueta={t.revisar.monto}

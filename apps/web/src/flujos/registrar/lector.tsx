@@ -14,6 +14,7 @@ import { registrarGasto as t } from '../../textos/registrar-gasto';
 import { registrarInversion as inv } from '../../textos/registrar-inversion';
 import { registrarDesembolso as d } from '../../textos/registrar-desembolso';
 import { registrarTarjeta as k } from '../../textos/registrar-tarjeta';
+import { ResultadoAvance } from './avance-guardado';
 import { registrarDevolucion as dev } from '../../textos/registrar-devolucion';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
@@ -119,6 +120,7 @@ export async function LectorRegistrar() {
         />
       ) : (
         <div className="flex flex-col gap-3">
+          <ResultadoAvance />
           <h2 className="text-titulo-seccion">{t.elegir}</h2>
           <ul className="flex flex-col gap-2">
             {tipos.map((x) => (

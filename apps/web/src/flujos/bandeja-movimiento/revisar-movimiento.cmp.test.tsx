@@ -314,6 +314,12 @@ describe('PRU-CMP-BAND', () => {
     expect(falta.querySelector('[data-rol="fecha-faltante"]')?.textContent).toBe(
       'El SMS no trae la fecha. Escribila.',
     );
+    // [CH-240 E3-13] El campo que falta lleva el borde de advertencia de 2 px; con la fecha puesta no
+    const anchoBorde = (nodo: HTMLElement): string =>
+      getComputedStyle(nodo.querySelector('input[name="fecha"]') ?? nodo).borderTopWidth;
+    expect(anchoBorde(falta)).toBe('2px');
+    const conFecha = montarElemento(<Arnes inicial={campos('gasto', 1)} />);
+    expect(anchoBorde(conFecha)).not.toBe('2px');
   });
 
   it('PRU-CMP-BAND-216 [FT-35] los campos y el encabezado no tienen violaciones de axe en claro ni en oscuro', async () => {

@@ -26,6 +26,9 @@ export const registrarTarjeta = {
   entradaGuardada: (monto: string, tarjeta: string) => `Entrada guardada: ${monto} · ${tarjeta}`,
   avanceGuardado: (monto: string, tarjeta: string, cuenta: string) =>
     `Avance guardado: ${monto} · ${tarjeta} a ${cuenta}`,
+  // [CH-240 E3-22] El avance no pide confirmación: el resultado queda arriba del selector de Registrar
+  avanceResultado: (monto: string, tarjeta: string, cuenta: string) =>
+    `Guardado: avance de efectivo · ${monto} · ${tarjeta} a ${cuenta}`,
   transferenciaDeudaGuardada: (monto: string, origen: string, destino: string) =>
     `Deuda pasada: ${monto} · ${origen} a ${destino}`,
   av24Titulo: `Cambió ${glosario.teFaltaReservar.toLowerCase()}`,

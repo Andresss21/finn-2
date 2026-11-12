@@ -13,7 +13,6 @@ import {
   useRef,
   useState,
   type ComponentProps,
-  type ReactNode,
 } from 'react';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { useFieldArray } from 'react-hook-form';

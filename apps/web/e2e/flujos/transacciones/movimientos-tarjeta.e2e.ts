@@ -112,10 +112,11 @@ test.describe('PRU-E2E-TX', () => {
     await cuenta(page, t.cuentaAvance, 'Ahorro').click();
     await campo(page, c0.total).fill('200');
     await page.getByRole('button', { name: t.flujos.avance.guardar }).click();
-    await expect(page.getByRole('heading', { name: t.flujos.avance.listo })).toBeVisible();
-    await expect(page.getByTestId('resultado')).toHaveText(
-      t.avanceGuardado('$200.00', 'T', 'Ahorro'),
-    );
+    // [CH-240 E3-22] El avance no pide confirmación: la hoja se cierra y el resultado queda arriba del selector
+    await expect(page).toHaveURL(/\/registrar$/);
+    await expect(
+      page.locator('[data-rol="resultado-avance"]').getByTestId('resultado'),
+    ).toContainText(t.avanceResultado('$200.00', 'T', 'Ahorro'));
     await abrir(page, '/');
     await esperarMonto(billete(page), 90000);
     await abrirPago(page, 'T');
