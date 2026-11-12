@@ -26,7 +26,6 @@ import {
   type Campos,
 } from '../metas-nueva/formulario';
 import { ConfirmarEliminar } from '../metas-nueva/confirmar-eliminar';
-import { IrAlResultado } from '../presupuesto-asignar-categoria/ir-al-resultado';
 import { rutaMetasConResultado, type ResultadoMeta } from './resultado';
 
 export interface MetaParaEditar {
@@ -136,7 +135,7 @@ function Cuerpo(p: {
         rutaPadre={RUTA_PADRE}
       >
         {baja.estado !== 'listo' && enviado.current !== undefined ? (
-          <IrAlResultado ruta={rutaMetasConResultado(enviado.current)} />
+          <CerrarFlujoAlMontar rutaPadre={rutaMetasConResultado(enviado.current)} />
         ) : (
           <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
         )}

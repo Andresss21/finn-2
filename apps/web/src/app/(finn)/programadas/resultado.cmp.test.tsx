@@ -91,9 +91,9 @@ describe('PRU-CMP-PROG-781 el resultado en la lista de Programadas', () => {
 
   it('PRU-CMP-PROG-781 sin resultado, o con una programada que no está, no se dibuja nada', () => {
     expect(
-      montar(<ResultadoDeProgramada resultado={undefined} programadas={programadas} />).querySelector(
-        '[data-testid="resultado"]',
-      ),
+      montar(
+        <ResultadoDeProgramada resultado={undefined} programadas={programadas} />,
+      ).querySelector('[data-testid="resultado"]'),
     ).toBeNull();
     expect(
       montar(

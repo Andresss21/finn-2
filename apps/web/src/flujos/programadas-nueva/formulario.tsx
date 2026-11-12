@@ -20,7 +20,6 @@ import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { formatearFecha } from '../../formato';
 import { ConfirmarEliminar } from '../metas-nueva/confirmar-eliminar';
-import { IrAlResultado } from '../presupuesto-asignar-categoria/ir-al-resultado';
 import { rutaProgramadasConResultado } from './resultado';
 import { formularios } from '../../textos/formularios';
 import { programadas as t } from '../../textos/programadas';
@@ -124,9 +123,11 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
       >
         {/* E6-14 [CH-248]: eliminar y guardar los cambios dejan su resultado en la lista; crear vuelve como antes. */}
         {eliminacion.estado === 'listo' ? (
-          <IrAlResultado ruta={rutaProgramadasConResultado({ tipo: 'eliminada' })} />
+          <CerrarFlujoAlMontar rutaPadre={rutaProgramadasConResultado({ tipo: 'eliminada' })} />
         ) : edita ? (
-          <IrAlResultado ruta={rutaProgramadasConResultado({ tipo: 'ajustada', programadaId })} />
+          <CerrarFlujoAlMontar
+            rutaPadre={rutaProgramadasConResultado({ tipo: 'ajustada', programadaId })}
+          />
         ) : (
           <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
         )}

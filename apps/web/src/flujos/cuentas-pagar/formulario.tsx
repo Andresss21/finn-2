@@ -6,7 +6,7 @@
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { useMemo, useState } from 'react';
-import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { Pastillas } from '../../componentes/base/pastillas';
 import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
@@ -51,7 +51,6 @@ export interface PropsFormularioCuentasPagar {
   readonly superpuesto?: boolean;
 }
 
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 /** Un rechazo que ya se muestra en su campo no se repite como aviso. */
 const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
 
@@ -187,21 +186,11 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
             />
           </div>
           {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
-            <AvisoEnLinea
-              estado="problema"
-              aparecioDespues
-              {...(REINTENTABLES.includes(fallo.categoria)
-                ? {
-                    accion: (
-                      <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                        {formularios.intentarDeNuevo}
-                      </Boton>
-                    ),
-                  }
-                : {})}
-            >
-              {fallo.mensaje}
-            </AvisoEnLinea>
+            <ErrorDeFlujo
+              tipo="corto"
+              error={fallo}
+              alReintentar={() => void operacion.reintentar()}
+            />
           ) : null}
           <div className="grid grid-cols-2 gap-2.5">
             <Boton variante="secundaria" onClick={cancelar}>

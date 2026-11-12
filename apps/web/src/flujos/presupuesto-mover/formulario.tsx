@@ -11,6 +11,7 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import {
   CerrarFlujoAlMontar,
   PaginaFlujoDeRuta,
@@ -21,9 +22,7 @@ import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { moverDinero } from '../../servidor/acciones/presupuesto';
-import { formularios } from '../../textos/formularios';
 import { presupuestoMover as t } from '../../textos/presupuesto-mover';
-import { IrAlResultado } from '../presupuesto-asignar-categoria/ir-al-resultado';
 import { rutaConResultado } from '../presupuesto-asignar-categoria/resultado';
 import { PieDeHoja } from '../pie-de-hoja';
 import { ImpactoMover } from './impacto';
@@ -66,7 +65,6 @@ interface Vista {
   } | null;
 }
 type Asignados = Readonly<Record<string, Centavos>>;
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 
 interface Actuales {
   readonly asignacionOrigen?: Centavos;
@@ -140,8 +138,11 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
         {rutaDetalle === undefined ? (
           <CerrarFlujoAlMontar rutaPadre={rutaPadre} superpuesto={superpuesto} />
         ) : (
-          <IrAlResultado
-            ruta={rutaConResultado(rutaDetalle, { tipo: 'movido', monto: montoEnviado.current })}
+          <CerrarFlujoAlMontar
+            rutaPadre={rutaConResultado(rutaDetalle, {
+              tipo: 'movido',
+              monto: montoEnviado.current,
+            })}
           />
         )}
       </>
@@ -216,44 +217,33 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
           impactoCambio={operacion.impactoCambio}
         />
       ) : null}
-      {estado === 'error' && fallo !== undefined ? (
+      {estado === 'error' && fallo !== undefined && !conflicto ? (
+        <ErrorDeFlujo tipo="corto" error={fallo} alReintentar={() => void operacion.reintentar()} />
+      ) : null}
+      {estado === 'error' && fallo !== undefined && conflicto ? (
         <AvisoEnLinea
           estado="problema"
           aparecioDespues
-          {...(conflicto
-            ? {
-                accion: (
-                  <Boton
-                    variante="secundaria"
-                    onClick={() => {
-                      alUsarActuales(
-                        formulario.getValues(),
-                        actuales.asignacionOrigen as Centavos,
-                        actuales.asignacionDestino as Centavos,
-                      );
-                    }}
-                  >
-                    {t.usarValoresActuales}
-                  </Boton>
-                ),
-              }
-            : REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                      {formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
+          accion={
+            <Boton
+              variante="secundaria"
+              onClick={() => {
+                alUsarActuales(
+                  formulario.getValues(),
+                  actuales.asignacionOrigen as Centavos,
+                  actuales.asignacionDestino as Centavos,
+                );
+              }}
+            >
+              {t.usarValoresActuales}
+            </Boton>
+          }
         >
           {fallo.mensaje}
-          {conflicto
-            ? ` ${t.valoresActuales(
-                formatearMonto(actuales.asignacionOrigen),
-                formatearMonto(actuales.asignacionDestino),
-              )}`
-            : ''}
+          {` ${t.valoresActuales(
+            formatearMonto(actuales.asignacionOrigen),
+            formatearMonto(actuales.asignacionDestino),
+          )}`}
         </AvisoEnLinea>
       ) : null}
       <PieDeHoja rutaPadre={rutaPadre} superpuesto={superpuesto}>

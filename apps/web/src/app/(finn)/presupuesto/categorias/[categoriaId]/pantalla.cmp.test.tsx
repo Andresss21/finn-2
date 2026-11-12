@@ -369,7 +369,9 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     );
     const cubrir = enlace(raiz, 'Cubrir');
     expect(sinEspacios(cubrir)).toBe('Cubrir $26.30');
-    expect(cubrir?.getAttribute('href')).toBe(`/presupuesto/asignar/${ID}`);
+    expect(cubrir?.getAttribute('href')).toBe(
+      `/presupuesto/asignar/${ID}?volver=${encodeURIComponent(`/presupuesto/categorias/${ID}`)}`,
+    );
     // En un período cerrado ya no hay con qué cubrir
     const cerrado = mostrar(
       dto({
@@ -594,7 +596,9 @@ describe('Detalle de categoría: historial sin datos y meta (D9, A9)', () => {
     const nav = raiz.querySelector('nav[aria-label="Acciones de la categoría"]') as HTMLElement;
     const principal = enlace(nav, 'Asignar');
     expect(sinEspacios(principal)).toBe('Asignar $75.00');
-    expect(principal?.getAttribute('href')).toBe(`/presupuesto/asignar/${ID}`);
+    expect(principal?.getAttribute('href')).toBe(
+      `/presupuesto/asignar/${ID}?volver=${encodeURIComponent(`/presupuesto/categorias/${ID}`)}`,
+    );
     // El monto va una sola vez: la sección de la meta ya no repite el botón.
     expect(enlace(raiz.querySelector('[data-seccion="meta"]') as HTMLElement, 'Asignar')).toBe(
       undefined,

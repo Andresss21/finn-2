@@ -5,6 +5,7 @@
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { AccionesDeBloqueo } from '../cuentas-archivar/acciones-bloqueo';
@@ -17,7 +18,6 @@ import { formularios } from '../../textos/formularios';
 
 const t = cuentasGestion.eliminar;
 const n = cuentasGestion.comunes;
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const RUTA_AL_TERMINAR = '/cuentas';
 
 export interface PropsFormularioCuentasEliminar {
@@ -132,21 +132,11 @@ export function FormularioCuentasEliminar(p: PropsFormularioCuentasEliminar) {
           <>
             <p>{t.pregunta(nombre)}</p>
             {estado === 'error' && fallo !== undefined ? (
-              <AvisoEnLinea
-                estado="problema"
-                aparecioDespues
-                {...(REINTENTABLES.includes(fallo.categoria)
-                  ? {
-                      accion: (
-                        <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                          {formularios.intentarDeNuevo}
-                        </Boton>
-                      ),
-                    }
-                  : {})}
-              >
-                {fallo.mensaje}
-              </AvisoEnLinea>
+              <ErrorDeFlujo
+                tipo="corto"
+                error={fallo}
+                alReintentar={() => void operacion.reintentar()}
+              />
             ) : null}
             <Boton
               enviando={estado === 'enviando'}

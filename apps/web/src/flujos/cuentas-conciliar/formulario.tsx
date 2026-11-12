@@ -7,6 +7,7 @@ import type { SalidaOp45 } from '@finn/aplicacion/operaciones/conciliacion';
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { Icono } from '../../componentes/base/icono';
 import { Resultado } from '../../componentes/base/resultado';
@@ -465,21 +466,7 @@ export function FormularioConciliar({
           </Boton>
         </div>
         {fallo === undefined ? null : (
-          <AvisoEnLinea
-            estado="problema"
-            aparecioDespues
-            {...(REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton variante="secundaria" onClick={() => void subida.reintentar()}>
-                      {formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
-          >
-            {fallo.mensaje}
-          </AvisoEnLinea>
+          <ErrorDeFlujo tipo="largo" error={fallo} alReintentar={() => void subida.reintentar()} />
         )}
         <Boton
           enviando={subida.estado === 'enviando'}

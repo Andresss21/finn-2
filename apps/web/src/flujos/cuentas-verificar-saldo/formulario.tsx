@@ -6,6 +6,7 @@
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { Resultado } from '../../componentes/base/resultado';
 import { Monto } from '../../componentes/dominio/monto';
@@ -63,7 +64,6 @@ interface Vista {
 type Paso = 'datos' | 'marcar' | 'revisar';
 type Ajuste = NonNullable<Vista['avisos']>[number];
 
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const MENSAJES: Readonly<Record<string, string | undefined>> = t.rechazos;
 /** La ruta del flujo que crea el ajuste de AV-21 (FD-06) según la operación que propone el servidor. */
 const RUTA_AJUSTE: Readonly<Record<string, string | undefined>> = {
@@ -367,21 +367,11 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
           </AvisoEnLinea>
         )}
         {estado === 'error' && fallo !== undefined ? (
-          <AvisoEnLinea
-            estado="problema"
-            aparecioDespues
-            {...(REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                      {formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
-          >
-            {fallo.mensaje}
-          </AvisoEnLinea>
+          <ErrorDeFlujo
+            tipo="corto"
+            error={fallo}
+            alReintentar={() => void operacion.reintentar()}
+          />
         ) : null}
         <Boton
           tipo="submit"

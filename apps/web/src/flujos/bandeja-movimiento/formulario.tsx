@@ -18,6 +18,7 @@ import type { FechaLocal } from '@finn/dominio/valores';
 import { useFieldArray } from 'react-hook-form';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
@@ -96,7 +97,6 @@ interface Previsualizacion extends VistaDeImpacto {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 /** Los rechazos que se muestran junto al campo de las partes, no como aviso del formulario. */
 const DE_LAS_PARTES = ['suma_lineas_distinta', 'linea_sin_destino'];
 const FINALES = ['aprobado', 'descartado', 'autodescartado'];
@@ -515,30 +515,34 @@ function Flujo({
           ) : null}
           {fallo !== undefined &&
           deLasPartes === undefined &&
-          !Object.values(fallo.campos ?? {}).includes(fallo.mensaje) ? (
+          !Object.values(fallo.campos ?? {}).includes(fallo.mensaje) &&
+          !conflicto ? (
+            <ErrorDeFlujo
+              tipo="largo"
+              error={fallo}
+              alReintentar={() =>
+                void [editar, aprobarSolo, coincide].find((o) => o.estado === 'error')?.reintentar()
+              }
+            />
+          ) : null}
+          {fallo !== undefined &&
+          deLasPartes === undefined &&
+          !Object.values(fallo.campos ?? {}).includes(fallo.mensaje) &&
+          conflicto ? (
             <AvisoEnLinea
               estado="problema"
               aparecioDespues
-              {...(conflicto || REINTENTABLES.includes(fallo.categoria)
-                ? {
-                    accion: (
-                      <Boton
-                        variante="secundaria"
-                        onClick={() => {
-                          if (conflicto) {
-                            visto.current = { ...visto.current, ...fallo.datos };
-                            editar.volverAEditar();
-                          } else
-                            void [editar, aprobarSolo, coincide]
-                              .find((o) => o.estado === 'error')
-                              ?.reintentar();
-                        }}
-                      >
-                        {conflicto ? formularios.usarValorActual : formularios.intentarDeNuevo}
-                      </Boton>
-                    ),
-                  }
-                : {})}
+              accion={
+                <Boton
+                  variante="secundaria"
+                  onClick={() => {
+                    visto.current = { ...visto.current, ...fallo.datos };
+                    editar.volverAEditar();
+                  }}
+                >
+                  {formularios.usarValorActual}
+                </Boton>
+              }
             >
               {fallo.mensaje}
             </AvisoEnLinea>

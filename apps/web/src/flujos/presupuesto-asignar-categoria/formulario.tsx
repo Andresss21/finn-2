@@ -24,7 +24,6 @@ import { asignarEnCategoria, asignarRapido } from '../../servidor/acciones/presu
 import { presupuestoAsignar as t } from '../../textos/presupuesto-asignar';
 import { PieDeHoja } from '../pie-de-hoja';
 import { CampoConFoco } from './campo-con-foco';
-import { IrAlResultado } from './ir-al-resultado';
 import { OpcionesRapidas, type DatosRapida, type VarianteRapida } from './rapida';
 import { rutaConResultado, type ResultadoPresupuesto } from './resultado';
 
@@ -165,7 +164,7 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
         {rutaDetalle === undefined ? (
           <CerrarFlujoAlMontar rutaPadre={rutaPadre} superpuesto={superpuesto} />
         ) : (
-          <IrAlResultado ruta={rutaConResultado(rutaDetalle, enviado.current)} />
+          <CerrarFlujoAlMontar rutaPadre={rutaConResultado(rutaDetalle, enviado.current)} />
         )}
       </>
     );

@@ -5,7 +5,7 @@
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useEffect, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
-import { Boton } from '../../componentes/base/boton';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Seleccion } from '../../componentes/base/seleccion';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { CerrarFlujoAlMontar, useCerrarFlujo } from '../../componentes/navegacion/flujo-de-ruta';
@@ -21,7 +21,6 @@ import { FilaAntesDespues } from '../presupuesto-impacto-k4';
 
 const t = cuentasGestion.archivar;
 const n = cuentasGestion.comunes;
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const DEVOLVER = 'devolver';
 
 export interface PropsFormularioCuentasArchivar {
@@ -145,21 +144,11 @@ export function FormularioCuentasArchivar(p: PropsFormularioCuentasArchivar) {
               />
             ) : null}
             {estado === 'error' && fallo !== undefined ? (
-              <AvisoEnLinea
-                estado="problema"
-                aparecioDespues
-                {...(REINTENTABLES.includes(fallo.categoria)
-                  ? {
-                      accion: (
-                        <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                          {formularios.intentarDeNuevo}
-                        </Boton>
-                      ),
-                    }
-                  : {})}
-              >
-                {fallo.mensaje}
-              </AvisoEnLinea>
+              <ErrorDeFlujo
+                tipo="corto"
+                error={fallo}
+                alReintentar={() => void operacion.reintentar()}
+              />
             ) : null}
             {estado === 'confirmando' ? (
               <ConfirmacionImpacto

@@ -8,7 +8,7 @@ import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useId, useMemo, useState } from 'react';
 import { useFieldArray } from 'react-hook-form';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
-import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto, MensajeError } from '../../componentes/base/campo';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
@@ -62,7 +62,6 @@ interface Previsualizacion extends VistaDeImpacto {
 
 const SIN_VALORES: ValoresDeUrl = {};
 const ID_FORMULARIO = 'formulario-registrar-gasto';
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 /** Los rechazos de negocio que se muestran junto al campo de las partes (CA-21.5), no como aviso del formulario. */
 const DE_LAS_PARTES = ['suma_lineas_distinta', 'linea_sin_destino'];
 /** Un rechazo cuyo mensaje ya se muestra en su campo no se repite como aviso del formulario. */
@@ -362,21 +361,11 @@ export function FormularioRegistrarGasto({
           fallo !== undefined &&
           deLasPartes === undefined &&
           !enSuCampo(fallo) ? (
-            <AvisoEnLinea
-              estado="problema"
-              aparecioDespues
-              {...(REINTENTABLES.includes(fallo.categoria)
-                ? {
-                    accion: (
-                      <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                        {formularios.intentarDeNuevo}
-                      </Boton>
-                    ),
-                  }
-                : {})}
-            >
-              {fallo.mensaje}
-            </AvisoEnLinea>
+            <ErrorDeFlujo
+              tipo="largo"
+              error={fallo}
+              alReintentar={() => void operacion.reintentar()}
+            />
           ) : null}
         </form>
       )}

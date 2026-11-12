@@ -117,8 +117,9 @@ describe('PRU-CMP-PRES-781 el resultado bajo los botones del detalle', () => {
     );
     const deshacer = nodo.querySelector('button');
     expect(deshacer?.textContent).toBe('Deshacer');
-    await act(async () => {
+    await act(() => {
       deshacer?.click();
+      return Promise.resolve();
     });
     expect(asignar).toHaveBeenCalledTimes(1);
     expect(asignar).toHaveBeenCalledWith({
@@ -175,8 +176,9 @@ describe('PRU-CMP-PRES-781 el resultado bajo los botones del detalle', () => {
         asignar={asignar}
       />,
     );
-    await act(async () => {
+    await act(() => {
       nodo.querySelector('button')?.click();
+      return Promise.resolve();
     });
     expect(nodo.textContent).toContain('Asignaste $150.00 a Supermercado.');
     expect(nodo.textContent).toContain('Cambió.');
