@@ -3,13 +3,13 @@
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import '../../../../app/globals.css';
+import '../../../../../app/globals.css';
 import {
   detalleDeVolver,
   enlaceDeFlujo,
   leerResultadoPresupuesto,
   rutaConResultado,
-} from '../../../../flujos/presupuesto-asignar-categoria/resultado';
+} from '../../../../../flujos/presupuesto-asignar-categoria/resultado';
 import { ResultadoDelFlujo } from './resultado';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({}) }));
@@ -102,7 +102,9 @@ describe('PRU-CMP-PRES-781 el resultado bajo los botones del detalle', () => {
   };
 
   it('PRU-CMP-PRES-781 [CA-E6-17] asignar deja el resultado con «Deshacer», que es la asignación anterior con el valor visto como esperado', async () => {
-    const asignar = vi.fn(() => Promise.resolve({ ok: true as const, valor: {} }));
+    const asignar = vi.fn(() =>
+      Promise.resolve({ ok: true as const, valor: {}, yaAplicada: false as const, avisos: [] }),
+    );
     const nodo = montar(
       <ResultadoDelFlujo
         {...props}
@@ -159,7 +161,11 @@ describe('PRU-CMP-PRES-781 el resultado bajo los botones del detalle', () => {
     const asignar = vi.fn(() =>
       Promise.resolve({
         ok: false as const,
-        error: { categoria: 'CONFLICTO', codigo: 'conflicto_desactualizado', mensaje: 'Cambió.' },
+        error: {
+          categoria: 'CONFLICTO' as const,
+          codigo: 'conflicto_desactualizado',
+          mensaje: 'Cambió.',
+        },
       }),
     );
     const nodo = montar(

@@ -4,7 +4,7 @@
 // ni la categoría. Envía solo lo que cambió, con lo que vio la persona como `esperado` (4.6.2). No calcula montos (PF-3).
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { DatoFijo } from '../../componentes/formularios/dato-fijo';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
@@ -26,6 +26,8 @@ import {
   type Campos,
 } from '../metas-nueva/formulario';
 import { ConfirmarEliminar } from '../metas-nueva/confirmar-eliminar';
+import { IrAlResultado } from '../presupuesto-asignar-categoria/ir-al-resultado';
+import { rutaMetasConResultado, type ResultadoMeta } from './resultado';
 
 export interface MetaParaEditar {
   readonly id: string;
@@ -58,12 +60,23 @@ function Cuerpo(p: {
   useEffect(() => {
     if (campoInicial !== undefined) llevarFoco(campoInicial)();
   }, [campoInicial]);
+  // E4-18, E6-14: lo que cambió, tal como lo escribió la persona: la lista lo dice al volver.
+  const enviado = useRef<ResultadoMeta | undefined>(undefined);
   const enviar = useCallback<AccionEscritura>(
     (payload) => {
       const { modo, esperado, ...c } = payload as Cruda;
       const r = normalizarMontoEscrito(c.monto);
       const monto = r.estado === 'valido' ? r.texto : c.monto;
       const porPeriodo = meta.tipo === 'mensual' || meta.tipo === 'semanal';
+      const cambioMonto =
+        sumarMontosEscritos([monto]) !== sumarMontosEscritos([esperado['monto'] ?? '']);
+      const cambioFecha =
+        !porPeriodo && c.fechaObjetivo !== '' && c.fechaObjetivo !== esperado['fechaObjetivo'];
+      enviado.current = cambioFecha
+        ? { tipo: 'extendida', metaId: meta.id, fecha: c.fechaObjetivo }
+        : cambioMonto
+          ? { tipo: 'ajustada', metaId: meta.id }
+          : undefined;
       return gestionarMeta({
         accion: 'editar',
         metaId: meta.id,
@@ -122,7 +135,11 @@ function Cuerpo(p: {
         titulo={baja.estado === 'listo' ? t.eliminada : t.guardada}
         rutaPadre={RUTA_PADRE}
       >
-        <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
+        {baja.estado !== 'listo' && enviado.current !== undefined ? (
+          <IrAlResultado ruta={rutaMetasConResultado(enviado.current)} />
+        ) : (
+          <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
+        )}
       </PaginaFlujoDeRuta>
     );
 

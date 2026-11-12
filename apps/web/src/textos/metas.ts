@@ -46,6 +46,12 @@ export const metas = {
     extender: 'Extender la fecha',
     ajustar: 'Ajustar el monto',
   },
+  // E4-18, E6-14 [CH-248]: el resultado de editar una meta queda en la lista, en el lugar del aviso de la vencida.
+  resultado: {
+    extendida: (categoria: string, fecha: string) =>
+      `Extendiste la meta de ${categoria} al ${fecha}.`,
+    ajustada: (categoria: string) => `Ajustaste la meta de ${categoria}.`,
+  },
   fila: {
     porPeriodo: 'Monto del período',
     para: (fecha: string) => `para el ${fecha}`,
