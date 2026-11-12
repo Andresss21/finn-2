@@ -1,0 +1,600 @@
+[
+ {
+  "momento": "entrada de Inicio y billete Listo para asignar (recarga)",
+  "esperado": "§2.8: cifras que ruedan una vez, 1.4 s, 90 ms entre dígitos; bloques escalonados",
+  "despues": {
+   "url": "/",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 362
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 60,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 362
+   }
+  ]
+ },
+ {
+  "momento": "pestaña a la derecha: Inicio → Presupuesto",
+  "esperado": "§11: entra desde 22 px a la derecha, opacidad 0→1, 320 ms, --curva-estandar",
+  "despues": {
+   "url": "/presupuesto",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 2245
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 60,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 2245
+   }
+  ]
+ },
+ {
+  "momento": "abrir un detalle: Presupuesto → categoría Restaurantes",
+  "esperado": "§11: entra desde 70 px a la derecha, 360 ms",
+  "despues": {
+   "url": "/presupuesto/categorias/00000000-0000-4000-8000-000000000011",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 65
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 60,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 65
+   },
+   {
+    "nombre": "fz-barup",
+    "destino": "svg[role=img][aria-label=Últimos 6 períodos: Promedio g] > g > g.fz-barra-sube",
+    "duracion": 700,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "transform:scaleY(0)",
+     "transform:none"
+    ],
+    "en": 65
+   },
+   {
+    "nombre": "fz-barup",
+    "destino": "svg[role=img][aria-label=Últimos 6 períodos: Promedio g] > g > g.fz-barra-sube",
+    "duracion": 700,
+    "retraso": 80,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "transform:scaleY(0)",
+     "transform:none"
+    ],
+    "en": 65
+   },
+   {
+    "nombre": "fz-barup",
+    "destino": "svg[role=img][aria-label=Últimos 6 períodos: Promedio g] > g > g.fz-barra-sube",
+    "duracion": 700,
+    "retraso": 160,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "transform:scaleY(0)",
+     "transform:none"
+    ],
+    "en": 65
+   },
+   {
+    "nombre": "fz-barup",
+    "destino": "svg[role=img][aria-label=Últimos 6 períodos: Promedio g] > g > g.fz-barra-sube",
+    "duracion": 700,
+    "retraso": 240,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "transform:scaleY(0)",
+     "transform:none"
+    ],
+    "en": 65
+   },
+   {
+    "nombre": "fz-barup",
+    "destino": "svg[role=img][aria-label=Últimos 6 períodos: Promedio g] > g > g.fz-barra-sube",
+    "duracion": 700,
+    "retraso": 320,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "transform:scaleY(0)",
+     "transform:none"
+    ],
+    "en": 65
+   },
+   {
+    "nombre": "fz-barup",
+    "destino": "svg[role=img][aria-label=Últimos 6 períodos: Promedio g] > g > g.fz-barra-sube",
+    "duracion": 700,
+    "retraso": 400,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "transform:scaleY(0)",
+     "transform:none"
+    ],
+    "en": 66
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > nav[aria-label=Acciones de la categoría]",
+    "duracion": 400,
+    "retraso": 120,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 66
+   },
+   {
+    "nombre": "transition:background-color",
+    "destino": "div > div[role=radiogroup][aria-label=Vista] > button[role=radio]",
+    "duracion": 220,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "linear",
+    "cuadros": [
+     "backgroundColor:rgb(255, 255, 255)",
+     "backgroundColor:rgba(0, 0, 0, 0)"
+    ],
+    "en": 80
+   }
+  ]
+ },
+ {
+  "momento": "volver: categoría → Presupuesto",
+  "esperado": "§11: entra desde 50 px a la izquierda, 360 ms",
+  "despues": {
+   "url": "/presupuesto",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 2233
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 60,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 2233
+   }
+  ]
+ },
+ {
+  "momento": "pestaña a la izquierda: Presupuesto → Inicio",
+  "esperado": "§11: igual desde la izquierda, 320 ms",
+  "despues": {
+   "url": "/",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 4080
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 60,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 4081
+   }
+  ]
+ },
+ {
+  "momento": "abrir Registrar (flujo largo)",
+  "esperado": "§11: sube desde abajo, 420 ms, --curva-entrada",
+  "despues": {
+   "url": "/registrar",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "cerrar Registrar",
+  "esperado": "§11: aparece con 8 px hacia arriba, 300 ms",
+  "despues": {
+   "url": "/",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 7764
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 60,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 7764
+   }
+  ]
+ },
+ {
+  "momento": "abrir la hoja Más secciones",
+  "esperado": "§11: velo 0→1 (280 ms), la hoja sube (380 ms, --curva-entrada), opciones escalonadas 40 ms",
+  "despues": {
+   "url": "/",
+   "dialogos": [
+    "Más secciones"
+   ]
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-v-in",
+    "destino": "div.fz-velo",
+    "duracion": 200,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "ease",
+    "cuadros": [
+     "opacity:0",
+     "opacity:1"
+    ],
+    "en": 9597
+   },
+   {
+    "nombre": "fz-sh-in",
+    "destino": "div[role=dialog].fz-hoja",
+    "duracion": 380,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.9, 0.25, 1)",
+    "cuadros": [
+     "transform:translateY(100%)",
+     "transform:none"
+    ],
+    "en": 9597
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > ul > li.fz-opcion",
+    "duracion": 300,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 9597
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > ul > li.fz-opcion",
+    "duracion": 300,
+    "retraso": 40,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 9597
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > ul > li.fz-opcion",
+    "duracion": 300,
+    "retraso": 80,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 9597
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > ul > li.fz-opcion",
+    "duracion": 300,
+    "retraso": 120,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 9597
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > ul > li.fz-opcion",
+    "duracion": 300,
+    "retraso": 160,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 9597
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > ul > li.fz-opcion",
+    "duracion": 300,
+    "retraso": 200,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 9597
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > ul > li.fz-opcion",
+    "duracion": 300,
+    "retraso": 240,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 9597
+   }
+  ]
+ },
+ {
+  "momento": "cerrar la hoja Más secciones (Escape)",
+  "esperado": "§11: baja (200 ms, --curva-salida) y recién entonces se desmonta",
+  "despues": {
+   "url": "/",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "abrir el panel de notificaciones (campana)",
+  "esperado": "§11: cae desde arriba (360 ms), avisos escalonados 60 ms",
+  "despues": {
+   "url": "/notificaciones",
+   "dialogos": [
+    "Notificaciones"
+   ]
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-v-in",
+    "destino": "div.fz-velo",
+    "duracion": 200,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "ease",
+    "cuadros": [
+     "opacity:0",
+     "opacity:1"
+    ],
+    "en": 12981
+   },
+   {
+    "nombre": "fz-dr-in",
+    "destino": "div[role=dialog].fz-hoja",
+    "duracion": 200,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.9, 0.25, 1)",
+    "cuadros": [
+     "transform:translateY(-100%)",
+     "transform:none"
+    ],
+    "en": 12981
+   },
+   {
+    "nombre": "fz-pop-in",
+    "destino": "div > div > span.fz-vacio-disco",
+    "duracion": 400,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.3, 1.4, 0.5, 1)",
+    "cuadros": [
+     "opacity:0;transform:scale(0.85)",
+     "opacity:1;transform:none"
+    ],
+    "en": 12981
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > div > h2.fz-vacio-texto",
+    "duracion": 220,
+    "retraso": 80,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 12981
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > div > p.fz-vacio-texto",
+    "duracion": 220,
+    "retraso": 80,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 12981
+   }
+  ]
+ },
+ {
+  "momento": "cerrar el panel de notificaciones (Escape)",
+  "esperado": "§11: sube (200 ms)",
+  "despues": {
+   "url": "/",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "abrir la hoja Asignar desde Inicio",
+  "esperado": "§11: velo (280 ms) y hoja que sube (380 ms); en computadora, panel lateral",
+  "despues": {
+   "url": "/presupuesto?filtro=sin-fondos",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 16630
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 60,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 16630
+   }
+  ]
+ },
+ {
+  "momento": "cerrar la hoja Asignar (Escape)",
+  "esperado": "§11: baja (200 ms, --curva-salida)",
+  "despues": {
+   "url": "/presupuesto?filtro=sin-fondos",
+   "dialogos": []
+  },
+  "animaciones": []
+ }
+]

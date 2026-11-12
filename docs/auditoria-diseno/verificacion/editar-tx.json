@@ -1,0 +1,14 @@
+{
+ "porEnlace": {
+  "0ms": 0,
+  "1000ms": 7,
+  "3000ms": 7,
+  "8000ms": 7
+ },
+ "porUrl": {
+  "carga": 0,
+  "quieta": 0,
+  "3s": 7
+ },
+ "url": "/actividad/00000000-0000-4000-8000-000000000052/editar?volver=%2Factividad"
+}

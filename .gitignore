@@ -20,3 +20,10 @@ pruebas/inventario.json
 supabase/.branches/
 supabase/.temp/
 next-env.d.ts
+
+# Auditoría de diseño de la app: el paquete de diseño no se commitea, y capturas y medidas se regeneran con tools/auditoria/
+docs/diseno/
+docs/auditoria-diseno/capturas/
+docs/auditoria-diseno/medidas/
+docs/auditoria-diseno/medidas-ref/
+docs/auditoria-diseno/analisis/

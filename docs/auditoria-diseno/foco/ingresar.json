@@ -1,0 +1,58 @@
+[
+ {
+  "nombre": "email",
+  "tag": "input",
+  "visibleFoco": true,
+  "outline": "solid 3px rgb(31, 71, 209) offset 2px",
+  "sombra": "none",
+  "sombraPadre": "none",
+  "outlinePadre": "none 0px",
+  "x": 520,
+  "y": 193,
+  "w": 400,
+  "h": 48,
+  "indicador": "outline"
+ },
+ {
+  "nombre": "contrasena",
+  "tag": "input",
+  "visibleFoco": true,
+  "outline": "solid 3px rgb(31, 71, 209) offset 2px",
+  "sombra": "none",
+  "sombraPadre": "none",
+  "outlinePadre": "none 0px",
+  "x": 520,
+  "y": 305,
+  "w": 400,
+  "h": 48,
+  "indicador": "outline"
+ },
+ {
+  "nombre": "Mostrar contraseña",
+  "tag": "button",
+  "visibleFoco": true,
+  "outline": "solid 3px rgb(31, 71, 209) offset 2px",
+  "sombra": "none",
+  "sombraPadre": "none",
+  "outlinePadre": "none 0px",
+  "x": 520,
+  "y": 393,
+  "w": 400,
+  "h": 44,
+  "indicador": "outline"
+ },
+ {
+  "nombre": "Ingresar",
+  "tag": "button",
+  "visibleFoco": true,
+  "outline": "solid 3px rgb(31, 71, 209) offset 2px",
+  "sombra": "none",
+  "sombraPadre": "none",
+  "outlinePadre": "none 0px",
+  "x": 520,
+  "y": 453,
+  "w": 400,
+  "h": 48,
+  "indicador": "outline"
+ }
+]

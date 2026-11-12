@@ -1,0 +1,122 @@
+[
+ {
+  "momento": "tomar el movimiento (ratón, más de 6 px)",
+  "esperado": "SIN DISEÑO: PANTALLAS §7 solo dice «Arrastrar a una categoría es un atajo; los botones siempre están»",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "transition:transform",
+    "destino": "div > span > button[role=button][aria-label=Arrastrar Super $12.00 a una c]",
+    "duracion": 120,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "linear",
+    "cuadros": [
+     "transform:none",
+     "transform:scale(0.97)"
+    ],
+    "en": 1223
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div[role=status]",
+    "duracion": 400,
+    "retraso": 480,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 1241
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div",
+    "duracion": 400,
+    "retraso": 300,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 1257
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > aside[aria-label=Destinos del arrastre]",
+    "duracion": 400,
+    "retraso": 360,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 1257
+   }
+  ]
+ },
+ {
+  "momento": "llevarlo sobre un destino",
+  "esperado": "SIN DISEÑO",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "soltar sobre el destino",
+  "esperado": "SIN DISEÑO; por DECISIONES el resultado queda en el lugar de la fila",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "transition:transform",
+    "destino": "div > span > button[role=button][aria-label=Arrastrar Super $12.00 a una c]",
+    "duracion": 120,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "linear",
+    "cuadros": [
+     "transform:scale(0.97)",
+     "transform:none"
+    ],
+    "en": 6506
+   },
+   {
+    "nombre": "fz-pop-in",
+    "destino": "div[role=list][aria-label=Movimientos por revisar] > div[role=listitem] > div.fz-resultado-entra",
+    "duracion": 340,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.3, 1.4, 0.5, 1)",
+    "cuadros": [
+     "opacity:0;transform:scale(0.85)",
+     "opacity:1;transform:none"
+    ],
+    "en": 6557
+   },
+   {
+    "nombre": "fz-rebote",
+    "destino": "a[aria-label=Bandeja, 2 por revisar] > span > span.fz-rebote",
+    "duracion": 340,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.3, 1.4, 0.5, 1)",
+    "cuadros": [
+     "transform:scale(0.85)",
+     "transform:none"
+    ],
+    "en": 6572
+   }
+  ]
+ }
+]

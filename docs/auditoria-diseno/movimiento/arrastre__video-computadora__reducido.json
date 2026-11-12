@@ -1,0 +1,29 @@
+[
+ {
+  "momento": "tomar el movimiento (ratón, más de 6 px)",
+  "esperado": "SIN DISEÑO: PANTALLAS §7 solo dice «Arrastrar a una categoría es un atajo; los botones siempre están»",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "llevarlo sobre un destino",
+  "esperado": "SIN DISEÑO",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": []
+ },
+ {
+  "momento": "soltar sobre el destino",
+  "esperado": "SIN DISEÑO; por DECISIONES el resultado queda en el lugar de la fila",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": []
+ }
+]

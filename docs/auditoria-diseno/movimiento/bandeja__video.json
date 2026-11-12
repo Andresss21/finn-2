@@ -1,0 +1,175 @@
+[
+ {
+  "momento": "entrar a la Bandeja (filas escalonadas)",
+  "esperado": "§2.12: las filas entran escalonadas (400 ms, 60 ms entre filas)",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "transition:background-color",
+    "destino": "main > div[role=radiogroup][aria-label=Vista de la Bandeja] > button[role=radio]",
+    "duracion": 220,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "linear",
+    "cuadros": [
+     "backgroundColor:rgb(255, 255, 255)",
+     "backgroundColor:rgba(0, 0, 0, 0)"
+    ],
+    "en": 2694
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div[role=radiogroup][aria-label=Vista de la Bandeja]",
+    "duracion": 400,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 2694
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > p",
+    "duracion": 400,
+    "retraso": 60,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 2694
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > button",
+    "duracion": 400,
+    "retraso": 120,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 2694
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div[role=list][aria-label=Movimientos por revisar]",
+    "duracion": 400,
+    "retraso": 180,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 2694
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > p",
+    "duracion": 400,
+    "retraso": 240,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 2694
+   },
+   {
+    "nombre": "fz-item",
+    "destino": "div > main > div[role=status]",
+    "duracion": 400,
+    "retraso": 360,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    "cuadros": [
+     "opacity:0;transform:translateY(8px)",
+     "opacity:1;transform:none"
+    ],
+    "en": 2710
+   }
+  ]
+ },
+ {
+  "momento": "aprobar con un toque",
+  "esperado": "§2.13 y §11: el resultado aparece en el lugar con un rebote (300 ms, --curva-enfasis); sin transición de pantalla",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-pop-in",
+    "destino": "div[role=list][aria-label=Movimientos por revisar] > div[role=listitem] > div.fz-resultado-entra",
+    "duracion": 340,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.3, 1.4, 0.5, 1)",
+    "cuadros": [
+     "opacity:0;transform:scale(0.85)",
+     "opacity:1;transform:none"
+    ],
+    "en": 4260
+   },
+   {
+    "nombre": "fz-rebote",
+    "destino": "a[aria-label=Bandeja, 2 por revisar] > span > span.fz-rebote",
+    "duracion": 340,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.3, 1.4, 0.5, 1)",
+    "cuadros": [
+     "transform:scale(0.85)",
+     "transform:none"
+    ],
+    "en": 4277
+   }
+  ]
+ },
+ {
+  "momento": "aprobar otro",
+  "esperado": "igual; el contador de la Bandeja cambia",
+  "despues": {
+   "url": "/bandeja",
+   "dialogos": []
+  },
+  "animaciones": [
+   {
+    "nombre": "fz-pop-in",
+    "destino": "div[role=list][aria-label=Movimientos por revisar] > div[role=listitem] > div.fz-resultado-entra",
+    "duracion": 340,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.3, 1.4, 0.5, 1)",
+    "cuadros": [
+     "opacity:0;transform:scale(0.85)",
+     "opacity:1;transform:none"
+    ],
+    "en": 6111
+   },
+   {
+    "nombre": "fz-rebote",
+    "destino": "a[aria-label=Bandeja, 1 por revisar] > span > span.fz-rebote",
+    "duracion": 340,
+    "retraso": 0,
+    "iteraciones": "1",
+    "curva": "cubic-bezier(0.3, 1.4, 0.5, 1)",
+    "cuadros": [
+     "transform:scale(0.85)",
+     "transform:none"
+    ],
+    "en": 6127
+   }
+  ]
+ }
+]
