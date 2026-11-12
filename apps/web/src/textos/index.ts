@@ -16,6 +16,7 @@ import { categoriaDetalle } from './categoria-detalle.ts';
 import { categoriaPago } from './categoria-pago.ts';
 import { categoriasArchivar } from './categorias-archivar.ts';
 import { categoriasFusionar } from './categorias-fusionar.ts';
+import { codigoTotp } from './codigo-totp.ts';
 import { cuentaDetalle } from './cuenta-detalle.ts';
 import { cuentas } from './cuentas.ts';
 import { cuentasCondiciones } from './cuentas-condiciones.ts';
@@ -68,6 +69,7 @@ export {
   categoriaPago,
   categoriasArchivar,
   categoriasFusionar,
+  codigoTotp,
   cuentaDetalle,
   cuentas,
   cuentasCondiciones,
@@ -132,6 +134,7 @@ export const areas = [
   ['categoriaPago', categoriaPago],
   ['categoriasArchivar', categoriasArchivar],
   ['categoriasFusionar', categoriasFusionar],
+  ['codigoTotp', codigoTotp],
   ['cuentaDetalle', cuentaDetalle],
   ['cuentas', cuentas],
   ['cuentasCondiciones', cuentasCondiciones],

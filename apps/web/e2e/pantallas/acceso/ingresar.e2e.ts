@@ -1,6 +1,7 @@
 // FT-01 Ingresar con contraseña y TOTP (06 §2.1; 05 §9; 07 §17: una pantalla, una navegación o un flujo). Cada prueba parte sin
 // cookies y recorre /ingresar y /ingresar/verificar como la persona. Los campos se buscan por su etiqueta del catálogo (FE-51).
 import { expect, test } from '../../configuracion/semilla.ts';
+import { escribirCodigo } from '../../ayudas/codigo.ts';
 import { esperarHidratacion } from '../../ayudas/esperas.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { codigoTotp } from '../../ayudas/totp.ts';
@@ -26,7 +27,7 @@ async function completarContrasena(page: Page, email: string, clave: string): Pr
 }
 
 async function completarCodigo(page: Page): Promise<void> {
-  await page.getByLabel(t.codigo).fill(codigoTotp());
+  await escribirCodigo(page, codigoTotp());
   await page.getByRole('button', { name: t.verificar }).click();
 }
 
