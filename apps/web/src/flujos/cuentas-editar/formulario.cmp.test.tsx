@@ -123,7 +123,7 @@ describe('PRU-CMP-CTA-400 editar el subtipo de efectivo', () => {
     );
   });
 
-  it('PRU-CMP-CTA-400 [CH-240] editar una tarjeta muestra límite, tasa, corte y pago y envía solo los que cambian, con lo visto', async () => {
+  it('PRU-CMP-CTA-400 editar una tarjeta muestra límite, tasa, corte y pago y envía solo los que cambian, con lo visto', async () => {
     const esperado = {
       nombre: 'Visa Oro',
       institucionId: null,

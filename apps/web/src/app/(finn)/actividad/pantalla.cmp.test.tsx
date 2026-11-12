@@ -338,7 +338,7 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
 });
 
 describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
-  it('PRU-CMP-TX-721 [CH-241] la lista no repite «Registrar» (ACT-01) y una fila por cobrar nombra la marca, nunca al deudor con «te debe»', () => {
+  it('PRU-CMP-TX-721 la lista no repite «Registrar» (ACT-01) y una fila por cobrar nombra la marca, nunca al deudor con «te debe»', () => {
     const porCobrar = {
       ...conCuentas('cine', [['Visa Oro', -4000]], ['Carlos'], -4000),
       marcas: { ...MARCAS, porCobrar: true },

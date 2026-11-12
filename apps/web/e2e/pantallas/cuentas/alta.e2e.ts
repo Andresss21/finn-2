@@ -35,7 +35,7 @@ test.describe('PRU-E2E-CTA altas', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-CTA-711 [CH-240] creo un préstamo por secciones y una inversión con sus campos y cada una aparece en Cuentas con sus datos', async ({
+  test('PRU-E2E-CTA-711 creo un préstamo por secciones y una inversión con sus campos y cada una aparece en Cuentas con sus datos', async ({
     page,
   }) => {
     await preparar();
@@ -62,7 +62,7 @@ test.describe('PRU-E2E-CTA altas', () => {
     await expect(page.locator('[data-identidad="inversion"]').getByText('Fondo')).toBeVisible();
   });
 
-  test('PRU-E2E-CTA-712 [CH-240] editar Visa Oro cambia el límite y el día de corte, y «Condiciones» abre su formulario sin redirigir', async ({
+  test('PRU-E2E-CTA-712 editar Visa Oro cambia el límite y el día de corte, y «Condiciones» abre su formulario sin redirigir', async ({
     page,
   }) => {
     await preparar([

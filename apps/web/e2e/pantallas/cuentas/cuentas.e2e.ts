@@ -231,7 +231,7 @@ test.describe('PRU-E2E-CTA', () => {
     });
   }
 
-  test('PRU-E2E-CTA-702 [CH-240] sin cuentas, el vacío ofrece «Agregar una cuenta»; con una sola tarjeta no aparece «Tocá la tarjeta de atrás…»', async ({
+  test('PRU-E2E-CTA-702 sin cuentas, el vacío ofrece «Agregar una cuenta»; con una sola tarjeta no aparece «Tocá la tarjeta de atrás…»', async ({
     page,
   }) => {
     await sembrarOps([], '2027-02-05');

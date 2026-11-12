@@ -149,7 +149,7 @@ test.describe('PRU-E2E-TX actividad', () => {
     await expect(page).toHaveURL(/categoria=/);
   });
 
-  test('PRU-E2E-TX-421 [CA-24.3, CH-241] en 1440 × 900 los filtros van en su columna fija de 320 px a la izquierda de la lista, abiertos, y filtran por la URL igual que antes', async ({
+  test('PRU-E2E-TX-421 [CA-24.3] en 1440 × 900 los filtros van en su columna fija de 320 px a la izquierda de la lista, abiertos, y filtran por la URL igual que antes', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });

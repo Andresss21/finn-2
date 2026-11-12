@@ -245,7 +245,7 @@ describe('PRU-CMP-CTA-103 pantalla de Cuentas', () => {
     document.documentElement.removeAttribute('data-theme');
   });
 
-  it('PRU-CMP-CTA-701 [CH-240] la billetera lleva costura punteada y el ícono wallet; el rótulo de la red no usa opacidad', () => {
+  it('PRU-CMP-CTA-701 la billetera lleva costura punteada y el ícono wallet; el rótulo de la red no usa opacidad', () => {
     const raiz = montar(
       <PantallaCuentas
         dto={dto({

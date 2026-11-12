@@ -508,7 +508,7 @@ describe('PRU-CMP-CTA-711 alta de préstamo por secciones', () => {
     );
   }
 
-  it('PRU-CMP-CTA-711 [CH-240] el préstamo se divide en «El préstamo», «Cuotas» y «Condiciones · opcional» plegada, con el aviso de que no hay modelo', () => {
+  it('PRU-CMP-CTA-711 el préstamo se divide en «El préstamo», «Cuotas» y «Condiciones · opcional» plegada, con el aviso de que no hay modelo', () => {
     const raiz = montar(<AltaPrestamo />);
     const titulos = [...raiz.querySelectorAll('h2, summary')].map((x) => x.textContent);
     expect(titulos).toEqual(['El préstamo', 'Cuotas', 'Condiciones · opcional']);
