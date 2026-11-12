@@ -1,4 +1,4 @@
-// Registro de los 52 íconos y los 7 glifos de estado (06-identidad-visual §2). El contenido de cada dibujo es
+// Registro de los 54 íconos y los 7 glifos de estado (06-identidad-visual §2). El contenido de cada dibujo es
 // el interior de su .svg en ./ y ./estados, sin cambios; PRU-CMP-VAL-101 lo compara con el archivo.
 export const ICONOS = {
   activity: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
@@ -19,6 +19,9 @@ export const ICONOS = {
   dang: '<path d="M8.3 3h7.4L21 8.3v7.4L15.7 21H8.3L3 15.7V8.3L8.3 3z"/><path d="M8.5 12h7"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/>',
   env: '<rect x="3" y="5.5" width="18" height="13" rx="1.5"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/>',
+  eye: '<path d="M2.5 12C4.8 7.6 8.1 5.5 12 5.5s7.2 2.1 9.5 6.5c-2.3 4.4-5.6 6.5-9.5 6.5S4.8 16.4 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeoff:
+    '<path d="M3 3l18 18"/><path d="M10.6 6A9 9 0 0 1 12 5.5c3.9 0 7.2 2.1 9.5 6.5a15 15 0 0 1-2.6 3.6"/><path d="M6.3 7.6C4.8 8.6 3.6 10.1 2.5 12c2.3 4.4 5.6 6.5 9.5 6.5 1.8 0 3.4-.4 4.8-1.3"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   filter: '<path d="M3 5h18l-7 8v6l-4 2v-8L3 5z"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="M4.9 4.9l2.1 2.1"/><path d="M17 17l2.1 2.1"/><path d="M4.9 19.1L7 17"/><path d="M17 7l2.1-2.1"/>',
   grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',

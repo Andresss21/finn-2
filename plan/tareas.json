@@ -679,9 +679,9 @@
 
   "TA-591": { "estado": "pendiente" },
 
-  "TA-592": { "estado": "pendiente" },
+  "TA-592": { "estado": "en_curso", "rama": "ta-592-grupo-e-acceso" },
 
-  "TA-593": { "estado": "pendiente" },
+  "TA-593": { "estado": "en_curso", "rama": "ta-592-grupo-e-acceso" },
 
   "TA-594": { "estado": "en_curso", "rama": "ta-594-totp-casillas" },
 
