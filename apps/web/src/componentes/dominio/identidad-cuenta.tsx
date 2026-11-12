@@ -44,7 +44,7 @@ export type PropsIdentidadCuenta =
   | { readonly tipo: 'efectivo'; readonly fila: FilaEfectivo }
   | { readonly tipo: 'prestamo'; readonly fila: FilaPrestamo }
   | { readonly tipo: 'inversion'; readonly fila: FilaInversion }
-  | { readonly tipo: 'archivada'; readonly fila: Ref };
+  | { readonly tipo: 'archivada'; readonly fila: Ref & { readonly institucion?: string } };
 
 const t = cuentas.cuenta;
 const BASE = 'relative overflow-hidden rounded-identidad text-texto';
@@ -52,7 +52,8 @@ const FONDO = {
   efectivo: 'bg-cuenta-banco',
   prestamo: 'bg-cuenta-prestamo',
   inversion: 'bg-cuenta-inversion',
-  archivada: 'bg-superficie-hundida opacity-85',
+  // Sin opacidad: el texto de la archivada mide 4.5:1 sobre su fondo (E4-22).
+  archivada: 'bg-superficie-hundida',
 } as const;
 const ICONO: Readonly<Record<PropsIdentidadCuenta['tipo'], NombreIcono>> = {
   efectivo: 'bank',
@@ -66,6 +67,8 @@ const LIBRETA: CSSProperties = {
     'repeating-linear-gradient(180deg, transparent 0 13px, var(--cuenta-motivo) 13px 14px)',
   maskImage: 'linear-gradient(to left, var(--decorativo-mascara) 30%, transparent)',
 };
+// Costura de la billetera (E2-12): línea punteada a 8 px del borde, en el color del motivo.
+const COSTURA: CSSProperties = { border: '1.5px dashed var(--cuenta-motivo)' };
 // Motivo de la cuenta de ahorro: anillos concéntricos cada 11 px en un círculo de 150 px que sale por la esquina.
 const ANILLOS: CSSProperties = {
   backgroundImage:
@@ -91,7 +94,20 @@ export function identidadEfectivo(subtipo: SubtipoEfectivo = 'corriente'): {
         />
       ),
     };
-  if (subtipo === 'billetera') return { fondo: 'bg-cuenta-banco', icono: 'wallet', motivo: null };
+  // pendiente: tokens-propuesta (entrega 4): `--cuenta-billetera` (E2-12) sigue propuesto; hasta entonces, el fondo de banco.
+  if (subtipo === 'billetera')
+    return {
+      fondo: 'bg-cuenta-banco',
+      icono: 'wallet',
+      motivo: (
+        <span
+          aria-hidden="true"
+          data-motivo="costura"
+          style={COSTURA}
+          className="absolute inset-2 rounded-[calc(var(--radio-identidad)-8px)]"
+        />
+      ),
+    };
   return {
     fondo: 'bg-cuenta-banco',
     icono: 'bank',
@@ -248,7 +264,15 @@ export function IdentidadCuenta(props: PropsIdentidadCuenta) {
       className={[BASE, FONDO[tipo], 'flex items-center gap-3.5 p-4'].join(' ')}
     >
       <Disco tipo={tipo} />
-      <Datos clase="flex-1" nombre={props.fila.nombre} detalle={t.archivada} />
+      <Datos
+        clase="flex-1"
+        nombre={props.fila.nombre}
+        detalle={
+          props.fila.institucion === undefined || props.fila.institucion === ''
+            ? t.archivada
+            : `${t.archivada} · ${props.fila.institucion}`
+        }
+      />
     </article>
   );
 }

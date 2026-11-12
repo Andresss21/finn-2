@@ -98,7 +98,7 @@ export function Cara({
             </span>
           )}
           {tarjeta.red === undefined ? null : (
-            <span className="block text-rotulo opacity-75">{t.credito(tarjeta.red)}</span>
+            <span className="block text-rotulo">{t.credito(tarjeta.red)}</span>
           )}
         </span>
       </span>

@@ -1,8 +1,13 @@
+import axe from 'axe-core';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { CuentasDto } from '@finn/aplicacion/consultas/cuentas';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../../app/globals.css';
+import {
+  ContextoAcciones,
+  type AccionesPublicadas,
+} from '../../../componentes/marco/publicar-acciones';
 import { PantallaCuentas } from './pantalla';
 
 // `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene: se simula `next/link`, nunca
@@ -170,19 +175,15 @@ describe('PRU-CMP-CTA-103 pantalla de Cuentas', () => {
   it('PRU-CMP-CTA-103 sin ninguna cuenta dice "Agregá tu primera cuenta" con el enlace a crearla; con cuentas, enlaza a ordenar, a cada detalle y a pagar', () => {
     const vacia = montar(<PantallaCuentas dto={dto()} />);
     expect(vacia.querySelector('h2')?.textContent).toBe('Agregá tu primera cuenta');
-    expect(vacia.querySelector('a[href="/cuentas/nueva"]')).not.toBeNull();
+    expect(vacia.querySelector('a[href="/cuentas/nueva"]')?.textContent).toBe('Agregar una cuenta');
     expect(vacia.querySelector('a[href="/cuentas/ordenar"]')).toBeNull();
 
     const llena = montar(<PantallaCuentas dto={dto({ efectivo: [ahorro], tarjetas: [visa()] })} />);
     const enlaces = [...llena.querySelectorAll('a')].map((a) => a.getAttribute('href'));
-    expect(enlaces).toEqual(
-      expect.arrayContaining([
-        '/cuentas/nueva',
-        '/cuentas/ordenar',
-        '/cuentas/ahorro',
-        '/cuentas/visa',
-      ]),
-    );
+    // E4-33: «Nueva cuenta» y «Ordenar las cuentas» salen de la página y entran al menú (PublicarAcciones).
+    expect(enlaces).toEqual(expect.arrayContaining(['/cuentas/ahorro', '/cuentas/visa']));
+    expect(enlaces).not.toContain('/cuentas/ordenar');
+    expect(enlaces).not.toContain('/cuentas/nueva');
   });
 
   it('PRU-CMP-CTA-234 [CA-51.4] «Mostrar archivadas» es un interruptor de servidor: enlace con role switch, aria-checked y la misma etiqueta en ambos estados', () => {
@@ -209,7 +210,7 @@ describe('PRU-CMP-CTA-103 pantalla de Cuentas', () => {
     expect(con.querySelector('[data-grupo="Archivadas"] h2')?.textContent).toBe('Archivadas');
   });
 
-  it('PRU-CMP-CTA-235 la tarjeta enlaza entera: no hay «Ver detalle de …» ni «Pagar …» subrayados; «En camino» está dentro de la posición neta y «Nueva cuenta» no se parte', () => {
+  it('PRU-CMP-CTA-235 la tarjeta enlaza entera: no hay «Ver detalle de …» ni «Pagar …» subrayados; «En camino» está dentro de la posición neta', () => {
     const raiz = montar(
       <PantallaCuentas dto={dto({ efectivo: [ahorro], tarjetas: [visa()], enCamino: 4000 })} />,
     );
@@ -223,7 +224,66 @@ describe('PRU-CMP-CTA-103 pantalla de Cuentas', () => {
       '$40.00',
     );
     expect(raiz.querySelectorAll('[data-en-camino]').length).toBe(1);
-    const nueva = raiz.querySelector('a[href="/cuentas/nueva"]') as HTMLElement;
-    expect(getComputedStyle(nueva).whiteSpace).toBe('nowrap');
+  });
+
+  it('PRU-CMP-CTA-701 [CA-E4-22] «Archivada · {banco}» mide al menos 4.5:1 sobre su fondo, en claro y oscuro', async () => {
+    const raiz = montar(
+      <PantallaCuentas
+        dto={dto({
+          efectivo: [ahorro],
+          archivadas: [{ id: 'vieja', nombre: 'Vieja', institucion: 'Banco Cuscatlán' }],
+        })}
+      />,
+    );
+    const archivada = raiz.querySelector('[data-identidad="archivada"]') as HTMLElement;
+    expect(archivada.textContent).toContain('Archivada · Banco Cuscatlán');
+    for (const tema of ['claro', 'oscuro']) {
+      document.documentElement.setAttribute('data-theme', tema);
+      const r = await axe.run(archivada, { runOnly: ['color-contrast'] });
+      expect(r.violations.map((v) => v.id)).toEqual([]);
+    }
+    document.documentElement.removeAttribute('data-theme');
+  });
+
+  it('PRU-CMP-CTA-701 [CH-240] la billetera lleva costura punteada y el ícono wallet; el rótulo de la red no usa opacidad', () => {
+    const raiz = montar(
+      <PantallaCuentas
+        dto={dto({
+          efectivo: [{ ...ahorro, subtipoEfectivo: 'billetera' }],
+          tarjetas: [visa({ red: 'Visa' })],
+        })}
+      />,
+    );
+    const bill = raiz.querySelector('[data-subtipo="billetera"]');
+    expect(bill?.querySelector('[data-motivo="costura"]')).not.toBeNull();
+    expect(bill?.querySelector('[data-motivo="libreta"]')).toBeNull();
+    const rotulos = [...raiz.querySelectorAll('[data-billetera] span')].filter((s) =>
+      /crédito/.test(s.textContent ?? ''),
+    );
+    expect(rotulos.length).toBeGreaterThan(0);
+    for (const r of rotulos) expect(getComputedStyle(r).opacity).toBe('1');
+  });
+
+  it('PRU-CMP-CTA-701 [CA-E6-14] la pantalla publica «Nueva cuenta» y «Ordenar las cuentas» al menú «En Cuentas»; sin cuentas, solo «Nueva cuenta»', () => {
+    const publicadas: AccionesPublicadas[] = [];
+    const llena = montar(
+      <ContextoAcciones value={(a) => a !== null && publicadas.push(a)}>
+        <PantallaCuentas dto={dto({ efectivo: [ahorro] })} />
+      </ContextoAcciones>,
+    );
+    expect(llena).toBeTruthy();
+    const ultima = publicadas.at(-1);
+    expect(ultima?.titulo).toBe('En Cuentas');
+    expect(ultima?.acciones.map((a) => [a.etiqueta, a.ruta])).toEqual([
+      ['Nueva cuenta', '/cuentas/nueva'],
+      ['Ordenar las cuentas', '/cuentas/ordenar'],
+    ]);
+    publicadas.length = 0;
+    montar(
+      <ContextoAcciones value={(a) => a !== null && publicadas.push(a)}>
+        <PantallaCuentas dto={dto()} />
+      </ContextoAcciones>,
+    );
+    expect(publicadas.at(-1)?.acciones.map((a) => a.etiqueta)).toEqual(['Nueva cuenta']);
   });
 });

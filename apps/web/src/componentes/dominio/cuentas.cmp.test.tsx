@@ -1,11 +1,13 @@
 import axe from 'axe-core';
 import { act, useState, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { useForm } from 'react-hook-form';
 import type { Centavos } from '@finn/dominio/valores';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../app/globals.css';
 import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta';
 import { Cabecera } from '../../app/(finn)/cuentas/[cuentaId]/cabecera';
+import { CamposDeTipo } from '../../flujos/cuentas-nueva/campos-de-tipo';
 import { ColorTarjeta } from '../../flujos/cuentas-nueva/color-tarjeta';
 import { aEntradaDeAccion, valoresIniciales, type Campos } from '../../flujos/cuentas-nueva/campos';
 import { BilleteraTarjetas, CaraConSaldo, type TarjetaDto } from './billetera';
@@ -462,10 +464,10 @@ describe('PRU-CMP-CTA-401 identidad de efectivo por el subtipo', () => {
   const esperado = {
     corriente: { fondo: 'bg-cuenta-banco', icono: 'bank', motivo: 'libreta' },
     ahorro: { fondo: 'bg-cuenta-ahorro', icono: 'coins', motivo: 'anillos' },
-    billetera: { fondo: 'bg-cuenta-banco', icono: 'wallet', motivo: null },
+    billetera: { fondo: 'bg-cuenta-banco', icono: 'wallet', motivo: 'costura' },
   } as const;
 
-  it('PRU-CMP-CTA-401 [FT-51, FT-52] corriente con libreta, ahorro con anillos y billetera con `wallet` sin motivo, en la lista y en el detalle, por el subtipo del DTO', () => {
+  it('PRU-CMP-CTA-401 [FT-51, FT-52] corriente con libreta, ahorro con anillos y billetera con `wallet` y costura punteada (E2-12), en la lista y en el detalle, por el subtipo del DTO', () => {
     for (const s of ['corriente', 'ahorro', 'billetera'] as const) {
       const lista = montar(<IdentidadCuenta tipo="efectivo" fila={fila(s)} />);
       const cabecera = montar(<Cabecera dto={detalle(s)} />);
@@ -487,5 +489,37 @@ describe('PRU-CMP-CTA-401 identidad de efectivo por el subtipo', () => {
       <IdentidadCuenta tipo="efectivo" fila={{ cuenta, saldo, saldoConfirmado }} />,
     );
     expect(vieja.querySelector('[data-motivo]')?.getAttribute('data-motivo')).toBe('libreta');
+  });
+});
+
+describe('PRU-CMP-CTA-711 alta de préstamo por secciones', () => {
+  function AltaPrestamo(): ReactNode {
+    const { register, watch } = useForm<Campos>({
+      defaultValues: valoresIniciales('2027-02-05' as never, 'prestamo', ''),
+    });
+    return (
+      <CamposDeTipo
+        c={watch()}
+        poner={() => () => undefined}
+        error={() => undefined}
+        register={register}
+        institucion={undefined}
+      />
+    );
+  }
+
+  it('PRU-CMP-CTA-711 [CH-240] el préstamo se divide en «El préstamo», «Cuotas» y «Condiciones · opcional» plegada, con el aviso de que no hay modelo', () => {
+    const raiz = montar(<AltaPrestamo />);
+    const titulos = [...raiz.querySelectorAll('h2, summary')].map((x) => x.textContent);
+    expect(titulos).toEqual(['El préstamo', 'Cuotas', 'Condiciones · opcional']);
+    const condiciones = raiz.querySelector<HTMLDetailsElement>(
+      'details[data-seccion="condiciones"]',
+    );
+    expect(condiciones?.open).toBe(false);
+    expect(condiciones?.textContent).toContain('no tiene un modelo de cálculo');
+    expect(raiz.querySelector('[data-seccion="Cuotas"]')?.textContent).toContain('Cuota pactada');
+    expect(raiz.querySelector('[data-seccion="El préstamo"]')?.textContent).toContain(
+      'Quién te prestó',
+    );
   });
 });

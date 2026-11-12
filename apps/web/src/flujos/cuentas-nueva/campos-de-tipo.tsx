@@ -3,6 +3,7 @@
 // formulario los carga al elegir uno de esos tipos (05 §13.3): con efectivo, el tipo por defecto, no van en el JS de la ruta
 // (05 §13.1). Qué campos son, cuáles se piden y cuándo se muestran lo dicen los descriptores de `campos.ts`.
 import type { UseFormRegister } from 'react-hook-form';
+import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -43,8 +44,66 @@ export interface PropsCamposDeTipo {
   readonly institucion: string | undefined;
 }
 
-export function CamposDeTipo({ c, poner, error, register, institucion }: PropsCamposDeTipo) {
+// E2-9: el préstamo en secciones; «Condiciones · opcional» va plegada. Cada campo conserva su descriptor (campos.ts).
+const SECCIONES_PRESTAMO: readonly {
+  readonly titulo: string;
+  readonly claves: readonly Clave[];
+  readonly plegada?: true;
+}[] = [
+  { titulo: t.seccionPrestamo, claves: ['contraparte', 'montoOriginal'] },
+  {
+    titulo: t.seccionCuotas,
+    claves: ['frecuencia', 'frecuenciaDias', 'cuotaPactada', 'plazoCuotas', 'cuotasPagadasAlCrear'],
+  },
+  {
+    titulo: t.seccionCondiciones,
+    claves: ['tasaNominalAnual', 'tipoTasa', 'modeloCalculo'],
+    plegada: true,
+  },
+];
+
+export function CamposDeTipo(props: PropsCamposDeTipo) {
+  if (props.c.tipo !== 'prestamo') return <CamposPlanos {...props} />;
+  return (
+    <>
+      {SECCIONES_PRESTAMO.map((s) => {
+        const cuerpo = <CamposPlanos {...props} claves={s.claves} />;
+        return s.plegada === true ? (
+          <details
+            key={s.titulo}
+            data-seccion="condiciones"
+            open={s.claves.some((k) => props.error(k) !== undefined)}
+            className="flex flex-col gap-4"
+          >
+            <summary className="text-titulo-seccion min-h-11 cursor-pointer py-2">
+              {s.titulo}
+            </summary>
+            <div className="flex flex-col gap-5 pt-2">
+              <AvisoEnLinea estado="informacion">{t.avisoSinModelo}</AvisoEnLinea>
+              {cuerpo}
+            </div>
+          </details>
+        ) : (
+          <section key={s.titulo} data-seccion={s.titulo} className="flex flex-col gap-5">
+            <h2 className="text-titulo-seccion">{s.titulo}</h2>
+            {cuerpo}
+          </section>
+        );
+      })}
+    </>
+  );
+}
+
+function CamposPlanos({
+  c,
+  poner,
+  error,
+  register,
+  institucion,
+  claves,
+}: PropsCamposDeTipo & { readonly claves?: readonly Clave[] }) {
   return CAMPOS_DE_TIPO[c.tipo].map((x) => {
+    if (claves !== undefined && !claves.includes(x.n)) return null;
     if (!visible(x, c)) return null;
     const etiqueta = ETIQUETAS[x.n] ?? '';
     const mensaje = error(x.n);

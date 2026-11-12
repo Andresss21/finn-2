@@ -80,7 +80,7 @@ export function valorDe(clase: Clase, texto: string): string | number | null {
 }
 
 /** `120000` millonésimas → `"12"`; `127525` → `"12.7525"` (DB-13). */
-const porcentajeDe = (millonesimas: number): string => {
+export const porcentajeDe = (millonesimas: number): string => {
   const decimales = String(millonesimas % 10_000)
     .padStart(4, '0')
     .replace(/0+$/, '');
