@@ -63,7 +63,9 @@ function Fila({
 
 function destinoDe(l: Linea): string {
   if ('categoria' in l.destino) return l.destino.categoria.nombre;
-  return 'deudor' in l.destino ? t.porCobrarA(l.destino.deudor.nombre) : t.devolucionDeOtraCompra;
+  return 'deudor' in l.destino
+    ? t.deudorPorCobrar(l.destino.deudor.nombre)
+    : t.devolucionDeOtraCompra;
 }
 
 /** El resumen de la parte con las cifras del DTO, sin sumar nada (PF-3). */
@@ -88,7 +90,16 @@ function resumenDe(l: Linea): { readonly texto: string; readonly sinCubrir: bool
   return { texto: partes.join(' · '), sinCubrir: (l.reparto?.noCubierto ?? 0) > 0 };
 }
 
-function Parte({ linea, n }: { readonly linea: Linea; readonly n: number }) {
+function Parte({
+  linea,
+  n,
+  salida,
+}: {
+  readonly linea: Linea;
+  readonly n: number;
+  /** Una parte de un gasto es dinero que sale: se muestra con el menos (ACT-16). */
+  readonly salida: boolean;
+}) {
   const { texto, sinCubrir } = resumenDe(linea);
   return (
     <li className="flex flex-col gap-2 px-4 py-3" data-linea={linea.id}>
@@ -97,7 +108,7 @@ function Parte({ linea, n }: { readonly linea: Linea; readonly n: number }) {
           <span className="sr-only">{t.parteDe(n)} · </span>
           {destinoDe(linea)}
         </span>
-        <Monto centavos={linea.monto} rol="cifra" presentacion="absoluto" />
+        <Monto centavos={linea.monto} rol="cifra" presentacion={salida ? 'salida' : 'absoluto'} />
       </p>
       {linea.reparto === undefined ? null : (
         // El largo de cada tramo es el monto mismo (`flex-grow`): el navegador reparte, la interfaz no divide
@@ -109,10 +120,27 @@ function Parte({ linea, n }: { readonly linea: Linea; readonly n: number }) {
             className="rounded-pastilla bg-texto-secundario"
             style={{ flexGrow: linea.reparto.cubierto }}
           />
-          <span className="bg-problema-fondo" style={{ flexGrow: linea.reparto.noCubierto }} />
+          <span
+            className="bg-[image:var(--patron-sin-reservar)]"
+            style={{ flexGrow: linea.reparto.noCubierto }}
+            data-no-cubierto
+          />
         </div>
       )}
       {texto === '' ? null : <p className={sinCubrir ? RESUMEN_SIN_CUBRIR : RESUMEN}>{texto}</p>}
+      {linea.porCobrar !== undefined && linea.porCobrar.abierto > 0 && 'deudor' in linea.destino ? (
+        <div className="flex gap-2" data-acciones-por-cobrar>
+          <EnlaceFinn
+            href={`/por-cobrar/cobrar?linea=${linea.id}&deudor=${linea.destino.deudor.id}`}
+            className={ENLACE}
+          >
+            {t.cobrar}
+          </EnlaceFinn>
+          <EnlaceFinn href={`/por-cobrar/condonar/${linea.id}`} className={ENLACE}>
+            {t.condonar}
+          </EnlaceFinn>
+        </div>
+      ) : null}
     </li>
   );
 }
@@ -267,11 +295,11 @@ export function PantallaDetalleTransaccion({
       <Seccion titulo={t.partes}>
         <ul className={TARJETA_PARTES}>
           {dto.lineas.map((l, i) => (
-            <Parte key={l.id} linea={l} n={i + 1} />
+            <Parte key={l.id} linea={l} n={i + 1} salida={x.tipo === 'gasto'} />
           ))}
         </ul>
       </Seccion>
-      <Seccion titulo={t.cuentas}>
+      <Seccion titulo={t.efectosHoy}>
         <ul className={TARJETA_FILAS}>
           {dto.efectos.map((e) => (
             <li key={e.cuenta.id} className="flex items-baseline justify-between gap-3 py-2">
