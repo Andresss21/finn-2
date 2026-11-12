@@ -824,3 +824,78 @@ describe('PRU-DOM-PRES-310: asignación rápida «reservar lo que falta» de la 
     expect(asig(exito(r).hechosNuevos, 'P', MAR)).toBe(Centavos.desdeEntero(1875));
   });
 });
+
+/**
+ * CH-246: cada valor «antes» y «después» del impacto es el de `calcular` sobre los hechos de antes y sobre `hechosNuevos`,
+ * y «después − antes» es su Δ. Devuelve el impacto para comprobar los números del caso.
+ */
+function resultantes(h: Hechos, r: ResultadoAplicar, hoy = HOY) {
+  const { impacto: i, hechosNuevos } = exito(r);
+  const [a, d] = [calcular(h, hoy), calcular(hechosNuevos, hoy)];
+  const disp = (x: typeof a, k: string) =>
+    x.presupuesto.celdas.find(
+      (y) => y.categoriaId === k && y.periodo.inicio === x.presupuesto.activo.inicio,
+    )?.disponible ?? 0;
+  const tarjeta = (x: typeof a, k: string) => x.tarjetas.find((y) => y.tarjetaId === k);
+  expect([i.lpaAntes, i.lpaDespues, i.lpaDespues - i.lpaAntes]).toEqual([
+    a.lpa.total,
+    d.lpa.total,
+    i.deltaLpa,
+  ]);
+  for (const x of i.deltaDisponible)
+    expect([x.antes, x.despues, x.despues - x.antes]).toEqual([
+      disp(a, x.categoriaId),
+      disp(d, x.categoriaId),
+      x.delta,
+    ]);
+  for (const t of i.deltaTarjetas) {
+    const [ta, td] = [tarjeta(a, t.tarjetaId), tarjeta(d, t.tarjetaId)];
+    expect([t.saldoAntes, t.saldoDespues, t.saldoDespues - t.saldoAntes]).toEqual([
+      ta?.sinRespaldo ?? 0,
+      td?.sinRespaldo ?? 0,
+      t.deltaSaldo,
+    ]);
+    expect([t.reservaAntes, t.reservaDespues, t.reservaDespues - t.reservaAntes]).toEqual([
+      ta?.reservaExcedente ?? 0,
+      td?.reservaExcedente ?? 0,
+      t.deltaReserva,
+    ]);
+  }
+  return i;
+}
+const valores = (i: ReturnType<typeof resultantes>) =>
+  i.deltaDisponible.map((x) => [x.categoriaId, x.antes, x.despues]);
+
+describe('PRU-DOM-MOTOR-112: valores resultantes del impacto en OP-14, OP-15 y OP-17 (CH-246)', () => {
+  it('PRU-DOM-MOTOR-112 CH-246 OP-14, OP-15 y OP-17: cada Disponible y LPA «después» del impacto es el de calcular(hechosNuevos) y «antes + Δ»', () => {
+    // OP-14: Mascota de 0 a 30; LPA de 1.000 a 970.
+    const asignar = resultantes(base(), ejecutar(base(), op14('MASC', MAR, 30)));
+    expect(valores(asignar)).toEqual([['MASC', 0, c(30)]]);
+    expect([asignar.lpaAntes, asignar.lpaDespues]).toEqual([c(1000), c(970)]);
+    // OP-15: Super 600 → 500 y Gas 0 → 100; LPA sigue en 400.
+    const h = base([asignacion('SUPER', MAR, 600)]);
+    const mover = resultantes(h, ejecutar(h, op15('SUPER', 'GAS', MAR, 100)));
+    expect(valores(mover)).toEqual([
+      ['GAS', 0, c(100)],
+      ['SUPER', c(600), c(500)],
+    ]);
+    expect([mover.lpaAntes, mover.lpaDespues]).toEqual([c(400), c(400)]);
+    // OP-17: Mascota 0 → 50 y Ropa 0 → 80 (sus metas); LPA de 1.000 a 870.
+    const auto = resultantes(base(), ejecutar(base(), op17(MAR)));
+    expect(valores(auto)).toEqual([
+      ['MASC', 0, c(50)],
+      ['ROPA', 0, c(80)],
+    ]);
+    expect([auto.lpaAntes, auto.lpaDespues]).toEqual([c(1000), c(870)]);
+  });
+
+  it('PRU-DOM-MOTOR-112 CH-246 OP-15: mover más que el Disponible deja el valor «después» del origen en negativo (D-6 de la entrega 4)', () => {
+    const h = base([asignacion('SUPER', MAR, 600)]);
+    const i = resultantes(h, ejecutar(h, op15('SUPER', 'GAS', MAR, 700)));
+    expect(valores(i)).toEqual([
+      ['GAS', 0, c(700)],
+      ['SUPER', c(600), c(-100)],
+    ]);
+    expect(i.deltaDisponible.find((x) => x.categoriaId === 'SUPER')?.despues).toBeLessThan(0);
+  });
+});

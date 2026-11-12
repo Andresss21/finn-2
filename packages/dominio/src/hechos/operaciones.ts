@@ -706,11 +706,25 @@ export interface AvisoOperacion {
 /** Efecto de una operación en el período activo, comparable por igualdad estructural (04 §4.3). */
 export interface Impacto {
   readonly deltaLpa: Centavos;
-  readonly deltaDisponible: readonly { readonly categoriaId: Uuid; readonly delta: Centavos }[];
+  /** [CH-246] LPA antes y después de la operación (`lpaDespues − lpaAntes = deltaLpa`); no entran en la huella. */
+  readonly lpaAntes: Centavos;
+  readonly lpaDespues: Centavos;
+  readonly deltaDisponible: readonly {
+    readonly categoriaId: Uuid;
+    readonly delta: Centavos;
+    /** [CH-246] Disp(c, A) antes y después (`despues − antes = delta`); no entran en la huella. */
+    readonly antes: Centavos;
+    readonly despues: Centavos;
+  }[];
   readonly deltaTarjetas: readonly {
     readonly tarjetaId: Uuid;
     readonly deltaSaldo: Centavos; // Δ S(t)
     readonly deltaReserva: Centavos; // Δ RE(t)
+    /** [CH-246] S(t) y RE(t) antes y después; no entran en la huella. */
+    readonly saldoAntes: Centavos;
+    readonly saldoDespues: Centavos;
+    readonly reservaAntes: Centavos;
+    readonly reservaDespues: Centavos;
   }[];
   readonly deltaReduccionProyectadaLpaAlCierre: Centavos;
   readonly avisos: readonly AvisoOperacion[];
