@@ -11,6 +11,15 @@ export const cuentasNuevaBase = {
     prestamo: 'Préstamo',
     inversion: 'Inversión',
   },
+  // CTA-02: la elección de tipo en tarjetas con ícono y una línea que dice qué es cada una
+  tiposAyuda: {
+    efectivo: 'Cuenta corriente, de ahorro o billetera',
+    tarjeta: 'Con corte, pago y límite',
+    prestamo: 'Con cuota y capital pendiente',
+    inversion: 'Depósito a plazo, fondo o acciones',
+  },
+  entraALpa: 'Entra a Listo para asignar.',
+  inversionFuera: 'No entra a Listo para asignar: las inversiones están fuera del presupuesto.',
   nombre: 'Nombre',
   institucion: 'Institución',
   sinInstitucion: 'Sin institución',

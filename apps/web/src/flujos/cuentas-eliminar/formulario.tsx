@@ -7,7 +7,7 @@ import { useCallback } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
-import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
+import { AccionesDeBloqueo } from '../cuentas-archivar/acciones-bloqueo';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -16,7 +16,6 @@ import { formularios } from '../../textos/formularios';
 
 const t = cuentasGestion.eliminar;
 const n = cuentasGestion.comunes;
-const ENLACE = 'inline-flex min-h-11 items-center font-bold text-enlace underline';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const RUTA_AL_TERMINAR = '/cuentas';
 
@@ -97,7 +96,10 @@ export function FormularioCuentasEliminar(p: PropsFormularioCuentasEliminar) {
   }
 
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
+    <PaginaFlujoDeRuta
+      titulo={bloqueos.length > 0 ? t.tituloBloqueo : t.titulo}
+      rutaPadre={rutaPadre}
+    >
       <div className="flex flex-col gap-5">
         {bloqueos.length > 0 ? (
           <>
@@ -112,11 +114,12 @@ export function FormularioCuentasEliminar(p: PropsFormularioCuentasEliminar) {
                 </li>
               ))}
             </ul>
-            {p.archivada ? null : (
-              <EnlaceFinn href={`${rutaPadre}/archivar`} className={ENLACE}>
-                {t.archivarEnLugar}
-              </EnlaceFinn>
-            )}
+            <AccionesDeBloqueo
+              cerrarHref={rutaPadre}
+              {...(p.archivada
+                ? {}
+                : { principal: { href: `${rutaPadre}/archivar`, texto: t.archivarCorto } })}
+            />
           </>
         ) : (
           <>

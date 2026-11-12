@@ -154,6 +154,7 @@ function CamposPlanos({
         requerido={x.requerido}
         inputMode={x.clase === 'texto' ? 'text' : x.clase === 'entero' ? 'numeric' : 'decimal'}
         autoComplete="off"
+        {...(x.n === 'rendimientoAnualEsperado' ? { descripcion: t.rendimientoInfo } : {})}
         {...(mensaje === undefined ? {} : { error: mensaje })}
         {...register(x.n)}
       />

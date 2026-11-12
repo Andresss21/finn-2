@@ -9,6 +9,7 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
+import { ElegirTipo } from './elegir-tipo';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -45,6 +46,11 @@ const CamposDeTipo = lazy(() =>
   import('./campos-de-tipo').then((m) => ({ default: m.CamposDeTipo })),
 );
 
+// La vista previa «Así se va a ver» solo existe con una billetera (E2-12): se carga al elegirla.
+const VistaBilletera = lazy(() =>
+  import('./vista-billetera').then((m) => ({ default: m.VistaBilletera })),
+);
+
 export interface PropsFormularioCuentaNueva {
   readonly hoy: FechaLocal;
   readonly tipoInicial: TipoCuenta;
@@ -62,8 +68,6 @@ interface Previsualizacion {
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
-const opciones = (m: Readonly<Record<string, string>>) =>
-  Object.entries(m).map(([valor, etiqueta]) => ({ valor, etiqueta }));
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 /** La pantalla a la que vuelve el flujo al terminar (`cerrarFlujo()`, 05 §1.4). */
 const RUTA_PADRE = '/cuentas';
@@ -186,12 +190,7 @@ export function FormularioCuentaNueva({
               {formularios.borradorRecuperado}
             </AvisoEnLinea>
           ) : null}
-          <Seleccion
-            etiqueta={t.tipo}
-            opciones={opciones(t.tipos)}
-            valor={c.tipo}
-            alCambiar={ponerYProponer('tipo')}
-          />
+          <ElegirTipo valor={c.tipo} alCambiar={ponerYProponer('tipo')} />
           {c.tipo === 'efectivo' ? (
             <div className="flex flex-col gap-2">
               <SelectorSegmentado
@@ -260,6 +259,11 @@ export function FormularioCuentaNueva({
             alCambiar={poner('saldo')}
             error={error('saldo')}
             requerido
+            {...(c.tipo === 'efectivo'
+              ? { descripcion: t.entraALpa }
+              : c.tipo === 'inversion'
+                ? { descripcion: t.inversionFuera }
+                : {})}
             {...(c.tipo === 'tarjeta'
               ? {
                   conSigno: true,
@@ -269,6 +273,11 @@ export function FormularioCuentaNueva({
                 }
               : {})}
           />
+          {c.tipo === 'efectivo' && c.subtipoEfectivo === 'billetera' ? (
+            <Suspense fallback={<div className="min-h-42" aria-hidden="true" />}>
+              <VistaBilletera nombre={c.nombre} saldo={c.saldo} />
+            </Suspense>
+          ) : null}
           {c.tipo === 'efectivo' ? null : (
             <Suspense fallback={<div className="min-h-60" aria-hidden="true" />}>
               <CamposDeTipo
