@@ -1308,6 +1308,7 @@ SP-01-Agricola | D | 04 SP-01, CH-03: formatos de Banco Agrícola reescritos y F
 DT-27 | D | 08 §27.1: CA pendientes de punta a punta en la matriz (P8-19.1) [D]
 PUERTA-07-30 | D | 07 §30: `pnpm pruebas:puerta`, las 7 condiciones y --simular (CH-211) [D]
 CH-220 | D | 08 §7: entrega 3 del diseño como fuente, anexo, HT-10 y B9 (registro) [CH-220]
+CH-240 | D | 08 §7: entrega 4 del diseño como fuente, anexo, HT-11 y B10 (registro y fichas) [CH-240]
 CH-220-anchos | D | 08 CH-220 (c): contenido a 1144 px, flujos y listas a 720 px, columnas con @container [CH-220]
 CH-220-movimiento | D | 08 CH-220 (d): utilidades y keyframes del catálogo de movimiento, reducir movimiento [CH-220]
 CH-220-cierre | D | 08 CH-220 (d): hojas, menús y panel que cierran animados antes de desmontar [CH-220]

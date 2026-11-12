@@ -613,5 +613,7 @@
 
   "TA-511": { "estado": "terminada", "rama": "ta-509-fixes-con-dominio", "pr": 546 },
 
-  "TA-512": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 }
+  "TA-512": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 },
+
+  "TA-560": { "estado": "pendiente" }
 }

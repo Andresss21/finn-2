@@ -715,3 +715,25 @@ En caso de conflicto manda el documento numerado (`06-identidad-visual.md` inclu
   Las únicas URLs externas son las de Google Fonts de la demo. 252 archivos, 22 MB; el mayor pesa 297 KB (PNG).
 - Detalle por archivo: `FIXES-VISUALES.md` §7 y el índice por pantalla de `AUDITORIA.md`. Esta tabla no los repite y
   `pnpm plan:anexos` no los cita.
+
+## Anexo posterior: `finn-diseno-entrega-4/` [CH-240]
+
+Cuarta entrega del diseño: la respuesta a la auditoría de la app real (`docs/auditoria-diseno/`), en seis etapas y un cierre
+(`finn-diseno-entrega-4-etapa-1.zip` a `-etapa-6.zip` y `-cierre.zip`, recibidos el 2026-11-11 en la carpeta de descargas del
+usuario). Las decisiones están en `08-tareas.md` CH-240 y en el bloque B10. En caso de conflicto manda el documento numerado,
+salvo lo que enmienda CH-240 (08 §0.3).
+
+| Carpeta o archivo | Contenido |
+|---|---|
+| `pantallas/` | Los 1.188 estados vigentes en HTML (`<estado>__<variante>.html`, con `data-rol` y `var(--token)`): de cada estado, la versión de la entrega más reciente que lo dibujó (cierre, etapas 6 a 1, entrega 3 y entrega 2) |
+| `DECISIONES.md` | Las decisiones vigentes del diseño, con las de la entrega 4 (D-1 a D-11, E2 a E6) y del cierre (C-1 a C-25) |
+| `PROMPT-DESARROLLO.md` | El prompt único del diseñador para implementar; lo parten las fichas de B10 (TA-560) |
+| `DATOS-EJEMPLO.md`, `FALTANTES.md`, `INDICE-cierre.md` | Juego de datos de las referencias, lo que sigue sin diseño y el índice del cierre (con las preguntas que responde CH-240 d) |
+| `indices/` | Los índices de las etapas 1 a 6, `CH-05-9.3-linea-de-ayuda.md` y `CAMBIOS-PROPUESTOS.md` |
+| `estilos/`, `fuentes/`, `iconos/` | Tokens y estilos del diseño, las fuentes que cargan los HTML (`../../fuentes/`) y los íconos SVG |
+| `finn-demo.html` | La demo navegable del cierre (un solo archivo; se abre sin servidor) |
+
+- **No se copiaron** los PNG (la imagen de cada HTML, sin información propia; 1.188 archivos, 233 MB): están fuera de git en
+  `C:/finn/diseno/entrega-4/pantallas/`, con la misma ruta que su HTML. Tampoco `herramientas/`, `canvas/` ni los `docs/` del
+  cierre (copia anterior de 04, 05 y 06; sus cambios propios se aplicaron sobre los del repo con la marca [D4], CH-240 c).
+
