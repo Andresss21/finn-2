@@ -617,77 +617,77 @@
 
   "TA-560": { "estado": "terminada", "rama": "ta-560-fichas-b10-v2", "pr": 554 },
 
-  "TA-561": { "estado": "en_curso", "rama": "ta-561-tokens-movimiento" },
+  "TA-561": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-562": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
+  "TA-562": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-563": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
+  "TA-563": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-564": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
+  "TA-564": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-565": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
+  "TA-565": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-566": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
+  "TA-566": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-567": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
+  "TA-567": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-568": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
+  "TA-568": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-569": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
+  "TA-569": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-570": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
+  "TA-570": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-571": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
+  "TA-571": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-572": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
+  "TA-572": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-573": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
+  "TA-573": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-574": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
+  "TA-574": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-575": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
+  "TA-575": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-576": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
+  "TA-576": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-577": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
+  "TA-577": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-578": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
+  "TA-578": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-579": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
+  "TA-579": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-580": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
+  "TA-580": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-581": { "estado": "en_curso", "rama": "ta-581-grupo-d-cuentas-actividad" },
+  "TA-581": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-582": { "estado": "en_curso", "rama": "ta-581-grupo-d-cuentas-actividad" },
+  "TA-582": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-583": { "estado": "en_curso", "rama": "ta-581-grupo-d-cuentas-actividad" },
+  "TA-583": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-584": { "estado": "en_curso", "rama": "ta-581-grupo-d-cuentas-actividad" },
+  "TA-584": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-585": { "estado": "en_curso", "rama": "ta-581-grupo-d-cuentas-actividad" },
+  "TA-585": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-586": { "estado": "en_curso", "rama": "ta-586-grupo-e-reportes" },
+  "TA-586": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-587": { "estado": "en_curso", "rama": "ta-586-grupo-e-reportes" },
+  "TA-587": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-588": { "estado": "en_curso", "rama": "ta-586-grupo-e-reportes" },
+  "TA-588": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-589": { "estado": "en_curso", "rama": "ta-589-grupo-e-ajustes" },
+  "TA-589": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-590": { "estado": "en_curso", "rama": "ta-589-grupo-e-ajustes" },
+  "TA-590": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-591": { "estado": "en_curso", "rama": "ta-589-grupo-e-ajustes" },
+  "TA-591": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-592": { "estado": "en_curso", "rama": "ta-592-grupo-e-acceso" },
+  "TA-592": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-593": { "estado": "en_curso", "rama": "ta-592-grupo-e-acceso" },
+  "TA-593": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-594": { "estado": "en_curso", "rama": "ta-594-totp-casillas" },
+  "TA-594": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-595": { "estado": "en_curso", "rama": "ta-595-formatos-instituciones" },
+  "TA-595": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
-  "TA-596": { "estado": "en_curso", "rama": "ta-596-salir-sesion-vencida" },
+  "TA-596": { "estado": "terminada", "rama": "ht-11-entrega-4", "pr": 555 },
 
   "TA-597": { "estado": "pendiente" }
 }
