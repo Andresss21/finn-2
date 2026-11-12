@@ -7,6 +7,7 @@ import { esperarContenido } from '../../ayudas/esperas.ts';
 import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
+import { cuentasGestion } from '../../../src/textos/cuentas-gestion.ts';
 import { formularios } from '../../../src/textos/formularios.ts';
 import { registrarGasto as g } from '../../../src/textos/registrar-gasto.ts';
 import { transaccion as t } from '../../../src/textos/transaccion.ts';
@@ -360,7 +361,9 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
     await page.getByRole('button', { name: 'Más acciones' }).click();
     await page.getByRole('menuitem', { name: 'Archivar', exact: true }).click();
     await esperarContenido(page);
-    await page.getByRole('button', { name: 'Archivar', exact: true }).click();
+    await page
+      .getByRole('button', { name: cuentasGestion.archivar.archivarCuenta('Ahorro'), exact: true })
+      .click();
     await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
 
     await irAEditar(page, '$100.00');

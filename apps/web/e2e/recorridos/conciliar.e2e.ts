@@ -125,7 +125,7 @@ test.describe('PRU-E2E-CONC recorrido 4.5 conciliar', () => {
     await page.getByRole('link', { name: tx.editar }).click();
     await page.getByRole('textbox', { name: g.total, exact: true }).fill('45');
     await page.getByRole('button', { name: tx.guardar }).click();
-    await expect(page.getByText(tx.avisos['AV-16'] ?? '')).toBeVisible();
+    await expect(page.getByText(tx.conciliadaAdvertencia('T', tx.queCambio.total))).toBeVisible();
     await page.getByRole('button', { name: tx.confirmar }).click();
     await expect(page.locator('[data-cambios-posteriores]')).toContainText(tx.motivos.monto);
     await abrir(page, `/cuentas/${T}`);

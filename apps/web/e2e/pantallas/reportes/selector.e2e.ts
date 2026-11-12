@@ -49,8 +49,10 @@ test.describe('PRU-E2E-REP selector, filtros y períodos de reportes', () => {
     page,
   }) => {
     await page.setViewportSize(TELEFONO);
-    await abrir(page, '/reportes');
+    // `/reportes` redirige: se espera la URL final antes de medir el contenido
+    await page.goto('/reportes');
     await expect(page).toHaveURL(/\/reportes\/tendencia$/);
+    await esperarContenido(page);
     await page.getByRole('button', { name: /Elegir otro reporte/ }).click();
     const hoja = page.getByRole('dialog');
     await expect(hoja.getByRole('link')).toHaveCount(15);

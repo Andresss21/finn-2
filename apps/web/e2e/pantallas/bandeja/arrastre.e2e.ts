@@ -164,10 +164,10 @@ test.describe('PRU-E2E-BAND arrastre de la entrega 4', () => {
       expect(caja7.height).toBeGreaterThanOrEqual(48);
     }
     expect(await page.evaluate(() => window.scrollY)).toBe(antes);
-    await expect(page.locator('[data-marco-barra]')).toHaveAttribute('inert', '');
+    await expect(page.locator('nav[data-marco-barra]')).toHaveAttribute('inert', '');
     await toque('touchEnd');
     await expect(panel).toHaveCount(0);
-    await expect(page.locator('[data-marco-barra]')).not.toHaveAttribute('inert', '');
+    await expect(page.locator('nav[data-marco-barra]')).not.toHaveAttribute('inert', '');
 
     // «Aprobar» y «Revisar» de un toque siguen igual
     await expect(

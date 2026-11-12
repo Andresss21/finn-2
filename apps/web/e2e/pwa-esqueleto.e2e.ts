@@ -132,8 +132,9 @@ test.describe('PRU-E2E-PWA', () => {
     await expect(hoja.locator('[aria-busy="true"] [aria-hidden="true"]')).toHaveCount(1);
     await expect(hoja.locator('[data-centavos]')).toHaveCount(0);
     // La pantalla de origen sigue debajo.
+    // (con la hoja abierta el fondo queda oculto para la tecnología de apoyo: se busca el título por su etiqueta)
     await expect(
-      page.getByRole('heading', { level: 1, name: navegacion.secciones.presupuesto }),
+      page.locator('h1').filter({ hasText: navegacion.secciones.presupuesto }),
     ).toBeAttached();
     liberar();
     await expect(hoja).toHaveCount(0);

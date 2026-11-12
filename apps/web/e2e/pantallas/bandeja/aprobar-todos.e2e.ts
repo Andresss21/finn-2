@@ -25,6 +25,7 @@ const sms = (
   comercio,
   recibido: `${dia}T${recibido}`,
   fecha: dia,
+  hoy: dia,
 });
 const BASE: Op[] = [
   { op: 'OP-01', cuenta: 'Ahorro' },

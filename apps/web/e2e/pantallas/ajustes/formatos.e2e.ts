@@ -72,6 +72,10 @@ test.describe('PRU-E2E-AJUS', () => {
     await recibirPricesmart(page, request);
     await llenar(page);
 
+    // «Probar con un SMS» es fija (sticky): se mide con la página arriba, no con el desplazamiento que dejó llenar el formulario
+    await page.evaluate(() => {
+      window.scrollTo(0, 0);
+    });
     const formulario = await page.locator('form').boundingBox();
     const probar = await page.getByRole('region', { name: t.probar.titulo }).boundingBox();
     expect(formulario).not.toBeNull();

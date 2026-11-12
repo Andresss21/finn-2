@@ -97,6 +97,8 @@ test.describe('PRU-E2E-INICIO entrega 4', () => {
     await page.addInitScript(() => {
       const w = window as unknown as { __pedidos: number };
       w.__pedidos = 0;
+      // El navegador de la prueba parte con el permiso denegado: se simula «sin decidir» para ver la tarjeta
+      Object.defineProperty(Notification, 'permission', { get: () => 'default' });
       const original = Notification.requestPermission.bind(Notification);
       Notification.requestPermission = (...args) => {
         w.__pedidos += 1;

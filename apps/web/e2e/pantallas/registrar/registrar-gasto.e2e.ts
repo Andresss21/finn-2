@@ -436,12 +436,15 @@ test.describe('PRU-E2E-TX', () => {
     await expect(page.getByTestId('resultado').locator('p')).toHaveText(
       t.guardado('PRICESMART', '$148.60', 'T', '3'),
     );
-    await expect(page.getByRole('link', { name: t.verCategoria('Super') })).toHaveAttribute(
-      'href',
-      /\/presupuesto\/categorias\/.+/,
-    );
-    await expect(page.getByRole('link', { name: t.verCategoria('Mascota') })).toBeVisible();
-    await expect(page.getByRole('link', { name: /^Ver / })).toHaveCount(2);
+    // E4-2 «Repartido en»: cada categoría tocada lleva su enlace «Ver la categoría», en su fila
+    const partes = page.getByRole('list', { name: t.lineasGuardadas }).getByRole('listitem');
+    await expect(
+      partes.filter({ hasText: 'Super' }).getByRole('link', { name: t.verLaCategoria }),
+    ).toHaveAttribute('href', /\/presupuesto\/categorias\/.+/);
+    await expect(
+      partes.filter({ hasText: 'Mascota' }).getByRole('link', { name: t.verLaCategoria }),
+    ).toBeVisible();
+    await expect(page.getByRole('link', { name: t.verLaCategoria })).toHaveCount(2);
     // con la fecha en un período cerrado, antes aparece el impacto con el aviso AV-01
     await page.getByRole('button', { name: t.registrarOtro }).click();
     await esperarHidratacion(page);

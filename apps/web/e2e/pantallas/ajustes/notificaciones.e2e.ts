@@ -5,6 +5,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarHidratacion } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
+import { inicioEntrega4 } from '../../../src/textos/inicio-entrega-4.ts';
 import { notificaciones as t } from '../../../src/textos/notificaciones.ts';
 import type { Escenario } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page, Request } from '@playwright/test';
@@ -19,7 +20,8 @@ async function preparar(): Promise<void> {
     titulo: 'Semilla de FT-06',
     refs: [],
     hoy: '2027-02-05',
-    estadoInicial: [],
+    // E5-15: la tarjeta de Inicio se ofrece con cuentas; sin ellas Inicio muestra los Primeros pasos
+    estadoInicial: [{ op: 'OP-01', cuenta: 'Ahorro' }],
     pasos: [],
   };
   await sembrar(escenario, '2027-02-05');
@@ -162,11 +164,14 @@ test.describe('PRU-E2E-NOTIF', () => {
       await simular(page, 'default', 'https://push.example.test/send/e2e-notif-101-0123456789');
       await abrir(page, '/');
       const activar = page.getByRole('button', { name: t.activar, exact: true });
-      await expect(page.getByRole('heading', { name: t.tarjetaTitulo })).toBeVisible();
+      const tarjeta = page.getByRole('region', {
+        name: inicioEntrega4.tarjetaNotificaciones.titulo,
+      });
+      await expect(tarjeta).toBeVisible();
       expect(await contador(page, 'pedidos')).toBe(0);
 
       await activar.click();
-      await expect(page.getByRole('heading', { name: t.tarjetaTitulo })).toHaveCount(0);
+      await expect(tarjeta).toHaveCount(0);
       expect(await contador(page, 'pedidos')).toBe(1);
 
       await abrir(page, '/ajustes/notificaciones');

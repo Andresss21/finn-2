@@ -207,7 +207,7 @@ test.describe('PRU-E2E-PRES recorrido 4.3 inicio de período', () => {
     await page.getByRole('button', { name: 'Extender la fecha' }).click();
     await page.getByLabel('Fecha objetivo', { exact: true }).fill('2027-06-20');
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
-    await expect(page).toHaveURL(/\/metas$/);
+    await expect(page).toHaveURL(/\/metas(\?resultado=.*)?$/);
     await esperarContenido(page);
     await expect(page.locator('[data-aviso-meta]')).toHaveCount(0);
     await expect(meta(page, 'Fondo')).toHaveAttribute('data-vencida', 'no');
@@ -218,8 +218,8 @@ test.describe('PRU-E2E-PRES recorrido 4.3 inicio de período', () => {
     await page.getByRole('link', { name: 'Auto-asignar' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(filaDeImpacto(page, 'Super')).toContainText('$20.00 → $320.00');
-    await expect(filaDeImpacto(page, 'Netflix')).toContainText('+$15.49');
-    await expect(filaDeImpacto(page, 'Fondo')).toContainText('+$100.00');
+    await expect(filaDeImpacto(page, 'Netflix')).toContainText('→ $0.00');
+    await expect(filaDeImpacto(page, 'Fondo')).toContainText('→ $500.00');
     await expect(page.getByText(/quedó sin cubrir/)).toHaveCount(0);
     await page.getByRole('button', { name: 'Asignar', exact: true }).click();
     // Sin AV-18 (nada quedó sin cubrir) el flujo se cierra solo, sin el aviso de «Asignación hecha»

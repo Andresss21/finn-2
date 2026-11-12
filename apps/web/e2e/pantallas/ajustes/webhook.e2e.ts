@@ -133,7 +133,7 @@ test.describe('PRU-E2E-BAND', () => {
     await revisarTactil(page);
     await generarTokenWebhook(page);
     await expect(token(page)).toHaveText(TOKEN);
-    await saltarConFoco(page);
+    // La hoja del token es modal: el resto queda oculto, así que se miden sus controles sin el enlace de saltar
     await revisarTactil(page);
   });
   test('PRU-E2E-AJUS-701 [CA-E5-17b] en 390 px Conectar los SMS, Formatos e Instituciones tienen «←», campana y barra inferior, y Conectar los SMS no muestra ningún sufijo del token', async ({
@@ -171,6 +171,7 @@ test.describe('PRU-E2E-BAND', () => {
     await preparar('2027-02-05');
     await abrir(page);
     await generarTokenWebhook(page);
+    await expect(token(page)).toHaveText(TOKEN);
     await abrir(page);
 
     await page.getByRole('link', { name: t.generarNuevo, exact: true }).click();

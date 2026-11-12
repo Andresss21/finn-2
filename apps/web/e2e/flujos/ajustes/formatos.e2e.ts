@@ -125,7 +125,10 @@ test.describe('PRU-E2E-AJUS', () => {
     await page.getByLabel(t.campos.nombre, { exact: true }).fill('Pago de prueba 2');
     await guardar(page).click();
     await expect(page).toHaveURL(/\/ajustes\/formatos\?guardado=/);
-    await expect(page.getByText(/Pago de prueba 2/)).toBeVisible();
+    // La lista dibuja el formato y, aparte, el resultado de guardar con su nombre: se mira la fila
+    await expect(
+      page.locator('[data-formato]').filter({ hasText: /Pago de prueba 2/ }),
+    ).toBeVisible();
     expect(eventosQueNombran('auditoria_formato editar')).toBe(1);
     // El antes y el después van en la misma fila
     expect(eventosQueNombran('"nombre": "Pago de prueba 2"')).toBeGreaterThanOrEqual(1);

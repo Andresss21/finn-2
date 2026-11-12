@@ -120,7 +120,8 @@ test.describe('PRU-E2E-CATEG', () => {
     await preparar([{ op: 'OP-07', categoria: 'Activa' }]);
     await abrir(page);
     await editar(page, 'Gastos').click();
-    await page.getByRole('button', { name: t.archivarGrupo, exact: true }).click();
+    // Con categorías activas «Archivar grupo» no se ofrece: queda deshabilitado y dice el motivo (E4-16)
+    await expect(page.getByRole('button', { name: t.archivarGrupo, exact: true })).toBeDisabled();
     await expect(page.getByText('Archivá primero todas las categorías de Gastos.')).toBeVisible();
 
     await preparar([
@@ -132,7 +133,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await abrir(page);
     await editar(page, 'Gastos').click();
     await page.getByRole('button', { name: t.archivarGrupo, exact: true }).click();
-    await expect(page.getByText(t.grupoArchivado)).toBeVisible();
+    await expect(page.getByText(t.grupoArchivado).first()).toBeVisible();
   });
 
   test('PRU-E2E-CATEG-106 [CA-18.3] "Bajar" un grupo lo pasa al segundo lugar y "Deshacer" lo devuelve; "Editar" renombra una categoría y la deja con el nombre nuevo en la lista', async ({

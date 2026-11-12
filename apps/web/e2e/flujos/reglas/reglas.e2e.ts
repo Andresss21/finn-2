@@ -120,9 +120,7 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     await abrir(page, '/presupuesto/estructura');
     await page.getByRole('link', { name: 'Editar Restaurantes', exact: true }).click();
     await page.getByRole('link', { name: 'Archivar', exact: true }).click();
-    await page.getByRole('button', { name: 'Archivar', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Revisá el impacto' })).toBeVisible();
-    await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
+    await page.getByRole('button', { name: 'Archivar Restaurantes', exact: true }).click();
     await expect(page).toHaveURL(/\/presupuesto\/categorias\/[0-9a-f-]+$/);
 
     await abrir(page, '/reglas');

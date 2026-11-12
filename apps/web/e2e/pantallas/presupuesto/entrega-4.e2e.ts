@@ -141,7 +141,8 @@ test.describe('PRU-E2E-PRES entrega 4', () => {
     await expect(page.getByText('Super va a quedar en −$350.00')).toBeVisible();
     await expect(page.getByText('$250.00 → −$350.00')).toBeVisible();
     await expect(boton).toBeEnabled();
-    await expect(page.getByRole('alert')).toHaveCount(0);
+    // Ningún error de flujo ni de campo (el `alert` vacío del anunciador de rutas de Next siempre está)
+    await expect(page.locator('[data-error-de-flujo], [aria-invalid="true"]')).toHaveCount(0);
     await boton.click();
     await expect(page).toHaveURL(/\/presupuesto$/);
     await esperarContenido(page);
@@ -171,7 +172,7 @@ test.describe('PRU-E2E-PRES entrega 4', () => {
     await expect(page).toHaveURL(/\/presupuesto\?filtro=sin-fondos$/);
     await expect(page.getByRole('link', { name: 'Sin fondos' })).toHaveAttribute(
       'aria-current',
-      'page',
+      'true',
     );
 
     await sembrarOps(OPS, HOY_CERRADO);

@@ -48,11 +48,12 @@ async function abrir(page: Page, ruta: string): Promise<void> {
 
 /** La primera ruta de detalle que enlaza una lista (`/metas/{id}`, `/programadas/{id}`), sin las de alta. */
 async function primeraRuta(page: Page, raiz: string): Promise<string> {
-  const href = await page
-    .locator(`a[href^="${raiz}/"]:not([href$="/nueva"])`)
-    .first()
-    .getAttribute('href');
-  if (href === null) throw new Error(`no hay enlaces de ${raiz}`);
+  // Solo la ruta del propio objeto (`/metas/{id}`), no sus acciones (`.../registrar`) ni las de alta
+  const hrefs = await page
+    .locator(`a[href^="${raiz}/"]`)
+    .evaluateAll((es) => es.map((e) => e.getAttribute('href') ?? ''));
+  const href = hrefs.find((h) => /^\/[a-z]+\/[0-9a-f-]{36}$/.test(h));
+  if (href === undefined) throw new Error(`no hay enlaces de ${raiz}`);
   return href;
 }
 
@@ -78,7 +79,7 @@ test.describe('PRU-E2E-META y PRU-E2E-PROG entrega 4', () => {
     await expect(pregunta).toBeVisible();
     await expect(pregunta).toBeFocused();
     await page.getByRole('button', { name: 'Eliminar', exact: true }).click();
-    await expect(page).toHaveURL(/\/metas$/);
+    await expect(page).toHaveURL(/\/metas(\?resultado=.*)?$/);
   });
 
   test('PRU-E2E-PROG-701 [CA-ET4-1] editar una programada muestra su tipo como dato fijo y la Fecha de fin nunca dice «undefined»', async ({

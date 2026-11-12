@@ -123,8 +123,9 @@ test.describe('PRU-E2E-CTA', () => {
       const riel = await barra(page, n).locator('..').boundingBox();
       return (b?.width ?? 0) / (riel?.width ?? 1);
     };
-    expect(await proporcion('Activos')).toBeCloseTo(0.1887, 2);
-    expect(await proporcion('Deudas')).toBeCloseTo(1, 2);
+    // Las barras crecen al entrar (movimiento de entrada): se espera a que lleguen a su ancho en lugar de medirlas en el primer cuadro
+    await expect.poll(() => proporcion('Activos')).toBeCloseTo(0.1887, 2);
+    await expect.poll(() => proporcion('Deudas')).toBeCloseTo(1, 2);
   });
 
   test('PRU-E2E-CTA-109 [CA-51.7] con activos y deudas en $0.00 las dos barras son 0, y con activos iguales a deudas, 10,000', async ({

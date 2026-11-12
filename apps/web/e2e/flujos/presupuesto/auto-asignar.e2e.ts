@@ -196,7 +196,8 @@ test.describe('PRU-E2E-PRES', () => {
     await expect(filaDeImpacto(page, 'Alfa')).toContainText('falta para la meta');
     await expect(filaDeImpacto(page, 'Alfa')).toContainText('→ $60.00');
     await expect(filaDeImpacto(page, 'Beta')).toContainText('→ $40.00');
-    await expect(hoja.getByText('→')).toHaveCount(0);
+    // E4-25: una fila «antes → después» por categoría que recibe dinero (Alfa y Beta)
+    await expect(hoja.getByText('→')).toHaveCount(2);
     const cancelar = hoja.getByRole('button', { name: 'Cancelar', exact: true });
     for (const b of [cancelar, confirmar(page)]) {
       const caja = await b.boundingBox();

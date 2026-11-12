@@ -162,7 +162,8 @@ test.describe('PRU-E2E-CTA', () => {
       page.getByText(cuentasGestion.eliminar.bloqueos.cuenta_con_movimientos('Ahorro')),
     ).toBeVisible();
     await expect(boton(page, cuentasGestion.eliminar.verCambios)).toHaveCount(0);
-    await page.getByRole('link', { name: cuentasGestion.eliminar.archivarEnLugar }).click();
+    // CTA-06: la pantalla bloqueada ofrece «Cerrar» y «Archivar» (la cuenta se archiva en lugar de eliminarse)
+    await page.getByRole('link', { name: 'Archivar', exact: true }).click();
     await expect(page).toHaveURL(/\/archivar$/);
   });
 
