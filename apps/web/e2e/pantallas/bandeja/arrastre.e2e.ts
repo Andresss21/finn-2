@@ -151,7 +151,7 @@ test.describe('PRU-E2E-BAND arrastre de la entrega 4', () => {
     const panel = page.locator('[data-panel-destinos]');
     await expect(panel).toBeVisible();
     // Los siete destinos entran sin desplazar: la sugerida, cinco frecuentes y «Otra categoría…»
-    const destinos = panel.locator('[data-destino]');
+    const destinos = panel.locator('[data-destino]').filter({ visible: true });
     await expect(destinos).toHaveCount(7);
     for (const caja7 of await destinos.evaluateAll((es) =>
       es.map(

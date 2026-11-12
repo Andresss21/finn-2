@@ -217,7 +217,7 @@ test.describe('PRU-E2E-PRES recorrido 4.3 inicio de período', () => {
     await abrir(page, '/presupuesto');
     await page.getByRole('link', { name: 'Auto-asignar' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(filaDeImpacto(page, 'Super')).toContainText('+$300.00');
+    await expect(filaDeImpacto(page, 'Super')).toContainText('$20.00 → $320.00');
     await expect(filaDeImpacto(page, 'Netflix')).toContainText('+$15.49');
     await expect(filaDeImpacto(page, 'Fondo')).toContainText('+$100.00');
     await expect(page.getByText(/quedó sin cubrir/)).toHaveCount(0);

@@ -114,7 +114,9 @@ test.describe('PRU-E2E-PRES recorrido 4.6 cerrar con sobregiros', () => {
       await expect(f.getByText(ti.reducira(reduccion), { exact: true })).toBeVisible();
     }
     const falta = page.locator('a[href^="/cuentas/"]').filter({ hasText: 'Te falta reservar' });
-    await esperarMonto(falta.locator('[data-centavos]').first(), 3000);
+    // D-4: la fila de la tarjeta tampoco lleva monto; los $30.00 se ven en Presupuesto (paso 2) y al tocarla
+    await expect(falta.first()).toBeVisible();
+    await expect(falta.locator('[data-centavos]')).toHaveCount(0);
 
     // Paso 2: el detalle de Super (reparto D2): débito $60.00; T $70.00 con $40.00 cubiertos y $30.00 no; débito olvidado al final
     await abrir(page, '/presupuesto');

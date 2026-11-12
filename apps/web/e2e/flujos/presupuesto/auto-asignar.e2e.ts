@@ -106,8 +106,8 @@ test.describe('PRU-E2E-PRES', () => {
     await page.getByRole('link', { name: 'Auto-asignar' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByText('Esto asignaría Finn')).toBeVisible();
-    await expect(filaDeImpacto(page, 'Alfa')).toContainText('+$60.00');
-    await expect(filaDeImpacto(page, 'Beta')).toContainText('+$40.00');
+    await expect(filaDeImpacto(page, 'Alfa')).toContainText('→ $60.00');
+    await expect(filaDeImpacto(page, 'Beta')).toContainText('→ $40.00');
     await expect(page.getByText('Beta queda con $10.00 sin cubrir.')).toBeVisible();
     await expect(page.getByText('Gama queda con $30.00 sin cubrir.')).toBeVisible();
     await confirmar(page).click();
@@ -132,7 +132,7 @@ test.describe('PRU-E2E-PRES', () => {
     await abrir(page, '/presupuesto');
     const alfa = await fila(page, 'Alfa').getAttribute('data-fila-categoria');
     await abrir(page, '/presupuesto/auto-asignar');
-    await expect(filaDeImpacto(page, 'Alfa')).toContainText('+$60.00');
+    await expect(filaDeImpacto(page, 'Alfa')).toContainText('→ $60.00');
     // La otra pestaña asigna $10.00 a Alfa mientras esta sigue con la previsualización de antes
     const otra = await context.newPage();
     await abrir(otra, `/presupuesto/asignar/${alfa}`);
@@ -145,8 +145,8 @@ test.describe('PRU-E2E-PRES', () => {
     await expect(confirmar(page)).toHaveCount(0);
     // No asignó nada: Alfa sigue con los $10.00 de la otra pestaña
     await page.getByRole('button', { name: 'Volver a calcular' }).click();
-    await expect(filaDeImpacto(page, 'Alfa')).toContainText('+$50.00');
-    await expect(filaDeImpacto(page, 'Beta')).toContainText('+$40.00');
+    await expect(filaDeImpacto(page, 'Alfa')).toContainText('$10.00 → $60.00');
+    await expect(filaDeImpacto(page, 'Beta')).toContainText('→ $40.00');
     await confirmar(page).click();
     await page.getByRole('button', { name: 'Listo', exact: true }).click();
     await expect(page).toHaveURL(/\/presupuesto$/);
@@ -194,8 +194,8 @@ test.describe('PRU-E2E-PRES', () => {
       hoja.getByText('hasta donde alcance Listo para asignar ($100.00).', { exact: false }),
     ).toBeVisible();
     await expect(filaDeImpacto(page, 'Alfa')).toContainText('falta para la meta');
-    await expect(filaDeImpacto(page, 'Alfa')).toContainText('+$60.00');
-    await expect(filaDeImpacto(page, 'Beta')).toContainText('+$40.00');
+    await expect(filaDeImpacto(page, 'Alfa')).toContainText('→ $60.00');
+    await expect(filaDeImpacto(page, 'Beta')).toContainText('→ $40.00');
     await expect(hoja.getByText('→')).toHaveCount(0);
     const cancelar = hoja.getByRole('button', { name: 'Cancelar', exact: true });
     for (const b of [cancelar, confirmar(page)]) {

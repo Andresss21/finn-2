@@ -244,7 +244,7 @@ test.describe('PRU-E2E-PWA', () => {
     await page.getByLabel('Texto').fill('desde la pestaña vieja');
     await page.getByRole('button', { name: 'Guardar' }).click();
     await expect(
-      page.getByText('Hay una versión nueva de Finn. Recargá para continuar.'),
+      page.getByText('Hay una versión nueva de Finn.'),
     ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Intentar de nuevo' })).toBeHidden();
     await page.getByRole('button', { name: 'Recargar' }).click();

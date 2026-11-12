@@ -142,7 +142,7 @@ test.describe('PRU-E2E-TX', () => {
     );
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
-    await expect(page.getByTestId('resultado')).toHaveText(
+    await expect(page.getByTestId('resultado').locator('p')).toHaveText(
       t.guardado(t.sinComercio, '$150.00', 'T', '2'),
     );
     await page.goto('/presupuesto');
@@ -170,7 +170,7 @@ test.describe('PRU-E2E-TX', () => {
     await campo(page, t.deudorNuevoDeParte('3')).fill('Ana');
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
-    await expect(page.getByTestId('resultado')).toHaveText(
+    await expect(page.getByTestId('resultado').locator('p')).toHaveText(
       t.guardado(t.sinComercio, '$200.00', 'T', '3'),
     );
     await page.goto('/presupuesto');
@@ -433,7 +433,7 @@ test.describe('PRU-E2E-TX', () => {
     await parteConCategoria(page, 3, '8.60', 'Super');
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
-    await expect(page.getByTestId('resultado')).toHaveText(
+    await expect(page.getByTestId('resultado').locator('p')).toHaveText(
       t.guardado('PRICESMART', '$148.60', 'T', '3'),
     );
     await expect(page.getByRole('link', { name: t.verCategoria('Super') })).toHaveAttribute(

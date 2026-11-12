@@ -24,7 +24,9 @@ async function preparar(): Promise<void> {
     titulo: 'Semilla de E5-10 a E5-14',
     refs: [],
     hoy: HOY,
-    estadoInicial: [{ op: 'OP-01', cuenta: 'Visa', tipo: 'tarjeta', ultimos4: '4821' }],
+    estadoInicial: [
+      { op: 'OP-01', cuenta: 'Visa', tipo: 'tarjeta', ultimos4: '4821', apertura: '2026-10-01' },
+    ],
     pasos: [],
   };
   await sembrar(escenario, HOY);

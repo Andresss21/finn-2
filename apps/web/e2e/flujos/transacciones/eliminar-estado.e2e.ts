@@ -204,7 +204,7 @@ test.describe('PRU-E2E-TX eliminar y cambiar el estado bancario', () => {
     await expect(page.getByText(/Eliminalos primero/)).toBeVisible();
     await expect(page.locator('[data-eventos]')).toContainText('$15.00');
     await expect(page.getByRole('button', { name: t.verCambios })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: t.verTransaccion })).toBeVisible();
+    await expect(page.getByRole('link', { name: t.entendido })).toBeVisible();
   });
 
   test('PRU-E2E-TX-454 [CA-26.5] RUTA-/actividad/[transaccionId]/estado al marcar confirmada la pendiente de $40.00 el saldo confirmado de la cuenta pasa de $60.00 a $100.00 y el saldo sigue en $100.00', async ({

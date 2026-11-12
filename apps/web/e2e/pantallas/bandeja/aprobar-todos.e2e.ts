@@ -36,7 +36,13 @@ const BASE: Op[] = [
 /** Un comercio con una compra aprobada antes en Farmacia: la siguiente trae esa categoría sugerida. */
 const conHistorial = (comercio: string, i: number): Op[] => [
   sms(`h${i}`, comercio, 5 + i, `09:0${i}`),
-  { op: 'OP-37', etiqueta: `h${i}`, categoria: 'Farmacia', aprobado: `${DIA_20}T09:3${i}` },
+  {
+    op: 'OP-37',
+    etiqueta: `h${i}`,
+    categoria: 'Farmacia',
+    aprobado: `${DIA_20}T09:3${i}`,
+    hoy: DIA_20,
+  },
 ];
 
 async function preparar(estadoInicial: Op[], ahora: string): Promise<void> {
