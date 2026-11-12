@@ -1,5 +1,7 @@
+'use client';
 // Lista de `/ajustes` (06 FT-72 a FT-77; export de diseño, pantalla 11 «Índice»): una tarjeta con una fila por sección: círculo
 // de ícono de 40, el nombre y la flecha. Solo enlaza a las secciones que existen; cada una conserva el texto de su catálogo.
+import { useInstalacion } from '../../../cliente/instalacion';
 import { Icono, type NombreIcono } from '../../../componentes/base/icono';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { ajustesApariencia } from '../../../textos/ajustes-apariencia';
@@ -27,6 +29,8 @@ const FILAS: readonly { href: string; icono: NombreIcono; texto: string }[] = [
 
 /** `respaldoAtrasado`: `AjustesDto.respaldo` (CA-76.1); sin él, la fila de Respaldo no avisa nada. */
 export function ListaAjustes({ respaldoAtrasado = false }: { respaldoAtrasado?: boolean }) {
+  // E5-17: en un iPhone sin instalar, la fila de Notificaciones dice por qué todavía no se puede activar.
+  const iosSinInstalar = useInstalacion().oferta === 'ios';
   return (
     <ul
       data-rol="lista-ajustes"
@@ -49,6 +53,11 @@ export function ListaAjustes({ respaldoAtrasado = false }: { respaldoAtrasado?: 
               {respaldoAtrasado && f.href === '/ajustes/respaldo' ? (
                 <span className="text-cuerpo-pequeno font-semibold text-problema-texto">
                   {ajustesRespaldo.atrasadoEnIndice}
+                </span>
+              ) : null}
+              {iosSinInstalar && f.href === '/ajustes/notificaciones' ? (
+                <span className="text-cuerpo-pequeno text-texto-secundario">
+                  {notificaciones.filaIosSinInstalar}
                 </span>
               ) : null}
             </span>

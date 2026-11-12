@@ -9,19 +9,28 @@ export const notificaciones = {
   activando: 'Activando…',
   descartar: 'Ahora no',
   activadasAqui: 'Las notificaciones están activas en este dispositivo.',
+  /** [CH-240] E5-16: la tarjeta «Este dispositivo» de `/ajustes/notificaciones`. */
+  esteDispositivoTitulo: 'Este dispositivo',
   sinDecidirAyuda:
-    'Finn te pide el permiso solo cuando tocás el botón. Si no lo activás, los avisos se ven igual en Finn.',
-  denegadoTitulo: 'Las notificaciones están bloqueadas',
-  denegadoAyuda:
-    'Para activarlas, habilitá las notificaciones de Finn en los ajustes de tu navegador o de tu teléfono, y volvé a abrir esta pantalla.',
+    'Finn te pide el permiso solo cuando tocás el botón. Si no las activás, los avisos igual aparecen en la campana.',
+  denegadoTitulo: 'Las notificaciones están bloqueadas en este navegador',
+  denegadoAyuda: 'Finn no puede volver a pedir el permiso. Para activarlas:',
   denegadoPasos: [
-    'Abrí los ajustes del sitio desde el candado o el ícono junto a la dirección.',
+    'Abrí los ajustes del sitio desde el candado, junto a la dirección.',
     'En «Notificaciones», elegí «Permitir».',
-    'Volvé a Finn y tocá «Activar notificaciones».',
+    'Volvé a Finn: esta pantalla se actualiza sola.',
   ],
-  iosTitulo: 'Primero instalá Finn',
-  iosAyuda:
-    'En iPhone y iPad las notificaciones solo funcionan con Finn instalada en la pantalla de inicio. Instalala desde «Compartir» y «Agregar a inicio», abrí Finn desde ese ícono y volvé acá.',
+  iosTitulo: 'En iPhone, primero instalá Finn',
+  iosAyuda: 'Safari solo deja recibir notificaciones a las apps agregadas a la pantalla de inicio.',
+  iosPasos: [
+    'Tocá Compartir en la barra de Safari.',
+    'Elegí «Agregar a inicio».',
+    'Abrí Finn desde el ícono y volvé acá a activarlas.',
+  ],
+  notaPermiso:
+    'Si el permiso está denegado, se cambia en los ajustes del navegador; Finn no puede pedirlo otra vez.',
+  /** [CH-240] E5-17: la fila de Notificaciones del índice de Ajustes en un iPhone sin instalar. */
+  filaIosSinInstalar: 'Sin activar: primero instalá Finn',
   noDisponible: 'Este navegador no permite notificaciones.',
   dispositivos: 'Dispositivos con notificaciones',
   sinDispositivos: 'Todavía no hay dispositivos con notificaciones.',

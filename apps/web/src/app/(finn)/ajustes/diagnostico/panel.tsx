@@ -108,11 +108,27 @@ export function PanelDiagnostico({ eventos, ejecutar, version }: PropsPanelDiagn
           }}
         />
         {eventos.length === 0 ? (
-          <p className="text-cuerpo-pequeno text-texto-secundario">{t.sinEventos}</p>
+          <div
+            data-rol="sin-eventos"
+            className="flex flex-col gap-1 rounded-contenedor border-2 border-dashed border-borde-control px-4 py-6 text-center"
+          >
+            <p className="text-cuerpo font-semibold text-texto">{t.sinEventos}</p>
+            <p className="text-cuerpo-pequeno text-texto-secundario">{t.sinEventosTexto}</p>
+          </div>
         ) : visibles.length === 0 ? (
-          <p role="status" className="text-cuerpo-pequeno text-texto-secundario">
-            {t.sinResultados}
-          </p>
+          <div role="status" className="flex flex-col items-start gap-3">
+            <p className="text-cuerpo-pequeno text-texto-secundario">
+              {t.sinResultados(busqueda.trim())}
+            </p>
+            <Boton
+              variante="secundaria"
+              onClick={() => {
+                setBusqueda('');
+              }}
+            >
+              {t.quitarBusqueda}
+            </Boton>
+          </div>
         ) : (
           <ul data-rol="eventos" className="flex flex-col divide-y divide-borde-sutil">
             {visibles.map((e) => (

@@ -3,7 +3,8 @@
 // una nueva. Los formatos de cada una se ven en Formatos bancarios.
 import { Vacio } from '../../../../componentes/base/vacio';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
-import { PaginaFlujoDeRuta } from '../../../../componentes/navegacion/flujo-de-ruta';
+import { VolverEnTitulo } from '../../../../componentes/navegacion/volver-en-titulo';
+import { navegacion } from '../../../../textos/navegacion';
 import { ajustesInstituciones as t } from '../../../../textos/ajustes-instituciones';
 
 const ENLACE = 'inline-flex min-h-11 items-center font-semibold text-enlace underline';
@@ -16,7 +17,14 @@ export function ListaInstituciones({
   readonly instituciones: readonly { readonly id: string; readonly nombre: string }[];
 }) {
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre="/ajustes/formatos">
+    <main className="mx-auto flex max-w-3xl flex-col gap-5 px-5 py-4">
+      <div className="-ml-2 flex items-center gap-1">
+        <VolverEnTitulo
+          href="/ajustes"
+          etiqueta={navegacion.volverA(navegacion.secciones.ajustes)}
+        />
+        <h1 className="min-w-0 flex-1 text-titulo-pantalla">{t.titulo}</h1>
+      </div>
       <div className="flex flex-col gap-5">
         {instituciones.length === 0 ? (
           <Vacio titulo={t.vacio.titulo} texto={t.vacio.texto} icono="x" tono="neutro" />
@@ -45,6 +53,6 @@ export function ListaInstituciones({
           {t.formatos}
         </EnlaceFinn>
       </div>
-    </PaginaFlujoDeRuta>
+    </main>
   );
 }

@@ -6,7 +6,7 @@ import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { seleccion } from '../../ayudas/seleccion-nativa.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
-import { ajustesWebhook } from '../../../src/textos/ajustes-webhook.ts';
+import { generarTokenWebhook } from '../../ayudas/webhook.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
 import { cuentas } from '../../../src/textos/cuentas.ts';
 import { registrarGasto as g } from '../../../src/textos/registrar-gasto.ts';
@@ -119,7 +119,7 @@ test.describe('PRU-E2E-BAND', () => {
     await sembrar(escenario([]), DIA_20);
     await page.goto('/ajustes/webhook');
     await esperarHidratacion(page);
-    await page.getByRole('button', { name: ajustesWebhook.generar, exact: true }).click();
+    await generarTokenWebhook(page);
     const token = ((await page.getByTestId('token').textContent()) ?? '').trim();
     const texto = 'Mensaje sin formato de MacroDroid';
     const respuesta = await request.post('/api/sms', {

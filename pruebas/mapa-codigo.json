@@ -215,7 +215,7 @@
   { "patron": "apps/web/src/app/(finn)/ajustes/lista-ajustes.tsx", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/instalar-finn.tsx", "fts": ["FT-05"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/loading.tsx", "fts": ["FT-04"] },
-  { "patron": "apps/web/src/flujos/ajustes-webhook/**", "fts": ["FT-03"] },
+  { "patron": "apps/web/src/flujos/ajustes-webhook-token/**", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/webhook/**", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/apariencia/**", "fts": ["FT-77"] },
   { "patron": "apps/web/src/flujos/ajustes-ciclo/**", "fts": ["FT-72"] },

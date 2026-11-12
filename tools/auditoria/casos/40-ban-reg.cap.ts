@@ -12,7 +12,7 @@ import {
   type Op,
   type Page,
 } from '../lib.ts';
-import { ajustesWebhook } from '../../../apps/web/src/textos/ajustes-webhook.ts';
+import { generarTokenWebhook } from '../../../apps/web/e2e/ayudas/webhook.ts';
 import { bandeja as tb } from '../../../apps/web/src/textos/bandeja.ts';
 import { cuentas as tc } from '../../../apps/web/src/textos/cuentas.ts';
 import { registrarGasto as tg } from '../../../apps/web/src/textos/registrar-gasto.ts';
@@ -226,7 +226,7 @@ const hrefDeVista =
 async function tokenWebhook(page: Page): Promise<string> {
   await page.goto('/ajustes/webhook');
   await quieta(page);
-  await page.getByRole('button', { name: ajustesWebhook.generar, exact: true }).click();
+  await generarTokenWebhook(page);
   return ((await page.getByTestId('token').textContent()) ?? '').trim();
 }
 async function enviarSms(
