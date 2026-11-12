@@ -9,6 +9,8 @@ import { Superpuesto, type DesdeSuperpuesto } from '../marco/superpuesto';
 import { PaginaFlujo } from '../marco/pagina-flujo';
 import { AvisoEnLinea, type EstadoFinanciero } from './aviso';
 import { ErrorPantalla } from './error-pantalla';
+import { formularios } from '../../textos/formularios';
+import { Boton } from './boton';
 import { Resultado } from './resultado';
 import { Vacio } from './vacio';
 
@@ -366,7 +368,7 @@ describe('PRU-CMP-VAL-103 superpuestos, avisos, resultados y vacíos', () => {
 
 describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
   // Salidas largas: la prueba termina la animación con `animationend` y no depende del reloj ni de la carga de la máquina.
-  const SALIDAS = ['--duracion-salida', '--duracion-rapida'];
+  const SALIDAS = ['--duracion-normal', '--duracion-rapida'];
   const salidasLargas = (): void => {
     for (const t of SALIDAS) document.documentElement.style.setProperty(t, '60s');
   };
@@ -406,17 +408,17 @@ describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
       expect(raiz.textContent).toBe('Pantalla de origen');
     }
 
-    // La hoja abre con su entrada (380 ms, curva de entrada) y el velo en 200 ms; la salida dura 200 ms.
+    // La hoja abre con su entrada (400 ms, curva de entrada) y el velo en 220 ms; la salida dura 220 ms.
     for (const t of SALIDAS) document.documentElement.style.removeProperty(t);
     expect(
-      getComputedStyle(document.documentElement).getPropertyValue('--duracion-salida').trim(),
-    ).toBe('200ms');
+      getComputedStyle(document.documentElement).getPropertyValue('--duracion-normal').trim(),
+    ).toBe('220ms');
     montar(<Hoja desde="abajo" alCerrar={() => {}} />);
     expect(getComputedStyle(dialogo()).animationName).toBe('fz-sh-in');
-    expect(getComputedStyle(dialogo()).animationDuration).toBe('0.38s');
+    expect(getComputedStyle(dialogo()).animationDuration).toBe('0.4s');
     const veloAbierto = document.querySelector('[data-testid=velo]') as HTMLElement;
     expect(getComputedStyle(veloAbierto).animationName).toBe('fz-v-in');
-    expect(getComputedStyle(veloAbierto).animationDuration).toBe('0.2s');
+    expect(getComputedStyle(veloAbierto).animationDuration).toBe('0.22s');
   });
 
   it('PRU-CMP-PWA-320 [] con movimiento reducido la hoja se desmonta en el acto', async () => {
@@ -480,5 +482,27 @@ describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
     // Otro `animationend` (o el tope de la duración del token) no lo llama de nuevo.
     terminarAnimacion(d);
     expect(cerrarFlujo).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PRU-CMP-PWA sin conexión en los envíos', () => {
+  it('PRU-CMP-PWA-741 [CA-E4-23] un control de envío sin conexión queda disabled con aria-describedby hacia «Sin conexión: no se puede guardar ahora.»', () => {
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    montados.push({ raiz, nodo });
+    act(() => {
+      raiz.render(
+        <Boton tipo="submit" deshabilitado motivoDeshabilitado={formularios.sinConexionMotivo}>
+          Guardar
+        </Boton>,
+      );
+    });
+    const boton = nodo.querySelector('button') as HTMLButtonElement;
+    expect(boton.disabled).toBe(true);
+    const motivo = nodo.querySelector(
+      `#${CSS.escape(boton.getAttribute('aria-describedby') ?? '')}`,
+    );
+    expect(motivo?.textContent).toBe('Sin conexión: no se puede guardar ahora.');
   });
 });

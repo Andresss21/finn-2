@@ -5,21 +5,40 @@ export const ajustesWebhook = {
   conToken: (fecha: string) => `Token generado el ${fecha}.`,
   /** [CH-227] Con el token configurado (A27). */
   conectado: 'Conectado',
-  conectadoConSms: (fecha: string) => `Conectado. El último SMS llegó el ${fecha}.`,
+  /** [CH-241 h] `cuando`: «hoy a las 12:41» o «el 04/02/2027 a las 04:07» (11-ajustes/conectar-sms). */
+  conectadoConSms: (cuando: string) => `Conectado. El último SMS llegó ${cuando}.`,
+  llegadaHoy: (hora: string) => `hoy a las ${hora}`,
+  llegadaOtroDia: (fecha: string, hora: string) => `el ${fecha} a las ${hora}`,
   generar: 'Generar token',
   generando: 'Generando…',
-  cambiar: 'Cambiar token',
-  advertenciaCambio:
-    'El token actual dejará de funcionar. Vas a tener que pegar el nuevo en MacroDroid.',
-  confirmarCambio: 'Sí, cambiar el token',
+  /** [CH-240] E5-18: la pantalla no muestra ningún sufijo ni «Copiar»; Finn guarda solo el SHA-256 del token (04 §8.8). */
+  tarjetaToken: 'Token de MacroDroid',
+  noGuardado:
+    'Finn no guarda el token: solo lo muestra una vez, al generarlo. Si lo perdiste o cambiaste de teléfono, generá uno nuevo.',
+  generarNuevo: 'Generar un token nuevo',
   cancelar: 'Cancelar',
-  copiaAhora: 'Copiá este token ahora: no lo vas a poder ver de nuevo.',
+  /** [CH-240] La hoja de `/ajustes/webhook/token` (E5-18, flujo corto). */
+  hoja: {
+    tituloCambiar: 'Cambiar el token',
+    tituloPrimero: 'Generar el token',
+    descripcion: 'Conectar los SMS',
+    advertenciaTitulo: 'El token actual deja de funcionar',
+    advertencia:
+      'MacroDroid no va a poder mandar SMS a Finn hasta que pegues el token nuevo en su acción «HTTP Request». Hacelo con el teléfono a mano: el token nuevo se muestra completo una sola vez.',
+    primero:
+      'El token se muestra completo una sola vez. Hacelo con el teléfono a mano, para pegarlo enseguida en MacroDroid.',
+    listoNuevo: 'Generaste un token nuevo. El anterior dejó de funcionar.',
+    listoPrimero: 'Generaste tu token.',
+    copialoAhora: 'Copialo ahora',
+    ocultoAlCerrar:
+      'Cuando cierres esta pantalla, el token se vuelve a ver oculto. Pegalo en MacroDroid y probá con «Probar acción».',
+    listo: 'Listo',
+  },
   tokenEtiqueta: 'Token del webhook',
   urlEtiqueta: 'URL de la acción HTTP',
   copiar: 'Copiar',
   copiado: 'Copiado',
   noSePudoCopiar: 'No se pudo copiar. Seleccionalo y copialo a mano.',
-  yaLoPegue: 'Ya lo pegué en MacroDroid',
   instrucciones: 'Cómo configurar MacroDroid',
   disparador: ['Disparador', 'SMS recibido, filtrado por los remitentes de tus bancos.'],
   accion: ['Acción', 'HTTP Request.'],

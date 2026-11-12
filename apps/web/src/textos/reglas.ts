@@ -11,6 +11,9 @@ export const reglas = {
   buscar: 'Buscar reglas',
   buscarMarcador: 'Comercio o categoría',
   sinCoincidencias: 'Ninguna regla con ese texto',
+  // E4-22: el vacío de la búsqueda dice qué se buscó y ofrece quitarla.
+  ningunaPara: (busqueda: string) => `Ninguna regla para ${busqueda}.`,
+  quitarBusqueda: 'Quitar la búsqueda',
   noSeAplica: 'No se aplica: la categoría está archivada',
   hacia: (categoria: string) => `→ ${categoria}`,
   archivadaEnLista: (categoria: string) => `${categoria} (archivada)`,
@@ -19,6 +22,7 @@ export const reglas = {
   obligatorio: 'Completá este campo.',
   guardar: 'Guardar regla',
   guardando: 'Guardando…',
+  sinCambios: 'Todavía no cambiaste nada.',
   creada: 'Regla creada',
   guardada: 'Regla guardada',
   cancelar: 'Cancelar',
@@ -27,7 +31,7 @@ export const reglas = {
   eliminada: 'Regla eliminada',
   confirmarEliminar: (patron: string) =>
     `¿Eliminar la regla «${patron}»? Los próximos SMS de ese comercio tomarán la categoría del historial.`,
-  confirmarSi: 'Sí, eliminar',
-  noEliminar: 'No eliminar',
+  confirmarSi: 'Eliminar',
+  noEliminar: 'Cancelar',
   sinCategorias: 'Primero creá una categoría para poder armar una regla.',
 } as const;

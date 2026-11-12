@@ -180,7 +180,7 @@ describe('PRU-CMP-REP hallazgos accionables', () => {
     expect(raiz.querySelector('[data-hallazgo-fila]')).toBeNull();
   });
 
-  it('PRU-CMP-REP-252 [FT-67] el hallazgo de suscripción lleva «Programarla» de un toque (OP-42 crear) y «Deshacer» (OP-51); con una programada desactivada, «Reactivarla» y su inversa', async () => {
+  it('PRU-CMP-REP-252 [FT-67] el hallazgo de suscripción lleva «Programarla» de un toque (OP-42 crear) y «Deshacer» (OP-51); con una programada desactivada, «Reactivarla» y su inversa «Desactivarla»', async () => {
     const tocar = async (el: Element | null | undefined): Promise<void> => {
       await act(async () => {
         (el as HTMLElement).click();
@@ -218,7 +218,7 @@ describe('PRU-CMP-REP hallazgos accionables', () => {
     expect(gestionar).toHaveBeenLastCalledWith(
       expect.objectContaining({ accion: 'activar', programadaId: 'p7', activa: true }),
     );
-    await tocar(boton(otra, 'Deshacer'));
+    await tocar(boton(otra, 'Desactivarla'));
     expect(gestionar).toHaveBeenLastCalledWith(
       expect.objectContaining({ accion: 'activar', programadaId: 'p7', activa: false }),
     );

@@ -17,9 +17,17 @@ export const categoriasArchivar = {
       : `Tiene dinero asignado en ${n} períodos futuros. Se devuelve a ${glosario.listoParaAsignar}.`,
   programada: (comercio: string, monto: string) => `Programada ${comercio} (${monto})`,
   desactivar: 'Desactivarla',
-  reasignarA: (nombre: string) => `Pasarla a ${nombre}`,
+  pasarla: 'Pasarla a otra categoría',
+  pasarlaA: 'Pasarla a',
   elegir: 'Elegí una opción.',
   archivar: 'Archivar',
+  // E4-1: el verbo del pie lleva el nombre de la categoría.
+  archivarNombre: (nombre: string) => `Archivar ${nombre}`,
+  intro: (nombre: string) =>
+    `Al archivar, ${nombre} deja de aparecer en el presupuesto. Su historial se conserva y la podés desarchivar.`,
+  rotuloImpacto: 'Antes de confirmar',
+  calculando: 'Calculando el impacto…',
+  impactoCambio: 'El impacto cambió. Revisalo antes de confirmar.',
   archivando: 'Archivando…',
   revisar: 'Revisá el impacto',
   impactoLpa: (delta: string) => `${glosario.listoParaAsignar} cambia ${delta}.`,

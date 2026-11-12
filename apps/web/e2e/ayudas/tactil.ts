@@ -19,6 +19,8 @@ export async function revisarTactil(
         const { width, height } = n.getBoundingClientRect();
         const visible = width > 0 && height > 0;
         if (!visible || (width >= minimo && height >= minimo)) return [];
+        // Con una hoja modal abierta el resto de la página queda oculto para la tecnología de apoyo: no se toca
+        if (n.closest('[aria-hidden="true"], [inert]') !== null) return [];
         if (fuera.includes(n.getAttribute('data-testid') ?? '')) return [];
         return [`${n.tagName} «${n.textContent.trim()}» ${width}×${height}`];
       }),

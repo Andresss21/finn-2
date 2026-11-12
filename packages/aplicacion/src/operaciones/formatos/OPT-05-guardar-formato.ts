@@ -23,6 +23,8 @@ import {
   type ErrorFinn,
   type ResultadoAccion,
 } from '../../errores/index.ts';
+import { datosDeRechazoDeFormato } from './mensajes-politica.ts';
+import { mensajeDeRechazo } from '../../errores/mensajes.ts';
 import { idErrorAleatorio } from '../marco.ts';
 
 export interface SalidaFormato {
@@ -30,23 +32,14 @@ export interface SalidaFormato {
   readonly accion: AccionAuditoriaFormato | null;
 }
 
-const LARGO_ATAQUE = 40;
-const MENSAJES = {
-  patron_invalido: 'El patrón no es una expresión regular válida.',
-  banderas_no_permitidas: 'Solo se permiten las banderas i, m, s y u, en ese orden.',
-  grupos_obligatorios:
-    'El patrón necesita los grupos ultimos4 y monto, y fecha solo si elegís formatos de fecha.',
-} as const;
-
-/** El texto de cada rechazo de la política de 04 §8.5, en el campo que corrige el usuario. */
-function rechazoDePolitica(v: Extract<ValidacionFormato, { valido: false }>): ErrorFinn {
+/** El texto de cada rechazo de la política de 04 §8.5 sale del catálogo (7.10 [CH-240] [CH-247]), en el campo que corrige el usuario. */
+function rechazoDePolitica(
+  v: Extract<ValidacionFormato, { valido: false }>,
+  e: EntradaFormato,
+): ErrorFinn {
   const campo = v.error === 'banderas_no_permitidas' ? 'banderas' : 'patron';
-  const mensaje =
-    v.error === 'patron_lento'
-      ? v.grado === null
-        ? 'No pudimos comprobar que el patrón sea rápido. Simplificalo.'
-        : `El patrón puede tardar demasiado con ciertos textos (grado ${String(v.grado)}, por ejemplo «${v.ataque.slice(0, LARGO_ATAQUE)}»). Simplificalo.`
-      : MENSAJES[v.error];
+  const datos = datosDeRechazoDeFormato(v, e);
+  const mensaje = mensajeDeRechazo({ codigo: v.error, datos }) ?? v.error;
   const base = errorDeValidacion([{ path: [campo], message: mensaje }]);
   return { ...base, codigo: v.error };
 }
@@ -93,7 +86,7 @@ export async function guardarFormatoBancario(
   const e: EntradaFormato = analizada.data;
   const despues: FilaFormato = e;
   const politica = validarFormato(e);
-  if (!politica.valido) return { ok: false, error: rechazoDePolitica(politica) };
+  if (!politica.valido) return { ok: false, error: rechazoDePolitica(politica, e) };
 
   let fin: Fin;
   try {

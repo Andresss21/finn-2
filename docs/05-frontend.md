@@ -579,10 +579,11 @@ Clases: **[P]** sección principal, **[S]** secundaria, **[D]** detalle, **[L]**
   notificaciones/page.tsx (y @superpuesto/(.)notificaciones, [F6] CF-23)                             [S] Centro de notificaciones        ?no-leidas=1 &cursor=
   ajustes/page.tsx                                    [S] Ajustes (índice)
   ajustes/ciclo/                                      [C] OP-19
-  ajustes/webhook/                                    [C] OPT-01
-  ajustes/formatos/page.tsx                           [L] lista de formatos bancarios
+  ajustes/webhook/page.tsx                            [S] Conectar los SMS **[CH-240]**
+  ajustes/webhook/token/                              [C] OPT-01 (generar el token) **[CH-240]**
+  ajustes/formatos/page.tsx                           [S] lista de formatos bancarios **[CH-240]**
   ajustes/formatos/nuevo/  ajustes/formatos/[formatoId]/   [L] OPT-05, OPT-06
-  ajustes/instituciones/page.tsx                      [L] lista de instituciones
+  ajustes/instituciones/page.tsx                      [S] lista de instituciones **[CH-240]**
   ajustes/instituciones/nueva/  ajustes/instituciones/[institucionId]/   [C] OPT-07
   ajustes/notificaciones/                             [S] OPT-02, OPT-03 (§8, Parte D)
   ajustes/seguridad/                                  [S] factores TOTP (CP-4; §9, Parte B)
@@ -1305,8 +1306,13 @@ Catálogo completo (la regla T9 de V5-18 rechaza cualquier parámetro de §1.3 o
 | `?ventana=` | Ventana de un reporte | `actual`, `ultimos-1` … `ultimos-12` | Reportes |
 | `?limite=` | Cantidad de filas de un reporte | Entero | Top de comercios |
 | `?cursor=` | Posición en una lista paginada (04 6.0.6) | Texto opaco | Bandeja, Actividad, detalle de cuenta, Notificaciones |
-| `?volver=` | **Ruta interna a la que se vuelve**: después de ingresar (3.6) o con el enlace "Volver" de un detalle (3.3) | Ruta interna, validada como en 3.6 | Rutas de `ingresar`, cualquier detalle [D] |
+| `?volver=` | **Ruta interna a la que se vuelve**: después de ingresar (3.6) o con el enlace "Volver" de un detalle (3.3); **[CH-248]** Asignar y Mover, abiertos desde el detalle de una categoría, la reciben con la ruta de ese detalle (solo `/presupuesto/categorias/<Uuid>`, con `?periodo=` si lo hay) y al terminar vuelven a él con `?resultado=` | Ruta interna, validada como en 3.6 | Rutas de `ingresar`, cualquier detalle [D] |
 | `?notificacion=` | Notificación que se abrió (se marca como leída, FE-32) | Uuid | Cualquier destino de 3.5 |
+| `?motivo=` **[CH-248]** | Por qué se llegó a `/ingresar`; con `sesion-vencida` la pantalla avisa que la sesión venció (7.5, 9.3) | `sesion-vencida` | `/ingresar` |
+| `?resultado=` **[CH-248]** | Resultado de un flujo corto que se cerró sobre el detalle (E2-13); la interfaz lo valida y dibuja, un valor mal formado no se muestra | `verificado:<FechaLocal>:<entero>` o `pagado:<montoTexto>:<0 o 1>` (detalle de cuenta); `asignado`, `asignado:<montoTexto>:<montoTexto>` (nuevo y anterior, con «Deshacer», OP-14 con los dos valores intercambiados) o `movido:<montoTexto>` (detalle de categoría, E2-13); `extendida:<Uuid>:<FechaLocal>` o `ajustada:<Uuid>` (Metas, E4-18); `eliminada` o `ajustada:<Uuid>` (Programadas, E6-14) | Detalle de cuenta, detalle de categoría, Metas, Programadas |
+| `?agregado=`, `?quitado=` **[CH-248]** | Nombre del factor que se acaba de agregar o quitar, para el aviso de resultado | Texto | Seguridad |
+| `?guardado=` **[CH-248]** | Formato que se acaba de guardar, para el aviso de resultado | Uuid | Formatos |
+| `?enfocar=` **[CH-248]** | Campo de la meta que se edita al abrir el detalle | `fecha`, `monto` | Detalle de meta |
 
 Notas:
 - **[R2] `?volver=` también para el regreso de los detalles.** El ajuste 1 pidió un nombre distinto de `?desde=`, que ya es el filtro de fechas de Actividad. Se usa `?volver=` y no un tercer nombre (por ejemplo `?regreso=`) porque su significado es el mismo que el de las rutas de `ingresar` (la ruta interna a la que se vuelve) y se valida igual. Dos nombres para un mismo significado también se evitan.
@@ -1481,11 +1487,12 @@ Notas:
 |---|---|---|---|---|---|
 | `/ajustes` | [S] | `ajustes()` | Índice de las páginas siguientes | — | Muestra un resumen de cada sección (por ejemplo, "Respaldo atrasado") |
 | `/ajustes/ciclo` | [C] | `ajustes()` | OP-19 (previsualizar primero) | AV-12 (antes) | Muestra la vigencia futura, si existe |
-| `/ajustes/webhook` | [C] | `ajustes()` | OPT-01 | — | El token nuevo se muestra **una sola vez**, con "Copiar"; nunca se guarda en el borrador ni en el cliente después de cerrar el flujo |
-| `/ajustes/formatos` | [L] | `ajustes()` | [L] nuevo y edición | — | Lista con `usos` y `ultimoUso` |
+| `/ajustes/webhook` | [S] | `ajustes()` | [C] `/ajustes/webhook/token` | — | **[CH-240]** Estado de la conexión (con `webhook.ultimoSmsEn` si ya llegó un SMS) y las instrucciones de MacroDroid. Finn guarda solo el SHA-256 del token: la pantalla no muestra ningún sufijo ni «Copiar» (E5-18). Lleva «←», la campana y la barra inferior (E5-20) |
+| `/ajustes/webhook/token` | [C] | `ajustes()` | OPT-01 | — | **[CH-240]** Hoja sobre Ajustes con la advertencia «El token actual deja de funcionar». El token nuevo se muestra **una sola vez**, con "Copiar"; nunca se guarda en el borrador ni en el cliente después de cerrar el flujo |
+| `/ajustes/formatos` | [S] | `ajustes()` | [L] nuevo y edición | — | **[CH-240]** Lista con `usos` y `ultimoUso`; lleva «←», la campana y la barra inferior (E5-20) |
 | `/ajustes/formatos/nuevo` | [L] | `formulario({ operacion: 'formato' })` | OPT-05, OPT-06 (probar contra un SMS) | — | Borrador (4.11) |
 | `/ajustes/formatos/[formatoId]` | [L] | `formulario({ operacion: 'formato', formatoId })` | OPT-05, OPT-06 | — | Borrador (4.11) |
-| `/ajustes/instituciones` | [L] | `ajustes()` | [C] nueva y edición | — | — |
+| `/ajustes/instituciones` | [S] | `ajustes()` | [C] nueva y edición | — | **[CH-240]** Lleva «←», la campana y la barra inferior (E5-20) |
 | `/ajustes/instituciones/nueva` | [C] | `ajustes()` | OPT-07 | — | — |
 | `/ajustes/instituciones/[institucionId]` | [C] | `ajustes()` | OPT-07 (renombrar) | — | — |
 | `/ajustes/notificaciones` | [S] | `ajustes()` | OPT-02 (activar en este dispositivo), OPT-03 (quitar un dispositivo) | — | Estado del permiso del navegador y la explicación si está denegado (CP-5). Detalle en §8 (Parte D) |
@@ -1872,6 +1879,7 @@ No se muestra ningún número guardado en el cliente: la app es solo en línea (
 
 - **Al leer:** la consulta responde `NO_AUTORIZADO` y `consultar()` redirige a `/ingresar?volver=…` o a `/ingresar/verificar?volver=…` (7.3).
 - **Al escribir:** la Server Action responde `NO_AUTORIZADO` (04 2.2.2) y `useOperacion` navega a `/ingresar?volver=<ruta del flujo>` (4.7). Los flujos largos conservan su borrador (4.11) y lo recuperan al volver.
+- **[CH-248]** Al llegar a `/ingresar` por una sesión vencida, `?motivo=sesion-vencida` (2.2) muestra el aviso de que la sesión venció; sin ese parámetro, la pantalla no dice nada. Lo implementó TA-596.
 - **Sin hacer nada:** no hay detección en segundo plano; el próximo pedido lo resuelve. `proxy.ts` redirige de forma optimista si la cookie ya no existe (04 12.4).
 
 ### 7.6 Versión nueva
@@ -1941,6 +1949,8 @@ Cada página de `ingresar` lee `estadoAcceso()` (CP-11) en el servidor y decide 
 - **Errores** (9.7): un solo mensaje para credenciales inválidas, sea el email, la contraseña o un usuario distinto del permitido, para no revelar cuál falló.
 - **Sin registro ni recuperación de contraseña en la app** (registro deshabilitado, ADR-08; recuperación desde el panel de Supabase, 04 12.6). **[D4]** (CH-05-9.3) Bajo el botón «Ingresar», una línea en `cuerpo-pequeno` y `--texto-secundario`, sin enlace: «¿Olvidaste la contraseña? Cambiala desde el panel de Supabase.» No hay control de «Primera vez» ni de «Olvidé mi contraseña».
 
+- **[CH-248]** Con `?motivo=sesion-vencida` (2.2), sobre el formulario va el aviso de que la sesión venció; el resto de la pantalla no cambia.
+
 ### 9.4 `/ingresar/verificar` (FE-38)
 
 - **Factor:** si hay un solo factor verificado, se usa ese. Si hay varios, se elige por su nombre (`estadoAcceso().factoresVerificados`, CP-11), con el primero preseleccionado.
@@ -1980,6 +1990,7 @@ Lo usan `/ingresar/inscribir` (primer factor, AAL1) y `/ajustes/seguridad/factor
 - **Quitar un factor:** `/ajustes/seguridad/factores/[factorId]/quitar`, con confirmación. Solo si queda otro factor verificado (04 12.2); si no, el flujo explica que se necesita otro factor antes y enlaza a agregarlo. Ejecuta `quitarFactor({ factorId })`.
 - **Cerrar las otras sesiones** [1T]: `cerrarOtrasSesiones()` (`signOut({ scope: 'others' })`); sin salida para revertir (4.14).
 - **Salir:** `salir()` (`signOut({ scope: 'local' })`, 04 12.2). Después, en el cliente: se borran los borradores de la pestaña (4.11) y se navega a `/ingresar`. La suscripción push del dispositivo **no** se quita; para eso está Ajustes > Notificaciones.
+- **[CH-242]** **«Salir» a la vista.** Además de aquí, `salir()` se invoca desde la última fila de la hoja «Más secciones» (separada por una franja de 8 px, con el ícono `logout` y sin flecha), el pie de la barra lateral y una tarjeta propia en `/ajustes`, en color neutro (`--texto`). Sin borradores de flujos largos en la pestaña (4.11), sale directo. Con borradores, antes abre un diálogo del marco (hoja en el teléfono y panel lateral en computadora, sin ruta nueva): «Tenés N cambios sin enviar», con cada borrador (el flujo, su detalle y la hora en que se guardó) y «Seguir» para retomarlo, «Quedarme» (tonal) y «Salir y borrarlos» (`--peligro`); con uno, en singular. Los borradores se borran solo después de `ok: true`: si `salir()` falla, siguen ahí y el motivo queda en el lugar. Saliendo, el control lleva `aria-busy`; sin conexión, se deshabilita con «Sin conexión: no se puede salir ahora.» (7.4). `salir()` no cambia.
 
 ### 9.7 Errores de autenticación
 
@@ -2822,7 +2833,7 @@ El `movimientoId` que necesitan las acciones de 11.5 sale de `destino` (`pantall
 
 Relaciona cada consulta y cada operación de 04 con su pantalla y su componente. Las tablas 15.1 y 15.2 **las genera** `tools/docs/fase5/trazabilidad.py` **[CH-18]** a partir del mapa de §2 y de las acciones de un toque de 4.14 (V5-36); no se editan a mano. Si cambia una fila de §2, se vuelven a generar y la CI comprueba que coincidan.
 
-Resultado actual: Consultas: 18/18 · operaciones con pantalla: 61/62 (sin pantalla: OP-35, el webhook) · flujos: 51 · carpetas de flujo repetidas: 0.
+Resultado actual: Consultas: 18/18 · operaciones con pantalla: 61/62 (sin pantalla: OP-35, el webhook) · flujos: 49 · carpetas de flujo repetidas: 0.
 
 ### 15.1 Consultas → pantallas
 
@@ -2839,7 +2850,7 @@ Resultado actual: Consultas: 18/18 · operaciones con pantalla: 61/62 (sin panta
 | `bandeja` | `/bandeja` | 1 |
 | `reporte` | `/reportes/[tipo]` | 1 |
 | `metas` | `/metas` | 1 |
-| `ajustes` | `/ajustes`, `/ajustes/apariencia`, `/ajustes/ciclo`, `/ajustes/diagnostico`, `/ajustes/exportar`, `/ajustes/formatos`, `/ajustes/instituciones`, `/ajustes/instituciones/[institucionId]`, `/ajustes/instituciones/nueva`, `/ajustes/notificaciones`, `/ajustes/respaldo`, `/ajustes/seguridad`, `/ajustes/seguridad/factores/[factorId]/quitar`, `/ajustes/seguridad/factores/nuevo`, `/ajustes/webhook` | 15 |
+| `ajustes` | `/ajustes`, `/ajustes/apariencia`, `/ajustes/ciclo`, `/ajustes/diagnostico`, `/ajustes/exportar`, `/ajustes/formatos`, `/ajustes/instituciones`, `/ajustes/instituciones/[institucionId]`, `/ajustes/instituciones/nueva`, `/ajustes/notificaciones`, `/ajustes/respaldo`, `/ajustes/seguridad`, `/ajustes/seguridad/factores/[factorId]/quitar`, `/ajustes/seguridad/factores/nuevo`, `/ajustes/webhook`, `/ajustes/webhook/token` | 16 |
 | `programadas` | `/programadas` | 1 |
 | `reglas` | `/reglas` | 1 |
 | `porCobrar` | `/por-cobrar`, `/por-cobrar/deudores/[deudorId]/renombrar` | 2 |
@@ -2962,7 +2973,7 @@ Las funciones que no son consultas de 04 §6 tienen su pantalla en 15.3.
 | OP-51 | `/programadas/[programadaId]` | [L] | `flujos/programadas-programada/` |
 | OP-52 | `/por-cobrar/deudores/[deudorId]/renombrar` | [C] | `flujos/por-cobrar-deudores-renombrar/` |
 | OP-53 | `/cuentas/[cuentaId]/verificar-saldo` | [L] | `flujos/cuentas-verificar-saldo/` |
-| OPT-01 | `/ajustes/webhook` | [C] | `flujos/ajustes-webhook/` |
+| OPT-01 | `/ajustes/webhook/token` | [C] | `flujos/ajustes-webhook-token/` |
 | OPT-02 | `/` | [P] | página `/` [1T] |
 | OPT-02 | `/ajustes/notificaciones` | [S] | página `/ajustes/notificaciones` |
 | OPT-03 | `/ajustes/notificaciones` | [S] | página `/ajustes/notificaciones` |
@@ -2989,7 +3000,7 @@ Las funciones que no son consultas de 04 §6 tienen su pantalla en 15.3.
 | `estadoSeguridad()` | `/ajustes/seguridad` y sus flujos | Lista de factores (9.6) | CP-4 |
 | `quitarFactor()` | `/ajustes/seguridad/factores/[factorId]/quitar` | `flujos/ajustes-seguridad-factores-quitar/` | CP-11 |
 | `cerrarOtrasSesiones()` | `/ajustes/seguridad` | Acción de un toque | CP-11, 4.14 |
-| `salir()` | `/ajustes/seguridad`, `/ingresar/verificar` ("Usar otra cuenta") | — | CP-11 |
+| `salir()` | `/ajustes/seguridad`, `/ingresar/verificar` ("Usar otra cuenta"); **[CH-242]** la hoja «Más secciones», el pie de la barra lateral y `/ajustes` (9.6) | — | CP-11 |
 | `consultas.sugerencia()` | `/registrar/gasto`, `/bandeja/[movimientoId]`, flujos de programadas | `useLecturaInteractiva` en el campo de comercio | CP-3, 4.12 |
 | `formulario({ operacion: 'devolver', busqueda })` | `/registrar/[tipo]` (`devolucion`), `/actividad/[transaccionId]/devolver` | `Buscador` de compras (10.7) | CP-3 |
 | `GET /api/exportar/{json, csv}` (OPT-08) | `/ajustes/exportar` | Enlaces de descarga | 04 2.2.1 |
@@ -3524,3 +3535,6 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-05-9.3** (diseño, entrega 4 · etapa 2, decisión E2-1; aplicado al cerrar el diseño el 11 de noviembre de 2026). Ingresar: en lugar del texto sobre «el procedimiento del repositorio», una línea de ayuda sin enlace que dice dónde se cambia la contraseña (9.3). Marca **[D4]**.
 - **CH-E5-2** (diseño, entrega 4 · etapa 5; aprobados por el dueño, aplicados al cerrar el diseño el 11 de noviembre de 2026). CH-E5-2: componente `SelectorReportes` en 10.7, junto a `Pestanas`, para la navegación de FT-60 (CH-E5-1 en 06). **[CH-240]** CH-E5-3 (Conectar los SMS, Formatos e Instituciones como [S] y OPT-01 en `/ajustes/webhook/token`) se aplica con su ficha de B10, junto con el código y los recuentos de PRU-SEG-OPER-102.
 - **CH-241** (Fase 8, decidido por el orquestador con delegación del usuario, 11 de noviembre de 2026, `08-tareas.md` §7). Entrega 4 frente a lo que CH-220 copió de la entrega 3: el código TOTP va en seis casillas, sin envío automático, con el pegado del código completo, un solo nombre accesible para el grupo y `autocomplete="one-time-code"` (9.4, 9.5 y FE-38; E2-2 de la entrega 4). Retira el punto TOTP de CH-221 (b). Lo implementa TA-594, de revisión obligatoria, que no toca `verificarFactor` ni la sesión. Marcas **[CH-241]**.
+- **CH-E5-3** (diseño, entrega 4 · etapa 5; aplicado con la ficha de Ajustes de B10, CH-240 c, el 11 de noviembre de 2026). `/ajustes/webhook`, `/ajustes/formatos` e `/ajustes/instituciones` son [S] (1.3, 2.11) y OPT-01 vive en `/ajustes/webhook/token` [C], con su carpeta `flujos/ajustes-webhook-token/`; 15.1 y 15.2 se regeneraron con `trazabilidad.py`. El contrato de OPT-01 no cambia. Marcas **[CH-240]**.
+- **CH-242** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). «Salir» a la vista: `salir()` se invoca también desde la hoja «Más secciones», el pie de la barra lateral y `/ajustes`, y con borradores en la pestaña pregunta antes «Tenés N cambios sin enviar» (9.6 y 15.3). `salir()` no cambia. Marcas **[CH-242]**. Lo aplicó TA-596.
+- **CH-248** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). El catálogo de 2.2 suma los parámetros de resultado que ya existen en la interfaz: `?motivo=sesion-vencida` (`/ingresar`; 7.5 y 9.3), `?resultado=` (detalle de cuenta), `?agregado=` y `?quitado=` (Seguridad), `?guardado=` (Formatos) y `?enfocar=` (detalle de meta). Marcas **[CH-248]**. Documenta lo implementado; no cambia código.

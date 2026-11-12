@@ -383,7 +383,8 @@ test.describe('PRU-E2E-INICIO', () => {
     await abrir(page);
     await expect(page.locator('[data-todo-al-dia]')).toHaveCount(0);
     await expect(page.locator('[data-pago-atrasado]')).toContainText('Renta');
-    await expect(page.locator('[data-pago-atrasado]')).toContainText('$50.00');
+    // D-4 (entrega 4): ninguna fila de «Necesita tu atención» lleva monto; se ve al tocar
+    await expect(page.locator('[data-pago-atrasado] [data-centavos]')).toHaveCount(0);
   });
 
   test('PRU-E2E-INICIO-142 [CA-08.9] con 7 transacciones "Recientes" muestra las 5 últimas por fecha, de la más reciente a la más antigua', async ({
@@ -433,7 +434,8 @@ test.describe('PRU-E2E-INICIO', () => {
     await abrir(page);
     const fila = page.locator('[data-pago-tarjeta]');
     await expect(fila).toHaveCount(1);
-    await esperarMonto(fila.locator('[data-centavos]'), 12000);
+    // D-4: la fila no lleva monto; el de la tarjeta se ve al tocar
+    await expect(fila.locator('[data-centavos]')).toHaveCount(0);
     await expect(page.getByText(t.pagoDeTarjeta('05/03'))).toBeVisible();
     await expect(fila.locator('xpath=ancestor::a')).toHaveAttribute(
       'href',

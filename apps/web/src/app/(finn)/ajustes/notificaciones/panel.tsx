@@ -43,7 +43,12 @@ function Permiso({
   if (permiso === 'ios_sin_instalar')
     return (
       <AvisoEnLinea estado="informacion" titulo={t.iosTitulo}>
-        {t.iosAyuda}
+        <span className="block">{t.iosAyuda}</span>
+        <ol className="mt-2 list-decimal pl-5">
+          {t.iosPasos.map((paso) => (
+            <li key={paso}>{paso}</li>
+          ))}
+        </ol>
       </AvisoEnLinea>
     );
   if (permiso === 'denegado')
@@ -61,7 +66,10 @@ function Permiso({
   if (permiso === 'cargando') return null;
   if (permiso === 'concedido' && ocupado) return <p className="text-texto">{t.activadasAqui}</p>;
   return (
-    <div className="flex flex-col gap-3">
+    <section aria-labelledby="este-dispositivo" className="flex flex-col gap-3">
+      <h2 id="este-dispositivo" className="text-titulo-seccion">
+        {t.esteDispositivoTitulo}
+      </h2>
       <p className="text-cuerpo-pequeno text-texto">{t.sinDecidirAyuda}</p>
       {falla ? (
         <AvisoEnLinea estado="problema" aparecioDespues>
@@ -83,7 +91,7 @@ function Permiso({
       >
         {t.activar}
       </Boton>
-    </div>
+    </section>
   );
 }
 
@@ -95,6 +103,10 @@ export function PanelNotificaciones({ dispositivos, registrar, quitar }: PropsPa
     void endpointCortoDeEsteDispositivo().then(setEste, () => undefined);
   }, [dispositivos]);
 
+  // E5-16: sin permiso concedido (sin pedir, denegado, iPhone sin instalar) este dispositivo no está en la lista.
+  const esEste = (d: DispositivoPush): boolean =>
+    permiso === 'concedido' && d.endpointCorto === este;
+
   const quitarDispositivo = async (d: DispositivoPush): Promise<void> => {
     setFalla(false);
     const r = await quitar({ id: d.id });
@@ -102,7 +114,7 @@ export function PanelNotificaciones({ dispositivos, registrar, quitar }: PropsPa
       setFalla(true);
       return;
     }
-    if (d.endpointCorto === este) {
+    if (esEste(d)) {
       await anularLocal().catch(() => undefined);
       setEste(null);
     }
@@ -113,7 +125,7 @@ export function PanelNotificaciones({ dispositivos, registrar, quitar }: PropsPa
       <Permiso
         registrar={registrar}
         alCambiar={releer}
-        ocupado={dispositivos.some((d) => d.endpointCorto === este)}
+        ocupado={dispositivos.some(esEste)}
         permiso={permiso}
       />
       <section aria-labelledby="dispositivos" className="flex flex-col gap-3">
@@ -136,7 +148,7 @@ export function PanelNotificaciones({ dispositivos, registrar, quitar }: PropsPa
                   <div className="min-w-0">
                     <p className="text-cuerpo-pequeno break-words text-texto">
                       {nombre}
-                      {d.endpointCorto === este ? ` · ${t.esteDispositivo}` : ''}
+                      {esEste(d) ? ` · ${t.esteDispositivo}` : ''}
                     </p>
                     <p className="text-sm text-texto-secundario">
                       {t.renovada(formatearInstante(d.renovadaEn))}
@@ -157,6 +169,7 @@ export function PanelNotificaciones({ dispositivos, registrar, quitar }: PropsPa
           </ul>
         )}
       </section>
+      <p className="text-sm text-texto-secundario">{t.notaPermiso}</p>
     </div>
   );
 }

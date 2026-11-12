@@ -15,7 +15,10 @@ vi.mock('next/link', async () => {
   const { createElement } = await import('react');
   const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
     createElement('a', { href, ...resto }, children);
-  return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
+  return Object.assign(Enlace, {
+    default: Enlace,
+    useLinkStatus: () => ({ pending: false }),
+  });
 });
 const reemplazo = vi.hoisted(() => vi.fn());
 vi.mock('next/navigation', () => ({
@@ -165,7 +168,7 @@ describe('PRU-CMP-TX-400 actividad', () => {
     expect(href).toBe(
       `/actividad/t1?volver=${encodeURIComponent('/actividad?texto=sel&cuenta=k1')}`,
     );
-    const mas = [...raiz.querySelectorAll('a')].find((a) => a.textContent === 'Cargar más');
+    const mas = raiz.querySelector<HTMLAnchorElement>('[data-cargar-mas]');
     expect(new URL(mas?.href ?? '').searchParams.get('cursor')).toBe('c|1');
     expect(new URL(mas?.href ?? '').searchParams.get('texto')).toBe('sel');
   });
@@ -261,23 +264,26 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
       '/actividad?texto=sel&cuenta=k1&desde=2027-02-21&hasta=2027-03-05',
     );
     expect(fichas[2]?.getAttribute('href')).toBe('/actividad?texto=sel&cuenta=k1&tipo=gasto');
-    expect(raiz.querySelector('summary')?.getAttribute('aria-label')).toBe('Filtros, 4 activos');
+    expect(raiz.querySelector('[data-boton-filtros]')?.getAttribute('aria-label')).toBe(
+      'Filtros, 4 activos',
+    );
   });
 
   it('PRU-CMP-TX-460 cada filtro de lista es un select nativo con su etiqueta, su nombre y la opción de la URL elegida', () => {
     const raiz = mostrar(dto([]), { categoria: 'c1', cuenta: 'k1' });
+    // Estado y origen son selectores segmentados con su valor en un campo oculto (ACT-06)
+    for (const nombre of ['estado', 'origen'])
+      expect(raiz.querySelector(`input[type="hidden"][name="${nombre}"]`)).not.toBeNull();
     const lista = (etiqueta: string) => {
       const id = [...raiz.querySelectorAll('label')].find(
         (l) => l.textContent === etiqueta,
       )?.htmlFor;
       return raiz.querySelector<HTMLSelectElement>(`select[id="${id ?? ''}"]`);
     };
-    expect(['Cuenta', 'Categoría', 'Tipo', 'Estado', 'Origen'].map((e) => lista(e)?.name)).toEqual([
+    expect(['Cuenta', 'Categoría', 'Tipo'].map((e) => lista(e)?.name)).toEqual([
       'cuenta',
       'categoria',
       'tipo',
-      'estado',
-      'origen',
     ]);
     expect(lista('Categoría')?.value).toBe('c1');
     expect(lista('Cuenta')?.value).toBe('k1');
@@ -318,11 +324,11 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
     expect(mas?.className).toContain('bg-accion-tonal');
     expect(mas?.parentElement?.className).toContain('justify-center');
     // Los filtros van en su propia columna y la búsqueda con la lista
-    expect(raiz.querySelector('[data-columna-filtros] details[data-filtros]')).not.toBeNull();
+    expect(raiz.querySelector('[data-columna-filtros] section[data-filtros]')).not.toBeNull();
     expect(raiz.querySelector('[data-columna-lista] [role="search"]')).not.toBeNull();
   });
 
-  it('PRU-CMP-TX-460 el estado de carga anuncia «Cargando la pantalla» una vez y no dibuja números', () => {
+  it('PRU-CMP-TX-460 el estado de carga anuncia «Cargando actividad» una vez y no dibuja números', () => {
     const nodo = document.createElement('div');
     document.body.append(nodo);
     const raiz = createRoot(nodo);
@@ -330,9 +336,71 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
       raiz.render(<Cargando />);
     });
     montados.push({ raiz, nodo });
-    const region = nodo.querySelector('[role="status"]');
-    expect(region?.getAttribute('aria-busy')).toBe('true');
-    expect(region?.textContent).toBe('Cargando la pantalla');
+    expect(nodo.querySelector('[role="status"]')?.textContent).toBe('Cargando actividad');
+    expect(nodo.querySelector('[aria-busy="true"]')).not.toBeNull();
     expect(nodo.querySelector('[data-centavos]')).toBeNull();
+  });
+});
+
+describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
+  it('PRU-CMP-TX-721 la lista no repite «Registrar» (ACT-01) y una fila por cobrar nombra la marca, nunca al deudor con «te debe»', () => {
+    const porCobrar = {
+      ...conCuentas('cine', [['Visa Oro', -4000]], ['Carlos'], -4000),
+      marcas: { ...MARCAS, porCobrar: true },
+    };
+    const raiz = mostrar(dto([{ fecha: '2027-02-21', transacciones: [porCobrar] }]));
+    expect(raiz.querySelectorAll('a[href="/registrar"]')).toHaveLength(0);
+    const texto = raiz.querySelector('[data-fila-transaccion="cine"]')?.textContent ?? '';
+    expect(texto).toContain('Por cobrar');
+    expect(texto).not.toMatch(/te debe/i);
+  });
+
+  it('PRU-CMP-TX-722 [CA-E4-8] el buscador y «Filtros · n» comparten fila, estado y origen son selectores segmentados y «Cargar más» dice «Cargando…» mientras navega', () => {
+    const raiz = mostrar(dto([], 'cur-2'), { estado: 'pendiente', tipo: 'gasto' });
+    const boton = raiz.querySelector<HTMLElement>('[data-boton-filtros]');
+    const buscador = raiz.querySelector<HTMLElement>('[role="search"]');
+    expect(boton?.textContent).toBe('Filtros · 2');
+    expect(boton?.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expect(
+      Math.abs(
+        (boton?.getBoundingClientRect().top ?? 0) - (buscador?.getBoundingClientRect().top ?? 99),
+      ),
+    ).toBeLessThan(8);
+    for (const grupo of ['Estado bancario', 'Origen']) {
+      const radios = raiz.querySelectorAll(
+        `[role="radiogroup"][aria-label="${grupo}"] [role="radio"]`,
+      );
+      expect(radios.length).toBeGreaterThanOrEqual(4);
+    }
+    expect(raiz.querySelector('input[name="estado"]')?.getAttribute('value')).toBe('pendiente');
+    // Mientras navega, `EnlaceFinn` marca el enlace con `aria-busy` y el texto cambia a «Cargando…»
+    const mas = raiz.querySelector<HTMLElement>('[data-cargar-mas]');
+    const visible = () =>
+      [...(mas?.children ?? [])]
+        .filter((x) => getComputedStyle(x).display !== 'none')
+        .map((x) => x.textContent);
+    expect(visible()).toEqual(['Cargar más']);
+    mas?.setAttribute('aria-busy', 'true');
+    expect(visible()).toEqual(['Cargando…']);
+  });
+
+  it('PRU-CMP-TX-723 [CA-E4-8] en teléfono «Filtros» abre una hoja inferior con el título «Filtros», «Ver resultados» y, con filtros, «Quitar filtros»', async () => {
+    vi.useRealTimers();
+    const raiz = mostrar(dto([]), { estado: 'pendiente' });
+    await act(async () => {
+      raiz.querySelector<HTMLElement>('[data-boton-filtros]')?.click();
+      await Promise.resolve();
+    });
+    await vi.waitFor(() => {
+      expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    });
+    const hoja = document.querySelector('[role="dialog"]') as HTMLElement;
+    expect(hoja.textContent).toContain('Filtros');
+    const pie = [...hoja.querySelectorAll('a, button')].map((x) => x.textContent);
+    expect(pie).toEqual(expect.arrayContaining(['Ver resultados', 'Quitar filtros']));
+    expect(
+      hoja.querySelector('button[type="submit"][form]')?.getBoundingClientRect().height,
+    ).toBeGreaterThanOrEqual(44);
+    expect(document.querySelector('[data-testid="velo"]')).not.toBeNull();
   });
 });

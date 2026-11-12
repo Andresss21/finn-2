@@ -61,14 +61,16 @@ test.describe('PRU-E2E-PROG pantalla de programadas', () => {
       '2027-06-01',
     );
     await abrir(page, '/programadas');
-    await fila(page, 'Netflix').getByRole('button', { name: 'Desactivar', exact: true }).click();
-    await expect(fila(page, 'Netflix').getByTestId('resultado')).toContainText('desactivada');
+    await fila(page, 'Netflix').getByRole('link').click();
+    await esperarContenido(page);
+    await page.getByRole('button', { name: 'Desactivar', exact: true }).click();
+    await expect(page.getByTestId('resultado')).toContainText('Desactivaste Netflix');
 
     fijarRelojServidor('2027-09-20T10:00:00-06:00');
     await abrir(page, '/programadas');
     await expect(fila(page, 'Netflix')).toContainText('Desactivada');
     await fila(page, 'Netflix').getByRole('button', { name: 'Reactivar', exact: true }).click();
-    await expect(fila(page, 'Netflix').getByTestId('resultado')).toContainText('activa');
+    await expect(fila(page, 'Netflix').getByTestId('resultado')).toContainText('Reactivaste');
 
     await abrir(page, '/programadas');
     await expect(page.locator('[data-seccion="atrasadas"]')).toHaveCount(0);
@@ -82,11 +84,13 @@ test.describe('PRU-E2E-PROG pantalla de programadas', () => {
     await sembrarOps([...BASE, NETFLIX], '2027-02-10');
     await abrir(page, '/programadas');
     await expect(proximos(page)).toHaveCount(1);
-    await fila(page, 'Netflix').getByRole('button', { name: 'Desactivar', exact: true }).click();
-    const resultado = fila(page, 'Netflix').getByTestId('resultado');
-    await expect(resultado).toContainText('quedó desactivada');
+    await fila(page, 'Netflix').getByRole('link').click();
+    await esperarContenido(page);
+    await page.getByRole('button', { name: 'Desactivar', exact: true }).click();
+    const resultado = page.getByTestId('resultado');
+    await expect(resultado).toContainText('Desactivaste Netflix: ya no se esperan sus pagos.');
     await resultado.getByRole('button', { name: 'Reactivar' }).click();
-    await expect(resultado).toContainText('quedó activa');
+    await expect(resultado).toContainText('Reactivaste Netflix.');
     await abrir(page, '/programadas');
     await expect(fila(page, 'Netflix')).not.toContainText('Desactivada');
     await expect(proximos(page)).toHaveCount(1);

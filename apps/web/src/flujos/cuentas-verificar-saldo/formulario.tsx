@@ -6,6 +6,7 @@
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { Resultado } from '../../componentes/base/resultado';
 import { Monto } from '../../componentes/dominio/monto';
@@ -13,7 +14,7 @@ import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
-import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { CerrarFlujoAlMontar } from '../../componentes/navegacion/flujo-de-ruta';
 import { useReemplazarBusqueda } from '../../componentes/navegacion/use-reemplazar-busqueda';
 import { centavosATextoDecimal, formatearFecha, formatearMonto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -21,6 +22,8 @@ import { useOperacion, type AccionEscritura } from '../../formularios/use-operac
 import { dominio } from '../../textos/dominio';
 import { formularios } from '../../textos/formularios';
 import { verificarSaldo as t } from '../../textos/verificar-saldo';
+import { MarcoCorto } from '../cuentas-archivar/marco-corto';
+import { rutaConResultado } from '../cuentas-archivar/resultado';
 import { aEntradaDeAccion, contrato, type Campos, type Marcar } from './campos';
 
 const BorradorVerificarSaldo = lazy(() => import('./borrador'));
@@ -36,6 +39,8 @@ export interface PropsFormularioVerificarSaldo {
   readonly fecha: string;
   /** Todas las candidatas a esa fecha; `candidatas` trae las más recientes. */
   readonly cantidad: number;
+  /** GLO-23: abierto como hoja o panel sobre el detalle (ruta interceptada). */
+  readonly superpuesto?: boolean;
   readonly candidatas: readonly {
     readonly id: string;
     readonly comercio: string | null;
@@ -59,7 +64,6 @@ interface Vista {
 type Paso = 'datos' | 'marcar' | 'revisar';
 type Ajuste = NonNullable<Vista['avisos']>[number];
 
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const MENSAJES: Readonly<Record<string, string | undefined>> = t.rechazos;
 /** La ruta del flujo que crea el ajuste de AV-21 (FD-06) según la operación que propone el servidor. */
 const RUTA_AJUSTE: Readonly<Record<string, string | undefined>> = {
@@ -71,7 +75,7 @@ const RUTA_AJUSTE: Readonly<Record<string, string | undefined>> = {
 const conSigno = (monto: Centavos): string => `${monto > 0 ? '+' : ''}${formatearMonto(monto)}`;
 
 export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
-  const { accion, cuentaId, cuenta, tarjeta, hoy, candidatas } = p;
+  const { accion, cuentaId, cuenta, tarjeta, hoy, candidatas, superpuesto = false } = p;
   const rutaPadre = `/cuentas/${cuentaId}`;
   const reemplazarBusqueda = useReemplazarBusqueda();
   const enviar = useCallback<AccionEscritura>(
@@ -94,6 +98,8 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
   const [ajuste, setAjuste] = useState<Ajuste>();
   const [base, setBase] = useState<Vista['propuesta']>();
   const siguiente = useRef<Paso | null>(null);
+  /** Cuántas transacciones marca la verificación que se confirma: lo que dijo el servidor al revisar (PF-3). */
+  const marcadas = useRef(0);
   const { estado, error: fallo, exito, previsualizacion } = operacion;
   const { volverAEditar } = operacion;
 
@@ -116,6 +122,7 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
       setMarcas(v.propuesta?.diferencia === 0 ? 'todas' : new Set());
     }
     setAjuste(v.avisos?.find((a) => a.codigo === 'AV-21'));
+    if (destino === 'revisar') marcadas.current = v.propuesta?.marcaria ?? 0;
     setPaso(destino);
   }, [estado, previsualizacion, volverAEditar]);
 
@@ -161,35 +168,46 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
       ...(monto === undefined ? {} : { total: centavosATextoDecimal(monto) }),
       ...(typeof datos?.['comercio'] === 'string' ? { comercio: datos['comercio'] } : {}),
     }).toString();
+    // E2-13: sin un paso siguiente (el ajuste de AV-21), el flujo se cierra y el resultado queda bajo las acciones del detalle.
+    if (ruta === undefined || texto === undefined)
+      return (
+        <MarcoCorto superpuesto={superpuesto} titulo={t.tituloListo} rutaPadre={rutaPadre}>
+          <CerrarFlujoAlMontar
+            rutaPadre={rutaConResultado(rutaPadre, {
+              tipo: 'verificado',
+              fecha: c.fecha,
+              marcadas: marcadas.current,
+            })}
+          />
+        </MarcoCorto>
+      );
     return (
-      <PaginaFlujoDeRuta titulo={t.tituloListo} rutaPadre={rutaPadre}>
+      <MarcoCorto superpuesto={superpuesto} titulo={t.tituloListo} rutaPadre={rutaPadre}>
         <div className="flex flex-col gap-4">
           <Resultado texto={t.guardado(cuenta, fechaTexto)} />
-          {ruta === undefined || texto === undefined ? null : (
-            <AvisoEnLinea
-              estado="advertencia"
-              aparecioDespues
-              accion={
-                <EnlaceFinn
-                  href={`/registrar/${ruta}?${valores}`}
-                  className="inline-flex min-h-11 items-center font-bold text-enlace underline"
-                >
-                  {t.crearAjuste}
-                </EnlaceFinn>
-              }
-            >
-              {texto}
-            </AvisoEnLinea>
-          )}
+          <AvisoEnLinea
+            estado="advertencia"
+            aparecioDespues
+            accion={
+              <EnlaceFinn
+                href={`/registrar/${ruta}?${valores}`}
+                className="inline-flex min-h-11 items-center font-bold text-enlace underline"
+              >
+                {t.crearAjuste}
+              </EnlaceFinn>
+            }
+          >
+            {texto}
+          </AvisoEnLinea>
         </div>
-      </PaginaFlujoDeRuta>
+      </MarcoCorto>
     );
   }
 
   if (paso === 'revisar' && estado !== 'editando') {
     const r = vista.propuesta;
     return (
-      <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
+      <MarcoCorto superpuesto={superpuesto} titulo={t.titulo} rutaPadre={rutaPadre}>
         <div className="flex flex-col gap-4">
           {estado === 'error' && fallo !== undefined ? (
             <AvisoEnLinea estado="problema" aparecioDespues>
@@ -218,13 +236,13 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
             }}
           />
         </div>
-      </PaginaFlujoDeRuta>
+      </MarcoCorto>
     );
   }
 
   if (paso === 'marcar' && base !== undefined) {
     return (
-      <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
+      <MarcoCorto superpuesto={superpuesto} titulo={t.titulo} rutaPadre={rutaPadre}>
         <div className="flex flex-col gap-4">
           <p data-saldo-finn>{t.saldoFinn(fechaTexto, formatearMonto(base.saldoFinn))}</p>
           <p data-diferencia className="font-bold">
@@ -293,12 +311,12 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
             </Boton>
           </div>
         </div>
-      </PaginaFlujoDeRuta>
+      </MarcoCorto>
     );
   }
 
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
+    <MarcoCorto superpuesto={superpuesto} titulo={t.titulo} rutaPadre={rutaPadre}>
       <form onSubmit={verDiferencia} noValidate className="flex flex-col gap-5">
         <Suspense fallback={null}>
           <BorradorVerificarSaldo
@@ -349,21 +367,11 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
           </AvisoEnLinea>
         )}
         {estado === 'error' && fallo !== undefined ? (
-          <AvisoEnLinea
-            estado="problema"
-            aparecioDespues
-            {...(REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                      {formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
-          >
-            {fallo.mensaje}
-          </AvisoEnLinea>
+          <ErrorDeFlujo
+            tipo="corto"
+            error={fallo}
+            alReintentar={() => void operacion.reintentar()}
+          />
         ) : null}
         <Boton
           tipo="submit"
@@ -377,6 +385,6 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
           {t.verDiferencia}
         </Boton>
       </form>
-    </PaginaFlujoDeRuta>
+    </MarcoCorto>
   );
 }

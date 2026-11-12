@@ -1,10 +1,14 @@
 'use client';
 // La página completa de `/ajustes/formatos` (FT-73; 05 §2.11): cada formato con su institución, el tipo, los usos y el último uso, el
 // inactivo marcado, y los enlaces a crear uno y a Instituciones. Los conteos los hace el servidor (`ajustes()`): no se calcula nada (PF-3).
-import { PaginaFlujoDeRuta } from '../../../../componentes/navegacion/flujo-de-ruta';
+// Después de guardar (`?guardado=`), el resultado arriba con la frase de los SMS sin reconocer, sin número porque el servidor no lo
+// informa, y «Verlos en la Bandeja» (E5-13, CA-E5-15): cada SMS se reprocesa desde su fila, sin «Reprocesar todos».
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
+import { VolverEnTitulo } from '../../../../componentes/navegacion/volver-en-titulo';
+import { Resultado } from '../../../../componentes/base/resultado';
 import { Vacio } from '../../../../componentes/base/vacio';
 import { formatearInstante } from '../../../../formato';
+import { navegacion } from '../../../../textos/navegacion';
 import { ajustesFormatos as t } from '../../../../textos/ajustes-formatos';
 
 export interface FormatoDeLista {
@@ -22,9 +26,42 @@ const ENLACE = 'inline-flex min-h-11 items-center font-semibold text-enlace unde
 const BOTON =
   'inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accion-tonal px-5 text-base font-semibold text-accion hover:bg-superficie-hundida focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
-export function ListaFormatos({ formatos }: { readonly formatos: readonly FormatoDeLista[] }) {
+export function ListaFormatos({
+  formatos,
+  guardado,
+}: {
+  readonly formatos: readonly FormatoDeLista[];
+  readonly guardado?: string | undefined;
+}) {
+  const recien = formatos.find((f) => f.id === guardado);
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} descripcion={t.descripcion} rutaPadre="/ajustes">
+    <main className="mx-auto flex max-w-3xl flex-col gap-5 px-5 py-4">
+      <div className="-ml-2 flex items-center gap-1">
+        <VolverEnTitulo
+          href="/ajustes"
+          etiqueta={navegacion.volverA(navegacion.secciones.ajustes)}
+        />
+        <h1 className="min-w-0 flex-1 text-titulo-pantalla">{t.titulo}</h1>
+      </div>
+      <p className="text-cuerpo-pequeno text-texto-secundario">{t.descripcion}</p>
+      {recien === undefined ? null : (
+        <div
+          data-resultado-guardado
+          role="status"
+          className="flex flex-col gap-1 rounded-contenedor bg-superficie pb-3 shadow-elevacion-1"
+        >
+          <Resultado texto={t.guardado.titulo(recien.institucion.nombre, recien.nombre)} />
+          <p className="text-cuerpo-pequeno px-4 text-texto-secundario">
+            {t.guardado.sinNumero(recien.institucion.nombre)}
+          </p>
+          <EnlaceFinn
+            href="/bandeja"
+            className="inline-flex min-h-11 items-center px-4 font-semibold text-enlace underline"
+          >
+            {t.guardado.verlos}
+          </EnlaceFinn>
+        </div>
+      )}
       <div className="flex flex-col gap-5">
         {formatos.length === 0 ? (
           <Vacio titulo={t.vacio.titulo} texto={t.vacio.texto} icono="x" tono="neutro" />
@@ -62,6 +99,6 @@ export function ListaFormatos({ formatos }: { readonly formatos: readonly Format
           {t.instituciones}
         </EnlaceFinn>
       </div>
-    </PaginaFlujoDeRuta>
+    </main>
   );
 }

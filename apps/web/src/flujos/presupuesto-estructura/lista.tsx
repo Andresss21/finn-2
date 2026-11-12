@@ -13,6 +13,7 @@ import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { useUnToque } from '../../formularios/use-un-toque';
 import { editarEnEstructura } from '../../servidor/acciones/categorias';
 import { estructura as t } from '../../textos/estructura';
+import { Archivadas } from './archivadas';
 
 const RAIZ = '/presupuesto/estructura';
 const ENLACE = 'inline-flex min-h-11 items-center px-3 font-semibold text-enlace';
@@ -31,7 +32,20 @@ interface Hermano {
   readonly de: number;
 }
 
-export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeEstructura[] }) {
+export function ListaEstructura({
+  grupos: todos,
+}: {
+  readonly grupos: readonly GrupoDeEstructura[];
+}) {
+  // E4-6: las archivadas (y las de un grupo archivado) salen de la lista y viven en «Archivadas · N» al pie.
+  const grupos = todos
+    .map((x, i) => ({
+      ...x,
+      posGrupo: i + 1,
+      deCategorias: x.categorias.length,
+      categorias: x.categorias.map((c, k) => ({ ...c, pos: k + 1 })).filter((c) => !c.archivada),
+    }))
+    .filter((x) => !x.grupo.archivado);
   const movido = useRef('');
   const un = useUnToque({
     accion: editarEnEstructura,
@@ -112,7 +126,7 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
             }
           />
         ) : null}
-        {grupos.map(({ grupo: g, categorias }, i) => (
+        {grupos.map(({ grupo: g, categorias, posGrupo, deCategorias }) => (
           <section key={g.id} aria-labelledby={`g-${g.id}`} className="flex flex-col gap-2">
             <div className="flex items-center gap-x-2">
               <h2
@@ -137,15 +151,15 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
                     tipo: 'grupo',
                     id: g.id,
                     nombre: g.nombre,
-                    pos: i + 1,
-                    de: grupos.length,
+                    pos: posGrupo,
+                    de: todos.length,
                   })}
                 </>
               )}
             </div>
             <div className="overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
               <ul>
-                {categorias.map(({ categoria: c, clase, archivada }, j) => (
+                {categorias.map(({ categoria: c, clase, archivada, pos }) => (
                   <li
                     key={c.id}
                     className="flex items-center gap-x-2 border-b border-borde-sutil px-4"
@@ -170,8 +184,8 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
                           tipo: 'categoria',
                           id: c.id,
                           nombre: c.nombre,
-                          pos: j + 1,
-                          de: categorias.length,
+                          pos,
+                          de: deCategorias,
                         })}
                   </li>
                 ))}
@@ -196,6 +210,7 @@ export function ListaEstructura({ grupos }: { readonly grupos: readonly GrupoDeE
             </div>
           </section>
         ))}
+        <Archivadas grupos={todos} />
         <EnlaceFinn
           href={`${RAIZ}/grupos/nuevo`}
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-accion-tonal font-semibold text-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"

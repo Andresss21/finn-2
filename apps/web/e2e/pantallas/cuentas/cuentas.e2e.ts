@@ -123,8 +123,9 @@ test.describe('PRU-E2E-CTA', () => {
       const riel = await barra(page, n).locator('..').boundingBox();
       return (b?.width ?? 0) / (riel?.width ?? 1);
     };
-    expect(await proporcion('Activos')).toBeCloseTo(0.1887, 2);
-    expect(await proporcion('Deudas')).toBeCloseTo(1, 2);
+    // Las barras crecen al entrar (movimiento de entrada): se espera a que lleguen a su ancho en lugar de medirlas en el primer cuadro
+    await expect.poll(() => proporcion('Activos')).toBeCloseTo(0.1887, 2);
+    await expect.poll(() => proporcion('Deudas')).toBeCloseTo(1, 2);
   });
 
   test('PRU-E2E-CTA-109 [CA-51.7] con activos y deudas en $0.00 las dos barras son 0, y con activos iguales a deudas, 10,000', async ({
@@ -175,7 +176,7 @@ test.describe('PRU-E2E-CTA', () => {
     await sembrarOps([], '2027-02-05');
     await abrir(page);
     await expect(page.getByRole('heading', { name: 'Agregá tu primera cuenta' })).toBeVisible();
-    await page.getByRole('link', { name: 'Crear una cuenta' }).click();
+    await page.getByRole('link', { name: 'Agregar una cuenta' }).click();
     await expect(page).toHaveURL(/\/cuentas\/nueva$/);
   });
 
@@ -192,10 +193,11 @@ test.describe('PRU-E2E-CTA', () => {
     await interruptor.click();
     await expect(page).toHaveURL(/\/cuentas\?archivadas=1$/);
     await expect(interruptor).toHaveAttribute('aria-checked', 'true');
-    await expect(page.getByRole('link', { name: 'Nueva cuenta' })).toBeVisible();
+    await page.getByRole('button', { name: 'Más acciones' }).click();
+    await expect(page.getByRole('menuitem', { name: 'Nueva cuenta' })).toBeVisible();
   });
 
-  test('PRU-E2E-CTA-230 [CA-51.8] en teléfono «Nueva cuenta» no se parte y la tarjeta del frente, entera, lleva al detalle', async ({
+  test('PRU-E2E-CTA-230 [CA-51.8] en teléfono la tarjeta del frente, entera, lleva al detalle', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -204,10 +206,45 @@ test.describe('PRU-E2E-CTA', () => {
       '2027-02-05',
     );
     await abrir(page);
-    const nueva = await page.getByRole('link', { name: 'Nueva cuenta' }).boundingBox();
-    expect(nueva?.height).toBeLessThan(60);
     await expect(page.getByRole('link', { name: /^Pagar / })).toHaveCount(0);
     await page.getByRole('link', { name: 'Ver detalle de Visa Oro', exact: true }).click();
     await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
+  });
+
+  for (const [ancho, alto, etiqueta] of [
+    [390, 844, 'teléfono'],
+    [1440, 900, 'computadora'],
+  ] as const) {
+    test(`PRU-E2E-CTA-701 [CA-E6-14] en ${etiqueta} (${ancho} px) «Nueva cuenta» y «Ordenar las cuentas» están en el menú «En Cuentas» y no como botones sueltos`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: ancho, height: alto });
+      await sembrarOps(ESC01_PASO4, '2027-02-05');
+      await abrir(page);
+      await expect(page.locator('main').getByRole('link', { name: 'Nueva cuenta' })).toHaveCount(0);
+      await expect(page.locator('main').getByRole('link', { name: 'Ordenar' })).toHaveCount(0);
+      await page.getByRole('button', { name: 'Más acciones' }).click();
+      const menu = page.getByRole('menu', { name: 'Más acciones' });
+      await expect(menu.getByText('En Cuentas')).toBeVisible();
+      await expect(menu.getByRole('menuitem', { name: 'Nueva cuenta' })).toBeVisible();
+      await menu.getByRole('menuitem', { name: 'Ordenar las cuentas' }).click();
+      await expect(page).toHaveURL(/\/cuentas\/ordenar$/);
+    });
+  }
+
+  test('PRU-E2E-CTA-702 sin cuentas, el vacío ofrece «Agregar una cuenta»; con una sola tarjeta no aparece «Tocá la tarjeta de atrás…»', async ({
+    page,
+  }) => {
+    await sembrarOps([], '2027-02-05');
+    await abrir(page);
+    await expect(page.getByRole('heading', { name: 'Agregá tu primera cuenta' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Agregar una cuenta' })).toBeVisible();
+    await sembrarOps(
+      [{ op: 'OP-01', cuenta: 'Visa Oro', tipo: 'tarjeta', saldo: 18.75, limite: 2500 }],
+      '2027-02-05',
+    );
+    await abrir(page);
+    await expect(page.locator('[data-billetera]')).toBeVisible();
+    await expect(page.getByText('Tocá la tarjeta de atrás')).toHaveCount(0);
   });
 });

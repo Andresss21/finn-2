@@ -3,7 +3,8 @@
 // meta, o de eliminarla; con «Extender la fecha» y «Ajustar el monto» si venció. Es el formulario de `/metas/nueva` sin el tipo
 // ni la categoría. Envía solo lo que cambió, con lo que vio la persona como `esperado` (4.6.2). No calcula montos (PF-3).
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { useCallback, useState } from 'react';
+import { DatoFijo } from '../../componentes/formularios/dato-fijo';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
@@ -24,6 +25,8 @@ import {
   REINTENTABLES,
   type Campos,
 } from '../metas-nueva/formulario';
+import { ConfirmarEliminar } from '../metas-nueva/confirmar-eliminar';
+import { rutaMetasConResultado, type ResultadoMeta } from './resultado';
 
 export interface MetaParaEditar {
   readonly id: string;
@@ -35,11 +38,13 @@ export interface MetaParaEditar {
   readonly fechaObjetivo: string | null;
   readonly vencida: boolean;
 }
+/** El campo que abre con el foco: lo pide «Extender la fecha» o «Ajustar el monto» de AV-17 (E4-18). */
+export type CampoConFoco = 'monto' | 'fechaObjetivo';
 type Esperado = Record<string, string | null>;
 type Cruda = Campos & { modo: string; esperado: Esperado };
 
 const RUTA_PADRE = '/metas';
-const enfocar = (nombre: string) => () => {
+const llevarFoco = (nombre: string) => () => {
   document.querySelector<HTMLInputElement>(`input[name="${nombre}"]`)?.focus();
 };
 
@@ -47,15 +52,30 @@ function Cuerpo(p: {
   readonly meta: MetaParaEditar;
   readonly inicial: Campos;
   readonly esperado: Esperado;
+  readonly enfocar?: CampoConFoco | undefined;
   readonly alUsarActual: (actuales: Record<string, unknown>, escrito: Campos) => void;
 }) {
-  const { meta, inicial } = p;
+  const { meta, inicial, enfocar: campoInicial } = p;
+  useEffect(() => {
+    if (campoInicial !== undefined) llevarFoco(campoInicial)();
+  }, [campoInicial]);
+  // E4-18, E6-14: lo que cambió, tal como lo escribió la persona: la lista lo dice al volver.
+  const enviado = useRef<ResultadoMeta | undefined>(undefined);
   const enviar = useCallback<AccionEscritura>(
     (payload) => {
       const { modo, esperado, ...c } = payload as Cruda;
       const r = normalizarMontoEscrito(c.monto);
       const monto = r.estado === 'valido' ? r.texto : c.monto;
       const porPeriodo = meta.tipo === 'mensual' || meta.tipo === 'semanal';
+      const cambioMonto =
+        sumarMontosEscritos([monto]) !== sumarMontosEscritos([esperado['monto'] ?? '']);
+      const cambioFecha =
+        !porPeriodo && c.fechaObjetivo !== '' && c.fechaObjetivo !== esperado['fechaObjetivo'];
+      enviado.current = cambioFecha
+        ? { tipo: 'extendida', metaId: meta.id, fecha: c.fechaObjetivo }
+        : cambioMonto
+          ? { tipo: 'ajustada', metaId: meta.id }
+          : undefined;
       return gestionarMeta({
         accion: 'editar',
         metaId: meta.id,
@@ -114,7 +134,11 @@ function Cuerpo(p: {
         titulo={baja.estado === 'listo' ? t.eliminada : t.guardada}
         rutaPadre={RUTA_PADRE}
       >
-        <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
+        {baja.estado !== 'listo' && enviado.current !== undefined ? (
+          <CerrarFlujoAlMontar rutaPadre={rutaMetasConResultado(enviado.current)} />
+        ) : (
+          <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
+        )}
       </PaginaFlujoDeRuta>
     );
 
@@ -133,11 +157,11 @@ function Cuerpo(p: {
             accion={
               <span className="flex flex-wrap gap-2">
                 {meta.tipo === 'para_fecha' || meta.tipo === 'anual' ? (
-                  <Boton variante="secundaria" onClick={enfocar('fechaObjetivo')}>
+                  <Boton variante="secundaria" onClick={llevarFoco('fechaObjetivo')}>
                     {t.vencida.extender}
                   </Boton>
                 ) : null}
-                <Boton variante="secundaria" onClick={enfocar('monto')}>
+                <Boton variante="secundaria" onClick={llevarFoco('monto')}>
                   {t.vencida.ajustar}
                 </Boton>
               </span>
@@ -146,9 +170,12 @@ function Cuerpo(p: {
             {t.vencida.texto(meta.categoria, formatearFecha(meta.fechaObjetivo ?? ''))}
           </AvisoEnLinea>
         ) : null}
-        <p className="text-cuerpo-pequeno text-texto-secundario">
-          {t.tipo}: {t.tipos[meta.tipo]}
-        </p>
+        <DatoFijo
+          nombre="tipo"
+          rotulo={t.tipo}
+          valor={t.tipos[meta.tipo]}
+          motivo={t.tipoNoSeCambia}
+        />
         {porPeriodo ? (
           <SelectorSegmentado
             etiqueta={t.modo}
@@ -215,30 +242,21 @@ function Cuerpo(p: {
           </AvisoEnLinea>
         ) : null}
         {confirmando ? (
-          <AvisoEnLinea estado="advertencia" aparecioDespues>
-            <p>{t.confirmarEliminar(meta.categoria)}</p>
-            <span className="flex flex-wrap gap-2 pt-2">
-              <Boton
-                variante="peligro"
-                enviando={baja.estado === 'enviando'}
-                textoEnviando={t.eliminando}
-                onClick={() => void baja.enviar({})}
-              >
-                {t.siEliminar}
-              </Boton>
-              <Boton
-                variante="secundaria"
-                onClick={() => {
-                  setConfirmando(false);
-                }}
-              >
-                {t.noEliminar}
-              </Boton>
-            </span>
-          </AvisoEnLinea>
+          <ConfirmarEliminar
+            pregunta={t.confirmarEliminar(meta.categoria)}
+            cancelar={t.noEliminar}
+            eliminar={t.siEliminar}
+            eliminando={t.eliminando}
+            enviando={baja.estado === 'enviando'}
+            alCancelar={() => {
+              setConfirmando(false);
+            }}
+            alEliminar={() => void baja.enviar({})}
+          />
         ) : (
           <Boton
-            variante="peligro"
+            variante="discreta"
+            className="self-start text-problema-texto"
             onClick={() => {
               setConfirmando(true);
             }}
@@ -251,7 +269,13 @@ function Cuerpo(p: {
   );
 }
 
-export function FormularioMetaEditar({ meta }: { readonly meta: MetaParaEditar }) {
+export function FormularioMetaEditar({
+  meta,
+  enfocar,
+}: {
+  readonly meta: MetaParaEditar;
+  readonly enfocar?: CampoConFoco | undefined;
+}) {
   // "Usar el valor actual" (05 §4.7): `esperado` pasa a lo que hay ahora, con el monto de Centavos a texto decimal, y se conserva
   // lo escrito. `useOperacion` copia `esperado` una sola vez, así que el cuerpo se vuelve a montar con la copia nueva.
   const [base, setBase] = useState<{ esperado: Esperado; inicial: Campos; version: number }>({
@@ -273,6 +297,7 @@ export function FormularioMetaEditar({ meta }: { readonly meta: MetaParaEditar }
     <Cuerpo
       key={base.version}
       meta={meta}
+      enfocar={enfocar}
       esperado={base.esperado}
       inicial={base.inicial}
       alUsarActual={(actuales, escrito) => {

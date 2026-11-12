@@ -7,7 +7,13 @@ export const ajustesRespaldo = {
   atrasadoEnIndice: 'Respaldo atrasado',
   respaldo: 'Último respaldo',
   restauracion: 'Última prueba de restauración',
-  nunca: 'Todavía no hay ninguno.',
+  nunca: 'Todavía no hay',
+  /** [CH-240] E5-19: sin ningún respaldo todavía. */
+  sinRespaldosTitulo: 'Todavía no hay respaldos',
+  sinRespaldosTexto:
+    'GitHub Actions hace uno cada noche a las 03:00. Si mañana sigue sin haber, revisá el diagnóstico.',
+  loHace: 'Lo hace',
+  loHaceValor: 'GitHub Actions, cada noche',
   alDia: 'Al día',
   atrasado: 'Atrasado',
   respaldoAtrasado: 'Pasaron más de 36 horas desde el último respaldo. Revisá el diagnóstico.',

@@ -11,6 +11,7 @@ import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
 import { SelectorPeriodo } from '../../../../../componentes/navegacion/selector-periodo';
 import { VolverEnTitulo } from '../../../../../componentes/navegacion/volver-en-titulo';
 import { formatearFecha } from '../../../../../formato';
+import { enlaceDeFlujo } from '../../../../../flujos/presupuesto-asignar-categoria/resultado';
 import { categoriaDetalle } from '../../../../../textos/categoria-detalle';
 import { categoriaPago as t } from '../../../../../textos/categoria-pago';
 
@@ -141,14 +142,25 @@ function Excedentes({ dto }: { readonly dto: DetallePago }) {
   );
 }
 
-export function PantallaPagoTarjeta({ dto }: { readonly dto: DetallePago }) {
+export function PantallaPagoTarjeta({
+  dto,
+  resultado,
+}: {
+  readonly dto: DetallePago;
+  /** E2-13 [CH-248]: el resultado de Asignar, bajo las acciones. */
+  readonly resultado?: ReactNode;
+}) {
   const { categoria, tarjeta, periodo, periodoActivo, tarjetaHoy, desgloseAlPagar: corte } = dto;
   const activo = periodo.estado === 'activo';
   const cerrado = periodo.estado === 'cerrado';
   const raiz = `/presupuesto/categorias/${categoria.id}`;
   const conPeriodo = (ruta: string): string =>
     periodo.inicio === periodoActivo.inicio ? ruta : `${ruta}?periodo=${periodo.inicio}`;
-  const hrefAsignar = conPeriodo(`/presupuesto/asignar/${categoria.id}`);
+  const hrefAsignar = enlaceDeFlujo(
+    `/presupuesto/asignar/${categoria.id}`,
+    raiz + (periodo.inicio === periodoActivo.inicio ? '' : `?periodo=${periodo.inicio}`),
+    periodo.inicio === periodoActivo.inicio ? undefined : periodo.inicio,
+  );
   const faltaReservar = tarjetaHoy.faltaReservar > 0;
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4">
@@ -284,6 +296,7 @@ export function PantallaPagoTarjeta({ dto }: { readonly dto: DetallePago }) {
             </EnlaceFinn>
           ) : null}
         </div>
+        {resultado}
       </nav>
 
       {activo ? (

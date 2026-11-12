@@ -16,4 +16,17 @@ export const presupuestoMover = {
   valoresActuales: (origen: string, destino: string) =>
     `${glosario.asignado} ahora: ${origen} en el origen y ${destino} en el destino.`,
   listo: 'Dinero movido',
+  // D-6 (CA-11.2): mover más que el Disponible se acepta con aviso; el negativo y los dos Disponibles los dice el servidor.
+  rotuloImpacto: 'Antes de confirmar',
+  calculando: 'Calculando el impacto…',
+  impactoCambio: 'El impacto cambió. Revisalo antes de confirmar.',
+  // Lo que la previsualización de OP-15 rechaza llega como código, sin mensaje compuesto (04 §4.3): el texto es el de 04 §7.10.
+  rechazos: {
+    destino_igual_origen: 'Elegí otra categoría.',
+    periodo_cerrado: 'No se puede cambiar lo asignado en un período cerrado.',
+    otro: 'No se puede mover ahora.',
+  },
+  vaAQuedar: (nombre: string, monto: string) => `${nombre} va a quedar en ${monto}`,
+  sobregirada: (monto: string) =>
+    `Queda sobregirada. Si no la cubrís antes del cierre, ${glosario.listoParaAsignar} bajará ${monto}.`,
 } as const;

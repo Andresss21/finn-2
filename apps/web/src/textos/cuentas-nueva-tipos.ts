@@ -28,4 +28,11 @@ export const cuentasNuevaTipos = {
   plazoCuotas: 'Cantidad de cuotas',
   cuotasPagadas: 'Cuotas que ya pagaste',
   rendimiento: 'Rendimiento anual esperado (%)',
+  rendimientoInfo: 'Solo informativo: Finn no proyecta el valor.',
+  // E2-9: secciones de la alta de un préstamo y el aviso de información sin modelo (FT-50)
+  seccionPrestamo: 'El préstamo',
+  seccionCuotas: 'Cuotas',
+  seccionCondiciones: 'Condiciones · opcional',
+  avisoSinModelo:
+    'Este préstamo no tiene un modelo de cálculo; el capital pendiente es el que registraste.',
 } as const;

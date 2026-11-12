@@ -228,4 +228,46 @@ describe('FT-25 detalle de una transacción', () => {
     expect(hrefs[0]).toMatch(/\/eventos\/eliminar\?tipo-evento=condonacion&evento=k9$/);
     expect(hrefs[1]).toMatch(/\/eventos\/eliminar\?tipo-evento=devolucion&evento=d1$/);
   });
+
+  it('PRU-CMP-TX-738 [CA-25.8] las partes de un gasto llevan el menos, lo no cubierto va rayado, la parte por cobrar trae «Cobrar» y «Condonar» de 44 px y la sección se llama «Efectos hoy»', () => {
+    const nodo = mostrar(
+      dto({
+        lineas: [
+          {
+            id: 'l1',
+            orden: 1,
+            monto: 2250,
+            destino: { categoria: { id: 'k1', nombre: 'Farmacia' } },
+            reparto: { cubierto: 1735, noCubierto: 515 },
+            cobros: [],
+            condonaciones: [],
+            devoluciones: [],
+          },
+          {
+            id: 'l2',
+            orden: 2,
+            monto: 3000,
+            destino: { deudor: { id: 'u1', nombre: 'Carlos' } },
+            porCobrar: { abierto: 2000, restituido: 1000, condonado: 0, devuelto: 0 },
+            cobros: [],
+            condonaciones: [],
+            devoluciones: [],
+          },
+        ],
+      }),
+    );
+    const [farmacia, carlos] = [...nodo.querySelectorAll('[data-linea]')];
+    expect(farmacia?.textContent).toContain('−$22.50');
+    expect(farmacia?.querySelector('[data-no-cubierto]')).not.toBeNull();
+    expect(
+      getComputedStyle(farmacia?.querySelector('[data-no-cubierto]') as Element).backgroundImage,
+    ).toContain('gradient');
+    expect(carlos?.textContent).toContain(t.deudorPorCobrar('Carlos'));
+    const enlaces = [...(carlos?.querySelectorAll('a') ?? [])];
+    expect(enlaces.map((a) => a.textContent)).toEqual([t.cobrar, t.condonar]);
+    expect(enlaces[0]?.getAttribute('href')).toBe('/por-cobrar/cobrar?linea=l2&deudor=u1');
+    expect(enlaces[1]?.getAttribute('href')).toBe('/por-cobrar/condonar/l2');
+    for (const e of enlaces) expect(e.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expect([...nodo.querySelectorAll('h2')].map((h) => h.textContent)).toContain(t.efectosHoy);
+  });
 });

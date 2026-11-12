@@ -10,9 +10,10 @@ import { VacioSinResultados } from '../../../componentes/navegacion/vacios';
 import { rotuloDeDia } from '../../../formato/rotulo-de-dia';
 import { actividad as t } from '../../../textos/actividad';
 import { Buscador } from './buscador';
+import { CargarMas } from './cargar-mas';
 import { FichasDeFiltros } from './chips';
 import { detalleDeFila } from './detalle-de-fila';
-import { FormularioFiltros, type GrupoDeFiltro, type RefDeFiltro } from './filtros';
+import { BotonFiltros, FormularioFiltros, type GrupoDeFiltro, type RefDeFiltro } from './filtros';
 
 /** Los parámetros de 05 §2.2 que lee esta pantalla, con el nombre que llevan en la URL. */
 export const CLAVES_FILTRO = [
@@ -66,20 +67,18 @@ export function PantallaActividad({
   const filtrado = Object.keys(sinCursor).length > 0;
   const actual = hrefDe(filtros, {});
   return (
-    // A14/B8: en computadora, la columna fija de filtros de 260 px a la izquierda y la lista hasta 760 px; en teléfono, una columna
+    // A14/B8: en computadora, la columna fija de filtros de 320 px a la izquierda (D-8, CH-241 e) y la lista hasta 760 px; en teléfono, una columna
     // (título, búsqueda, filtros, fichas y lista).
-    <main className="mx-auto flex max-w-3xl flex-col gap-4 px-5 py-4 @[996px]:grid @[996px]:max-w-[1056px] @[996px]:grid-cols-[260px_minmax(0,760px)] @[996px]:items-start @[996px]:gap-x-9 @[996px]:gap-y-4">
+    <main className="mx-auto flex max-w-3xl flex-col gap-4 px-5 py-4 @[996px]:grid @[996px]:max-w-[1116px] @[996px]:grid-cols-[320px_minmax(0,760px)] @[996px]:items-start @[996px]:gap-x-9 @[996px]:gap-y-4">
       <PublicarEncabezado encabezado={dto} />
+      {/* ACT-01: un solo «Registrar» por viewport (el de la barra superior o el de la lateral); el título va solo. */}
       <div className="order-1 flex items-center justify-between gap-3 @[996px]:col-span-2 @[996px]:row-start-1">
         <h1 className="text-titulo-pantalla">{t.titulo}</h1>
-        <EnlaceFinn href="/registrar" className={BOTON}>
-          {t.registrar}
-        </EnlaceFinn>
       </div>
       <aside
         aria-label={t.filtros}
         data-columna-filtros
-        className="order-3 @[996px]:sticky @[996px]:top-4 @[996px]:col-start-1 @[996px]:row-start-2"
+        className="order-3 hidden @[996px]:sticky @[996px]:block @[996px]:top-4 @[996px]:col-start-1 @[996px]:row-start-2"
       >
         <FormularioFiltros filtros={sinCursor} cuentas={cuentas} grupos={grupos} />
       </aside>
@@ -87,8 +86,12 @@ export function PantallaActividad({
         data-columna-lista
         className="contents @[996px]:order-4 @[996px]:col-start-2 @[996px]:row-start-2 @[996px]:flex @[996px]:flex-col @[996px]:gap-4"
       >
-        <div className="order-2">
-          <Buscador texto={texto ?? ''} resto={sinTexto} />
+        {/* ACT-02: el buscador y «Filtros» en una fila (el botón se oculta en computadora, donde la columna ya está) */}
+        <div className="order-2 flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <Buscador texto={texto ?? ''} resto={sinTexto} />
+          </div>
+          <BotonFiltros filtros={sinCursor} cuentas={cuentas} grupos={grupos} />
         </div>
         <div className="order-4 flex flex-col gap-4">
           <FichasDeFiltros
@@ -99,6 +102,16 @@ export function PantallaActividad({
               hrefDe(sinCursor, Object.fromEntries(claves.map((k) => [k, undefined])))
             }
           />
+          {filtrado ? (
+            <div className="flex justify-end" data-resumen-filtros>
+              <EnlaceFinn
+                href={texto === undefined ? '/actividad' : hrefDe({}, { texto })}
+                className={TONAL}
+              >
+                {t.quitarFiltros}
+              </EnlaceFinn>
+            </div>
+          ) : null}
           {dto.dias.length === 0 ? (
             filtrado ? (
               <VacioSinResultados rutaSinFiltros="/actividad" />
@@ -133,13 +146,10 @@ export function PantallaActividad({
               </EnlaceFinn>
             )}
             {dto.siguienteCursor === undefined ? null : (
-              <EnlaceFinn
+              <CargarMas
                 href={hrefDe(filtros, { cursor: dto.siguienteCursor })}
                 className={TONAL}
-                data-cargar-mas
-              >
-                {t.cargarMas}
-              </EnlaceFinn>
+              />
             )}
           </div>
         </div>

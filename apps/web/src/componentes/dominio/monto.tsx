@@ -35,6 +35,7 @@ export function Monto({
   return (
     <span
       data-centavos={centavos}
+      data-rol={rol}
       className={['whitespace-nowrap tabular-nums', ROL[rol], color].join(' ')}
     >
       <span aria-hidden="true">{formatearMonto(mostrado)}</span>

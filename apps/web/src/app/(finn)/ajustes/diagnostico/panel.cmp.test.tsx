@@ -81,7 +81,17 @@ describe('PRU-CMP-AJUS-15x diagnóstico', () => {
     expect(visibles[0]).toContain(t.nivel.error);
     await escribir(nodo, 'no existe');
     expect(filas(nodo)).toHaveLength(0);
-    expect(nodo.textContent).toContain(t.sinResultados);
+    expect(nodo.textContent).toContain(t.sinResultados('no existe'));
+    // E5-19: «Quitar la búsqueda» limpia el campo y vuelve la lista
+    const quitar = [...nodo.querySelectorAll('button')].find(
+      (b) => b.textContent === t.quitarBusqueda,
+    );
+    await act(() => {
+      quitar?.click();
+      return Promise.resolve();
+    });
+    expect(nodo.querySelector('input')?.value).toBe('');
+    expect(filas(nodo)).toHaveLength(2);
   });
 
   it('PRU-CMP-AJUS-151 [CA-76.4] «Ejecutar tareas ahora» llama a la acción una vez y avisa cuando terminó', async () => {
@@ -102,6 +112,7 @@ describe('PRU-CMP-AJUS-15x diagnóstico', () => {
       <PanelDiagnostico eventos={[]} ejecutar={ok()} version="0123456789abcdef" />,
     );
     expect(nodo.textContent).toContain(t.sinEventos);
+    expect(nodo.textContent).toContain(t.sinEventosTexto);
     expect(nodo.querySelector('[data-testid="version"]')?.textContent).toBe('0123456789ab');
   });
 

@@ -1,7 +1,11 @@
+'use client';
 // Lista de `/ajustes` (06 FT-72 a FT-77; export de diseño, pantalla 11 «Índice»): una tarjeta con una fila por sección: círculo
 // de ícono de 40, el nombre y la flecha. Solo enlaza a las secciones que existen; cada una conserva el texto de su catálogo.
+// [CH-242] Debajo, «Salir» en su propia tarjeta (entrega 3, `16-salir/ajustes-indice`); Apariencia lleva `sun` (GLO-107).
+import { useInstalacion } from '../../../cliente/instalacion';
 import { Icono, type NombreIcono } from '../../../componentes/base/icono';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
+import { Salir } from '../../../componentes/navegacion/navegacion-app';
 import { ajustesApariencia } from '../../../textos/ajustes-apariencia';
 import { ajustesCiclo } from '../../../textos/ajustes-ciclo';
 import { ajustesDiagnostico } from '../../../textos/ajustes-diagnostico';
@@ -10,6 +14,7 @@ import { ajustesFormatos } from '../../../textos/ajustes-formatos';
 import { ajustesRespaldo } from '../../../textos/ajustes-respaldo';
 import { ajustesWebhook } from '../../../textos/ajustes-webhook';
 import { notificaciones } from '../../../textos/notificaciones';
+import { salir } from '../../../textos/salir';
 import { seguridad } from '../../../textos/seguridad';
 
 const FILAS: readonly { href: string; icono: NombreIcono; texto: string }[] = [
@@ -22,12 +27,14 @@ const FILAS: readonly { href: string; icono: NombreIcono; texto: string }[] = [
   { href: '/ajustes/exportar', icono: 'send', texto: ajustesExportar.titulo },
   { href: '/ajustes/respaldo', icono: 'refresh', texto: ajustesRespaldo.enlace },
   { href: '/ajustes/diagnostico', icono: 'activity', texto: ajustesDiagnostico.enlace },
-  { href: '/ajustes/apariencia', icono: 'gear', texto: ajustesApariencia.enlace },
+  { href: '/ajustes/apariencia', icono: 'sun', texto: ajustesApariencia.enlace },
 ];
 
 /** `respaldoAtrasado`: `AjustesDto.respaldo` (CA-76.1); sin él, la fila de Respaldo no avisa nada. */
 export function ListaAjustes({ respaldoAtrasado = false }: { respaldoAtrasado?: boolean }) {
-  return (
+  // E5-17: en un iPhone sin instalar, la fila de Notificaciones dice por qué todavía no se puede activar.
+  const iosSinInstalar = useInstalacion().oferta === 'ios';
+  const lista = (
     <ul
       data-rol="lista-ajustes"
       className="flex flex-col divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1"
@@ -51,11 +58,24 @@ export function ListaAjustes({ respaldoAtrasado = false }: { respaldoAtrasado?: 
                   {ajustesRespaldo.atrasadoEnIndice}
                 </span>
               ) : null}
+              {iosSinInstalar && f.href === '/ajustes/notificaciones' ? (
+                <span className="text-cuerpo-pequeno text-texto-secundario">
+                  {notificaciones.filaIosSinInstalar}
+                </span>
+              ) : null}
             </span>
             <Icono nombre="chevR" tamano={16} className="text-texto-secundario" />
           </EnlaceFinn>
         </li>
       ))}
     </ul>
+  );
+  return (
+    <>
+      {lista}
+      <div className="overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
+        <Salir variante="tarjeta" subtitulo={salir.esteDispositivo} />
+      </div>
+    </>
   );
 }

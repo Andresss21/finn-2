@@ -139,9 +139,11 @@ test.describe('PRU-E2E-TX actividad', () => {
     await preparar(CAFES);
     await abrir(page, '/actividad?tipo=gasto');
     await expect(page.locator('[data-dia="2027-03-03"] h2')).toHaveText('Miércoles 03/03');
-    await expect(page.getByText('Filtros · 1')).toBeVisible();
-    await page.getByLabel('Categoría').selectOption({ label: 'Cafés' });
-    await page.getByRole('button', { name: 'Filtrar' }).click();
+    // En teléfono el botón «Filtros · 1» abre la hoja inferior (ACT-05) y «Ver resultados» aplica
+    await page.getByRole('button', { name: 'Filtros, 1 activos' }).click();
+    const hoja = page.getByRole('dialog');
+    await hoja.getByLabel('Categoría').selectOption({ label: 'Cafés' });
+    await hoja.getByRole('button', { name: 'Ver resultados' }).click();
     await expect(page).toHaveURL(/categoria=/);
     await expect(page).toHaveURL(/tipo=gasto/);
     await page.getByRole('link', { name: 'Quitar filtro Gasto' }).click();
@@ -149,7 +151,7 @@ test.describe('PRU-E2E-TX actividad', () => {
     await expect(page).toHaveURL(/categoria=/);
   });
 
-  test('PRU-E2E-TX-421 [CA-24.3] en 1440 × 900 los filtros van en su columna fija de 260 px a la izquierda de la lista, abiertos, y filtran por la URL igual que antes', async ({
+  test('PRU-E2E-TX-421 [CA-24.3] en 1440 × 900 los filtros van en su columna fija de 320 px a la izquierda de la lista, abiertos, y filtran por la URL igual que antes', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -159,10 +161,10 @@ test.describe('PRU-E2E-TX actividad', () => {
     const lista = page.locator('[data-columna-lista]');
     const c = await columna.boundingBox();
     const l = await lista.boundingBox();
-    expect(Math.round(c?.width ?? 0)).toBe(260);
+    expect(Math.round(c?.width ?? 0)).toBe(320);
     expect((c?.x ?? 0) + (c?.width ?? 0)).toBeLessThan(l?.x ?? 0);
     expect(l?.width ?? 0).toBeLessThanOrEqual(760);
-    await expect(page.getByText('Filtros · 1')).toBeVisible();
+    await expect(columna.getByRole('heading', { name: 'Filtros · 1' })).toBeVisible();
     await expect(page.getByLabel('Categoría')).toBeVisible();
     await page.getByLabel('Categoría').selectOption({ label: 'Cafés' });
     await page.getByRole('button', { name: 'Filtrar' }).click();
@@ -170,5 +172,22 @@ test.describe('PRU-E2E-TX actividad', () => {
     await expect(page).toHaveURL(/tipo=gasto/);
     await esperarContenido(page);
     await expect(filas(page).first()).toBeVisible();
+  });
+
+  test('PRU-E2E-TX-721 [CA-E4-8] en 1440 × 900 la columna de filtros mide 320 px (D-8) y filtra por la URL igual que antes, con un solo «Registrar» a la vista', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await preparar(CAFES);
+    await abrir(page, '/actividad?tipo=gasto');
+    const c = await page.locator('[data-columna-filtros]').boundingBox();
+    expect(Math.round(c?.width ?? 0)).toBe(320);
+    await page.getByLabel('Categoría').selectOption({ label: 'Cafés' });
+    await page.getByRole('button', { name: 'Filtrar' }).click();
+    await expect(page).toHaveURL(/categoria=/);
+    await expect(page).toHaveURL(/tipo=gasto/);
+    await esperarContenido(page);
+    // ACT-01: el contenido no repite el «Registrar» del marco.
+    await expect(page.locator('main').getByRole('link', { name: 'Registrar' })).toHaveCount(0);
   });
 });

@@ -7,6 +7,8 @@ import '../../app/globals.css';
 import { GraficoBarras, type PuntoBarra } from '../graficos/grafico-barras';
 import { TablaEquivalente } from '../graficos/tabla-equivalente';
 import { VistaGrafico } from '../graficos/vista-grafico';
+import { formatearMonto } from '../../formato';
+import { ContextoArrastre } from '../../app/(finn)/bandeja/arrastre';
 import { MovimientoBandeja, vistaDe, type MovimientoDto } from './movimiento-bandeja';
 
 // `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene (el enrutado se prueba en E2E).
@@ -148,20 +150,21 @@ describe('PRU-CMP-CTA-102 bandeja y gráficos', () => {
     );
     expect(textoAccesible(raiz)).toContain('→ Supermercado (por regla)');
     const aprobar = raiz.querySelector<HTMLButtonElement>(
-      'button[aria-label="Aprobar SUPER SELECTOS"]',
+      `button[aria-label="Aprobar SUPER SELECTOS ${formatearMonto(base.monto as Centavos)}"]`,
     );
     act(() => {
       aprobar?.click();
     });
     expect(llamadas).toEqual(['aprobar:m1']);
     const nombres = [...raiz.querySelectorAll('button')].map((b) => b.getAttribute('aria-label'));
+    const monto = formatearMonto(base.monto as Centavos);
     expect(nombres).toEqual([
-      'Aprobar SUPER SELECTOS',
-      'Descartar SUPER SELECTOS',
-      'Es otro gasto SUPER SELECTOS',
-      'Descartar SUPER SELECTOS',
-      'Intentar de nuevo SUPER SELECTOS',
-      'Copiar referencia SUPER SELECTOS',
+      `Aprobar SUPER SELECTOS ${monto}`,
+      `Descartar SUPER SELECTOS ${monto}`,
+      `Es otro gasto SUPER SELECTOS ${monto}`,
+      `Descartar SUPER SELECTOS ${monto}`,
+      `Intentar de nuevo SUPER SELECTOS ${monto}`,
+      `Copiar referencia SUPER SELECTOS ${monto}`,
     ]);
     expect(raiz.querySelector('blockquote')?.textContent).toContain('compra por $45.00');
     expect(raiz.querySelector('a[href="/b/3"]')?.textContent).toBe('Registrar a mano');
@@ -293,5 +296,70 @@ describe('PRU-CMP-BAND acciones de cada fila de la Bandeja', () => {
     expect(
       raiz.querySelector('[data-movimiento="noReconocido"] blockquote')?.textContent,
     ).toContain('SUPER SELECTOS');
+  });
+});
+
+describe('PRU-CMP-BAND arrastre de la Bandeja', () => {
+  const arrastrable = (id: string, comercio: string): MovimientoDto => ({
+    ...base,
+    id,
+    comercio,
+    aprobacion: { posible: true, faltantes: [], arrastrable: true },
+  });
+  const fijo = { ...base, id: 'fijo', estado: 'con_coincidencia' } as const;
+  const destinos = {
+    frecuentes: [{ id: 'cat-1', nombre: 'Farmacia' }],
+    grupos: [
+      { grupo: { id: 'g1', nombre: 'Salud' }, categorias: [{ id: 'cat-1', nombre: 'Farmacia' }] },
+    ],
+  };
+
+  it('PRU-CMP-BAND-701 [CA-E3-1] el asa reserva su lugar en todas las filas de computadora, tiene nombre e instrucción, y con Espacio toma la fila y anuncia «Tomaste {comercio}.»', async () => {
+    const filas = [arrastrable('a', 'FARMACIA SAN NICOLAS'), fijo];
+    const raiz = montar(
+      <>
+        {filas.map((m) => (
+          <MovimientoBandeja
+            key={m.id}
+            movimiento={m}
+            hrefRevisar={`/bandeja/${m.id}`}
+            reservarAsa
+            ranuraAsa={m.aprobacion.arrastrable === true}
+          />
+        ))}
+        <ContextoArrastre
+          movimientos={filas}
+          destinos={destinos}
+          alSoltar={() => undefined}
+          alElegirOtra={() => undefined}
+        />
+      </>,
+    );
+    // El lugar del asa está reservado en las dos filas, aunque solo una se arrastre (nada se corre al pasar)
+    for (const id of ['a', 'fijo'])
+      expect(raiz.querySelector(`[data-movimiento="${id}"] [data-reserva-asa]`), id).not.toBeNull();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const asa = raiz.querySelector<HTMLButtonElement>('[data-asa="a"]');
+    expect(asa?.getAttribute('aria-label')).toMatch(
+      /^Arrastrar FARMACIA SAN NICOLAS .*45\.00 a una categoría$/,
+    );
+    expect(asa?.closest('[data-movimiento="a"]')).not.toBeNull();
+    expect(raiz.querySelector('[data-movimiento="fijo"] [data-asa]')).toBeNull();
+    // La instrucción de FT-78 llega al asa por `aria-describedby`
+    const descrito = asa?.getAttribute('aria-describedby') ?? '';
+    expect(document.getElementById(descrito)?.textContent).toContain('presioná Espacio');
+    act(() => {
+      asa?.focus();
+      asa?.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }));
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(document.querySelector('[data-panel-destinos]')).not.toBeNull();
+    expect(document.querySelector('[role="status"][aria-live="assertive"]')?.textContent).toBe(
+      'Tomaste FARMACIA SAN NICOLAS.',
+    );
   });
 });

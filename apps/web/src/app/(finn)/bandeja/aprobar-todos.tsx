@@ -5,6 +5,8 @@
 import { useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
 import { Boton } from '../../../componentes/base/boton';
+import { Icono } from '../../../componentes/base/icono';
+import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { Resultado } from '../../../componentes/base/resultado';
 import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
 import { formatearMonto } from '../../../formato';
@@ -96,7 +98,7 @@ export function AprobarTodos({
         {no.length === 0 ? null : (
           <AvisoEnLinea
             estado="advertencia"
-            titulo={t.aprobarTodos.noAprobados(no.length)}
+            titulo={t.aprobarTodos.quedan(no.length)}
             aparecioDespues
           >
             <ul data-testid="av-19" className="flex flex-col gap-1">
@@ -104,7 +106,11 @@ export function AprobarTodos({
                 <li key={x.id}>
                   <span className="font-bold">{x.nombre}</span>
                   {': '}
-                  {x.motivo}
+                  {x.motivo}{' '}
+                  {/* [CH-240 E6-6] «Ver transacción» por cada uno: lleva a su movimiento, que ya muestra su resultado */}
+                  <EnlaceFinn href={`/bandeja/${x.id}`} className="font-semibold underline">
+                    {t.verTransaccion}
+                  </EnlaceFinn>
                 </li>
               ))}
             </ul>
@@ -136,10 +142,12 @@ export function AprobarTodos({
       {elegibles.length === 0 ? null : (
         <Boton
           variante="secundaria"
+          className="w-full"
           onClick={alTocar}
           enviando={estado === 'enviando'}
           textoEnviando={t.aprobarTodos.aprobando}
         >
+          <Icono nombre="check" tamano={18} />
           {t.aprobarTodos.boton(elegibles.length)}
         </Boton>
       )}

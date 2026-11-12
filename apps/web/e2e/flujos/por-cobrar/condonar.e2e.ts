@@ -49,7 +49,6 @@ const disponible = (page: Page, nombre: string) =>
     .locator('[data-centavos]')
     .first();
 const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').first();
-const enCamino = (page: Page) => page.locator('[data-en-camino] [data-centavos]');
 const faltaReservar = (page: Page) =>
   page.locator('[data-fila-pago]').first().locator('[data-centavos]').first();
 const disponibleDePago = (page: Page) =>
@@ -178,7 +177,9 @@ test.describe('PRU-E2E-COBRO condonar', () => {
     await page.getByRole('button', { name: t.listo, exact: true }).click();
 
     await abrir(page, '/por-cobrar?cerrados=1');
-    await esperarMonto(enCamino(page), 0);
+    // Sin nada en camino la pantalla muestra «Nadie te debe nada» y no dibuja «En camino» (en $0.00)
+    await expect(page.locator('[data-en-camino]')).toHaveCount(0);
+    await expect(page.getByText('Nadie te debe nada')).toBeVisible();
     await abrir(page, '/presupuesto');
     await esperarMonto(lpa(page), 15000);
     await esperarMonto(disponible(page, 'Ropa'), -2000);

@@ -57,10 +57,10 @@ function Decoracion() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
       <div
-        className="absolute -inset-6 animate-[finn-guilloche_40s_linear_infinite_alternate]"
+        className="absolute -inset-6 animate-[finn-guilloche_var(--decorativo-duracion-guilloche)_linear_infinite_alternate]"
         style={{ backgroundImage: GUILLOCHE }}
       />
-      <div className="absolute inset-y-0 left-0 w-1/5 animate-[finn-brillo_7s_linear_infinite] bg-linear-to-r from-transparent via-texto-sobre-marca/10 to-transparent" />
+      <div className="absolute inset-y-0 left-0 w-1/5 animate-[finn-brillo_var(--duracion-ambiental)_linear_infinite] bg-linear-to-r from-transparent via-texto-sobre-marca/10 to-transparent" />
     </div>
   );
 }
@@ -110,7 +110,7 @@ export function ResumenListoParaAsignar({
         <span
           aria-hidden="true"
           data-resplandor
-          className="pointer-events-none absolute inset-x-[12%] -bottom-3.5 h-10 animate-[finn-resplandor_6s_ease-in-out_infinite] rounded-full bg-accion/45 blur-[22px]"
+          className="pointer-events-none absolute inset-x-[12%] -bottom-3.5 h-10 animate-[finn-resplandor_var(--duracion-ambiental)_ease-in-out_infinite] rounded-full bg-accion/45 blur-[22px]"
         />
         <div
           data-tarjeta-billete

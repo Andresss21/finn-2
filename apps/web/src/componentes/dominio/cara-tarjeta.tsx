@@ -6,12 +6,11 @@ import type { ReactNode } from 'react';
 import { caraTarjeta as t } from '../../textos/cara-tarjeta';
 import { nombreDeColor } from './colores-tarjeta';
 
-// Guilloché y chip del export: decorativos.
-const GUILLOCHE =
-  'repeating-radial-gradient(circle at 115% -25%, transparent 0 11px, rgba(255,255,255,.07) 11px 12px)';
+// Guilloché y chip del export: decorativos, con sus valores en `tokens-decorativos.css` (C-18).
+const GUILLOCHE = 'var(--decorativo-guilloche-tarjeta)';
 const CHIP = {
-  oro: 'linear-gradient(135deg, #F3E3B5, #B8975A)',
-  plata: 'linear-gradient(135deg, #EEF1F4, #9AA3AE)',
+  oro: 'var(--decorativo-chip-oro)',
+  plata: 'var(--decorativo-chip-plata)',
 } as const;
 /** Lo que dibuja la cara; el detalle de cuenta (FT-52) la usa sin el resto del DTO de la lista. */
 export interface DatosCara {
@@ -48,8 +47,10 @@ export function Cara({
     >
       <span
         aria-hidden="true"
-        className="absolute -inset-y-[30%] left-0 w-[70px] animate-[finn-brillo_8s_linear_infinite] bg-linear-to-r from-transparent via-white/15 to-transparent"
-      />
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-tarjeta"
+      >
+        <span className="absolute -inset-y-[30%] left-0 w-[70px] -skew-x-[20deg] animate-[finn-brillo-cara_var(--duracion-ambiental)_linear_infinite] bg-linear-to-r from-transparent via-white/15 to-transparent" />
+      </span>
       <span className="relative flex items-baseline justify-between gap-2.5">
         <span className="min-w-0 truncate text-titulo-seccion">{tarjeta.cuenta.nombre}</span>
         <span className="flex-none text-rotulo whitespace-nowrap opacity-80">
@@ -63,7 +64,7 @@ export function Cara({
           style={{
             backgroundImage: CHIP[nombre === 'oro' ? 'oro' : 'plata'],
             borderRadius: 7,
-            boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.18)',
+            boxShadow: 'var(--decorativo-chip-sombra)',
           }}
           className="relative h-[30px] w-10"
         >
@@ -99,7 +100,7 @@ export function Cara({
             </span>
           )}
           {tarjeta.red === undefined ? null : (
-            <span className="block text-rotulo opacity-75">{t.credito(tarjeta.red)}</span>
+            <span className="block text-rotulo">{t.credito(tarjeta.red)}</span>
           )}
         </span>
       </span>

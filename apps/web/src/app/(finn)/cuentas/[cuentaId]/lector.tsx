@@ -5,6 +5,7 @@ import { archivarCuenta, desarchivarCuenta } from '../../../../servidor/acciones
 import { consultar } from '../../../../servidor/consultar';
 import { depsDeConsulta } from '../../../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../../../servidor/parametros';
+import { leerResultado, PARAMETRO_RESULTADO } from '../../../../flujos/cuentas-archivar/resultado';
 import { PantallaDetalleCuenta } from './pantalla';
 
 const texto = (v: BusquedaDePagina[string]): string | undefined =>
@@ -17,7 +18,9 @@ export async function LectorDetalleCuenta({
   readonly cuentaId: string;
   readonly busqueda: BusquedaDePagina;
 }) {
-  const parametros = { ...aParametrosDeConsulta(busqueda), cuentaId };
+  // `?resultado=` es de la interfaz (E2-13): no llega a la consulta.
+  const { [PARAMETRO_RESULTADO]: aviso, ...paraLaConsulta } = busqueda;
+  const parametros = { ...aParametrosDeConsulta(paraLaConsulta), cuentaId };
   const dto = await consultar(async () => detalleCuenta(await depsDeConsulta(), parametros), {
     validacionDeSegmento: true,
   });
@@ -30,6 +33,7 @@ export async function LectorDetalleCuenta({
         estado: texto(busqueda['estado']),
         cursor: texto(busqueda['cursor']),
       }}
+      resultado={leerResultado(texto(aviso))}
       desarchivar={desarchivarCuenta}
       archivar={archivarCuenta}
     />

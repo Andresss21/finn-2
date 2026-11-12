@@ -85,7 +85,7 @@ describe('PRU-CMP-REP-180 presupuesto contra la realidad', () => {
     expect(raiz.querySelector('h1')?.textContent).toBe('Reportes');
     expect(
       raiz.querySelector('nav[aria-label="Reportes"] a[aria-current="page"]')?.textContent,
-    ).toBe('Realidad');
+    ).toBe('Presupuesto contra la realidad');
     expect(raiz.querySelectorAll('[data-sin-hallazgos]')).toHaveLength(2);
     expect(raiz.querySelector('[data-hallazgo-realidad]')).toBeNull();
     expect(raiz.querySelector('[data-hallazgo-promedio]')).toBeNull();

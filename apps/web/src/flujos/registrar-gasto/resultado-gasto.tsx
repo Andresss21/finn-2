@@ -7,22 +7,20 @@ import { Resultado } from '../../componentes/base/resultado';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
 
-interface Referencia {
-  readonly id: string;
-  readonly nombre: string;
-}
-
-export interface LineaGuardada {
+/** Una parte del gasto: dónde quedó, el enlace que lleva ahí y el monto tal como se guardó, ya formateado. */
+export interface ParteGuardada {
   readonly clave: string;
-  readonly destino: string;
-  /** El monto tal como se guardó, ya formateado. */
+  /** La categoría o «{persona} te debe». */
+  readonly nombre: string;
+  readonly href: string;
+  readonly verTexto: string;
   readonly monto: string;
 }
 
 // Fuera del JSX por L15.
 const TARJETA = 'rounded-contenedor bg-superficie shadow-elevacion-1';
-const LISTA_LINEAS =
-  'grid grid-cols-3 gap-x-2.5 gap-y-3.5 rounded-contenedor bg-superficie p-3.5 shadow-elevacion-1';
+const LISTA_PARTES =
+  'flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie px-3.5 py-2 shadow-elevacion-1';
 /** Un enlace con el aspecto de un botón principal (05 §10.7), como en el estado sin cuentas. */
 const ENLACE_PRINCIPAL =
   'inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
@@ -31,37 +29,43 @@ const ENLACE_CATEGORIA =
 
 export default function ResultadoGasto({
   texto,
-  lineas,
-  tocadas,
+  transaccionId,
+  partes,
   reutilizados,
 }: {
   readonly texto: string;
-  readonly lineas: readonly LineaGuardada[];
-  readonly tocadas: readonly Referencia[];
+  /** La transacción creada (OP-20 devuelve su id): «Ver transacción». */
+  readonly transaccionId: string;
+  readonly partes: readonly ParteGuardada[];
   readonly reutilizados: readonly string[];
 }) {
   return (
     <div className="flex flex-col gap-6">
       <div className={TARJETA}>
-        <Resultado texto={texto} />
+        <Resultado
+          texto={texto}
+          enlace={<EnlaceFinn href={`/actividad/${transaccionId}`}>{t.verTransaccion}</EnlaceFinn>}
+        />
       </div>
-      <ul className={LISTA_LINEAS} aria-label={t.lineasGuardadas}>
-        {lineas.map((l) => (
-          <li key={l.clave} className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-rotulo truncate text-texto-secundario">{l.destino}</span>
-            <span className="font-semibold tabular-nums">{l.monto}</span>
-          </li>
-        ))}
-      </ul>
-      <ul className="flex flex-col" aria-label={t.categoriasTocadas}>
-        {tocadas.map((x) => (
-          <li key={x.id}>
-            <EnlaceFinn href={`/presupuesto/categorias/${x.id}`} className={ENLACE_CATEGORIA}>
-              {t.verCategoria(x.nombre)}
-            </EnlaceFinn>
-          </li>
-        ))}
-      </ul>
+      {/* [CH-240 E4-2] «Repartido en»: un enlace por cada categoría y cada deudor tocados, con su monto */}
+      <section aria-labelledby="repartido-en" className="flex flex-col gap-2">
+        <h2 id="repartido-en" className="text-rotulo text-texto-secundario">
+          {t.repartidoEn}
+        </h2>
+        <ul className={LISTA_PARTES} aria-label={t.lineasGuardadas}>
+          {partes.map((p) => (
+            <li key={p.clave} className="flex items-center gap-3 py-1">
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate">{p.nombre}</span>
+                <EnlaceFinn href={p.href} className={ENLACE_CATEGORIA}>
+                  {p.verTexto}
+                </EnlaceFinn>
+              </span>
+              <span className="font-semibold tabular-nums">{p.monto}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
       {reutilizados.map((nombre) => (
         <p key={nombre} className="text-cuerpo-pequeno text-texto" data-testid="deudor-existente">
           {t.deudorExistente(nombre)}

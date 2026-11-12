@@ -4,6 +4,7 @@
 import type { MetasDto } from '@finn/aplicacion/consultas/metas';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
 import { Icono } from '../../../componentes/base/icono';
+import { Resultado } from '../../../componentes/base/resultado';
 import { Vacio } from '../../../componentes/base/vacio';
 import { IndicadorEstado } from '../../../componentes/dominio/indicador-estado';
 import { Monto } from '../../../componentes/dominio/monto';
@@ -11,6 +12,7 @@ import { indicadorDeMeta, ResumenMeta } from '../../../componentes/dominio/resum
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { formatearFecha } from '../../../formato';
+import type { ResultadoMeta } from '../../../flujos/metas-meta/resultado';
 import { metas as t } from '../../../textos/metas';
 
 const BOTON =
@@ -113,8 +115,17 @@ function SinMeta({ categorias }: { readonly categorias: MetasDto['categoriasSinM
   );
 }
 
-export function PantallaMetas({ dto }: { readonly dto: MetasDto }) {
+export function PantallaMetas({
+  dto,
+  resultado,
+}: {
+  readonly dto: MetasDto;
+  /** E4-18 [CH-248]: lo que dejó editar una meta (`?resultado=`, ya validado). */
+  readonly resultado?: ResultadoMeta | undefined;
+}) {
   const { metas, categoriasSinMeta } = dto;
+  const deLaMeta =
+    resultado === undefined ? undefined : metas.find((m) => m.id === resultado.metaId);
   const nueva = categoriasSinMeta[0];
   const crear = nueva === undefined ? undefined : `/metas/nueva?categoria=${nueva.id}`;
   const pide = metas.filter((m) => !m.vencida);
@@ -130,6 +141,17 @@ export function PantallaMetas({ dto }: { readonly dto: MetasDto }) {
           </EnlaceFinn>
         )}
       </div>
+      {resultado === undefined || deLaMeta === undefined ? null : (
+        <div data-resultado-flujo={resultado.tipo}>
+          <Resultado
+            texto={
+              resultado.tipo === 'extendida'
+                ? t.resultado.extendida(deLaMeta.categoria.nombre, formatearFecha(resultado.fecha))
+                : t.resultado.ajustada(deLaMeta.categoria.nombre)
+            }
+          />
+        </div>
+      )}
       {metas
         .filter((m) => m.vencida)
         .map((m) => (
@@ -139,10 +161,10 @@ export function PantallaMetas({ dto }: { readonly dto: MetasDto }) {
               titulo={t.vencida.titulo}
               accion={
                 <span className="flex flex-wrap">
-                  <EnlaceFinn href={`/metas/${m.id}`} className={ENLACE}>
+                  <EnlaceFinn href={`/metas/${m.id}?enfocar=fecha`} className={ENLACE}>
                     {t.vencida.extender}
                   </EnlaceFinn>
-                  <EnlaceFinn href={`/metas/${m.id}`} className={ENLACE}>
+                  <EnlaceFinn href={`/metas/${m.id}?enfocar=monto`} className={ENLACE}>
                     {t.vencida.ajustar}
                   </EnlaceFinn>
                 </span>

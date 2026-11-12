@@ -227,7 +227,9 @@ describe('PRU-CMP-PRES «Reservar $X» en la categoría de pago', () => {
     const principal = n.querySelector('[data-accion-principal]') as HTMLAnchorElement;
     expect(visible(principal)).toBe('Reservar $18.75');
     expect(principal.querySelector('[data-centavos]')?.getAttribute('data-centavos')).toBe('1875');
-    expect(principal.getAttribute('href')).toBe(`/presupuesto/asignar/${ID}`);
+    expect(principal.getAttribute('href')).toBe(
+      `/presupuesto/asignar/${ID}?volver=${encodeURIComponent(`/presupuesto/categorias/${ID}`)}`,
+    );
     expect(principal.getAttribute('data-variante')).toBe('reservar_falta');
     expect(principal.getBoundingClientRect().height).toBeGreaterThanOrEqual(52);
     const alDia = mostrar(dto({ tarjetaHoy: { ...hoyCero, deuda: 64218, reservado: 64218 } }));

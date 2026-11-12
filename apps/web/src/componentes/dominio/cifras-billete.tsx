@@ -51,7 +51,7 @@ export function CifrasBillete({
               key={i}
               className={
                 rueda
-                  ? 'inline-block animate-[finn-cifra-rueda_1.4s_var(--curva-estandar)_backwards]'
+                  ? 'inline-block animate-[finn-cifra-rueda_var(--duracion-bucle)_var(--curva-estandar)_backwards]'
                   : 'inline-block'
               }
               style={rueda ? { animationDelay: `${String(i * 90)}ms` } : undefined}

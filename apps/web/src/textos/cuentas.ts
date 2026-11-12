@@ -44,6 +44,9 @@ export const cuentas = {
     titulo: 'Cuentas',
     nuevaCuenta: 'Nueva cuenta',
     ordenar: 'Ordenar',
+    // E4-33/E6-11: el grupo del menú y sus dos acciones.
+    enCuentas: 'En Cuentas',
+    ordenarCuentas: 'Ordenar las cuentas',
     verDetalle: (nombre: string) => `Ver detalle de ${nombre}`,
     pagar: (nombre: string) => `Pagar ${nombre}`,
     grupos: {
@@ -57,7 +60,7 @@ export const cuentas = {
     ocultarArchivadas: 'Ocultar archivadas',
     vacioTitulo: 'Agregá tu primera cuenta',
     vacioTexto: 'Acá vas a ver dónde está tu dinero y cuánto debés.',
-    vacioAccion: 'Crear una cuenta',
+    vacioAccion: 'Agregar una cuenta',
   },
   bandeja: {
     estados: {

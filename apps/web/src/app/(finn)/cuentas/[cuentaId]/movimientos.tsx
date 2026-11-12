@@ -1,9 +1,11 @@
 // Movimientos del detalle de cuenta (FT-52, CA-52.5): cada fila con el saldo corrido que trae el DTO (`saldoDespues`, 04 §6.0.5),
 // el filtro por tipo y estado, y el enlace a la página anterior en el tiempo (`?cursor=`). Dibuja lo que trae el DTO: no suma (PF-3).
+import type { ReactNode } from 'react';
 import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta';
 import { Vacio } from '../../../../componentes/base/vacio';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
+import { VacioSinResultados } from '../../../../componentes/navegacion/vacios';
 import { formatearFecha } from '../../../../formato';
 import { cuentaDetalle } from '../../../../textos/cuenta-detalle';
 import { dominio } from '../../../../textos/dominio';
@@ -37,11 +39,14 @@ export function hrefDe(cuentaId: string, filtros: FiltrosDetalle, cambios: Filtr
 function Filtros({
   cuentaId,
   filtros,
+  conLista,
 }: {
   readonly cuentaId: string;
   readonly filtros: FiltrosDetalle;
+  /** Sin lista (nada coincide), el «Quitar filtros» vive en el vacío y no se repite aquí. */
+  readonly conLista: boolean;
 }) {
-  const hay = filtros.tipo !== undefined || filtros.estado !== undefined;
+  const hay = conLista && (filtros.tipo !== undefined || filtros.estado !== undefined);
   return (
     <form
       method="get"
@@ -119,9 +124,12 @@ function subtitulo(m: Fila, cuentaId: string): string {
 export function Movimientos({
   dto,
   filtros,
+  selector,
 }: {
   readonly dto: DetalleCuentaDto;
   readonly filtros: FiltrosDetalle;
+  /** E4-13: el selector de período, bajo el título de «Movimientos». */
+  readonly selector?: ReactNode;
 }) {
   const id = dto.cuenta.id;
   const filtrado = filtros.tipo !== undefined || filtros.estado !== undefined;
@@ -133,14 +141,26 @@ export function Movimientos({
             ? cuentaDetalle.inversion.movimientos
             : dto.tarjeta !== undefined
               ? cuentaDetalle.tarjeta.movimientosDelCiclo
-              : t.titulo}
+              : dto.periodo.estado === 'cerrado'
+                ? t.tituloCerrado
+                : t.titulo}
         </h2>
         <EnlaceFinn href={`/actividad?cuenta=${id}`} className={ENLACE_ACTIVIDAD}>
           {cuentaDetalle.acciones.verEnActividad}
         </EnlaceFinn>
       </div>
-      <Filtros cuentaId={id} filtros={filtros} />
-      {dto.movimientos.length === 0 ? (
+      {selector}
+      <Filtros cuentaId={id} filtros={filtros} conLista={dto.movimientos.length > 0} />
+      {dto.movimientos.length === 0 && filtrado ? (
+        // E6-12: «Sin resultados con estos filtros» y «Quitar filtros» (sin `?tipo=` ni `?estado=`, con el período)
+        <VacioSinResultados
+          rutaSinFiltros={hrefDe(id, filtros, {
+            tipo: undefined,
+            estado: undefined,
+            cursor: undefined,
+          })}
+        />
+      ) : dto.movimientos.length === 0 ? (
         <Vacio
           titulo={filtrado || filtros.periodo !== undefined ? t.sinResultados : t.vacio}
           texto={filtrado || filtros.periodo !== undefined ? t.sinResultadosTexto : t.vacioTexto}

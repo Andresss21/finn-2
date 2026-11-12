@@ -8,6 +8,14 @@ import type { MovimientoDto } from '../../../componentes/dominio/movimiento-band
 import { bandeja as t } from '../../../textos/bandeja';
 import { AprobarTodos } from './aprobar-todos';
 
+// `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene (el enrutado se prueba en E2E).
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
+    createElement('a', { href, ...resto }, children);
+  return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
+});
+
 const aprobar = vi.fn(); // la Server Action llega por prop: no se simula ningún módulo propio
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -93,6 +101,48 @@ describe('PRU-CMP-BAND', () => {
     expect(aviso?.textContent).toContain('Pago Visa');
     expect(aviso?.textContent).toContain('Elegí de qué cuenta salió el pago.');
     expect(aviso?.querySelectorAll('li')).toHaveLength(1);
+  });
+
+  it('PRU-CMP-BAND-711 [CA-E6-8] en curso, «Aprobando…» con aria-disabled y sin «2 de 2»; con un rechazo, el resultado lista el movimiento con el motivo y «Ver transacción»', async () => {
+    let resolver: (v: unknown) => void = () => undefined;
+    aprobar.mockReturnValue(new Promise((r) => (resolver = r)));
+    const otro = movimiento('e2', 'FARMACIA SAN NICOLAS', 1200);
+    const nodo = montar(
+      <AprobarTodos accion={aprobar} elegibles={['e1', 'e2']} movimientos={[LISTO, otro]} />,
+    );
+    const boton = nodo.querySelector('button');
+    // Tonal, a todo el ancho y con el glifo `check`
+    expect(boton?.className).toContain('w-full');
+    expect(boton?.querySelector('svg')).not.toBeNull();
+    await tocar(boton);
+    expect(boton?.textContent).toBe(t.aprobarTodos.aprobando);
+    expect(boton?.getAttribute('aria-disabled')).toBe('true');
+    expect(boton?.hasAttribute('disabled')).toBe(false);
+    expect(nodo.textContent).not.toMatch(/\d+ de \d+/);
+
+    resolver({
+      ok: true,
+      valor: {
+        elementos: [
+          { movimientoId: 'e1', resultado: 'aprobado' },
+          {
+            movimientoId: 'e2',
+            resultado: {
+              codigo: 'movimiento_estado_no_valido',
+              mensaje: 'Este movimiento ya está aprobado.',
+            },
+          },
+        ],
+      },
+      yaAplicada: false,
+      avisos: [],
+    });
+    await esperar();
+    const aviso = nodo.querySelector('[data-testid="av-19"]');
+    expect(nodo.textContent).toContain(t.aprobarTodos.quedan(1));
+    expect(aviso?.textContent).toContain('FARMACIA SAN NICOLAS');
+    expect(aviso?.textContent).toContain('Este movimiento ya está aprobado.');
+    expect(aviso?.querySelector('a')?.textContent).toBe(t.verTransaccion);
   });
 
   it('PRU-CMP-BAND-161 [FT-36] sin elegibles el botón «Aprobar todos» no aparece', () => {

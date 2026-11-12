@@ -21,5 +21,14 @@ export const seguridad = {
     `¿Quitar ${nombre}? Con ese factor ya no vas a poder ingresar.`,
   quitando: 'Quitando…',
   volver: 'Volver a Seguridad',
+  // Quitar un factor (E2-8): hoja de confirmación con dos o más factores; el resultado queda en Seguridad.
+  preguntaQuitarFactor: (nombre: string) => `¿Quitar ${nombre}?`,
+  consecuenciaQuitar: (nombre: string, quedan: readonly string[]) =>
+    `Ya no vas a poder ingresar con ${nombre}. ${quedan.length === 1 ? 'Te queda' : 'Te quedan'} ${quedan.join(' y ')}.`,
+  cancelar: 'Cancelar',
+  quitarNombre: (nombre: string) => `Quitar ${nombre}`,
+  quitaste: (nombre: string) => `Quitaste ${nombre}.`,
+  agregaste: (nombre: string) =>
+    `Agregaste ${nombre}. Ya podés ingresar con cualquiera de los dos factores.`,
   intentarDeNuevo: 'Intentar de nuevo',
 } as const;

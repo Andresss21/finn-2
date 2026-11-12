@@ -7,10 +7,10 @@ import { Dialogo } from '../base/dialogo';
 
 export type DesdeSuperpuesto = 'abajo' | 'lado' | 'arriba';
 
-// Mapa de clases literales (L13). `auto`: hoja inferior y, desde `md`, panel lateral.
+// Mapa de clases literales (L13). `auto`: hoja inferior (centrada a 640 px en tableta, D-2) y, desde `md` (1024 px), panel lateral.
 const FORMAS: Record<DesdeSuperpuesto | 'auto', string> = {
-  auto: 'inset-x-0 bottom-0 max-h-11/12 rounded-t-superpuesto md:inset-x-auto md:inset-y-0 md:right-0 md:max-h-none md:w-105 md:max-w-full md:rounded-t-none md:rounded-l-superpuesto',
-  abajo: 'inset-x-0 bottom-0 max-h-11/12 rounded-t-superpuesto',
+  auto: 'inset-x-0 bottom-0 mx-auto max-h-11/12 max-w-160 rounded-t-superpuesto md:inset-x-auto md:inset-y-0 md:mx-0 md:right-0 md:max-h-none md:w-105 md:max-w-full md:rounded-t-none md:rounded-l-superpuesto',
+  abajo: 'inset-x-0 bottom-0 mx-auto max-h-11/12 max-w-160 rounded-t-superpuesto',
   lado: 'inset-y-0 right-0 w-105 max-w-full rounded-l-superpuesto',
   arriba: 'inset-x-0 top-0 max-h-11/12 rounded-b-superpuesto pt-12',
 };

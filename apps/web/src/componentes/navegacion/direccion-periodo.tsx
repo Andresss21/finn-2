@@ -1,5 +1,5 @@
 'use client';
-// C12 (CH-220): al cambiar de período, el contenido entra desde el lado que corresponde (320 ms, `--duracion-periodo`). Todo en el
+// C12 (CH-220): al cambiar de período, el contenido entra desde el lado que corresponde (340 ms, `--duracion-transicion`). Todo en el
 // cliente: la flecha del selector anota hacia qué período va y en qué dirección; la pantalla, al montarse con ese período, anima
 // su contenido. El servidor no sabe de dónde se vino. Con movimiento reducido, la regla global de `globals.css` quita la animación.
 import { useLayoutEffect, type ComponentProps } from 'react';

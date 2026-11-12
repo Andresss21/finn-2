@@ -12,6 +12,9 @@ export const transaccion = {
   estado: 'Estado',
   periodo: 'Período',
   cuentas: 'Cuentas',
+  efectosHoy: 'Efectos hoy',
+  cobrar: 'Cobrar',
+  condonar: 'Condonar',
   nota: 'Nota',
   origen: 'Origen',
   origenes: actividad.origenes,
@@ -49,8 +52,20 @@ export const transaccion = {
   volverAEditar: 'Volver a editar',
   avisos: {
     'AV-01': 'La fecha es de un período cerrado o cambia el período de la transacción.',
+    'AV-03': glosario.deudaSinReservar,
+    'AV-07': `La deuda de esa tarjeta queda como «${glosario.teFaltaReservar}».`,
     'AV-16': `Esta transacción está ${glosario.conciliada.toLowerCase()}: al cambiarla vuelve a ${glosario.confirmada.toLowerCase()} y queda un cambio posterior.`,
   } as Readonly<Record<string, string>>,
+  // E3-15 / E4-1: AV-16 al editar una conciliada, de advertencia o de información según lo que cambió (04 OP-28)
+  conciliadaAdvertencia: (cuenta: string, queCambio: string) =>
+    `Está conciliada. Al guardar pasa a confirmada y la conciliación de ${cuenta} registra el cambio posterior: ${queCambio}. Guardar confirma este cambio.`,
+  conciliadaInformacion: (cuenta: string) =>
+    `Sigue conciliada. Cambiar la categoría no cambia el saldo de ${cuenta}: la conciliación no se toca.`,
+  conciliadaRepartoDistinto: (cuenta: string) =>
+    `Sigue conciliada. Repartir distinto entre las partes no cambia el total ni el saldo de ${cuenta}: la conciliación no se toca.`,
+  queCambio: { fecha: 'la fecha', total: 'el total', cuentaId: 'la cuenta' } as const,
+  corregiParaGuardar: 'Corregí lo marcado para guardar.',
+  cargandoCampos: 'Cargando los campos…',
   impactoLpa: (delta: string) => `${glosario.listoParaAsignar} cambia ${delta}.`,
   // FT-26: eliminar (OP-29) y cambiar el estado bancario (OP-30); 05 §2.6. Los rechazos llegan compuestos en `mensaje`.
   marcarConfirmada: `Marcar como ${glosario.confirmada.toLowerCase()}`,
@@ -64,6 +79,7 @@ export const transaccion = {
   cancelar: 'Cancelar',
   noSePuedeEliminar: 'No se puede eliminar todavía',
   verTransaccion: 'Ver transacción',
+  entendido: 'Entendido',
   avisosEliminar: {
     'AV-01': 'La transacción es de un período cerrado: al eliminarla se recalcula lo posterior.',
     'AV-16': `Esta transacción está ${glosario.conciliada.toLowerCase()}: al eliminarla queda un cambio posterior en su conciliación.`,
@@ -82,7 +98,7 @@ export const transaccion = {
   repartoEntrePartes: 'Reparto entre las partes',
   quedanPorDevolver: (monto: string) => `quedan ${monto} por devolver`,
   montoDe: (parte: string) => `Monto de ${parte}`,
-  devolverA: 'Devolver a',
+  devolverA: 'Vuelve a',
   registrarDevolucion: 'Registrar devolución',
   registrarDevolucionMonto: (monto: string) => `Registrar devolución ${monto}`,
   sinNadaTitulo: 'Sin nada por devolver',

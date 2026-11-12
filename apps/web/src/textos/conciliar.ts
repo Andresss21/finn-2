@@ -10,6 +10,7 @@ export const conciliar = {
   elegirArchivo: 'Elegir archivo',
   elegirOtro: 'Elegir otro archivo',
   falta: 'Subí el archivo CSV.',
+  tamano: (kb: number) => `${kb} KB`,
   revisar: 'Revisar',
   leyendo: 'Leyendo el archivo…',
   saldoEstado: (fecha: string, monto: string) => `Saldo del estado (${fecha}): ${monto}`,

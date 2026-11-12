@@ -8,6 +8,7 @@ import { Monto } from '../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { centavosATextoDecimal, formatearMonto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
+import { CifraReporte } from './cifra';
 import { Tabla } from './vistas-detalle';
 
 export type Hallazgo = ReporteDe<'hormiga'>['hallazgos'][number];
@@ -65,6 +66,12 @@ export function Hormiga({ dto }: { readonly dto: ReporteDe<'hormiga'> }) {
     );
   return (
     <div className="flex flex-col gap-6">
+      {dto.grupos[0] === undefined ? null : (
+        <CifraReporte
+          centavos={dto.grupos[0].total}
+          frase={t.cifras.hormiga(dto.grupos[0].etiqueta)}
+        />
+      )}
       {dto.hallazgos.length === 0 ? null : (
         <div className="flex flex-col gap-2.5">
           {dto.hallazgos.map((h) => (

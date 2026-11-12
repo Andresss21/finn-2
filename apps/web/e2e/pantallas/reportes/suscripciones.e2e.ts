@@ -189,8 +189,11 @@ test.describe('PRU-E2E-REP suscripciones detectadas', () => {
   }) => {
     await sembrarSemilla(PROGRAMADA_CON_HISTORIAL, HOY);
     await abrir(page, '/programadas');
-    await fila(page, 'NETFLIX').getByRole('button', { name: 'Desactivar', exact: true }).click();
-    await expect(fila(page, 'NETFLIX').getByTestId('resultado')).toContainText('desactivada');
+    // E4-24: «Desactivar» vive en la edición de la programada; el resultado queda en la lista, de donde se salió
+    await fila(page, 'NETFLIX').getByRole('link').click();
+    await esperarContenido(page);
+    await page.getByRole('button', { name: 'Desactivar', exact: true }).click();
+    await expect(page.getByTestId('resultado')).toContainText('Desactivaste NETFLIX');
 
     // El 17/06 cae mientras está desactivada; el 18/06 se reactiva desde el reporte (CF-20).
     fijarRelojServidor('2027-06-18T10:00:00-06:00');

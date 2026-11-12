@@ -18,11 +18,17 @@ import { PublicarEncabezado } from '../../../../../componentes/marco/proveedor-e
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
 import { VolverEnTitulo } from '../../../../../componentes/navegacion/volver-en-titulo';
 import { SelectorPeriodo } from '../../../../../componentes/navegacion/selector-periodo';
-import { formatearFecha, formatearMonto } from '../../../../../formato';
+import { formatearFecha, formatearMonto, formatearPeriodoNumerico } from '../../../../../formato';
 import { categoriaDetalle as t } from '../../../../../textos/categoria-detalle';
 import { ConsumosYCalendario } from './calendario';
 import { Desarchivar } from './desarchivar';
+import { SacarDeUnToque } from '../../sacar-un-toque';
 import { Historial } from './historial';
+import { ResultadoDelFlujo } from './resultado';
+import {
+  enlaceDeFlujo,
+  type ResultadoPresupuesto,
+} from '../../../../../flujos/presupuesto-asignar-categoria/resultado';
 import { PantallaPagoTarjeta } from './pago';
 import { MontoDestello } from '../../../../../componentes/dominio/monto-destello';
 
@@ -52,15 +58,37 @@ function Seccion({
 export function PantallaDetalleCategoria({
   dto,
   desarchivar,
+  sacar,
+  resultado,
+  asignar,
 }: {
   readonly dto: DetalleCategoriaDto;
+  /** E2-13 [CH-248]: lo que dejó Asignar o Mover (`?resultado=`, ya validado) y `asignarEnCategoria` para su «Deshacer». */
+  readonly resultado?: ResultadoPresupuesto | undefined;
+  readonly asignar?: AccionEscritura;
   readonly desarchivar: AccionEscritura;
+  /** `sacarDisponible` (OP-11): la pone el lector; sin ella no se ofrece la propuesta de AV-14. */
+  readonly sacar?: AccionEscritura;
 }) {
   const { categoria, periodoActivo } = dto;
   const conPeriodo = (ruta: string): string =>
     dto.periodo.inicio === periodoActivo.inicio ? ruta : `${ruta}?periodo=${dto.periodo.inicio}`;
   const raiz = `/presupuesto/categorias/${categoria.id}`;
-  if (dto.clase === 'pago') return <PantallaPagoTarjeta dto={dto} />;
+  const enPeriodoActivo = dto.periodo.inicio === periodoActivo.inicio;
+  const volver = `${raiz}${enPeriodoActivo ? '' : `?periodo=${dto.periodo.inicio}`}`;
+  const flujo = (ruta: string): string =>
+    enlaceDeFlujo(ruta, volver, enPeriodoActivo ? undefined : dto.periodo.inicio);
+  const delFlujo =
+    asignar === undefined || resultado === undefined ? undefined : (
+      <ResultadoDelFlujo
+        resultado={resultado}
+        categoriaId={categoria.id}
+        nombre={categoria.nombre}
+        periodoInicio={dto.periodo.inicio}
+        asignar={asignar}
+      />
+    );
+  if (dto.clase === 'pago') return <PantallaPagoTarjeta dto={dto} resultado={delFlujo} />;
 
   const { numeros, sobregiro, acciones, meta, periodo } = dto;
   const cerrado = periodo.estado === 'cerrado';
@@ -94,12 +122,13 @@ export function PantallaDetalleCategoria({
       ? [
           {
             etiqueta: t.acciones.mover,
-            ruta: conPeriodo(`/presupuesto/mover?categoria-origen=${categoria.id}`),
+            ruta: flujo(`/presupuesto/mover?categoria-origen=${categoria.id}`),
             icono: 'swap',
           } as const,
         ]
       : []),
-    ...(archivada
+    // E4-9: en un período cerrado «Archivar» no se ofrece (D-5, CA-E4-15); «Fusionar con otra» sigue siendo válida.
+    ...(archivada || cerrado
       ? []
       : [
           bloqueoArchivar === undefined
@@ -109,8 +138,10 @@ export function PantallaDetalleCategoria({
                 motivo: t.acciones.bloqueos[bloqueoArchivar],
                 icono: 'inbox',
               } as const),
-          { etiqueta: t.acciones.fusionar, ruta: `${raiz}/fusionar`, icono: 'repeat' } as const,
         ]),
+    ...(archivada
+      ? []
+      : [{ etiqueta: t.acciones.fusionar, ruta: `${raiz}/fusionar`, icono: 'repeat' } as const]),
     acciones.puedeEliminar
       ? {
           etiqueta: t.acciones.eliminar,
@@ -125,7 +156,7 @@ export function PantallaDetalleCategoria({
           peligro: true,
         },
   ];
-  const hrefAsignar = conPeriodo(`/presupuesto/asignar/${categoria.id}`);
+  const hrefAsignar = flujo(`/presupuesto/asignar/${categoria.id}`);
   const faltaMeta = meta !== null && meta.falta > 0 ? meta.falta : undefined;
   // D9: una categoría de ahorro (meta con progreso) que nunca tuvo gasto no muestra historial de gasto.
   const ahorroSinGasto =
@@ -156,7 +187,14 @@ export function PantallaDetalleCategoria({
           ruta={raiz}
           parametros={{}}
         />
-        {cerrado ? <AvisoEnLinea estado="informacion">{t.periodoCerrado}</AvisoEnLinea> : null}
+        {cerrado ? (
+          <AvisoEnLinea
+            estado="informacion"
+            titulo={t.periodoCerradoTitulo(formatearPeriodoNumerico(periodo))}
+          >
+            {t.periodoCerrado}
+          </AvisoEnLinea>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-6">
@@ -208,7 +246,8 @@ export function PantallaDetalleCategoria({
             {sobregiro.parteDebito === 0 ? null : (
               <AvisoEnLinea estado="problema" titulo={t.sobregiro.debito}>
                 {t.sobregiro.conDebito} <Monto centavos={sobregiro.parteDebito} />.{' '}
-                {t.sobregiro.alCerrar} <Monto centavos={sobregiro.parteDebito} />.
+                {cerrado ? t.sobregiro.alCerrarCerrado : t.sobregiro.alCerrar}{' '}
+                <Monto centavos={sobregiro.parteDebito} />.
               </AvisoEnLinea>
             )}
             {sobregiro.parteTarjeta === 0 ? null : (
@@ -230,9 +269,38 @@ export function PantallaDetalleCategoria({
           </div>
         )}
 
+        {archivada && numeros.disponible > 0 ? (
+          <div data-aviso="av-14">
+            <AvisoEnLinea
+              estado="advertencia"
+              titulo={t.archivadaConDinero(categoria.nombre, formatearMonto(numeros.disponible))}
+            >
+              <div className="flex flex-col gap-2">
+                <p>{t.archivadaTexto}</p>
+                {sacar === undefined ? null : (
+                  <SacarDeUnToque
+                    categoriaId={categoria.id}
+                    asignado={numeros.asignado}
+                    disponible={numeros.disponible}
+                    accion={sacar}
+                  />
+                )}
+                <EnlaceFinn href={`${raiz}/sacar`} className={TONAL}>
+                  {t.elegirDestino}
+                </EnlaceFinn>
+              </div>
+            </AvisoEnLinea>
+          </div>
+        ) : null}
+
         {meta === null ? null : (
           <Seccion titulo={t.meta.titulo} atributo="meta">
             <ResumenMeta meta={meta} conseguido={numeros.disponible} />
+            {archivada ? (
+              <p data-meta-pausa className="text-cuerpo-pequeno text-texto-secundario">
+                {t.metaEnPausa(categoria.nombre)}
+              </p>
+            ) : null}
           </Seccion>
         )}
       </div>
@@ -330,19 +398,18 @@ export function PantallaDetalleCategoria({
               )}
             </EnlaceFinn>
             <EnlaceFinn
-              href={conPeriodo(`/presupuesto/mover?categoria-origen=${categoria.id}`)}
+              href={flujo(`/presupuesto/mover?categoria-origen=${categoria.id}`)}
               className={TONAL}
             >
               {t.acciones.mover}
             </EnlaceFinn>
           </div>
         ) : null}
-        {archivada && numeros.disponible > 0 ? (
-          <EnlaceFinn href={`${raiz}/sacar`} className={TONAL}>
-            {t.acciones.sacar}
-          </EnlaceFinn>
-        ) : null}
+        {delFlujo}
         {archivada ? <Desarchivar categoriaId={categoria.id} accion={desarchivar} /> : null}
+        {archivada ? (
+          <p className="text-cuerpo-pequeno text-texto-secundario">{t.desarchivarPrimero}</p>
+        ) : null}
       </nav>
     </main>
   );

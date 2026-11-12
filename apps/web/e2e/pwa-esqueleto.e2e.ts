@@ -1,7 +1,12 @@
 // PRU-E2E-PWA-101 (TA-200; 05 §1.2, §6.1; 04 §2.2.4): la compilación real de producción (`next build` y
 // `next start`, que levanta el `webServer` de playwright.config.ts) separa lo público de lo autenticado.
 import { readFileSync } from 'node:fs';
-import { expect, test } from '@playwright/test';
+import { entrarAal2 } from './ayudas/sesion.ts';
+import { esperarContenido } from './ayudas/esperas.ts';
+import { expect, sembrar, test } from './configuracion/semilla.ts';
+import { fijarRelojServidor } from '../../../tools/pruebas/e2e/reloj.ts';
+import type { Escenario } from '../../../packages/dominio/escenarios/tipos.ts';
+import { estados, navegacion } from '../src/textos/index.ts';
 import { prerenderizadasDeFinn } from '../../../tools/pruebas/rendimiento/clasificar.ts';
 import config from '../next.config.ts';
 
@@ -85,5 +90,53 @@ test.describe('PRU-E2E-PWA', () => {
       }
       expect([cuerpo.readUInt32BE(16), cuerpo.readUInt32BE(20)]).toEqual([ancho, alto]);
     }
+  });
+
+  // TA-563 (E6-1, `T1-carga/flujo-corto`): la hoja aparece de inmediato, en esqueleto, sobre la pantalla de origen.
+  test('PRU-E2E-PWA-721 [CA-E6-3] al abrir Asignar desde Presupuesto con la respuesta demorada, la hoja aparece en esqueleto sobre Presupuesto antes de los datos', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await entrarAal2(context, baseURL ?? '');
+    fijarRelojServidor('2027-02-10T10:00:00-06:00');
+    const escenario: Escenario = {
+      id: 'SEM-ESQUELETO',
+      titulo: 'Semilla del esqueleto',
+      refs: [],
+      hoy: '2027-02-10',
+      estadoInicial: [
+        { op: 'OP-01', cuenta: 'Ahorro' },
+        { op: 'OP-07', categoria: 'Super' },
+      ],
+      pasos: [],
+    };
+    await sembrar(escenario, '2027-02-10');
+    await page.goto('/presupuesto');
+    await esperarContenido(page);
+
+    let liberar: () => void = () => undefined;
+    const compuerta = new Promise<void>((resolver) => {
+      liberar = resolver;
+    });
+    await page.route(
+      (url) => url.pathname.startsWith('/presupuesto/asignar/'),
+      async (ruta) => {
+        if (ruta.request().headers()['rsc'] === '1') await compuerta;
+        await ruta.continue();
+      },
+    );
+    await page.locator('a[href*="/presupuesto/asignar/"]').first().click();
+    const hoja = page.getByRole('dialog', { name: estados.cargandoPantalla('formulario') });
+    await expect(hoja).toBeVisible();
+    await expect(hoja.locator('[aria-busy="true"] [aria-hidden="true"]')).toHaveCount(1);
+    await expect(hoja.locator('[data-centavos]')).toHaveCount(0);
+    // La pantalla de origen sigue debajo.
+    // (con la hoja abierta el fondo queda oculto para la tecnología de apoyo: se busca el título por su etiqueta)
+    await expect(
+      page.locator('h1').filter({ hasText: navegacion.secciones.presupuesto }),
+    ).toBeAttached();
+    liberar();
+    await expect(hoja).toHaveCount(0);
   });
 });

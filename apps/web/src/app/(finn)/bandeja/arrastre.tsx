@@ -16,6 +16,7 @@ import {
   useSensors,
   type Announcements,
   type CollisionDetection,
+  type DragCancelEvent,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
@@ -25,6 +26,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icono } from '../../../componentes/base/icono';
 import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
+import { avisarArrastre } from '../../../componentes/marco/arrastre';
 import { formatearMonto } from '../../../formato';
 import { bandeja } from '../../../textos/bandeja';
 
@@ -47,18 +49,39 @@ export interface DestinosArrastre {
 const colision: CollisionDetection = (a) =>
   a.pointerCoordinates === null ? rectIntersection(a) : pointerWithin(a);
 
-function Destino({ id, texto, sobre }: { id: string; texto: string; sobre: boolean }) {
+/**
+ * [CH-240 E3-2, E3-3] Un destino de 48 px. Libre: borde punteado `--borde-control` («se puede soltar acá»). Con la fila encima:
+ * fondo `--accion`, texto `--texto-sobre-accion`, borde de 2 px y el glifo `in` (tres señales); «Otra categoría…» usa el tonal.
+ */
+function Destino({
+  id,
+  texto,
+  sobre,
+  ancho,
+}: {
+  id: string;
+  texto: string;
+  sobre: boolean;
+  ancho?: boolean;
+}) {
   const { setNodeRef } = useDroppable({ id });
   return (
     <li
       ref={setNodeRef}
       data-destino={id}
+      {...(sobre ? { 'data-sobre': '' } : {})}
       className={[
-        'flex min-h-11 items-center rounded-xl px-3 text-cuerpo',
-        sobre ? 'bg-informacion-fondo font-bold' : 'bg-superficie-hundida',
+        'flex min-h-12 items-center gap-1 rounded-xl border-2 px-3 text-cuerpo',
+        ancho === true ? 'col-span-2' : '',
+        sobre
+          ? id === OTRA
+            ? 'border-accion bg-accion-tonal font-bold text-accion'
+            : 'border-accion bg-accion font-bold text-texto-sobre-accion'
+          : 'border-dashed border-borde-control bg-superficie',
       ].join(' ')}
     >
-      {texto}
+      {sobre ? <Icono nombre="in" tamano={16} /> : null}
+      <span className="min-w-0 truncate">{texto}</span>
     </li>
   );
 }
@@ -70,8 +93,19 @@ const etiquetaDe = (m: MovimientoDto): string =>
     .join(' ');
 
 /** El asa de una fila arrastrable: un botón con nombre propio, que nunca es la única forma de aprobar (WCAG 2.5.7). */
-export function AsaArrastre({ id, etiqueta }: { id: string; etiqueta: string }) {
-  const { attributes, listeners, setNodeRef } = useDraggable({ id });
+export function AsaArrastre({
+  id,
+  etiqueta,
+  deshabilitado,
+}: {
+  id: string;
+  etiqueta: string;
+  deshabilitado?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id,
+    disabled: deshabilitado === true,
+  });
   return (
     <button
       type="button"
@@ -80,12 +114,25 @@ export function AsaArrastre({ id, etiqueta }: { id: string; etiqueta: string }) 
       {...listeners}
       aria-label={etiqueta}
       data-asa={id}
+      {...(deshabilitado === true
+        ? { 'aria-disabled': true, 'aria-describedby': 'bandeja-sin-conexion' }
+        : {})}
       onContextMenu={(e) => {
         e.preventDefault();
       }}
-      className="inline-flex min-h-11 min-w-11 select-none items-center justify-center rounded-full text-texto-secundario [-webkit-touch-callout:none] [touch-action:manipulation]"
+      // [CH-240 E3-1] Teléfono: sin asa visible, el botón cubre la cabecera (pulsación larga). Computadora: 44 px, aparece al pasar y con foco.
+      className="group/asa inline-flex size-full select-none items-center justify-center rounded-full text-texto-secundario [-webkit-touch-callout:none] [touch-action:manipulation] lg:size-11"
     >
-      <Icono nombre="grip" tamano={18} />
+      <span className="hidden opacity-0 group-hover/fila:opacity-100 group-focus-visible/asa:opacity-100 lg:inline-flex">
+        <Icono nombre="grip" tamano={18} />
+      </span>
+      <span
+        aria-hidden="true"
+        data-instruccion-asa
+        className="pointer-events-none absolute top-full right-0 z-20 mt-1 hidden w-64 rounded-xl bg-superficie p-2 text-left text-cuerpo-pequeno font-normal text-texto shadow-elevacion-2 lg:group-focus-visible/asa:block"
+      >
+        {t.instrucciones}
+      </span>
     </button>
   );
 }
@@ -95,12 +142,15 @@ export function ContextoArrastre({
   destinos,
   alSoltar,
   alElegirOtra,
+  deshabilitado,
 }: {
   readonly movimientos: readonly MovimientoDto[];
   readonly destinos: DestinosArrastre;
   readonly alSoltar: (movimientoId: string, categoriaId: string) => void;
   /** Soltar sobre «Otra categoría…» termina el arrastre sin aprobar y abre el selector (CA-78.11). */
   readonly alElegirOtra: (movimientoId: string) => void;
+  /** [CH-240 E6-3] Sin conexión el asa y la pulsación larga no empiezan ningún arrastre. */
+  readonly deshabilitado?: boolean;
 }) {
   const [activo, setActivo] = useState<string | null>(null);
   const [sobre, setSobre] = useState<string | null>(null);
@@ -142,6 +192,23 @@ export function ContextoArrastre({
         : halladas;
     });
   });
+  // [CH-240 E3-3, E3-6] La fila tomada deja su hueco punteado (`data-tomada`) y, mientras dura el arrastre, la barra inferior
+  // del teléfono queda `inert`: el panel de destinos la tapa y nada debe recibir el foco detrás
+  useEffect(() => {
+    if (activo === null) return;
+    const fila = document.querySelector(`[data-movimiento="${activo}"]`);
+    fila?.setAttribute('data-tomada', '');
+    avisarArrastre(true);
+    return () => {
+      fila?.removeAttribute('data-tomada');
+      avisarArrastre(false);
+    };
+  }, [activo]);
+  const devolverFoco = (id: string): void => {
+    window.setTimeout(() => {
+      document.querySelector<HTMLElement>(`[data-asa="${id}"]`)?.focus();
+    }, 0);
+  };
   const movimiento = movimientos.find((m) => m.id === activo);
   const sugerida = movimiento?.categoriaSugerida ?? null;
   const frecuentes = destinos.frecuentes.filter((c) => c.id !== sugerida?.id).slice(0, FRECUENTES);
@@ -205,22 +272,43 @@ export function ContextoArrastre({
         if (destino.startsWith('f:') || destino.startsWith('g:'))
           alSoltar(String(active.id), destino.slice(2));
         else if (destino === OTRA) alElegirOtra(String(active.id));
+        // Soltar fuera del panel cancela: la fila vuelve a su lugar y el foco, al asa (E3-4)
+        else devolverFoco(String(active.id));
       }}
-      onDragCancel={() => {
+      onDragCancel={({ active }: DragCancelEvent) => {
         setActivo(null);
         setSobre(null);
+        devolverFoco(String(active.id));
       }}
     >
       {movimientos.map((m) => {
         const ranura = ranuras[m.id];
         return ranura === undefined || m.aprobacion.arrastrable !== true
           ? null
-          : createPortal(<AsaArrastre id={m.id} etiqueta={t.asa(etiquetaDe(m))} />, ranura, m.id);
+          : createPortal(
+              <AsaArrastre
+                id={m.id}
+                etiqueta={t.asa(etiquetaDe(m))}
+                {...(deshabilitado === true ? { deshabilitado } : {})}
+              />,
+              ranura,
+              m.id,
+            );
       })}
       <DragOverlay dropAnimation={null}>
         {movimiento === undefined ? null : (
-          <span className="inline-flex whitespace-nowrap rounded-full bg-superficie px-3 py-2 text-cuerpo font-bold shadow-elevacion-1">
+          // [CH-240 E3-3] Versión compacta levantada: asa, «{comercio} · {monto}», elevación 3, anillo de 2 px y escala 1.03
+          <span
+            data-fila-levantada
+            className="inline-flex scale-103 items-center gap-2 rounded-full bg-superficie px-3 py-2 text-cuerpo font-bold whitespace-nowrap shadow-elevacion-3 ring-2 ring-accion"
+          >
+            <Icono nombre="grip" tamano={18} />
             {ficha}
+            {sobre === null ? null : (
+              <span className="font-normal text-texto-secundario">
+                {t.haciaCategoria(nombreDe(sobre))}
+              </span>
+            )}
           </span>
         )}
       </DragOverlay>
@@ -228,20 +316,22 @@ export function ContextoArrastre({
         <aside
           aria-label={t.panel}
           data-panel-destinos
-          className="fixed inset-x-0 bottom-0 z-40 max-h-[60vh] overflow-y-auto rounded-t-contenedor bg-superficie p-3 shadow-elevacion-1 lg:inset-y-0 lg:right-0 lg:left-auto lg:max-h-none lg:w-96 lg:rounded-none"
+          className="fixed inset-x-0 bottom-0 z-40 max-h-[60vh] overflow-y-auto rounded-t-contenedor bg-superficie p-3 shadow-elevacion-3 lg:inset-y-0 lg:right-0 lg:left-auto lg:max-h-none lg:w-96 lg:rounded-none"
         >
-          <ul className="flex flex-col gap-2">
+          {/* Teléfono: rejilla de 2 columnas; «Sugerida» y «Otra categoría…» a todo el ancho (E3-2) */}
+          <ul className="grid grid-cols-2 gap-2 lg:grid-cols-1">
             {sugerida?.id === undefined ? null : (
               <Destino
                 id={`f:${sugerida.id}`}
                 texto={t.sugerida(sugerida.nombre)}
                 sobre={sobre === `f:${sugerida.id}`}
+                ancho
               />
             )}
             {frecuentes.map((c) => (
               <Destino key={c.id} id={`f:${c.id}`} texto={c.nombre} sobre={sobre === `f:${c.id}`} />
             ))}
-            <Destino id={OTRA} texto={t.otra} sobre={sobre === OTRA} />
+            <Destino id={OTRA} texto={t.otra} sobre={sobre === OTRA} ancho />
           </ul>
           {destinos.grupos.map((g) => (
             <section key={g.grupo.id} className="mt-4 hidden lg:block">

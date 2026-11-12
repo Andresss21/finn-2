@@ -26,8 +26,10 @@ async function rutaActual(): Promise<string> {
 async function traducir(error: ErrorFinn, opciones: OpcionesConsultar): Promise<never> {
   switch (error.categoria) {
     case 'NO_AUTORIZADO': {
-      const paso = error.datos?.['aal'] === 'aal1' ? '/ingresar/verificar' : '/ingresar';
-      return redirect(`${paso}?volver=${encodeURIComponent(await rutaActual())}`);
+      // E2-5 [CH-242]: sin sesión, venció; Ingresar lo dice por el motivo explícito (también lo pone `useOperacion`).
+      const vencida = '/ingresar?motivo=sesion-vencida&';
+      const paso = error.datos?.['aal'] === 'aal1' ? '/ingresar/verificar?' : vencida;
+      return redirect(`${paso}volver=${encodeURIComponent(await rutaActual())}`);
     }
     case 'NO_ENCONTRADO':
       return notFound();

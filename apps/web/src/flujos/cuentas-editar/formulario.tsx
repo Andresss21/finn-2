@@ -1,6 +1,6 @@
 'use client';
 // `/cuentas/[cuentaId]/editar` (FT-53, OP-02; 05 §2.7, §4.7): el flujo largo de corregir el nombre, la institución, los últimos
-// cuatro dígitos y la fecha de apertura. Envía solo lo que cambió, cada campo con el valor que vio la persona (`esperado`); si
+// cuatro dígitos y la fecha de apertura; en una tarjeta, también el límite, la tasa, el día de corte y el de pago (CTA-01). Envía solo lo que cambió, cada campo con el valor que vio la persona (`esperado`); si
 // la apertura cambia de período, la confirmación trae AV-01. No calcula montos (PF-3): el impacto lo dice el servidor.
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { useCallback, useState } from 'react';
@@ -8,6 +8,8 @@ import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { cuentasNuevaTipos as tarjeta } from '../../textos/cuentas-nueva-tipos';
 import { Seleccion } from '../../componentes/base/seleccion';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
@@ -34,7 +36,7 @@ export interface PropsFormularioCuentasEditar {
   readonly hoy: FechaLocal;
   readonly instituciones: readonly { readonly id: string; readonly nombre: string }[];
   /** Lo que vio la persona al abrir (4.6.2): lo vacío es `null`. */
-  readonly esperado: Record<string, string | null>;
+  readonly esperado: Record<string, string | number | null>;
 }
 
 const CONTRATO = z.object({
@@ -43,13 +45,18 @@ const CONTRATO = z.object({
   institucionId: z.string(),
   ultimos4: z.string(), // los cuatro dígitos los valida el servidor y vuelve en su campo (4.7)
   fechaApertura: z.string(),
+  // CTA-01: solo una tarjeta los trae (vacíos en las demás cuentas)
+  limiteCredito: z.string(),
+  tasaAnual: z.string(),
+  diaCorte: z.string(),
+  diaPago: z.string(),
 });
 type Campos = z.infer<typeof CONTRATO>;
 type Cruda = Campos & {
   modo: string;
   revisionVista?: string;
   huellaImpacto?: string;
-  esperado: Record<string, string | null>;
+  esperado: Record<string, string | number | null>;
 };
 interface Vista {
   readonly impacto?: { readonly deltaLpa: Centavos } | null;
@@ -57,17 +64,29 @@ interface Vista {
 }
 
 /** Lo que vio la persona, como los campos del formulario. */
-const camposDe = (e: Record<string, string | null>): Campos => ({
-  nombre: e['nombre'] ?? '',
-  subtipoEfectivo: e['subtipoEfectivo'] ?? '',
-  institucionId: e['institucionId'] ?? SIN_INSTITUCION,
-  ultimos4: e['ultimos4'] ?? '',
-  fechaApertura: e['fechaApertura'] ?? '',
+const texto = (v: string | number | null | undefined): string =>
+  v === null || v === undefined ? '' : `${v}`;
+const camposDe = (e: Record<string, string | number | null>): Campos => ({
+  nombre: texto(e['nombre']),
+  subtipoEfectivo: texto(e['subtipoEfectivo']),
+  institucionId:
+    e['institucionId'] === null || e['institucionId'] === undefined
+      ? SIN_INSTITUCION
+      : `${e['institucionId']}`,
+  ultimos4: texto(e['ultimos4']),
+  fechaApertura: texto(e['fechaApertura']),
+  limiteCredito: texto(e['limiteCredito']),
+  tasaAnual: texto(e['tasaAnual']),
+  diaCorte: texto(e['diaCorte']),
+  diaPago: texto(e['diaPago']),
 });
 
 interface PropsCuerpo extends PropsFormularioCuentasEditar {
   readonly inicial: Campos;
-  readonly alUsarActual: (actuales: Record<string, string | null>, escrito: Campos) => void;
+  readonly alUsarActual: (
+    actuales: Record<string, string | number | null>,
+    escrito: Campos,
+  ) => void;
 }
 
 function Cuerpo({
@@ -83,7 +102,15 @@ function Cuerpo({
   const enviar = useCallback<AccionEscritura>(
     (payload) => {
       const { modo, esperado: visto, revisionVista, huellaImpacto, ...c } = payload as Cruda;
-      const cambia = (k: keyof Campos, valor: string) => (visto[k] ?? '') !== valor;
+      const cambia = (k: keyof Campos, valor: string) => texto(visto[k]) !== valor;
+      const esTarjeta = 'limiteCredito' in visto;
+      // CTA-01: de la tarjeta se envía lo que cambió, con el tipo del contrato (días como número; monto y tasa, en texto)
+      const deTarjeta = (k: 'limiteCredito' | 'tasaAnual' | 'diaCorte' | 'diaPago') => {
+        const v = c[k].trim().replace(',', '.');
+        return esTarjeta && v !== '' && cambia(k, v)
+          ? { [k]: k === 'diaCorte' || k === 'diaPago' ? Number(v) : v }
+          : {};
+      };
       const nombre = c.nombre.trim();
       const ultimos4 = c.ultimos4.trim();
       // [CH-224] pasar a billetera quita la institución y los últimos 4 en la misma edición (OP-02)
@@ -102,6 +129,10 @@ function Cuerpo({
               ...(ultimos4 !== '' && cambia('ultimos4', ultimos4) ? { ultimos4 } : {}),
             }),
         ...(cambia('fechaApertura', c.fechaApertura) ? { fechaApertura: c.fechaApertura } : {}),
+        ...deTarjeta('limiteCredito'),
+        ...deTarjeta('tasaAnual'),
+        ...deTarjeta('diaCorte'),
+        ...deTarjeta('diaPago'),
         esperado: visto,
         modo,
         ...(revisionVista === undefined ? {} : { revisionVista, huellaImpacto }),
@@ -140,7 +171,8 @@ function Cuerpo({
   };
   const { estado, error: fallo } = operacion;
   const vista = (operacion.previsualizacion ?? {}) as Vista;
-  const actuales = fallo?.datos?.['actuales'] as Record<string, string | null> | undefined;
+  const actuales = fallo?.datos?.['actuales'] as Record<string, string | number | null> | undefined;
+  const esTarjeta = 'limiteCredito' in esperado;
   const conflicto = fallo?.codigo === 'conflicto_desactualizado' && actuales !== undefined;
   // Un rechazo cuyo mensaje ya está en su campo no se repite como aviso del formulario.
   const enSuCampo = Object.values(fallo?.campos ?? {}).includes(fallo?.mensaje ?? '');
@@ -239,6 +271,40 @@ function Cuerpo({
             />
           </>
         )}
+        {esTarjeta ? (
+          <>
+            <EntradaMonto
+              nombre="limiteCredito"
+              etiqueta={tarjeta.limiteCredito}
+              valor={c.limiteCredito}
+              alCambiar={poner('limiteCredito')}
+              requerido
+            />
+            <EntradaTexto
+              etiqueta={tarjeta.tasaAnual}
+              inputMode="decimal"
+              autoComplete="off"
+              {...conError('tasaAnual')}
+              {...formulario.register('tasaAnual')}
+            />
+            <EntradaTexto
+              etiqueta={tarjeta.diaCorte}
+              inputMode="numeric"
+              autoComplete="off"
+              requerido
+              {...conError('diaCorte')}
+              {...formulario.register('diaCorte')}
+            />
+            <EntradaTexto
+              etiqueta={tarjeta.diaPago}
+              inputMode="numeric"
+              autoComplete="off"
+              requerido
+              {...conError('diaPago')}
+              {...formulario.register('diaPago')}
+            />
+          </>
+        ) : null}
         <EntradaFecha
           nombre="fechaApertura"
           etiqueta={n.apertura}

@@ -2,7 +2,7 @@
 // Los rechazos del servidor llegan ya compuestos en `mensaje`.
 export const registrarDevolucion = {
   titulo: 'Registrar devolución',
-  tipo: { titulo: 'Devolución', detalle: 'De una compra que ya registraste, o sin ella' },
+  tipo: { titulo: 'Devolución', detalle: 'De una compra' },
   buscar: 'Buscar la compra',
   buscarAyuda:
     'Escribí el comercio o la nota: aparecen las compras que todavía se pueden devolver.',

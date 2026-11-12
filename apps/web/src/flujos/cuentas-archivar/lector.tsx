@@ -6,7 +6,13 @@ import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { FormularioCuentasArchivar } from './formulario';
 
-export async function LectorCuentasArchivar({ cuentaId }: { readonly cuentaId: string }) {
+export async function LectorCuentasArchivar({
+  cuentaId,
+  superpuesto = false,
+}: {
+  readonly cuentaId: string;
+  readonly superpuesto?: boolean;
+}) {
   const dto = await consultar(async () => detalleCuenta(await depsDeConsulta(), { cuentaId }), {
     validacionDeSegmento: true,
   });
@@ -20,6 +26,7 @@ export async function LectorCuentasArchivar({ cuentaId }: { readonly cuentaId: s
       deuda={dto.tarjeta?.deuda}
       reservado={dto.tarjeta?.reservado}
       bloqueos={dto.acciones.bloqueosArchivo}
+      superpuesto={superpuesto}
     />
   );
 }

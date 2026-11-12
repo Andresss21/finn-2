@@ -12,7 +12,7 @@ import { bandeja as t } from '../../textos/bandeja';
 import { cuentas as c } from '../../textos/cuentas';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
 import { parteVacia } from '../registrar-gasto/campos';
-import type { Campos } from './campos';
+import { motivoFaltantes, type Campos } from './campos';
 import CamposMovimiento from './campos-movimiento';
 import type { BuscarCompras } from './eleccion-compra';
 import Encabezado, { type ResumenDelMovimiento } from './encabezado';
@@ -281,6 +281,45 @@ describe('PRU-CMP-BAND', () => {
     // El botón del calendario sigue dentro del campo, con su área de 44
     const calendario = fecha.querySelector<HTMLElement>('button[aria-haspopup=dialog]');
     expect(calendario?.getBoundingClientRect().height).toBe(44);
+  });
+
+  it('PRU-CMP-BAND-721 [CA-E4-21c] el formulario no tiene «Después de aprobar» en ningún tipo; el ingreso muestra la nota fija; con faltantes, «Aprobar» tiene un solo motivo que los junta', () => {
+    for (const tipo of ['gasto', 'ingreso', 'pago_tarjeta', 'devolucion']) {
+      const nodo = montarElemento(<Arnes inicial={campos(tipo, 1)} />);
+      expect(nodo.textContent, tipo).not.toContain('Después de aprobar');
+      expect(nodo.textContent, tipo).not.toContain('Antes de guardar');
+      expect(nodo.querySelector('[data-rol="nota-ingreso"]') !== null, tipo).toBe(
+        tipo === 'ingreso',
+      );
+    }
+    const ingreso = montarElemento(<Arnes inicial={campos('ingreso', 0)} />);
+    expect(ingreso.querySelector('[data-rol="nota-ingreso"]')?.textContent).toBe(
+      'Un ingreso no lleva categoría: entra a Listo para asignar y desde ahí lo repartís.',
+    );
+    // No reconocido a mano: un solo motivo con la plantilla de `movimiento_incompleto`
+    const vacio: Campos = {
+      ...campos('gasto', 1),
+      cuentaId: '',
+      total: '',
+      lineas: [{ ...parteVacia() }],
+    };
+    expect(motivoFaltantes(vacio)).toBe(
+      'Completá la cuenta, el monto y la categoría antes de aprobar.',
+    );
+    // Datos faltantes: solo la fecha, con su línea a lo ancho de la fila Fecha · Monto
+    const sinFecha: Campos = { ...campos('gasto', 1), fecha: '' };
+    expect(motivoFaltantes(sinFecha)).toBe('Completá la fecha antes de aprobar.');
+    expect(motivoFaltantes(campos('gasto', 1))).toBeUndefined();
+    const falta = montarElemento(<Arnes inicial={sinFecha} />);
+    expect(falta.querySelector('[data-rol="fecha-faltante"]')?.textContent).toBe(
+      'El SMS no trae la fecha. Escribila.',
+    );
+    // [CH-240 E3-13] El campo que falta lleva el borde de advertencia de 2 px; con la fecha puesta no
+    const anchoBorde = (nodo: HTMLElement): string =>
+      getComputedStyle(nodo.querySelector('input[name="fecha"]') ?? nodo).borderTopWidth;
+    expect(anchoBorde(falta)).toBe('2px');
+    const conFecha = montarElemento(<Arnes inicial={campos('gasto', 1)} />);
+    expect(anchoBorde(conFecha)).not.toBe('2px');
   });
 
   it('PRU-CMP-BAND-216 [FT-35] los campos y el encabezado no tienen violaciones de axe en claro ni en oscuro', async () => {

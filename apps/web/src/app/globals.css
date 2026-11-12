@@ -1,7 +1,14 @@
 /* Puente con Tailwind (05 §10.1, CF-10 a CF-12): los valores son de tokens.css; las utilidades, de tailwind.css. */
 @import 'tailwindcss';
 @import './tokens.css';
+@import './tokens-decorativos.css';
 @import '../../tailwind.css';
+
+/* [CH-241 c, D-2] La barra lateral y la computadora empiezan en 1024 px de ventana: de 768 a 1023 se usa el marco de teléfono.
+   `md` es ese umbral para todo el código; `xl` (1280) es el de las dos columnas de los flujos largos. */
+@theme {
+  --breakpoint-md: 64rem;
+}
 
 /* next/font da a cada familia un nombre propio: se antepone al de la entrega para que las fuentes autohospedadas
    sean las que se usan. El resto de la pila (la de tokens.css) queda de reserva. */
@@ -13,6 +20,26 @@
 /* Foco no tapado (11.2, WCAG 2.4.11): la barra superior fija mide 3.75 rem y la barra inferior de teléfono 5 rem más su margen seguro. */
 html {
   scroll-padding-block: 4.5rem 7rem;
+}
+
+/* GLO-07 (06-identidad-visual §2.2): el foco de teclado de todo control es la línea de 3 px en `--foco`, separada 2 px, y no el
+   anillo del navegador. `:where` le da especificidad cero: lo que un componente ya declara (campos, filas con anillo propio) manda. */
+:where(
+  a[href],
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex]:not([tabindex='-1']),
+  [role='radio'],
+  [role='switch'],
+  [role='checkbox'],
+  [role='menuitem'],
+  [role='tab']
+):focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
 }
 
 body {
@@ -63,9 +90,21 @@ body {
   }
 }
 
+/* Brillo de la cara de la tarjeta: recorre por `left` (no por `transform`) para que el recorte de la cara lo contenga; con
+   `translateX` animado el navegador móvil ensanchaba la vista de la página con el borde sesgado fuera de la cara. */
+@keyframes finn-brillo-cara {
+  0% {
+    left: -30%;
+  }
+  14%,
+  100% {
+    left: 110%;
+  }
+}
+
 /* Marco (06-identidad-visual §3, export K1, CH-109). En teléfono el `h1` de la página (llega del servidor) va en la barra
    fija, antes de Registrar (110) + campana + ☰, o entre «Volver» y la campana; el de un flujo va en su propia barra. */
-@media (width < 48rem) {
+@media (width < 64rem) {
   #contenido h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
     position: fixed;
     top: 0;
@@ -93,12 +132,6 @@ body {
     h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
     right: 6.75rem;
   }
-  /* [CH-227] Teléfono angosto: Registrar queda solo con su ícono (44 × 44), y al título le toca el resto. */
-  @media (width < 25rem) {
-    #contenido[data-barra='principal'] h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
-      right: 10rem;
-    }
-  }
   /* Flujo largo a pantalla completa: sin la barra superior ni la inferior. */
   body:has([data-pagina-flujo]) [data-marco-barra] {
     display: none;
@@ -109,7 +142,7 @@ body {
 }
 
 /* Computadora: a la izquierda, padding 32 48 48, `--ancho-pantalla` (o todo el ancho), título de 2.5 rem y lugar para la campana. */
-@media (width >= 48rem) {
+@media (width >= 64rem) {
   /* [CH-220] Contenedor de las rejillas de dos columnas: colapsan por el ancho del contenedor y no por el de la ventana. */
   #contenido {
     container-type: inline-size;
@@ -126,13 +159,53 @@ body {
   #contenido h1.text-titulo-pantalla {
     font-size: 2.5rem;
   }
-  #contenido > main > :first-child {
+  #contenido > main:not([data-pagina-flujo]) > :first-child {
     margin-right: 3.5rem;
   }
   /* «Más acciones» (con su rótulo) ocupa lugar junto a la campana. */
-  #contenido[data-acciones] > main > :first-child {
+  #contenido[data-acciones] > main:not([data-pagina-flujo]) > :first-child {
     margin-right: 13.5rem;
   }
+  /* [E4-26, Marco] Ningún flujo largo lleva campana: en computadora solo queda la barra lateral. */
+  body:has([data-pagina-flujo]) [data-marco-barra] {
+    display: none;
+  }
+}
+
+/* [CH-241 c, D-2, T4-tableta] De 768 a 1023 px: marco de teléfono (barras superior e inferior a todo el ancho) con el contenido
+   centrado a 640 px y 24 px de relleno; las dos columnas de los flujos pasan a una. */
+@media (48rem <= width < 64rem) {
+  #contenido > main {
+    margin-inline: auto;
+    max-width: 40rem;
+    padding-inline: 1.5rem;
+  }
+}
+
+/* [E6-20, CH-241] Un título que no entra junto a «Registrar», la campana y el menú se achica en lugar de cortarse; lo marca
+   `Marco` al medirlo (`data-ajustado`). */
+@media (width < 64rem) {
+  #contenido h1[data-ajustado] {
+    font-size: 1.625rem;
+  }
+}
+
+/* E6-3: en un flujo no hay barra superior: el aviso de «sin conexión» va arriba del flujo. */
+body:has([data-pagina-flujo]) [data-sin-conexion] {
+  top: 1rem;
+}
+
+/* E6-2: la franja de navegación pendiente recorre su pista; con movimiento reducido no se anima y queda al 38 %. */
+@keyframes finn-franja {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(263%);
+  }
+}
+.finn-franja {
+  animation: finn-franja var(--duracion-bucle) var(--curva-estandar) infinite;
 }
 
 /* Halos del botón de la Bandeja mientras hay movimientos por revisar (06-identidad-visual 3.1): decorativos. */
@@ -142,10 +215,10 @@ body {
   border: 2px solid var(--accion);
   border-radius: 1.375rem;
   pointer-events: none;
-  animation: finn-halo 2.8s ease-out infinite;
+  animation: finn-halo var(--duracion-pulso) ease-out infinite;
 }
 .finn-halo + .finn-halo {
-  animation-delay: 1.4s;
+  animation-delay: var(--duracion-bucle);
 }
 @keyframes finn-halo {
   0% {
@@ -159,7 +232,7 @@ body {
 }
 
 /* Movimiento compartido [CH-220 d, FIXES §3]: keyframes y utilidades; toda duración y curva sale de tokens.css, y con movimiento
-   reducido la regla de arriba los anula. `--n` es el índice que pone quien dibuja (servidor, sin JS), con tope en --tope-escalonado. */
+   reducido la regla de arriba los anula. `--n` es el índice que pone quien dibuja (servidor, sin JS), con tope en TOPE_ESCALONADO (`componentes/movimiento/indice.ts`). */
 /* El índice no se hereda: cada bloque o fila trae el suyo. */
 @property --n {
   syntax: '<number>';
@@ -303,10 +376,10 @@ body {
   }
 }
 .fz-periodo-siguiente {
-  animation: fz-periodo-siguiente var(--duracion-periodo) var(--curva-entrada) both;
+  animation: fz-periodo-siguiente var(--duracion-transicion) var(--curva-entrada) both;
 }
 .fz-periodo-anterior {
-  animation: fz-periodo-anterior var(--duracion-periodo) var(--curva-entrada) both;
+  animation: fz-periodo-anterior var(--duracion-transicion) var(--curva-entrada) both;
 }
 @keyframes fz-menu-out {
   to {
@@ -317,46 +390,47 @@ body {
 
 .fz-item {
   animation: fz-item var(--duracion-lenta) var(--curva-estandar) both;
-  animation-delay: calc(min(var(--n, 0), var(--tope-escalonado)) * var(--escalonado-bloque));
+  animation-delay: calc(var(--n, 0) * 60ms /* pendiente: tokens-propuesta (entrega 4) */);
 }
 /* Dos columnas de computadora: 90 ms entre bloques. */
 .fz-item-columna {
-  animation-delay: calc(min(var(--n, 0), var(--tope-escalonado)) * var(--escalonado-columna));
+  animation-delay: calc(var(--n, 0) * 90ms /* pendiente: tokens-propuesta (entrega 4) */);
 }
 .fz-opcion {
-  animation: fz-item var(--duracion-opcion) var(--curva-estandar) both;
-  animation-delay: calc(min(var(--n, 0), var(--tope-escalonado)) * var(--escalonado-opcion));
+  animation: fz-item var(--duracion-transicion) var(--curva-estandar) both;
+  animation-delay: calc(var(--n, 0) * var(--retardo-cascada));
 }
 .fz-aviso {
-  animation: fz-item var(--duracion-opcion) var(--curva-estandar) both;
+  animation: fz-item var(--duracion-transicion) var(--curva-estandar) both;
   animation-delay: calc(
-    var(--retraso-aviso) + min(var(--n, 0), var(--tope-escalonado)) * var(--escalonado-aviso)
+    var(--duracion-rapida) + var(--n, 0) * 60ms /* pendiente: tokens-propuesta (entrega 4) */
   );
 }
 .fz-vacio-disco {
   animation: fz-pop-in var(--duracion-lenta) var(--curva-enfasis) both;
 }
 .fz-vacio-texto {
-  animation: fz-item var(--duracion-normal) var(--curva-estandar) var(--retraso-vacio) both;
+  animation: fz-item var(--duracion-normal) var(--curva-estandar) 80ms
+    /* pendiente: tokens-propuesta (entrega 4) */ both;
 }
 .fz-pop-in {
   animation: fz-pop-in var(--duracion-lenta) var(--curva-enfasis) both;
 }
 .fz-sacudida {
-  animation: fz-jitter var(--duracion-sacudida) var(--curva-estandar) both;
+  animation: fz-jitter var(--duracion-temblor) var(--curva-estandar) both;
 }
 /* El mismo temblor con otro nombre: un segundo error lo vuelve a disparar sin desmontar el campo. */
 .fz-sacudida-otra {
-  animation: fz-jitter-otra var(--duracion-sacudida) var(--curva-estandar) both;
+  animation: fz-jitter-otra var(--duracion-temblor) var(--curva-estandar) both;
 }
 .fz-barra-sube {
   transform-box: fill-box;
   transform-origin: bottom;
-  animation: fz-barup var(--duracion-barra) var(--curva-estandar) both;
-  animation-delay: calc(var(--n, 0) * var(--escalonado-barra));
+  animation: fz-barup var(--duracion-grafico) var(--curva-estandar) both;
+  animation-delay: calc(var(--n, 0) * 80ms /* pendiente: tokens-propuesta (entrega 4) */);
 }
 .fz-barra-crece {
-  animation: fz-grow var(--duracion-crecer) var(--curva-estandar) both;
+  animation: fz-grow var(--duracion-grafico) var(--curva-estandar) both;
 }
 /* C10: la máscara de la dona se dibuja por stroke-dashoffset; sin animación queda entera. */
 @keyframes fz-dona {
@@ -366,7 +440,7 @@ body {
 }
 .fz-dona-revela {
   stroke-dasharray: 1;
-  animation: fz-dona var(--duracion-crecer) var(--curva-estandar) both;
+  animation: fz-dona var(--duracion-grafico) var(--curva-estandar) both;
 }
 /* C2: aprobar en la Bandeja. La fila sale a la derecha, el resultado entra en su lugar y el contador rebota. */
 @keyframes fz-fila-sale {
@@ -382,7 +456,7 @@ body {
 }
 .fz-fila-sale {
   pointer-events: none;
-  animation: fz-fila-sale var(--duracion-salida-fila) var(--curva-salida) both;
+  animation: fz-fila-sale var(--duracion-normal) var(--curva-salida) both;
 }
 .fz-resultado-entra {
   animation: fz-pop-in var(--duracion-transicion) var(--curva-enfasis) both;
@@ -413,16 +487,16 @@ body {
   }
 }
 .fz-destello-sube {
-  animation: fz-destello-sube var(--duracion-destello) var(--curva-estandar);
+  animation: fz-destello-sube var(--duracion-confirmacion) var(--curva-estandar);
 }
 .fz-destello-sube > * {
-  animation: fz-tinte-sube var(--duracion-destello) var(--curva-estandar);
+  animation: fz-tinte-sube var(--duracion-confirmacion) var(--curva-estandar);
 }
 .fz-destello-baja {
-  animation: fz-destello-baja var(--duracion-destello) var(--curva-estandar);
+  animation: fz-destello-baja var(--duracion-confirmacion) var(--curva-estandar);
 }
 .fz-destello-baja > * {
-  animation: fz-tinte-baja var(--duracion-destello) var(--curva-estandar);
+  animation: fz-tinte-baja var(--duracion-confirmacion) var(--curva-estandar);
 }
 .fz-marca-activa {
   transform-origin: left;
@@ -431,17 +505,17 @@ body {
 /* C1 y C12: hojas, panel lateral, panel de notificaciones y velo entran con su curva y salen antes de desmontarse
    (`useSalida`); `data-forma` lo pone `Dialogo` y `data-saliendo` marca la salida. */
 .fz-hoja {
-  animation: fz-sh-in var(--duracion-entrada-hoja) var(--curva-entrada) both;
+  animation: fz-sh-in var(--duracion-lenta) var(--curva-entrada) both;
 }
 .fz-hoja[data-forma='lado'] {
   animation-name: fz-right-in;
 }
 .fz-hoja[data-forma='arriba'] {
-  animation: fz-dr-in var(--duracion-salida) var(--curva-entrada) both;
+  animation: fz-dr-in var(--duracion-normal) var(--curva-entrada) both;
 }
 .fz-hoja[data-saliendo] {
   pointer-events: none;
-  animation: fz-sh-out var(--duracion-salida) var(--curva-salida) both;
+  animation: fz-sh-out var(--duracion-normal) var(--curva-salida) both;
 }
 .fz-hoja[data-saliendo][data-forma='lado'] {
   animation-name: fz-right-out;
@@ -449,7 +523,7 @@ body {
 .fz-hoja[data-saliendo][data-forma='arriba'] {
   animation-name: fz-dr-out;
 }
-@media (width >= 48rem) {
+@media (width >= 64rem) {
   .fz-hoja[data-forma='auto'] {
     animation-name: fz-right-in;
   }
@@ -458,7 +532,7 @@ body {
   }
 }
 .fz-velo {
-  animation: fz-v-in var(--duracion-salida) ease both;
+  animation: fz-v-in var(--duracion-normal) ease both;
 }
 .fz-velo[data-saliendo] {
   animation-name: fz-v-out;
@@ -477,7 +551,7 @@ body {
    abajo. Un flujo largo a pantalla completa no, para no mover su pie fijo. */
 #contenido > main:not([data-pagina-flujo]) > :not(:first-child) {
   animation: fz-item var(--duracion-lenta) var(--curva-estandar) both;
-  animation-delay: calc(min(var(--n), var(--tope-escalonado)) * var(--escalonado-bloque));
+  animation-delay: calc(var(--n) * 60ms /* pendiente: tokens-propuesta (entrega 4) */);
 }
 #contenido > main:not([data-pagina-flujo]) > :nth-child(2) {
   --n: 0;
@@ -505,6 +579,62 @@ body {
 }
 #contenido > main:not([data-pagina-flujo]) > :nth-child(n + 10) {
   --n: 8;
+}
+
+/* GLO-01 y GLO-02 (06-identidad-visual §11 [CH-241]): el marco anota de dónde entra la pantalla en `#contenido[data-entrada]`
+   (`direccion-entrada.ts`). Cada tiempo es un token; con movimiento reducido la regla global anula la animación. */
+@keyframes fz-entra-derecha {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+  }
+}
+@keyframes fz-entra-izquierda {
+  from {
+    opacity: 0;
+    transform: translateX(-22px);
+  }
+}
+/* La pantalla que entra se desliza 70 px desde la derecha: sin recorte, el navegador del teléfono ensancha la vista de la página
+   mientras dura y deja la barra fija más ancha que la pantalla, con «Más acciones» debajo de la campana. `clip` no crea un
+   contenedor de desplazamiento ni recorta la barra fija. */
+#contenido {
+  overflow-x: clip;
+}
+@keyframes fz-entra-hija {
+  from {
+    opacity: 0;
+    transform: translateX(70px);
+  }
+}
+@keyframes fz-entra-volver {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+}
+@keyframes fz-entra-sube {
+  from {
+    transform: translateY(100%);
+  }
+}
+#contenido[data-entrada='derecha'] > main:not([data-pagina-flujo]) {
+  animation: fz-entra-derecha var(--duracion-normal) var(--curva-estandar) both;
+}
+#contenido[data-entrada='izquierda'] > main:not([data-pagina-flujo]) {
+  animation: fz-entra-izquierda var(--duracion-normal) var(--curva-estandar) both;
+}
+#contenido[data-entrada='hija'] > main:not([data-pagina-flujo]) {
+  animation: fz-entra-hija var(--duracion-transicion) var(--curva-entrada) both;
+}
+#contenido[data-entrada='volver'] > main:not([data-pagina-flujo]) {
+  animation: fz-entra-volver var(--duracion-transicion) var(--curva-entrada) both;
+}
+#contenido[data-entrada='registrar'] > main[data-pagina-flujo] {
+  animation: fz-entra-sube var(--duracion-lenta) var(--curva-entrada) both;
+}
+#contenido[data-entrada='cerrar-registrar'] > main:not([data-pagina-flujo]) {
+  animation: fz-item var(--duracion-transicion) var(--curva-estandar) both;
 }
 
 /* C7: presionado y transición de botones, pastillas y segmentos. */
@@ -540,7 +670,7 @@ body {
 }
 
 /* C11: en computadora, las filas tocables (las que llevan `chevR`) cambian el fondo al 6 % de `--texto` (`--fila-hover`) y mueven la flecha 4 px. */
-@media (hover: hover) and (width >= 48rem) {
+@media (hover: hover) and (width >= 64rem) {
   :is(a, button):has([data-icono='chevR']) {
     transition: background-color var(--duracion-normal) var(--curva-estandar);
   }

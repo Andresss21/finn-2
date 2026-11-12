@@ -115,10 +115,10 @@ async function irAEditar(page: Page, texto: string): Promise<void> {
   await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toBeVisible();
 }
 
-/** Guarda la edición de una compra conciliada: AV-16 antes y confirmación (P12). */
-async function guardarConciliada(page: Page): Promise<void> {
+/** Guarda la edición de una compra conciliada: AV-16 antes (con el texto de lo que cambió, E3-15) y confirmación (P12). */
+async function guardarConciliada(page: Page, aviso: string): Promise<void> {
   await page.getByRole('button', { name: tx.guardar }).click();
-  await expect(page.getByText(tx.avisos['AV-16'] ?? '')).toBeVisible();
+  await expect(page.getByText(aviso)).toBeVisible();
   await page.getByRole('button', { name: tx.confirmar }).click();
   await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toHaveCount(0);
 }
@@ -315,7 +315,7 @@ test.describe('PRU-E2E-CONC conciliar con estado de cuenta', () => {
     await conciliarConAyB(page);
     await irAEditar(page, '$40.00');
     await elegirOpcion(page, g.categoriaDeParte('1'), 'Casa');
-    await guardarConciliada(page);
+    await guardarConciliada(page, tx.conciliadaInformacion('T'));
     await expect(page.getByText('Conciliada con el estado de cuenta')).toBeVisible();
     await expect(page.locator('[data-cambios-posteriores]')).toHaveCount(0);
     await abrir(page, `/cuentas/${T}`);
@@ -349,7 +349,7 @@ test.describe('PRU-E2E-CONC conciliar con estado de cuenta', () => {
     await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toHaveCount(0);
     await irAEditar(page, '$40.00');
     await page.getByRole('textbox', { name: g.total, exact: true }).fill('45');
-    await guardarConciliada(page);
+    await guardarConciliada(page, tx.conciliadaAdvertencia('T', tx.queCambio.total));
     await abrir(page, `/cuentas/${T}`);
     const conciliacion = page.locator('[data-conciliacion]');
     await expect(

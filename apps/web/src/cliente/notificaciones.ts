@@ -28,6 +28,25 @@ export function usePermiso(): [EstadoPermiso, () => void] {
   const [permiso, setPermiso] = useState<EstadoPermiso>('cargando');
   useEffect(() => {
     setPermiso(leerPermiso());
+    // E5-16: «esta pantalla se actualiza sola» cuando se cambia el permiso en los ajustes del navegador.
+    let estado: PermissionStatus | undefined;
+    const alCambiar = (): void => {
+      setPermiso(leerPermiso());
+    };
+    let vivo = true;
+    const permisos = navigator.permissions as Permissions | undefined; // no existe en todos los navegadores
+    void permisos?.query({ name: 'notifications' }).then(
+      (s) => {
+        if (!vivo) return;
+        estado = s;
+        s.addEventListener('change', alCambiar);
+      },
+      () => undefined,
+    );
+    return () => {
+      vivo = false;
+      estado?.removeEventListener('change', alCambiar);
+    };
   }, []);
   return [
     permiso,

@@ -9,12 +9,16 @@ import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
 import { FormularioAsignar } from './formulario';
+import { detalleDeVolver, PARAMETRO_VOLVER } from './resultado';
 
 export interface PropsLectorAsignar {
   readonly categoriaId: string;
   readonly busqueda: BusquedaDePagina;
   readonly superpuesto?: boolean;
 }
+
+const texto = (v: BusquedaDePagina[string]): string | undefined =>
+  typeof v === 'string' ? v : undefined;
 
 export async function LectorAsignar({
   categoriaId,
@@ -41,6 +45,8 @@ export async function LectorAsignar({
     { validacionDeSegmento: true },
   );
   const { contexto } = dto;
+  // E2-13 [CH-248]: abierto desde el detalle de la categoría (`?volver=`), el resultado vuelve a él.
+  const volver = detalleDeVolver(texto(busqueda[PARAMETRO_VOLVER]));
   return (
     <FormularioAsignar
       categoriaId={categoriaId}
@@ -53,6 +59,7 @@ export async function LectorAsignar({
       {...(contexto.meta === undefined ? {} : { meta: contexto.meta })}
       rapida={contexto.rapida}
       rutaPadre={pedido === undefined ? '/presupuesto' : `/presupuesto?periodo=${pedido}`}
+      {...(volver === undefined ? {} : { rutaDetalle: volver })}
       superpuesto={superpuesto}
     />
   );

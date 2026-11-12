@@ -124,7 +124,7 @@ test.describe('PRU-E2E-CTA', () => {
 
     await abrirAccion(page, 'T', cuentaDetalle.acciones.archivar);
     await expect(page.getByText(cuentasGestion.archivar.futuras)).toBeVisible();
-    await boton(page, cuentasGestion.archivar.archivar).click();
+    await boton(page, cuentasGestion.archivar.archivarCuenta('T')).click();
     await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
 
     await abrir(page, '/cuentas');
@@ -162,7 +162,8 @@ test.describe('PRU-E2E-CTA', () => {
       page.getByText(cuentasGestion.eliminar.bloqueos.cuenta_con_movimientos('Ahorro')),
     ).toBeVisible();
     await expect(boton(page, cuentasGestion.eliminar.verCambios)).toHaveCount(0);
-    await page.getByRole('link', { name: cuentasGestion.eliminar.archivarEnLugar }).click();
+    // CTA-06: la pantalla bloqueada ofrece «Cerrar» y «Archivar» (la cuenta se archiva en lugar de eliminarse)
+    await page.getByRole('link', { name: 'Archivar', exact: true }).click();
     await expect(page).toHaveURL(/\/archivar$/);
   });
 
@@ -174,7 +175,7 @@ test.describe('PRU-E2E-CTA', () => {
       { op: 'OP-01', cuenta: 'Vieja' },
     ]);
     await abrirAccion(page, 'Vieja', cuentaDetalle.acciones.archivar);
-    await boton(page, cuentasGestion.archivar.archivar).click();
+    await boton(page, cuentasGestion.archivar.archivarCuenta('Vieja')).click();
     await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
     await esperarContenido(page);
 

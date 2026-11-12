@@ -49,6 +49,16 @@ const vigente = (motivo: string, d06: string): boolean =>
     new RegExp(`^\\| ${m[0]} \\|.*Diferido`, 'm').test(d06),
   );
 
+// [CH-249] Fichas agrupadas en un PR (HT-11): una dependencia que queda terminada en el mismo diff, con el mismo PR y la
+// misma rama que la ficha, cuenta como terminada. En curso, pendiente, otro PR u otra rama siguen dando S5.
+const mismoPr = (x: Entrada, d: Entrada | undefined): boolean =>
+  x.estado === 'terminada' &&
+  d?.estado === 'terminada' &&
+  d.pr !== undefined &&
+  d.pr === x.pr &&
+  d.rama !== undefined &&
+  d.rama === x.rama;
+
 export function verificarEstado(e: Estado, c: Contexto): Hallazgo[] {
   const h: Hallazgo[] = [];
   const err = (codigo: string, detalle: string): number => h.push({ codigo, detalle });
@@ -68,7 +78,7 @@ export function verificarEstado(e: Estado, c: Contexto): Hallazgo[] {
       err('S4-motivo', `${id}: bloqueada sin motivo`);
     if (x.estado === 'en_curso' || x.estado === 'terminada')
       for (const d of deps(f))
-        if (c.base[d]?.estado !== 'terminada')
+        if (c.base[d]?.estado !== 'terminada' && !mismoPr(x, e[d]))
           err('S5-dependencia', `${id} está ${x.estado} y ${d} no está terminada en la base`);
     const antes = c.base[id];
     if (
@@ -88,9 +98,9 @@ export function verificarEstado(e: Estado, c: Contexto): Hallazgo[] {
 
 // Control negativo: [qué se rompe, código que debe aparecer, mutación].
 function mutaciones(c: Contexto, e: Estado): [string, string, (x: Estado) => unknown][] {
-  const dep = c.fichas.find(
-    (f) => e[f.id]?.estado === 'pendiente' && deps(f).some((d) => e[d]?.estado !== 'terminada'),
-  );
+  // [CH-249] Una ficha con una dependencia sin terminar en la base: en un PR que cierra un grupo, en el
+  // estado del diff ya no queda ninguna pendiente con dependencias sin terminar
+  const dep = c.fichas.find((f) => deps(f).some((d) => c.base[d]?.estado !== 'terminada'));
   const fin = Object.keys(e).find((k) => e[k]?.estado === 'terminada') ?? 'TA-001';
   return [
     ['tarea del plan sin entrada', 'S1-sin-entrada', (x) => delete x['TA-003']],
@@ -102,6 +112,18 @@ function mutaciones(c: Contexto, e: Estado): [string, string, (x: Estado) => unk
       'en curso con una dependencia sin terminar',
       'S5-dependencia',
       (x) => dep && (x[dep.id] = { estado: 'en_curso', rama: dep.id.toLowerCase() + '-x' }),
+    ],
+    [
+      // [CH-249] el grupo de un PR no ampara a una dependencia terminada con otro PR en la misma rama
+      'terminada con una dependencia terminada en el diff con otro PR',
+      'S5-dependencia',
+      (x) => {
+        if (!dep) return;
+        const r = dep.id.toLowerCase() + '-x';
+        x[dep.id] = { estado: 'terminada', rama: r, pr: 2 };
+        for (const d of deps(dep))
+          if (x[d]?.estado !== 'terminada') x[d] = { estado: 'terminada', rama: r, pr: 1 };
+      },
     ],
     [
       'TA-549 desbloqueada con CF-03 diferido',
@@ -185,10 +207,13 @@ function siguiente(): void {
   }
 }
 
-const orden = process.argv[2];
-if (orden === 'verificar') process.exit(verificar(process.argv.includes('--negativo')) ? 0 : 1);
-else if (orden === 'siguiente') siguiente();
-else {
-  console.log('Uso: node tools/plan/estado.ts verificar [--negativo] | siguiente');
-  process.exit(1);
+// Solo como comando: la prueba (estado.test.ts) importa `verificarEstado` sin correr nada
+if (import.meta.main) {
+  const orden = process.argv[2];
+  if (orden === 'verificar') process.exit(verificar(process.argv.includes('--negativo')) ? 0 : 1);
+  else if (orden === 'siguiente') siguiente();
+  else {
+    console.log('Uso: node tools/plan/estado.ts verificar [--negativo] | siguiente');
+    process.exit(1);
+  }
 }

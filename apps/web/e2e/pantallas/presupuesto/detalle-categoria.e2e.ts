@@ -307,7 +307,11 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await expect(sobregiro(page)).toHaveAttribute('data-sobregiro', 'debito');
     const cubrir = page.getByRole('link', { name: /^Cubrir/ });
     // El enlace no lleva ningún monto: $146.30 lo calcula el servidor en Asignar (`rapida.cubrirSobregiro`, CA-12.9)
-    await expect(cubrir).toHaveAttribute('href', `/presupuesto/asignar/${id}`);
+    // E2-13 [CH-248]: el enlace lleva `?volver=` al detalle (sin monto): ahí queda el resultado.
+    await expect(cubrir).toHaveAttribute(
+      'href',
+      `/presupuesto/asignar/${id}?volver=${encodeURIComponent(`/presupuesto/categorias/${id}`)}`,
+    );
     await esperarMonto(cubrir.locator('[data-centavos]'), 2630);
     // El reparto de A.7: 6 consumos en orden, el de $28.30 con $20.50 cubiertos y $7.80 no
     await expect(consumos(page)).toHaveCount(6);
@@ -365,7 +369,9 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     );
     await abrirDetalle(page, 'Super', `?periodo=${P1}`);
     await expect(page.locator('[data-selector-periodo="cerrado"]')).toBeVisible();
-    await expect(page.getByText('Este período está cerrado')).toBeVisible();
+    await expect(
+      page.getByText('No se puede cambiar lo asignado en un período cerrado.'),
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: /^Asignar/ })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Mover dinero' })).toHaveCount(0);
     await expect(page.getByRole('link', { name: /^Cubrir|^Reservar/ })).toHaveCount(0);
@@ -418,7 +424,7 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     const id = await page.locator('[data-archivada]').getAttribute('data-archivada');
     await abrir(page, `${RUTA}/categorias/${id}`);
     await expect(page.getByText('Categoría archivada')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Sacar el dinero' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Elegir destino y monto' })).toHaveAttribute(
       'href',
       `/presupuesto/categorias/${id}/sacar`,
     );

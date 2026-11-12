@@ -12,6 +12,7 @@ export const metas = {
   volver: 'Volver a Metas',
   categoria: 'Categoría',
   tipo: 'Tipo de meta',
+  tipoNoSeCambia: 'El tipo no se cambia. Para otro tipo, eliminá la meta y creá otra.',
   tipos: { mensual: 'Mensual', semanal: 'Semanal', anual: 'Anual', para_fecha: 'Para una fecha' },
   modo: 'Modo',
   modos: { acumular: 'Acumular', rellenar_hasta: 'Rellenar hasta' },
@@ -33,8 +34,8 @@ export const metas = {
   eliminada: 'Meta eliminada',
   confirmarEliminar: (categoria: string) =>
     `¿Eliminar la meta de ${categoria}? No cambia lo asignado.`,
-  siEliminar: 'Sí, eliminar',
-  noEliminar: 'No, conservar',
+  siEliminar: 'Eliminar',
+  noEliminar: 'Cancelar',
   otras: 'Otras metas',
   sinMetaTitulo: 'Categorías sin meta',
   sinMeta: 'Sin meta',
@@ -44,6 +45,12 @@ export const metas = {
       `La meta de ${categoria} venció el ${fecha} sin cumplirse.`,
     extender: 'Extender la fecha',
     ajustar: 'Ajustar el monto',
+  },
+  // E4-18, E6-14 [CH-248]: el resultado de editar una meta queda en la lista, en el lugar del aviso de la vencida.
+  resultado: {
+    extendida: (categoria: string, fecha: string) =>
+      `Extendiste la meta de ${categoria} al ${fecha}.`,
+    ajustada: (categoria: string) => `Ajustaste la meta de ${categoria}.`,
   },
   fila: {
     porPeriodo: 'Monto del período',

@@ -17,10 +17,19 @@ import { useOperacion, type AccionEscritura } from '../../formularios/use-operac
 import { formularios } from '../../textos/formularios';
 import { transaccion as t } from '../../textos/transaccion';
 
-const ENLACE = 'inline-flex min-h-11 items-center font-bold text-enlace underline';
+const ENTENDIDO =
+  'inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accion-tonal px-4 font-bold text-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+const ELIMINAR_EVENTO =
+  'inline-flex min-h-11 items-center px-2 font-semibold text-problema-texto focus-visible:outline-3 focus-visible:outline-foco';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const RUTA_AL_TERMINAR = '/actividad';
 const ROTULOS = { cobro: t.restituido, condonacion: t.condonado, devolucion: t.devuelto } as const;
+
+/** El `?volver=` del detalle, para encadenarlo al enlace de un evento. */
+const volverDe = (detalle: string): string => {
+  const i = detalle.indexOf('?');
+  return i < 0 ? '' : `&${detalle.slice(i + 1)}`;
+};
 
 export interface PropsFormularioActividadEliminar {
   /** `eliminarTransaccion` (OP-29): la pone el lector, así el formulario se prueba sin servidor. */
@@ -32,6 +41,8 @@ export interface PropsFormularioActividadEliminar {
   /** Los eventos vinculados de sus partes. */
   readonly eventos: readonly {
     readonly clave: string;
+    /** El id del evento para `?evento=` (R2): el de la transacción de cobro o devolución, o el de la condonación. */
+    readonly id: string;
     readonly tipo: keyof typeof ROTULOS;
     readonly fecha: FechaLocal;
     readonly monto: Centavos;
@@ -102,15 +113,27 @@ export function FormularioActividadEliminar(p: PropsFormularioActividadEliminar)
             {eventos.length === 0 ? null : (
               <ul className="flex flex-col gap-1" data-eventos>
                 {eventos.map((e) => (
-                  <li key={e.clave} className="flex justify-between gap-3">
+                  <li key={e.clave} className="flex items-center justify-between gap-3">
                     <span>{`${ROTULOS[e.tipo]} · ${formatearFechaTexto(e.fecha)}`}</span>
-                    <Monto centavos={e.monto} presentacion="absoluto" />
+                    <span className="flex items-center gap-2">
+                      <Monto centavos={e.monto} presentacion="absoluto" />
+                      <EnlaceFinn
+                        href={`/actividad/${transaccionId}/eventos/eliminar?tipo-evento=${e.tipo}&evento=${e.id}${volverDe(detalle)}`}
+                        aria-label={t.eliminarEventoDe(
+                          ROTULOS[e.tipo],
+                          formatearFechaTexto(e.fecha),
+                        )}
+                        className={ELIMINAR_EVENTO}
+                      >
+                        {t.eliminarEvento}
+                      </EnlaceFinn>
+                    </span>
                   </li>
                 ))}
               </ul>
             )}
-            <EnlaceFinn href={detalle} className={ENLACE}>
-              {t.verTransaccion}
+            <EnlaceFinn href={detalle} className={ENTENDIDO}>
+              {t.entendido}
             </EnlaceFinn>
           </>
         ) : (

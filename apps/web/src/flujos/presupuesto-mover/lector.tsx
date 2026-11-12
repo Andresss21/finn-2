@@ -9,6 +9,7 @@ import { redirect } from 'next/navigation';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
+import { detalleDeVolver, PARAMETRO_VOLVER } from '../presupuesto-asignar-categoria/resultado';
 import { FormularioMover, type CategoriaParaMover } from './formulario';
 
 export interface PropsLectorMover {
@@ -23,6 +24,8 @@ export async function LectorMover({ busqueda, superpuesto = false }: PropsLector
   const pedido = texto(params['periodoInicio']) as FechaLocal | undefined;
   const origenPedido = texto(params['categoriaOrigen']);
   const destinoPedido = texto(params['categoriaDestino']);
+  // E2-13 [CH-248]: abierto desde el detalle de la categoría (`?volver=`), el resultado vuelve a él.
+  const volver = detalleDeVolver(texto(busqueda[PARAMETRO_VOLVER]));
   const rutaPadre = pedido === undefined ? '/presupuesto' : `/presupuesto?periodo=${pedido}`;
   const vista = await consultar(async () =>
     presupuesto(await depsDeConsulta(), pedido === undefined ? {} : { periodoInicio: pedido }),
@@ -65,6 +68,7 @@ export async function LectorMover({ busqueda, superpuesto = false }: PropsLector
       origenInicial={origenPedido ?? ''}
       destinoInicial={destinoPedido ?? ''}
       rutaPadre={rutaPadre}
+      {...(volver === undefined ? {} : { rutaDetalle: volver })}
       superpuesto={superpuesto}
     />
   );

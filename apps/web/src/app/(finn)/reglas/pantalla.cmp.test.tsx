@@ -117,14 +117,17 @@ describe('PRU-CMP-BAND-150 reglas', () => {
 });
 
 describe('PRU-CMP-BAND buscador de reglas', () => {
-  it('PRU-CMP-BAND-312 [CA-39.3] el buscador relleno envía ?q= a /reglas, conserva el texto y sin coincidencias dice «Ninguna regla con ese texto» con «Nueva regla» a la vista', () => {
+  it('PRU-CMP-BAND-312 [CA-39.3] el buscador relleno envía ?q= a /reglas, conserva el texto y sin coincidencias dice «Ninguna regla para {búsqueda}.» con «Quitar la búsqueda» y «Nueva regla» a la vista', () => {
     const raiz = mostrar(<PantallaReglas dto={dto([])} q="zzz" total={2} />);
     const form = raiz.querySelector('form[role="search"]') as HTMLFormElement;
     expect(form.getAttribute('action')).toBe('/reglas');
     expect(form.getAttribute('method')).toBe('get');
     const campo = form.querySelector('input[name="q"]') as HTMLInputElement;
     expect(campo.value).toBe('zzz');
-    expect(raiz.querySelector('[data-sin-coincidencias]')?.textContent).toBe(t.sinCoincidencias);
+    const vacio = raiz.querySelector('[data-sin-coincidencias]');
+    expect(vacio?.querySelector('p')?.textContent).toBe(t.ningunaPara('zzz'));
+    expect(vacio?.querySelector('a')?.textContent).toBe(t.quitarBusqueda);
+    expect(vacio?.querySelector('a')?.getAttribute('href')).toBe('/reglas');
     expect(raiz.textContent).not.toContain(t.vacioTitulo);
     expect([...raiz.querySelectorAll('a')].some((a) => a.textContent.includes(t.nuevaRegla))).toBe(
       true,

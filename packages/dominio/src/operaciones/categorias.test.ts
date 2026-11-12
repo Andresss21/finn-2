@@ -310,7 +310,7 @@ describe('PRU-DOM-CATEG-101: aplicar, grupos y categorías (01 §5.2, 04 §3.2)'
     const h = r.hechosNuevos;
     expect(disp(h, 'LUZ')).toBe(c(0));
     expect(r.impacto.deltaLpa).toBe(c(30)); // vuelve lo asignado en abril
-    expect(r.impacto.deltaDisponible).toEqual([
+    expect(r.impacto.deltaDisponible).toMatchObject([
       { categoriaId: 'LUZ', delta: c(-50) },
       { categoriaId: 'SAL', delta: c(50) },
     ]);
@@ -483,7 +483,7 @@ describe('PRU-DOM-CATEG-101: aplicar, grupos y categorías (01 §5.2, 04 §3.2)'
     expect(r.operacionDeclarada).toBe('fusion');
     // ESC-42: Δ LPA +30 (el SobD de Café en enero se compensa) y Δ Salidas(A) −30.
     expect(r.impacto.deltaLpa).toBe(c(30));
-    expect(r.impacto.deltaDisponible).toEqual([{ categoriaId: 'SAL', delta: c(-30) }]);
+    expect(r.impacto.deltaDisponible).toMatchObject([{ categoriaId: 'SAL', delta: c(-30) }]);
     expect(r.avisos.map((a) => [a.codigo, a.requiereConfirmacion])).toEqual([
       ['AV-01', true],
       ['AV-13', true],
@@ -536,5 +536,61 @@ describe('PRU-DOM-CATEG-101: aplicar, grupos y categorías (01 §5.2, 04 §3.2)'
     expect(fusion('SAL', 'VIEJA')).toEqual(['fusion_destino_archivado']);
     expect(fusion('NO', 'SAL')).toEqual(['no_encontrado']);
     expect(fusion('SAL', 'NO')).toEqual(['no_encontrado']);
+  });
+});
+
+describe('PRU-DOM-MOTOR-113: valores resultantes del impacto en OP-09 y OP-12 (CH-246)', () => {
+  /** Los valores «antes» y «después» de cada Δ: los de `calcular` sobre los hechos de antes y sobre `hechosNuevos`. */
+  const resultantes = (h: Hechos, r: ResultadoAplicar) => {
+    const { impacto: i, hechosNuevos } = exito(r);
+    expect([i.lpaAntes, i.lpaDespues, i.lpaDespues - i.lpaAntes]).toEqual([
+      lpa(h),
+      lpa(hechosNuevos),
+      i.deltaLpa,
+    ]);
+    for (const x of i.deltaDisponible)
+      expect([x.antes, x.despues, x.despues - x.antes]).toEqual([
+        disp(h, x.categoriaId) ?? 0,
+        disp(hechosNuevos, x.categoriaId) ?? 0,
+        x.delta,
+      ]);
+    return i;
+  };
+  const valores = (i: ReturnType<typeof resultantes>) =>
+    i.deltaDisponible.map((x) => [x.categoriaId, x.antes, x.despues]);
+  const LPA = c(1000 - 150 - 30 - 70 - 30 - 25); // el de la base (ESC-42)
+
+  it('PRU-DOM-MOTOR-113 CH-246 OP-09 y OP-12: cada Disponible y LPA «después» del impacto es el de calcular(hechosNuevos) y «antes + Δ»', () => {
+    // OP-09: el Disponible de Luz (50) pasa a Salidas (60 → 110) y vuelven a LPA los 30 de abril.
+    const archivar = resultantes(
+      base(),
+      ejecutar(base(), {
+        operacion: 'OP-09',
+        categoriaId: id('LUZ'),
+        ids: contador(),
+        destinoDisponible: { categoriaId: id('SAL') },
+        devolverAsignacionesFuturas: true,
+        programadas: [{ programadaId: id('Q2'), accion: 'desactivar' }],
+      }),
+    );
+    expect(valores(archivar)).toEqual([
+      ['LUZ', c(50), c(0)],
+      ['SAL', c(60), c(110)],
+    ]);
+    expect([archivar.lpaAntes, archivar.lpaDespues]).toEqual([LPA, c(725)]);
+    // OP-12 (ESC-42): Salidas de 60 a 30 y LPA +30.
+    const fusion = resultantes(
+      base(),
+      ejecutar(base(), {
+        operacion: 'OP-12',
+        origenId: id('CAFE'),
+        destinoId: id('SAL'),
+        ids: contador(),
+        reglas: [],
+        movimientoLineas: [],
+      }),
+    );
+    expect(valores(fusion)).toEqual([['SAL', c(60), c(30)]]);
+    expect([fusion.lpaAntes, fusion.lpaDespues]).toEqual([LPA, c(725)]);
   });
 });

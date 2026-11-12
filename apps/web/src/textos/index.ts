@@ -16,6 +16,7 @@ import { categoriaDetalle } from './categoria-detalle.ts';
 import { categoriaPago } from './categoria-pago.ts';
 import { categoriasArchivar } from './categorias-archivar.ts';
 import { categoriasFusionar } from './categorias-fusionar.ts';
+import { codigoTotp } from './codigo-totp.ts';
 import { cuentaDetalle } from './cuenta-detalle.ts';
 import { cuentas } from './cuentas.ts';
 import { cuentasCondiciones } from './cuentas-condiciones.ts';
@@ -47,6 +48,7 @@ import { registrarTarjeta } from './registrar-tarjeta.ts';
 import { registrarTipo } from './registrar-tipo.ts';
 import { conciliar } from './conciliar.ts';
 import { reportes } from './reportes.ts';
+import { salir } from './salir.ts';
 import { transaccion } from './transaccion.ts';
 import { verificarSaldo } from './verificar-saldo.ts';
 
@@ -68,6 +70,7 @@ export {
   categoriaPago,
   categoriasArchivar,
   categoriasFusionar,
+  codigoTotp,
   cuentaDetalle,
   cuentas,
   cuentasCondiciones,
@@ -98,6 +101,7 @@ export {
   registrarTarjeta,
   registrarTipo,
   reportes,
+  salir,
   transaccion,
   conciliar,
   verificarSaldo,
@@ -132,6 +136,7 @@ export const areas = [
   ['categoriaPago', categoriaPago],
   ['categoriasArchivar', categoriasArchivar],
   ['categoriasFusionar', categoriasFusionar],
+  ['codigoTotp', codigoTotp],
   ['cuentaDetalle', cuentaDetalle],
   ['cuentas', cuentas],
   ['cuentasCondiciones', cuentasCondiciones],
@@ -150,6 +155,7 @@ export const areas = [
   ['registrarTarjeta', registrarTarjeta],
   ['registrarTipo', registrarTipo],
   ['reportes', reportes],
+  ['salir', salir],
   ['transaccion', transaccion],
   ['conciliar', conciliar],
   ['verificarSaldo', verificarSaldo],

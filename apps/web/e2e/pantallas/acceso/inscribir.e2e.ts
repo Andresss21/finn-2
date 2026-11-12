@@ -1,6 +1,7 @@
 // FT-02 Inscribir el primer factor TOTP (06 §2.2; 05 §9.5; 07 §17: una pantalla, una navegación o un flujo). El usuario de prueba
 // se deja sin factores y la primera prueba lo vuelve a dejar con uno; el orden de este archivo importa (modo serial).
 import { expect, test } from '../../configuracion/semilla.ts';
+import { escribirCodigo } from '../../ayudas/codigo.ts';
 import { esperarHidratacion } from '../../ayudas/esperas.ts';
 import {
   asegurarFactor,
@@ -134,7 +135,7 @@ test.describe('PRU-E2E-ACCESO', () => {
   }) => {
     await llegarAInscribir(page, '/pruebas/origen');
     const secreto = await secretoDe(page);
-    await page.getByLabel(t.codigo).fill(codigoDe(secreto));
+    await escribirCodigo(page, codigoDe(secreto));
     await page.getByRole('button', { name: t.confirmar }).click();
     await expect(page.getByRole('heading', { name: t.tituloListo })).toBeVisible();
     await expect(page.getByText(t.recomendarRespaldo)).toBeVisible();
@@ -144,7 +145,7 @@ test.describe('PRU-E2E-ACCESO', () => {
     );
     guardarSecreto(secreto); // el factor del usuario de prueba ahora es este
     await page.context().storageState({ path: ARCHIVO_SESION });
-    await page.getByRole('link', { name: t.seguir }).click();
+    await page.getByRole('button', { name: t.seguirAFinn }).click();
     await page.waitForURL((u) => u.pathname === '/pruebas/origen');
   });
 
@@ -178,13 +179,15 @@ test.describe('PRU-E2E-ACCESO', () => {
     const antes = await listarFactores(await clienteAal1());
     await entrarAal2(context, baseURL ?? '');
     await page.goto('/ajustes/seguridad/factores/nuevo');
-    await expect(page.getByRole('heading', { name: t.tituloRespaldo })).toBeVisible();
+    await expect(page.getByRole('heading', { name: t.tituloFactorRespaldo })).toBeVisible();
+    await esperarHidratacion(page);
+    await page.getByRole('button', { name: t.seguir, exact: true }).click();
     await expect(page.getByAltText(t.altQr)).toBeVisible();
     await esperarQrDecodificado(page);
     const secreto = await secretoDe(page);
-    await page.getByLabel(t.codigo).fill(codigoDe(secreto));
-    await page.getByRole('button', { name: t.confirmar }).click();
-    await expect(page.getByRole('heading', { name: t.tituloRespaldoListo })).toBeVisible();
+    await escribirCodigo(page, codigoDe(secreto));
+    await page.getByRole('button', { name: t.verificar, exact: true }).click();
+    await page.waitForURL((u) => u.pathname === '/ajustes/seguridad');
     const cliente = await clienteAal2();
     const factores = await listarFactores(cliente);
     expect(factores.filter((f) => f.estado === 'verified')).toHaveLength(2);

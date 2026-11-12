@@ -158,7 +158,7 @@ describe('PRU-CMP-PWA', () => {
     expect(opciones.map((f) => Math.round(segundos(estilo(f).animationDelay) * 1000))).toEqual([
       0, 40, 80, 120, 160, 200, 240, 280, 320, 320, 320, 320,
     ]);
-    expect(segundos(estilo(opciones[0] as Element).animationDuration)).toBeCloseTo(0.3, 3);
+    expect(segundos(estilo(opciones[0] as Element).animationDuration)).toBeCloseTo(0.34, 3);
     // Con «reducir movimiento» la regla anula toda animación y transición.
     const anula = reglas().find(
       (r) => r.condicion.includes('prefers-reduced-motion: reduce') && r.selector.includes('*'),
@@ -282,6 +282,6 @@ describe('PRU-CMP-PWA', () => {
       filas.map((_, k) => Math.min(k, 8) * 40),
     );
     expect(estilo(filas[0] as Element).animationName).toBe('fz-item');
-    expect(segundos(estilo(filas[0] as Element).animationDuration)).toBeCloseTo(0.3, 3);
+    expect(segundos(estilo(filas[0] as Element).animationDuration)).toBeCloseTo(0.34, 3);
   });
 });

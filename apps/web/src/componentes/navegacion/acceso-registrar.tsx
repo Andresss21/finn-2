@@ -1,6 +1,7 @@
 'use client';
 // `AccesoRegistrar` (05 §3.3, N1): un enlace «Registrar» a `ruta` (`/registrar`, o el gasto con la cuenta desde un detalle
 // de cuenta). Botón principal de la barra superior en teléfono y a todo el ancho en la barra lateral (06-identidad-visual 3.1).
+// [CH-241, E6-20] «Registrar» conserva su texto en todo ancho: es el título el que se achica.
 import { navegacion } from '../../textos/navegacion';
 import { Icono } from '../base/icono';
 import { EnlaceFinn } from './enlace-finn';
@@ -16,9 +17,9 @@ export function rutaRegistrar(pathname: string): string {
 // Mapa de clases literales (L13).
 const VARIANTES = {
   barra:
-    'text-etiqueta inline-flex h-11 items-center justify-center gap-1.5 rounded-control bg-accion pr-3.5 pl-2.5 font-bold text-texto-sobre-accion max-[25rem]:w-11 max-[25rem]:p-0',
+    'text-etiqueta inline-flex h-11 items-center justify-center gap-1.5 rounded-control bg-accion pr-3.5 pl-2.5 font-bold text-texto-sobre-accion',
   lateral:
-    'text-etiqueta inline-flex h-11 w-full items-center justify-center gap-2 rounded-control bg-accion px-3 font-bold text-texto-sobre-accion',
+    'text-etiqueta inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-control bg-accion px-3 font-bold text-texto-sobre-accion',
 } as const;
 
 export function AccesoRegistrar({
@@ -31,9 +32,7 @@ export function AccesoRegistrar({
   return (
     <EnlaceFinn href={ruta} className={VARIANTES[variante]}>
       <Icono nombre="plus" tamano={18} />
-      <span className={variante === 'barra' ? 'max-[25rem]:sr-only' : undefined}>
-        {navegacion.registrar}
-      </span>
+      <span>{navegacion.registrar}</span>
     </EnlaceFinn>
   );
 }

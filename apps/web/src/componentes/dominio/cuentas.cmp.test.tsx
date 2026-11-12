@@ -1,11 +1,15 @@
 import axe from 'axe-core';
 import { act, useState, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { useForm } from 'react-hook-form';
 import type { Centavos } from '@finn/dominio/valores';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../app/globals.css';
 import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta';
 import { Cabecera } from '../../app/(finn)/cuentas/[cuentaId]/cabecera';
+import { CamposDeTipo } from '../../flujos/cuentas-nueva/campos-de-tipo';
+import { ElegirTipo } from '../../flujos/cuentas-nueva/elegir-tipo';
+import { VistaBilletera } from '../../flujos/cuentas-nueva/vista-billetera';
 import { ColorTarjeta } from '../../flujos/cuentas-nueva/color-tarjeta';
 import { aEntradaDeAccion, valoresIniciales, type Campos } from '../../flujos/cuentas-nueva/campos';
 import { BilleteraTarjetas, CaraConSaldo, type TarjetaDto } from './billetera';
@@ -462,10 +466,10 @@ describe('PRU-CMP-CTA-401 identidad de efectivo por el subtipo', () => {
   const esperado = {
     corriente: { fondo: 'bg-cuenta-banco', icono: 'bank', motivo: 'libreta' },
     ahorro: { fondo: 'bg-cuenta-ahorro', icono: 'coins', motivo: 'anillos' },
-    billetera: { fondo: 'bg-cuenta-banco', icono: 'wallet', motivo: null },
+    billetera: { fondo: 'bg-cuenta-banco', icono: 'wallet', motivo: 'costura' },
   } as const;
 
-  it('PRU-CMP-CTA-401 [FT-51, FT-52] corriente con libreta, ahorro con anillos y billetera con `wallet` sin motivo, en la lista y en el detalle, por el subtipo del DTO', () => {
+  it('PRU-CMP-CTA-401 [FT-51, FT-52] corriente con libreta, ahorro con anillos y billetera con `wallet` y costura punteada (E2-12), en la lista y en el detalle, por el subtipo del DTO', () => {
     for (const s of ['corriente', 'ahorro', 'billetera'] as const) {
       const lista = montar(<IdentidadCuenta tipo="efectivo" fila={fila(s)} />);
       const cabecera = montar(<Cabecera dto={detalle(s)} />);
@@ -487,5 +491,112 @@ describe('PRU-CMP-CTA-401 identidad de efectivo por el subtipo', () => {
       <IdentidadCuenta tipo="efectivo" fila={{ cuenta, saldo, saldoConfirmado }} />,
     );
     expect(vieja.querySelector('[data-motivo]')?.getAttribute('data-motivo')).toBe('libreta');
+  });
+});
+
+describe('PRU-CMP-CTA-711 alta de préstamo por secciones', () => {
+  function AltaPrestamo(): ReactNode {
+    const { register, watch } = useForm<Campos>({
+      defaultValues: valoresIniciales('2027-02-05', 'prestamo', ''),
+    });
+    return (
+      <CamposDeTipo
+        c={watch()}
+        poner={() => () => undefined}
+        error={() => undefined}
+        register={register}
+        institucion={undefined}
+      />
+    );
+  }
+
+  it('PRU-CMP-CTA-711 el préstamo se divide en «El préstamo», «Cuotas» y «Condiciones · opcional» plegada, con el aviso de que no hay modelo', () => {
+    const raiz = montar(<AltaPrestamo />);
+    const titulos = [...raiz.querySelectorAll('h2, summary')].map((x) => x.textContent);
+    expect(titulos).toEqual(['El préstamo', 'Cuotas', 'Condiciones · opcional']);
+    const condiciones = raiz.querySelector<HTMLDetailsElement>(
+      'details[data-seccion="condiciones"]',
+    );
+    expect(condiciones?.open).toBe(false);
+    expect(condiciones?.textContent).toContain('no tiene un modelo de cálculo');
+    expect(raiz.querySelector('[data-seccion="Cuotas"]')?.textContent).toContain('Cuota pactada');
+    expect(raiz.querySelector('[data-seccion="El préstamo"]')?.textContent).toContain(
+      'Quién te prestó',
+    );
+  });
+
+  it('PRU-CMP-CTA-711 el monto original queda donde OP-01 lo exige (en «El préstamo») y no en la sección plegada', () => {
+    const raiz = montar(<AltaPrestamo />);
+    expect(raiz.querySelector('[data-seccion="El préstamo"]')?.textContent).toContain(
+      'Monto original',
+    );
+    expect(raiz.querySelector('details[data-seccion="condiciones"]')?.textContent).not.toContain(
+      'Monto original',
+    );
+  });
+
+  it('PRU-CMP-CTA-711 la inversión pide el rendimiento como opcional e informativo', () => {
+    function AltaInversion(): ReactNode {
+      const { register, watch } = useForm<Campos>({
+        defaultValues: valoresIniciales('2027-02-05', 'inversion', ''),
+      });
+      return (
+        <CamposDeTipo
+          c={watch()}
+          poner={() => () => undefined}
+          error={() => undefined}
+          register={register}
+          institucion={undefined}
+        />
+      );
+    }
+    const raiz = montar(<AltaInversion />);
+    const campo = raiz.querySelector('input');
+    expect(campo?.getAttribute('aria-describedby')).not.toBeNull();
+    expect(raiz.textContent).toContain('Rendimiento anual esperado (%)');
+    expect(raiz.textContent).toContain('Opcional');
+    expect(raiz.textContent).toContain('Solo informativo: Finn no proyecta el valor.');
+  });
+
+  it('PRU-CMP-CTA-711 [CA-E6-18] el tipo se elige en cuatro tarjetas con ícono de 44 px o más y elegir una avisa el tipo', () => {
+    const elegidos: string[] = [];
+    const raiz = montar(
+      <ElegirTipo
+        valor="efectivo"
+        alCambiar={(t) => {
+          elegidos.push(t);
+        }}
+      />,
+    );
+    const grupo = raiz.querySelector('[role="radiogroup"]');
+    expect(grupo?.getAttribute('aria-label')).toBe('Tipo de cuenta');
+    const tarjetas = [...raiz.querySelectorAll<HTMLElement>('[data-tipo-cuenta]')];
+    expect(tarjetas.map((x) => x.dataset['tipoCuenta'])).toEqual([
+      'efectivo',
+      'tarjeta',
+      'prestamo',
+      'inversion',
+    ]);
+    for (const x of tarjetas) {
+      expect(x.querySelector('[data-icono]')).not.toBeNull();
+      expect(x.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    }
+    expect(raiz.querySelector<HTMLInputElement>('input[value="efectivo"]')?.checked).toBe(true);
+    act(() => {
+      raiz.querySelector<HTMLInputElement>('input[value="prestamo"]')?.click();
+    });
+    expect(elegidos).toEqual(['prestamo']);
+  });
+
+  it('PRU-CMP-CTA-711 «Así se va a ver» dibuja la billetera con su costura y el monto escrito, y sin nombre no inventa uno', () => {
+    const raiz = montar(<VistaBilletera nombre="Billetera" saldo="40" />);
+    const vista = raiz.querySelector('[data-vista-billetera]');
+    expect(vista?.textContent).toContain('Así se va a ver');
+    expect(vista?.textContent).toContain('Billetera');
+    expect(vista?.textContent).toContain('$40.00');
+    expect(vista?.querySelector('[data-motivo="costura"]')).not.toBeNull();
+    expect(vista?.querySelector('[data-icono="wallet"]')).not.toBeNull();
+    const vacia = montar(<VistaBilletera nombre="  " saldo="" />);
+    expect(vacia.textContent).not.toContain('$');
   });
 });

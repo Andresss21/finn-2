@@ -168,4 +168,43 @@ describe('PRU-CMP-TX devolver', () => {
     );
     expect(accion).not.toHaveBeenCalled();
   });
+
+  it('PRU-CMP-TX-731 [CA-E4-20] la cuenta a la que vuelve el dinero se rotula «Vuelve a» y muestra la cuenta elegida', async () => {
+    const nodo = await montar(<FormularioActividadDevolver {...base} accion={vi.fn(ok)} />);
+    const rotulo = [...nodo.querySelectorAll('label, span')].find(
+      (x) => x.textContent === 'Vuelve a',
+    );
+    expect(rotulo).toBeDefined();
+    expect(nodo.textContent).not.toContain('Devolver a');
+    expect(nodo.textContent).toContain('Ahorro');
+  });
+
+  it('PRU-CMP-TX-737 [CA-28.6] con el exceso en una parte, «Registrar devolución» queda deshabilitado con «Corregí el monto de …» hasta que se cambia ese monto', async () => {
+    const accion = vi.fn(() =>
+      Promise.resolve({
+        ok: false as const,
+        error: {
+          categoria: 'DOMINIO' as const,
+          codigo: 'devolucion_mayor_que_linea',
+          mensaje: 'En esa parte quedan $25.00 por devolver.',
+        },
+      }),
+    );
+    const nodo = await montar(
+      <FormularioActividadDevolver {...base} partes={dos} accion={accion} />,
+    );
+    await userEvent.fill(campo(nodo, 'total'), '50');
+    await userEvent.fill(campo(nodo, 'reparto.1'), '40');
+    await userEvent.fill(campo(nodo, 'reparto.0'), '10');
+    await userEvent.click(registrar());
+    await vi.waitFor(() => {
+      expect(registrar().disabled).toBe(true);
+    });
+    expect(document.body.textContent).toContain(t.corregiMonto('Ana (por cobrar)'));
+    await userEvent.fill(campo(nodo, 'reparto.1'), '20');
+    await vi.waitFor(() => {
+      expect(registrar().disabled).toBe(false);
+    });
+    expect(nodo.querySelector('[data-linea="l2"]')?.textContent).not.toContain('En esa parte');
+  });
 });

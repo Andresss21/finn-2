@@ -377,8 +377,8 @@ describe('PRU-CMP-PRES', () => {
     const franja = n.querySelector('[data-resumen-lpa="franja"]');
     const asignar = franja?.querySelector('a') ?? null;
     expect(asignar?.textContent).toBe('Asignar');
-    expect(asignar?.getAttribute('href')).toBe('#categorias');
-    expect(n.querySelector('#categorias')).not.toBeNull();
+    // E4-15, D-3: «Asignar» lleva a las categorías sin fondos, igual que el billete de Inicio.
+    expect(asignar?.getAttribute('href')).toBe('/presupuesto?filtro=sin-fondos');
     expect(Math.round(asignar?.getBoundingClientRect().height ?? 0)).toBeGreaterThanOrEqual(44);
     const enlace = (texto: string) =>
       [...n.querySelectorAll('a')].find((a) => a.textContent === texto) ?? null;

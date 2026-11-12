@@ -5,14 +5,18 @@ import type { ReactNode } from 'react';
 import type { ReporteDe } from '@finn/aplicacion/consultas/reporte';
 import type { Ref } from '@finn/dominio/selectores';
 import type { Centavos } from '@finn/dominio/valores';
+import { CifraReporte } from './cifra';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { GraficoDona, type PorcionDona } from '../../../../componentes/graficos/grafico-dona';
+import { TablaDesplazable } from '../../../../componentes/graficos/tabla-desplazable';
 import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { formatearFecha, formatearMonto, formatearPorcentaje } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
 
 export interface Nombres {
   readonly cuentas: readonly Ref[];
+  /** Solo las cuentas de efectivo: Flujo de efectivo filtra por estas (06 §3.3). */
+  readonly efectivo: readonly Ref[];
   readonly grupos: readonly Ref[];
   readonly categorias: readonly Ref[];
 }
@@ -40,17 +44,14 @@ export function Tabla<F>({
   enfocable = false,
 }: {
   readonly titulo: string;
-  /** Una tabla ancha que se desplaza: el teclado llega a ella para recorrerla (axe: scrollable-region-focusable). */
+  /** Fuerza el desplazamiento aunque tenga 3 columnas o menos (E5-4: de otro modo, solo las de más de 3 columnas). */
   readonly enfocable?: boolean;
   readonly columnas: readonly Columna<NoInfer<F>>[];
   readonly filas: readonly F[];
   readonly clave: (fila: F) => string;
 }) {
   return (
-    <div
-      className="overflow-x-auto in-[.sr-only]:overflow-visible"
-      {...(enfocable ? { tabIndex: 0, role: 'region', 'aria-label': titulo } : {})}
-    >
+    <TablaDesplazable nombre={titulo} ancha={enfocable || columnas.length > 3}>
       <table data-tabla-reporte className="w-full text-cuerpo-pequeno">
         <caption className="sr-only">{titulo}</caption>
         <thead>
@@ -91,7 +92,7 @@ export function Tabla<F>({
           ))}
         </tbody>
       </table>
-    </div>
+    </TablaDesplazable>
   );
 }
 
@@ -126,6 +127,7 @@ export function Categorias({
   const mayor = porciones[0];
   return (
     <div className="flex flex-col gap-4">
+      <CifraReporte centavos={dto.total} frase={t.cifras.categorias} />
       <VistaGrafico
         grafico={
           <GraficoDona
@@ -181,49 +183,60 @@ export function TopComercios({
   /** [CH-226] El ancho de la barra de cada comercio, en el orden del DTO: lo ubica la escala del servidor (FE-44). */
   readonly anchos: readonly number[];
 }) {
+  const primero = dto.comercios[0];
   return (
-    <ol className="flex flex-col gap-3">
-      {dto.comercios.map((c, k) => (
-        <li
-          key={c.clave}
-          data-comercio={c.clave}
-          className="flex flex-col gap-2 rounded-contenedor bg-superficie p-3.5"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col">
-              <h3 className="text-titulo-seccion">
-                {c.clave === '(sin comercio)' ? t.sinComercio : c.etiqueta}
-              </h3>
-              <p className="text-cuerpo-pequeno text-texto-secundario">
-                {t.compras(c.frecuencia)} · {nombreDe(nombres.categorias, c.categoriaPrincipal)}
-              </p>
-            </div>
-            <span data-monto-comercio>{monto(c.monto)}</span>
-          </div>
-          <div
-            aria-hidden="true"
-            data-barra-comercio
-            className="flex h-1.5 overflow-hidden rounded-pastilla bg-superficie-hundida"
+    <div className="flex flex-col gap-4">
+      {primero === undefined ? null : (
+        <CifraReporte
+          centavos={primero.monto}
+          frase={t.cifras.comercios(
+            primero.clave === '(sin comercio)' ? t.sinComercio : primero.etiqueta,
+          )}
+        />
+      )}
+      <ol className="flex flex-col gap-3">
+        {dto.comercios.map((c, k) => (
+          <li
+            key={c.clave}
+            data-comercio={c.clave}
+            className="flex flex-col gap-2 rounded-contenedor bg-superficie p-3.5"
           >
-            <span style={{ width: `${anchos[k] ?? 0}%` }} className="bg-texto" />
-          </div>
-          {c.variantes.length > 1 ? (
-            <ul aria-label={t.variantes} className="flex flex-col gap-1 text-cuerpo-pequeno">
-              {c.variantes.map((v) => (
-                <li
-                  key={v.comercio}
-                  data-variante={v.comercio}
-                  className="flex justify-between gap-3"
-                >
-                  <span className="min-w-0 truncate">{v.comercio}</span>
-                  {monto(v.monto)}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </li>
-      ))}
-    </ol>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-col">
+                <h3 className="text-titulo-seccion">
+                  {c.clave === '(sin comercio)' ? t.sinComercio : c.etiqueta}
+                </h3>
+                <p className="text-cuerpo-pequeno text-texto-secundario">
+                  {t.compras(c.frecuencia)} · {nombreDe(nombres.categorias, c.categoriaPrincipal)}
+                </p>
+              </div>
+              <span data-monto-comercio>{monto(c.monto)}</span>
+            </div>
+            <div
+              aria-hidden="true"
+              data-barra-comercio
+              className="flex h-1.5 overflow-hidden rounded-pastilla bg-superficie-hundida"
+            >
+              <span style={{ width: `${anchos[k] ?? 0}%` }} className="bg-texto" />
+            </div>
+            {c.variantes.length > 1 ? (
+              <ul aria-label={t.variantes} className="flex flex-col gap-1 text-cuerpo-pequeno">
+                {c.variantes.map((v) => (
+                  <li
+                    key={v.comercio}
+                    data-variante={v.comercio}
+                    className="flex justify-between gap-3"
+                  >
+                    <span className="min-w-0 truncate">{v.comercio}</span>
+                    {monto(v.monto)}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 

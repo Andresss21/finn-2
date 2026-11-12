@@ -3,6 +3,7 @@
 // selección de 52 px, Fecha y Total en dos columnas, el comercio, las partes compactas de Registrar gasto (CH-126) y la nota. Se
 // cargan aparte para que la ruta no pase su presupuesto de bytes (05 §13.1). La edición de un movimiento (FT-35) conserva la suya
 // en `bandeja-movimiento/edicion.tsx`. No calcula montos (PF-3): la suma de las partes la valida el servidor.
+import { useEffect } from 'react';
 import type { FechaLocal } from '@finn/dominio/valores';
 import type { UseFieldArrayReturn, UseFormReturn } from 'react-hook-form';
 import { EntradaTexto } from '../../componentes/base/campo';
@@ -27,6 +28,8 @@ export interface CuentaDeEdicion extends Referencia {
 }
 
 export interface PropsEdicion {
+  /** Avisa que los campos ya están: hasta entonces «Guardar cambios» espera (V-01). */
+  readonly alMontar?: () => void;
   readonly formulario: UseFormReturn<Campos>;
   readonly partes: UseFieldArrayReturn<Campos, 'lineas'>;
   readonly cuentas: readonly CuentaDeEdicion[];
@@ -52,6 +55,7 @@ const aOpciones = (xs: readonly CuentaDeEdicion[]): OpcionNativa[] =>
   }));
 
 export default function Edicion({
+  alMontar,
   formulario,
   partes,
   cuentas,
@@ -63,6 +67,9 @@ export default function Edicion({
   motivoCuenta,
   soloEtiquetas,
 }: PropsEdicion) {
+  useEffect(() => {
+    alMontar?.();
+  }, [alMontar]);
   const { setValue, formState } = formulario;
   const c = formulario.watch();
   const poner = (nombre: Parameters<typeof setValue>[0]) => (valor: string) => {

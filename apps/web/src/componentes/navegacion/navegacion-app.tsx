@@ -2,9 +2,12 @@
 // Contratos de navegación de 05 §3.3 (FE-29, FE-30) con la forma de 06-identidad-visual §3: barra inferior con la Bandeja
 // al centro en teléfono, barra lateral en computadora y hoja «Más secciones» (N5: botón y enlace, dos interacciones).
 // Los contadores van dentro del nombre accesible del enlace y no se anuncian al cambiar (11.3).
+// [CH-242] «Salir» (05 §9.6): aquí solo el botón; `salir()` y los borradores, en `marco/salir.tsx`, que se descarga al tocarlo.
 import { usePathname } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useId, useState, type ReactNode } from 'react';
+import { useConexion } from '../../cliente/useConexion';
 import { navegacion } from '../../textos/navegacion';
+import { salirFila as ts } from '../../textos/salir-fila';
 import { Icono, type NombreIcono } from '../base/icono';
 import { Marca } from '../marco/marca';
 import { indice } from '../movimiento/indice';
@@ -86,6 +89,116 @@ const FILAS = {
   baja: 'group text-cuerpo-pequeno relative flex min-h-11 items-center gap-3 rounded-control px-3 text-texto-secundario aria-[current=page]:bg-superficie-hundida aria-[current=page]:font-bold aria-[current=page]:text-texto',
 } as const;
 
+export type VarianteSalir = 'hoja' | 'lateral' | 'tarjeta';
+// Mapa de clases literales (L13), del export 16-salir: fila de 52 de la hoja, fila de 44 del pie lateral y tarjeta de Ajustes.
+const SALIR = {
+  hoja: ['flex min-h-13 w-full items-center gap-3 px-4 py-2 text-left text-texto', 'text-cuerpo'],
+  lateral: [
+    'flex min-h-11 w-full items-center gap-3 rounded-control px-3 text-left text-texto-secundario',
+    'text-cuerpo-pequeno',
+  ],
+  tarjeta: [
+    'grid min-h-14 w-full grid-cols-[40px_minmax(0,1fr)] items-center gap-3 px-4 py-3 text-left text-texto',
+    'text-cuerpo font-semibold',
+  ],
+} as const;
+
+/** El botón «Salir» (sin flecha: es una acción). Saliendo, `aria-busy`; sin conexión o si falló, el motivo en el lugar. */
+export function FilaSalir(p: {
+  readonly variante: VarianteSalir;
+  readonly estado?: 'quieto' | 'saliendo' | 'error';
+  readonly sinConexion: boolean;
+  readonly subtitulo?: string | undefined;
+  readonly onClick: () => void;
+  readonly onPointerEnter?: () => void;
+}) {
+  const id = useId();
+  const saliendo = p.estado === 'saliendo';
+  const error = p.estado === 'error' && !p.sinConexion;
+  const motivo = p.sinConexion ? ts.sinConexion : error ? ts.noSePudo : undefined;
+  const [boton, texto] = SALIR[p.variante];
+  const icono = saliendo ? (
+    <span
+      aria-hidden="true"
+      className="size-4 animate-spin rounded-pastilla border-2 border-current border-e-transparent"
+    />
+  ) : (
+    <Icono nombre="logout" tamano={20} />
+  );
+  return (
+    <button
+      type="button"
+      disabled={saliendo || p.sinConexion}
+      aria-busy={saliendo || undefined}
+      aria-describedby={motivo === undefined ? undefined : id}
+      onClick={p.onClick}
+      onPointerEnter={p.onPointerEnter}
+      onFocus={p.onPointerEnter}
+      className={boton}
+    >
+      {p.variante === 'tarjeta' ? (
+        <span
+          aria-hidden="true"
+          className="flex size-10 items-center justify-center rounded-pastilla bg-superficie-hundida text-texto-secundario"
+        >
+          {icono}
+        </span>
+      ) : (
+        icono
+      )}
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className={texto}>{saliendo ? ts.saliendo : ts.salir}</span>
+        {(motivo ?? p.subtitulo) === undefined ? null : (
+          <span
+            id={id}
+            {...(error ? { role: 'alert' } : {})}
+            className={
+              error
+                ? 'text-cuerpo-pequeno flex items-center gap-1.5 text-problema-texto'
+                : 'text-cuerpo-pequeno text-texto-secundario'
+            }
+          >
+            {error ? <Icono nombre="problema" tamano={16} /> : null}
+            {motivo ?? p.subtitulo}
+          </span>
+        )}
+      </span>
+    </button>
+  );
+}
+
+const cargarSalir = () => import('../marco/salir');
+const ControlSalir = lazy(() => cargarSalir().then((m) => ({ default: m.ControlSalir })));
+
+/** «Salir» (05 §9.6 [CH-242]): el primer toque carga `salir()` y decide si sale directo o pregunta por los borradores. */
+export function Salir({
+  variante,
+  subtitulo,
+}: {
+  readonly variante: VarianteSalir;
+  readonly subtitulo?: string;
+}) {
+  const { enLinea } = useConexion();
+  const [activo, setActivo] = useState(false);
+  const fila = (
+    <FilaSalir
+      variante={variante}
+      sinConexion={!enLinea}
+      subtitulo={subtitulo}
+      onPointerEnter={() => void cargarSalir().catch(() => undefined)}
+      onClick={() => {
+        setActivo(true);
+      }}
+    />
+  );
+  if (!activo) return fila;
+  return (
+    <Suspense fallback={fila}>
+      <ControlSalir variante={variante} subtitulo={subtitulo} />
+    </Suspense>
+  );
+}
+
 function BarraInferior({ secciones, seccionActiva, contadores }: PropsNavegacionApp) {
   return (
     <nav
@@ -107,7 +220,8 @@ function BarraInferior({ secciones, seccionActiva, contadores }: PropsNavegacion
                     href={s.ruta}
                     aria-label={nombre}
                     aria-current={activa}
-                    className="group text-etiqueta flex flex-col items-center gap-0.5 text-xs font-bold text-texto"
+                    punto="icono"
+                    className="group text-etiqueta relative flex flex-col items-center gap-0.5 text-xs font-bold text-texto"
                   >
                     <span className="relative -mt-6.5 inline-flex size-15.5 items-center justify-center rounded-identidad border-4 border-fondo bg-marca text-texto-sobre-marca shadow-elevacion-2 group-aria-[current=page]:bg-accion">
                       {/* Mientras hay movimientos por revisar, dos halos desfasados (06-identidad-visual 3.1; decorativos). */}
@@ -130,6 +244,7 @@ function BarraInferior({ secciones, seccionActiva, contadores }: PropsNavegacion
                   href={s.ruta}
                   aria-label={nombre}
                   aria-current={activa}
+                  punto="icono"
                   className={PESTANA}
                 >
                   <span aria-hidden="true" className={RAYA} />
@@ -162,6 +277,7 @@ function FilaLateral({
         href={seccion.ruta}
         aria-label={nombre}
         aria-current={activa ? 'page' : undefined}
+        punto="fila"
         className={FILAS[alta ? 'alta' : 'baja']}
       >
         <span
@@ -211,6 +327,10 @@ function BarraLateral({
           </ul>
         </div>
       </nav>
+      {/* Pie (entrega 3): bajo una línea `--borde-sutil`; el correo de la sesión no llega al marco (informe de TA-596). */}
+      <div data-pieza="pie-salir" className="mt-auto border-t border-borde-sutil pt-3">
+        <Salir variante="lateral" />
+      </div>
     </aside>
   );
 }
@@ -263,7 +383,7 @@ export function MasSecciones({ secciones, seccionActiva, contadores }: PropsNave
           }}
         >
           {/* Filas de 52 con separador: ícono 20, nombre, contador a la derecha y `chevR` (06-identidad-visual 2.17, export K1). */}
-          <ul className="-mx-5 -mt-3 flex flex-col pb-4">
+          <ul className="-mx-5 -mt-3 flex flex-col">
             {secciones
               .filter((s) => s.nivel === 'secundaria')
               .map((s, i) => {
@@ -285,6 +405,11 @@ export function MasSecciones({ secciones, seccionActiva, contadores }: PropsNave
                 );
               })}
           </ul>
+          {/* [CH-242] La última fila, tras una franja `--superficie-hundida` de 8 px (entrega 3). */}
+          <div className="-mx-5 pb-4">
+            <div aria-hidden="true" className="h-2 bg-superficie-hundida" />
+            <Salir variante="hoja" />
+          </div>
         </SuperpuestoDiferido>
       ) : null}
     </>

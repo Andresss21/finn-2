@@ -3,9 +3,10 @@
 // en un período activo o futuro. Muestra lo que trae el servidor y envía el valor absoluto con `esperado` (lo que vio al abrir).
 // AV-11 llega como `REQUIERE_CONFIRMACION`; `conflicto_desactualizado` ofrece el valor actual. No calcula montos (PF-3).
 import type { Centavos } from '@finn/dominio/valores';
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -20,11 +21,11 @@ import { aplicarSigno, normalizarMontoEscrito } from '../../formularios/normaliz
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { asignarEnCategoria, asignarRapido } from '../../servidor/acciones/presupuesto';
-import { formularios } from '../../textos/formularios';
 import { presupuestoAsignar as t } from '../../textos/presupuesto-asignar';
 import { PieDeHoja } from '../pie-de-hoja';
 import { CampoConFoco } from './campo-con-foco';
 import { OpcionesRapidas, type DatosRapida, type VarianteRapida } from './rapida';
+import { rutaConResultado, type ResultadoPresupuesto } from './resultado';
 
 export interface PropsFormularioAsignar {
   readonly categoriaId: string;
@@ -39,6 +40,8 @@ export interface PropsFormularioAsignar {
   readonly rapida?: DatosRapida;
   /** La pantalla a la que vuelve la página completa al terminar (`cerrarFlujo()`, 05 §1.4). */
   readonly rutaPadre: string;
+  /** E2-13 [CH-248]: con `?desde=categoria`, el detalle de la categoría (con su `?periodo=`): ahí queda el resultado. */
+  readonly rutaDetalle?: string;
   readonly superpuesto: boolean;
 }
 
@@ -64,7 +67,6 @@ interface Vista {
     readonly datos?: { readonly lpa?: Centavos };
   }[];
 }
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 
 /** Lo que el servidor guarda como Asignado, escrito como lo teclea la persona: el valor absoluto y su signo. */
 const camposDe = (asignado: Centavos): Campos => ({
@@ -101,14 +103,17 @@ function Cifra({
 }
 
 function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
-  const { categoriaId, periodoInicio, superpuesto, rutaPadre } = p;
+  const { categoriaId, periodoInicio, superpuesto, rutaPadre, rutaDetalle } = p;
+  // E2-13: lo que se envió, tal como lo vio la persona (sin cuentas): alimenta el resultado y su «Deshacer».
+  const enviado = useRef<ResultadoPresupuesto>({ tipo: 'asignado' });
   const enviarAsignacion = useCallback<AccionEscritura>(
     (payload) => {
       const { modo, esperado: e, revisionVista, huellaImpacto, variante } = payload as Cruda;
       const { monto = '', signo = 'positivo' } = payload as Cruda;
       const confirmacion = revisionVista === undefined ? {} : { revisionVista, huellaImpacto };
       // OP-16: el valor lo calcula el servidor; solo viaja la variante y lo que vio la persona (`esperado`).
-      if (variante !== undefined)
+      if (variante !== undefined) {
+        enviado.current = { tipo: 'asignado' };
         return asignarRapido({
           categoriaId,
           periodoInicio,
@@ -117,11 +122,18 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
           modo,
           ...confirmacion,
         });
+      }
       const normal = normalizarMontoEscrito(monto);
+      const montoNuevo = aplicarSigno(normal.estado === 'valido' ? normal.texto : monto, signo);
+      const anterior = typeof e?.['monto'] === 'string' ? e['monto'] : undefined;
+      enviado.current =
+        anterior === undefined
+          ? { tipo: 'asignado' }
+          : { tipo: 'asignado', nuevo: montoNuevo, anterior };
       return asignarEnCategoria({
         categoriaId,
         periodoInicio,
-        montoNuevo: aplicarSigno(normal.estado === 'valido' ? normal.texto : monto, signo),
+        montoNuevo,
         esperado: e,
         modo,
         ...confirmacion,
@@ -149,7 +161,11 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
     return (
       <>
         <p role="status">{t.listo}</p>
-        <CerrarFlujoAlMontar rutaPadre={rutaPadre} superpuesto={superpuesto} />
+        {rutaDetalle === undefined ? (
+          <CerrarFlujoAlMontar rutaPadre={rutaPadre} superpuesto={superpuesto} />
+        ) : (
+          <CerrarFlujoAlMontar rutaPadre={rutaConResultado(rutaDetalle, enviado.current)} />
+        )}
       </>
     );
   if (estado === 'confirmando')
@@ -227,35 +243,25 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
           requerido
         />
       </CampoConFoco>
-      {estado === 'error' && fallo !== undefined ? (
+      {estado === 'error' && fallo !== undefined && !conflicto ? (
+        <ErrorDeFlujo tipo="corto" error={fallo} alReintentar={() => void operacion.reintentar()} />
+      ) : null}
+      {estado === 'error' && fallo !== undefined && conflicto ? (
         <AvisoEnLinea
           estado="problema"
           aparecioDespues
-          {...(conflicto
-            ? {
-                accion: (
-                  <Boton
-                    variante="secundaria"
-                    onClick={() => {
-                      alUsarActual(actual, formulario.getValues());
-                    }}
-                  >
-                    {t.usarValorActual}
-                  </Boton>
-                ),
-              }
-            : REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                      {formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
+          accion={
+            <Boton
+              variante="secundaria"
+              onClick={() => {
+                alUsarActual(actual, formulario.getValues());
+              }}
+            >
+              {t.usarValorActual}
+            </Boton>
+          }
         >
-          {fallo.mensaje}
-          {conflicto ? ` ${t.valorActual(formatearMonto(actual))}` : ''}
+          {fallo.mensaje} {t.valorActual(formatearMonto(actual))}
         </AvisoEnLinea>
       ) : null}
       <PieDeHoja rutaPadre={rutaPadre} superpuesto={superpuesto}>

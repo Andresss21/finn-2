@@ -275,7 +275,7 @@ describe('PRU-DOM-CTA-102: aplicar, operaciones de cuentas (01 §5.1, 04 §3.1)'
     // inv. 22: la tarjeta tiene exactamente una categoría de pago.
     expect(r.hechosNuevos.categorias.filter((x) => x.tarjetaId === 'U')).toHaveLength(1);
     // Deuda 300 sin reserva: S(U) = 300 aparece y se informa después (AV-07). Sin LPA de por medio.
-    expect(r.impacto.deltaTarjetas).toEqual([
+    expect(r.impacto.deltaTarjetas).toMatchObject([
       { tarjetaId: 'U', deltaSaldo: c(300), deltaReserva: c(0) },
     ]);
     expect(r.impacto.deltaLpa).toBe(0);

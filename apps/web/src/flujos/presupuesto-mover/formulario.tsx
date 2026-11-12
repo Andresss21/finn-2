@@ -1,15 +1,17 @@
 'use client';
 // `/presupuesto/mover` (FT-11, OP-15; 05 §2.3, §4.4, §4.7): el flujo corto de pasar dinero de una categoría a otra en un
 // período activo o futuro. Muestra lo que trae el servidor y envía `esperado` con las dos asignaciones que vio al abrir
-// (CP-10a). Listo para asignar no cambia, así que no hay confirmación; origen igual a destino y los demás rechazos los dice el
-// servidor. `conflicto_desactualizado` ofrece los valores actuales. No calcula montos (PF-3).
+// (CP-10a). D-6 (CA-11.2): mover más que el Disponible se acepta; con origen, destino y monto válidos se pide la previsualización
+// de OP-15 y el impacto va en la misma pantalla (el aviso con el negativo y los dos Disponibles). Los rechazos los dice el
+// servidor al confirmar. `conflicto_desactualizado` ofrece los valores actuales. No calcula montos (PF-3).
 import type { Centavos } from '@finn/dominio/valores';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import {
   CerrarFlujoAlMontar,
   PaginaFlujoDeRuta,
@@ -20,9 +22,10 @@ import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { moverDinero } from '../../servidor/acciones/presupuesto';
-import { formularios } from '../../textos/formularios';
 import { presupuestoMover as t } from '../../textos/presupuesto-mover';
+import { rutaConResultado } from '../presupuesto-asignar-categoria/resultado';
 import { PieDeHoja } from '../pie-de-hoja';
+import { ImpactoMover } from './impacto';
 
 export interface CategoriaParaMover {
   readonly id: string;
@@ -38,6 +41,8 @@ export interface PropsFormularioMover {
   readonly destinoInicial: string;
   /** La pantalla a la que vuelve la página completa al terminar (`cerrarFlujo()`, 05 §1.4). */
   readonly rutaPadre: string;
+  /** E2-13 [CH-248]: con `?volver=` al detalle de una categoría, ahí queda el resultado, con el monto que escribió la persona. */
+  readonly rutaDetalle?: string;
   readonly superpuesto: boolean;
 }
 
@@ -49,9 +54,19 @@ const CONTRATO = z.object({
     .refine((v) => normalizarMontoEscrito(v).estado === 'valido', { error: t.obligatorio }),
 });
 type Campos = z.infer<typeof CONTRATO>;
-type Cruda = Campos & { modo: string };
+type Cruda = Campos & { modo: string; revisionVista?: string; huellaImpacto?: string };
+interface Vista {
+  readonly rechazos?: readonly { readonly codigo: string }[];
+  readonly impacto?: {
+    readonly deltaDisponible?: readonly {
+      readonly categoriaId: string;
+      readonly antes: Centavos;
+      readonly despues: Centavos;
+    }[];
+  } | null;
+}
 type Asignados = Readonly<Record<string, Centavos>>;
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
+const RECHAZOS: Readonly<Record<string, string | undefined>> = t.rechazos;
 
 interface Actuales {
   readonly asignacionOrigen?: Centavos;
@@ -66,11 +81,13 @@ interface PropsCuerpo {
 }
 
 function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
-  const { periodoInicio, superpuesto, rutaPadre } = p;
+  const { periodoInicio, superpuesto, rutaPadre, rutaDetalle } = p;
+  const montoEnviado = useRef('');
   const enviar = useCallback<AccionEscritura>(
     (payload) => {
-      const { modo, origenId, destinoId, monto } = payload as Cruda;
+      const { modo, revisionVista, huellaImpacto, origenId, destinoId, monto } = payload as Cruda;
       const normal = normalizarMontoEscrito(monto);
+      montoEnviado.current = normal.estado === 'valido' ? normal.texto : '';
       return moverDinero({
         origenId,
         destinoId,
@@ -81,11 +98,12 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
           asignacionDestino: centavosATextoDecimal(asignados[destinoId] ?? (0 as Centavos)),
         },
         modo,
+        ...(revisionVista === undefined ? {} : { revisionVista, huellaImpacto }),
       });
     },
     [periodoInicio, asignados],
   );
-  const operacion = useOperacion({ accion: enviar });
+  const operacion = useOperacion({ accion: enviar, previsualizarPrimero: true });
   const formulario = useFormularioFinn<Campos>({
     contrato: CONTRATO,
     valoresIniciales: inicial,
@@ -99,11 +117,37 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
     actuales?.asignacionOrigen !== undefined &&
     actuales.asignacionDestino !== undefined;
 
+  const vista = (operacion.previsualizacion ?? {}) as Vista;
+  const rechazo = vista.rechazos?.[0];
+  // D-6: la previsualización se pide con lo elegido apenas el formulario es válido y cada vez que cambia. Si hay una llamada en
+  // vuelo se espera a que termine: `useOperacion` ignora el doble envío (FE-12).
+  const clave = JSON.stringify([c.origenId, c.destinoId, c.monto]);
+  const valido =
+    c.origenId !== '' && c.destinoId !== '' && normalizarMontoEscrito(c.monto).estado === 'valido';
+  const pedida = useRef<string | null>(null);
+  const [confirmo, setConfirmo] = useState(false);
+  const { enviar: pedirImpacto } = formulario;
+  useEffect(() => {
+    if (estado === 'enviando' || estado === 'listo' || !valido || pedida.current === clave) return;
+    pedida.current = clave;
+    setConfirmo(false);
+    void pedirImpacto();
+  }, [clave, valido, estado, pedirImpacto]);
+
   if (estado === 'listo')
     return (
       <>
         <p role="status">{t.listo}</p>
-        <CerrarFlujoAlMontar rutaPadre={rutaPadre} superpuesto={superpuesto} />
+        {rutaDetalle === undefined ? (
+          <CerrarFlujoAlMontar rutaPadre={rutaPadre} superpuesto={superpuesto} />
+        ) : (
+          <CerrarFlujoAlMontar
+            rutaPadre={rutaConResultado(rutaDetalle, {
+              tipo: 'movido',
+              monto: montoEnviado.current,
+            })}
+          />
+        )}
       </>
     );
 
@@ -112,9 +156,20 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
     etiqueta: k.nombre,
     detalle: t.disponibleDe(formatearMonto(k.disponible)),
   }));
+  const nombreDe = (id: string) => p.categorias.find((k) => k.id === id)?.nombre ?? '';
   const errores = formulario.formState.errors;
   return (
-    <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (estado === 'confirmando' && valido && pedida.current === clave) {
+          setConfirmo(true);
+          void operacion.confirmar();
+        } else void formulario.enviar();
+      }}
+      noValidate
+      className="flex flex-col gap-5"
+    >
       <SeleccionNativa
         alta
         marcador={t.elegirCategoria}
@@ -152,52 +207,59 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
         prefijo="$"
         sinVistaPrevia
       />
-      {estado === 'error' && fallo !== undefined ? (
+      {valido && operacion.previsualizacion === undefined && estado === 'enviando' ? (
+        <p role="status" className="text-texto-secundario">
+          {t.calculando}
+        </p>
+      ) : null}
+      {valido && vista.impacto?.deltaDisponible !== undefined ? (
+        <ImpactoMover
+          origen={{ id: c.origenId, nombre: nombreDe(c.origenId) }}
+          destino={{ id: c.destinoId, nombre: nombreDe(c.destinoId) }}
+          deltas={vista.impacto.deltaDisponible}
+          impactoCambio={operacion.impactoCambio}
+        />
+      ) : null}
+      {rechazo === undefined ? null : (
+        <AvisoEnLinea estado="problema" aparecioDespues>
+          {RECHAZOS[rechazo.codigo] ?? t.rechazos.otro}
+        </AvisoEnLinea>
+      )}
+      {estado === 'error' && fallo !== undefined && !conflicto ? (
+        <ErrorDeFlujo tipo="corto" error={fallo} alReintentar={() => void operacion.reintentar()} />
+      ) : null}
+      {estado === 'error' && fallo !== undefined && conflicto ? (
         <AvisoEnLinea
           estado="problema"
           aparecioDespues
-          {...(conflicto
-            ? {
-                accion: (
-                  <Boton
-                    variante="secundaria"
-                    onClick={() => {
-                      alUsarActuales(
-                        formulario.getValues(),
-                        actuales.asignacionOrigen as Centavos,
-                        actuales.asignacionDestino as Centavos,
-                      );
-                    }}
-                  >
-                    {t.usarValoresActuales}
-                  </Boton>
-                ),
-              }
-            : REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                      {formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
+          accion={
+            <Boton
+              variante="secundaria"
+              onClick={() => {
+                alUsarActuales(
+                  formulario.getValues(),
+                  actuales.asignacionOrigen as Centavos,
+                  actuales.asignacionDestino as Centavos,
+                );
+              }}
+            >
+              {t.usarValoresActuales}
+            </Boton>
+          }
         >
           {fallo.mensaje}
-          {conflicto
-            ? ` ${t.valoresActuales(
-                formatearMonto(actuales.asignacionOrigen),
-                formatearMonto(actuales.asignacionDestino),
-              )}`
-            : ''}
+          {` ${t.valoresActuales(
+            formatearMonto(actuales.asignacionOrigen),
+            formatearMonto(actuales.asignacionDestino),
+          )}`}
         </AvisoEnLinea>
       ) : null}
       <PieDeHoja rutaPadre={rutaPadre} superpuesto={superpuesto}>
         <Boton
           tipo="submit"
-          enviando={estado === 'enviando'}
+          enviando={estado === 'enviando' && confirmo}
           textoEnviando={t.moviendo}
-          deshabilitado={!operacion.enLinea}
+          deshabilitado={!operacion.enLinea || (estado === 'enviando' && !confirmo)}
           {...(operacion.motivoSinEnvio === undefined
             ? {}
             : { motivoDeshabilitado: operacion.motivoSinEnvio })}

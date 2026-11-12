@@ -1,7 +1,6 @@
 // Lector de `/bandeja/[movimientoId]` (05 §2.5): llama a `formulario({ operacion: 'movimiento', movimientoId })` y pasa al
 // flujo el movimiento con los catálogos de cuentas, categorías y personas. Lo único que traduce los errores de la consulta
 // es `consultar()`.
-import type { ReactNode } from 'react';
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { formatearFechaTexto, formatearMonto } from '../../formato';
 import { vistaDe } from '../../componentes/dominio/vista-movimiento';
@@ -10,23 +9,23 @@ import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { aCandidata } from './campos';
 import { FormularioMovimiento } from './formulario';
-import type { NavegacionDelPanel } from './panel-navegacion';
 
 export async function LectorMovimiento({
   movimientoId,
   traspaso,
   categoriaSoltada,
-  lateral,
-  navegacion,
+  categoriaVista,
+  siguienteId,
 }: {
   readonly movimientoId: string;
   /** Viene de la fila de la lista, que no pudo aprobar con un toque (05 §4.15). */
   readonly traspaso: boolean;
   /** Viene de un arrastre (FT-78): la categoría soltada, que el flujo pone en la línea y envía con la variante de OP-37. */
   readonly categoriaSoltada?: string;
-  /** Computadora: la lista de la Bandeja a la izquierda y el lugar del movimiento en ella (CH-137). */
-  readonly lateral?: ReactNode;
-  readonly navegacion?: NavegacionDelPanel;
+  /** [CH-240 E6-5] El arrastre chocó con un cambio de las líneas: la categoría que vio la lista (`''`: ninguna). */
+  readonly categoriaVista?: string;
+  /** El movimiento que sigue en el orden de la Bandeja, para «Siguiente movimiento» (CH-245). */
+  readonly siguienteId?: string;
 }) {
   const dto = await consultar(async () =>
     formulario(await depsDeConsulta(), { operacion: 'movimiento', movimientoId }),
@@ -111,8 +110,8 @@ export async function LectorMovimiento({
       {...(categoriaSoltada !== undefined && categorias.some((c) => c.id === categoriaSoltada)
         ? { categoriaSoltada }
         : {})}
-      {...(lateral === undefined ? {} : { lateral })}
-      {...(navegacion === undefined ? {} : { navegacion })}
+      {...(categoriaVista === undefined ? {} : { categoriaVista })}
+      {...(siguienteId === undefined ? {} : { siguienteId })}
     />
   );
 }

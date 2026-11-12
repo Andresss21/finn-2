@@ -47,22 +47,32 @@ export function menuDe(dto: DetalleCuentaDto): AccionPantalla[] {
   const motivoArchivo = a.puedeArchivar ? undefined : a.bloqueosArchivo.map(motivoDe).join(' ');
   const motivoEliminar = a.puedeEliminar ? undefined : a.bloqueosEliminar.map(motivoDe).join(' ');
   const conSaldo = cuenta.tipo === 'efectivo' || cuenta.tipo === 'tarjeta';
-  const escribe = (etiqueta: string, ruta: string, icono: 'check' | 'list'): AccionPantalla =>
+  const escribe = (
+    etiqueta: string,
+    ruta: string,
+    icono: 'check' | 'list' | 'wallet',
+  ): AccionPantalla =>
     cuenta.archivada
       ? { etiqueta, motivo: t.acciones.motivoArchivada, icono }
       : { etiqueta, ruta, icono };
+  const tarjeta = cuenta.tipo === 'tarjeta';
+  // CTA-03: el menú de una tarjeta es Editar, Pagar tarjeta, Verificar saldo, Conciliar, Archivar y Eliminar. «Condiciones» es del
+  // préstamo (los datos de la tarjeta se editan en Editar) y «Ordenar cuentas» solo va donde el diseño lo muestra.
   return [
     { etiqueta: t.acciones.editar, ruta: `${base}/editar`, icono: 'edit' },
-    ...(cuenta.tipo === 'tarjeta' || cuenta.tipo === 'prestamo'
+    ...(cuenta.tipo === 'prestamo'
       ? [{ etiqueta: t.acciones.condiciones, ruta: `${base}/condiciones`, icono: 'gear' } as const]
       : []),
+    ...(tarjeta ? [escribe(t.acciones.pagarTarjeta, `${base}/pagar`, 'wallet')] : []),
     ...(conSaldo
       ? [
           escribe(t.acciones.verificarSaldo, `${base}/verificar-saldo`, 'check'),
           escribe(t.acciones.conciliarConEstado, `${base}/conciliar`, 'list'),
         ]
       : []),
-    { etiqueta: t.acciones.ordenar, ruta: '/cuentas/ordenar', icono: 'grip' },
+    ...(tarjeta
+      ? []
+      : [{ etiqueta: t.acciones.ordenar, ruta: '/cuentas/ordenar', icono: 'grip' } as const]),
     ...(cuenta.archivada
       ? []
       : [

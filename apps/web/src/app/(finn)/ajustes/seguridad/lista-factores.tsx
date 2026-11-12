@@ -1,8 +1,10 @@
 // La lista de factores de `/ajustes/seguridad` (FT-74, 05 §9.6): nombre, fecha de alta y estado de cada uno, con «Quitar»; los
 // sin verificar dicen «Inscripción sin terminar». Es de servidor: la lee `estadoSeguridad()` (CP-4) en su propio `Suspense`.
+import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Icono } from '../../../../componentes/base/icono';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { formatearInstante } from '../../../../formato/instante-texto';
+import { autenticacion } from '../../../../textos/autenticacion';
 import { seguridad as t } from '../../../../textos/seguridad';
 
 export interface FactorEnLista {
@@ -16,6 +18,8 @@ const SIN_HORA = /^(\d{2}\/\d{2}\/\d{4})/;
 const fechaDeAlta = (iso: string): string => SIN_HORA.exec(formatearInstante(iso))?.[1] ?? '';
 
 export function ListaFactores({ factores }: { readonly factores: readonly FactorEnLista[] }) {
+  // Con un solo factor verificado no hay flujo de quitar (AJU-14, AJU-15): el aviso lo explica y el botón agrega otro (04 §12.2)
+  const unico = factores.filter((f) => f.estado === 'verificado').length < 2;
   return (
     <section className="flex flex-col gap-2.5" aria-labelledby="titulo-factores">
       <h2 id="titulo-factores" className="text-titulo-seccion">
@@ -47,21 +51,31 @@ export function ListaFactores({ factores }: { readonly factores: readonly Factor
                     : t.sinTerminar}
                 </span>
               </span>
-              <EnlaceFinn
-                href={`/ajustes/seguridad/factores/${f.id}/quitar`}
-                aria-label={`${t.quitar} ${nombre}`}
-                className="inline-flex min-h-11 items-center px-2 text-etiqueta font-bold text-peligro"
-              >
-                {t.quitar}
-              </EnlaceFinn>
+              {unico && f.estado === 'verificado' ? (
+                <span />
+              ) : (
+                <EnlaceFinn
+                  href={`/ajustes/seguridad/factores/${f.id}/quitar`}
+                  aria-label={`${t.quitar} ${nombre}`}
+                  className="inline-flex min-h-11 items-center px-2 text-etiqueta font-bold text-peligro"
+                >
+                  {t.quitar}
+                </EnlaceFinn>
+              )}
             </li>
           );
         })}
       </ul>
+      {unico ? (
+        <AvisoEnLinea estado="advertencia" aparecioDespues>
+          {autenticacion.factor_unico}
+        </AvisoEnLinea>
+      ) : null}
       <EnlaceFinn
         href="/ajustes/seguridad/factores/nuevo"
-        className="inline-flex min-h-12 items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
+        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-accion-tonal px-5 font-semibold text-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
       >
+        <Icono nombre="plus" tamano={18} />
         {t.agregar}
       </EnlaceFinn>
     </section>

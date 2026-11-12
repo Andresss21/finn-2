@@ -8,6 +8,7 @@ import { GraficoBarras } from '../../../../componentes/graficos/grafico-barras';
 import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { formatearFecha, formatearMesCorto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
+import { CifraReporte } from './cifra';
 import { HallazgosTarjetas, type AccionesTarjetas } from './tarjetas-hallazgos';
 import { Tabla } from './vistas-detalle';
 
@@ -85,8 +86,19 @@ export function Tarjetas({
   readonly periodoInicio: string;
   readonly acciones?: AccionesTarjetas;
 }) {
+  // El arrastre del último ciclo vencido de la primera tarjeta que tiene (un campo del DTO, no una suma).
+  const ultimo = dto.tarjetas
+    .map((f) => ({ nombre: f.tarjeta.nombre, ciclo: f.ciclos.at(-1) }))
+    .find((x) => x.ciclo !== undefined && x.ciclo.arrastre > 0);
   return (
     <div className="flex flex-col gap-6">
+      {ultimo?.ciclo === undefined ? null : (
+        <CifraReporte
+          centavos={ultimo.ciclo.arrastre}
+          estado="deuda-sin-respaldo"
+          frase={t.cifras.tarjetas(ultimo.nombre, formatearFecha(ultimo.ciclo.corte))}
+        />
+      )}
       {/* Siempre montada: la salida «Deshacer» sigue en su lugar cuando la revalidación cambia el hallazgo. */}
       <HallazgosTarjetas
         hallazgos={dto.hallazgos}

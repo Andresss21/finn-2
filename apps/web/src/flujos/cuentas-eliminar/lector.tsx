@@ -6,7 +6,13 @@ import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { FormularioCuentasEliminar } from './formulario';
 
-export async function LectorCuentasEliminar({ cuentaId }: { readonly cuentaId: string }) {
+export async function LectorCuentasEliminar({
+  cuentaId,
+  superpuesto = false,
+}: {
+  readonly cuentaId: string;
+  readonly superpuesto?: boolean;
+}) {
   const dto = await consultar(async () => detalleCuenta(await depsDeConsulta(), { cuentaId }), {
     validacionDeSegmento: true,
   });
@@ -18,6 +24,7 @@ export async function LectorCuentasEliminar({ cuentaId }: { readonly cuentaId: s
       archivada={dto.cuenta.archivada}
       programadas={dto.programadas.length}
       bloqueos={dto.acciones.bloqueosEliminar}
+      superpuesto={superpuesto}
     />
   );
 }

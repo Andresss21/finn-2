@@ -219,7 +219,7 @@ export function PantallaPresupuesto({
                 lpa={dto.lpa}
                 enCamino={dto.enCamino}
                 lpaNegativo={dto.lpaNegativo}
-                accion={{ href: '#categorias', texto: t.acciones.asignar }}
+                accion={{ href: hrefFiltro('sin-fondos'), texto: t.acciones.asignar }}
               />
               <EnlaceFinn href="/presupuesto/listo-para-asignar" className={COMO_SE_COMPONE}>
                 {t.acciones.comoSeCompone}

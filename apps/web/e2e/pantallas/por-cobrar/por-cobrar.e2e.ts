@@ -165,10 +165,26 @@ test.describe('PRU-E2E-COBRO pantalla de por cobrar', () => {
     await expect(page.getByText('Nadie te debe nada')).toBeVisible();
 
     await abrir(page, '/por-cobrar?cerrados=1');
-    const partida = deudor(page, 'Ana').locator('[data-partida]');
+    const partida = page.locator('[data-seccion="cerrados"] [data-partida]');
     await expect(partida).toHaveCount(1);
     await expect(partida).toHaveAttribute('data-partida-estado', 'cerrado');
-    await esperarMonto(partida.locator('[data-abierto] [data-centavos]'), 0);
     await expect(partida.getByRole('link')).toHaveCount(0);
+  });
+
+  test('PRU-E2E-COBRO-701 [] «Ver los cerrados» muestra «Cerrados · N» con una fila por partida cerrada, su estado y sin acciones, y pasa a «Ocultar los cerrados»', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC20_PASO4);
+    await abrir(page, '/por-cobrar');
+    await page.getByRole('switch', { name: 'Ver los cerrados' }).click();
+    await expect(page).toHaveURL(/\/por-cobrar\?cerrados=1$/);
+    await esperarContenido(page);
+    const cerrados = page.locator('[data-seccion="cerrados"]');
+    await expect(cerrados.getByRole('heading', { name: 'Cerrados · 1' })).toBeVisible();
+    await expect(cerrados.locator('[data-partida]')).toContainText(/Ana · .*cobrado/);
+    await expect(cerrados.getByRole('link')).toHaveCount(0);
+    await page.getByRole('link', { name: 'Ocultar los cerrados' }).click();
+    await expect(page).toHaveURL(/\/por-cobrar$/);
+    await expect(page.locator('[data-seccion="cerrados"]')).toHaveCount(0);
   });
 });

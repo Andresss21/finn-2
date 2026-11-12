@@ -10,6 +10,10 @@ import { Boton } from '../base/boton';
 
 export interface PropsConfirmacionImpacto {
   readonly titulo: string;
+  /** E4-1: una línea con lo que se confirma, debajo del título. */
+  readonly descripcion?: string;
+  /** E4-1: en eliminar, el verbo va en `--peligro` y «Volver a editar» es «Cancelar». */
+  readonly peligro?: boolean;
   /** "El impacto cambió" (4.4 paso 2), cuando se pidió confirmar de nuevo. */
   readonly nota?: string;
   /** El impacto en el período activo, ya formateado: una fila de la tarjeta por elemento. */
@@ -25,6 +29,8 @@ export interface PropsConfirmacionImpacto {
 
 export function ConfirmacionImpacto({
   titulo,
+  descripcion,
+  peligro = false,
   nota,
   impacto,
   avisos,
@@ -39,10 +45,13 @@ export function ConfirmacionImpacto({
     encabezado.current?.focus();
   }, []);
   return (
-    <section className="flex flex-col gap-4" aria-labelledby="confirmacion-titulo">
+    <section className="flex flex-col gap-4 md:max-w-180" aria-labelledby="confirmacion-titulo">
       <h2 id="confirmacion-titulo" ref={encabezado} tabIndex={-1} className="text-titulo-seccion">
         {titulo}
       </h2>
+      {descripcion === undefined ? null : (
+        <p className="text-cuerpo-pequeno text-texto-secundario">{descripcion}</p>
+      )}
       {nota === undefined ? null : (
         <AvisoEnLinea estado="informacion" aparecioDespues>
           {nota}
@@ -64,7 +73,11 @@ export function ConfirmacionImpacto({
         <Boton variante="secundaria" onClick={alVolver}>
           {textoVolver}
         </Boton>
-        <Boton enviando={enviando} onClick={alConfirmar}>
+        <Boton
+          variante={peligro ? 'peligro' : 'principal'}
+          enviando={enviando}
+          onClick={alConfirmar}
+        >
           {textoConfirmar}
         </Boton>
       </div>

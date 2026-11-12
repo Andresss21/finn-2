@@ -2,6 +2,10 @@
 import { guardarInstitucion } from '../../servidor/acciones/formatos';
 import { FormularioInstitucion } from '../ajustes-instituciones-institucion/formulario';
 
-export function LectorInstitucionNueva() {
-  return <FormularioInstitucion guardar={guardarInstitucion} />;
+export function LectorInstitucionNueva({
+  superpuesto = false,
+}: {
+  readonly superpuesto?: boolean;
+}) {
+  return <FormularioInstitucion guardar={guardarInstitucion} superpuesto={superpuesto} />;
 }

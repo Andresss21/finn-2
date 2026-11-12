@@ -142,7 +142,7 @@ test.describe('PRU-E2E-TX', () => {
     );
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
-    await expect(page.getByTestId('resultado')).toHaveText(
+    await expect(page.getByTestId('resultado').locator('p')).toHaveText(
       t.guardado(t.sinComercio, '$150.00', 'T', '2'),
     );
     await page.goto('/presupuesto');
@@ -170,7 +170,7 @@ test.describe('PRU-E2E-TX', () => {
     await campo(page, t.deudorNuevoDeParte('3')).fill('Ana');
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
-    await expect(page.getByTestId('resultado')).toHaveText(
+    await expect(page.getByTestId('resultado').locator('p')).toHaveText(
       t.guardado(t.sinComercio, '$200.00', 'T', '3'),
     );
     await page.goto('/presupuesto');
@@ -433,15 +433,24 @@ test.describe('PRU-E2E-TX', () => {
     await parteConCategoria(page, 3, '8.60', 'Super');
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
-    await expect(page.getByTestId('resultado')).toHaveText(
+    await expect(page.getByTestId('resultado').locator('p')).toHaveText(
       t.guardado('PRICESMART', '$148.60', 'T', '3'),
     );
-    await expect(page.getByRole('link', { name: t.verCategoria('Super') })).toHaveAttribute(
-      'href',
-      /\/presupuesto\/categorias\/.+/,
-    );
-    await expect(page.getByRole('link', { name: t.verCategoria('Mascota') })).toBeVisible();
-    await expect(page.getByRole('link', { name: /^Ver / })).toHaveCount(2);
+    // E4-2 «Repartido en»: cada categoría tocada lleva su enlace «Ver la categoría», en su fila
+    const partes = page.getByRole('list', { name: t.lineasGuardadas }).getByRole('listitem');
+    await expect(
+      partes
+        .filter({ has: page.getByText('Super', { exact: true }) })
+        .getByRole('link', { name: t.verLaCategoria })
+        .first(),
+    ).toHaveAttribute('href', /\/presupuesto\/categorias\/.+/);
+    await expect(
+      partes
+        .filter({ has: page.getByText('Mascota', { exact: true }) })
+        .getByRole('link', { name: t.verLaCategoria }),
+    ).toBeVisible();
+    // una por línea: Super $100.00, Mascota $40.00 y el resto de $8.60 en Super
+    await expect(page.getByRole('link', { name: t.verLaCategoria })).toHaveCount(3);
     // con la fecha en un período cerrado, antes aparece el impacto con el aviso AV-01
     await page.getByRole('button', { name: t.registrarOtro }).click();
     await esperarHidratacion(page);
@@ -507,7 +516,7 @@ test.describe('PRU-E2E-TX', () => {
     const boton = await guardar(page).boundingBox();
     const lineas = await page.locator('[data-campo-lineas]').boundingBox();
     const alto = page.viewportSize()?.height ?? 0;
-    if ((page.viewportSize()?.width ?? 0) >= 768) {
+    if ((page.viewportSize()?.width ?? 0) >= 1024) {
       expect(Math.abs((boton?.x ?? 0) - (lineas?.x ?? 99))).toBeLessThan(2);
     } else {
       expect((boton?.y ?? 0) + (boton?.height ?? 0)).toBeGreaterThan(alto - 40);

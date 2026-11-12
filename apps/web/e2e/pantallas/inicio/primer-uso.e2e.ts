@@ -7,6 +7,7 @@ import { esperarContenido } from '../../ayudas/esperas.ts';
 
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { ajustesWebhook } from '../../../src/textos/ajustes-webhook.ts';
+import { generarTokenWebhook } from '../../ayudas/webhook.ts';
 import { estructura as te } from '../../../src/textos/estructura.ts';
 import { plantilla as t } from '../../../src/textos/plantilla.ts';
 import { primerosPasos as p } from '../../../src/textos/primeros-pasos.ts';
@@ -292,7 +293,7 @@ test.describe('PRU-E2E-INICIO', () => {
     await abrir(page, '/');
     await page.getByRole('button', { name: p.ocultar, exact: true }).click();
     await abrir(page, '/ajustes/webhook');
-    await page.getByRole('button', { name: ajustesWebhook.generar, exact: true }).click();
+    await generarTokenWebhook(page);
     await expect(page.getByTestId('token')).toBeVisible();
 
     await abrir(page, '/');

@@ -3,7 +3,7 @@
 // abre el calendario. Entrega una `FechaLocal` ('AAAA-MM-DD') sin `Date`. El valor inicial es el `hoy` del Encabezado que pasa
 // el llamador, nunca la fecha del dispositivo. El calendario y sus textos se cargan solo al abrirlo (05 §13.1).
 import { FechaLocal } from '@finn/dominio/valores';
-import { lazy, Suspense, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { formatearFecha } from '../../formato';
 import { base } from '../../textos/base';
 import { EntradaTexto } from '../base/campo';
@@ -27,6 +27,14 @@ export interface PropsEntradaFecha {
   readonly sinVistaPrevia?: boolean;
   /** El `hoy` del servidor, para marcarlo en el calendario; sin él se toma el de `<html data-hoy>`. */
   readonly hoy?: FechaLocal;
+  /**
+   * [CH-240 E3-18] El mensaje va a lo ancho de la fila Fecha · Total, fuera de la celda: el campo lo entrega aquí y solo lleva
+   * `aria-invalid` y `aria-describedby` hacia el elemento `id`.
+   */
+  readonly mensajeEnFila?: {
+    readonly id: string;
+    readonly alCambiar: (mensaje: string | undefined) => void;
+  };
 }
 
 /** Lo escrito → `dd/mm/aaaa` con las barras puestas; acepta también un `AAAA-MM-DD` pegado completo. */
@@ -63,15 +71,16 @@ export function EntradaFecha({
   deshabilitado = false,
   sinVistaPrevia = false,
   hoy,
+  mensajeEnFila,
 }: PropsEntradaFecha) {
   // El borrador se guarda aparte: el valor del formulario solo cambia con una fecha completa, que exista y dentro del rango.
-  const [borrador, setBorrador] = useState<string>(formatearFecha(valor));
+  const [borrador, setBorrador] = useState<string>(valor ? formatearFecha(valor) : '');
   const [anterior, setAnterior] = useState<string>(valor);
   const [abierto, setAbierto] = useState(false);
   const boton = useRef<HTMLButtonElement>(null);
   if (valor !== anterior) {
     setAnterior(valor);
-    setBorrador(formatearFecha(valor));
+    setBorrador(valor ? formatearFecha(valor) : '');
   }
   const fecha = leer(borrador);
   const fuera =
@@ -82,6 +91,11 @@ export function EntradaFecha({
     : borrador.length === 10 && fecha === undefined
       ? base.fechaNoExiste
       : error;
+
+  const avisar = mensajeEnFila?.alCambiar;
+  useEffect(() => {
+    avisar?.(mensaje);
+  }, [avisar, mensaje]);
 
   function cerrar(devolverFoco = false) {
     setAbierto(false);
@@ -94,7 +108,10 @@ export function EntradaFecha({
       {...(fecha === undefined || fuera || sinVistaPrevia
         ? {}
         : { descripcion: base.fechaVistaPrevia(formatearFecha(fecha)) })}
-      {...(mensaje === undefined ? {} : { error: mensaje })}
+      {...(mensaje === undefined || mensajeEnFila !== undefined ? {} : { error: mensaje })}
+      {...(mensaje !== undefined && mensajeEnFila !== undefined
+        ? { 'aria-invalid': true, 'aria-describedby': mensajeEnFila.id }
+        : {})}
       requerido={requerido}
       name={nombre}
       inputMode="numeric"

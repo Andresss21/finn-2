@@ -122,4 +122,42 @@ describe('PRU-CMP-CTA-400 editar el subtipo de efectivo', () => {
       cuentaSubtipo.opcional,
     );
   });
+
+  it('PRU-CMP-CTA-400 editar una tarjeta muestra límite, tasa, corte y pago y envía solo los que cambian, con lo visto', async () => {
+    const esperado = {
+      nombre: 'Visa Oro',
+      institucionId: null,
+      ultimos4: null,
+      fechaApertura: '2027-01-01',
+      limiteCredito: '2500.00',
+      tasaAnual: '24',
+      diaCorte: 15,
+      diaPago: 5,
+    };
+    const accion = vi.fn(ok);
+    const nodo = await montar(
+      <FormularioCuentasEditar
+        accion={accion}
+        cuentaId="k3"
+        hoy={HOY}
+        instituciones={[]}
+        esperado={esperado}
+      />,
+    );
+    const campo = (etiqueta: string) =>
+      [...nodo.querySelectorAll('label')].find((l) => l.textContent.startsWith(etiqueta))
+        ?.control as HTMLInputElement;
+    expect(campo('Límite de crédito').value).toBe('2500.00');
+    expect(campo('Día de corte').value).toBe('15');
+    await userEvent.clear(campo('Día de corte'));
+    await userEvent.type(campo('Día de corte'), '20');
+    await userEvent.clear(campo('Límite de crédito'));
+    await userEvent.type(campo('Límite de crédito'), '3000');
+    await userEvent.click(guardar(nodo));
+    const entrada = accion.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(entrada).toMatchObject({ cuentaId: 'k3', diaCorte: 20, esperado });
+    expect(entrada).not.toHaveProperty('diaPago');
+    expect(entrada).not.toHaveProperty('tasaAnual');
+    expect(typeof entrada['limiteCredito']).toBe('string');
+  });
 });

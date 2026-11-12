@@ -2,7 +2,12 @@
 // Un id que no es UUID es `notFound()` (7.3, `validacionDeSegmento`); un `?periodo=` que no abre un período redirige a la misma
 // ruta sin ese parámetro (05 §2.2, CP-13). Lo único que traduce los errores es `consultar()`.
 import { detalleCategoria } from '@finn/aplicacion/consultas/detalle-categoria';
-import { desarchivarCategoria } from '../../../../../servidor/acciones/categorias';
+import { asignarEnCategoria } from '../../../../../servidor/acciones/presupuesto';
+import {
+  leerResultadoPresupuesto,
+  PARAMETRO_RESULTADO,
+} from '../../../../../flujos/presupuesto-asignar-categoria/resultado';
+import { desarchivarCategoria, sacarDisponible } from '../../../../../servidor/acciones/categorias';
 import { consultar } from '../../../../../servidor/consultar';
 import { depsDeConsulta } from '../../../../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../../../../servidor/parametros';
@@ -15,9 +20,19 @@ export async function LectorDetalleCategoria({
   readonly categoriaId: string;
   readonly busqueda: BusquedaDePagina;
 }) {
-  const parametros = { ...aParametrosDeConsulta(busqueda), categoriaId };
+  // `?resultado=` es de la interfaz (E2-13): no llega a la consulta.
+  const { [PARAMETRO_RESULTADO]: aviso, ...paraLaConsulta } = busqueda;
+  const parametros = { ...aParametrosDeConsulta(paraLaConsulta), categoriaId };
   const dto = await consultar(async () => detalleCategoria(await depsDeConsulta(), parametros), {
     validacionDeSegmento: true,
   });
-  return <PantallaDetalleCategoria dto={dto} desarchivar={desarchivarCategoria} />;
+  return (
+    <PantallaDetalleCategoria
+      dto={dto}
+      desarchivar={desarchivarCategoria}
+      sacar={sacarDisponible}
+      resultado={leerResultadoPresupuesto(typeof aviso === 'string' ? aviso : undefined)}
+      asignar={asignarEnCategoria}
+    />
+  );
 }

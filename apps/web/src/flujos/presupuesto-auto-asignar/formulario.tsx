@@ -43,7 +43,12 @@ export interface PropsFormularioAutoAsignar {
 interface Vista {
   readonly impacto?: {
     readonly deltaLpa: Centavos;
-    readonly deltaDisponible: readonly { readonly categoriaId: string; readonly delta: Centavos }[];
+    readonly deltaDisponible: readonly {
+      readonly categoriaId: string;
+      readonly delta: Centavos;
+      readonly antes?: Centavos;
+      readonly despues?: Centavos;
+    }[];
   } | null;
   readonly avisos?: readonly {
     readonly codigo: string;
@@ -78,11 +83,13 @@ function Cuerpo({ p, revision, alUsarActuales }: PropsCuerpo) {
 
   const cerrar = useCerrarFlujo(rutaPadre, superpuesto);
   const nombre = (id: string) => nombres[id] ?? id;
-  const sinCubrir = (v: Vista): string[] =>
+  const sinCubrir = (v: Vista, antes = false): string[] =>
     (v.avisos ?? [])
       .filter((a) => a.codigo === 'AV-18')
       .flatMap((a) => Object.entries(a.datos ?? {}))
-      .map(([id, monto]) => t.sinCubrir(nombre(id), formatearMonto(monto)));
+      .map(([id, monto]) =>
+        (antes ? t.quedaSinCubrir : t.sinCubrir)(nombre(id), formatearMonto(monto)),
+      );
 
   const actuales = fallo?.datos?.['actuales'] as { revision?: string } | undefined;
   const conflicto = fallo?.codigo === 'conflicto_desactualizado';
@@ -138,11 +145,13 @@ function Cuerpo({ p, revision, alUsarActuales }: PropsCuerpo) {
           <p className="text-cuerpo-pequeno text-texto-secundario">{t.faltaParaLaMeta}</p>
         </div>
         <span className="shrink-0 font-bold tabular-nums">
-          {`${x.delta > 0 ? '+' : ''}${formatearMonto(x.delta)}`}
+          {x.antes !== undefined && x.despues !== undefined
+            ? `${formatearMonto(x.antes)} → ${formatearMonto(x.despues)}`
+            : `${x.delta > 0 ? '+' : ''}${formatearMonto(x.delta)}`}
         </span>
       </div>
     ));
-    const pendientes = sinCubrir(vista);
+    const pendientes = sinCubrir(vista, true);
     // Con Listo para asignar en cero o negativo no se asigna nada: no hay nada que confirmar.
     if (asignaciones.length === 0)
       return (
@@ -171,7 +180,11 @@ function Cuerpo({ p, revision, alUsarActuales }: PropsCuerpo) {
               : [t.impactoLpa(`${delta > 0 ? '+' : ''}${formatearMonto(delta)}`)]),
           ]}
           avisos={pendientes}
-          textoConfirmar={t.confirmar}
+          textoConfirmar={
+            delta === undefined
+              ? t.confirmar
+              : t.confirmarMonto(formatearMonto(delta).replace(/^[−-]/, ''))
+          }
           textoVolver={t.cancelar}
           enviando={estado === 'enviando'}
           alConfirmar={() => {

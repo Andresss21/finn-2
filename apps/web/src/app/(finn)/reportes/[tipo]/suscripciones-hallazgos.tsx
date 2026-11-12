@@ -110,7 +110,7 @@ export function HallazgosSuscripciones({
       if (h.accion.tipo === 'reactivar')
         return {
           descripcion: t.suscripciones.reactivada(h.comercio),
-          etiqueta: ti.deshacer,
+          etiqueta: t.suscripciones.desactivarla,
           entrada: { accion: 'activar', programadaId: h.accion.programadaId, activa: false },
         };
       const id = (valor as { id?: string } | undefined)?.id;

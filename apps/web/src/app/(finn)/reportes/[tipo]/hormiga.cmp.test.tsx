@@ -108,7 +108,7 @@ describe('PRU-CMP-REP-190 gastos hormiga', () => {
     expect(raiz.querySelector('h1')?.textContent).toBe('Reportes');
     expect(
       raiz.querySelector('nav[aria-label="Reportes"] a[aria-current="page"]')?.textContent,
-    ).toBe('Hormiga');
+    ).toBe('Gastos hormiga');
     const hallazgos = raiz.querySelectorAll('[data-hallazgo-hormiga]');
     expect(hallazgos).toHaveLength(1);
     expect(hallazgos[0]?.textContent).toContain(

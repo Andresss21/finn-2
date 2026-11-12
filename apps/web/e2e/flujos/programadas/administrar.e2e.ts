@@ -84,7 +84,7 @@ async function crearNetflix(page: Page): Promise<void> {
   await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Streaming' });
   await page.getByLabel('Primera fecha').fill('2027-02-17');
   await page.getByRole('button', { name: 'Crear programada' }).click();
-  await expect(page).toHaveURL(/\/programadas$/);
+  await expect(page).toHaveURL(/\/programadas(\?resultado=.*)?$/);
   await esperarContenido(page);
 }
 
@@ -123,12 +123,15 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await abrir(page, '/programadas');
     await fila(page, 'Netflix').getByRole('link').click();
     await esperarContenido(page);
-    await expect(page.getByLabel('Primera fecha')).toBeDisabled();
-    await expect(page.getByLabel('Frecuencia')).toBeDisabled();
+    // E4-16, E4-19: con historial son datos fijos con su motivo, no controles deshabilitados
+    await expect(page.locator('[data-dato-fijo="primeraFecha"]')).toContainText('17/02/2027');
+    await expect(page.locator('[data-dato-fijo="frecuencia"]')).toBeVisible();
+    await expect(page.getByLabel('Primera fecha')).toHaveCount(0);
+    await expect(page.getByLabel('Frecuencia')).toHaveCount(0);
     await expect(page.getByText(/ya tiene pagos registrados/)).toBeVisible();
     await page.getByLabel('Monto', { exact: true }).fill('17.99');
     await page.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await expect(page).toHaveURL(/\/programadas$/);
+    await expect(page).toHaveURL(/\/programadas(\?resultado=.*)?$/);
     await esperarContenido(page);
     await expect(fila(page, 'Netflix')).toContainText('$17.99');
   });
@@ -148,12 +151,16 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await abrir(page, '/programadas');
     await fila(page, 'Netflix').getByRole('link').click();
     await esperarContenido(page);
-    await expect(page.getByRole('button', { name: 'Eliminar', exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: 'Eliminar programada', exact: true }),
+    ).toHaveCount(0);
     await abrir(page, '/programadas');
     await fila(page, 'Gimnasio').getByRole('link').click();
     await esperarContenido(page);
+    await page.getByRole('button', { name: 'Eliminar programada', exact: true }).click();
+    await expect(page.getByText(/^¿Eliminás la programada de/)).toBeVisible();
     await page.getByRole('button', { name: 'Eliminar', exact: true }).click();
-    await expect(page).toHaveURL(/\/programadas$/);
+    await expect(page).toHaveURL(/\/programadas(\?resultado=.*)?$/);
     await esperarContenido(page);
     await expect(fila(page, 'Gimnasio')).toHaveCount(0);
     await expect(fila(page, 'Netflix')).toHaveCount(1);
@@ -209,7 +216,7 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await esperarContenido(page);
     await page.getByLabel('Monto', { exact: true }).fill('20');
     await page.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await expect(page).toHaveURL(/\/programadas$/);
+    await expect(page).toHaveURL(/\/programadas(\?resultado=.*)?$/);
     await fila(page, 'Netflix').getByRole('link').click();
     await esperarContenido(page);
     await page.getByRole('button', { name: 'Desactivar', exact: true }).click();
@@ -226,8 +233,7 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await page.getByRole('link', { name: 'Editar Gimnasio', exact: true }).click();
     await page.getByRole('link', { name: 'Archivar', exact: true }).click();
     await page.getByLabel(/Programada Gimnasio/).selectOption({ label: 'Desactivarla' });
-    await page.getByRole('button', { name: 'Archivar', exact: true }).click();
-    await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
+    await page.getByRole('button', { name: 'Archivar Gimnasio', exact: true }).click();
     await expect(page).toHaveURL(/\/presupuesto\/categorias\/[0-9a-f-]+$/);
 
     await abrir(page, '/programadas');
@@ -243,9 +249,9 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await abrir(page, '/presupuesto/estructura');
     await page.getByRole('link', { name: 'Editar Gimnasio', exact: true }).click();
     await page.getByRole('link', { name: 'Archivar', exact: true }).click();
-    await page.getByRole('button', { name: 'Archivar', exact: true }).click();
-    await expect(page.locator('p').filter({ hasText: 'Elegí una opción.' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Revisá el impacto' })).toHaveCount(0);
+    // E4-24: la decisión viene elegida («Desactivarla»), así que no hay un envío sin decidir; sin tocar «Archivar» nada cambia
+    await expect(page.getByLabel(/Programada Gimnasio/)).toHaveValue('desactivar');
+    await expect(page).toHaveURL(/\/archivar/);
 
     await abrir(page, '/programadas');
     await expect(fila(page, 'Gimnasio')).not.toContainText('Desactivada');

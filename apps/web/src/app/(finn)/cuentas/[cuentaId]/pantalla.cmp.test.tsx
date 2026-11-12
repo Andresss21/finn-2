@@ -115,7 +115,7 @@ const fila = (id: string, saldoDespues: number, efecto = -1000) => ({
 });
 
 describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
-  it('PRU-CMP-CTA-104 [Q-detalleCuenta, AV-07] una tarjeta dibuja deuda, te falta reservar, uso del límite, ciclo y desglose al pagar tal como vienen', () => {
+  it('PRU-CMP-CTA-104 [Q-detalleCuenta, AV-07] una tarjeta dibuja deuda, te falta reservar, corte, pago, límite y desglose al pagar tal como vienen', () => {
     const raiz = mostrar(
       dto({
         cuenta: {
@@ -151,20 +151,9 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
       m.getAttribute('data-centavos'),
     );
     // [CH-222] «Reservar $7.00» repite lo que falta en la cabecera del contenedor
-    expect(montos).toEqual([
-      '700',
-      '700',
-      '7000',
-      '7700',
-      '0',
-      '250000',
-      '5000',
-      '2700',
-      '0',
-      '7700',
-    ]);
-    expect(b?.textContent).toContain('16/02/2027 al 15/03/2027');
-    expect(b?.textContent).toContain('3.08%');
+    expect(montos).toEqual(['700', '700', '7000', '7700', '250000', '5000', '2700', '0', '7700']);
+    // CTA-26: la rejilla es «Corte · Pago · Límite», con las fechas del DTO
+    expect(b?.textContent).toContain('Corte15/03Pago05/04Límite');
   });
 
   it('PRU-CMP-CTA-104 [Q-detalleCuenta] un préstamo sin modelo dice que no hay amortización y con modelo dibuja la tabla del DTO', () => {
@@ -465,7 +454,11 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
     );
     expect(saldos).toEqual(['3000', '4000']);
     const enlaces = [...pagina2.querySelectorAll('[data-movimientos] a')]
-      .filter((a) => a.getAttribute('href')?.includes('/cuentas/'))
+      .filter(
+        (a) =>
+          a.getAttribute('href')?.includes('/cuentas/') &&
+          a.closest('[data-selector-periodo]') === null,
+      )
       .map((a) => [a.textContent, a.getAttribute('href')]);
     expect(enlaces).toEqual([
       ['Quitar filtros', '/cuentas/visa'],
@@ -541,9 +534,16 @@ describe('PRU-CMP-CTA-260 detalle de cuenta portado del export (CH-142)', () => 
     expect(eliminar?.peligro).toBe(true);
   });
 
-  it('PRU-CMP-CTA-260 [CA-52.4] en una tarjeta el menú suma Condiciones y en un préstamo no ofrece verificar ni conciliar; archivada, verificar y conciliar quedan deshabilitadas con el motivo', () => {
+  it('PRU-CMP-CTA-260 [CA-52.4] el menú de una tarjeta suma Pagar tarjeta y no Condiciones ni Ordenar cuentas (CTA-03), en un préstamo no ofrece verificar ni conciliar; archivada, verificar y conciliar quedan deshabilitadas con el motivo', () => {
     const tarjeta = menuDe(dto({ cuenta: cuentaDe('tarjeta') })).map((a) => a.etiqueta);
-    expect(tarjeta).toContain('Condiciones');
+    expect(tarjeta).toEqual([
+      'Editar',
+      'Pagar tarjeta',
+      'Verificar saldo',
+      'Conciliar con estado de cuenta',
+      'Archivar',
+      'Eliminar',
+    ]);
     const prestamo = menuDe(dto({ cuenta: cuentaDe('prestamo') })).map((a) => a.etiqueta);
     expect(prestamo).toContain('Condiciones');
     expect(prestamo).not.toContain('Verificar saldo');
@@ -826,5 +826,43 @@ describe('PRU-CMP-CTA «Reservar $X» en el detalle de la tarjeta', () => {
     expect(fecha.getAttribute('data-proximo-pago')).toBe('2027-04-05');
     expect(fecha.textContent).toBe('Pagá antes del 05/04');
     expect(intereses.querySelectorAll('dt')).toHaveLength(4);
+  });
+});
+
+describe('PRU-CMP-CTA-721 filtros del detalle sin resultados', () => {
+  it('PRU-CMP-CTA-721 [CA-E6-15] con ?tipo= y ?estado= sin movimientos dice «Sin resultados con estos filtros» y «Quitar filtros» enlaza sin esos parámetros', () => {
+    const raiz = mostrar(dto({ movimientos: [] }), {
+      periodo: '2027-01',
+      tipo: 'gasto',
+      estado: 'pendiente',
+    });
+    expect(raiz.querySelector('[data-movimientos]')?.textContent).toContain(
+      'Sin resultados con estos filtros',
+    );
+    const quitar = [...raiz.querySelectorAll('[data-movimientos] a')].filter(
+      (a) => a.textContent === 'Quitar filtros',
+    );
+    expect(quitar).toHaveLength(1);
+    expect(quitar[0]?.getAttribute('href')).toBe('/cuentas/visa?periodo=2027-01');
+  });
+
+  it('PRU-CMP-CTA-721 en un período cerrado el título dice «Cerrado · Movimientos de ese período» y el selector va dentro de la sección, bajo el título', () => {
+    const raiz = mostrar(
+      dto({
+        periodo: {
+          inicio: '2027-01-21',
+          fin: '2027-02-20',
+          dias: 31,
+          estado: 'cerrado',
+          transicion: false,
+        },
+        navegacion: { anterior: '2026-12-21', siguiente: '2027-02-21' },
+      }),
+      { periodo: '2027-01-21' },
+    );
+    const seccion = raiz.querySelector('[data-movimientos]') as HTMLElement;
+    expect(seccion.querySelector('h2')?.textContent).toBe('Cerrado · Movimientos de ese período');
+    expect(seccion.querySelector('[data-selector-periodo="cerrado"]')).not.toBeNull();
+    expect(mostrar(dto()).querySelector('[data-movimientos] h2')?.textContent).toBe('Movimientos');
   });
 });

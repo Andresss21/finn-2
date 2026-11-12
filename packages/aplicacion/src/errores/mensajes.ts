@@ -8,6 +8,7 @@ import type { Centavos } from '@finn/dominio/valores';
 type Datos = NonNullable<Rechazo['datos']>;
 
 const SIN_ARCHIVAR = 'Elegí una categoría activa.';
+const SIMPLIFICA = 'Finn acepta hasta grado 2: simplificá las partes que se repiten.';
 
 /** Código → plantilla. Una función elige entre dos textos según los datos (`nombre_repetido`, R2). */
 export const MENSAJES_RECHAZO: Readonly<Record<string, string | ((d: Datos) => string)>> = {
@@ -46,11 +47,13 @@ export const MENSAJES_RECHAZO: Readonly<Record<string, string | ((d: Datos) => s
   nombre_repetido: (d) =>
     d['deudorId'] !== undefined
       ? 'Ya existe un deudor llamado {nombre}.' // OP-52 (R2)
-      : d['tarjeta'] !== undefined
-        ? 'El nombre {nombre} lo usa la tarjeta archivada {tarjeta}. Elegí otro o desarchivala.'
-        : d['grupo'] === undefined
-          ? 'Ya existe un grupo llamado {nombre}.' // un grupo repetido no trae {grupo} [CH-40]
-          : 'Ya existe {nombre} en {grupo}.',
+      : d['institucionId'] !== undefined
+        ? 'Ya hay una institución llamada {nombre}.' // OPT-07 [CH-240]
+        : d['tarjeta'] !== undefined
+          ? 'El nombre {nombre} lo usa la tarjeta archivada {tarjeta}. Elegí otro o desarchivala.'
+          : d['grupo'] === undefined
+            ? 'Ya existe un grupo llamado {nombre}.' // un grupo repetido no trae {grupo} [CH-40]
+            : 'Ya existe {nombre} en {grupo}.',
   grupo_archivado: '{grupo} está archivado.',
   grupo_del_sistema: 'El grupo Pagos de tarjeta lo administra Finn.',
   categoria_ya_archivada: '{categoria} ya está archivada.',
@@ -135,6 +138,20 @@ export const MENSAJES_RECHAZO: Readonly<Record<string, string | ((d: Datos) => s
   coincidencia_no_valida: 'Ese movimiento no coincide con la transacción elegida.',
   transaccion_ya_conciliada: 'Esa transacción ya está conciliada.',
   transaccion_fuera_de_verificacion: 'Esa transacción es posterior a la fecha que verificaste.',
+  // [CH-240] [CH-247] Política de patrones de OPT-05 (8.5): los datos los arma `operaciones/formatos/mensajes-politica.ts`
+  patron_invalido: (d) =>
+    d['detalle'] === undefined
+      ? 'Este patrón no es una expresión regular válida.'
+      : 'Este patrón no es una expresión regular válida: {detalle}.',
+  banderas_no_permitidas: 'Solo se permiten las banderas i, m, s y u, en ese orden.',
+  grupos_obligatorios: (d) =>
+    d['grupos'] === undefined
+      ? 'El patrón tiene el grupo fecha, pero no elegiste formatos de fecha: elegí al menos uno o quitá el grupo.'
+      : 'Al patrón le faltan los grupos {grupos}: siempre ultimos4 y monto, y fecha si elegís formatos de fecha.',
+  patron_lento: (d) =>
+    d['grado'] === undefined
+      ? `No pudimos comprobar que este patrón sea rápido: el análisis no terminó. ${SIMPLIFICA}`
+      : `Este patrón tarda demasiado con algunos textos: retroceso de grado {grado} (se trabó con {cadena}). ${SIMPLIFICA}`,
   // Comunes a todas las operaciones (3.0.7, 7.7)
   no_encontrado: 'Esto ya no existe.',
   conflicto_id:

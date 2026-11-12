@@ -2,6 +2,7 @@
   { "patron": "apps/web/src/app/layout.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/globals.css", "fts": "marco" },
   { "patron": "apps/web/src/app/tokens.css", "fts": "marco" },
+  { "patron": "apps/web/src/app/tokens-decorativos.css", "fts": "marco" },
   { "patron": "apps/web/src/app/manifest.ts", "fts": "marco" },
   { "patron": "apps/web/src/componentes/marco/*.tsx", "fts": "marco" },
   { "patron": "apps/web/src/componentes/navegacion/*", "fts": "marco" },
@@ -34,6 +35,8 @@
   { "patron": "apps/web/src/componentes/base/icono.tsx", "fts": "marco" },
   { "patron": "apps/web/src/componentes/base/iconos/**", "fts": "marco" },
   { "patron": "apps/web/src/componentes/base/*.tsx", "fts": "marco" },
+  { "patron": "apps/web/src/componentes/base/*.ts", "fts": "marco" },
+  { "patron": "apps/web/src/componentes/marco/*.ts", "fts": "marco" },
   { "patron": "apps/web/src/components/ui/**", "fts": "marco" },
   { "patron": "apps/web/src/formato/**", "fts": "marco" },
   { "patron": "apps/web/src/formularios/**", "fts": "marco" },
@@ -142,6 +145,7 @@
     "fts": ["FT-19"]
   },
   { "patron": "apps/web/src/flujos/presupuesto-categorias-archivar/**", "fts": ["FT-19"] },
+  { "patron": "apps/web/src/flujos/presupuesto-impacto-k4.tsx", "fts": ["FT-19", "FT-20"] },
   { "patron": "apps/web/src/flujos/presupuesto-categorias-sacar/**", "fts": ["FT-19"] },
   {
     "patron": "apps/web/src/app/(finn)/presupuesto/categorias/[categoriaId]/fusionar/**",
@@ -212,7 +216,7 @@
   { "patron": "apps/web/src/app/(finn)/ajustes/lista-ajustes.tsx", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/instalar-finn.tsx", "fts": ["FT-05"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/loading.tsx", "fts": ["FT-04"] },
-  { "patron": "apps/web/src/flujos/ajustes-webhook/**", "fts": ["FT-03"] },
+  { "patron": "apps/web/src/flujos/ajustes-webhook-token/**", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/webhook/**", "fts": ["FT-03"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/apariencia/**", "fts": ["FT-77"] },
   { "patron": "apps/web/src/flujos/ajustes-ciclo/**", "fts": ["FT-72"] },

@@ -157,7 +157,7 @@ test.describe('PRU-E2E-CTA', () => {
     const bloque = page.locator('[data-bloque="tarjeta"]');
     await expect(bloque).toContainText('Te falta reservar');
     await esperarMonto(bloque.locator('[data-centavos]').first(), 1875);
-    await expect(bloque).toContainText('Ciclo de facturación');
+    await expect(bloque).toContainText('Corte');
     await expect(page.locator('[data-bloque="prestamo"], [data-bloque="inversion"]')).toHaveCount(
       0,
     );

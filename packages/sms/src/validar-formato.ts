@@ -13,6 +13,8 @@ export type ValidacionFormato =
       error: 'patron_lento';
       grado: number | 'exponencial' | null; // null: recheck no terminó (`unknown`)
       ataque: string;
+      /** CH-247 b: la parte del ataque que se repite, para describirla en el texto (sin `unknown`). */
+      repeticion?: { prefijo: string; repetido: string; veces: number };
     };
 
 /** 04 §8.5: `checker: 'auto'`, `timeout: 10 s`. */
@@ -34,8 +36,8 @@ export const PARAMETROS_ANALISIS = {
 
 const BANDERAS = /^i?m?s?u?$/; // 03 §3.21
 
-/** Nombres de los grupos con nombre del patrón, sin analizar su texto a mano. */
-function gruposDe(patron: string, banderas: string): Set<string> {
+/** Nombres de los grupos con nombre del patrón, sin analizar su texto a mano. El patrón tiene que compilar. */
+export function gruposDe(patron: string, banderas: string): Set<string> {
   // La alternativa vacía coincide siempre; `groups` trae todas las claves aunque no participen.
   const m = new RegExp(`(?:${patron})|`, banderas).exec('');
   return new Set(Object.keys(m?.groups ?? {}));
@@ -74,10 +76,14 @@ export function validarFormato(
   const c = r.complexity;
   if (c.type === 'polynomial' && c.degree <= 2)
     return { valido: true, grado: c.degree <= 1 ? 1 : 2 };
+  const bombeo = r.attack.pumps[0];
   return {
     valido: false,
     error: 'patron_lento',
     grado: c.type === 'polynomial' ? c.degree : 'exponencial',
     ataque: r.attack.pattern,
+    ...(bombeo === undefined
+      ? {}
+      : { repeticion: { prefijo: bombeo.prefix, repetido: bombeo.pump, veces: r.attack.base } }),
   };
 }

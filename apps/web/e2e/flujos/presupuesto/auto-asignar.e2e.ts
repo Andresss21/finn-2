@@ -68,7 +68,7 @@ const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').f
 /** Los montos de una fila de categoría: Disponible, Asignado y Gastado, en ese orden (05 §10.8). */
 const montoDeFila = (page: Page, nombre: string, n: 0 | 1 | 2) =>
   fila(page, nombre).locator('[data-centavos]').nth(n);
-const confirmar = (page: Page) => page.getByRole('button', { name: 'Asignar', exact: true });
+const confirmar = (page: Page) => page.getByRole('button', { name: /^Asignar \$/ });
 /** La fila de una categoría en la tarjeta de la confirmación (CH-180): nombre, «falta para la meta» y «+$…». */
 const filaDeImpacto = (page: Page, nombre: string) =>
   page
@@ -88,7 +88,7 @@ test.describe('PRU-E2E-PRES', () => {
     await esperarMonto(lpa(page), -10000);
     await abrir(page, '/presupuesto/auto-asignar');
     await expect(page.getByText('Finn no asignará nada')).toBeVisible();
-    await expect(page.getByText('Mascota quedó sin cubrir por $50.00.')).toBeVisible();
+    await expect(page.getByText('Mascota queda con $50.00 sin cubrir.')).toBeVisible();
     await expect(confirmar(page)).toHaveCount(0);
     await abrir(page, '/presupuesto');
     await esperarMonto(lpa(page), -10000);
@@ -106,10 +106,10 @@ test.describe('PRU-E2E-PRES', () => {
     await page.getByRole('link', { name: 'Auto-asignar' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByText('Esto asignaría Finn')).toBeVisible();
-    await expect(filaDeImpacto(page, 'Alfa')).toContainText('+$60.00');
-    await expect(filaDeImpacto(page, 'Beta')).toContainText('+$40.00');
-    await expect(page.getByText('Beta quedó sin cubrir por $10.00.')).toBeVisible();
-    await expect(page.getByText('Gama quedó sin cubrir por $30.00.')).toBeVisible();
+    await expect(filaDeImpacto(page, 'Alfa')).toContainText('→ $60.00');
+    await expect(filaDeImpacto(page, 'Beta')).toContainText('→ $40.00');
+    await expect(page.getByText('Beta queda con $10.00 sin cubrir.')).toBeVisible();
+    await expect(page.getByText('Gama queda con $30.00 sin cubrir.')).toBeVisible();
     await confirmar(page).click();
     // Después (AV-18): el aviso queda a la vista hasta que se lo lee
     await expect(page.getByText('Asignación hecha')).toBeVisible();
@@ -132,7 +132,7 @@ test.describe('PRU-E2E-PRES', () => {
     await abrir(page, '/presupuesto');
     const alfa = await fila(page, 'Alfa').getAttribute('data-fila-categoria');
     await abrir(page, '/presupuesto/auto-asignar');
-    await expect(filaDeImpacto(page, 'Alfa')).toContainText('+$60.00');
+    await expect(filaDeImpacto(page, 'Alfa')).toContainText('→ $60.00');
     // La otra pestaña asigna $10.00 a Alfa mientras esta sigue con la previsualización de antes
     const otra = await context.newPage();
     await abrir(otra, `/presupuesto/asignar/${alfa}`);
@@ -145,12 +145,28 @@ test.describe('PRU-E2E-PRES', () => {
     await expect(confirmar(page)).toHaveCount(0);
     // No asignó nada: Alfa sigue con los $10.00 de la otra pestaña
     await page.getByRole('button', { name: 'Volver a calcular' }).click();
-    await expect(filaDeImpacto(page, 'Alfa')).toContainText('+$50.00');
-    await expect(filaDeImpacto(page, 'Beta')).toContainText('+$40.00');
+    await expect(filaDeImpacto(page, 'Alfa')).toContainText('$10.00 → $60.00');
+    await expect(filaDeImpacto(page, 'Beta')).toContainText('→ $40.00');
     await confirmar(page).click();
     await page.getByRole('button', { name: 'Listo', exact: true }).click();
     await expect(page).toHaveURL(/\/presupuesto$/);
     await esperarContenido(page);
+    await esperarMonto(lpa(page), 0);
+    await esperarMonto(montoDeFila(page, 'Alfa', 0), 6000);
+    await esperarMonto(montoDeFila(page, 'Beta', 0), 4000);
+  });
+
+  test('PRU-E2E-PRES-742 [CA-E6-16] auto-asignar muestra la tarjeta K4 con «Beta queda con … sin cubrir» antes de confirmar y «Asignar $X» confirma una sola vez', async ({
+    page,
+  }) => {
+    await sembrarOps(TRES_METAS, HOY);
+    await abrir(page, '/presupuesto/auto-asignar');
+    await expect(page.getByText('Beta queda con $10.00 sin cubrir.')).toBeVisible();
+    await expect(confirmar(page)).toHaveText('Asignar $100.00');
+    await confirmar(page).dblclick();
+    await expect(page.getByText('Asignación hecha')).toBeVisible();
+    await page.getByRole('button', { name: 'Listo', exact: true }).click();
+    await abrir(page, '/presupuesto');
     await esperarMonto(lpa(page), 0);
     await esperarMonto(montoDeFila(page, 'Alfa', 0), 6000);
     await esperarMonto(montoDeFila(page, 'Beta', 0), 4000);
@@ -178,9 +194,10 @@ test.describe('PRU-E2E-PRES', () => {
       hoja.getByText('hasta donde alcance Listo para asignar ($100.00).', { exact: false }),
     ).toBeVisible();
     await expect(filaDeImpacto(page, 'Alfa')).toContainText('falta para la meta');
-    await expect(filaDeImpacto(page, 'Alfa')).toContainText('+$60.00');
-    await expect(filaDeImpacto(page, 'Beta')).toContainText('+$40.00');
-    await expect(hoja.getByText('→')).toHaveCount(0);
+    await expect(filaDeImpacto(page, 'Alfa')).toContainText('→ $60.00');
+    await expect(filaDeImpacto(page, 'Beta')).toContainText('→ $40.00');
+    // E4-25: una fila «antes → después» por categoría que recibe dinero (Alfa y Beta)
+    await expect(hoja.getByText('→')).toHaveCount(2);
     const cancelar = hoja.getByRole('button', { name: 'Cancelar', exact: true });
     for (const b of [cancelar, confirmar(page)]) {
       const caja = await b.boundingBox();

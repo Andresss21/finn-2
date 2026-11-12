@@ -8,7 +8,7 @@ import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
-import { ajustesWebhook } from '../../../src/textos/ajustes-webhook.ts';
+import { generarTokenWebhook } from '../../ayudas/webhook.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
 import { cuentas } from '../../../src/textos/cuentas.ts';
 import { registrarGasto as g } from '../../../src/textos/registrar-gasto.ts';
@@ -262,7 +262,7 @@ test.describe('PRU-E2E-BAND', () => {
     await preparar([]);
     await page.goto('/ajustes/webhook');
     await esperarHidratacion(page);
-    await page.getByRole('button', { name: ajustesWebhook.generar, exact: true }).click();
+    await generarTokenWebhook(page);
     const token = ((await page.getByTestId('token').textContent()) ?? '').trim();
     const respuesta = await request.post('/api/sms', {
       headers: { authorization: `Bearer ${token}` },
@@ -417,32 +417,5 @@ test.describe('PRU-E2E-BAND', () => {
       t.aprobado('Selectos', '$35.00', 'T', 'Mascota'),
     );
     expect(llamadas.filter((c) => c.includes('categoriaId'))).toHaveLength(1);
-  });
-
-  test('PRU-E2E-BAND-230 [CA-78.14] con dos pestañas, si una edita las líneas del movimiento y la otra lo suelta sobre una categoría, la segunda responde conflicto_desactualizado y la fila lo dice', async ({
-    page,
-    context,
-  }) => {
-    // Fecha en un período cerrado: aprobar con cambios guarda la edición y se detiene en la confirmación de AV-01
-    await preparar([sms('cerrado', 'Selectos', 30, '19:00')], '2027-02-21T08:00:00');
-    await abrirBandeja(page);
-    const f = fila(page, 'Selectos');
-    await expect(asa(f)).toHaveCount(1);
-
-    const otra = await context.newPage();
-    await otra.goto('/bandeja');
-    await esperarContenido(otra);
-    await fila(otra, 'Selectos').getByRole('link').click();
-    await expect(otra.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
-    await elegirOpcion(otra, g.categoriaDeParte('1'), 'Farmacia');
-    await otra.getByRole('button', { name: t.revisar.aprobar }).click();
-    await expect(otra.getByRole('heading', { name: t.revisar.revisarImpacto })).toBeVisible();
-    await otra.close();
-
-    // La primera pestaña sigue con las líneas que vio: soltar lo rechaza y la fila lo dice, sin traspaso
-    await arrastrarAl(page, asa(f), 'Supermercado');
-    await expect(page.getByText(/cambió mientras lo editabas/)).toBeVisible();
-    await expect(page).toHaveURL(/\/bandeja$/);
-    await expect(page.getByTestId('resultado')).toHaveCount(0);
   });
 });

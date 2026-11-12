@@ -128,7 +128,7 @@ Este documento traduce el diseño técnico aprobado (01 a 05) a funciones que el
 | FD-29 **[B1]** | Cantidad mínima de períodos según el uso: 1 en la asignación rápida, 3 en los reportes de patrón | 3.14 |
 | FD-30 **[R3]** | Arrastre a una categoría: una sola operación, pulsación larga en el teléfono, panel de destinos, carga diferida y teclado | 0.13, FT-78 |
 | FD-31 **[R4]** | Qué monto puede llevar un push: el de un movimiento o de un cambio ya ocurrido, nunca un saldo | 0.15, 3.8, 3.16 |
-| FD-32 **[E]** **[CH-151]** | Revisión lateral de la Bandeja en computadora: Revisar movimiento como panel derecho, con «1 de N» y flechas; es la página `/bandeja/[movimientoId]`, no una ruta interceptada | 5.7 |
+| FD-32 **[E]** **[CH-151]** **[CH-245]** | Revisar movimiento en computadora: flujo largo de dos columnas (identifica a la izquierda; campos y acciones a la derecha), sin la lista lateral ni «1 de N» con flechas; es la página `/bandeja/[movimientoId]`, no una ruta interceptada | 5.7 |
 
 ### 0.7 Registro de cambios propuestos
 
@@ -1392,22 +1392,22 @@ Reglas comunes a todas las fichas:
 - Si sospecho que el token se filtró, quiero cambiarlo y que el anterior deje de funcionar en el acto.
 
 **Flujo.**
-1. `/ajustes/webhook`: muestra si ya hay un token (`AjustesDto.webhook.configurado`, `rotadoEn`).
-2. "Generar token" o "Cambiar token" → OPT-01. El token se muestra **una sola vez**, con "Copiar", y la URL `https://<dominio>/api/sms`.
+1. `/ajustes/webhook` [S]: muestra si ya hay un token (`AjustesDto.webhook.configurado`, `rotadoEn`) y, si ya llegó un SMS, cuándo (`ultimoSmsEn`). Finn guarda solo el SHA-256 del token: la pantalla no muestra ningún sufijo ni «Copiar» **[CH-240]**.
+2. "Generar token" o "Generar un token nuevo" abre el flujo corto `/ajustes/webhook/token` (hoja sobre Ajustes) **[CH-240]**; con un token, la hoja advierte «El token actual deja de funcionar» y se confirma con el botón de peligro. → OPT-01. El token se muestra **una sola vez**, completo y con "Copiar", y la URL `https://<dominio>/api/sms`.
 3. Instrucciones de 04 §8.8 (disparador, acción HTTP, cabeceras, cuerpo, reintentos) y la prueba en el teléfono.
 4. Un SMS de prueba aparece en la Bandeja como no reconocido (FT-38).
 
 **Piezas.**
 - Operaciones: OPT-01; `POST /api/sms` (OP-35, FT-34).
 - Consultas: `ajustes()`.
-- Rutas: `/ajustes/webhook`.
+- Rutas: `/ajustes/webhook`, `/ajustes/webhook/token` **[CH-240]**.
 - Componentes: `Aviso`; botón "Copiar".
 
 **Reglas.** 04 §8.1 y §8.8; 04 §12.5 (cliente que no es persona); 05 §2.11 (el token nunca va al borrador ni queda en el cliente al cerrar el flujo).
 
 **Estados.**
 - Sin token: "Todavía no conectaste tus SMS. Generá un token y pegalo en MacroDroid." **(nuevo)**.
-- Con token: la fecha de `rotadoEn` y "Cambiar token", que advierte antes: "El token actual dejará de funcionar. Vas a tener que pegar el nuevo en MacroDroid." **(nuevo)**.
+- Con token: la fecha de `rotadoEn` y "Generar un token nuevo", que advierte antes: "El token actual deja de funcionar." y que MacroDroid no podrá mandar SMS hasta pegar el nuevo **(nuevo)**. **[CH-240]**
 
 **Errores y textos.** Los comunes (04 §3.0.7). Textos nuevos: los dos anteriores y "Copiá este token ahora: no lo vas a poder ver de nuevo." **(nuevo)**.
 
@@ -4263,7 +4263,7 @@ Reglas comunes a las fichas de reportes:
 
 **Estados.** Formato inactivo: marcado y fuera de la interpretación. Borrador (05 §4.11).
 
-**Errores y textos.** `patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento` (04 §8.5), `nombre_repetido` (institución). Sin textos nuevos.
+**Errores y textos.** `patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento` (04 §8.5), `nombre_repetido` (institución). **[CH-240]** **[CH-247]** Sus textos son los del catálogo de 04 §7.10 («Ya hay una institución llamada {nombre}.»; `patron_lento` con el grado y la descripción de la repetición, no la cadena literal), en el campo que corrige el usuario. Sin textos nuevos en 06.
 
 **Criterios de aceptación.**
 - **CA-73.1** Dado un patrón con grado de retroceso 3 (como los de 03 §9.5), cuando lo guardo, entonces se rechaza con `patron_lento`, el grado y la cadena de ataque.
@@ -4533,7 +4533,7 @@ Cada recorrido encadena las features en el orden en que el usuario las vive. Sir
 | S4 Bandeja | Lista compacta con estados y acciones por fila | FT-35 a FT-38 | **Coincide** con 05 §4.15 y 06 §2.5. "Descartar" en un posible duplicado es OP-40 `es_duplicado` (con "Restaurar") |
 | S4 Bandeja | "→ Supermercado (por regla)" | FT-35 | **CF-25:** `MovimientoDto` trae la categoría sugerida pero no si salió de una regla o del historial. Se agrega `porRegla`, calculado con las reglas vigentes como en BE-43 |
 | S4 Bandeja | Nota "Tocá un movimiento para revisarlo completo. Arrastrar a una categoría es un atajo; los botones siempre están." | FT-78 | **Se conserva** (5.5) |
-| S4 Bandeja | Computadora: la revisión del movimiento a la derecha de la lista, con Aprobar · Editar · Descartar | FT-35, FT-78 | **Precisión (FD-32, enmendada por CH-151):** el panel lateral es **Revisar movimiento** (`/bandeja/[movimientoId]`) con su formulario, no un resumen de solo lectura; la lista queda a la izquierda con el movimiento marcado. Es una página propia, con la lista y el orden de `bandeja()`, porque 05 FE-04 no intercepta flujos largos. Mientras dura un arrastre, ese mismo panel muestra los destinos (FD-30) |
+| S4 Bandeja | Computadora: la revisión del movimiento a la derecha de la lista, con Aprobar · Editar · Descartar | FT-35, FT-78 | **Precisión (FD-32, enmendada por CH-151 y CH-245):** Revisar movimiento (`/bandeja/[movimientoId]`) con su formulario es una página propia de dos columnas (identifica a la izquierda; campos y acciones a la derecha), no un resumen de solo lectura; ya no lleva la lista lateral ni «1 de N» con flechas **[CH-245]**. Es una página propia porque 05 FE-04 no intercepta flujos largos. «Siguiente movimiento» después de aprobar o descartar se conserva (`01-revisar-movimiento/aprobado`). Mientras dura un arrastre, la Bandeja muestra los destinos (FD-30) |
 | S5 Registrar | Cuenta propuesta "la cuenta que más usás en PRICESMART" | FT-21 | **Ajuste del diseño:** "Propuesta: la cuenta de tu último gasto." (`cuentaPropuesta`, 04 §6.14.4) |
 | S5 Registrar | Dividir con líneas, deudor "(me lo debe)", suma "$148.60 de $148.60" | FT-21 | **Coincide.** La suma es la ayuda permitida por PF-3 |
 | S5 Registrar | Bloque "Antes de guardar" con valor actual → valor nuevo de la deuda y de cada categoría | FT-21 | **Ajuste del diseño (P6-27 a, [R5]):** el bloque se quita. Sin previsualización; `ConfirmacionImpacto` solo con AV-01 y, después de guardar, el resultado con un enlace a cada categoría tocada (CA-21.12) |
@@ -4611,7 +4611,7 @@ Requisitos comunes: tres señales en todo estado (05 §10.3); tocables de 44 × 
 
 ### 5.7 Decisión de esta sección
 
-**FD-32. Revisión lateral de la Bandeja en computadora. [Enmendada por CH-151]** El panel derecho de la Bandeja en computadora es Revisar movimiento: el flujo completo de `/bandeja/[movimientoId]` (editar, aprobar, descartar), con «1 de N» y las flechas anterior y siguiente en el encabezado del panel, y «Siguiente movimiento» después de aprobar o descartar. Es una sola página con la lista a la izquierda, no una ruta interceptada ni una segunda instancia del formulario; en teléfono sigue siendo la pantalla completa. *Justificación:* es lo que dibuja el diseño del export (S4) y lo que decidió CH-136 (c); no contradice 05 FE-04 (los flujos largos nunca se interceptan) porque cada movimiento es su propia página, con una sola instancia del formulario. *Texto anterior (reemplazado):* el panel era un resumen de solo lectura con las acciones de un toque de la fila y «Editar» abría el flujo largo; nunca se implementó así.
+**FD-32. Revisar movimiento en computadora. [Enmendada por CH-151 y CH-245]** Revisar movimiento es el flujo completo de `/bandeja/[movimientoId]` (editar, aprobar, descartar), en computadora de dos columnas: a la izquierda lo que identifica al movimiento (estado, comercio, monto, SMS) y a la derecha los campos y las acciones **[CH-245]**; «Siguiente movimiento» aparece después de aprobar o descartar. Es una sola página, no una ruta interceptada ni una segunda instancia del formulario; en teléfono sigue siendo la pantalla completa. *Justificación:* la entrega 4 del diseño (E3-10) lo dibuja así, y no contradice 05 FE-04 (los flujos largos nunca se interceptan). *Texto anterior (reemplazado por CH-245):* el panel derecho de la Bandeja era Revisar movimiento con la lista a la izquierda, «1 de N» y flechas (CH-151); antes (reemplazado por CH-151) era un resumen de solo lectura.
 
 ### 5.8 CF-25 y las preguntas de esta sección **[R5]**
 
@@ -4775,6 +4775,7 @@ Lo que el script **no** comprueba: que una ficha use bien la operación que cita
 | `/ajustes/seguridad/factores/[factorId]/quitar` | FT-74 |
 | `/ajustes/seguridad/factores/nuevo` | FT-02, FT-74 |
 | `/ajustes/webhook` | FT-03, FT-04 |
+| `/ajustes/webhook/token` | FT-03 |
 | `/bandeja` | FT-08, FT-34, FT-35, FT-36, FT-37, FT-38, FT-78, FT-70 |
 | `/bandeja/[movimientoId]` | FT-35, FT-37, FT-38, FT-78, FT-70 |
 | `/cuentas` | FT-33, FT-51 |
@@ -4961,3 +4962,6 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-07** (Fase 8, aprobado en la revisión de la Parte C de `08-tareas.md`, aplicado al cerrarla el 23 de octubre de 2026). Dependencias de construcción y de datos (2.0) y las de datos de FT-03, FT-04, FT-08, FT-16, FT-19, FT-34, FT-35 y FT-54. Los CA no cambian. Marcas **[F8]**.
 - **CH-222, CH-224 y CH-225** (Fase 8, decididos por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). FT-29: acción principal "Reservar $X" con la variante `reservar_falta` de OP-16 (CH-222). S6: la identidad de la cuenta de efectivo por su subtipo y §7.3 sin los subtipos fuera de fase (CH-224); la cara de la tarjeta por su color guardado, uno de 8 (CH-225). Los CA no cambian. Marcas **[CH-nnn]** en cada lugar.
 - **CH-E5-1** (diseño, entrega 4 · etapa 5; aprobado por el dueño con la condición de conservar los enlaces y «atrás», aplicado al cerrar el diseño el 11 de noviembre de 2026). FT-60: la navegación entre reportes es `SelectorReportes` (05 §10.7) en lugar de `Pestanas`: con 15 tipos las pestañas no entran. Cada opción sigue siendo un enlace a `/reportes/[tipo]`. **[CH-240]** Lo que CH-E5-3 y CH-E5-4 cambian en FT-03, FT-73 y la tabla de rutas (6.4) lo aplican sus fichas de B10, con el código. Los CA no cambian. Marcas **[D4]**. Detalle en la entrega de diseño 4 (`prompt/CAMBIOS-PROPUESTOS.md`, E5-1).
+- **CH-E5-4 y CH-247** (diseño, entrega 4 · etapa 5, aprobado por el dueño, y Fase 8, decidido por el orquestador con delegación del usuario; aplicados con TA-595 el 12 de noviembre de 2026, CH-240 c). FT-73 remite a los textos de 04 §7.10 para los rechazos de la política de patrones y el nombre repetido de una institución. Instituciones muestra «N formatos» sin «N cuentas», que `AjustesDto` no trae (CH-247 g). Marcas **[CH-240]** y **[CH-247]**.
+- **CH-E5-3** (diseño, entrega 4 · etapa 5; aprobado por el dueño, aplicado con la ficha de Ajustes de B10 el 11 de noviembre de 2026, CH-240 c). FT-03: Conectar los SMS es una pantalla [S] (con «←», campana y barra inferior) y generar el token es el flujo corto `/ajustes/webhook/token` (OPT-01), con la advertencia «El token actual deja de funcionar»; fuera de ese momento no se muestra ningún sufijo del token. La tabla de rutas suma `/ajustes/webhook/token`. Marcas **[CH-240]**.
+- **CH-245** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Entrega 4 del diseño (E3-10) frente a CH-151: Revisar movimiento en computadora va en dos columnas, sin la lista lateral ni «1 de N» con flechas. Cambian la fila de decisiones FD-32, S4 y el texto de la decisión (marca **[CH-245]**); «Siguiente movimiento» después de aprobar o descartar se conserva. Los CA no cambian.
