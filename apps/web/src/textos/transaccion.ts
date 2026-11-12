@@ -51,6 +51,16 @@ export const transaccion = {
     'AV-01': 'La fecha es de un período cerrado o cambia el período de la transacción.',
     'AV-16': `Esta transacción está ${glosario.conciliada.toLowerCase()}: al cambiarla vuelve a ${glosario.confirmada.toLowerCase()} y queda un cambio posterior.`,
   } as Readonly<Record<string, string>>,
+  // E3-15 / E4-1: AV-16 al editar una conciliada, de advertencia o de información según lo que cambió (04 OP-28)
+  conciliadaAdvertencia: (cuenta: string, queCambio: string) =>
+    `Está conciliada. Al guardar pasa a confirmada y la conciliación de ${cuenta} registra el cambio posterior: ${queCambio}. Guardar confirma este cambio.`,
+  conciliadaInformacion: (cuenta: string) =>
+    `Sigue conciliada. Cambiar la categoría no cambia el saldo de ${cuenta}: la conciliación no se toca.`,
+  conciliadaRepartoDistinto: (cuenta: string) =>
+    `Sigue conciliada. Repartir distinto entre las partes no cambia el total ni el saldo de ${cuenta}: la conciliación no se toca.`,
+  queCambio: { fecha: 'la fecha', total: 'el total', cuentaId: 'la cuenta' } as const,
+  corregiParaGuardar: 'Corregí lo marcado para guardar.',
+  cargandoCampos: 'Cargando los campos…',
   impactoLpa: (delta: string) => `${glosario.listoParaAsignar} cambia ${delta}.`,
   // FT-26: eliminar (OP-29) y cambiar el estado bancario (OP-30); 05 §2.6. Los rechazos llegan compuestos en `mensaje`.
   marcarConfirmada: `Marcar como ${glosario.confirmada.toLowerCase()}`,
