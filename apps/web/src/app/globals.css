@@ -22,6 +22,26 @@ html {
   scroll-padding-block: 4.5rem 7rem;
 }
 
+/* GLO-07 (06-identidad-visual §2.2): el foco de teclado de todo control es la línea de 3 px en `--foco`, separada 2 px, y no el
+   anillo del navegador. `:where` le da especificidad cero: lo que un componente ya declara (campos, filas con anillo propio) manda. */
+:where(
+  a[href],
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex]:not([tabindex='-1']),
+  [role='radio'],
+  [role='switch'],
+  [role='checkbox'],
+  [role='menuitem'],
+  [role='tab']
+):focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+
 body {
   background: var(--fondo);
   color: var(--texto);
