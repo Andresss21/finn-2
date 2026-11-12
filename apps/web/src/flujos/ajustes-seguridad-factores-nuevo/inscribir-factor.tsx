@@ -2,26 +2,25 @@
 // Inscribir un factor TOTP (05 §9.5, FE-37): lo usan `/ingresar/inscribir` (primero) y `/ajustes/seguridad/factores/nuevo`
 // (respaldo). Al abrir llama a `iniciarInscripcion()`; el QR y el secreto viven solo en el estado de este componente: nada
 // va al borrador, a `sessionStorage` ni a un evento. Sin envío automático del código (WCAG 3.2.2), como en 9.4.
-// [CH-221 b] Como en `/ingresar/verificar`: código incorrecto, el campo tiembla (380 ms) con el borde de problema; confirmado, un
-// check y el cierre al terminar la espera del token (650 ms). Con movimiento reducido, ni temblor ni espera. Solo presentación:
-// `completarInscripcion` y la sesión no cambian.
+// [CH-241] Las mismas seis casillas que `/ingresar/verificar`: código incorrecto, el grupo tiembla con el borde de problema y el
+// mensaje en línea; confirmado, la cascada, un check y el cierre al terminar la espera del token. Con movimiento reducido, ni
+// temblor ni espera. Solo presentación: `completarInscripcion` y la sesión no cambian.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
 import { Icono } from '../../componentes/base/icono';
+import { CodigoTotp, useErrorDeCodigo } from '../../componentes/formularios/codigo-totp';
 import { useMovimientoReducido } from '../../componentes/movimiento/use-movimiento-reducido';
 import { duracionToken } from '../../componentes/movimiento/use-salida';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
+import { CASILLAS, campoCodigo } from '../../app/ingresar/codigo';
+import { codigoTotp } from '../../textos/codigo-totp';
 import { ingreso as t } from '../../textos/ingreso';
 
-const CONTRATO = z.object({
-  factorId: z.string().min(1),
-  codigo: z.string().regex(/^\d{6}$/, { error: t.codigoSeisDigitos }),
-});
+const CONTRATO = z.object({ factorId: z.string().min(1), codigo: campoCodigo });
 type Campos = z.infer<typeof CONTRATO>;
 
 /** Lo que devuelve `iniciarInscripcion()` (CP-11). */
@@ -45,8 +44,6 @@ export interface PropsInscribirFactor {
   readonly rutaIngresar: string;
 }
 
-const CODIGOS_DE_CODIGO = ['codigo_incorrecto', 'codigo_vencido'];
-const quitarEspacios = (texto: string): string => texto.replace(/[\s-]/g, '');
 /** Grupos de 4 caracteres (05 §9.5, paso 2). */
 const agrupar = (secreto: string): string => secreto.replace(/(.{4})(?=.)/g, '$1 ');
 /** El SVG (`qrSvg`, sin prefijo: CH-67) como imagen: no se inserta como HTML. */
@@ -129,7 +126,7 @@ function PasoCodigo({
     operacion,
   });
   const [copiado, setCopiado] = useState(false);
-  const { register, formState, setValue, setFocus } = formulario;
+  const { formState, setValue, watch } = formulario;
   const { estado, error } = operacion;
 
   const reducido = useMovimientoReducido();
@@ -148,26 +145,16 @@ function PasoCodigo({
     };
   }, [estado, reducido]);
 
-  // Cada respuesta de error es un objeto nuevo: cada una vuelve a hacer temblar el campo (alterna dos nombres de animación).
-  const errorDeCodigo = error !== undefined && CODIGOS_DE_CODIGO.includes(error.codigo);
-  const [errorPrevio, setErrorPrevio] = useState(error);
-  const [temblores, setTemblores] = useState(0);
-  if (error !== errorPrevio) {
-    setErrorPrevio(error);
-    if (errorDeCodigo) setTemblores(temblores + 1);
-  }
-
-  // Código incorrecto o vencido: el campo queda vacío y con el foco, como en 9.4
-  useEffect(() => {
-    if (error === undefined || !CODIGOS_DE_CODIGO.includes(error.codigo)) return;
+  // Código incorrecto o vencido: las casillas quedan vacías y con el foco, como en 9.4
+  const codigo = useErrorDeCodigo(error, () => {
     setValue('codigo', '');
-    setFocus('codigo');
-  }, [error, setValue, setFocus]);
-
-  const errorCodigo = formState.errors.codigo?.message;
+  });
+  const valor = watch('codigo');
+  const errorCodigo = formState.errors.codigo?.message ?? codigo.mensaje;
   return (
     <form
       onSubmit={(e) => {
+        if (valor.length < CASILLAS) codigo.control.current?.enfocar(valor.length);
         void formulario.enviar(e);
       }}
       noValidate
@@ -208,37 +195,24 @@ function PasoCodigo({
           {copiado ? t.copiado : ''}
         </p>
       </div>
-      {error === undefined ? null : (
+      {error === undefined || codigo.mensaje !== undefined ? null : (
         <AvisoEnLinea estado="problema" aparecioDespues>
           {error.mensaje}
         </AvisoEnLinea>
       )}
-      <div
-        data-temblor={errorDeCodigo && temblores > 0 ? temblores : undefined}
-        className={
-          errorDeCodigo && temblores > 0 && !reducido
-            ? temblores % 2 === 1
-              ? 'fz-sacudida'
-              : 'fz-sacudida-otra'
-            : undefined
-        }
-      >
-        <EntradaTexto
-          etiqueta={t.codigo}
-          {...(errorDeCodigo ? { className: 'border-2 border-problema-borde' } : {})}
-          requerido
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          pattern="\d{6}"
-          {...(errorCodigo === undefined ? {} : { error: errorCodigo })}
-          {...register('codigo', {
-            setValueAs: quitarEspacios,
-            onChange: (e: { target: HTMLInputElement }) => {
-              e.target.value = quitarEspacios(e.target.value);
-            },
-          })}
-        />
-      </div>
+      <CodigoTotp
+        ref={codigo.control}
+        etiqueta={codigoTotp.codigoDeLaApp}
+        rotuloVisible
+        valor={valor}
+        alCambiar={(nuevo) => {
+          setValue('codigo', nuevo, { shouldValidate: formState.isSubmitted });
+        }}
+        error={errorCodigo}
+        todasConProblema={codigo.mensaje !== undefined && formState.errors.codigo === undefined}
+        temblores={codigo.temblores}
+        correcto={estado === 'listo'}
+      />
       {estado === 'listo' ? (
         <p
           role="status"
