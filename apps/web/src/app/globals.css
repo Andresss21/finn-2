@@ -90,6 +90,18 @@ body {
   }
 }
 
+/* Brillo de la cara de la tarjeta: recorre por `left` (no por `transform`) para que el recorte de la cara lo contenga; con
+   `translateX` animado el navegador móvil ensanchaba la vista de la página con el borde sesgado fuera de la cara. */
+@keyframes finn-brillo-cara {
+  0% {
+    left: -30%;
+  }
+  14%,
+  100% {
+    left: 110%;
+  }
+}
+
 /* Marco (06-identidad-visual §3, export K1, CH-109). En teléfono el `h1` de la página (llega del servidor) va en la barra
    fija, antes de Registrar (110) + campana + ☰, o entre «Volver» y la campana; el de un flujo va en su propia barra. */
 @media (width < 64rem) {

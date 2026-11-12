@@ -47,8 +47,10 @@ export function Cara({
     >
       <span
         aria-hidden="true"
-        className="absolute -inset-y-[30%] left-0 w-[70px] animate-[finn-brillo_var(--duracion-ambiental)_linear_infinite] bg-linear-to-r from-transparent via-white/15 to-transparent"
-      />
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-tarjeta"
+      >
+        <span className="absolute -inset-y-[30%] left-0 w-[70px] -skew-x-[20deg] animate-[finn-brillo-cara_var(--duracion-ambiental)_linear_infinite] bg-linear-to-r from-transparent via-white/15 to-transparent" />
+      </span>
       <span className="relative flex items-baseline justify-between gap-2.5">
         <span className="min-w-0 truncate text-titulo-seccion">{tarjeta.cuenta.nombre}</span>
         <span className="flex-none text-rotulo whitespace-nowrap opacity-80">
