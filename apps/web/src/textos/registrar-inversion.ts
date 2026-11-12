@@ -9,6 +9,9 @@ export const registrarInversion = {
   inversion: 'Inversión',
   valorDe: (monto: string) => `Valor ${monto}`,
   cuentaAporte: 'Sale de la cuenta',
+  // [CH-240 E4-3] Notas fijas del retiro y del ajuste de valor
+  notaRetiro: 'Lo que retirás entra a Listo para asignar.',
+  notaAjuste: 'Un ajuste de valor no cambia tu presupuesto: no toca Listo para asignar.',
   cuentaRetiro: 'Entra a la cuenta',
   categoria: 'Categoría del aporte',
   fecha: 'Fecha',

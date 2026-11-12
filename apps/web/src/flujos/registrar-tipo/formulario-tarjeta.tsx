@@ -7,6 +7,7 @@ import { mensajeDeRechazo } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { useMemo, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { NotaFija } from './nota-fija';
 import { Boton } from '../../componentes/base/boton';
 import { Resultado } from '../../componentes/base/resultado';
 import { Seleccion } from '../../componentes/base/seleccion';
@@ -256,6 +257,8 @@ export function FormularioRegistrarTarjeta({
               {fallo.mensaje}
             </AvisoEnLinea>
           ) : null}
+          {/* [CH-240 E4-3] Una nota fija dice el efecto del tipo, sin cifras ni impacto en vivo */}
+          {tipo === 'entrada-tarjeta' ? <NotaFija clave="entrada-tarjeta" /> : null}
           <Boton
             tipo="submit"
             enviando={estado === 'enviando'}

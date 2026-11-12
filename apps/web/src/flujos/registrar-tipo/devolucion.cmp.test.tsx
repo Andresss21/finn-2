@@ -8,6 +8,7 @@ import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import '../../app/globals.css';
 import { registrarDevolucion as t } from '../../textos/registrar-devolucion';
 import type { AccionEscritura } from '../../formularios/use-operacion';
+import { NotaFija, type ClaveDeNota } from './nota-fija';
 import { FormularioDevolucion, type BuscarCompras, type CompraCandidata } from './devolucion';
 
 // `next/link` y `next/navigation` necesitan `process` y el enrutador de Next: se simulan (el enrutado se prueba en E2E).
@@ -120,5 +121,24 @@ describe('PRU-CMP-TX-420 devolución desde Registrar', () => {
     });
     expect(entrada).not.toHaveProperty('reparto');
     expect(entrada).not.toHaveProperty('transaccionOriginalId');
+  });
+
+  it('PRU-CMP-TX-711 [CA-E4-21c] Ingreso, Entrada a una tarjeta e Inversión muestran su nota fija y ningún bloque de impacto que cambie al escribir', async () => {
+    const esperado: Readonly<Record<ClaveDeNota, string>> = {
+      ingreso: 'Lo que registrás entra a Listo para asignar.',
+      'entrada-tarjeta':
+        'Baja la deuda sin pasar por tu presupuesto: Listo para asignar no cambia.',
+      retiro: 'Lo que retirás entra a Listo para asignar.',
+      ajuste: 'Un ajuste de valor no cambia tu presupuesto: no toca Listo para asignar.',
+    };
+    for (const clave of Object.keys(esperado) as ClaveDeNota[]) {
+      const nodo = await montar(<NotaFija clave={clave} />);
+      expect(nodo.querySelector('[data-rol="nota-fija"]')?.textContent, clave).toBe(
+        esperado[clave],
+      );
+      // Sin cifras ni valores del servidor: la nota no cambia con lo que se escribe
+      expect(nodo.querySelector('[data-centavos]'), clave).toBeNull();
+      expect(nodo.textContent, clave).not.toMatch(/\$|\d/);
+    }
   });
 });

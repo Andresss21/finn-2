@@ -6,6 +6,7 @@ import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { useMemo, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { NotaFija } from './nota-fija';
 import { Boton } from '../../componentes/base/boton';
 import { Resultado } from '../../componentes/base/resultado';
 import { Seleccion, type Opcion } from '../../componentes/base/seleccion';
@@ -247,6 +248,8 @@ export function FormularioRegistrarInversion({
               {fallo.mensaje}
             </AvisoEnLinea>
           ) : null}
+          {/* [CH-240 E4-3] Una nota fija dice el efecto del tipo, sin cifras ni impacto en vivo */}
+          {modalidad === 'retiro' || modalidad === 'ajuste' ? <NotaFija clave={modalidad} /> : null}
           <Boton
             tipo="submit"
             enviando={estado === 'enviando'}

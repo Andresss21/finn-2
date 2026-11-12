@@ -7,6 +7,7 @@ import type { FechaLocal } from '@finn/dominio/valores';
 import { useMemo, type ReactNode } from 'react';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { NotaFija } from './nota-fija';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { Resultado } from '../../componentes/base/resultado';
@@ -120,7 +121,7 @@ export function FormularioRegistrarTipo({
       <Marco superpuesto={superpuesto} titulo={titulo}>
         <Vacio
           titulo={esIngreso ? t.sinEfectivoTitulo : t.pocasTitulo}
-          texto={esIngreso ? t.sinEfectivoTexto : t.pocasTexto}
+          texto={esIngreso ? t.sinEfectivoTexto : t.pocasTexto(cuentas[0]?.nombre ?? '')}
           accion={
             <EnlaceFinn href="/cuentas/nueva" className={ENLACE}>
               {t.crearCuenta}
@@ -245,6 +246,8 @@ export function FormularioRegistrarTipo({
               {fallo.mensaje}
             </AvisoEnLinea>
           ) : null}
+          {/* [CH-240 E4-3] Una nota fija dice el efecto del tipo, sin cifras ni impacto en vivo */}
+          {esIngreso ? <NotaFija clave="ingreso" /> : null}
           <Boton
             tipo="submit"
             enviando={estado === 'enviando'}

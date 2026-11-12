@@ -2,6 +2,8 @@
 import { glosario } from './glosario.ts';
 
 export const registrarTarjeta = {
+  // [CH-240 E4-3] Nota fija de «Entrada a una tarjeta»: el efecto, sin cifras
+  notaEntrada: 'Baja la deuda sin pasar por tu presupuesto: Listo para asignar no cambia.',
   flujos: {
     'entrada-tarjeta': {
       titulo: 'Entrada a una tarjeta',
@@ -45,16 +47,16 @@ export const registrarTarjeta = {
   },
   tipos: {
     entrada: {
-      titulo: 'Dinero que entra a una tarjeta',
-      detalle: 'Un cashback o el pago de un tercero; baja lo que te falta reservar.',
+      titulo: 'Entrada a una tarjeta',
+      detalle: 'Cashback o pago de un tercero',
     },
     avance: {
-      titulo: 'Un avance de efectivo',
-      detalle: 'Efectivo que sacás de la tarjeta; entra a una cuenta como otras entradas.',
+      titulo: 'Avance de efectivo',
+      detalle: 'Desde una tarjeta',
     },
     deuda: {
-      titulo: 'Pasar deuda de una tarjeta a otra',
-      detalle: 'Mover deuda entre dos tarjetas.',
+      titulo: 'Transferencia de deuda',
+      detalle: 'Entre tarjetas',
     },
   },
 } as const;
