@@ -15,6 +15,9 @@ export const verificarSaldo = {
   calculando: 'Calculando…',
   saldoFinn: (fecha: string, monto: string) => `Saldo de Finn al ${fecha}: ${monto}`,
   diferencia: (monto: string) => `Diferencia: ${monto}`,
+  // E2-13: el resultado que queda bajo las acciones del detalle cuando no hay diferencia que ajustar.
+  verificado: (fecha: string, n: number) =>
+    `Verificaste el saldo al ${fecha}: coincide con el banco. ${n === 1 ? '1 transacción quedó conciliada' : `${String(n)} transacciones quedaron conciliadas`}.`,
   coincide: 'Coincide con Finn. Dejamos marcado todo hasta esa fecha.',
   noCoincide: 'No coincide con Finn. No marcamos nada: elegí vos qué conciliar.',
   sinCandidatas: 'No hay transacciones hasta esa fecha: se registra la diferencia sin marcar nada.',

@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { IndicadorEstado } from '../../../../componentes/dominio/indicador-estado';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
-import { formatearFecha, formatearPorcentaje } from '../../../../formato';
+import { formatearFecha } from '../../../../formato';
 import { cuentaDetalle } from '../../../../textos/cuenta-detalle';
 import { FilasAmortizacion } from './filas-amortizacion';
 
@@ -16,12 +16,15 @@ const TARJETA_TABLA =
   'flex flex-col gap-3.5 rounded-contenedor bg-superficie p-4 shadow-elevacion-1 overflow-x-auto';
 const PAGAR =
   'inline-flex min-h-12 flex-none items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+// CTA-27: «Reservar $X» es un enlace en `--enlace` 700 a la derecha del indicador, no una pastilla en su propia fila.
 const RESERVAR =
-  'inline-flex min-h-11 items-center justify-center rounded-pastilla bg-accion px-4 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+  'inline-flex min-h-11 items-center justify-center font-bold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE =
   'inline-flex min-h-11 items-center font-bold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
 const m = (c: Centavos) => <Monto centavos={c} rol="cuerpo" />;
+/** «25/10» de una fecha `AAAA-MM-DD` del DTO. */
+const diaMes = (fecha: string): string => `${fecha.slice(8)}/${fecha.slice(5, 7)}`;
 
 /** Filas «rótulo … valor» con una línea entre cada una, como las del diseño. */
 function Filas({ filas }: { readonly filas: readonly (readonly [string, ReactNode])[] }) {
@@ -82,21 +85,17 @@ export function BloqueTarjeta({
             {t.deuda} {m(tarjeta.deuda)}
           </span>
         </p>
-        <dl className="grid grid-cols-2 gap-x-3 gap-y-3 text-cuerpo-pequeno">
+        {/* CTA-26: la rejilla del diseño es «Corte · Pago · Límite»; las fechas son las del DTO, sin calcular (PF-3). El saldo a favor
+            solo aparece cuando existe. */}
+        <dl className="grid grid-cols-3 gap-x-3 gap-y-3 text-cuerpo-pequeno">
           {(
             [
-              [t.saldoAFavor, m(tarjeta.saldoAFavor)],
+              [t.corte, diaMes(tarjeta.cicloFacturacion.hasta)],
+              [t.pago, diaMes(d.proximoPago)],
               [t.limite, m(tarjeta.limite)],
-              ...(tarjeta.limite > 0
-                ? ([[t.usoLimite, formatearPorcentaje(tarjeta.usoLimite)]] as const)
+              ...(tarjeta.saldoAFavor > 0
+                ? ([[t.saldoAFavor, m(tarjeta.saldoAFavor)]] as const)
                 : []),
-              [
-                t.ciclo,
-                t.cicloValor(
-                  formatearFecha(tarjeta.cicloFacturacion.desde),
-                  formatearFecha(tarjeta.cicloFacturacion.hasta),
-                ),
-              ],
             ] as const
           ).map(([rotulo, valor]) => (
             <div key={rotulo}>
@@ -109,10 +108,13 @@ export function BloqueTarjeta({
       <section aria-labelledby="al-pagar" className={TARJETA}>
         {/* [CH-234 A17] La fecha de pago del DTO, tal cual, a la derecha del título */}
         <div className="flex items-baseline justify-between gap-3">
-          <h2 id="al-pagar" className="text-rotulo text-texto-secundario">
+          <h2 id="al-pagar" className="text-rotulo whitespace-nowrap text-texto-secundario">
             {t.alPagar}
           </h2>
-          <span data-proximo-pago={d.proximoPago} className="text-cuerpo-pequeno font-semibold">
+          <span
+            data-proximo-pago={d.proximoPago}
+            className="text-cuerpo-pequeno font-semibold whitespace-nowrap"
+          >
             {t.pagaAntesDel(d.proximoPago.slice(8), d.proximoPago.slice(5, 7))}
           </span>
         </div>

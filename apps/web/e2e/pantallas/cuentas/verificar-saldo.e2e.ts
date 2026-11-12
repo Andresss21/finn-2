@@ -77,7 +77,9 @@ test.describe('PRU-E2E-CONC', () => {
     await expect(page.getByRole('heading', { name: t.tituloRevisar })).toBeFocused();
     await expect(page.getByText(t.seMarcan(3))).toBeVisible();
     await page.getByRole('button', { name: t.confirmar }).click();
-    await expect(page.getByTestId('resultado')).toHaveText(t.guardado('Ahorro', '15/10/2027'));
+    // E2-13: sin diferencia que ajustar no hay pantalla de resultado propia: vuelve al detalle y lo dice bajo las acciones
+    await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}\?resultado=verificado/);
+    await expect(page.getByTestId('resultado')).toHaveText(t.verificado('15/10/2027', 3));
     // Quedaron conciliadas: ya no hay candidatas a esa fecha.
     await abrir(page, `${verificar}?fecha=2027-10-15`);
     await expect(page.getByText(t.candidatas(0))).toBeVisible();

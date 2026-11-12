@@ -8,7 +8,8 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { AccionesDeBloqueo } from '../cuentas-archivar/acciones-bloqueo';
-import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { CerrarFlujoAlMontar, useCerrarFlujo } from '../../componentes/navegacion/flujo-de-ruta';
+import { MarcoCorto } from '../cuentas-archivar/marco-corto';
 import { formatearMonto } from '../../formato';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { cuentasGestion } from '../../textos/cuentas-gestion';
@@ -29,6 +30,8 @@ export interface PropsFormularioCuentasEliminar {
   readonly programadas: number;
   /** `acciones.bloqueosEliminar` del detalle: códigos de 04 §7.5. */
   readonly bloqueos: readonly string[];
+  /** GLO-23: abierto como hoja o panel sobre el detalle (ruta interceptada). */
+  readonly superpuesto?: boolean;
 }
 
 interface Aviso {
@@ -41,7 +44,7 @@ interface Vista {
 }
 
 export function FormularioCuentasEliminar(p: PropsFormularioCuentasEliminar) {
-  const { accion, cuentaId, nombre, bloqueos } = p;
+  const { accion, cuentaId, nombre, bloqueos, superpuesto = false } = p;
   const rutaPadre = `/cuentas/${cuentaId}`;
   const enviar = useCallback<AccionEscritura>(
     (payload) => accion({ ...(payload as object), cuentaId }),
@@ -49,13 +52,14 @@ export function FormularioCuentasEliminar(p: PropsFormularioCuentasEliminar) {
   );
   const operacion = useOperacion({ accion: enviar, previsualizarPrimero: true });
   const { estado, error: fallo } = operacion;
+  const cerrar = useCerrarFlujo(rutaPadre, superpuesto);
   const vista = (operacion.previsualizacion ?? {}) as Vista;
 
   if (estado === 'listo')
     return (
-      <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
+      <MarcoCorto superpuesto={superpuesto} titulo={t.titulo} rutaPadre={rutaPadre}>
         <CerrarFlujoAlMontar rutaPadre={RUTA_AL_TERMINAR} />
-      </PaginaFlujoDeRuta>
+      </MarcoCorto>
     );
 
   if (estado === 'confirmando') {
@@ -71,7 +75,7 @@ export function FormularioCuentasEliminar(p: PropsFormularioCuentasEliminar) {
         : [n.avisos[a.codigo] ?? a.codigo],
     );
     return (
-      <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
+      <MarcoCorto superpuesto={superpuesto} titulo={t.titulo} rutaPadre={rutaPadre}>
         <ConfirmacionImpacto
           titulo={n.revisar}
           {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
@@ -86,17 +90,20 @@ export function FormularioCuentasEliminar(p: PropsFormularioCuentasEliminar) {
           }
           avisos={avisos}
           textoConfirmar={t.eliminar}
-          textoVolver={t.volver}
+          peligro
+          descripcion={t.descripcion(nombre)}
+          textoVolver={t.cancelar}
           enviando={false}
           alConfirmar={() => void operacion.confirmar()}
-          alVolver={operacion.volverAEditar}
+          alVolver={cerrar}
         />
-      </PaginaFlujoDeRuta>
+      </MarcoCorto>
     );
   }
 
   return (
-    <PaginaFlujoDeRuta
+    <MarcoCorto
+      superpuesto={superpuesto}
       titulo={bloqueos.length > 0 ? t.tituloBloqueo : t.titulo}
       rutaPadre={rutaPadre}
     >
@@ -155,6 +162,6 @@ export function FormularioCuentasEliminar(p: PropsFormularioCuentasEliminar) {
           </>
         )}
       </div>
-    </PaginaFlujoDeRuta>
+    </MarcoCorto>
   );
 }

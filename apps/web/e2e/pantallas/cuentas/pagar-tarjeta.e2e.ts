@@ -109,7 +109,8 @@ test.describe('PRU-E2E-CTA', () => {
     await campo(page, t.monto).fill('150');
     await expect(pagar(page)).toHaveText(t.pagarMonto('$150.00'));
     await pagar(page).click();
-    await expect(page.getByRole('heading', { name: t.tituloListo })).toBeVisible();
+    // E2-13: sin pantalla de resultado propia, vuelve al detalle de la tarjeta con el resultado bajo sus acciones
+    await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}\?resultado=pagado/);
     await expect(page.getByTestId('resultado')).toHaveText(t.guardado('$150.00', 'T'));
     // El paso 2 de ESC-08: al abrir de nuevo, Pago T queda en $150.00 y el monto para no generar intereses en $50.00
     await abrir(page, TARJETA);
@@ -149,7 +150,8 @@ test.describe('PRU-E2E-CTA', () => {
     await expect(page.getByText(t.avisos['AV-10']('$50.00', 'T'))).toBeVisible();
     await expect(page.getByText(impactoLineas.reduccion('+$50.00'))).toBeVisible();
     await page.getByRole('button', { name: t.confirmar }).click();
-    await expect(page.getByRole('heading', { name: t.tituloListo })).toBeVisible();
+    // E2-13: sin pantalla de resultado propia, vuelve al detalle de la tarjeta con el resultado bajo sus acciones
+    await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}\?resultado=pagado/);
     // Después (AV-04): el aviso de estado y, en la categoría de pago, el monto de la reducción proyectada
     await expect(page.getByText(t.avisoExcedente('T'))).toBeVisible();
     await page.getByRole('link', { name: t.verCategoria('T') }).click();

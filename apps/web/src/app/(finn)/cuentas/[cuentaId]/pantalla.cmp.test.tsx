@@ -115,7 +115,7 @@ const fila = (id: string, saldoDespues: number, efecto = -1000) => ({
 });
 
 describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
-  it('PRU-CMP-CTA-104 [Q-detalleCuenta, AV-07] una tarjeta dibuja deuda, te falta reservar, uso del límite, ciclo y desglose al pagar tal como vienen', () => {
+  it('PRU-CMP-CTA-104 [Q-detalleCuenta, AV-07] una tarjeta dibuja deuda, te falta reservar, corte, pago, límite y desglose al pagar tal como vienen', () => {
     const raiz = mostrar(
       dto({
         cuenta: {
@@ -151,20 +151,9 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
       m.getAttribute('data-centavos'),
     );
     // [CH-222] «Reservar $7.00» repite lo que falta en la cabecera del contenedor
-    expect(montos).toEqual([
-      '700',
-      '700',
-      '7000',
-      '7700',
-      '0',
-      '250000',
-      '5000',
-      '2700',
-      '0',
-      '7700',
-    ]);
-    expect(b?.textContent).toContain('16/02/2027 al 15/03/2027');
-    expect(b?.textContent).toContain('3.08%');
+    expect(montos).toEqual(['700', '700', '7000', '7700', '250000', '5000', '2700', '0', '7700']);
+    // CTA-26: la rejilla es «Corte · Pago · Límite», con las fechas del DTO
+    expect(b?.textContent).toContain('Corte15/03Pago05/04Límite');
   });
 
   it('PRU-CMP-CTA-104 [Q-detalleCuenta] un préstamo sin modelo dice que no hay amortización y con modelo dibuja la tabla del DTO', () => {
@@ -545,9 +534,16 @@ describe('PRU-CMP-CTA-260 detalle de cuenta portado del export (CH-142)', () => 
     expect(eliminar?.peligro).toBe(true);
   });
 
-  it('PRU-CMP-CTA-260 [CA-52.4] en una tarjeta el menú suma Condiciones y en un préstamo no ofrece verificar ni conciliar; archivada, verificar y conciliar quedan deshabilitadas con el motivo', () => {
+  it('PRU-CMP-CTA-260 [CA-52.4] el menú de una tarjeta suma Pagar tarjeta y no Condiciones ni Ordenar cuentas (CTA-03), en un préstamo no ofrece verificar ni conciliar; archivada, verificar y conciliar quedan deshabilitadas con el motivo', () => {
     const tarjeta = menuDe(dto({ cuenta: cuentaDe('tarjeta') })).map((a) => a.etiqueta);
-    expect(tarjeta).toContain('Condiciones');
+    expect(tarjeta).toEqual([
+      'Editar',
+      'Pagar tarjeta',
+      'Verificar saldo',
+      'Conciliar con estado de cuenta',
+      'Archivar',
+      'Eliminar',
+    ]);
     const prestamo = menuDe(dto({ cuenta: cuentaDe('prestamo') })).map((a) => a.etiqueta);
     expect(prestamo).toContain('Condiciones');
     expect(prestamo).not.toContain('Verificar saldo');

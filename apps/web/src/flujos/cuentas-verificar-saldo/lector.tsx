@@ -13,9 +13,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function LectorVerificarSaldo({
   cuentaId,
   busqueda,
+  superpuesto = false,
 }: {
   readonly cuentaId: string;
   readonly busqueda: BusquedaDePagina;
+  readonly superpuesto?: boolean;
 }) {
   if (!UUID.test(cuentaId)) notFound();
   const { fecha } = aParametrosDeConsulta(busqueda);
@@ -36,6 +38,7 @@ export async function LectorVerificarSaldo({
       hoy={dto.hoy}
       fecha={c.fecha}
       cantidad={c.candidatas.cantidad}
+      superpuesto={superpuesto}
       candidatas={c.candidatas.recientes.map((t) => ({
         id: t.id,
         comercio: t.comercio,

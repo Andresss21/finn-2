@@ -8,6 +8,7 @@ import { PublicarAcciones } from '../../../../componentes/marco/publicar-accione
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
 import { VolverEnTitulo } from '../../../../componentes/navegacion/volver-en-titulo';
 import { SelectorPeriodo } from '../../../../componentes/navegacion/selector-periodo';
+import type { ResultadoDeFlujo } from '../../../../flujos/cuentas-archivar/resultado';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { cuentaDetalle as t } from '../../../../textos/cuenta-detalle';
 import { AccionesArchivada, AccionesPrincipales, Programadas, menuDe } from './acciones';
@@ -15,15 +16,19 @@ import { Cabecera } from './cabecera';
 import { AvisoDiferencia, Conciliaciones } from './conciliaciones';
 import { Movimientos, type FiltrosDetalle } from './movimientos';
 import { BloquePrestamo, BloqueTarjeta, ProximaCuota } from './por-tipo';
+import { ResultadoDelFlujo } from './resultado';
 
 export function PantallaDetalleCuenta({
   dto,
   filtros,
+  resultado,
   desarchivar,
   archivar,
 }: {
   readonly dto: DetalleCuentaDto;
   readonly filtros: FiltrosDetalle;
+  /** E2-13: el resultado de un flujo corto que se cerró sobre este detalle (`?resultado=`). */
+  readonly resultado?: ResultadoDeFlujo | undefined;
   /** La Server Action de OP-05: la pasa el lector. */
   readonly desarchivar: AccionEscritura;
   /** La Server Action de OP-04 («Archivar de nuevo»): la pasa el lector. */
@@ -53,6 +58,13 @@ export function PantallaDetalleCuenta({
             <AvisoDiferencia conciliacion={dto.conciliaciones[0]} />
           )}
           <AccionesPrincipales cuenta={cuenta} />
+          <ResultadoDelFlujo
+            resultado={resultado}
+            nombre={cuenta.nombre}
+            {...(dto.tarjeta === undefined
+              ? {}
+              : { categoriaPagoId: dto.tarjeta.categoriaPago.id })}
+          />
           <AccionesArchivada cuenta={cuenta} desarchivar={desarchivar} archivar={archivar} />
           {dto.tarjeta === undefined ? null : <BloqueTarjeta tarjeta={dto.tarjeta} />}
         </div>
