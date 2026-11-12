@@ -107,3 +107,17 @@ export function EsqueletoGenerico() {
     </main>
   );
 }
+
+/** E6-1: el esqueleto de un detalle: el título de la pantalla es una barra (el `loading.tsx` no conoce los parámetros). */
+export function EsqueletoDetalle({ pantalla }: { readonly pantalla: string }) {
+  return (
+    <main className="mx-auto flex max-w-3xl flex-col gap-5 px-5 py-4">
+      <Esqueleto pantalla={pantalla}>
+        <span className="block h-8 w-1/2 rounded-sm bg-superficie-hundida" />
+        <BloqueGrafico />
+        <SeccionEsqueleto filas={3} />
+        <SeccionEsqueleto filas={2} />
+      </Esqueleto>
+    </main>
+  );
+}

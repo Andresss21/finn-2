@@ -178,6 +178,19 @@ body {
   }
 }
 
+/* E6-2: la franja de navegación pendiente recorre su pista; con movimiento reducido no se anima y queda al 38 %. */
+@keyframes finn-franja {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(263%);
+  }
+}
+.finn-franja {
+  animation: finn-franja var(--duracion-bucle) var(--curva-estandar) infinite;
+}
+
 /* Halos del botón de la Bandeja mientras hay movimientos por revisar (06-identidad-visual 3.1): decorativos. */
 .finn-halo {
   position: absolute;

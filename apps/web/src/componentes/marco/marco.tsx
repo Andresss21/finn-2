@@ -142,11 +142,17 @@ function CuerpoDelMarco({
         </div>
       )}
       {pendientes.size > 0 ? (
+        // E6-2: franja de 3 px (`--accion` sobre `--accion-tonal`) debajo del margen seguro; con movimiento reducido
+        // queda fija al 38 % (la regla de movimiento de `globals.css` anula la animación).
         <div
           role="progressbar"
           aria-label={navegacion.navegando}
-          className="fixed inset-x-0 top-0 z-50 h-0.75 animate-pulse bg-accion"
-        />
+          data-franja-navegacion
+          className="fixed inset-x-0 z-50 h-0.75 overflow-hidden bg-accion-tonal"
+          style={{ top: 'env(safe-area-inset-top, 0px)' }}
+        >
+          <div className="finn-franja h-full w-[38%] bg-accion" />
+        </div>
       ) : null}
       <NavegacionApp {...comun} registrar={<AccesoRegistrar ruta={ruta} variante="lateral" />} />
       <div
