@@ -50,17 +50,36 @@ test.describe('PRU-E2E-CTA', () => {
     await abrirDetalle(page);
     const detalle = page.url();
     await page.getByRole('link', { name: td.acciones.verificarSaldo }).click();
-    await esperarContenido(page);
+    // GLO-23: desde el detalle abre como hoja o panel sobre él (ruta interceptada), con el título del flujo
+    await expect(page.getByRole('dialog', { name: tv.titulo })).toBeVisible();
+    await expect(page).toHaveURL(/\/verificar-saldo$/);
     // Con un saldo distinto del de Finn, la diferencia (K4) se ve antes de confirmar nada
     await page.getByLabel(tv.saldoBanco, { exact: true }).fill('950');
     await page.getByRole('button', { name: tv.verDiferencia }).click();
     await expect(page.getByText(/^Diferencia:/)).toBeVisible();
     await page.getByRole('button', { name: tv.revisar }).click();
+    await expect(page.getByRole('heading', { name: tv.tituloRevisar })).toBeVisible();
     await page.getByRole('button', { name: tv.confirmar }).click();
-    // E2-13: sin pantalla de resultado propia, vuelve al detalle y el resultado queda bajo las acciones
-    await expect(page).toHaveURL(detalle);
+    // E2-13: con diferencia queda el paso siguiente (crear el ajuste de AV-21), así que el flujo se queda con su resultado
+    await expect(page.getByTestId('resultado')).toBeVisible();
+    await expect(page.getByRole('link', { name: tv.crearAjuste })).toBeVisible();
+    // Sin diferencia no hay paso siguiente: el flujo se cierra y el resultado queda bajo las acciones del detalle
+    await page.goto(detalle);
     await esperarContenido(page);
-    await expect(page.getByText(/Verificación de saldo guardada/)).toBeVisible();
+    await page.getByRole('link', { name: td.acciones.verificarSaldo }).click();
+    await page.getByLabel(tv.saldoBanco, { exact: true }).fill('970');
+    await page.getByRole('button', { name: tv.verDiferencia }).click();
+    await expect(page.getByText(tv.coincide)).toBeVisible();
+    await page.getByRole('button', { name: tv.revisar }).click();
+    await page.getByRole('button', { name: tv.confirmar }).click();
+    await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}\?resultado=verificado/);
+    await esperarContenido(page);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const acciones = page.locator('[data-accion="verificar-saldo"]');
+    const resultado = page.getByTestId('resultado');
+    await expect(resultado).toContainText('coincide con el banco');
+    const [a, r] = [await acciones.boundingBox(), await resultado.boundingBox()];
+    expect(r?.y ?? 0).toBeGreaterThan(a?.y ?? 0);
   });
 
   test('PRU-E2E-CTA-722 el período anterior muestra solo sus movimientos con «Cerrado · Movimientos de ese período» y el saldo de hoy arriba', async ({

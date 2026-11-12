@@ -175,7 +175,8 @@ test.describe('PRU-E2E-CTA recorrido 4.4 pagar la tarjeta', () => {
     await expect(page.getByText(t.avisos['AV-10']('$50.00', 'T'))).toBeVisible();
     await expect(page.getByText(impactoLineas.reduccion('+$50.00'))).toBeVisible();
     await page.getByRole('button', { name: t.confirmar }).click();
-    await expect(page.getByRole('heading', { name: t.tituloListo })).toBeVisible();
+    // E2-13: sin pantalla de resultado propia, vuelve al detalle de la tarjeta con el resultado bajo sus acciones
+    await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}\?resultado=pagado/);
     await expect(page.getByText(t.avisoExcedente('T'))).toBeVisible();
     await page.getByRole('link', { name: t.verCategoria('T') }).click();
     await esperarContenido(page);

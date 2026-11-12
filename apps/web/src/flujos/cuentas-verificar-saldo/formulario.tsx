@@ -3,7 +3,7 @@
 // que dice el servidor, elegir qué marcar como conciliado y confirmar. Tres pasos sobre la misma operación: datos (previsualiza
 // con todas las candidatas para traer la diferencia), marcar (todas preseleccionadas solo si la diferencia es exactamente cero, P6-5)
 // y revisar (previsualiza con lo marcado y confirma). No calcula montos (PF-3).
-import { Centavos, type FechaLocal } from '@finn/dominio/valores';
+import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
@@ -148,11 +148,6 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
   const error = (n: keyof Campos): string | undefined => formState.errors[n]?.message;
   const vista = (previsualizacion ?? {}) as Vista;
   const fechaTexto = formatearFecha(c.fecha);
-  // E2-14: en una tarjeta el servidor da el saldo con signo (deuda en negativo) y la pantalla lo dice como deuda: solo se muestra con el signo cambiado.
-  const lineaFinn = (saldo: Centavos): string =>
-    tarjeta
-      ? t.deudaFinn(fechaTexto, formatearMonto(Centavos.negar(saldo)))
-      : t.saldoFinn(fechaTexto, formatearMonto(saldo));
 
   if (estado === 'listo' && exito !== undefined) {
     const ruta = RUTA_AJUSTE[String(ajuste?.datos?.['operacion'])];
@@ -226,7 +221,7 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
               r === undefined
                 ? []
                 : [
-                    lineaFinn(r.saldoFinn),
+                    t.saldoFinn(fechaTexto, formatearMonto(r.saldoFinn)),
                     t.diferencia(conSigno(r.diferencia)),
                     t.seMarcan(r.marcaria),
                   ]
@@ -249,7 +244,7 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
     return (
       <MarcoCorto superpuesto={superpuesto} titulo={t.titulo} rutaPadre={rutaPadre}>
         <div className="flex flex-col gap-4">
-          <p data-saldo-finn>{lineaFinn(base.saldoFinn)}</p>
+          <p data-saldo-finn>{t.saldoFinn(fechaTexto, formatearMonto(base.saldoFinn))}</p>
           <p data-diferencia className="font-bold">
             {t.diferencia(conSigno(base.diferencia))}
           </p>
