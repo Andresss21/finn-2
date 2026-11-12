@@ -18,6 +18,10 @@ export const categoriasFusionar = {
   metaDescartada: (origen: string) => `Se descarta la meta de ${origen}.`,
   fusionar: 'Fusionar',
   fusionando: 'Fusionando…',
+  // E4-1: la tarjeta de impacto va en la misma pantalla, debajo del destino.
+  rotuloImpacto: 'Antes de confirmar',
+  calculando: 'Calculando el impacto…',
+  impactoCambio: 'El impacto cambió. Revisalo antes de confirmar.',
   revisar: 'Revisá el impacto',
   deltaLpa: (delta: string) => `${glosario.listoParaAsignar}: ${delta}`,
   deltaDisponible: (categoria: string, delta: string) =>

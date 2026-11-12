@@ -30,7 +30,6 @@ const CIRCULO =
   'inline-flex size-11 shrink-0 items-center justify-center rounded-pastilla bg-superficie-hundida text-texto hover:bg-borde-sutil focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
 function estadoVisible(p: PeriodoDto): { icono: NombreIcono; texto: string } {
-  if (p.transicion) return { icono: 'swap', texto: dominio.periodo.transicion(p.dias) };
   if (p.estado === 'cerrado') return { icono: 'lock', texto: dominio.periodo.cerrado };
   if (p.estado === 'futuro') return { icono: 'cal', texto: dominio.periodo.futuro };
   return { icono: 'clock', texto: dominio.periodo.activo };
@@ -84,6 +83,12 @@ export function SelectorPeriodo({
         )}
         <div className="flex min-w-0 flex-col items-center text-center">
           <p className="text-cuerpo font-bold">{formatearPeriodoNumerico(periodo)}</p>
+          {/* E4-11: «Período de transición, N días» en negrita y color de información, encima de la línea de estado */}
+          {periodo.transicion ? (
+            <p data-transicion className="text-etiqueta font-bold text-informacion-texto">
+              {dominio.periodo.transicion(periodo.dias)}
+            </p>
+          ) : null}
           <p className="flex items-center gap-1.5 text-cuerpo-pequeno text-texto-secundario">
             <Icono nombre={icono} tamano={16} />
             <span>{detalle}</span>

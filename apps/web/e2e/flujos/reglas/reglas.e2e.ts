@@ -245,7 +245,7 @@ test.describe('PRU-E2E-AJUS buscador de reglas', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-AJUS-160 [FT-39] (CH-227) RUTA-/reglas con ?q=super quedan solo las reglas cuyo comercio o categoría coinciden, y sin coincidencias dice «Ninguna regla con ese texto»', async ({
+  test('PRU-E2E-AJUS-160 [FT-39] (CH-227) RUTA-/reglas con ?q=super quedan solo las reglas cuyo comercio o categoría coinciden, y sin coincidencias dice «Ninguna regla para {búsqueda}.» con «Quitar la búsqueda»', async ({
     page,
   }) => {
     await preparar([]);
@@ -260,6 +260,9 @@ test.describe('PRU-E2E-AJUS buscador de reglas', () => {
 
     await abrir(page, '/reglas?q=farmacia');
     await expect(page.locator('[data-regla]')).toHaveCount(0);
-    await expect(page.getByText(r.sinCoincidencias)).toBeVisible();
+    await expect(page.getByText(r.ningunaPara('farmacia'))).toBeVisible();
+    await page.getByRole('link', { name: r.quitarBusqueda }).click();
+    await expect(page).toHaveURL(/\/reglas$/);
+    await expect(page.locator('[data-regla]')).not.toHaveCount(0);
   });
 });

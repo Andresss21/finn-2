@@ -24,6 +24,7 @@ export const programadas = {
   vacioTexto: 'Cargá tus pagos que se repiten para verlos venir y registrarlos sin esfuerzo.',
   crearUna: 'Crear la primera',
   tipo: 'Tipo',
+  tipoNoSeCambia: 'El tipo no se cambia. Para otro tipo, desactivala y creá otra.',
   tipos: {
     gasto: 'Gasto',
     pago_tarjeta: 'Pago de tarjeta',

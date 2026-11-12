@@ -145,6 +145,7 @@
     "fts": ["FT-19"]
   },
   { "patron": "apps/web/src/flujos/presupuesto-categorias-archivar/**", "fts": ["FT-19"] },
+  { "patron": "apps/web/src/flujos/presupuesto-impacto-k4.tsx", "fts": ["FT-19", "FT-20"] },
   { "patron": "apps/web/src/flujos/presupuesto-categorias-sacar/**", "fts": ["FT-19"] },
   {
     "patron": "apps/web/src/app/(finn)/presupuesto/categorias/[categoriaId]/fusionar/**",

@@ -633,19 +633,19 @@
 
   "TA-568": { "estado": "en_curso", "rama": "ta-562-grupo-a-marco" },
 
-  "TA-569": { "estado": "pendiente" },
+  "TA-569": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
 
-  "TA-570": { "estado": "pendiente" },
+  "TA-570": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
 
-  "TA-571": { "estado": "pendiente" },
+  "TA-571": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
 
-  "TA-572": { "estado": "pendiente" },
+  "TA-572": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
 
-  "TA-573": { "estado": "pendiente" },
+  "TA-573": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
 
-  "TA-574": { "estado": "pendiente" },
+  "TA-574": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
 
-  "TA-575": { "estado": "pendiente" },
+  "TA-575": { "estado": "en_curso", "rama": "ta-569-grupo-b-inicio-presupuesto" },
 
   "TA-576": { "estado": "pendiente" },
 

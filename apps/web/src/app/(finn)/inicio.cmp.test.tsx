@@ -144,7 +144,7 @@ describe('PRU-CMP-INICIO', () => {
     expect(rect(resplandor).bottom).toBeGreaterThan(rect(tarjeta).bottom);
   });
 
-  it('PRU-CMP-INICIO-222 [CA-08.1] cada fila de atención es de 68 px: círculo de 36 px con el glifo, el nombre del estado en su color, el monto del mismo color a la derecha y el chevrón; el sobregiro sigue sin monto a la vista (PF-2)', () => {
+  it('PRU-CMP-INICIO-222 [CA-08.1] cada fila de atención es de 68 px: círculo de 36 px con el glifo, el nombre del estado en su color y el chevrón, sin monto (D-4); el sobregiro sigue sin monto a la vista (PF-2)', () => {
     const nodo = montar(
       <PantallaInicio
         dto={dto({
@@ -182,12 +182,10 @@ describe('PRU-CMP-INICIO', () => {
     const circulo = fila?.querySelector('svg')?.parentElement;
     expect([rect(circulo).width, rect(circulo).height]).toEqual([36, 36]);
     const estado = fila?.querySelector('[data-estado]');
-    const monto = fila?.querySelector('[data-centavos]');
     expect(estado?.textContent).toBe('Te falta reservar');
-    expect(color(monto)).toBe(color(estado));
-    expect(rect(monto).left).toBeGreaterThan(rect(estado).right);
+    expect(fila?.querySelector('[data-centavos]')).toBeNull();
     const chevron = [...(fila?.querySelectorAll('svg') ?? [])].at(-1);
-    expect(rect(chevron).left).toBeGreaterThan(rect(monto).right);
+    expect(rect(chevron).left).toBeGreaterThan(rect(estado).right);
     // Sobregiro: sin monto en el resumen y, al tocar, el monto.
     const sobregiro = nodo.querySelector<HTMLDetailsElement>('details[data-sobregiro="c-1"]');
     expect(sobregiro?.querySelector('summary [data-centavos]')).toBeNull();
@@ -307,6 +305,91 @@ describe('PRU-CMP-INICIO', () => {
         esperado: { monto: '255.00' },
       }),
     );
+  });
+});
+
+const luminancia = (rgb: string): number => {
+  const [r = 0, g = 0, b = 0] = (rgb.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+  const lineal = (v: number) =>
+    v / 255 <= 0.04045 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4;
+  return 0.2126 * lineal(r) + 0.7152 * lineal(g) + 0.0722 * lineal(b);
+};
+const contraste = (a: string, b: string): number => {
+  const [x, y] = [luminancia(a), luminancia(b)].sort((m, n) => n - m) as [number, number];
+  return (x + 0.05) / (y + 0.05);
+};
+
+describe('PRU-CMP-INICIO entrega 4', () => {
+  const atencion = {
+    faltaReservar: [{ tarjeta: { id: 't-1', nombre: 'Visa Oro' }, monto: centavos(1875) }],
+    pagosExcedentes: [{ tarjeta: { id: 't-2', nombre: 'Mastercard' }, monto: centavos(500) }],
+    sobregiradas: [
+      {
+        categoria: { id: 'c-1', nombre: 'Restaurantes' },
+        grupo: { id: 'g-1', nombre: 'Gastos' },
+        sobregiro: {
+          tipo: 'debito',
+          total: centavos(2630),
+          parteDebito: centavos(2630),
+          parteTarjeta: centavos(0),
+        },
+      },
+    ],
+    metasVencidas: [{ categoria: { id: 'c-3', nombre: 'Viaje' }, falta: centavos(9000) }],
+    pagosTarjetaProximos: [
+      {
+        tarjeta: { id: 't-1', nombre: 'Visa Oro' },
+        fechaPago: '2027-02-07',
+        paraNoGenerarIntereses: centavos(12000),
+      },
+    ],
+  };
+
+  it('PRU-CMP-INICIO-701 [CA-E4-12] ninguna fila de «Necesita tu atención» tiene un monto (data-rol de cifra), a 390 y a 1440 px', () => {
+    for (const ancho of [390, 1440]) {
+      const nodo = montar(<PantallaInicio dto={dto({ atencion })} />);
+      nodo.style.width = `${ancho}px`;
+      const seccion = nodo.querySelector('section[aria-label="Necesita tu atención"]');
+      expect(seccion?.querySelectorAll('a, details').length).toBeGreaterThanOrEqual(5);
+      const visibles = [
+        ...(seccion?.querySelectorAll('[data-centavos], [data-rol^="cifra"]') ?? []),
+      ].filter((m) => m.checkVisibility());
+      expect(visibles, `a ${ancho} px`).toHaveLength(0);
+      // El monto del sobregiro sigue apareciendo al tocar (PF-2).
+      const sobregiro = nodo.querySelector<HTMLDetailsElement>('details[data-sobregiro="c-1"]');
+      act(() => {
+        if (sobregiro) sobregiro.open = true;
+      });
+      expect(sobregiro?.querySelector('[data-rol="cifra"]')).not.toBeNull();
+    }
+  });
+
+  it('PRU-CMP-INICIO-702 [CA-E4-14] la línea de estado del billete en «Todo asignado» y en negativo mide al menos 4.5:1 sobre el billete, en claro y oscuro', () => {
+    for (const tema of ['light', 'dark']) {
+      document.documentElement.dataset['theme'] = tema;
+      for (const [lpa, negativo] of [
+        [0, false],
+        [-10000, true],
+      ] as const) {
+        const nodo = montar(
+          <ResumenListoParaAsignar
+            variante="billete"
+            lpa={centavos(lpa)}
+            enCamino={centavos(0)}
+            lpaNegativo={negativo}
+          />,
+        );
+        const tarjeta = nodo.querySelector('[data-tarjeta-billete]');
+        const linea = tarjeta?.querySelector('[data-estado]');
+        expect(linea, `${tema} ${lpa}`).not.toBeNull();
+        const fondo = getComputedStyle(tarjeta as Element).backgroundColor;
+        expect(contraste(color(linea), fondo), `${tema} ${lpa}`).toBeGreaterThanOrEqual(4.5);
+        // El glifo conserva su disco de color.
+        const disco = linea?.querySelector('span[aria-hidden="true"]');
+        expect(getComputedStyle(disco as Element).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+      }
+    }
+    delete document.documentElement.dataset['theme'];
   });
 });
 

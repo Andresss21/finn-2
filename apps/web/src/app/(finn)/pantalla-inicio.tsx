@@ -7,6 +7,7 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Icono } from '../../componentes/base/icono';
 import { ResumenListoParaAsignar } from '../../componentes/dominio/billete';
 import { Monto } from '../../componentes/dominio/monto';
+import { TarjetaActivarNotificaciones } from '../../componentes/dominio/tarjeta-activar-notificaciones';
 import { PublicarEncabezado } from '../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { CirculoEstado, FOCO, FilaAtencion, TextoDeFila } from './fila-atencion';
@@ -20,6 +21,8 @@ import type { AccionEscritura } from '../../formularios/use-operacion';
 import { dominio } from '../../textos/dominio';
 import { glosario } from '../../textos/glosario';
 import { inicio as t } from '../../textos/inicio';
+import { inicioEntrega4 } from '../../textos/inicio-entrega-4';
+import type { RegistrarSuscripcion } from '../../cliente/notificaciones';
 import { PrimerosPasosDeInicio } from './primeros-pasos';
 
 const CONTENEDOR =
@@ -100,6 +103,7 @@ export function PantallaInicio({
   asignar,
   sacar,
   haySinFondos = false,
+  registrarSuscripcion,
 }: {
   readonly dto: InicioDto;
   /** `marcarLeidas` (OPT-04): la pone el lector; sin ella no se ofrece «Marcar como leído». */
@@ -110,6 +114,8 @@ export function PantallaInicio({
   readonly sacar?: AccionEscritura;
   /** Hay al menos una categoría sin fondos (`presupuesto` con ese filtro): a dónde lleva el botón del billete (P6-26). */
   readonly haySinFondos?: boolean;
+  /** `registrarSuscripcion` (FT-06): la pone el lector; sin ella no se ofrece la tarjeta «Activá las notificaciones» (E5-15). */
+  readonly registrarSuscripcion?: RegistrarSuscripcion;
 }) {
   const { atencion: a, primerosPasos, patrimonio } = dto;
   const sinCuentas = primerosPasos !== null && !primerosPasos.cuenta;
@@ -163,6 +169,17 @@ export function PantallaInicio({
           </div>
         )}
         {primerosPasos === null ? null : <PrimerosPasosDeInicio pasos={primerosPasos} />}
+        {sinCuentas ? (
+          <p className="flex items-start gap-2 text-cuerpo-pequeno text-texto-secundario">
+            <span className="flex-none pt-0.5 text-informacion-texto">
+              <Icono nombre="informacion" tamano={16} />
+            </span>
+            {inicioEntrega4.notaSinCuentas}
+          </p>
+        ) : null}
+        {sinCuentas || registrarSuscripcion === undefined ? null : (
+          <TarjetaActivarNotificaciones registrar={registrarSuscripcion} />
+        )}
         {sinCuentas ? null : (
           <Seccion titulo={t.atencion} conTitulo={hayAtencion}>
             {a.cambiosRetroactivos.map((n) => (
@@ -209,7 +226,6 @@ export function PantallaInicio({
                     href={`/cuentas/${x.tarjeta.id}`}
                     estado="deuda-sin-respaldo"
                     etiqueta={glosario.teFaltaReservar}
-                    monto={x.monto}
                   >
                     {x.tarjeta.nombre}
                   </FilaAtencion>
@@ -220,7 +236,6 @@ export function PantallaInicio({
                     href={`/cuentas/${x.tarjeta.id}`}
                     estado="problema"
                     etiqueta={glosario.pagasteDeMas}
-                    monto={x.monto}
                   >
                     {x.tarjeta.nombre}
                   </FilaAtencion>
@@ -269,7 +284,6 @@ export function PantallaInicio({
                     href={`/presupuesto/categorias/${x.categoria.id}`}
                     estado="advertencia"
                     etiqueta={dominio.metaVencida}
-                    monto={x.falta}
                   >
                     {x.categoria.nombre}
                   </FilaAtencion>
@@ -280,7 +294,6 @@ export function PantallaInicio({
                     href={hrefDeOcurrencia(o)}
                     estado="advertencia"
                     etiqueta={t.atrasado}
-                    monto={o.monto}
                     datos={{ 'data-pago-atrasado': o.programada.id }}
                   >
                     {o.programada.nombre}
@@ -292,7 +305,6 @@ export function PantallaInicio({
                     href={`/cuentas/${x.tarjeta.id}`}
                     estado="advertencia"
                     etiqueta={t.pagoDeTarjeta(formatearFecha(x.fechaPago).slice(0, 5))}
-                    monto={x.paraNoGenerarIntereses}
                     datos={{ 'data-pago-tarjeta': x.tarjeta.id }}
                   >
                     {x.tarjeta.nombre}

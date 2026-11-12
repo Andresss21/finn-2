@@ -3,18 +3,18 @@
 // otra. Muestra el resumen de lo que se mueve, deja elegir el destino, previsualiza y confirma siempre (AV-13, AV-01). El
 // impacto (Δ Listo para asignar, Δ Disponible del destino y lo que suma cada período) lo dice el servidor: no se calcula acá (PF-3).
 import type { Centavos } from '@finn/dominio/valores';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
-import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearFechaTexto, formatearMonto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { categoriasFusionar as t } from '../../textos/categorias-fusionar';
 import { formularios } from '../../textos/formularios';
+import { TarjetaImpacto } from '../presupuesto-impacto-k4';
 
 export interface PropsFormularioFusionar {
   /** `fusionarCategorias` (OP-12): la pone el lector, así el formulario se prueba sin servidor. */
@@ -86,6 +86,18 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
   const vista = (operacion.previsualizacion ?? {}) as Vista;
   const rutaPadre = `/presupuesto/categorias/${c.destino === '' ? origen.id : c.destino}`;
 
+  // E4-1: el impacto se pide al servidor con el destino elegido, al elegirlo y cada vez que cambia. Si hay una llamada en vuelo
+  // se espera a que termine: `useOperacion` ignora el doble envío (FE-12).
+  const pedida = useRef<string | null>(null);
+  const [confirmo, setConfirmo] = useState(false);
+  const { enviar: pedirImpacto } = formulario;
+  useEffect(() => {
+    if (estado === 'enviando' || estado === 'listo' || c.destino === '') return;
+    if (pedida.current === c.destino) return;
+    pedida.current = c.destino;
+    setConfirmo(false);
+    void pedirImpacto();
+  }, [c.destino, estado, pedirImpacto]);
   if (estado === 'listo')
     return (
       <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
@@ -94,57 +106,26 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
       </PaginaFlujoDeRuta>
     );
 
-  if (estado === 'confirmando') {
-    const rechazo = vista.rechazos?.[0];
-    const nombre = destino?.nombre ?? '';
-    const av13 = vista.avisos?.find((a) => a.codigo === 'AV-13');
-    const periodos = Object.entries(av13?.datos ?? {})
-      .filter(([k]) => k.startsWith(PREFIJO))
-      .sort(([a], [b]) => (a < b ? -1 : 1));
-    const disponible = vista.impacto?.deltaDisponible?.find((x) => x.categoriaId === c.destino);
-    const lineas = [
-      ...(vista.impacto && vista.impacto.deltaLpa !== 0
-        ? [t.deltaLpa(conSigno(vista.impacto.deltaLpa))]
-        : []),
-      ...(disponible === undefined ? [] : [t.deltaDisponible(nombre, conSigno(disponible.delta))]),
-      ...periodos.map(([k, v]) =>
-        t.deltaPeriodo(
-          formatearFechaTexto(k.slice(PREFIJO.length)),
-          nombre,
-          conSigno(v as Centavos),
-        ),
-      ),
-      ...(typeof av13?.datos?.['metaDescartada'] === 'string'
-        ? [t.metaDescartada(origen.nombre)]
-        : []),
-    ];
-    return (
-      <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
-        {rechazo === undefined ? (
-          <ConfirmacionImpacto
-            titulo={t.revisar}
-            impacto={lineas.length === 0 ? [t.sinCambios] : lineas}
-            avisos={vista.avisos?.some((a) => a.codigo === 'AV-01') ? [t.periodoCerrado] : []}
-            textoConfirmar={t.confirmar}
-            textoVolver={t.volverAEditar}
-            enviando={false}
-            alConfirmar={() => void operacion.confirmar()}
-            alVolver={operacion.volverAEditar}
-          />
-        ) : (
-          <div className="flex flex-col gap-4">
-            <AvisoEnLinea estado="problema" aparecioDespues>
-              {t.rechazos.otro}
-            </AvisoEnLinea>
-            <Boton variante="secundaria" onClick={operacion.volverAEditar}>
-              {t.volverAEditar}
-            </Boton>
-          </div>
-        )}
-      </PaginaFlujoDeRuta>
-    );
-  }
-
+  const rechazo = vista.rechazos?.[0];
+  const puedeConfirmar = operacion.enLinea && estado === 'confirmando' && rechazo === undefined;
+  const nombre = destino?.nombre ?? '';
+  const av13 = vista.avisos?.find((a) => a.codigo === 'AV-13');
+  const periodos = Object.entries(av13?.datos ?? {})
+    .filter(([k]) => k.startsWith(PREFIJO))
+    .sort(([a], [b]) => (a < b ? -1 : 1));
+  const disponible = vista.impacto?.deltaDisponible?.find((x) => x.categoriaId === c.destino);
+  const lineas = [
+    ...(vista.impacto && vista.impacto.deltaLpa !== 0
+      ? [t.deltaLpa(conSigno(vista.impacto.deltaLpa))]
+      : []),
+    ...(disponible === undefined ? [] : [t.deltaDisponible(nombre, conSigno(disponible.delta))]),
+    ...periodos.map(([k, v]) =>
+      t.deltaPeriodo(formatearFechaTexto(k.slice(PREFIJO.length)), nombre, conSigno(v as Centavos)),
+    ),
+    ...(typeof av13?.datos?.['metaDescartada'] === 'string'
+      ? [t.metaDescartada(origen.nombre)]
+      : []),
+  ];
   const opciones: readonly OpcionNativa[] = destinos.map((d) => ({
     valor: d.id,
     etiqueta: d.nombre,
@@ -164,18 +145,20 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
         ? {}
         : {
             acciones: (
-              <div className="w-full md:ml-auto md:w-[calc(50%-1.125rem)]">
+              <div className="w-full">
                 <Boton
-                  tipo="submit"
-                  form={ID_FORMULARIO}
                   variante="peligro"
                   className="w-full"
-                  enviando={estado === 'enviando'}
+                  enviando={estado === 'enviando' && confirmo}
                   textoEnviando={t.fusionando}
-                  deshabilitado={!operacion.enLinea}
+                  deshabilitado={!puedeConfirmar}
                   {...(operacion.motivoSinEnvio === undefined
                     ? {}
                     : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+                  onClick={() => {
+                    setConfirmo(true);
+                    void operacion.confirmar();
+                  }}
                 >
                   {t.fusionar}
                 </Boton>
@@ -188,7 +171,9 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
       ) : (
         <form
           id={ID_FORMULARIO}
-          onSubmit={(e) => void formulario.enviar(e)}
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
           noValidate
           className="flex flex-col gap-5"
         >
@@ -221,6 +206,24 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
             <AvisoEnLinea estado="advertencia">{t.metaDescartada(origen.nombre)}</AvisoEnLinea>
           )}
           <AvisoEnLinea estado="informacion">{t.intro(origen.nombre)}</AvisoEnLinea>
+          {c.destino === '' ? null : operacion.previsualizacion === undefined ? (
+            estado === 'enviando' ? (
+              <p role="status" className="text-texto-secundario">
+                {t.calculando}
+              </p>
+            ) : null
+          ) : rechazo === undefined ? (
+            <TarjetaImpacto
+              rotulo={t.rotuloImpacto}
+              {...(operacion.impactoCambio ? { nota: t.impactoCambio } : {})}
+              avisos={vista.avisos?.some((a) => a.codigo === 'AV-01') ? [t.periodoCerrado] : []}
+              filas={lineas.length === 0 ? [t.sinCambios] : lineas}
+            />
+          ) : (
+            <AvisoEnLinea estado="problema" aparecioDespues>
+              {t.rechazos.otro}
+            </AvisoEnLinea>
+          )}
           {estado === 'error' && fallo !== undefined ? (
             <AvisoEnLinea
               estado="problema"

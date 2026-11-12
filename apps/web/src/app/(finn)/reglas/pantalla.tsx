@@ -57,9 +57,16 @@ export function PantallaReglas({
             />
           </form>
           {dto.reglas.length === 0 ? (
-            <p data-sin-coincidencias className="text-cuerpo text-texto-secundario">
-              {t.sinCoincidencias}
-            </p>
+            <div data-sin-coincidencias className="flex flex-col items-start gap-2">
+              <p className="text-cuerpo text-texto-secundario">
+                {q === '' ? t.sinCoincidencias : t.ningunaPara(q)}
+              </p>
+              {q === '' ? null : (
+                <EnlaceFinn href="/reglas" className={BOTON}>
+                  {t.quitarBusqueda}
+                </EnlaceFinn>
+              )}
+            </div>
           ) : (
             <>
               <ul className="overflow-hidden rounded-contenedor bg-superficie">

@@ -18,7 +18,11 @@ export const presupuestoAutoAsignar = {
   // 06 FT-13, Estados: con Listo para asignar en cero o negativo no se asigna nada.
   nadaQueAsignar: `No hay dinero en ${glosario.listoParaAsignar}: Finn no asignará nada.`,
   sinCubrir: (categoria: string, monto: string) => `${categoria} quedó sin cubrir por ${monto}.`,
+  // E6-13: antes de confirmar, lo que queda sin cubrir va en presente, y el verbo del pie lleva el monto que dijo el servidor.
+  quedaSinCubrir: (categoria: string, monto: string) =>
+    `${categoria} queda con ${monto} sin cubrir.`,
   confirmar: 'Asignar',
+  confirmarMonto: (monto: string) => `Asignar ${monto}`,
   cancelar: 'Cancelar',
   volver: 'Volver a Presupuesto',
   listo: 'Asignación hecha',

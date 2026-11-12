@@ -89,6 +89,13 @@ const elegirDestinoEn = async (nodo: HTMLElement, grupo: string, opcion: string)
 const elegirDestino = (nodo: HTMLElement, nombre: string): Promise<void> =>
   elegirDestinoEn(nodo, 'Fusionar con', nombre);
 
+/** E4-1: el impacto se pide solo al elegir el destino; se espera a que el servidor conteste. */
+const conImpacto = async (nodo: HTMLElement): Promise<void> => {
+  await vi.waitFor(() => {
+    expect(nodo.querySelector('[data-impacto-k4]')).not.toBeNull();
+  });
+};
+
 describe('PRU-CMP-CATEG', () => {
   it('PRU-CMP-CATEG-120 sin otra categoría activa el flujo lo explica y no ofrece fusionar', () => {
     const accion = vi.fn(() => ok(vista()));
@@ -100,7 +107,7 @@ describe('PRU-CMP-CATEG', () => {
     expect(accion).not.toHaveBeenCalled();
   });
 
-  it('PRU-CMP-CATEG-121 muestra el resumen de lo que se mueve y pide elegir el destino antes de enviar', async () => {
+  it('PRU-CMP-CATEG-121 [CA-E4-1] muestra el resumen de lo que se mueve; sin destino no pide el impacto y «Fusionar» está deshabilitado', () => {
     const accion = vi.fn(() => ok(vista()));
     const nodo = montar(<FormularioFusionar {...base} accion={accion} />);
     for (const linea of [
@@ -112,26 +119,25 @@ describe('PRU-CMP-CATEG', () => {
       t.metaDescartada('Café'),
     ])
       expect(nodo.textContent).toContain(linea);
-
-    await tocar(nodo, t.fusionar);
+    expect(boton(nodo, t.fusionar).disabled).toBe(true);
     expect(accion).not.toHaveBeenCalled();
     expect(nodo.textContent).toContain(t.destino);
   });
 
-  it('PRU-CMP-CATEG-122 [AV-13, AV-01] previsualiza primero, dibuja el impacto del servidor, confirma con la huella y vuelve al detalle del destino', async () => {
+  it('PRU-CMP-CATEG-122 [CA-E4-1, AV-13, AV-01] al elegir el destino pide el impacto al servidor, lo dibuja debajo, y «Fusionar» confirma con la huella y vuelve al detalle del destino', async () => {
     const accion = vi.fn((entrada: unknown) =>
       (entrada as { modo: string }).modo === 'previsualizar' ? ok(vista()) : ok({}),
     );
     const nodo = montar(<FormularioFusionar {...base} accion={accion} />);
     await elegirDestino(nodo, 'Salidas');
-    await tocar(nodo, t.fusionar);
+    await conImpacto(nodo);
     expect(accion).toHaveBeenLastCalledWith({
       origenId: ORIGEN,
       destinoId: DESTINO,
       modo: 'previsualizar',
     });
     for (const linea of [
-      t.revisar,
+      t.rotuloImpacto,
       t.deltaLpa('+$30.00'),
       t.deltaDisponible('Salidas', '−$30.00'),
       t.deltaPeriodo('21 ene 2027', 'Salidas', '+$50.00'),
@@ -140,7 +146,7 @@ describe('PRU-CMP-CATEG', () => {
     ])
       expect(nodo.textContent).toContain(linea);
 
-    await tocar(nodo, t.confirmar);
+    await tocar(nodo, t.fusionar);
     expect(accion).toHaveBeenLastCalledWith({
       origenId: ORIGEN,
       destinoId: DESTINO,
@@ -152,7 +158,7 @@ describe('PRU-CMP-CATEG', () => {
     expect(replace).toHaveBeenCalledWith(`/presupuesto/categorias/${DESTINO}`);
   });
 
-  it('PRU-CMP-CATEG-123 con impacto nulo igual muestra la confirmación y lo dice', async () => {
+  it('PRU-CMP-CATEG-123 con impacto nulo igual muestra la tarjeta y lo dice', async () => {
     const accion = vi.fn(() =>
       ok(
         vista({
@@ -163,13 +169,13 @@ describe('PRU-CMP-CATEG', () => {
     );
     const nodo = montar(<FormularioFusionar {...base} accion={accion} />);
     await elegirDestino(nodo, 'Salidas');
-    await tocar(nodo, t.fusionar);
+    await conImpacto(nodo);
     expect(nodo.textContent).toContain(t.sinCambios);
     expect(nodo.textContent).not.toContain(t.periodoCerrado);
-    expect(boton(nodo, t.confirmar)).toBeDefined();
+    expect(boton(nodo, t.fusionar).disabled).toBe(false);
   });
 
-  it('PRU-CMP-CATEG-124 si el servidor rechaza la fusión, la confirmación se reemplaza por el aviso y deja volver a editar', async () => {
+  it('PRU-CMP-CATEG-124 si el servidor rechaza la fusión, la tarjeta se reemplaza por el aviso y «Fusionar» queda deshabilitado', async () => {
     const accion = vi.fn(() =>
       ok(
         vista({
@@ -181,39 +187,31 @@ describe('PRU-CMP-CATEG', () => {
     );
     const nodo = montar(<FormularioFusionar {...base} accion={accion} />);
     await elegirDestino(nodo, 'Salidas');
-    await tocar(nodo, t.fusionar);
-    expect(nodo.textContent).toContain(t.rechazos.otro);
-    expect([...nodo.querySelectorAll('button')].some((b) => b.textContent === t.confirmar)).toBe(
-      false,
-    );
-    await tocar(nodo, t.volverAEditar);
-    expect(nodo.textContent).toContain(t.resumenTitulo);
+    await vi.waitFor(() => {
+      expect(nodo.textContent).toContain(t.rechazos.otro);
+    });
+    expect(nodo.querySelector('[data-impacto-k4]')).toBeNull();
+    expect(boton(nodo, t.fusionar).disabled).toBe(true);
   });
 
-  it('PRU-CMP-PRES-283 [FT-20] la confirmación de Fusionar dibuja cada línea del impacto como fila de una tarjeta, AV-01 como advertencia y «Volver a editar» y «Confirmar» en dos columnas de 44 px o más, sin «antes → después»', async () => {
+  it('PRU-CMP-PRES-283 [CA-E4-21, CA-E4-4] la tarjeta K4 de Fusionar dibuja cada línea del impacto como fila, AV-01 como advertencia, sin botones propios ni «antes → después», y el pie de 44 px o más confirma', async () => {
     const accion = vi.fn(() => ok(vista()));
     const nodo = montar(<FormularioFusionar {...base} accion={accion} />);
     await elegirDestino(nodo, 'Salidas');
-    await tocar(nodo, t.fusionar);
-    const tarjeta = nodo.querySelector('section ul');
-    expect(tarjeta?.className).toContain('rounded-contenedor');
-    expect(
-      [...(tarjeta?.querySelectorAll(':scope > li') ?? [])].map((li) => li.textContent),
-    ).toEqual([
+    await conImpacto(nodo);
+    const k4 = nodo.querySelector('[data-impacto-k4]');
+    expect(k4?.querySelector('ul')?.className).toContain('rounded-contenedor');
+    expect([...(k4?.querySelectorAll('ul > li') ?? [])].map((li) => li.textContent)).toEqual([
       t.deltaLpa('+$30.00'),
       t.deltaDisponible('Salidas', '−$30.00'),
       t.deltaPeriodo('21 ene 2027', 'Salidas', '+$50.00'),
       t.metaDescartada('Café'),
     ]);
-    expect(nodo.querySelector('section [data-estado="advertencia"]')?.textContent).toContain(
+    expect(k4?.querySelector('[data-estado="advertencia"]')?.textContent).toContain(
       t.periodoCerrado,
     );
-    expect(document.activeElement?.textContent).toBe(t.revisar);
-    const pie = boton(nodo, t.confirmar).parentElement;
-    expect(pie?.className).toContain('grid-cols-2');
-    const botones = [...(pie?.querySelectorAll('button') ?? [])];
-    expect(botones.map((b) => b.textContent)).toEqual([t.volverAEditar, t.confirmar]);
-    for (const b of botones) expect(b.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expect(k4?.querySelectorAll('button')).toHaveLength(0);
+    expect(boton(nodo, t.fusionar).getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     expect(nodo.textContent).not.toContain('→');
   });
 });

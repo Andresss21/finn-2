@@ -61,12 +61,12 @@ async function previsualizarCafeEnSalidas(page: Page): Promise<void> {
   await page.getByRole('menuitem', { name: 'Fusionar con otra', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Fusionar categorías', level: 1 })).toBeVisible();
   await page.getByLabel('Fusionar con').selectOption({ label: 'Salidas' });
-  await page.getByRole('button', { name: 'Fusionar', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Revisá el impacto' })).toBeVisible();
+  // E4-1: el impacto llega solo, en la tarjeta K4 de la misma pantalla
+  await expect(page.getByRole('heading', { name: 'Antes de confirmar' })).toBeVisible();
 }
 
 async function confirmar(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
+  await page.getByRole('button', { name: 'Fusionar', exact: true }).click();
   await expect(page).toHaveURL(/\/presupuesto\/categorias\/[0-9a-f-]+$/);
 }
 

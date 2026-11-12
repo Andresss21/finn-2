@@ -5,6 +5,7 @@
 // No calcula montos (PF-3): la suma de las partes la valida el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
+import { DatoFijo } from '../../componentes/formularios/dato-fijo';
 import { lazy, Suspense, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
@@ -17,6 +18,7 @@ import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
+import { formatearFecha } from '../../formato';
 import { formularios } from '../../textos/formularios';
 import { programadas as t } from '../../textos/programadas';
 import {
@@ -143,7 +145,14 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             />
           </Suspense>
         )}
-        {edita ? null : (
+        {edita ? (
+          <DatoFijo
+            nombre="tipo"
+            rotulo={t.tipo}
+            valor={t.tipos[c.tipo]}
+            motivo={t.tipoNoSeCambia}
+          />
+        ) : (
           <SelectorSegmentado
             etiqueta={t.tipo}
             opciones={opciones(t.tipos)}
@@ -263,41 +272,58 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             ) : null}
           </>
         )}
-        {calendarioEditable ? null : (
-          <AvisoEnLinea estado="informacion">{p.motivoCalendario}</AvisoEnLinea>
+        {calendarioEditable ? (
+          <>
+            <SeleccionNativa
+              etiqueta={t.frecuencia}
+              opciones={FRECUENCIAS.map((f) => ({ valor: f, etiqueta: t.frecuencias[f] }))}
+              valor={c.frecuencia}
+              alCambiar={(v) => {
+                poner('frecuencia')(v as Campos['frecuencia']);
+              }}
+              marcador={t.frecuencia}
+            />
+            {c.frecuencia === 'cada_n_dias' ? (
+              <EntradaTexto
+                etiqueta={t.cadaDias}
+                requerido
+                inputMode="numeric"
+                value={c.frecuenciaDias}
+                onChange={(e) => {
+                  poner('frecuenciaDias')(e.target.value.replace(/\D/g, ''));
+                }}
+                {...errorDe(errors.frecuenciaDias?.message)}
+              />
+            ) : null}
+            <EntradaFecha
+              nombre="primeraFecha"
+              etiqueta={t.primeraFecha}
+              valor={c.primeraFecha as FechaLocal}
+              alCambiar={poner('primeraFecha')}
+              error={errors.primeraFecha?.message}
+              requerido
+            />
+          </>
+        ) : (
+          // E4-16, E4-19: con historial, la frecuencia y la primera fecha son datos fijos, no controles deshabilitados.
+          <>
+            <DatoFijo
+              nombre="frecuencia"
+              rotulo={t.frecuencia}
+              valor={
+                c.frecuencia === 'cada_n_dias'
+                  ? `${t.frecuencias[c.frecuencia]} · ${c.frecuenciaDias}`
+                  : t.frecuencias[c.frecuencia]
+              }
+            />
+            <DatoFijo
+              nombre="primeraFecha"
+              rotulo={t.primeraFecha}
+              valor={formatearFecha(c.primeraFecha)}
+              motivo={p.motivoCalendario}
+            />
+          </>
         )}
-        <SeleccionNativa
-          deshabilitado={!calendarioEditable}
-          etiqueta={t.frecuencia}
-          opciones={FRECUENCIAS.map((f) => ({ valor: f, etiqueta: t.frecuencias[f] }))}
-          valor={c.frecuencia}
-          alCambiar={(v) => {
-            poner('frecuencia')(v as Campos['frecuencia']);
-          }}
-          marcador={t.frecuencia}
-        />
-        {c.frecuencia === 'cada_n_dias' ? (
-          <EntradaTexto
-            etiqueta={t.cadaDias}
-            requerido
-            inputMode="numeric"
-            disabled={!calendarioEditable}
-            value={c.frecuenciaDias}
-            onChange={(e) => {
-              poner('frecuenciaDias')(e.target.value.replace(/\D/g, ''));
-            }}
-            {...errorDe(errors.frecuenciaDias?.message)}
-          />
-        ) : null}
-        <EntradaFecha
-          nombre="primeraFecha"
-          etiqueta={t.primeraFecha}
-          valor={c.primeraFecha as FechaLocal}
-          alCambiar={poner('primeraFecha')}
-          error={errors.primeraFecha?.message}
-          deshabilitado={!calendarioEditable}
-          requerido
-        />
         <EntradaFecha
           nombre="fechaFin"
           etiqueta={t.fechaFin}

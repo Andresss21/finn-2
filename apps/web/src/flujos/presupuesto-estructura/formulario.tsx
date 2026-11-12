@@ -28,6 +28,9 @@ export interface PropsFormularioEstructura {
   readonly grupoInicial?: string;
   readonly superpuesto: boolean;
   readonly motivoHistorial?: string;
+  /** E4-5: `grupo_con_categorias_activas` y `grupo_no_vacio`, cuando bloquean «Archivar grupo» y «Eliminar grupo». */
+  readonly motivoArchivarGrupo?: string;
+  readonly motivoEliminarGrupo?: string;
 }
 
 const RAIZ = '/presupuesto/estructura';
@@ -158,6 +161,7 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
   const { estado } = operacion;
   const errorNombre = formulario.formState.errors.nombre?.message;
   const sinCambios = !nuevo && !formulario.formState.isDirty;
+  const motivoEliminar = p.motivoHistorial ?? p.motivoEliminarGrupo;
   const motivo = !operacion.enLinea
     ? operacion.motivoSinEnvio
     : sinCambios
@@ -203,6 +207,10 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
               variante="secundaria"
               enviando={baja.estado === 'enviando' && archivando}
               textoEnviando={t.archivando}
+              deshabilitado={p.motivoArchivarGrupo !== undefined}
+              {...(p.motivoArchivarGrupo === undefined
+                ? {}
+                : { motivoDeshabilitado: p.motivoArchivarGrupo })}
               onClick={() => {
                 quitar(true);
               }}
@@ -214,15 +222,15 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
             variante="peligro"
             enviando={baja.estado === 'enviando' && !archivando}
             textoEnviando={t.eliminando}
-            deshabilitado={fila?.puedeEliminar === false}
-            {...(p.motivoHistorial === undefined ? {} : { motivoDeshabilitado: p.motivoHistorial })}
+            deshabilitado={fila?.puedeEliminar === false || p.motivoEliminarGrupo !== undefined}
+            {...(motivoEliminar === undefined ? {} : { motivoDeshabilitado: motivoEliminar })}
             onClick={() => {
               quitar(false);
             }}
           >
             {esGrupo ? t.eliminarGrupo : t.eliminarCategoria}
           </Boton>
-          {fila?.puedeEliminar === false ? (
+          {fila !== undefined && !fila.archivada ? (
             <div className="flex flex-wrap">
               <EnlaceFinn
                 href={`/presupuesto/categorias/${fila.categoria.id}/archivar`}

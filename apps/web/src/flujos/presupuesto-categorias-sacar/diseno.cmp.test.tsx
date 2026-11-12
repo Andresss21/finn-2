@@ -90,7 +90,6 @@ describe('PRU-CMP-PRES', () => {
     expect(nodo.querySelectorAll('[aria-labelledby="fusion-resumen"] li')).toHaveLength(5);
     expect(nodo.textContent).toContain('Se descarta la meta de Restaurantes.');
     const fusionar = boton(nodo, 'Fusionar');
-    expect(fusionar?.getAttribute('form')).toBe('formulario-fusionar');
     expect(fusionar?.closest('form')).toBeNull();
     expect(alto(fusionar)).toBeGreaterThanOrEqual(44);
   });
@@ -130,8 +129,7 @@ describe('PRU-CMP-PRES', () => {
     expect(nodo.querySelector('select')).not.toBeNull();
     expect(nodo.querySelectorAll('[role="radiogroup"]')).toHaveLength(0);
     expect(nodo.querySelector('[data-futuras]')?.className).toContain('shadow-elevacion-1');
-    const archivar = boton(nodo, 'Archivar');
-    expect(archivar?.getAttribute('form')).toBe('formulario-archivar');
+    const archivar = boton(nodo, 'Archivar Supermercado');
     expect(archivar?.closest('form')).toBeNull();
     expect(alto(archivar)).toBeGreaterThanOrEqual(44);
   });

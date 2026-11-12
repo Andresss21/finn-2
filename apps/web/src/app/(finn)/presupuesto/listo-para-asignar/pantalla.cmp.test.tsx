@@ -190,3 +190,50 @@ describe('PRU-CMP-PRES', () => {
     }
   });
 });
+
+describe('PRU-CMP-PRES detalle de Listo para asignar, entrega 4', () => {
+  it('PRU-CMP-PRES-722 [CA-C-3] el detalle no tiene fila «Arrastre» y sus filas de composición son las de DetalleLpaDto', () => {
+    const nodo = montar(<PantallaListoParaAsignar dto={dto()} />);
+    expect(nodo.textContent).not.toMatch(/Arrastre/i);
+    const filas = [...nodo.querySelectorAll('[data-seccion="descomposicion"] dl > div')];
+    // 4 entradas y 6 conceptos que restan: exactamente los campos de `descomposicion` del DTO.
+    expect(filas.map((f) => f.querySelector('dt')?.textContent)).toEqual([
+      'Ingresos',
+      'Otras entradas',
+      'Restituciones',
+      'Saldos iniciales',
+      'Asignado en períodos cerrados',
+      'Asignado en el período actual',
+      'Asignado en períodos futuros',
+      'Reducciones por sobregiro con débito',
+      'Reducciones por pago excedente',
+      'En camino',
+    ]);
+  });
+
+  it('PRU-CMP-PRES-723 [CA-C-3] «Asignaste más de lo que tenés» va en texto sobre marca con al menos 4.5:1 sobre el billete', () => {
+    const nodo = montar(<PantallaListoParaAsignar dto={dto({ lpa: -8615, lpaNegativo: true })} />);
+    const linea = [...nodo.querySelectorAll('[data-tarjeta-billete] [data-estado]')].find((x) =>
+      x.textContent.includes('Asignaste más de lo que tenés'),
+    ) as HTMLElement;
+    expect(linea).toBeDefined();
+    const lum = (rgb: string) => {
+      const [r = 0, g = 0, b = 0] = (rgb.match(/[\d.]+/g) ?? [])
+        .slice(0, 3)
+        .map(Number)
+        .map((v) => {
+          const x = v / 255;
+          return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+        });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const fondo = getComputedStyle(
+      nodo.querySelector('[data-tarjeta-billete]') as Element,
+    ).backgroundColor;
+    const [a, b] = [lum(getComputedStyle(linea).color), lum(fondo)].sort((m, n) => n - m) as [
+      number,
+      number,
+    ];
+    expect((a + 0.05) / (b + 0.05)).toBeGreaterThanOrEqual(4.5);
+  });
+});
