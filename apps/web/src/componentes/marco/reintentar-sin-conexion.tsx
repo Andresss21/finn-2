@@ -7,6 +7,7 @@ import { almacen } from '../../cliente/almacen';
 import { base } from '../../textos/base';
 import { navegacion } from '../../textos/navegacion';
 import { Boton } from '../base/boton';
+import { Icono } from '../base/icono';
 
 export function ReintentarSinConexion() {
   const [borrador, setBorrador] = useState(false);
@@ -15,7 +16,12 @@ export function ReintentarSinConexion() {
   }, []);
   return (
     <>
-      {borrador ? <p>{navegacion.sinConexionPagina.borrador}</p> : null}
+      {borrador ? (
+        <p className="text-cuerpo-pequeno inline-flex items-center gap-1.5 text-positivo-texto">
+          <Icono nombre="check" tamano={18} />
+          {navegacion.sinConexionPagina.borrador}
+        </p>
+      ) : null}
       <Boton
         onClick={() => {
           location.reload();

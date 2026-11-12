@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../globals.css';
 import { notificaciones as textos } from '../../../textos/notificaciones';
+import ErrorDelPanel from '../@superpuesto/(.)notificaciones/error';
 import { ContenidoNotificaciones } from './contenido';
 
 // `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene: se simula `next/link`, nunca
@@ -18,6 +19,11 @@ vi.mock('next/link', async () => {
     createElement('a', { href, ...resto }, children);
   return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
 });
+
+// Solo el límite externo: el panel de error usa el enrutador de Next.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: () => undefined, back: () => undefined }),
+}));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -180,5 +186,41 @@ describe('PRU-CMP-NOTIF-110 centro de notificaciones', () => {
     );
     const resultado = await axe.run(raiz);
     expect(resultado.violations.map((v) => v.id)).toEqual([]);
+  });
+});
+
+describe('PRU-CMP-NOTIF panel de notificaciones (E6-9)', () => {
+  it('PRU-CMP-NOTIF-701 [CA-E6-12] el panel vacío, todo leído y con error, cada uno con su texto; el error con su referencia e «Intentar de nuevo»', async () => {
+    const vacio = contenido(dto([], 0));
+    expect(vacio.textContent).toContain(t.vacioTitulo);
+    expect(vacio.textContent).toContain('Sin leer: 0');
+
+    const leido = contenido(dto([fila({ leida: true }), fila({ id: 'n2', leida: true })], 0));
+    expect(leido.textContent).toContain('Sin leer: 0');
+    expect(leido.textContent).toContain(t.todoLeido);
+    const titulos = [...leido.querySelectorAll('h2')].map((h) => h.textContent);
+    expect(titulos).toContain(t.anteriores);
+    expect(t.anteriores).toBe('Leídas');
+    expect(leido.querySelector('[data-contador]')).toBeNull();
+
+    const error = Object.assign(new Error('x'), { digest: 'REF-123' });
+    const reset = vi.fn();
+    const panel = mostrar(<ErrorDelPanel error={error} reset={reset} />);
+    const dialogo = document.querySelector('[role="dialog"]') as HTMLElement;
+    expect(dialogo.getAttribute('aria-labelledby')).not.toBeNull();
+    expect(
+      document.getElementById(dialogo.getAttribute('aria-labelledby') ?? '')?.textContent,
+    ).toBe(textos.titulo);
+    expect(dialogo.textContent).toContain('REF-123');
+    expect(dialogo.querySelector('[aria-label="Copiar la referencia"]')).not.toBeNull();
+    const reintentar = [...dialogo.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Intentar de nuevo',
+    );
+    expect(reintentar).not.toBeUndefined();
+    await act(async () => {
+      await userEvent.click(reintentar as HTMLElement);
+    });
+    expect(reset).toHaveBeenCalled();
+    expect(panel).not.toBeNull();
   });
 });

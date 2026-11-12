@@ -507,7 +507,7 @@ test.describe('PRU-E2E-TX', () => {
     const boton = await guardar(page).boundingBox();
     const lineas = await page.locator('[data-campo-lineas]').boundingBox();
     const alto = page.viewportSize()?.height ?? 0;
-    if ((page.viewportSize()?.width ?? 0) >= 768) {
+    if ((page.viewportSize()?.width ?? 0) >= 1024) {
       expect(Math.abs((boton?.x ?? 0) - (lineas?.x ?? 99))).toBeLessThan(2);
     } else {
       expect((boton?.y ?? 0) + (boton?.height ?? 0)).toBeGreaterThan(alto - 40);

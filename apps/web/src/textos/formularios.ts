@@ -2,14 +2,16 @@ import { glosario } from './glosario';
 // Textos del patrón de escritura (05 §4.7 y §4.8): los que produce el cliente; los del servidor llegan en `mensaje`.
 export const formularios = {
   sinConexion: 'Estás sin conexión. No se envió nada; intentá de nuevo cuando vuelva la conexión.',
-  sinConexionMotivo: 'Sin conexión',
+  sinConexionMotivo: 'Sin conexión: no se puede guardar ahora.',
   yaEstabaGuardado: 'Ya estaba guardado',
   noExiste: 'Esto ya no existe.',
   intentarDeNuevo: 'Intentar de nuevo',
   cancelar: 'Cancelar',
   impactoCambio: 'El impacto cambió',
-  versionNueva: 'Hay una versión nueva de Finn. Recargá para continuar.',
+  versionNueva: 'Hay una versión nueva de Finn.',
   recargar: 'Recargar',
+  verGuardado: 'Ver lo guardado',
+  guardarComoNuevo: 'Guardar como nuevo',
   borradorRecuperado: 'Recuperamos lo que estabas escribiendo',
   descartarBorrador: 'Descartar borrador',
   borradorCuerpo: 'Lo guardamos en este dispositivo cuando saliste sin guardar.',

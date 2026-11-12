@@ -9,6 +9,8 @@ import { Superpuesto, type DesdeSuperpuesto } from '../marco/superpuesto';
 import { PaginaFlujo } from '../marco/pagina-flujo';
 import { AvisoEnLinea, type EstadoFinanciero } from './aviso';
 import { ErrorPantalla } from './error-pantalla';
+import { formularios } from '../../textos/formularios';
+import { Boton } from './boton';
 import { Resultado } from './resultado';
 import { Vacio } from './vacio';
 
@@ -480,5 +482,27 @@ describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
     // Otro `animationend` (o el tope de la duración del token) no lo llama de nuevo.
     terminarAnimacion(d);
     expect(cerrarFlujo).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PRU-CMP-PWA sin conexión en los envíos', () => {
+  it('PRU-CMP-PWA-741 [CA-E4-23] un control de envío sin conexión queda disabled con aria-describedby hacia «Sin conexión: no se puede guardar ahora.»', () => {
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    montados.push({ raiz, nodo });
+    act(() => {
+      raiz.render(
+        <Boton tipo="submit" deshabilitado motivoDeshabilitado={formularios.sinConexionMotivo}>
+          Guardar
+        </Boton>,
+      );
+    });
+    const boton = nodo.querySelector('button') as HTMLButtonElement;
+    expect(boton.disabled).toBe(true);
+    const motivo = nodo.querySelector(
+      `#${CSS.escape(boton.getAttribute('aria-describedby') ?? '')}`,
+    );
+    expect(motivo?.textContent).toBe('Sin conexión: no se puede guardar ahora.');
   });
 });

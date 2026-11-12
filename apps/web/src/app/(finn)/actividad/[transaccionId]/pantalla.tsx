@@ -26,6 +26,12 @@ const TARJETA_PARTES =
   'divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1';
 const RESUMEN = 'text-cuerpo-pequeno text-texto-secundario';
 const RESUMEN_SIN_CUBRIR = 'text-cuerpo-pequeno text-problema-texto';
+// ACT-17: un glifo por estado (reloj, visto y conciliación), el mismo de la fila de Actividad.
+const GLIFO_ESTADO_BANCARIO = {
+  pendiente: 'clock',
+  confirmada: 'check',
+  conciliada: 'reconcile',
+} as const;
 const PASTILLA =
   'inline-flex min-h-8 items-center gap-1.5 rounded-pastilla bg-superficie-hundida px-3 text-cuerpo-pequeno font-medium';
 
@@ -245,7 +251,7 @@ export function PantallaDetalleTransaccion({
         </span>
         <div className="flex flex-wrap gap-2">
           <span className={PASTILLA}>
-            <Icono nombre="check" tamano={16} />
+            <Icono nombre={GLIFO_ESTADO_BANCARIO[x.estadoBancario]} tamano={16} />
             {dominio.estadoBancario[x.estadoBancario]}
           </span>
           <span className={PASTILLA}>

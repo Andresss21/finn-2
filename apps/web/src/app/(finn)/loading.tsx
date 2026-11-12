@@ -1,20 +1,15 @@
-// Estado de carga (05 §7.1, FE-33): sin números ni ceros inventados, solo bloques de la estructura; la región lleva
-// `aria-busy` y el texto accesible «Cargando…» se anuncia una vez. Con movimiento reducido no hay animación.
-import { estados } from '../../textos/estados';
-
-const BLOQUES = [
-  'h-8 w-1/2 rounded-pastilla bg-superficie-hundida motion-safe:animate-pulse',
-  'h-24 w-full rounded-pastilla bg-superficie-hundida motion-safe:animate-pulse',
-  'h-24 w-full rounded-pastilla bg-superficie-hundida motion-safe:animate-pulse',
-] as const;
+// Estado de carga de `(finn)` (E6-1, FE-33, GLO-32; `T1-carga/inicio`): lo que carga Inicio y toda pantalla que no trae el suyo. Este
+// archivo no conoce la ruta, así que no pone título: la barra queda sin título y el cuerpo, en esqueleto, sin números inventados.
+import { BloqueGrafico, Esqueleto, SeccionEsqueleto } from '../../componentes/navegacion/esqueleto';
 
 export default function Cargando() {
   return (
-    <div role="status" aria-busy="true" className="flex flex-col gap-4 p-4">
-      <span className="sr-only">{estados.cargando}</span>
-      {BLOQUES.map((clases, i) => (
-        <div key={i} className={clases} aria-hidden="true" />
-      ))}
-    </div>
+    <main className="mx-auto flex max-w-3xl flex-col gap-5 px-5 py-4">
+      <Esqueleto pantalla="la pantalla">
+        <BloqueGrafico />
+        <SeccionEsqueleto filas={3} />
+        <SeccionEsqueleto filas={2} />
+      </Esqueleto>
+    </main>
   );
 }

@@ -124,7 +124,7 @@ describe('PRU-CMP-REP-150 reportes: plantilla común', () => {
     );
   });
 
-  it('PRU-CMP-REP-152 [FT-60] el estado de carga anuncia «Cargando la pantalla» una vez, con las pestañas y la tarjeta como bloques, sin números', () => {
+  it('PRU-CMP-REP-152 [FT-60] el estado de carga anuncia «Cargando reportes» una vez, con las pestañas y la tarjeta como bloques, sin números', () => {
     const nodo = document.createElement('div');
     document.body.append(nodo);
     const raiz = createRoot(nodo);
@@ -132,9 +132,8 @@ describe('PRU-CMP-REP-150 reportes: plantilla común', () => {
       raiz.render(<Cargando />);
     });
     montados.push({ raiz, nodo });
-    const region = nodo.querySelector('[role="status"]');
-    expect(region?.getAttribute('aria-busy')).toBe('true');
-    expect(region?.textContent).toBe('Cargando la pantalla');
+    expect(nodo.querySelector('[role="status"]')?.textContent).toBe('Cargando reportes');
+    expect(nodo.querySelector('[aria-busy="true"]')).not.toBeNull();
     expect(nodo.querySelector('h1')?.textContent).toBe('Reportes');
     expect(nodo.querySelector('[data-centavos]')).toBeNull();
   });

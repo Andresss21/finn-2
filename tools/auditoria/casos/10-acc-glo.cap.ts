@@ -1273,7 +1273,7 @@ caso({
       .context()
       .grantPermissions(['clipboard-write'])
       .catch(() => undefined);
-    await page.getByRole('button', { name: 'Copiar referencia' }).click();
+    await page.getByRole('button', { name: 'Copiar la referencia' }).click();
     await page.waitForTimeout(300);
   },
 });
