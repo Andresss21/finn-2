@@ -3,6 +3,7 @@
 // meta, o de eliminarla; con «Extender la fecha» y «Ajustar el monto» si venció. Es el formulario de `/metas/nueva` sin el tipo
 // ni la categoría. Envía solo lo que cambió, con lo que vio la persona como `esperado` (4.6.2). No calcula montos (PF-3).
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
+import { DatoFijo } from '../../componentes/formularios/dato-fijo';
 import { useCallback, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
@@ -146,9 +147,12 @@ function Cuerpo(p: {
             {t.vencida.texto(meta.categoria, formatearFecha(meta.fechaObjetivo ?? ''))}
           </AvisoEnLinea>
         ) : null}
-        <p className="text-cuerpo-pequeno text-texto-secundario">
-          {t.tipo}: {t.tipos[meta.tipo]}
-        </p>
+        <DatoFijo
+          nombre="tipo"
+          rotulo={t.tipo}
+          valor={t.tipos[meta.tipo]}
+          motivo={t.tipoNoSeCambia}
+        />
         {porPeriodo ? (
           <SelectorSegmentado
             etiqueta={t.modo}

@@ -401,7 +401,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     );
   });
 
-  it('PRU-CMP-PRES-105 una categoría archivada con Disponible ofrece «Sacar el dinero» y «Desarchivar» y no asignar ni mover', async () => {
+  it('PRU-CMP-PRES-105 una categoría archivada con Disponible ofrece el aviso AV-14 con «Elegir destino y monto» y «Desarchivar» y no asignar ni mover', async () => {
     const raiz = mostrar(
       dto({
         categoria: { id: ID, nombre: 'Gimnasio', archivada: true },
@@ -410,7 +410,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
       }),
     );
     expect(raiz.textContent).toContain('Categoría archivada');
-    expect(enlace(raiz, 'Sacar el dinero')?.getAttribute('href')).toBe(
+    expect(enlace(raiz, 'Elegir destino y monto')?.getAttribute('href')).toBe(
       `/presupuesto/categorias/${ID}/sacar`,
     );
     expect(enlace(raiz, 'Asignar')).toBeUndefined();
@@ -644,6 +644,52 @@ describe('Detalle de categoría: cobertura de cada consumo (A6)', () => {
 });
 
 describe('PRU-CMP-CATEG entrega 4', () => {
+  it('PRU-CMP-CATEG-731 [CH-240] el detalle de una archivada con Disponible muestra AV-14 y sus dos acciones, la meta en pausa y ningún «Eliminar»; «Archivar» en una activa con Disponible va deshabilitado con su motivo', async () => {
+    const sacar = vi.fn(() =>
+      Promise.resolve({ ok: true as const, valor: {}, yaAplicada: false, avisos: [] }),
+    );
+    const archivada = dto({
+      categoria: { id: ID, nombre: 'Gimnasio', archivada: true },
+      numeros: { ...ceros, entradas: 2500, disponible: 2500 },
+      meta: { id: 'm', tipo: 'mensual', monto: 3000, falta: 0 },
+      acciones: { ...acciones, puedeAsignar: false, puedeArchivar: false, puedeEliminar: false },
+    });
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raizReact = createRoot(nodo);
+    act(() => {
+      raizReact.render(
+        <PantallaDetalleCategoria dto={archivada} desarchivar={desarchivar} sacar={sacar} />,
+      );
+    });
+    montados.push({ raiz: raizReact, nodo });
+    const aviso = nodo.querySelector('[data-aviso="av-14"]') as HTMLElement;
+    expect(sinEspacios(aviso)).toContain('Gimnasio está archivada y tiene $25.00');
+    expect(boton(aviso, 'Sacar $25.00 a Listo para asignar')).toBeDefined();
+    expect(enlace(aviso, 'Elegir destino y monto')).toBeDefined();
+    expect(nodo.querySelector('[data-meta-pausa]')?.textContent).toBe(
+      'En pausa: no pide dinero mientras Gimnasio esté archivada.',
+    );
+    expect(boton(nodo, 'Desarchivar')).toBeDefined();
+    expect(nodo.textContent).not.toContain('Eliminar');
+
+    const activa = await abrirMenu(
+      dto({
+        numeros: { ...ceros, disponible: 1000 },
+        acciones: { ...acciones, bloqueosArchivo: ['disponible'], puedeArchivar: false },
+      }),
+    );
+    const archivar = [...activa.querySelectorAll('[role="menuitem"], button, a')].find((x) =>
+      x.textContent.includes('Archivar'),
+    );
+    expect(
+      archivar?.getAttribute('aria-disabled') ?? archivar?.hasAttribute('disabled'),
+    ).toBeTruthy();
+    expect(activa.textContent).toContain(
+      'No se puede archivar: tiene Disponible distinto de cero.',
+    );
+  });
+
   it('PRU-CMP-CATEG-711 [CA-E4-19] a 1440 px el historial pone el gráfico arriba y la tabla debajo, y la tabla no desborda su tarjeta', async () => {
     await page.viewport(1440, 900);
     const historial = [

@@ -11,6 +11,9 @@ export const reglas = {
   buscar: 'Buscar reglas',
   buscarMarcador: 'Comercio o categoría',
   sinCoincidencias: 'Ninguna regla con ese texto',
+  // E4-22: el vacío de la búsqueda dice qué se buscó y ofrece quitarla.
+  ningunaPara: (busqueda: string) => `Ninguna regla para ${busqueda}.`,
+  quitarBusqueda: 'Quitar la búsqueda',
   noSeAplica: 'No se aplica: la categoría está archivada',
   hacia: (categoria: string) => `→ ${categoria}`,
   archivadaEnLista: (categoria: string) => `${categoria} (archivada)`,

@@ -22,6 +22,7 @@ import { formatearFecha, formatearMonto, formatearPeriodoNumerico } from '../../
 import { categoriaDetalle as t } from '../../../../../textos/categoria-detalle';
 import { ConsumosYCalendario } from './calendario';
 import { Desarchivar } from './desarchivar';
+import { SacarDeUnToque } from '../../sacar-un-toque';
 import { Historial } from './historial';
 import { PantallaPagoTarjeta } from './pago';
 import { MontoDestello } from '../../../../../componentes/dominio/monto-destello';
@@ -52,9 +53,12 @@ function Seccion({
 export function PantallaDetalleCategoria({
   dto,
   desarchivar,
+  sacar,
 }: {
   readonly dto: DetalleCategoriaDto;
   readonly desarchivar: AccionEscritura;
+  /** `sacarDisponible` (OP-11): la pone el lector; sin ella no se ofrece la propuesta de AV-14. */
+  readonly sacar?: AccionEscritura;
 }) {
   const { categoria, periodoActivo } = dto;
   const conPeriodo = (ruta: string): string =>
@@ -215,7 +219,8 @@ export function PantallaDetalleCategoria({
             {sobregiro.parteDebito === 0 ? null : (
               <AvisoEnLinea estado="problema" titulo={t.sobregiro.debito}>
                 {t.sobregiro.conDebito} <Monto centavos={sobregiro.parteDebito} />.{' '}
-                {cerrado ? t.sobregiro.alCerrarCerrado : t.sobregiro.alCerrar} <Monto centavos={sobregiro.parteDebito} />.
+                {cerrado ? t.sobregiro.alCerrarCerrado : t.sobregiro.alCerrar}{' '}
+                <Monto centavos={sobregiro.parteDebito} />.
               </AvisoEnLinea>
             )}
             {sobregiro.parteTarjeta === 0 ? null : (
@@ -237,9 +242,38 @@ export function PantallaDetalleCategoria({
           </div>
         )}
 
+        {archivada && numeros.disponible > 0 ? (
+          <div data-aviso="av-14">
+            <AvisoEnLinea
+              estado="advertencia"
+              titulo={t.archivadaConDinero(categoria.nombre, formatearMonto(numeros.disponible))}
+            >
+              <div className="flex flex-col gap-2">
+                <p>{t.archivadaTexto}</p>
+                {sacar === undefined ? null : (
+                  <SacarDeUnToque
+                    categoriaId={categoria.id}
+                    asignado={numeros.asignado}
+                    disponible={numeros.disponible}
+                    accion={sacar}
+                  />
+                )}
+                <EnlaceFinn href={`${raiz}/sacar`} className={TONAL}>
+                  {t.elegirDestino}
+                </EnlaceFinn>
+              </div>
+            </AvisoEnLinea>
+          </div>
+        ) : null}
+
         {meta === null ? null : (
           <Seccion titulo={t.meta.titulo} atributo="meta">
             <ResumenMeta meta={meta} conseguido={numeros.disponible} />
+            {archivada ? (
+              <p data-meta-pausa className="text-cuerpo-pequeno text-texto-secundario">
+                {t.metaEnPausa(categoria.nombre)}
+              </p>
+            ) : null}
           </Seccion>
         )}
       </div>
@@ -344,12 +378,10 @@ export function PantallaDetalleCategoria({
             </EnlaceFinn>
           </div>
         ) : null}
-        {archivada && numeros.disponible > 0 ? (
-          <EnlaceFinn href={`${raiz}/sacar`} className={TONAL}>
-            {t.acciones.sacar}
-          </EnlaceFinn>
-        ) : null}
         {archivada ? <Desarchivar categoriaId={categoria.id} accion={desarchivar} /> : null}
+        {archivada ? (
+          <p className="text-cuerpo-pequeno text-texto-secundario">{t.desarchivarPrimero}</p>
+        ) : null}
       </nav>
     </main>
   );

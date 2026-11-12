@@ -137,9 +137,15 @@ describe('PRU-CMP-COBRO-101 por cobrar', () => {
       />,
     );
     const fila = cerrada.querySelector('[data-partida="l1"]');
-    expect(fila?.textContent).toContain('Cerrado');
+    // E4-21: «Cerrados · N» con su estado «cobrado» y sin acciones; el interruptor pasa a «Ocultar los cerrados».
+    expect(cerrada.querySelector('[data-seccion="cerrados"] h2')?.textContent).toBe('Cerrados · 1');
+    expect(fila?.textContent).toContain('cobrado');
     expect(fila?.querySelectorAll('a')).toHaveLength(0);
-    expect(cerrada.querySelector('[role="switch"]')?.getAttribute('aria-checked')).toBe('true');
+    expect(cerrada.querySelector('[role="switch"]')).toBeNull();
+    expect(
+      [...cerrada.querySelectorAll('a')].find((a) => a.textContent === 'Ocultar los cerrados')
+        ?.getAttribute('href'),
+    ).toBe('/por-cobrar');
 
     const vacia = mostrar(<PantallaPorCobrar dto={dto([], 0, 0)} cerrados={false} />);
     expect(vacia.textContent).toContain('Nadie te debe nada');

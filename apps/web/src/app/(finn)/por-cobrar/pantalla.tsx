@@ -3,6 +3,7 @@
 // enlaces a sus rutas; una partida cerrada no los ofrece (no tiene saldo abierto).
 import type { PorCobrarDto } from '@finn/aplicacion/consultas/por-cobrar';
 import type { Centavos } from '@finn/dominio/valores';
+import { porCobrarEntrega4 as e4 } from '../../../textos/por-cobrar-entrega-4';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
 import { InterruptorEnlace } from '../../../componentes/base/interruptor-enlace';
 import { Vacio } from '../../../componentes/base/vacio';
@@ -123,6 +124,54 @@ function TarjetaDeudor({ d }: { readonly d: Deudor }) {
   );
 }
 
+/** E4-21: las partidas cerradas, de todos los deudores, en una sola sección sin acciones (cobradas o condonadas). */
+function Cerrados({
+  cerradas,
+}: {
+  readonly cerradas: readonly (Partida & { readonly deudor: string })[];
+}) {
+  return (
+    <section
+      data-seccion="cerrados"
+      aria-labelledby="cerrados"
+      className="flex flex-col gap-2 rounded-contenedor bg-superficie p-4 shadow-elevacion-1"
+    >
+      <h2 id="cerrados" className="text-rotulo text-texto-secundario">
+        {e4.cerrados(cerradas.length)}
+      </h2>
+      <ul className="flex flex-col">
+        {cerradas.map((x) => {
+          const condonada = x.condonado > 0;
+          return (
+            <li
+              key={x.lineaId}
+              data-partida={x.lineaId}
+              data-partida-estado={x.estado}
+              data-cierre={condonada ? 'condonado' : 'cobrado'}
+              className="flex items-start justify-between gap-3 border-t border-borde-sutil py-3 first:border-t-0"
+            >
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <p className="text-cuerpo font-semibold">
+                  {x.deudor} · {x.comercio ?? dominio.sinComercio}
+                </p>
+                <p className="text-cuerpo-pequeno text-texto-secundario">
+                  {formatearFecha(x.fechaOrigen)} · {t.medios[x.medio]} ·{' '}
+                  {condonada ? e4.condonado : e4.cobrado}{' '}
+                  <Monto
+                    centavos={condonada ? x.condonado : x.restituido}
+                    rol="cuerpo"
+                    presentacion="absoluto"
+                  />
+                </p>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export function PantallaPorCobrar({
   dto,
   cerrados,
@@ -130,7 +179,13 @@ export function PantallaPorCobrar({
   readonly dto: PorCobrarDto;
   readonly cerrados: boolean;
 }) {
-  const hayDeudores = dto.deudores.length > 0;
+  const cerradas = dto.deudores.flatMap((d) =>
+    d.items.filter((x) => x.estado === 'cerrado').map((x) => ({ ...x, deudor: d.deudor.nombre })),
+  );
+  const deudores = dto.deudores
+    .map((d) => ({ ...d, items: d.items.filter((x) => x.estado !== 'cerrado') }))
+    .filter((d) => d.items.length > 0);
+  const hayDeudores = deudores.length > 0;
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-5 px-5 py-4">
       <PublicarEncabezado encabezado={dto} />
@@ -158,7 +213,7 @@ export function PantallaPorCobrar({
             {dto.enCamino > 0 ? t.avisoEnCamino : t.avisoSinEnCamino}
           </AvisoEnLinea>
           <div className="flex flex-col gap-4">
-            {dto.deudores.map((d) => (
+            {deudores.map((d) => (
               <TarjetaDeudor key={d.deudor.id} d={d} />
             ))}
           </div>
@@ -166,12 +221,15 @@ export function PantallaPorCobrar({
       ) : (
         <Vacio titulo={t.vacioTitulo} texto={t.vacioTexto} icono="cero" />
       )}
+      {cerrados && cerradas.length > 0 ? <Cerrados cerradas={cerradas} /> : null}
       {/* Cada estado del interruptor tiene su URL y funciona sin hidratar. */}
-      <InterruptorEnlace
-        href={cerrados ? '/por-cobrar' : '/por-cobrar?cerrados=1'}
-        activo={cerrados}
-        etiqueta={t.verCerrados}
-      />
+      {cerrados ? (
+        <EnlaceFinn href="/por-cobrar" className={ENLACE}>
+          {e4.ocultarCerrados}
+        </EnlaceFinn>
+      ) : (
+        <InterruptorEnlace href="/por-cobrar?cerrados=1" activo={false} etiqueta={t.verCerrados} />
+      )}
     </main>
   );
 }

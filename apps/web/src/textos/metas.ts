@@ -12,6 +12,7 @@ export const metas = {
   volver: 'Volver a Metas',
   categoria: 'Categoría',
   tipo: 'Tipo de meta',
+  tipoNoSeCambia: 'El tipo no se cambia. Para otro tipo, eliminá la meta y creá otra.',
   tipos: { mensual: 'Mensual', semanal: 'Semanal', anual: 'Anual', para_fecha: 'Para una fecha' },
   modo: 'Modo',
   modos: { acumular: 'Acumular', rellenar_hasta: 'Rellenar hasta' },

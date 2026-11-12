@@ -420,7 +420,7 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     const id = await page.locator('[data-archivada]').getAttribute('data-archivada');
     await abrir(page, `${RUTA}/categorias/${id}`);
     await expect(page.getByText('Categoría archivada')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Sacar el dinero' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Elegir destino y monto' })).toHaveAttribute(
       'href',
       `/presupuesto/categorias/${id}/sacar`,
     );

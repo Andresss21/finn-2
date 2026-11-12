@@ -29,6 +29,41 @@ const OPS: Op[] = [
   },
 ];
 
+// ESC-44 hasta el paso 2 (hoy 5 mar): Gimnasio archivada con $25.00 de Disponible y su programada desactivada.
+const ESC44: Op[] = [
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-07', categoria: 'Gimnasio' },
+  { op: 'OP-21', monto: 700, fecha: '2027-01-25', hoy: '2027-01-25' },
+  { op: 'OP-14', categoria: 'Gimnasio', monto: 70, periodo: 'P1', hoy: '2027-01-25' },
+  {
+    op: 'OP-20',
+    cuenta: 'Ahorro',
+    monto: 30,
+    categoria: 'Gimnasio',
+    fecha: '2027-02-02',
+    hoy: '2027-02-02',
+    etiqueta: 'gimnasio',
+  },
+  { op: 'OP-14', categoria: 'Gimnasio', monto: 30, periodo: 'P3' },
+  {
+    op: 'OP-42',
+    etiqueta: 'gimnasio',
+    cuenta: 'Ahorro',
+    comercio: 'Gimnasio',
+    monto: 30,
+    categoria: 'Gimnasio',
+    primeraFecha: '2027-03-10',
+  },
+  {
+    op: 'OP-09',
+    categoria: 'Gimnasio',
+    destino: 'LPA',
+    devolverFuturas: true,
+    desactivar: ['gimnasio'],
+  },
+  { op: 'OP-33', compra: 'gimnasio', monto: 25 },
+];
+
 async function sembrarOps(ops: Op[], hoy: string): Promise<void> {
   fijarRelojServidor(`${hoy}T10:00:00-06:00`);
   await sembrar(
@@ -167,5 +202,38 @@ test.describe('PRU-E2E-PRES entrega 4', () => {
     expect((await suma(0)) - (await suma(1))).toBe(total);
     await expect(page.getByText('Arrastre')).toHaveCount(0);
     await expect(page.locator('[data-seccion="historial"]')).not.toContainText(/adelanto/i);
+  });
+
+  test('PRU-E2E-CATEG-731 [CH-240] desde Estructura, Editar categoría abre la hoja, «Guardar» se habilita al cambiar el nombre y un nombre repetido muestra el error en el campo', async ({
+    page,
+  }) => {
+    await sembrarOps(OPS, '2027-02-10');
+    await abrir(page, '/presupuesto/estructura');
+    await page.getByRole('link', { name: 'Editar Super', exact: true }).click();
+    await esperarContenido(page);
+    const guardar = page.getByRole('button', { name: 'Guardar', exact: true });
+    await expect(guardar).toBeDisabled();
+    const nombre = page.getByLabel('Nombre');
+    await nombre.fill('Super mercado');
+    await expect(guardar).toBeEnabled();
+    await nombre.fill('Salidas');
+    await guardar.click();
+    await expect(page.locator('[aria-invalid="true"]').first()).toBeVisible();
+  });
+
+  test('PRU-E2E-CATEG-732 [CH-240] «Archivadas · N» se abre, «Desarchivar» deja el resultado en el lugar y la categoría vuelve a su grupo', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC44, '2027-03-05');
+    await abrir(page, '/presupuesto/estructura');
+    const resumen = page.getByText('Archivadas · 1');
+    await expect(resumen).toBeVisible();
+    await resumen.click();
+    const fila = page.locator('[data-archivada]').filter({ hasText: 'Gimnasio' });
+    await expect(fila).toBeVisible();
+    await fila.getByRole('button', { name: 'Desarchivar', exact: true }).click();
+    await expect(page.getByText(/^Desarchivaste Gimnasio: volvió a /)).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Archivarla de nuevo' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Editar Gimnasio', exact: true })).toBeVisible();
   });
 });
