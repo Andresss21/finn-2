@@ -174,6 +174,8 @@ El **título** de cada prueba empieza con su identificador y lleva entre corchet
 it('PRU-INT-TARJ-004 [CA-30.4, ESC-10, AV-04, AV-10] pago mayor que lo reservado deja Pago T negativo y avisa', …)
 ```
 
+Los criterios del diseño de la entrega 4 se citan con su id tal cual, entre los corchetes y separados por coma (`[CA-E4-9, CA-C-4]`), **[CH-243]** (13.1).
+
 La matriz de la Parte B lee esos corchetes con `vitest list --json` y `playwright test --list --reporter=json`, sin ejecutar nada.
 
 **Justificación.** El identificador en el título sale en los informes de Vitest y Playwright, en las trazas y en los avisos de inestabilidad. Así una prueba que falla en CI se busca por nombre en este documento y en la matriz. *Alternativas descartadas:* anotaciones aparte (`test.info().annotations`), que Vitest no tiene igual y se desincronizan del título; IDs solo en un archivo de matriz escrito a mano, que deja pruebas sin dueño.
@@ -810,7 +812,7 @@ export default {
 
 Los conteos los dio el script sobre los documentos, con 01 completo (V7-09 y V7-11): 77 fichas (31 [I], 38 [M], 8 [P], 1 diferida), 492 CA, 50 ESC, 24 AV, 28 invariantes y 34 CB. La puerta de salida (P7-8) exige los **465** CA [I] y [M]; FT-49 aparece como "diferida" en el informe, no como falta.
 
-**Formato de las referencias** dentro de los corchetes del título: `CA-nn.m`, `ESC-nn`, `AV-nn`, `INV-nn`, `CB-nn`, `REC-4.n`, `V-nn`, `V5-nn`, `V6-nn`, `H-nn`, `CF-nn`, `FT-nn`, `Q-<consulta>` **[CH-34]** (el nombre de la consulta de 04 §6 en camelCase, por ejemplo `Q-detalleLpa`) y `FORM-<operacion>` **[CH-37]** (la clave de operación de `formulario()` de 04 §6.14 en snake_case, por ejemplo `FORM-pagar_tarjeta`). Las decisiones de 00 y 01 (`C1`, `H3`, `Q2a`…) se aceptan como contexto, pero no cuentan como cobertura. Cualquier otra forma es un error (M7).
+**Formato de las referencias** dentro de los corchetes del título: `CA-nn.m`, `ESC-nn`, `AV-nn`, `INV-nn`, `CB-nn`, `REC-4.n`, `V-nn`, `V5-nn`, `V6-nn`, `H-nn`, `CF-nn`, `FT-nn`, `Q-<consulta>` **[CH-34]** (el nombre de la consulta de 04 §6 en camelCase, por ejemplo `Q-detalleLpa`) y `FORM-<operacion>` **[CH-37]** (la clave de operación de `formulario()` de 04 §6.14 en snake_case, por ejemplo `FORM-pagar_tarjeta`). Los criterios del diseño de la entrega 4 **[CH-243]** se citan con su id exacto: `CA-E2-n`, `CA-E3-n`, `CA-E4-n`, `CA-E5-n`, `CA-E6-n`, `CA-ET4-n` y `CA-C-n`, con sufijo de una letra minúscula cuando el criterio lo lleva (`CA-E4-21b`, `CA-E5-17b`); existen si están en `docs/anexos/finn-diseno-entrega-4/PROMPT-DESARROLLO.md` §7 (las líneas `- CA-… ·`), que son los objetivos `| D |` de `plan/objetivos.txt`. No son CA de 06: no cuentan para M1 ni para la puerta de las fichas FT. Las decisiones de 00 y 01 (`C1`, `H3`, `Q2a`…) se aceptan como contexto, pero no cuentan como cobertura. Cualquier otra forma es un error (M7).
 
 ### 13.2 Entradas
 
@@ -857,7 +859,7 @@ El script exige **Disparador**, **Pasos** numerados y **Resultado esperado** (M1
 | M4 | Cada invariante tiene una prueba `PROP`, `DOM`, `INT` o `ESQ` | Desde la primera ficha terminada (el motor ya existe) |
 | M5 | Cada recorrido tiene su E2E | Cuando todas las fichas que cita están exigidas, salvo que el recorrido figure como pendiente de punta a punta en `pruebas/pendientes-e2e.json` (DT-27, **[CH-105]**); en modo puerta, siempre |
 | M6 | Las 92 verificaciones previas están en el JSON, con destino existente o con motivo | Siempre que estén en el JSON; el destino, en modo puerta |
-| M7 | Toda referencia citada existe en los documentos (incluidas las `Q-<consulta>` de 06 §6.3, **[CH-34]**, y las `FORM-<operacion>` de `formulario()`, **[CH-37]**) | Siempre |
+| M7 | Toda referencia citada existe en los documentos (incluidas las `Q-<consulta>` de 06 §6.3, **[CH-34]**, las `FORM-<operacion>` de `formulario()`, **[CH-37]**, y los `CA-E*-n`, `CA-ET4-n` y `CA-C-n` del diseño, **[CH-243]**) | Siempre |
 | M8 | Identificador bien formado, con nivel y área de las tablas 1.1 y 2.2; único; nivel coherente con el archivo (§2.3); todo archivo de prueba lleva identificador | Siempre |
 | M9 | La cuarentena no cuenta como cobertura; una entrada vencida falla; la cuarentena no cita pruebas inexistentes | Siempre |
 | M10 | Cada `PRU-MAN` tiene disparador, pasos y resultado esperado | Siempre |
@@ -1998,3 +2000,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-237** (Fase 8, TA-555; lo aprueba el usuario con su "mergeá", `08-tareas.md` §7). En un PR, `cierre` corre también con la E2E completa en verde, para que `main` pueda reutilizar esa corrida (6.1, CH-231 c). Marca **[CH-237]**.
 - **CH-239** (Fase 8, corrección posterior a TA-012, decidido por el orquestador a pedido del usuario; lo aprueba el usuario con su "mergeá", `08-tareas.md` §7). La E2E se elige por la clase del diff (documentos y plan, estilos, pantallas propias, el resto); en `main`, desde la última E2E completa de `main`, cuyo informe suma M15 cuando la E2E es parcial (6.1, 13.3 M15). Ninguna prueba, reintento, límite ni presupuesto cambia. Marca **[CH-239]**.
 - **CH-231** (Fase 8, decidido por el orquestador a pedido del usuario; lo aprueba el usuario con su "mergeá", `08-tareas.md` §7). La E2E de CI corre en 4 fragmentos con su propia pila y el job `e2e` une los informes y sigue siendo el check de `cierre`, `desplegar` y `pr:mergear`; `ci:local` tiene un modo corto para los diffs solo de interfaz (6.1). Ninguna prueba, reintento, límite ni presupuesto cambia. Marca **[CH-231]**.
+- **CH-243** (Fase 8, corrección posterior a TA-007, decidido por el orquestador; lo aprueba el usuario con su "mergeá", `08-tareas.md` §7). Los criterios del diseño de la entrega 4 (`CA-E2-n` a `CA-E6-n`, `CA-ET4-n`, `CA-C-n`) son referencias válidas de M7, con su existencia en `PROMPT-DESARROLLO.md` §7 (2.1, 13.1). Marca **[CH-243]**.
