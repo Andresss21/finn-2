@@ -78,7 +78,7 @@ describe('PRU-CMP-BAND', () => {
       </>,
     );
     const descartar = nodo.querySelector<HTMLButtonElement>(
-      `button[aria-label="${cuentas.bandeja.accionDe(cuentas.bandeja.descartar, 'SUPER SELECTOS')}"]`,
+      `button[aria-label="${cuentas.bandeja.accionDe(cuentas.bandeja.descartar, 'SUPER SELECTOS $45.00')}"]`,
     );
     await act(() => {
       descartar?.click();
@@ -112,8 +112,8 @@ describe('PRU-CMP-BAND', () => {
       </>,
     );
     expect(botones(nodo)).toEqual([
-      cuentas.bandeja.accionDe(cuentas.bandeja.esOtroGasto, 'SUPER SELECTOS'),
-      cuentas.bandeja.accionDe(cuentas.bandeja.descartar, 'SUPER SELECTOS'),
+      cuentas.bandeja.accionDe(cuentas.bandeja.esOtroGasto, 'SUPER SELECTOS $45.00'),
+      cuentas.bandeja.accionDe(cuentas.bandeja.descartar, 'SUPER SELECTOS $45.00'),
     ]);
     await act(() => {
       nodo.querySelector('button')?.click();

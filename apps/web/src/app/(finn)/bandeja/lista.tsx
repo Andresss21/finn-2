@@ -3,6 +3,9 @@
 // sin movimientos, el vacío «Bandeja al día». Lo que muestra es lo que devolvió `bandeja()`, salvo la fila que se aprobó con
 // un toque: la revalidación la saca de la lista y su resultado queda en su lugar (FT-35, 05 §4.15).
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useConexion } from '../../../cliente/useConexion';
+import { Boton } from '../../../componentes/base/boton';
+import { Icono } from '../../../componentes/base/icono';
 import { Vacio } from '../../../componentes/base/vacio';
 import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
 import { bandeja as t } from '../../../textos/bandeja';
@@ -23,6 +26,10 @@ interface Contadores {
   readonly noReconocidos: number;
   readonly errores: number;
 }
+
+/** [CH-240 E3-9] Se ven los primeros 8 movimientos; «Aprobar todos» cuenta todos los elegibles. */
+const VISIBLES = 8;
+const ID_SIN_CONEXION = 'bandeja-sin-conexion';
 
 /** Una fila que se aprobó o se está aprobando: se queda donde estaba aunque la lista ya no la traiga. */
 interface Retenida {
@@ -60,6 +67,8 @@ export function ListaBandeja({
     null,
   );
   const [otra, setOtra] = useState<string | null>(null);
+  const [limite, setLimite] = useState(VISIBLES);
+  const { enLinea } = useConexion();
   const pedida = useRef(false);
   const contador = useRef(0);
   const cargar = useCallback(() => {
@@ -132,6 +141,16 @@ export function ListaBandeja({
           <span className="text-cuerpo-pequeno text-texto-secundario">{desglose(contadores)}</span>
         </p>
       )}
+      {enLinea ? null : (
+        // [CH-240 E6-3] El motivo de «Aprobar», «Descartar» y el arrastre, una vez para toda la lista
+        <p
+          id={ID_SIN_CONEXION}
+          className="flex items-start gap-2 rounded-contenedor bg-superficie px-3.5 py-3 text-cuerpo-pequeno text-texto-secundario"
+        >
+          <Icono nombre="wifioff" tamano={18} className="mt-0.5 shrink-0" />
+          {t.sinConexion}
+        </p>
+      )}
       <AprobarTodos accion={aprobarTodos} elegibles={elegibles} movimientos={movimientos} />
       {filas.length === 0 ? (
         <Vacio titulo={t.alDia.titulo} texto={t.alDia.texto} icono="inbox" />
@@ -144,34 +163,49 @@ export function ListaBandeja({
             onKeyDownCapture={cargar}
             className="divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1"
           >
-            {filas.map((m) => (
-              <div
-                key={m.id}
-                role="listitem"
-                {...(m.id === actual
-                  ? // [CH-220 A11] La fila elegida: fondo hundido y la marca de 3 px en `--accion` a la izquierda
-                    {
-                      'aria-current': 'true',
-                      'data-fila-elegida': '',
-                      className:
-                        'relative bg-superficie-hundida before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:bg-accion',
-                    }
-                  : {})}
-              >
-                <FilaBandeja
-                  movimiento={m}
-                  hrefRevisar={`/bandeja/${m.id}`}
-                  resultado={retenidas[m.id]?.resultado}
-                  alIniciar={alIniciar}
-                  alTerminar={alTerminar}
-                  {...(destinos === undefined
-                    ? {}
-                    : { conArrastre: true, alElegirCategoria: elegirOtra })}
-                  {...(soltado?.movimientoId === m.id ? { soltado } : {})}
-                />
-              </div>
-            ))}
+            {filas
+              .map((m, i) => ({ m, i }))
+              .filter(({ m, i }) => i < limite || retenidas[m.id] !== undefined || m.id === actual)
+              .map(({ m }) => (
+                <div
+                  key={m.id}
+                  role="listitem"
+                  {...(m.id === actual
+                    ? // [CH-220 A11] La fila elegida: fondo hundido y la marca de 3 px en `--accion` a la izquierda
+                      {
+                        'aria-current': 'true',
+                        'data-fila-elegida': '',
+                        className:
+                          'relative bg-superficie-hundida before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:bg-accion',
+                      }
+                    : {})}
+                >
+                  <FilaBandeja
+                    movimiento={m}
+                    hrefRevisar={`/bandeja/${m.id}`}
+                    resultado={retenidas[m.id]?.resultado}
+                    alIniciar={alIniciar}
+                    alTerminar={alTerminar}
+                    {...(enLinea ? {} : { sinConexion: { idMotivo: ID_SIN_CONEXION } })}
+                    {...(destinos === undefined
+                      ? {}
+                      : { conArrastre: true, alElegirCategoria: elegirOtra })}
+                    {...(soltado?.movimientoId === m.id ? { soltado } : {})}
+                  />
+                </div>
+              ))}
           </div>
+          {filas.length > limite ? (
+            <Boton
+              variante="secundaria"
+              className="w-full"
+              onClick={() => {
+                setLimite(filas.length);
+              }}
+            >
+              {t.mostrarMas(filas.length - limite)}
+            </Boton>
+          ) : null}
           <p className="text-cuerpo-pequeno text-texto-terciario">{t.nota}</p>
         </>
       )}
@@ -187,6 +221,7 @@ export function ListaBandeja({
           destinos={destinos}
           alSoltar={alSoltar}
           alElegirOtra={elegirOtra}
+          deshabilitado={!enLinea}
         />
       )}
       {otra === null || destinos === undefined ? null : (

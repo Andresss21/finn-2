@@ -33,7 +33,7 @@ import { bandeja as t } from '../../../textos/bandeja';
 import { formularios } from '../../../textos/formularios';
 
 /** Al soltar sobre una categoría, estos dos se quedan en la fila: el flujo no los arregla (FT-78). */
-const DE_LA_FILA = ['arrastre_no_permitido', 'conflicto_desactualizado'];
+const DE_LA_FILA = ['arrastre_no_permitido'];
 /** Los rechazos que necesitan datos del usuario pasan al flujo; el resto se queda en la fila (05 §4.15). */
 const necesitaElFlujo = (e: ErrorFinn, porArrastre: boolean): boolean =>
   !(porArrastre && DE_LA_FILA.includes(e.codigo)) &&
@@ -44,6 +44,12 @@ const necesitaElFlujo = (e: ErrorFinn, porArrastre: boolean): boolean =>
 const lineasVistas = (m: MovimientoDto): unknown[] => {
   const l = m.esperado?.['lineas'];
   return Array.isArray(l) ? (l as unknown[]) : [];
+};
+
+/** La categoría de la primera línea que vio la lista, o `null` si no tenía. */
+const categoriaVista = (m: MovimientoDto): string | null => {
+  const primera = lineasVistas(m)[0] as { categoriaId?: string | null } | undefined;
+  return primera?.categoriaId ?? null;
 };
 
 /** Una categoría soltada sobre esta fila; `n` distingue una suelta de la siguiente. */
@@ -62,6 +68,8 @@ interface Props {
   /** FT-78: la fila reserva el lugar del asa; `ContextoArrastre` la monta cuando llega la librería. */
   readonly conArrastre?: boolean;
   readonly soltado?: Soltado;
+  /** [CH-240 E6-3] Sin conexión: «Aprobar» y «Descartar» se deshabilitan con el aviso de la lista como motivo. */
+  readonly sinConexion?: { readonly idMotivo: string };
   /** [CH-220 A10] Abre el selector de categorías de la lista para este movimiento (solo los arrastrables, FT-78). */
   readonly alElegirCategoria?: (id: string) => void;
 }
@@ -74,6 +82,7 @@ export function FilaBandeja({
   alTerminar,
   conArrastre,
   soltado,
+  sinConexion,
   alElegirCategoria,
 }: Props) {
   const operacion = useOperacion({ accion: aprobarMovimiento, creacion: true });
@@ -115,8 +124,13 @@ export function FilaBandeja({
     // Si venía de un arrastre, el flujo recibe también la categoría soltada (FT-78).
     const traspasar = (): void => {
       const categoria = porArrastre.current;
+      // [CH-240 E6-5] Si las líneas cambiaron desde que la lista las vio, el flujo recibe la categoría que se vio
+      const visto =
+        error?.codigo === 'conflicto_desactualizado' && categoria !== undefined
+          ? `&conflicto=1&visto=${categoriaVista(m) ?? ''}`
+          : '';
       window.location.assign(
-        `${hrefRevisar}?traspaso=1${categoria === undefined ? '' : `&categoria=${categoria}`}`,
+        `${hrefRevisar}?traspaso=1${categoria === undefined ? '' : `&categoria=${categoria}`}${visto}`,
       );
     };
     if (estado === 'confirmando') traspasar();
@@ -209,6 +223,8 @@ export function FilaBandeja({
           hrefRevisar={hrefRevisar}
           alAccionar={alAccionar}
           ranuraAsa={conArrastre === true && m.aprobacion.arrastrable === true}
+          reservarAsa={conArrastre === true && m.aprobacion.arrastrable !== true}
+          {...(sinConexion === undefined ? {} : { sinConexion })}
           {...(alElegirCategoria !== undefined && m.aprobacion.arrastrable === true
             ? {
                 alElegirCategoria: () => {

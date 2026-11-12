@@ -3,7 +3,7 @@
 // toque avisan a `alAccionar` y el `Resultado` lo pinta la pantalla en el lugar de la fila (4.14, 4.15).
 import type { ReactNode } from 'react';
 import type { Centavos } from '@finn/dominio/valores';
-import { formatearFecha } from '../../formato';
+import { formatearFecha, formatearMonto } from '../../formato';
 import { bandeja } from '../../textos/bandeja';
 import { cuentas } from '../../textos/cuentas';
 import { Icono } from '../base/icono';
@@ -98,6 +98,10 @@ interface Props {
   readonly alAccionar?: (accion: AccionBandeja, id: string) => void;
   /** FT-78: el lugar del asa de arrastre, reservado desde el principio; la librería la monta ahí cuando llega. */
   readonly ranuraAsa?: boolean;
+  /** [CH-240 E3-1] En computadora, las filas que no se arrastran reservan el mismo lugar vacío: nada se corre al pasar. */
+  readonly reservarAsa?: boolean;
+  /** [CH-240 E6-3] Sin conexión, «Aprobar» y «Descartar» se deshabilitan y su motivo es el aviso de la lista (`aria-describedby`). */
+  readonly sinConexion?: { readonly idMotivo: string };
   /**
    * [CH-220 A10] «Elegir categoría» de un toque (05 §4.14): abre el selector de categorías de la lista, que aprueba con la misma
    * variante de OP-37 que soltar sobre ella (FT-78). Sin él, «Elegir categoría» lleva a Revisar.
@@ -110,6 +114,8 @@ export function MovimientoBandeja({
   hrefRevisar,
   alAccionar,
   ranuraAsa,
+  reservarAsa,
+  sinConexion,
   alElegirCategoria,
 }: Props) {
   const vista = vistaDe(m);
@@ -118,13 +124,29 @@ export function MovimientoBandeja({
   const acciones = ACCIONES[vista] ?? [];
   const elegir = vista === 'falta' ? alElegirCategoria : undefined;
   const conAcciones = acciones.length > 0 || ENLACE[vista] !== undefined;
+  const motivoNoEntra =
+    m.estado === 'pendiente'
+      ? bandeja.aprobarTodos.motivos[m.aprobacion.motivoNoElegible ?? '']
+      : undefined;
   const pista =
     m.categoriaSugerida === null
       ? null
       : `→ ${m.categoriaSugerida.nombre}${m.categoriaSugerida.porRegla ? ` (${t.porRegla})` : ''}`;
+  // [CH-240 E3-1] El asa va al final de la cabecera. En el teléfono su lugar cubre la cabecera (la pulsación larga de 350 ms
+  // es el gesto, sin asa visible); en computadora es un cuadro de 44 px siempre reservado.
   const ranura =
     ranuraAsa === true ? (
-      <span data-ranura-asa={m.id} className="inline-flex min-h-11 min-w-11" />
+      <span
+        data-ranura-asa={m.id}
+        data-reserva-asa=""
+        className="absolute inset-0 lg:relative lg:inset-auto lg:inline-flex lg:size-11 lg:shrink-0"
+      />
+    ) : reservarAsa === true ? (
+      <span
+        aria-hidden="true"
+        data-reserva-asa=""
+        className="hidden size-11 shrink-0 lg:inline-flex"
+      />
     ) : null;
   const contenido: ReactNode = (
     <>
@@ -160,14 +182,19 @@ export function MovimientoBandeja({
         />
       )}
       {conAcciones ? null : <Icono nombre="chevR" tamano={16} className="text-texto-terciario" />}
+      {ranura}
     </>
   );
   return (
-    <article data-movimiento={m.id} data-vista={vista} className="px-4 py-3.5">
+    <article
+      data-movimiento={m.id}
+      data-vista={vista}
+      className="group/fila px-4 py-3.5 data-[tomada]:outline-2 data-[tomada]:-outline-offset-2 data-[tomada]:outline-dashed data-[tomada]:outline-borde-control data-[tomada]:[&>*]:invisible"
+    >
       {conAcciones ? (
-        <div className="flex items-center gap-3">{contenido}</div>
+        <div className="relative flex items-center gap-3">{contenido}</div>
       ) : (
-        <EnlaceFinn href={hrefRevisar} className="flex min-h-11 items-center gap-3">
+        <EnlaceFinn href={hrefRevisar} className="relative flex min-h-11 items-center gap-3">
           {contenido}
         </EnlaceFinn>
       )}
@@ -176,9 +203,18 @@ export function MovimientoBandeja({
           {m.sms.texto}
         </blockquote>
       ) : null}
+      {motivoNoEntra === undefined ? null : (
+        // [CH-240 E3-8] La fila conserva su estado; el motivo de que no entre en el lote va como línea secundaria
+        <p
+          data-motivo-no-entra
+          className="mt-1.5 ml-13 flex items-start gap-1.5 text-cuerpo-pequeno text-texto-secundario"
+        >
+          <Icono nombre="info" tamano={16} className="mt-0.5 shrink-0" />
+          <span>{bandeja.aprobarTodos.noEntra(motivoNoEntra)}</span>
+        </p>
+      )}
       {conAcciones ? (
         <div className="mt-2 ml-13 flex flex-wrap items-center gap-2">
-          {ranura}
           {elegir === undefined ? null : (
             <Boton
               variante="pastilla"
@@ -192,7 +228,24 @@ export function MovimientoBandeja({
             <Boton
               key={accion}
               variante={i === 0 ? 'pastilla' : 'secundaria'}
-              aria-label={t.accionDe(texto, comercio)}
+              aria-label={t.accionDe(
+                texto,
+                [
+                  comercio,
+                  m.monto === null
+                    ? ''
+                    : formatearMonto(
+                        (SALEN.has(m.tipoPropuesto ?? '')
+                          ? -Math.abs(m.monto)
+                          : m.monto) as Centavos,
+                      ),
+                ]
+                  .filter(Boolean)
+                  .join(' '),
+              )}
+              {...(sinConexion !== undefined && (accion === 'aprobar' || accion === 'descartar')
+                ? { deshabilitado: true, 'aria-describedby': sinConexion.idMotivo }
+                : {})}
               onClick={() => alAccionar?.(accion, m.id)}
             >
               {texto}
@@ -205,9 +258,7 @@ export function MovimientoBandeja({
             {elegir === undefined ? (ENLACE[vista] ?? t.revisar) : t.revisar}
           </EnlaceFinn>
         </div>
-      ) : ranura === null ? null : (
-        <div className="mt-1 ml-13 flex">{ranura}</div>
-      )}
+      ) : null}
     </article>
   );
 }

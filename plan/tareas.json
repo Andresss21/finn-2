@@ -647,15 +647,15 @@
 
   "TA-575": { "estado": "pendiente" },
 
-  "TA-576": { "estado": "pendiente" },
+  "TA-576": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
 
-  "TA-577": { "estado": "pendiente" },
+  "TA-577": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
 
-  "TA-578": { "estado": "pendiente" },
+  "TA-578": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
 
-  "TA-579": { "estado": "pendiente" },
+  "TA-579": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
 
-  "TA-580": { "estado": "pendiente" },
+  "TA-580": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
 
   "TA-581": { "estado": "pendiente" },
 
