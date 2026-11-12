@@ -90,6 +90,21 @@ export const reportes = {
       tarjetas: 'Tarjetas',
     },
   },
+  // E5-5: la frase de la cifra de cada reporte (el monto es un campo del DTO).
+  cifras: {
+    ritmo: (fin: string) => `bajaría Listo para asignar al cerrar el ${fin} si seguís a este ritmo`,
+    categorias: 'gastado en el período',
+    remanente: 'acumulado de los períodos elegidos',
+    hormiga: (etiqueta: string) => `en ${etiqueta}, el grupo que más pesa este período`,
+    suscripciones: (comercio: string) => `al año en ${comercio}, que no tenés programada`,
+    tarjetas: (tarjeta: string, corte: string) =>
+      `sin pagar de ${tarjeta} en el último corte, el ${corte}`,
+  },
+  // E5-4: una tabla de más de 3 columnas desplaza en el teléfono.
+  tablaAncha: {
+    desplazar: 'Desplazá para ver más columnas.',
+    region: (nombre: string) => `${nombre}, con desplazamiento horizontal`,
+  },
   // E5-2: el filtro de cuentas con su hoja (panel de 440 en computadora).
   filtroCuentas: {
     todas: 'Todas',
@@ -236,7 +251,7 @@ export const reportes = {
       por_cobrar_debito: 'Por cobrar con débito',
       pagos_tarjeta: 'Pagos de tarjeta',
       prestamos_inversiones: 'Préstamos e inversiones',
-      transferencias: 'Transferencias',
+      transferencias: 'Transferencias a otras cuentas',
       saldoFinal: 'Saldo final',
     },
     periodo: (inicio: string) => `Período desde el ${inicio}`,

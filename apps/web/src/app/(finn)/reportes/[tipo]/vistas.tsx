@@ -9,10 +9,12 @@ import {
 } from '../../../../componentes/graficos/grafico-barras';
 import { GraficoLineas } from '../../../../componentes/graficos/grafico-lineas';
 import { LeyendaGrafico } from '../../../../componentes/graficos/leyenda-grafico';
+import { TablaDesplazable } from '../../../../componentes/graficos/tabla-desplazable';
 import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { formatearFecha, formatearMesCorto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
+import { CifraReporte } from './cifra';
 import type { TipoDeReporte } from './tipos';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { Flujo } from './flujo';
@@ -86,7 +88,7 @@ function Serie<F extends { readonly periodo: string }>({
         )
       }
       tabla={
-        <div className="overflow-x-auto in-[.sr-only]:overflow-visible">
+        <TablaDesplazable nombre={titulo} ancha={columnas.length >= 3}>
           <table data-tabla-reporte className="w-full text-cuerpo-pequeno">
             <caption className="sr-only">{titulo}</caption>
             <thead>
@@ -119,7 +121,7 @@ function Serie<F extends { readonly periodo: string }>({
               ))}
             </tbody>
           </table>
-        </div>
+        </TablaDesplazable>
       }
     />
   );
@@ -257,13 +259,19 @@ export function cuerpoDe(
     case 'remanente': {
       const { periodos } = dto as ReporteDe<'remanente'>;
       if (sinMovimiento(periodos.map((p) => p.neto))) return null;
+      const ultimo = periodos.at(-1);
       return (
-        <Serie
-          titulo={t.titulos.remanente}
-          filas={periodos}
-          lineas={[{ titulo: t.serieRemanente, valor: (f) => f.acumulado }]}
-          columnas={[campo('neto'), campo('acumulado')]}
-        />
+        <div className="flex flex-col gap-4">
+          {ultimo === undefined ? null : (
+            <CifraReporte centavos={ultimo.acumulado} frase={t.cifras.remanente} />
+          )}
+          <Serie
+            titulo={t.titulos.remanente}
+            filas={periodos}
+            lineas={[{ titulo: t.serieRemanente, valor: (f) => f.acumulado }]}
+            columnas={[campo('neto'), campo('acumulado')]}
+          />
+        </div>
       );
     }
     case 'categorias': {

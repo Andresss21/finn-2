@@ -5,8 +5,10 @@ import type { ReactNode } from 'react';
 import type { ReporteDe } from '@finn/aplicacion/consultas/reporte';
 import type { Ref } from '@finn/dominio/selectores';
 import type { Centavos } from '@finn/dominio/valores';
+import { CifraReporte } from './cifra';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { GraficoDona, type PorcionDona } from '../../../../componentes/graficos/grafico-dona';
+import { TablaDesplazable } from '../../../../componentes/graficos/tabla-desplazable';
 import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { formatearFecha, formatearMonto, formatearPorcentaje } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
@@ -42,17 +44,14 @@ export function Tabla<F>({
   enfocable = false,
 }: {
   readonly titulo: string;
-  /** Una tabla ancha que se desplaza: el teclado llega a ella para recorrerla (axe: scrollable-region-focusable). */
+  /** Fuerza el desplazamiento aunque tenga 3 columnas o menos (E5-4: de otro modo, solo las de más de 3 columnas). */
   readonly enfocable?: boolean;
   readonly columnas: readonly Columna<NoInfer<F>>[];
   readonly filas: readonly F[];
   readonly clave: (fila: F) => string;
 }) {
   return (
-    <div
-      className="overflow-x-auto in-[.sr-only]:overflow-visible"
-      {...(enfocable ? { tabIndex: 0, role: 'region', 'aria-label': titulo } : {})}
-    >
+    <TablaDesplazable nombre={titulo} ancha={enfocable || columnas.length > 3}>
       <table data-tabla-reporte className="w-full text-cuerpo-pequeno">
         <caption className="sr-only">{titulo}</caption>
         <thead>
@@ -93,7 +92,7 @@ export function Tabla<F>({
           ))}
         </tbody>
       </table>
-    </div>
+    </TablaDesplazable>
   );
 }
 
@@ -128,6 +127,7 @@ export function Categorias({
   const mayor = porciones[0];
   return (
     <div className="flex flex-col gap-4">
+      <CifraReporte centavos={dto.total} frase={t.cifras.categorias} />
       <VistaGrafico
         grafico={
           <GraficoDona

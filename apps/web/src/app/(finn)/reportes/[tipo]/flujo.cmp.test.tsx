@@ -134,7 +134,7 @@ describe('PRU-CMP-REP flujo de efectivo', () => {
       }),
     );
     expect(con.querySelector('[data-fila="transferencias"] th')?.textContent).toBe(
-      'Transferencias',
+      'Transferencias a otras cuentas',
     );
     expect(celda(con, 'transferencias')).toContain('−$200.00');
     const sin = mostrar(
