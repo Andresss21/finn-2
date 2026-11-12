@@ -4263,7 +4263,7 @@ Reglas comunes a las fichas de reportes:
 
 **Estados.** Formato inactivo: marcado y fuera de la interpretación. Borrador (05 §4.11).
 
-**Errores y textos.** `patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento` (04 §8.5), `nombre_repetido` (institución). **[D4]** Sus textos están en el catálogo de 04 §7.10 (CH-E5-4).
+**Errores y textos.** `patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento` (04 §8.5), `nombre_repetido` (institución). Sin textos nuevos.
 
 **Criterios de aceptación.**
 - **CA-73.1** Dado un patrón con grado de retroceso 3 (como los de 03 §9.5), cuando lo guardo, entonces se rechaza con `patron_lento`, el grado y la cadena de ataque.
