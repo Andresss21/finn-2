@@ -34,8 +34,8 @@ export const metas = {
   eliminada: 'Meta eliminada',
   confirmarEliminar: (categoria: string) =>
     `¿Eliminar la meta de ${categoria}? No cambia lo asignado.`,
-  siEliminar: 'Sí, eliminar',
-  noEliminar: 'No, conservar',
+  siEliminar: 'Eliminar',
+  noEliminar: 'Cancelar',
   otras: 'Otras metas',
   sinMetaTitulo: 'Categorías sin meta',
   sinMeta: 'Sin meta',

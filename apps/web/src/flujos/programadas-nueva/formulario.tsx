@@ -6,7 +6,7 @@
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { DatoFijo } from '../../componentes/formularios/dato-fijo';
-import { lazy, Suspense, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
@@ -19,6 +19,7 @@ import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navega
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { formatearFecha } from '../../formato';
+import { ConfirmarEliminar } from '../metas-nueva/confirmar-eliminar';
 import { formularios } from '../../textos/formularios';
 import { programadas as t } from '../../textos/programadas';
 import {
@@ -76,6 +77,7 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
     ...(edita ? { esperado: valoresEnviables(inicial) } : { creacion: true }),
   });
   const eliminacion = useOperacion({ accion: p.accionEliminar });
+  const [confirmando, setConfirmando] = useState(false);
   const formulario = useFormularioFinn<Campos>({
     contrato,
     valoresIniciales: inicial,
@@ -371,16 +373,36 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
         >
           {edita ? t.guardar : t.crear}
         </Boton>
-        {edita ? p.activar : null}
+        {edita && p.activar !== undefined ? (
+          <div className="flex flex-col gap-1">
+            {p.activar}
+            <span className="text-cuerpo-pequeno text-texto-secundario">{t.ayudaDesactivar}</span>
+          </div>
+        ) : null}
         {edita && p.puedeEliminar ? (
-          <Boton
-            variante="peligro"
-            enviando={eliminacion.estado === 'enviando'}
-            textoEnviando={t.eliminando}
-            onClick={() => void eliminacion.enviar({ programadaId })}
-          >
-            {t.eliminar}
-          </Boton>
+          confirmando ? (
+            <ConfirmarEliminar
+              pregunta={t.confirmarEliminar(p.nombre ?? '')}
+              cancelar={t.cancelar}
+              eliminar={t.eliminar}
+              eliminando={t.eliminando}
+              enviando={eliminacion.estado === 'enviando'}
+              alCancelar={() => {
+                setConfirmando(false);
+              }}
+              alEliminar={() => void eliminacion.enviar({ programadaId })}
+            />
+          ) : (
+            <Boton
+              variante="discreta"
+              className="self-start text-problema-texto"
+              onClick={() => {
+                setConfirmando(true);
+              }}
+            >
+              {t.eliminarProgramada}
+            </Boton>
+          )
         ) : null}
       </form>
     </PaginaFlujoDeRuta>

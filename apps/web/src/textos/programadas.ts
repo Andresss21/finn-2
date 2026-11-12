@@ -17,13 +17,19 @@ export const programadas = {
   atrasadaTexto: (nombre: string, fecha: string) =>
     `${nombre} se esperaba el ${fecha} y no llegó el SMS.`,
   registrar: 'Registrar',
+  registrarMonto: (monto: string) => `Registrar ${monto}`,
   sinModeloTitulo: 'Cuota sin modelo',
   sinModeloTexto: (nombre: string) =>
     `${nombre} se registra sola, pero el préstamo no tiene modelo de cálculo: no se podrá separar capital e interés.`,
-  vacioTitulo: 'Todavía no tenés programadas',
-  vacioTexto: 'Cargá tus pagos que se repiten para verlos venir y registrarlos sin esfuerzo.',
-  crearUna: 'Crear la primera',
+  vacioTitulo: 'No hay pagos programados',
+  vacioTexto:
+    'Programá Netflix o la cuota del préstamo para verlos venir y emparejarlos con su SMS.',
+  crearUna: 'Programar un pago',
   tipo: 'Tipo',
+  ayudaDesactivar: 'Deja de esperar los pagos; la podés reactivar desde la lista.',
+  confirmarEliminar: (nombre: string) =>
+    `¿Eliminás la programada de ${nombre}? Todavía no tiene pagos registrados: se borra entera.`,
+  cancelar: 'Cancelar',
   tipoNoSeCambia: 'El tipo no se cambia. Para otro tipo, desactivala y creá otra.',
   tipos: {
     gasto: 'Gasto',
@@ -69,9 +75,10 @@ export const programadas = {
   sinCambios: 'No cambiaste nada.',
   desactivar: 'Desactivar',
   reactivar: 'Reactivar',
-  desactivadaResultado: (nombre: string) => `${nombre} quedó desactivada.`,
-  reactivadaResultado: (nombre: string) => `${nombre} quedó activa.`,
+  desactivadaResultado: (nombre: string) => `Desactivaste ${nombre}: ya no se esperan sus pagos.`,
+  reactivadaResultado: (nombre: string) => `Reactivaste ${nombre}.`,
   eliminar: 'Eliminar',
+  eliminarProgramada: 'Eliminar programada',
   eliminando: 'Eliminando…',
   eliminada: 'Programada eliminada',
   volver: 'Volver a Programadas',

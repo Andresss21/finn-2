@@ -86,7 +86,7 @@ test.describe('PRU-E2E-META flujo de una meta', () => {
     await meta(page, 'Laptop').getByRole('link', { name: 'Editar', exact: true }).click();
     await page.getByRole('button', { name: 'Eliminar meta' }).click();
     await expect(page.getByText(/¿Eliminar la meta de Laptop\?/)).toBeVisible();
-    await page.getByRole('button', { name: 'Sí, eliminar' }).click();
+    await page.getByRole('button', { name: 'Eliminar', exact: true }).click();
     await expect(page).toHaveURL(/\/metas$/);
     await esperarContenido(page);
     await expect(page.locator('[data-meta]')).toHaveCount(0);

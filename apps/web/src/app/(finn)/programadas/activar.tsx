@@ -13,12 +13,15 @@ export function Activar({
   nombre,
   activa,
   accion,
+  soloReactivar = false,
 }: {
   readonly programadaId: string;
   readonly nombre: string;
   readonly activa: boolean;
   /** `gestionarProgramada` (OP-42): la pasa el lector, así el componente se prueba sin servidor. */
   readonly accion: AccionEscritura;
+  /** En la lista solo se reactiva (MAS-105): desactivar vive en la hoja de editar. Una fila activa no dibuja nada. */
+  readonly soloReactivar?: boolean;
 }) {
   const [inicial] = useState(activa);
   const cambio = useOperacion({ accion });
@@ -26,6 +29,7 @@ export function Activar({
   const falla = cambio.error ?? inversa.error;
   const enviar = (operacion: typeof cambio, nueva: boolean) =>
     operacion.enviar({ accion: 'activar', programadaId, activa: nueva });
+  if (soloReactivar && inicial) return null;
   const hecho = cambio.estado === 'listo';
   const revertido = inversa.estado === 'listo';
   return (
