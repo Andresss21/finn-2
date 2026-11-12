@@ -175,10 +175,5 @@ export const bandeja = {
     referenciaNota: 'La misma referencia aparece en Ajustes › Diagnóstico.',
     siguiente: 'Siguiente movimiento',
     soloLectura: 'Solo lectura',
-    panel: {
-      posicion: (n: number, total: number) => `${n} de ${total}`,
-      anterior: 'Anterior',
-      siguiente: 'Siguiente',
-    },
   },
 } as const;

@@ -5,7 +5,6 @@
 import { bandeja } from '@finn/aplicacion/consultas/bandeja';
 import type { Metadata } from 'next';
 import { LectorMovimiento } from '../../../../flujos/bandeja-movimiento/lector';
-import type { NavegacionDelPanel } from '../../../../flujos/bandeja-movimiento/panel-navegacion';
 import { consultar } from '../../../../servidor/consultar';
 import { depsDeConsulta } from '../../../../servidor/consultas';
 import type { BusquedaDePagina } from '../../../../servidor/parametros';
@@ -26,17 +25,7 @@ export default async function PaginaMovimiento({
   const dto = await consultar(async () => bandeja(await depsDeConsulta()));
   const movimientos = soloActivos(dto.movimientos);
   const i = movimientos.findIndex((m) => m.id === movimientoId);
-  const anterior = movimientos[i - 1]?.id;
-  const siguiente = movimientos[i + 1]?.id;
-  const navegacion: NavegacionDelPanel | undefined =
-    i < 0
-      ? undefined
-      : {
-          posicion: i + 1,
-          total: movimientos.length,
-          ...(anterior === undefined ? {} : { anterior }),
-          ...(siguiente === undefined ? {} : { siguiente }),
-        };
+  const siguiente = i < 0 ? undefined : movimientos[i + 1]?.id;
   return (
     <LectorMovimiento
       movimientoId={movimientoId}
@@ -45,7 +34,7 @@ export default async function PaginaMovimiento({
       {...(conflicto === '1' && typeof categoria === 'string'
         ? { categoriaVista: typeof visto === 'string' ? visto : '' }
         : {})}
-      {...(navegacion === undefined ? {} : { navegacion })}
+      {...(siguiente === undefined ? {} : { siguienteId: siguiente })}
     />
   );
 }

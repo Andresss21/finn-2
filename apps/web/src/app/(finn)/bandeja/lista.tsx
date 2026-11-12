@@ -51,14 +51,11 @@ export function ListaBandeja({
   contadores,
   elegibles,
   movimientos,
-  actual,
   destinos,
 }: {
   readonly contadores: Contadores;
   readonly elegibles: readonly string[];
   readonly movimientos: readonly MovimientoDto[];
-  /** El movimiento que se revisa a la derecha, en computadora (CH-137): queda marcado en la lista. */
-  readonly actual?: string;
   /** `destinosArrastre` de `bandeja()` (CF-22): sin ellos no hay arrastre. */
   readonly destinos?: DestinosArrastre;
 }) {
@@ -165,21 +162,9 @@ export function ListaBandeja({
           >
             {filas
               .map((m, i) => ({ m, i }))
-              .filter(({ m, i }) => i < limite || retenidas[m.id] !== undefined || m.id === actual)
+              .filter(({ m, i }) => i < limite || retenidas[m.id] !== undefined)
               .map(({ m }) => (
-                <div
-                  key={m.id}
-                  role="listitem"
-                  {...(m.id === actual
-                    ? // [CH-220 A11] La fila elegida: fondo hundido y la marca de 3 px en `--accion` a la izquierda
-                      {
-                        'aria-current': 'true',
-                        'data-fila-elegida': '',
-                        className:
-                          'relative bg-superficie-hundida before:absolute before:inset-y-0 before:left-0 before:w-0.75 before:bg-accion',
-                      }
-                    : {})}
-                >
+                <div key={m.id} role="listitem">
                   <FilaBandeja
                     movimiento={m}
                     hrefRevisar={`/bandeja/${m.id}`}

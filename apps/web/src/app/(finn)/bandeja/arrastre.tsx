@@ -26,6 +26,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icono } from '../../../componentes/base/icono';
 import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
+import { avisarArrastre } from '../../../componentes/marco/arrastre';
 import { formatearMonto } from '../../../formato';
 import { bandeja } from '../../../textos/bandeja';
 
@@ -196,12 +197,11 @@ export function ContextoArrastre({
   useEffect(() => {
     if (activo === null) return;
     const fila = document.querySelector(`[data-movimiento="${activo}"]`);
-    const barra = document.querySelector('[data-marco-barra]');
     fila?.setAttribute('data-tomada', '');
-    barra?.setAttribute('inert', '');
+    avisarArrastre(true);
     return () => {
       fila?.removeAttribute('data-tomada');
-      barra?.removeAttribute('inert');
+      avisarArrastre(false);
     };
   }, [activo]);
   const devolverFoco = (id: string): void => {

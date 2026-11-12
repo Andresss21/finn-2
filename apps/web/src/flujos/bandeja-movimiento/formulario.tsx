@@ -41,7 +41,6 @@ import { TextoDelSms } from './texto-sms';
 import type { CuentaDelMovimiento } from './campos-movimiento';
 import type { ResumenDelMovimiento } from './encabezado';
 import type { DuplicadoDe } from './estados';
-import { PanelDeLaBandeja, type NavegacionDelPanel } from './panel-navegacion';
 import {
   motivoFaltantes,
   camposIniciales,
@@ -77,10 +76,8 @@ export interface PropsFormularioMovimiento {
     /** Solo en un SMS con error: lo que necesita «Intentar de nuevo» (OP-49). */
     readonly reproceso?: { readonly smsId: string; readonly intentoVisto: number };
   };
-  /** Computadora: la lista de la Bandeja a la izquierda del flujo (S4 del export, CH-137). */
-  readonly lateral?: ReactNode;
-  /** Computadora: «1 de N» y las flechas del panel, si el movimiento sigue en la lista. */
-  readonly navegacion?: NavegacionDelPanel;
+  /** El movimiento que sigue en el orden de la Bandeja, para «Siguiente movimiento» (CH-245: sin lista lateral). */
+  readonly siguienteId?: string;
   /** Viene de la fila de la lista (05 §4.15): se vuelve a aprobar para mostrar el mensaje o la confirmación. */
   readonly traspaso: boolean;
   /** FT-78: la categoría que se soltó sobre la fila; se pone en la línea y el traspaso envía la variante de OP-37. */
@@ -144,10 +141,10 @@ export function FormularioMovimiento(props: PropsFormularioMovimiento) {
   // Si al abrir ya está aprobado o descartado se muestra su estado; si no, el flujo sigue montado aunque la revalidación
   // cambie su estado al aprobar (el resultado es suyo).
   const [abierto] = useState(() => !FINALES.includes(props.movimiento.estado));
-  const { lateral, navegacion, movimiento: m } = props;
+  const { movimiento: m } = props;
   const marco: Marco = { titulo: t.revisar.titulo, rutaPadre: '/bandeja' };
   return (
-    <PanelDeLaBandeja lateral={lateral} navegacion={navegacion}>
+    <>
       {abierto ? (
         <Flujo {...props} marco={marco} />
       ) : (
@@ -162,7 +159,7 @@ export function FormularioMovimiento(props: PropsFormularioMovimiento) {
           />
         </Suspense>
       )}
-    </PanelDeLaBandeja>
+    </>
   );
 }
 
@@ -175,12 +172,12 @@ function Flujo({
   categoriaSoltada,
   categoriaVista,
   marco,
-  navegacion,
+  siguienteId: siguienteAlAbrir,
   hoy,
   candidatas,
 }: PropsFormularioMovimiento & { readonly marco: Marco }) {
   const [aMano, setAMano] = useState(false); // «Registrar a mano»: un SMS que no se leyó pasa a sus campos
-  const [siguienteId] = useState(() => navegacion?.siguiente); // el que seguía al abrir: la lista ya no trae este movimiento al aprobar
+  const [siguienteId] = useState(() => siguienteAlAbrir); // el que seguía al abrir: la lista ya no trae este movimiento al aprobar
   const conCoincidencia = movimiento.estado === 'con_coincidencia';
   const sinLeer = movimiento.estado === 'no_reconocido' || movimiento.estado === 'error';
   // Sin «Aprobar»: un posible duplicado y un SMS que no se leyó se resuelven con las decisiones del pie (S4 del export)
