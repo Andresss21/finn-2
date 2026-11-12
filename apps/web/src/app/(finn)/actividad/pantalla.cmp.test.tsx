@@ -168,7 +168,7 @@ describe('PRU-CMP-TX-400 actividad', () => {
     expect(href).toBe(
       `/actividad/t1?volver=${encodeURIComponent('/actividad?texto=sel&cuenta=k1')}`,
     );
-    const mas = raiz.querySelector('[data-cargar-mas]');
+    const mas = raiz.querySelector<HTMLAnchorElement>('[data-cargar-mas]');
     expect(new URL(mas?.href ?? '').searchParams.get('cursor')).toBe('c|1');
     expect(new URL(mas?.href ?? '').searchParams.get('texto')).toBe('sel');
   });
