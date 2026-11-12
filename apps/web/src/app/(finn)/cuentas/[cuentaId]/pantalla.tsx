@@ -63,15 +63,20 @@ export function PantallaDetalleCuenta({
           {dto.prestamo === undefined ? null : (
             <BloquePrestamo prestamo={dto.prestamo} cuentaId={cuenta.id} />
           )}
-          <SelectorPeriodo
-            periodo={dto.periodo}
-            periodoActivo={dto.periodoActivo}
-            {...(navegacion.anterior === undefined ? {} : { anterior: navegacion.anterior })}
-            {...(navegacion.siguiente === undefined ? {} : { siguiente: navegacion.siguiente })}
-            ruta={`/cuentas/${cuenta.id}`}
-            parametros={parametros}
+          <Movimientos
+            dto={dto}
+            filtros={filtros}
+            selector={
+              <SelectorPeriodo
+                periodo={dto.periodo}
+                periodoActivo={dto.periodoActivo}
+                {...(navegacion.anterior === undefined ? {} : { anterior: navegacion.anterior })}
+                {...(navegacion.siguiente === undefined ? {} : { siguiente: navegacion.siguiente })}
+                ruta={`/cuentas/${cuenta.id}`}
+                parametros={parametros}
+              />
+            }
           />
-          <Movimientos dto={dto} filtros={filtros} />
           <Conciliaciones conciliaciones={dto.conciliaciones} />
           <Programadas programadas={dto.programadas} />
         </div>

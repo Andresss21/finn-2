@@ -67,6 +67,7 @@ export const cuentaDetalle = {
   },
   movimientos: {
     titulo: 'Movimientos',
+    tituloCerrado: 'Cerrado · Movimientos de ese período',
     vacio: 'Esta cuenta todavía no tiene movimientos',
     vacioTexto: 'Cuando registres algo con esta cuenta, lo vas a ver acá.',
     sinResultados: 'Ningún movimiento coincide con los filtros.',

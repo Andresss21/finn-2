@@ -1,5 +1,6 @@
 // Movimientos del detalle de cuenta (FT-52, CA-52.5): cada fila con el saldo corrido que trae el DTO (`saldoDespues`, 04 §6.0.5),
 // el filtro por tipo y estado, y el enlace a la página anterior en el tiempo (`?cursor=`). Dibuja lo que trae el DTO: no suma (PF-3).
+import type { ReactNode } from 'react';
 import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta';
 import { Vacio } from '../../../../componentes/base/vacio';
 import { Monto } from '../../../../componentes/dominio/monto';
@@ -123,9 +124,12 @@ function subtitulo(m: Fila, cuentaId: string): string {
 export function Movimientos({
   dto,
   filtros,
+  selector,
 }: {
   readonly dto: DetalleCuentaDto;
   readonly filtros: FiltrosDetalle;
+  /** E4-13: el selector de período, bajo el título de «Movimientos». */
+  readonly selector?: ReactNode;
 }) {
   const id = dto.cuenta.id;
   const filtrado = filtros.tipo !== undefined || filtros.estado !== undefined;
@@ -137,12 +141,15 @@ export function Movimientos({
             ? cuentaDetalle.inversion.movimientos
             : dto.tarjeta !== undefined
               ? cuentaDetalle.tarjeta.movimientosDelCiclo
-              : t.titulo}
+              : dto.periodo.estado === 'cerrado'
+                ? t.tituloCerrado
+                : t.titulo}
         </h2>
         <EnlaceFinn href={`/actividad?cuenta=${id}`} className={ENLACE_ACTIVIDAD}>
           {cuentaDetalle.acciones.verEnActividad}
         </EnlaceFinn>
       </div>
+      {selector}
       <Filtros cuentaId={id} filtros={filtros} conLista={dto.movimientos.length > 0} />
       {dto.movimientos.length === 0 && filtrado ? (
         // E6-12: «Sin resultados con estos filtros» y «Quitar filtros» (sin `?tipo=` ni `?estado=`, con el período)
