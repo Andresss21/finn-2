@@ -194,7 +194,9 @@ test.describe('PRU-E2E-REP reportes por categoría y comercio', () => {
     ]);
     await abrir(page, '/reportes/categorias');
     await expect(page.locator('[data-reporte] [data-fila]')).toHaveCount(2);
-    await page.getByRole('link', { name: 'Visa Oro' }).click();
+    await page.getByRole('button', { name: /^Cuentas:/ }).click();
+    await page.getByRole('dialog').getByLabel('Visa Oro').check();
+    await page.getByRole('dialog').getByRole('link', { name: 'Ver 1 cuenta' }).click();
     await expect(page).toHaveURL(/cuentas=/);
     await esperarContenido(page);
     await expect(page.locator('[data-reporte] [data-fila]')).toHaveCount(1);

@@ -42,6 +42,96 @@ export const reportes = {
   sinMovimientosTexto: 'Probá con otra ventana de períodos o quitá el filtro de cuentas.',
   verVentana: (ventana: string) => `Ver ${ventana}`,
   filtros: { cuentas: 'Cuentas', grupo: 'Grupo', limite: 'Cuántos', todos: 'Todos' },
+  // E5-1 (CH-E5-1): los 15 reportes en tres grupos, con los títulos de 06 §3.5.1. `elegir` es el nombre del botón del teléfono.
+  selector: {
+    etiqueta: 'Reportes',
+    tituloHoja: 'Elegir un reporte',
+    elegir: (grupo: string, nombre: string) => `Reporte: ${grupo} ${nombre}. Elegir otro reporte`,
+    grupos: [
+      {
+        id: 'dinero',
+        rotulo: 'Tu dinero',
+        tipos: [
+          'tendencia',
+          'categorias',
+          'ingresos-gastos',
+          'remanente',
+          'flujo-efectivo',
+          'top-comercios',
+          'patrimonio',
+        ],
+      },
+      {
+        id: 'presupuesto',
+        rotulo: 'Tu presupuesto',
+        tipos: ['cumplimiento', 'ritmo', 'realidad', 'gasto-semanal', 'hallazgos'],
+      },
+      {
+        id: 'habitos',
+        rotulo: 'Hábitos y tarjetas',
+        tipos: ['hormiga', 'suscripciones', 'tarjetas'],
+      },
+    ],
+    nombres: {
+      tendencia: 'Tendencia de ingresos y gastos',
+      categorias: 'Categorías',
+      'ingresos-gastos': 'Ingresos y gastos',
+      remanente: 'Lo que te quedó del período',
+      'flujo-efectivo': 'Flujo de efectivo',
+      'top-comercios': 'Comercios donde más gastás',
+      patrimonio: 'Tu patrimonio',
+      cumplimiento: 'Cumplimiento del presupuesto',
+      ritmo: 'Ritmo de gasto',
+      realidad: 'Presupuesto contra la realidad',
+      'gasto-semanal': 'Gasto semanal',
+      hallazgos: 'Hallazgos',
+      hormiga: 'Gastos hormiga',
+      suscripciones: 'Suscripciones',
+      tarjetas: 'Tarjetas',
+    },
+  },
+  // E5-5: la frase de la cifra de cada reporte (el monto es un campo del DTO).
+  cifras: {
+    ritmo: (fin: string) => `bajaría Listo para asignar al cerrar el ${fin} si seguís a este ritmo`,
+    categorias: 'gastado en el período',
+    comercios: (comercio: string) => `en ${comercio}, el comercio donde más gastaste`,
+    remanente: 'acumulado de los períodos elegidos',
+    hormiga: (etiqueta: string) => `en ${etiqueta}, el grupo que más pesa este período`,
+    suscripciones: (comercio: string) => `al año en ${comercio}, que no tenés programada`,
+    tarjetas: (tarjeta: string, corte: string) =>
+      `sin pagar de ${tarjeta} en el último corte, el ${corte}`,
+  },
+  // E5-4: una tabla de más de 3 columnas desplaza en el teléfono.
+  tablaAncha: {
+    desplazar: 'Desplazá para ver más columnas.',
+    region: (nombre: string) => `${nombre}, con desplazamiento horizontal`,
+  },
+  // E5-2: el filtro de cuentas con su hoja (panel de 440 en computadora).
+  filtroCuentas: {
+    todas: 'Todas',
+    varias: (n: number) => `${n} cuentas`,
+    abrir: (valor: string) => `Cuentas: ${valor}. Elegir cuentas`,
+    titulo: 'Cuentas',
+    soloEfectivo: 'En este reporte solo se cuentan las cuentas de efectivo.',
+    quitar: 'Quitar el filtro',
+    ver: (n: number) => (n === 1 ? 'Ver 1 cuenta' : `Ver ${n} cuentas`),
+    verTodas: 'Ver todas las cuentas',
+  },
+  // E5-3: el segmentado compacto «Actual · 1 · 3 · 6 · 12»; el nombre accesible es el completo.
+  ventanasCortas: {
+    actual: 'Actual',
+    ultimos_1: '1',
+    ultimos_3: '3',
+    ultimos_6: '6',
+    ultimos_12: '12',
+  },
+  ventanasNombres: {
+    actual: 'Período actual',
+    ultimos_1: '1 período, el último',
+    ultimos_3: 'Últimos 3 períodos',
+    ultimos_6: 'Últimos 6 períodos',
+    ultimos_12: 'Últimos 12 períodos',
+  },
   ventana: 'Períodos',
   ventanas: {
     actual: 'Período actual',
@@ -162,7 +252,7 @@ export const reportes = {
       por_cobrar_debito: 'Por cobrar con débito',
       pagos_tarjeta: 'Pagos de tarjeta',
       prestamos_inversiones: 'Préstamos e inversiones',
-      transferencias: 'Transferencias',
+      transferencias: 'Transferencias a otras cuentas',
       saldoFinal: 'Saldo final',
     },
     periodo: (inicio: string) => `Período desde el ${inicio}`,
@@ -199,6 +289,8 @@ export const reportes = {
     programarla: 'Programarla',
     programando: 'Programando…',
     reactivarla: 'Reactivarla',
+    // E6-15: el resultado de reactivar se revierte con «Desactivarla».
+    desactivarla: 'Desactivarla',
     reactivando: 'Reactivando…',
     programada: (comercio: string, mensual: string) =>
       `Programaste ${comercio}: ${mensual} cada mes.`,

@@ -5,7 +5,9 @@ import type { ReporteDe, ReporteDto } from '@finn/aplicacion/consultas/reporte';
 import { Vacio } from '../../../../componentes/base/vacio';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
+import { FiltroCuentas } from '../../../../componentes/navegacion/filtro-cuentas';
 import { Pestanas, type PestanaDeEnlace } from '../../../../componentes/navegacion/pestanas';
+import { SelectorReportes } from '../../../../componentes/navegacion/selector-reportes';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { SelectorPeriodo } from '../../../../componentes/navegacion/selector-periodo';
 import { reportes as t } from '../../../../textos/reportes';
@@ -52,33 +54,32 @@ interface Filtro {
   readonly activas: readonly string[];
 }
 
-function filtrosDe(url: TipoDeUrl, p: Parametros, nombres: Nombres): Filtro[] {
-  const elegidas = (p.cuentas ?? '').split(',').filter((id) => id !== '');
-  const alternar = (id: string): string =>
-    (elegidas.includes(id) ? elegidas.filter((x) => x !== id) : [...elegidas, id]).join(',');
-  const filtros: Filtro[] = [
-    {
-      etiqueta: t.ventana,
-      opciones: VENTANAS.map((v) => ({
-        id: v,
-        etiqueta: t.ventanas[v],
-        href: hrefDe(url, p, { ventana: v }),
-      })),
-      activas: [p.ventana ?? predeterminada(url)],
-    },
-    {
-      etiqueta: t.filtros.cuentas,
-      opciones: [
-        { id: 'todas', etiqueta: t.filtros.todos, href: hrefDe(url, p, { cuentas: '' }) },
-        ...nombres.cuentas.map((c) => ({
-          id: c.id,
-          etiqueta: c.nombre,
-          href: hrefDe(url, p, { cuentas: alternar(c.id) }),
-        })),
-      ],
-      activas: elegidas.length === 0 ? ['todas'] : elegidas,
-    },
-  ];
+// CA-E5-5: estos reportes no llevan filtro de cuentas (su ventana es fija o su contrato no recibe `?cuentas=`).
+const SIN_CUENTAS: ReadonlySet<TipoDeUrl> = new Set([
+  'ritmo',
+  'realidad',
+  'hormiga',
+  'suscripciones',
+  'hallazgos',
+]);
+
+/** E5-3: «Actual · 1 · 3 · 6 · 12» como enlaces; la etiqueta es corta y el nombre accesible, el completo. */
+function ventanaDe(url: TipoDeUrl, p: Parametros): Filtro {
+  return {
+    etiqueta: t.ventana,
+    opciones: VENTANAS.map((v) => ({
+      id: v,
+      etiqueta: t.ventanasCortas[v],
+      nombre: t.ventanasNombres[v],
+      href: hrefDe(url, p, { ventana: v }),
+    })),
+    activas: [p.ventana ?? predeterminada(url)],
+  };
+}
+
+/** Los filtros de un solo reporte (`?grupo=`, `?limite=`). */
+function filtrosPropios(url: TipoDeUrl, p: Parametros, nombres: Nombres): Filtro[] {
+  const filtros: Filtro[] = [];
   if (url === 'categorias')
     filtros.push({
       etiqueta: t.filtros.grupo,
@@ -151,10 +152,11 @@ export function PantallaReporte({
   // `ritmo`, `realidad` y `hallazgos` miran el período activo y `suscripciones` los 4 cerrados (05 §2.10): ninguno lleva ventana ni cuentas.
   const delActivo =
     url === 'ritmo' || url === 'realidad' || url === 'hallazgos' || url === 'suscripciones';
-  const todos = semanal === null && !delActivo ? filtrosDe(url, parametros, nombres) : [];
-  // `hormiga` elige su período con el selector: no lleva la ventana, solo las cuentas.
-  const [primero, ...otros] = todos;
-  const ventana = deHormiga === null ? primero : undefined;
+  const conVentana = semanal === null && !delActivo && deHormiga === null;
+  const ventana = conVentana ? ventanaDe(url, parametros) : undefined;
+  const propios = semanal === null && !delActivo ? filtrosPropios(url, parametros, nombres) : [];
+  const conCuentas = semanal === null && !SIN_CUENTAS.has(url);
+  const deEfectivo = url === 'flujo-efectivo';
   // Sin movimientos, la salida del diseño es mirar más períodos; si ya se miran 3 o más, no hay a dónde ampliar.
   const efectiva = parametros.ventana ?? predeterminada(url);
   const ampliar = efectiva === 'ultimos_3' || efectiva === 'ultimos_6' || efectiva === 'ultimos_12';
@@ -162,109 +164,111 @@ export function PantallaReporte({
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4 md:max-w-6xl">
       <PublicarEncabezado encabezado={dto} />
       <h1 className="text-titulo-pantalla">{t.titulo}</h1>
-      <div className="-mx-5 px-5">
-        <Pestanas
-          etiqueta={t.titulo}
-          variante="tinta"
-          pestanas={TIPOS_DE_URL.map((u) => ({
-            id: u,
-            etiqueta: t.pestanas[u],
-            href: hrefDe(u, compartidos),
-          }))}
-          activas={[url]}
+      <div className="flex flex-col gap-6 md:grid md:grid-cols-[14.5rem_minmax(0,1fr)] md:items-start md:gap-8">
+        <SelectorReportes
+          actual={url}
+          opciones={TIPOS_DE_URL.map((u) => ({ id: u, href: hrefDe(u, compartidos) }))}
         />
-      </div>
-      <section
-        data-reporte={TIPOS[url]}
-        className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] md:items-start md:gap-10"
-      >
-        <div data-reporte-filtros className="flex flex-col gap-5">
-          <h2 className="text-titulo-seccion">{t.titulos[url]}</h2>
-          {url === 'flujo-efectivo' ? (
-            <p data-explicacion className="text-cuerpo-pequeno text-texto-secundario">
-              {t.explicacionFlujo}
-            </p>
-          ) : null}
-          {url === 'remanente' ? (
-            <p data-explicacion className="text-cuerpo-pequeno text-texto-secundario">
-              {t.explicacionRemanente}
-            </p>
-          ) : null}
-          {conPeriodo === null ? null : (
-            <SelectorPeriodo
-              periodo={conPeriodo.periodo}
-              periodoActivo={dto.periodoActivo}
-              {...(conPeriodo.navegacion.anterior === undefined
-                ? {}
-                : { anterior: conPeriodo.navegacion.anterior })}
-              {...(conPeriodo.navegacion.siguiente === undefined
-                ? {}
-                : { siguiente: conPeriodo.navegacion.siguiente })}
-              ruta={`/reportes/${url}`}
-              parametros={{
-                ...(parametros.categorias === undefined
+        <section
+          data-reporte={TIPOS[url]}
+          className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] md:items-start md:gap-10"
+        >
+          <div data-reporte-filtros className="flex flex-col gap-5">
+            <h2 className="text-titulo-seccion">{t.titulos[url]}</h2>
+            {url === 'flujo-efectivo' ? (
+              <p data-explicacion className="text-cuerpo-pequeno text-texto-secundario">
+                {t.explicacionFlujo}
+              </p>
+            ) : null}
+            {url === 'remanente' ? (
+              <p data-explicacion className="text-cuerpo-pequeno text-texto-secundario">
+                {t.explicacionRemanente}
+              </p>
+            ) : null}
+            {conPeriodo === null ? null : (
+              <SelectorPeriodo
+                periodo={conPeriodo.periodo}
+                periodoActivo={dto.periodoActivo}
+                {...(conPeriodo.navegacion.anterior === undefined
                   ? {}
-                  : { categorias: parametros.categorias }),
-                ...(parametros.cuentas === undefined ? {} : { cuentas: parametros.cuentas }),
-              }}
-            />
-          )}
-          {semanal === null ? null : (
-            <>
-              <Pestanas
-                etiqueta={t.gastoSemanal.categorias}
-                pestanas={categoriasDe(semanal, parametros, nombres)}
-                activas={semanal.categorias.map((c) => c.categoria)}
-                marca="true"
+                  : { anterior: conPeriodo.navegacion.anterior })}
+                {...(conPeriodo.navegacion.siguiente === undefined
+                  ? {}
+                  : { siguiente: conPeriodo.navegacion.siguiente })}
+                ruta={`/reportes/${url}`}
+                parametros={{
+                  ...(parametros.categorias === undefined
+                    ? {}
+                    : { categorias: parametros.categorias }),
+                  ...(parametros.cuentas === undefined ? {} : { cuentas: parametros.cuentas }),
+                }}
               />
-            </>
-          )}
-          {ventana === undefined ? null : (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-etiqueta text-texto">{ventana.etiqueta}</span>
-              <Pestanas
-                etiqueta={ventana.etiqueta}
-                pestanas={ventana.opciones}
-                activas={ventana.activas}
-                marca="true"
-                variante="segmento"
+            )}
+            {semanal === null ? null : (
+              <>
+                <Pestanas
+                  etiqueta={t.gastoSemanal.categorias}
+                  pestanas={categoriasDe(semanal, parametros, nombres)}
+                  activas={semanal.categorias.map((c) => c.categoria)}
+                  marca="true"
+                />
+              </>
+            )}
+            {conCuentas ? (
+              <FiltroCuentas
+                cuentas={deEfectivo ? nombres.efectivo : nombres.cuentas}
+                elegidas={(parametros.cuentas ?? '').split(',').filter((id) => id !== '')}
+                hrefSin={hrefDe(url, parametros, { cuentas: '' })}
+                soloEfectivo={deEfectivo}
               />
+            ) : null}
+            {ventana === undefined ? null : (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-etiqueta text-texto">{ventana.etiqueta}</span>
+                <Pestanas
+                  etiqueta={ventana.etiqueta}
+                  pestanas={ventana.opciones}
+                  activas={ventana.activas}
+                  marca="true"
+                  variante="segmento"
+                />
+              </div>
+            )}
+            <div className="flex flex-col gap-1">
+              {propios.map((f) => (
+                <Pestanas
+                  key={f.etiqueta}
+                  etiqueta={f.etiqueta}
+                  pestanas={f.opciones}
+                  activas={f.activas}
+                  marca="true"
+                />
+              ))}
             </div>
-          )}
-          <div className="flex flex-col gap-1">
-            {otros.map((f) => (
-              <Pestanas
-                key={f.etiqueta}
-                etiqueta={f.etiqueta}
-                pestanas={f.opciones}
-                activas={f.activas}
-                marca="true"
-              />
-            ))}
           </div>
-        </div>
-        {cuerpo === null ? (
-          <Vacio
-            titulo={t.sinMovimientos}
-            texto={t.sinMovimientosTexto}
-            icono="cero"
-            {...(ampliar
-              ? {}
-              : {
-                  accion: (
-                    <EnlaceFinn
-                      href={hrefDe(url, parametros, { ventana: 'ultimos_3' })}
-                      className={ACCION_VACIO}
-                    >
-                      {t.verVentana(t.ventanas.ultimos_3)}
-                    </EnlaceFinn>
-                  ),
-                })}
-          />
-        ) : (
-          <div className="min-w-0">{cuerpo}</div>
-        )}
-      </section>
+          {cuerpo === null ? (
+            <Vacio
+              titulo={t.sinMovimientos}
+              texto={t.sinMovimientosTexto}
+              icono="cero"
+              {...(ampliar
+                ? {}
+                : {
+                    accion: (
+                      <EnlaceFinn
+                        href={hrefDe(url, parametros, { ventana: 'ultimos_3' })}
+                        className={ACCION_VACIO}
+                      >
+                        {t.verVentana(t.ventanas.ultimos_3)}
+                      </EnlaceFinn>
+                    ),
+                  })}
+            />
+          ) : (
+            <div className="min-w-0">{cuerpo}</div>
+          )}
+        </section>
+      </div>
     </main>
   );
 }

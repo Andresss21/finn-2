@@ -6,6 +6,7 @@ import { Monto } from '../../../../componentes/dominio/monto';
 import { formatearFecha } from '../../../../formato';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { reportes as t } from '../../../../textos/reportes';
+import { CifraReporte } from './cifra';
 import { HallazgosRitmo } from './ritmo-hallazgos';
 import { Tabla } from './vistas-detalle';
 
@@ -21,6 +22,11 @@ export function Ritmo({
   const { proyeccion: p } = dto;
   return (
     <div className="flex flex-col gap-6">
+      <CifraReporte
+        centavos={p.reduccionLpa}
+        estado="problema"
+        frase={t.cifras.ritmo(formatearFecha(dto.periodo.fin).slice(0, 5))}
+      />
       <section data-proyeccion-cierre className="flex flex-col gap-2">
         <h3 className="text-titulo-seccion">
           {t.ritmo.cierre(formatearFecha(dto.periodo.fin).slice(0, 5))}

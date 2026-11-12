@@ -54,6 +54,32 @@ function mostrar(datos: ReporteDe<'categorias'>): HTMLElement {
 }
 
 describe('PRU-CMP-REP', () => {
+  it('PRU-CMP-REP-712 [CA-E6-22] con 10 categorías la dona dibuja 8 porciones y «Otras» con rayado, la tabla lista las 10 con porcentajes que suman 100 % y la cifra es el gastado del DTO', () => {
+    const raiz = mostrar(dto(72390, 2330));
+    const porciones = [...raiz.querySelectorAll('[data-grafico="dona"] [data-porcion]')];
+    expect(porciones).toHaveLength(9);
+    const rayadas = porciones.filter((p) => p.getAttribute('fill') === 'url(#finn-rayado-otras)');
+    expect(rayadas).toHaveLength(1);
+    expect(raiz.querySelector('#finn-rayado-otras')).not.toBeNull();
+    const filas = [...raiz.querySelectorAll('[data-tabla-reporte] tbody tr')];
+    expect(filas).toHaveLength(10);
+    const suma = filas.reduce(
+      (total, f) =>
+        total +
+        Math.round(
+          Number(
+            (f.querySelector('[data-col="porcentaje"]')?.textContent ?? '0').replace('%', ''),
+          ) * 100,
+        ),
+      0,
+    );
+    expect(suma).toBe(10000);
+    expect(
+      raiz.querySelector('[data-cifra-reporte] [data-centavos]')?.getAttribute('data-centavos'),
+    ).toBe('72390');
+    // CH-241 (e): Tendencia sigue con «Asignado» (CH-226 a); lo cubre PRU-CMP-REP-310.
+  });
+
   it('PRU-CMP-REP-160 [FT-60] la dona lleva al centro el total gastado del DTO con «gastado» debajo, y «Otras» muestra en la leyenda el monto que trae el DTO', () => {
     const raiz = mostrar(dto(72390, 2330));
     const dona = raiz.querySelector('[data-grafico="dona"]') as SVGElement;

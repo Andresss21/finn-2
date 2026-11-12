@@ -7,6 +7,7 @@ import { Monto } from '../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { programadas as tp } from '../../../../textos/programadas';
 import { reportes as t } from '../../../../textos/reportes';
+import { CifraReporte } from './cifra';
 import { HallazgosSuscripciones, type AccionesSuscripciones } from './suscripciones-hallazgos';
 import { Tabla } from './vistas-detalle';
 
@@ -24,6 +25,12 @@ export function Suscripciones({
 }) {
   return (
     <div className="flex flex-col gap-6">
+      {dto.hallazgos[0] === undefined ? null : (
+        <CifraReporte
+          centavos={dto.hallazgos[0].anual}
+          frase={t.cifras.suscripciones(dto.hallazgos[0].comercio)}
+        />
+      )}
       {dto.suficiente ? null : (
         <AvisoEnLinea estado="informacion">{t.suscripciones.insuficiente}</AvisoEnLinea>
       )}

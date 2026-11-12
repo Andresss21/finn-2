@@ -169,7 +169,7 @@ describe('PRU-CMP-REP suscripciones detectadas', () => {
     );
     expect(raiz.textContent).not.toContain('No hay movimientos');
     expect(raiz.querySelector('[data-hallazgo-suscripcion]')).toBeNull();
-    expect(raiz.querySelector('main button')).toBeNull();
+    expect(raiz.querySelector('[data-reporte] button')).toBeNull();
   });
 
   it('PRU-CMP-REP-213 [FT-65, CA-65.2, CA-65.3] «Programarla» arma OP-42 crear (mensual, sin registro automático, una línea) y su «Deshacer» es OP-51 con el id creado; «Reactivarla» es OP-42 activar y su «Deshacer» activa: false', async () => {
@@ -215,7 +215,7 @@ describe('PRU-CMP-REP suscripciones detectadas', () => {
     expect(gestionar).toHaveBeenLastCalledWith(
       expect.objectContaining({ accion: 'activar', programadaId: 'p7', activa: true }),
     );
-    await tocar(boton(otra, 'Deshacer'));
+    await tocar(boton(otra, 'Desactivarla'));
     expect(gestionar).toHaveBeenLastCalledWith(
       expect.objectContaining({ accion: 'activar', programadaId: 'p7', activa: false }),
     );

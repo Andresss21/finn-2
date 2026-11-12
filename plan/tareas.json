@@ -667,11 +667,11 @@
 
   "TA-585": { "estado": "pendiente" },
 
-  "TA-586": { "estado": "pendiente" },
+  "TA-586": { "estado": "en_curso", "rama": "ta-586-grupo-e-reportes" },
 
-  "TA-587": { "estado": "pendiente" },
+  "TA-587": { "estado": "en_curso", "rama": "ta-586-grupo-e-reportes" },
 
-  "TA-588": { "estado": "pendiente" },
+  "TA-588": { "estado": "en_curso", "rama": "ta-586-grupo-e-reportes" },
 
   "TA-589": { "estado": "en_curso", "rama": "ta-589-grupo-e-ajustes" },
 

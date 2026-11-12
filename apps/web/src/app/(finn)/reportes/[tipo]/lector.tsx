@@ -120,6 +120,7 @@ export async function LectorReporte({
       ].map((c) => c.cuenta),
       ...(listaDeCuentas.archivadas ?? []),
     ],
+    efectivo: listaDeCuentas.efectivo.map((c) => c.cuenta),
     grupos: arbol?.grupos.map((g) => g.grupo) ?? [],
     categorias: arbol?.grupos.flatMap((g) => g.categorias.map((c) => c.categoria)) ?? [],
   };
