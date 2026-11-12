@@ -45,8 +45,8 @@ async function abrir(page: Page, ruta = RUTA): Promise<void> {
 }
 
 const dia = (page: Page) => page.getByLabel(t.nuevoDia, { exact: true });
-const verCambio = (page: Page) => page.getByRole('button', { name: t.verCambio, exact: true });
-const confirmar = (page: Page) => page.getByRole('button', { name: t.confirmar, exact: true });
+/** Con el impacto a la vista, el botón dice a qué día cambia (E6-13); sin él, «Cambiar el ciclo» está deshabilitado. */
+const confirmar = (page: Page) => page.getByRole('button', { name: /^Cambiar al día \d+$/ });
 const futura = (page: Page) => page.locator('[data-ciclo-futura]');
 const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').first();
 const disponibleSuper = (page: Page) =>
@@ -56,10 +56,9 @@ const disponibleSuper = (page: Page) =>
     .locator('[data-centavos]')
     .first();
 
-/** Elige el día y pide la previsualización de AV-12. */
+/** Elige el día: el panel pide solo la previsualización de AV-12 (E6-13). */
 async function pedirCambio(page: Page, valor: string): Promise<void> {
   await dia(page).selectOption(valor);
-  await verCambio(page).click();
 }
 
 test.describe('PRU-E2E-AJUS', () => {
@@ -79,8 +78,10 @@ test.describe('PRU-E2E-AJUS', () => {
     await expect(page.locator('[data-ciclo-vigente]')).toHaveText('21');
     await pedirCambio(page, '1');
     const aviso = page.getByRole('region', { name: t.revisar });
-    await expect(aviso).toContainText('Rige desde el 21/12/2027.');
-    await expect(aviso).toContainText('El período del 21/12 al 31/12 (11 días) será de transición');
+    await expect(aviso).toContainText('Rige desde el 21/12/2027');
+    await expect(aviso).toContainText(
+      'El período del 21/12 al 31/12 será de transición, de 11 días',
+    );
     await confirmar(page).click();
     await expect(page.getByTestId('resultado')).toContainText(t.listo(1, '21/12/2027'));
 
@@ -99,8 +100,10 @@ test.describe('PRU-E2E-AJUS', () => {
     await abrir(page);
     await pedirCambio(page, '1');
     const aviso = page.getByRole('region', { name: t.revisar });
-    await expect(aviso).toContainText('Rige desde el 21/01/2028.');
-    await expect(aviso).toContainText('El período del 21/01 al 31/01 (11 días) será de transición');
+    await expect(aviso).toContainText('Rige desde el 21/01/2028');
+    await expect(aviso).toContainText(
+      'El período del 21/01 al 31/01 será de transición, de 11 días',
+    );
   });
 
   test('PRU-E2E-AJUS-112 [CA-72.3] con el período de transición de 11 días, la meta semanal de $50.00 pide $78.57 y la mensual de $200.00 pide $200.00', async ({
@@ -169,5 +172,31 @@ test.describe('PRU-E2E-AJUS', () => {
     fijarRelojServidor('2027-02-28T10:00:00-06:00');
     await abrir(page, '/presupuesto');
     await expect(selector).toContainText('28/02 – 30/03/2027');
+  });
+  test('PRU-E2E-AJUS-722 [FT-72] (CH-240) cambiar el ciclo abre la hoja sobre Ajustes con la K4 de AV-12; con el mismo día, ciclo_sin_cambio queda en el campo y «Cambiar el ciclo» deshabilitado y enlazado a ese mensaje', async ({
+    page,
+  }) => {
+    await sembrarOps(ESC45, '2027-11-10');
+    await abrir(page, '/ajustes');
+    await page.getByRole('link', { name: t.enlace, exact: true }).click();
+    const hoja = page.getByRole('dialog', { name: t.tituloHoja });
+    await expect(hoja).toBeVisible();
+    await expect(page).toHaveURL(/\/ajustes\/ciclo$/);
+    // El impacto se pide al servidor con lo elegido, antes de confirmar
+    await dia(page).selectOption('1');
+    const k4 = hoja.getByRole('region', { name: t.revisar });
+    await expect(k4).toContainText('Rige desde el 21/12/2027');
+    await expect(k4).toContainText('El período del 21/12 al 31/12 será de transición, de 11 días');
+    await expect(hoja.getByRole('button', { name: t.confirmarDia(1), exact: true })).toBeEnabled();
+
+    await dia(page).selectOption('21');
+    const mensaje = hoja.getByText('El ciclo ya empieza el día 21.');
+    await expect(mensaje).toBeVisible();
+    await expect(k4).toHaveCount(0);
+    const deshabilitado = hoja.getByRole('button', { name: t.confirmar, exact: true });
+    await expect(deshabilitado).toBeDisabled();
+    const idMensaje = await mensaje.evaluate((e) => e.closest('[id]')?.id ?? '');
+    await expect(deshabilitado).toHaveAttribute('aria-describedby', idMensaje);
+    await expect(dia(page)).toHaveAttribute('aria-invalid', 'true');
   });
 });

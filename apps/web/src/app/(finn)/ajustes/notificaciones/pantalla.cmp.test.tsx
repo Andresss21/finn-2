@@ -69,6 +69,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   Reflect.deleteProperty(navigator, 'serviceWorker');
   Reflect.deleteProperty(navigator, 'userAgent');
+  Reflect.deleteProperty(navigator, 'permissions');
 });
 
 async function montar(ui: ReactNode): Promise<HTMLElement> {
@@ -192,5 +193,61 @@ describe('PRU-CMP-NOTIF', () => {
     await tocar(boton(nodo, /Quitar Pixel/));
     expect(quitar).toHaveBeenLastCalledWith({ id: 'id-este' });
     expect(propia.unsubscribe).toHaveBeenCalledTimes(1);
+  });
+  it('PRU-CMP-NOTIF-711 [CA-E5-19] con el permiso denegado y con iPhone sin instalar, el panel da los pasos de E5-16 y este dispositivo queda fuera de la lista', async () => {
+    // Una suscripción vieja de este mismo navegador sigue en la lista del servidor: sin permiso no se la marca como «Este dispositivo»
+    const propia = suscripcion();
+    const dispositivos: DispositivoPush[] = [
+      {
+        id: 'id-este',
+        endpointCorto: endpointCorto(ENDPOINT),
+        agente: 'Pixel',
+        renovadaEn: '2027-02-05T16:00:00.000Z',
+      },
+    ];
+    simularNavegador('denied', propia);
+    const denegado = await montar(
+      <PanelNotificaciones dispositivos={dispositivos} registrar={ok} quitar={ok} />,
+    );
+    expect(denegado.textContent).toContain('Las notificaciones están bloqueadas en este navegador');
+    expect(denegado.querySelectorAll('ol li')).toHaveLength(3);
+    for (const paso of t.denegadoPasos) expect(denegado.textContent).toContain(paso);
+    expect(denegado.textContent).toContain('esta pantalla se actualiza sola');
+    expect(denegado.textContent).not.toContain(` · ${t.esteDispositivo}`);
+    expect(boton(denegado, t.activar)).toBeUndefined();
+    // «Quitar» es un botón con el nombre del dispositivo (E6-18)
+    expect(boton(denegado, /Quitar Pixel/)).toBeDefined();
+    denegado.remove();
+
+    vi.unstubAllGlobals();
+    Object.defineProperty(navigator, 'userAgent', { configurable: true, value: AGENTE_IOS });
+    const ios = await montar(
+      <PanelNotificaciones dispositivos={dispositivos} registrar={ok} quitar={ok} />,
+    );
+    expect(ios.textContent).toContain('En iPhone, primero instalá Finn');
+    expect(ios.querySelectorAll('ol li')).toHaveLength(3);
+    for (const paso of t.iosPasos) expect(ios.textContent).toContain(paso);
+    expect(ios.textContent).not.toContain(` · ${t.esteDispositivo}`);
+    expect(boton(ios, t.activar)).toBeUndefined();
+  });
+
+  it('PRU-CMP-NOTIF-712 [CA-E5-19] denegado, la pantalla se actualiza sola cuando el permiso cambia en los ajustes del navegador', async () => {
+    const navegador = simularNavegador('denied');
+    const estado = new EventTarget();
+    Object.defineProperty(navigator, 'permissions', {
+      configurable: true,
+      value: { query: vi.fn(() => Promise.resolve(estado)) },
+    });
+    const nodo = await montar(<PanelNotificaciones dispositivos={[]} registrar={ok} quitar={ok} />);
+    expect(boton(nodo, t.activar)).toBeUndefined();
+    expect(navegador.pedir).not.toHaveBeenCalled();
+
+    await act(async () => {
+      Object.defineProperty(Notification, 'permission', { configurable: true, value: 'default' });
+      estado.dispatchEvent(new Event('change'));
+      await Promise.resolve();
+    });
+    expect(boton(nodo, t.activar)).toBeDefined();
+    expect(nodo.textContent).not.toContain(t.denegadoTitulo);
   });
 });

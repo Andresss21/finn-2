@@ -70,11 +70,18 @@ const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement => {
   if (b === undefined) throw new Error(`no hay un botón «${texto}»`);
   return b;
 };
+/** Deja correr las promesas de la previsualización (el panel la pide solo al abrir y al elegir un día). */
+const esperar = async (): Promise<void> => {
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 0));
+  });
+};
 const tocar = async (nodo: HTMLElement, texto: string): Promise<void> => {
   await act(() => {
     boton(nodo, texto).click();
     return Promise.resolve();
   });
+  await esperar();
 };
 const elegirDia = async (nodo: HTMLElement, valor: string): Promise<void> => {
   const select = nodo.querySelector('select');
@@ -82,53 +89,71 @@ const elegirDia = async (nodo: HTMLElement, valor: string): Promise<void> => {
   await act(async () => {
     await userEvent.selectOptions(select, valor);
   });
+  await esperar();
+};
+const abrirPanel = async (ui: ReactNode): Promise<HTMLElement> => {
+  const nodo = montar(ui);
+  await esperar();
+  return nodo;
 };
 
 describe('PRU-CMP-AJUS', () => {
-  it('PRU-CMP-AJUS-110 [CA-72.1] AV-12 dice desde cuándo rige y el período de transición con sus días, y el dinero no cambia', async () => {
+  it('PRU-CMP-AJUS-110 [CA-72.1] AV-12 dice desde cuándo rige y el período de transición con sus días, el dinero no cambia y «Cambiar al día 1» confirma', async () => {
     const accion = accionCon(previsualizacion([AV12_CON_TRANSICION]));
-    const nodo = montar(<PanelCiclo accion={accion} diaVigente={21} />);
+    const nodo = await abrirPanel(
+      <PanelCiclo accion={accion} diaVigente={21} alCerrar={vi.fn()} />,
+    );
+    // Al abrir ya pidió el impacto del día que está elegido; no hay botón «Ver el cambio»
+    expect(accion).toHaveBeenCalledWith({ diaInicio: 21, modo: 'previsualizar' });
     await elegirDia(nodo, '1');
-    await tocar(nodo, t.verCambio);
 
-    expect(accion).toHaveBeenCalledWith({ diaInicio: 1, modo: 'previsualizar' });
+    expect(accion).toHaveBeenLastCalledWith({ diaInicio: 1, modo: 'previsualizar' });
     const texto = nodo.textContent;
     expect(texto).toContain(t.revisar);
-    expect(texto).toContain('Rige desde el 21/12/2027.');
-    expect(texto).toContain('El período del 21/12 al 31/12 (11 días) será de transición');
+    expect(texto).toContain('Rige desde el 21/12/2027');
+    expect(texto).toContain('El período del 21/12 al 31/12 será de transición, de 11 días');
     expect(texto).toContain(t.dineroNoCambia);
+    expect(texto).toContain('21 → 1');
+    expect(boton(nodo, t.confirmarDia(1)).disabled).toBe(false);
   });
 
-  it('PRU-CMP-AJUS-111 [CA-72.4] un día igual al vigente se rechaza con "El ciclo ya empieza el día 21." y no ofrece confirmar', async () => {
+  it('PRU-CMP-AJUS-111 [CA-72.4] un día igual al vigente se rechaza con "El ciclo ya empieza el día 21." en el campo y «Cambiar el ciclo» queda deshabilitado y enlazado a ese mensaje', async () => {
     const accion = accionCon(
       previsualizacion([], [{ codigo: 'ciclo_sin_cambio', datos: { dia: 21 } }]),
     );
-    const nodo = montar(<PanelCiclo accion={accion} diaVigente={21} />);
-    await tocar(nodo, t.verCambio);
+    const nodo = await abrirPanel(
+      <PanelCiclo accion={accion} diaVigente={21} alCerrar={vi.fn()} />,
+    );
 
     expect(nodo.textContent).toContain('El ciclo ya empieza el día 21.');
     expect(nodo.textContent).not.toContain(t.revisar);
-    expect([...nodo.querySelectorAll('button')].some((b) => b.textContent === t.confirmar)).toBe(
-      false,
+    const confirmar = boton(nodo, t.confirmar);
+    expect(confirmar.disabled).toBe(true);
+    const enlazado = confirmar.getAttribute('aria-describedby');
+    expect(enlazado).not.toBeNull();
+    expect(document.getElementById(enlazado ?? '')?.textContent).toContain(
+      'El ciclo ya empieza el día 21.',
     );
-    expect(nodo.querySelector('select')?.getAttribute('aria-invalid')).toBe('true');
+    const select = nodo.querySelector('select');
+    expect(select?.getAttribute('aria-invalid')).toBe('true');
+    expect(select?.getAttribute('aria-describedby')).toContain(enlazado ?? '');
   });
 
-  it('PRU-CMP-AJUS-112 [CA-72.5] la previsualización no guarda: solo "Cambiar el ciclo" confirma, y "Volver a editar" regresa sin confirmar', async () => {
+  it('PRU-CMP-AJUS-112 [CA-72.5] la previsualización no guarda: solo «Cambiar al día 21» confirma, y «Cancelar» cierra sin confirmar', async () => {
     const accion = accionCon(previsualizacion([AV12_SIN_TRANSICION]));
-    const nodo = montar(<PanelCiclo accion={accion} diaVigente={5} />);
+    const alCerrar = vi.fn();
+    const nodo = await abrirPanel(
+      <PanelCiclo accion={accion} diaVigente={5} alCerrar={alCerrar} />,
+    );
     await elegirDia(nodo, '21');
-    await tocar(nodo, t.verCambio);
     expect(nodo.textContent).toContain(t.sinTransicion);
-    expect(accion).toHaveBeenCalledTimes(1);
+    expect(
+      accion.mock.calls.every((c) => (c[0] as { modo: string }).modo === 'previsualizar'),
+    ).toBe(true);
 
-    await tocar(nodo, t.volverAEditar);
-    expect(nodo.querySelector('select')).not.toBeNull();
-    expect(accion).toHaveBeenCalledTimes(1);
-
-    await tocar(nodo, t.verCambio);
-    await tocar(nodo, t.confirmar);
-    expect(accion).toHaveBeenCalledTimes(3);
+    const antes = accion.mock.calls.length;
+    await tocar(nodo, t.confirmarDia(21));
+    expect(accion).toHaveBeenCalledTimes(antes + 1);
     expect(accion).toHaveBeenLastCalledWith({
       diaInicio: 21,
       modo: 'confirmar',
@@ -136,18 +161,28 @@ describe('PRU-CMP-AJUS', () => {
       huellaImpacto: 'h1',
     });
     expect(nodo.textContent).toContain(t.listo(21, '21/12/2027'));
+
+    const otro = await abrirPanel(
+      <PanelCiclo accion={accionCon(previsualizacion([]))} diaVigente={5} alCerrar={alCerrar} />,
+    );
+    await tocar(otro, 'Cancelar');
+    expect(alCerrar).toHaveBeenCalledTimes(1);
   });
 
-  it('PRU-CMP-AJUS-113 [FT-72, Q-ajustes] con una vigencia futura se muestra con su fecha y el día que fijará; sin ella, "Ninguna"', () => {
-    const sin = montar(<PanelCiclo accion={accionCon(previsualizacion([]))} diaVigente={21} />);
+  it('PRU-CMP-AJUS-113 [FT-72, Q-ajustes] con una vigencia futura se muestra con su fecha y el día que fijará; sin ella, "Ninguna"', async () => {
+    const sin = await abrirPanel(
+      <PanelCiclo accion={accionCon(previsualizacion([]))} diaVigente={21} alCerrar={vi.fn()} />,
+    );
     expect(sin.querySelector('[data-ciclo-futura]')?.textContent).toBe(t.sinFutura);
     expect(sin.querySelector('[data-ciclo-vigente]')?.textContent).toBe('21');
+    sin.remove();
 
-    const con = montar(
+    const con = await abrirPanel(
       <PanelCiclo
         accion={accionCon(previsualizacion([]))}
         diaVigente={21}
         futura={{ diaInicio: 1, rigeDesde: '2027-12-21' }}
+        alCerrar={vi.fn()}
       />,
     );
     expect(con.querySelector('[data-ciclo-futura]')?.textContent).toBe(
@@ -155,13 +190,19 @@ describe('PRU-CMP-AJUS', () => {
     );
   });
 
-  it('PRU-CMP-AJUS-114 [FT-72] la pantalla y la confirmación no tienen violaciones de accesibilidad', async () => {
-    const nodo = montar(
-      <PanelCiclo accion={accionCon(previsualizacion([AV12_CON_TRANSICION]))} diaVigente={21} />,
+  it('PRU-CMP-AJUS-114 [FT-72] la hoja, con el impacto a la vista y con el mismo día, no tiene violaciones de accesibilidad', async () => {
+    const nodo = await abrirPanel(
+      <PanelCiclo
+        accion={accionCon(previsualizacion([AV12_CON_TRANSICION]))}
+        diaVigente={21}
+        alCerrar={vi.fn()}
+      />,
     );
     expect((await axe.run(nodo)).violations).toEqual([]);
     await elegirDia(nodo, '1');
-    await tocar(nodo, t.verCambio);
+    expect(nodo.textContent).toContain(t.revisar);
+    // El botón pasa de deshabilitado a habilitado con una transición de color: axe mide cuando ya terminó
+    await new Promise((r) => setTimeout(r, 600));
     expect((await axe.run(nodo)).violations).toEqual([]);
   });
 });

@@ -1,13 +1,14 @@
 'use client';
-// `/ajustes/ciclo` (FT-72, OP-19; 05 §2.11, §4.4; 06 FT-72): elegir el nuevo día de inicio, ver qué dice AV-12 (desde cuándo rige
-// y el período de transición) y confirmar siempre. Previsualiza primero: nada se guarda hasta "Cambiar el ciclo". Los días del
-// período de transición son un conteo de fechas del aviso, no un monto (PF-3). No importa nada de Next: lo prueba un componente.
-import { useState, type SyntheticEvent } from 'react';
+// `/ajustes/ciclo` (FT-72, OP-19; 05 §2.11, §4.4; 06 FT-72; E6-13): flujo corto que empieza por el impacto. Al abrir y cada vez que se
+// elige un día se pide la previsualización al servidor y se muestra AV-12 (desde cuándo rige y el período de transición) en la
+// tarjeta «Antes de confirmar»; «Cambiar al día N» confirma siempre. Con el mismo día, `ciclo_sin_cambio` va en el campo y el botón
+// queda deshabilitado, enlazado a ese mensaje. Los días del período de transición son un conteo de fechas del aviso, no un monto
+// (PF-3). No importa nada de Next: lo prueba un componente.
+import { useEffect, useId, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Campo } from '../../componentes/base/campo';
+import { Campo, MensajeError } from '../../componentes/base/campo';
 import { Resultado } from '../../componentes/base/resultado';
-import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { formatearFecha } from '../../formato';
 import { diasDelTramo } from '../../formato/dias-del-tramo';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -19,6 +20,8 @@ export interface PropsPanelCiclo {
   readonly accion: AccionEscritura;
   readonly diaVigente: number;
   readonly futura?: { readonly diaInicio: number; readonly rigeDesde: string };
+  /** `cerrarFlujo()` (05 §1.4): «Cancelar» y «Listo». */
+  readonly alCerrar: () => void;
 }
 
 type Datos = Readonly<Record<string, string | number | undefined>>;
@@ -35,24 +38,32 @@ const CAJA =
 
 const corto = (f: string): string => formatearFecha(f).slice(0, 5);
 
-/** El texto de AV-12 con las fechas del servidor y, si hay período de transición, sus días. */
+/** El párrafo de AV-12 con las fechas del servidor y, si hay período de transición, sus días. */
 function textoAv12(datos: Datos): string {
-  const desde = String(datos['rigeDesde']);
   const inicio = datos['transicionInicio'];
   const fin = datos['transicionFin'];
-  const rige = t.rigeDesde(formatearFecha(desde));
-  if (typeof inicio !== 'string' || typeof fin !== 'string') return `${rige} ${t.sinTransicion}`;
-  return `${rige} ${t.transicion(corto(inicio), corto(fin), diasDelTramo(inicio, fin))}`;
+  if (typeof inicio !== 'string' || typeof fin !== 'string') return t.sinTransicion;
+  return t.transicion(corto(inicio), corto(fin), diasDelTramo(inicio, fin));
 }
 
-export function PanelCiclo({ accion, diaVigente, futura }: PropsPanelCiclo) {
+export function PanelCiclo({ accion, diaVigente, futura, alCerrar }: PropsPanelCiclo) {
   const operacion = useOperacion({ accion, previsualizarPrimero: true });
   const [dia, setDia] = useState(String(diaVigente));
+  // El día para el que ya se pidió la previsualización: cada día nuevo la pide otra vez, también si el anterior seguía en vuelo.
+  const [pedidoPara, setPedidoPara] = useState<string>();
   const [aplicado, setAplicado] = useState<{ dia: number; desde: string }>();
-  const { estado, error: fallo, impactoCambio } = operacion;
+  const { estado, error: fallo, enviar } = operacion;
+  const idError = useId();
   const vista = operacion.previsualizacion as Vista | undefined;
   const rechazo = vista?.rechazos?.[0];
   const av12 = vista?.avisos?.find((a) => a.codigo === 'AV-12');
+  const datos = av12?.datos ?? {};
+
+  useEffect(() => {
+    if (estado === 'enviando' || estado === 'listo' || pedidoPara === dia) return;
+    setPedidoPara(dia);
+    void enviar({ diaInicio: Number(dia) });
+  }, [dia, estado, pedidoPara, enviar]);
 
   const resumen = (
     <dl className="rounded-contenedor bg-superficie px-4 py-1 shadow-elevacion-1">
@@ -78,68 +89,63 @@ export function PanelCiclo({ accion, diaVigente, futura }: PropsPanelCiclo) {
       <div className="flex flex-col gap-6">
         {resumen}
         <Resultado texto={t.listo(aplicado.dia, formatearFecha(aplicado.desde))} />
+        <Boton onClick={alCerrar}>{t.hecho}</Boton>
       </div>
     );
 
-  if (
-    av12 !== undefined &&
-    rechazo === undefined &&
-    (estado === 'confirmando' || estado === 'enviando')
-  ) {
-    const datos = av12.datos ?? {};
-    return (
-      <div className="flex flex-col gap-6">
-        {resumen}
-        <ConfirmacionImpacto
-          titulo={t.revisar}
-          {...(impactoCambio ? { nota: formularios.impactoCambio } : {})}
-          impacto={[t.dineroNoCambia]}
-          avisos={[textoAv12(datos)]}
-          textoConfirmar={t.confirmar}
-          textoVolver={t.volverAEditar}
-          enviando={estado === 'enviando'}
-          alConfirmar={() => {
-            setAplicado({ dia: Number(datos['diaInicio']), desde: String(datos['rigeDesde']) });
-            void operacion.confirmar();
-          }}
-          alVolver={operacion.volverAEditar}
-        />
-      </div>
-    );
-  }
-
-  const error =
+  const sinCambio = rechazo?.codigo === 'ciclo_sin_cambio';
+  const mensajeRechazo =
     rechazo === undefined
       ? undefined
-      : rechazo.codigo === 'ciclo_sin_cambio'
+      : sinCambio
         ? t.rechazos.ciclo_sin_cambio(String(rechazo.datos?.['dia'] ?? dia))
         : t.rechazos.otro;
-  const enviar = (e: SyntheticEvent) => {
-    e.preventDefault();
-    void operacion.enviar({ diaInicio: Number(dia) });
-  };
+  // La previsualización a la vista es la del día elegido (no la de uno anterior que todavía no se reemplazó).
+  const alDia = pedidoPara === dia && estado !== 'enviando';
+  const listoParaConfirmar =
+    alDia &&
+    estado === 'confirmando' &&
+    av12 !== undefined &&
+    rechazo === undefined &&
+    Number(datos['diaInicio']) === Number(dia);
+  const calculando =
+    aplicado === undefined && (estado === 'enviando' || (estado !== 'error' && pedidoPara !== dia));
+
   return (
-    <form onSubmit={enviar} noValidate className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6">
       {resumen}
-      <Campo etiqueta={t.nuevoDia} requerido {...(error === undefined ? {} : { error })}>
-        {(control) => (
-          <select
-            {...control}
-            className={CAJA}
-            value={dia}
-            onChange={(e) => {
-              setDia(e.target.value);
-              if (estado === 'confirmando') operacion.volverAEditar();
-            }}
-          >
-            {DIAS.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-        )}
-      </Campo>
+      <div className="flex flex-col gap-1">
+        <Campo etiqueta={t.nuevoDia} requerido>
+          {(control) => (
+            <select
+              {...control}
+              aria-describedby={sinCambio && alDia ? idError : control['aria-describedby']}
+              aria-invalid={sinCambio && alDia ? true : undefined}
+              className={CAJA}
+              value={dia}
+              onChange={(e) => {
+                setDia(e.target.value);
+              }}
+            >
+              {DIAS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          )}
+        </Campo>
+        {sinCambio && alDia && mensajeRechazo !== undefined ? (
+          <div id={idError}>
+            <MensajeError>{mensajeRechazo}</MensajeError>
+          </div>
+        ) : null}
+      </div>
+      {calculando ? (
+        <p role="status" className="text-cuerpo-pequeno text-texto-secundario">
+          {t.calculando}
+        </p>
+      ) : null}
       {estado === 'error' && fallo !== undefined ? (
         <AvisoEnLinea
           estado="problema"
@@ -157,17 +163,65 @@ export function PanelCiclo({ accion, diaVigente, futura }: PropsPanelCiclo) {
           {fallo.mensaje}
         </AvisoEnLinea>
       ) : null}
-      <Boton
-        tipo="submit"
-        enviando={estado === 'enviando'}
-        textoEnviando={t.calculando}
-        deshabilitado={!operacion.enLinea}
-        {...(operacion.motivoSinEnvio === undefined
-          ? {}
-          : { motivoDeshabilitado: operacion.motivoSinEnvio })}
-      >
-        {t.verCambio}
-      </Boton>
-    </form>
+      {mensajeRechazo !== undefined && !sinCambio && alDia ? (
+        <AvisoEnLinea estado="problema" aparecioDespues>
+          {mensajeRechazo}
+        </AvisoEnLinea>
+      ) : null}
+      {listoParaConfirmar ? (
+        <section
+          aria-labelledby="ciclo-impacto"
+          data-impacto
+          className="flex flex-col gap-3 rounded-contenedor bg-superficie p-4 shadow-elevacion-1"
+        >
+          <h2 id="ciclo-impacto" className="text-titulo-seccion">
+            {t.revisar}
+          </h2>
+          <p className="text-cuerpo font-semibold text-texto">
+            {t.rigeDesde(formatearFecha(String(datos['rigeDesde'])))}
+          </p>
+          <p className="text-cuerpo-pequeno text-texto">{textoAv12(datos)}</p>
+          <dl className="divide-y divide-borde-sutil">
+            <div className="flex items-baseline justify-between gap-4 py-2">
+              <dt className="text-cuerpo-pequeno text-texto-secundario">{t.diaDeInicio}</dt>
+              <dd className="font-medium tabular-nums">{`${String(diaVigente)} → ${String(datos['diaInicio'])}`}</dd>
+            </div>
+            {typeof datos['transicionInicio'] === 'string' &&
+            typeof datos['transicionFin'] === 'string' ? (
+              <div className="flex items-baseline justify-between gap-4 py-2">
+                <dt className="text-cuerpo-pequeno text-texto-secundario">{t.periodoTransicion}</dt>
+                <dd className="font-medium tabular-nums">
+                  {`${corto(datos['transicionInicio'])} – ${corto(datos['transicionFin'])}`}
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+          <p className="text-cuerpo-pequeno text-texto-secundario">{t.dineroNoCambia}</p>
+        </section>
+      ) : null}
+      <div className="grid grid-cols-2 gap-2">
+        <Boton variante="secundaria" onClick={alCerrar}>
+          {formularios.cancelar}
+        </Boton>
+        {listoParaConfirmar ? (
+          <Boton
+            deshabilitado={!operacion.enLinea}
+            {...(operacion.motivoSinEnvio === undefined
+              ? {}
+              : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+            onClick={() => {
+              setAplicado({ dia: Number(datos['diaInicio']), desde: String(datos['rigeDesde']) });
+              void operacion.confirmar();
+            }}
+          >
+            {t.confirmarDia(Number(datos['diaInicio']))}
+          </Boton>
+        ) : (
+          <Boton deshabilitado aria-describedby={sinCambio && alDia ? idError : undefined}>
+            {t.confirmar}
+          </Boton>
+        )}
+      </div>
+    </div>
   );
 }

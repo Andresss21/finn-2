@@ -5,12 +5,13 @@ import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { PaginaCiclo } from './pagina';
 
-export async function LectorCiclo() {
+export async function LectorCiclo({ superpuesto = false }: { readonly superpuesto?: boolean }) {
   const { ciclo } = await consultar(async () => ajustes(await depsDeConsulta()));
   return (
     <PaginaCiclo
       accion={cambiarCiclo}
       diaVigente={ciclo.diaInicioVigente}
+      superpuesto={superpuesto}
       {...(ciclo.vigenciaFutura === undefined ? {} : { futura: ciclo.vigenciaFutura })}
     />
   );

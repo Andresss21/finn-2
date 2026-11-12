@@ -3,6 +3,7 @@
 // acá solo se muestran. No calcula nada (PF-3).
 import { ajustes } from '@finn/aplicacion/consultas/ajustes';
 import type { Metadata } from 'next';
+import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../../../componentes/navegacion/flujo-de-ruta';
 import { formatearInstante } from '../../../../formato';
@@ -51,6 +52,12 @@ export default async function PaginaRespaldo() {
   return (
     <PaginaFlujoDeRuta titulo={t.titulo} descripcion={t.descripcion} rutaPadre="/ajustes">
       <div className="flex flex-col gap-6">
+        {respaldo.ultimoRespaldoEn === undefined ? (
+          // [CH-240] E5-19: todavía no hay ningún respaldo; las filas dicen «Todavía no hay».
+          <AvisoEnLinea estado="advertencia" titulo={t.sinRespaldosTitulo}>
+            {t.sinRespaldosTexto}
+          </AvisoEnLinea>
+        ) : null}
         <Estado
           id="respaldo"
           titulo={t.respaldo}
@@ -65,6 +72,12 @@ export default async function PaginaRespaldo() {
           atrasado={respaldo.restauracionAtrasada}
           aviso={t.restauracionAtrasada}
         />
+        <section aria-labelledby="lo-hace" className="flex flex-col gap-1">
+          <h2 id="lo-hace" className="text-titulo-seccion">
+            {t.loHace}
+          </h2>
+          <p className="text-cuerpo text-texto">{t.loHaceValor}</p>
+        </section>
         <EnlaceFinn
           href="/ajustes/diagnostico"
           className="inline-flex min-h-12 min-w-11 items-center justify-center rounded-control bg-accion-tonal px-5 text-base font-semibold text-accion no-underline hover:bg-superficie-hundida focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"

@@ -105,7 +105,7 @@ test.describe('PRU-E2E-AJUS', () => {
     await expect(lista.first()).toContainText('token_invalido');
     const buscar = page.getByRole('searchbox', { name: d.buscar });
     await buscar.fill('no-existe');
-    await expect(page.getByText(d.sinResultados)).toBeVisible();
+    await expect(page.getByText(d.sinResultados('no-existe'))).toBeVisible();
     await buscar.fill('token_invalido');
     await expect(lista).toHaveCount(1);
   });
@@ -130,5 +130,35 @@ test.describe('PRU-E2E-AJUS', () => {
     expect(await hechos()).toEqual(trasPrimera);
     await page.getByRole('link', { name: navegacion.saltar }).focus();
     await revisarTactil(page);
+  });
+  test('PRU-E2E-AJUS-721 [CA-E5-22] Diagnóstico sin eventos y con una búsqueda sin coincidencias («Quitar la búsqueda» limpia el campo); Respaldo sin respaldos', async ({
+    page,
+    request,
+  }) => {
+    // Sin ningún evento todavía: el vacío dice cuándo aparecen
+    await abrir(page, '/ajustes/diagnostico');
+    await esperarHidratacion(page);
+    await expect(page.getByText(d.sinEventos, { exact: true })).toBeVisible();
+    await expect(page.getByText(d.sinEventosTexto)).toBeVisible();
+
+    // Con un evento y una búsqueda que no coincide: el texto nombra lo buscado y «Quitar la búsqueda» la limpia
+    expect(await informar(request, 'respaldo', 'x'.repeat(40))).toBe(401);
+    await abrir(page, '/ajustes/diagnostico');
+    await esperarHidratacion(page);
+    const buscar = page.getByRole('searchbox', { name: d.buscar });
+    await buscar.fill('BDJ-9X7Q');
+    await expect(page.getByText(d.sinResultados('BDJ-9X7Q'))).toBeVisible();
+    await page.getByRole('button', { name: d.quitarBusqueda, exact: true }).click();
+    await expect(buscar).toHaveValue('');
+    await expect(page.locator('[data-rol="eventos"] > li')).toHaveCount(1);
+
+    // Respaldo sin ningún respaldo: aviso, cuándo se hace, «Ver el diagnóstico» y las filas dicen «Todavía no hay»
+    await abrir(page, '/ajustes/respaldo');
+    await expect(page.getByText(r.sinRespaldosTitulo)).toBeVisible();
+    await expect(page.getByText(r.sinRespaldosTexto)).toBeVisible();
+    await expect(page.locator('[data-rol="respaldo"]')).toContainText(r.nunca);
+    await expect(page.locator('[data-rol="restauracion"]')).toContainText(r.nunca);
+    await expect(page.getByText(r.loHaceValor)).toBeVisible();
+    await expect(page.getByRole('link', { name: r.verDiagnostico, exact: true })).toBeVisible();
   });
 });
