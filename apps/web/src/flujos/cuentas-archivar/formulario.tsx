@@ -16,6 +16,8 @@ import { MarcoCorto } from './marco-corto';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { cuentasGestion } from '../../textos/cuentas-gestion';
 import { formularios } from '../../textos/formularios';
+import { glosario } from '../../textos/glosario';
+import { FilaAntesDespues } from '../presupuesto-impacto-k4';
 
 const t = cuentasGestion.archivar;
 const n = cuentasGestion.comunes;
@@ -38,7 +40,11 @@ export interface PropsFormularioCuentasArchivar {
 }
 
 interface Vista {
-  readonly impacto?: { readonly deltaLpa: Centavos } | null;
+  readonly impacto?: {
+    readonly deltaLpa: Centavos;
+    readonly lpaAntes?: Centavos;
+    readonly lpaDespues?: Centavos;
+  } | null;
   readonly avisos?: readonly { readonly codigo: string }[];
 }
 
@@ -162,8 +168,20 @@ export function FormularioCuentasArchivar(p: PropsFormularioCuentasArchivar) {
                 impacto={
                   vista.impacto
                     ? [
-                        n.impactoLpa(
-                          `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
+                        // E6-13: «valor actual → nuevo» con lo que dice el servidor [CH-246]; sin esos valores, el cambio.
+                        vista.impacto.lpaAntes !== undefined &&
+                        vista.impacto.lpaDespues !== undefined ? (
+                          <FilaAntesDespues
+                            key="lpa"
+                            nombre={glosario.listoParaAsignar}
+                            antes={vista.impacto.lpaAntes}
+                            despues={vista.impacto.lpaDespues}
+                            conEstado={false}
+                          />
+                        ) : (
+                          n.impactoLpa(
+                            `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
+                          )
                         ),
                       ]
                     : []

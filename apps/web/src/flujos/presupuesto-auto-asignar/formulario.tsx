@@ -43,7 +43,12 @@ export interface PropsFormularioAutoAsignar {
 interface Vista {
   readonly impacto?: {
     readonly deltaLpa: Centavos;
-    readonly deltaDisponible: readonly { readonly categoriaId: string; readonly delta: Centavos }[];
+    readonly deltaDisponible: readonly {
+      readonly categoriaId: string;
+      readonly delta: Centavos;
+      readonly antes?: Centavos;
+      readonly despues?: Centavos;
+    }[];
   } | null;
   readonly avisos?: readonly {
     readonly codigo: string;
@@ -140,7 +145,9 @@ function Cuerpo({ p, revision, alUsarActuales }: PropsCuerpo) {
           <p className="text-cuerpo-pequeno text-texto-secundario">{t.faltaParaLaMeta}</p>
         </div>
         <span className="shrink-0 font-bold tabular-nums">
-          {`${x.delta > 0 ? '+' : ''}${formatearMonto(x.delta)}`}
+          {x.antes !== undefined && x.despues !== undefined
+            ? `${formatearMonto(x.antes)} → ${formatearMonto(x.despues)}`
+            : `${x.delta > 0 ? '+' : ''}${formatearMonto(x.delta)}`}
         </span>
       </div>
     ));

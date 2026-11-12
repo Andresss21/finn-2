@@ -45,7 +45,13 @@ describe('PRU-CMP-PRES impacto «antes → después»', () => {
         filas={[
           <FilaAntesDespues key="a" nombre="Super" antes={c(6285)} despues={c(-1715)} />,
           <FilaAntesDespues key="b" nombre="Casa" antes={c(-2630)} despues={c(5370)} />,
-          <FilaAntesDespues key="c" nombre="Listo" antes={c(100)} despues={c(-100)} conEstado={false} />,
+          <FilaAntesDespues
+            key="c"
+            nombre="Listo"
+            antes={c(100)}
+            despues={c(-100)}
+            conEstado={false}
+          />,
         ]}
       />,
     );

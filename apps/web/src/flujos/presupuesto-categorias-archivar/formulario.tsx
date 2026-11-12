@@ -15,7 +15,7 @@ import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { categoriasArchivar as t } from '../../textos/categorias-archivar';
 import { formularios } from '../../textos/formularios';
-import { TarjetaImpacto } from '../presupuesto-impacto-k4';
+import { FilaAntesDespues, TarjetaImpacto } from '../presupuesto-impacto-k4';
 
 export interface PropsFormularioArchivar {
   /** `archivarCategoria` (OP-09): la pone el lector, así el formulario se prueba sin servidor. */
@@ -47,7 +47,14 @@ interface Cruda extends Campos {
   huellaImpacto?: string;
 }
 interface Vista {
-  readonly impacto?: { readonly deltaLpa: Centavos } | null;
+  readonly impacto?: {
+    readonly deltaLpa: Centavos;
+    readonly deltaDisponible?: readonly {
+      readonly categoriaId: string;
+      readonly antes: Centavos;
+      readonly despues: Centavos;
+    }[];
+  } | null;
   readonly rechazos?: readonly { readonly codigo: string }[];
 }
 
@@ -275,6 +282,23 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
                     t.impactoLpa(
                       `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
                     ),
+                    // E4-25, E6-13: cada Disponible que cambia, «valor actual → nuevo» con el valor que dice el servidor.
+                    ...(vista.impacto.deltaDisponible ?? []).flatMap((x) => {
+                      const nombre =
+                        x.categoriaId === categoriaId
+                          ? p.categoria
+                          : p.destinos.find((d) => d.id === x.categoriaId)?.nombre;
+                      return nombre === undefined
+                        ? []
+                        : [
+                            <FilaAntesDespues
+                              key={x.categoriaId}
+                              nombre={nombre}
+                              antes={x.antes}
+                              despues={x.despues}
+                            />,
+                          ];
+                    }),
                   ]
                 : []
             }

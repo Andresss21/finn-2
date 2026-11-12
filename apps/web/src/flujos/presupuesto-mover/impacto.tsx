@@ -18,7 +18,12 @@ export interface PropsImpactoMover {
   readonly impactoCambio?: boolean;
 }
 
-export function ImpactoMover({ origen, destino, deltas, impactoCambio = false }: PropsImpactoMover) {
+export function ImpactoMover({
+  origen,
+  destino,
+  deltas,
+  impactoCambio = false,
+}: PropsImpactoMover) {
   const filas = [origen, destino].flatMap((k) => {
     const d = deltas.find((x) => x.categoriaId === k.id);
     return d === undefined ? [] : [{ ...k, antes: d.antes, despues: d.despues }];

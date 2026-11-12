@@ -52,7 +52,9 @@ export function FilaAntesDespues({
       nombre={nombre}
       valor={`${formatearMonto(antes)} → ${formatearMonto(despues)}`}
       {...(conEstado && despues < 0
-        ? { estado: { estado: 'problema', etiqueta: glosario.sobregiroConDebitoOEfectivo } as const }
+        ? {
+            estado: { estado: 'problema', etiqueta: glosario.sobregiroConDebitoOEfectivo } as const,
+          }
         : {})}
     />
   );

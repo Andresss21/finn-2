@@ -14,7 +14,7 @@ import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { categoriasFusionar as t } from '../../textos/categorias-fusionar';
 import { formularios } from '../../textos/formularios';
-import { TarjetaImpacto } from '../presupuesto-impacto-k4';
+import { FilaAntesDespues, TarjetaImpacto } from '../presupuesto-impacto-k4';
 
 export interface PropsFormularioFusionar {
   /** `fusionarCategorias` (OP-12): la pone el lector, así el formulario se prueba sin servidor. */
@@ -45,6 +45,8 @@ interface Vista {
     readonly deltaDisponible?: readonly {
       readonly categoriaId: string;
       readonly delta: Centavos;
+      readonly antes?: Centavos;
+      readonly despues?: Centavos;
     }[];
   } | null;
   readonly avisos?: readonly {
@@ -118,7 +120,21 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
     ...(vista.impacto && vista.impacto.deltaLpa !== 0
       ? [t.deltaLpa(conSigno(vista.impacto.deltaLpa))]
       : []),
-    ...(disponible === undefined ? [] : [t.deltaDisponible(nombre, conSigno(disponible.delta))]),
+    // E4-25, E6-13: «valor actual → nuevo» con lo que dice el servidor [CH-246]; sin esos valores, el texto del cambio.
+    ...(disponible === undefined
+      ? []
+      : [
+          disponible.antes !== undefined && disponible.despues !== undefined ? (
+            <FilaAntesDespues
+              key="disponible"
+              nombre={nombre}
+              antes={disponible.antes}
+              despues={disponible.despues}
+            />
+          ) : (
+            t.deltaDisponible(nombre, conSigno(disponible.delta))
+          ),
+        ]),
     ...periodos.map(([k, v]) =>
       t.deltaPeriodo(formatearFechaTexto(k.slice(PREFIJO.length)), nombre, conSigno(v as Centavos)),
     ),
