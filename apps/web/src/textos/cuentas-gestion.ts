@@ -2,6 +2,7 @@
 import { cuentasNueva } from './cuentas-nueva.ts';
 
 export const cuentasGestion = {
+  cerrar: 'Cerrar',
   editar: {
     titulo: 'Editar cuenta',
     guardar: 'Guardar cambios',
@@ -27,6 +28,9 @@ export const cuentasGestion = {
     dejar: 'Dejarlas como están',
     archivar: 'Archivar',
     archivando: 'Archivando…',
+    tituloBloqueo: 'No se puede archivar',
+    guiaSaldo: 'Pasá el saldo a otra cuenta con una transferencia y volvé a intentarlo.',
+    transferirSaldo: 'Transferir el saldo',
     volver: 'Volver a la cuenta',
     // Los bloqueos de 04 §7.5: los mismos mensajes que da el servidor, armados con lo que muestra el detalle.
     bloqueos: {
@@ -48,6 +52,8 @@ export const cuentasGestion = {
     eliminar: 'Eliminar cuenta',
     volver: 'Volver a la cuenta',
     archivarEnLugar: 'Archivar en lugar de eliminar',
+    tituloBloqueo: 'No se puede eliminar',
+    archivarCorto: 'Archivar',
     bloqueos: {
       cuenta_con_movimientos: (nombre: string) =>
         `${nombre} tiene movimientos. Podés archivarla en lugar de eliminarla.`,

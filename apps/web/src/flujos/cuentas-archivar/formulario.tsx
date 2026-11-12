@@ -8,14 +8,14 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Seleccion } from '../../componentes/base/seleccion';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
-import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { formatearMonto } from '../../formato';
+import { centavosATextoDecimal } from '../../formato/monto';
+import { AccionesDeBloqueo } from '../cuentas-bloqueo/acciones';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { cuentasGestion } from '../../textos/cuentas-gestion';
 import { formularios } from '../../textos/formularios';
 
 const t = cuentasGestion.archivar;
-const ENLACE = 'inline-flex min-h-11 items-center font-bold text-enlace underline';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const DEVOLVER = 'devolver';
 
@@ -70,7 +70,10 @@ export function FormularioCuentasArchivar(p: PropsFormularioCuentasArchivar) {
       </PaginaFlujoDeRuta>
     );
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
+    <PaginaFlujoDeRuta
+      titulo={bloqueos.length > 0 ? t.tituloBloqueo : t.titulo}
+      rutaPadre={rutaPadre}
+    >
       <div className="flex flex-col gap-5">
         {bloqueos.length > 0 ? (
           <>
@@ -81,9 +84,20 @@ export function FormularioCuentasArchivar(p: PropsFormularioCuentasArchivar) {
                 </li>
               ))}
             </ul>
-            <EnlaceFinn href={rutaPadre} className={ENLACE}>
-              {t.volver}
-            </EnlaceFinn>
+            {bloqueos.includes('cuenta_con_saldo') ? (
+              <p className="text-texto-secundario">{t.guiaSaldo}</p>
+            ) : null}
+            <AccionesDeBloqueo
+              cerrarHref={rutaPadre}
+              {...(bloqueos.includes('cuenta_con_saldo') && p.saldo > 0
+                ? {
+                    principal: {
+                      href: `/registrar/transferencia?cuenta=${cuentaId}&total=${centavosATextoDecimal(p.saldo)}`,
+                      texto: t.transferirSaldo,
+                    },
+                  }
+                : {})}
+            />
           </>
         ) : (
           <>
