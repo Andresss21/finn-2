@@ -120,7 +120,8 @@ describe('PRU-INT-ESQ', () => {
         ok: true,
         cambios: [],
         hechosNuevos: {},
-        impacto: {},
+        // Un impacto vacío con la forma de 04 §2.4: la huella lo recorre (CH-246)
+        impacto: { deltaLpa: 0, deltaDisponible: [], deltaTarjetas: [], avisos: [] },
         avisos: [],
       })) as never,
     });

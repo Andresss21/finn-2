@@ -183,11 +183,23 @@ describe('aplicar: marco común de las operaciones (01 §5.0, 04 §2.4)', () => 
     const r = exito(prueba(base(), [...nuevoMonto('tc', 400), ...nuevoMonto('d2', 80)]));
     expect(r.impacto).toEqual({
       deltaLpa: c(-50),
+      lpaAntes: c(620),
+      lpaDespues: c(570),
       deltaDisponible: [
-        { categoriaId: 'C1', delta: c(-200) },
-        { categoriaId: 'P', delta: c(200) },
+        { categoriaId: 'C1', delta: c(-200), antes: c(50), despues: c(-150) },
+        { categoriaId: 'P', delta: c(200), antes: c(150), despues: c(350) },
       ],
-      deltaTarjetas: [{ tarjetaId: 'T', deltaSaldo: c(50), deltaReserva: c(-50) }],
+      deltaTarjetas: [
+        {
+          tarjetaId: 'T',
+          deltaSaldo: c(50),
+          deltaReserva: c(-50),
+          saldoAntes: c(0),
+          saldoDespues: c(50),
+          reservaAntes: c(50),
+          reservaDespues: c(0),
+        },
+      ],
       deltaReduccionProyectadaLpaAlCierre: c(150),
       avisos: r.avisos,
     });

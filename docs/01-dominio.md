@@ -826,7 +826,7 @@ Una meta de una categoría archivada se conserva, pero no se evalúa. [Propio]
 **5.0.2 Recálculo.** Ninguna operación escribe derivados. Después de cada operación, todos los derivados son los de la sección 4. [R1, P4]
 
 **5.0.3 Impacto retroactivo (C3).** Si una operación cambia un hecho con fecha en un período cerrado, o mueve un hecho entre períodos (I6):
-- Finn calcula, antes de confirmar, la variación en el período activo: Δ LPA, Δ Disp(c, A) de cada categoría afectada, Δ S(t), Δ RE(t) y Δ de la reducción proyectada de LPA al cierre.
+- Finn calcula, antes de confirmar, la variación en el período activo: Δ LPA, Δ Disp(c, A) de cada categoría afectada, Δ S(t), Δ RE(t) y Δ de la reducción proyectada de LPA al cierre. **[CH-246]** Junto a cada Δ de LPA, Disp(c, A), S(t) y RE(t), su valor antes y después de la operación, de modo que después − antes = Δ.
 - Muestra ese impacto y, después de confirmar, emite el aviso AV-01.
 - No crea ajustes automáticos ni desbloquea asignaciones.
 
@@ -2215,3 +2215,4 @@ Aprobadas en fases posteriores. Este documento no se modifica; cada línea indic
 - **CH-222** (Fase 8, decidido por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). **OP-16, variante nueva "Reservar lo que falta" (precisión):** solo en la categoría de pago c = pago(t), en el período activo y con S(t) > 0 (§4.8): δ = S(t), con las reglas de OP-14, incluido AV-11. Detalle en `04-backend.md` OP-16 y §6.14.4.
 - **CH-224** (Fase 8, ídem). **§1.2, cuenta de efectivo (precisión):** tiene un subtipo, corriente, ahorro o billetera. Solo cambia su presentación y la propuesta de origen de un pago de tarjeta (04 BE-41); ninguna regla de este documento depende de él. Detalle en `03-base-de-datos.md` §3.4 y `04-backend.md` OP-01.
 - **CH-226** (Fase 8, ídem). **OP-37 con tipo devolución (precisión):** el movimiento puede indicar la compra que se devuelve; entonces se ejecuta OP-33 vinculada a esa compra con el reparto de sus líneas (cada una sobre una línea de la compra) y rigen sus precondiciones; sin compra, la devolución sin compra original. Detalle en `04-backend.md` OP-37.
+- **CH-246** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). **§5.0.3 (precisión):** el impacto lleva, junto a cada Δ de LPA, Disp(c, A), S(t) y RE(t), su valor antes y después de la operación (después − antes = Δ), leídos de las mismas dos instantáneas. Ninguna regla cambia. Detalle en `04-backend.md` §2.4 y §4.3.

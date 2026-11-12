@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { calcular } from '../calculo/calcular';
 import { estadoDe, periodoDe } from '../calculo/periodos';
 import type { Hechos } from '../hechos';
+import { formaCanonicaDelImpacto } from '../operaciones/impacto';
 import { FechaLocal } from '../valores/fecha-local';
 import { fechaArb, hechosArb } from './generadores';
 import { Sistema, operacionesArb } from './operaciones';
@@ -116,6 +117,75 @@ describe('PRU-PROP-MOTOR-107: operacionesArb', () => {
         hoyArb.chain((hoy) => fc.tuple(fc.constant(hoy), hechosArb(hoy), operacionesArb())),
         ([hoy, hechos, comandos]) => {
           const sistema = new Sistema(hechos, hoy, comprobar);
+          fc.modelRun(() => ({ model: {}, real: sistema }), comandos);
+        },
+      ),
+      opciones,
+    );
+  });
+});
+
+/**
+ * CH-246: en todo impacto aceptado, «después − antes» es el Δ y cada valor es el de la instantánea de antes o la de
+ * `hechosNuevos`; la forma canónica (la huella) es la del impacto sin esos valores.
+ */
+function resultantes({ antes, resultado }: Paso): void {
+  if (!resultado.ok) return;
+  const { impacto: i } = resultado;
+  const despues = calcular(resultado.hechosNuevos, antes.hoy);
+  const disp = (x: typeof antes, k: string) =>
+    x.presupuesto.celdas.find(
+      (y) => y.categoriaId === k && y.periodo.inicio === x.presupuesto.activo.inicio,
+    )?.disponible ?? 0;
+  const tarjeta = (x: typeof antes, k: string) => x.tarjetas.find((y) => y.tarjetaId === k);
+  expect([i.lpaAntes, i.lpaDespues, i.lpaDespues - i.lpaAntes]).toEqual([
+    antes.lpa.total,
+    despues.lpa.total,
+    i.deltaLpa,
+  ]);
+  for (const x of i.deltaDisponible)
+    expect([x.antes, x.despues, x.despues - x.antes]).toEqual([
+      disp(antes, x.categoriaId),
+      disp(despues, x.categoriaId),
+      x.delta,
+    ]);
+  for (const t of i.deltaTarjetas) {
+    const [ta, td] = [tarjeta(antes, t.tarjetaId), tarjeta(despues, t.tarjetaId)];
+    expect([t.saldoAntes, t.saldoDespues, t.saldoDespues - t.saldoAntes]).toEqual([
+      ta?.sinRespaldo ?? 0,
+      td?.sinRespaldo ?? 0,
+      t.deltaSaldo,
+    ]);
+    expect([t.reservaAntes, t.reservaDespues, t.reservaDespues - t.reservaAntes]).toEqual([
+      ta?.reservaExcedente ?? 0,
+      td?.reservaExcedente ?? 0,
+      t.deltaReserva,
+    ]);
+  }
+  // La huella de antes de CH-246: el impacto con solo sus Δ da la misma forma canónica.
+  const soloDeltas = {
+    deltaLpa: i.deltaLpa,
+    deltaDisponible: i.deltaDisponible.map(({ categoriaId, delta }) => ({ categoriaId, delta })),
+    deltaTarjetas: i.deltaTarjetas.map(({ tarjetaId, deltaSaldo, deltaReserva }) => ({
+      tarjetaId,
+      deltaSaldo,
+      deltaReserva,
+    })),
+    deltaReduccionProyectadaLpaAlCierre: i.deltaReduccionProyectadaLpaAlCierre,
+    avisos: i.avisos,
+  };
+  expect(formaCanonicaDelImpacto(resultado)).toBe(
+    formaCanonicaDelImpacto({ ...resultado, impacto: soloDeltas as never }),
+  );
+}
+
+describe('PRU-PROP-MOTOR-109: operacionesArb e impacto resultante (CH-246)', () => {
+  it('PRU-PROP-MOTOR-109 [V-20] CH-246 GEN-operaciones: en todo impacto, después − antes = Δ para LPA, cada Disponible, S y RE, con los valores de las dos instantáneas, y la huella no los incluye', () => {
+    fc.assert(
+      fc.property(
+        hoyArb.chain((hoy) => fc.tuple(fc.constant(hoy), hechosArb(hoy), operacionesArb())),
+        ([hoy, hechos, comandos]) => {
+          const sistema = new Sistema(hechos, hoy, resultantes);
           fc.modelRun(() => ({ model: {}, real: sistema }), comandos);
         },
       ),

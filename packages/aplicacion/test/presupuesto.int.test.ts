@@ -483,4 +483,62 @@ describe('PRU-INT-PRES', () => {
     expect(lpa(h)).toBeLessThan(0);
     expect(await ejecutar(OP14, confirmada)).toMatchObject({ ok: true, yaAplicada: true });
   });
+
+  it('PRU-INT-PRES-104 CH-246 OP-15: la previsualización trae el Disponible y LPA antes y después (el origen sobregirado en negativo) y no escribe; REQUIERE_CONFIRMACION los trae también', async () => {
+    await categoria(940, 'Mercado');
+    await categoria(941, 'Cine');
+    await asignacion(942, uuid(940), 5000);
+    const h0 = await hechos();
+    const revision = () => leer((t) => Promise.resolve(t.estado.revision), RELOJ);
+    const r0 = await revision();
+    const L = lpa(h0);
+    const entrada = {
+      origenId: uuid(940),
+      destinoId: uuid(941),
+      periodoInicio: inicioA(h0),
+      monto: '80.00',
+      esperado: { asignacionOrigen: '50.00', asignacionDestino: '0' },
+    };
+    const vista = await preparar(OP15, entrada);
+    if (!vista.ok) throw new Error(JSON.stringify(vista.error));
+    const disponible = vista.valor.impacto?.deltaDisponible;
+    expect(disponible).toHaveLength(2);
+    expect(disponible).toEqual(
+      expect.arrayContaining([
+        { categoriaId: uuid(940), delta: -8000, antes: 5000, despues: -3000 },
+        { categoriaId: uuid(941), delta: 8000, antes: 0, despues: 8000 },
+      ]),
+    );
+    expect(vista.valor.impacto).toMatchObject({ deltaLpa: 0, lpaAntes: L, lpaDespues: L });
+    // previsualizar no escribe: ni la revisión ni las asignaciones cambian
+    expect(await revision()).toBe(r0);
+    const h1 = await hechos();
+    expect([asig(h1, uuid(940)), asig(h1, uuid(941))]).toEqual([5000, 0]);
+
+    // La previsualización de REQUIERE_CONFIRMACION (OP-14 que deja LPA negativo) lleva los mismos campos.
+    const pedir = await ejecutar(OP14, {
+      categoriaId: uuid(941),
+      periodoInicio: inicioA(h1),
+      montoNuevo: texto(Math.max(0, L) + 10000),
+      esperado: { monto: '0' },
+    });
+    if (pedir.ok) throw new Error('debía pedir confirmación');
+    expect(pedir.error).toMatchObject({
+      categoria: 'REQUIERE_CONFIRMACION',
+      previsualizacion: {
+        impacto: {
+          lpaAntes: L,
+          lpaDespues: L - Math.max(0, L) - 10000,
+          deltaDisponible: [
+            {
+              categoriaId: uuid(941),
+              antes: 0,
+              despues: Math.max(0, L) + 10000,
+            },
+          ],
+        },
+      },
+    });
+    expect(await revision()).toBe(r0);
+  });
 });

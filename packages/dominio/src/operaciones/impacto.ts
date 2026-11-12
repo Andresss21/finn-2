@@ -10,18 +10,22 @@ import { claveDe } from './comunes';
 
 const { restar, cero } = Centavos;
 
-/** Δ del valor de cada clave de `a` a `b`, en orden de clave. */
+/** Valor de cada clave en `a` y en `b` y su Δ, en orden de clave (una clave ausente vale 0). */
 function deltas<T, K>(a: readonly T[], b: readonly T[], par: (x: T) => readonly [K, Centavos]) {
   const [ma, mb] = [new Map(a.map(par)), new Map(b.map(par))];
-  return [...new Set([...ma.keys(), ...mb.keys()])]
-    .sort()
-    .map((k) => ({ k, d: restar(mb.get(k) ?? cero, ma.get(k) ?? cero) }));
+  return [...new Set([...ma.keys(), ...mb.keys()])].sort().map((k) => {
+    const [antes, despues] = [ma.get(k) ?? cero, mb.get(k) ?? cero];
+    return { k, antes, despues, d: restar(despues, antes) };
+  });
 }
 
 const delActivo = (i: Instantanea) =>
   i.presupuesto.celdas.filter((x) => x.periodo.inicio === i.presupuesto.activo.inicio);
 
-/** Δ LPA, Δ Disp(c, A), Δ S(t), Δ RE(t) y Δ de la reducción proyectada (§5.0.3); los Δ ≠ 0. */
+/**
+ * Δ LPA, Δ Disp(c, A), Δ S(t), Δ RE(t) y Δ de la reducción proyectada (§5.0.3); los Δ ≠ 0. [CH-246] Junto a cada Δ
+ * de LPA, Disp, S y RE, su valor antes y después, leídos de las mismas dos instantáneas: la interfaz no resta (PF-3).
+ */
 export function impacto(antes: Instantanea, despues: Instantanea): Omit<Impacto, 'avisos'> {
   const delta = (f: (i: Instantanea) => Centavos) => restar(f(despues), f(antes));
   const disp = deltas(delActivo(antes), delActivo(despues), (x) => [x.categoriaId, x.disponible]);
@@ -30,10 +34,27 @@ export function impacto(antes: Instantanea, despues: Instantanea): Omit<Impacto,
   const re = t((x) => x.reservaExcedente);
   return {
     deltaLpa: delta((i) => i.lpa.total),
-    deltaDisponible: disp.filter((x) => x.d !== 0).map((x) => ({ categoriaId: x.k, delta: x.d })),
-    deltaTarjetas: t((x) => x.sinRespaldo).flatMap(({ k, d }, n) => {
-      const deltaReserva = re[n]?.d ?? cero;
-      return d === 0 && deltaReserva === 0 ? [] : [{ tarjetaId: k, deltaSaldo: d, deltaReserva }];
+    lpaAntes: antes.lpa.total,
+    lpaDespues: despues.lpa.total,
+    deltaDisponible: disp
+      .filter((x) => x.d !== 0)
+      .map((x) => ({ categoriaId: x.k, delta: x.d, antes: x.antes, despues: x.despues })),
+    deltaTarjetas: t((x) => x.sinRespaldo).flatMap((s, n) => {
+      const r = re[n] ?? { d: cero, antes: cero, despues: cero };
+      if (s.d === 0 && r.d === 0) return [];
+      const { k: tarjetaId, d: deltaSaldo, antes: saldoAntes, despues: saldoDespues } = s;
+      const { d: deltaReserva, antes: reservaAntes, despues: reservaDespues } = r;
+      return [
+        {
+          tarjetaId,
+          deltaSaldo,
+          deltaReserva,
+          saldoAntes,
+          saldoDespues,
+          reservaAntes,
+          reservaDespues,
+        },
+      ];
     }),
     deltaReduccionProyectadaLpaAlCierre: delta((i) => i.reduccionProyectada),
   };
@@ -100,10 +121,27 @@ function canonica(v: unknown, nuevas: ReadonlyMap<unknown, string>): unknown {
   return nuevas.get(v) ?? v;
 }
 
+/** [CH-246] El impacto sin los valores antes y después, que no entran en la huella (04 §4.3). */
+function soloDeltas(i: Impacto) {
+  const { deltaLpa, deltaDisponible, deltaTarjetas, deltaReduccionProyectadaLpaAlCierre } = i;
+  return {
+    deltaLpa,
+    deltaReduccionProyectadaLpaAlCierre,
+    avisos: i.avisos,
+    deltaDisponible: deltaDisponible.map(({ categoriaId, delta }) => ({ categoriaId, delta })),
+    deltaTarjetas: deltaTarjetas.map(({ tarjetaId, deltaSaldo, deltaReserva }) => ({
+      tarjetaId,
+      deltaSaldo,
+      deltaReserva,
+    })),
+  };
+}
+
 /**
  * Serialización canónica de `impacto` y `avisos` (04 §4.3, V-20): todo id de una fila insertada pasa
  * a `@nueva#k` (k = posición de su `insertar` en los cambios) y las listas se ordenan después, para
- * que tampoco el orden dependa del generador. La aplicación calcula el SHA-256 de este texto.
+ * que tampoco el orden dependa del generador. La aplicación calcula el SHA-256 de este texto. [CH-246] Los valores
+ * antes y después no entran: son función de los mismos hechos y la huella de un impacto no cambia por ellos.
  */
 export function formaCanonicaDelImpacto(
   r: Pick<Extract<ResultadoAplicar, { ok: true }>, 'cambios' | 'impacto' | 'avisos'>,
@@ -113,5 +151,5 @@ export function formaCanonicaDelImpacto(
     if (x.tipo === 'insertar' && !nuevas.has(claveDe(x.fila)))
       nuevas.set(claveDe(x.fila), `@nueva#${k}`);
   });
-  return JSON.stringify(canonica({ impacto: r.impacto, avisos: r.avisos }, nuevas));
+  return JSON.stringify(canonica({ impacto: soloDeltas(r.impacto), avisos: r.avisos }, nuevas));
 }
