@@ -4,6 +4,7 @@ import type { DetalleCuentaDto } from '@finn/aplicacion/consultas/detalle-cuenta
 import { Vacio } from '../../../../componentes/base/vacio';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
+import { VacioSinResultados } from '../../../../componentes/navegacion/vacios';
 import { formatearFecha } from '../../../../formato';
 import { cuentaDetalle } from '../../../../textos/cuenta-detalle';
 import { dominio } from '../../../../textos/dominio';
@@ -37,11 +38,14 @@ export function hrefDe(cuentaId: string, filtros: FiltrosDetalle, cambios: Filtr
 function Filtros({
   cuentaId,
   filtros,
+  conLista,
 }: {
   readonly cuentaId: string;
   readonly filtros: FiltrosDetalle;
+  /** Sin lista (nada coincide), el «Quitar filtros» vive en el vacío y no se repite aquí. */
+  readonly conLista: boolean;
 }) {
-  const hay = filtros.tipo !== undefined || filtros.estado !== undefined;
+  const hay = conLista && (filtros.tipo !== undefined || filtros.estado !== undefined);
   return (
     <form
       method="get"
@@ -139,8 +143,17 @@ export function Movimientos({
           {cuentaDetalle.acciones.verEnActividad}
         </EnlaceFinn>
       </div>
-      <Filtros cuentaId={id} filtros={filtros} />
-      {dto.movimientos.length === 0 ? (
+      <Filtros cuentaId={id} filtros={filtros} conLista={dto.movimientos.length > 0} />
+      {dto.movimientos.length === 0 && filtrado ? (
+        // E6-12: «Sin resultados con estos filtros» y «Quitar filtros» (sin `?tipo=` ni `?estado=`, con el período)
+        <VacioSinResultados
+          rutaSinFiltros={hrefDe(id, filtros, {
+            tipo: undefined,
+            estado: undefined,
+            cursor: undefined,
+          })}
+        />
+      ) : dto.movimientos.length === 0 ? (
         <Vacio
           titulo={filtrado || filtros.periodo !== undefined ? t.sinResultados : t.vacio}
           texto={filtrado || filtros.periodo !== undefined ? t.sinResultadosTexto : t.vacioTexto}

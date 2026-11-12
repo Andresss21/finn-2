@@ -657,15 +657,15 @@
 
   "TA-580": { "estado": "en_curso", "rama": "ta-576-grupo-c-bandeja-registrar" },
 
-  "TA-581": { "estado": "pendiente" },
+  "TA-581": { "estado": "en_curso", "rama": "ta-581-grupo-d-cuentas-actividad" },
 
-  "TA-582": { "estado": "pendiente" },
+  "TA-582": { "estado": "en_curso", "rama": "ta-581-grupo-d-cuentas-actividad" },
 
-  "TA-583": { "estado": "pendiente" },
+  "TA-583": { "estado": "en_curso", "rama": "ta-581-grupo-d-cuentas-actividad" },
 
-  "TA-584": { "estado": "pendiente" },
+  "TA-584": { "estado": "en_curso", "rama": "ta-581-grupo-d-cuentas-actividad" },
 
-  "TA-585": { "estado": "pendiente" },
+  "TA-585": { "estado": "en_curso", "rama": "ta-581-grupo-d-cuentas-actividad" },
 
   "TA-586": { "estado": "en_curso", "rama": "ta-586-grupo-e-reportes" },
 

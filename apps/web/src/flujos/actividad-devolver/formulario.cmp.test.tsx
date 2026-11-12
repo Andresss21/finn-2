@@ -168,4 +168,14 @@ describe('PRU-CMP-TX devolver', () => {
     );
     expect(accion).not.toHaveBeenCalled();
   });
+
+  it('PRU-CMP-TX-731 [CA-E4-20] la cuenta a la que vuelve el dinero se rotula «Vuelve a» y muestra la cuenta elegida', async () => {
+    const nodo = await montar(<FormularioActividadDevolver {...base} accion={vi.fn(ok)} />);
+    const rotulo = [...nodo.querySelectorAll('label, span')].find(
+      (x) => x.textContent === 'Vuelve a',
+    );
+    expect(rotulo).toBeDefined();
+    expect(nodo.textContent).not.toContain('Devolver a');
+    expect(nodo.textContent).toContain('Ahorro');
+  });
 });

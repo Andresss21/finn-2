@@ -828,3 +828,21 @@ describe('PRU-CMP-CTA «Reservar $X» en el detalle de la tarjeta', () => {
     expect(intereses.querySelectorAll('dt')).toHaveLength(4);
   });
 });
+
+describe('PRU-CMP-CTA-721 filtros del detalle sin resultados', () => {
+  it('PRU-CMP-CTA-721 [CA-E6-15] con ?tipo= y ?estado= sin movimientos dice «Sin resultados con estos filtros» y «Quitar filtros» enlaza sin esos parámetros', () => {
+    const raiz = mostrar(dto({ movimientos: [] }), {
+      periodo: '2027-01',
+      tipo: 'gasto',
+      estado: 'pendiente',
+    });
+    expect(raiz.querySelector('[data-movimientos]')?.textContent).toContain(
+      'Sin resultados con estos filtros',
+    );
+    const quitar = [...raiz.querySelectorAll('[data-movimientos] a')].filter(
+      (a) => a.textContent === 'Quitar filtros',
+    );
+    expect(quitar).toHaveLength(1);
+    expect(quitar[0]?.getAttribute('href')).toBe('/cuentas/visa?periodo=2027-01');
+  });
+});

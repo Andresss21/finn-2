@@ -4,18 +4,25 @@
 import type { CuentasDto } from '@finn/aplicacion/consultas/cuentas';
 import type { Centavos } from '@finn/dominio/valores';
 import type { ReactNode } from 'react';
-import { Icono } from '../../../componentes/base/icono';
 import { InterruptorEnlace } from '../../../componentes/base/interruptor-enlace';
 import { Vacio } from '../../../componentes/base/vacio';
 import { BilleteraTarjetas, type TarjetaDto } from '../../../componentes/dominio/billetera';
 import { IdentidadCuenta } from '../../../componentes/dominio/identidad-cuenta';
 import { Monto } from '../../../componentes/dominio/monto';
 import { PosicionNeta } from '../../../componentes/dominio/posicion-neta';
+import { PublicarAcciones } from '../../../componentes/marco/publicar-acciones';
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { cuentas as t } from '../../../textos/cuentas';
 
 const p = t.pantalla;
+/** E4-33/E6-11: «Nueva cuenta» y «Ordenar las cuentas» viven en el menú «En Cuentas»; sin cuentas, solo la primera. */
+const ACCION_NUEVA = { etiqueta: p.nuevaCuenta, ruta: '/cuentas/nueva', icono: 'plus' } as const;
+const ACCIONES_CON_CUENTAS = [
+  ACCION_NUEVA,
+  { etiqueta: p.ordenarCuentas, ruta: '/cuentas/ordenar', icono: 'grip' },
+] as const;
+const ACCIONES_SIN_CUENTAS = [ACCION_NUEVA] as const;
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const BOTON = `inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-control bg-superficie-hundida px-4 font-semibold text-texto ${FOCO}`;
 const TARJETA = `block rounded-identidad ${FOCO}`;
@@ -58,19 +65,12 @@ export function PantallaCuentas({ dto }: { readonly dto: CuentasDto }) {
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-5 py-4">
       <PublicarEncabezado encabezado={dto} />
+      <PublicarAcciones
+        titulo={p.enCuentas}
+        acciones={sinCuentas ? ACCIONES_SIN_CUENTAS : ACCIONES_CON_CUENTAS}
+      />
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-titulo-pantalla">{p.titulo}</h1>
-        <div className="flex items-center gap-2">
-          {sinCuentas ? null : (
-            <EnlaceFinn href="/cuentas/ordenar" className={BOTON}>
-              {p.ordenar}
-            </EnlaceFinn>
-          )}
-          <EnlaceFinn href="/cuentas/nueva" className={BOTON}>
-            <Icono nombre="plus" tamano={18} />
-            {p.nuevaCuenta}
-          </EnlaceFinn>
-        </div>
       </div>
       {sinCuentas ? (
         <Vacio
