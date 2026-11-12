@@ -215,7 +215,7 @@ describe('PRU-CMP-PRES selector de período, entrega 4', () => {
   const ruta = (n: HTMLElement, nombre: string) =>
     [...n.querySelectorAll('a')].find((a) => a.getAttribute('aria-label') === nombre);
 
-  it('PRU-CMP-PRES-721 [CH-240] SelectorPeriodo dibuja enlaces con su href; sin `anterior` el lugar queda reservado; el período de transición muestra su texto', () => {
+  it('PRU-CMP-PRES-721 [] SelectorPeriodo dibuja enlaces con su href; sin `anterior` el lugar queda reservado; el período de transición muestra su texto', () => {
     const n = montar(
       <SelectorPeriodo
         periodo={otro({})}

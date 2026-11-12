@@ -644,7 +644,7 @@ describe('Detalle de categoría: cobertura de cada consumo (A6)', () => {
 });
 
 describe('PRU-CMP-CATEG entrega 4', () => {
-  it('PRU-CMP-CATEG-731 [CH-240] el detalle de una archivada con Disponible muestra AV-14 y sus dos acciones, la meta en pausa y ningún «Eliminar»; «Archivar» en una activa con Disponible va deshabilitado con su motivo', async () => {
+  it('PRU-CMP-CATEG-731 [] el detalle de una archivada con Disponible muestra AV-14 y sus dos acciones, la meta en pausa y ningún «Eliminar»; «Archivar» en una activa con Disponible va deshabilitado con su motivo', async () => {
     const sacar = vi.fn(() =>
       Promise.resolve({ ok: true as const, valor: {}, yaAplicada: false, avisos: [] }),
     );

@@ -204,7 +204,7 @@ test.describe('PRU-E2E-PRES entrega 4', () => {
     await expect(page.locator('[data-seccion="historial"]')).not.toContainText(/adelanto/i);
   });
 
-  test('PRU-E2E-CATEG-731 [CH-240] desde Estructura, Editar categoría abre la hoja, «Guardar» se habilita al cambiar el nombre y un nombre repetido muestra el error en el campo', async ({
+  test('PRU-E2E-CATEG-731 [] desde Estructura, Editar categoría abre la hoja, «Guardar» se habilita al cambiar el nombre y un nombre repetido muestra el error en el campo', async ({
     page,
   }) => {
     await sembrarOps(OPS, '2027-02-10');
@@ -221,7 +221,7 @@ test.describe('PRU-E2E-PRES entrega 4', () => {
     await expect(page.locator('[aria-invalid="true"]').first()).toBeVisible();
   });
 
-  test('PRU-E2E-CATEG-732 [CH-240] «Archivadas · N» se abre, «Desarchivar» deja el resultado en el lugar y la categoría vuelve a su grupo', async ({
+  test('PRU-E2E-CATEG-732 [] «Archivadas · N» se abre, «Desarchivar» deja el resultado en el lugar y la categoría vuelve a su grupo', async ({
     page,
   }) => {
     await sembrarOps(ESC44, '2027-03-05');

@@ -171,7 +171,7 @@ test.describe('PRU-E2E-COBRO pantalla de por cobrar', () => {
     await expect(partida.getByRole('link')).toHaveCount(0);
   });
 
-  test('PRU-E2E-COBRO-701 [CH-240] «Ver los cerrados» muestra «Cerrados · N» con una fila por partida cerrada, su estado y sin acciones, y pasa a «Ocultar los cerrados»', async ({
+  test('PRU-E2E-COBRO-701 [] «Ver los cerrados» muestra «Cerrados · N» con una fila por partida cerrada, su estado y sin acciones, y pasa a «Ocultar los cerrados»', async ({
     page,
   }) => {
     await sembrarOps(ESC20_PASO4);
