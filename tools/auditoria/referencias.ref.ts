@@ -17,7 +17,11 @@ const test = base.extend<{ redBloqueada: undefined }>({
 });
 
 const DISENO = join(SALIDA, '..', 'diseno');
-const RAICES = ['02-referencias/entrega-2/pantallas', '02-referencias/entrega-1/pantallas', 'entrega-3/pantallas'];
+const RAICES = [
+  '02-referencias/entrega-2/pantallas',
+  '02-referencias/entrega-1/pantallas',
+  'entrega-3/pantallas',
+];
 const DESTINO = join(SALIDA, 'medidas-ref');
 mkdirSync(DESTINO, { recursive: true });
 

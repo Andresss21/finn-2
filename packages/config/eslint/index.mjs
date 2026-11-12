@@ -77,6 +77,8 @@ export function configurar({ controles = false } = {}) {
         'plan/**',
         'supabase/**',
         'tools/plan/**',
+        // Scripts de captura y medición de la auditoría de diseño (docs/auditoria-diseno): herramienta de un uso, fuera del producto.
+        'tools/auditoria/**',
         ...(controles ? [] : [`tools/lint/controles/**`]),
       ],
     },

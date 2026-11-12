@@ -74,7 +74,12 @@ const OPS_RITMO: Op[] = [
   { op: 'OP-01', cuenta: 'Ahorro' },
   ...Object.keys(GASTOS_RITMO).map((categoria): Op => ({ op: 'OP-07', categoria })),
   { op: 'OP-21', monto: 1000 },
-  ...Object.keys(GASTOS_RITMO).map((categoria): Op => ({ op: 'OP-14', categoria, monto: 50, periodo: 'P1' })),
+  ...Object.keys(GASTOS_RITMO).map((categoria): Op => ({
+    op: 'OP-14',
+    categoria,
+    monto: 50,
+    periodo: 'P1',
+  })),
   ...Object.entries(GASTOS_RITMO).flatMap(([categoria, montos]) =>
     montos.map((monto): Op => ({ op: 'OP-20', cuenta: 'Ahorro', monto, categoria })),
   ),
@@ -94,10 +99,32 @@ const ESC44: Op[] = [
   { op: 'OP-07', categoria: 'Gimnasio' },
   { op: 'OP-21', monto: 700, fecha: '2027-01-25', hoy: '2027-01-25' },
   { op: 'OP-14', categoria: 'Gimnasio', monto: 70, periodo: 'P1', hoy: '2027-01-25' },
-  { op: 'OP-20', cuenta: 'Ahorro', monto: 30, categoria: 'Gimnasio', fecha: '2027-02-02', hoy: '2027-02-02', etiqueta: 'gimnasio' },
+  {
+    op: 'OP-20',
+    cuenta: 'Ahorro',
+    monto: 30,
+    categoria: 'Gimnasio',
+    fecha: '2027-02-02',
+    hoy: '2027-02-02',
+    etiqueta: 'gimnasio',
+  },
   { op: 'OP-14', categoria: 'Gimnasio', monto: 30, periodo: 'P3' },
-  { op: 'OP-42', etiqueta: 'gimnasio', cuenta: 'Ahorro', comercio: 'Gimnasio', monto: 30, categoria: 'Gimnasio', primeraFecha: '2027-03-10' },
-  { op: 'OP-09', categoria: 'Gimnasio', destino: 'LPA', devolverFuturas: true, desactivar: ['gimnasio'] },
+  {
+    op: 'OP-42',
+    etiqueta: 'gimnasio',
+    cuenta: 'Ahorro',
+    comercio: 'Gimnasio',
+    monto: 30,
+    categoria: 'Gimnasio',
+    primeraFecha: '2027-03-10',
+  },
+  {
+    op: 'OP-09',
+    categoria: 'Gimnasio',
+    destino: 'LPA',
+    devolverFuturas: true,
+    desactivar: ['gimnasio'],
+  },
   { op: 'OP-33', compra: 'gimnasio', monto: 25 },
 ];
 // Tarjeta con reserva excedente de $30.00 (ESC-13 paso 4), hoy 21 feb.
@@ -162,7 +189,9 @@ async function idDe(page: Page, nombre: string): Promise<string> {
 
 // ============================ INICIO ============================
 const ini = (id: string, o: Record<string, unknown>) =>
-  caso({ id: `inicio__${id}`, ruta: '/', comp: INI, ...(o as object) } as Parameters<typeof caso>[0]);
+  caso({ id: `inicio__${id}`, ruta: '/', comp: INI, ...(o as object) } as Parameters<
+    typeof caso
+  >[0]);
 
 ini('al-dia', {
   ref: `${E1}/S1-Inicio__todo-al-dia`,
@@ -246,7 +275,12 @@ test('inicio__cargando', async ({ page, context, baseURL }, info) => {
     page,
     info,
     'inicio__cargando',
-    { ruta: '/', comp: 'apps/web/src/app/(finn)/loading.tsx', ref: '02-referencias/entrega-2/pantallas/14-sin-conexion-404-y-error-de-pantalla/cargando', nota: 'loading.tsx real, con la navegación retenida. Revisar la referencia que exista en 14.' },
+    {
+      ruta: '/',
+      comp: 'apps/web/src/app/(finn)/loading.tsx',
+      ref: '02-referencias/entrega-2/pantallas/14-sin-conexion-404-y-error-de-pantalla/cargando',
+      nota: 'loading.tsx real, con la navegación retenida. Revisar la referencia que exista en 14.',
+    },
     { carga: true },
   );
   soltar();
@@ -273,10 +307,18 @@ test('inicio__asignar-boton', async ({ page, context, baseURL }, info) => {
   await entrar(context, baseURL);
   await page.goto('/');
   await quieta(page);
-  await page.getByRole('link', { name: /^Asignar \$/ }).or(page.getByRole('button', { name: /^Asignar \$/ })).first().click();
+  await page
+    .getByRole('link', { name: /^Asignar \$/ })
+    .or(page.getByRole('button', { name: /^Asignar \$/ }))
+    .first()
+    .click();
   await page.waitForTimeout(1500);
   await quieta(page);
-  nota('inicio__asignar-boton', `url=${page.url()} dialogo=${await page.getByRole('dialog').count()}`, info.project.name);
+  nota(
+    'inicio__asignar-boton',
+    `url=${page.url()} dialogo=${await page.getByRole('dialog').count()}`,
+    info.project.name,
+  );
   await capturar(page, info, 'inicio__asignar-boton', {
     ruta: '/',
     comp: 'apps/web/src/app/(finn)/pantalla-inicio.tsx',
@@ -287,28 +329,59 @@ test('inicio__asignar-boton', async ({ page, context, baseURL }, info) => {
 
 // ============================ PRESUPUESTO ============================
 const pre = (id: string, o: Record<string, unknown>) =>
-  caso({ id: `presupuesto__${id}`, ruta: '/presupuesto', comp: PRES, ...(o as object) } as Parameters<typeof caso>[0]);
+  caso({
+    id: `presupuesto__${id}`,
+    ruta: '/presupuesto',
+    comp: PRES,
+    ...(o as object),
+  } as Parameters<typeof caso>[0]);
 
-pre('sobregiradas', { ...A7, ref: `${E1}/S2-Presupuesto__filtro-sobregiradas`, url: '/presupuesto?filtro=sobregiradas' });
-pre('sin-fondos', { ...A7, ref: `${E1}/S2-Presupuesto__filtro-sobregiradas`, nota: 'Sin PNG propio de "Sin fondos".', url: '/presupuesto?filtro=sin-fondos' });
-pre('cubiertas', { ...A7, ref: `${E2}/D3-presupuesto-filtros-que-se-desplazan/cubiertas`, url: '/presupuesto?filtro=cubiertas' });
+pre('sobregiradas', {
+  ...A7,
+  ref: `${E1}/S2-Presupuesto__filtro-sobregiradas`,
+  url: '/presupuesto?filtro=sobregiradas',
+});
+pre('sin-fondos', {
+  ...A7,
+  ref: `${E1}/S2-Presupuesto__filtro-sobregiradas`,
+  nota: 'Sin PNG propio de "Sin fondos".',
+  url: '/presupuesto?filtro=sin-fondos',
+});
+pre('cubiertas', {
+  ...A7,
+  ref: `${E2}/D3-presupuesto-filtros-que-se-desplazan/cubiertas`,
+  url: '/presupuesto?filtro=cubiertas',
+});
 pre('filtros-desplazados', {
   ...A7,
   ref: `${E2}/D3-presupuesto-filtros-que-se-desplazan/todas`,
   nota: 'Principal con la fila de filtros: se mide si sangra y se desplaza.',
   pasos: async (page) => {
     const m = await page.evaluate(() => {
-      const g = document.querySelector('[role="group"][aria-label="Filtrar categorías"]') as HTMLElement | null;
+      const g = document.querySelector(
+        '[role="group"][aria-label="Filtrar categorías"]',
+      ) as HTMLElement | null;
       const sc = (g?.closest('div, nav') ?? g) as HTMLElement | null;
       let el: HTMLElement | null = g;
       let scroller: HTMLElement | null = null;
       while (el) {
         const o = getComputedStyle(el).overflowX;
-        if (o === 'auto' || o === 'scroll') { scroller = el; break; }
+        if (o === 'auto' || o === 'scroll') {
+          scroller = el;
+          break;
+        }
         el = el.parentElement;
       }
       const r = (scroller ?? g)?.getBoundingClientRect();
-      return { grupo: g?.getBoundingClientRect().toJSON(), desplazable: scroller !== null, scroller: r?.toJSON(), scrollW: scroller?.scrollWidth, clientW: scroller?.clientWidth, anchoVentana: innerWidth, sc: !!sc };
+      return {
+        grupo: g?.getBoundingClientRect().toJSON(),
+        desplazable: scroller !== null,
+        scroller: r?.toJSON(),
+        scrollW: scroller?.scrollWidth,
+        clientW: scroller?.clientWidth,
+        anchoVentana: innerWidth,
+        sc: !!sc,
+      };
     });
     nota('presupuesto__filtros-desplazados', JSON.stringify(m), 'x');
   },
@@ -320,8 +393,16 @@ pre('sin-resultados', {
   soloLectura: true,
   url: '/presupuesto?filtro=sobregiradas',
 });
-pre('periodo-cerrado', { ...A7, ref: `${E1}/S2-Presupuesto__periodo-cerrado`, url: `/presupuesto?periodo=${P_CERRADO}` });
-pre('periodo-futuro', { ...A7, ref: `${E1}/S2-Presupuesto__periodo-futuro`, url: `/presupuesto?periodo=${P_FUTURO}` });
+pre('periodo-cerrado', {
+  ...A7,
+  ref: `${E1}/S2-Presupuesto__periodo-cerrado`,
+  url: `/presupuesto?periodo=${P_CERRADO}`,
+});
+pre('periodo-futuro', {
+  ...A7,
+  ref: `${E1}/S2-Presupuesto__periodo-futuro`,
+  url: `/presupuesto?periodo=${P_FUTURO}`,
+});
 pre('lpa-negativo', {
   ref: `${E2}/15-inicio-y-presupuesto-piezas-nuevas/lpa-negativo`,
   ops: LPA_NEG,
@@ -368,14 +449,30 @@ test('presupuesto__selector-periodo', async ({ page, context, baseURL }, info) =
 
 // ============================ LISTO PARA ASIGNAR ============================
 const LPA = (id: string, o: Record<string, unknown>) =>
-  caso({ id: `lpa__${id}`, ruta: '/presupuesto/listo-para-asignar', comp: LPA_PAG, ...(o as object) } as Parameters<typeof caso>[0]);
+  caso({
+    id: `lpa__${id}`,
+    ruta: '/presupuesto/listo-para-asignar',
+    comp: LPA_PAG,
+    ...(o as object),
+  } as Parameters<typeof caso>[0]);
 LPA('principal', { ...A7, ref: `${E2}/05-detalle-de-listo-para-asignar/principal` });
-LPA('negativo', { ref: `${E2}/05-detalle-de-listo-para-asignar/negativo`, ops: LPA_NEG, hoy: '2027-02-10', soloLectura: true });
+LPA('negativo', {
+  ref: `${E2}/05-detalle-de-listo-para-asignar/negativo`,
+  ops: LPA_NEG,
+  hoy: '2027-02-10',
+  soloLectura: true,
+});
 LPA('tabla', {
   ...A7,
   ref: `${E2}/05-detalle-de-listo-para-asignar/tabla`,
   pasos: async (page) => {
-    await page.getByRole('radio', { name: /Tabla/ }).or(page.getByRole('button', { name: /Tabla/ })).or(page.getByText('Tabla', { exact: true })).first().click({ timeout: 5000 }).catch(() => undefined);
+    await page
+      .getByRole('radio', { name: /Tabla/ })
+      .or(page.getByRole('button', { name: /Tabla/ }))
+      .or(page.getByText('Tabla', { exact: true }))
+      .first()
+      .click({ timeout: 5000 })
+      .catch(() => undefined);
   },
 });
 
@@ -422,7 +519,8 @@ caso({
   ref: `${E2}/07-flujos-del-presupuesto/asignar-periodo-cerrado`,
   nota: 'La app redirige al detalle de la categoría con ?motivo=periodo_cerrado.',
   ...A7,
-  url: async (page) => `/presupuesto/asignar/${await idDe(page, 'Restaurantes')}?periodo=${P_CERRADO}`,
+  url: async (page) =>
+    `/presupuesto/asignar/${await idDe(page, 'Restaurantes')}?periodo=${P_CERRADO}`,
 });
 test('asignar__conflicto', async ({ page, context, baseURL }, info) => {
   const { sembrarEscenario } = await import('../lib.ts');
@@ -460,7 +558,11 @@ test('asignar__resultado', async ({ page, context, baseURL }, info) => {
   await page.getByRole('button', { name: 'Guardar', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await quieta(page);
-  nota('asignar__resultado', `url=${page.url()} deshacer=${await page.getByText('Deshacer').count()} status=${await page.locator('[role="status"]').count()}`, info.project.name);
+  nota(
+    'asignar__resultado',
+    `url=${page.url()} deshacer=${await page.getByText('Deshacer').count()} status=${await page.locator('[role="status"]').count()}`,
+    info.project.name,
+  );
   await capturar(page, info, 'asignar__resultado', {
     ruta: '/presupuesto',
     comp: PANT_PRES,
@@ -563,8 +665,17 @@ caso({
 
 // ============================ ESTRUCTURA Y PLANTILLA ============================
 const est = (id: string, o: Record<string, unknown>) =>
-  caso({ id: `estructura__${id}`, ruta: '/presupuesto/estructura', comp: EST, ...(o as object) } as Parameters<typeof caso>[0]);
-est('lista', { ref: `${E2}/08-estructura-y-plantilla-inicial/estructura`, ...A7, url: '/presupuesto/estructura' });
+  caso({
+    id: `estructura__${id}`,
+    ruta: '/presupuesto/estructura',
+    comp: EST,
+    ...(o as object),
+  } as Parameters<typeof caso>[0]);
+est('lista', {
+  ref: `${E2}/08-estructura-y-plantilla-inicial/estructura`,
+  ...A7,
+  url: '/presupuesto/estructura',
+});
 est('movida', {
   ref: `${E2}/08-estructura-y-plantilla-inicial/estructura-movida`,
   ops: ESTRUCTURA,
@@ -597,7 +708,10 @@ est('nueva-categoria', {
   ...A7,
   url: '/presupuesto/estructura',
   pasos: async (page) => {
-    await page.getByRole('link', { name: /^Agregar categoría a|Nueva categoría/ }).first().click();
+    await page
+      .getByRole('link', { name: /^Agregar categoría a|Nueva categoría/ })
+      .first()
+      .click();
     await quieta(page);
   },
 });
@@ -635,7 +749,12 @@ est('error-nombre-vacio', {
 });
 
 const pla = (id: string, o: Record<string, unknown>) =>
-  caso({ id: `plantilla__${id}`, ruta: '/presupuesto/estructura/plantilla', comp: PLA, ...(o as object) } as Parameters<typeof caso>[0]);
+  caso({
+    id: `plantilla__${id}`,
+    ruta: '/presupuesto/estructura/plantilla',
+    comp: PLA,
+    ...(o as object),
+  } as Parameters<typeof caso>[0]);
 pla('sugerida', {
   ref: `${E2}/08-estructura-y-plantilla-inicial/plantilla`,
   ops: [],
@@ -668,7 +787,11 @@ test('plantilla__creando', async ({ page, context, baseURL }, info) => {
     page,
     info,
     'plantilla__creando',
-    { ruta: '/presupuesto/estructura/plantilla', comp: PLA, ref: `${E2}/08-estructura-y-plantilla-inicial/plantilla-creando` },
+    {
+      ruta: '/presupuesto/estructura/plantilla',
+      comp: PLA,
+      ref: `${E2}/08-estructura-y-plantilla-inicial/plantilla-creando`,
+    },
     { carga: true },
   );
   soltar();
@@ -698,7 +821,9 @@ test('plantilla__resultado', async ({ page, context, baseURL }, info) => {
   await page.goto('/presupuesto/estructura/plantilla');
   await quieta(page);
   await page.getByRole('button', { name: /^Crear \d+ categorías$/ }).click();
-  await expect(page.getByText(/Se crearon|Creaste|creadas/i).first()).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/Se crearon|Creaste|creadas/i).first()).toBeVisible({
+    timeout: 60_000,
+  });
   await capturar(page, info, 'plantilla__resultado', {
     ruta: '/presupuesto/estructura/plantilla',
     comp: PLA,
@@ -717,7 +842,10 @@ caso({
   ...A7,
   antes: async (page) => {
     await page.addInitScript(() => {
-      Object.defineProperty(Notification, 'permission', { get: () => 'default', configurable: true });
+      Object.defineProperty(Notification, 'permission', {
+        get: () => 'default',
+        configurable: true,
+      });
     });
   },
 });

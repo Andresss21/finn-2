@@ -121,7 +121,8 @@ async function simularAccion(
   let n = 0;
   await page.route('**/*', async (ruta) => {
     if (!esAccion(ruta.request())) return ruta.fallback();
-    const r = typeof resultado === 'function' ? (resultado as (n: number) => unknown)(n) : resultado;
+    const r =
+      typeof resultado === 'function' ? (resultado as (n: number) => unknown)(n) : resultado;
     n += 1;
     if (opciones.retener !== undefined) await opciones.retener;
     await ruta
@@ -294,7 +295,9 @@ test('acceso__sesion-vencida', async ({ page, context, baseURL }, info) => {
   // Como PRU-E2E-ACCESO-001: JWT vencido y refresh token que Auth rechaza.
   const base64url = (t: string): string => Buffer.from(t).toString('base64url');
   const host = new URL(variable('NEXT_PUBLIC_SUPABASE_URL')).hostname.split('.')[0];
-  const carga = base64url(JSON.stringify({ sub: variable('FINN_USUARIO_ID'), aal: 'aal2', exp: 1 }));
+  const carga = base64url(
+    JSON.stringify({ sub: variable('FINN_USUARIO_ID'), aal: 'aal2', exp: 1 }),
+  );
   const vencida = {
     access_token: `${base64url('{"alg":"ES256","typ":"JWT"}')}.${carga}.firma`,
     refresh_token: 'rechazado',
@@ -399,7 +402,9 @@ test('acceso__verificar-comportamiento', async ({ page, context, baseURL }, info
     ),
   };
   await page.keyboard.press('Backspace');
-  const trasRetroceso = await campos.evaluateAll((es) => es.map((e) => (e as HTMLInputElement).value));
+  const trasRetroceso = await campos.evaluateAll((es) =>
+    es.map((e) => (e as HTMLInputElement).value),
+  );
   await campos.first().fill('');
   // Pegar «123 456»
   await campos.first().focus();
@@ -410,15 +415,22 @@ test('acceso__verificar-comportamiento', async ({ page, context, baseURL }, info
       new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }),
     );
   });
-  const trasPegarEvento = await campos.evaluateAll((es) => es.map((e) => (e as HTMLInputElement).value));
+  const trasPegarEvento = await campos.evaluateAll((es) =>
+    es.map((e) => (e as HTMLInputElement).value),
+  );
   await campos.first().fill('');
   await campos.first().focus();
   await page.keyboard.insertText('123 456');
-  const trasPegarTexto = await campos.evaluateAll((es) => es.map((e) => (e as HTMLInputElement).value));
+  const trasPegarTexto = await campos.evaluateAll((es) =>
+    es.map((e) => (e as HTMLInputElement).value),
+  );
   // ¿Se verifica sola al sexto dígito? Se escribe un código de 6 dígitos y se espera sin tocar el botón.
   await campos.first().fill('');
   await campos.first().focus();
-  await simularAccion(page, errorDe('codigo_incorrecto', 'El código no es correcto. Revisá que sea el de Finn en tu app.'));
+  await simularAccion(
+    page,
+    errorDe('codigo_incorrecto', 'El código no es correcto. Revisá que sea el de Finn en tu app.'),
+  );
   await page.keyboard.type('000000');
   await page.waitForTimeout(1500);
   const enviosSinBoton = envios.length;
@@ -466,7 +478,8 @@ test('acceso__verificar-errores', async ({ page, context, baseURL }, info) => {
     return {
       clase: g?.className,
       animaciones: anim,
-      bordeDelCampo: s === null ? null : `${s.borderTopWidth} ${s.borderTopStyle} ${s.borderTopColor}`,
+      bordeDelCampo:
+        s === null ? null : `${s.borderTopWidth} ${s.borderTopStyle} ${s.borderTopColor}`,
       sombraDelCampo: s?.boxShadow,
       focoEnElCampo: document.activeElement === campo,
       valor: (campo as HTMLInputElement | null)?.value,
@@ -578,7 +591,10 @@ test('acceso__verificar-enviando-y-correcto', async ({ page, context, baseURL },
         const r = p?.getBoundingClientRect();
         return {
           texto: p?.textContent,
-          cajaDelMensaje: r === undefined ? null : [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)],
+          cajaDelMensaje:
+            r === undefined
+              ? null
+              : [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)],
           fondoDelCampo: s?.backgroundColor,
           valorDelCampo: (campo as HTMLInputElement | null)?.value,
         };
@@ -621,7 +637,10 @@ test('acceso__verificar-varios-factores', async ({ page, context, baseURL }, inf
     });
     const factor = page.getByLabel('Factor');
     if ((await factor.count()) > 0) {
-      await factor.first().click().catch(() => undefined);
+      await factor
+        .first()
+        .click()
+        .catch(() => undefined);
       await page.waitForTimeout(300);
       await capturar(page, info, 'acceso__verificar-varios-factores-abierto', {
         ...VER,
@@ -701,7 +720,10 @@ test('acceso__inscribir', async ({ page, context, baseURL }, info) => {
     n === 0
       ? inscripcion
       : n === 1
-        ? errorDe('codigo_incorrecto', 'El código no es correcto. Revisá que sea el de Finn en tu app.')
+        ? errorDe(
+            'codigo_incorrecto',
+            'El código no es correcto. Revisá que sea el de Finn en tu app.',
+          )
         : { ok: true, valor: {} },
   );
   await expect(page.getByAltText('Código QR para tu app de autenticación')).toBeVisible();
@@ -777,22 +799,56 @@ caso({
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 const HOY_A7 = '2026-10-15';
-const N = (
-  motivo: string,
-  titulo: string,
-  cuerpo: string,
-  creadaEn: string,
-  leida = false,
-) => ({ aviso: null, motivo, titulo, cuerpo, creadaEn, leida });
+const N = (motivo: string, titulo: string, cuerpo: string, creadaEn: string, leida = false) => ({
+  aviso: null,
+  motivo,
+  titulo,
+  cuerpo,
+  creadaEn,
+  leida,
+});
 const NOTIF = [
-  N('pago_tarjeta_proximo', 'Visa Oro corta el 25/10', 'Te falta reservar $18.75 para que la deuda quede cubierta antes del corte.', '2026-10-15T08:00:00-06:00'),
-  N('cuota_proxima', 'Cuota del préstamo el 20/10', 'Cuota 14 · $210.00 desde Cuenta de ahorro. Se registra sola.', '2026-10-15T07:55:00-06:00'),
-  N('meta_vencida', 'Netflix tiene su meta cubierta', 'Ya está asignado lo que pide este período.', '2026-10-14T12:00:00-06:00', true),
-  N('registro_automatico', 'La regla PIZZA HUT se aplicó', '1 movimiento quedó en Restaurantes.', '2026-10-13T12:00:00-06:00', true),
-  N('cierre_periodo', 'Se cerró el período 21/08 – 20/09', 'Sobregiros cubiertos: Listo para asignar no cambió.', '2026-09-21T06:00:00-06:00', true),
+  N(
+    'pago_tarjeta_proximo',
+    'Visa Oro corta el 25/10',
+    'Te falta reservar $18.75 para que la deuda quede cubierta antes del corte.',
+    '2026-10-15T08:00:00-06:00',
+  ),
+  N(
+    'cuota_proxima',
+    'Cuota del préstamo el 20/10',
+    'Cuota 14 · $210.00 desde Cuenta de ahorro. Se registra sola.',
+    '2026-10-15T07:55:00-06:00',
+  ),
+  N(
+    'meta_vencida',
+    'Netflix tiene su meta cubierta',
+    'Ya está asignado lo que pide este período.',
+    '2026-10-14T12:00:00-06:00',
+    true,
+  ),
+  N(
+    'registro_automatico',
+    'La regla PIZZA HUT se aplicó',
+    '1 movimiento quedó en Restaurantes.',
+    '2026-10-13T12:00:00-06:00',
+    true,
+  ),
+  N(
+    'cierre_periodo',
+    'Se cerró el período 21/08 – 20/09',
+    'Sobregiros cubiertos: Listo para asignar no cambió.',
+    '2026-09-21T06:00:00-06:00',
+    true,
+  ),
 ] as const;
 
-const A7N = { escenario: escenarioA7(), hoyServidor: HOY_A7, notificaciones: NOTIF, soloLectura: true } as const;
+const A7N = {
+  escenario: escenarioA7(),
+  hoyServidor: HOY_A7,
+  notificaciones: NOTIF,
+  soloLectura: true,
+} as const;
 const A7_LEIDAS = {
   escenario: escenarioA7(),
   hoyServidor: HOY_A7,
@@ -832,7 +888,10 @@ caso({
   url: async (page) => {
     await page.goto('/presupuesto');
     await quieta(page);
-    const id = await page.locator('[data-fila-categoria]').first().getAttribute('data-fila-categoria');
+    const id = await page
+      .locator('[data-fila-categoria]')
+      .first()
+      .getAttribute('data-fila-categoria');
     return `/presupuesto/categorias/${id ?? ''}`;
   },
 });
@@ -847,7 +906,10 @@ caso({
   url: async (page) => {
     await page.goto('/presupuesto');
     await quieta(page);
-    const id = await page.locator('[data-fila-categoria]').first().getAttribute('data-fila-categoria');
+    const id = await page
+      .locator('[data-fila-categoria]')
+      .first()
+      .getAttribute('data-fila-categoria');
     return `/presupuesto/categorias/${id ?? ''}`;
   },
   pasos: async (page) => {
@@ -1009,8 +1071,17 @@ test('salir__con-borradores', async ({ page, context, baseURL }, info) => {
   await quieta(page);
   await page.evaluate(() => {
     const b = (campos: unknown) =>
-      JSON.stringify({ version: 1, guardadoEn: '2026-10-15T09:41:00-06:00', campos, id: null, revisionAlAbrir: null });
-    sessionStorage.setItem('finn:borrador:v1:/registrar/gasto', b({ comercio: 'Super Selectos', monto: '35.00' }));
+      JSON.stringify({
+        version: 1,
+        guardadoEn: '2026-10-15T09:41:00-06:00',
+        campos,
+        id: null,
+        revisionAlAbrir: null,
+      });
+    sessionStorage.setItem(
+      'finn:borrador:v1:/registrar/gasto',
+      b({ comercio: 'Super Selectos', monto: '35.00' }),
+    );
     sessionStorage.setItem('finn:borrador:v1:/cuentas/nueva', b({ nombre: 'Cuenta de ahorro' }));
   });
   await page.getByRole('button', { name: 'Salir', exact: true }).click();
@@ -1026,7 +1097,11 @@ test('salir__con-borradores', async ({ page, context, baseURL }, info) => {
   );
   writeFileSync(
     join(SALIDA, 'medidas', `_salir-con-borradores__${info.project.name}.txt`),
-    JSON.stringify({ trasTocarSalirConDosBorradores: resultado, url: page.url(), borradoresQueQuedan: quedan }, null, 1),
+    JSON.stringify(
+      { trasTocarSalirConDosBorradores: resultado, url: page.url(), borradoresQueQuedan: quedan },
+      null,
+      1,
+    ),
   );
   await capturar(page, info, 'salir__con-borradores', {
     ruta: '/ajustes/seguridad',
@@ -1145,7 +1220,13 @@ caso({
     await page.addInitScript(() => {
       sessionStorage.setItem(
         'finn:borrador:v1:/registrar/gasto',
-        JSON.stringify({ version: 1, guardadoEn: '2026-10-15T09:41:00-06:00', campos: {}, id: null, revisionAlAbrir: null }),
+        JSON.stringify({
+          version: 1,
+          guardadoEn: '2026-10-15T09:41:00-06:00',
+          campos: {},
+          id: null,
+          revisionAlAbrir: null,
+        }),
       );
     });
   },
@@ -1188,7 +1269,10 @@ caso({
   ref: `${E14}/error-de-pantalla`,
   nota: 'Después de tocar «Copiar referencia».',
   pasos: async (page) => {
-    await page.context().grantPermissions(['clipboard-write']).catch(() => undefined);
+    await page
+      .context()
+      .grantPermissions(['clipboard-write'])
+      .catch(() => undefined);
     await page.getByRole('button', { name: 'Copiar referencia' }).click();
     await page.waitForTimeout(300);
   },
@@ -1375,9 +1459,15 @@ test('marco__hojas-comportamiento', async ({ page, context, baseURL }, info) => 
         relleno: s.padding,
         altoMaximo: s.maxHeight,
         animacionHoja: `${s.animationName} ${s.animationDuration} ${s.animationTimingFunction}`,
-        animacionVelo: sv === null ? null : `${sv.animationName} ${sv.animationDuration} ${sv.animationTimingFunction}`,
+        animacionVelo:
+          sv === null
+            ? null
+            : `${sv.animationName} ${sv.animationDuration} ${sv.animationTimingFunction}`,
         fondoVelo: sv?.backgroundColor,
-        titulo: titulo === null ? null : `${titulo.textContent} · ${st?.fontFamily.split(',')[0]} ${st?.fontSize}/${st?.lineHeight} ${st?.fontWeight}`,
+        titulo:
+          titulo === null
+            ? null
+            : `${titulo.textContent} · ${st?.fontFamily.split(',')[0]} ${st?.fontSize}/${st?.lineHeight} ${st?.fontWeight}`,
         filas,
         focoAlAbrir:
           document.activeElement?.getAttribute('aria-label') ??
@@ -1392,7 +1482,8 @@ test('marco__hojas-comportamiento', async ({ page, context, baseURL }, info) => 
       const x = await page.evaluate(() => {
         const a = document.activeElement;
         return {
-          dentro: a?.closest('[role="dialog"]') !== null && a?.closest('[role="dialog"]') !== undefined,
+          dentro:
+            a?.closest('[role="dialog"]') !== null && a?.closest('[role="dialog"]') !== undefined,
           n: a?.getAttribute('aria-label') ?? (a?.textContent ?? '').trim().slice(0, 24),
         };
       });
@@ -1411,17 +1502,25 @@ test('marco__hojas-comportamiento', async ({ page, context, baseURL }, info) => 
     await quieta(page);
     r.masSeccionesTab = await recorrerConTab(12);
     await page.keyboard.press('Escape');
-    const cerro = await hoja.waitFor({ state: 'detached', timeout: 3000 }).then(() => true).catch(() => false);
+    const cerro = await hoja
+      .waitFor({ state: 'detached', timeout: 3000 })
+      .then(() => true)
+      .catch(() => false);
     r.masSeccionesEscape = {
       cierra: cerro,
-      elFocoVuelveA: await page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName),
+      elFocoVuelveA: await page.evaluate(
+        () => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName,
+      ),
     };
     await boton.click();
     await hoja.waitFor();
     await quieta(page);
     await page.mouse.click(195, 90); // sobre el velo, arriba de la hoja
     r.masSeccionesVelo = {
-      tocarElVeloCierra: await hoja.waitFor({ state: 'detached', timeout: 3000 }).then(() => true).catch(() => false),
+      tocarElVeloCierra: await hoja
+        .waitFor({ state: 'detached', timeout: 3000 })
+        .then(() => true)
+        .catch(() => false),
     };
   }
 
@@ -1434,9 +1533,17 @@ test('marco__hojas-comportamiento', async ({ page, context, baseURL }, info) => 
   r.panelTab = await recorrerConTab(10);
   await page.keyboard.press('Escape');
   r.panelEscape = {
-    cierra: await panel.waitFor({ state: 'detached', timeout: 3000 }).then(() => true).catch(() => false),
+    cierra: await panel
+      .waitFor({ state: 'detached', timeout: 3000 })
+      .then(() => true)
+      .catch(() => false),
     urlDespues: new URL(page.url()).pathname,
-    elFocoVuelveA: await page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName),
+    elFocoVuelveA: await page.evaluate(
+      () => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName,
+    ),
   };
-  writeFileSync(join(SALIDA, 'medidas', `_hojas__${info.project.name}.txt`), JSON.stringify(r, null, 1));
+  writeFileSync(
+    join(SALIDA, 'medidas', `_hojas__${info.project.name}.txt`),
+    JSON.stringify(r, null, 1),
+  );
 });

@@ -22,7 +22,8 @@ export type { Op, Escenario, Page, TestInfo, BrowserContext };
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const SALIDA = join(raiz, 'docs', 'auditoria-diseno');
-for (const d of ['capturas', 'capturas/pliegue', 'medidas', 'videos']) mkdirSync(join(SALIDA, d), { recursive: true });
+for (const d of ['capturas', 'capturas/pliegue', 'medidas', 'videos'])
+  mkdirSync(join(SALIDA, d), { recursive: true });
 
 export interface Meta {
   /** Ruta de la app, con su patrón (p. ej. /cuentas/[cuentaId]) */
@@ -39,7 +40,9 @@ export async function quieta(page: Page, opciones: { carga?: boolean } = {}): Pr
   await esperarHidratacion(page).catch(() => undefined);
   if (opciones.carga !== true)
     await expect(
-      page.locator('[aria-busy="true"], template[id^="B:"], div[hidden][id^="S:"]:has(> :not(template))'),
+      page.locator(
+        '[aria-busy="true"], template[id^="B:"], div[hidden][id^="S:"]:has(> :not(template))',
+      ),
     )
       .toHaveCount(0, { timeout: 15_000 })
       .catch(() => undefined);
@@ -78,7 +81,9 @@ export async function capturar(
   const estirar = opciones.completa !== false && vp !== null && alto > vp.height + 1;
   if (estirar) {
     await page.setViewportSize({ width: vp.width, height: Math.min(alto, 12_000) });
-    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+    );
   }
   await page.screenshot({ path: join(SALIDA, 'capturas', `${nombre}.png`), ...foto });
   if (estirar) await page.setViewportSize(vp);
@@ -93,7 +98,14 @@ export async function sembrarOps(
 ): Promise<void> {
   fijarRelojServidor(`${hoyServidor}T10:00:00-06:00`);
   await sembrar(
-    { id: 'SEM-AUDITORIA', titulo: 'Auditoría de diseño', refs: [], hoy, estadoInicial: ops, pasos: [] },
+    {
+      id: 'SEM-AUDITORIA',
+      titulo: 'Auditoría de diseño',
+      refs: [],
+      hoy,
+      estadoInicial: ops,
+      pasos: [],
+    },
     hoy,
     notificaciones,
   );
@@ -147,7 +159,12 @@ let semillaEnBase = '';
 /** Una entrada del inventario = una prueba que deja su captura y su medida en cada variante. */
 export function caso(c: Caso): void {
   test(c.id, async ({ page, context, baseURL }, info) => {
-    const clave = JSON.stringify([c.ops ?? c.escenario?.id, c.hoy, c.hoyServidor, c.notificaciones]);
+    const clave = JSON.stringify([
+      c.ops ?? c.escenario?.id,
+      c.hoy,
+      c.hoyServidor,
+      c.notificaciones,
+    ]);
     if (clave === semillaEnBase) {
       // misma base, intacta: solo se repone el reloj del servidor
       const hoy = c.hoyServidor ?? c.hoy ?? c.escenario?.hoy ?? '2027-02-10';
@@ -155,14 +172,25 @@ export function caso(c: Caso): void {
     } else if (c.ops !== undefined)
       await sembrarOps(c.ops, c.hoy ?? '2027-02-10', c.hoyServidor, c.notificaciones);
     else if (c.escenario !== undefined)
-      await sembrarEscenario(c.escenario, c.hoyServidor ?? c.escenario.hoy ?? '2027-02-10', c.notificaciones);
-    semillaEnBase = c.soloLectura === true && (c.ops !== undefined || c.escenario !== undefined) ? clave : '';
+      await sembrarEscenario(
+        c.escenario,
+        c.hoyServidor ?? c.escenario.hoy ?? '2027-02-10',
+        c.notificaciones,
+      );
+    semillaEnBase =
+      c.soloLectura === true && (c.ops !== undefined || c.escenario !== undefined) ? clave : '';
     if (c.sesion !== false) await entrar(context, baseURL);
     await c.antes?.(page, context);
     const url = typeof c.url === 'function' ? await c.url(page) : (c.url ?? c.ruta);
     await page.goto(url);
     await quieta(page, { carga: c.carga });
     await c.pasos?.(page, info);
-    await capturar(page, info, c.id, { ruta: c.ruta, comp: c.comp, ref: c.ref, nota: c.nota }, { carga: c.carga });
+    await capturar(
+      page,
+      info,
+      c.id,
+      { ruta: c.ruta, comp: c.comp, ref: c.ref, nota: c.nota },
+      { carga: c.carga },
+    );
   });
 }

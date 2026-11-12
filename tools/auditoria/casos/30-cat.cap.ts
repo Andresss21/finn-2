@@ -43,21 +43,50 @@ const PERIODO_CERRADO: Op[] = [
   { op: 'OP-07', categoria: 'Super' },
   { op: 'OP-21', monto: 1000, hoy: '2027-02-10' },
   { op: 'OP-14', categoria: 'Super', monto: 300, periodo: 'P1', hoy: '2027-02-10' },
-  { op: 'OP-20', cuenta: 'T', monto: 400, categoria: 'Super', fecha: '2027-02-10', hoy: '2027-02-10' },
+  {
+    op: 'OP-20',
+    cuenta: 'T',
+    monto: 400,
+    categoria: 'Super',
+    fecha: '2027-02-10',
+    hoy: '2027-02-10',
+  },
 ];
 const ESC44_PASO0: Op[] = [
   { op: 'OP-01', cuenta: 'Ahorro' },
   { op: 'OP-07', categoria: 'Gimnasio' },
   { op: 'OP-21', monto: 700, fecha: '2027-01-25', hoy: '2027-01-25' },
   { op: 'OP-14', categoria: 'Gimnasio', monto: 70, periodo: 'P1', hoy: '2027-01-25' },
-  { op: 'OP-20', cuenta: 'Ahorro', monto: 30, categoria: 'Gimnasio', fecha: '2027-02-02', hoy: '2027-02-02', etiqueta: 'gimnasio' },
+  {
+    op: 'OP-20',
+    cuenta: 'Ahorro',
+    monto: 30,
+    categoria: 'Gimnasio',
+    fecha: '2027-02-02',
+    hoy: '2027-02-02',
+    etiqueta: 'gimnasio',
+  },
   { op: 'OP-14', categoria: 'Gimnasio', monto: 30, periodo: 'P3' },
-  { op: 'OP-42', etiqueta: 'gimnasio', cuenta: 'Ahorro', comercio: 'Gimnasio', monto: 30, categoria: 'Gimnasio', primeraFecha: '2027-03-10' },
+  {
+    op: 'OP-42',
+    etiqueta: 'gimnasio',
+    cuenta: 'Ahorro',
+    comercio: 'Gimnasio',
+    monto: 30,
+    categoria: 'Gimnasio',
+    primeraFecha: '2027-03-10',
+  },
 ];
 const ESC44_PASO2: Op[] = [
   { op: 'OP-07', categoria: 'Salidas' },
   ...ESC44_PASO0,
-  { op: 'OP-09', categoria: 'Gimnasio', destino: 'LPA', devolverFuturas: true, desactivar: ['gimnasio'] },
+  {
+    op: 'OP-09',
+    categoria: 'Gimnasio',
+    destino: 'LPA',
+    devolverFuturas: true,
+    desactivar: ['gimnasio'],
+  },
   { op: 'OP-33', compra: 'gimnasio', monto: 25 },
 ];
 const ESC42_PASO0: Op[] = [
@@ -121,7 +150,10 @@ async function idDe(page: Page, nombre: string, sufijo = ''): Promise<string> {
   if (id === null) throw new Error(`no hay fila de «${nombre}»`);
   return id;
 }
-const urlDe = (nombre: string, cola = '') => async (page: Page) => `/presupuesto/categorias/${await idDe(page, nombre)}${cola}`;
+const urlDe =
+  (nombre: string, cola = '') =>
+  async (page: Page) =>
+    `/presupuesto/categorias/${await idDe(page, nombre)}${cola}`;
 
 interface Det {
   id: string;
@@ -160,9 +192,21 @@ async function retener(page: Page, ruta: string): Promise<() => void> {
 }
 
 // ═══ DETALLE DE CATEGORÍA ═══════════════════════════════════════════════════════════════════════════════════════════════
-det({ id: 'categoria__principal', ref: `${S1}/S3-Detalle`, nota: 'Restaurantes de A.7: sobregiro con débito −$26.30.' });
-det({ id: 'categoria__con-meta', ref: `${S1}/S3-Detalle__con-meta`, nombre: 'Fondo de emergencia' });
-det({ id: 'categoria__sobregiro-tarjeta', ref: `${S1}/S3-Detalle__sobregiro-con-tarjeta`, nombre: 'Gasolina' });
+det({
+  id: 'categoria__principal',
+  ref: `${S1}/S3-Detalle`,
+  nota: 'Restaurantes de A.7: sobregiro con débito −$26.30.',
+});
+det({
+  id: 'categoria__con-meta',
+  ref: `${S1}/S3-Detalle__con-meta`,
+  nombre: 'Fondo de emergencia',
+});
+det({
+  id: 'categoria__sobregiro-tarjeta',
+  ref: `${S1}/S3-Detalle__sobregiro-con-tarjeta`,
+  nombre: 'Gasolina',
+});
 det({
   id: 'categoria__sin-movimientos',
   ref: `${S1}/S3-Detalle__sin-movimientos`,
@@ -202,7 +246,10 @@ caso({
   url: async (page) => {
     await page.goto('/presupuesto');
     await quieta(page);
-    const href = await page.locator('[data-fila-pago]').filter({ hasText: 'Visa Oro' }).getAttribute('href');
+    const href = await page
+      .locator('[data-fila-pago]')
+      .filter({ hasText: 'Visa Oro' })
+      .getAttribute('href');
     if (href === null) throw new Error('sin fila de pago');
     return href;
   },
@@ -219,7 +266,11 @@ caso({
   url: async (page) => {
     await page.goto('/presupuesto');
     await quieta(page);
-    const href = await page.locator('[data-fila-pago]').filter({ hasText: 'T' }).first().getAttribute('href');
+    const href = await page
+      .locator('[data-fila-pago]')
+      .filter({ hasText: 'T' })
+      .first()
+      .getAttribute('href');
     if (href === null) throw new Error('sin fila de pago');
     return href;
   },
@@ -233,7 +284,8 @@ caso({
   ops: PERIODO_CERRADO,
   hoy: '2027-02-21',
   soloLectura: true,
-  url: async (page) => `/presupuesto/categorias/${await idDe(page, 'Super', '?periodo=2027-01-21')}?periodo=2027-01-21`,
+  url: async (page) =>
+    `/presupuesto/categorias/${await idDe(page, 'Super', '?periodo=2027-01-21')}?periodo=2027-01-21`,
 });
 caso({
   id: 'categoria__archivada',
@@ -283,7 +335,12 @@ const abrirMenu = async (page: Page) => {
 };
 det({ id: 'categoria-mas__cerrado', ref: `${MA}/cerrado`, nota: 'Menú cerrado (Restaurantes).' });
 det({ id: 'categoria-mas__abierto', ref: `${MA}/abierto`, pasos: abrirMenu });
-det({ id: 'categoria-mas__abierto-con-meta', ref: `${MA}/abierto-con-meta`, nombre: 'Fondo de emergencia', pasos: abrirMenu });
+det({
+  id: 'categoria-mas__abierto-con-meta',
+  ref: `${MA}/abierto-con-meta`,
+  nombre: 'Fondo de emergencia',
+  pasos: abrirMenu,
+});
 caso({
   id: 'categoria-mas__periodo-cerrado',
   ruta: RUTA_DET,
@@ -293,7 +350,8 @@ caso({
   ops: PERIODO_CERRADO,
   hoy: '2027-02-21',
   soloLectura: true,
-  url: async (page) => `/presupuesto/categorias/${await idDe(page, 'Super', '?periodo=2027-01-21')}?periodo=2027-01-21`,
+  url: async (page) =>
+    `/presupuesto/categorias/${await idDe(page, 'Super', '?periodo=2027-01-21')}?periodo=2027-01-21`,
   pasos: abrirMenu,
 });
 caso({
@@ -364,14 +422,26 @@ test('categoria-sacar__hoja', async ({ page, context, baseURL }, info) => {
   await entrar(context, baseURL);
   await page.goto('/presupuesto');
   await quieta(page);
-  await page.locator('[data-seccion="archivadas-con-dinero"]').getByRole('link', { name: 'Sacar el dinero de Gimnasio' }).click();
+  await page
+    .locator('[data-seccion="archivadas-con-dinero"]')
+    .getByRole('link', { name: 'Sacar el dinero de Gimnasio' })
+    .click();
   await page.getByRole('dialog').waitFor();
-  await capturar(page, info, 'categoria-sacar__hoja', { ruta: `${RUTA_DET}/sacar (interceptada)`, comp: sacComp, ref: SACAR });
+  await capturar(page, info, 'categoria-sacar__hoja', {
+    ruta: `${RUTA_DET}/sacar (interceptada)`,
+    comp: sacComp,
+    ref: SACAR,
+  });
   await page.getByLabel('Poner en').selectOption({ label: 'Salidas' });
   await page.getByLabel(/Monto a sacar/).fill('900');
   await page.getByRole('button', { name: 'Sacar', exact: true }).click();
   await page.waitForTimeout(800);
-  await capturar(page, info, 'categoria-sacar__error-monto', { ruta: `${RUTA_DET}/sacar (interceptada)`, comp: sacComp, ref: SACAR, nota: 'Monto mayor que lo que tiene la archivada.' });
+  await capturar(page, info, 'categoria-sacar__error-monto', {
+    ruta: `${RUTA_DET}/sacar (interceptada)`,
+    comp: sacComp,
+    ref: SACAR,
+    nota: 'Monto mayor que lo que tiene la archivada.',
+  });
 });
 caso({
   id: 'categoria-sacar__pagina',
@@ -466,7 +536,12 @@ test('categoria-sacar__desarchivar', async ({ page, context, baseURL }, info) =>
   await quieta(page);
   await page.getByRole('button', { name: 'Desarchivar' }).click();
   await expect(page.getByText('Categoría archivada')).toHaveCount(0);
-  await capturar(page, info, 'categoria-sacar__desarchivar', { ruta: RUTA_DET, comp: `${APP}/presupuesto/categorias/[categoriaId]/desarchivar.tsx`, ref: 'SIN DISEÑO', nota: 'Resultado de Desarchivar (lugar y aviso).' });
+  await capturar(page, info, 'categoria-sacar__desarchivar', {
+    ruta: RUTA_DET,
+    comp: `${APP}/presupuesto/categorias/[categoriaId]/desarchivar.tsx`,
+    ref: 'SIN DISEÑO',
+    nota: 'Resultado de Desarchivar (lugar y aviso).',
+  });
 });
 
 // ═══ METAS ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -495,7 +570,15 @@ caso({
   hoyServidor: '2027-05-21',
   soloLectura: true,
 });
-caso({ id: 'metas__vacia', ruta: '/metas', comp: metasComp, ref: `${M}/vacia`, ops: SIN_METAS, hoy: '2027-02-10', soloLectura: true });
+caso({
+  id: 'metas__vacia',
+  ruta: '/metas',
+  comp: metasComp,
+  ref: `${M}/vacia`,
+  ops: SIN_METAS,
+  hoy: '2027-02-10',
+  soloLectura: true,
+});
 caso({
   id: 'metas__cargando',
   ruta: '/metas',
@@ -552,13 +635,17 @@ nueva('meta__nueva-error-vacio', { nota: 'Crear meta sin monto.' }, async (p) =>
   await p.getByRole('button', { name: 'Crear meta' }).click();
   await p.waitForTimeout(500);
 });
-nueva('meta__nueva-error-fecha-pasada', { nota: 'Fecha anterior a hoy: rechazo del servidor en el campo.' }, async (p) => {
-  await elegir(p, 'Para una fecha');
-  await p.getByLabel('Monto de la meta').fill('600');
-  await p.getByLabel('Fecha objetivo', { exact: true }).fill('2027-01-01');
-  await p.getByRole('button', { name: 'Crear meta' }).click();
-  await expect(p.getByText('La fecha objetivo no puede ser anterior a hoy.')).toBeVisible();
-});
+nueva(
+  'meta__nueva-error-fecha-pasada',
+  { nota: 'Fecha anterior a hoy: rechazo del servidor en el campo.' },
+  async (p) => {
+    await elegir(p, 'Para una fecha');
+    await p.getByLabel('Monto de la meta').fill('600');
+    await p.getByLabel('Fecha objetivo', { exact: true }).fill('2027-01-01');
+    await p.getByRole('button', { name: 'Crear meta' }).click();
+    await expect(p.getByText('La fecha objetivo no puede ser anterior a hoy.')).toBeVisible();
+  },
+);
 nueva('meta__nueva-error-sin-fecha', { nota: 'Para una fecha sin fecha.' }, async (p) => {
   await elegir(p, 'Para una fecha');
   await p.getByLabel('Monto de la meta').fill('600');
@@ -595,11 +682,16 @@ const metaDe = (categoria: string) => async (page: Page) => {
   await quieta(page);
   if (categoria === 'Laptop') {
     // vencida: va en «Otras metas» (sin «Editar»); el aviso trae los enlaces
-    const h = await page.locator('[data-aviso-meta]').getByRole('link', { name: 'Extender la fecha' }).getAttribute('href');
+    const h = await page
+      .locator('[data-aviso-meta]')
+      .getByRole('link', { name: 'Extender la fecha' })
+      .getAttribute('href');
     if (h === null) throw new Error('sin aviso');
     return h;
   }
-  const m = page.locator('[data-meta]').filter({ has: page.getByRole('heading', { name: categoria }) });
+  const m = page
+    .locator('[data-meta]')
+    .filter({ has: page.getByRole('heading', { name: categoria }) });
   const href = await m.getByRole('link', { name: 'Editar', exact: true }).getAttribute('href');
   if (href === null) throw new Error(`sin meta de ${categoria}`);
   return href;
@@ -683,5 +775,10 @@ test('meta__editar-conflicto', async ({ page, context, baseURL }, info) => {
   await page.getByLabel('Monto de la meta').fill('300');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
   await page.getByRole('button', { name: 'Usar el valor actual' }).waitFor();
-  await capturar(page, info, 'meta__editar-conflicto', { ruta: '/metas/[metaId]', comp: editComp, ref: `${E2}/07-flujos-del-presupuesto/asignar-conflicto`, nota: 'Cambió mientras editabas; la referencia es el conflicto de Asignar.' });
+  await capturar(page, info, 'meta__editar-conflicto', {
+    ruta: '/metas/[metaId]',
+    comp: editComp,
+    ref: `${E2}/07-flujos-del-presupuesto/asignar-conflicto`,
+    nota: 'Cambió mientras editabas; la referencia es el conflicto de Asignar.',
+  });
 });

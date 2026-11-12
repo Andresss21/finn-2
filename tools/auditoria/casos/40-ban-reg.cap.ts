@@ -119,7 +119,11 @@ function a7ConTodo(): Escenario {
     ],
   };
 }
-const A7_BAN = { escenario: a7ConBandeja('SEM-A7-BAN'), hoyServidor: HOY_A7, soloLectura: true } as const;
+const A7_BAN = {
+  escenario: a7ConBandeja('SEM-A7-BAN'),
+  hoyServidor: HOY_A7,
+  soloLectura: true,
+} as const;
 const A7_BAN_ESCRIBE = { escenario: a7ConBandeja('SEM-A7-BAN'), hoyServidor: HOY_A7 } as const;
 const A7_REG = { escenario: a7ConTodo(), hoyServidor: HOY_A7, soloLectura: true } as const;
 const A7_REG_ESCRIBE = { escenario: a7ConTodo(), hoyServidor: HOY_A7 } as const;
@@ -135,7 +139,13 @@ const sms = (etiqueta: string, comercio: string, monto: number, hora: string): O
   recibido: `${DIA}T${hora}`,
   fecha: DIA,
 });
-const smsDe = (etiqueta: string, comercio: string, monto: number, fecha: string, hora: string): Op => ({
+const smsDe = (
+  etiqueta: string,
+  comercio: string,
+  monto: number,
+  fecha: string,
+  hora: string,
+): Op => ({
   op: 'OP-35',
   etiqueta,
   cuenta: 'T',
@@ -186,7 +196,9 @@ async function intentar(que: string, paso: () => Promise<unknown>): Promise<void
   try {
     await paso();
   } catch (e) {
-    console.log(`[aviso] no se pudo: ${que} — ${e instanceof Error ? (e.message.split('\n')[0] ?? '') : ''}`);
+    console.log(
+      `[aviso] no se pudo: ${que} — ${e instanceof Error ? (e.message.split('\n')[0] ?? '') : ''}`,
+    );
   }
 }
 
@@ -202,12 +214,14 @@ async function hrefDe(page: Page, texto: string | RegExp): Promise<string> {
   return `/bandeja/${(await fila.getAttribute('data-movimiento')) ?? ''}`;
 }
 /** La ruta de la revisión del movimiento con esa vista (`data-vista`). */
-const hrefDeVista = (vista: string) => async (page: Page): Promise<string> => {
-  await irABandeja(page);
-  const fila = page.locator(`[data-vista="${vista}"]`).first();
-  await expect(fila).toBeVisible();
-  return `/bandeja/${(await fila.getAttribute('data-movimiento')) ?? ''}`;
-};
+const hrefDeVista =
+  (vista: string) =>
+  async (page: Page): Promise<string> => {
+    await irABandeja(page);
+    const fila = page.locator(`[data-vista="${vista}"]`).first();
+    await expect(fila).toBeVisible();
+    return `/bandeja/${(await fila.getAttribute('data-movimiento')) ?? ''}`;
+  };
 /** Genera el token del webhook (FT-03) y lo devuelve. */
 async function tokenWebhook(page: Page): Promise<string> {
   await page.goto('/ajustes/webhook');
@@ -239,30 +253,38 @@ async function esperarFilas(page: Page, selector: string, cuantas: number): Prom
 }
 /** Espera las piezas diferidas de la revisión (el encabezado y los campos llegan con `lazy`). */
 async function revisarListo(page: Page): Promise<void> {
-  await expect(panel(page).locator('[data-encabezado-movimiento]')).toBeVisible({ timeout: 15_000 });
+  await expect(panel(page).locator('[data-encabezado-movimiento]')).toBeVisible({
+    timeout: 15_000,
+  });
   await pausa(page, 500);
   await quieta(page);
 }
 /** Las Server Actions son POST a la URL de la página: se cortan para forzar el error de red. */
-const cortarEscrituras = (patron: string) => async (page: Page): Promise<void> => {
-  await page.route(patron, async (route) => {
-    if (route.request().method() === 'POST') await route.abort('failed');
-    else await route.continue();
-  });
-};
+const cortarEscrituras =
+  (patron: string) =>
+  async (page: Page): Promise<void> => {
+    await page.route(patron, async (route) => {
+      if (route.request().method() === 'POST') await route.abort('failed');
+      else await route.continue();
+    });
+  };
 /** Igual, pero la respuesta no llega: el botón se queda en «Guardando…». */
-const demorarEscrituras = (patron: string) => async (page: Page): Promise<void> => {
-  await page.route(patron, async (route) => {
-    if (route.request().method() !== 'POST') return route.continue();
-    await new Promise((r) => setTimeout(r, 30_000));
-    await route.abort('failed').catch(() => undefined);
-  });
-};
+const demorarEscrituras =
+  (patron: string) =>
+  async (page: Page): Promise<void> => {
+    await page.route(patron, async (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
+      await new Promise((r) => setTimeout(r, 30_000));
+      await route.abort('failed').catch(() => undefined);
+    });
+  };
 /** Una selección nativa: se elige por el nombre de la opción, con el control ya hidratado. */
 async function elegir(page: Page, etiqueta: string, nombre: string): Promise<void> {
   const control = campo(page, etiqueta);
   await expect
-    .poll(() => control.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))))
+    .poll(() =>
+      control.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))),
+    )
     .toBe(true);
   await control.selectOption({ label: nombre });
 }
@@ -285,7 +307,11 @@ async function llenarGasto(
     await campo(page, tg.montoDeParte(n)).fill(l.monto);
     if (l.destino !== '') await elegir(page, tg.categoriaDeParte(n), l.destino);
   }
-  await page.locator('h1').first().click({ force: true }).catch(() => undefined); // saca el foco del último campo
+  await page
+    .locator('h1')
+    .first()
+    .click({ force: true })
+    .catch(() => undefined); // saca el foco del último campo
   await pausa(page);
 }
 const S5 = {
@@ -301,12 +327,17 @@ const S5 = {
 const guardarGasto = (page: Page) => page.getByRole('button', { name: /^Guardar/ });
 
 /** Abre un tipo desde el selector de `/registrar`: la ruta interceptada lo muestra como hoja (teléfono) o panel (computadora). */
-const abrirTipo = (titulo: string) => async (page: Page): Promise<void> => {
-  await page.getByRole('link', { name: new RegExp(`^${titulo}`) }).first().click();
-  await expect(page.getByRole('dialog')).toBeVisible({ timeout: 15_000 });
-  await pausa(page, 600);
-  await quieta(page);
-};
+const abrirTipo =
+  (titulo: string) =>
+  async (page: Page): Promise<void> => {
+    await page
+      .getByRole('link', { name: new RegExp(`^${titulo}`) })
+      .first()
+      .click();
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 15_000 });
+    await pausa(page, 600);
+    await quieta(page);
+  };
 
 // ═════════════════════════════ BANDEJA ═════════════════════════════
 
@@ -349,7 +380,9 @@ caso({
   nota: 'Panel de destinos del arrastre (FT-78); el diseño solo lo nombra en la nota de la Bandeja',
   ...A7_BAN,
   pasos: async (page) => {
-    const asa = filas(page).filter({ hasText: /FARMACIA/ }).locator('[data-asa]');
+    const asa = filas(page)
+      .filter({ hasText: /FARMACIA/ })
+      .locator('[data-asa]');
     await expect(asa).toBeVisible({ timeout: 10_000 });
     await asa.focus();
     await page.keyboard.press('Space');
@@ -383,7 +416,9 @@ caso({
       .getByRole('button', { name: /^Aprobar/ })
       .click();
     await intentar('ver «Intentar de nuevo»', () =>
-      expect(page.getByRole('button', { name: tf.intentarDeNuevo })).toBeVisible({ timeout: 20_000 }),
+      expect(page.getByRole('button', { name: tf.intentarDeNuevo })).toBeVisible({
+        timeout: 20_000,
+      }),
     );
   },
 });
@@ -601,7 +636,9 @@ caso({
   url: hrefDeVista('faltaOtro'),
   pasos: async (page) => {
     await revisarListo(page);
-    await panel(page).getByRole('button', { name: /^Aprobar/ }).click();
+    await panel(page)
+      .getByRole('button', { name: /^Aprobar/ })
+      .click();
     await pausa(page, 1_200);
   },
 });
@@ -740,9 +777,13 @@ caso({
   url: (page) => hrefDe(page, /SUPER SELECTOS/),
   pasos: async (page) => {
     await revisarListo(page);
-    await panel(page).getByRole('button', { name: /^Aprobar/ }).click();
+    await panel(page)
+      .getByRole('button', { name: /^Aprobar/ })
+      .click();
     await intentar('ver «Intentar de nuevo»', () =>
-      expect(page.getByRole('button', { name: tf.intentarDeNuevo })).toBeVisible({ timeout: 20_000 }),
+      expect(page.getByRole('button', { name: tf.intentarDeNuevo })).toBeVisible({
+        timeout: 20_000,
+      }),
     );
   },
 });
@@ -757,9 +798,13 @@ caso({
   antes: demorarEscrituras('**/bandeja/*'),
   url: (page) => hrefDe(page, /SUPER SELECTOS/),
   pasos: async (page) => {
-    await expect(panel(page).locator('[data-encabezado-movimiento]')).toBeVisible({ timeout: 15_000 });
+    await expect(panel(page).locator('[data-encabezado-movimiento]')).toBeVisible({
+      timeout: 15_000,
+    });
     await pausa(page, 800);
-    await panel(page).getByRole('button', { name: /^Aprobar/ }).click();
+    await panel(page)
+      .getByRole('button', { name: /^Aprobar/ })
+      .click();
     await pausa(page, 700);
   },
 });
@@ -783,7 +828,9 @@ caso({
     await page.getByRole('button', { name: tg.agregarLinea }).click();
     await campo(page, tg.montoDeParte('1')).fill('25.00');
     await campo(page, tg.montoDeParte('2')).fill('10.00');
-    await panel(page).getByRole('button', { name: /^Aprobar/ }).click();
+    await panel(page)
+      .getByRole('button', { name: /^Aprobar/ })
+      .click();
     await pausa(page, 2_000);
   },
 });
@@ -796,7 +843,9 @@ caso({
   url: (page) => hrefDe(page, /SUPER SELECTOS/),
   pasos: async (page) => {
     await revisarListo(page);
-    await panel(page).getByRole('button', { name: /^Aprobar/ }).click();
+    await panel(page)
+      .getByRole('button', { name: /^Aprobar/ })
+      .click();
     await expect(page.getByTestId('resultado')).toBeVisible();
     await pausa(page, 600);
   },
@@ -812,7 +861,9 @@ caso({
     const href = await hrefDe(page, /SUPER SELECTOS/);
     await page.goto(href);
     await revisarListo(page);
-    await panel(page).getByRole('button', { name: /^Aprobar/ }).click();
+    await panel(page)
+      .getByRole('button', { name: /^Aprobar/ })
+      .click();
     await expect(page.getByTestId('resultado')).toBeVisible();
     return href;
   },
@@ -842,7 +893,10 @@ caso({
   url: async (page) => {
     await page.goto('/bandeja?vista=descartados');
     await quieta(page);
-    const id = await page.locator('[data-vista="descartado"]').first().getAttribute('data-movimiento');
+    const id = await page
+      .locator('[data-vista="descartado"]')
+      .first()
+      .getAttribute('data-movimiento');
     return `/bandeja/${id ?? ''}`;
   },
   pasos: revisarListo,
@@ -859,7 +913,9 @@ caso({
   url: (page) => hrefDe(page, /\$30\.00/),
   pasos: async (page) => {
     await revisarListo(page);
-    await panel(page).getByRole('button', { name: /^Aprobar/ }).click();
+    await panel(page)
+      .getByRole('button', { name: /^Aprobar/ })
+      .click();
     await expect(page.getByRole('heading', { name: tb.revisar.revisarImpacto })).toBeVisible();
     await pausa(page);
   },
@@ -980,7 +1036,10 @@ caso({
   },
   pasos: async (page) => {
     await pausa(page, 1_500);
-    await page.getByRole('link', { name: /Registrar/ }).first().click();
+    await page
+      .getByRole('link', { name: /Registrar/ })
+      .first()
+      .click();
     await pausa(page, 1_200);
   },
 });
@@ -993,7 +1052,9 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(tg.tipoIngreso)(page);
-    await intentar('elegir la cuenta', () => radio(page, tt.cuentaIngreso, 'Cuenta corriente').click({ timeout: 5_000 }));
+    await intentar('elegir la cuenta', () =>
+      radio(page, tt.cuentaIngreso, 'Cuenta corriente').click({ timeout: 5_000 }),
+    );
     await campo(page, tt.total).fill('925.00');
     await campo(page, tt.descripcion).fill('Salario quincena');
     await pausa(page);
@@ -1031,7 +1092,9 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(tg.tipoIngreso)(page);
-    await intentar('elegir la cuenta', () => radio(page, tt.cuentaIngreso, 'Cuenta corriente').click({ timeout: 5_000 }));
+    await intentar('elegir la cuenta', () =>
+      radio(page, tt.cuentaIngreso, 'Cuenta corriente').click({ timeout: 5_000 }),
+    );
     await campo(page, tt.fecha).fill('2026-09-10');
     await campo(page, tt.total).fill('925.00');
     await campo(page, tt.descripcion).fill('Salario quincena');
@@ -1049,8 +1112,12 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(tg.tipoTransferencia)(page);
-    await intentar('origen', () => radio(page, tt.origen, 'Cuenta corriente').click({ timeout: 5_000 }));
-    await intentar('destino', () => radio(page, tt.destino, 'Cuenta de ahorro').click({ timeout: 5_000 }));
+    await intentar('origen', () =>
+      radio(page, tt.origen, 'Cuenta corriente').click({ timeout: 5_000 }),
+    );
+    await intentar('destino', () =>
+      radio(page, tt.destino, 'Cuenta de ahorro').click({ timeout: 5_000 }),
+    );
     await campo(page, tt.total).fill('200.00');
     await pausa(page);
   },
@@ -1064,8 +1131,12 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(tg.tipoTransferencia)(page);
-    await intentar('origen', () => radio(page, tt.origen, 'Cuenta corriente').click({ timeout: 5_000 }));
-    await intentar('destino', () => radio(page, tt.destino, 'Cuenta corriente').click({ timeout: 5_000 }));
+    await intentar('origen', () =>
+      radio(page, tt.origen, 'Cuenta corriente').click({ timeout: 5_000 }),
+    );
+    await intentar('destino', () =>
+      radio(page, tt.destino, 'Cuenta corriente').click({ timeout: 5_000 }),
+    );
     await campo(page, tt.total).fill('200.00');
     await page.getByRole('button', { name: tt.guardarTransferencia }).click();
     await pausa(page, 1_500);
@@ -1079,8 +1150,13 @@ caso({
   ...A7_REG,
   url: '/registrar',
   pasos: async (page) => {
-    await page.getByRole('link', { name: new RegExp(`^${tv.tipo.titulo}`) }).first().click();
-    await expect(page.getByRole('heading', { level: 1, name: tv.titulo })).toBeVisible({ timeout: 15_000 });
+    await page
+      .getByRole('link', { name: new RegExp(`^${tv.tipo.titulo}`) })
+      .first()
+      .click();
+    await expect(page.getByRole('heading', { level: 1, name: tv.titulo })).toBeVisible({
+      timeout: 15_000,
+    });
     await pausa(page, 1_500);
     await quieta(page);
   },
@@ -1112,7 +1188,11 @@ caso({
   pasos: async (page) => {
     await pausa(page, 1_500);
     await intentar('elegir «Sin compra original»', () =>
-      page.getByRole('button', { name: tv.sinCompra }).or(page.getByText(tv.sinCompra)).first().click({ timeout: 8_000 }),
+      page
+        .getByRole('button', { name: tv.sinCompra })
+        .or(page.getByText(tv.sinCompra))
+        .first()
+        .click({ timeout: 8_000 }),
     );
     await pausa(page, 1_000);
   },
@@ -1127,9 +1207,15 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(ti.tipoAporte)(page);
-    await intentar('inversión', () => radio(page, ti.inversion, /Depósito/).click({ timeout: 5_000 }));
-    await intentar('cuenta', () => radio(page, ti.cuentaAporte, 'Cuenta de ahorro').click({ timeout: 5_000 }));
-    await intentar('categoría', () => radio(page, ti.categoria, 'Fondo de emergencia').click({ timeout: 5_000 }));
+    await intentar('inversión', () =>
+      radio(page, ti.inversion, /Depósito/).click({ timeout: 5_000 }),
+    );
+    await intentar('cuenta', () =>
+      radio(page, ti.cuentaAporte, 'Cuenta de ahorro').click({ timeout: 5_000 }),
+    );
+    await intentar('categoría', () =>
+      radio(page, ti.categoria, 'Fondo de emergencia').click({ timeout: 5_000 }),
+    );
     await campo(page, ti.monto).fill('200.00');
     await pausa(page);
   },
@@ -1163,8 +1249,12 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(td.tipo.titulo)(page);
-    await intentar('préstamo', () => radio(page, td.prestamo, /Préstamo/).click({ timeout: 5_000 }));
-    await intentar('cuenta', () => radio(page, td.cuenta, 'Cuenta corriente').click({ timeout: 5_000 }));
+    await intentar('préstamo', () =>
+      radio(page, td.prestamo, /Préstamo/).click({ timeout: 5_000 }),
+    );
+    await intentar('cuenta', () =>
+      radio(page, td.cuenta, 'Cuenta corriente').click({ timeout: 5_000 }),
+    );
     await intentar('monto', () => campo(page, tt.total).fill('5000.00', { timeout: 5_000 }));
     await pausa(page);
   },
@@ -1178,8 +1268,12 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(tk.tipos.avance.titulo)(page);
-    await intentar('tarjeta', () => radio(page, tk.tarjetaAvance, 'Visa Oro').click({ timeout: 5_000 }));
-    await intentar('cuenta', () => radio(page, tk.cuentaAvance, 'Cuenta corriente').click({ timeout: 5_000 }));
+    await intentar('tarjeta', () =>
+      radio(page, tk.tarjetaAvance, 'Visa Oro').click({ timeout: 5_000 }),
+    );
+    await intentar('cuenta', () =>
+      radio(page, tk.cuentaAvance, 'Cuenta corriente').click({ timeout: 5_000 }),
+    );
     await intentar('monto', () => campo(page, tt.total).fill('100.00', { timeout: 5_000 }));
     await pausa(page);
   },
@@ -1193,8 +1287,12 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(tk.tipos.deuda.titulo)(page);
-    await intentar('origen', () => radio(page, tk.tarjetaOrigen, 'Visa Oro').click({ timeout: 5_000 }));
-    await intentar('destino', () => radio(page, tk.tarjetaDestino, /Mastercard/).click({ timeout: 5_000 }));
+    await intentar('origen', () =>
+      radio(page, tk.tarjetaOrigen, 'Visa Oro').click({ timeout: 5_000 }),
+    );
+    await intentar('destino', () =>
+      radio(page, tk.tarjetaDestino, /Mastercard/).click({ timeout: 5_000 }),
+    );
     await intentar('monto', () => campo(page, tt.total).fill('200.00', { timeout: 5_000 }));
     await pausa(page);
   },
@@ -1209,7 +1307,9 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(tk.tipos.entrada.titulo)(page);
-    await intentar('tarjeta', () => radio(page, tk.tarjetaEntrada, 'Visa Oro').click({ timeout: 5_000 }));
+    await intentar('tarjeta', () =>
+      radio(page, tk.tarjetaEntrada, 'Visa Oro').click({ timeout: 5_000 }),
+    );
     await intentar('monto', () => campo(page, tt.total).fill('25.00', { timeout: 5_000 }));
     await pausa(page);
   },
@@ -1224,8 +1324,12 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(tk.tipos.avance.titulo)(page);
-    await intentar('tarjeta', () => radio(page, tk.tarjetaAvance, 'Visa Oro').click({ timeout: 5_000 }));
-    await intentar('cuenta', () => radio(page, tk.cuentaAvance, 'Cuenta corriente').click({ timeout: 5_000 }));
+    await intentar('tarjeta', () =>
+      radio(page, tk.tarjetaAvance, 'Visa Oro').click({ timeout: 5_000 }),
+    );
+    await intentar('cuenta', () =>
+      radio(page, tk.cuentaAvance, 'Cuenta corriente').click({ timeout: 5_000 }),
+    );
     await intentar('monto', () => campo(page, tt.total).fill('100.00', { timeout: 5_000 }));
     await page.getByRole('button', { name: tk.flujos.avance.guardar }).click();
     await pausa(page, 2_500);
@@ -1255,7 +1359,9 @@ caso({
   url: '/registrar',
   pasos: async (page) => {
     await abrirTipo(tg.tipoIngreso)(page);
-    await intentar('elegir la cuenta', () => radio(page, tt.cuentaIngreso, 'Cuenta corriente').click({ timeout: 5_000 }));
+    await intentar('elegir la cuenta', () =>
+      radio(page, tt.cuentaIngreso, 'Cuenta corriente').click({ timeout: 5_000 }),
+    );
     await campo(page, tt.total).fill('925.00');
     await campo(page, tt.descripcion).fill('Salario quincena');
     await page.getByRole('button', { name: /^Guardar/ }).click();
@@ -1339,7 +1445,9 @@ caso({
   ...A7_REG,
   pasos: async (page) => {
     await expect(page.locator('[data-campo-lineas]')).toBeVisible({ timeout: 15_000 });
-    await intentar('dejar la cuenta sin elegir', () => campo(page, tg.cuenta).selectOption({ index: 0 }));
+    await intentar('dejar la cuenta sin elegir', () =>
+      campo(page, tg.cuenta).selectOption({ index: 0 }),
+    );
     await guardarGasto(page).click();
     await pausa(page, 1_000);
   },
@@ -1353,7 +1461,11 @@ caso({
   pasos: (page) =>
     llenarGasto(page, {
       ...S5,
-      lineas: [S5.lineas[0], S5.lineas[1], { destino: tg.porCobrarA(tg.otraPersona), monto: '30.00' }],
+      lineas: [
+        S5.lineas[0],
+        S5.lineas[1],
+        { destino: tg.porCobrarA(tg.otraPersona), monto: '30.00' },
+      ],
     }),
 });
 caso({
@@ -1447,7 +1559,9 @@ caso({
     await llenarGasto(page, S5);
     await guardarGasto(page).click();
     await intentar('ver «Intentar de nuevo»', () =>
-      expect(page.getByRole('button', { name: tf.intentarDeNuevo })).toBeVisible({ timeout: 20_000 }),
+      expect(page.getByRole('button', { name: tf.intentarDeNuevo })).toBeVisible({
+        timeout: 20_000,
+      }),
     );
   },
 });

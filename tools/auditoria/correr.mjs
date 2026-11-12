@@ -17,7 +17,14 @@ let codigo = 1;
 try {
   const r = spawnSync(
     'pnpm',
-    ['exec', 'playwright', 'test', '--config', join(aqui, 'playwright.config.ts'), ...process.argv.slice(2)].map((a) =>
+    [
+      'exec',
+      'playwright',
+      'test',
+      '--config',
+      join(aqui, 'playwright.config.ts'),
+      ...process.argv.slice(2),
+    ].map((a) =>
       // con `shell` en Windows, cmd parte los argumentos con | & < > y espacios
       process.platform === 'win32' && /[\s|&<>^()]/.test(a) ? `"${a}"` : a,
     ),

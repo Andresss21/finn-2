@@ -18,7 +18,10 @@ import {
 import { codigoDe } from '../../../apps/web/e2e/ayudas/totp.ts';
 import { SECRETO_RESPALDO_E2E } from '../../pruebas/e2e/respaldo.ts';
 import { clienteAal2, quitarRespaldos } from '../../../apps/web/e2e/ayudas/factores.ts';
-import { completarInscripcion, iniciarInscripcion } from '../../../packages/aplicacion/src/autenticacion/supabase.ts';
+import {
+  completarInscripcion,
+  iniciarInscripcion,
+} from '../../../packages/aplicacion/src/autenticacion/supabase.ts';
 
 const E2 = '02-referencias/entrega-2/pantallas';
 const E3 = 'entrega-3/pantallas/16-salir';
@@ -33,7 +36,11 @@ const esc = (id: string, extra: Op[] = []): Escenario => ({
   id,
   estadoInicial: [...(a7.estadoInicial ?? []), ...extra],
 });
-const SIN_NADA: Op[] = [{ op: 'OP-01', cuenta: 'Ahorro' }, { op: 'OP-07', categoria: 'Streaming' }, { op: 'OP-21', monto: 1000 }];
+const SIN_NADA: Op[] = [
+  { op: 'OP-01', cuenta: 'Ahorro' },
+  { op: 'OP-07', categoria: 'Streaming' },
+  { op: 'OP-21', monto: 1000 },
+];
 const P_ATRASADA = { hoyServidor: '2026-10-19' } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -275,7 +282,10 @@ caso({
   soloLectura: true,
   url: '/por-cobrar',
   pasos: async (page) => {
-    await page.getByRole('link', { name: /^Condonar / }).first().click();
+    await page
+      .getByRole('link', { name: /^Condonar / })
+      .first()
+      .click();
     await expect(page.getByRole('button', { name: /^Condonar \$/ })).toBeVisible();
     await quieta(page);
   },
@@ -339,12 +349,50 @@ const notificacion = (
   ...(destino === undefined ? {} : { destino }),
 });
 const NOTIS = (leidas: boolean) => [
-  notificacion('pago_tarjeta_proximo', 'Visa Oro corta el 25/10', 'Te falta reservar $18.75 para que la deuda quede cubierta antes del corte.', '2026-10-15T08:00:00', leidas, { pantalla: 'cuentas' }),
-  notificacion('registro_automatico', 'Cuota del préstamo el 20/10', 'Cuota 14 · $210.00 desde Cuenta de ahorro. Se registra sola.', '2026-10-15T06:00:00', leidas),
-  notificacion('meta_vencida', 'Netflix tiene su meta cubierta', 'Ya está asignado lo que pide este período.', '2026-10-14T10:00:00', true),
-  notificacion('registro_automatico', 'La regla PIZZA HUT se aplicó', '1 movimiento quedó en Restaurantes.', '2026-10-13T10:00:00', true),
-  notificacion('cierre_periodo', 'Se cerró el período 21/08 – 20/09', 'Sobregiros cubiertos: Listo para asignar no cambió.', '2026-09-21T10:00:00', true),
-  notificacion('registro_automatico', 'Cuota de Gimnasio registrada', 'Se registró sola.', '2026-10-10T10:00:00', true, { pantalla: 'transaccion', transaccionId: SIN_DESTINO }),
+  notificacion(
+    'pago_tarjeta_proximo',
+    'Visa Oro corta el 25/10',
+    'Te falta reservar $18.75 para que la deuda quede cubierta antes del corte.',
+    '2026-10-15T08:00:00',
+    leidas,
+    { pantalla: 'cuentas' },
+  ),
+  notificacion(
+    'registro_automatico',
+    'Cuota del préstamo el 20/10',
+    'Cuota 14 · $210.00 desde Cuenta de ahorro. Se registra sola.',
+    '2026-10-15T06:00:00',
+    leidas,
+  ),
+  notificacion(
+    'meta_vencida',
+    'Netflix tiene su meta cubierta',
+    'Ya está asignado lo que pide este período.',
+    '2026-10-14T10:00:00',
+    true,
+  ),
+  notificacion(
+    'registro_automatico',
+    'La regla PIZZA HUT se aplicó',
+    '1 movimiento quedó en Restaurantes.',
+    '2026-10-13T10:00:00',
+    true,
+  ),
+  notificacion(
+    'cierre_periodo',
+    'Se cerró el período 21/08 – 20/09',
+    'Sobregiros cubiertos: Listo para asignar no cambió.',
+    '2026-09-21T10:00:00',
+    true,
+  ),
+  notificacion(
+    'registro_automatico',
+    'Cuota de Gimnasio registrada',
+    'Se registró sola.',
+    '2026-10-10T10:00:00',
+    true,
+    { pantalla: 'transaccion', transaccionId: SIN_DESTINO },
+  ),
 ];
 caso({
   id: 'notificaciones__lista',
@@ -414,7 +462,10 @@ caso({
   soloLectura: true,
   url: '/presupuesto',
   pasos: async (page) => {
-    await page.locator('[data-marco-barra]').getByRole('link', { name: /^Notificaciones/ }).click();
+    await page
+      .locator('[data-marco-barra]')
+      .getByRole('link', { name: /^Notificaciones/ })
+      .click();
     await expect(page).toHaveURL(/\/notificaciones/);
     await quieta(page);
   },
@@ -679,7 +730,10 @@ caso({
   ...A7_AJU,
   url: '/ajustes/seguridad',
   pasos: async (page) => {
-    await page.getByRole('link', { name: /^Quitar/ }).first().click();
+    await page
+      .getByRole('link', { name: /^Quitar/ })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/quitar$/);
     await quieta(page);
   },
@@ -723,7 +777,12 @@ async function simularPush(
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // CASOS QUE ESCRIBEN EN LA BASE (siempre al final; cada uno con su semilla propia, que ningún otro caso reutiliza)
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-const meta = (ruta: string, comp: string, ref: string, nota?: string) => ({ ruta, comp, ref, ...(nota === undefined ? {} : { nota }) });
+const meta = (ruta: string, comp: string, ref: string, nota?: string) => ({
+  ruta,
+  comp,
+  ref,
+  ...(nota === undefined ? {} : { nota }),
+});
 
 caso({
   id: 'ajustes-instituciones__nueva-repetida',
@@ -790,7 +849,10 @@ caso({
 // Reglas: crear tres por la pantalla y archivar la categoría de una
 test('reglas__flujo', async ({ page, context, baseURL }, info) => {
   test.setTimeout(120_000);
-  await sembrarEscenario(esc('SEM-MAS-REGLAS', [{ op: 'OP-07', categoria: 'Cafetería', hoy: '2026-10-15' }]), '2026-10-15');
+  await sembrarEscenario(
+    esc('SEM-MAS-REGLAS', [{ op: 'OP-07', categoria: 'Cafetería', hoy: '2026-10-15' }]),
+    '2026-10-15',
+  );
   await entrar(context, baseURL);
   const crear = async (patron: string, categoria: string): Promise<void> => {
     await page.goto('/reglas/nueva');
@@ -814,26 +876,66 @@ test('reglas__flujo', async ({ page, context, baseURL }, info) => {
 
   await page.goto('/reglas');
   await quieta(page);
-  await capturar(page, info, 'reglas__lista', meta('/reglas', `${REG}/pantalla.tsx`, `${RR}/lista`, 'Tres reglas; STARBUCKS→Cafetería con la categoría archivada («No se aplica»).'));
+  await capturar(
+    page,
+    info,
+    'reglas__lista',
+    meta(
+      '/reglas',
+      `${REG}/pantalla.tsx`,
+      `${RR}/lista`,
+      'Tres reglas; STARBUCKS→Cafetería con la categoría archivada («No se aplica»).',
+    ),
+  );
   await page.getByRole('searchbox').fill('zzzz');
   await quieta(page);
-  await capturar(page, info, 'reglas__sin-coincidencias', meta('/reglas', `${REG}/pantalla.tsx`, 'SIN DISEÑO', 'Búsqueda sin resultados.'));
+  await capturar(
+    page,
+    info,
+    'reglas__sin-coincidencias',
+    meta('/reglas', `${REG}/pantalla.tsx`, 'SIN DISEÑO', 'Búsqueda sin resultados.'),
+  );
   await page.goto('/reglas');
   await quieta(page);
   await page.locator('a[href^="/reglas/"]:not([href$="/nueva"])').first().click();
   await expect(page.getByRole('button', { name: 'Guardar regla' })).toBeVisible();
   await quieta(page);
-  await capturar(page, info, 'regla__editar', meta('/reglas/[reglaId]', `${FLU}/reglas-regla/lector.tsx`, `${RR}/nueva`, 'Editar regla: no hay tablero propio; la referencia más cercana es «nueva».'));
+  await capturar(
+    page,
+    info,
+    'regla__editar',
+    meta(
+      '/reglas/[reglaId]',
+      `${FLU}/reglas-regla/lector.tsx`,
+      `${RR}/nueva`,
+      'Editar regla: no hay tablero propio; la referencia más cercana es «nueva».',
+    ),
+  );
   await page.getByRole('button', { name: 'Eliminar regla' }).click();
   await quieta(page);
-  await capturar(page, info, 'regla__eliminar-confirmar', meta('/reglas/[reglaId]', `${FLU}/reglas-regla/lector.tsx`, 'SIN DISEÑO', 'Confirmación de eliminar.'));
+  await capturar(
+    page,
+    info,
+    'regla__eliminar-confirmar',
+    meta(
+      '/reglas/[reglaId]',
+      `${FLU}/reglas-regla/lector.tsx`,
+      'SIN DISEÑO',
+      'Confirmación de eliminar.',
+    ),
+  );
   await page.goto('/reglas/nueva');
   await quieta(page);
   await page.getByLabel('El comercio contiene').fill('PUMA');
   await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Gasolina' });
   await page.getByRole('button', { name: 'Guardar regla' }).click();
   await expect(page.getByText(/Ya hay una regla/)).toBeVisible();
-  await capturar(page, info, 'regla__nueva-repetida', meta('/reglas/nueva', `${FLU}/reglas-nueva/formulario.tsx`, `${RR}/nueva-repetida`));
+  await capturar(
+    page,
+    info,
+    'regla__nueva-repetida',
+    meta('/reglas/nueva', `${FLU}/reglas-nueva/formulario.tsx`, `${RR}/nueva-repetida`),
+  );
 });
 
 // Conectar los SMS (webhook): sin token, token recién generado, conectado y cambiar token
@@ -841,22 +943,43 @@ test('ajustes-conectar-sms__flujo', async ({ page, context, baseURL }, info) => 
   test.setTimeout(120_000);
   await sembrarEscenario(esc('SEM-MAS-WEBHOOK'), '2026-10-15');
   await entrar(context, baseURL);
-  const m = (ref: string, nota?: string) => meta('/ajustes/webhook', `${AJU}/webhook/page.tsx`, ref, nota);
+  const m = (ref: string, nota?: string) =>
+    meta('/ajustes/webhook', `${AJU}/webhook/page.tsx`, ref, nota);
   await page.goto('/ajustes/webhook');
   await quieta(page);
-  await capturar(page, info, 'ajustes-conectar-sms__sin-token', m(`${RA}/conectar-sms`, 'Aún sin token (la referencia ya está conectada).'));
+  await capturar(
+    page,
+    info,
+    'ajustes-conectar-sms__sin-token',
+    m(`${RA}/conectar-sms`, 'Aún sin token (la referencia ya está conectada).'),
+  );
   await page.getByRole('button', { name: 'Generar token', exact: true }).click();
   await expect(page.getByTestId('token')).toBeVisible();
   await quieta(page);
-  await capturar(page, info, 'ajustes-conectar-sms__token-generado', m(`${RA}/conectar-sms`, 'Token recién generado, se muestra completo una sola vez.'));
+  await capturar(
+    page,
+    info,
+    'ajustes-conectar-sms__token-generado',
+    m(`${RA}/conectar-sms`, 'Token recién generado, se muestra completo una sola vez.'),
+  );
   await page.getByRole('button', { name: 'Ya lo pegué en MacroDroid' }).click();
   await page.goto('/ajustes/webhook');
   await quieta(page);
-  await capturar(page, info, 'ajustes-conectar-sms__con-token', m(`${RA}/conectar-sms`, 'Token guardado, sin SMS recibido todavía.'));
+  await capturar(
+    page,
+    info,
+    'ajustes-conectar-sms__con-token',
+    m(`${RA}/conectar-sms`, 'Token guardado, sin SMS recibido todavía.'),
+  );
   await page.getByRole('button', { name: 'Cambiar token', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Sí, cambiar el token' })).toBeVisible();
   await quieta(page);
-  await capturar(page, info, 'ajustes-conectar-sms__cambiar', m('SIN DISEÑO', 'Advertencia antes de cambiar el token.'));
+  await capturar(
+    page,
+    info,
+    'ajustes-conectar-sms__cambiar',
+    m('SIN DISEÑO', 'Advertencia antes de cambiar el token.'),
+  );
 });
 
 // Respaldo y diagnóstico: avisos como los haría GitHub Actions
@@ -865,45 +988,117 @@ test('ajustes-respaldo-diagnostico__flujo', async ({ page, context, baseURL, req
   const dia = '2026-10-15';
   await sembrarEscenario(esc('SEM-MAS-RESPALDO'), dia);
   await entrar(context, baseURL);
-  const informar = async (evento: 'respaldo' | 'restauracion', token = SECRETO_RESPALDO_E2E): Promise<number> =>
+  const informar = async (
+    evento: 'respaldo' | 'restauracion',
+    token = SECRETO_RESPALDO_E2E,
+  ): Promise<number> =>
     (
       await request.post(`/api/respaldo/${evento}`, {
         headers: { authorization: `Bearer ${token}` },
-        data: evento === 'respaldo' ? { objeto: 'diarios/2026-10-15.dump', revision: 1, bytes: 1000 } : {},
+        data:
+          evento === 'respaldo'
+            ? { objeto: 'diarios/2026-10-15.dump', revision: 1, bytes: 1000 }
+            : {},
       })
     ).status();
   const ir = async (ruta: string): Promise<void> => {
     await page.goto(ruta);
     await quieta(page);
   };
-  const rr = (r: string, c: string, ref: string, nota?: string) => meta(r, `${AJU}/${c}`, ref, nota);
+  const rr = (r: string, c: string, ref: string, nota?: string) =>
+    meta(r, `${AJU}/${c}`, ref, nota);
   await ir('/ajustes/respaldo');
-  await capturar(page, info, 'ajustes-respaldo__sin-respaldo', rr('/ajustes/respaldo', 'respaldo/page.tsx', `${RA}/respaldo`, 'Nunca hubo respaldo.'));
+  await capturar(
+    page,
+    info,
+    'ajustes-respaldo__sin-respaldo',
+    rr('/ajustes/respaldo', 'respaldo/page.tsx', `${RA}/respaldo`, 'Nunca hubo respaldo.'),
+  );
   await ir('/ajustes/diagnostico');
-  await capturar(page, info, 'ajustes-diagnostico__sin-eventos', rr('/ajustes/diagnostico', 'diagnostico/panel.tsx', `${RA}/diagnostico`, 'Sin eventos.'));
+  await capturar(
+    page,
+    info,
+    'ajustes-diagnostico__sin-eventos',
+    rr('/ajustes/diagnostico', 'diagnostico/panel.tsx', `${RA}/diagnostico`, 'Sin eventos.'),
+  );
   const estados = [await informar('respaldo'), await informar('restauracion')];
   fijarRelojServidor(`${dia}T22:00:00-06:00`);
   await ir('/ajustes');
-  await capturar(page, info, 'ajustes__indice-respaldo-al-dia', rr('/ajustes', 'page.tsx', `${E3}/ajustes-indice`, `Respaldo al día en el índice. POST respaldo/restauración: ${estados.join(',')}`));
+  await capturar(
+    page,
+    info,
+    'ajustes__indice-respaldo-al-dia',
+    rr(
+      '/ajustes',
+      'page.tsx',
+      `${E3}/ajustes-indice`,
+      `Respaldo al día en el índice. POST respaldo/restauración: ${estados.join(',')}`,
+    ),
+  );
   await ir('/ajustes/respaldo');
-  await capturar(page, info, 'ajustes-respaldo__al-dia', rr('/ajustes/respaldo', 'respaldo/page.tsx', `${RA}/respaldo`, 'Respaldo y restauración al día (la referencia es «atrasado»).'));
+  await capturar(
+    page,
+    info,
+    'ajustes-respaldo__al-dia',
+    rr(
+      '/ajustes/respaldo',
+      'respaldo/page.tsx',
+      `${RA}/respaldo`,
+      'Respaldo y restauración al día (la referencia es «atrasado»).',
+    ),
+  );
   fijarRelojServidor('2026-10-17T00:00:00-06:00');
   await ir('/ajustes');
-  await capturar(page, info, 'ajustes__indice-respaldo-atrasado', rr('/ajustes', 'lista-ajustes.tsx', `${E3}/ajustes-indice`, 'Respaldo atrasado en el índice.'));
+  await capturar(
+    page,
+    info,
+    'ajustes__indice-respaldo-atrasado',
+    rr('/ajustes', 'lista-ajustes.tsx', `${E3}/ajustes-indice`, 'Respaldo atrasado en el índice.'),
+  );
   await ir('/ajustes/respaldo');
-  await capturar(page, info, 'ajustes-respaldo__atrasado', rr('/ajustes/respaldo', 'respaldo/page.tsx', `${RA}/respaldo`));
+  await capturar(
+    page,
+    info,
+    'ajustes-respaldo__atrasado',
+    rr('/ajustes/respaldo', 'respaldo/page.tsx', `${RA}/respaldo`),
+  );
   await informar('respaldo', 'x'.repeat(40));
   await ir('/ajustes/diagnostico');
-  await capturar(page, info, 'ajustes-diagnostico__con-referencia', rr('/ajustes/diagnostico', 'diagnostico/panel.tsx', `${RA}/diagnostico`, 'Un evento (token inválido del aviso de respaldo).'));
+  await capturar(
+    page,
+    info,
+    'ajustes-diagnostico__con-referencia',
+    rr(
+      '/ajustes/diagnostico',
+      'diagnostico/panel.tsx',
+      `${RA}/diagnostico`,
+      'Un evento (token inválido del aviso de respaldo).',
+    ),
+  );
   await page.getByRole('searchbox').fill('no-existe');
   await quieta(page);
-  await capturar(page, info, 'ajustes-diagnostico__sin-resultados', rr('/ajustes/diagnostico', 'diagnostico/panel.tsx', 'SIN DISEÑO', 'Búsqueda sin resultados.'));
+  await capturar(
+    page,
+    info,
+    'ajustes-diagnostico__sin-resultados',
+    rr('/ajustes/diagnostico', 'diagnostico/panel.tsx', 'SIN DISEÑO', 'Búsqueda sin resultados.'),
+  );
   await ir('/ajustes/diagnostico');
   await page.getByRole('button', { name: 'Ejecutar tareas ahora', exact: true }).click();
   await expect(page.getByText(/tareas/i).first()).toBeVisible();
   // [repaso AJU] esperar a que termine «Ejecutando…» para capturar el resultado
   await expect(page.getByText('Ejecutando…')).toHaveCount(0, { timeout: 30_000 });
-  await capturar(page, info, 'ajustes-diagnostico__tareas-ejecutadas', rr('/ajustes/diagnostico', 'diagnostico/panel.tsx', `${RA}/diagnostico`, 'Resultado de «Ejecutar tareas ahora».'));
+  await capturar(
+    page,
+    info,
+    'ajustes-diagnostico__tareas-ejecutadas',
+    rr(
+      '/ajustes/diagnostico',
+      'diagnostico/panel.tsx',
+      `${RA}/diagnostico`,
+      'Resultado de «Ejecutar tareas ahora».',
+    ),
+  );
 });
 
 // Seguridad: dos factores, quitar, agregar. El factor del usuario de prueba no se toca: solo se agrega y se quita un respaldo.
@@ -924,30 +1119,80 @@ test('ajustes-seguridad__flujo', async ({ page, context, baseURL }, info) => {
     await entrar(context, baseURL);
     await page.goto('/ajustes/seguridad');
     await quieta(page);
-    await capturar(page, info, 'ajustes-seguridad__dos-factores', meta('/ajustes/seguridad', `${AJU}/seguridad/lista-factores.tsx`, `${RA}/seguridad`));
-    await page.locator(`[data-factor="${inicio.valor.factorId}"]`).getByRole('link', { name: /^Quitar/ }).click();
+    await capturar(
+      page,
+      info,
+      'ajustes-seguridad__dos-factores',
+      meta('/ajustes/seguridad', `${AJU}/seguridad/lista-factores.tsx`, `${RA}/seguridad`),
+    );
+    await page
+      .locator(`[data-factor="${inicio.valor.factorId}"]`)
+      .getByRole('link', { name: /^Quitar/ })
+      .click();
     await expect(page).toHaveURL(/\/quitar$/);
     await quieta(page);
-    await capturar(page, info, 'ajustes-seguridad__quitar-factor', meta('/ajustes/seguridad/factores/[factorId]/quitar', `${FLU}/ajustes-seguridad-factores-quitar/formulario.tsx`, 'SIN DISEÑO', 'FALTANTES: factor-quitar. Confirmación con 2 factores, sin tocar «Quitar».'));
+    await capturar(
+      page,
+      info,
+      'ajustes-seguridad__quitar-factor',
+      meta(
+        '/ajustes/seguridad/factores/[factorId]/quitar',
+        `${FLU}/ajustes-seguridad-factores-quitar/formulario.tsx`,
+        'SIN DISEÑO',
+        'FALTANTES: factor-quitar. Confirmación con 2 factores, sin tocar «Quitar».',
+      ),
+    );
   } finally {
     await quitarRespaldos();
   }
   try {
     await page.goto('/ajustes/seguridad/factores/nuevo');
     await quieta(page);
-    await capturar(page, info, 'ajustes-seguridad__agregar-factor', meta('/ajustes/seguridad/factores/nuevo', `${FLU}/ajustes-seguridad-factores-nuevo/inscribir-factor.tsx`, 'SIN DISEÑO', 'FALTANTES: factor-nuevo. Código de verificación: DECISIONES pide 6 casillas de 44 × 52.'));
+    await capturar(
+      page,
+      info,
+      'ajustes-seguridad__agregar-factor',
+      meta(
+        '/ajustes/seguridad/factores/nuevo',
+        `${FLU}/ajustes-seguridad-factores-nuevo/inscribir-factor.tsx`,
+        'SIN DISEÑO',
+        'FALTANTES: factor-nuevo. Código de verificación: DECISIONES pide 6 casillas de 44 × 52.',
+      ),
+    );
     const campo = page.getByRole('textbox').first();
     if (await campo.isVisible().catch(() => false)) {
       await campo.fill('000000');
       // [repaso AJU] enviar el código para que aparezca el error (no cambia ningún factor: el código es inválido)
       await page.keyboard.press('Enter');
-      await expect(page.locator('[role=alert], [aria-invalid=true]').first()).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator('[role=alert], [aria-invalid=true]').first()).toBeVisible({
+        timeout: 15_000,
+      });
       await quieta(page);
-      await capturar(page, info, 'ajustes-seguridad__agregar-factor-codigo-malo', meta('/ajustes/seguridad/factores/nuevo', `${FLU}/ajustes-seguridad-factores-nuevo/inscribir-factor.tsx`, 'SIN DISEÑO', 'Código equivocado (000000).'));
+      await capturar(
+        page,
+        info,
+        'ajustes-seguridad__agregar-factor-codigo-malo',
+        meta(
+          '/ajustes/seguridad/factores/nuevo',
+          `${FLU}/ajustes-seguridad-factores-nuevo/inscribir-factor.tsx`,
+          'SIN DISEÑO',
+          'Código equivocado (000000).',
+        ),
+      );
     }
     await page.goto('/ajustes/seguridad');
     await quieta(page);
-    await capturar(page, info, 'ajustes-seguridad__inscripcion-sin-terminar', meta('/ajustes/seguridad', `${AJU}/seguridad/lista-factores.tsx`, `${RA}/seguridad`, 'Segundo factor «Inscripción sin terminar» (como en la referencia seguridad).'));
+    await capturar(
+      page,
+      info,
+      'ajustes-seguridad__inscripcion-sin-terminar',
+      meta(
+        '/ajustes/seguridad',
+        `${AJU}/seguridad/lista-factores.tsx`,
+        `${RA}/seguridad`,
+        'Segundo factor «Inscripción sin terminar» (como en la referencia seguridad).',
+      ),
+    );
   } finally {
     await quitarRespaldos();
   }

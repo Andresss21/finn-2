@@ -28,7 +28,11 @@ const REGISTRADOR = () => {
   const describir = (el: Element | null | undefined): string => {
     if (!el) return '';
     const partes: string[] = [];
-    for (let e: Element | null = el, i = 0; e && i < 3 && e !== document.body; e = e.parentElement, i++) {
+    for (
+      let e: Element | null = el, i = 0;
+      e && i < 3 && e !== document.body;
+      e = e.parentElement, i++
+    ) {
       const dato = ['role', 'aria-label', 'data-componente']
         .map((a) => (e!.getAttribute(a) ? `[${a}=${e!.getAttribute(a)!.slice(0, 30)}]` : ''))
         .join('');
@@ -44,7 +48,8 @@ const REGISTRADOR = () => {
       const efecto = a.effect as KeyframeEffect | null;
       const t = efecto?.getComputedTiming();
       const nombre =
-        (a as CSSAnimation).animationName ?? `transition:${(a as CSSTransition).transitionProperty ?? '?'}`;
+        (a as CSSAnimation).animationName ??
+        `transition:${(a as CSSTransition).transitionProperty ?? '?'}`;
       const destino = describir(efecto?.target);
       const clave = `${nombre}|${destino}|${String(t?.duration)}|${String(t?.delay)}`;
       if (w.__vistos.has(clave)) continue;
@@ -94,25 +99,39 @@ interface Momento {
   accion: (page: Page) => Promise<void>;
 }
 
-async function grabar(page: Page, info: TestInfo, id: string, reducido: boolean, momentos: Momento[]): Promise<void> {
+async function grabar(
+  page: Page,
+  info: TestInfo,
+  id: string,
+  reducido: boolean,
+  momentos: Momento[],
+): Promise<void> {
   const resultado: Record<string, unknown>[] = [];
   for (const m of momentos) {
     await vaciar(page).catch(() => []);
     await m.accion(page);
     // deja correr la transición completa (hasta 1,8 s) antes de leer
     await page.waitForTimeout(1800);
-    const animaciones = (await vaciar(page).catch(() => [])).filter((a) => a['iteraciones'] !== 'Infinity');
+    const animaciones = (await vaciar(page).catch(() => [])).filter(
+      (a) => a['iteraciones'] !== 'Infinity',
+    );
     const estado = await page.evaluate(() => ({
       url: location.pathname + location.search,
-      dialogos: [...document.querySelectorAll('[role=dialog]')].map((d) => d.getAttribute('aria-label') ?? d.querySelector('h1,h2')?.textContent ?? ''),
+      dialogos: [...document.querySelectorAll('[role=dialog]')].map(
+        (d) => d.getAttribute('aria-label') ?? d.querySelector('h1,h2')?.textContent ?? '',
+      ),
     }));
     resultado.push({ momento: m.nombre, esperado: m.esperado, despues: estado, animaciones });
   }
   const sufijo = `${info.project.name}${reducido ? '__reducido' : ''}`;
-  writeFileSync(join(SALIDA, 'movimiento', `${id}__${sufijo}.json`), JSON.stringify(resultado, null, 1));
+  writeFileSync(
+    join(SALIDA, 'movimiento', `${id}__${sufijo}.json`),
+    JSON.stringify(resultado, null, 1),
+  );
   const video = page.video();
   await page.close();
-  if (video && !reducido) await video.saveAs(join(SALIDA, 'videos', `${id}__${info.project.name}.webm`));
+  if (video && !reducido)
+    await video.saveAs(join(SALIDA, 'videos', `${id}__${info.project.name}.webm`));
 }
 
 const A7 = escenarioA7();
@@ -148,7 +167,11 @@ for (const reducido of [false, true]) {
       await page.addInitScript(REGISTRADOR);
     });
 
-    test(`mov navegacion${reducido ? ' reducido' : ''}`, async ({ page, context, baseURL }, info) => {
+    test(`mov navegacion${reducido ? ' reducido' : ''}`, async ({
+      page,
+      context,
+      baseURL,
+    }, info) => {
       await sembrarEscenario(A7, '2026-10-15');
       await entrar(context, baseURL);
       await page.goto('/');
@@ -158,7 +181,8 @@ for (const reducido of [false, true]) {
       await grabar(page, info, 'navegacion', reducido, [
         {
           nombre: 'entrada de Inicio y billete Listo para asignar (recarga)',
-          esperado: '§2.8: cifras que ruedan una vez, 1.4 s, 90 ms entre dígitos; bloques escalonados',
+          esperado:
+            '§2.8: cifras que ruedan una vez, 1.4 s, 90 ms entre dígitos; bloques escalonados',
           accion: async (p) => {
             await p.reload();
           },
@@ -171,12 +195,20 @@ for (const reducido of [false, true]) {
         {
           nombre: 'abrir un detalle: Presupuesto → categoría Restaurantes',
           esperado: '§11: entra desde 70 px a la derecha, 360 ms',
-          accion: async (p) => p.getByRole('link', { name: /Restaurantes/ }).first().click(),
+          accion: async (p) =>
+            p
+              .getByRole('link', { name: /Restaurantes/ })
+              .first()
+              .click(),
         },
         {
           nombre: 'volver: categoría → Presupuesto',
           esperado: '§11: entra desde 50 px a la izquierda, 360 ms',
-          accion: async (p) => p.getByRole('link', { name: /^Volver/ }).first().click(),
+          accion: async (p) =>
+            p
+              .getByRole('link', { name: /^Volver/ })
+              .first()
+              .click(),
         },
         {
           nombre: 'pestaña a la izquierda: Presupuesto → Inicio',
@@ -186,7 +218,11 @@ for (const reducido of [false, true]) {
         {
           nombre: 'abrir Registrar (flujo largo)',
           esperado: '§11: sube desde abajo, 420 ms, --curva-entrada',
-          accion: async (p) => p.getByRole('link', { name: /^Registrar/ }).first().click(),
+          accion: async (p) =>
+            p
+              .getByRole('link', { name: /^Registrar/ })
+              .first()
+              .click(),
         },
         {
           nombre: 'cerrar Registrar',
@@ -202,7 +238,8 @@ for (const reducido of [false, true]) {
           ? [
               {
                 nombre: 'abrir la hoja Más secciones',
-                esperado: '§11: velo 0→1 (280 ms), la hoja sube (380 ms, --curva-entrada), opciones escalonadas 40 ms',
+                esperado:
+                  '§11: velo 0→1 (280 ms), la hoja sube (380 ms, --curva-entrada), opciones escalonadas 40 ms',
                 accion: async (p: Page) => p.getByRole('button', { name: /Más secciones/ }).click(),
               },
               {
@@ -230,7 +267,12 @@ for (const reducido of [false, true]) {
         {
           nombre: 'abrir la hoja Asignar desde Inicio',
           esperado: '§11: velo (280 ms) y hoja que sube (380 ms); en computadora, panel lateral',
-          accion: async (p) => p.getByRole('link', { name: /^Asignar \$/ }).or(p.getByRole('button', { name: /^Asignar \$/ })).first().click(),
+          accion: async (p) =>
+            p
+              .getByRole('link', { name: /^Asignar \$/ })
+              .or(p.getByRole('button', { name: /^Asignar \$/ }))
+              .first()
+              .click(),
         },
         {
           nombre: 'cerrar la hoja Asignar (Escape)',
@@ -250,17 +292,28 @@ for (const reducido of [false, true]) {
         {
           nombre: 'entrar a la Bandeja (filas escalonadas)',
           esperado: '§2.12: las filas entran escalonadas (400 ms, 60 ms entre filas)',
-          accion: async (p) => p.getByRole('link', { name: /^Bandeja/ }).first().click(),
+          accion: async (p) =>
+            p
+              .getByRole('link', { name: /^Bandeja/ })
+              .first()
+              .click(),
         },
         {
           nombre: 'aprobar con un toque',
-          esperado: '§2.13 y §11: el resultado aparece en el lugar con un rebote (300 ms, --curva-enfasis); sin transición de pantalla',
-          accion: async () => fila('12.00').getByRole('button', { name: /^Aprobar/ }).click(),
+          esperado:
+            '§2.13 y §11: el resultado aparece en el lugar con un rebote (300 ms, --curva-enfasis); sin transición de pantalla',
+          accion: async () =>
+            fila('12.00')
+              .getByRole('button', { name: /^Aprobar/ })
+              .click(),
         },
         {
           nombre: 'aprobar otro',
           esperado: 'igual; el contador de la Bandeja cambia',
-          accion: async () => fila('13.00').getByRole('button', { name: /^Aprobar/ }).click(),
+          accion: async () =>
+            fila('13.00')
+              .getByRole('button', { name: /^Aprobar/ })
+              .click(),
         },
       ]);
     });
@@ -270,16 +323,24 @@ for (const reducido of [false, true]) {
       await entrar(context, baseURL);
       await page.goto('/bandeja');
       await quieta(page);
-      const asa = page.locator('[data-movimiento]').filter({ hasText: '12.00' }).locator('[data-asa]');
+      const asa = page
+        .locator('[data-movimiento]')
+        .filter({ hasText: '12.00' })
+        .locator('[data-asa]');
       await asa.waitFor({ timeout: 20_000 });
       const foto = (nombre: string) =>
         page.screenshot({
-          path: join(SALIDA, 'capturas', `bandeja__${nombre}__${info.project.name}${reducido ? '-reducido' : ''}.png`),
+          path: join(
+            SALIDA,
+            'capturas',
+            `bandeja__${nombre}__${info.project.name}${reducido ? '-reducido' : ''}.png`,
+          ),
         });
       await grabar(page, info, 'arrastre', reducido, [
         {
           nombre: 'tomar el movimiento (ratón, más de 6 px)',
-          esperado: 'SIN DISEÑO: PANTALLAS §7 solo dice «Arrastrar a una categoría es un atajo; los botones siempre están»',
+          esperado:
+            'SIN DISEÑO: PANTALLAS §7 solo dice «Arrastrar a una categoría es un atajo; los botones siempre están»',
           accion: async (p) => {
             const c = await asa.boundingBox();
             if (!c) throw new Error('el asa no tiene caja');
@@ -316,16 +377,25 @@ for (const reducido of [false, true]) {
     test(`mov codigo${reducido ? ' reducido' : ''}`, async ({ page }, info) => {
       await page.goto('/ingresar');
       await quieta(page);
-      await page.getByLabel(/correo|email/i).first().fill(variable('E2E_EMAIL'));
-      await page.getByLabel(/contraseña/i).first().fill(variable('E2E_CLAVE'));
+      await page
+        .getByLabel(/correo|email/i)
+        .first()
+        .fill(variable('E2E_EMAIL'));
+      await page
+        .getByLabel(/contraseña/i)
+        .first()
+        .fill(variable('E2E_CLAVE'));
       await page.keyboard.press('Enter');
       await page.waitForURL('**/ingresar/verificar**');
       await quieta(page);
-      const casillas = page.locator('input[inputmode="numeric"], input[autocomplete="one-time-code"]');
+      const casillas = page.locator(
+        'input[inputmode="numeric"], input[autocomplete="one-time-code"]',
+      );
       await grabar(page, info, 'codigo', reducido, [
         {
           nombre: 'escribir tres dígitos',
-          esperado: 'DECISIONES: casilla llena con línea de 3 px en --accion, sube 2 px y hace un pop; avanza a la siguiente',
+          esperado:
+            'DECISIONES: casilla llena con línea de 3 px en --accion, sube 2 px y hace un pop; avanza a la siguiente',
           accion: async (p) => {
             await casillas.first().click();
             await p.keyboard.type('123', { delay: 120 });
@@ -333,14 +403,16 @@ for (const reducido of [false, true]) {
         },
         {
           nombre: 'completar con un código incorrecto',
-          esperado: 'DECISIONES: se verifica sola al sexto dígito; error: el grupo tiembla 380 ms y las casillas toman --problema-borde',
+          esperado:
+            'DECISIONES: se verifica sola al sexto dígito; error: el grupo tiembla 380 ms y las casillas toman --problema-borde',
           accion: async (p) => {
             await p.keyboard.type('000', { delay: 120 });
           },
         },
         {
           nombre: 'pegar el código correcto',
-          esperado: 'DECISIONES: pegar reparte los 6 dígitos; correcto: --positivo-fondo en cascada (40 ms), check con pop, sigue a los 650 ms',
+          esperado:
+            'DECISIONES: pegar reparte los 6 dígitos; correcto: --positivo-fondo en cascada (40 ms), check con pop, sigue a los 650 ms',
           accion: async (p) => {
             const codigo = codigoTotp();
             await casillas.first().click();

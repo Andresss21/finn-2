@@ -78,7 +78,15 @@ export interface Medida {
     masSecciones: boolean;
     volver: string;
     cerrar: boolean;
-    main: { x: number; y: number; w: number; h: number; padL: string; padR: string; maxW: string } | null;
+    main: {
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      padL: string;
+      padR: string;
+      maxW: string;
+    } | null;
   };
   camposSinEtiqueta: string[];
   animaciones: { nombre: string; dur: number; iter: string; sel: string }[];
@@ -160,7 +168,11 @@ export function medir(): Medida {
   };
   const sel = (el: Element): string => {
     const partes: string[] = [];
-    for (let e: Element | null = el, i = 0; e && i < 4 && e !== document.body; e = e.parentElement, i++) {
+    for (
+      let e: Element | null = el, i = 0;
+      e && i < 4 && e !== document.body;
+      e = e.parentElement, i++
+    ) {
       const id = e.id ? `#${e.id}` : '';
       const dato = ['data-componente', 'data-testid', 'data-rol', 'role', 'aria-label']
         .map((a) => (e!.getAttribute(a) ? `[${a}="${e!.getAttribute(a)!.slice(0, 40)}"]` : ''))
@@ -173,7 +185,13 @@ export function medir(): Medida {
     for (let e: Element | null = el, i = 0; e && i < 3; e = e.parentElement, i++) {
       const d = e.getAttribute('data-rol');
       if (d) return d;
-      const c = [...e.classList].find((k) => /^(text|t)-[a-z]+(-[a-z]+)*$/.test(k) && !/^text-(texto|accion|enlace|fondo|positivo|problema|advertencia|informacion|deuda|cero|marca|peligro|left|right|center|current|inherit|transparent|white|black|ellipsis|nowrap|wrap|balance|pretty|start|end|justify)/.test(k));
+      const c = [...e.classList].find(
+        (k) =>
+          /^(text|t)-[a-z]+(-[a-z]+)*$/.test(k) &&
+          !/^text-(texto|accion|enlace|fondo|positivo|problema|advertencia|informacion|deuda|cero|marca|peligro|left|right|center|current|inherit|transparent|white|black|ellipsis|nowrap|wrap|balance|pretty|start|end|justify)/.test(
+            k,
+          ),
+      );
       if (c) return c.replace(/^(text|t)-/, '');
     }
     return '';
@@ -200,7 +218,8 @@ export function medir(): Medida {
     const r = el.getBoundingClientRect();
     const color = rgba(cs.color);
     const bg = fondoEfectivo(el);
-    const lhPx = cs.lineHeight === 'normal' ? parseFloat(cs.fontSize) * 1.2 : parseFloat(cs.lineHeight);
+    const lhPx =
+      cs.lineHeight === 'normal' ? parseFloat(cs.fontSize) * 1.2 : parseFloat(cs.lineHeight);
     const rango = document.createRange();
     rango.selectNodeContents(el);
     const altoTexto = propio ? rango.getBoundingClientRect().height : r.height;
@@ -296,7 +315,11 @@ export function medir(): Medida {
     const cs = getComputedStyle(el);
     const conFondo = rgba(cs.backgroundColor)[3] > 0 || cs.backgroundImage !== 'none';
     const conSombra = cs.boxShadow !== 'none';
-    const conBorde = parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth) + parseFloat(cs.borderLeftWidth) > 0;
+    const conBorde =
+      parseFloat(cs.borderTopWidth) +
+        parseFloat(cs.borderBottomWidth) +
+        parseFloat(cs.borderLeftWidth) >
+      0;
     if (!conFondo && !conSombra && !conBorde) continue;
     const r = el.getBoundingClientRect();
     if (r.width < 16 || r.height < 4) continue;
@@ -307,10 +330,15 @@ export function medir(): Medida {
       y: r1(r.y + scrollY),
       w: r1(r.width),
       h: r1(r.height),
-      bg: cs.backgroundImage !== 'none' ? `img:${hex(rgba(cs.backgroundColor))}` : hex(rgba(cs.backgroundColor)),
+      bg:
+        cs.backgroundImage !== 'none'
+          ? `img:${hex(rgba(cs.backgroundColor))}`
+          : hex(rgba(cs.backgroundColor)),
       radio: cs.borderRadius,
       sombra: cs.boxShadow === 'none' ? '' : cs.boxShadow.slice(0, 120),
-      borde: conBorde ? `${cs.borderTopWidth} ${cs.borderRightWidth} ${cs.borderBottomWidth} ${cs.borderLeftWidth} ${hex(rgba(cs.borderTopColor))}` : '',
+      borde: conBorde
+        ? `${cs.borderTopWidth} ${cs.borderRightWidth} ${cs.borderBottomWidth} ${cs.borderLeftWidth} ${hex(rgba(cs.borderTopColor))}`
+        : '',
       pad: cs.padding,
       gap: cs.gap,
     });
@@ -330,7 +358,8 @@ export function medir(): Medida {
         break;
       }
     }
-    if (!desplazable && fueraDeAncho.length < 30) fueraDeAncho.push({ sel: sel(el), x: r1(r.x), w: r1(r.width) });
+    if (!desplazable && fueraDeAncho.length < 30)
+      fueraDeAncho.push({ sel: sel(el), x: r1(r.x), w: r1(r.width) });
   }
 
   const main = document.querySelector('main');
@@ -346,19 +375,26 @@ export function medir(): Medida {
     .filter((el) => el.matches('input:not([type=hidden]), select, textarea') && visible(el))
     .filter((el) => {
       const c = el as HTMLInputElement;
-      return !(c.labels && c.labels.length > 0) && !c.getAttribute('aria-label') && !c.getAttribute('aria-labelledby');
+      return (
+        !(c.labels && c.labels.length > 0) &&
+        !c.getAttribute('aria-label') &&
+        !c.getAttribute('aria-labelledby')
+      );
     })
     .map(sel);
-  const animaciones = document.getAnimations().slice(0, 60).map((a) => {
-    const t = a.effect?.getComputedTiming();
-    const objetivo = (a.effect as KeyframeEffect | null)?.target;
-    return {
-      nombre: (a as CSSAnimation).animationName ?? (a as CSSTransition).transitionProperty ?? '',
-      dur: Number(t?.duration ?? 0),
-      iter: String(t?.iterations ?? ''),
-      sel: objetivo ? sel(objetivo) : '',
-    };
-  });
+  const animaciones = document
+    .getAnimations()
+    .slice(0, 60)
+    .map((a) => {
+      const t = a.effect?.getComputedTiming();
+      const objetivo = (a.effect as KeyframeEffect | null)?.target;
+      return {
+        nombre: (a as CSSAnimation).animationName ?? (a as CSSTransition).transitionProperty ?? '',
+        dur: Number(t?.duration ?? 0),
+        iter: String(t?.iterations ?? ''),
+        sel: objetivo ? sel(objetivo) : '',
+      };
+    });
   const cmain = main ? getComputedStyle(main) : null;
   const rmain = main?.getBoundingClientRect();
   return {
@@ -370,7 +406,9 @@ export function medir(): Medida {
     docW: document.documentElement.scrollWidth,
     docH: document.documentElement.scrollHeight,
     desbordeHorizontal: document.documentElement.scrollWidth > vw + 1,
-    fuentes: [...document.fonts].filter((f) => f.status === 'loaded').map((f) => `${f.family}|${f.weight}|${f.stretch}`),
+    fuentes: [...document.fonts]
+      .filter((f) => f.status === 'loaded')
+      .map((f) => `${f.family}|${f.weight}|${f.stretch}`),
     textos,
     tocables,
     cajas,
@@ -384,14 +422,44 @@ export function medir(): Medida {
     },
     marco: {
       barraSuperior: q('header'),
-      barraInferior: [...document.querySelectorAll('nav')].some((n) => visible(n) && n.getBoundingClientRect().top > innerHeight - 140 && n.getBoundingClientRect().width > innerWidth * 0.8),
-      barraLateral: [...document.querySelectorAll('nav, aside')].some((n) => visible(n) && n.getBoundingClientRect().height > innerHeight * 0.7 && n.getBoundingClientRect().width < 320),
-      campana: [...document.querySelectorAll('a,button')].some((e) => visible(e) && /Notificaciones/.test(nombre(e)) && e.getBoundingClientRect().top < 120),
-      registrar: [...document.querySelectorAll('a,button')].some((e) => visible(e) && /^Registrar$/.test(nombre(e))),
-      masSecciones: [...document.querySelectorAll('a,button')].some((e) => visible(e) && /Más secciones/.test(nombre(e))),
+      barraInferior: [...document.querySelectorAll('nav')].some(
+        (n) =>
+          visible(n) &&
+          n.getBoundingClientRect().top > innerHeight - 140 &&
+          n.getBoundingClientRect().width > innerWidth * 0.8,
+      ),
+      barraLateral: [...document.querySelectorAll('nav, aside')].some(
+        (n) =>
+          visible(n) &&
+          n.getBoundingClientRect().height > innerHeight * 0.7 &&
+          n.getBoundingClientRect().width < 320,
+      ),
+      campana: [...document.querySelectorAll('a,button')].some(
+        (e) =>
+          visible(e) && /Notificaciones/.test(nombre(e)) && e.getBoundingClientRect().top < 120,
+      ),
+      registrar: [...document.querySelectorAll('a,button')].some(
+        (e) => visible(e) && /^Registrar$/.test(nombre(e)),
+      ),
+      masSecciones: [...document.querySelectorAll('a,button')].some(
+        (e) => visible(e) && /Más secciones/.test(nombre(e)),
+      ),
       volver: volver ? nombre(volver) : '',
-      cerrar: [...document.querySelectorAll('a,button')].some((e) => visible(e) && /^Cerrar/.test(nombre(e))),
-      main: main && cmain && rmain ? { x: r1(rmain.x), y: r1(rmain.y), w: r1(rmain.width), h: r1(rmain.height), padL: cmain.paddingLeft, padR: cmain.paddingRight, maxW: cmain.maxWidth } : null,
+      cerrar: [...document.querySelectorAll('a,button')].some(
+        (e) => visible(e) && /^Cerrar/.test(nombre(e)),
+      ),
+      main:
+        main && cmain && rmain
+          ? {
+              x: r1(rmain.x),
+              y: r1(rmain.y),
+              w: r1(rmain.width),
+              h: r1(rmain.height),
+              padL: cmain.paddingLeft,
+              padR: cmain.paddingRight,
+              maxW: cmain.maxWidth,
+            }
+          : null,
     },
     camposSinEtiqueta,
     animaciones,

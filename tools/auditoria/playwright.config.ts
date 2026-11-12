@@ -54,19 +54,30 @@ export default {
     },
     { name: 'computadora-claro', testMatch: '**/*.cap.ts', use: ancho(1440, 900) },
     // Responsive (punto 9): mismas pantallas, solo medidas de desborde y una captura
-    { name: 'ancho-360', testMatch: '**/*.resp.ts', use: { ...telefono, viewport: { width: 360, height: 800 }, colorScheme: 'light' as const } },
+    {
+      name: 'ancho-360',
+      testMatch: '**/*.resp.ts',
+      use: { ...telefono, viewport: { width: 360, height: 800 }, colorScheme: 'light' as const },
+    },
     { name: 'ancho-768', testMatch: '**/*.resp.ts', use: ancho(768, 1024) },
     { name: 'ancho-1024', testMatch: '**/*.resp.ts', use: ancho(1024, 768) },
     // Movimiento (punto 8): video de los momentos clave, y la pasada con movimiento reducido
     {
       name: 'video',
       testMatch: '**/*.video.ts',
-      use: { ...telefono, colorScheme: 'light' as const, video: { mode: 'on' as const, size: { width: 390, height: 844 } } },
+      use: {
+        ...telefono,
+        colorScheme: 'light' as const,
+        video: { mode: 'on' as const, size: { width: 390, height: 844 } },
+      },
     },
     {
       name: 'video-computadora',
       testMatch: '**/*.video.ts',
-      use: { ...ancho(1440, 900), video: { mode: 'on' as const, size: { width: 1440, height: 900 } } },
+      use: {
+        ...ancho(1440, 900),
+        video: { mode: 'on' as const, size: { width: 1440, height: 900 } },
+      },
     },
     // Referencias de diseño: mide los HTML de docs/diseno con el mismo medidor
     { name: 'referencias', testMatch: '**/*.ref.ts', use: {} },

@@ -6,7 +6,22 @@ import { join } from 'node:path';
 import { SALIDA, entrar, escenarioA7, quieta, sembrarEscenario, test } from '../lib.ts';
 
 mkdirSync(join(SALIDA, 'foco'), { recursive: true });
-const RUTAS = ['/', '/presupuesto', '/bandeja', '/actividad', '/cuentas', '/reportes', '/ajustes', '/ajustes/seguridad', '/registrar', '/registrar/gasto', '/cuentas/nueva', '/metas', '/reglas/nueva', '/ingresar'];
+const RUTAS = [
+  '/',
+  '/presupuesto',
+  '/bandeja',
+  '/actividad',
+  '/cuentas',
+  '/reportes',
+  '/ajustes',
+  '/ajustes/seguridad',
+  '/registrar',
+  '/registrar/gasto',
+  '/cuentas/nueva',
+  '/metas',
+  '/reglas/nueva',
+  '/ingresar',
+];
 
 test('foco visible', async ({ page, context, baseURL }, info) => {
   test.skip(info.project.name !== 'computadora-claro', 'solo en computadora');
@@ -29,14 +44,25 @@ test('foco visible', async ({ page, context, baseURL }, info) => {
         // el indicador puede estar en el propio control o en su contenedor (campo relleno con :focus-within)
         const padre = el.parentElement ? getComputedStyle(el.parentElement) : null;
         return {
-          nombre: (el.getAttribute('aria-label') || el.innerText || (el as HTMLInputElement).name || el.tagName).replace(/\s+/g, ' ').trim().slice(0, 60),
+          nombre: (
+            el.getAttribute('aria-label') ||
+            el.innerText ||
+            (el as HTMLInputElement).name ||
+            el.tagName
+          )
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 60),
           tag: el.tagName.toLowerCase(),
           visibleFoco: el.matches(':focus-visible'),
           outline: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor} offset ${cs.outlineOffset}`,
           sombra: cs.boxShadow.slice(0, 140),
           sombraPadre: padre?.boxShadow.slice(0, 140) ?? '',
           outlinePadre: padre ? `${padre.outlineStyle} ${padre.outlineWidth}` : '',
-          x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height),
+          x: Math.round(r.x),
+          y: Math.round(r.y),
+          w: Math.round(r.width),
+          h: Math.round(r.height),
         };
       });
       if (!d) continue;
@@ -45,8 +71,19 @@ test('foco visible', async ({ page, context, baseURL }, info) => {
       claves.add(clave);
       const conOutline = !/^none|^\S+ 0px/.test(d.outline);
       const conSombra = d.sombra !== 'none' && d.sombra !== '';
-      const enPadre = (d.sombraPadre !== 'none' && d.sombraPadre !== '') || !/^none|^\S+ 0px/.test(d.outlinePadre);
-      vistos.push({ ...d, indicador: conOutline ? 'outline' : conSombra ? 'sombra' : enPadre ? 'en el contenedor' : 'NINGUNO' });
+      const enPadre =
+        (d.sombraPadre !== 'none' && d.sombraPadre !== '') ||
+        !/^none|^\S+ 0px/.test(d.outlinePadre);
+      vistos.push({
+        ...d,
+        indicador: conOutline
+          ? 'outline'
+          : conSombra
+            ? 'sombra'
+            : enPadre
+              ? 'en el contenedor'
+              : 'NINGUNO',
+      });
     }
     const nombre = ruta === '/' ? 'inicio' : ruta.slice(1).replaceAll('/', '-');
     writeFileSync(join(SALIDA, 'foco', `${nombre}.json`), JSON.stringify(vistos, null, 1));

@@ -47,13 +47,45 @@ const EXTRAS: Op[] = [
     etiqueta: 'dividida',
     hoy: HOY,
   },
-  { op: 'OP-20', cuenta: VISA, categoria: 'Supermercado', monto: 50, fecha: '2026-10-13', etiqueta: 'dev1', hoy: HOY },
+  {
+    op: 'OP-20',
+    cuenta: VISA,
+    categoria: 'Supermercado',
+    monto: 50,
+    fecha: '2026-10-13',
+    etiqueta: 'dev1',
+    hoy: HOY,
+  },
   { op: 'OP-33', compra: 'dev1', monto: 20, fecha: '2026-10-14', hoy: HOY },
-  { op: 'OP-20', cuenta: VISA, categoria: 'Restaurantes', monto: 25, fecha: '2026-10-12', etiqueta: 'dev2', hoy: HOY },
+  {
+    op: 'OP-20',
+    cuenta: VISA,
+    categoria: 'Restaurantes',
+    monto: 25,
+    fecha: '2026-10-12',
+    etiqueta: 'dev2',
+    hoy: HOY,
+  },
   { op: 'OP-33', compra: 'dev2', monto: 25, fecha: '2026-10-13', hoy: HOY },
-  { op: 'OP-20', cuenta: CC, monto: 35.5, lineas: [{ deudor: 'Ana', monto: 35.5 }], fecha: '2026-10-09', etiqueta: 'cobro1', hoy: HOY },
+  {
+    op: 'OP-20',
+    cuenta: CC,
+    monto: 35.5,
+    lineas: [{ deudor: 'Ana', monto: 35.5 }],
+    fecha: '2026-10-09',
+    etiqueta: 'cobro1',
+    hoy: HOY,
+  },
   { op: 'OP-31', cobro: 'cobro1', cuenta: CC, monto: 10, fecha: '2026-10-14', hoy: HOY },
-  { op: 'OP-20', cuenta: CC, categoria: 'Restaurantes', monto: 33.33, fecha: '2026-10-08', etiqueta: 'conc1', hoy: HOY },
+  {
+    op: 'OP-20',
+    cuenta: CC,
+    categoria: 'Restaurantes',
+    monto: 33.33,
+    fecha: '2026-10-08',
+    etiqueta: 'conc1',
+    hoy: HOY,
+  },
   {
     op: 'OP-47',
     cuenta: CC,
@@ -97,9 +129,11 @@ async function masAcciones(page: Page, item: string | RegExp): Promise<void> {
   await quieta(page);
 }
 /** Detalle de la fila con `texto` y luego una ruta hija (devolver, editar…). */
-const detalleYa = (...textos: string[]) => async (page: Page) => {
-  await abrirDetalle(page, ...textos);
-};
+const detalleYa =
+  (...textos: string[]) =>
+  async (page: Page) => {
+    await abrirDetalle(page, ...textos);
+  };
 
 // ═══ Actividad ══════════════════════════════════════════════════════════════════════════════════════════════════════════
 const ACTIV = { ruta: '/actividad', comp: `${APP}/actividad/pantalla.tsx` } as const;
@@ -124,8 +158,15 @@ caso({
   nota: 'Teléfono: hoja de filtros; computadora: columna fija de 260 px (ya abierta).',
   ...A7,
   pasos: async (page) => {
-    const abrir = page.locator('summary').filter({ hasText: /^Filtros/ }).first();
-    if (await abrir.isVisible().catch(() => false) && (await page.locator('details[open]').count()) === 0) await abrir.click();
+    const abrir = page
+      .locator('summary')
+      .filter({ hasText: /^Filtros/ })
+      .first();
+    if (
+      (await abrir.isVisible().catch(() => false)) &&
+      (await page.locator('details[open]').count()) === 0
+    )
+      await abrir.click();
     await expect(page.getByRole('button', { name: 'Filtrar' })).toBeVisible();
     await quieta(page);
   },
@@ -160,14 +201,24 @@ test('actividad__cargando', async ({ page, context, baseURL }, info) => {
   await quieta(page);
   await page.route(/\/actividad(\?|$)/, async (route) => {
     const h = route.request().headers();
-    if (h['rsc'] === undefined || h['next-router-prefetch'] !== undefined || h['next-router-segment-prefetch'] !== undefined)
+    if (
+      h['rsc'] === undefined ||
+      h['next-router-prefetch'] !== undefined ||
+      h['next-router-segment-prefetch'] !== undefined
+    )
       return route.continue();
     await new Promise((r) => setTimeout(r, 12_000));
     return route.continue().catch(() => undefined);
   });
   await page.getByRole('link', { name: 'Actividad', exact: true }).first().click();
   await expect(page.locator('[aria-busy="true"]').first()).toBeVisible({ timeout: 8000 });
-  await capturar(page, info, 'actividad__cargando', meta('/actividad', `${APP}/actividad/loading.tsx`, `${ACTR}/cargando`), { carga: true });
+  await capturar(
+    page,
+    info,
+    'actividad__cargando',
+    meta('/actividad', `${APP}/actividad/loading.tsx`, `${ACTR}/cargando`),
+    { carga: true },
+  );
 });
 
 // "Cargar más" con un período cerrado: 60 transacciones de períodos anteriores y la fecha de hoy un año después.
@@ -198,7 +249,10 @@ caso({
 });
 
 // ═══ Detalle de transacción (lectura) ═══════════════════════════════════════════════════════════════════════════════════
-const DETC = { ruta: '/actividad/[transaccionId]', comp: `${APP}/actividad/[transaccionId]/pantalla.tsx` } as const;
+const DETC = {
+  ruta: '/actividad/[transaccionId]',
+  comp: `${APP}/actividad/[transaccionId]/pantalla.tsx`,
+} as const;
 caso({
   id: 'transaccion__principal',
   ...DETC,
@@ -338,7 +392,9 @@ caso({
   pasos: async (page) => {
     await abrirDetalle(page, '$30.00', 'Gasolina');
     await masAcciones(page, 'Registrar devolución');
-    await expect(page.getByRole('heading', { level: 1, name: 'Registrar devolución' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Registrar devolución' }),
+    ).toBeVisible();
   },
 });
 caso({
@@ -351,7 +407,9 @@ caso({
   pasos: async (page) => {
     await abrirDetalle(page, '$60.00');
     await masAcciones(page, 'Registrar devolución');
-    await expect(page.getByRole('heading', { level: 2, name: 'Reparto entre las partes' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Reparto entre las partes' }),
+    ).toBeVisible();
   },
 });
 caso({
@@ -378,7 +436,14 @@ caso({
     await abrirDetalle(page, '$25.00', 'Con devoluciones');
     await page.goto(`/actividad/${idActual(page)}/devolver`);
     await quieta(page);
-    console.log('SINCAP', page.url(), (await page.locator('main').innerText()).slice(0, 300).split(String.fromCharCode(10)).join(' | '));
+    console.log(
+      'SINCAP',
+      page.url(),
+      (await page.locator('main').innerText())
+        .slice(0, 300)
+        .split(String.fromCharCode(10))
+        .join(' | '),
+    );
     await expect(page.locator('[data-sin-capacidad]')).toBeVisible();
   },
 });
@@ -462,14 +527,26 @@ test('act-escribe__editar-conflicto-y-archivada', async ({ page, context, baseUR
     escenarioAct('SEM-A7-ACT-W1', [
       { op: 'OP-01', cuenta: 'Cuenta vieja', saldo: 0, apertura: HOY, hoy: HOY },
       { op: 'OP-21', cuenta: 'Cuenta vieja', monto: 50, fecha: HOY, etiqueta: 'v-in', hoy: HOY },
-      { op: 'OP-20', cuenta: 'Cuenta vieja', categoria: 'Farmacia', monto: 50, fecha: HOY, etiqueta: 'v-out', hoy: HOY },
+      {
+        op: 'OP-20',
+        cuenta: 'Cuenta vieja',
+        categoria: 'Farmacia',
+        monto: 50,
+        fecha: HOY,
+        etiqueta: 'v-out',
+        hoy: HOY,
+      },
     ]),
     HOY,
   );
   await entrar(context, baseURL);
 
   // Conflicto al guardar: otra pestaña edita la misma transacción
-  const EDI = meta('/actividad/[transaccionId]/editar', `${FLU}/actividad-editar/formulario.tsx`, `${DET}/editar-conflicto`);
+  const EDI = meta(
+    '/actividad/[transaccionId]/editar',
+    `${FLU}/actividad-editar/formulario.tsx`,
+    `${DET}/editar-conflicto`,
+  );
   await abrirDetalle(page, '$35.00', 'Supermercado');
   await page.getByRole('link', { name: 'Editar' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Editar transacción' })).toBeVisible();
@@ -479,27 +556,50 @@ test('act-escribe__editar-conflicto-y-archivada', async ({ page, context, baseUR
   await quieta(otra);
   await otra.getByRole('textbox', { name: 'Comercio', exact: false }).first().fill('Tienda');
   await otra.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(otra.getByRole('heading', { level: 1, name: 'Editar transacción' })).toHaveCount(0, { timeout: 20_000 });
+  await expect(otra.getByRole('heading', { level: 1, name: 'Editar transacción' })).toHaveCount(0, {
+    timeout: 20_000,
+  });
   await otra.close();
   await page.bringToFront();
   await page.getByRole('textbox', { name: 'Comercio', exact: false }).first().fill('Otro');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByRole('button', { name: /valor actual/i })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('button', { name: /valor actual/i })).toBeVisible({
+    timeout: 20_000,
+  });
   await capturar(page, info, 'transaccion-editar__conflicto', EDI);
 
   // Cuenta archivada: se archiva «Cuenta vieja» (saldo 0) y se edita su compra
   await page.goto('/cuentas');
   await quieta(page);
-  const href = await page.locator('main a[href^="/cuentas/"]').filter({ hasText: 'Cuenta vieja' }).first().getAttribute('href');
+  const href = await page
+    .locator('main a[href^="/cuentas/"]')
+    .filter({ hasText: 'Cuenta vieja' })
+    .first()
+    .getAttribute('href');
   await page.goto(`${href}/archivar`);
   await quieta(page);
   await page.getByRole('button', { name: 'Archivar', exact: true }).click();
   await page.waitForURL(new RegExp(`${href}$`), { timeout: 20_000 });
   await abrirDetalle(page, '$50.00', 'Farmacia');
-  await capturar(page, info, 'transaccion__cuenta-archivada', meta(DETC.ruta, DETC.comp, `${DET}/editar-cuenta-archivada`, 'Detalle de una compra de una cuenta archivada.'));
+  await capturar(
+    page,
+    info,
+    'transaccion__cuenta-archivada',
+    meta(
+      DETC.ruta,
+      DETC.comp,
+      `${DET}/editar-cuenta-archivada`,
+      'Detalle de una compra de una cuenta archivada.',
+    ),
+  );
   await page.getByRole('link', { name: 'Editar' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Editar transacción' })).toBeVisible();
-  await capturar(page, info, 'transaccion-editar__cuenta-archivada', meta(EDI.ruta, EDI.comp, `${DET}/editar-cuenta-archivada`));
+  await capturar(
+    page,
+    info,
+    'transaccion-editar__cuenta-archivada',
+    meta(EDI.ruta, EDI.comp, `${DET}/editar-cuenta-archivada`),
+  );
 });
 
 test('act-escribe__estado-devolver-eliminar', async ({ page, context, baseURL }, info) => {
@@ -512,7 +612,12 @@ test('act-escribe__estado-devolver-eliminar', async ({ page, context, baseURL },
   await page.getByRole('button', { name: 'Guardar', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Editar' })).toBeVisible({ timeout: 20_000 });
   await quieta(page);
-  await capturar(page, info, 'transaccion__confirmada-tras-cambiar-estado', meta(DETC.ruta, DETC.comp, `${DET}/principal`, 'Resultado de «Guardar» en Estado bancario.'));
+  await capturar(
+    page,
+    info,
+    'transaccion__confirmada-tras-cambiar-estado',
+    meta(DETC.ruta, DETC.comp, `${DET}/principal`, 'Resultado de «Guardar» en Estado bancario.'),
+  );
 
   // Devolver: resultado (vuelve al detalle con el evento)
   await abrirDetalle(page, '$30.00', 'Gasolina');
@@ -521,33 +626,80 @@ test('act-escribe__estado-devolver-eliminar', async ({ page, context, baseURL },
   await page.getByRole('button', { name: /^Registrar devolución/ }).click();
   await expect(page.getByRole('heading', { name: 'Eventos' })).toBeVisible({ timeout: 20_000 });
   await quieta(page);
-  await capturar(page, info, 'transaccion__devolucion-registrada', meta(DETC.ruta, DETC.comp, `${DET}/principal`, 'Detalle tras registrar la devolución.'));
+  await capturar(
+    page,
+    info,
+    'transaccion__devolucion-registrada',
+    meta(DETC.ruta, DETC.comp, `${DET}/principal`, 'Detalle tras registrar la devolución.'),
+  );
 
   // Eliminar evento: revisar y resultado
   await page.getByRole('link', { name: /^Eliminar devuelto/ }).click();
   await page.getByRole('button', { name: 'Ver qué cambia' }).click();
   await expect(page.getByRole('button', { name: 'Eliminar evento' })).toBeVisible();
-  await capturar(page, info, 'transaccion-eliminar-evento__revisar', meta('/actividad/[transaccionId]/eventos/eliminar', `${FLU}/actividad-eventos-eliminar/lector.tsx`, `${DET}/eliminar-evento`, 'Paso de revisión del impacto.'));
+  await capturar(
+    page,
+    info,
+    'transaccion-eliminar-evento__revisar',
+    meta(
+      '/actividad/[transaccionId]/eventos/eliminar',
+      `${FLU}/actividad-eventos-eliminar/lector.tsx`,
+      `${DET}/eliminar-evento`,
+      'Paso de revisión del impacto.',
+    ),
+  );
   await page.getByRole('button', { name: 'Eliminar evento' }).click();
   await expect(page.getByRole('heading', { name: 'Eventos' })).toHaveCount(0, { timeout: 20_000 });
   await quieta(page);
-  await capturar(page, info, 'transaccion__evento-eliminado', meta(DETC.ruta, DETC.comp, `${DET}/principal`, 'Resultado de eliminar el evento.'));
+  await capturar(
+    page,
+    info,
+    'transaccion__evento-eliminado',
+    meta(DETC.ruta, DETC.comp, `${DET}/principal`, 'Resultado de eliminar el evento.'),
+  );
 
   // Eliminar: revisar y resultado en el lugar
   await abrirDetalle(page, '$88.60');
   await masAcciones(page, 'Eliminar');
   await page.getByRole('button', { name: 'Ver qué cambia' }).click();
   await expect(page.getByRole('button', { name: 'Eliminar', exact: true })).toBeVisible();
-  await capturar(page, info, 'transaccion-eliminar__revisar', meta('/actividad/[transaccionId]/eliminar', `${FLU}/actividad-eliminar/formulario.tsx`, `${DET}/eliminar`, 'Paso de revisión del impacto.'));
+  await capturar(
+    page,
+    info,
+    'transaccion-eliminar__revisar',
+    meta(
+      '/actividad/[transaccionId]/eliminar',
+      `${FLU}/actividad-eliminar/formulario.tsx`,
+      `${DET}/eliminar`,
+      'Paso de revisión del impacto.',
+    ),
+  );
   await page.getByRole('button', { name: 'Eliminar', exact: true }).click();
   await expect(page).toHaveURL(/\/actividad(\?.*)?$/, { timeout: 20_000 });
   await quieta(page);
-  await capturar(page, info, 'actividad__eliminada', meta('/actividad', `${APP}/actividad/pantalla.tsx`, `${DET}/eliminada`, 'Resultado de eliminar.'));
+  await capturar(
+    page,
+    info,
+    'actividad__eliminada',
+    meta(
+      '/actividad',
+      `${APP}/actividad/pantalla.tsx`,
+      `${DET}/eliminada`,
+      'Resultado de eliminar.',
+    ),
+  );
 });
 
 // ═══ Reportes ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
 const REPC = { ruta: '/reportes/[tipo]', comp: `${APP}/reportes/[tipo]/pantalla.tsx` } as const;
-const rep = (id: string, tipo: string, ref: string, comp = REPC.comp, nota?: string, extra: Record<string, unknown> = {}) =>
+const rep = (
+  id: string,
+  tipo: string,
+  ref: string,
+  comp = REPC.comp,
+  nota?: string,
+  extra: Record<string, unknown> = {},
+) =>
   caso({
     id,
     ruta: `/reportes/${tipo.split('?')[0]}`,
@@ -577,18 +729,82 @@ rep('reporte-tendencia__tabla', 'tendencia', `${REP}/tendencia-tabla`, REPC.comp
   },
 });
 rep('reporte-categorias__principal', 'categorias', `${REP}/categorias`, `${R}/vistas.tsx`);
-rep('reporte-ingresos-gastos__principal', 'ingresos-gastos', `${REP}/ingresos-gastos`, `${R}/vistas.tsx`);
-rep('reporte-top-comercios__principal', 'top-comercios', `${REP}/top-comercios`, `${R}/vistas-detalle.tsx`);
+rep(
+  'reporte-ingresos-gastos__principal',
+  'ingresos-gastos',
+  `${REP}/ingresos-gastos`,
+  `${R}/vistas.tsx`,
+);
+rep(
+  'reporte-top-comercios__principal',
+  'top-comercios',
+  `${REP}/top-comercios`,
+  `${R}/vistas-detalle.tsx`,
+);
 rep('reporte-hallazgos__principal', 'hallazgos', `${REP}/hallazgos`, `${R}/hallazgos.tsx`);
-rep('reporte-flujo-efectivo__principal', 'flujo-efectivo', 'SIN DISEÑO', `${R}/flujo.tsx`, 'FALTANTES: reportes-otros.');
-rep('reporte-ritmo__principal', 'ritmo', 'SIN DISEÑO', `${R}/ritmo.tsx`, 'FALTANTES: reportes-otros.');
-rep('reporte-realidad__principal', 'realidad', 'SIN DISEÑO', `${R}/realidad.tsx`, 'FALTANTES: reportes-otros.');
-rep('reporte-tarjetas__principal', 'tarjetas', 'SIN DISEÑO', `${R}/tarjetas.tsx`, 'FALTANTES: reportes-otros.');
-rep('reporte-remanente__principal', 'remanente', 'SIN DISEÑO', `${R}/vistas.tsx`, 'FALTANTES: reportes-otros.');
-rep('reporte-cumplimiento__principal', 'cumplimiento', 'SIN DISEÑO', `${R}/vistas-detalle.tsx`, 'FALTANTES: reportes-otros.');
-rep('reporte-patrimonio__principal', 'patrimonio', 'SIN DISEÑO', `${R}/vistas-detalle.tsx`, 'FALTANTES: reportes-otros.');
-rep('reporte-gasto-semanal__a7', 'gasto-semanal', `${SEM}/varias`, `${R}/vistas-semanal.tsx`, 'Semilla A.7 (varias categorías con gasto).');
-rep('reporte-tendencia__ventana-3', 'tendencia?ventana=ultimos-3', `${REP}/tendencia`, REPC.comp, 'Ventana de 3 períodos.');
+rep(
+  'reporte-flujo-efectivo__principal',
+  'flujo-efectivo',
+  'SIN DISEÑO',
+  `${R}/flujo.tsx`,
+  'FALTANTES: reportes-otros.',
+);
+rep(
+  'reporte-ritmo__principal',
+  'ritmo',
+  'SIN DISEÑO',
+  `${R}/ritmo.tsx`,
+  'FALTANTES: reportes-otros.',
+);
+rep(
+  'reporte-realidad__principal',
+  'realidad',
+  'SIN DISEÑO',
+  `${R}/realidad.tsx`,
+  'FALTANTES: reportes-otros.',
+);
+rep(
+  'reporte-tarjetas__principal',
+  'tarjetas',
+  'SIN DISEÑO',
+  `${R}/tarjetas.tsx`,
+  'FALTANTES: reportes-otros.',
+);
+rep(
+  'reporte-remanente__principal',
+  'remanente',
+  'SIN DISEÑO',
+  `${R}/vistas.tsx`,
+  'FALTANTES: reportes-otros.',
+);
+rep(
+  'reporte-cumplimiento__principal',
+  'cumplimiento',
+  'SIN DISEÑO',
+  `${R}/vistas-detalle.tsx`,
+  'FALTANTES: reportes-otros.',
+);
+rep(
+  'reporte-patrimonio__principal',
+  'patrimonio',
+  'SIN DISEÑO',
+  `${R}/vistas-detalle.tsx`,
+  'FALTANTES: reportes-otros.',
+);
+rep(
+  'reporte-gasto-semanal__a7',
+  'gasto-semanal',
+  `${SEM}/varias`,
+  `${R}/vistas-semanal.tsx`,
+  'Semilla A.7 (varias categorías con gasto).',
+);
+rep(
+  'reporte-tendencia__ventana-3',
+  'tendencia?ventana=ultimos-3',
+  `${REP}/tendencia`,
+  REPC.comp,
+  'Ventana de 3 períodos.',
+);
 caso({
   id: 'reporte__no-encontrado',
   ...REPC,
@@ -612,7 +828,8 @@ caso({
 });
 
 // Semillas propias de los reportes
-const sembrada = (ops: Op[], hoyServidor: string, hoy = hoyServidor) => ({ ops, hoy, hoyServidor, soloLectura: true }) as const;
+const sembrada = (ops: Op[], hoyServidor: string, hoy = hoyServidor) =>
+  ({ ops, hoy, hoyServidor, soloLectura: true }) as const;
 const SUPERMERCADO: Op[] = [
   { op: 'OP-01', cuenta: 'Ahorro' },
   { op: 'OP-07', categoria: 'Supermercado' },
@@ -624,7 +841,12 @@ const SUPERMERCADO: Op[] = [
   { op: 'OP-20', cuenta: 'Ahorro', monto: 35, categoria: 'Supermercado', fecha: '2027-05-13' },
 ];
 const SEMANAL = { ruta: '/reportes/gasto-semanal', comp: `${R}/vistas-semanal.tsx` } as const;
-caso({ id: 'reporte-gasto-semanal__una', ...SEMANAL, ref: `${SEM}/una`, ...sembrada(SUPERMERCADO, '2027-05-15') });
+caso({
+  id: 'reporte-gasto-semanal__una',
+  ...SEMANAL,
+  ref: `${SEM}/una`,
+  ...sembrada(SUPERMERCADO, '2027-05-15'),
+});
 caso({
   id: 'reporte-gasto-semanal__tabla',
   ...SEMANAL,
@@ -661,7 +883,11 @@ caso({
   ...SEMANAL,
   ref: `${E1}/S7-Semanal__asignado-negativo`,
   ...sembrada(
-    [...SUPERMERCADO.slice(0, 3), { op: 'OP-07', categoria: 'Ajuste' }, { op: 'OP-14', categoria: 'Ajuste', monto: -20, periodo: 'P4' }],
+    [
+      ...SUPERMERCADO.slice(0, 3),
+      { op: 'OP-07', categoria: 'Ajuste' },
+      { op: 'OP-14', categoria: 'Ajuste', monto: -20, periodo: 'P4' },
+    ],
     '2027-05-15',
   ),
 });
@@ -702,8 +928,23 @@ caso({
 });
 
 const NETFLIX = (fecha: string): Op[] => [
-  { op: 'OP-35', etiqueta: `netflix-${fecha}`, cuenta: 'T', monto: 15.49, comercio: 'NETFLIX', recibido: `${fecha}T10:00`, fecha, hoy: fecha },
-  { op: 'OP-37', etiqueta: `netflix-${fecha}`, categoria: 'Streaming', aprobado: `${fecha}T12:00`, hoy: fecha },
+  {
+    op: 'OP-35',
+    etiqueta: `netflix-${fecha}`,
+    cuenta: 'T',
+    monto: 15.49,
+    comercio: 'NETFLIX',
+    recibido: `${fecha}T10:00`,
+    fecha,
+    hoy: fecha,
+  },
+  {
+    op: 'OP-37',
+    etiqueta: `netflix-${fecha}`,
+    categoria: 'Streaming',
+    aprobado: `${fecha}T12:00`,
+    hoy: fecha,
+  },
 ];
 const ing = (hoy: string): Op => ({ op: 'OP-21', monto: 10, hoy });
 caso({
@@ -743,8 +984,22 @@ caso({
       { op: 'OP-07', categoria: 'Super' },
       { op: 'OP-21', monto: 3000 },
       { op: 'OP-14', categoria: 'Pago Visa', monto: 420, periodo: 'P1' },
-      { op: 'OP-23', tarjeta: 'Visa', monto: 300, origen: 'Ahorro', fecha: '2027-02-20', hoy: '2027-02-20' },
-      { op: 'OP-33', monto: 50, categoria: 'Super', cuenta: 'Visa', fecha: '2027-02-25', hoy: '2027-02-25' },
+      {
+        op: 'OP-23',
+        tarjeta: 'Visa',
+        monto: 300,
+        origen: 'Ahorro',
+        fecha: '2027-02-20',
+        hoy: '2027-02-20',
+      },
+      {
+        op: 'OP-33',
+        monto: 50,
+        categoria: 'Super',
+        cuenta: 'Visa',
+        fecha: '2027-02-25',
+        hoy: '2027-02-25',
+      },
       { op: 'OP-21', monto: 10, hoy: '2027-03-22' },
     ],
     '2027-03-25',
@@ -756,7 +1011,13 @@ caso({
   ruta: '/reportes/hallazgos',
   comp: `${R}/hallazgos.tsx`,
   ref: `${REP}/hallazgos-vacio`,
-  ...sembrada([{ op: 'OP-01', cuenta: 'Ahorro' }, { op: 'OP-21', monto: 100 }], '2027-03-05'),
+  ...sembrada(
+    [
+      { op: 'OP-01', cuenta: 'Ahorro' },
+      { op: 'OP-21', monto: 100 },
+    ],
+    '2027-03-05',
+  ),
 });
 caso({
   id: 'reportes__sin-movimientos',
@@ -782,14 +1043,33 @@ test('reportes__cargando', async ({ page, context, baseURL }, info) => {
   await quieta(page);
   await page.route(/\/reportes\/categorias(\?|$)/, async (route) => {
     const h = route.request().headers();
-    if (h['rsc'] === undefined || h['next-router-prefetch'] !== undefined || h['next-router-segment-prefetch'] !== undefined)
+    if (
+      h['rsc'] === undefined ||
+      h['next-router-prefetch'] !== undefined ||
+      h['next-router-segment-prefetch'] !== undefined
+    )
       return route.continue();
     await new Promise((r) => setTimeout(r, 12_000));
     return route.continue().catch(() => undefined);
   });
-  await page.locator('nav[aria-label="Reportes"] a, a[href="/reportes/categorias"]').filter({ visible: true }).first().click();
+  await page
+    .locator('nav[aria-label="Reportes"] a, a[href="/reportes/categorias"]')
+    .filter({ visible: true })
+    .first()
+    .click();
   await expect(page.locator('[aria-busy="true"]').first()).toBeVisible({ timeout: 8000 });
-  await capturar(page, info, 'reportes__cargando', meta('/reportes/[tipo]', `${R}/loading.tsx`, `${REP}/tendencia`, 'SIN DISEÑO del estado de carga de Reportes; el marco es el genérico.'), { carga: true });
+  await capturar(
+    page,
+    info,
+    'reportes__cargando',
+    meta(
+      '/reportes/[tipo]',
+      `${R}/loading.tsx`,
+      `${REP}/tendencia`,
+      'SIN DISEÑO del estado de carga de Reportes; el marco es el genérico.',
+    ),
+    { carga: true },
+  );
 });
 
 void sembrarOps;

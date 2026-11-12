@@ -58,7 +58,14 @@ const opsA7X = (extra: Op[] = []): Op[] => [
     },
     hoy: HOY,
   },
-  { op: 'OP-01', cuenta: 'Depósito a plazo', tipo: 'inversion', saldo: 2075.6, apertura: HOY, hoy: HOY },
+  {
+    op: 'OP-01',
+    cuenta: 'Depósito a plazo',
+    tipo: 'inversion',
+    saldo: 2075.6,
+    apertura: HOY,
+    hoy: HOY,
+  },
   {
     op: 'OP-47',
     cuenta: 'Cuenta corriente',
@@ -90,12 +97,18 @@ async function idDe(page: Page, nombre: string, archivadas = false): Promise<str
   await quieta(page);
   const enlace = page.locator('main a[href^="/cuentas/"]').filter({ hasText: nombre });
   if ((await enlace.count()) === 0)
-    await page.locator('[data-billetera] button').filter({ hasText: nombre }).first().click({ position: { x: 90, y: 18 } });
+    await page
+      .locator('[data-billetera] button')
+      .filter({ hasText: nombre })
+      .first()
+      .click({ position: { x: 90, y: 18 } });
   const href = await enlace.first().getAttribute('href');
   return (href ?? '').split('/')[2] ?? '';
 }
-const de = (nombre: string, sufijo = '') => async (page: Page) =>
-  `/cuentas/${await idDe(page, nombre)}${sufijo}`;
+const de =
+  (nombre: string, sufijo = '') =>
+  async (page: Page) =>
+    `/cuentas/${await idDe(page, nombre)}${sufijo}`;
 
 const meta = (ruta: string, comp: string, ref: string, nota?: string) => ({
   ruta,
@@ -164,7 +177,10 @@ caso({
   nota: 'A.7: Mastercard sin deuda al frente (estado «Sin deuda»). El saldo a favor está en cuentas__saldo-a-favor.',
   ...A7,
   pasos: async (page) => {
-    await page.locator('[data-billetera] button').filter({ hasText: 'Mastercard' }).click({ position: { x: 90, y: 18 } });
+    await page
+      .locator('[data-billetera] button')
+      .filter({ hasText: 'Mastercard' })
+      .click({ position: { x: 90, y: 18 } });
     await expect(page.locator('[data-detalle-tarjeta]')).toContainText('Sin deuda');
   },
 });
@@ -184,7 +200,9 @@ caso({
   ...A7,
   pasos: async (page) => {
     await page.context().setOffline(true);
-    await expect(page.getByText(/sin conexión/i).first()).toBeVisible({ timeout: 8000 }).catch(() => undefined);
+    await expect(page.getByText(/sin conexión/i).first())
+      .toBeVisible({ timeout: 8000 })
+      .catch(() => undefined);
   },
 });
 
@@ -353,7 +371,10 @@ caso({
     await llenarTarjeta(page, 'Visa Platino', '9912');
     const colores = ['plata', 'grafito', 'zafiro', 'rubi', 'esmeralda', 'amatista', 'cobre'];
     for (const [i, color] of colores.entries()) {
-      await page.locator('[data-color-tarjeta] label').nth(i + 1).click();
+      await page
+        .locator('[data-color-tarjeta] label')
+        .nth(i + 1)
+        .click();
       await capturar(page, info, `cuenta-nueva__color-${color}`, {
         ...NUEVA,
         comp: `${FLU}/cuentas-nueva/color-tarjeta.tsx`,
@@ -452,7 +473,9 @@ caso({
   ...A7,
   pasos: async (page) => {
     await page.context().setOffline(true);
-    await expect(boton(page, n.guardar)).toBeDisabled({ timeout: 8000 }).catch(() => undefined);
+    await expect(boton(page, n.guardar))
+      .toBeDisabled({ timeout: 8000 })
+      .catch(() => undefined);
   },
 });
 
@@ -499,7 +522,10 @@ caso({
 });
 
 // ═══ Pagar tarjeta ══════════════════════════════════════════════════════════════════════════════════════════════════════
-const PAGAR = { ruta: '/cuentas/[cuentaId]/pagar', comp: `${FLU}/cuentas-pagar/formulario.tsx` } as const;
+const PAGAR = {
+  ruta: '/cuentas/[cuentaId]/pagar',
+  comp: `${FLU}/cuentas-pagar/formulario.tsx`,
+} as const;
 caso({
   id: 'cuenta-pagar__principal',
   ...PAGAR,
@@ -532,7 +558,9 @@ caso({
     await hidratado(page, tp.desde);
     await campo(page, tp.monto).fill('');
     await page.getByRole('button', { name: /^Pagar/ }).click();
-    await expect(page.getByText(tp.completar).first()).toBeVisible().catch(() => undefined);
+    await expect(page.getByText(tp.completar).first())
+      .toBeVisible()
+      .catch(() => undefined);
   },
 });
 caso({
@@ -545,7 +573,10 @@ caso({
 });
 
 // ═══ Cuota de préstamo ══════════════════════════════════════════════════════════════════════════════════════════════════
-const CUOTA = { ruta: '/cuentas/[cuentaId]/cuota', comp: `${FLU}/cuentas-cuota/formulario.tsx` } as const;
+const CUOTA = {
+  ruta: '/cuentas/[cuentaId]/cuota',
+  comp: `${FLU}/cuentas-cuota/formulario.tsx`,
+} as const;
 caso({
   id: 'cuenta-cuota__principal',
   ...CUOTA,
@@ -739,7 +770,9 @@ caso({
   url: de('Visa Oro', '/conciliar'),
   pasos: async (page) => {
     await subirCsv(page, CSV_VISA);
-    await expect(page.getByRole('heading', { name: /^Coinciden/ })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: /^Coinciden/ })).toBeVisible({
+      timeout: 20_000,
+    });
   },
 });
 
@@ -766,7 +799,15 @@ caso({
 });
 const UNA: Op[] = [
   { op: 'OP-01', cuenta: 'Cuenta corriente', saldo: 1284.6, apertura: HOY },
-  { op: 'OP-01', cuenta: 'Visa Oro', tipo: 'tarjeta', saldo: 18.75, limite: 2500, apertura: HOY, ultimos4: '4821' },
+  {
+    op: 'OP-01',
+    cuenta: 'Visa Oro',
+    tipo: 'tarjeta',
+    saldo: 18.75,
+    limite: 2500,
+    apertura: HOY,
+    ultimos4: '4821',
+  },
 ];
 caso({
   id: 'cuentas__una-tarjeta',
@@ -798,7 +839,11 @@ test('cuentas__cargando', async ({ page, context, baseURL }, info) => {
   // La navegación de cliente pide el RSC de /cuentas: se demora para que quede a la vista el estado de carga
   await page.route(/\/cuentas(\?|$)/, async (route) => {
     const h = route.request().headers();
-    if (h['rsc'] === undefined || h['next-router-prefetch'] !== undefined || h['next-router-segment-prefetch'] !== undefined)
+    if (
+      h['rsc'] === undefined ||
+      h['next-router-prefetch'] !== undefined ||
+      h['next-router-segment-prefetch'] !== undefined
+    )
       return route.continue();
     await new Promise((r) => setTimeout(r, 12_000));
     return route.continue().catch(() => undefined);
@@ -809,7 +854,12 @@ test('cuentas__cargando', async ({ page, context, baseURL }, info) => {
     page,
     info,
     'cuentas__cargando',
-    meta('/cuentas', 'apps/web/src/app/(finn)/loading.tsx', 'SIN DISEÑO', 'Estado de carga genérico del marco (05 §7.1).'),
+    meta(
+      '/cuentas',
+      'apps/web/src/app/(finn)/loading.tsx',
+      'SIN DISEÑO',
+      'Estado de carga genérico del marco (05 §7.1).',
+    ),
     { carga: true },
   );
 });
@@ -817,7 +867,9 @@ test('cuentas__cargando', async ({ page, context, baseURL }, info) => {
 // ═══ Recorridos que escriben ════════════════════════════════════════════════════════════════════════════════════════════
 test('cta-escribe__archivar-eliminar', async ({ page, context, baseURL }, info) => {
   await sembrarEscenario(
-    escenarioX('SEM-A7-CTA-ARCH', [{ op: 'OP-01', cuenta: 'Cuenta vieja', saldo: 0, apertura: HOY, hoy: HOY }]),
+    escenarioX('SEM-A7-CTA-ARCH', [
+      { op: 'OP-01', cuenta: 'Cuenta vieja', saldo: 0, apertura: HOY, hoy: HOY },
+    ]),
     HOY,
   );
   await entrar(context, baseURL);
@@ -826,15 +878,44 @@ test('cta-escribe__archivar-eliminar', async ({ page, context, baseURL }, info) 
 
   await page.goto(`${base}/archivar`);
   await quieta(page);
-  await capturar(page, info, 'cuenta-archivar__principal', meta('/cuentas/[cuentaId]/archivar', `${FLU}/cuentas-archivar/formulario.tsx`, `${E2}/archivar`));
+  await capturar(
+    page,
+    info,
+    'cuenta-archivar__principal',
+    meta(
+      '/cuentas/[cuentaId]/archivar',
+      `${FLU}/cuentas-archivar/formulario.tsx`,
+      `${E2}/archivar`,
+    ),
+  );
 
   await page.goto(`${base}/eliminar`);
   await quieta(page);
-  await capturar(page, info, 'cuenta-eliminar__principal', meta('/cuentas/[cuentaId]/eliminar', `${FLU}/cuentas-eliminar/formulario.tsx`, `${E2}/eliminar-bloqueado`, 'Eliminar permitido (cuenta sin movimientos): la referencia solo trae el bloqueado.'));
+  await capturar(
+    page,
+    info,
+    'cuenta-eliminar__principal',
+    meta(
+      '/cuentas/[cuentaId]/eliminar',
+      `${FLU}/cuentas-eliminar/formulario.tsx`,
+      `${E2}/eliminar-bloqueado`,
+      'Eliminar permitido (cuenta sin movimientos): la referencia solo trae el bloqueado.',
+    ),
+  );
   if ((await boton(page, g.eliminar.verCambios).count()) > 0) {
     await boton(page, g.eliminar.verCambios).click();
     await expect(page.getByRole('heading', { name: g.comunes.revisar })).toBeVisible();
-    await capturar(page, info, 'cuenta-eliminar__confirmar', meta('/cuentas/[cuentaId]/eliminar', 'apps/web/src/componentes/formularios/confirmacion-impacto.tsx', 'SIN DISEÑO', 'Confirmación de eliminar con el impacto (AV-15).'));
+    await capturar(
+      page,
+      info,
+      'cuenta-eliminar__confirmar',
+      meta(
+        '/cuentas/[cuentaId]/eliminar',
+        'apps/web/src/componentes/formularios/confirmacion-impacto.tsx',
+        'SIN DISEÑO',
+        'Confirmación de eliminar con el impacto (AV-15).',
+      ),
+    );
   }
 
   await page.goto(`${base}/archivar`);
@@ -842,22 +923,52 @@ test('cta-escribe__archivar-eliminar', async ({ page, context, baseURL }, info) 
   await boton(page, g.archivar.archivar).click();
   await expect(page).toHaveURL(new RegExp(`${id}$`));
   await expect(page.getByText(d.soloLectura)).toBeVisible();
-  await capturar(page, info, 'cuenta__archivada', meta('/cuentas/[cuentaId]', `${APP}/[cuentaId]/acciones.tsx`, `${E2}/archivada`));
+  await capturar(
+    page,
+    info,
+    'cuenta__archivada',
+    meta('/cuentas/[cuentaId]', `${APP}/[cuentaId]/acciones.tsx`, `${E2}/archivada`),
+  );
 
   await page.getByRole('button', { name: 'Más acciones' }).first().click();
   await expect(page.getByRole('menu')).toBeVisible();
-  await capturar(page, info, 'cuenta__archivada-mas-acciones', meta('/cuentas/[cuentaId]', 'apps/web/src/componentes/marco/mas-acciones.tsx', `${E2}/mas-acciones`, 'Menú de una cuenta archivada: acciones que escriben deshabilitadas con motivo.'));
+  await capturar(
+    page,
+    info,
+    'cuenta__archivada-mas-acciones',
+    meta(
+      '/cuentas/[cuentaId]',
+      'apps/web/src/componentes/marco/mas-acciones.tsx',
+      `${E2}/mas-acciones`,
+      'Menú de una cuenta archivada: acciones que escriben deshabilitadas con motivo.',
+    ),
+  );
   await page.keyboard.press('Escape');
 
   await page.goto('/cuentas?archivadas=1');
   await quieta(page);
-  await capturar(page, info, 'cuentas__archivadas', meta('/cuentas?archivadas=1', `${APP}/pantalla.tsx`, `${E1}/S6-Cuentas__archivadas-visibles`));
+  await capturar(
+    page,
+    info,
+    'cuentas__archivadas',
+    meta('/cuentas?archivadas=1', `${APP}/pantalla.tsx`, `${E1}/S6-Cuentas__archivadas-visibles`),
+  );
 
   await page.goto(base);
   await quieta(page);
   await boton(page, d.desarchivar).click();
   await expect(page.getByText(d.desarchivada)).toBeVisible();
-  await capturar(page, info, 'cuenta__desarchivada', meta('/cuentas/[cuentaId]', `${APP}/[cuentaId]/desarchivar.tsx`, `${E2}/archivada`, 'Resultado en el lugar con «Archivar de nuevo».'));
+  await capturar(
+    page,
+    info,
+    'cuenta__desarchivada',
+    meta(
+      '/cuentas/[cuentaId]',
+      `${APP}/[cuentaId]/desarchivar.tsx`,
+      `${E2}/archivada`,
+      'Resultado en el lugar con «Archivar de nuevo».',
+    ),
+  );
 });
 
 test('cta-escribe__crear-subtipos-y-tarjeta', async ({ page, context, baseURL }, info) => {
@@ -886,22 +997,64 @@ test('cta-escribe__crear-subtipos-y-tarjeta', async ({ page, context, baseURL },
     await page.locator('[data-color-tarjeta] label').nth(3).click();
   }, '/cuentas/nueva?tipo-cuenta=tarjeta');
 
-  await capturar(page, info, 'cuentas__subtipos-y-tres-tarjetas', meta('/cuentas', `${APP}/pantalla.tsx`, `${E1}/S6-Cuentas`, 'Billetera y ahorro creadas desde la app (identidad por subtipo) y tres tarjetas apiladas.'));
+  await capturar(
+    page,
+    info,
+    'cuentas__subtipos-y-tres-tarjetas',
+    meta(
+      '/cuentas',
+      `${APP}/pantalla.tsx`,
+      `${E1}/S6-Cuentas`,
+      'Billetera y ahorro creadas desde la app (identidad por subtipo) y tres tarjetas apiladas.',
+    ),
+  );
 
   for (const [nombre, idCaptura, nota] of [
-    ['Billetera', 'cuenta__billetera', 'FALTANTES: identidad de la billetera (ícono wallet provisorio).'],
-    ['Ahorro BAC', 'cuenta__ahorro', 'Cuenta de ahorro creada desde la app: identidad con anillos.'],
-    ['Visa Platino', 'cuenta__tarjeta-zafiro', 'Tarjeta creada desde la app con red Visa y color zafiro.'],
+    [
+      'Billetera',
+      'cuenta__billetera',
+      'FALTANTES: identidad de la billetera (ícono wallet provisorio).',
+    ],
+    [
+      'Ahorro BAC',
+      'cuenta__ahorro',
+      'Cuenta de ahorro creada desde la app: identidad con anillos.',
+    ],
+    [
+      'Visa Platino',
+      'cuenta__tarjeta-zafiro',
+      'Tarjeta creada desde la app con red Visa y color zafiro.',
+    ],
   ] as const) {
     const id = await idDe(page, nombre);
     await page.goto(`/cuentas/${id}`);
     await quieta(page);
-    await capturar(page, info, idCaptura, meta('/cuentas/[cuentaId]', `${APP}/[cuentaId]/cabecera.tsx`, nombre === 'Visa Platino' ? `${E2}/tarjeta` : `${E2}/corriente`, nota));
+    await capturar(
+      page,
+      info,
+      idCaptura,
+      meta(
+        '/cuentas/[cuentaId]',
+        `${APP}/[cuentaId]/cabecera.tsx`,
+        nombre === 'Visa Platino' ? `${E2}/tarjeta` : `${E2}/corriente`,
+        nota,
+      ),
+    );
   }
   const billetera = await idDe(page, 'Billetera');
   await page.goto(`/cuentas/${billetera}/editar`);
   await quieta(page);
-  await capturar(page, info, 'cuenta-editar__billetera', meta('/cuentas/[cuentaId]/editar', `${FLU}/cuentas-editar/formulario.tsx`, `${E2}/editar`, 'Editar una billetera: sin institución ni últimos 4.'));
+  await capturar(
+    page,
+    info,
+    'cuenta-editar__billetera',
+    meta(
+      '/cuentas/[cuentaId]/editar',
+      `${FLU}/cuentas-editar/formulario.tsx`,
+      `${E2}/editar`,
+      'Editar una billetera: sin institución ni últimos 4.',
+    ),
+  );
 });
 
 test('cta-escribe__pagar-cuota-verificar-conciliar', async ({ page, context, baseURL }, info) => {
@@ -911,7 +1064,11 @@ test('cta-escribe__pagar-cuota-verificar-conciliar', async ({ page, context, bas
   const master = await idDe(page, 'Mastercard Clásica');
   const corriente = await idDe(page, 'Cuenta corriente');
   const prestamo = await idDe(page, 'Préstamo personal');
-  const PAG = meta('/cuentas/[cuentaId]/pagar', `${FLU}/cuentas-pagar/formulario.tsx`, `${E2}/pagar-tarjeta`);
+  const PAG = meta(
+    '/cuentas/[cuentaId]/pagar',
+    `${FLU}/cuentas-pagar/formulario.tsx`,
+    `${E2}/pagar-tarjeta`,
+  );
 
   // Pagar la Visa: resultado
   await page.goto(`/cuentas/${visa}/pagar`);
@@ -920,8 +1077,13 @@ test('cta-escribe__pagar-cuota-verificar-conciliar', async ({ page, context, bas
   await campo(page, tp.desde).selectOption({ label: 'Cuenta corriente' });
   await campo(page, tp.monto).fill('100');
   await page.getByRole('button', { name: /^Pagar \$/ }).click();
-  await expect(page.getByRole('heading', { name: tp.tituloListo })).toBeVisible({ timeout: 20_000 });
-  await capturar(page, info, 'cuenta-pagar__listo', { ...PAG, nota: 'Resultado del pago: la referencia no trae este estado.' });
+  await expect(page.getByRole('heading', { name: tp.tituloListo })).toBeVisible({
+    timeout: 20_000,
+  });
+  await capturar(page, info, 'cuenta-pagar__listo', {
+    ...PAG,
+    nota: 'Resultado del pago: la referencia no trae este estado.',
+  });
 
   // Pagar la Mastercard sin deuda: queda saldo a favor
   await page.goto(`/cuentas/${master}/pagar`);
@@ -932,17 +1094,45 @@ test('cta-escribe__pagar-cuota-verificar-conciliar', async ({ page, context, bas
   await page.getByRole('button', { name: /^Pagar \$/ }).click();
   await expect(page.getByRole('heading', { name: tp.revisar })).toBeVisible({ timeout: 20_000 });
   await boton(page, tp.confirmar).click();
-  await expect(page.getByRole('heading', { name: tp.tituloListo })).toBeVisible({ timeout: 20_000 });
-  await capturar(page, info, 'cuenta-pagar__listo-con-excedente', { ...PAG, ref: `${E2}/pagar-saldo-a-favor`, nota: 'Resultado con el aviso de pago excedente (AV-04).' });
+  await expect(page.getByRole('heading', { name: tp.tituloListo })).toBeVisible({
+    timeout: 20_000,
+  });
+  await capturar(page, info, 'cuenta-pagar__listo-con-excedente', {
+    ...PAG,
+    ref: `${E2}/pagar-saldo-a-favor`,
+    nota: 'Resultado con el aviso de pago excedente (AV-04).',
+  });
 
   await page.goto('/cuentas');
   await quieta(page);
-  await page.locator('[data-billetera] button').filter({ hasText: 'Mastercard' }).click({ position: { x: 90, y: 18 } });
+  await page
+    .locator('[data-billetera] button')
+    .filter({ hasText: 'Mastercard' })
+    .click({ position: { x: 90, y: 18 } });
   await expect(page.locator('[data-detalle-tarjeta]')).toContainText('Saldo a favor');
-  await capturar(page, info, 'cuentas__saldo-a-favor', meta('/cuentas', 'apps/web/src/componentes/dominio/billetera.tsx', `${E1}/S6-Cuentas__tarjeta-con-saldo-a-favor-mastercard-al-frente`));
+  await capturar(
+    page,
+    info,
+    'cuentas__saldo-a-favor',
+    meta(
+      '/cuentas',
+      'apps/web/src/componentes/dominio/billetera.tsx',
+      `${E1}/S6-Cuentas__tarjeta-con-saldo-a-favor-mastercard-al-frente`,
+    ),
+  );
   await page.goto(`/cuentas/${master}`);
   await quieta(page);
-  await capturar(page, info, 'cuenta__tarjeta-saldo-a-favor', meta('/cuentas/[cuentaId]', `${APP}/[cuentaId]/por-tipo.tsx`, `${E2}/tarjeta`, 'Tarjeta con saldo a favor.'));
+  await capturar(
+    page,
+    info,
+    'cuenta__tarjeta-saldo-a-favor',
+    meta(
+      '/cuentas/[cuentaId]',
+      `${APP}/[cuentaId]/por-tipo.tsx`,
+      `${E2}/tarjeta`,
+      'Tarjeta con saldo a favor.',
+    ),
+  );
 
   // Cuota del préstamo: resultado
   await page.goto(`/cuentas/${prestamo}/cuota?modalidad=cuota`);
@@ -955,7 +1145,17 @@ test('cta-escribe__pagar-cuota-verificar-conciliar', async ({ page, context, bas
   await campo(page, tc.seguro).fill('10');
   await boton(page, tc.guardarCuota).click();
   await expect(page.getByRole('heading', { name: tc.listoCuota })).toBeVisible({ timeout: 20_000 });
-  await capturar(page, info, 'cuenta-cuota__listo', meta('/cuentas/[cuentaId]/cuota', `${FLU}/cuentas-cuota/formulario.tsx`, `${E2}/cuota`, 'Resultado de pagar la cuota: la referencia no trae este estado.'));
+  await capturar(
+    page,
+    info,
+    'cuenta-cuota__listo',
+    meta(
+      '/cuentas/[cuentaId]/cuota',
+      `${FLU}/cuentas-cuota/formulario.tsx`,
+      `${E2}/cuota`,
+      'Resultado de pagar la cuota: la referencia no trae este estado.',
+    ),
+  );
 
   // Verificar saldo con diferencia: resultado con la propuesta de ajuste
   await page.goto(`/cuentas/${corriente}/verificar-saldo`);
@@ -966,11 +1166,33 @@ test('cta-escribe__pagar-cuota-verificar-conciliar', async ({ page, context, bas
   await boton(page, tv.revisar).click();
   await expect(page.getByRole('heading', { name: tv.tituloRevisar })).toBeVisible();
   await boton(page, tv.confirmar).click();
-  await expect(page.getByRole('heading', { name: tv.tituloListo })).toBeVisible({ timeout: 20_000 });
-  await capturar(page, info, 'cuenta-verificar-saldo__listo-con-ajuste', meta('/cuentas/[cuentaId]/verificar-saldo', `${FLU}/cuentas-verificar-saldo/formulario.tsx`, `${E2}/verificar-diferencia`, 'Resultado con la propuesta de ajuste (AV-21).'));
+  await expect(page.getByRole('heading', { name: tv.tituloListo })).toBeVisible({
+    timeout: 20_000,
+  });
+  await capturar(
+    page,
+    info,
+    'cuenta-verificar-saldo__listo-con-ajuste',
+    meta(
+      '/cuentas/[cuentaId]/verificar-saldo',
+      `${FLU}/cuentas-verificar-saldo/formulario.tsx`,
+      `${E2}/verificar-diferencia`,
+      'Resultado con la propuesta de ajuste (AV-21).',
+    ),
+  );
   await page.goto(`/cuentas/${corriente}`);
   await quieta(page);
-  await capturar(page, info, 'cuenta__corriente-dos-conciliaciones', meta('/cuentas/[cuentaId]', `${APP}/[cuentaId]/conciliaciones.tsx`, `${E2}/corriente`, 'Con un estado de cuenta y una verificación de saldo, como la referencia.'));
+  await capturar(
+    page,
+    info,
+    'cuenta__corriente-dos-conciliaciones',
+    meta(
+      '/cuentas/[cuentaId]',
+      `${APP}/[cuentaId]/conciliaciones.tsx`,
+      `${E2}/corriente`,
+      'Con un estado de cuenta y una verificación de saldo, como la referencia.',
+    ),
+  );
 
   // Conciliar la Visa: terminar
   await page.goto(`/cuentas/${visa}/conciliar`);
@@ -978,8 +1200,20 @@ test('cta-escribe__pagar-cuota-verificar-conciliar', async ({ page, context, bas
   await subirCsv(page, CSV_VISA);
   await expect(page.getByRole('heading', { name: /^Coinciden/ })).toBeVisible({ timeout: 20_000 });
   await boton(page, tk.terminar).click();
-  await expect(page.getByRole('heading', { name: tk.tituloListo })).toBeVisible({ timeout: 20_000 });
-  await capturar(page, info, 'cuenta-conciliar__listo', meta('/cuentas/[cuentaId]/conciliar', `${FLU}/cuentas-conciliar/formulario.tsx`, `${E2}/conciliar-resultado`, 'Conciliación terminada, con la propuesta de ajuste.'));
+  await expect(page.getByRole('heading', { name: tk.tituloListo })).toBeVisible({
+    timeout: 20_000,
+  });
+  await capturar(
+    page,
+    info,
+    'cuenta-conciliar__listo',
+    meta(
+      '/cuentas/[cuentaId]/conciliar',
+      `${FLU}/cuentas-conciliar/formulario.tsx`,
+      `${E2}/conciliar-resultado`,
+      'Conciliación terminada, con la propuesta de ajuste.',
+    ),
+  );
 });
 
 test('cta-escribe__condiciones-con-modelo', async ({ page, context, baseURL }, info) => {
@@ -993,7 +1227,13 @@ test('cta-escribe__condiciones-con-modelo', async ({ page, context, baseURL }, i
         tipo: 'prestamo',
         saldo: 10000,
         apertura: '2027-01-15',
-        prestamo: { contraparte: 'Banco Agrícola', montoOriginal: 10000, cuota: 350, plazoCuotas: 36, cuotasPagadas: 0 },
+        prestamo: {
+          contraparte: 'Banco Agrícola',
+          montoOriginal: 10000,
+          cuota: 350,
+          plazoCuotas: 36,
+          cuotasPagadas: 0,
+        },
       },
       { op: 'OP-07', categoria: 'Cuota del préstamo' },
       { op: 'OP-21', monto: 1000, cuenta: 'Cuenta de ahorro' },
@@ -1008,16 +1248,50 @@ test('cta-escribe__condiciones-con-modelo', async ({ page, context, baseURL }, i
   await campo(page, tcond.comunes.tasaAnual).fill('12');
   await campo(page, tcond.seguroPrimerMes).fill('5');
   await radio(page, tcond.comunes.modelo, 'Banco Agrícola').click();
-  await capturar(page, info, 'cuenta-condiciones__principal', meta('/cuentas/[cuentaId]/condiciones', `${FLU}/cuentas-condiciones/formulario.tsx`, `${E2}/condiciones`));
+  await capturar(
+    page,
+    info,
+    'cuenta-condiciones__principal',
+    meta(
+      '/cuentas/[cuentaId]/condiciones',
+      `${FLU}/cuentas-condiciones/formulario.tsx`,
+      `${E2}/condiciones`,
+    ),
+  );
   await boton(page, tcond.guardar).click();
   await expect(page).toHaveURL(new RegExp(`/cuentas/${id}$`), { timeout: 20_000 });
   await quieta(page);
   await expect(page.locator('[data-bloque="prestamo"] tbody tr').first()).toBeVisible();
-  await capturar(page, info, 'cuenta__prestamo-con-amortizacion', meta('/cuentas/[cuentaId]', `${APP}/[cuentaId]/por-tipo.tsx`, `${E2}/prestamo`));
+  await capturar(
+    page,
+    info,
+    'cuenta__prestamo-con-amortizacion',
+    meta('/cuentas/[cuentaId]', `${APP}/[cuentaId]/por-tipo.tsx`, `${E2}/prestamo`),
+  );
   await page.goto(`/cuentas/${id}/cuota?modalidad=cuota`);
   await quieta(page);
-  await capturar(page, info, 'cuenta-cuota__con-propuesta', meta('/cuentas/[cuentaId]/cuota', `${FLU}/cuentas-cuota/formulario.tsx`, `${E2}/cuota`, 'Con modelo: el desglose llega propuesto.'));
+  await capturar(
+    page,
+    info,
+    'cuenta-cuota__con-propuesta',
+    meta(
+      '/cuentas/[cuentaId]/cuota',
+      `${FLU}/cuentas-cuota/formulario.tsx`,
+      `${E2}/cuota`,
+      'Con modelo: el desglose llega propuesto.',
+    ),
+  );
   await page.goto('/cuentas');
   await quieta(page);
-  await capturar(page, info, 'cuentas__prestamo-con-cuota', meta('/cuentas', 'apps/web/src/componentes/dominio/identidad-cuenta.tsx', `${E1}/S6-Cuentas`, 'Boleto del préstamo con el talón de la próxima cuota.'));
+  await capturar(
+    page,
+    info,
+    'cuentas__prestamo-con-cuota',
+    meta(
+      '/cuentas',
+      'apps/web/src/componentes/dominio/identidad-cuenta.tsx',
+      `${E1}/S6-Cuentas`,
+      'Boleto del préstamo con el talón de la próxima cuota.',
+    ),
+  );
 });
