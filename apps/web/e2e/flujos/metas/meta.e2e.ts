@@ -69,7 +69,8 @@ test.describe('PRU-E2E-META flujo de una meta', () => {
     await page.getByLabel('Fecha objetivo', { exact: true }).fill('2027-07-15');
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
-    await expect(page).toHaveURL(/\/metas$/);
+    await expect(page).toHaveURL(/\/metas\?resultado=extendida%3A/);
+    await expect(page.locator('[data-resultado-flujo="extendida"]')).toBeVisible();
     await esperarContenido(page);
     await expect(page.locator('[data-aviso-meta]')).toHaveCount(0);
     await expect(meta(page, 'Laptop')).toHaveAttribute('data-vencida', 'no');
@@ -107,7 +108,7 @@ test.describe('PRU-E2E-META flujo de una meta', () => {
     await meta(otra, 'Gas').getByRole('link', { name: 'Editar', exact: true }).click();
     await otra.getByLabel('Monto de la meta').fill('250');
     await otra.getByRole('button', { name: 'Guardar cambios' }).click();
-    await expect(otra).toHaveURL(/\/metas$/);
+    await expect(otra).toHaveURL(/\/metas\?resultado=ajustada%3A/);
 
     await page.getByLabel('Monto de la meta').fill('300');
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
@@ -115,7 +116,8 @@ test.describe('PRU-E2E-META flujo de una meta', () => {
     await expect(page.getByLabel('Monto de la meta')).toHaveValue('300');
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
-    await expect(page).toHaveURL(/\/metas$/);
+    await expect(page).toHaveURL(/\/metas\?resultado=ajustada%3A/);
+    await expect(page.locator('[data-resultado-flujo="ajustada"]')).toBeVisible();
     await esperarContenido(page);
     await esperarMonto(meta(page, 'Gas').locator('[data-objetivo] [data-centavos]'), 30000);
   });
