@@ -1,6 +1,5 @@
-// Las filas de «Necesita tu atención» (FT-08; S1 del export): círculo de 36 px con el glifo, el nombre y el estado en su color, el monto
-// del estado a la derecha y el chevrón. Solo presentan: el monto llega del DTO (PF-3).
-import type { Centavos } from '@finn/dominio/valores';
+// Las filas de «Necesita tu atención» (FT-08; S1 del export; D-4 de la entrega 4): círculo de 36 px con el glifo, el nombre y el estado en
+// su color y el chevrón. Ninguna fila lleva monto (PF-2): se ve al tocar y, el de las tarjetas, en «Pagos de tarjeta próximos».
 import type { ReactNode } from 'react';
 import { Icono } from '../../componentes/base/icono';
 import {
@@ -8,13 +7,12 @@ import {
   COLOR_TEXTO,
   type EstadoFinanciero,
 } from '../../componentes/dominio/indicador-estado';
-import { Monto } from '../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 
 export const FOCO =
   'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-/** La rejilla de la fila: círculo, texto, monto y chevrón (el desplegable de los sobregiros la usa sin monto). */
-export const REJILLA = `grid min-h-17 grid-cols-[36px_minmax(0,1fr)_auto_18px] items-center gap-3 px-4 no-underline ${FOCO}`;
+/** La rejilla de la fila: círculo, texto y chevrón. */
+export const REJILLA = `grid min-h-17 grid-cols-[36px_minmax(0,1fr)_18px] items-center gap-3 px-4 no-underline ${FOCO}`;
 
 export function CirculoEstado({ estado }: { readonly estado: EstadoFinanciero }) {
   return (
@@ -59,15 +57,12 @@ export function FilaAtencion({
   href,
   estado,
   etiqueta,
-  monto,
   datos,
   children,
 }: {
   readonly href: string;
   readonly estado: EstadoFinanciero;
   readonly etiqueta: string;
-  /** Sin monto (la Bandeja cuenta movimientos, no dinero) la columna queda vacía. */
-  readonly monto?: Centavos;
   readonly datos?: Readonly<Record<`data-${string}`, string>>;
   readonly children: ReactNode;
 }) {
@@ -76,7 +71,6 @@ export function FilaAtencion({
       <span className="contents" {...datos}>
         <CirculoEstado estado={estado} />
         <TextoDeFila etiquetas={[{ estado, texto: etiqueta }]}>{children}</TextoDeFila>
-        {monto === undefined ? <span /> : <Monto centavos={monto} rol="cifra" estado={estado} />}
         <Icono nombre="chevR" tamano={18} />
       </span>
     </EnlaceFinn>

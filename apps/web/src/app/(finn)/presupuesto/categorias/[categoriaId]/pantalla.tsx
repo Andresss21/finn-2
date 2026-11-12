@@ -18,7 +18,7 @@ import { PublicarEncabezado } from '../../../../../componentes/marco/proveedor-e
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
 import { VolverEnTitulo } from '../../../../../componentes/navegacion/volver-en-titulo';
 import { SelectorPeriodo } from '../../../../../componentes/navegacion/selector-periodo';
-import { formatearFecha, formatearMonto } from '../../../../../formato';
+import { formatearFecha, formatearMonto, formatearPeriodoNumerico } from '../../../../../formato';
 import { categoriaDetalle as t } from '../../../../../textos/categoria-detalle';
 import { ConsumosYCalendario } from './calendario';
 import { Desarchivar } from './desarchivar';
@@ -156,7 +156,14 @@ export function PantallaDetalleCategoria({
           ruta={raiz}
           parametros={{}}
         />
-        {cerrado ? <AvisoEnLinea estado="informacion">{t.periodoCerrado}</AvisoEnLinea> : null}
+        {cerrado ? (
+          <AvisoEnLinea
+            estado="informacion"
+            titulo={t.periodoCerradoTitulo(formatearPeriodoNumerico(periodo))}
+          >
+            {t.periodoCerrado}
+          </AvisoEnLinea>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-6">
@@ -208,7 +215,7 @@ export function PantallaDetalleCategoria({
             {sobregiro.parteDebito === 0 ? null : (
               <AvisoEnLinea estado="problema" titulo={t.sobregiro.debito}>
                 {t.sobregiro.conDebito} <Monto centavos={sobregiro.parteDebito} />.{' '}
-                {t.sobregiro.alCerrar} <Monto centavos={sobregiro.parteDebito} />.
+                {cerrado ? t.sobregiro.alCerrarCerrado : t.sobregiro.alCerrar} <Monto centavos={sobregiro.parteDebito} />.
               </AvisoEnLinea>
             )}
             {sobregiro.parteTarjeta === 0 ? null : (

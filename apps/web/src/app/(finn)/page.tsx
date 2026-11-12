@@ -5,7 +5,6 @@ import { inicio } from '@finn/aplicacion/consultas/inicio';
 import { presupuesto } from '@finn/aplicacion/consultas/presupuesto';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { TarjetaActivarNotificaciones } from '../../componentes/marco/tarjeta-notificaciones';
 import { sacarDisponible } from '../../servidor/acciones/categorias.ts';
 import { marcarLeidas, registrarSuscripcion } from '../../servidor/acciones/notificaciones.ts';
 import { asignarEnCategoria } from '../../servidor/acciones/presupuesto.ts';
@@ -31,17 +30,13 @@ export default async function PaginaInicio() {
       await consultar(async () => presupuesto(await depsDeConsulta(), { filtro: 'sin_fondos' }))
     ).grupos.some((g) => g.categorias.length > 0);
   return (
-    <>
-      <PantallaInicio
-        dto={dto}
-        marcarLeidas={marcarLeidas}
-        asignar={asignarEnCategoria}
-        sacar={sacarDisponible}
-        haySinFondos={haySinFondos}
-      />
-      <div className="mx-auto max-w-270 px-5 pb-4">
-        <TarjetaActivarNotificaciones registrar={registrarSuscripcion} />
-      </div>
-    </>
+    <PantallaInicio
+      dto={dto}
+      marcarLeidas={marcarLeidas}
+      asignar={asignarEnCategoria}
+      sacar={sacarDisponible}
+      haySinFondos={haySinFondos}
+      registrarSuscripcion={registrarSuscripcion}
+    />
   );
 }

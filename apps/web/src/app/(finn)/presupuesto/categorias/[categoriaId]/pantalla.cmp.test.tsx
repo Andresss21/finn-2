@@ -5,6 +5,7 @@ import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { DetalleCategoriaDto } from '@finn/aplicacion/consultas/detalle-categoria';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { page } from 'vitest/browser';
 import '../../../../globals.css';
 import { Marco } from '../../../../../componentes/marco/marco';
 import { PantallaDetalleCategoria } from './pantalla';
@@ -29,7 +30,8 @@ vi.mock('next/navigation', () => ({
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const montados: { raiz: Root; nodo: HTMLElement }[] = [];
-afterEach(() => {
+afterEach(async () => {
+  await page.viewport(414, 896);
   for (const { raiz, nodo } of montados.splice(0)) {
     act(() => {
       raiz.unmount();
@@ -638,5 +640,51 @@ describe('Detalle de categoría: cobertura de cada consumo (A6)', () => {
       (barrita(entero).querySelector('[data-segmento="cubierto"]') as HTMLElement).style.width,
     ).toBe('100%');
     expect(barrita(entero).querySelector('[data-segmento="no-cubierto"]')).toBeNull();
+  });
+});
+
+describe('PRU-CMP-CATEG entrega 4', () => {
+  it('PRU-CMP-CATEG-711 [CA-E4-19] a 1440 px el historial pone el gráfico arriba y la tabla debajo, y la tabla no desborda su tarjeta', async () => {
+    await page.viewport(1440, 900);
+    const historial = [
+      hist('2026-12-21', 12000, 9000),
+      hist('2027-01-21', 12000, 14630),
+      hist('2027-02-21', 12000, 11000),
+    ];
+    const raiz = mostrar(
+      dto({ historial, historialResumen: { promedioGastado: 11543, periodosExcedidos: 1 } }),
+    );
+    const tarjeta = raiz.querySelector('[data-historial] [data-vista-grafico]') as HTMLElement;
+    const tabla = [...tarjeta.querySelectorAll('[data-tabla-equivalente]')].at(-1) as HTMLElement;
+    const grafico = tabla.parentElement?.previousElementSibling as Element;
+    const caja = tarjeta.getBoundingClientRect();
+    const tablaCaja = tabla.getBoundingClientRect();
+    expect(tablaCaja.left).toBeGreaterThanOrEqual(caja.left);
+    expect(tablaCaja.right).toBeLessThanOrEqual(caja.right);
+    expect(tabla.scrollWidth).toBeLessThanOrEqual(tabla.clientWidth);
+    // La tabla va debajo del gráfico, no a su lado.
+    expect(tablaCaja.top).toBeGreaterThanOrEqual(grafico.getBoundingClientRect().bottom - 1);
+  });
+
+  it('PRU-CMP-CATEG-712 [CA-E4-16] un período cerrado dibuja el aviso «Período cerrado · fechas», sin Asignar, Mover dinero ni «Cubrir», con el cierre en pasado', () => {
+    const periodo = { ...CERRADO };
+    const raiz = mostrar(
+      dto({
+        periodo,
+        navegacion: {},
+        numeros: { ...ceros, asignado: 12000, gastado: 14630, disponible: -2630, fondo: 12000 },
+        sobregiro: { tipo: 'debito', total: 2630, parteDebito: 2630, parteTarjeta: 0 },
+      }),
+    );
+    const texto = sinEspacios(raiz);
+    expect(texto).toContain('Período cerrado · 21/01 – 20/02/2027');
+    expect(texto).toContain('No se puede cambiar lo asignado en un período cerrado.');
+    expect(texto).toContain('Listo para asignar bajó');
+    expect(enlace(raiz, 'Ir al período actual')?.getAttribute('href')).toBe(
+      `/presupuesto/categorias/${ID}`,
+    );
+    for (const accion of ['Asignar', 'Mover dinero', 'Cubrir']) {
+      expect(enlace(raiz, accion), accion).toBeUndefined();
+    }
   });
 });

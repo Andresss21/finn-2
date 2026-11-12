@@ -5,7 +5,9 @@ import { alcanceReserva, glosario } from './glosario.ts';
 export const categoriaDetalle = {
   titulo: 'Detalle de categoría',
   volver: 'Volver a Presupuesto',
-  periodoCerrado: 'Este período está cerrado: solo se puede mirar.',
+  // D-5: el aviso de información del período cerrado; el cuerpo es el del catálogo de 04 (`periodo_cerrado`).
+  periodoCerradoTitulo: (fechas: string) => `Período cerrado · ${fechas}`,
+  periodoCerrado: 'No se puede cambiar lo asignado en un período cerrado.',
   archivada: 'Categoría archivada',
   numeros: {
     disponible: glosario.disponible,
@@ -22,6 +24,7 @@ export const categoriaDetalle = {
     conDebito: 'Con débito',
     conTarjeta: 'Con tarjeta',
     alCerrar: 'Al cerrar el período, Listo para asignar bajará',
+    alCerrarCerrado: 'Al cerrar el período, Listo para asignar bajó',
     deudaEnCategoria: alcanceReserva.deudaEnCategoria,
     sumaALoQueFalta: alcanceReserva.sumaALoQueFalta,
     cubrir: 'Cubrir',

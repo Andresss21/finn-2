@@ -86,8 +86,10 @@ export function Historial({
       </tbody>
     </table>
   );
+  // CAT-21, CAT-31: en computadora el gráfico va arriba y la tabla debajo, a todo el ancho de la tarjeta (`tablaAlLado` las pone
+  // lado a lado y la tabla se corta); la regla fuerza una sola columna sin tocar `VistaGrafico` (es del grupo E).
   return (
-    <div data-historial={n}>
+    <div data-historial={n} className="md:[&_[data-vista-grafico]>div:last-child]:grid-cols-1">
       <VistaGrafico
         cifra={<Monto centavos={resumen.promedioGastado} rol="cifra-principal" />}
         nota={t.promedio}
