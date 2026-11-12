@@ -365,7 +365,9 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     );
     await abrirDetalle(page, 'Super', `?periodo=${P1}`);
     await expect(page.locator('[data-selector-periodo="cerrado"]')).toBeVisible();
-    await expect(page.getByText('Este período está cerrado')).toBeVisible();
+    await expect(
+      page.getByText('No se puede cambiar lo asignado en un período cerrado.'),
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: /^Asignar/ })).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Mover dinero' })).toHaveCount(0);
     await expect(page.getByRole('link', { name: /^Cubrir|^Reservar/ })).toHaveCount(0);

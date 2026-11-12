@@ -28,7 +28,14 @@ const A7: Op[] = [
 async function sembrarOps(ops: Op[]): Promise<void> {
   fijarRelojServidor(`${HOY}T10:00:00-06:00`);
   await sembrar(
-    { id: 'SEM-INI-E4', titulo: 'Semilla de TA-569', refs: [], hoy: HOY, estadoInicial: ops, pasos: [] },
+    {
+      id: 'SEM-INI-E4',
+      titulo: 'Semilla de TA-569',
+      refs: [],
+      hoy: HOY,
+      estadoInicial: ops,
+      pasos: [],
+    },
     HOY,
   );
 }
@@ -107,13 +114,19 @@ test.describe('PRU-E2E-INICIO entrega 4', () => {
     const yAtencion = (await page.getByRole('heading', { name: t.atencion }).boundingBox())?.y ?? 0;
     expect(yTarjeta).toBeGreaterThan(yBillete);
     expect(yTarjeta).toBeLessThan(yAtencion);
-    expect(await page.evaluate(() => (window as unknown as { __pedidos: number }).__pedidos)).toBe(0);
+    expect(await page.evaluate(() => (window as unknown as { __pedidos: number }).__pedidos)).toBe(
+      0,
+    );
 
     await tarjeta.getByRole('button', { name: tn.descartar }).click();
     await expect(tarjeta).toHaveCount(0);
     await page.reload();
     await esperarContenido(page);
-    await expect(page.getByRole('region', { name: e4.tarjetaNotificaciones.titulo })).toHaveCount(0);
-    expect(await page.evaluate(() => (window as unknown as { __pedidos: number }).__pedidos)).toBe(0);
+    await expect(page.getByRole('region', { name: e4.tarjetaNotificaciones.titulo })).toHaveCount(
+      0,
+    );
+    expect(await page.evaluate(() => (window as unknown as { __pedidos: number }).__pedidos)).toBe(
+      0,
+    );
   });
 });

@@ -310,7 +310,8 @@ describe('PRU-CMP-INICIO', () => {
 
 const luminancia = (rgb: string): number => {
   const [r = 0, g = 0, b = 0] = (rgb.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
-  const lineal = (v: number) => (v / 255 <= 0.04045 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4);
+  const lineal = (v: number) =>
+    v / 255 <= 0.04045 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4;
   return 0.2126 * lineal(r) + 0.7152 * lineal(g) + 0.0722 * lineal(b);
 };
 const contraste = (a: string, b: string): number => {
@@ -344,7 +345,7 @@ describe('PRU-CMP-INICIO entrega 4', () => {
     ],
   };
 
-  it('PRU-CMP-INICIO-701 [CA-E4-12] ninguna fila de «Necesita tu atención» tiene un monto (data-rol de cifra), a 390 y a 1440 px', async () => {
+  it('PRU-CMP-INICIO-701 [CA-E4-12] ninguna fila de «Necesita tu atención» tiene un monto (data-rol de cifra), a 390 y a 1440 px', () => {
     for (const ancho of [390, 1440]) {
       const nodo = montar(<PantallaInicio dto={dto({ atencion })} />);
       nodo.style.width = `${ancho}px`;

@@ -391,7 +391,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     const raiz = mostrar(
       dto({ periodo: CERRADO, navegacion: { anterior: '2026-12-21', siguiente: '2027-02-21' } }),
     );
-    expect(raiz.textContent).toContain('Este período está cerrado');
+    expect(raiz.textContent).toContain('No se puede cambiar lo asignado en un período cerrado.');
     expect(enlace(raiz, 'Asignar')).toBeUndefined();
     expect(enlace(raiz, 'Mover dinero')).toBeUndefined();
     expect(raiz.querySelector('[data-selector-periodo="cerrado"]')).not.toBeNull();

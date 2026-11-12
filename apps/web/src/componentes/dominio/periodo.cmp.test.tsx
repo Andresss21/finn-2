@@ -210,3 +210,72 @@ describe('PRU-CMP-PRES-102 billete y selector de período [FE-31, CF-13]', () =>
     ).toEqual([]);
   });
 });
+
+describe('PRU-CMP-PRES selector de período, entrega 4', () => {
+  const ruta = (n: HTMLElement, nombre: string) =>
+    [...n.querySelectorAll('a')].find((a) => a.getAttribute('aria-label') === nombre);
+
+  it('PRU-CMP-PRES-721 [CH-240] SelectorPeriodo dibuja enlaces con su href; sin `anterior` el lugar queda reservado; el período de transición muestra su texto', () => {
+    const n = montar(
+      <SelectorPeriodo
+        periodo={otro({})}
+        periodoActivo={activo}
+        anterior="2026-07-21"
+        siguiente="2026-09-21"
+        ruta="/presupuesto"
+        parametros={{ filtro: 'sin-fondos' }}
+      />,
+    );
+    expect(ruta(n, 'Período anterior')?.getAttribute('href')).toBe(
+      '/presupuesto?filtro=sin-fondos&periodo=2026-07-21',
+    );
+    expect(ruta(n, 'Período siguiente')?.getAttribute('href')).toBe(
+      '/presupuesto?filtro=sin-fondos',
+    );
+    expect(
+      [...n.querySelectorAll('a')].find((a) => a.textContent === 'Ir al período actual'),
+    ).toBeDefined();
+    expect(n.querySelectorAll('button')).toHaveLength(0);
+
+    const primero = montar(
+      <SelectorPeriodo
+        periodo={otro({})}
+        periodoActivo={activo}
+        siguiente="2026-09-21"
+        ruta="/presupuesto"
+        parametros={{}}
+      />,
+    );
+    expect(ruta(primero, 'Período anterior')).toBeUndefined();
+    const reservado = primero.querySelector('nav > div > span[aria-hidden="true"]');
+    expect(Math.round(reservado?.getBoundingClientRect().width ?? 0)).toBe(44);
+
+    const transicion = montar(
+      <SelectorPeriodo
+        periodo={otro({ transicion: true, dias: 11, estado: 'futuro' })}
+        periodoActivo={activo}
+        ruta="/presupuesto"
+        parametros={{}}
+      />,
+    );
+    const linea = transicion.querySelector('[data-transicion]') as HTMLElement;
+    expect(linea.textContent).toBe('Período de transición, 11 días');
+    expect(Number(getComputedStyle(linea).fontWeight)).toBeGreaterThanOrEqual(700);
+    expect(getComputedStyle(linea).color).toBe(
+      getComputedStyle(document.documentElement)
+        .getPropertyValue('--informacion-texto')
+        .trim()
+        .replace(
+          /^#(..)(..)(..)$/,
+          (_m, r: string, g: string, b: string) =>
+            `rgb(${parseInt(r, 16)}, ${parseInt(g, 16)}, ${parseInt(b, 16)})`,
+        ),
+    );
+    // Encima de la línea de estado.
+    const estado = transicion.querySelector('nav p:last-child') as HTMLElement;
+    expect(linea.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      estado.getBoundingClientRect().top + 1,
+    );
+    expect(estado.textContent).toBe('Futuro');
+  });
+});
