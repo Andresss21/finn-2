@@ -92,7 +92,7 @@ const flecha = (nodo: HTMLElement, etiqueta: string) =>
   nodo.querySelector<HTMLAnchorElement>(`a[aria-label="${etiqueta}"]`) as HTMLAnchorElement;
 
 describe('PRU-CMP-PWA-400 entrada lateral al cambiar de período', () => {
-  it('PRU-CMP-PWA-400 [] la flecha siguiente hace entrar el contenido desde la derecha y la anterior desde la izquierda, en 320 ms; sin flecha, sin entrada', () => {
+  it('PRU-CMP-PWA-400 [] la flecha siguiente hace entrar el contenido desde la derecha y la anterior desde la izquierda, en 340 ms; sin flecha, sin entrada', () => {
     const { nodo, ir } = montar();
     const contenido = () => nodo.querySelector('#contenido-c12') as HTMLElement;
     expect(contenido().className).toBe('');
@@ -103,7 +103,7 @@ describe('PRU-CMP-PWA-400 entrada lateral al cambiar de período', () => {
     ir('2027-03-21');
     expect(contenido().className).toBe('fz-periodo-siguiente');
     expect(getComputedStyle(contenido()).animationName).toBe('fz-periodo-siguiente');
-    expect(getComputedStyle(contenido()).animationDuration).toBe('0.32s');
+    expect(getComputedStyle(contenido()).animationDuration).toBe('0.34s');
 
     act(() => {
       flecha(nodo, 'Período anterior').click();

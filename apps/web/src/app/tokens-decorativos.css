@@ -1,0 +1,15 @@
+/* Finn 2.0 · valores decorativos de la app (entrega 4: C-18, GLO-10). No son tokens de diseño: son los motivos de la cara de la
+   tarjeta y del billete que el diseño dibuja con valores sueltos. Viven acá y en ningún otro lado; ningún texto se apoya en ellos
+   para su contraste (el de la cara sale de `--tarjeta-*` y `--tarjeta-*-texto`). Sin color de fondo ni de texto. */
+:root {
+  --decorativo-chip-oro: linear-gradient(135deg, #f3e3b5, #b8975a);
+  --decorativo-chip-plata: linear-gradient(135deg, #eef1f4, #9aa3ae);
+  --decorativo-chip-sombra: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+  --decorativo-guilloche-tarjeta: repeating-radial-gradient(
+    circle at 115% -25%,
+    transparent 0 11px,
+    rgba(255, 255, 255, 0.07) 11px 12px
+  );
+  --decorativo-mascara: #000;
+  --decorativo-duracion-guilloche: 40s;
+}

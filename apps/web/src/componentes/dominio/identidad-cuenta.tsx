@@ -64,7 +64,7 @@ const ICONO: Readonly<Record<PropsIdentidadCuenta['tipo'], NombreIcono>> = {
 const LIBRETA: CSSProperties = {
   backgroundImage:
     'repeating-linear-gradient(180deg, transparent 0 13px, var(--cuenta-motivo) 13px 14px)',
-  maskImage: 'linear-gradient(to left, #000 30%, transparent)',
+  maskImage: 'linear-gradient(to left, var(--decorativo-mascara) 30%, transparent)',
 };
 // Motivo de la cuenta de ahorro: anillos concéntricos cada 11 px en un círculo de 150 px que sale por la esquina.
 const ANILLOS: CSSProperties = {

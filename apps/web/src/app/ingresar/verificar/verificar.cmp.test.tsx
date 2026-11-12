@@ -223,7 +223,7 @@ describe('PRU-CMP-ACCESO movimiento del código', () => {
       expect(window.location.hash).toBe('#verificado-111');
     });
     expect(
-      getComputedStyle(document.documentElement).getPropertyValue('--espera-verificado').trim(),
+      getComputedStyle(document.documentElement).getPropertyValue('--duracion-confirmacion').trim(),
     ).toBe('650ms');
   });
 

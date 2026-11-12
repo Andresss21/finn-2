@@ -366,7 +366,7 @@ describe('PRU-CMP-VAL-103 superpuestos, avisos, resultados y vacíos', () => {
 
 describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
   // Salidas largas: la prueba termina la animación con `animationend` y no depende del reloj ni de la carga de la máquina.
-  const SALIDAS = ['--duracion-salida', '--duracion-rapida'];
+  const SALIDAS = ['--duracion-normal', '--duracion-rapida'];
   const salidasLargas = (): void => {
     for (const t of SALIDAS) document.documentElement.style.setProperty(t, '60s');
   };
@@ -406,17 +406,17 @@ describe('PRU-CMP-PWA cierre animado de hojas, panel y menú', () => {
       expect(raiz.textContent).toBe('Pantalla de origen');
     }
 
-    // La hoja abre con su entrada (380 ms, curva de entrada) y el velo en 200 ms; la salida dura 200 ms.
+    // La hoja abre con su entrada (400 ms, curva de entrada) y el velo en 220 ms; la salida dura 220 ms.
     for (const t of SALIDAS) document.documentElement.style.removeProperty(t);
     expect(
-      getComputedStyle(document.documentElement).getPropertyValue('--duracion-salida').trim(),
-    ).toBe('200ms');
+      getComputedStyle(document.documentElement).getPropertyValue('--duracion-normal').trim(),
+    ).toBe('220ms');
     montar(<Hoja desde="abajo" alCerrar={() => {}} />);
     expect(getComputedStyle(dialogo()).animationName).toBe('fz-sh-in');
-    expect(getComputedStyle(dialogo()).animationDuration).toBe('0.38s');
+    expect(getComputedStyle(dialogo()).animationDuration).toBe('0.4s');
     const veloAbierto = document.querySelector('[data-testid=velo]') as HTMLElement;
     expect(getComputedStyle(veloAbierto).animationName).toBe('fz-v-in');
-    expect(getComputedStyle(veloAbierto).animationDuration).toBe('0.2s');
+    expect(getComputedStyle(veloAbierto).animationDuration).toBe('0.22s');
   });
 
   it('PRU-CMP-PWA-320 [] con movimiento reducido la hoja se desmonta en el acto', async () => {

@@ -33,7 +33,7 @@ export function Dialogo({
   children,
   acciones,
 }: PropsDialogo) {
-  const { saliendo, salir, alTerminarAnimacion } = useSalida(alCerrar, '--duracion-salida');
+  const { saliendo, salir, alTerminarAnimacion } = useSalida(alCerrar, '--duracion-normal');
   const fase = saliendo ? { 'data-saliendo': '' } : {};
   // Se lee al montar, antes de que Radix mueva el foco al diálogo.
   const [disparador] = useState(() =>
