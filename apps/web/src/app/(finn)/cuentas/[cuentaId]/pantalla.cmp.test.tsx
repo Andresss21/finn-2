@@ -465,7 +465,11 @@ describe('PRU-CMP-CTA-104 pantalla de detalle de cuenta', () => {
     );
     expect(saldos).toEqual(['3000', '4000']);
     const enlaces = [...pagina2.querySelectorAll('[data-movimientos] a')]
-      .filter((a) => a.getAttribute('href')?.includes('/cuentas/'))
+      .filter(
+        (a) =>
+          a.getAttribute('href')?.includes('/cuentas/') &&
+          a.closest('[data-selector-periodo]') === null,
+      )
       .map((a) => [a.textContent, a.getAttribute('href')]);
     expect(enlaces).toEqual([
       ['Quitar filtros', '/cuentas/visa'],
@@ -844,5 +848,25 @@ describe('PRU-CMP-CTA-721 filtros del detalle sin resultados', () => {
     );
     expect(quitar).toHaveLength(1);
     expect(quitar[0]?.getAttribute('href')).toBe('/cuentas/visa?periodo=2027-01');
+  });
+
+  it('PRU-CMP-CTA-721 en un período cerrado el título dice «Cerrado · Movimientos de ese período» y el selector va dentro de la sección, bajo el título', () => {
+    const raiz = mostrar(
+      dto({
+        periodo: {
+          inicio: '2027-01-21',
+          fin: '2027-02-20',
+          dias: 31,
+          estado: 'cerrado',
+          transicion: false,
+        },
+        navegacion: { anterior: '2026-12-21', siguiente: '2027-02-21' },
+      }),
+      { periodo: '2027-01-21' },
+    );
+    const seccion = raiz.querySelector('[data-movimientos]') as HTMLElement;
+    expect(seccion.querySelector('h2')?.textContent).toBe('Cerrado · Movimientos de ese período');
+    expect(seccion.querySelector('[data-selector-periodo="cerrado"]')).not.toBeNull();
+    expect(mostrar(dto()).querySelector('[data-movimientos] h2')?.textContent).toBe('Movimientos');
   });
 });
