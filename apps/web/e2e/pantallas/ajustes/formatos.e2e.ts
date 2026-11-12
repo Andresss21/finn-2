@@ -49,6 +49,11 @@ async function recibirPricesmart(page: Page, request: APIRequestContext): Promis
     data: { texto: SMS_PRICESMART, remitente: 'BAC' },
   });
   expect(r.status()).toBe(200);
+  // El webhook procesa el SMS en `after()` (04 §8.2): se espera a que la Bandeja lo muestre sin reconocer antes de probar
+  await expect(async () => {
+    await abrir(page, '/bandeja');
+    await expect(page.locator('[data-vista="noReconocido"]')).toHaveCount(1);
+  }).toPass();
 }
 
 async function llenar(page: Page): Promise<void> {
