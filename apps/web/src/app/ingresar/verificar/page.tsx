@@ -3,9 +3,9 @@ import type { Metadata } from 'next';
 import { resolverAcceso } from '../acceso';
 import { FormularioVerificar } from './formulario-verificar';
 import { salir, verificarFactor } from '../../../servidor/acciones/autenticacion';
-import { ingreso } from '../../../textos/ingreso';
+import { codigoTotp } from '../../../textos/codigo-totp';
 
-export const metadata: Metadata = { title: ingreso.tituloVerificar };
+export const metadata: Metadata = { title: codigoTotp.tituloVerificar };
 
 export default async function PaginaVerificar({
   searchParams,

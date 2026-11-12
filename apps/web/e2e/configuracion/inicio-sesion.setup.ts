@@ -1,6 +1,7 @@
 // Sesión AAL2 reutilizable (05 §14.1, FE-50): ingresa una vez por la interfaz (FT-01) y guarda el `storageState`.
 // Los campos se buscan por su etiqueta del catálogo (FE-51).
 import { test as preparar } from '@playwright/test';
+import { escribirCodigo } from '../ayudas/codigo.ts';
 import { codigoTotp } from '../ayudas/totp.ts';
 import { esperarHidratacion } from '../ayudas/esperas.ts';
 import { ingreso as t } from '../../src/textos/ingreso.ts';
@@ -20,7 +21,7 @@ preparar('ingresa con contraseña y TOTP y guarda la sesión', async ({ page }) 
   await page.getByLabel(t.contrasena, { exact: true }).fill(variable('E2E_CLAVE'));
   await page.keyboard.press('Enter');
   await page.waitForURL('**/ingresar/verificar**');
-  await page.getByLabel(t.codigo).fill(codigoTotp());
+  await escribirCodigo(page, codigoTotp());
   await page.keyboard.press('Enter');
   await page.waitForURL((u) => !u.pathname.startsWith('/ingresar'));
   await page.context().storageState({ path: ARCHIVO_SESION });
