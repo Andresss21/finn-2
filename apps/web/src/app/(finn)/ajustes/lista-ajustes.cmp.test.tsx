@@ -13,6 +13,12 @@ vi.mock('next/link', async () => {
     createElement('a', { href, ...resto }, children);
   return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
 });
+// [CH-242] La tarjeta «Salir» viene de `navegacion-app.tsx`, que importa el enrutador de Next.
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/ajustes',
+  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ refresh: () => undefined, replace: () => undefined, back: () => undefined }),
+}));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

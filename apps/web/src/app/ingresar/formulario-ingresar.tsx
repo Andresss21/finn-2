@@ -6,10 +6,13 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { Icono } from '../../componentes/base/icono';
+import { almacen } from '../../cliente/almacen';
+import { claveDeBorrador } from '../../formularios/clave-borrador';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { autenticacion } from '../../textos/autenticacion';
 import { ingreso as t } from '../../textos/ingreso';
+import { salir as ts } from '../../textos/salir';
 import type { RutasAcceso } from './acceso';
 
 const CONTRATO = z.object({
@@ -45,6 +48,17 @@ export function FormularioIngresar({
   });
   const [visible, setVisible] = useState(false);
   const { estado, exito } = operacion;
+
+  // E2-5 [CH-242]: «Tu sesión venció» solo con el motivo explícito de la URL (lo ponen `consultar()` y `useOperacion`), y la
+  // frase del borrador solo si hay uno para la ruta de `volver` (4.11). Se leen después de montar: URL y sessionStorage.
+  const [vencida, setVencida] = useState<string | null>(null);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('motivo') !== 'sesion-vencida') return;
+    const borrador = almacen.hayPrefijo(claveDeBorrador(rutas.destino));
+    setVencida(
+      borrador ? `${ts.sesionVencidaTexto} ${ts.borradorGuardado}` : ts.sesionVencidaTexto,
+    );
+  }, [rutas.destino]);
 
   const cerrada = useRef(false);
   useEffect(() => {
@@ -86,6 +100,11 @@ export function FormularioIngresar({
       className="flex flex-col gap-4"
     >
       <h1 className="text-titulo-seccion">{t.tituloIngresar}</h1>
+      {vencida === null || mensaje !== undefined ? null : (
+        <AvisoEnLinea estado="advertencia" titulo={ts.sesionVencida} aparecioDespues>
+          {vencida}
+        </AvisoEnLinea>
+      )}
       {mensaje === undefined ? null : (
         <div id={idMensaje}>
           <AvisoEnLinea estado="problema" aparecioDespues={operacion.error !== undefined}>

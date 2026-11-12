@@ -27,7 +27,8 @@ export const borrarBorradores = (): void => {
   almacen.borrarPrefijo(PREFIJO_BORRADOR);
 };
 
-function leerGuardado(clave: string): Guardado | null {
+/** El borrador guardado en esa clave, si es válido (4.11). Lo usa también «Salir» (05 §9.6 [CH-242]). */
+export function leerGuardado(clave: string): Guardado | null {
   const texto = almacen.leer(clave);
   if (texto === null) return null;
   try {

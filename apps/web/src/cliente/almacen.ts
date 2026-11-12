@@ -70,3 +70,17 @@ export const almacen = {
     return false;
   },
 } as const;
+
+/** Las claves con el prefijo, para «Salir» (05 §9.6 [CH-242]); fuera de `almacen`, para que solo la cargue quien la usa. */
+export function clavesConPrefijo(prefijo: string): string[] {
+  const claves: string[] = [];
+  try {
+    for (let i = 0; i < window.sessionStorage.length; i += 1) {
+      const clave = window.sessionStorage.key(i);
+      if (clave?.startsWith(prefijo) === true) claves.push(clave);
+    }
+  } catch {
+    return [];
+  }
+  return claves;
+}

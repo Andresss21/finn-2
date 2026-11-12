@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
 import { navegacion } from '../../textos/navegacion';
+import { salir } from '../../textos/salir';
 import { Marco } from './marco';
 import { PaginaFlujo } from './pagina-flujo';
 import { PublicarAcciones } from './publicar-acciones';
@@ -276,5 +277,73 @@ describe('PRU-CMP-PWA flujo de dos columnas', () => {
     // El pie es hijo de la misma columna del contenido, no del marco.
     const pie = nodo.querySelector('button')?.parentElement as HTMLElement;
     expect(pie.parentElement).toBe(flujo);
+  });
+});
+
+describe('PRU-CMP-PWA «Salir» a la vista', () => {
+  /** El motivo enlazado con `aria-describedby` de un control. */
+  const descripcion = (el: Element): string | null => {
+    const id = el.getAttribute('aria-describedby');
+    return id === null ? null : (document.getElementById(id)?.textContent ?? null);
+  };
+
+  it('PRU-CMP-PWA-781 [] CH-242: la hoja Más secciones y la barra lateral tienen «Salir» con logout, sin flecha; sin conexión, deshabilitado con su motivo', async () => {
+    const nodo = montar('/', '', <main />);
+    // Barra lateral: al pie, bajo la línea `--borde-sutil`, un botón (es una acción, no una sección).
+    const pie = nodo.querySelector('aside [data-pieza="pie-salir"]') as HTMLElement;
+    expect(pie.parentElement?.lastElementChild).toBe(pie);
+    const lateral = pie.querySelector('button') as HTMLButtonElement;
+    expect(lateral.textContent).toBe(salir.salir);
+    expect(lateral.querySelector('[data-icono="logout"]')).not.toBeNull();
+    expect(lateral.querySelector('[data-icono="chevR"]')).toBeNull();
+    expect(lateral.disabled).toBe(false);
+    expect(lateral.hasAttribute('aria-describedby')).toBe(false);
+
+    // Hoja «Más secciones»: la última fila, después de la franja de 8 px y fuera de la lista de secciones.
+    await sinAct(async () => {
+      await userEvent.click(
+        nodo.querySelector(`header button[aria-label="${navegacion.secundarias}"]`) as HTMLElement,
+      );
+    });
+    const hoja = await vi.waitFor(() => {
+      const d = document.querySelector<HTMLElement>('[role=dialog]');
+      if (d === null) throw new Error('la hoja todavía no llegó');
+      return d;
+    });
+    const botones = [...hoja.querySelectorAll('button')].filter(
+      (b) => b.textContent === salir.salir,
+    );
+    expect(botones).toHaveLength(1);
+    const fila = botones[0] as HTMLButtonElement;
+    expect(fila.closest('ul')).toBeNull();
+    expect(fila.parentElement?.lastElementChild).toBe(fila);
+    const franja = fila.previousElementSibling as HTMLElement;
+    expect(franja.getAttribute('aria-hidden')).toBe('true');
+    expect(franja.getBoundingClientRect().height).toBe(8);
+    expect(fila.querySelector('[data-icono="logout"]')).not.toBeNull();
+    expect(fila.querySelector('[data-icono="chevR"]')).toBeNull();
+    expect(fila.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    // Las secciones sí llevan su flecha.
+    expect(hoja.querySelectorAll('ul [data-icono="chevR"]').length).toBeGreaterThan(0);
+
+    // Sin conexión: los dos deshabilitados, con «Sin conexión: no se puede salir ahora.» enlazado.
+    const enLinea = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+    });
+    for (const boton of [lateral, fila]) {
+      expect(boton.disabled).toBe(true);
+      expect(descripcion(boton)).toBe(salir.sinConexion);
+    }
+    expect(salir.sinConexion).toBe('Sin conexión: no se puede salir ahora.');
+    enLinea.mockRestore();
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(lateral.disabled).toBe(false);
+    // Cerrar la hoja: el diálogo vive en `document.body`, fuera del nodo que se desmonta.
+    await sinAct(async () => {
+      await userEvent.keyboard('{Escape}');
+    });
   });
 });

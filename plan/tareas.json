@@ -687,7 +687,7 @@
 
   "TA-595": { "estado": "pendiente" },
 
-  "TA-596": { "estado": "pendiente" },
+  "TA-596": { "estado": "en_curso", "rama": "ta-596-salir-sesion-vencida" },
 
   "TA-597": { "estado": "pendiente" }
 }

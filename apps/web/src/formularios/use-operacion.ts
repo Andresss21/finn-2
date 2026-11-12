@@ -41,7 +41,9 @@ const ESPERA_OCUPADO_MS = (): Promise<void> =>
   new Promise((listo) => setTimeout(listo, 1000 + Math.floor(Math.random() * 1000)));
 
 const IR_A_INGRESAR = (): void => {
-  window.location.assign(`/ingresar?volver=${encodeURIComponent(window.location.pathname)}`);
+  // E2-5 [CH-242]: con el motivo explícito, Ingresar dice «Tu sesión venció» (el mismo de `servidor/consultar.ts`).
+  const volver = encodeURIComponent(window.location.pathname);
+  window.location.assign(`/ingresar?motivo=sesion-vencida&volver=${volver}`);
 };
 
 const errorSinConexion: ErrorFinn = {

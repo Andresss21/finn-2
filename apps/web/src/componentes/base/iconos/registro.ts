@@ -1,4 +1,4 @@
-// Registro de los 54 íconos y los 7 glifos de estado (06-identidad-visual §2). El contenido de cada dibujo es
+// Registro de los 56 íconos y los 7 glifos de estado (06-identidad-visual §2). El contenido de cada dibujo es
 // el interior de su .svg en ./ y ./estados, sin cambios; PRU-CMP-VAL-101 lo compara con el archivo.
 export const ICONOS = {
   activity: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
@@ -23,7 +23,7 @@ export const ICONOS = {
   eyeoff:
     '<path d="M3 3l18 18"/><path d="M10.6 6A9 9 0 0 1 12 5.5c3.9 0 7.2 2.1 9.5 6.5a15 15 0 0 1-2.6 3.6"/><path d="M6.3 7.6C4.8 8.6 3.6 10.1 2.5 12c2.3 4.4 5.6 6.5 9.5 6.5 1.8 0 3.4-.4 4.8-1.3"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   filter: '<path d="M3 5h18l-7 8v6l-4 2v-8L3 5z"/>',
-  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="M4.9 4.9l2.1 2.1"/><path d="M17 17l2.1 2.1"/><path d="M4.9 19.1L7 17"/><path d="M17 7l2.1-2.1"/>',
+  gear: '<path d="M10.23 4.61L10.52 2.11L13.48 2.11L13.77 4.61A7.6 7.6 0 0 1 15.97 5.52L17.95 3.96L20.04 6.05L18.48 8.03A7.6 7.6 0 0 1 19.39 10.23L21.89 10.52L21.89 13.48L19.39 13.77A7.6 7.6 0 0 1 18.48 15.97L20.04 17.95L17.95 20.04L15.97 18.48A7.6 7.6 0 0 1 13.77 19.39L13.48 21.89L10.52 21.89L10.23 19.39A7.6 7.6 0 0 1 8.03 18.48L6.05 20.04L3.96 17.95L5.52 15.97A7.6 7.6 0 0 1 4.61 13.77L2.11 13.48L2.11 10.52L4.61 10.23A7.6 7.6 0 0 1 5.52 8.03L3.96 6.05L6.05 3.96L8.03 5.52A7.6 7.6 0 0 1 10.23 4.61z"/><circle cx="12" cy="12" r="3"/>',
   grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
   grip: '<path d="M9 6v.1"/><path d="M15 6v.1"/><path d="M9 12v.1"/><path d="M15 12v.1"/><path d="M9 18v.1"/><path d="M15 18v.1"/>',
   home: '<path d="M4 10.8L12 4l8 6.8V20h-5.2v-5.6H9.2V20H4v-9.2z"/>',
@@ -33,6 +33,7 @@ export const ICONOS = {
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.2"/><path d="M12 7.9v.1"/>',
   list: '<path d="M8 6h12"/><path d="M8 12h12"/><path d="M8 18h12"/><path d="M4 6v.1"/><path d="M4 12v.1"/><path d="M4 18v.1"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>',
+  logout: '<path d="M10 4H4.5v16H10"/><path d="M9.5 12H20"/><path d="M16 8l4 4-4 4"/>',
   menu: '<path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/>',
   mic: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/>',
   more: '<path d="M5.5 12v.1"/><path d="M12 12v.1"/><path d="M18.5 12v.1"/>',
@@ -46,6 +47,7 @@ export const ICONOS = {
   search: '<circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/>',
   send: '<path d="M4 12l16-8-6 16-2.5-6.5L4 12z"/>',
   sms: '<path d="M4 5h16v11H9.5L4 20V5z"/><path d="M8 9.5h8"/><path d="M8 12.5h5"/>',
+  sun: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="M4.9 4.9l2.1 2.1"/><path d="M17 17l2.1 2.1"/><path d="M4.9 19.1L7 17"/><path d="M17 7l2.1-2.1"/>',
   swap: '<path d="M5 8.5h13"/><path d="M15 5.2l3.3 3.3-3.3 3.3"/><path d="M19 15.5H6"/><path d="M9 12.2l-3.3 3.3L9 18.8"/>',
   target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12v.1"/>',
   ticket:
