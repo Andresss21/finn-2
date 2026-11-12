@@ -182,9 +182,7 @@ test.describe('PRU-E2E-BAND arrastre de la entrega 4', () => {
   test('PRU-E2E-BAND-703 [CA-E6-7, CA-78.14] con la línea cambiada en otra pestaña, soltar abre el flujo con el valor visto, el actual y «Usar el valor actual», con Farmacia puesta', async ({
     page,
     context,
-    isMobile,
   }) => {
-    test.skip(isMobile, 'El arrastre con el ratón es de computadora');
     await page.setViewportSize({ width: 1440, height: 900 });
     // Fecha en un período cerrado: guardar el cambio de la otra pestaña se detiene en la confirmación de AV-01
     await preparar([sms('cerrado', 'Selectos', 30, '19:00')], '2027-02-21T08:00:00');
