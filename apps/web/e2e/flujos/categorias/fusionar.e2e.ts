@@ -86,7 +86,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await previsualizarCafeEnSalidas(page);
     await expect(page.getByText('Listo para asignar: +$30.00')).toBeVisible();
     await expect(page.getByText('$60.00 → $30.00')).toBeVisible();
-    await expect(page.getByText('Se descarta la meta de Café.')).toBeVisible();
+    await expect(page.getByText('Se descarta la meta de Café.').first()).toBeVisible();
     await expect(page.getByText('La fusión modifica períodos cerrados.')).toBeVisible();
     await confirmar(page);
 

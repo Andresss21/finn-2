@@ -5,6 +5,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
+import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { generarTokenWebhook } from '../../ayudas/webhook.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { ajustesFormatos as t } from '../../../src/textos/ajustes-formatos.ts';
@@ -52,7 +53,7 @@ async function recibirPricesmart(page: Page, request: APIRequestContext): Promis
 
 async function llenar(page: Page): Promise<void> {
   await abrir(page, '/ajustes/formatos/nuevo');
-  await page.getByLabel(t.campos.institucion, { exact: true }).selectOption({ label: 'BAC' });
+  await elegirOpcion(page, t.campos.institucion, 'BAC');
   await page.getByLabel(t.campos.nombre, { exact: true }).fill('compra con tarjeta');
   await page.getByLabel(t.campos.patron, { exact: true }).fill(PATRON);
   await page.getByLabel('DD/MM/AAAA', { exact: true }).check();

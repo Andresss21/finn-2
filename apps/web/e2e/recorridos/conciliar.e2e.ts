@@ -141,7 +141,10 @@ test.describe('PRU-E2E-CONC recorrido 4.5 conciliar', () => {
     await expect(page.getByRole('checkbox').first()).toBeChecked();
     await page.getByRole('button', { name: vs.revisar }).click();
     await page.getByRole('button', { name: vs.confirmar }).click();
-    await expect(page.getByTestId('resultado')).toHaveText(vs.guardado('Ahorro', '15/02/2027'));
+    // E2-13: el resultado queda en el detalle de la cuenta, con las transacciones que quedaron conciliadas
+    await expect(page.getByTestId('resultado')).toContainText(
+      'Verificaste el saldo al 15/02/2027: coincide con el banco.',
+    );
     await abrir(page, `/cuentas/${AHORRO}`);
     await expect(conciliacion(page).getByRole('heading', { level: 3 })).toContainText(
       'Verificación de saldo',

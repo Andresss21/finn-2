@@ -439,10 +439,14 @@ test.describe('PRU-E2E-TX', () => {
     // E4-2 «Repartido en»: cada categoría tocada lleva su enlace «Ver la categoría», en su fila
     const partes = page.getByRole('list', { name: t.lineasGuardadas }).getByRole('listitem');
     await expect(
-      partes.filter({ hasText: 'Super' }).getByRole('link', { name: t.verLaCategoria }),
+      partes
+        .filter({ has: page.getByText('Super', { exact: true }) })
+        .getByRole('link', { name: t.verLaCategoria }),
     ).toHaveAttribute('href', /\/presupuesto\/categorias\/.+/);
     await expect(
-      partes.filter({ hasText: 'Mascota' }).getByRole('link', { name: t.verLaCategoria }),
+      partes
+        .filter({ has: page.getByText('Mascota', { exact: true }) })
+        .getByRole('link', { name: t.verLaCategoria }),
     ).toBeVisible();
     await expect(page.getByRole('link', { name: t.verLaCategoria })).toHaveCount(2);
     // con la fecha en un período cerrado, antes aparece el impacto con el aviso AV-01

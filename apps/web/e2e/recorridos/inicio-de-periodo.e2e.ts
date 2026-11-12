@@ -221,7 +221,8 @@ test.describe('PRU-E2E-PRES recorrido 4.3 inicio de período', () => {
     await expect(filaDeImpacto(page, 'Netflix')).toContainText('→ $0.00');
     await expect(filaDeImpacto(page, 'Fondo')).toContainText('→ $500.00');
     await expect(page.getByText(/quedó sin cubrir/)).toHaveCount(0);
-    await page.getByRole('button', { name: 'Asignar', exact: true }).click();
+    // E6-13: el pie confirma con el monto («Asignar $X»)
+    await page.getByRole('button', { name: /^Asignar \$[\d,.]+$/ }).click();
     // Sin AV-18 (nada quedó sin cubrir) el flujo se cierra solo, sin el aviso de «Asignación hecha»
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByText(/quedó sin cubrir/)).toHaveCount(0);

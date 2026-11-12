@@ -110,8 +110,9 @@ test.describe('PRU-E2E-PRES entrega 4', () => {
     await sembrarOps(OPS, HOY_CERRADO);
     const id = await idDe(page, 'Super');
     await page.goto(`/presupuesto/asignar/${id}?periodo=${P1}`);
-    await esperarContenido(page);
+    // La ruta redirige: se espera la URL final antes de medir el contenido
     await expect(page).toHaveURL(new RegExp(`/presupuesto/categorias/${id}\\?periodo=${P1}`));
+    await esperarContenido(page);
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByText('Período cerrado · 21/01 – 20/02/2027')).toBeVisible();
     await expect(
@@ -156,7 +157,7 @@ test.describe('PRU-E2E-PRES entrega 4', () => {
     );
     await abrir(page, '/');
     await expect(
-      page.getByRole('region', { name: 'Necesita tu atención' }).getByText('Super'),
+      page.getByRole('region', { name: 'Necesita tu atención' }).getByText('Super').first(),
     ).toBeVisible();
   });
 
