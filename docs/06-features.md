@@ -1393,14 +1393,14 @@ Reglas comunes a todas las fichas:
 
 **Flujo.**
 1. `/ajustes/webhook`: muestra si ya hay un token (`AjustesDto.webhook.configurado`, `rotadoEn`).
-2. "Generar token" o "Cambiar token" → OPT-01, en el flujo corto `/ajustes/webhook/token` **[D4]**. El token se muestra **una sola vez**, con "Copiar", y la URL `https://<dominio>/api/sms`.
+2. "Generar token" o "Cambiar token" → OPT-01. El token se muestra **una sola vez**, con "Copiar", y la URL `https://<dominio>/api/sms`.
 3. Instrucciones de 04 §8.8 (disparador, acción HTTP, cabeceras, cuerpo, reintentos) y la prueba en el teléfono.
 4. Un SMS de prueba aparece en la Bandeja como no reconocido (FT-38).
 
 **Piezas.**
 - Operaciones: OPT-01; `POST /api/sms` (OP-35, FT-34).
 - Consultas: `ajustes()`.
-- Rutas: `/ajustes/webhook`, `/ajustes/webhook/token` **[D4]**.
+- Rutas: `/ajustes/webhook`.
 - Componentes: `Aviso`; botón "Copiar".
 
 **Reglas.** 04 §8.1 y §8.8; 04 §12.5 (cliente que no es persona); 05 §2.11 (el token nunca va al borrador ni queda en el cliente al cerrar el flujo).
@@ -4775,7 +4775,6 @@ Lo que el script **no** comprueba: que una ficha use bien la operación que cita
 | `/ajustes/seguridad/factores/[factorId]/quitar` | FT-74 |
 | `/ajustes/seguridad/factores/nuevo` | FT-02, FT-74 |
 | `/ajustes/webhook` | FT-03, FT-04 |
-| `/ajustes/webhook/token` **[D4]** | FT-03 |
 | `/bandeja` | FT-08, FT-34, FT-35, FT-36, FT-37, FT-38, FT-78, FT-70 |
 | `/bandeja/[movimientoId]` | FT-35, FT-37, FT-38, FT-78, FT-70 |
 | `/cuentas` | FT-33, FT-51 |
@@ -4961,4 +4960,3 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CT-03 y CT-07** (Fase 7, aprobados en las revisiones de las partes C y D de `07-pruebas.md`). CA-78.15 y CA-70.7 sin iPhone (riesgo aceptado, P7-9); 3.5.12 y el recorrido 4.2 sobre la semilla `estado-a7`, sin cambio en ningún número citado por los CA. Marcas **[F7]** en cada lugar. Detalle en `07-pruebas.md` §22 y §28.
 - **CH-07** (Fase 8, aprobado en la revisión de la Parte C de `08-tareas.md`, aplicado al cerrarla el 23 de octubre de 2026). Dependencias de construcción y de datos (2.0) y las de datos de FT-03, FT-04, FT-08, FT-16, FT-19, FT-34, FT-35 y FT-54. Los CA no cambian. Marcas **[F8]**.
 - **CH-222, CH-224 y CH-225** (Fase 8, decididos por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). FT-29: acción principal "Reservar $X" con la variante `reservar_falta` de OP-16 (CH-222). S6: la identidad de la cuenta de efectivo por su subtipo y §7.3 sin los subtipos fuera de fase (CH-224); la cara de la tarjeta por su color guardado, uno de 8 (CH-225). Los CA no cambian. Marcas **[CH-nnn]** en cada lugar.
-- **CH-E5-1** (diseño, entrega 4 · etapa 5; aprobado por el dueño con la condición de conservar los enlaces y «atrás», aplicado al cerrar el diseño el 11 de noviembre de 2026). FT-60: la navegación entre reportes es `SelectorReportes` (05 §10.7) en lugar de `Pestanas`: con 15 tipos las pestañas no entran. Cada opción sigue siendo un enlace a `/reportes/[tipo]`. Por CH-E5-3 y CH-E5-4, FT-03 y la tabla de rutas (6.4) suman `/ajustes/webhook/token` y FT-73 remite a los textos del catálogo. Los CA no cambian. Marcas **[D4]**. Detalle en la entrega de diseño 4 (`prompt/CAMBIOS-PROPUESTOS.md`, E5-1).

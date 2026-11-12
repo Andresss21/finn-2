@@ -579,8 +579,7 @@ Clases: **[P]** sección principal, **[S]** secundaria, **[D]** detalle, **[L]**
   notificaciones/page.tsx (y @superpuesto/(.)notificaciones, [F6] CF-23)                             [S] Centro de notificaciones        ?no-leidas=1 &cursor=
   ajustes/page.tsx                                    [S] Ajustes (índice)
   ajustes/ciclo/                                      [C] OP-19
-  ajustes/webhook/page.tsx                            [S] estado de la conexión de los SMS   [D4]
-  ajustes/webhook/token/                              [C] OPT-01 (generar un token nuevo)   [D4]
+  ajustes/webhook/                                    [C] OPT-01
   ajustes/formatos/page.tsx                           [S] lista de formatos bancarios   [D4]
   ajustes/formatos/nuevo/  ajustes/formatos/[formatoId]/   [L] OPT-05, OPT-06
   ajustes/instituciones/page.tsx                      [S] lista de instituciones   [D4]
@@ -1482,8 +1481,7 @@ Notas:
 |---|---|---|---|---|---|
 | `/ajustes` | [S] | `ajustes()` | Índice de las páginas siguientes | — | Muestra un resumen de cada sección (por ejemplo, "Respaldo atrasado") |
 | `/ajustes/ciclo` | [C] | `ajustes()` | OP-19 (previsualizar primero) | AV-12 (antes) | Muestra la vigencia futura, si existe |
-| `/ajustes/webhook` | [S] | `ajustes()` | [C] `/ajustes/webhook/token` | — | Estado de la conexión (`AjustesDto.webhook.configurado`, `rotadoEn`). No muestra ningún sufijo del token (04 §8.8 guarda solo el SHA-256). El diseño muestra además el último SMS recibido, que el DTO no trae: CH-C-2, pendiente de aprobación **[D4]** |
-| `/ajustes/webhook/token` | [C] | `ajustes()` | OPT-01 | — | Se abre con la advertencia y el botón de peligro. El token nuevo se muestra **una sola vez**, con "Copiar"; nunca se guarda en el borrador ni en el cliente después de cerrar el flujo **[D4]** |
+| `/ajustes/webhook` | [C] | `ajustes()` | OPT-01 | — | El token nuevo se muestra **una sola vez**, con "Copiar"; nunca se guarda en el borrador ni en el cliente después de cerrar el flujo |
 | `/ajustes/formatos` | [S] | `ajustes()` | [L] nuevo y edición | — | Lista con `usos` y `ultimoUso` **[D4]** |
 | `/ajustes/formatos/nuevo` | [L] | `formulario({ operacion: 'formato' })` | OPT-05, OPT-06 (probar contra un SMS) | — | Borrador (4.11) |
 | `/ajustes/formatos/[formatoId]` | [L] | `formulario({ operacion: 'formato', formatoId })` | OPT-05, OPT-06 | — | Borrador (4.11) |
@@ -2841,7 +2839,7 @@ Resultado actual: Consultas: 18/18 · operaciones con pantalla: 61/62 (sin panta
 | `bandeja` | `/bandeja` | 1 |
 | `reporte` | `/reportes/[tipo]` | 1 |
 | `metas` | `/metas` | 1 |
-| `ajustes` | `/ajustes`, `/ajustes/apariencia`, `/ajustes/ciclo`, `/ajustes/diagnostico`, `/ajustes/exportar`, `/ajustes/formatos`, `/ajustes/instituciones`, `/ajustes/instituciones/[institucionId]`, `/ajustes/instituciones/nueva`, `/ajustes/notificaciones`, `/ajustes/respaldo`, `/ajustes/seguridad`, `/ajustes/seguridad/factores/[factorId]/quitar`, `/ajustes/seguridad/factores/nuevo`, `/ajustes/webhook`, `/ajustes/webhook/token` | 16 |
+| `ajustes` | `/ajustes`, `/ajustes/apariencia`, `/ajustes/ciclo`, `/ajustes/diagnostico`, `/ajustes/exportar`, `/ajustes/formatos`, `/ajustes/instituciones`, `/ajustes/instituciones/[institucionId]`, `/ajustes/instituciones/nueva`, `/ajustes/notificaciones`, `/ajustes/respaldo`, `/ajustes/seguridad`, `/ajustes/seguridad/factores/[factorId]/quitar`, `/ajustes/seguridad/factores/nuevo`, `/ajustes/webhook` | 15 |
 | `programadas` | `/programadas` | 1 |
 | `reglas` | `/reglas` | 1 |
 | `porCobrar` | `/por-cobrar`, `/por-cobrar/deudores/[deudorId]/renombrar` | 2 |
@@ -2964,7 +2962,7 @@ Las funciones que no son consultas de 04 §6 tienen su pantalla en 15.3.
 | OP-51 | `/programadas/[programadaId]` | [L] | `flujos/programadas-programada/` |
 | OP-52 | `/por-cobrar/deudores/[deudorId]/renombrar` | [C] | `flujos/por-cobrar-deudores-renombrar/` |
 | OP-53 | `/cuentas/[cuentaId]/verificar-saldo` | [L] | `flujos/cuentas-verificar-saldo/` |
-| OPT-01 | `/ajustes/webhook/token` | [C] | `flujos/ajustes-webhook-token/` |
+| OPT-01 | `/ajustes/webhook` | [C] | `flujos/ajustes-webhook/` |
 | OPT-02 | `/` | [P] | página `/` [1T] |
 | OPT-02 | `/ajustes/notificaciones` | [S] | página `/ajustes/notificaciones` |
 | OPT-03 | `/ajustes/notificaciones` | [S] | página `/ajustes/notificaciones` |
@@ -3524,4 +3522,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CT-01, CT-03, CT-04, CT-07 y CT-08** (Fase 7, aprobados en las revisiones de las partes A a D de `07-pruebas.md`). Reloj de E2E (14.1); lector de pantalla con TalkBack y NVDA, registrado por el usuario (11.10); nivel de componentes con el modo navegador de Vitest (14.1); A.7 como semilla ejecutada por el motor, con los números corregidos (A.7). **CT-08:** fila de `/presupuesto/estructura/plantilla` en §2.3, que CF-08 citaba y faltaba, y tablas 15.1 y 15.2 regeneradas con `trazabilidad.py` actualizado (marcas en la celda de la ruta, OP-53 y `verificar_saldo`); con eso pasan `trazabilidad.py --comprobar` y `cobertura.py`. Marcas **[F7]** en cada sección. Detalle en `07-pruebas.md` §3, §4, §22, §28 y §34.
 - **CH-227** (Fase 8, decidido por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). `/reglas` con buscador y el parámetro nuevo `?q=` (2.2 y 2.8). Marcas **[CH-227]**. Las duraciones y anchos de la entrega 3 (CH-220) no cambian este documento: viven en `06-identidad-visual.md`.
 - **CH-05-9.3** (diseño, entrega 4 · etapa 2, decisión E2-1; aplicado al cerrar el diseño el 11 de noviembre de 2026). Ingresar: en lugar del texto sobre «el procedimiento del repositorio», una línea de ayuda sin enlace que dice dónde se cambia la contraseña (9.3). Marca **[D4]**.
-- **CH-E5-2 y CH-E5-3** (diseño, entrega 4 · etapa 5; aprobados por el dueño, aplicados al cerrar el diseño el 11 de noviembre de 2026). CH-E5-2: componente `SelectorReportes` en 10.7, junto a `Pestanas`, para la navegación de FT-60 (CH-E5-1 en 06). CH-E5-3: `/ajustes/webhook`, `/ajustes/formatos` e `/ajustes/instituciones` pasan de [C] y [L] a [S] (páginas de consulta hijas de Ajustes, con «←», campana y barra inferior), y OPT-01 pasa a la ruta nueva `/ajustes/webhook/token` [C]; los flujos de formato siguen [L] y los de institución, [C] (1.3, 2.11 y las tablas de 15). Las tablas de 15 se actualizaron a mano en esta fila; `trazabilidad.py --comprobar` y `cobertura.py` se vuelven a correr en la Fase 8 con este 05 (V5-36). Marcas **[D4]**.
+- **CH-E5-2 y CH-E5-3** (diseño, entrega 4 · etapa 5; aprobados por el dueño, aplicados al cerrar el diseño el 11 de noviembre de 2026). CH-E5-2: componente `SelectorReportes` en 10.7, junto a `Pestanas`, para la navegación de FT-60 (CH-E5-1 en 06). CH-E5-3: `/ajustes/formatos` e `/ajustes/instituciones` pasan de [L] a [S] (páginas de consulta hijas de Ajustes, con «←», campana y barra inferior); **[CH-240]** la parte de `/ajustes/webhook` ([S], con OPT-01 en la ruta nueva `/ajustes/webhook/token` [C]) se aplica en la ficha de B10 que la implementa, junto con el código (el lint de rutas FE-59 compara §2 con `flujos/`); los flujos de formato siguen [L] y los de institución, [C] (1.3, 2.11 y las tablas de 15). Las tablas de 15 se actualizaron a mano en esta fila; `trazabilidad.py --comprobar` y `cobertura.py` se vuelven a correr en la Fase 8 con este 05 (V5-36). Marcas **[D4]**.
