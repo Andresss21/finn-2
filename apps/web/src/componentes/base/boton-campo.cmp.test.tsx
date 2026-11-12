@@ -173,7 +173,7 @@ describe('PRU-CMP-VAL-102 botones y campos', () => {
 
 // TA-567 (CH-240): componentes base de la auditoría.
 describe('PRU-CMP-PWA componentes base de la auditoría', () => {
-  it('PRU-CMP-PWA-761 [CH-240] el foco visible de Boton, Pastillas y un enlace usa --foco (3 px, separado 2 px), no el contorno del navegador', () => {
+  it('PRU-CMP-PWA-761 [] el foco visible de Boton, Pastillas y un enlace usa --foco (3 px, separado 2 px), no el contorno del navegador', () => {
     const nodo = montar(
       <>
         <Boton>Guardar</Boton>
@@ -203,7 +203,7 @@ describe('PRU-CMP-PWA componentes base de la auditoría', () => {
     }
   });
 
-  it('PRU-CMP-PWA-762 [CH-240] las acciones de Resultado y Vacio son botones tonales de 44 px, y un monto en un botón usa cifras tabulares con su espacio', () => {
+  it('PRU-CMP-PWA-762 [] las acciones de Resultado y Vacio son botones tonales de 44 px, y un monto en un botón usa cifras tabulares con su espacio', () => {
     const nodo = montar(
       <>
         <Resultado texto="Listo" salida={{ etiqueta: 'Deshacer', ejecutar: () => undefined }} />
@@ -232,7 +232,7 @@ describe('PRU-CMP-PWA componentes base de la auditoría', () => {
     expect(boton.textContent).toMatch(/Asignar \$75\.00/);
   });
 
-  it('PRU-CMP-PWA-763 [CH-240] un formulario con dos errores tiene una sola alerta (el resumen) y cada campo enlaza su mensaje', () => {
+  it('PRU-CMP-PWA-763 [] un formulario con dos errores tiene una sola alerta (el resumen) y cada campo enlaza su mensaje', () => {
     const nodo = montar(
       <form>
         <p role="alert">Revisá los campos marcados.</p>

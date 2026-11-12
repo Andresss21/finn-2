@@ -119,7 +119,7 @@ describe('PRU-CMP-PWA-400 entrada lateral al cambiar de período', () => {
 });
 
 describe('PRU-CMP-PWA dirección de entrada entre pantallas', () => {
-  it('PRU-CMP-PWA-771 [CH-240] la navegación a una pestaña a la derecha, a una hija y de vuelta pone la dirección correcta, y cada dirección tiene su animación (con su token) en globals.css', () => {
+  it('PRU-CMP-PWA-771 [] la navegación a una pestaña a la derecha, a una hija y de vuelta pone la dirección correcta, y cada dirección tiene su animación (con su token) en globals.css', () => {
     expect(direccionDeEntrada(null, '/presupuesto')).toBeNull();
     expect(direccionDeEntrada('/', '/presupuesto')).toBe('derecha');
     expect(direccionDeEntrada('/cuentas', '/actividad')).toBe('izquierda');

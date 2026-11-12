@@ -354,7 +354,7 @@ test.describe('PRU-E2E-PWA', () => {
     expect(await columnas()).toBe(2);
   });
 
-  test('PRU-E2E-PWA-714 [CA-E6-19, CH-241] las filas de la barra lateral miden 44 px con el símbolo de la marca; Programadas y Reportes marcan su fila; a 390 px el título «Presupuesto» no lleva puntos suspensivos y «Registrar» conserva su texto', async ({
+  test('PRU-E2E-PWA-714 [CA-E6-19] las filas de la barra lateral miden 44 px con el símbolo de la marca; Programadas y Reportes marcan su fila; a 390 px el título «Presupuesto» no lleva puntos suspensivos y «Registrar» conserva su texto', async ({
     page,
   }) => {
     await sembrarBase();

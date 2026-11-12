@@ -29,7 +29,7 @@ async function medirFoco(page: Page): Promise<{ estilo: string; ancho: string; c
 }
 
 test.describe('PRU-E2E-PWA', () => {
-  test('PRU-E2E-PWA-761 [CH-240] recorriendo con Tab Inicio, Presupuesto y Ajustes, cada control con foco muestra la línea --foco', async ({
+  test('PRU-E2E-PWA-761 [] recorriendo con Tab Inicio, Presupuesto y Ajustes, cada control con foco muestra la línea --foco', async ({
     page,
     context,
     baseURL,

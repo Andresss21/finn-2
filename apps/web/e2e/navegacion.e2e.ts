@@ -155,7 +155,7 @@ test.describe('PRU-E2E-PWA', () => {
 
   // TA-568 (GLO-01, GLO-02; 06-identidad-visual §11 [CH-241]): Registrar sube desde abajo con `--duracion-lenta`; con «reducir
   // movimiento» la pantalla aparece sin animación.
-  test('PRU-E2E-PWA-771 [CH-240] abrir Registrar desde Inicio anota la entrada desde abajo con --duracion-lenta, y con prefers-reduced-motion la pantalla aparece sin animación', async ({
+  test('PRU-E2E-PWA-771 [] abrir Registrar desde Inicio anota la entrada desde abajo con --duracion-lenta, y con prefers-reduced-motion la pantalla aparece sin animación', async ({
     page,
     context,
     baseURL,
