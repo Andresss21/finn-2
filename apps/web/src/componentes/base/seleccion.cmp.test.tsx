@@ -94,8 +94,12 @@ describe('PRU-CMP-VAL-104 selección y buscador', () => {
     ).toEqual([]);
   });
 
-  it('PRU-CMP-VAL-104 todo control mide al menos 44 × 44 px', () => {
+  it('PRU-CMP-VAL-104 todo control mide al menos 44 × 44 px', async () => {
     const raiz = montar(<Galeria />);
+    // La lista desplegable se carga diferida (05 §13.1): se espera a que llegue
+    await vi.waitFor(() => {
+      expect(raiz.querySelector('button[role=combobox]')).not.toBeNull();
+    });
     const medidas = objetivos(raiz).map((el) => {
       const r = el.getBoundingClientRect();
       return { texto: el.textContent || el.tagName, ancho: r.width, alto: r.height };
@@ -104,8 +108,12 @@ describe('PRU-CMP-VAL-104 selección y buscador', () => {
     expect(medidas.filter((m) => m.ancho < 44 || m.alto < 44)).toEqual([]);
   });
 
-  it('PRU-CMP-VAL-104 cada control tiene nombre accesible y el foco se ve', () => {
+  it('PRU-CMP-VAL-104 cada control tiene nombre accesible y el foco se ve', async () => {
     const raiz = montar(<Galeria />);
+    // La lista desplegable se carga diferida (05 §13.1): se espera a que llegue
+    await vi.waitFor(() => {
+      expect(raiz.querySelector('button[role=combobox]')).not.toBeNull();
+    });
     for (const el of raiz.querySelectorAll<HTMLElement>('button, input, [role=radio]')) {
       const nombre =
         el.getAttribute('aria-label') ||
@@ -133,6 +141,10 @@ describe('PRU-CMP-VAL-104 selección y buscador', () => {
     expect(raiz.querySelectorAll('[role=radio]')).toHaveLength(2);
     expect(raiz.querySelector('[role=radio][aria-checked=true]')?.getAttribute('value')).toBe('a');
     expect(raiz.querySelector('[role=radiogroup]')?.getAttribute('aria-labelledby')).toBeTruthy();
+    // La lista desplegable se carga diferida (05 §13.1): se espera a que llegue
+    await vi.waitFor(() => {
+      expect(raiz.querySelector('button[role=combobox]')).not.toBeNull();
+    });
     const lista = raiz.querySelector('button[role=combobox]') as HTMLButtonElement;
     expect(lista.labels[0]?.textContent).toContain('Cuenta');
     expect(lista.textContent).toBe('Cuenta 3');

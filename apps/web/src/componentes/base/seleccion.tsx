@@ -1,16 +1,9 @@
 'use client';
 // Selección y buscador (05 §10.7). Hasta 7 opciones se ven todas (radio); con más, lista desplegable.
-import { useId, useRef, useState, type KeyboardEvent } from 'react';
+import { lazy, Suspense, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../components/ui/select';
 import { base } from '../../textos/base';
 import { Campo, MensajeError } from './campo';
 
@@ -21,6 +14,10 @@ export interface Opcion {
 }
 
 const MAXIMO_VISIBLES = 7;
+
+// La lista desplegable (Radix Select) solo se carga cuando una selección tiene más de 7 opciones: el presupuesto de bytes de
+// las pantallas con pocas opciones (05 §13.1) no la paga.
+const SeleccionLista = lazy(() => import('./seleccion-lista'));
 
 // Fuera del JSX por L15: el estado deshabilitado lo da `has-disabled:` del radio que la etiqueta contiene.
 const CLASES_OPCION =
@@ -48,27 +45,24 @@ export function Seleccion({
   const idEtiqueta = useId();
   if (opciones.length > MAXIMO_VISIBLES) {
     return (
-      <Campo
-        etiqueta={etiqueta}
-        requerido
-        {...(descripcion === undefined ? {} : { descripcion })}
-        {...(error === undefined ? {} : { error })}
+      <Suspense
+        fallback={
+          <div className="flex flex-col gap-1">
+            <Label>{etiqueta}</Label>
+            <div aria-hidden="true" className="h-13 rounded-control bg-superficie-hundida" />
+          </div>
+        }
       >
-        {(control) => (
-          <Select value={valor} disabled={deshabilitada} onValueChange={alCambiar}>
-            <SelectTrigger {...control}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {opciones.map((o) => (
-                <SelectItem key={o.valor} value={o.valor}>
-                  {o.etiqueta}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </Campo>
+        <SeleccionLista
+          etiqueta={etiqueta}
+          opciones={opciones}
+          valor={valor}
+          alCambiar={alCambiar}
+          deshabilitada={deshabilitada}
+          {...(descripcion === undefined ? {} : { descripcion })}
+          {...(error === undefined ? {} : { error })}
+        />
+      </Suspense>
     );
   }
   return (
