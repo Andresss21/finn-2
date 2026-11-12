@@ -49,7 +49,6 @@ const disponible = (page: Page, nombre: string) =>
     .locator('[data-centavos]')
     .first();
 const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').first();
-const enCamino = (page: Page) => page.locator('[data-en-camino] [data-centavos]');
 const faltaReservar = (page: Page) =>
   page.locator('[data-fila-pago]').first().locator('[data-centavos]').first();
 const disponibleDePago = (page: Page) =>
