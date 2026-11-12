@@ -180,7 +180,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
     await monto(page).fill('45');
     await guardar(page).click();
 
-    await expect(page.getByText(t.avisos['AV-16'] ?? '')).toBeVisible();
+    await expect(page.getByText(t.conciliadaAdvertencia('T', 'el total'))).toBeVisible();
     await page.getByRole('button', { name: t.confirmar }).click();
 
     await expect(page.locator('[data-cambios-posteriores]')).toContainText(t.motivos.monto);
@@ -194,6 +194,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
     await irAEditar(page, '$40.00');
     await elegirOpcion(page, g.categoriaDeParte('1'), 'Casa');
     await guardar(page).click();
+    await expect(page.getByText(t.conciliadaInformacion('T'))).toBeVisible();
     await page.getByRole('button', { name: t.confirmar }).click();
 
     await terminada(page);
@@ -310,5 +311,64 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
       page.getByRole('link', { name: t.editar }),
     ])
       expect((await enlace.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+  });
+
+  test('PRU-E2E-TX-731 [CH-240] editar la fecha de una conciliada pide el paso con AV-16 de advertencia; cambiar solo la categoría lo muestra de información', async ({
+    page,
+  }) => {
+    await preparar(ESC47, '2027-02-16');
+    await irAEditar(page, '$40.00');
+    await page.getByLabel(g.fecha).fill('2027-02-05');
+    await guardar(page).click();
+    await expect(page.getByText(t.conciliadaAdvertencia('T', 'la fecha'))).toBeVisible();
+    await expect(page.getByText(t.conciliadaInformacion('T'))).toHaveCount(0);
+    await page.getByRole('button', { name: t.volverAEditar }).click();
+
+    await page.getByLabel(g.fecha).fill('2027-02-03');
+    await elegirOpcion(page, g.categoriaDeParte('1'), 'Casa');
+    await guardar(page).click();
+    await expect(page.getByText(t.conciliadaInformacion('T'))).toBeVisible();
+    await expect(page.getByText(t.conciliadaAdvertencia('T', 'la fecha'))).toHaveCount(0);
+  });
+
+  test('PRU-E2E-TX-732 [CH-240] editar una transacción de una cuenta archivada muestra sus datos, con Cuenta, Fecha y Total en solo lectura', async ({
+    page,
+  }) => {
+    await preparar(
+      [
+        { op: 'OP-01', cuenta: 'Ahorro' },
+        { op: 'OP-01', cuenta: 'Corriente' },
+        { op: 'OP-07', categoria: 'Super' },
+        { op: 'OP-21', monto: 100, fecha: '2027-02-01', hoy: '2027-02-01' },
+        { op: 'OP-14', categoria: 'Super', monto: 100, periodo: 'P1', hoy: '2027-02-01' },
+        {
+          op: 'OP-20',
+          cuenta: 'Ahorro',
+          monto: 100,
+          categoria: 'Super',
+          etiqueta: 'g',
+          fecha: '2027-02-03',
+          hoy: '2027-02-03',
+        },
+      ],
+      '2027-02-12',
+    );
+    // Archiva Ahorro (saldo $0.00) como la persona: Cuentas → detalle → Más acciones → Archivar
+    await abrir(page, '/cuentas');
+    await page.locator('[data-grupo="Efectivo"] a').filter({ hasText: 'Ahorro' }).first().click();
+    await esperarContenido(page);
+    await page.getByRole('button', { name: 'Más acciones' }).click();
+    await page.getByRole('menuitem', { name: 'Archivar', exact: true }).click();
+    await esperarContenido(page);
+    await page.getByRole('button', { name: 'Archivar', exact: true }).click();
+    await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
+
+    await irAEditar(page, '$100.00');
+    // Los campos están (no el formulario vacío de ACT-28) y los tres bloqueados dicen «Solo lectura»
+    await expect(page.getByLabel(g.fecha)).toBeDisabled();
+    await expect(page.getByRole('textbox', { name: g.total, exact: true })).toBeDisabled();
+    await expect(page.locator('[data-cuenta-fija]')).toContainText(t.soloLectura);
+    await expect(page.getByRole('textbox', { name: g.comercio })).toBeEnabled();
+    await expect(guardar(page)).toBeEnabled();
   });
 });
