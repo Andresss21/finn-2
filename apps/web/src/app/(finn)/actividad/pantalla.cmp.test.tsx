@@ -322,7 +322,7 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
     expect(raiz.querySelector('[data-columna-lista] [role="search"]')).not.toBeNull();
   });
 
-  it('PRU-CMP-TX-460 el estado de carga anuncia «Cargando la pantalla» una vez y no dibuja números', () => {
+  it('PRU-CMP-TX-460 el estado de carga anuncia «Cargando actividad» una vez y no dibuja números', () => {
     const nodo = document.createElement('div');
     document.body.append(nodo);
     const raiz = createRoot(nodo);
@@ -330,9 +330,8 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
       raiz.render(<Cargando />);
     });
     montados.push({ raiz, nodo });
-    const region = nodo.querySelector('[role="status"]');
-    expect(region?.getAttribute('aria-busy')).toBe('true');
-    expect(region?.textContent).toBe('Cargando la pantalla');
+    expect(nodo.querySelector('[role="status"]')?.textContent).toBe('Cargando actividad');
+    expect(nodo.querySelector('[aria-busy="true"]')).not.toBeNull();
     expect(nodo.querySelector('[data-centavos]')).toBeNull();
   });
 });

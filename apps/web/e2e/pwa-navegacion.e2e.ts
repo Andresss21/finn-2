@@ -93,4 +93,41 @@ test.describe('PRU-E2E-PWA', () => {
     );
     expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('BODY');
   });
+
+  // TA-564 (E6-2, `T2-navegacion/en-curso`): el punto del enlace y la franja de 3 px mientras la navegación está pendiente.
+  test('PRU-E2E-PWA-731 [CA-E6-2] al tocar Cuentas con la respuesta demorada, la franja de 3 px y el punto aparecen y se van al llegar', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await entrarAal2(context, baseURL ?? '');
+    await page.goto('/presupuesto');
+    await esperarHidratacion(page);
+    let liberar: () => void = () => undefined;
+    const compuerta = new Promise<void>((resolver) => {
+      liberar = resolver;
+    });
+    await page.route(
+      (url) => url.pathname === '/cuentas',
+      async (ruta) => {
+        const cabeceras = ruta.request().headers();
+        if (cabeceras['rsc'] === '1' && cabeceras['next-router-prefetch'] === undefined)
+          await compuerta;
+        await ruta.continue();
+      },
+    );
+    const enlace = page
+      .locator('nav[aria-label="' + navegacion.principal + '"]:visible')
+      .getByRole('link', { name: navegacion.secciones.cuentas });
+    await enlace.click();
+    await expect(enlace).toHaveAttribute('aria-busy', 'true');
+    await expect(enlace.locator('[data-punto-pendiente]')).toBeVisible();
+    const franja = page.getByRole('progressbar', { name: navegacion.navegando });
+    await expect(franja).toBeVisible();
+    expect((await franja.boundingBox())?.height).toBe(3);
+    liberar();
+    await expect(page).toHaveURL(/\/cuentas$/);
+    await expect(franja).toHaveCount(0);
+    await expect(page.locator('[data-punto-pendiente]')).toHaveCount(0);
+  });
 });

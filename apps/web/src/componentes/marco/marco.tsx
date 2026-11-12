@@ -7,7 +7,16 @@
 // a…» y la campana (más «Más acciones» si la pantalla publica `PublicarAcciones`, CH-115), las demás Registrar, campana y ☰;
 // `PaginaFlujo` oculta las barras. Computadora: campana (y «Más acciones») arriba a la derecha.
 import { usePathname, useSearchParams } from 'next/navigation';
-import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useConexion } from '../../cliente/useConexion';
 import { useRefrescoAutomatico } from '../../cliente/useRefrescoAutomatico';
 import { navegacion } from '../../textos/navegacion';
@@ -19,7 +28,9 @@ import {
   EnlaceFinn,
   EVENTO_SIN_CONEXION,
 } from '../navegacion/enlace-finn';
+import { direccionDeEntrada } from '../navegacion/direccion-entrada';
 import { useRefrescar } from '../navegacion/use-refrescar';
+import { EVENTO_ARRASTRE } from './arrastre';
 import { MasSecciones, NavegacionApp } from '../navegacion/navegacion-app';
 import {
   barraDeRuta,
@@ -92,6 +103,44 @@ function CuerpoDelMarco({
       return despues;
     });
   }, []);
+  // GLO-01 y GLO-02 (06-identidad-visual §11): de dónde entra la pantalla. El marco solo anota la dirección en `#contenido`; el
+  // movimiento es CSS (`globals.css`), así que ninguna ruta suma JS.
+  const previa = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    const direccion = direccionDeEntrada(previa.current, pathname);
+    previa.current = pathname;
+    const contenido = document.getElementById('contenido');
+    if (direccion === null) contenido?.removeAttribute('data-entrada');
+    else contenido?.setAttribute('data-entrada', direccion);
+  }, [pathname]);
+  // E3-7: mientras dura un arrastre en el teléfono la barra inferior queda `inert` (el arrastre lo hace la Bandeja, TA-576).
+  useEffect(() => {
+    const alArrastrar = (e: Event): void => {
+      const arrastrando = (e as CustomEvent<boolean>).detail;
+      for (const barra of document.querySelectorAll('nav[data-marco-barra]')) {
+        if (arrastrando) barra.setAttribute('inert', '');
+        else barra.removeAttribute('inert');
+      }
+    };
+    window.addEventListener(EVENTO_ARRASTRE, alArrastrar);
+    return () => {
+      window.removeEventListener(EVENTO_ARRASTRE, alArrastrar);
+    };
+  }, []);
+  // [E6-20, CH-241] El título de la barra del teléfono que no entra junto a Registrar, la campana y ☰ se achica (`data-ajustado`).
+  useEffect(() => {
+    const ajustar = (): void => {
+      const h1 = document.querySelector<HTMLElement>('#contenido h1.text-titulo-pantalla');
+      if (h1 === null) return;
+      h1.removeAttribute('data-ajustado');
+      if (h1.scrollWidth > h1.clientWidth) h1.setAttribute('data-ajustado', '');
+    };
+    ajustar();
+    window.addEventListener('resize', ajustar);
+    return () => {
+      window.removeEventListener('resize', ajustar);
+    };
+  }, [pathname]);
   // 05 §14.3: las pruebas esperan este atributo antes de interactuar.
   useEffect(() => {
     document.documentElement.setAttribute('data-hidratado', 'si');
@@ -117,22 +166,28 @@ function CuerpoDelMarco({
         {navegacion.saltar}
       </a>
       {enLinea ? null : (
-        // [A35] Banda compacta `--texto` sobre `--fondo` con la nube tachada (radio de control, 10 × 14).
+        // E6-3 (entrega 4): forma aprobada, `--marca` de 48 px de alto y radio 16, con la nube tachada.
         <div
           role="status"
           data-sin-conexion
-          className="text-etiqueta fixed inset-x-4 top-16 z-40 flex items-center gap-2 rounded-control bg-texto px-3.5 py-2.5 text-fondo md:top-2 md:right-6 md:left-68"
+          className="text-etiqueta fixed inset-x-4 top-16 z-40 flex min-h-12 items-center gap-2 rounded-contenedor bg-marca px-3.5 py-2.5 text-texto-sobre-marca md:top-2 md:right-6 md:left-68"
         >
           <Icono nombre="wifioff" tamano={18} />
           <span>{bloqueada ? navegacion.sinConexionNavegacion : navegacion.sinConexion}</span>
         </div>
       )}
       {pendientes.size > 0 ? (
+        // E6-2: franja de 3 px (`--accion` sobre `--accion-tonal`) debajo del margen seguro; con movimiento reducido
+        // queda fija al 38 % (la regla de movimiento de `globals.css` anula la animación).
         <div
           role="progressbar"
           aria-label={navegacion.navegando}
-          className="fixed inset-x-0 top-0 z-50 h-0.75 animate-pulse bg-accion"
-        />
+          data-franja-navegacion
+          className="fixed inset-x-0 z-50 h-0.75 overflow-hidden bg-accion-tonal"
+          style={{ top: 'env(safe-area-inset-top, 0px)' }}
+        >
+          <div className="finn-franja h-full w-[38%] bg-accion" />
+        </div>
       ) : null}
       <NavegacionApp {...comun} registrar={<AccesoRegistrar ruta={ruta} variante="lateral" />} />
       <div
@@ -158,7 +213,7 @@ function CuerpoDelMarco({
           )}
           <span className="flex-1 md:hidden" />
           {tipoBarra === 'principal' ? (
-            <span className="flex w-27.5 justify-end max-[25rem]:w-11 md:hidden">
+            <span className="flex w-27.5 justify-end md:hidden">
               <AccesoRegistrar ruta={ruta} variante="barra" />
             </span>
           ) : null}

@@ -20,7 +20,14 @@ export const ContextoNavegacionPendiente = createContext<(id: string, pendiente:
 );
 
 // Hijo de `Link`, el único lugar donde `useLinkStatus` da el estado. `aria-busy` va en el `<a>`, que no es suyo.
-function Senal() {
+// E6-2 (FE-39, `T2-navegacion`): el punto de 8 px `--accion` del enlace pendiente. En la barra inferior va arriba a la derecha del
+// ícono; en la barra lateral, al final de la fila. Solo lo piden esos enlaces (`punto`). Clases literales (L13).
+const PUNTOS = {
+  icono: 'absolute top-1.5 left-1/2 ml-2.5 size-2 rounded-full bg-accion',
+  fila: 'ml-auto size-2 shrink-0 rounded-full bg-accion',
+} as const;
+
+function Senal({ punto }: { readonly punto?: keyof typeof PUNTOS | undefined }) {
   const { pending } = useLinkStatus();
   const id = useId();
   const marcar = useContext(ContextoNavegacionPendiente);
@@ -34,7 +41,14 @@ function Senal() {
       marcar(id, false);
     };
   }, [pending, id, marcar]);
-  return <span ref={ancla} hidden />;
+  return (
+    <>
+      <span ref={ancla} hidden />
+      {pending && punto !== undefined ? (
+        <span aria-hidden="true" data-punto-pendiente className={PUNTOS[punto]} />
+      ) : null}
+    </>
+  );
 }
 
 /** El enlace avisa al marco con este evento cuando no navega por falta de conexión (05 §8.5, FE-56). */
@@ -42,9 +56,11 @@ export const EVENTO_SIN_CONEXION = 'finn:navegacion-sin-conexion';
 
 type PropsEnlaceFinn = Omit<ComponentProps<typeof Link>, 'onClick'> & {
   readonly onClick?: MouseEventHandler<HTMLAnchorElement>;
+  /** E6-2: dónde dibuja el punto de «pendiente»: junto al ícono (barra inferior) o al final de la fila (barra lateral). */
+  readonly punto?: keyof typeof PUNTOS;
 };
 
-export function EnlaceFinn({ children, className, onClick, ...props }: PropsEnlaceFinn) {
+export function EnlaceFinn({ children, className, onClick, punto, ...props }: PropsEnlaceFinn) {
   return (
     <Link
       {...props}
@@ -59,7 +75,7 @@ export function EnlaceFinn({ children, className, onClick, ...props }: PropsEnla
       className={[className, 'active:opacity-70 aria-busy:opacity-60'].filter(Boolean).join(' ')}
     >
       {children}
-      <Senal />
+      <Senal punto={punto} />
     </Link>
   );
 }

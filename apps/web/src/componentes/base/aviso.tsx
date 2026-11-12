@@ -2,6 +2,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '../../components/ui/utils';
 import { base } from '../../textos/base';
+import { ACCION_TONAL } from './accion-tonal';
 import { Icono } from './icono';
 
 export type EstadoFinanciero =
@@ -52,9 +53,7 @@ export function AvisoEnLinea({
           <p className={cn('text-etiqueta font-bold', clases.texto)}>{titulo}</p>
         )}
         <div className="text-cuerpo-pequeno text-texto">{children}</div>
-        {accion === undefined ? null : (
-          <div className={cn('mt-1 font-bold underline', clases.texto)}>{accion}</div>
-        )}
+        {accion === undefined ? null : <div className={cn('mt-2', ACCION_TONAL)}>{accion}</div>}
       </div>
     </div>
   );

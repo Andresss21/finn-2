@@ -5,6 +5,18 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../app/globals.css';
 import { Boton } from './boton';
 import { EntradaTexto } from './campo';
+import { Pastillas } from './pastillas';
+import { Resultado } from './resultado';
+import { Vacio } from './vacio';
+
+// Solo el límite externo: `Pastillas` usa `EnlaceFinn`, que necesita `next/link` y `next/navigation`.
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
+    createElement('a', { href, ...resto }, children);
+  return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
+});
+vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({}) }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -156,5 +168,83 @@ describe('PRU-CMP-VAL-102 botones y campos', () => {
     expect(
       document.getElementById(monto.getAttribute('aria-describedby') ?? '')?.textContent,
     ).toContain('Escribí un monto mayor a cero');
+  });
+});
+
+// TA-567 (CH-240): componentes base de la auditoría.
+describe('PRU-CMP-PWA componentes base de la auditoría', () => {
+  it('PRU-CMP-PWA-761 [] el foco visible de Boton, Pastillas y un enlace usa --foco (3 px, separado 2 px), no el contorno del navegador', () => {
+    const nodo = montar(
+      <>
+        <Boton>Guardar</Boton>
+        <Pastillas
+          etiqueta="Filtro"
+          opciones={[
+            { valor: 'a', etiqueta: 'Uno' },
+            { valor: 'b', etiqueta: 'Dos' },
+          ]}
+          valor="a"
+          alCambiar={() => undefined}
+        />
+        <a href="/x">Enlace</a>
+      </>,
+    );
+    const sonda = document.createElement('span');
+    sonda.style.color = 'var(--foco)';
+    nodo.append(sonda);
+    const foco = getComputedStyle(sonda).color;
+    for (const control of nodo.querySelectorAll<HTMLElement>('button, a[href]')) {
+      control.focus({ focusVisible: true } as FocusOptions);
+      const e = getComputedStyle(control);
+      expect(e.outlineStyle, control.textContent).toBe('solid');
+      expect(e.outlineWidth).toBe('3px');
+      expect(e.outlineOffset).toBe('2px');
+      expect(e.outlineColor).toBe(foco);
+    }
+  });
+
+  it('PRU-CMP-PWA-762 [] las acciones de Resultado y Vacio son botones tonales de 44 px, y un monto en un botón usa cifras tabulares con su espacio', () => {
+    const nodo = montar(
+      <>
+        <Resultado texto="Listo" salida={{ etiqueta: 'Deshacer', ejecutar: () => undefined }} />
+        <Vacio titulo="Nada" texto="Sin datos" accion={<a href="/crear">Crear</a>} />
+        <Boton>Asignar $75.00</Boton>
+      </>,
+    );
+    const tonal = document.createElement('span');
+    tonal.style.backgroundColor = 'var(--accion-tonal)';
+    nodo.append(tonal);
+    const fondoTonal = getComputedStyle(tonal).backgroundColor;
+    const acciones = [
+      nodo.querySelector('[data-testid="resultado"] button'),
+      nodo.querySelector('a[href="/crear"]'),
+    ] as HTMLElement[];
+    for (const a of acciones) {
+      const e = getComputedStyle(a);
+      expect(e.backgroundColor).toBe(fondoTonal);
+      expect(e.textDecorationLine).toBe('none');
+      expect(a.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    }
+    const boton = [...nodo.querySelectorAll('button')].find((b) =>
+      b.textContent.startsWith('Asignar'),
+    ) as HTMLElement;
+    expect(getComputedStyle(boton).fontVariantNumeric).toContain('tabular-nums');
+    expect(boton.textContent).toMatch(/Asignar \$75\.00/);
+  });
+
+  it('PRU-CMP-PWA-763 [] un formulario con dos errores tiene una sola alerta (el resumen) y cada campo enlaza su mensaje', () => {
+    const nodo = montar(
+      <form>
+        <p role="alert">Revisá los campos marcados.</p>
+        <EntradaTexto etiqueta="Nombre" error="Completá este campo." />
+        <EntradaTexto etiqueta="Comercio" error="Es demasiado corto." />
+      </form>,
+    );
+    expect(nodo.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    for (const campo of nodo.querySelectorAll('input')) {
+      const id = campo.getAttribute('aria-describedby') ?? '';
+      expect(campo.getAttribute('aria-invalid')).toBe('true');
+      expect(nodo.querySelector(`#${CSS.escape(id)}`)?.textContent).toMatch(/\./);
+    }
   });
 });

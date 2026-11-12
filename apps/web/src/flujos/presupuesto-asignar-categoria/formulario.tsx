@@ -6,6 +6,7 @@ import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useState, type ReactNode } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -20,7 +21,6 @@ import { aplicarSigno, normalizarMontoEscrito } from '../../formularios/normaliz
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { asignarEnCategoria, asignarRapido } from '../../servidor/acciones/presupuesto';
-import { formularios } from '../../textos/formularios';
 import { presupuestoAsignar as t } from '../../textos/presupuesto-asignar';
 import { PieDeHoja } from '../pie-de-hoja';
 import { CampoConFoco } from './campo-con-foco';
@@ -64,7 +64,6 @@ interface Vista {
     readonly datos?: { readonly lpa?: Centavos };
   }[];
 }
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 
 /** Lo que el servidor guarda como Asignado, escrito como lo teclea la persona: el valor absoluto y su signo. */
 const camposDe = (asignado: Centavos): Campos => ({
@@ -227,35 +226,25 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
           requerido
         />
       </CampoConFoco>
-      {estado === 'error' && fallo !== undefined ? (
+      {estado === 'error' && fallo !== undefined && !conflicto ? (
+        <ErrorDeFlujo tipo="corto" error={fallo} alReintentar={() => void operacion.reintentar()} />
+      ) : null}
+      {estado === 'error' && fallo !== undefined && conflicto ? (
         <AvisoEnLinea
           estado="problema"
           aparecioDespues
-          {...(conflicto
-            ? {
-                accion: (
-                  <Boton
-                    variante="secundaria"
-                    onClick={() => {
-                      alUsarActual(actual, formulario.getValues());
-                    }}
-                  >
-                    {t.usarValorActual}
-                  </Boton>
-                ),
-              }
-            : REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                      {formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
+          accion={
+            <Boton
+              variante="secundaria"
+              onClick={() => {
+                alUsarActual(actual, formulario.getValues());
+              }}
+            >
+              {t.usarValorActual}
+            </Boton>
+          }
         >
-          {fallo.mensaje}
-          {conflicto ? ` ${t.valorActual(formatearMonto(actual))}` : ''}
+          {fallo.mensaje} {t.valorActual(formatearMonto(actual))}
         </AvisoEnLinea>
       ) : null}
       <PieDeHoja rutaPadre={rutaPadre} superpuesto={superpuesto}>

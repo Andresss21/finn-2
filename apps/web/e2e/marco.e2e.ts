@@ -11,7 +11,7 @@ import { fijarRelojServidor } from '../../../tools/pruebas/e2e/reloj.ts';
 import type { Escenario } from '../../../packages/dominio/escenarios/tipos.ts';
 import { estados, navegacion } from '../src/textos/index.ts';
 
-const ANCHO_ESCRITORIO = 768;
+const ANCHO_ESCRITORIO = 1024;
 const HOY = '2027-02-10';
 
 async function sembrarBase(): Promise<void> {
@@ -172,8 +172,8 @@ test.describe('PRU-E2E-PWA', () => {
     await expect(campana).toBeVisible();
     await expect(menu).toBeVisible();
     await expect(registrar).toBeVisible();
-    // Con el título largo, Registrar queda solo con su ícono de 44 × 44 y conserva su nombre.
-    expect(await registrar.boundingBox()).toMatchObject({ width: 44, height: 44 });
+    // [CH-241, E6-20] Registrar conserva su texto; es el título el que se achica.
+    await expect(registrar).toContainText(navegacion.registrar);
     expect(await sinPuntos()).toBe(true);
   });
 
@@ -283,5 +283,104 @@ test.describe('PRU-E2E-PWA', () => {
     await page.keyboard.press('Escape');
     await expect(page.getByRole('menu')).toHaveCount(0);
     await expect(boton).toBeFocused();
+  });
+
+  // TA-562 (CH-240, CH-241; D-1, D-2, E4-26, E5-11, E6-19, E6-20).
+  test('PRU-E2E-PWA-711 [CA-E4-4, CA-E4-5] a 1440 px un flujo de una columna mide ≤ 720 px, y Registrar gasto ocupa 1096 px en dos columnas iguales', async ({
+    page,
+  }) => {
+    test.skip(test.info().project.name !== 'escritorio', 'mide la computadora');
+    await sembrarBase();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const principal = page.locator('#contenido > main');
+    await abrir(page, '/cuentas/nueva');
+    expect((await principal.boundingBox())?.width ?? 0).toBeLessThanOrEqual(720);
+    await abrir(page, '/registrar/gasto');
+    // El ancho del contenido: 1440 − 248 de la barra lateral − 2 × 48 de relleno.
+    expect(Math.round(((await principal.boundingBox())?.width ?? 0) - 96)).toBe(1096);
+    const columnas = await page
+      .locator('#contenido form div.grid')
+      .first()
+      .evaluate((g) => getComputedStyle(g).gridTemplateColumns.split(' '));
+    expect(columnas).toHaveLength(2);
+    expect(columnas[0]).toBe(columnas[1]);
+  });
+
+  test('PRU-E2E-PWA-712 [CA-E4-6, CA-E6-13] a 900 y a 768 px hay barra superior e inferior sin barra lateral, el contenido mide ≤ 640 px con 24 px de relleno, Registrar gasto va en una columna y la hoja se centra a 640', async ({
+    page,
+  }) => {
+    test.skip(test.info().project.name !== 'escritorio', 'mide la tableta');
+    await sembrarBase();
+    for (const ancho of [900, 768]) {
+      await page.setViewportSize({ width: ancho, height: 1024 });
+      await abrir(page, '/presupuesto');
+      await expect(page.locator('aside')).toBeHidden();
+      await expect(barra(page)).toBeVisible();
+      await expect(page.locator('nav[data-marco-barra]')).toBeVisible();
+      const main = page.locator('#contenido > main');
+      expect((await main.boundingBox())?.width ?? 0).toBeLessThanOrEqual(640);
+      expect(await estilo(page, '#contenido > main', 'padding-left')).toBe('24px');
+
+      await abrir(page, '/registrar/gasto');
+      const columnas = await page
+        .locator('#contenido form div.grid')
+        .first()
+        .evaluate((g) => getComputedStyle(g).gridTemplateColumns.split(' ').length);
+      expect(columnas).toBe(1);
+
+      await abrir(page, '/presupuesto');
+      await page.getByRole('button', { name: navegacion.secundarias }).click();
+      const caja = await page.getByRole('dialog').boundingBox();
+      expect(caja?.width ?? 0).toBeLessThanOrEqual(640);
+      expect(Math.abs((caja?.x ?? 0) + (caja?.width ?? 0) / 2 - ancho / 2)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('PRU-E2E-PWA-713 [CA-E4-7] a 1024 px aparece la barra lateral y Registrar gasto va en una columna; a 1280, en dos', async ({
+    page,
+  }) => {
+    test.skip(test.info().project.name !== 'escritorio', 'mide la computadora');
+    await sembrarBase();
+    const columnas = async (): Promise<number> =>
+      page
+        .locator('#contenido form div.grid')
+        .first()
+        .evaluate((g) => getComputedStyle(g).gridTemplateColumns.split(' ').length);
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await abrir(page, '/registrar/gasto');
+    await expect(page.locator('aside')).toBeVisible();
+    expect(await columnas()).toBe(1);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    expect(await columnas()).toBe(2);
+  });
+
+  test('PRU-E2E-PWA-714 [CA-E6-19] las filas de la barra lateral miden 44 px con el símbolo de la marca; Programadas y Reportes marcan su fila; a 390 px el título «Presupuesto» no lleva puntos suspensivos y «Registrar» conserva su texto', async ({
+    page,
+  }) => {
+    await sembrarBase();
+    if (enEscritorio(page)) {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await abrir(page, '/programadas');
+      const lateral = page.locator('aside');
+      await expect(lateral.locator('[style*="mask"]')).toHaveCount(1);
+      for (const fila of await lateral.locator('nav a').all())
+        expect((await fila.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+      await expect(
+        lateral.getByRole('link', { name: navegacion.secciones.programadas }),
+      ).toHaveAttribute('aria-current', 'page');
+      await abrir(page, '/reportes/tendencia');
+      await expect(
+        lateral.getByRole('link', { name: navegacion.secciones.reportes }),
+      ).toHaveAttribute('aria-current', 'page');
+    } else {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await abrir(page, '/presupuesto');
+      expect(await titulo(page).evaluate((h) => h.scrollWidth <= h.clientWidth)).toBe(true);
+      await expect(barra(page).getByRole('link', { name: navegacion.registrar })).toContainText(
+        navegacion.registrar,
+      );
+      await abrir(page, '/reportes/tendencia');
+      await expect(page.locator('nav[data-marco-barra] [aria-current="page"]')).toHaveCount(0);
+    }
   });
 });

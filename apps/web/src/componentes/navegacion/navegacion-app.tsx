@@ -107,7 +107,8 @@ function BarraInferior({ secciones, seccionActiva, contadores }: PropsNavegacion
                     href={s.ruta}
                     aria-label={nombre}
                     aria-current={activa}
-                    className="group text-etiqueta flex flex-col items-center gap-0.5 text-xs font-bold text-texto"
+                    punto="icono"
+                    className="group text-etiqueta relative flex flex-col items-center gap-0.5 text-xs font-bold text-texto"
                   >
                     <span className="relative -mt-6.5 inline-flex size-15.5 items-center justify-center rounded-identidad border-4 border-fondo bg-marca text-texto-sobre-marca shadow-elevacion-2 group-aria-[current=page]:bg-accion">
                       {/* Mientras hay movimientos por revisar, dos halos desfasados (06-identidad-visual 3.1; decorativos). */}
@@ -130,6 +131,7 @@ function BarraInferior({ secciones, seccionActiva, contadores }: PropsNavegacion
                   href={s.ruta}
                   aria-label={nombre}
                   aria-current={activa}
+                  punto="icono"
                   className={PESTANA}
                 >
                   <span aria-hidden="true" className={RAYA} />
@@ -162,6 +164,7 @@ function FilaLateral({
         href={seccion.ruta}
         aria-label={nombre}
         aria-current={activa ? 'page' : undefined}
+        punto="fila"
         className={FILAS[alta ? 'alta' : 'baja']}
       >
         <span

@@ -104,7 +104,7 @@ test.describe('PRU-E2E-BAND', () => {
     expect(a?.height).toBeGreaterThanOrEqual(44);
     expect(d?.height).toBeGreaterThanOrEqual(44);
     expect((d?.y ?? 0) > (a?.y ?? 99)).toBe(true);
-    if ((page.viewportSize()?.width ?? 0) < 768)
+    if ((page.viewportSize()?.width ?? 0) < 1024)
       expect((d?.y ?? 0) + (d?.height ?? 0)).toBeGreaterThan(
         (page.viewportSize()?.height ?? 0) - 40,
       );
