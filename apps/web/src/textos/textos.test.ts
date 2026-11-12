@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { areas, autenticacion, glosario } from './index.ts';
 
 // Voseo de 04 §7.10 aplicado a src/textos/ (05 §12.2): formas tuteadas al inicio o tras puntuación.
-const TUTEO = /(^|[.!?¡¿,;:]\s*)(revisa|intenta|vuelve|puedes|tienes|elige|asigna)\s/i;
+const TUTEO = /(^|[.!?¡¿,;:]\s*)(revisa|intenta|vuelve(?! a\s*$)|puedes|tienes|elige|asigna)\s/i;
 
 // Recorre el catálogo; las funciones se evalúan con argumentos de muestra.
 function* textos(nodo: unknown, ruta: string): Generator<[string, string]> {

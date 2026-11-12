@@ -68,7 +68,10 @@ const LIBRETA: CSSProperties = {
   maskImage: 'linear-gradient(to left, var(--decorativo-mascara) 30%, transparent)',
 };
 // Costura de la billetera (E2-12): línea punteada a 8 px del borde, en el color del motivo.
-const COSTURA: CSSProperties = { border: '1.5px dashed var(--cuenta-motivo)' };
+const COSTURA: CSSProperties = {
+  border: '1.5px dashed var(--cuenta-motivo)',
+  borderRadius: 'calc(var(--radio-identidad) - 8px)',
+};
 // Motivo de la cuenta de ahorro: anillos concéntricos cada 11 px en un círculo de 150 px que sale por la esquina.
 const ANILLOS: CSSProperties = {
   backgroundImage:
@@ -104,7 +107,7 @@ export function identidadEfectivo(subtipo: SubtipoEfectivo = 'corriente'): {
           aria-hidden="true"
           data-motivo="costura"
           style={COSTURA}
-          className="absolute inset-2 rounded-[calc(var(--radio-identidad)-8px)]"
+          className="absolute inset-2"
         />
       ),
     };

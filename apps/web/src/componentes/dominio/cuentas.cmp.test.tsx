@@ -495,7 +495,7 @@ describe('PRU-CMP-CTA-401 identidad de efectivo por el subtipo', () => {
 describe('PRU-CMP-CTA-711 alta de préstamo por secciones', () => {
   function AltaPrestamo(): ReactNode {
     const { register, watch } = useForm<Campos>({
-      defaultValues: valoresIniciales('2027-02-05' as never, 'prestamo', ''),
+      defaultValues: valoresIniciales('2027-02-05', 'prestamo', ''),
     });
     return (
       <CamposDeTipo

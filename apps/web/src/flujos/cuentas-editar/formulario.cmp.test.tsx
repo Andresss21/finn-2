@@ -145,7 +145,7 @@ describe('PRU-CMP-CTA-400 editar el subtipo de efectivo', () => {
       />,
     );
     const campo = (etiqueta: string) =>
-      [...nodo.querySelectorAll('label')].find((l) => l.textContent?.startsWith(etiqueta))
+      [...nodo.querySelectorAll('label')].find((l) => l.textContent.startsWith(etiqueta))
         ?.control as HTMLInputElement;
     expect(campo('Límite de crédito').value).toBe('2500.00');
     expect(campo('Día de corte').value).toBe('15');

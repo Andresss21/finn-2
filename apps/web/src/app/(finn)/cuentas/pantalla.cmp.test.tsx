@@ -258,7 +258,7 @@ describe('PRU-CMP-CTA-103 pantalla de Cuentas', () => {
     expect(bill?.querySelector('[data-motivo="costura"]')).not.toBeNull();
     expect(bill?.querySelector('[data-motivo="libreta"]')).toBeNull();
     const rotulos = [...raiz.querySelectorAll('[data-billetera] span')].filter((s) =>
-      /crédito/.test(s.textContent ?? ''),
+      /crédito/.test(s.textContent),
     );
     expect(rotulos.length).toBeGreaterThan(0);
     for (const r of rotulos) expect(getComputedStyle(r).opacity).toBe('1');
