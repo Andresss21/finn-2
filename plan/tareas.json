@@ -617,7 +617,7 @@
 
   "TA-560": { "estado": "terminada", "rama": "ta-560-fichas-b10-v2", "pr": 554 },
 
-  "TA-561": { "estado": "pendiente" },
+  "TA-561": { "estado": "en_curso", "rama": "ta-561-tokens-movimiento" },
 
   "TA-562": { "estado": "pendiente" },
 

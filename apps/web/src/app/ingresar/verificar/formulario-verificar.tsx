@@ -66,7 +66,7 @@ export function FormularioVerificar({
       () => {
         window.location.assign(rutas.destino);
       },
-      reducido ? 0 : duracionToken('--espera-verificado'),
+      reducido ? 0 : duracionToken('--duracion-confirmacion'),
     );
     return () => {
       clearTimeout(reloj);

@@ -141,7 +141,7 @@ function PasoCodigo({
       () => {
         terminar.current();
       },
-      reducido ? 0 : duracionToken('--espera-verificado'),
+      reducido ? 0 : duracionToken('--duracion-confirmacion'),
     );
     return () => {
       clearTimeout(reloj);

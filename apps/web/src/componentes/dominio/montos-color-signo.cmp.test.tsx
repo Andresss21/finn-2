@@ -258,7 +258,7 @@ describe('PRU-CMP-PWA destello de montos', () => {
     dibujar(9000);
     expect(destello(nodo)?.getAttribute('data-destello')).toBe('sube');
     expect(estilo(destello(nodo)).animationName).toBe('fz-destello-sube');
-    expect(estilo(destello(nodo)).animationDuration).toBe('0.6s');
+    expect(estilo(destello(nodo)).animationDuration).toBe('0.65s');
     const monto = destello(nodo)?.querySelector('[data-centavos]');
     expect(estilo(monto).animationName).toBe('fz-tinte-sube');
     // El tinte arranca en el color del token, aunque el monto tenga el suyo.

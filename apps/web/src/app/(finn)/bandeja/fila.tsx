@@ -90,7 +90,7 @@ export function FilaBandeja({
   const aprobado = useRef<ResultadoFila | undefined>(undefined);
   const salida = useSalida(() => {
     alTerminar(m.id, aprobado.current);
-  }, '--duracion-salida-fila');
+  }, '--duracion-normal');
   const salirFila = useRef(salida.salir);
   useEffect(() => {
     salirFila.current = salida.salir;

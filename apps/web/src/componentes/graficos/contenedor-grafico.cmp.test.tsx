@@ -164,7 +164,7 @@ describe('PRU-CMP-REP entrada de los gráficos', () => {
     expect(
       barras.map((b) => Math.round(segundos(getComputedStyle(b).animationDelay) * 1000)),
     ).toEqual([0, 80]);
-    expect(segundos(getComputedStyle(barras[0] as Element).animationDuration)).toBeCloseTo(0.7, 3);
+    expect(segundos(getComputedStyle(barras[0] as Element).animationDuration)).toBeCloseTo(0.8, 3);
     // Crece desde la base: el origen es el borde inferior de la propia barra.
     expect(getComputedStyle(barras[0] as Element).transformBox).toBe('fill-box');
     const revela = raiz.querySelector('mask circle.fz-dona-revela') as Element;

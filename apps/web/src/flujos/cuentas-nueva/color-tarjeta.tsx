@@ -52,7 +52,7 @@ export function ColorTarjeta({ valor, alCambiar, vista }: PropsColorTarjeta) {
               style={{ backgroundImage: `var(--tarjeta-${c.nombre})` }}
               className="block size-11 rounded-control shadow-elevacion-1 peer-checked:outline-3 peer-checked:outline-offset-2 peer-checked:outline-texto peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-foco"
             />
-            <span className="sr-only">{caraTarjeta.colores[c.hex] ?? c.nombre}</span>
+            <span className="sr-only">{caraTarjeta.colores[c.nombre] ?? c.nombre}</span>
           </label>
         ))}
       </div>

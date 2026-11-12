@@ -24,7 +24,8 @@ export default {
   overrides: [
     {
       // `app/tokens.css` es donde TA-201 deja la entrega del diseño (08 TA-201).
-      files: ['**/estilos/tokens.css', '**/app/tokens.css'],
+      // `app/tokens-decorativos.css` (entrega 4, C-18): los motivos decorativos de la cara de la tarjeta y del billete.
+      files: ['**/estilos/tokens.css', '**/app/tokens.css', '**/app/tokens-decorativos.css'],
       rules: Object.fromEntries(Object.keys(COLOR).map((r) => [r, null])),
     },
   ],
