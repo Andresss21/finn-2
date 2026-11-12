@@ -4,7 +4,7 @@ import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../../../app/globals.css';
-import { leerResultado, rutaConResultado } from '../../../../flujos/cuentas-resultado';
+import { leerResultado, rutaConResultado } from '../../../../flujos/cuentas-archivar/resultado';
 import { ResultadoDelFlujo } from './resultado';
 
 vi.mock('next/link', async () => {
@@ -38,7 +38,7 @@ function montar(ui: ReactNode): HTMLElement {
 }
 
 describe('PRU-CMP-CTA-743 el resultado de un flujo corto queda en el detalle', () => {
-  it('PRU-CMP-CTA-743 [CH-240] la URL del detalle lleva el resultado y se lee de vuelta; un valor mal formado no se muestra', () => {
+  it('PRU-CMP-CTA-743 la URL del detalle lleva el resultado y se lee de vuelta; un valor mal formado no se muestra', () => {
     const verificado = { tipo: 'verificado', fecha: '2027-03-10', marcadas: 12 } as const;
     const pagado = { tipo: 'pagado', monto: '300.00', excedente: true } as const;
     expect(
@@ -63,7 +63,7 @@ describe('PRU-CMP-CTA-743 el resultado de un flujo corto queda en el detalle', (
     }
   });
 
-  it('PRU-CMP-CTA-743 [CH-240] verificar saldo sin diferencia dice que coincide y cuántas transacciones quedaron conciliadas, sin tiempo límite ni salida', () => {
+  it('PRU-CMP-CTA-743 verificar saldo sin diferencia dice que coincide y cuántas transacciones quedaron conciliadas, sin tiempo límite ni salida', () => {
     const nodo = montar(
       <ResultadoDelFlujo
         resultado={{ tipo: 'verificado', fecha: '2027-03-10', marcadas: 12 }}
@@ -77,7 +77,7 @@ describe('PRU-CMP-CTA-743 el resultado de un flujo corto queda en el detalle', (
     expect(r?.querySelector('button')).toBeNull();
   });
 
-  it('PRU-CMP-CTA-743 [CH-240] pagar la tarjeta deja «Pago guardado», el aviso del excedente y el enlace a la categoría de pago', () => {
+  it('PRU-CMP-CTA-743 pagar la tarjeta deja «Pago guardado», el aviso del excedente y el enlace a la categoría de pago', () => {
     const nodo = montar(
       <ResultadoDelFlujo
         resultado={{ tipo: 'pagado', monto: '150.00', excedente: true }}

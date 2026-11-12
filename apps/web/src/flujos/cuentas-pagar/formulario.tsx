@@ -22,7 +22,7 @@ import { pagarTarjeta } from '../../servidor/acciones/transacciones';
 import { cuentasPagar as t } from '../../textos/cuentas-pagar';
 import { formularios } from '../../textos/formularios';
 import { MarcoCorto } from '../cuentas-archivar/marco-corto';
-import { rutaConResultado } from '../cuentas-resultado';
+import { rutaConResultado } from '../cuentas-archivar/resultado';
 import { aEntradaDeAccion, contrato, type Campos, type Previsualizacion } from './campos';
 
 export interface PropsFormularioCuentasPagar {

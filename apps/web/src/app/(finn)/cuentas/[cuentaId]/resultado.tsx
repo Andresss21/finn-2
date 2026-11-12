@@ -1,11 +1,11 @@
 // E2-13 (CH-240): el resultado de verificar saldo y de pagar la tarjeta queda en el detalle, bajo las acciones, sin pantalla propia ni
-// tiempo límite. Lo dibuja a partir de `?resultado=` (validado en `flujos/cuentas-resultado.ts`); el detalle de arriba ya trae los
+// tiempo límite. Lo dibuja a partir de `?resultado=` (validado en `flujos/cuentas-archivar/resultado.ts`); el detalle de arriba ya trae los
 // datos actualizados (saldos, movimientos, conciliaciones), así que acá no se calcula ni se repite ningún monto del motor (PF-3).
 import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Resultado } from '../../../../componentes/base/resultado';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { formatearFecha, formatearMontoTexto } from '../../../../formato';
-import type { ResultadoDeFlujo } from '../../../../flujos/cuentas-resultado';
+import type { ResultadoDeFlujo } from '../../../../flujos/cuentas-archivar/resultado';
 import { cuentasPagar } from '../../../../textos/cuentas-pagar';
 import { verificarSaldo } from '../../../../textos/verificar-saldo';
 

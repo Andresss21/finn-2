@@ -5,7 +5,7 @@ import { archivarCuenta, desarchivarCuenta } from '../../../../servidor/acciones
 import { consultar } from '../../../../servidor/consultar';
 import { depsDeConsulta } from '../../../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../../../servidor/parametros';
-import { leerResultado, PARAMETRO_RESULTADO } from '../../../../flujos/cuentas-resultado';
+import { leerResultado, PARAMETRO_RESULTADO } from '../../../../flujos/cuentas-archivar/resultado';
 import { PantallaDetalleCuenta } from './pantalla';
 
 const texto = (v: BusquedaDePagina[string]): string | undefined =>

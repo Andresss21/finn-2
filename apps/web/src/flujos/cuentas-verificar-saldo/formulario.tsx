@@ -22,7 +22,7 @@ import { dominio } from '../../textos/dominio';
 import { formularios } from '../../textos/formularios';
 import { verificarSaldo as t } from '../../textos/verificar-saldo';
 import { MarcoCorto } from '../cuentas-archivar/marco-corto';
-import { rutaConResultado } from '../cuentas-resultado';
+import { rutaConResultado } from '../cuentas-archivar/resultado';
 import { aEntradaDeAccion, contrato, type Campos, type Marcar } from './campos';
 
 const BorradorVerificarSaldo = lazy(() => import('./borrador'));

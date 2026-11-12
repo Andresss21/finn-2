@@ -8,7 +8,7 @@ import { PublicarAcciones } from '../../../../componentes/marco/publicar-accione
 import { PublicarEncabezado } from '../../../../componentes/marco/proveedor-encabezado';
 import { VolverEnTitulo } from '../../../../componentes/navegacion/volver-en-titulo';
 import { SelectorPeriodo } from '../../../../componentes/navegacion/selector-periodo';
-import type { ResultadoDeFlujo } from '../../../../flujos/cuentas-resultado';
+import type { ResultadoDeFlujo } from '../../../../flujos/cuentas-archivar/resultado';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { cuentaDetalle as t } from '../../../../textos/cuenta-detalle';
 import { AccionesArchivada, AccionesPrincipales, Programadas, menuDe } from './acciones';
