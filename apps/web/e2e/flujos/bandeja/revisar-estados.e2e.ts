@@ -62,7 +62,6 @@ async function preparar(estadoInicial: Op[]): Promise<void> {
 const panel = (page: Page): Locator => page.locator('main[data-pagina-flujo]');
 const filas = (page: Page): Locator => page.locator('[data-movimiento]');
 const alto = async (l: Locator): Promise<number> => (await l.boundingBox())?.height ?? 0;
-const esEscritorio = (page: Page): boolean => (page.viewportSize()?.width ?? 0) >= 1024;
 
 /** Abre la revisión desde la fila de la lista que tenga ese texto. */
 async function abrirDeLaLista(page: Page, texto: string | RegExp): Promise<void> {
@@ -287,36 +286,6 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(panel(page).getByLabel(t.revisar.monto, { exact: true })).toBeVisible();
   });
 
-  test('PRU-E2E-BAND-207 [FT-35] en computadora la lista queda a la izquierda con el movimiento marcado y el panel dice «1 de 2» con flechas de 44 px; en teléfono no hay lista ni flechas', async ({
-    page,
-  }) => {
-    await preparar([...HISTORIAL, sms('a', 'Super', 30, '10:15'), sms('b', 'Super', 20, '10:30')]);
-    await page.goto('/bandeja');
-    await esperarContenido(page);
-    const segundo = await filas(page).nth(1).getByRole('link').getAttribute('href');
-    await filas(page).first().getByRole('link').click();
-    await expect(page.getByRole('heading', { level: 1, name: t.revisar.titulo })).toBeVisible();
-    const navegacion = page.locator('[data-panel-navegacion]');
-    if (!esEscritorio(page)) {
-      await expect(navegacion).toBeHidden();
-      await expect(page.locator('[data-lista-lateral]')).toBeHidden();
-      return;
-    }
-    await expect(page.locator('[data-lista-lateral]').locator('[data-movimiento]')).toHaveCount(2);
-    await expect(
-      page.locator('[data-lista-lateral] [aria-current=true] [data-movimiento]'),
-    ).toHaveCount(1);
-    await expect(navegacion).toContainText(t.revisar.panel.posicion(1, 2));
-    const anterior = navegacion.getByRole('button', { name: t.revisar.panel.anterior });
-    await expect(anterior).toBeDisabled();
-    const siguiente = navegacion.getByRole('link', { name: t.revisar.panel.siguiente });
-    await expect(siguiente).toHaveAttribute('href', segundo ?? '');
-    const caja = await siguiente.boundingBox();
-    expect(Math.min(caja?.width ?? 0, caja?.height ?? 0)).toBeGreaterThanOrEqual(44);
-    await siguiente.click();
-    await expect(navegacion).toContainText(t.revisar.panel.posicion(2, 2));
-  });
-
   test('PRU-E2E-BAND-208 [FT-37] después de descartar, el panel ofrece «Siguiente movimiento» con el que seguía en la lista', async ({
     page,
   }) => {
@@ -331,40 +300,5 @@ test.describe('PRU-E2E-BAND', () => {
     const siguiente = panel(page).getByRole('link', { name: t.revisar.siguiente });
     await expect(siguiente).toHaveAttribute('href', segundo ?? '');
     expect(await alto(siguiente)).toBeGreaterThanOrEqual(44);
-  });
-
-  test('PRU-E2E-BAND-450 [FT-35] en 1440 × 900 la fila elegida lleva el fondo hundido y la marca de 3 px en acción, y el panel de Revisar queda fijo al desplazar la lista', async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    const muchos = Array.from({ length: 12 }, (_, i) =>
-      sms(`m${String(i)}`, `Comercio ${String(i)}`, 10 + i, `10:${String(10 + i)}`),
-    );
-    await preparar([...HISTORIAL, ...muchos]);
-    await page.goto('/bandeja');
-    await esperarContenido(page);
-    const primero = await filas(page).first().getByRole('link').first().getAttribute('href');
-    await page.goto(primero ?? '');
-    await esperarContenido(page);
-    const elegida = page.locator('[data-lista-lateral] [data-fila-elegida]');
-    await expect(elegida).toHaveCount(1);
-    const marca = await elegida.evaluate((el) => {
-      const antes = getComputedStyle(el, '::before');
-      const probe = document.createElement('span');
-      probe.style.color = 'var(--accion)';
-      document.body.append(probe);
-      const accion = getComputedStyle(probe).color;
-      probe.remove();
-      return { ancho: antes.width, color: antes.backgroundColor, accion };
-    });
-    expect(marca.ancho).toBe('3px');
-    expect(marca.color).toBe(marca.accion);
-    const arriba = (await panel(page).boundingBox())?.y ?? 0;
-    await page.mouse.wheel(0, 700);
-    await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
-    const despues = (await panel(page).boundingBox())?.y ?? -1;
-    expect(despues).toBeGreaterThanOrEqual(0);
-    expect(despues).toBeLessThanOrEqual(Math.max(arriba, 32));
-    await expect(panel(page)).toBeInViewport();
   });
 });

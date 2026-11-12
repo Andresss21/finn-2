@@ -16,6 +16,7 @@ export async function LectorMovimiento({
   movimientoId,
   traspaso,
   categoriaSoltada,
+  categoriaVista,
   lateral,
   navegacion,
 }: {
@@ -24,6 +25,8 @@ export async function LectorMovimiento({
   readonly traspaso: boolean;
   /** Viene de un arrastre (FT-78): la categoría soltada, que el flujo pone en la línea y envía con la variante de OP-37. */
   readonly categoriaSoltada?: string;
+  /** [CH-240 E6-5] El arrastre chocó con un cambio de las líneas: la categoría que vio la lista (`''`: ninguna). */
+  readonly categoriaVista?: string;
   /** Computadora: la lista de la Bandeja a la izquierda y el lugar del movimiento en ella (CH-137). */
   readonly lateral?: ReactNode;
   readonly navegacion?: NavegacionDelPanel;
@@ -111,6 +114,7 @@ export async function LectorMovimiento({
       {...(categoriaSoltada !== undefined && categorias.some((c) => c.id === categoriaSoltada)
         ? { categoriaSoltada }
         : {})}
+      {...(categoriaVista === undefined ? {} : { categoriaVista })}
       {...(lateral === undefined ? {} : { lateral })}
       {...(navegacion === undefined ? {} : { navegacion })}
     />

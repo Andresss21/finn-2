@@ -7,6 +7,7 @@ import type { FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense } from 'react';
 import type { UseFieldArrayReturn, UseFormReturn } from 'react-hook-form';
 import { EntradaTexto } from '../../componentes/base/campo';
+import { Icono } from '../../componentes/base/icono';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaFechaConAtajos } from '../../componentes/formularios/entrada-fecha-atajos';
@@ -122,6 +123,16 @@ export default function CamposMovimiento({
           sinVistaPrevia
         />
       </div>
+      {c.fecha === '' ? (
+        // [CH-240 E3-13] El SMS no trae la fecha: la línea va a lo ancho de la fila Fecha · Monto
+        <p
+          data-rol="fecha-faltante"
+          className="-mt-2 flex items-start gap-1.5 text-cuerpo-pequeno text-advertencia-texto"
+        >
+          <Icono nombre="advertencia" tamano={16} className="mt-0.5 shrink-0" />
+          {t.revisar.fechaFaltante}
+        </p>
+      ) : null}
       <EntradaTexto etiqueta={g.comercio} autoComplete="off" {...formulario.register('comercio')} />
       <div className="flex flex-col gap-1.5">
         <span className="text-etiqueta">{t.revisar.tipo}</span>
@@ -175,6 +186,12 @@ export default function CamposMovimiento({
             error={(i) => formState.errors.devueltas?.[i]?.monto?.message}
           />
         </Suspense>
+      ) : null}
+      {c.tipo === 'ingreso' ? (
+        // [CH-240 E3-11] Un ingreso no lleva categoría: la nota fija dice dónde entra, sin cifras (E4-3)
+        <p data-rol="nota-ingreso" className="text-cuerpo-pequeno text-texto-secundario">
+          {t.revisar.notaIngreso}
+        </p>
       ) : null}
       {c.tipo === 'gasto' || (c.tipo === 'devolucion' && !sobreCompra) ? (
         <LineasDeGasto
