@@ -3757,13 +3757,13 @@ Reglas comunes a las fichas de reportes:
 1. `/reportes` redirige a `/reportes/tendencia`.
 2. `/reportes/[tipo]` con `tendencia`, `categorias`, `ingresos-gastos`, `remanente`, `top-comercios`, `cumplimiento` o `patrimonio` → `reporte()`.
 3. Parámetros: `?ventana=`, `?cuentas=`, `?grupo=` (categorías), `?limite=` (top de comercios).
-4. Navegación entre reportes con `Pestanas` como enlaces (05 §10.7).
+4. **[D4]** (CH-E5-1) Navegación entre reportes con `SelectorReportes` (05 §10.7): los tipos agrupados en Tu dinero, Tu presupuesto y Hábitos y tarjetas. Cada opción es un enlace a `/reportes/[tipo]` con `aria-current` en el actual; «atrás» del navegador vuelve al reporte anterior. En el teléfono, el selector abre una hoja; desde 1024 px, la lista está siempre a la vista a la izquierda del reporte.
 
 **Piezas.**
 - Operaciones: ninguna.
 - Consultas: `reporte()` (tipos de 04 §6.9.2).
 - Rutas: `/reportes`, `/reportes/[tipo]`.
-- Componentes: `GraficoBarras`, `GraficoLineas`, `GraficoDona`, `Monto`, `Pestanas`, `Seleccion`, `EstadoVacio`.
+- Componentes: `GraficoBarras`, `GraficoLineas`, `GraficoDona`, `Monto`, `SelectorReportes` **[D4]**, `Seleccion`, `EstadoVacio`.
 
 **Reglas.** 04 §6.9.1 y §6.9.2 (BE-40), §6.9.5 (`remanente` no es un flujo de caja), §6.9.6 (BE-43); 01 §4.13 (clasificación), D1, N9, H13, R4 (archivadas con su nombre).
 
@@ -4960,3 +4960,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CT-03 y CT-07** (Fase 7, aprobados en las revisiones de las partes C y D de `07-pruebas.md`). CA-78.15 y CA-70.7 sin iPhone (riesgo aceptado, P7-9); 3.5.12 y el recorrido 4.2 sobre la semilla `estado-a7`, sin cambio en ningún número citado por los CA. Marcas **[F7]** en cada lugar. Detalle en `07-pruebas.md` §22 y §28.
 - **CH-07** (Fase 8, aprobado en la revisión de la Parte C de `08-tareas.md`, aplicado al cerrarla el 23 de octubre de 2026). Dependencias de construcción y de datos (2.0) y las de datos de FT-03, FT-04, FT-08, FT-16, FT-19, FT-34, FT-35 y FT-54. Los CA no cambian. Marcas **[F8]**.
 - **CH-222, CH-224 y CH-225** (Fase 8, decididos por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). FT-29: acción principal "Reservar $X" con la variante `reservar_falta` de OP-16 (CH-222). S6: la identidad de la cuenta de efectivo por su subtipo y §7.3 sin los subtipos fuera de fase (CH-224); la cara de la tarjeta por su color guardado, uno de 8 (CH-225). Los CA no cambian. Marcas **[CH-nnn]** en cada lugar.
+- **CH-E5-1** (diseño, entrega 4 · etapa 5; aprobado por el dueño con la condición de conservar los enlaces y «atrás», aplicado al cerrar el diseño el 11 de noviembre de 2026). FT-60: la navegación entre reportes es `SelectorReportes` (05 §10.7) en lugar de `Pestanas`: con 15 tipos las pestañas no entran. Cada opción sigue siendo un enlace a `/reportes/[tipo]`. **[CH-240]** Lo que CH-E5-3 y CH-E5-4 cambian en FT-03, FT-73 y la tabla de rutas (6.4) lo aplican sus fichas de B10, con el código. Los CA no cambian. Marcas **[D4]**. Detalle en la entrega de diseño 4 (`prompt/CAMBIOS-PROPUESTOS.md`, E5-1).

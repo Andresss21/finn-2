@@ -19,7 +19,7 @@ Este documento convierte lo aprobado en 00 a 07 en tareas que un agente de progr
 
 ### 0.3 Precedencia
 
-1. `00-decisiones.md` > `01-dominio.md` > `02-tecnologias.md` > `03-base-de-datos.md` > `04-backend.md` > `05-frontend.md` > `06-features.md` > `07-pruebas.md`, cada uno con sus enmiendas; después, `06-identidad-visual.md`. **[CH-220]** Después de `06-identidad-visual.md`, la entrega 3 del diseño (`docs/anexos/finn-fixes-visuales/`: `FIXES-VISUALES.md` y su auditoría): en caso de conflicto manda el documento numerado, salvo lo que enmienda CH-220.
+1. `00-decisiones.md` > `01-dominio.md` > `02-tecnologias.md` > `03-base-de-datos.md` > `04-backend.md` > `05-frontend.md` > `06-features.md` > `07-pruebas.md`, cada uno con sus enmiendas; después, `06-identidad-visual.md`. **[CH-220]** Después de `06-identidad-visual.md`, la entrega 3 del diseño (`docs/anexos/finn-fixes-visuales/`: `FIXES-VISUALES.md` y su auditoría): en caso de conflicto manda el documento numerado, salvo lo que enmienda CH-220. **[CH-240]** Después de la entrega 3, la entrega 4 (`docs/anexos/finn-diseno-entrega-4/`): sus `DECISIONES.md` mandan sobre la entrega 3 y sobre los PNG y HTML anteriores; en caso de conflicto manda el documento numerado, salvo lo que enmienda CH-240.
 2. Este documento manda sobre el orden y la forma de las tareas. No manda sobre ninguna regla de los anteriores.
 3. Una contradicción no se resuelve aquí: se plantea como P8-n o CH-nn.
 
@@ -212,6 +212,7 @@ Textos en español neutro; voseo en lo que se le habla al usuario.
 | TA-280 a TA-399 | B6 Features [I] | C |
 | TA-400 a TA-499 | B7 Features [M] | D |
 | TA-500 a TA-549 | B8 Features [P] y FT-49 (bloqueada) | D |
+| TA-560 a TA-599 | **[CH-240]** B10 Entrega 4 del diseño (HT-11): registro de fichas e implementación | Posterior |
 | TA-486 a TA-499 y TA-507 a TA-512 | **[CH-220]** B9 Fixes visuales (entrega 3, HT-10): usa los huecos libres de los rangos de B7 y B8, con los números que fijó el usuario. Una parte de una tarea de B9 recibe el siguiente libre de esos huecos | Posterior |
 
 - El número identifica; **el campo `orden` decide la secuencia**. Así una tarea de operación (B5) puede ir entre dos de features sin renumerar.
@@ -496,6 +497,16 @@ tu: —
 ```
 
 **Criterio:** las 20 tareas de B9 (§29b) en `terminada`, cada una con su informe de ids (hecho, hecho en parte o bloqueado) y sus capturas de antes y después en `C:/finn/capturas/TA-nnn/`; `pnpm ci:local` y la E2E en verde en `main`. No encadena HT-9: los fixes no esperan a la puerta, que sigue siendo la de 07 §30 y no cambia.
+
+### HT-11 Entrega 4 del diseño **[CH-240]**
+
+```hito
+despues: TA-560
+requiere: TA-560
+tu: —
+```
+
+**Criterio:** las tareas de B10 (§29c) en `terminada`, cada una con sus criterios CA-E4/CA-C del `PROMPT-DESARROLLO.md` del anexo y sus capturas de antes y después en `C:/finn/capturas/TA-nnn/`; `pnpm ci:local` y la E2E en verde en `main`. TA-560 agrega a `requiere` las fichas que crea y mueve `despues` a la última. No encadena HT-9.
 
 **Justificación.** Los hitos siguen las fronteras de 07 §1 (cada nivel tiene su hito) y separan lo que depende de vos (HT-4, HT-5, HT-6, HT-9) de lo que no. Así se ve en qué hito el plan espera por una TU. *Alternativa descartada:* un hito por bloque de tareas (no dice qué se puede usar).
 
@@ -1677,6 +1688,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-235** | Cierre de TA-493: A11 sin el panel del primero en `/bandeja`. (a) **Origen:** el trabajo de TA-493 entró repartido en #538 (C2: aprobar en el lugar) y #545 (A10: acciones por fila; A11 en parte: fila elegida marcada y panel fijo). Lo único no hecho es «en computadora `/bandeja` abre con el panel del primer movimiento»: montar el panel en `/bandeja` pasa el tope de 52 KB de la ruta (05 §13.1) y redirigir a `/bandeja/[primero]` cambia la URL y las E2E. (b) **Resolución:** A11: `/bandeja` en computadora no abre con el panel del primero; decisión del usuario, 2026-11-10. (c) **Tareas:** TA-493 sale de su alcance ese punto y queda `terminada`; sus pruebas `PRU-CMP-BAND-310`, `-311` y `PRU-E2E-BAND-480` no existen con ese id y se mapean a `PRU-E2E-BAND-481`, `PRU-CMP-BAND-450` y `PRU-E2E-BAND-450`. (d) **Archivos:** 08 (esta fila y TA-493), `plan/tareas.json` | 05 §13.1; TA-493 | Decidido por el usuario (2026-11-10); **aplicado [CH-235]** en TA-493 |
 | **CH-237** | `cierre` del PR con la E2E completa (TA-555, CH-231 c). (a) **Origen:** TA-555 reutiliza en `main` la E2E de un PR solo si esa corrida tuvo `e2e` y `cierre` en `success`, pero en un PR `cierre` corría solo si se cerraba una ficha: casi nunca habría reutilización. (b) **Medido** (corridas 42864339298, 42878211044, 42881412145 y 42900582110 del 2026-11-10): los PR listos con web ya corren la suite completa (559 a 564 pruebas en los 4 fragmentos, como `main`; fragmento 1 de 16 a 18 min); `cierre` tarda 1 a 2 min. (c) **Resolución:** en un PR, `cierre` corre también cuando `e2e` pasó y su filtro fue `todas`; M15 es el mismo que en `main`. Sin cambios en qué E2E corre un PR ni en `pruebas:puerta`. (d) **Archivos:** `.github/workflows/ci.yml`, 07 §6.1 y «Enmiendas posteriores», 08 (esta fila, TA-012 y TA-555) | 07 §6.1, §13.5; TA-012 | Decidido en TA-555; lo aprueba el usuario con su «mergeá»; **aplicado [CH-237]** en 07 §6.1 y TA-012 |
 | **CH-239** | E2E por tipo de cambio (corrección posterior a TA-012, dueña de `ci.yml`, `afecta.mjs` y `ci:local`; pedido del usuario: «no quiero que un cambio de color corra más de 500 pruebas»). (a) **Origen:** los PR #544 a #547, de interfaz, corrieron la E2E completa (559 a 564 pruebas, 26 a 33 min) y `ci:local` salía en modo completo porque toda tarea toca `plan/tareas.json`. En `main`, la E2E corre completa salvo la reutilización de CH-231 c (corrida 42909607267: 28,5 min del merge a producción; 42924885690, reutilizada: 15,7). (b) **Clases** (`clase` y `seleccionE2E` en `tools/pruebas/afectadas.ts`; el diff toma la más alta): 0 documentos y plan, sin E2E y sin subir la clase; 1 estilos (`tokens.css`, `tokens.json`, `globals.css`, `tailwind.css`): PRU-E2E-PWA-007, PRU-E2E-PWA-008 y PRU-REN-PWA-002 (el contraste de tokens, PRU-DOM-PWA-001, ya corre en `rapido`); 2 pantallas, flujos, textos propios y sus `*.e2e.ts`, sin lo que el mapa da como `marco`: las afectadas sin el marco, las de la clase 1, PRU-E2E-ACCESO-102 (el ingreso, del que depende toda la app) y PRU-SEG-ACCESO-002 (cada ruta real sin sesión, con AAL1 y con AAL2: una página que deja de mostrarse o de exigir sesión); 3 el resto y lo que no se sabe clasificar, como antes en el PR y la completa en `main`. Una ficha que se cierra corre la completa (CH-70). (c) **M15 con E2E parcial (opción b, sin nocturno):** la opción (a), `main` completa tras un PR parcial, deja el color a unos 30 a 45 min del merge y corre 560 pruebas igual; la (b) con el nocturno deja días sin la completa. Se eligió medir la clase de `main` desde la última E2E completa de `main` (`base_e2e`, caché `e2e-base-<run_id>` que guarda `cierre` con la completa propia o reutilizada y M15 en verde; vale si es ancestro de HEAD y tiene a lo sumo 7 días): todo lo cambiado desde esa base corre en la corrida, y `cierre` suma para M15 el informe de esa base (falla si no está o no es el elegido). Así M15 sigue exigiendo un resultado en verde de cada prueba de cada ficha terminada, y `pruebas:puerta` no cambia. Enmienda 07 §6.1 y M15. 02 ADR-21 pide E2E en `main` antes de desplegar, no la completa: sin contradicción. (d) **`ci:local`:** documentos y plan no cuentan; clases 1 y 2, modo corto con esas pruebas. (e) **CH-231 c no cambia:** saltar la E2E de `main` sigue exigiendo la completa del PR. (f) **Riesgo que queda:** una E2E no asociada a un archivo de clase 1 o 2 cambiado, que ese cambio rompe (por ejemplo, una regla de `globals.css` que oculta un botón de otra pantalla), no corre hasta la próxima corrida de clase 3 de `main` o hasta 7 días. (g) **Sin cambios** en qué pruebas existen, timeouts, reintentos ni presupuestos. (h) **Pruebas:** `tools/ci/seleccion-e2e.test.ts` (las clases con color, color y plan, pantalla y docs, pantalla y componente base, dominio, desconocido; filtros; base de `main`) y `tools/ci/workflows.test.ts` (`clase_e2e`, caché, `cierre-previo` y `cierre-guardar`). (i) **Archivos:** `.github/workflows/ci.yml`, `tools/ci/afecta.mjs`, `tools/ci/reutiliza-e2e.ts`, `tools/pruebas/afectadas.ts`, `package.json` (`ci:cierre`), sus pruebas, 07 §6.1, M15 y «Enmiendas posteriores» y 08 (esta fila, §1.7 y TA-012) | 07 §6.1, §13.3 M15; 08 §1.7, TA-012 | Decidido por el orquestador a pedido del usuario; lo aprueba el usuario con su «mergeá»; **aplicado [CH-239]** en 07 §6.1 y M15, 08 §1.7 y TA-012 |
+| **CH-240** | Entrega 4 del diseño como fuente, cambios del diseño a 04, 05 y 06, respuestas del dueño y hito HT-11 (2026-11-11). (a) **Origen:** la auditoría de la app real contra el diseño (`docs/auditoria-diseno/`, PR #552) mandó al diseñador `PROMPT-DISENO.md`; el diseñador respondió con la entrega 4 en seis etapas y un cierre (`finn-diseno-entrega-4-etapa-1.zip` a `-etapa-6.zip` y `-cierre.zip`, en la carpeta de descargas del usuario). (b) **Fuente:** el anexo `docs/anexos/finn-diseno-entrega-4/` tiene la versión **vigente** de cada uno de los 1.188 estados (la de la entrega más reciente que lo dibujó: cierre, etapas 6 a 1, entrega 3 y entrega 2) solo en HTML, que es la medida exacta; los PNG (la imagen de cada HTML, sin información propia, 233 MB) quedan fuera de git en `C:/finn/diseno/entrega-4/pantallas/`, con la misma ruta. Precedencia en §0.3. No se copiaron `herramientas/` ni `canvas/`. (c) **Cambios del diseño a 05 y 06:** CH-E5-1 a CH-E5-4 y CH-05-9.3, con la marca **[D4]**, salvo CH-E5-4 (los textos de `patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento` y `nombre_repetido` de OPT-07 en el catálogo de 04 §7.10, cuyo recuento fija PRU-SEG-OPER-102) y CH-E5-3 (Conectar los SMS, Formatos e Instituciones como [S] y OPT-01 en `/ajustes/webhook/token` [C]), que aplican a 04, 05 y 06 las fichas de B10 que los implementan, en el mismo PR que el código, porque el lint de rutas (FE-59) compara 05 §2 con `flujos/` y PRU-SEG-OPER-102 fija los recuentos de esos documentos; en el texto y su línea en «Enmiendas posteriores», aplicados **sobre** los documentos del repo: los `.md` del cierre salen de una copia anterior a CH-25…CH-239 y no se copian. (d) **Respuestas del dueño a las preguntas del cierre** (`INDICE-cierre.md` §7; delegadas al orquestador): 1, 2, 4, 5, 6 y 9, manda la semilla `estado-a7` ejecutada por el motor (05 A.7, CT-07, DP-27): las referencias son ilustrativas y no se corrigen a mano; el período 21/08–20/09 es «ago» (CT-07); 3, vale la regla de 04 y la condición de «Pagos de tarjeta próximos» la decide el servidor; 7, la fila «Arrastre» del detalle de Listo para asignar se quita (no está en `DetalleLpaDto`); 8, Editar transacción en computadora va en una columna de 720 px (E5-11 manda sobre E4-26 y sobre §5.2 del prompt); 10, CH-C-2 (`AjustesDto.webhook.ultimoSms`) aprobado como propuesta, en su propia ficha con su cambio a 04 §6.11. (e) **El prompt del diseñador no es una ficha:** `PROMPT-DESARROLLO.md` (84 criterios CA-E4 y CA-C) se parte en fichas de B10 con el tamaño de DT-01; sus pasos «mandame un plan y esperá» y «un bloque por PR» los reemplaza el orquestador (§37). Lo de `docs/auditoria-diseno/PROMPT-FIXES.md` que el diseño no reemplaza (con la corrección de GLO-28 del 11/11) entra en las mismas fichas. (f) **Registro:** HT-11 (§2), bloque B10 (§29c) y TA-560, que escribe las fichas. |
 
 ---
 
@@ -12507,6 +12519,44 @@ compartido: —
 
 
 ---
+
+## 29c. Bloque B10 — Entrega 4 del diseño (HT-11) **[CH-240]**
+
+La implementación de la entrega 4 (`docs/anexos/finn-diseno-entrega-4/`), que responde a la auditoría de la app real (`docs/auditoria-diseno/`). TA-560 parte `PROMPT-DESARROLLO.md` en fichas; las demás las agrega ella con números de TA-561 a TA-599.
+
+#### TA-560 Entrega 4: fichas de implementación de B10 **[CH-240]**
+
+```tarea
+orden: 908
+bloque: B10
+hito: HT-11
+depende: —
+tu: —
+revision: normal
+modelo: opus
+paralelo: no
+tamano: prod=0 archivos=0 ca=0 migraciones=0 total=1200
+cubre: CH-240
+pru: —
+compartido: —
+```
+
+**Qué construir.**
+- Las fichas de B10 en este bloque, con el formato de §32 y los números TA-561 en adelante, a partir de §5 de `PROMPT-DESARROLLO.md` del anexo (un bloque del prompt puede dar varias fichas), de las respuestas de CH-240 (d) y de lo que `docs/auditoria-diseno/PROMPT-FIXES.md` deja para desarrollo y el diseño no reemplaza. Cada ficha: ≤ 10 criterios, `tamano` estimado con margen (§29b), `cubre` con los CH y los ids CA-E4/CA-C que cumple, `pru` con sus pruebas nuevas, `paralelo` y `depende` según los archivos que comparte (§31), «Leer» con las secciones exactas del anexo y de la auditoría, y en «Terminada cuando» la verificación del bloque B9 (teléfono 390 × 844 y computadora 1440 × 900, claro y oscuro; reducir movimiento; tocables ≥ 44; contraste) contra el HTML vigente, con los PNG de `C:/finn/diseno/entrega-4/pantallas/` como imagen.
+- La ficha de Formatos e Instituciones aplica CH-E5-4 a 04 §7.10 y a 06 FT-73 (el texto de los cuatro rechazos de 04 §8.5 y de `nombre_repetido` de OPT-07, como en `indices/INDICE-etapa-5.md` del anexo), con el recuento de rechazos de `tools/ci/docs.test.ts`, que sale de ese documento.
+- La ficha de Ajustes que aplica CH-E5-3 (CH-240 c) a 05 (§1.3, §2.11, §15) y a 06 (FT-03): `/ajustes/webhook`, `/ajustes/formatos` e `/ajustes/instituciones` como [S] y OPT-01 en `/ajustes/webhook/token` [C], junto con el código (`flujos/ajustes-webhook` y las listas) y los recuentos de `tools/ci/docs.test.ts`.
+- La ficha del CH-C-2 (`ultimoSms`), con su cambio a 04 §6.11 y su migración si la necesita, como revisión obligatoria.
+- HT-11 con todas las fichas en `requiere` y la última en `despues`; los objetivos nuevos en `plan/objetivos.txt` y las tareas en `plan/tareas.json` (`pendiente`).
+
+**Leer.** CH-240; §29b (forma de las fichas de diseño), §31, §32; del anexo: `INDICE-cierre.md`, `DECISIONES.md` (secciones de la entrega 4 y del cierre), `DATOS-EJEMPLO.md` §1 y §7, `PROMPT-DESARROLLO.md`; `docs/auditoria-diseno/AUDITORIA-APP.md` (resumen y 20 prioridades), `PROMPT-FIXES.md`, `INVENTARIO.md`.
+
+**Archivos.** `docs/08-tareas.md`, `plan/objetivos.txt`, `plan/tareas.json`.
+
+**Pruebas primero.** Ninguna: plan. La comprobación es `plan:verificar`.
+
+**Comandos.** `pnpm plan:verificar`; `pnpm plan:siguiente`; `pnpm ci:local`.
+
+**Terminada cuando.** `plan:verificar` pasa con las fichas nuevas y HT-11; cada criterio CA-E4 y CA-C del prompt está en `cubre` de una ficha o anotado como no aplicable con su motivo; `plan:siguiente` ofrece las primeras fichas de B10.
 
 ## 30. CA pendientes de punta a punta (P8-19.1)
 

@@ -1939,7 +1939,7 @@ Cada página de `ingresar` lee `estadoAcceso()` (CP-11) en el servidor y decide 
 - **Campos:** email (`type="email"`, `autoComplete="username"`) y contraseña (`type="password"`, `autoComplete="current-password"`, con la opción de mostrarla). Sin "Recordarme": la sesión ya es larga (ADR-08).
 - **Envío:** `ingresar({ email, contrasena })`. Con `siguiente`: `verificar` → `/ingresar/verificar?volver=`; `inscribir` → `/ingresar/inscribir?volver=`; `listo` no ocurre (siempre hay un segundo paso).
 - **Errores** (9.7): un solo mensaje para credenciales inválidas, sea el email, la contraseña o un usuario distinto del permitido, para no revelar cuál falló.
-- **Sin registro ni recuperación de contraseña en la app** (registro deshabilitado, ADR-08; recuperación desde el panel de Supabase, 04 12.6). Un texto breve dice que la recuperación se hace con el procedimiento del repositorio.
+- **Sin registro ni recuperación de contraseña en la app** (registro deshabilitado, ADR-08; recuperación desde el panel de Supabase, 04 12.6). **[D4]** (CH-05-9.3) Bajo el botón «Ingresar», una línea en `cuerpo-pequeno` y `--texto-secundario`, sin enlace: «¿Olvidaste la contraseña? Cambiala desde el panel de Supabase.» No hay control de «Primera vez» ni de «Olvidé mi contraseña».
 
 ### 9.4 `/ingresar/verificar` (FE-38)
 
@@ -2200,6 +2200,7 @@ Regla L16: fuera de `componentes/base/`, nadie importa de `components/ui/` ni de
 | `Buscador` | `buscar: (texto) => Promise<Opcion[]>` (lectura interactiva, 4.12), `valor`, `alCambiar` | vacío, buscando, con resultados, sin resultados, error | Patrón *combobox* de ARIA; anuncia la cantidad de resultados en una región `status` |
 | `Casilla`, `Interruptor`, `Opciones` | Las del control nativo o de Radix, más las de `Campo` | marcado, desmarcado, mixto (solo casilla), foco, deshabilitado | El nombre accesible es la etiqueta; el interruptor anuncia su estado |
 | `Pestanas` | `pestanas: { id; etiqueta; href? }[]`, `activa` | activa, inactiva, foco | Si el contenido depende de la URL (filtros, vistas), son **enlaces** con `aria-current`, no pestañas de ARIA |
+| `SelectorReportes` **[D4]** | `grupos: { etiqueta; tipos: { tipo; etiqueta; href }[] }[]`, `actual` | cerrado, abierto (teléfono), opción actual, foco | Cada opción es un **enlace** (`EnlaceFinn`) con `aria-current="page"` en el actual, nunca un `radio` ni una pestaña de ARIA. En el teléfono, el disparador es un botón con `aria-haspopup="dialog"` que abre un `Superpuesto` `desde: 'abajo'`; al elegir, navega y la hoja se cierra. Desde 1024 px, la lista es un `<nav aria-label="Reportes">` fijo de 232 px. Opciones de 48 px de alto en el teléfono y 44 en computadora (CH-E5-2) |
 | `Superpuesto` (1.4; **[F6]** CF-23: variante `desde: 'abajo' \| 'lado' \| 'arriba'`, la de arriba para `/notificaciones`) | `titulo`, `descripcion?`, `alCerrar` (`cerrarFlujo`), `children`, `acciones` | abierto, cargando, error | Rol `dialog` con `aria-modal="true"` y nombre = título; foco atrapado; Escape cierra; al cerrar, el foco vuelve al disparador (11.2). La forma (hoja inferior, diálogo central, panel lateral) es del diseño |
 | `PaginaFlujo` (1.4) | Las mismas | ídem | Página completa: `main` con `h1` = título; sin foco atrapado |
 | `Menu` | `elementos: { etiqueta; alSeleccionar \| href; peligro? }[]`, `etiquetaDisparador` | cerrado, abierto, elemento activo | Patrón *menu button* de ARIA. Nunca es la única vía a una acción frecuente |
@@ -3008,7 +3009,7 @@ Las funciones que no son consultas de 04 §6 tienen su pantalla en 15.3.
 | `/cuentas` | `cuentas` | `TarjetaCredito`, `FilaCuenta`, `BarraProgreso` (uso del límite), `Monto` |
 | `/cuentas/[cuentaId]` | `detalleCuenta` | `SelectorPeriodo`, `FilaTransaccion`, `Aviso` (AV-21), `Monto` |
 | `/actividad` | `actividad` | `FilaTransaccion`, `EstadoVacio` (sin resultados) |
-| `/reportes/[tipo]` | `reporte` | `GraficoBarras`, `GraficoLineas` (con `referencia` en el gasto semanal), `GraficoDona` (`categorias`), tabla equivalente |
+| `/reportes/[tipo]` | `reporte` | `GraficoBarras`, `GraficoLineas` (con `referencia` en el gasto semanal), `GraficoDona` (`categorias`), tabla equivalente, `SelectorReportes` **[D4]** |
 | `/metas` | `metas` | `ResumenMeta`, `BarraProgreso`, `IndicadorEstado` |
 
 ### 15.5 Nombre de la carpeta de un flujo (FE-59)
@@ -3520,3 +3521,5 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CF-25** (Fase 6, aprobado en la revisión de la Parte E): los componentes de 10.8.1 dibujan las proporciones que trae el DTO, sin recalcular. Detalle en `06-features.md` §5.8.
 - **CT-01, CT-03, CT-04, CT-07 y CT-08** (Fase 7, aprobados en las revisiones de las partes A a D de `07-pruebas.md`). Reloj de E2E (14.1); lector de pantalla con TalkBack y NVDA, registrado por el usuario (11.10); nivel de componentes con el modo navegador de Vitest (14.1); A.7 como semilla ejecutada por el motor, con los números corregidos (A.7). **CT-08:** fila de `/presupuesto/estructura/plantilla` en §2.3, que CF-08 citaba y faltaba, y tablas 15.1 y 15.2 regeneradas con `trazabilidad.py` actualizado (marcas en la celda de la ruta, OP-53 y `verificar_saldo`); con eso pasan `trazabilidad.py --comprobar` y `cobertura.py`. Marcas **[F7]** en cada sección. Detalle en `07-pruebas.md` §3, §4, §22, §28 y §34.
 - **CH-227** (Fase 8, decidido por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). `/reglas` con buscador y el parámetro nuevo `?q=` (2.2 y 2.8). Marcas **[CH-227]**. Las duraciones y anchos de la entrega 3 (CH-220) no cambian este documento: viven en `06-identidad-visual.md`.
+- **CH-05-9.3** (diseño, entrega 4 · etapa 2, decisión E2-1; aplicado al cerrar el diseño el 11 de noviembre de 2026). Ingresar: en lugar del texto sobre «el procedimiento del repositorio», una línea de ayuda sin enlace que dice dónde se cambia la contraseña (9.3). Marca **[D4]**.
+- **CH-E5-2** (diseño, entrega 4 · etapa 5; aprobados por el dueño, aplicados al cerrar el diseño el 11 de noviembre de 2026). CH-E5-2: componente `SelectorReportes` en 10.7, junto a `Pestanas`, para la navegación de FT-60 (CH-E5-1 en 06). **[CH-240]** CH-E5-3 (Conectar los SMS, Formatos e Instituciones como [S] y OPT-01 en `/ajustes/webhook/token`) se aplica con su ficha de B10, junto con el código y los recuentos de PRU-SEG-OPER-102.

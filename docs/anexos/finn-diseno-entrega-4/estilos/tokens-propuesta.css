@@ -1,0 +1,59 @@
+/* Finn 2.0 · propuesta de tokens (entrega 4). NO forman parte de tokens.css: falta aprobarlos.
+   Lo propuesto en la entrega 3 (--duracion-temblor, --retardo-cascada, --duracion-confirmacion) quedó aprobado y está en tokens.css.
+
+   Motivo (D-10 de la auditoría): la app usa 18 variables de movimiento con nombre propio. 15 coinciden o caen en un token
+   aprobado y se reemplazan (tabla abajo). Dos retardos de escalonado no tienen equivalente: van acá. Una no es de diseño.
+   No son colores: no llevan contraste. Con "reducir movimiento" no se usa ninguno. */
+:root {
+  --retardo-bloque: 60ms;   /* entre bloques que entran escalonados: bloques de una pantalla, filas de la Bandeja, avisos (PANTALLAS §11) */
+  --retardo-grafico: 80ms;  /* entre barras o columnas de un gráfico que crecen escalonadas */
+}
+
+/* Variables propias de la app → token
+   --duracion-opcion 300ms        → --duracion-transicion (340ms)
+   --duracion-entrada-hoja 380ms  → --duracion-lenta (400ms)
+   --duracion-salida 200ms        → --duracion-normal (220ms)
+   --duracion-barra 700ms         → --duracion-grafico (800ms)
+   --duracion-crecer 800ms        → --duracion-grafico (800ms)
+   --duracion-sacudida 380ms      → --duracion-temblor (380ms)
+   --escalonado-bloque 60ms       → --retardo-bloque (propuesto)
+   --escalonado-aviso 60ms        → --retardo-bloque (propuesto)
+   --escalonado-columna 90ms      → --retardo-grafico (propuesto)
+   --escalonado-barra 80ms        → --retardo-grafico (propuesto)
+   --escalonado-opcion 40ms       → --retardo-cascada (40ms)
+   --retraso-aviso 120ms          → --duracion-rapida (120ms), como retraso
+   --retraso-vacio 80ms           → --retardo-grafico (propuesto)
+   --duracion-destello 600ms      → --duracion-confirmacion (650ms)
+   --duracion-salida-fila 240ms   → --duracion-normal (220ms)
+   --espera-verificado 650ms      → --duracion-confirmacion (650ms)
+   --duracion-periodo 320ms       → --duracion-transicion (340ms)
+   --tope-escalonado 8            → no es un token de diseño (es una cantidad, no un tiempo): constante con nombre en el componente
+*/
+
+/* Entrega 4 · etapa 2 · identidad de la billetera (FALTANTES `billetera`).
+   Motivo: la billetera (efectivo en mano, subtipo_efectivo = billetera) usaba el fondo de banco y no se distinguía de una
+   cuenta corriente. Fondo propio en el tono libre de la rueda de cuentas (amarillo ocre, más saturado que el durazno del préstamo para que no se confundan: banco azul, ahorro verde, préstamo durazno,
+   inversión lila), con la misma luminosidad que los demás para que la lista se lea pareja.
+   Contraste medido: texto 14.42:1 y texto-secundario 6.55:1 en claro; texto 13.72:1 y texto-secundario 7.61:1 en oscuro. El ícono va sobre --cuenta-disco, como en las demás. La costura es decorativa (como los demás motivos), por eso no se le exige 3:1.
+   El motivo (costura punteada) usa --cuenta-motivo, como los demás. */
+:root { --cuenta-billetera: #F2E3AE; }
+:root[data-theme="oscuro"] { --cuenta-billetera: #272310; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="claro"]) { --cuenta-billetera: #272310; } }
+
+/* Entrega 4 · etapa 4 · E4-32 (cierra D-10): duraciones sueltas de finn.css → token más cercano.
+   Todas tienen un token razonable; no se propone ninguno nuevo. Las curvas sueltas siguen a sus tokens --curva-* en la etapa 6.
+   .fz-hold .fz-fill (soltar)        .25s  → --duracion-normal (220ms)
+   .fz-hold:active .fz-fill          1.4s  → --duracion-bucle (1400ms)
+   .fz-key                           .08s  → --duracion-rapida (120ms)
+   .fz-go .fz-arr, .fz-lift          .2s   → --duracion-normal (220ms)
+   .fz-shine::after                  .7s   → --duracion-confirmacion (650ms)
+   .fz-row, .fz-row .fz-arr          .2s   → --duracion-normal (220ms)
+   .fz-d-tab, .fz-d-down             .3s   → --duracion-transicion (340ms)
+   .fz-d-right, .fz-d-left           .32s  → --duracion-transicion (340ms)
+   .fz-d-push, .fz-d-back            .36s  → --duracion-transicion (340ms)
+   .fz-d-up                          .42s  → --duracion-lenta (400ms)
+   .fz-sh-in                         .38s  → --duracion-lenta (400ms)
+   .fz-sh-out, .fz-dr-out, .fz-v-out .2s   → --duracion-normal (220ms)
+   .fz-dr-in                         .36s  → --duracion-transicion (340ms)
+   .fz-v-in                          .28s  → --duracion-transicion (340ms; empata con 220 y acompaña la entrada de la hoja)
+*/
