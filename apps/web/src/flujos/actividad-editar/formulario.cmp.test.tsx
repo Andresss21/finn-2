@@ -129,7 +129,9 @@ describe('PRU-CMP-TX editar una transacción', () => {
     expect(campo(nodo, 'total').disabled).toBe(true);
     expect(nodo.querySelector('[data-cuenta-fija]')?.textContent).toContain(t.soloLectura);
     expect(campo(nodo, 'comercio').disabled).toBe(false);
-    expect(guardar().disabled).toBe(false);
+    await vi.waitFor(() => {
+      expect(guardar().disabled).toBe(false);
+    });
   });
 
   it('PRU-CMP-TX-734 [CA-25.4] AV-16 pide la confirmación con la advertencia si cambia la fecha', async () => {

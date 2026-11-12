@@ -35,7 +35,7 @@ export function SinCapacidad({
       </dl>
       <EnlaceFinn
         href={detalle}
-        className="inline-flex min-h-11 items-center font-bold text-enlace underline"
+        className="inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accion-tonal px-4 font-bold text-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
       >
         {t.volverATransaccion}
       </EnlaceFinn>

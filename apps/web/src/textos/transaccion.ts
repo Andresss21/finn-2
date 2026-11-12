@@ -74,6 +74,7 @@ export const transaccion = {
   cancelar: 'Cancelar',
   noSePuedeEliminar: 'No se puede eliminar todavía',
   verTransaccion: 'Ver transacción',
+  entendido: 'Entendido',
   avisosEliminar: {
     'AV-01': 'La transacción es de un período cerrado: al eliminarla se recalcula lo posterior.',
     'AV-16': `Esta transacción está ${glosario.conciliada.toLowerCase()}: al eliminarla queda un cambio posterior en su conciliación.`,

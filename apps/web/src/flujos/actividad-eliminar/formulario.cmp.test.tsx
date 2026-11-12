@@ -111,14 +111,26 @@ describe('PRU-CMP-TX eliminar una transacción', () => {
         accion={accion}
         bloqueo="Esta compra tiene cobros, condonaciones o devoluciones. Eliminalos primero."
         eventos={[
-          { clave: 'c1', tipo: 'cobro', fecha: '2027-02-16' as never, monto: 1000 as never },
+          {
+            clave: 'c1',
+            id: 'e1',
+            tipo: 'cobro',
+            fecha: '2027-02-16' as never,
+            monto: 1000 as never,
+          },
         ]}
       />,
     );
     expect(nodo.textContent).toContain(t.noSePuedeEliminar);
     expect(nodo.textContent).toContain('Eliminalos primero.');
     expect(nodo.querySelector('[data-eventos]')?.textContent).toContain('$10.00');
-    expect(nodo.querySelector('a')?.getAttribute('href')).toBe('/actividad/t1');
+    const enlaces = [...nodo.querySelectorAll('a')];
+    expect(enlaces.find((a) => a.textContent === t.eliminarEvento)?.getAttribute('href')).toBe(
+      '/actividad/t1/eventos/eliminar?tipo-evento=cobro&evento=e1',
+    );
+    const entendido = enlaces.find((a) => a.textContent === t.entendido);
+    expect(entendido?.getAttribute('href')).toBe('/actividad/t1');
+    expect(entendido?.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     expect([...nodo.querySelectorAll('button')].map((b) => b.textContent)).not.toContain(
       t.verCambios,
     );

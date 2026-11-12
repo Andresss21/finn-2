@@ -3,7 +3,7 @@
 // queda en cada una, la fecha y la cuenta a la que vuelve. Flujo largo. Se guarda en un solo viaje (05 §4.4); el servidor pide confirmar
 // con AV-01. No calcula montos (PF-3): lo que queda, el reparto distinto del total y el exceso por parte los dice el servidor.
 import type { FechaLocal } from '@finn/dominio/valores';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
@@ -104,6 +104,7 @@ export function FormularioActividadDevolver(p: PropsFormularioDevolver) {
   const { setValue, formState } = formulario;
   const c = formulario.watch();
   const { estado, error: fallo } = operacion;
+  const [rechazo, setRechazo] = useState<{ fallo: unknown; escrito: string }>();
   const vista = (operacion.previsualizacion ?? {}) as VistaDeImpacto & {
     readonly avisos?: readonly { readonly codigo: string }[];
   };
@@ -124,6 +125,11 @@ export function FormularioActividadDevolver(p: PropsFormularioDevolver) {
     (x) => fallo?.codigo === 'devolucion_mayor_que_linea' && fallo.mensaje.includes(x.queda),
   );
   const delError = candidatas.length === 1 ? candidatas[0] : undefined;
+  // ACT-30: con el exceso en una parte, el botón espera a que se cambie ese monto y dice cuál corregir
+  const escritoEnLaParte = c.reparto[delError === undefined ? -1 : partes.indexOf(delError)] ?? '';
+  if (delError !== undefined && rechazo?.fallo !== fallo)
+    setRechazo({ fallo, escrito: escritoEnLaParte });
+  const parteSinCorregir = delError !== undefined && rechazo?.escrito === escritoEnLaParte;
   const error = (n: 'cuentaId' | 'fecha' | 'total'): string | undefined =>
     formState.errors[n]?.message;
   const guardar = (
@@ -132,11 +138,13 @@ export function FormularioActividadDevolver(p: PropsFormularioDevolver) {
       form={ID}
       enviando={estado === 'enviando'}
       textoEnviando={t.guardando}
-      deshabilitado={!operacion.enLinea}
+      deshabilitado={!operacion.enLinea || parteSinCorregir}
       className="w-full"
-      {...(operacion.motivoSinEnvio === undefined
-        ? {}
-        : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+      {...(operacion.motivoSinEnvio !== undefined
+        ? { motivoDeshabilitado: operacion.motivoSinEnvio }
+        : parteSinCorregir && delError !== undefined
+          ? { motivoDeshabilitado: t.corregiMonto(delError.nombre) }
+          : {})}
     >
       {montoValido(c.total)
         ? t.registrarDevolucionMonto(formatearMontoTexto(c.total))
@@ -208,7 +216,11 @@ export function FormularioActividadDevolver(p: PropsFormularioDevolver) {
                     etiqueta={t.montoDe(x.nombre)}
                     valor={c.reparto[i] ?? ''}
                     alCambiar={poner(`reparto.${i}`)}
-                    error={x === delError ? fallo?.mensaje : formState.errors.reparto?.[i]?.message}
+                    error={
+                      x === delError && parteSinCorregir
+                        ? fallo?.mensaje
+                        : formState.errors.reparto?.[i]?.message
+                    }
                     prefijo="$"
                     compacto
                     deshabilitado={x.sinCapacidad}
@@ -238,7 +250,7 @@ export function FormularioActividadDevolver(p: PropsFormularioDevolver) {
               error={error('cuentaId')}
             />
           </div>
-          {estado === 'error' && fallo !== undefined ? (
+          {estado === 'error' && fallo !== undefined && delError === undefined ? (
             <AvisoEnLinea
               estado="problema"
               aparecioDespues
@@ -252,7 +264,7 @@ export function FormularioActividadDevolver(p: PropsFormularioDevolver) {
                   }
                 : {})}
             >
-              {delError === undefined ? fallo.mensaje : t.corregiMonto(delError.nombre)}
+              {fallo.mensaje}
             </AvisoEnLinea>
           ) : null}
         </form>
