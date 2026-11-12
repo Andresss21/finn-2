@@ -66,15 +66,13 @@ export function PantallaActividad({
   const filtrado = Object.keys(sinCursor).length > 0;
   const actual = hrefDe(filtros, {});
   return (
-    // A14/B8: en computadora, la columna fija de filtros de 260 px a la izquierda y la lista hasta 760 px; en teléfono, una columna
+    // A14/B8: en computadora, la columna fija de filtros de 320 px a la izquierda (D-8, CH-241 e) y la lista hasta 760 px; en teléfono, una columna
     // (título, búsqueda, filtros, fichas y lista).
-    <main className="mx-auto flex max-w-3xl flex-col gap-4 px-5 py-4 @[996px]:grid @[996px]:max-w-[1056px] @[996px]:grid-cols-[260px_minmax(0,760px)] @[996px]:items-start @[996px]:gap-x-9 @[996px]:gap-y-4">
+    <main className="mx-auto flex max-w-3xl flex-col gap-4 px-5 py-4 @[996px]:grid @[996px]:max-w-[1116px] @[996px]:grid-cols-[320px_minmax(0,760px)] @[996px]:items-start @[996px]:gap-x-9 @[996px]:gap-y-4">
       <PublicarEncabezado encabezado={dto} />
+      {/* ACT-01: un solo «Registrar» por viewport (el de la barra superior o el de la lateral); el título va solo. */}
       <div className="order-1 flex items-center justify-between gap-3 @[996px]:col-span-2 @[996px]:row-start-1">
         <h1 className="text-titulo-pantalla">{t.titulo}</h1>
-        <EnlaceFinn href="/registrar" className={BOTON}>
-          {t.registrar}
-        </EnlaceFinn>
       </div>
       <aside
         aria-label={t.filtros}

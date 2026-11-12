@@ -5,7 +5,6 @@ export const actividad = {
   titulo: 'Actividad',
   vacioTitulo: 'Todavía no hay transacciones',
   vacioTexto: 'Cuando registres un gasto, un ingreso o una transferencia, lo vas a ver acá.',
-  registrar: 'Registrar',
   buscar: 'Buscar',
   buscarMarcador: 'Buscá por comercio o nota',
   borrarBusqueda: 'Borrar búsqueda',

@@ -336,3 +336,17 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
     expect(nodo.querySelector('[data-centavos]')).toBeNull();
   });
 });
+
+describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
+  it('PRU-CMP-TX-721 [CH-241] la lista no repite «Registrar» (ACT-01) y una fila por cobrar nombra la marca, nunca al deudor con «te debe»', () => {
+    const porCobrar = {
+      ...conCuentas('cine', [['Visa Oro', -4000]], ['Carlos'], -4000),
+      marcas: { ...MARCAS, porCobrar: true },
+    };
+    const raiz = mostrar(dto([{ fecha: '2027-02-21', transacciones: [porCobrar] }]));
+    expect(raiz.querySelectorAll('a[href="/registrar"]')).toHaveLength(0);
+    const texto = raiz.querySelector('[data-fila-transaccion="cine"]')?.textContent ?? '';
+    expect(texto).toContain('Por cobrar');
+    expect(texto).not.toMatch(/te debe/i);
+  });
+});
