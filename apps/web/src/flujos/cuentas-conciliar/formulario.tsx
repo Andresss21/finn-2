@@ -308,6 +308,18 @@ export function FormularioConciliar({
       <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
         <div className="flex flex-col gap-5">
           <p>{t.cuenta(cuenta)}</p>
+          <dl className="flex flex-col gap-1 rounded-contenedor bg-superficie px-3.5 py-2">
+            <div className="flex justify-between gap-3" data-fecha-corte>
+              <dt className="text-texto-secundario">{t.fechaCorte}</dt>
+              <dd className="font-semibold">{fecha}</dd>
+            </div>
+            <div className="flex justify-between gap-3" data-saldo-final>
+              <dt className="text-texto-secundario">{t.saldoFinalEstado}</dt>
+              <dd>
+                <Monto centavos={leida.saldoFinal} rol="cifra" />
+              </dd>
+            </div>
+          </dl>
           <div className="flex flex-col gap-1">
             <p data-saldo-estado>{t.saldoEstado(fecha, formatearMonto(leida.saldoFinal))}</p>
             <p data-saldo-finn>{t.saldoFinn(fecha, formatearMonto(c.saldoFinn))}</p>

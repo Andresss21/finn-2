@@ -87,6 +87,7 @@ export const categoriaDetalle = {
     movido: (monto: string) => `Moviste ${monto}.`,
     deshacer: 'Deshacer',
     deshaciendo: 'Deshaciendo…',
+    movidoDeshecho: 'Deshiciste el movimiento.',
     deshecho: (nombre: string) => `Deshiciste la asignación de ${nombre}.`,
     confirmarDeshacer: 'Confirmar',
   },

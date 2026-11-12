@@ -5,9 +5,16 @@
 
 export type ResultadoPresupuesto =
   | { readonly tipo: 'asignado'; readonly nuevo?: string; readonly anterior?: string }
-  | { readonly tipo: 'movido'; readonly monto: string };
+  | {
+      readonly tipo: 'movido';
+      readonly monto: string;
+      /** Las dos categorías del movimiento: con ellas el detalle ofrece «Deshacer» (OP-15 con origen y destino intercambiados). */
+      readonly origenId?: string;
+      readonly destinoId?: string;
+    };
 
 const MONTO = /^-?\d{1,12}(\.\d{1,2})?$/;
+const UUID = /^[0-9a-f-]{36}$/;
 const MONTO_POSITIVO = /^\d{1,12}(\.\d{1,2})?$/;
 
 export const PARAMETRO_RESULTADO = 'resultado';
@@ -35,7 +42,9 @@ export function detalleDeVolver(valor: string | undefined): string | undefined {
 export function rutaConResultado(base: string, r: ResultadoPresupuesto): string {
   const valor =
     r.tipo === 'movido'
-      ? `movido:${r.monto}`
+      ? r.origenId !== undefined && r.destinoId !== undefined
+        ? `movido:${r.monto}:${r.origenId}:${r.destinoId}`
+        : `movido:${r.monto}`
       : r.nuevo !== undefined && r.anterior !== undefined
         ? `asignado:${r.nuevo}:${r.anterior}`
         : 'asignado';
@@ -47,12 +56,17 @@ export function rutaConResultado(base: string, r: ResultadoPresupuesto): string 
 export function leerResultadoPresupuesto(
   valor: string | undefined,
 ): ResultadoPresupuesto | undefined {
-  const [tipo, a, b, resto] = (valor ?? '').split(':');
+  const [tipo, a, b, c, resto] = (valor ?? '').split(':');
   if (resto !== undefined) return undefined;
+  if (tipo === 'movido' && a !== undefined && MONTO_POSITIVO.test(a)) {
+    if (b === undefined && c === undefined) return { tipo, monto: a };
+    if (b !== undefined && c !== undefined && b !== c && UUID.test(b) && UUID.test(c))
+      return { tipo, monto: a, origenId: b, destinoId: c };
+    return undefined;
+  }
+  if (c !== undefined) return undefined;
   if (tipo === 'asignado' && a === undefined) return { tipo };
   if (tipo === 'asignado' && a !== undefined && b !== undefined && MONTO.test(a) && MONTO.test(b))
     return { tipo, nuevo: a, anterior: b };
-  if (tipo === 'movido' && a !== undefined && b === undefined && MONTO_POSITIVO.test(a))
-    return { tipo, monto: a };
   return undefined;
 }

@@ -61,11 +61,14 @@ export function PantallaDetalleCategoria({
   sacar,
   resultado,
   asignar,
+  mover,
 }: {
   readonly dto: DetalleCategoriaDto;
   /** E2-13 [CH-248]: lo que dejó Asignar o Mover (`?resultado=`, ya validado) y `asignarEnCategoria` para su «Deshacer». */
   readonly resultado?: ResultadoPresupuesto | undefined;
   readonly asignar?: AccionEscritura;
+  /** `moverDinero` (OP-15): el «Deshacer» de Mover. */
+  readonly mover?: AccionEscritura;
   readonly desarchivar: AccionEscritura;
   /** `sacarDisponible` (OP-11): la pone el lector; sin ella no se ofrece la propuesta de AV-14. */
   readonly sacar?: AccionEscritura;
@@ -86,6 +89,7 @@ export function PantallaDetalleCategoria({
         nombre={categoria.nombre}
         periodoInicio={dto.periodo.inicio}
         asignar={asignar}
+        {...(mover === undefined ? {} : { mover })}
       />
     );
   if (dto.clase === 'pago') return <PantallaPagoTarjeta dto={dto} resultado={delFlujo} />;
