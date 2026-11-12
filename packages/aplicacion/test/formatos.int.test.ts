@@ -9,6 +9,7 @@ import {
   guardarInstitucionBancaria,
   probarFormato,
 } from '../src/operaciones/formatos/index.ts';
+import { mensajeDeRechazo } from '../src/errores/mensajes.ts';
 
 const opciones = () => RELOJ;
 const SESION = '11111111-1111-4111-8111-111111111111';
@@ -283,5 +284,86 @@ describe('PRU-INT-BAND-104', () => {
     expect(await admin(`SELECT nombre FROM finn.instituciones WHERE id = '${id}'`)).toEqual([
       'Banco Renombrado',
     ]);
+  });
+
+  it('PRU-INT-AJUS-741 [CA-E5-14] OPT-05 con cada patrón rechazado y OPT-07 con un nombre repetido devuelven el texto del catálogo de 04 §7.10 (CH-E5-4, CH-247) en su campo', async () => {
+    const id = randomUUID();
+    const lento = 'Finn acepta hasta grado 2: simplificá las partes que se repiten.';
+    const casos: [Record<string, unknown>, string, string, string][] = [
+      [
+        { patron: '(' },
+        'patron_invalido',
+        'patron',
+        'Este patrón no es una expresión regular válida: falta cerrar un paréntesis.',
+      ],
+      [
+        { patron: `${PATRON}\\` },
+        'patron_invalido',
+        'patron',
+        'Este patrón no es una expresión regular válida: termina con una barra invertida.',
+      ],
+      [
+        { banderas: 'mi' },
+        'banderas_no_permitidas',
+        'banderas',
+        'Solo se permiten las banderas i, m, s y u, en ese orden.',
+      ],
+      [
+        { patron: String.raw`compra (?<ultimos4>\d{4})` },
+        'grupos_obligatorios',
+        'patron',
+        'Al patrón le faltan los grupos monto: siempre ultimos4 y monto, y fecha si elegís formatos de fecha.',
+      ],
+      [
+        { patron: 'compra', formatosFecha: ['DD/MM/AAAA'] },
+        'grupos_obligatorios',
+        'patron',
+        'Al patrón le faltan los grupos ultimos4, monto y fecha: siempre ultimos4 y monto, y fecha si elegís formatos de fecha.',
+      ],
+      [
+        { patron: String.raw`compra (?<ultimos4>\d{4}) (?<monto>[\d.,]+) (?<fecha>\d{8})$` },
+        'grupos_obligatorios',
+        'patron',
+        'El patrón tiene el grupo fecha, pero no elegiste formatos de fecha: elegí al menos uno o quitá el grupo.',
+      ],
+      [
+        { patron: String.raw`(?<ultimos4>\d{4}) (?<monto>(\d+)+)$` },
+        'patron_lento',
+        'patron',
+        `Este patrón tarda demasiado con algunos textos: retroceso de grado exponencial (se trabó con «0000 0» seguido de 31 veces «0»). ${lento}`,
+      ],
+      [
+        {
+          patron: String.raw`compra en\s+(?<comercio>.+?)\s+(?<ultimos4>\d{4}) (?<monto>[\d.,]+)$`,
+        },
+        'patron_lento',
+        'patron',
+        `Este patrón tarda demasiado con algunos textos: retroceso de grado 3 (se trabó con «COMPRA EN» seguido de 1,651 espacios). ${lento}`,
+      ],
+    ];
+    for (const [resto, codigo, campo, texto] of casos) {
+      const r = await guardarFormatoBancario(formato(id, resto), SESION, opciones);
+      expect(r, texto).toMatchObject({ ok: false, error: { codigo, campos: { [campo]: texto } } });
+    }
+    // `unknown` (el análisis no terminó) no trae grado ni cadena: su propio texto (CH-247 a)
+    expect(mensajeDeRechazo({ codigo: 'patron_lento' })).toBe(
+      `No pudimos comprobar que este patrón sea rápido: el análisis no terminó. ${lento}`,
+    );
+    // Un mensaje de V8 fuera del mapa no se muestra en inglés (CH-247 d)
+    expect(mensajeDeRechazo({ codigo: 'patron_invalido' })).toBe(
+      'Este patrón no es una expresión regular válida.',
+    );
+
+    const repetida = await guardarInstitucionBancaria(
+      { id: randomUUID(), nombre: 'BAC' },
+      opciones,
+    );
+    expect(repetida).toMatchObject({
+      ok: false,
+      error: {
+        codigo: 'nombre_repetido',
+        campos: { nombre: 'Ya hay una institución llamada BAC.' },
+      },
+    });
   });
 });

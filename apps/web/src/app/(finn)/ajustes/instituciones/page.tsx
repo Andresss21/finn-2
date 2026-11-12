@@ -9,6 +9,14 @@ import { ListaInstituciones } from './lista';
 export const metadata: Metadata = { title: ajustesInstituciones.titulo };
 
 export default async function PaginaInstituciones() {
-  const { instituciones } = await consultar(async () => ajustes(await depsDeConsulta()));
-  return <ListaInstituciones instituciones={instituciones} />;
+  const { instituciones, formatos } = await consultar(async () => ajustes(await depsDeConsulta()));
+  // E5-14: «N formatos» se cuenta de `formatos` (sin «N cuentas», que `AjustesDto` no trae; CH-247 e)
+  return (
+    <ListaInstituciones
+      instituciones={instituciones.map((i) => ({
+        ...i,
+        formatos: formatos.filter((f) => f.institucion.id === i.id).length,
+      }))}
+    />
+  );
 }

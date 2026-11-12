@@ -16,6 +16,7 @@ import {
   type ErrorFinn,
   type ResultadoAccion,
 } from '../../errores/index.ts';
+import { mensajeDeRechazo } from '../../errores/mensajes.ts';
 import { idErrorAleatorio } from '../marco.ts';
 
 export interface SalidaInstitucion {
@@ -38,10 +39,15 @@ export async function guardarInstitucionBancaria(
     fin = await escribir(async (tx): Promise<Fin> => {
       const actual = await leerInstitucion(tx, e.id);
       if (actual?.nombre === e.nombre) return 'ya_aplicada';
-      if (await nombreDeInstitucionEnUso(tx, e.nombre, e.id))
-        return errorDeValidacion([
-          { path: ['nombre'], message: 'Ya hay una institución con ese nombre.' },
-        ]);
+      if (await nombreDeInstitucionEnUso(tx, e.nombre, e.id)) {
+        // 04 §7.10 [CH-240]: el texto de una institución; el código sigue siendo `nombre_repetido`
+        const datos = { nombre: e.nombre, institucionId: e.id };
+        const mensaje = mensajeDeRechazo({ codigo: 'nombre_repetido', datos }) ?? '';
+        return {
+          ...errorDeValidacion([{ path: ['nombre'], message: mensaje }]),
+          codigo: 'nombre_repetido',
+        };
+      }
       await guardarInstitucion(tx, { id: e.id, nombre: e.nombre });
       return actual === null ? 'crear' : 'renombrar';
     }, opciones?.());

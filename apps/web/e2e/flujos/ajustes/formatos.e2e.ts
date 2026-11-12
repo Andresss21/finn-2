@@ -61,7 +61,7 @@ async function llenarFormato(
 async function crearFormato(page: Page, nombre: string): Promise<void> {
   await llenarFormato(page, { nombre, patron: PATRON_VALIDO, conFecha: true });
   await guardar(page).click();
-  await expect(page).toHaveURL(/\/ajustes\/formatos$/);
+  await expect(page).toHaveURL(/\/ajustes\/formatos\?guardado=/);
 }
 
 /** El token de FT-03 generado desde Ajustes, como lo pegaría MacroDroid. */
@@ -92,7 +92,7 @@ test.describe('PRU-E2E-AJUS', () => {
     await preparar();
     await llenarFormato(page, { nombre: 'Lento', patron: PATRON_LENTO, conFecha: true });
     await guardar(page).click();
-    await expect(page.getByText(/grado 3, por ejemplo «/)).toBeVisible();
+    await expect(page.getByText(/retroceso de grado 3 \(se trabó con «/)).toBeVisible();
     await expect(page.getByLabel(t.campos.patron, { exact: true })).toHaveAttribute(
       'aria-invalid',
       'true',
@@ -107,7 +107,7 @@ test.describe('PRU-E2E-AJUS', () => {
     await preparar();
     await llenarFormato(page, { nombre: 'Sin monto', patron: PATRON_SIN_MONTO });
     await guardar(page).click();
-    await expect(page.getByText(/necesita los grupos ultimos4 y monto/)).toBeVisible();
+    await expect(page.getByText(/Al patrón le faltan los grupos monto:/)).toBeVisible();
     await expect(page).toHaveURL(/\/ajustes\/formatos\/nuevo$/);
     expect(eventosQueNombran('auditoria_formato')).toBe(0);
   });
@@ -124,7 +124,7 @@ test.describe('PRU-E2E-AJUS', () => {
     await expect(page.getByLabel(t.campos.nombre, { exact: true })).toHaveValue('Pago de prueba');
     await page.getByLabel(t.campos.nombre, { exact: true }).fill('Pago de prueba 2');
     await guardar(page).click();
-    await expect(page).toHaveURL(/\/ajustes\/formatos$/);
+    await expect(page).toHaveURL(/\/ajustes\/formatos\?guardado=/);
     await expect(page.getByText(/Pago de prueba 2/)).toBeVisible();
     expect(eventosQueNombran('auditoria_formato editar')).toBe(1);
     // El antes y el después van en la misma fila
@@ -150,9 +150,9 @@ test.describe('PRU-E2E-AJUS', () => {
     await abrir(page, '/ajustes/formatos');
     await page.getByRole('link', { name: /Pago de prueba/ }).click();
     await esperarHidratacion(page);
-    await page.getByLabel(t.campos.activo, { exact: true }).uncheck();
+    await page.getByRole('switch', { name: t.campos.activo, exact: true }).click();
     await guardar(page).click();
-    await expect(page).toHaveURL(/\/ajustes\/formatos$/);
+    await expect(page).toHaveURL(/\/ajustes\/formatos\?guardado=/);
     await expect(
       page.locator('[data-formato]').filter({ hasText: /Pago de prueba/ }),
     ).toContainText(t.inactivo);
