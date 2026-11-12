@@ -690,6 +690,15 @@ describe('PRU-CMP-CATEG entrega 4', () => {
     );
   });
 
+  it('PRU-CMP-CATEG-733 [CA-E4-15] en un período cerrado «Más acciones» no ofrece «Mover dinero» ni «Archivar» y conserva Editar, Fusionar con otra y Eliminar', async () => {
+    const menu = await abrirMenu(
+      dto({ periodo: CERRADO, navegacion: {}, acciones: { ...acciones, puedeAsignar: false } }),
+    );
+    expect(accion(menu, 'Mover dinero')).toBeUndefined();
+    expect(accion(menu, 'Archivar')).toBeUndefined();
+    for (const x of ['Editar', 'Fusionar', 'Eliminar']) expect(accion(menu, x), x).toBeDefined();
+  });
+
   it('PRU-CMP-CATEG-711 [CA-E4-19] a 1440 px el historial pone el gráfico arriba y la tabla debajo, y la tabla no desborda su tarjeta', async () => {
     await page.viewport(1440, 900);
     const historial = [

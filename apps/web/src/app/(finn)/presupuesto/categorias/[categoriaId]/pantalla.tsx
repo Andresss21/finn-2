@@ -103,7 +103,8 @@ export function PantallaDetalleCategoria({
           } as const,
         ]
       : []),
-    ...(archivada
+    // E4-9: en un período cerrado «Archivar» no se ofrece (D-5, CA-E4-15); «Fusionar con otra» sigue siendo válida.
+    ...(archivada || cerrado
       ? []
       : [
           bloqueoArchivar === undefined
@@ -113,8 +114,10 @@ export function PantallaDetalleCategoria({
                 motivo: t.acciones.bloqueos[bloqueoArchivar],
                 icono: 'inbox',
               } as const),
-          { etiqueta: t.acciones.fusionar, ruta: `${raiz}/fusionar`, icono: 'repeat' } as const,
         ]),
+    ...(archivada
+      ? []
+      : [{ etiqueta: t.acciones.fusionar, ruta: `${raiz}/fusionar`, icono: 'repeat' } as const]),
     acciones.puedeEliminar
       ? {
           etiqueta: t.acciones.eliminar,

@@ -194,7 +194,7 @@ describe('PRU-CMP-CATEG', () => {
     expect(boton(nodo, t.fusionar).disabled).toBe(true);
   });
 
-  it('PRU-CMP-PRES-283 [CA-E4-1, CA-E4-26] la tarjeta K4 de Fusionar dibuja cada línea del impacto como fila, AV-01 como advertencia, sin botones propios ni «antes → después», y el pie de 44 px o más confirma', async () => {
+  it('PRU-CMP-PRES-283 [CA-E4-21, CA-E4-4] la tarjeta K4 de Fusionar dibuja cada línea del impacto como fila, AV-01 como advertencia, sin botones propios ni «antes → después», y el pie de 44 px o más confirma', async () => {
     const accion = vi.fn(() => ok(vista()));
     const nodo = montar(<FormularioFusionar {...base} accion={accion} />);
     await elegirDestino(nodo, 'Salidas');

@@ -92,9 +92,9 @@ test.describe('PRU-E2E-CATEG', () => {
     await expect(page.getByRole('heading', { name: 'Archivar categoría', level: 1 })).toBeVisible();
     await expect(page.getByText('Tiene dinero asignado en 1 período futuro.')).toBeVisible();
     await page.getByLabel(/Programada Gimnasio/).selectOption({ label: 'Desactivarla' });
-    await page.getByRole('button', { name: 'Archivar', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Revisá el impacto' })).toBeVisible();
-    await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
+    // E4-1: la tarjeta de impacto está en la misma pantalla y el pie confirma con el verbo
+    await expect(page.getByRole('heading', { name: 'Antes de confirmar' })).toBeVisible();
+    await page.getByRole('button', { name: 'Archivar Gimnasio', exact: true }).click();
     await expect(page).toHaveURL(/\/presupuesto\/categorias\/[0-9a-f-]+$/);
 
     await abrir(page, '/presupuesto');
@@ -146,5 +146,39 @@ test.describe('PRU-E2E-CATEG', () => {
     await esperarMonto(fila(page, 'Gimnasio').locator('[data-centavos]').nth(2), 3000);
     await abrir(page, '/presupuesto');
     await expect(fila(page, 'Gimnasio')).toHaveCount(0);
+  });
+});
+
+test.describe('PRU-E2E-PRES', () => {
+  test.beforeEach(async ({ context, baseURL }) => {
+    await entrarAal2(context, baseURL ?? '');
+  });
+
+  test('PRU-E2E-PRES-741 [CA-E4-21] archivar Gimnasio con su programada muestra la tarjeta K4 en la misma pantalla y, al cambiar «Desactivarla» por «Pasarla a otra categoría», vuelve a pedir el impacto al servidor', async ({
+    page,
+  }) => {
+    await sembrarOps([{ op: 'OP-07', categoria: 'Salidas' }, ...ESC44_PASO0]);
+    await abrir(page, '/presupuesto');
+    const id = await fila(page, 'Gimnasio').getAttribute('data-fila-categoria');
+    await abrir(page, `/presupuesto/categorias/${id}/archivar`);
+    const k4 = page.locator('[data-impacto-k4]');
+    await expect(k4).toBeVisible();
+    await expect(page.getByLabel(/Programada Gimnasio/)).toHaveValue('desactivar');
+    // Cada cambio de decisión es una previsualización nueva al servidor (una Server Action por cambio)
+    const acciones: string[] = [];
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && r.headers()['next-action'] !== undefined)
+        acciones.push(r.postData() ?? '');
+    });
+    await page
+      .getByLabel(/Programada Gimnasio/)
+      .selectOption({ label: 'Pasarla a otra categoría' });
+    await page.getByLabel('Pasarla a').selectOption({ label: 'Salidas' });
+    await expect.poll(() => acciones.length).toBeGreaterThan(0);
+    expect(acciones.at(-1)).toContain('reasignar');
+    await expect(k4).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Archivar Gimnasio', exact: true }),
+    ).toBeEnabled();
   });
 });

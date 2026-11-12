@@ -162,7 +162,8 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
     etiqueta: d.nombre,
   }));
   const rechazo = vista.rechazos?.[0];
-  const puedeConfirmar = operacion.enLinea && estado === 'confirmando' && rechazo === undefined && !sinDestino;
+  const puedeConfirmar =
+    operacion.enLinea && estado === 'confirmando' && rechazo === undefined && !sinDestino;
   const nada = disponible === 0 && futuras === 0 && programadas.length === 0;
   const montoTexto = formatearMonto(disponible);
   return (
@@ -170,7 +171,7 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
       titulo={t.titulo}
       rutaPadre={rutaPadre}
       acciones={
-        <div className="w-full md:ml-auto md:w-[calc(50%-1.125rem)]">
+        <div className="w-full">
           <Boton
             className="w-full"
             enviando={estado === 'enviando' && confirmo}

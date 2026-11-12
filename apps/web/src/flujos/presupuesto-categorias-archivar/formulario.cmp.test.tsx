@@ -186,7 +186,7 @@ describe('PRU-CMP-CATEG', () => {
     expect(boton(nodo, t.archivarNombre('Gimnasio')).disabled).toBe(true);
   });
 
-  it('PRU-CMP-PRES-282 [CA-E4-1, CA-E4-26] el impacto de Archivar es una tarjeta K4 de filas debajo de las decisiones, sin botones propios ni «antes → después»; el pie de 44 px o más es el que confirma', async () => {
+  it('PRU-CMP-PRES-282 [CA-E4-21, CA-E4-4] el impacto de Archivar es una tarjeta K4 de filas debajo de las decisiones, sin botones propios ni «antes → después»; el pie de 44 px o más es el que confirma', async () => {
     const accion = previsualiza();
     const nodo = montar(<FormularioArchivar {...base} accion={accion} />);
     await conImpacto(nodo);

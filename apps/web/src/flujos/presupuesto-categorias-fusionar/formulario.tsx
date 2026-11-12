@@ -145,7 +145,7 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
         ? {}
         : {
             acciones: (
-              <div className="w-full md:ml-auto md:w-[calc(50%-1.125rem)]">
+              <div className="w-full">
                 <Boton
                   variante="peligro"
                   className="w-full"

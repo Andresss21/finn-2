@@ -77,7 +77,7 @@ const filaDe = (nodo: HTMLElement, id: string): string | undefined =>
 const alto = (e: Element): number => e.getBoundingClientRect().height;
 
 describe('PRU-CMP-PRES', () => {
-  it('PRU-CMP-PRES-130 [AV-18] al abrir previsualiza sola con la revisión vista, dibuja lo que asignaría y lo que queda sin cubrir; confirmar envía la misma entrada con la huella y el aviso sigue a la vista', async () => {
+  it('PRU-CMP-PRES-130 [AV-18, CA-E6-13] al abrir previsualiza sola con la revisión vista, dibuja lo que asignaría y lo que queda sin cubrir; confirmar envía la misma entrada con la huella y el aviso sigue a la vista', async () => {
     const accion = vi.fn((entrada: unknown) =>
       (entrada as { modo: string }).modo === 'previsualizar'
         ? ok(vista({ avisos: [sinCubrir] }))
@@ -92,9 +92,9 @@ describe('PRU-CMP-PRES', () => {
     });
     expect(nodo.textContent).toContain(t.revisar);
     expect(filaDe(nodo, SUPER)).toBe(`Super${t.faltaParaLaMeta}+$300.00`);
-    expect(nodo.textContent).toContain(t.sinCubrir('Mascota', '$50.00'));
+    expect(nodo.textContent).toContain(t.quedaSinCubrir('Mascota', '$50.00'));
 
-    await tocar(nodo, t.confirmar);
+    await tocar(nodo, t.confirmarMonto('$300.00'));
     expect(accion).toHaveBeenLastCalledWith({
       periodoInicio: '2027-02-01',
       modo: 'confirmar',
@@ -116,7 +116,7 @@ describe('PRU-CMP-PRES', () => {
     );
     const nodo = await montar(<FormularioAutoAsignar {...base} accion={accion} />);
     expect(nodo.textContent).not.toContain('quedó sin cubrir');
-    await tocar(nodo, t.confirmar);
+    await tocar(nodo, t.confirmarMonto('$300.00'));
     expect(replace).toHaveBeenCalledWith('/presupuesto');
   });
 
@@ -125,7 +125,7 @@ describe('PRU-CMP-PRES', () => {
     const nodo = await montar(<FormularioAutoAsignar {...base} hayFalta={false} accion={accion} />);
     expect(nodo.textContent).toContain(t.sinFalta);
     expect(accion).not.toHaveBeenCalled();
-    expect(() => boton(nodo, t.confirmar)).toThrow();
+    expect(() => boton(nodo, t.confirmarMonto('$300.00'))).toThrow();
   });
 
   it('PRU-CMP-PRES-133 [AV-18] con Listo para asignar en cero o negativo la previsualización dice que no asignará nada, muestra lo que falta y no ofrece confirmar', async () => {
@@ -134,8 +134,8 @@ describe('PRU-CMP-PRES', () => {
     );
     const nodo = await montar(<FormularioAutoAsignar {...base} accion={accion} />);
     expect(nodo.textContent).toContain(t.nadaQueAsignar);
-    expect(nodo.textContent).toContain(t.sinCubrir('Mascota', '$50.00'));
-    expect(() => boton(nodo, t.confirmar)).toThrow();
+    expect(nodo.textContent).toContain(t.quedaSinCubrir('Mascota', '$50.00'));
+    expect(() => boton(nodo, t.confirmarMonto('$300.00'))).toThrow();
   });
 
   it('PRU-CMP-PRES-134 si el estado cambió después de previsualizar, confirmar responde conflicto_desactualizado y "Volver a calcular" previsualiza de nuevo con la revisión actual', async () => {
@@ -155,10 +155,10 @@ describe('PRU-CMP-PRES', () => {
       });
     });
     const nodo = await montar(<FormularioAutoAsignar {...base} accion={accion} />);
-    await tocar(nodo, t.confirmar);
+    await tocar(nodo, t.confirmarMonto('$300.00'));
     expect(pasos).toBe(1);
     expect(nodo.textContent).toContain('Este valor cambió mientras lo editabas');
-    expect(() => boton(nodo, t.confirmar)).toThrow();
+    expect(() => boton(nodo, t.confirmarMonto('$300.00'))).toThrow();
 
     await tocar(nodo, t.volverACalcular);
     expect(accion).toHaveBeenLastCalledWith({
@@ -168,7 +168,7 @@ describe('PRU-CMP-PRES', () => {
     });
     expect(nodo.textContent).toContain(t.revisar);
   });
-  it('PRU-CMP-PRES-280 [FT-13] la confirmación de Auto-asignar dibuja el período, la introducción con Listo para asignar, una fila por categoría con «+$…» en una tarjeta, lo que queda sin cubrir como advertencia y «Cancelar» y «Asignar» en dos columnas de 44 px o más, sin «antes → después»', async () => {
+  it('PRU-CMP-PRES-280 [CA-E6-13] la confirmación de Auto-asignar dibuja el período, la introducción con Listo para asignar, una fila por categoría con «+$…» en una tarjeta, lo que queda sin cubrir como advertencia y «Cancelar» y «Asignar $300.00» en dos columnas de 44 px o más, sin «antes → después»', async () => {
     const accion = vi.fn(() => ok(vista({ avisos: [sinCubrir] })));
     const nodo = await montar(<FormularioAutoAsignar {...base} accion={accion} />);
     expect(nodo.textContent).toContain(t.periodo('01/02 – 28/02/2027'));
@@ -178,14 +178,14 @@ describe('PRU-CMP-PRES', () => {
     const filas = [...(tarjeta?.querySelectorAll(':scope > li') ?? [])].map((li) => li.textContent);
     expect(filas).toEqual([`Super${t.faltaParaLaMeta}+$300.00`, t.impactoLpa('−$300.00')]);
     const aviso = nodo.querySelector('[data-estado="advertencia"]');
-    expect(aviso?.textContent).toContain(t.sinCubrir('Mascota', '$50.00'));
+    expect(aviso?.textContent).toContain(t.quedaSinCubrir('Mascota', '$50.00'));
     // El foco va al título de la confirmación, como antes (05 §4.4)
     expect(document.activeElement?.textContent).toBe(t.revisar);
-    const pie = boton(nodo, t.confirmar).parentElement;
+    const pie = boton(nodo, t.confirmarMonto('$300.00')).parentElement;
     expect(pie?.className).toContain('grid-cols-2');
     expect([...(pie?.querySelectorAll('button') ?? [])].map((b) => b.textContent)).toEqual([
       t.cancelar,
-      t.confirmar,
+      t.confirmarMonto('$300.00'),
     ]);
     for (const b of pie?.querySelectorAll('button') ?? [])
       expect(alto(b)).toBeGreaterThanOrEqual(44);

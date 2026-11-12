@@ -32,6 +32,19 @@ export async function LectorEstructura({
           codigo: 'categoria_con_historial',
           datos: { categoria: fila.categoria.nombre },
         }) ?? undefined);
+  // E4-5: los bloqueos de un grupo con su motivo. Qué categorías tiene lo dice `estructura()`; el texto, el catálogo de 04 §7.7.
+  const delGrupo = grupos.find((g) => g.grupo.id === id);
+  const motivoDe = (codigo: string): string | undefined =>
+    delGrupo === undefined
+      ? undefined
+      : (mensajeDeRechazo({ codigo, datos: { grupo: delGrupo.grupo.nombre } }) ?? undefined);
+  const motivoArchivarGrupo = delGrupo?.categorias.some((c) => !c.archivada)
+    ? motivoDe('grupo_con_categorias_activas')
+    : undefined;
+  const motivoEliminarGrupo =
+    delGrupo !== undefined && delGrupo.categorias.length > 0
+      ? motivoDe('grupo_no_vacio')
+      : undefined;
   return (
     <FormularioEstructura
       modo={modo}
@@ -40,6 +53,8 @@ export async function LectorEstructura({
       {...(id === undefined ? {} : { id })}
       {...(grupo === undefined ? {} : { grupoInicial: grupo })}
       {...(motivoHistorial === undefined ? {} : { motivoHistorial })}
+      {...(motivoArchivarGrupo === undefined ? {} : { motivoArchivarGrupo })}
+      {...(motivoEliminarGrupo === undefined ? {} : { motivoEliminarGrupo })}
     />
   );
 }
