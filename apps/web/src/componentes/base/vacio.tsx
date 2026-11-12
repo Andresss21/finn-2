@@ -1,5 +1,6 @@
 // Vacío (06-identidad-visual 2.19, 05 §7.2): círculo de 72 con el glifo, título, texto de 280 como máximo y la acción.
 import type { ReactNode } from 'react';
+import { cn } from '../../components/ui/utils';
 import { ACCION_TONAL } from './accion-tonal';
 import { Icono, type NombreIcono } from './icono';
 
@@ -35,7 +36,7 @@ export function Vacio({
       <h2 className="fz-vacio-texto text-titulo-seccion text-texto">{titulo}</h2>
       <p className="fz-vacio-texto text-cuerpo-pequeno max-w-70 text-texto-secundario">{texto}</p>
       {accion === undefined ? null : (
-        <div className={`fz-vacio-texto ${ACCION_TONAL}`}>{accion}</div>
+        <div className={cn('fz-vacio-texto', ACCION_TONAL)}>{accion}</div>
       )}
     </div>
   );

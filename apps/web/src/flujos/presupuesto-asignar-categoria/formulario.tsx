@@ -21,7 +21,6 @@ import { aplicarSigno, normalizarMontoEscrito } from '../../formularios/normaliz
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { asignarEnCategoria, asignarRapido } from '../../servidor/acciones/presupuesto';
-import { formularios } from '../../textos/formularios';
 import { presupuestoAsignar as t } from '../../textos/presupuesto-asignar';
 import { PieDeHoja } from '../pie-de-hoja';
 import { CampoConFoco } from './campo-con-foco';
@@ -65,7 +64,6 @@ interface Vista {
     readonly datos?: { readonly lpa?: Centavos };
   }[];
 }
-const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 
 /** Lo que el servidor guarda como Asignado, escrito como lo teclea la persona: el valor absoluto y su signo. */
 const camposDe = (asignado: Centavos): Campos => ({
@@ -235,31 +233,18 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
         <AvisoEnLinea
           estado="problema"
           aparecioDespues
-          {...(conflicto
-            ? {
-                accion: (
-                  <Boton
-                    variante="secundaria"
-                    onClick={() => {
-                      alUsarActual(actual, formulario.getValues());
-                    }}
-                  >
-                    {t.usarValorActual}
-                  </Boton>
-                ),
-              }
-            : REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                      {formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
+          accion={
+            <Boton
+              variante="secundaria"
+              onClick={() => {
+                alUsarActual(actual, formulario.getValues());
+              }}
+            >
+              {t.usarValorActual}
+            </Boton>
+          }
         >
-          {fallo.mensaje}
-          {conflicto ? ` ${t.valorActual(formatearMonto(actual))}` : ''}
+          {fallo.mensaje} {t.valorActual(formatearMonto(actual))}
         </AvisoEnLinea>
       ) : null}
       <PieDeHoja rutaPadre={rutaPadre} superpuesto={superpuesto}>

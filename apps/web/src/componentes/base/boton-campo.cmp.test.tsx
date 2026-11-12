@@ -173,7 +173,7 @@ describe('PRU-CMP-VAL-102 botones y campos', () => {
 
 // TA-567 (CH-240): componentes base de la auditoría.
 describe('PRU-CMP-PWA componentes base de la auditoría', () => {
-  it('PRU-CMP-PWA-761 [CH-240] el foco visible de Boton, Pastillas y un enlace usa --foco (3 px, separado 2 px), no el contorno del navegador', async () => {
+  it('PRU-CMP-PWA-761 [CH-240] el foco visible de Boton, Pastillas y un enlace usa --foco (3 px, separado 2 px), no el contorno del navegador', () => {
     const nodo = montar(
       <>
         <Boton>Guardar</Boton>
@@ -196,7 +196,7 @@ describe('PRU-CMP-PWA componentes base de la auditoría', () => {
     for (const control of nodo.querySelectorAll<HTMLElement>('button, a[href]')) {
       control.focus({ focusVisible: true } as FocusOptions);
       const e = getComputedStyle(control);
-      expect(e.outlineStyle, control.textContent ?? '').toBe('solid');
+      expect(e.outlineStyle, control.textContent).toBe('solid');
       expect(e.outlineWidth).toBe('3px');
       expect(e.outlineOffset).toBe('2px');
       expect(e.outlineColor).toBe(foco);
@@ -226,7 +226,7 @@ describe('PRU-CMP-PWA componentes base de la auditoría', () => {
       expect(a.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     }
     const boton = [...nodo.querySelectorAll('button')].find((b) =>
-      b.textContent?.startsWith('Asignar'),
+      b.textContent.startsWith('Asignar'),
     ) as HTMLElement;
     expect(getComputedStyle(boton).fontVariantNumeric).toContain('tabular-nums');
     expect(boton.textContent).toMatch(/Asignar \$75\.00/);

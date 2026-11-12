@@ -5,17 +5,24 @@
 import type { ReactNode } from 'react';
 import { estados } from '../../textos/estados';
 
-// Clases literales (L13).
-const HUNDIDO = 'bg-superficie-hundida';
+// Clases literales (L13): cada ancho de barra es una clase completa.
+const BARRAS = {
+  'w-full': 'block h-3 w-full rounded-sm bg-superficie-hundida',
+  'w-3/4': 'block h-3 w-3/4 rounded-sm bg-superficie-hundida',
+  'w-2/3': 'block h-3 w-2/3 rounded-sm bg-superficie-hundida',
+  'w-1/2': 'block h-3 w-1/2 rounded-sm bg-superficie-hundida',
+  'w-1/3': 'block h-3 w-1/3 rounded-sm bg-superficie-hundida',
+  'w-1/4': 'block h-3 w-1/4 rounded-sm bg-superficie-hundida',
+} as const;
 
-export function Barra({ ancho = 'w-full' }: { readonly ancho?: string }) {
-  return <span className={`block h-3 rounded-sm ${HUNDIDO} ${ancho}`} />;
+export function Barra({ ancho = 'w-full' }: { readonly ancho?: keyof typeof BARRAS }) {
+  return <span className={BARRAS[ancho]} />;
 }
 
 export function Circulo({ tamano = 20 }: { readonly tamano?: number }) {
   return (
     <span
-      className={`block shrink-0 rounded-full ${HUNDIDO}`}
+      className="block shrink-0 rounded-full bg-superficie-hundida"
       style={{ width: tamano, height: tamano }}
     />
   );
@@ -23,7 +30,7 @@ export function Circulo({ tamano = 20 }: { readonly tamano?: number }) {
 
 /** El gráfico: un bloque de 168 px sin color de datos. */
 export function BloqueGrafico() {
-  return <span className={`block h-42 w-full rounded-control ${HUNDIDO}`} />;
+  return <span className="block h-42 w-full rounded-control bg-superficie-hundida" />;
 }
 
 /** Una fila de lista: círculo del ícono y dos barras. */

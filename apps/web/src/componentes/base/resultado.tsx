@@ -2,6 +2,7 @@
 // Resultado de una acción (06-identidad-visual 2.13, 05 §10.7, 4.14): queda en su lugar, sin tiempo límite y sin toast.
 // Se anuncia por la región del marco (11.3); aquí es un contenedor `data-testid="resultado"` con la salida o el enlace.
 import type { ReactNode } from 'react';
+import { cn } from '../../components/ui/utils';
 import { ACCION_TONAL } from './accion-tonal';
 import { Icono } from './icono';
 
@@ -34,7 +35,7 @@ export function Resultado({ texto, salida, enlace }: PropsResultado) {
         </button>
       )}
       {enlace === undefined ? null : (
-        <span className={`inline-flex min-h-11 items-center ${ACCION_TONAL}`}>{enlace}</span>
+        <span className={cn('inline-flex min-h-11 items-center', ACCION_TONAL)}>{enlace}</span>
       )}
     </div>
   );
