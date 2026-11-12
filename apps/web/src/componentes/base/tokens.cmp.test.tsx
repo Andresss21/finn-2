@@ -99,7 +99,7 @@ describe('PRU-CMP-PWA', () => {
     expect(globals).not.toContain('--tope-escalonado');
   });
 
-  it('PRU-CMP-PWA-702 [D-10] en apps/web/src no hay un hex ni una duración en ms o s fuera de tokens.css y tokens-decorativos.css', () => {
+  it('PRU-CMP-PWA-702 [CA-E4-2, D-10] en apps/web/src no hay un hex ni una duración en ms o s fuera de tokens.css y tokens-decorativos.css', () => {
     const permitidos = new Set([TOKENS, DECORATIVOS]);
     const hex = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![\w-])/g;
     // `500ms` o `1.4s` pegados: los textos para el usuario llevan un espacio ("30 s") y no cuentan.
@@ -120,7 +120,7 @@ describe('PRU-CMP-PWA', () => {
     expect(sueltos).toEqual([]);
   });
 
-  it('PRU-CMP-PWA-703 [C-18] los --decorativo-* se declaran solo en tokens-decorativos.css y ningún texto los usa como fondo de su contraste', () => {
+  it('PRU-CMP-PWA-703 [CA-C-4, C-18] los --decorativo-* se declaran solo en tokens-decorativos.css y ningún texto los usa como fondo de su contraste', () => {
     const declarados = declaradas(leer(DECORATIVOS), ['decorativo']);
     expect(declarados.length).toBeGreaterThanOrEqual(6);
     const fuera: string[] = [];
