@@ -152,4 +152,42 @@ test.describe('PRU-E2E-PWA', () => {
       ).toBe(true);
     }
   });
+
+  // TA-568 (GLO-01, GLO-02; 06-identidad-visual §11 [CH-241]): Registrar sube desde abajo con `--duracion-lenta`; con «reducir
+  // movimiento» la pantalla aparece sin animación.
+  test('PRU-E2E-PWA-771 [CH-240] abrir Registrar desde Inicio anota la entrada desde abajo con --duracion-lenta, y con prefers-reduced-motion la pantalla aparece sin animación', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await entrarAal2(context, baseURL ?? '');
+    for (const reducido of [false, true]) {
+      await page.emulateMedia({ reducedMotion: reducido ? 'reduce' : 'no-preference' });
+      await page.goto('/');
+      await esperarHidratacion(page);
+      await page
+        .locator('[data-marco-barra], aside')
+        .getByRole('link', { name: navegacion.registrar })
+        .locator('visible=true')
+        .first()
+        .click();
+      await expect(page.locator('#contenido[data-entrada="registrar"]')).toBeAttached();
+      const medida = await page
+        .locator('#contenido > main')
+        .first()
+        .evaluate((m) => {
+          const e = getComputedStyle(m);
+          return {
+            flujo: m.hasAttribute('data-pagina-flujo'),
+            nombre: e.animationName,
+            duracion: e.animationDuration,
+          };
+        });
+      if (reducido) expect(medida.nombre).toBe('none');
+      else if (medida.flujo) {
+        expect(medida.nombre).toBe('fz-entra-sube');
+        expect(medida.duracion).toBe('0.4s');
+      }
+    }
+  });
 });

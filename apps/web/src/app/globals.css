@@ -569,6 +569,56 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
   --n: 8;
 }
 
+/* GLO-01 y GLO-02 (06-identidad-visual §11 [CH-241]): el marco anota de dónde entra la pantalla en `#contenido[data-entrada]`
+   (`direccion-entrada.ts`). Cada tiempo es un token; con movimiento reducido la regla global anula la animación. */
+@keyframes fz-entra-derecha {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+  }
+}
+@keyframes fz-entra-izquierda {
+  from {
+    opacity: 0;
+    transform: translateX(-22px);
+  }
+}
+@keyframes fz-entra-hija {
+  from {
+    opacity: 0;
+    transform: translateX(70px);
+  }
+}
+@keyframes fz-entra-volver {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+}
+@keyframes fz-entra-sube {
+  from {
+    transform: translateY(100%);
+  }
+}
+#contenido[data-entrada='derecha'] > main:not([data-pagina-flujo]) {
+  animation: fz-entra-derecha var(--duracion-normal) var(--curva-estandar) both;
+}
+#contenido[data-entrada='izquierda'] > main:not([data-pagina-flujo]) {
+  animation: fz-entra-izquierda var(--duracion-normal) var(--curva-estandar) both;
+}
+#contenido[data-entrada='hija'] > main:not([data-pagina-flujo]) {
+  animation: fz-entra-hija var(--duracion-transicion) var(--curva-entrada) both;
+}
+#contenido[data-entrada='volver'] > main:not([data-pagina-flujo]) {
+  animation: fz-entra-volver var(--duracion-transicion) var(--curva-entrada) both;
+}
+#contenido[data-entrada='registrar'] > main[data-pagina-flujo] {
+  animation: fz-entra-sube var(--duracion-lenta) var(--curva-entrada) both;
+}
+#contenido[data-entrada='cerrar-registrar'] > main:not([data-pagina-flujo]) {
+  animation: fz-item var(--duracion-transicion) var(--curva-estandar) both;
+}
+
 /* C7: presionado y transición de botones, pastillas y segmentos. */
 :is(button, [role='radio'], .fz-presion) {
   transition:

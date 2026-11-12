@@ -7,7 +7,16 @@
 // a…» y la campana (más «Más acciones» si la pantalla publica `PublicarAcciones`, CH-115), las demás Registrar, campana y ☰;
 // `PaginaFlujo` oculta las barras. Computadora: campana (y «Más acciones») arriba a la derecha.
 import { usePathname, useSearchParams } from 'next/navigation';
-import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useConexion } from '../../cliente/useConexion';
 import { useRefrescoAutomatico } from '../../cliente/useRefrescoAutomatico';
 import { navegacion } from '../../textos/navegacion';
@@ -19,7 +28,9 @@ import {
   EnlaceFinn,
   EVENTO_SIN_CONEXION,
 } from '../navegacion/enlace-finn';
+import { direccionDeEntrada } from '../navegacion/direccion-entrada';
 import { useRefrescar } from '../navegacion/use-refrescar';
+import { EVENTO_ARRASTRE } from './arrastre';
 import { MasSecciones, NavegacionApp } from '../navegacion/navegacion-app';
 import {
   barraDeRuta,
@@ -91,6 +102,30 @@ function CuerpoDelMarco({
       else despues.delete(id);
       return despues;
     });
+  }, []);
+  // GLO-01 y GLO-02 (06-identidad-visual §11): de dónde entra la pantalla. El marco solo anota la dirección en `#contenido`; el
+  // movimiento es CSS (`globals.css`), así que ninguna ruta suma JS.
+  const previa = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    const direccion = direccionDeEntrada(previa.current, pathname);
+    previa.current = pathname;
+    const contenido = document.getElementById('contenido');
+    if (direccion === null) contenido?.removeAttribute('data-entrada');
+    else contenido?.setAttribute('data-entrada', direccion);
+  }, [pathname]);
+  // E3-7: mientras dura un arrastre en el teléfono la barra inferior queda `inert` (el arrastre lo hace la Bandeja, TA-576).
+  useEffect(() => {
+    const alArrastrar = (e: Event): void => {
+      const arrastrando = (e as CustomEvent<boolean>).detail;
+      for (const barra of document.querySelectorAll('nav[data-marco-barra]')) {
+        if (arrastrando) barra.setAttribute('inert', '');
+        else barra.removeAttribute('inert');
+      }
+    };
+    window.addEventListener(EVENTO_ARRASTRE, alArrastrar);
+    return () => {
+      window.removeEventListener(EVENTO_ARRASTRE, alArrastrar);
+    };
   }, []);
   // [E6-20, CH-241] El título de la barra del teléfono que no entra junto a Registrar, la campana y ☰ se achica (`data-ajustado`).
   useEffect(() => {
