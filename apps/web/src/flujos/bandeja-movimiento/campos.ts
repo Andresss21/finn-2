@@ -15,6 +15,41 @@ import {
   type Parte,
 } from '../registrar-gasto/campos';
 
+/**
+ * [CH-240 E3-12, E3-13] Lo que falta para poder aprobar, en el orden en que lo dice el motivo de «Aprobar». Es solo qué campo
+ * está vacío: nada se calcula (PF-3); el servidor valida al enviar.
+ */
+export function camposQueFaltan(
+  c: Campos,
+): readonly ('cuenta' | 'fecha' | 'monto' | 'categoria')[] {
+  const vacioMonto = normalizarMontoEscrito(c.total).estado !== 'valido';
+  const sinDestino =
+    c.tipo === 'gasto' &&
+    (c.lineas.length === 0 ||
+      c.lineas.some(
+        (l) =>
+          (l.destino === 'categoria' && l.categoriaId === '') ||
+          (l.destino === 'por_cobrar' && l.deudorId === ''),
+      ));
+  return [
+    ...(c.cuentaId === '' ? (['cuenta'] as const) : []),
+    ...(c.fecha === '' ? (['fecha'] as const) : []),
+    ...(vacioMonto ? (['monto'] as const) : []),
+    ...(sinDestino ? (['categoria'] as const) : []),
+  ];
+}
+
+/** El motivo único de «Aprobar» deshabilitado: «Completá la cuenta, el monto y la categoría antes de aprobar.» (E3-12). */
+export function motivoFaltantes(c: Campos): string | undefined {
+  const nombres = camposQueFaltan(c).map((k) => t.revisar.faltan[k]);
+  if (nombres.length === 0) return undefined;
+  return t.revisar.completa(
+    nombres.length === 1
+      ? (nombres[0] ?? '')
+      : `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1) ?? ''}`,
+  );
+}
+
 /** Una parte de la devolución sobre una línea de la compra elegida (CH-226): su nombre y lo que queda, ya formateados del DTO. */
 export interface Devuelta {
   readonly lineaOriginalId: string;

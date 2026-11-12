@@ -10,8 +10,8 @@ export const registrarDesembolso = {
   guardado: (monto: string, prestamo: string, cuenta: string) =>
     `Desembolso guardado: ${monto} · ${prestamo} a ${cuenta}`,
   tipo: {
-    titulo: 'Desembolso de un préstamo',
-    detalle: 'Dinero de un préstamo que llega a una cuenta; entra como otras entradas.',
+    titulo: 'Desembolso',
+    detalle: 'De un préstamo nuevo',
   },
   sin: {
     prestamos: {

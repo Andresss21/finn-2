@@ -14,6 +14,7 @@ export const formularios = {
   guardarComoNuevo: 'Guardar como nuevo',
   borradorRecuperado: 'Recuperamos lo que estabas escribiendo',
   descartarBorrador: 'Descartar borrador',
+  borradorCuerpo: 'Lo guardamos en este dispositivo cuando saliste sin guardar.',
   usarValorActual: 'Usar el valor actual',
   incierto: 'No pudimos confirmar si se guardó. Volvé a intentarlo; no se duplicará.',
   huboCambios: 'Hubo cambios desde que abriste esto. Al guardar se verifica.',

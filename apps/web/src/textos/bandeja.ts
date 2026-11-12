@@ -53,6 +53,10 @@ export const bandeja = {
   dividido: (n: number) => `Dividido en ${n} partes`,
   porCobrarA: (nombre: string) => `Por cobrar: ${nombre}`,
   verTransaccion: 'Ver transacción',
+  mostrarMas: (k: number) => `Mostrar ${k} más`,
+  // [CH-240 E6-3] Sin conexión en la Bandeja: un solo aviso, que es el motivo de las acciones de todas las filas
+  sinConexion:
+    'Estás sin conexión. Aprobar, descartar y arrastrar vuelven cuando vuelva la conexión.',
   // FT-36: Aprobar todos (OP-38) y AV-19. «Aprobar todos ({n})» es nuevo; los motivos son los de 04 OP-38
   aprobarTodos: {
     boton: (n: number) => `Aprobar todos (${n})`,
@@ -61,6 +65,9 @@ export const bandeja = {
     noAprobados: (n: number) =>
       n === 1 ? 'No se aprobó 1 movimiento' : `No se aprobaron ${n} movimientos`,
     sinComercio: 'Movimiento sin comercio',
+    // [CH-240 E3-8] La fila conserva su estado y dice por qué no entra en el lote
+    noEntra: (motivo: string) => `No entra en «Aprobar todos»: ${motivo}`,
+    quedan: (k: number) => `Quedan ${k} para revisar uno por uno`,
     motivos: {
       requiere_revision_individual: 'Requiere revisión individual (afecta un período cerrado).',
       pago_sin_origen: 'Elegí de qué cuenta salió el pago.',
@@ -75,6 +82,7 @@ export const bandeja = {
     sobre: (categoria: string) => `Sobre ${categoria}.`,
     soltaste: (comercio: string, categoria: string) => `Soltaste ${comercio} en ${categoria}.`,
     cancelado: 'Arrastre cancelado.',
+    haciaCategoria: (categoria: string) => `→ ${categoria}`,
     panel: 'Destinos del arrastre',
     sugerida: (categoria: string) => `Sugerida: ${categoria}`,
     otra: 'Otra categoría…',
@@ -86,6 +94,25 @@ export const bandeja = {
     },
   },
   revisar: {
+    // [CH-240 E3-11, E3-12, E3-13] Notas fijas y el motivo único de «Aprobar» cuando faltan datos
+    notaIngreso:
+      'Un ingreso no lleva categoría: entra a Listo para asignar y desde ahí lo repartís.',
+    faltan: {
+      cuenta: 'la cuenta',
+      fecha: 'la fecha',
+      monto: 'el monto',
+      categoria: 'la categoría',
+    },
+    completa: (lista: string) => `Completá ${lista} antes de aprobar.`,
+    fechaFaltante: 'El SMS no trae la fecha. Escribila.',
+    descartarAprobando: 'Disponible cuando termine de aprobar.',
+    // [CH-240 E6-5] `conflicto_desactualizado` sobre las líneas, al soltar: lo que se vio, lo de ahora y lo que se eligió
+    conflictoArrastre: {
+      titulo: 'Este movimiento cambió mientras lo mirabas.',
+      cambio: (visto: string, ahora: string) => `Viste ${visto}; ahora es ${ahora}.`,
+      elegido: (categoria: string) => `Lo que elegiste (${categoria}) no cambió.`,
+      sinCategoria: 'sin categoría',
+    },
     titulo: 'Revisar movimiento',
     sms: 'Texto del SMS',
     detalleError: 'Detalle del error',
@@ -148,10 +175,5 @@ export const bandeja = {
     referenciaNota: 'La misma referencia aparece en Ajustes › Diagnóstico.',
     siguiente: 'Siguiente movimiento',
     soloLectura: 'Solo lectura',
-    panel: {
-      posicion: (n: number, total: number) => `${n} de ${total}`,
-      anterior: 'Anterior',
-      siguiente: 'Siguiente',
-    },
   },
 } as const;

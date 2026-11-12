@@ -159,6 +159,12 @@ test.describe('PRU-E2E-TX flujo de inversiones', () => {
     await abrir(page, '/presupuesto');
     await esperarMonto(lpa(page), 30000);
     await esperarMonto(disponible(page, 'Aporte inversión'), 20000);
+    // [CH-240 E3-21] Una sola hoja con el segmentado: «Ajuste de valor» elegido, y «Retiro» lleva al retiro con los mismos datos de la URL
+    await abrir(page, '/registrar/ajuste-inversion');
+    await expect(opcion(page, t.tipoEtiqueta, t.tipos.ajuste)).toBeChecked();
+    await opcion(page, t.tipoEtiqueta, t.tipos.retiro).click();
+    await expect(page).toHaveURL(/\/registrar\/retiro-inversion$/);
+    await expect(page.getByRole('heading', { name: t.titulo.retiro })).toBeVisible();
     await llenar(page, '/registrar/ajuste-inversion', undefined, '75.60', t.montoAjuste);
     await page.getByRole('button', { name: t.guardar.ajuste }).click();
     await expect(page.getByRole('heading', { name: t.listo.ajuste })).toBeVisible();

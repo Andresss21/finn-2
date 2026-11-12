@@ -149,3 +149,16 @@ const AVISOS: Readonly<Record<string, string>> = {
   'AV-07': t.avisoDeudaTarjeta,
 };
 export const textoDeAviso = (codigo: string): string => AVISOS[codigo] ?? codigo;
+
+/**
+ * [CH-240 E3-18, E6-21] El motivo escrito de «Guardar» deshabilitado, en el orden en que importa: sin conexión; una fecha que no
+ * vale (el campo ya dice cuál); las partes que el servidor rechazó con `suma_lineas_distinta`, con su mensaje, mientras no cambien.
+ */
+export function motivoDeGuardar(e: {
+  readonly sinConexion: string | undefined;
+  readonly fechaConError: boolean;
+  readonly sumaRechazada: string | undefined;
+  readonly textoFecha: string;
+}): string | undefined {
+  return e.sinConexion ?? (e.fechaConError ? e.textoFecha : e.sumaRechazada);
+}

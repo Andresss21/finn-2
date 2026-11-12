@@ -8,7 +8,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
-import { parteVacia, type Campos } from './campos';
+import type { FechaLocal } from '@finn/dominio/valores';
+import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
+import { motivoDeGuardar, parteVacia, type Campos } from './campos';
 import LineasDeGasto from './lineas';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -190,4 +192,86 @@ describe('PRU-CMP-TX', () => {
       ).toEqual([]);
     },
   );
+
+  it('PRU-CMP-TX-701 [] con la suma distinta, «Guardar» tiene el texto de suma_lineas_distinta como motivo; con una fecha que no existe, el error va a lo ancho y es el motivo de «Guardar»; «Otra persona» abre su nombre con la nota', async () => {
+    const suma = 'Las partes suman $138.60 y el total es $148.60.';
+    expect(
+      motivoDeGuardar({
+        sinConexion: undefined,
+        fechaConError: false,
+        textoFecha: t.corregiFecha,
+        sumaRechazada: suma,
+      }),
+    ).toBe(suma);
+    expect(
+      motivoDeGuardar({
+        sinConexion: undefined,
+        fechaConError: true,
+        textoFecha: t.corregiFecha,
+        sumaRechazada: suma,
+      }),
+    ).toBe('Corregí la fecha para guardar.');
+    expect(
+      motivoDeGuardar({
+        sinConexion: 'Sin conexión',
+        fechaConError: true,
+        textoFecha: t.corregiFecha,
+        sumaRechazada: suma,
+      }),
+    ).toBe('Sin conexión');
+    expect(
+      motivoDeGuardar({
+        sinConexion: undefined,
+        fechaConError: false,
+        textoFecha: t.corregiFecha,
+        sumaRechazada: undefined,
+      }),
+    ).toBeUndefined();
+
+    // Una fecha que no existe: el mensaje sale del campo hacia la fila y la celda no lo repite
+    const avisos: (string | undefined)[] = [];
+    document.body.style.cssText = 'background: var(--fondo); color: var(--texto)';
+    const nodo = document.createElement('main');
+    nodo.style.width = '350px';
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    act(() => {
+      raiz.render(
+        <EntradaFecha
+          nombre="fecha"
+          etiqueta="Fecha"
+          valor={'2027-02-10' as FechaLocal}
+          alCambiar={() => undefined}
+          mensajeEnFila={{
+            id: 'error-fecha',
+            alCambiar: (m) => {
+              avisos.push(m);
+            },
+          }}
+        />,
+      );
+    });
+    montados.push({ raiz, nodo });
+    const entrada = nodo.querySelector('input');
+    await act(async () => {
+      await userEvent.clear(entrada as HTMLInputElement);
+      await userEvent.type(entrada as HTMLInputElement, '31022027');
+    });
+    expect(avisos.at(-1)).toBe('Esa fecha no existe. Escribila como dd/mm/aaaa.');
+    expect(nodo.textContent).not.toContain('Esa fecha no existe');
+    expect(entrada?.getAttribute('aria-invalid')).toBe('true');
+    expect(entrada?.getAttribute('aria-describedby')).toBe('error-fecha');
+    // El botón del calendario mide 44 px en todos los estados
+    const cal = nodo.querySelector('button[aria-haspopup="dialog"]');
+    expect(cal?.getBoundingClientRect().width).toBeGreaterThanOrEqual(44);
+    expect(cal?.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+
+    // «Otra persona (me lo debe)» abre «Nombre de quien te lo debe» con la nota fija
+    const otra = montar(
+      [{ ...parteVacia(), monto: '30', destino: 'por_cobrar', deudorId: 'nuevo' }],
+      '30',
+    );
+    expect(otra.textContent).toContain('Nombre de quien te lo debe');
+    expect(otra.textContent).toContain('Se agrega a Por cobrar con esta parte.');
+  });
 });

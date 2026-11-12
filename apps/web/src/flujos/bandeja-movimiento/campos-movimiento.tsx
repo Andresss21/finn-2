@@ -7,6 +7,7 @@ import type { FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense } from 'react';
 import type { UseFieldArrayReturn, UseFormReturn } from 'react-hook-form';
 import { EntradaTexto } from '../../componentes/base/campo';
+import { Icono } from '../../componentes/base/icono';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaFechaConAtajos } from '../../componentes/formularios/entrada-fecha-atajos';
@@ -17,6 +18,9 @@ import { parteVacia } from '../registrar-gasto/campos';
 import LineasDeGasto from '../registrar-gasto/lineas';
 import { conCompra, type Campos, type CompraCandidata } from './campos';
 import type { BuscarCompras } from './eleccion-compra';
+
+/** Clases literales (L13): el borde del campo al que le falta un dato que el SMS no trae. */
+const BORDE_FALTANTE = '[&_input]:border-2 [&_input]:border-advertencia-texto';
 
 interface Referencia {
   readonly id: string;
@@ -100,17 +104,20 @@ export default function CamposMovimiento({
         error={error('cuentaId')}
       />
       <div className="grid grid-cols-2 gap-2.5 [&>*]:min-w-0">
-        <EntradaFechaConAtajos
-          nombre="fecha"
-          etiqueta={g.fecha}
-          valor={c.fecha as FechaLocal}
-          alCambiar={poner('fecha')}
-          error={error('fecha')}
-          requerido
-          sinVistaPrevia
-          hoy={hoy}
-          atajos={ATAJOS}
-        />
+        {/* [CH-240 E3-13] El campo que falta lleva el borde de advertencia (`--advertencia-texto`) */}
+        <div className={c.fecha === '' ? BORDE_FALTANTE : ''}>
+          <EntradaFechaConAtajos
+            nombre="fecha"
+            etiqueta={g.fecha}
+            valor={c.fecha as FechaLocal}
+            alCambiar={poner('fecha')}
+            error={error('fecha')}
+            requerido
+            sinVistaPrevia
+            hoy={hoy}
+            atajos={ATAJOS}
+          />
+        </div>
         <EntradaMonto
           nombre="total"
           etiqueta={t.revisar.monto}
@@ -122,6 +129,16 @@ export default function CamposMovimiento({
           sinVistaPrevia
         />
       </div>
+      {c.fecha === '' ? (
+        // [CH-240 E3-13] El SMS no trae la fecha: la línea va a lo ancho de la fila Fecha · Monto
+        <p
+          data-rol="fecha-faltante"
+          className="-mt-2 flex items-start gap-1.5 text-cuerpo-pequeno text-advertencia-texto"
+        >
+          <Icono nombre="advertencia" tamano={16} className="mt-0.5 shrink-0" />
+          {t.revisar.fechaFaltante}
+        </p>
+      ) : null}
       <EntradaTexto etiqueta={g.comercio} autoComplete="off" {...formulario.register('comercio')} />
       <div className="flex flex-col gap-1.5">
         <span className="text-etiqueta">{t.revisar.tipo}</span>
@@ -175,6 +192,12 @@ export default function CamposMovimiento({
             error={(i) => formState.errors.devueltas?.[i]?.monto?.message}
           />
         </Suspense>
+      ) : null}
+      {c.tipo === 'ingreso' ? (
+        // [CH-240 E3-11] Un ingreso no lleva categoría: la nota fija dice dónde entra, sin cifras (E4-3)
+        <p data-rol="nota-ingreso" className="text-cuerpo-pequeno text-texto-secundario">
+          {t.revisar.notaIngreso}
+        </p>
       ) : null}
       {c.tipo === 'gasto' || (c.tipo === 'devolucion' && !sobreCompra) ? (
         <LineasDeGasto

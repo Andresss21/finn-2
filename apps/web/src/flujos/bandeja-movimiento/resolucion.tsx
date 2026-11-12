@@ -26,11 +26,14 @@ interface Salida {
   readonly icono?: NombreIcono;
 }
 
+const ID_MOTIVO_DESCARTAR = 'motivo-descartar-aprobando';
+
 export default function Resolucion({
   movimientoId,
   estado,
   propio,
   alDescartar,
+  aprobando,
   alRegistrarAMano,
   reproceso,
 }: {
@@ -40,6 +43,8 @@ export default function Resolucion({
   readonly propio: boolean;
   /** El movimiento quedó descartado (OP-39 o «Es duplicado»): la pantalla pasa a su resultado con «Restaurar». */
   readonly alDescartar: () => void;
+  /** [CH-240 E3-13] Mientras aprueba, «Descartar» queda deshabilitado con su motivo escrito. */
+  readonly aprobando?: boolean;
   /** Solo en un SMS que no se leyó: muestra los campos para completarlo. */
   readonly alRegistrarAMano?: () => void;
   /** Solo en un SMS con error: lo que necesita OP-49 (`intentoVisto`, CA-38.3). */
@@ -127,7 +132,10 @@ export default function Resolucion({
           <Boton
             key={b.texto}
             variante={propio && i === 0 ? 'principal' : 'secundaria'}
-            deshabilitado={ocupado || sinConexion}
+            deshabilitado={ocupado || sinConexion || (aprobando === true && b.icono === 'trash')}
+            {...(aprobando === true && b.icono === 'trash'
+              ? { 'aria-describedby': ID_MOTIVO_DESCARTAR }
+              : {})}
             onClick={b.ejecutar}
             className={propio ? 'w-full' : 'flex-1'}
           >
@@ -136,6 +144,17 @@ export default function Resolucion({
           </Boton>
         ))}
       </div>
+      {aprobando === true && salidas.some((b) => b.icono === 'trash') ? (
+        // [CH-240 E3-13] El motivo de «Descartar» lleva el ícono `clock`: espera a que termine de aprobar
+        <p
+          id={ID_MOTIVO_DESCARTAR}
+          data-rol="motivo-descartar"
+          className="flex items-center gap-1.5 text-sm text-texto-secundario"
+        >
+          <Icono nombre="clock" tamano={16} className="shrink-0" />
+          {t.revisar.descartarAprobando}
+        </p>
+      ) : null}
       {reprocesar.estado === 'listo' ? (
         <p role="status" className="text-cuerpo-pequeno text-texto-secundario">
           {t.reprocesado}

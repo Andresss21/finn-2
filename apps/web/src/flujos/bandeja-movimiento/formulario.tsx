@@ -13,7 +13,6 @@ import {
   useRef,
   useState,
   type ComponentProps,
-  type ReactNode,
 } from 'react';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { useFieldArray } from 'react-hook-form';
@@ -41,8 +40,8 @@ import { TextoDelSms } from './texto-sms';
 import type { CuentaDelMovimiento } from './campos-movimiento';
 import type { ResumenDelMovimiento } from './encabezado';
 import type { DuplicadoDe } from './estados';
-import { PanelDeLaBandeja, type NavegacionDelPanel } from './panel-navegacion';
 import {
+  motivoFaltantes,
   camposIniciales,
   conCategoriaSoltada,
   contrato,
@@ -76,14 +75,14 @@ export interface PropsFormularioMovimiento {
     /** Solo en un SMS con error: lo que necesita «Intentar de nuevo» (OP-49). */
     readonly reproceso?: { readonly smsId: string; readonly intentoVisto: number };
   };
-  /** Computadora: la lista de la Bandeja a la izquierda del flujo (S4 del export, CH-137). */
-  readonly lateral?: ReactNode;
-  /** Computadora: «1 de N» y las flechas del panel, si el movimiento sigue en la lista. */
-  readonly navegacion?: NavegacionDelPanel;
+  /** El movimiento que sigue en el orden de la Bandeja, para «Siguiente movimiento» (CH-245: sin lista lateral). */
+  readonly siguienteId?: string;
   /** Viene de la fila de la lista (05 §4.15): se vuelve a aprobar para mostrar el mensaje o la confirmación. */
   readonly traspaso: boolean;
   /** FT-78: la categoría que se soltó sobre la fila; se pone en la línea y el traspaso envía la variante de OP-37. */
   readonly categoriaSoltada?: string;
+  /** [CH-240 E6-5] `conflicto_desactualizado` al soltar: la categoría que vio la lista (`''`: ninguna). No aprueba hasta «Usar el valor actual». */
+  readonly categoriaVista?: string;
   readonly cuentas: readonly CuentaDelMovimiento[];
   readonly categorias: readonly Referencia[];
   readonly deudores: readonly Referencia[];
@@ -124,6 +123,16 @@ const SinCuentasDeMovimiento = lazy(() => import('./sin-cuentas-movimiento'));
 
 const ID_FORMULARIO = 'formulario-revisar-movimiento';
 
+/** El nombre de una categoría por su id; `''` o `null`: «sin categoría». */
+const nombreCategoria = (categorias: readonly Referencia[], id: string | null): string =>
+  (id === null || id === '' ? undefined : categorias.find((c) => c.id === id)?.nombre) ??
+  t.revisar.conflictoArrastre.sinCategoria;
+/** La categoría de la primera línea de lo que hay ahora en el servidor. */
+const categoriaActual = (lineas: unknown): string | null =>
+  Array.isArray(lineas)
+    ? ((lineas[0] as { categoriaId?: string | null } | undefined)?.categoriaId ?? null)
+    : null;
+
 /** El marco de la página, el mismo en todas las pantallas del flujo: título y ruta padre. */
 type Marco = Omit<ComponentProps<typeof PaginaFlujoDeRuta>, 'children' | 'acciones'>;
 
@@ -131,10 +140,10 @@ export function FormularioMovimiento(props: PropsFormularioMovimiento) {
   // Si al abrir ya está aprobado o descartado se muestra su estado; si no, el flujo sigue montado aunque la revalidación
   // cambie su estado al aprobar (el resultado es suyo).
   const [abierto] = useState(() => !FINALES.includes(props.movimiento.estado));
-  const { lateral, navegacion, movimiento: m } = props;
+  const { movimiento: m } = props;
   const marco: Marco = { titulo: t.revisar.titulo, rutaPadre: '/bandeja' };
   return (
-    <PanelDeLaBandeja lateral={lateral} navegacion={navegacion}>
+    <>
       {abierto ? (
         <Flujo {...props} marco={marco} />
       ) : (
@@ -149,7 +158,7 @@ export function FormularioMovimiento(props: PropsFormularioMovimiento) {
           />
         </Suspense>
       )}
-    </PanelDeLaBandeja>
+    </>
   );
 }
 
@@ -160,13 +169,14 @@ function Flujo({
   deudores,
   traspaso,
   categoriaSoltada,
+  categoriaVista,
   marco,
-  navegacion,
+  siguienteId: siguienteAlAbrir,
   hoy,
   candidatas,
 }: PropsFormularioMovimiento & { readonly marco: Marco }) {
   const [aMano, setAMano] = useState(false); // «Registrar a mano»: un SMS que no se leyó pasa a sus campos
-  const [siguienteId] = useState(() => navegacion?.siguiente); // el que seguía al abrir: la lista ya no trae este movimiento al aprobar
+  const [siguienteId] = useState(() => siguienteAlAbrir); // el que seguía al abrir: la lista ya no trae este movimiento al aprobar
   const conCoincidencia = movimiento.estado === 'con_coincidencia';
   const sinLeer = movimiento.estado === 'no_reconocido' || movimiento.estado === 'error';
   // Sin «Aprobar»: un posible duplicado y un SMS que no se leyó se resuelven con las decisiones del pie (S4 del export)
@@ -227,17 +237,22 @@ function Flujo({
   // El traspaso de la lista (05 §4.15): se vuelve a aprobar y el servidor repite su mensaje o su confirmación
   const { id: movimientoId, origenId } = movimiento;
   const lineasDelServidor = useRef((movimiento.esperado as { lineas?: unknown }).lineas);
-  useEffect(() => {
-    if (traspaso)
-      void aprobarAhora({
+  const aprobarTraspaso = useCallback(
+    () =>
+      aprobarAhora({
         movimientoId,
         ...(origenId === undefined ? {} : { origenId }),
         // Un arrastre confirma o completa con la misma variante (CF-21), con las líneas que vio la lista
         ...(categoriaSoltada === undefined
           ? {}
           : { categoriaId: categoriaSoltada, esperado: { lineas: lineasDelServidor.current } }),
-      });
-  }, [traspaso, movimientoId, origenId, categoriaSoltada, aprobarAhora]);
+      }),
+    [movimientoId, origenId, categoriaSoltada, aprobarAhora],
+  );
+  // Con un conflicto de las líneas no se aprueba solo: la persona primero ve el cambio (E6-5)
+  useEffect(() => {
+    if (traspaso && categoriaVista === undefined) void aprobarTraspaso();
+  }, [traspaso, categoriaVista, aprobarTraspaso]);
 
   // Terminó de guardar los cambios: se aprueba lo que se guardó
   useEffect(() => {
@@ -339,6 +354,9 @@ function Flujo({
         ? g.faltaRepartir(formatearMonto(falta))
         : g.sobraRepartir;
   const totalValido = normalizarMontoEscrito(c.total).estado === 'valido';
+  // [CH-240 E3-12, E3-13] Con datos faltantes o a mano, «Aprobar» queda deshabilitado con un solo motivo que los junta
+  const motivoFaltan =
+    aMano || movimiento.resumen.vista === 'faltaOtro' ? motivoFaltantes(c) : undefined;
 
   const salidas = (
     <Suspense fallback={null}>
@@ -347,6 +365,7 @@ function Flujo({
         estado={movimiento.estado}
         propio={propio}
         alDescartar={alDescartar}
+        aprobando={enviando}
         {...(propio && sinLeer
           ? {
               alRegistrarAMano: () => {
@@ -388,19 +407,18 @@ function Flujo({
       </PaginaFlujoDeRuta>
     );
 
+  const motivoAprobar = aprobar.motivoSinEnvio ?? motivoFaltan;
   // «Aprobar $X» (o «Confirmar», que aprueba la coincidencia con OP-40) y, debajo, las salidas tonales
   const pie = (
-    <div className="flex w-full flex-col gap-2">
+    <div className="flex w-full flex-col gap-2 lg:ml-auto lg:w-[calc(50%-1rem)]">
       <Boton
         tipo="submit"
         form={ID_FORMULARIO}
         enviando={enviando}
         textoEnviando={conCoincidencia ? t.revisar.confirmando : t.revisar.aprobando}
-        deshabilitado={!aprobar.enLinea}
+        deshabilitado={!aprobar.enLinea || motivoFaltan !== undefined}
         className="w-full"
-        {...(aprobar.motivoSinEnvio === undefined
-          ? {}
-          : { motivoDeshabilitado: aprobar.motivoSinEnvio })}
+        {...(motivoAprobar === undefined ? {} : { motivoDeshabilitado: motivoAprobar })}
       >
         {conCoincidencia
           ? t.revisar.confirmarCoincidencia
@@ -413,84 +431,119 @@ function Flujo({
   );
 
   return (
-    <PaginaFlujoDeRuta {...marco} acciones={pie}>
+    <PaginaFlujoDeRuta {...marco} ancha acciones={pie}>
       <form
         id={ID_FORMULARIO}
         onSubmit={(e) => void alEnviar(conCoincidencia)(e)}
         noValidate
-        className="flex flex-col gap-5"
+        className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8"
       >
-        <Suspense fallback={null}>
-          <Encabezado resumen={movimiento.resumen} />
-        </Suspense>
-        <TextoDelSms texto={movimiento.sms} />
-        {movimiento.coincidencia === undefined ? null : (
+        {/* [CH-240 E3-10] Computadora: a la izquierda lo que identifica al movimiento; a la derecha los campos y las acciones */}
+        <div data-columna="identifica" className="flex flex-col gap-5 lg:sticky lg:top-6">
           <Suspense fallback={null}>
-            <Coincidencia coincidencia={movimiento.coincidencia} />
+            <Encabezado resumen={movimiento.resumen} />
           </Suspense>
-        )}
-        {movimiento.errorDetalle === undefined ? null : (
-          <Suspense fallback={null}>
-            <DetalleError errorDetalle={movimiento.errorDetalle} />
-          </Suspense>
-        )}
-        <Suspense fallback={null}>
-          <CamposMovimiento
-            formulario={formulario}
-            partes={partes}
-            cuentas={cuentas}
-            categorias={categorias}
-            deudores={deudores}
-            deLasPartes={deLasPartes}
-            ayuda={ayuda}
-            hoy={hoy}
-            candidatas={candidatas}
-            buscarCompras={buscarComprasDevolucion}
-          />
-        </Suspense>
-        {ofreceRecordar(c) ? (
-          <label className="flex min-h-11 items-center gap-3 rounded-contenedor bg-superficie px-3.5">
-            <input
-              type="checkbox"
-              className="size-5 shrink-0"
-              checked={recordar}
-              onChange={(e) => {
-                setRecordar(e.target.checked);
-              }}
-            />
-            <span>{t.revisar.recordar}</span>
-          </label>
-        ) : null}
-        {fallo !== undefined &&
-        deLasPartes === undefined &&
-        !Object.values(fallo.campos ?? {}).includes(fallo.mensaje) ? (
-          <AvisoEnLinea
-            estado="problema"
-            aparecioDespues
-            {...(conflicto || REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton
-                      variante="secundaria"
-                      onClick={() => {
-                        if (conflicto) {
-                          visto.current = { ...visto.current, ...fallo.datos };
-                          editar.volverAEditar();
-                        } else
-                          void [editar, aprobarSolo, coincide]
-                            .find((o) => o.estado === 'error')
-                            ?.reintentar();
-                      }}
-                    >
-                      {conflicto ? formularios.usarValorActual : formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
-          >
-            {fallo.mensaje}
-          </AvisoEnLinea>
-        ) : null}
+          {categoriaVista === undefined || categoriaSoltada === undefined ? null : (
+            // [CH-240 E6-5] El valor visto, el actual y la categoría elegida, que no cambió, con la categoría ya puesta en la línea
+            <AvisoEnLinea
+              estado="advertencia"
+              aparecioDespues
+              titulo={t.revisar.conflictoArrastre.titulo}
+              accion={
+                <Boton
+                  variante="secundaria"
+                  deshabilitado={aprobarSolo.estado === 'enviando'}
+                  onClick={() => void aprobarTraspaso()}
+                >
+                  {formularios.usarValorActual}
+                </Boton>
+              }
+            >
+              <p>
+                {t.revisar.conflictoArrastre.cambio(
+                  nombreCategoria(categorias, categoriaVista),
+                  nombreCategoria(categorias, categoriaActual(lineasDelServidor.current)),
+                )}
+              </p>
+              <p>
+                {t.revisar.conflictoArrastre.elegido(nombreCategoria(categorias, categoriaSoltada))}
+              </p>
+            </AvisoEnLinea>
+          )}
+          <TextoDelSms texto={movimiento.sms} />
+          {movimiento.coincidencia === undefined ? null : (
+            <Suspense fallback={null}>
+              <Coincidencia coincidencia={movimiento.coincidencia} />
+            </Suspense>
+          )}
+          {movimiento.errorDetalle === undefined ? null : (
+            <Suspense fallback={null}>
+              <DetalleError errorDetalle={movimiento.errorDetalle} />
+            </Suspense>
+          )}
+        </div>
+        <div data-columna="campos" className="flex flex-col gap-5">
+          {/* [CH-240 E3-13] Aprobando, los campos quedan de solo lectura */}
+          <fieldset disabled={enviando} className="contents">
+            <Suspense fallback={null}>
+              <CamposMovimiento
+                formulario={formulario}
+                partes={partes}
+                cuentas={cuentas}
+                categorias={categorias}
+                deudores={deudores}
+                deLasPartes={deLasPartes}
+                ayuda={ayuda}
+                hoy={hoy}
+                candidatas={candidatas}
+                buscarCompras={buscarComprasDevolucion}
+              />
+            </Suspense>
+          </fieldset>
+          {ofreceRecordar(c) ? (
+            <label className="flex min-h-11 items-center gap-3 rounded-contenedor bg-superficie px-3.5">
+              <input
+                type="checkbox"
+                className="size-5 shrink-0"
+                checked={recordar}
+                onChange={(e) => {
+                  setRecordar(e.target.checked);
+                }}
+              />
+              <span>{t.revisar.recordar}</span>
+            </label>
+          ) : null}
+          {fallo !== undefined &&
+          deLasPartes === undefined &&
+          !Object.values(fallo.campos ?? {}).includes(fallo.mensaje) ? (
+            <AvisoEnLinea
+              estado="problema"
+              aparecioDespues
+              {...(conflicto || REINTENTABLES.includes(fallo.categoria)
+                ? {
+                    accion: (
+                      <Boton
+                        variante="secundaria"
+                        onClick={() => {
+                          if (conflicto) {
+                            visto.current = { ...visto.current, ...fallo.datos };
+                            editar.volverAEditar();
+                          } else
+                            void [editar, aprobarSolo, coincide]
+                              .find((o) => o.estado === 'error')
+                              ?.reintentar();
+                        }}
+                      >
+                        {conflicto ? formularios.usarValorActual : formularios.intentarDeNuevo}
+                      </Boton>
+                    ),
+                  }
+                : {})}
+            >
+              {fallo.mensaje}
+            </AvisoEnLinea>
+          ) : null}
+        </div>
       </form>
     </PaginaFlujoDeRuta>
   );

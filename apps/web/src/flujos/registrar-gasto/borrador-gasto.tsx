@@ -39,13 +39,14 @@ export default function BorradorGasto({
     <AvisoEnLinea
       estado="informacion"
       aparecioDespues
+      titulo={formularios.borradorRecuperado}
       accion={
-        <Boton variante="secundaria" onClick={borrador.descartar}>
+        <Boton variante="discreta" onClick={borrador.descartar}>
           {formularios.descartarBorrador}
         </Boton>
       }
     >
-      {formularios.borradorRecuperado}
+      {formularios.borradorCuerpo}
     </AvisoEnLinea>
   );
 }
