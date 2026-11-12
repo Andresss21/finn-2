@@ -27,6 +27,7 @@ export interface Prueba {
   archivo: string;
 }
 export interface Entradas extends Documentos {
+  diseno4?: string; // docs/anexos/finn-diseno-entrega-4/PROMPT-DESARROLLO.md: fuente de los CA-E*-n, CA-ET4-n y CA-C-n (CH-243)
   inventario: { titulo: string; archivo: string }[];
   features: Record<string, EstadoFt | 'pendiente_e2e'>; // FT-nn → estado; CA-nn.m → pendiente_e2e (M18)
   pendientes: Pendiente[]; // pruebas/pendientes-e2e.json (CH-08)
@@ -123,6 +124,11 @@ function formulariosDe06(d06: string): string[] {
   return [...d06.matchAll(/^\| `formulario\('(\w+)'\)` \|/gm)].map((m) => `FORM-${m[1]}`);
 }
 
+// Los CA del diseño (entrega 4, CH-243) como los escribe PROMPT-DESARROLLO.md §7: «- CA-E4-21b · Dado…»; coinciden con plan/objetivos.txt
+export function criteriosDeDiseno(t: string): string[] {
+  return [...t.matchAll(/^- (CA-(?:E[2-6]|ET4|C)-\d+[a-z]?) · /gm)].map((m) => m[1] ?? '');
+}
+
 // ---------------------------------------------------------------- reglas
 export function verificar(e: Entradas) {
   const { lista, errores } = pruebas(e);
@@ -133,6 +139,7 @@ export function verificar(e: Entradas) {
     ...fs.map((f) => f.ft),
     ...consultasDe06(e.d06),
     ...formulariosDe06(e.d06),
+    ...criteriosDeDiseno(e.diseno4 ?? ''),
   ]);
   const cob = cobertura(e, lista, ids);
   const { cubre, obj } = cob;
@@ -323,6 +330,7 @@ export function cargarEntradas(raiz = '.', puerta = false, resultados?: string):
     d04: leer(env('D04', 'docs/04-backend.md')),
     d05: leer(env('D05', 'docs/05-frontend.md')),
     d06: leer(env('D06', 'docs/06-features.md')),
+    diseno4: leer(env('DISENO4', 'docs/anexos/finn-diseno-entrega-4/PROMPT-DESARROLLO.md')),
     inventario: json(
       leer(env('INVENTARIO', 'pruebas/inventario.json'), '[]'),
     ) as Entradas['inventario'],
