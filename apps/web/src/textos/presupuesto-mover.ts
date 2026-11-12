@@ -16,4 +16,11 @@ export const presupuestoMover = {
   valoresActuales: (origen: string, destino: string) =>
     `${glosario.asignado} ahora: ${origen} en el origen y ${destino} en el destino.`,
   listo: 'Dinero movido',
+  // D-6 (CA-11.2): mover más que el Disponible se acepta con aviso; el negativo y los dos Disponibles los dice el servidor.
+  rotuloImpacto: 'Antes de confirmar',
+  calculando: 'Calculando el impacto…',
+  impactoCambio: 'El impacto cambió. Revisalo antes de confirmar.',
+  vaAQuedar: (nombre: string, monto: string) => `${nombre} va a quedar en ${monto}`,
+  sobregirada: (monto: string) =>
+    `Queda sobregirada. Si no la cubrís antes del cierre, ${glosario.listoParaAsignar} bajará ${monto}.`,
 } as const;

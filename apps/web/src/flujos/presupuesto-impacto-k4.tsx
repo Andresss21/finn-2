@@ -1,9 +1,12 @@
 // La tarjeta K4 «Antes de confirmar» (E4-1, E4-25) de los flujos largos del presupuesto que empiezan por el impacto (Archivar y
 // Fusionar): va en la misma pantalla, debajo de las decisiones, y el pie de la pantalla confirma con su verbo. Dibuja lo que
 // armó el llamador con lo que devolvió el servidor; no suma ni compara montos (PF-3).
+import type { Centavos } from '@finn/dominio/valores';
 import type { ReactNode } from 'react';
 import { AvisoEnLinea } from '../componentes/base/aviso';
 import { IndicadorEstado, type EstadoFinanciero } from '../componentes/dominio/indicador-estado';
+import { formatearMonto } from '../formato';
+import { glosario } from '../textos/glosario';
 
 export interface PropsFilaImpacto {
   readonly nombre: string;
@@ -25,6 +28,33 @@ export function FilaImpacto({ nombre, valor, estado }: PropsFilaImpacto) {
       </div>
       <span className="shrink-0 font-bold tabular-nums">{valor}</span>
     </div>
+  );
+}
+
+export interface PropsFilaAntesDespues {
+  readonly nombre: string;
+  /** [CH-246] Lo que dice el servidor: el valor de hoy y el que va a quedar. La interfaz no los suma ni los resta (PF-3). */
+  readonly antes: Centavos;
+  readonly despues: Centavos;
+  /** E4-25: con `false` la fila no lleva indicador (Listo para asignar no es un sobregiro). */
+  readonly conEstado?: boolean;
+}
+
+/** E4-25, E6-13: «valor actual → nuevo»; un valor nuevo negativo (comparación de signo) lleva su indicador de estado. */
+export function FilaAntesDespues({
+  nombre,
+  antes,
+  despues,
+  conEstado = true,
+}: PropsFilaAntesDespues) {
+  return (
+    <FilaImpacto
+      nombre={nombre}
+      valor={`${formatearMonto(antes)} → ${formatearMonto(despues)}`}
+      {...(conEstado && despues < 0
+        ? { estado: { estado: 'problema', etiqueta: glosario.sobregiroConDebitoOEfectivo } as const }
+        : {})}
+    />
   );
 }
 

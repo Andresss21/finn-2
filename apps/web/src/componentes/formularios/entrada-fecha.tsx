@@ -74,13 +74,13 @@ export function EntradaFecha({
   mensajeEnFila,
 }: PropsEntradaFecha) {
   // El borrador se guarda aparte: el valor del formulario solo cambia con una fecha completa, que exista y dentro del rango.
-  const [borrador, setBorrador] = useState<string>(formatearFecha(valor));
+  const [borrador, setBorrador] = useState<string>(valor ? formatearFecha(valor) : '');
   const [anterior, setAnterior] = useState<string>(valor);
   const [abierto, setAbierto] = useState(false);
   const boton = useRef<HTMLButtonElement>(null);
   if (valor !== anterior) {
     setAnterior(valor);
-    setBorrador(formatearFecha(valor));
+    setBorrador(valor ? formatearFecha(valor) : '');
   }
   const fecha = leer(borrador);
   const fuera =

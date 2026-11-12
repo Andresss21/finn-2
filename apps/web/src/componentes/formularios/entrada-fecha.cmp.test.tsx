@@ -279,3 +279,19 @@ describe('PRU-CMP-TX', () => {
     },
   );
 });
+
+describe('PRU-CMP-VAL-760 campo de fecha sin valor', () => {
+  it('PRU-CMP-VAL-760 [FT-21] un campo de fecha sin valor se muestra vacío, sin «undefined»', () => {
+    const raiz = montar(
+      <EntradaFecha
+        nombre="fecha"
+        etiqueta="Fecha"
+        valor={'' as FechaLocal}
+        alCambiar={() => undefined}
+        hoy={HOY}
+      />,
+    );
+    expect(texto(raiz).value).toBe('');
+    expect(raiz.textContent).not.toContain('undefined');
+  });
+});

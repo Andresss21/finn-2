@@ -137,6 +137,9 @@ test.describe('PRU-E2E-PRES entrega 4', () => {
     await page.getByLabel('Poner en').selectOption({ label: 'Salidas' });
     await page.getByLabel(/Monto a mover/).fill('600');
     const boton = page.getByRole('button', { name: 'Mover', exact: true });
+    // D-6: el aviso y los dos Disponibles vienen de la previsualización de OP-15 [CH-246].
+    await expect(page.getByText('Super va a quedar en −$350.00')).toBeVisible();
+    await expect(page.getByText('$250.00 → −$350.00')).toBeVisible();
     await expect(boton).toBeEnabled();
     await expect(page.getByRole('alert')).toHaveCount(0);
     await boton.click();
