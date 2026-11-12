@@ -41,8 +41,8 @@ const todos = [
 ];
 
 describe('PRU-CMP-VAL-101 íconos y glifos de estado', () => {
-  it('PRU-CMP-VAL-101 hay 52 íconos y 7 glifos de estado, cada uno con su archivo', () => {
-    expect(Object.keys(ICONOS)).toHaveLength(52);
+  it('PRU-CMP-VAL-101 hay 54 íconos y 7 glifos de estado, cada uno con su archivo', () => {
+    expect(Object.keys(ICONOS)).toHaveLength(54);
     expect(Object.keys(GLIFOS).sort()).toEqual([
       'advertencia',
       'cero',
@@ -52,7 +52,7 @@ describe('PRU-CMP-VAL-101 íconos y glifos de estado', () => {
       'positivo',
       'problema',
     ]);
-    expect(Object.keys(fuentes)).toHaveLength(59);
+    expect(Object.keys(fuentes)).toHaveLength(61);
   });
 
   it.each(todos)(

@@ -58,7 +58,7 @@ test.describe('PRU-E2E-ACCESO', () => {
   test.beforeAll(quitarRespaldos);
   test.afterEach(quitarRespaldos);
 
-  test('PRU-E2E-ACCESO-113 [CA-74.1] con un solo factor verificado, Quitar lo explica con el enlace a agregar otro y quitarFactor responde factor_unico', async ({
+  test('PRU-E2E-ACCESO-113 [CA-74.1] con un solo factor verificado, Seguridad lo explica con el aviso y el enlace a agregar otro, no ofrece Quitar y quitarFactor responde factor_unico', async ({
     page,
     context,
     baseURL,
@@ -66,17 +66,15 @@ test.describe('PRU-E2E-ACCESO', () => {
     const id = await factorUnico();
     await entrarAal2(context, baseURL ?? '');
     await abrirSeguridad(page);
-    await page
-      .locator(`[data-factor="${id}"]`)
-      .getByRole('link', { name: /^Quitar/ })
-      .click();
-    await page.waitForURL(`**/ajustes/seguridad/factores/${id}/quitar`);
     await expect(page.getByText(autenticacion.factor_unico)).toBeVisible();
     await expect(page.getByRole('link', { name: t.agregar })).toHaveAttribute(
       'href',
       '/ajustes/seguridad/factores/nuevo',
     );
-    await expect(page.getByRole('button', { name: t.quitar })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /^Quitar/ })).toHaveCount(0);
+    // Sin pantalla «Quitar» (AJU-15): la ruta directa vuelve a Seguridad
+    await page.goto(`/ajustes/seguridad/factores/${id}/quitar`);
+    await page.waitForURL((u) => u.pathname === '/ajustes/seguridad');
     const cliente = await clienteAal2();
     const resultado = await quitarFactor(cliente.auth, variable('FINN_USUARIO_ID'), {
       factorId: id,
@@ -101,8 +99,9 @@ test.describe('PRU-E2E-ACCESO', () => {
       .getByRole('link', { name: /^Quitar/ })
       .click();
     await page.waitForURL(`**/ajustes/seguridad/factores/${respaldo}/quitar`);
-    await page.getByRole('button', { name: t.quitar }).click();
+    await page.getByRole('button', { name: t.quitarNombre('Respaldo') }).click();
     await page.waitForURL((u) => u.pathname === '/ajustes/seguridad');
+    await expect(page.getByText(t.quitaste('Respaldo'))).toBeVisible();
     await expect(page.getByRole('heading', { name: t.titulo, level: 1 })).toBeVisible();
     await expect(page.locator('[data-factor]')).toHaveCount(1);
     await expect(page.locator(`[data-factor="${id}"]`)).toBeVisible();

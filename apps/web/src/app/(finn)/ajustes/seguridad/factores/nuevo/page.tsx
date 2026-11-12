@@ -1,15 +1,19 @@
 // `/ajustes/seguridad/factores/nuevo` (05 §9.5, FT-02): un factor de respaldo con AAL2. Sin borrador: el secreto nunca se guarda.
+// Lee los factores para rechazar un nombre repetido en el campo, antes de pedir el QR (E2-7).
 import type { Metadata } from 'next';
 import { InscribirFactor } from '../../../../../../flujos/ajustes-seguridad-factores-nuevo/inscribir-factor';
 import {
   completarInscripcion,
   iniciarInscripcion,
 } from '../../../../../../servidor/acciones/autenticacion';
+import { consultar } from '../../../../../../servidor/consultar';
+import { estadoSeguridad } from '../../../../../../servidor/sesion';
 import { ingreso } from '../../../../../../textos/ingreso';
 
-export const metadata: Metadata = { title: ingreso.tituloRespaldo };
+export const metadata: Metadata = { title: ingreso.tituloFactorRespaldo };
 
-export default function PaginaFactorNuevo() {
+export default async function PaginaFactorNuevo() {
+  const { factores } = await consultar(() => estadoSeguridad());
   return (
     <InscribirFactor
       iniciar={iniciarInscripcion}
@@ -18,6 +22,9 @@ export default function PaginaFactorNuevo() {
       esRespaldo
       destino="/ajustes/seguridad"
       rutaIngresar="/ingresar?volver=%2Fajustes%2Fseguridad%2Ffactores%2Fnuevo"
+      nombresUsados={factores
+        .filter((f) => f.estado === 'verificado')
+        .flatMap((f) => (f.nombre === null ? [] : [f.nombre]))}
     />
   );
 }

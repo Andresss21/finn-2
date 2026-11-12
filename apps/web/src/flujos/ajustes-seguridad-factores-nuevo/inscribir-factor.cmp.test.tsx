@@ -11,7 +11,9 @@ import { autenticacion } from '../../textos/autenticacion';
 import { ingreso } from '../../textos/ingreso';
 import { InscribirFactor } from './inscribir-factor';
 
-// `next/link` necesita el enrutador de Next, que el navegador de prueba no tiene (el cierre lleva enlaces).
+// `next/link` y `next/navigation` necesitan el enrutador de Next, que el navegador de prueba no tiene (el cierre lleva enlaces).
+const reemplazar = vi.fn();
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: reemplazar }) }));
 vi.mock('next/link', async () => {
   const { createElement } = await import('react');
   const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
@@ -30,6 +32,7 @@ afterEach(() => {
     nodo.remove();
   }
   vi.restoreAllMocks();
+  reemplazar.mockClear();
 });
 
 type Accion = (entrada: unknown) => Promise<ResultadoAccion<unknown>>;
@@ -53,24 +56,43 @@ const INSCRIPCION = {
   secreto: 'ABCDEFGH',
 };
 
-async function pantalla(completar: Accion) {
+function montar(iniciar: Accion, completar: Accion, usados: readonly string[] = []): HTMLElement {
   const nodo = document.createElement('main');
   document.body.append(nodo);
   const raiz = createRoot(nodo);
-  await act(async () => {
+  act(() => {
     raiz.render(
       <InscribirFactor
-        iniciar={() => Promise.resolve(bien(INSCRIPCION))}
+        iniciar={iniciar}
         completar={completar}
         nombre="Respaldo"
         esRespaldo
         destino="/ajustes/seguridad"
         rutaIngresar="/ingresar"
+        nombresUsados={usados}
       />,
     );
-    await Promise.resolve();
   });
   montados.push({ raiz, nodo });
+  return nodo;
+}
+
+const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement =>
+  [...nodo.querySelectorAll('button')].find((b) =>
+    b.textContent.includes(texto),
+  ) as HTMLButtonElement;
+
+/** El respaldo pide su nombre primero (E2-7): se toca «Seguir» con «Respaldo» ya escrito. */
+async function seguir(nodo: HTMLElement): Promise<void> {
+  await act(async () => {
+    boton(nodo, ingreso.seguir).click();
+    await Promise.resolve();
+  });
+}
+
+async function pantalla(completar: Accion) {
+  const nodo = montar(() => Promise.resolve(bien(INSCRIPCION)), completar);
+  await seguir(nodo);
   await vi.waitFor(() => {
     expect(nodo.querySelector('input[autocomplete="one-time-code"]')).not.toBeNull();
   });
@@ -117,10 +139,86 @@ describe('PRU-CMP-ACCESO movimiento del código en la inscripción', () => {
     expect(
       getComputedStyle(nodo.querySelector('[data-verificado] .fz-pop-in') as Element).animationName,
     ).toBe('fz-pop-in');
-    expect(nodo.textContent).not.toContain(ingreso.tituloRespaldoListo);
+    // El respaldo no tiene pantalla de cierre: vuelve a Seguridad con el resultado (E2-7)
+    expect(reemplazar).not.toHaveBeenCalled();
     await vi.waitFor(() => {
-      expect(nodo.textContent).toContain(ingreso.tituloRespaldoListo);
+      expect(reemplazar).toHaveBeenCalledWith('/ajustes/seguridad?agregado=Respaldo');
     });
+    expect(nodo.textContent).not.toContain(ingreso.tituloRespaldoListo);
     expect(completar).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PRU-CMP-ACCESO inscribir: preparando, copiado y error (CH-240)', () => {
+  it('PRU-CMP-ACCESO-711 [] preparando muestra el esqueleto con aria-busy y el envío deshabilitado con su motivo', async () => {
+    const nodo = montar(
+      () => new Promise<never>(() => undefined),
+      () => Promise.resolve(bien({})),
+    );
+    await seguir(nodo);
+    expect(nodo.querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(nodo.textContent).toContain(ingreso.preparando);
+    const enviar = boton(nodo, ingreso.verificar);
+    expect(enviar.disabled).toBe(true);
+    const motivo = document.getElementById(enviar.getAttribute('aria-describedby') ?? '');
+    expect(motivo?.textContent).toBe(ingreso.esperaCodigo);
+  });
+
+  it('PRU-CMP-ACCESO-712 [] copiar deja «Copiada» con el check en el botón, que mide 44 px', async () => {
+    vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    const { nodo } = await pantalla(() => Promise.resolve(bien({})));
+    const copiar = boton(nodo, ingreso.copiar);
+    expect(copiar.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    await act(async () => {
+      copiar.click();
+      await Promise.resolve();
+    });
+    await vi.waitFor(() => {
+      expect(copiar.textContent).toBe(ingreso.copiado);
+    });
+    expect(copiar.querySelector('[data-icono="check"]')).not.toBeNull();
+  });
+
+  it('PRU-CMP-ACCESO-713 [] si no se puede preparar, el aviso de problema trae el mensaje e «Intentar de nuevo» vuelve a pedir', async () => {
+    const iniciar = vi.fn<Accion>(() =>
+      Promise.resolve({
+        ok: false,
+        error: {
+          categoria: 'DOMINIO',
+          codigo: 'interno',
+          mensaje: 'Algo falló. Referencia: ABC123',
+        },
+      }),
+    );
+    const nodo = montar(iniciar, () => Promise.resolve(bien({})));
+    await seguir(nodo);
+    await vi.waitFor(() => {
+      expect(nodo.textContent).toContain(ingreso.errorPreparar);
+    });
+    expect(nodo.textContent).toContain('Referencia: ABC123');
+    await act(async () => {
+      boton(nodo, ingreso.intentarDeNuevo).click();
+      await Promise.resolve();
+    });
+    expect(iniciar).toHaveBeenCalledTimes(2);
+  });
+
+  it('PRU-CMP-ACCESO-714 [] un nombre repetido se rechaza en el campo antes del QR; con otro nombre queda de solo lectura', async () => {
+    const iniciar = vi.fn<Accion>(() => Promise.resolve(bien(INSCRIPCION)));
+    const nodo = montar(iniciar, () => Promise.resolve(bien({})), ['Autenticador', 'respaldo']);
+    await seguir(nodo);
+    expect(nodo.textContent).toContain(ingreso.nombreRepetido);
+    expect(iniciar).not.toHaveBeenCalled();
+    const campo = nodo.querySelector('input') as HTMLInputElement;
+    expect(campo.getAttribute('aria-invalid')).toBe('true');
+    await userEvent.fill(campo, 'Mi gestor');
+    await seguir(nodo);
+    await vi.waitFor(() => {
+      expect(iniciar).toHaveBeenCalledWith(expect.objectContaining({ nombre: 'Mi gestor' }));
+    });
+    await vi.waitFor(() => {
+      expect(nodo.querySelector('input[autocomplete="one-time-code"]')).not.toBeNull();
+    });
+    expect((nodo.querySelector('input') as HTMLInputElement).readOnly).toBe(true);
   });
 });
