@@ -3,7 +3,7 @@
 // de una transacción. Reúsa los campos de la edición de un movimiento (FT-35). Solo se envía lo que cambió, cada campo con el valor que se
 // vio (04 §4.6.2); con AV-01 o AV-16 el servidor pide confirmar antes. Es un flujo largo: siempre página completa (05 §1.4). No calcula
 // montos (PF-3): la suma de las partes la valida el servidor.
-import { lazy, Suspense, useRef } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import { useFieldArray } from 'react-hook-form';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
@@ -18,6 +18,7 @@ import { formatearMonto } from '../../formato';
 import { faltaRepartir } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
+import { estados } from '../../textos/estados';
 import { formularios } from '../../textos/formularios';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
 import { transaccion as t } from '../../textos/transaccion';
@@ -67,6 +68,43 @@ const ConfirmacionImpacto = lazy(() =>
 // Los campos se cargan aparte: el HTML del servidor ya los trae y el presupuesto de bytes de la ruta no los cuenta (05 §13.1)
 const Edicion = lazy(() => import('./edicion'));
 
+const BLOQUE_52 = 'h-13 rounded-control bg-superficie-hundida motion-safe:animate-pulse';
+const BLOQUE_48 = 'h-12 rounded-control bg-superficie-hundida motion-safe:animate-pulse';
+const BLOQUE_96 = 'h-24 rounded-control bg-superficie-hundida motion-safe:animate-pulse';
+
+/** Mientras llegan los campos: cada control conserva su lugar (P1-02), no una página en blanco (V-01). */
+function EsqueletoDeCampos() {
+  return (
+    <div role="status" aria-busy="true" className="flex flex-col gap-4.5" data-cargando-campos>
+      <span className="sr-only">{estados.cargando}</span>
+      <div aria-hidden="true" className={BLOQUE_52} />
+      <div aria-hidden="true" className="grid grid-cols-2 gap-2.5">
+        <div className={BLOQUE_48} />
+        <div className={BLOQUE_48} />
+      </div>
+      <div aria-hidden="true" className={BLOQUE_48} />
+      <div aria-hidden="true" className={BLOQUE_96} />
+      <div aria-hidden="true" className={BLOQUE_48} />
+    </div>
+  );
+}
+
+/** AV-16 de E3-15 (E4-1): advertencia si cambia la fecha, el total o la cuenta; información si no (04 OP-28, CA-25.4). */
+function textoAv16(
+  entrada: Record<string, unknown> | undefined,
+  cuenta: string,
+  repartoDistinto: boolean,
+): string {
+  const cambios = entrada ?? {};
+  const mueve = ['fecha', 'total', 'cuentaId'].filter((k) => k in cambios);
+  if (mueve.length > 0)
+    return t.conciliadaAdvertencia(
+      cuenta,
+      mueve.map((k) => t.queCambio[k as 'fecha' | 'total' | 'cuentaId']).join(', '),
+    );
+  return repartoDistinto ? t.conciliadaRepartoDistinto(cuenta) : t.conciliadaInformacion(cuenta);
+}
+
 export function FormularioActividadEditar({
   transaccionId,
   inicial,
@@ -95,12 +133,23 @@ export function FormularioActividadEditar({
     fallo !== undefined && DE_LAS_PARTES.includes(fallo.codigo) ? fallo.mensaje : undefined;
   const conflicto = fallo?.codigo === 'conflicto_desactualizado';
   const { enviar } = operacion;
+  const [camposListos, setCamposListos] = useState(false);
+  const [enviada, setEnviada] = useState<Record<string, unknown>>();
+  // E3-16: un rechazo del servidor queda en su campo y «Guardar cambios» espera a que se corrija (se compara con lo escrito al fallar)
+  const [rechazo, setRechazo] = useState<{ fallo: unknown; escrito: string }>();
+  const escrito = JSON.stringify(c);
+  const rechazable = fallo !== undefined && !conflicto && !REINTENTABLES.includes(fallo.categoria);
+  if (rechazable && rechazo?.fallo !== fallo) setRechazo({ fallo, escrito });
+  const sinCorregir = rechazable && rechazo?.escrito === escrito;
 
   const alEnviar = formulario.handleSubmit(() => {
     // `getValues` y no el resultado del contrato: este quita el `lineaId` de cada parte
     const entrada = entradaDeEdicion(transaccionId, inicial, formulario.getValues(), visto.current);
     if (entrada === undefined) cerrar();
-    else return enviar(entrada);
+    else {
+      setEnviada(entrada);
+      return enviar(entrada);
+    }
     return undefined;
   });
 
@@ -114,7 +163,15 @@ export function FormularioActividadEditar({
             titulo={t.revisar}
             {...(operacion.impactoCambio ? { nota: formularios.impactoCambio } : {})}
             vista={vista}
-            avisos={(vista.avisos ?? []).map((a) => t.avisos[a.codigo] ?? a.codigo)}
+            avisos={(vista.avisos ?? []).map((a) =>
+              a.codigo === 'AV-16'
+                ? textoAv16(
+                    enviada,
+                    cuentas.find((x) => x.id === inicial.cuentaId)?.nombre ?? '',
+                    enviada !== undefined && 'lineas' in enviada,
+                  )
+                : (t.avisos[a.codigo] ?? a.codigo),
+            )}
             textoConfirmar={t.confirmar}
             textoVolver={t.volverAEditar}
             enviando={false}
@@ -144,11 +201,15 @@ export function FormularioActividadEditar({
       form={ID_FORMULARIO}
       enviando={estado === 'enviando'}
       textoEnviando={t.guardando}
-      deshabilitado={!enLinea}
+      deshabilitado={!enLinea || !camposListos || sinCorregir}
       className="w-full"
-      {...(operacion.motivoSinEnvio === undefined
-        ? {}
-        : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+      {...(operacion.motivoSinEnvio !== undefined
+        ? { motivoDeshabilitado: operacion.motivoSinEnvio }
+        : sinCorregir
+          ? { motivoDeshabilitado: t.corregiParaGuardar }
+          : !camposListos
+            ? { motivoDeshabilitado: t.cargandoCampos }
+            : {})}
     >
       {t.guardar}
     </Boton>
@@ -167,8 +228,11 @@ export function FormularioActividadEditar({
             {motivoCuenta}
           </AvisoEnLinea>
         ) : null}
-        <Suspense fallback={null}>
+        <Suspense fallback={<EsqueletoDeCampos />}>
           <Edicion
+            alMontar={() => {
+              setCamposListos(true);
+            }}
             formulario={formulario}
             partes={partes}
             cuentas={cuentas}

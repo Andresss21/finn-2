@@ -26,18 +26,21 @@ export async function LectorActividadEliminar({
   const eventos = dto.lineas.flatMap((l) => [
     ...l.cobros.map((e) => ({
       clave: `c${e.transaccionId}`,
+      id: e.transaccionId,
       tipo: 'cobro' as const,
       fecha: e.fecha,
       monto: e.monto,
     })),
     ...l.condonaciones.map((e) => ({
       clave: `k${e.id}`,
+      id: e.id,
       tipo: 'condonacion' as const,
       fecha: e.fecha,
       monto: e.monto,
     })),
     ...l.devoluciones.map((e) => ({
       clave: `d${e.transaccionId}`,
+      id: e.transaccionId,
       tipo: 'devolucion' as const,
       fecha: e.fecha,
       monto: e.monto,

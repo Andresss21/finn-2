@@ -139,9 +139,11 @@ test.describe('PRU-E2E-TX actividad', () => {
     await preparar(CAFES);
     await abrir(page, '/actividad?tipo=gasto');
     await expect(page.locator('[data-dia="2027-03-03"] h2')).toHaveText('Miércoles 03/03');
-    await expect(page.getByText('Filtros · 1')).toBeVisible();
-    await page.getByLabel('Categoría').selectOption({ label: 'Cafés' });
-    await page.getByRole('button', { name: 'Filtrar' }).click();
+    // En teléfono el botón «Filtros · 1» abre la hoja inferior (ACT-05) y «Ver resultados» aplica
+    await page.getByRole('button', { name: 'Filtros, 1 activos' }).click();
+    const hoja = page.getByRole('dialog');
+    await hoja.getByLabel('Categoría').selectOption({ label: 'Cafés' });
+    await hoja.getByRole('button', { name: 'Ver resultados' }).click();
     await expect(page).toHaveURL(/categoria=/);
     await expect(page).toHaveURL(/tipo=gasto/);
     await page.getByRole('link', { name: 'Quitar filtro Gasto' }).click();
@@ -162,7 +164,7 @@ test.describe('PRU-E2E-TX actividad', () => {
     expect(Math.round(c?.width ?? 0)).toBe(320);
     expect((c?.x ?? 0) + (c?.width ?? 0)).toBeLessThan(l?.x ?? 0);
     expect(l?.width ?? 0).toBeLessThanOrEqual(760);
-    await expect(page.getByText('Filtros · 1')).toBeVisible();
+    await expect(columna.getByRole('heading', { name: 'Filtros · 1' })).toBeVisible();
     await expect(page.getByLabel('Categoría')).toBeVisible();
     await page.getByLabel('Categoría').selectOption({ label: 'Cafés' });
     await page.getByRole('button', { name: 'Filtrar' }).click();
