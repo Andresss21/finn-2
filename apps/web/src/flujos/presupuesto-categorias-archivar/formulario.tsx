@@ -4,18 +4,18 @@
 // y confirma. Lo que no hay que decidir no se pregunta; las asignaciones futuras siempre se devuelven (OP-09 las pide así). No
 // calcula montos (PF-3): el impacto lo dice el servidor.
 import type { Centavos } from '@finn/dominio/valores';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
-import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { categoriasArchivar as t } from '../../textos/categorias-archivar';
 import { formularios } from '../../textos/formularios';
+import { TarjetaImpacto } from '../presupuesto-impacto-k4';
 
 export interface PropsFormularioArchivar {
   /** `archivarCategoria` (OP-09): la pone el lector, así el formulario se prueba sin servidor. */
@@ -54,6 +54,8 @@ interface Vista {
 const ID_FORMULARIO = 'formulario-archivar';
 const LPA = 'lpa';
 const DESACTIVAR = 'desactivar';
+/** «Pasarla a otra categoría» elegido y el destino todavía sin elegir. */
+const OTRA = 'otra';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const MENSAJES: Readonly<Record<string, string | undefined>> = t.rechazos;
 
@@ -69,7 +71,7 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
         .object({ destino: z.string(), programadas: z.record(z.string(), z.string()) })
         .superRefine((c, ctx) => {
           for (const x of programadas)
-            if ((c.programadas[x.id] ?? '') === '')
+            if (['', OTRA].includes(c.programadas[x.id] ?? ''))
               ctx.addIssue({ code: 'custom', path: ['programadas', x.id], message: t.elegir });
         }),
     [programadas],
@@ -107,13 +109,32 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
   const operacion = useOperacion({ accion: enviar, previsualizarPrimero: true });
   const formulario = useFormularioFinn<Campos>({
     contrato,
-    valoresIniciales: { destino: LPA, programadas: {} },
+    // E4-24: «Desactivarla» viene elegida; así el impacto se puede pedir al servidor desde el primer momento (E4-1).
+    valoresIniciales: {
+      destino: LPA,
+      programadas: Object.fromEntries(programadas.map((x) => [x.id, DESACTIVAR])),
+    },
     operacion,
   });
   const { estado, error: fallo } = operacion;
   const c = formulario.watch();
   const vista = (operacion.previsualizacion ?? {}) as Vista;
   const errores = formulario.formState.errors;
+
+  // E4-1: el impacto se pide al servidor con lo elegido, al abrir y cada vez que cambia una decisión. Si hay una llamada en
+  // vuelo se espera a que termine: `useOperacion` ignora el doble envío (FE-12).
+  const clave = JSON.stringify(c);
+  const sinDestino = Object.values(c.programadas).includes(OTRA);
+  const pedida = useRef<string | null>(null);
+  const [confirmo, setConfirmo] = useState(false);
+  const { enviar: pedirImpacto } = formulario;
+  useEffect(() => {
+    if (estado === 'enviando' || estado === 'listo' || sinDestino || pedida.current === clave)
+      return;
+    pedida.current = clave;
+    setConfirmo(false);
+    void pedirImpacto();
+  }, [clave, sinDestino, estado, pedirImpacto]);
 
   if (estado === 'listo')
     return (
@@ -123,43 +144,6 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
       </PaginaFlujoDeRuta>
     );
 
-  if (estado === 'confirmando') {
-    const rechazo = vista.rechazos?.[0];
-    return (
-      <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
-        {rechazo === undefined ? (
-          <ConfirmacionImpacto
-            titulo={t.revisar}
-            impacto={
-              vista.impacto
-                ? [
-                    t.impactoLpa(
-                      `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
-                    ),
-                  ]
-                : []
-            }
-            avisos={[]}
-            textoConfirmar={t.confirmar}
-            textoVolver={t.volverAEditar}
-            enviando={false}
-            alConfirmar={() => void operacion.confirmar()}
-            alVolver={operacion.volverAEditar}
-          />
-        ) : (
-          <div className="flex flex-col gap-4">
-            <AvisoEnLinea estado="problema" aparecioDespues>
-              {MENSAJES[rechazo.codigo] ?? t.rechazos.otro}
-            </AvisoEnLinea>
-            <Boton variante="secundaria" onClick={operacion.volverAEditar}>
-              {t.volverAEditar}
-            </Boton>
-          </div>
-        )}
-      </PaginaFlujoDeRuta>
-    );
-  }
-
   const opcionesDestino: readonly OpcionNativa[] = [
     { valor: LPA, etiqueta: t.lpa },
     ...p.destinos.map((d) => ({
@@ -168,10 +152,17 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
       detalle: t.disponibleDe(formatearMonto(d.disponible)),
     })),
   ];
+  // E4-24: dos opciones; «Pasarla a otra categoría» abre el selector del destino.
   const opcionesProgramada: readonly OpcionNativa[] = [
     { valor: DESACTIVAR, etiqueta: t.desactivar },
-    ...p.destinos.map((d) => ({ valor: d.id, etiqueta: t.reasignarA(d.nombre) })),
+    { valor: OTRA, etiqueta: t.pasarla },
   ];
+  const opcionesDestinoProgramada: readonly OpcionNativa[] = p.destinos.map((d) => ({
+    valor: d.id,
+    etiqueta: d.nombre,
+  }));
+  const rechazo = vista.rechazos?.[0];
+  const puedeConfirmar = operacion.enLinea && estado === 'confirmando' && rechazo === undefined && !sinDestino;
   const nada = disponible === 0 && futuras === 0 && programadas.length === 0;
   const montoTexto = formatearMonto(disponible);
   return (
@@ -181,28 +172,35 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
       acciones={
         <div className="w-full md:ml-auto md:w-[calc(50%-1.125rem)]">
           <Boton
-            tipo="submit"
-            form={ID_FORMULARIO}
             className="w-full"
-            enviando={estado === 'enviando'}
+            enviando={estado === 'enviando' && confirmo}
             textoEnviando={t.archivando}
-            deshabilitado={!operacion.enLinea}
+            deshabilitado={!puedeConfirmar}
             {...(operacion.motivoSinEnvio === undefined
               ? {}
               : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+            onClick={() => {
+              setConfirmo(true);
+              void operacion.confirmar();
+            }}
           >
-            {t.archivar}
+            {t.archivarNombre(p.categoria)}
           </Boton>
         </div>
       }
     >
       <form
         id={ID_FORMULARIO}
-        onSubmit={(e) => void formulario.enviar(e)}
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
         noValidate
         className="flex flex-col gap-5"
       >
-        <p className="font-semibold">{p.categoria}</p>
+        <div className="flex flex-col gap-1.5">
+          <p className="font-semibold">{p.categoria}</p>
+          <p className="text-cuerpo-pequeno text-texto-secundario">{t.intro(p.categoria)}</p>
+        </div>
         {nada ? <p>{t.nadaQueDecidir(p.categoria)}</p> : null}
         {disponible === 0 ? null : (
           <SeleccionNativa
@@ -223,25 +221,68 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
             {t.futuras(futuras)}
           </p>
         )}
-        {programadas.map((x) => (
-          <SeleccionNativa
-            alta
-            marcador={t.elegir}
-            key={x.id}
-            etiqueta={t.programada(x.comercio, formatearMonto(x.monto))}
-            opciones={opcionesProgramada}
-            valor={c.programadas[x.id] ?? ''}
-            alCambiar={(v) => {
-              formulario.setValue(`programadas.${x.id}`, v, {
-                shouldDirty: true,
-                shouldValidate: formulario.formState.isSubmitted,
-              });
-            }}
-            {...(errores.programadas?.[x.id]?.message === undefined
-              ? {}
-              : { error: errores.programadas[x.id]?.message })}
+        {programadas.map((x) => {
+          const decision = c.programadas[x.id] ?? DESACTIVAR;
+          const pasar = decision !== DESACTIVAR;
+          const poner = (v: string) => {
+            formulario.setValue(`programadas.${x.id}`, v, {
+              shouldDirty: true,
+              shouldValidate: formulario.formState.isSubmitted,
+            });
+          };
+          return (
+            <div key={x.id} className="flex flex-col gap-3">
+              <SeleccionNativa
+                alta
+                marcador={t.elegir}
+                etiqueta={t.programada(x.comercio, formatearMonto(x.monto))}
+                opciones={opcionesProgramada}
+                valor={pasar ? OTRA : DESACTIVAR}
+                alCambiar={(v) => {
+                  poner(v === DESACTIVAR ? DESACTIVAR : OTRA);
+                }}
+              />
+              {pasar ? (
+                <SeleccionNativa
+                  alta
+                  marcador={t.elegir}
+                  etiqueta={t.pasarlaA}
+                  opciones={opcionesDestinoProgramada}
+                  valor={decision === OTRA ? '' : decision}
+                  alCambiar={poner}
+                  {...(errores.programadas?.[x.id]?.message === undefined
+                    ? {}
+                    : { error: errores.programadas[x.id]?.message })}
+                />
+              ) : null}
+            </div>
+          );
+        })}
+        {operacion.previsualizacion === undefined ? (
+          estado === 'enviando' ? (
+            <p role="status" className="text-texto-secundario">
+              {t.calculando}
+            </p>
+          ) : null
+        ) : rechazo === undefined ? (
+          <TarjetaImpacto
+            rotulo={t.rotuloImpacto}
+            {...(operacion.impactoCambio ? { nota: t.impactoCambio } : {})}
+            filas={
+              vista.impacto
+                ? [
+                    t.impactoLpa(
+                      `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
+                    ),
+                  ]
+                : []
+            }
           />
-        ))}
+        ) : (
+          <AvisoEnLinea estado="problema" aparecioDespues>
+            {MENSAJES[rechazo.codigo] ?? t.rechazos.otro}
+          </AvisoEnLinea>
+        )}
         {estado === 'error' && fallo !== undefined ? (
           <AvisoEnLinea
             estado="problema"
