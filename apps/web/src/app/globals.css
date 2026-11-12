@@ -595,6 +595,12 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
     transform: translateX(-22px);
   }
 }
+/* La pantalla que entra se desliza 70 px desde la derecha: sin recorte, el navegador del teléfono ensancha la vista de la página
+   mientras dura y deja la barra fija más ancha que la pantalla, con «Más acciones» debajo de la campana. `clip` no crea un
+   contenedor de desplazamiento ni recorta la barra fija. */
+#contenido {
+  overflow-x: clip;
+}
 @keyframes fz-entra-hija {
   from {
     opacity: 0;
