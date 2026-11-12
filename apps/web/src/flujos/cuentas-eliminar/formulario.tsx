@@ -7,7 +7,7 @@ import { useCallback } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
-import { AccionesDeBloqueo } from '../cuentas-bloqueo/acciones';
+import { AccionesDeBloqueo } from '../cuentas-archivar/acciones-bloqueo';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';

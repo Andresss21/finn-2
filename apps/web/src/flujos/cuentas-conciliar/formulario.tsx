@@ -8,6 +8,7 @@ import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
+import { Icono } from '../../componentes/base/icono';
 import { Resultado } from '../../componentes/base/resultado';
 import { Monto } from '../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
@@ -123,7 +124,7 @@ export function FormularioConciliar({
   const subida = useOperacion({ accion: iniciar });
   const fin = useOperacion({ accion: terminar });
   const [archivo, setArchivo] = useState<File | null>(null);
-  const [falta, setFalta] = useState(false);
+  const entradaArchivo = useRef<HTMLInputElement>(null);
   const [marcadas, setMarcadas] = useState<ReadonlySet<string>>(new Set());
   const [ajuste, setAjuste] = useState<Ajuste>();
   const huella = useRef('');
@@ -160,11 +161,7 @@ export function FormularioConciliar({
   };
 
   const revisar = async () => {
-    if (archivo === null) {
-      setFalta(true);
-      return;
-    }
-    setFalta(false);
+    if (archivo === null) return;
     const bytes = new Uint8Array(await archivo.arrayBuffer());
     huella.current = await huellaDe(bytes);
     await subida.enviar({ cuentaId, archivo: bytes });
@@ -422,27 +419,50 @@ export function FormularioConciliar({
     <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
       <div className="flex flex-col gap-5">
         <p>{t.cuenta(cuenta)}</p>
-        <div className="flex flex-col gap-2">
-          <h2 className="text-titulo-seccion">{t.subirTitulo}</h2>
-          <p className="text-cuerpo-pequeno text-texto-secundario">{t.subirAyuda}</p>
-          <label htmlFor="archivo-estado" className="font-semibold">
+        <div
+          data-zona-archivo
+          className={[
+            'flex flex-col items-center gap-2 rounded-contenedor border-2 border-dashed p-6 text-center',
+            fallo === undefined ? 'border-borde-control' : 'border-problema-borde',
+          ].join(' ')}
+        >
+          <Icono nombre="in" tamano={24} />
+          {archivo === null ? (
+            <>
+              <h2 className="text-titulo-seccion">{t.subirTitulo}</h2>
+              <p className="text-cuerpo-pequeno text-texto-secundario">{t.subirAyuda}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-cuerpo font-bold">{archivo.name}</p>
+              <p className="text-cuerpo-pequeno text-texto-secundario">
+                {t.tamano(Math.max(1, Math.round(archivo.size / 1024)))}
+              </p>
+            </>
+          )}
+          {/* El control nativo habla en el idioma del navegador: va oculto tras un botón de Finn (CTA-09). */}
+          <label htmlFor="archivo-estado" className="sr-only">
             {t.archivo}
           </label>
           <input
+            ref={entradaArchivo}
             id="archivo-estado"
             type="file"
             accept=".csv,text/csv"
-            className="min-h-11"
+            className="sr-only"
+            tabIndex={-1}
             onChange={(e) => {
               setArchivo(e.target.files?.[0] ?? null);
-              setFalta(false);
             }}
           />
-          {falta ? (
-            <p role="alert" className="text-problema-texto">
-              {t.falta}
-            </p>
-          ) : null}
+          <Boton
+            variante="secundaria"
+            onClick={() => {
+              entradaArchivo.current?.click();
+            }}
+          >
+            {archivo === null ? t.elegirArchivo : t.elegirOtro}
+          </Boton>
         </div>
         {fallo === undefined ? null : (
           <AvisoEnLinea
@@ -464,7 +484,8 @@ export function FormularioConciliar({
         <Boton
           enviando={subida.estado === 'enviando'}
           textoEnviando={t.leyendo}
-          deshabilitado={!subida.enLinea}
+          deshabilitado={!subida.enLinea || archivo === null}
+          {...(archivo === null ? { motivoDeshabilitado: t.falta } : {})}
           onClick={() => void revisar()}
         >
           {t.revisar}

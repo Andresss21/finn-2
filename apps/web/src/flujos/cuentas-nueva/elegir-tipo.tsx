@@ -12,6 +12,9 @@ const ICONO: Readonly<Record<TipoCuenta, NombreIcono>> = {
   inversion: 'trend',
 };
 
+const TARJETA =
+  'flex min-h-11 cursor-pointer flex-col gap-2 rounded-contenedor border-2 border-transparent bg-superficie p-4 shadow-elevacion-1 has-checked:border-accion has-checked:bg-accion-tonal has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-foco';
+
 export function ElegirTipo({
   valor,
   alCambiar,
@@ -22,8 +25,14 @@ export function ElegirTipo({
   return (
     <div role="radiogroup" aria-label={t.tipo} className="grid grid-cols-2 gap-3">
       {TIPOS.map((tipo) => (
-        <label key={tipo} className="relative block cursor-pointer">
+        <label
+          key={tipo}
+          htmlFor={`tipo-cuenta-${tipo}`}
+          data-tipo-cuenta={tipo}
+          className={TARJETA}
+        >
           <input
+            id={`tipo-cuenta-${tipo}`}
             type="radio"
             name="tipo-cuenta"
             value={tipo}
@@ -31,18 +40,13 @@ export function ElegirTipo({
             onChange={() => {
               alCambiar(tipo);
             }}
-            className="peer sr-only"
+            className="sr-only"
           />
-          <span
-            data-tipo-cuenta={tipo}
-            className="flex min-h-11 flex-col gap-2 rounded-contenedor border-2 border-transparent bg-superficie p-4 shadow-elevacion-1 peer-checked:border-accion peer-checked:bg-accion-tonal peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-foco"
-          >
-            <span className="flex size-10 items-center justify-center rounded-full bg-superficie-hundida">
-              <Icono nombre={ICONO[tipo]} tamano={20} />
-            </span>
-            <span className="text-cuerpo font-bold">{t.tipos[tipo]}</span>
-            <span className="text-cuerpo-pequeno text-texto-secundario">{t.tiposAyuda[tipo]}</span>
+          <span className="flex size-10 items-center justify-center rounded-full bg-superficie-hundida">
+            <Icono nombre={ICONO[tipo]} tamano={20} />
           </span>
+          <span className="text-cuerpo font-bold">{t.tipos[tipo]}</span>
+          <span className="text-cuerpo-pequeno text-texto-secundario">{t.tiposAyuda[tipo]}</span>
         </label>
       ))}
     </div>

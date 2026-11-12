@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Centavos } from '@finn/dominio/valores';
 import '../../app/globals.css';
 import { FormularioCuentasArchivar } from '../cuentas-archivar/formulario';
+import { FormularioConciliar } from '../cuentas-conciliar/formulario';
 import { FormularioCuentasEliminar } from '../cuentas-eliminar/formulario';
 
 vi.mock('next/navigation', () => ({
@@ -88,5 +89,34 @@ describe('PRU-CMP-CTA-731 bloqueos de archivar y eliminar con botones', () => {
     ]);
     const archivada = montar(<FormularioCuentasEliminar {...props} archivada />);
     expect(botones(archivada).map((x) => x.texto)).toEqual(['Cerrar']);
+  });
+});
+
+describe('PRU-CMP-CTA-732 subir el estado de cuenta', () => {
+  it('PRU-CMP-CTA-732 el archivo se elige con un botón de Finn en español (el control nativo va oculto) y «Revisar» está deshabilitado con su motivo hasta tener archivo', () => {
+    const raiz = montar(
+      <FormularioConciliar
+        iniciar={accion}
+        terminar={accion}
+        agregar={accion}
+        cuentaId="c3"
+        cuenta="Corriente"
+        categorias={[]}
+        tiposAlta={{ cargo: [], abono: [] }}
+      />,
+    );
+    const zona = raiz.querySelector('[data-zona-archivo]');
+    expect(zona?.textContent).toContain('Subí el estado de cuenta');
+    expect(zona?.textContent).toContain('Elegir archivo');
+    const nativo = raiz.querySelector<HTMLInputElement>('input[type="file"]');
+    expect(nativo?.className).toContain('sr-only');
+    expect(nativo?.labels?.[0]?.textContent).toBe('Archivo CSV');
+    const revisar = [...raiz.querySelectorAll('button')].find((b) => b.textContent === 'Revisar');
+    expect(revisar?.disabled).toBe(true);
+    expect(raiz.textContent).toContain('Subí el archivo CSV.');
+    const elegir = [...raiz.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Elegir archivo',
+    );
+    expect(elegir?.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
   });
 });

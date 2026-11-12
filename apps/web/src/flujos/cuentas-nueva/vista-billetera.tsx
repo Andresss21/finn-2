@@ -8,6 +8,9 @@ import { formatearMontoTexto } from '../../formato';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { cuentasNuevaBilletera as t } from '../../textos/cuentas-nueva-billetera';
 
+const TARJETA =
+  'relative flex min-h-42 max-w-80 flex-col gap-3 overflow-hidden rounded-identidad p-4 text-texto';
+
 export function VistaBilletera({
   nombre,
   saldo,
@@ -23,7 +26,7 @@ export function VistaBilletera({
       <article
         data-identidad="efectivo"
         data-subtipo="billetera"
-        className={`relative flex min-h-42 max-w-80 flex-col gap-3 overflow-hidden rounded-identidad p-4 text-texto ${id.fondo}`}
+        className={[TARJETA, id.fondo].join(' ')}
       >
         {id.motivo}
         <span className="relative flex size-9.5 flex-none items-center justify-center rounded-xl bg-cuenta-disco">

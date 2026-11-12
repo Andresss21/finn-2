@@ -10,7 +10,7 @@ import { Seleccion } from '../../componentes/base/seleccion';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
 import { centavosATextoDecimal } from '../../formato/monto';
-import { AccionesDeBloqueo } from '../cuentas-bloqueo/acciones';
+import { AccionesDeBloqueo } from './acciones-bloqueo';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { cuentasGestion } from '../../textos/cuentas-gestion';
 import { formularios } from '../../textos/formularios';
