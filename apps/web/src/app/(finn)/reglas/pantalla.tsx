@@ -59,9 +59,9 @@ export function PantallaReglas({
           {dto.reglas.length === 0 ? (
             <div data-sin-coincidencias className="flex flex-col items-start gap-2">
               <p className="text-cuerpo text-texto-secundario">
-                {q === undefined || q === '' ? t.sinCoincidencias : t.ningunaPara(q)}
+                {q === '' ? t.sinCoincidencias : t.ningunaPara(q)}
               </p>
-              {q === undefined || q === '' ? null : (
+              {q === '' ? null : (
                 <EnlaceFinn href="/reglas" className={BOTON}>
                   {t.quitarBusqueda}
                 </EnlaceFinn>

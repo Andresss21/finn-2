@@ -12,7 +12,8 @@ import { useUnToque } from '../../formularios/use-un-toque';
 import { desarchivarCategoria } from '../../servidor/acciones/categorias';
 import { estructuraEntrega4 as t } from '../../textos/estructura-entrega-4';
 
-const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+const RESUMEN =
+  'flex min-h-11 cursor-pointer list-none items-center gap-2 text-rotulo text-texto-secundario focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco [&::-webkit-details-marker]:hidden';
 
 interface Pedido {
   readonly id: string;
@@ -58,9 +59,7 @@ export function Archivadas({ grupos }: { readonly grupos: readonly GrupoDeEstruc
   };
   return (
     <details open={resultado !== undefined || undefined} className="group flex flex-col gap-2">
-      <summary
-        className={`flex min-h-11 cursor-pointer list-none items-center gap-2 text-rotulo text-texto-secundario [&::-webkit-details-marker]:hidden ${FOCO}`}
-      >
+      <summary className={RESUMEN}>
         <span className="group-open:rotate-90">
           <Icono nombre="chevR" tamano={16} />
         </span>

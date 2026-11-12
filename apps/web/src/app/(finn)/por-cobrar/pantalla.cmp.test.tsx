@@ -143,7 +143,8 @@ describe('PRU-CMP-COBRO-101 por cobrar', () => {
     expect(fila?.querySelectorAll('a')).toHaveLength(0);
     expect(cerrada.querySelector('[role="switch"]')).toBeNull();
     expect(
-      [...cerrada.querySelectorAll('a')].find((a) => a.textContent === 'Ocultar los cerrados')
+      [...cerrada.querySelectorAll('a')]
+        .find((a) => a.textContent === 'Ocultar los cerrados')
         ?.getAttribute('href'),
     ).toBe('/por-cobrar');
 
