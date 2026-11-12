@@ -1392,22 +1392,22 @@ Reglas comunes a todas las fichas:
 - Si sospecho que el token se filtró, quiero cambiarlo y que el anterior deje de funcionar en el acto.
 
 **Flujo.**
-1. `/ajustes/webhook`: muestra si ya hay un token (`AjustesDto.webhook.configurado`, `rotadoEn`).
-2. "Generar token" o "Cambiar token" → OPT-01. El token se muestra **una sola vez**, con "Copiar", y la URL `https://<dominio>/api/sms`.
+1. `/ajustes/webhook` [S]: muestra si ya hay un token (`AjustesDto.webhook.configurado`, `rotadoEn`) y, si ya llegó un SMS, cuándo (`ultimoSmsEn`). Finn guarda solo el SHA-256 del token: la pantalla no muestra ningún sufijo ni «Copiar» **[CH-240]**.
+2. "Generar token" o "Generar un token nuevo" abre el flujo corto `/ajustes/webhook/token` (hoja sobre Ajustes) **[CH-240]**; con un token, la hoja advierte «El token actual deja de funcionar» y se confirma con el botón de peligro. → OPT-01. El token se muestra **una sola vez**, completo y con "Copiar", y la URL `https://<dominio>/api/sms`.
 3. Instrucciones de 04 §8.8 (disparador, acción HTTP, cabeceras, cuerpo, reintentos) y la prueba en el teléfono.
 4. Un SMS de prueba aparece en la Bandeja como no reconocido (FT-38).
 
 **Piezas.**
 - Operaciones: OPT-01; `POST /api/sms` (OP-35, FT-34).
 - Consultas: `ajustes()`.
-- Rutas: `/ajustes/webhook`.
+- Rutas: `/ajustes/webhook`, `/ajustes/webhook/token` **[CH-240]**.
 - Componentes: `Aviso`; botón "Copiar".
 
 **Reglas.** 04 §8.1 y §8.8; 04 §12.5 (cliente que no es persona); 05 §2.11 (el token nunca va al borrador ni queda en el cliente al cerrar el flujo).
 
 **Estados.**
 - Sin token: "Todavía no conectaste tus SMS. Generá un token y pegalo en MacroDroid." **(nuevo)**.
-- Con token: la fecha de `rotadoEn` y "Cambiar token", que advierte antes: "El token actual dejará de funcionar. Vas a tener que pegar el nuevo en MacroDroid." **(nuevo)**.
+- Con token: la fecha de `rotadoEn` y "Generar un token nuevo", que advierte antes: "El token actual deja de funcionar." y que MacroDroid no podrá mandar SMS hasta pegar el nuevo **(nuevo)**. **[CH-240]**
 
 **Errores y textos.** Los comunes (04 §3.0.7). Textos nuevos: los dos anteriores y "Copiá este token ahora: no lo vas a poder ver de nuevo." **(nuevo)**.
 
@@ -4775,6 +4775,7 @@ Lo que el script **no** comprueba: que una ficha use bien la operación que cita
 | `/ajustes/seguridad/factores/[factorId]/quitar` | FT-74 |
 | `/ajustes/seguridad/factores/nuevo` | FT-02, FT-74 |
 | `/ajustes/webhook` | FT-03, FT-04 |
+| `/ajustes/webhook/token` | FT-03 |
 | `/bandeja` | FT-08, FT-34, FT-35, FT-36, FT-37, FT-38, FT-78, FT-70 |
 | `/bandeja/[movimientoId]` | FT-35, FT-37, FT-38, FT-78, FT-70 |
 | `/cuentas` | FT-33, FT-51 |
@@ -4961,3 +4962,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-07** (Fase 8, aprobado en la revisión de la Parte C de `08-tareas.md`, aplicado al cerrarla el 23 de octubre de 2026). Dependencias de construcción y de datos (2.0) y las de datos de FT-03, FT-04, FT-08, FT-16, FT-19, FT-34, FT-35 y FT-54. Los CA no cambian. Marcas **[F8]**.
 - **CH-222, CH-224 y CH-225** (Fase 8, decididos por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). FT-29: acción principal "Reservar $X" con la variante `reservar_falta` de OP-16 (CH-222). S6: la identidad de la cuenta de efectivo por su subtipo y §7.3 sin los subtipos fuera de fase (CH-224); la cara de la tarjeta por su color guardado, uno de 8 (CH-225). Los CA no cambian. Marcas **[CH-nnn]** en cada lugar.
 - **CH-E5-1** (diseño, entrega 4 · etapa 5; aprobado por el dueño con la condición de conservar los enlaces y «atrás», aplicado al cerrar el diseño el 11 de noviembre de 2026). FT-60: la navegación entre reportes es `SelectorReportes` (05 §10.7) en lugar de `Pestanas`: con 15 tipos las pestañas no entran. Cada opción sigue siendo un enlace a `/reportes/[tipo]`. **[CH-240]** Lo que CH-E5-3 y CH-E5-4 cambian en FT-03, FT-73 y la tabla de rutas (6.4) lo aplican sus fichas de B10, con el código. Los CA no cambian. Marcas **[D4]**. Detalle en la entrega de diseño 4 (`prompt/CAMBIOS-PROPUESTOS.md`, E5-1).
+- **CH-E5-3** (diseño, entrega 4 · etapa 5; aprobado por el dueño, aplicado con la ficha de Ajustes de B10 el 11 de noviembre de 2026, CH-240 c). FT-03: Conectar los SMS es una pantalla [S] (con «←», campana y barra inferior) y generar el token es el flujo corto `/ajustes/webhook/token` (OPT-01), con la advertencia «El token actual deja de funcionar»; fuera de ese momento no se muestra ningún sufijo del token. La tabla de rutas suma `/ajustes/webhook/token`. Marcas **[CH-240]**.

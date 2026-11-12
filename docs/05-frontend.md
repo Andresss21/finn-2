@@ -579,10 +579,11 @@ Clases: **[P]** sección principal, **[S]** secundaria, **[D]** detalle, **[L]**
   notificaciones/page.tsx (y @superpuesto/(.)notificaciones, [F6] CF-23)                             [S] Centro de notificaciones        ?no-leidas=1 &cursor=
   ajustes/page.tsx                                    [S] Ajustes (índice)
   ajustes/ciclo/                                      [C] OP-19
-  ajustes/webhook/                                    [C] OPT-01
-  ajustes/formatos/page.tsx                           [L] lista de formatos bancarios
+  ajustes/webhook/page.tsx                            [S] Conectar los SMS **[CH-240]**
+  ajustes/webhook/token/                              [C] OPT-01 (generar el token) **[CH-240]**
+  ajustes/formatos/page.tsx                           [S] lista de formatos bancarios **[CH-240]**
   ajustes/formatos/nuevo/  ajustes/formatos/[formatoId]/   [L] OPT-05, OPT-06
-  ajustes/instituciones/page.tsx                      [L] lista de instituciones
+  ajustes/instituciones/page.tsx                      [S] lista de instituciones **[CH-240]**
   ajustes/instituciones/nueva/  ajustes/instituciones/[institucionId]/   [C] OPT-07
   ajustes/notificaciones/                             [S] OPT-02, OPT-03 (§8, Parte D)
   ajustes/seguridad/                                  [S] factores TOTP (CP-4; §9, Parte B)
@@ -1481,11 +1482,12 @@ Notas:
 |---|---|---|---|---|---|
 | `/ajustes` | [S] | `ajustes()` | Índice de las páginas siguientes | — | Muestra un resumen de cada sección (por ejemplo, "Respaldo atrasado") |
 | `/ajustes/ciclo` | [C] | `ajustes()` | OP-19 (previsualizar primero) | AV-12 (antes) | Muestra la vigencia futura, si existe |
-| `/ajustes/webhook` | [C] | `ajustes()` | OPT-01 | — | El token nuevo se muestra **una sola vez**, con "Copiar"; nunca se guarda en el borrador ni en el cliente después de cerrar el flujo |
-| `/ajustes/formatos` | [L] | `ajustes()` | [L] nuevo y edición | — | Lista con `usos` y `ultimoUso` |
+| `/ajustes/webhook` | [S] | `ajustes()` | [C] `/ajustes/webhook/token` | — | **[CH-240]** Estado de la conexión (con `webhook.ultimoSmsEn` si ya llegó un SMS) y las instrucciones de MacroDroid. Finn guarda solo el SHA-256 del token: la pantalla no muestra ningún sufijo ni «Copiar» (E5-18). Lleva «←», la campana y la barra inferior (E5-20) |
+| `/ajustes/webhook/token` | [C] | `ajustes()` | OPT-01 | — | **[CH-240]** Hoja sobre Ajustes con la advertencia «El token actual deja de funcionar». El token nuevo se muestra **una sola vez**, con "Copiar"; nunca se guarda en el borrador ni en el cliente después de cerrar el flujo |
+| `/ajustes/formatos` | [S] | `ajustes()` | [L] nuevo y edición | — | **[CH-240]** Lista con `usos` y `ultimoUso`; lleva «←», la campana y la barra inferior (E5-20) |
 | `/ajustes/formatos/nuevo` | [L] | `formulario({ operacion: 'formato' })` | OPT-05, OPT-06 (probar contra un SMS) | — | Borrador (4.11) |
 | `/ajustes/formatos/[formatoId]` | [L] | `formulario({ operacion: 'formato', formatoId })` | OPT-05, OPT-06 | — | Borrador (4.11) |
-| `/ajustes/instituciones` | [L] | `ajustes()` | [C] nueva y edición | — | — |
+| `/ajustes/instituciones` | [S] | `ajustes()` | [C] nueva y edición | — | **[CH-240]** Lleva «←», la campana y la barra inferior (E5-20) |
 | `/ajustes/instituciones/nueva` | [C] | `ajustes()` | OPT-07 | — | — |
 | `/ajustes/instituciones/[institucionId]` | [C] | `ajustes()` | OPT-07 (renombrar) | — | — |
 | `/ajustes/notificaciones` | [S] | `ajustes()` | OPT-02 (activar en este dispositivo), OPT-03 (quitar un dispositivo) | — | Estado del permiso del navegador y la explicación si está denegado (CP-5). Detalle en §8 (Parte D) |
@@ -2822,7 +2824,7 @@ El `movimientoId` que necesitan las acciones de 11.5 sale de `destino` (`pantall
 
 Relaciona cada consulta y cada operación de 04 con su pantalla y su componente. Las tablas 15.1 y 15.2 **las genera** `tools/docs/fase5/trazabilidad.py` **[CH-18]** a partir del mapa de §2 y de las acciones de un toque de 4.14 (V5-36); no se editan a mano. Si cambia una fila de §2, se vuelven a generar y la CI comprueba que coincidan.
 
-Resultado actual: Consultas: 18/18 · operaciones con pantalla: 61/62 (sin pantalla: OP-35, el webhook) · flujos: 51 · carpetas de flujo repetidas: 0.
+Resultado actual: Consultas: 18/18 · operaciones con pantalla: 61/62 (sin pantalla: OP-35, el webhook) · flujos: 49 · carpetas de flujo repetidas: 0.
 
 ### 15.1 Consultas → pantallas
 
@@ -2839,7 +2841,7 @@ Resultado actual: Consultas: 18/18 · operaciones con pantalla: 61/62 (sin panta
 | `bandeja` | `/bandeja` | 1 |
 | `reporte` | `/reportes/[tipo]` | 1 |
 | `metas` | `/metas` | 1 |
-| `ajustes` | `/ajustes`, `/ajustes/apariencia`, `/ajustes/ciclo`, `/ajustes/diagnostico`, `/ajustes/exportar`, `/ajustes/formatos`, `/ajustes/instituciones`, `/ajustes/instituciones/[institucionId]`, `/ajustes/instituciones/nueva`, `/ajustes/notificaciones`, `/ajustes/respaldo`, `/ajustes/seguridad`, `/ajustes/seguridad/factores/[factorId]/quitar`, `/ajustes/seguridad/factores/nuevo`, `/ajustes/webhook` | 15 |
+| `ajustes` | `/ajustes`, `/ajustes/apariencia`, `/ajustes/ciclo`, `/ajustes/diagnostico`, `/ajustes/exportar`, `/ajustes/formatos`, `/ajustes/instituciones`, `/ajustes/instituciones/[institucionId]`, `/ajustes/instituciones/nueva`, `/ajustes/notificaciones`, `/ajustes/respaldo`, `/ajustes/seguridad`, `/ajustes/seguridad/factores/[factorId]/quitar`, `/ajustes/seguridad/factores/nuevo`, `/ajustes/webhook`, `/ajustes/webhook/token` | 16 |
 | `programadas` | `/programadas` | 1 |
 | `reglas` | `/reglas` | 1 |
 | `porCobrar` | `/por-cobrar`, `/por-cobrar/deudores/[deudorId]/renombrar` | 2 |
@@ -2962,7 +2964,7 @@ Las funciones que no son consultas de 04 §6 tienen su pantalla en 15.3.
 | OP-51 | `/programadas/[programadaId]` | [L] | `flujos/programadas-programada/` |
 | OP-52 | `/por-cobrar/deudores/[deudorId]/renombrar` | [C] | `flujos/por-cobrar-deudores-renombrar/` |
 | OP-53 | `/cuentas/[cuentaId]/verificar-saldo` | [L] | `flujos/cuentas-verificar-saldo/` |
-| OPT-01 | `/ajustes/webhook` | [C] | `flujos/ajustes-webhook/` |
+| OPT-01 | `/ajustes/webhook/token` | [C] | `flujos/ajustes-webhook-token/` |
 | OPT-02 | `/` | [P] | página `/` [1T] |
 | OPT-02 | `/ajustes/notificaciones` | [S] | página `/ajustes/notificaciones` |
 | OPT-03 | `/ajustes/notificaciones` | [S] | página `/ajustes/notificaciones` |
@@ -3524,3 +3526,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-05-9.3** (diseño, entrega 4 · etapa 2, decisión E2-1; aplicado al cerrar el diseño el 11 de noviembre de 2026). Ingresar: en lugar del texto sobre «el procedimiento del repositorio», una línea de ayuda sin enlace que dice dónde se cambia la contraseña (9.3). Marca **[D4]**.
 - **CH-E5-2** (diseño, entrega 4 · etapa 5; aprobados por el dueño, aplicados al cerrar el diseño el 11 de noviembre de 2026). CH-E5-2: componente `SelectorReportes` en 10.7, junto a `Pestanas`, para la navegación de FT-60 (CH-E5-1 en 06). **[CH-240]** CH-E5-3 (Conectar los SMS, Formatos e Instituciones como [S] y OPT-01 en `/ajustes/webhook/token`) se aplica con su ficha de B10, junto con el código y los recuentos de PRU-SEG-OPER-102.
 - **CH-241** (Fase 8, decidido por el orquestador con delegación del usuario, 11 de noviembre de 2026, `08-tareas.md` §7). Entrega 4 frente a lo que CH-220 copió de la entrega 3: el código TOTP va en seis casillas, sin envío automático, con el pegado del código completo, un solo nombre accesible para el grupo y `autocomplete="one-time-code"` (9.4, 9.5 y FE-38; E2-2 de la entrega 4). Retira el punto TOTP de CH-221 (b). Lo implementa TA-594, de revisión obligatoria, que no toca `verificarFactor` ni la sesión. Marcas **[CH-241]**.
+- **CH-E5-3** (diseño, entrega 4 · etapa 5; aplicado con la ficha de Ajustes de B10, CH-240 c, el 11 de noviembre de 2026). `/ajustes/webhook`, `/ajustes/formatos` e `/ajustes/instituciones` son [S] (1.3, 2.11) y OPT-01 vive en `/ajustes/webhook/token` [C], con su carpeta `flujos/ajustes-webhook-token/`; 15.1 y 15.2 se regeneraron con `trazabilidad.py`. El contrato de OPT-01 no cambia. Marcas **[CH-240]**.

@@ -1,10 +1,11 @@
 'use client';
 // La página completa de `/ajustes/formatos` (FT-73; 05 §2.11): cada formato con su institución, el tipo, los usos y el último uso, el
 // inactivo marcado, y los enlaces a crear uno y a Instituciones. Los conteos los hace el servidor (`ajustes()`): no se calcula nada (PF-3).
-import { PaginaFlujoDeRuta } from '../../../../componentes/navegacion/flujo-de-ruta';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
+import { VolverEnTitulo } from '../../../../componentes/navegacion/volver-en-titulo';
 import { Vacio } from '../../../../componentes/base/vacio';
 import { formatearInstante } from '../../../../formato';
+import { navegacion } from '../../../../textos/navegacion';
 import { ajustesFormatos as t } from '../../../../textos/ajustes-formatos';
 
 export interface FormatoDeLista {
@@ -24,7 +25,15 @@ const BOTON =
 
 export function ListaFormatos({ formatos }: { readonly formatos: readonly FormatoDeLista[] }) {
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} descripcion={t.descripcion} rutaPadre="/ajustes">
+    <main className="mx-auto flex max-w-3xl flex-col gap-5 px-5 py-4">
+      <div className="-ml-2 flex items-center gap-1">
+        <VolverEnTitulo
+          href="/ajustes"
+          etiqueta={navegacion.volverA(navegacion.secciones.ajustes)}
+        />
+        <h1 className="min-w-0 flex-1 text-titulo-pantalla">{t.titulo}</h1>
+      </div>
+      <p className="text-cuerpo-pequeno text-texto-secundario">{t.descripcion}</p>
       <div className="flex flex-col gap-5">
         {formatos.length === 0 ? (
           <Vacio titulo={t.vacio.titulo} texto={t.vacio.texto} icono="x" tono="neutro" />
@@ -62,6 +71,6 @@ export function ListaFormatos({ formatos }: { readonly formatos: readonly Format
           {t.instituciones}
         </EnlaceFinn>
       </div>
-    </PaginaFlujoDeRuta>
+    </main>
   );
 }

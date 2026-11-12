@@ -7,7 +7,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
-import { ajustesWebhook } from '../../../src/textos/ajustes-webhook.ts';
+import { generarTokenWebhook } from '../../ayudas/webhook.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
 import type { Escenario } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { APIRequestContext, Page } from '@playwright/test';
@@ -34,7 +34,7 @@ async function prepararToken(page: Page): Promise<string> {
   await sembrar(escenario, HOY);
   await page.goto('/ajustes/webhook');
   await esperarHidratacion(page);
-  await page.getByRole('button', { name: ajustesWebhook.generar, exact: true }).click();
+  await generarTokenWebhook(page);
   const token = ((await page.getByTestId('token').textContent()) ?? '').trim();
   expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
   return token;

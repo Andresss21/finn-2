@@ -9,7 +9,7 @@ import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { formatearFechaTexto } from '../../../src/formato/index.ts';
 import { transaccion } from '../../../src/textos/transaccion.ts';
-import { ajustesWebhook } from '../../../src/textos/ajustes-webhook.ts';
+import { generarTokenWebhook } from '../../ayudas/webhook.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
 import { cuentas } from '../../../src/textos/cuentas.ts';
 import { registrarGasto as g } from '../../../src/textos/registrar-gasto.ts';
@@ -38,7 +38,7 @@ async function preparar(page: Page): Promise<string> {
   await sembrar(escenario, HOY);
   await page.goto('/ajustes/webhook');
   await esperarHidratacion(page);
-  await page.getByRole('button', { name: ajustesWebhook.generar, exact: true }).click();
+  await generarTokenWebhook(page);
   const token = ((await page.getByTestId('token').textContent()) ?? '').trim();
   expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
   return token;

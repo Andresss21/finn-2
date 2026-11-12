@@ -11,7 +11,7 @@ import { entrarAal2 } from '../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../ayudas/esperas.ts';
 import { esperarMonto } from '../ayudas/montos.ts';
 import { alinearRelojes } from '../../../../tools/pruebas/e2e/reloj.ts';
-import { ajustesWebhook } from '../../src/textos/ajustes-webhook.ts';
+import { generarTokenWebhook } from '../ayudas/webhook.ts';
 import { bandeja as t } from '../../src/textos/bandeja.ts';
 import { cuentas } from '../../src/textos/cuentas.ts';
 import { inicio as ti } from '../../src/textos/inicio.ts';
@@ -116,7 +116,7 @@ test.describe('PRU-E2E-BAND recorrido 4.2 un día típico', () => {
 
     // Paso 0: el token de FT-03 para el «teléfono» (MacroDroid)
     await abrir(page, '/ajustes/webhook');
-    await page.getByRole('button', { name: ajustesWebhook.generar, exact: true }).click();
+    await generarTokenWebhook(page);
     const token = ((await page.getByTestId('token').textContent()) ?? '').trim();
     expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
     const recibir = async (comercio: string, monto: string): Promise<void> => {

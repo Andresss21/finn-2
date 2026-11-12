@@ -9,7 +9,7 @@ import { esperarContenido, esperarHidratacion } from '../ayudas/esperas.ts';
 import { esperarMonto } from '../ayudas/montos.ts';
 import { alinearRelojes } from '../../../../tools/pruebas/e2e/reloj.ts';
 import type { Escenario } from '../../../../packages/dominio/escenarios/tipos.ts';
-import { ajustesWebhook as aw } from '../../src/textos/ajustes-webhook.ts';
+import { generarTokenWebhook } from '../ayudas/webhook.ts';
 import { bandeja as tb } from '../../src/textos/bandeja.ts';
 import { cuentas } from '../../src/textos/cuentas.ts';
 import { cuentasNueva as tc } from '../../src/textos/cuentas-nueva.ts';
@@ -113,7 +113,7 @@ test.describe('PRU-E2E-INICIO recorrido 4.1 primer uso', () => {
     await enlace(page, p.pasos.sms).click();
     await expect(page).toHaveURL(/\/ajustes\/webhook$/);
     await esperarHidratacion(page);
-    await page.getByRole('button', { name: aw.generar, exact: true }).click();
+    await generarTokenWebhook(page);
     const token = ((await page.getByTestId('token').textContent()) ?? '').trim();
     expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
     await abrir(page, '/ajustes/webhook');

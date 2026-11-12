@@ -8,7 +8,7 @@ import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { eventosQueNombran } from '../../../../../tools/pruebas/e2e/pila.ts';
 import { ajustesFormatos as t } from '../../../src/textos/ajustes-formatos.ts';
-import { ajustesWebhook } from '../../../src/textos/ajustes-webhook.ts';
+import { generarTokenWebhook } from '../../ayudas/webhook.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { APIRequestContext, Page } from '@playwright/test';
 
@@ -67,7 +67,7 @@ async function crearFormato(page: Page, nombre: string): Promise<void> {
 /** El token de FT-03 generado desde Ajustes, como lo pegaría MacroDroid. */
 async function generarToken(page: Page): Promise<string> {
   await abrir(page, '/ajustes/webhook');
-  await page.getByRole('button', { name: ajustesWebhook.generar, exact: true }).click();
+  await generarTokenWebhook(page);
   const token = ((await page.getByTestId('token').textContent()) ?? '').trim();
   expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
   return token;
