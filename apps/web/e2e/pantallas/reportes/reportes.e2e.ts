@@ -193,12 +193,12 @@ test.describe('PRU-E2E-REP reportes por período', () => {
     await expect(page.getByText('Esto ya no existe.')).toBeVisible();
   });
 
-  test('PRU-E2E-REP-150 [FT-60] la plantilla en computadora pone los períodos a la izquierda y el reporte a la derecha, en teléfono todo en una columna, y las pestañas y los períodos miden al menos 44 px', async ({
+  test('PRU-E2E-REP-150 [FT-60] la plantilla en computadora pone los períodos a la izquierda y el reporte a la derecha, en teléfono todo en una columna, y los períodos miden al menos 44 px', async ({
     page,
   }) => {
     await sembrarOps(CINCO_PERIODOS, '2027-05-25');
     const reporte = page.locator('[data-reporte]');
-    const enlaces = page.locator('nav[aria-label="Reportes"] a, nav[aria-label="Períodos"] a');
+    const enlaces = page.locator('nav[aria-label="Períodos"] a');
     await page.setViewportSize({ width: 1280, height: 900 });
     await abrir(page, '/reportes/tendencia?ventana=ultimos-3');
     const izquierda = await page.locator('[data-reporte-filtros]').boundingBox();

@@ -13,6 +13,8 @@ import { reportes as t } from '../../../../textos/reportes';
 
 export interface Nombres {
   readonly cuentas: readonly Ref[];
+  /** Solo las cuentas de efectivo: Flujo de efectivo filtra por estas (06 §3.3). */
+  readonly efectivo: readonly Ref[];
   readonly grupos: readonly Ref[];
   readonly categorias: readonly Ref[];
 }

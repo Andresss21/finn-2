@@ -6,6 +6,8 @@ export interface PestanaDeEnlace {
   readonly id: string;
   readonly etiqueta: string;
   readonly href: string;
+  /** Nombre accesible completo cuando la etiqueta visible es corta (E5-3: «3» → «Últimos 3 períodos»). */
+  readonly nombre?: string;
 }
 
 export interface PropsPestanas {
@@ -63,6 +65,7 @@ export function Pestanas({
               <EnlaceFinn
                 href={p.href}
                 className={activa ? estilo.activa : estilo.inactiva}
+                {...(p.nombre === undefined ? {} : { 'aria-label': p.nombre })}
                 {...(activa ? { 'aria-current': marca } : {})}
               >
                 {p.etiqueta}
