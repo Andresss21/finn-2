@@ -139,10 +139,10 @@ export function PantallaMetas({ dto }: { readonly dto: MetasDto }) {
               titulo={t.vencida.titulo}
               accion={
                 <span className="flex flex-wrap">
-                  <EnlaceFinn href={`/metas/${m.id}`} className={ENLACE}>
+                  <EnlaceFinn href={`/metas/${m.id}?enfocar=fecha`} className={ENLACE}>
                     {t.vencida.extender}
                   </EnlaceFinn>
-                  <EnlaceFinn href={`/metas/${m.id}`} className={ENLACE}>
+                  <EnlaceFinn href={`/metas/${m.id}?enfocar=monto`} className={ENLACE}>
                     {t.vencida.ajustar}
                   </EnlaceFinn>
                 </span>

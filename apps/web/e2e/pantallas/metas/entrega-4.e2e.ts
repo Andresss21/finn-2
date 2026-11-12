@@ -62,7 +62,7 @@ test.describe('PRU-E2E-META y PRU-E2E-PROG entrega 4', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-META-701 [] el tipo de la meta es un dato fijo con su motivo; eliminar la meta confirma dentro del flujo y vuelve a la lista', async ({
+  test('PRU-E2E-META-701 [CA-ET4-1] el tipo de la meta es un dato fijo con su motivo; eliminar la meta confirma dentro del flujo y vuelve a la lista', async ({
     page,
   }) => {
     await sembrarOps(OPS);
@@ -73,13 +73,15 @@ test.describe('PRU-E2E-META y PRU-E2E-PROG entrega 4', () => {
     await expect(tipo).toContainText(
       'El tipo no se cambia. Para otro tipo, eliminá la meta y creá otra.',
     );
+    await page.getByRole('button', { name: 'Eliminar meta', exact: true }).click();
+    const pregunta = page.getByText(/^¿Eliminar la meta de/);
+    await expect(pregunta).toBeVisible();
+    await expect(pregunta).toBeFocused();
     await page.getByRole('button', { name: 'Eliminar', exact: true }).click();
-    await expect(page.getByText(/^¿Eliminás/)).toBeVisible();
-    await page.getByRole('button', { name: /^Sí, eliminar/ }).click();
     await expect(page).toHaveURL(/\/metas$/);
   });
 
-  test('PRU-E2E-PROG-701 [] editar una programada muestra su tipo como dato fijo y la Fecha de fin nunca dice «undefined»', async ({
+  test('PRU-E2E-PROG-701 [CA-ET4-1] editar una programada muestra su tipo como dato fijo y la Fecha de fin nunca dice «undefined»', async ({
     page,
   }) => {
     await sembrarOps(OPS);

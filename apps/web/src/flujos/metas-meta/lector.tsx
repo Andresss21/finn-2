@@ -5,9 +5,16 @@ import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { notFound } from 'next/navigation';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
-import { FormularioMetaEditar } from './formulario';
+import { FormularioMetaEditar, type CampoConFoco } from './formulario';
 
-export async function LectorMetasMeta({ metaId }: { readonly metaId: string }) {
+export async function LectorMetasMeta({
+  metaId,
+  enfocar,
+}: {
+  readonly metaId: string;
+  /** El campo que abre con el foco (E4-18). */
+  readonly enfocar?: CampoConFoco | undefined;
+}) {
   const dto = await consultar(
     async () => formulario(await depsDeConsulta(), { operacion: 'meta', metaId }),
     { validacionDeSegmento: true },
@@ -17,6 +24,7 @@ export async function LectorMetasMeta({ metaId }: { readonly metaId: string }) {
   const fecha = meta.esperado['fechaObjetivo'];
   return (
     <FormularioMetaEditar
+      enfocar={enfocar}
       meta={{
         id: meta.id,
         categoria: meta.categoria.nombre,

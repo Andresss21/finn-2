@@ -3,11 +3,13 @@
 // una pantalla hija: el título y «Volver» los pone el marco (CH-109). `esperado` es lo que vio la persona al abrir (FE-09).
 import { useCallback, useState } from 'react';
 import { Boton } from '../../componentes/base/boton';
+import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { CerrarFlujoAlMontar } from '../../componentes/navegacion/flujo-de-ruta';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { gestionarRegla } from '../../servidor/acciones/bandeja';
 import { reglas as t } from '../../textos/reglas';
+import { ConfirmarEliminar } from '../metas-nueva/confirmar-eliminar';
 import {
   AvisoDeFallo,
   CamposRegla,
@@ -91,45 +93,45 @@ export function FormularioReglaRegla({ regla, grupos }: PropsFormularioReglaRegl
         {fallo === undefined ? null : (
           <AvisoDeFallo fallo={fallo} reintentar={() => void fallida.reintentar()} />
         )}
-        <Boton
-          tipo="submit"
-          enviando={guardar.estado === 'enviando'}
-          textoEnviando={t.guardando}
-          deshabilitado={!guardar.enLinea || sinCambios || ocupado}
-          {...(guardar.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: guardar.motivoSinEnvio })}
-        >
-          {t.guardar}
-        </Boton>
+        <div className="flex flex-wrap items-center gap-3">
+          <EnlaceFinn
+            href={RUTA_PADRE}
+            className="inline-flex min-h-11 items-center justify-center rounded-control bg-accion-tonal px-4 font-semibold text-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
+          >
+            {t.cancelar}
+          </EnlaceFinn>
+          <Boton
+            tipo="submit"
+            enviando={guardar.estado === 'enviando'}
+            textoEnviando={t.guardando}
+            deshabilitado={!guardar.enLinea || sinCambios || ocupado}
+            {...(guardar.motivoSinEnvio === undefined
+              ? sinCambios
+                ? { motivoDeshabilitado: t.sinCambios }
+                : {}
+              : { motivoDeshabilitado: guardar.motivoSinEnvio })}
+          >
+            {t.guardar}
+          </Boton>
+        </div>
       </form>
       {pregunta ? (
-        <section className="flex flex-col gap-3 rounded-contenedor bg-superficie p-4">
-          <p>{t.confirmarEliminar(regla.patron)}</p>
-          <div className="flex flex-wrap gap-3">
-            <Boton
-              variante="peligro"
-              enviando={eliminar.estado === 'enviando'}
-              textoEnviando={t.eliminando}
-              deshabilitado={!eliminar.enLinea || ocupado}
-              onClick={() => void eliminar.enviar({})}
-            >
-              {t.confirmarSi}
-            </Boton>
-            <Boton
-              variante="discreta"
-              deshabilitado={ocupado}
-              onClick={() => {
-                setPregunta(false);
-              }}
-            >
-              {t.noEliminar}
-            </Boton>
-          </div>
-        </section>
+        <ConfirmarEliminar
+          pregunta={t.confirmarEliminar(regla.patron)}
+          cancelar={t.noEliminar}
+          eliminar={t.confirmarSi}
+          eliminando={t.eliminando}
+          enviando={eliminar.estado === 'enviando'}
+          deshabilitado={!eliminar.enLinea || ocupado}
+          alCancelar={() => {
+            setPregunta(false);
+          }}
+          alEliminar={() => void eliminar.enviar({})}
+        />
       ) : (
         <Boton
           variante="discreta"
+          className="self-start text-problema-texto"
           deshabilitado={ocupado}
           onClick={() => {
             setPregunta(true);
