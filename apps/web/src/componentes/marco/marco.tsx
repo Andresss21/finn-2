@@ -136,8 +136,19 @@ function CuerpoDelMarco({
       if (h1.scrollWidth > h1.clientWidth) h1.setAttribute('data-ajustado', '');
     };
     ajustar();
+    // Al cargar las fuentes cambia el ancho del texto: se vuelve a medir (si no, el título medido con la fuente de respaldo queda mal).
+    let activo = true;
+    void document.fonts.ready.then(() => {
+      if (activo) ajustar();
+    });
+    // El título puede montarse después (la pantalla hija llega por streaming): se mide también cuando cambia el contenido.
+    const observador = new MutationObserver(ajustar);
+    const contenido = document.getElementById('contenido');
+    if (contenido !== null) observador.observe(contenido, { childList: true, subtree: true });
     window.addEventListener('resize', ajustar);
     return () => {
+      activo = false;
+      observador.disconnect();
       window.removeEventListener('resize', ajustar);
     };
   }, [pathname]);

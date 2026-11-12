@@ -375,7 +375,9 @@ test.describe('PRU-E2E-PWA', () => {
     } else {
       await page.setViewportSize({ width: 390, height: 844 });
       await abrir(page, '/presupuesto');
-      expect(await titulo(page).evaluate((h) => h.scrollWidth <= h.clientWidth)).toBe(true);
+      await expect
+        .poll(() => titulo(page).evaluate((h) => h.scrollWidth <= h.clientWidth))
+        .toBe(true);
       await expect(barra(page).getByRole('link', { name: navegacion.registrar })).toContainText(
         navegacion.registrar,
       );
