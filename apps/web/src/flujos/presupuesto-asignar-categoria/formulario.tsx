@@ -6,6 +6,7 @@ import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useState, type ReactNode } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -227,7 +228,10 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
           requerido
         />
       </CampoConFoco>
-      {estado === 'error' && fallo !== undefined ? (
+      {estado === 'error' && fallo !== undefined && !conflicto ? (
+        <ErrorDeFlujo tipo="corto" error={fallo} alReintentar={() => void operacion.reintentar()} />
+      ) : null}
+      {estado === 'error' && fallo !== undefined && conflicto ? (
         <AvisoEnLinea
           estado="problema"
           aparecioDespues

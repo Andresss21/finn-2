@@ -10,6 +10,8 @@ export const formularios = {
   impactoCambio: 'El impacto cambió',
   versionNueva: 'Hay una versión nueva de Finn.',
   recargar: 'Recargar',
+  verGuardado: 'Ver lo guardado',
+  guardarComoNuevo: 'Guardar como nuevo',
   borradorRecuperado: 'Recuperamos lo que estabas escribiendo',
   descartarBorrador: 'Descartar borrador',
   usarValorActual: 'Usar el valor actual',
