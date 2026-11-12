@@ -23,6 +23,8 @@ import { useOperacion, type AccionEscritura } from '../../formularios/use-operac
 import { moverDinero } from '../../servidor/acciones/presupuesto';
 import { formularios } from '../../textos/formularios';
 import { presupuestoMover as t } from '../../textos/presupuesto-mover';
+import { IrAlResultado } from '../presupuesto-asignar-categoria/ir-al-resultado';
+import { rutaConResultado } from '../presupuesto-asignar-categoria/resultado';
 import { PieDeHoja } from '../pie-de-hoja';
 import { ImpactoMover } from './impacto';
 
@@ -40,6 +42,8 @@ export interface PropsFormularioMover {
   readonly destinoInicial: string;
   /** La pantalla a la que vuelve la página completa al terminar (`cerrarFlujo()`, 05 §1.4). */
   readonly rutaPadre: string;
+  /** E2-13 [CH-248]: con `?volver=` al detalle de una categoría, ahí queda el resultado, con el monto que escribió la persona. */
+  readonly rutaDetalle?: string;
   readonly superpuesto: boolean;
 }
 
@@ -77,11 +81,13 @@ interface PropsCuerpo {
 }
 
 function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
-  const { periodoInicio, superpuesto, rutaPadre } = p;
+  const { periodoInicio, superpuesto, rutaPadre, rutaDetalle } = p;
+  const montoEnviado = useRef('');
   const enviar = useCallback<AccionEscritura>(
     (payload) => {
       const { modo, revisionVista, huellaImpacto, origenId, destinoId, monto } = payload as Cruda;
       const normal = normalizarMontoEscrito(monto);
+      montoEnviado.current = normal.estado === 'valido' ? normal.texto : '';
       return moverDinero({
         origenId,
         destinoId,
@@ -131,7 +137,13 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
     return (
       <>
         <p role="status">{t.listo}</p>
-        <CerrarFlujoAlMontar rutaPadre={rutaPadre} superpuesto={superpuesto} />
+        {rutaDetalle === undefined ? (
+          <CerrarFlujoAlMontar rutaPadre={rutaPadre} superpuesto={superpuesto} />
+        ) : (
+          <IrAlResultado
+            ruta={rutaConResultado(rutaDetalle, { tipo: 'movido', monto: montoEnviado.current })}
+          />
+        )}
       </>
     );
 

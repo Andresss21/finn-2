@@ -80,6 +80,16 @@ export const categoriaDetalle = {
   },
   programadas: { titulo: 'Programadas', proxima: 'Próxima' },
   reglas: { titulo: 'Reglas de comercio' },
+  // E2-13 [CH-248]: el resultado de Asignar y de Mover queda bajo las acciones, con «Deshacer» cuando hay operación inversa.
+  resultado: {
+    asignado: (monto: string, nombre: string) => `Asignaste ${monto} a ${nombre}.`,
+    asignadoSinMonto: (nombre: string) => `Guardaste la asignación de ${nombre}.`,
+    movido: (monto: string) => `Moviste ${monto}.`,
+    deshacer: 'Deshacer',
+    deshaciendo: 'Deshaciendo…',
+    deshecho: (nombre: string) => `Deshiciste la asignación de ${nombre}.`,
+    confirmarDeshacer: 'Confirmar',
+  },
   acciones: {
     etiqueta: 'Acciones de la categoría',
     asignar: 'Asignar',
