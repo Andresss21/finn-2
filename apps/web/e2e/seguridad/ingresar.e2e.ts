@@ -11,7 +11,7 @@ test.describe('PRU-E2E-ACCESO', () => {
     await esperarHidratacion(page);
   });
 
-  test('PRU-E2E-ACCESO-701 [CH-240] el ojo muestra y oculta la contraseña con aria-pressed; enviar vacío marca los dos campos con su error', async ({
+  test('PRU-E2E-ACCESO-701 [] el ojo muestra y oculta la contraseña con aria-pressed; enviar vacío marca los dos campos con su error', async ({
     page,
   }) => {
     const campo = page.getByLabel(t.contrasena, { exact: true });
@@ -34,7 +34,7 @@ test.describe('PRU-E2E-ACCESO', () => {
     await expect(campo).toHaveAttribute('aria-invalid', 'true');
   });
 
-  test('PRU-E2E-ACCESO-702 [CH-240] sin conexión «Ingresar» queda deshabilitado con su motivo enlazado', async ({
+  test('PRU-E2E-ACCESO-702 [] sin conexión «Ingresar» queda deshabilitado con su motivo enlazado', async ({
     page,
     context,
   }) => {

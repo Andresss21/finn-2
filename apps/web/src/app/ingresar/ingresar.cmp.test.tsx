@@ -76,7 +76,7 @@ describe('PRU-CMP-ACCESO', () => {
     expect(nodo.querySelector('h1')?.textContent).toBe('Ingresá');
   });
 
-  it('PRU-CMP-ACCESO-702 [CA-E2-1] el ojo es un botón de 44 px dentro del campo, no envía el formulario y conserva autocomplete', () => {
+  it('PRU-CMP-ACCESO-702 [] el ojo es un botón de 44 px dentro del campo, no envía el formulario y conserva autocomplete', () => {
     const nodo = pantalla();
     const campo = nodo.querySelector<HTMLInputElement>('input[autocomplete="current-password"]');
     const ojo = nodo.querySelector<HTMLButtonElement>('button[aria-pressed]');
@@ -95,7 +95,7 @@ describe('PRU-CMP-ACCESO', () => {
     expect(ojo?.getAttribute('aria-label')).toBe(ingreso.ocultarContrasena);
   });
 
-  it('PRU-CMP-ACCESO-703 [CH-240] con «demasiados intentos» el botón queda deshabilitado y describido por el aviso', async () => {
+  it('PRU-CMP-ACCESO-703 [] con «demasiados intentos» el botón queda deshabilitado y describido por el aviso', async () => {
     const nodo = pantalla(demasiados);
     const [email, clave] = [...nodo.querySelectorAll<HTMLInputElement>('input')];
     await userEvent.click(email as HTMLInputElement);
