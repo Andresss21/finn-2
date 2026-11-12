@@ -94,6 +94,7 @@ export const reportes = {
   cifras: {
     ritmo: (fin: string) => `bajaría Listo para asignar al cerrar el ${fin} si seguís a este ritmo`,
     categorias: 'gastado en el período',
+    comercios: (comercio: string) => `en ${comercio}, el comercio donde más gastaste`,
     remanente: 'acumulado de los períodos elegidos',
     hormiga: (etiqueta: string) => `en ${etiqueta}, el grupo que más pesa este período`,
     suscripciones: (comercio: string) => `al año en ${comercio}, que no tenés programada`,
@@ -288,6 +289,8 @@ export const reportes = {
     programarla: 'Programarla',
     programando: 'Programando…',
     reactivarla: 'Reactivarla',
+    // E6-15: el resultado de reactivar se revierte con «Desactivarla».
+    desactivarla: 'Desactivarla',
     reactivando: 'Reactivando…',
     programada: (comercio: string, mensual: string) =>
       `Programaste ${comercio}: ${mensual} cada mes.`,

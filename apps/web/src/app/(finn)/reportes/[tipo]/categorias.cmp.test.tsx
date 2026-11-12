@@ -54,7 +54,7 @@ function mostrar(datos: ReporteDe<'categorias'>): HTMLElement {
 }
 
 describe('PRU-CMP-REP', () => {
-  it('PRU-CMP-REP-712 [CA-E6-22, CH-241-tendencia] con 10 categorías la dona dibuja 8 porciones y «Otras» con rayado, la tabla lista las 10 con porcentajes que suman 100 % y la cifra es el gastado del DTO', () => {
+  it('PRU-CMP-REP-712 [CA-E6-22] con 10 categorías la dona dibuja 8 porciones y «Otras» con rayado, la tabla lista las 10 con porcentajes que suman 100 % y la cifra es el gastado del DTO', () => {
     const raiz = mostrar(dto(72390, 2330));
     const porciones = [...raiz.querySelectorAll('[data-grafico="dona"] [data-porcion]')];
     expect(porciones).toHaveLength(9);

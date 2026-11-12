@@ -183,49 +183,60 @@ export function TopComercios({
   /** [CH-226] El ancho de la barra de cada comercio, en el orden del DTO: lo ubica la escala del servidor (FE-44). */
   readonly anchos: readonly number[];
 }) {
+  const primero = dto.comercios[0];
   return (
-    <ol className="flex flex-col gap-3">
-      {dto.comercios.map((c, k) => (
-        <li
-          key={c.clave}
-          data-comercio={c.clave}
-          className="flex flex-col gap-2 rounded-contenedor bg-superficie p-3.5"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-col">
-              <h3 className="text-titulo-seccion">
-                {c.clave === '(sin comercio)' ? t.sinComercio : c.etiqueta}
-              </h3>
-              <p className="text-cuerpo-pequeno text-texto-secundario">
-                {t.compras(c.frecuencia)} · {nombreDe(nombres.categorias, c.categoriaPrincipal)}
-              </p>
-            </div>
-            <span data-monto-comercio>{monto(c.monto)}</span>
-          </div>
-          <div
-            aria-hidden="true"
-            data-barra-comercio
-            className="flex h-1.5 overflow-hidden rounded-pastilla bg-superficie-hundida"
+    <div className="flex flex-col gap-4">
+      {primero === undefined ? null : (
+        <CifraReporte
+          centavos={primero.monto}
+          frase={t.cifras.comercios(
+            primero.clave === '(sin comercio)' ? t.sinComercio : primero.etiqueta,
+          )}
+        />
+      )}
+      <ol className="flex flex-col gap-3">
+        {dto.comercios.map((c, k) => (
+          <li
+            key={c.clave}
+            data-comercio={c.clave}
+            className="flex flex-col gap-2 rounded-contenedor bg-superficie p-3.5"
           >
-            <span style={{ width: `${anchos[k] ?? 0}%` }} className="bg-texto" />
-          </div>
-          {c.variantes.length > 1 ? (
-            <ul aria-label={t.variantes} className="flex flex-col gap-1 text-cuerpo-pequeno">
-              {c.variantes.map((v) => (
-                <li
-                  key={v.comercio}
-                  data-variante={v.comercio}
-                  className="flex justify-between gap-3"
-                >
-                  <span className="min-w-0 truncate">{v.comercio}</span>
-                  {monto(v.monto)}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </li>
-      ))}
-    </ol>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-col">
+                <h3 className="text-titulo-seccion">
+                  {c.clave === '(sin comercio)' ? t.sinComercio : c.etiqueta}
+                </h3>
+                <p className="text-cuerpo-pequeno text-texto-secundario">
+                  {t.compras(c.frecuencia)} · {nombreDe(nombres.categorias, c.categoriaPrincipal)}
+                </p>
+              </div>
+              <span data-monto-comercio>{monto(c.monto)}</span>
+            </div>
+            <div
+              aria-hidden="true"
+              data-barra-comercio
+              className="flex h-1.5 overflow-hidden rounded-pastilla bg-superficie-hundida"
+            >
+              <span style={{ width: `${anchos[k] ?? 0}%` }} className="bg-texto" />
+            </div>
+            {c.variantes.length > 1 ? (
+              <ul aria-label={t.variantes} className="flex flex-col gap-1 text-cuerpo-pequeno">
+                {c.variantes.map((v) => (
+                  <li
+                    key={v.comercio}
+                    data-variante={v.comercio}
+                    className="flex justify-between gap-3"
+                  >
+                    <span className="min-w-0 truncate">{v.comercio}</span>
+                    {monto(v.monto)}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 

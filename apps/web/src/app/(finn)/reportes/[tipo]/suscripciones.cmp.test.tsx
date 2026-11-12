@@ -215,7 +215,7 @@ describe('PRU-CMP-REP suscripciones detectadas', () => {
     expect(gestionar).toHaveBeenLastCalledWith(
       expect.objectContaining({ accion: 'activar', programadaId: 'p7', activa: true }),
     );
-    await tocar(boton(otra, 'Deshacer'));
+    await tocar(boton(otra, 'Desactivarla'));
     expect(gestionar).toHaveBeenLastCalledWith(
       expect.objectContaining({ accion: 'activar', programadaId: 'p7', activa: false }),
     );
