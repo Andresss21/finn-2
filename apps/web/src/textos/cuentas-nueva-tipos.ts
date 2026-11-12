@@ -28,6 +28,7 @@ export const cuentasNuevaTipos = {
   plazoCuotas: 'Cantidad de cuotas',
   cuotasPagadas: 'Cuotas que ya pagaste',
   rendimiento: 'Rendimiento anual esperado (%)',
+  rendimientoInfo: 'Solo informativo: Finn no proyecta el valor.',
   // E2-9: secciones de la alta de un préstamo y el aviso de información sin modelo (FT-50)
   seccionPrestamo: 'El préstamo',
   seccionCuotas: 'Cuotas',
