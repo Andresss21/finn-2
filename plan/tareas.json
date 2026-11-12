@@ -615,7 +615,7 @@
 
   "TA-512": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 },
 
-  "TA-560": { "estado": "en_curso", "rama": "ta-560-fichas-b10-v2" },
+  "TA-560": { "estado": "terminada", "rama": "ta-560-fichas-b10-v2", "pr": 554 },
 
   "TA-561": { "estado": "pendiente" },
 
