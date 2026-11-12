@@ -48,6 +48,7 @@ import { registrarTarjeta } from './registrar-tarjeta.ts';
 import { registrarTipo } from './registrar-tipo.ts';
 import { conciliar } from './conciliar.ts';
 import { reportes } from './reportes.ts';
+import { salir } from './salir.ts';
 import { transaccion } from './transaccion.ts';
 import { verificarSaldo } from './verificar-saldo.ts';
 
@@ -100,6 +101,7 @@ export {
   registrarTarjeta,
   registrarTipo,
   reportes,
+  salir,
   transaccion,
   conciliar,
   verificarSaldo,
@@ -153,6 +155,7 @@ export const areas = [
   ['registrarTarjeta', registrarTarjeta],
   ['registrarTipo', registrarTipo],
   ['reportes', reportes],
+  ['salir', salir],
   ['transaccion', transaccion],
   ['conciliar', conciliar],
   ['verificarSaldo', verificarSaldo],
