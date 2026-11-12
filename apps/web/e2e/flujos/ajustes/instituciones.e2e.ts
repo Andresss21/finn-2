@@ -44,15 +44,15 @@ test.describe('PRU-E2E-AJUS', () => {
     await page.getByRole('link', { name: ti.nueva, exact: true }).click();
     await esperarHidratacion(page);
     await page.getByLabel(ti.nombre, { exact: true }).fill('bac');
-    await page.getByRole('button', { name: ti.guardar, exact: true }).click();
-    await expect(page.getByText('Ya hay una institución con ese nombre.')).toBeVisible();
+    await page.getByRole('button', { name: ti.crear, exact: true }).click();
+    await expect(page.getByText('Ya hay una institución llamada bac.')).toBeVisible();
 
     await page.getByLabel(ti.nombre, { exact: true }).fill('Banco Nuevo');
-    await page.getByRole('button', { name: ti.guardar, exact: true }).click();
+    await page.getByRole('button', { name: ti.crear, exact: true }).click();
     await expect(page).toHaveURL(/\/ajustes\/instituciones$/);
     await expect(filas).toHaveCount(4);
 
-    await page.getByRole('link', { name: 'Banco Nuevo', exact: true }).click();
+    await page.getByRole('link', { name: /^Banco Nuevo/ }).click();
     await esperarHidratacion(page);
     await expect(page.getByLabel(ti.nombre, { exact: true })).toHaveValue('Banco Nuevo');
     await page.getByLabel(ti.nombre, { exact: true }).fill('Banco Renombrado');

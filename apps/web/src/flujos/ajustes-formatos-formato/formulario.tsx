@@ -1,13 +1,15 @@
 'use client';
 // `/ajustes/formatos/nuevo` y `/ajustes/formatos/[formatoId]` (FT-73, OPT-05 y OPT-06; 05 §2.11, §4.11): crear, editar, activar o
-// desactivar un formato y probarlo. Flujo largo con borrador. La política del patrón (compila, banderas, grupos, retroceso) la aplica el
-// servidor: sus rechazos llegan en `campos` y se muestran en el campo que corrige la persona. No calcula montos (PF-3).
+// desactivar un formato y probarlo. Flujo largo con borrador; desde 1280 px, en dos columnas con «Probar con un SMS» fija (E5-10, E5-11).
+// La política del patrón la aplica el servidor: sus rechazos llegan en `campos` con el texto de 04 §7.10 y se muestran en el campo que
+// corrige la persona. No se eliminan: «Activo» es un interruptor de toda la fila. Al guardar, la lista muestra el resultado (E5-13).
 import type { ErrorFinn, ResultadoAccion } from '@finn/aplicacion/errores';
 import type { SalidaProbar } from '@finn/aplicacion/operaciones/formatos';
-import { useCallback, useState, type SyntheticEvent } from 'react';
+import { useCallback, useId, useState, type SyntheticEvent } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Campo, EntradaTexto } from '../../componentes/base/campo';
+import { Campo, EntradaTexto, MensajeError } from '../../componentes/base/campo';
+import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { useBorrador } from '../../formularios/use-borrador';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -18,6 +20,54 @@ import { CAJA_SELECT, ProbarFormato, type SmsDePrueba } from './probar';
 const RUTA_PADRE = '/ajustes/formatos';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const FORMATOS_FECHA = ['AAAA/MM/DD', 'AAAAMMDD', 'AAAA-MM-DD', 'DD/MM/AAAA'] as const;
+// E5-10: área de texto de 4 líneas que parte en cualquier carácter; la caja es la de `CAJA_SELECT` (L13: clases literales)
+const CAJA_PATRON =
+  'w-full rounded-t-control rounded-b-sm border-b-2 border-borde-control bg-superficie px-3 py-2 font-mono text-base break-all text-texto focus-visible:border-b-4 focus-visible:border-foco focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco aria-invalid:border-2 aria-invalid:border-problema-borde';
+const segmentos = (o: Readonly<Record<string, string>>) =>
+  Object.entries(o).map(([valor, etiqueta]) => ({ valor, etiqueta }));
+
+/** E5-10: el botón `role="switch"` es toda la fila (48 px), nombrado por su texto y descrito por su ayuda. */
+function InterruptorActivo({
+  activo,
+  alCambiar,
+}: {
+  readonly activo: boolean;
+  readonly alCambiar: (v: boolean) => void;
+}) {
+  const id = useId();
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={activo}
+      aria-labelledby={`${id}-n`}
+      aria-describedby={`${id}-d`}
+      onClick={() => {
+        alCambiar(!activo);
+      }}
+      className="flex min-h-12 w-full items-center gap-4 rounded-control text-left focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
+    >
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span id={`${id}-n`} className="font-medium">
+          {t.campos.activo}
+        </span>
+        <span id={`${id}-d`} className="text-sm text-texto-secundario">
+          {t.campos.activoAyuda}
+        </span>
+      </span>
+      <span
+        aria-hidden="true"
+        className={
+          activo
+            ? 'flex h-7 w-12 shrink-0 items-center justify-end rounded-pastilla bg-accion p-0.5'
+            : 'flex h-7 w-12 shrink-0 items-center justify-start rounded-pastilla bg-borde-control p-0.5'
+        }
+      >
+        <span className="size-6 rounded-pastilla bg-superficie shadow-elevacion-1" />
+      </span>
+    </button>
+  );
+}
 
 export interface FormatoGuardado {
   readonly id: string;
@@ -136,12 +186,16 @@ export function FormularioFormato({
   const alta = formato === undefined;
   const titulo = alta ? t.tituloNuevo : t.tituloEditar;
 
-  if (estado === 'listo')
+  if (estado === 'listo') {
+    // E5-13: la lista muestra el resultado del formato guardado (`?guardado=`)
+    const guardado = (operacion.exito?.valor as { formatoId?: string } | undefined)?.formatoId;
+    const destino = guardado === undefined ? RUTA_PADRE : `${RUTA_PADRE}?guardado=${guardado}`;
     return (
-      <PaginaFlujoDeRuta titulo={t.listo} rutaPadre={RUTA_PADRE}>
-        <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
+      <PaginaFlujoDeRuta titulo={t.listo} rutaPadre={destino}>
+        <CerrarFlujoAlMontar rutaPadre={destino} />
       </PaginaFlujoDeRuta>
     );
+  }
 
   const enviar = (e: SyntheticEvent) => {
     e.preventDefault();
@@ -167,8 +221,8 @@ export function FormularioFormato({
     formatosFecha: valores.formatosFecha,
   };
   return (
-    <PaginaFlujoDeRuta titulo={titulo} rutaPadre={RUTA_PADRE}>
-      <div className="flex flex-col gap-8">
+    <PaginaFlujoDeRuta titulo={titulo} rutaPadre={RUTA_PADRE} ancha>
+      <div className="flex flex-col gap-8 xl:grid xl:grid-cols-2 xl:items-start">
         <form onSubmit={enviar} noValidate className="flex flex-col gap-5">
           {borrador.recuperado ? (
             <AvisoEnLinea
@@ -214,19 +268,26 @@ export function FormularioFormato({
             }}
             error={err('tipoMovimiento')}
           />
-          <EntradaTexto
+          <Campo
             etiqueta={t.campos.patron}
             descripcion={t.campos.patronAyuda}
             requerido
-            autoComplete="off"
-            spellCheck={false}
-            className="font-mono"
-            value={valores.patron}
-            onChange={(e) => {
-              poner('patron', e.target.value);
-            }}
             {...conError('patron')}
-          />
+          >
+            {(control) => (
+              <textarea
+                {...control}
+                rows={4}
+                autoComplete="off"
+                spellCheck={false}
+                className={CAJA_PATRON}
+                value={valores.patron}
+                onChange={(e) => {
+                  poner('patron', e.target.value);
+                }}
+              />
+            )}
+          </Campo>
           <EntradaTexto
             etiqueta={t.campos.banderas}
             descripcion={t.campos.banderasAyuda}
@@ -238,26 +299,29 @@ export function FormularioFormato({
             }}
             {...conError('banderas')}
           />
-          <Seleccionar
-            etiqueta={t.campos.miles}
-            valor={valores.montoSeparadorMiles}
-            opciones={Object.entries(t.separadoresMiles)}
-            alCambiar={(v) => {
-              poner('montoSeparadorMiles', v);
-            }}
-            error={err('montoSeparadorMiles')}
-          />
-          <Seleccionar
-            etiqueta={t.campos.decimal}
-            valor={valores.montoSeparadorDecimal}
-            opciones={Object.entries(t.separadoresDecimal)}
-            alCambiar={(v) => {
-              poner('montoSeparadorDecimal', v);
-            }}
-            error={err('montoSeparadorDecimal')}
-          />
+          {(['montoSeparadorMiles', 'montoSeparadorDecimal'] as const).map((n) => {
+            const miles = n === 'montoSeparadorMiles';
+            const m = err(n);
+            return (
+              <div key={n} className="flex flex-col items-start gap-1">
+                <span aria-hidden="true" className="text-sm font-medium">
+                  {miles ? t.campos.miles : t.campos.decimal}
+                </span>
+                <SelectorSegmentado
+                  etiqueta={miles ? t.campos.miles : t.campos.decimal}
+                  opciones={segmentos(miles ? t.separadoresMiles : t.separadoresDecimal)}
+                  valor={valores[n]}
+                  alCambiar={(v) => {
+                    poner(n, v);
+                  }}
+                />
+                {m === undefined ? null : <MensajeError>{m}</MensajeError>}
+              </div>
+            );
+          })}
           <fieldset className="flex flex-col gap-1">
             <legend className="text-sm font-medium">{t.campos.fechas}</legend>
+            <p className="text-sm text-texto-secundario">{t.campos.fechasAyuda}</p>
             {FORMATOS_FECHA.map((f) => (
               <label key={f} className="flex min-h-11 items-center gap-3">
                 <input
@@ -275,17 +339,12 @@ export function FormularioFormato({
               <p className="text-sm text-problema-texto">{err('formatosFecha')}</p>
             )}
           </fieldset>
-          <label className="flex min-h-11 items-center gap-3 font-medium">
-            <input
-              type="checkbox"
-              className="size-11 shrink-0"
-              checked={valores.activo}
-              onChange={(e) => {
-                poner('activo', e.target.checked);
-              }}
-            />
-            {t.campos.activo}
-          </label>
+          <InterruptorActivo
+            activo={valores.activo}
+            alCambiar={(v) => {
+              poner('activo', v);
+            }}
+          />
           {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
             <AvisoEnLinea
               estado="problema"

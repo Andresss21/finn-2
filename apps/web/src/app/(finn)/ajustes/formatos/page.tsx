@@ -8,7 +8,17 @@ import { ListaFormatos } from './lista';
 
 export const metadata: Metadata = { title: ajustesFormatos.titulo };
 
-export default async function PaginaFormatos() {
+export default async function PaginaFormatos({
+  searchParams,
+}: {
+  readonly searchParams: Promise<{ readonly guardado?: string | string[] }>;
+}) {
   const { formatos } = await consultar(async () => ajustes(await depsDeConsulta()));
-  return <ListaFormatos formatos={formatos} />;
+  const { guardado } = await searchParams;
+  return (
+    <ListaFormatos
+      formatos={formatos}
+      guardado={typeof guardado === 'string' ? guardado : undefined}
+    />
+  );
 }

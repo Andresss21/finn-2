@@ -1,13 +1,14 @@
 'use client';
 // Probar el formato en edición contra uno de los 20 SMS recientes sin reconocer o con error (OPT-06; 06 FT-73, CA-73.3): muestra los
-// grupos que capturó y qué normalizador falló. Es una lectura: no guarda nada. El texto del SMS lo trae el servidor; no se interpreta acá.
+// grupos que capturó y qué normalizador falló, en la tabla Grupo · Capturó · Se lee como (E5-10, CA-E5-13). Es una lectura: no guarda
+// nada. El texto del SMS y lo que se lee de cada grupo (`campos`) los trae el servidor; acá solo se formatean.
 import type { ResultadoAccion } from '@finn/aplicacion/errores';
 import type { SalidaProbar } from '@finn/aplicacion/operaciones/formatos';
 import { useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Campo } from '../../componentes/base/campo';
-import { formatearInstante } from '../../formato';
+import { formatearFecha, formatearInstante, formatearMonto } from '../../formato';
 import { ajustesFormatos } from '../../textos/ajustes-formatos';
 import { formularios } from '../../textos/formularios';
 
@@ -36,6 +37,16 @@ type Estado =
   | { readonly tipo: 'resultado'; readonly valor: SalidaProbar }
   | { readonly tipo: 'error'; readonly mensaje: string };
 
+/** «Se lee como»: lo que el servidor normalizó de cada grupo (`campos`), formateado; sin `campos` (falló), nada. */
+function seLee(grupo: string, r: SalidaProbar): string {
+  const c = r.campos;
+  if (c === undefined) return '';
+  if (grupo === 'ultimos4') return `***${c.ultimos4}`;
+  if (grupo === 'monto') return formatearMonto(c.monto);
+  if (grupo === 'fecha') return c.fecha === null ? '' : formatearFecha(c.fecha);
+  return grupo === 'comercio' ? (c.comercio ?? '') : '';
+}
+
 function explicacion(r: SalidaProbar): string {
   if (r.coincide) return t.coincide;
   if (r.demasiadoLargo) return t.demasiadoLargo;
@@ -48,7 +59,7 @@ export function ProbarFormato({ probar, sms, formato }: PropsProbar) {
 
   if (sms.length === 0)
     return (
-      <section aria-labelledby="probar-titulo" className="flex flex-col gap-2">
+      <section aria-labelledby="probar-titulo" className="flex flex-col gap-2 xl:sticky xl:top-4">
         <h2 id="probar-titulo" className="text-titulo-seccion">
           {t.titulo}
         </h2>
@@ -70,7 +81,7 @@ export function ProbarFormato({ probar, sms, formato }: PropsProbar) {
   const grupos = estado.tipo === 'resultado' ? Object.entries(estado.valor.grupos ?? {}) : [];
 
   return (
-    <section aria-labelledby="probar-titulo" className="flex flex-col gap-3">
+    <section aria-labelledby="probar-titulo" className="flex flex-col gap-3 xl:sticky xl:top-4">
       <h2 id="probar-titulo" className="text-titulo-seccion">
         {t.titulo}
       </h2>
@@ -119,17 +130,41 @@ export function ProbarFormato({ probar, sms, formato }: PropsProbar) {
             {grupos.length === 0 ? (
               <p className="text-cuerpo-pequeno text-texto-secundario">{t.sinGrupos}</p>
             ) : (
-              <dl className="rounded-contenedor bg-superficie px-4 py-1 shadow-elevacion-1">
-                {grupos.map(([nombre, valor]) => (
-                  <div
-                    key={nombre}
-                    className="flex items-baseline justify-between gap-4 border-b border-borde-sutil py-2 last:border-b-0"
-                  >
-                    <dt className="text-cuerpo-pequeno text-texto-secundario">{nombre}</dt>
-                    <dd className="break-all text-right font-medium">{valor}</dd>
-                  </div>
-                ))}
-              </dl>
+              <table className="w-full rounded-contenedor bg-superficie text-left shadow-elevacion-1">
+                <thead className="text-cuerpo-pequeno text-texto-secundario">
+                  <tr className="border-b border-borde-sutil">
+                    <th scope="col" className="px-4 py-2 font-medium">
+                      {t.grupo}
+                    </th>
+                    <th scope="col" className="px-2 py-2 font-medium">
+                      {t.capturo}
+                    </th>
+                    <th scope="col" className="px-4 py-2 font-medium">
+                      {t.seLee}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {grupos.map(([nombre, valor]) => (
+                    <tr
+                      key={nombre}
+                      data-fallo={estado.valor.fallo === nombre ? '' : undefined}
+                      className="border-b border-borde-sutil last:border-b-0 data-fallo:text-problema-texto"
+                    >
+                      <th
+                        scope="row"
+                        className="px-4 py-2 font-mono text-cuerpo-pequeno font-normal"
+                      >
+                        {nombre}
+                      </th>
+                      <td className="px-2 py-2 break-all">{valor}</td>
+                      <td className="px-4 py-2 break-all font-medium">
+                        {seLee(nombre, estado.valor)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </>
         ) : null}

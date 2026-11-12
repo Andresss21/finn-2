@@ -1,6 +1,6 @@
 'use client';
-// La página completa de `/ajustes/instituciones` (FT-73; 05 §2.11): las instituciones por nombre, con el enlace a renombrarlas y a crear
-// una nueva. Los formatos de cada una se ven en Formatos bancarios.
+// La página completa de `/ajustes/instituciones` (FT-73; 05 §2.11; E5-14): las instituciones por nombre con «N formatos»; tocar una
+// abre «Renombrar» y «Nueva institución», las dos en hoja (panel de 440 px en computadora). No se ofrece eliminar una institución.
 import { Vacio } from '../../../../componentes/base/vacio';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
 import { VolverEnTitulo } from '../../../../componentes/navegacion/volver-en-titulo';
@@ -14,7 +14,11 @@ const BOTON =
 export function ListaInstituciones({
   instituciones,
 }: {
-  readonly instituciones: readonly { readonly id: string; readonly nombre: string }[];
+  readonly instituciones: readonly {
+    readonly id: string;
+    readonly nombre: string;
+    readonly formatos: number;
+  }[];
 }) {
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-5 px-5 py-4">
@@ -38,9 +42,12 @@ export function ListaInstituciones({
               >
                 <EnlaceFinn
                   href={`/ajustes/instituciones/${i.id}`}
-                  className="flex min-h-14 items-center px-4 py-3 font-semibold"
+                  className="flex min-h-14 flex-col justify-center gap-0.5 px-4 py-3"
                 >
-                  {i.nombre}
+                  <span className="font-semibold">{i.nombre}</span>
+                  <span className="text-cuerpo-pequeno text-texto-secundario">
+                    {t.formatosDe(i.formatos)}
+                  </span>
                 </EnlaceFinn>
               </li>
             ))}

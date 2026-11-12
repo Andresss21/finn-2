@@ -152,6 +152,48 @@ describe('PRU-CMP-AJUS', () => {
     ).not.toBeNull();
   });
 
+  it('PRU-CMP-AJUS-741 [CA-E5-14, CA-E5-16] el rechazo de patron_lento va en el campo Patrón con el texto del servidor, el grado y la repetición; no hay «Eliminar» y «Activo» es un interruptor de toda la fila', async () => {
+    const mensaje =
+      'Este patrón tarda demasiado con algunos textos: retroceso de grado 3 (se trabó con «en» seguido de 2,000 espacios). Finn acepta hasta grado 2: simplificá las partes que se repiten.';
+    const props = base({
+      guardar: vi.fn(() =>
+        Promise.resolve({
+          ok: false as const,
+          error: {
+            categoria: 'VALIDACION' as const,
+            codigo: 'patron_lento',
+            mensaje: 'Revisá los campos marcados.',
+            campos: { patron: mensaje },
+          },
+        }),
+      ),
+    });
+    const nodo = montar(<FormularioFormato {...props} />);
+    const activo = nodo.querySelector<HTMLButtonElement>('button[role="switch"]');
+    if (activo === null) throw new Error('no hay interruptor');
+    expect(activo.getAttribute('aria-checked')).toBe('true');
+    expect(activo.textContent).toContain(t.campos.activo);
+    expect(activo.getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
+    await act(async () => {
+      activo.click();
+      await Promise.resolve();
+    });
+    expect(activo.getAttribute('aria-checked')).toBe('false');
+    expect(nodo.textContent).not.toContain('Eliminar');
+
+    await tocar(nodo, t.guardar);
+    expect(props.guardar).toHaveBeenCalledWith(expect.objectContaining({ activo: false }));
+    const patron = nodo.querySelector('textarea');
+    expect(patron?.getAttribute('aria-invalid')).toBe('true');
+    const ayuda = document.getElementById(
+      (patron?.getAttribute('aria-describedby') ?? '').split(' ')[0] ?? '',
+    );
+    expect(nodo.textContent).toContain(mensaje);
+    expect(nodo.textContent).toContain('grado 3');
+    expect(nodo.textContent).toContain('seguido de 2,000 espacios');
+    expect(ayuda).not.toBeNull();
+  });
+
   it('PRU-CMP-AJUS-122 [FT-73] sin SMS para probar lo dice y la pantalla no tiene violaciones de accesibilidad', async () => {
     const sin = montar(<FormularioFormato {...base({ smsParaProbar: [] })} />);
     expect(sin.textContent).toContain(t.probar.sinSms);
