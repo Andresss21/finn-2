@@ -5,6 +5,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
+import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
@@ -50,8 +51,9 @@ const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').f
 const montoDeFila = (page: Page, nombre: string, n: 0 | 1 | 2) =>
   fila(page, nombre).locator('[data-centavos]').nth(n);
 
-const elegir = async (page: Page, grupo: 'Sacar de' | 'Poner en', categoria: string) =>
-  page.getByLabel(grupo).selectOption({ label: categoria });
+// Espera a que React tome el control antes de elegir: un cambio anterior se perdería
+const elegir = (page: Page, grupo: 'Sacar de' | 'Poner en', categoria: string) =>
+  elegirOpcion(page, grupo, categoria);
 const mover = (page: Page) => page.getByRole('button', { name: 'Mover', exact: true });
 
 async function moverDinero(

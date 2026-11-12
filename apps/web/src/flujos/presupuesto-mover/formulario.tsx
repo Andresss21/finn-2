@@ -56,6 +56,7 @@ const CONTRATO = z.object({
 type Campos = z.infer<typeof CONTRATO>;
 type Cruda = Campos & { modo: string; revisionVista?: string; huellaImpacto?: string };
 interface Vista {
+  readonly rechazos?: readonly { readonly codigo: string }[];
   readonly impacto?: {
     readonly deltaDisponible?: readonly {
       readonly categoriaId: string;
@@ -65,6 +66,7 @@ interface Vista {
   } | null;
 }
 type Asignados = Readonly<Record<string, Centavos>>;
+const RECHAZOS: Readonly<Record<string, string | undefined>> = t.rechazos;
 
 interface Actuales {
   readonly asignacionOrigen?: Centavos;
@@ -116,6 +118,7 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
     actuales.asignacionDestino !== undefined;
 
   const vista = (operacion.previsualizacion ?? {}) as Vista;
+  const rechazo = vista.rechazos?.[0];
   // D-6: la previsualización se pide con lo elegido apenas el formulario es válido y cada vez que cambia. Si hay una llamada en
   // vuelo se espera a que termine: `useOperacion` ignora el doble envío (FE-12).
   const clave = JSON.stringify([c.origenId, c.destinoId, c.monto]);
@@ -217,6 +220,11 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
           impactoCambio={operacion.impactoCambio}
         />
       ) : null}
+      {rechazo === undefined ? null : (
+        <AvisoEnLinea estado="problema" aparecioDespues>
+          {RECHAZOS[rechazo.codigo] ?? t.rechazos.otro}
+        </AvisoEnLinea>
+      )}
       {estado === 'error' && fallo !== undefined && !conflicto ? (
         <ErrorDeFlujo tipo="corto" error={fallo} alReintentar={() => void operacion.reintentar()} />
       ) : null}

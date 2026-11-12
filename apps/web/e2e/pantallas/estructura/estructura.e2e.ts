@@ -133,7 +133,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await abrir(page);
     await editar(page, 'Gastos').click();
     await page.getByRole('button', { name: t.archivarGrupo, exact: true }).click();
-    await expect(page.getByText(t.grupoArchivado).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: t.grupoArchivado })).toBeVisible();
   });
 
   test('PRU-E2E-CATEG-106 [CA-18.3] "Bajar" un grupo lo pasa al segundo lugar y "Deshacer" lo devuelve; "Editar" renombra una categoría y la deja con el nombre nuevo en la lista', async ({

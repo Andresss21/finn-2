@@ -441,14 +441,16 @@ test.describe('PRU-E2E-TX', () => {
     await expect(
       partes
         .filter({ has: page.getByText('Super', { exact: true }) })
-        .getByRole('link', { name: t.verLaCategoria }),
+        .getByRole('link', { name: t.verLaCategoria })
+        .first(),
     ).toHaveAttribute('href', /\/presupuesto\/categorias\/.+/);
     await expect(
       partes
         .filter({ has: page.getByText('Mascota', { exact: true }) })
         .getByRole('link', { name: t.verLaCategoria }),
     ).toBeVisible();
-    await expect(page.getByRole('link', { name: t.verLaCategoria })).toHaveCount(2);
+    // una por línea: Super $100.00, Mascota $40.00 y el resto de $8.60 en Super
+    await expect(page.getByRole('link', { name: t.verLaCategoria })).toHaveCount(3);
     // con la fecha en un período cerrado, antes aparece el impacto con el aviso AV-01
     await page.getByRole('button', { name: t.registrarOtro }).click();
     await esperarHidratacion(page);

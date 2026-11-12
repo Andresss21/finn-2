@@ -25,25 +25,18 @@ const sms = (
   comercio,
   recibido: `${dia}T${recibido}`,
   fecha: dia,
-  hoy: dia,
 });
 const BASE: Op[] = [
   { op: 'OP-01', cuenta: 'Ahorro' },
   { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta', ultimos4: '1234' },
   { op: 'OP-07', categoria: 'Farmacia' },
   { op: 'OP-21', monto: 500 },
-  { op: 'OP-14', categoria: 'Farmacia', monto: 300, periodo: 'P1' },
+  { op: 'OP-14', categoria: 'Farmacia', monto: 300 },
 ];
 /** Un comercio con una compra aprobada antes en Farmacia: la siguiente trae esa categoría sugerida. */
-const conHistorial = (comercio: string, i: number): Op[] => [
-  sms(`h${i}`, comercio, 5 + i, `09:0${i}`),
-  {
-    op: 'OP-37',
-    etiqueta: `h${i}`,
-    categoria: 'Farmacia',
-    aprobado: `${DIA_20}T09:3${i}`,
-    hoy: DIA_20,
-  },
+const conHistorial = (comercio: string, i: number, dia = DIA_20): Op[] => [
+  sms(`h${i}`, comercio, 5 + i, `09:0${i}`, dia),
+  { op: 'OP-37', etiqueta: `h${i}`, categoria: 'Farmacia', aprobado: `${dia}T09:3${i}` },
 ];
 
 async function preparar(estadoInicial: Op[], ahora: string): Promise<void> {
@@ -75,9 +68,10 @@ test.describe('PRU-E2E-BAND aprobar todos y muchos movimientos', () => {
   }) => {
     await preparar(
       [
-        ...conHistorial('Botica', 0),
-        ...conHistorial('Droguería', 1),
-        ...conHistorial('Bazar', 2),
+        // El historial se aprueba el día 21: el período del día 20 ya está cerrado y no admite aprobar
+        ...conHistorial('Botica', 0, DIA_21),
+        ...conHistorial('Droguería', 1, DIA_21),
+        ...conHistorial('Bazar', 2, DIA_21),
         // Dos del día 21 (período abierto) entran en el lote; el del día 20 cae en un período cerrado y no entra
         sms('a', 'Botica', 9, '07:00', DIA_21),
         sms('b', 'Droguería', 14, '07:30', DIA_21),
