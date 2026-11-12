@@ -615,5 +615,79 @@
 
   "TA-512": { "estado": "terminada", "rama": "ta-488-fixes-visuales-2", "pr": 538 },
 
-  "TA-560": { "estado": "pendiente" }
+  "TA-560": { "estado": "terminada", "rama": "ta-560-fichas-b10-v2", "pr": 554 },
+
+  "TA-561": { "estado": "pendiente" },
+
+  "TA-562": { "estado": "pendiente" },
+
+  "TA-563": { "estado": "pendiente" },
+
+  "TA-564": { "estado": "pendiente" },
+
+  "TA-565": { "estado": "pendiente" },
+
+  "TA-566": { "estado": "pendiente" },
+
+  "TA-567": { "estado": "pendiente" },
+
+  "TA-568": { "estado": "pendiente" },
+
+  "TA-569": { "estado": "pendiente" },
+
+  "TA-570": { "estado": "pendiente" },
+
+  "TA-571": { "estado": "pendiente" },
+
+  "TA-572": { "estado": "pendiente" },
+
+  "TA-573": { "estado": "pendiente" },
+
+  "TA-574": { "estado": "pendiente" },
+
+  "TA-575": { "estado": "pendiente" },
+
+  "TA-576": { "estado": "pendiente" },
+
+  "TA-577": { "estado": "pendiente" },
+
+  "TA-578": { "estado": "pendiente" },
+
+  "TA-579": { "estado": "pendiente" },
+
+  "TA-580": { "estado": "pendiente" },
+
+  "TA-581": { "estado": "pendiente" },
+
+  "TA-582": { "estado": "pendiente" },
+
+  "TA-583": { "estado": "pendiente" },
+
+  "TA-584": { "estado": "pendiente" },
+
+  "TA-585": { "estado": "pendiente" },
+
+  "TA-586": { "estado": "pendiente" },
+
+  "TA-587": { "estado": "pendiente" },
+
+  "TA-588": { "estado": "pendiente" },
+
+  "TA-589": { "estado": "pendiente" },
+
+  "TA-590": { "estado": "pendiente" },
+
+  "TA-591": { "estado": "pendiente" },
+
+  "TA-592": { "estado": "pendiente" },
+
+  "TA-593": { "estado": "pendiente" },
+
+  "TA-594": { "estado": "pendiente" },
+
+  "TA-595": { "estado": "pendiente" },
+
+  "TA-596": { "estado": "pendiente" },
+
+  "TA-597": { "estado": "pendiente" }
 }

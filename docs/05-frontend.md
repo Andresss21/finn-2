@@ -128,7 +128,7 @@ Este documento define la arquitectura de `apps/web` con el detalle suficiente pa
 | FE-35 *(B)* | Comportamiento en pantalla sin conexión | 7.4 |
 | FE-36 *(B)* | Rutas de acceso y su tabla de redirecciones | 9.2 |
 | FE-37 *(B)* | Inscripción de TOTP: limpieza de factores sin verificar; el secreto nunca se guarda | 9.5 |
-| FE-38 *(B)* | Código TOTP sin envío automático | 9.4 |
+| FE-38 *(B)* | Código TOTP sin envío automático (**[CH-241]** en seis casillas) | 9.4 |
 | FE-39 *(B)* | Señal inmediata al navegar: `EnlaceFinn` con `useLinkStatus` e indicador global | 7.1 |
 | FE-40 *(C)* | Tokens como variables CSS `--finn-*` en `tokens.css`, expuestos a Tailwind con `@theme inline`; tema oscuro por clase | 10.1 |
 | FE-41 *(C)* | Tabla única de estados financieros e indicador con triple señal (color, forma, nombre) | 10.3 |
@@ -1944,7 +1944,7 @@ Cada página de `ingresar` lee `estadoAcceso()` (CP-11) en el servidor y decide 
 ### 9.4 `/ingresar/verificar` (FE-38)
 
 - **Factor:** si hay un solo factor verificado, se usa ese. Si hay varios, se elige por su nombre (`estadoAcceso().factoresVerificados`, CP-11), con el primero preseleccionado.
-- **Código:** un campo de 6 dígitos con `inputMode="numeric"`, `autoComplete="one-time-code"` y `pattern="\d{6}"`. Al pegar, se quitan espacios y guiones.
+- **Código:** ~~un campo de 6 dígitos con `inputMode="numeric"`, `autoComplete="one-time-code"` y `pattern="\d{6}"`~~. **[CH-241]** Seis casillas de un dígito (entrega 4, E2-2), con `inputMode="numeric"`: escribir avanza a la siguiente, Retroceso vuelve a la anterior y **pegar el código completo** lo reparte en las seis. El grupo tiene **un solo nombre accesible** (`role="group"` con su rótulo) y la primera casilla lleva `autoComplete="one-time-code"`, para que el teléfono ofrezca el código. Al pegar, se quitan espacios y guiones. Con menos de 6 dígitos, el envío marca las casillas vacías y dice cuántos faltan.
 - **Sin envío automático** al completar los 6 dígitos: se envía con el botón o con Enter. Un cambio de pantalla al escribir sorprende y no cumple WCAG 2.2 (criterio 3.2.2).
 - **Envío:** `verificarFactor({ factorId, codigo })` hace `mfa.challenge` y `mfa.verify` (04 12.2). Con éxito, la sesión pasa a AAL2 y se navega a `volver`.
 - **Errores:** código incorrecto o vencido → el mensaje y el campo vacío con el foco; demasiados intentos → el mensaje de espera.
@@ -1961,7 +1961,7 @@ Lo usan `/ingresar/inscribir` (primer factor, AAL1) y `/ajustes/seguridad/factor
    - se llama a `mfa.enroll({ factorType: 'totp', friendlyName })`.
    - El nombre por defecto es "Autenticador" (primer factor) o "Respaldo" (siguiente); se puede cambiar.
 2. **Se muestran** el código QR (`qrSvg`, como imagen con texto alternativo "Código QR para tu app de autenticación") y el **secreto** en texto, agrupado de a 4 caracteres, con "Copiar", para guardarlo en el gestor de contraseñas como factor de respaldo (ADR-08). **[CH-67]** La imagen es un data URI armado con `encodeURIComponent(qrSvg)`, sobre fondo `--marca-icono-figura` (claro en los dos temas) y con margen `--espacio-3`, para que se pueda escanear en tema oscuro.
-3. **El usuario escribe el código** que muestra su app (mismo campo que 9.4). `completarInscripcion({ factorId, codigo })` hace `challenge` y `verify`; con éxito, la sesión es AAL2.
+3. **El usuario escribe el código** que muestra su app (mismo campo que 9.4; **[CH-241]** las mismas seis casillas, sin envío automático). `completarInscripcion({ factorId, codigo })` hace `challenge` y `verify`; con éxito, la sesión es AAL2.
 4. **Al terminar el primer factor**, la pantalla recomienda inscribir uno de respaldo, con el enlace a `/ajustes/seguridad/factores/nuevo` (ADR-08), y sigue a `volver`.
 
 **Protección del secreto:**
@@ -3523,3 +3523,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-227** (Fase 8, decidido por el orquestador con delegación del usuario, 7 de noviembre de 2026, `08-tareas.md` §7). `/reglas` con buscador y el parámetro nuevo `?q=` (2.2 y 2.8). Marcas **[CH-227]**. Las duraciones y anchos de la entrega 3 (CH-220) no cambian este documento: viven en `06-identidad-visual.md`.
 - **CH-05-9.3** (diseño, entrega 4 · etapa 2, decisión E2-1; aplicado al cerrar el diseño el 11 de noviembre de 2026). Ingresar: en lugar del texto sobre «el procedimiento del repositorio», una línea de ayuda sin enlace que dice dónde se cambia la contraseña (9.3). Marca **[D4]**.
 - **CH-E5-2** (diseño, entrega 4 · etapa 5; aprobados por el dueño, aplicados al cerrar el diseño el 11 de noviembre de 2026). CH-E5-2: componente `SelectorReportes` en 10.7, junto a `Pestanas`, para la navegación de FT-60 (CH-E5-1 en 06). **[CH-240]** CH-E5-3 (Conectar los SMS, Formatos e Instituciones como [S] y OPT-01 en `/ajustes/webhook/token`) se aplica con su ficha de B10, junto con el código y los recuentos de PRU-SEG-OPER-102.
+- **CH-241** (Fase 8, decidido por el orquestador con delegación del usuario, 11 de noviembre de 2026, `08-tareas.md` §7). Entrega 4 frente a lo que CH-220 copió de la entrega 3: el código TOTP va en seis casillas, sin envío automático, con el pegado del código completo, un solo nombre accesible para el grupo y `autocomplete="one-time-code"` (9.4, 9.5 y FE-38; E2-2 de la entrega 4). Retira el punto TOTP de CH-221 (b). Lo implementa TA-594, de revisión obligatoria, que no toca `verificarFactor` ni la sesión. Marcas **[CH-241]**.
