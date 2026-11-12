@@ -120,6 +120,8 @@ export const cuentaDetalle = {
     reservaExcedente: glosario.reservadoDeMas,
     saldoAFavor: 'Saldo a favor',
     limite: 'Límite',
+    corte: 'Corte',
+    pago: 'Pago',
     usoLimite: 'Uso del límite',
     ciclo: 'Ciclo de facturación',
     cicloValor: (desde: string, hasta: string) => `${desde} al ${hasta}`,

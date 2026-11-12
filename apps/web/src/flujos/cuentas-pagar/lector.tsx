@@ -2,7 +2,7 @@
 // reservado y el origen propuesto vienen del servidor y aquí solo pasan a texto (PF-3). Una tarjeta archivada no se abre (05 §7.7).
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { notFound } from 'next/navigation';
-import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { MarcoCorto } from '../cuentas-archivar/marco-corto';
 import { MENOS, centavosATextoDecimal, formatearMonto } from '../../formato';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
@@ -11,7 +11,13 @@ import { FormularioCuentasPagar } from './formulario';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function LectorCuentasPagar({ tarjetaId }: { readonly tarjetaId: string }) {
+export async function LectorCuentasPagar({
+  tarjetaId,
+  superpuesto = false,
+}: {
+  readonly tarjetaId: string;
+  readonly superpuesto?: boolean;
+}) {
   if (!UUID.test(tarjetaId)) notFound();
   const dto = await consultar(async () =>
     formulario(await depsDeConsulta(), { operacion: 'pagar_tarjeta', tarjetaId }),
@@ -19,9 +25,13 @@ export async function LectorCuentasPagar({ tarjetaId }: { readonly tarjetaId: st
   const x = dto.contexto.tarjetas[0];
   if (x === undefined)
     return (
-      <PaginaFlujoDeRuta titulo={t.tituloGenerico} rutaPadre={`/cuentas/${tarjetaId}`}>
+      <MarcoCorto
+        superpuesto={superpuesto}
+        titulo={t.tituloGenerico}
+        rutaPadre={`/cuentas/${tarjetaId}`}
+      >
         <p>{t.archivada}</p>
-      </PaginaFlujoDeRuta>
+      </MarcoCorto>
     );
   const d = x.desgloseAlPagar;
   const propuesto = x.origenPropuesto?.id;
@@ -81,6 +91,7 @@ export async function LectorCuentasPagar({ tarjetaId }: { readonly tarjetaId: st
         d.paraNoGenerarIntereses > 0 ? centavosATextoDecimal(d.paraNoGenerarIntereses) : ''
       }
       categoriaPagoId={categoriaPago?.categoria.id}
+      superpuesto={superpuesto}
     />
   );
 }

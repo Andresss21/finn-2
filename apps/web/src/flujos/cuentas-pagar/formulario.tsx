@@ -9,13 +9,11 @@ import { useMemo, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Pastillas } from '../../componentes/base/pastillas';
-import { Resultado } from '../../componentes/base/resultado';
 import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
 import { ConfirmacionImpactoDeVista } from '../../componentes/formularios/confirmacion-impacto-de-vista';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
-import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
-import { PaginaFlujoDeRuta, useCerrarFlujo } from '../../componentes/navegacion/flujo-de-ruta';
+import { CerrarFlujoAlMontar, useCerrarFlujo } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -23,6 +21,8 @@ import { useOperacion, type AccionEscritura } from '../../formularios/use-operac
 import { pagarTarjeta } from '../../servidor/acciones/transacciones';
 import { cuentasPagar as t } from '../../textos/cuentas-pagar';
 import { formularios } from '../../textos/formularios';
+import { MarcoCorto } from '../cuentas-archivar/marco-corto';
+import { rutaConResultado } from '../cuentas-resultado';
 import { aEntradaDeAccion, contrato, type Campos, type Previsualizacion } from './campos';
 
 export interface PropsFormularioCuentasPagar {
@@ -47,16 +47,16 @@ export interface PropsFormularioCuentasPagar {
   readonly atajos: readonly { readonly etiqueta: string; readonly valor: string }[];
   readonly montoInicial: string;
   readonly categoriaPagoId: string | undefined;
+  /** GLO-23: abierto como hoja o panel sobre el detalle (ruta interceptada). */
+  readonly superpuesto?: boolean;
 }
 
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 /** Un rechazo que ya se muestra en su campo no se repite como aviso. */
 const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
-const ENLACE =
-  'inline-flex min-h-11 items-center font-semibold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
 export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
-  const { tarjetaId, tarjetaNombre: nombre, hoy, origenes } = props;
+  const { tarjetaId, tarjetaNombre: nombre, hoy, origenes, superpuesto = false } = props;
   const rutaPadre = `/cuentas/${tarjetaId}`;
   const enviar: AccionEscritura = (payload) => pagarTarjeta(aEntradaDeAccion(tarjetaId, payload));
   const operacion = useOperacion({ accion: enviar, creacion: true });
@@ -68,7 +68,7 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
   const formulario = useFormularioFinn<Campos>({ contrato, valoresIniciales: inicial, operacion });
   const { setValue, formState } = formulario;
   const c = formulario.watch();
-  const cancelar = useCerrarFlujo(rutaPadre, false);
+  const cancelar = useCerrarFlujo(rutaPadre, superpuesto);
   const opciones = useMemo(
     () =>
       origenes.map((o) => ({
@@ -87,29 +87,18 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
   const total = normalizarMontoEscrito(c.total);
 
+  // E2-13: el pago no tiene pantalla de resultado propia: vuelve al detalle de la tarjeta y el resultado queda bajo sus acciones.
   if (estado === 'listo' && exito !== undefined) {
     return (
-      <PaginaFlujoDeRuta titulo={t.tituloListo} rutaPadre={rutaPadre}>
-        <div className="flex flex-col gap-4">
-          <Resultado texto={t.guardado(formatearMontoTexto(c.total), nombre)} />
-          {exito.avisos.some((a) => a.codigo === 'AV-04') ? (
-            <AvisoEnLinea estado="informacion" aparecioDespues>
-              {t.avisoExcedente(nombre)}
-            </AvisoEnLinea>
-          ) : null}
-          {props.categoriaPagoId === undefined ? null : (
-            <EnlaceFinn
-              href={`/presupuesto/categorias/${props.categoriaPagoId}`}
-              className={ENLACE}
-            >
-              {t.verCategoria(nombre)}
-            </EnlaceFinn>
-          )}
-          <EnlaceFinn href={rutaPadre} className={ENLACE}>
-            {t.verTarjeta(nombre)}
-          </EnlaceFinn>
-        </div>
-      </PaginaFlujoDeRuta>
+      <MarcoCorto superpuesto={superpuesto} titulo={t.tituloListo} rutaPadre={rutaPadre}>
+        <CerrarFlujoAlMontar
+          rutaPadre={rutaConResultado(rutaPadre, {
+            tipo: 'pagado',
+            monto: total.estado === 'valido' ? total.texto : '0',
+            excedente: exito.avisos.some((a) => a.codigo === 'AV-04'),
+          })}
+        />
+      </MarcoCorto>
     );
   }
 
@@ -122,7 +111,7 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
   const aFavor = vista.propuesta?.saldoAFavor ?? 0;
 
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo(nombre)} rutaPadre={rutaPadre}>
+    <MarcoCorto superpuesto={superpuesto} titulo={t.titulo(nombre)} rutaPadre={rutaPadre}>
       {estado === 'confirmando' ? (
         <ConfirmacionImpactoDeVista
           titulo={t.revisar}
@@ -232,6 +221,6 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
           </div>
         </form>
       )}
-    </PaginaFlujoDeRuta>
+    </MarcoCorto>
   );
 }
