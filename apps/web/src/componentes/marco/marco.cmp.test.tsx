@@ -9,6 +9,7 @@ import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
 import { navegacion } from '../../textos/navegacion';
 import { Marco } from './marco';
+import { PaginaFlujo } from './pagina-flujo';
 import { PublicarAcciones } from './publicar-acciones';
 
 // Solo el límite externo: `next/link` y `next/navigation` necesitan el enrutador de Next, que el navegador de prueba no tiene.
@@ -251,5 +252,33 @@ describe('PRU-CMP-PWA sin conexión', () => {
     expect(e.paddingTop).toBe('10px');
     expect(e.paddingLeft).toBe('14px');
     enLinea.mockRestore();
+  });
+});
+
+describe('PRU-CMP-PWA flujo de dos columnas', () => {
+  it('PRU-CMP-PWA-711 [CA-E4-5] PaginaFlujo ancha: una sola columna (720 px) debajo de 1280 px de ventana, todo el ancho desde 1280, y el pie dentro del contenido', () => {
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    montados.push({ raiz, nodo });
+    act(() => {
+      raiz.render(
+        <PaginaFlujo
+          titulo="Registrar gasto"
+          alCerrar={() => undefined}
+          ancha
+          acciones={<button>Guardar</button>}
+        >
+          <p>Campos</p>
+        </PaginaFlujo>,
+      );
+    });
+    const flujo = nodo.querySelector('main[data-pagina-flujo]') as HTMLElement;
+    expect(flujo.className).toContain('md:[--ancho-pantalla:45rem]');
+    expect(flujo.className).toContain('xl:[--ancho-pantalla:none]');
+    expect(flujo.className).toContain('max-w-160');
+    // El pie es hijo de la misma columna del contenido, no del marco.
+    const pie = nodo.querySelector('button')?.parentElement as HTMLElement;
+    expect(pie.parentElement).toBe(flujo);
   });
 });

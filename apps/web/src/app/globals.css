@@ -4,6 +4,12 @@
 @import './tokens-decorativos.css';
 @import '../../tailwind.css';
 
+/* [CH-241 c, D-2] La barra lateral y la computadora empiezan en 1024 px de ventana: de 768 a 1023 se usa el marco de teléfono.
+   `md` es ese umbral para todo el código; `xl` (1280) es el de las dos columnas de los flujos largos. */
+@theme {
+  --breakpoint-md: 64rem;
+}
+
 /* next/font da a cada familia un nombre propio: se antepone al de la entrega para que las fuentes autohospedadas
    sean las que se usan. El resto de la pila (la de tokens.css) queda de reserva. */
 :root {
@@ -66,7 +72,7 @@ body {
 
 /* Marco (06-identidad-visual §3, export K1, CH-109). En teléfono el `h1` de la página (llega del servidor) va en la barra
    fija, antes de Registrar (110) + campana + ☰, o entre «Volver» y la campana; el de un flujo va en su propia barra. */
-@media (width < 48rem) {
+@media (width < 64rem) {
   #contenido h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
     position: fixed;
     top: 0;
@@ -94,12 +100,6 @@ body {
     h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
     right: 6.75rem;
   }
-  /* [CH-227] Teléfono angosto: Registrar queda solo con su ícono (44 × 44), y al título le toca el resto. */
-  @media (width < 25rem) {
-    #contenido[data-barra='principal'] h1.text-titulo-pantalla:not([data-pagina-flujo] *) {
-      right: 10rem;
-    }
-  }
   /* Flujo largo a pantalla completa: sin la barra superior ni la inferior. */
   body:has([data-pagina-flujo]) [data-marco-barra] {
     display: none;
@@ -110,7 +110,7 @@ body {
 }
 
 /* Computadora: a la izquierda, padding 32 48 48, `--ancho-pantalla` (o todo el ancho), título de 2.5 rem y lugar para la campana. */
-@media (width >= 48rem) {
+@media (width >= 64rem) {
   /* [CH-220] Contenedor de las rejillas de dos columnas: colapsan por el ancho del contenedor y no por el de la ventana. */
   #contenido {
     container-type: inline-size;
@@ -127,12 +127,34 @@ body {
   #contenido h1.text-titulo-pantalla {
     font-size: 2.5rem;
   }
-  #contenido > main > :first-child {
+  #contenido > main:not([data-pagina-flujo]) > :first-child {
     margin-right: 3.5rem;
   }
   /* «Más acciones» (con su rótulo) ocupa lugar junto a la campana. */
-  #contenido[data-acciones] > main > :first-child {
+  #contenido[data-acciones] > main:not([data-pagina-flujo]) > :first-child {
     margin-right: 13.5rem;
+  }
+  /* [E4-26, Marco] Ningún flujo largo lleva campana: en computadora solo queda la barra lateral. */
+  body:has([data-pagina-flujo]) [data-marco-barra] {
+    display: none;
+  }
+}
+
+/* [CH-241 c, D-2, T4-tableta] De 768 a 1023 px: marco de teléfono (barras superior e inferior a todo el ancho) con el contenido
+   centrado a 640 px y 24 px de relleno; las dos columnas de los flujos pasan a una. */
+@media (48rem <= width < 64rem) {
+  #contenido > main {
+    margin-inline: auto;
+    max-width: 40rem;
+    padding-inline: 1.5rem;
+  }
+}
+
+/* [E6-20, CH-241] Un título que no entra junto a «Registrar», la campana y el menú se achica en lugar de cortarse; lo marca
+   `Marco` al medirlo (`data-ajustado`). */
+@media (width < 64rem) {
+  #contenido h1[data-ajustado] {
+    font-size: 1.625rem;
   }
 }
 
@@ -451,7 +473,7 @@ body {
 .fz-hoja[data-saliendo][data-forma='arriba'] {
   animation-name: fz-dr-out;
 }
-@media (width >= 48rem) {
+@media (width >= 64rem) {
   .fz-hoja[data-forma='auto'] {
     animation-name: fz-right-in;
   }
@@ -542,7 +564,7 @@ body {
 }
 
 /* C11: en computadora, las filas tocables (las que llevan `chevR`) cambian el fondo al 6 % de `--texto` (`--fila-hover`) y mueven la flecha 4 px. */
-@media (hover: hover) and (width >= 48rem) {
+@media (hover: hover) and (width >= 64rem) {
   :is(a, button):has([data-icono='chevR']) {
     transition: background-color var(--duracion-normal) var(--curva-estandar);
   }

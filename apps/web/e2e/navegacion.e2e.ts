@@ -11,7 +11,7 @@ import { SECCIONES, seccionDeRuta } from '../src/componentes/navegacion/seccione
 import { navegacion } from '../src/textos/index.ts';
 
 const ORIGEN = '/pruebas/navegacion';
-const ANCHO_ESCRITORIO = 768;
+const ANCHO_ESCRITORIO = 1024;
 
 test.describe('PRU-E2E-PWA', () => {
   test('PRU-E2E-PWA-103 la Bandeja y Notificaciones llevan su contador en el nombre, la sección activa marca aria-current por prefijo y las secundarias se alcanzan en dos interacciones en teléfono y a la vista en computadora', async ({

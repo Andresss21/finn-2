@@ -20,9 +20,10 @@ export interface PropsPaginaFlujo {
 // Clases literales (L13).
 const ANCHO = {
   normal:
-    'mx-auto flex min-h-dvh max-w-xl flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:45rem]',
+    'mx-auto flex min-h-dvh max-w-160 flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:45rem]',
+  // [D-1, D-2] Entre 1024 y 1279 px de ventana, 720; desde 1280, todo el ancho del contenido (1096 a 1440), en dos columnas.
   ancha:
-    'mx-auto flex min-h-dvh max-w-270 flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:71.5rem]',
+    'mx-auto flex min-h-dvh max-w-160 flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:45rem] xl:[--ancho-pantalla:none]',
 } as const;
 
 export function PaginaFlujo({
@@ -53,7 +54,7 @@ export function PaginaFlujo({
       )}
       <div className="flex-1 px-5 py-3 md:px-0">{children}</div>
       {acciones === undefined ? null : (
-        <div className="sticky bottom-0 flex gap-3 border-t border-borde-sutil bg-superficie px-4 pt-3 pb-6.5 md:static md:border-0 md:bg-transparent md:px-0">
+        <div className="sticky bottom-0 flex gap-3 border-t border-borde-sutil bg-superficie px-5 pt-3 pb-6.5 md:static md:border-0 md:bg-transparent md:px-0">
           {acciones}
         </div>
       )}

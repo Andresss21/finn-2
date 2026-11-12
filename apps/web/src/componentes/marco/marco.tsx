@@ -92,6 +92,20 @@ function CuerpoDelMarco({
       return despues;
     });
   }, []);
+  // [E6-20, CH-241] El título de la barra del teléfono que no entra junto a Registrar, la campana y ☰ se achica (`data-ajustado`).
+  useEffect(() => {
+    const ajustar = (): void => {
+      const h1 = document.querySelector<HTMLElement>('#contenido h1.text-titulo-pantalla');
+      if (h1 === null) return;
+      h1.removeAttribute('data-ajustado');
+      if (h1.scrollWidth > h1.clientWidth) h1.setAttribute('data-ajustado', '');
+    };
+    ajustar();
+    window.addEventListener('resize', ajustar);
+    return () => {
+      window.removeEventListener('resize', ajustar);
+    };
+  }, [pathname]);
   // 05 §14.3: las pruebas esperan este atributo antes de interactuar.
   useEffect(() => {
     document.documentElement.setAttribute('data-hidratado', 'si');
@@ -158,7 +172,7 @@ function CuerpoDelMarco({
           )}
           <span className="flex-1 md:hidden" />
           {tipoBarra === 'principal' ? (
-            <span className="flex w-27.5 justify-end max-[25rem]:w-11 md:hidden">
+            <span className="flex w-27.5 justify-end md:hidden">
               <AccesoRegistrar ruta={ruta} variante="barra" />
             </span>
           ) : null}
