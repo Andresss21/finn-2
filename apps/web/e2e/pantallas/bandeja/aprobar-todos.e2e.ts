@@ -92,7 +92,7 @@ test.describe('PRU-E2E-BAND aprobar todos y muchos movimientos', () => {
     await expect(page.getByRole('button', { name: /Deshacer/ })).toHaveCount(0);
   });
 
-  test('PRU-E2E-BAND-712 [CH-240] con más de 8 movimientos se ven 8 y «Mostrar {k} más»; «Aprobar» de una fila mide 44 px y se llama «Aprobar {comercio} {monto}»', async ({
+  test('PRU-E2E-BAND-712 [CA-E6-18] con más de 8 movimientos se ven 8 y «Mostrar {k} más»; «Aprobar» de una fila mide 44 px y se llama «Aprobar {comercio} {monto}»', async ({
     page,
   }) => {
     const comercios = Array.from({ length: 10 }, (_, i) => `Tienda ${String.fromCharCode(65 + i)}`);

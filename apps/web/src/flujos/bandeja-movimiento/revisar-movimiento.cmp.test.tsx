@@ -283,7 +283,7 @@ describe('PRU-CMP-BAND', () => {
     expect(calendario?.getBoundingClientRect().height).toBe(44);
   });
 
-  it('PRU-CMP-BAND-721 [CH-240] el formulario no tiene «Después de aprobar» en ningún tipo; el ingreso muestra la nota fija; con faltantes, «Aprobar» tiene un solo motivo que los junta', () => {
+  it('PRU-CMP-BAND-721 [CA-E4-21c] el formulario no tiene «Después de aprobar» en ningún tipo; el ingreso muestra la nota fija; con faltantes, «Aprobar» tiene un solo motivo que los junta', () => {
     for (const tipo of ['gasto', 'ingreso', 'pago_tarjeta', 'devolucion']) {
       const nodo = montarElemento(<Arnes inicial={campos(tipo, 1)} />);
       expect(nodo.textContent, tipo).not.toContain('Después de aprobar');

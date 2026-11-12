@@ -193,7 +193,7 @@ describe('PRU-CMP-TX', () => {
     },
   );
 
-  it('PRU-CMP-TX-701 [CH-240] con la suma distinta, «Guardar» tiene el texto de suma_lineas_distinta como motivo; con una fecha que no existe, el error va a lo ancho y es el motivo de «Guardar»; «Otra persona» abre su nombre con la nota', async () => {
+  it('PRU-CMP-TX-701 [] con la suma distinta, «Guardar» tiene el texto de suma_lineas_distinta como motivo; con una fecha que no existe, el error va a lo ancho y es el motivo de «Guardar»; «Otra persona» abre su nombre con la nota', async () => {
     const suma = 'Las partes suman $138.60 y el total es $148.60.';
     expect(
       motivoDeGuardar({

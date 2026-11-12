@@ -179,7 +179,7 @@ test.describe('PRU-E2E-BAND arrastre de la entrega 4', () => {
     );
   });
 
-  test('PRU-E2E-BAND-703 [CA-E6-7] con la línea cambiada en otra pestaña, soltar abre el flujo con el valor visto, el actual y «Usar el valor actual», con Farmacia puesta', async ({
+  test('PRU-E2E-BAND-703 [CA-E6-7, CA-78.14] con la línea cambiada en otra pestaña, soltar abre el flujo con el valor visto, el actual y «Usar el valor actual», con Farmacia puesta', async ({
     page,
     context,
     isMobile,

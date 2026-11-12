@@ -56,7 +56,7 @@ test.describe('PRU-E2E-BAND revisar movimiento de la entrega 4', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-BAND-721 [CH-240] a 1440 px Revisar va en dos columnas, sin «Después de aprobar»; a 390 px una devolución no desborda y «Cambiar compra» se ve entero', async ({
+  test('PRU-E2E-BAND-721 [CA-E4-5, CA-E4-21c] a 1440 px Revisar va en dos columnas, sin «Después de aprobar»; a 390 px una devolución no desborda y «Cambiar compra» se ve entero', async ({
     page,
     isMobile,
   }) => {
@@ -95,7 +95,7 @@ test.describe('PRU-E2E-BAND revisar movimiento de la entrega 4', () => {
     await expect(page.getByText('Después de aprobar')).toHaveCount(0);
   });
 
-  test('PRU-E2E-BAND-722 [CH-240] aprobar un movimiento de un período cerrado pide el paso con AV-01 y confirma con la huella', async ({
+  test('PRU-E2E-BAND-722 [CA-E4-21b] aprobar un movimiento de un período cerrado pide el paso con AV-01 y confirma con la huella', async ({
     page,
   }) => {
     // Fecha en un período cerrado: aprobar se detiene en la confirmación de AV-01 (E4-1: el servidor lo pide)

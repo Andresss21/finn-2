@@ -89,7 +89,7 @@ test.describe('PRU-E2E-TX registrar gasto de la entrega 4', () => {
     await expect(page.getByText(t.repartidoEn)).toBeVisible();
   });
 
-  test('PRU-E2E-TX-702 [CH-240] salir sin guardar y volver muestra «Recuperamos lo que estabas escribiendo» con «Descartar borrador» de 44 px, y descartarlo limpia el formulario', async ({
+  test('PRU-E2E-TX-702 [] salir sin guardar y volver muestra «Recuperamos lo que estabas escribiendo» con «Descartar borrador» de 44 px, y descartarlo limpia el formulario', async ({
     page,
   }) => {
     await preparar();
