@@ -4,7 +4,7 @@
 // tarjeta «Antes de confirmar»; «Cambiar al día N» confirma siempre. Con el mismo día, `ciclo_sin_cambio` va en el campo y el botón
 // queda deshabilitado, enlazado a ese mensaje. Los días del período de transición son un conteo de fechas del aviso, no un monto
 // (PF-3). No importa nada de Next: lo prueba un componente.
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Campo, MensajeError } from '../../componentes/base/campo';
@@ -64,6 +64,19 @@ export function PanelCiclo({ accion, diaVigente, futura, alCerrar }: PropsPanelC
     setPedidoPara(dia);
     void enviar({ diaInicio: Number(dia) });
   }, [dia, estado, pedidoPara, enviar]);
+
+  // Si el cambio de día llegó mientras otra previsualización seguía en vuelo, `enviar` ignora el pedido: cuando ese termina y lo
+  // que se ve no es del día elegido, se vuelve a pedir (hasta 3 veces, sin ciclos).
+  const reintentos = useRef(0);
+  useEffect(() => {
+    if (estado === 'enviando' || estado === 'listo' || pedidoPara !== dia || vista === undefined)
+      return;
+    const deLaVista = rechazo?.datos?.['dia'] ?? datos['diaInicio'];
+    if (deLaVista === undefined || Number(deLaVista) === Number(dia) || reintentos.current >= 3)
+      return;
+    reintentos.current += 1;
+    void enviar({ diaInicio: Number(dia) });
+  }, [estado, pedidoPara, dia, vista, rechazo, datos, enviar]);
 
   const resumen = (
     <dl className="rounded-contenedor bg-superficie px-4 py-1 shadow-elevacion-1">

@@ -19,7 +19,7 @@ const VARIANTES = {
   barra:
     'text-etiqueta inline-flex h-11 items-center justify-center gap-1.5 rounded-control bg-accion pr-3.5 pl-2.5 font-bold text-texto-sobre-accion',
   lateral:
-    'text-etiqueta inline-flex h-11 w-full items-center justify-center gap-2 rounded-control bg-accion px-3 font-bold text-texto-sobre-accion',
+    'text-etiqueta inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-control bg-accion px-3 font-bold text-texto-sobre-accion',
 } as const;
 
 export function AccesoRegistrar({

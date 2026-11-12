@@ -168,7 +168,11 @@ export function FormularioActividadEditar({
                 ? textoAv16(
                     enviada,
                     cuentas.find((x) => x.id === inicial.cuentaId)?.nombre ?? '',
-                    enviada !== undefined && 'lineas' in enviada,
+                    // «Repartir distinto» solo si cambió el monto de alguna parte; cambiar solo una categoría no lo es
+                    enviada !== undefined &&
+                      'lineas' in enviada &&
+                      JSON.stringify(c.lineas.map((l) => l.monto)) !==
+                        JSON.stringify(inicial.lineas.map((l) => l.monto)),
                   )
                 : (t.avisos[a.codigo] ?? a.codigo),
             )}

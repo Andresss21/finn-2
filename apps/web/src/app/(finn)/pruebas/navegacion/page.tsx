@@ -23,7 +23,8 @@ const ENCABEZADO = {
 export default function OrigenDeNavegacion() {
   soloEnPruebas();
   return (
-    <main>
+    // El aviso «Estás sin conexión» (E6-3) se dibuja fijo arriba: el enlace queda debajo para poder tocarlo sin conexión.
+    <main className="pt-32">
       <PublicarEncabezado encabezado={ENCABEZADO} />
       <h1>{'Origen de navegación'}</h1>
       <EnlaceFinn

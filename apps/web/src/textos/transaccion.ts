@@ -52,6 +52,8 @@ export const transaccion = {
   volverAEditar: 'Volver a editar',
   avisos: {
     'AV-01': 'La fecha es de un período cerrado o cambia el período de la transacción.',
+    'AV-03': glosario.deudaSinReservar,
+    'AV-07': `La deuda de esa tarjeta queda como «${glosario.teFaltaReservar}».`,
     'AV-16': `Esta transacción está ${glosario.conciliada.toLowerCase()}: al cambiarla vuelve a ${glosario.confirmada.toLowerCase()} y queda un cambio posterior.`,
   } as Readonly<Record<string, string>>,
   // E3-15 / E4-1: AV-16 al editar una conciliada, de advertencia o de información según lo que cambió (04 OP-28)
