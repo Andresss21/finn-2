@@ -12,9 +12,11 @@ import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabez
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { formatearFecha, formatearMonto } from '../../../formato';
 import { gestionarProgramada, omitirOcurrencia } from '../../../servidor/acciones/programadas';
+import type { ResultadoProgramada } from '../../../flujos/programadas-nueva/resultado';
 import { programadas as t } from '../../../textos/programadas';
 import { Activar } from './activar';
 import { Omitir } from './omitir';
+import { ResultadoDeProgramada } from './resultado';
 import { InsigniaDeFecha } from '../../../componentes/dominio/insignia-fecha';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
@@ -30,9 +32,12 @@ const diaYMes = (fecha: string): string => formatearFecha(fecha).slice(0, 5);
 export function PantallaProgramadas({
   dto,
   horizonte,
+  resultado,
 }: {
   readonly dto: ProgramadasDto;
   readonly horizonte: 7 | 30;
+  /** E6-14 [CH-248]: lo que dejó eliminar o guardar los cambios de una programada (`?resultado=`, ya validado). */
+  readonly resultado?: ResultadoProgramada | undefined;
 }) {
   const atrasadas = dto.programadas.flatMap((p) =>
     p.activa ? p.atrasadas.map((fecha) => ({ p, fecha })) : [],
@@ -49,6 +54,7 @@ export function PantallaProgramadas({
           {t.nueva}
         </EnlaceFinn>
       </div>
+      <ResultadoDeProgramada resultado={resultado} programadas={dto.programadas} />
       {dto.programadas.length === 0 ? (
         <Vacio
           titulo={t.vacioTitulo}

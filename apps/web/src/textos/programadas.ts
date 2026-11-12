@@ -81,6 +81,11 @@ export const programadas = {
   eliminarProgramada: 'Eliminar programada',
   eliminando: 'Eliminando…',
   eliminada: 'Programada eliminada',
+  // E6-14 [CH-248]: el resultado de eliminar y de guardar los cambios queda en la lista, sin salida para revertir.
+  resultado: {
+    eliminada: 'Eliminaste la programada.',
+    ajustada: (nombre: string) => `Guardaste los cambios de ${nombre}.`,
+  },
   volver: 'Volver a Programadas',
   // La ocurrencia de una programada (FT-41; 05 §2): registrar con un toque u omitir. Los rechazos los trae el servidor.
   ocurrencia: {
