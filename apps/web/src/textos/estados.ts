@@ -2,6 +2,8 @@
 // de vacío (FE-34). Voseo (§12.2).
 export const estados = {
   cargando: 'Cargando la pantalla',
+  /** E6-1: el anuncio nombra la pantalla que carga («Cargando actividad»). */
+  cargandoPantalla: (pantalla: string) => `Cargando ${pantalla}`,
   errorTitulo: 'Algo salió mal y no se pudo cargar esta pantalla.',
   referencia: (id: string) => `Referencia: ${id}`,
   copiarReferencia: 'Copiar referencia',
