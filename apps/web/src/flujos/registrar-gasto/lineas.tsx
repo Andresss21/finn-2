@@ -128,6 +128,7 @@ export default function LineasDeGasto({
               {parte.destino === 'por_cobrar' && parte.deudorId === DEUDOR_NUEVO ? (
                 <EntradaTexto
                   etiqueta={t.deudorNuevoDeParte(n)}
+                  descripcion={t.deudorNuevoNota}
                   autoComplete="off"
                   error={error(i, 'deudorNuevo')}
                   {...registroDeudorNuevo(i)}

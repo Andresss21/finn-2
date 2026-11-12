@@ -5,12 +5,12 @@
 // que muestra por su cuenta es cuánto falta repartir, como ayuda visual (05 §5.1); la suma la valida el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { lazy, Suspense, useMemo } from 'react';
+import { lazy, Suspense, useId, useMemo, useState } from 'react';
 import { useFieldArray } from 'react-hook-form';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, MensajeError } from '../../componentes/base/campo';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -28,6 +28,7 @@ import {
   contrato,
   DEUDOR_NUEVO,
   deudoresReutilizados,
+  motivoDeGuardar,
   parteVacia,
   textoDeAviso,
   valoresIniciales,
@@ -133,6 +134,22 @@ export function FormularioRegistrarGasto({
   ): string | undefined => formState.errors.lineas?.[i]?.[n]?.message;
 
   const { estado, error: fallo, exito } = operacion;
+  // [CH-240 E3-18] El error de la fecha va a lo ancho de la fila Fecha · Total y «Guardar» espera a que se corrija
+  const [errorFecha, setErrorFecha] = useState<string | undefined>(undefined);
+  const idErrorFecha = useId();
+  // [CH-240 E6-21] Con `suma_lineas_distinta`, «Guardar» dice por qué hasta que cambien las partes o el total
+  const huellaPartes = JSON.stringify([c.total, c.lineas]);
+  const [sumaRechazada, setSumaRechazada] = useState<{
+    readonly rechazo: ErrorFinn;
+    readonly huella: string;
+  }>();
+  // Se actualiza al llegar un rechazo nuevo (ajuste del estado durante el render, como `EntradaFecha`): no es un efecto
+  if (
+    estado === 'error' &&
+    fallo?.codigo === 'suma_lineas_distinta' &&
+    sumaRechazada?.rechazo !== fallo
+  )
+    setSumaRechazada({ rechazo: fallo, huella: huellaPartes });
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
   const opcionesCuentas = aOpciones(cuentas);
 
@@ -148,9 +165,6 @@ export function FormularioRegistrarGasto({
   if (estado === 'listo' && exito !== undefined) {
     const nombreDeCuenta = cuentas.find((x) => x.id === c.cuentaId)?.nombre ?? '';
     const reutilizados = deudoresReutilizados(c, deudores);
-    const tocadas = categorias.filter((x) =>
-      c.lineas.some((l) => l.destino === 'categoria' && l.categoriaId === x.id),
-    );
     return (
       <PaginaFlujoDeRuta titulo={t.listo} rutaPadre="/registrar">
         <Suspense fallback={null}>
@@ -161,12 +175,20 @@ export function FormularioRegistrarGasto({
               nombreDeCuenta,
               String(c.lineas.length),
             )}
-            lineas={c.lineas.map((l, i) => ({
+            transaccionId={(exito.valor as { id: string }).id}
+            partes={c.lineas.map((l, i) => ({
               clave: partes.fields[i]?.id ?? String(i),
-              destino: nombreDelDestino(l, categorias, deudores),
+              nombre:
+                l.destino === 'categoria'
+                  ? nombreDelDestino(l, categorias, deudores)
+                  : t.teDebe(nombreDelDestino(l, categorias, deudores)),
+              href:
+                l.destino === 'categoria'
+                  ? `/presupuesto/categorias/${l.categoriaId}`
+                  : '/por-cobrar',
+              verTexto: l.destino === 'categoria' ? t.verLaCategoria : t.verEnPorCobrar,
               monto: formatearMontoTexto(l.monto),
             }))}
-            tocadas={tocadas}
             reutilizados={reutilizados}
           />
         </Suspense>
@@ -193,17 +215,22 @@ export function FormularioRegistrarGasto({
 
   const totalValido = normalizarMontoEscrito(c.total).estado === 'valido';
 
+  const motivoGuardar = motivoDeGuardar({
+    sinConexion: operacion.motivoSinEnvio,
+    fechaConError: errorFecha !== undefined,
+    textoFecha: t.corregiFecha,
+    sumaRechazada:
+      sumaRechazada?.huella === huellaPartes ? sumaRechazada.rechazo.mensaje : undefined,
+  });
   const guardar = (
     <Boton
       tipo="submit"
       form={ID_FORMULARIO}
       enviando={estado === 'enviando'}
       textoEnviando={t.guardando}
-      deshabilitado={!operacion.enLinea}
+      deshabilitado={!operacion.enLinea || motivoGuardar !== undefined}
       className="w-full"
-      {...(operacion.motivoSinEnvio === undefined
-        ? {}
-        : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+      {...(motivoGuardar === undefined ? {} : { motivoDeshabilitado: motivoGuardar })}
     >
       {totalValido ? t.guardarMonto(formatearMontoTexto(c.total)) : t.guardar}
     </Boton>
@@ -218,7 +245,8 @@ export function FormularioRegistrarGasto({
         ? {}
         : {
             acciones: (
-              <div className="w-full @[996px]:ml-auto @[996px]:w-[calc(50%-1.125rem)]">
+              // [CH-240 E6-21] La barra fija queda a 20 px de los bordes (16 del marco más 4)
+              <div className="w-full max-md:px-1 @[996px]:ml-auto @[996px]:w-[calc(50%-1.125rem)]">
                 {guardar}
               </div>
             ),
@@ -269,6 +297,7 @@ export function FormularioRegistrarGasto({
                   requerido
                   sinVistaPrevia
                   hoy={hoy}
+                  mensajeEnFila={{ id: idErrorFecha, alCambiar: setErrorFecha }}
                 />
                 <EntradaMonto
                   nombre="total"
@@ -280,6 +309,11 @@ export function FormularioRegistrarGasto({
                   prefijo="$"
                   sinVistaPrevia
                 />
+                {errorFecha === undefined ? null : (
+                  <div id={idErrorFecha} className="col-span-2">
+                    <MensajeError>{errorFecha}</MensajeError>
+                  </div>
+                )}
               </div>
               <EntradaTexto
                 etiqueta={t.comercio}
