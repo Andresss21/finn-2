@@ -6,7 +6,7 @@ export const estados = {
   cargandoPantalla: (pantalla: string) => `Cargando ${pantalla}`,
   errorTitulo: 'Algo salió mal y no se pudo cargar esta pantalla.',
   referencia: (id: string) => `Referencia: ${id}`,
-  copiarReferencia: 'Copiar referencia',
+  copiarReferencia: 'Copiar la referencia',
   referenciaCopiada: 'Referencia copiada.',
   noExisteTitulo: 'Esto ya no existe.',
   noExisteTexto: 'Puede que se haya eliminado o que el enlace ya no sea válido.',

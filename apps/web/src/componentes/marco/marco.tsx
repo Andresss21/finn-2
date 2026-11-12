@@ -131,11 +131,11 @@ function CuerpoDelMarco({
         {navegacion.saltar}
       </a>
       {enLinea ? null : (
-        // [A35] Banda compacta `--texto` sobre `--fondo` con la nube tachada (radio de control, 10 × 14).
+        // E6-3 (entrega 4): forma aprobada, `--marca` de 48 px de alto y radio 16, con la nube tachada.
         <div
           role="status"
           data-sin-conexion
-          className="text-etiqueta fixed inset-x-4 top-16 z-40 flex items-center gap-2 rounded-control bg-texto px-3.5 py-2.5 text-fondo md:top-2 md:right-6 md:left-68"
+          className="text-etiqueta fixed inset-x-4 top-16 z-40 flex min-h-12 items-center gap-2 rounded-contenedor bg-marca px-3.5 py-2.5 text-texto-sobre-marca md:top-2 md:right-6 md:left-68"
         >
           <Icono nombre="wifioff" tamano={18} />
           <span>{bloqueada ? navegacion.sinConexionNavegacion : navegacion.sinConexion}</span>

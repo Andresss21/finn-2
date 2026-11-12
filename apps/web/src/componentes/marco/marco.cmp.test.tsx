@@ -224,7 +224,7 @@ describe('PRU-CMP-PWA', () => {
 });
 
 describe('PRU-CMP-PWA sin conexión', () => {
-  it('PRU-CMP-PWA-340 [] sin conexión, la banda compacta va en --texto sobre --fondo con la nube tachada y el radio de control', () => {
+  it('PRU-CMP-PWA-340 [CA-E6-4] sin conexión, el aviso va en --marca sobre su texto, de 48 px de alto y radio 16, con la nube tachada y solo «Estás sin conexión»', () => {
     const enLinea = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     const raiz = montar(
       '/presupuesto',
@@ -236,21 +236,17 @@ describe('PRU-CMP-PWA sin conexión', () => {
     const banda = raiz.querySelector('[data-sin-conexion]') as HTMLElement;
     expect(banda.getAttribute('role')).toBe('status');
     expect(banda.textContent).toBe(navegacion.sinConexion);
+    expect(banda.textContent).toBe('Estás sin conexión');
     expect(banda.querySelector('[data-icono="wifioff"]')).not.toBeNull();
     const sonda = document.createElement('span');
-    sonda.style.cssText = 'color: var(--texto); background-color: var(--fondo)';
+    sonda.style.cssText = 'color: var(--texto-sobre-marca); background-color: var(--marca)';
     document.body.append(sonda);
     const e = getComputedStyle(banda);
-    expect(e.backgroundColor).toBe(getComputedStyle(sonda).color);
-    expect(e.color).toBe(getComputedStyle(sonda).backgroundColor);
+    expect(e.backgroundColor).toBe(getComputedStyle(sonda).backgroundColor);
+    expect(e.color).toBe(getComputedStyle(sonda).color);
     sonda.remove();
-    const radio = document.createElement('span');
-    radio.style.borderRadius = 'var(--radio-control)';
-    document.body.append(radio);
-    expect(e.borderTopLeftRadius).toBe(getComputedStyle(radio).borderTopLeftRadius);
-    radio.remove();
-    expect(e.paddingTop).toBe('10px');
-    expect(e.paddingLeft).toBe('14px');
+    expect(e.borderTopLeftRadius).toBe('16px');
+    expect(banda.getBoundingClientRect().height).toBe(48);
     enLinea.mockRestore();
   });
 });

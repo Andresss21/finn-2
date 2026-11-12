@@ -35,12 +35,13 @@ export const notificaciones = {
   centro: {
     filtro: 'Mostrar',
     todas: 'Todas',
-    sinLeer: (n: number | null) => (n === null || n === 0 ? 'Sin leer' : `Sin leer · ${n}`),
+    sinLeer: (n: number | null) =>
+      n === null ? 'Sin leer' : n === 0 ? 'Sin leer: 0' : `Sin leer · ${n}`,
     marcarTodo: 'Marcar todo como leído',
     marcando: 'Marcando…',
     todoLeido: 'Todo leído',
     nuevas: 'Nuevas',
-    anteriores: 'Anteriores',
+    anteriores: 'Leídas',
     sinLeerMarca: 'Sin leer',
     yaNoExiste: 'Esto ya no existe',
     vacioTitulo: 'No tenés notificaciones',

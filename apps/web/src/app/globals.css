@@ -178,6 +178,11 @@ body {
   }
 }
 
+/* E6-3: en un flujo no hay barra superior: el aviso de «sin conexión» va arriba del flujo. */
+body:has([data-pagina-flujo]) [data-sin-conexion] {
+  top: 1rem;
+}
+
 /* E6-2: la franja de navegación pendiente recorre su pista; con movimiento reducido no se anima y queda al 38 %. */
 @keyframes finn-franja {
   from {

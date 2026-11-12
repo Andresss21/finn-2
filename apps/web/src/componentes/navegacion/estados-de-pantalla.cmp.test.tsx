@@ -64,7 +64,7 @@ describe('PRU-CMP-AJUS-142 error de pantalla', () => {
     expect(alerta.textContent).toContain('Referencia: E-ABC234');
     const botones = [...alerta.querySelectorAll('button')];
     expect(botones.map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual([
-      'Copiar referencia',
+      'Copiar la referencia',
       'Intentar de nuevo',
     ]);
     for (const b of botones) expect(b.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
@@ -84,7 +84,7 @@ describe('PRU-CMP-AJUS-142 error de pantalla', () => {
     for (const tema of ['claro', 'oscuro'] as const) {
       document.documentElement.dataset['theme'] = tema;
       const raiz = montar(<ErrorDeLaPantalla error={new Error('x')} reset={() => undefined} />);
-      expect(raiz.querySelector('[aria-label="Copiar referencia"]')).toBeNull();
+      expect(raiz.querySelector('[aria-label="Copiar la referencia"]')).toBeNull();
       const { violations } = await axe.run(raiz, {
         runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
       });
