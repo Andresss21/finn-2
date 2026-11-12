@@ -25,6 +25,7 @@ export async function LectorWebhook() {
         configurado={dto.webhook.configurado}
         {...(dto.webhook.rotadoEn === undefined ? {} : { rotadoEn: dto.webhook.rotadoEn })}
         {...(dto.webhook.ultimoSmsEn === undefined ? {} : { ultimoSmsEn: dto.webhook.ultimoSmsEn })}
+        hoy={dto.hoy}
         formato={process.env['FINN_WEBHOOK_FORMATO'] === 'texto' ? 'texto' : 'json'}
       />
     </main>

@@ -14,10 +14,18 @@ export interface PropsConexionMacroDroid {
   readonly rotadoEn?: string;
   /** [CH-227] Instante ISO del último SMS recibido (`AjustesDto.webhook.ultimoSmsEn`). */
   readonly ultimoSmsEn?: string;
+  /** El día de hoy (`AjustesDto.hoy`, `AAAA-MM-DD`): para decir «hoy a las …» sin reloj propio (L20). */
+  readonly hoy: string;
   /** La variante del cuerpo que acepta el servidor (`FINN_WEBHOOK_FORMATO`, BE-61). */
   readonly formato: 'json' | 'texto';
 }
 
+/** «hoy a las 12:41» si el SMS llegó hoy (el día de la interfaz); si no, «el 04/02/2027 a las 04:07». Solo parte el texto ya formateado. */
+function cuandoLlego(iso: string, hoy: string): string {
+  const [fecha = '', hora = ''] = formatearInstante(iso).split(' ');
+  const [dia = '', mes = '', anio = ''] = fecha.split('/');
+  return `${anio}-${mes}-${dia}` === hoy ? t.llegadaHoy(hora) : t.llegadaOtroDia(fecha, hora);
+}
 const sinSuscripcion = () => () => undefined;
 /** El dominio de esta misma página (solo existe en el navegador): `https://<dominio>/api/sms`. */
 const origen = (): string => window.location.origin;
@@ -68,6 +76,7 @@ export function PanelConexion({
   configurado,
   rotadoEn,
   ultimoSmsEn,
+  hoy,
   formato,
 }: PropsConexionMacroDroid) {
   const url = `${useSyncExternalStore(sinSuscripcion, origen, () => '')}/api/sms`;
@@ -79,7 +88,7 @@ export function PanelConexion({
           <AvisoEnLinea estado="positivo">
             {ultimoSmsEn === undefined
               ? t.conectado
-              : t.conectadoConSms(formatearInstante(ultimoSmsEn))}
+              : t.conectadoConSms(cuandoLlego(ultimoSmsEn, hoy))}
           </AvisoEnLinea>
         </div>
       ) : null}

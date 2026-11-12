@@ -38,17 +38,18 @@ function montar(ui: ReactNode): { nodo: HTMLElement } {
   return { nodo };
 }
 
+const HOY = '2027-02-05';
 const enlaceDelToken = (nodo: HTMLElement): HTMLAnchorElement | undefined =>
   [...nodo.querySelectorAll('a')].find((a) => a.getAttribute('href') === '/ajustes/webhook/token');
 
 describe('PRU-CMP-BAND', () => {
   it('PRU-CMP-BAND-101 [CA-03.1] la pantalla nunca muestra el token ni un sufijo ni «Copiar»: dice cuándo se generó y que Finn no lo guarda, y generar abre el flujo corto', () => {
-    const sin = montar(<PanelConexion configurado={false} formato="json" />);
+    const sin = montar(<PanelConexion configurado={false} hoy={HOY} formato="json" />);
     expect(sin.nodo.textContent).toContain(t.sinToken);
     expect(enlaceDelToken(sin.nodo)?.textContent).toBe(t.generar);
 
     const con = montar(
-      <PanelConexion configurado rotadoEn="2027-02-05T16:32:00.000Z" formato="json" />,
+      <PanelConexion configurado rotadoEn="2027-02-05T16:32:00.000Z" hoy={HOY} formato="json" />,
     );
     expect(con.nodo.textContent).toContain('05/02/2027 10:32');
     expect(con.nodo.textContent).toContain(t.noGuardado);
@@ -62,19 +63,19 @@ describe('PRU-CMP-BAND', () => {
   });
 
   it('PRU-CMP-BAND-102 las instrucciones de 04 §8.8 siguen la variante del servidor y nunca llevan el token', () => {
-    const json = montar(<PanelConexion configurado={false} formato="json" />);
+    const json = montar(<PanelConexion configurado={false} hoy={HOY} formato="json" />);
     expect(json.nodo.textContent).toContain(t.cuerpoJson);
     expect(json.nodo.textContent).toContain(t.contenidoJson);
     expect(json.nodo.textContent).not.toContain(t.remitenteTexto);
     expect(json.nodo.textContent).toContain(`/api/sms`);
-    const texto = montar(<PanelConexion configurado={false} formato="texto" />);
+    const texto = montar(<PanelConexion configurado={false} hoy={HOY} formato="texto" />);
     expect(texto.nodo.textContent).toContain(t.remitenteTexto);
     expect(texto.nodo.textContent).toContain(t.contenidoTexto);
   });
 
   it('PRU-CMP-BAND-102 la pantalla no tiene violaciones de axe', async () => {
     const { nodo } = montar(
-      <PanelConexion configurado rotadoEn="2027-02-05T16:32:00.000Z" formato="json" />,
+      <PanelConexion configurado rotadoEn="2027-02-05T16:32:00.000Z" hoy={HOY} formato="json" />,
     );
     const { violations } = await axe.run(nodo);
     expect(violations.map((v) => v.id)).toEqual([]);
@@ -88,23 +89,26 @@ describe('PRU-CMP-AJUS', () => {
         configurado
         rotadoEn="2027-02-01T12:00:00.000Z"
         ultimoSmsEn="2027-02-04T10:07:00.000Z"
+        hoy={HOY}
         formato="json"
       />,
     );
     const aviso = conSms.nodo.querySelector('[data-conexion]') as HTMLElement;
     expect(aviso.querySelector('[data-estado="positivo"]')).not.toBeNull();
-    expect(aviso.textContent).toContain(t.conectadoConSms('04/02/2027 04:07'));
-    expect(t.conectadoConSms('04/02/2027 04:07')).toMatch(/^Conectado\. El último SMS llegó /);
+    expect(aviso.textContent).toContain(t.conectadoConSms('el 04/02/2027 a las 04:07'));
+    expect(t.conectadoConSms('el 04/02/2027 a las 04:07')).toMatch(
+      /^Conectado\. El último SMS llegó /,
+    );
 
     const sinSms = montar(
-      <PanelConexion configurado rotadoEn="2027-02-01T12:00:00.000Z" formato="json" />,
+      <PanelConexion configurado rotadoEn="2027-02-01T12:00:00.000Z" hoy={HOY} formato="json" />,
     );
     const solo = sinSms.nodo.querySelector('[data-conexion]') as HTMLElement;
     expect(solo.textContent).toContain(t.conectado);
     expect(solo.textContent).not.toContain('último SMS');
 
     // Sin token no está conectado: no hay aviso.
-    const sinToken = montar(<PanelConexion configurado={false} formato="json" />);
+    const sinToken = montar(<PanelConexion configurado={false} hoy={HOY} formato="json" />);
     expect(sinToken.nodo.querySelector('[data-conexion]')).toBeNull();
   });
 });

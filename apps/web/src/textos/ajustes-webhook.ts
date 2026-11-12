@@ -5,7 +5,10 @@ export const ajustesWebhook = {
   conToken: (fecha: string) => `Token generado el ${fecha}.`,
   /** [CH-227] Con el token configurado (A27). */
   conectado: 'Conectado',
-  conectadoConSms: (fecha: string) => `Conectado. El último SMS llegó el ${fecha}.`,
+  /** [CH-241 h] `cuando`: «hoy a las 12:41» o «el 04/02/2027 a las 04:07» (11-ajustes/conectar-sms). */
+  conectadoConSms: (cuando: string) => `Conectado. El último SMS llegó ${cuando}.`,
+  llegadaHoy: (hora: string) => `hoy a las ${hora}`,
+  llegadaOtroDia: (fecha: string, hora: string) => `el ${fecha} a las ${hora}`,
   generar: 'Generar token',
   generando: 'Generando…',
   /** [CH-240] E5-18: la pantalla no muestra ningún sufijo ni «Copiar»; Finn guarda solo el SHA-256 del token (04 §8.8). */
