@@ -313,7 +313,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
       expect((await enlace.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   });
 
-  test('PRU-E2E-TX-731 [CH-240] editar la fecha de una conciliada pide el paso con AV-16 de advertencia; cambiar solo la categoría lo muestra de información', async ({
+  test('PRU-E2E-TX-731 [CA-25.4] editar la fecha de una conciliada pide el paso con AV-16 de advertencia; cambiar solo la categoría lo muestra de información', async ({
     page,
   }) => {
     await preparar(ESC47, '2027-02-16');
@@ -331,7 +331,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
     await expect(page.getByText(t.conciliadaAdvertencia('T', 'la fecha'))).toHaveCount(0);
   });
 
-  test('PRU-E2E-TX-732 [CH-240] editar una transacción de una cuenta archivada muestra sus datos, con Cuenta, Fecha y Total en solo lectura', async ({
+  test('PRU-E2E-TX-732 [CA-25.5] editar una transacción de una cuenta archivada muestra sus datos, con Cuenta, Fecha y Total en solo lectura', async ({
     page,
   }) => {
     await preparar(

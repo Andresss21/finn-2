@@ -68,20 +68,23 @@ const ConfirmacionImpacto = lazy(() =>
 // Los campos se cargan aparte: el HTML del servidor ya los trae y el presupuesto de bytes de la ruta no los cuenta (05 §13.1)
 const Edicion = lazy(() => import('./edicion'));
 
+const BLOQUE_52 = 'h-13 rounded-control bg-superficie-hundida motion-safe:animate-pulse';
+const BLOQUE_48 = 'h-12 rounded-control bg-superficie-hundida motion-safe:animate-pulse';
+const BLOQUE_96 = 'h-24 rounded-control bg-superficie-hundida motion-safe:animate-pulse';
+
 /** Mientras llegan los campos: cada control conserva su lugar (P1-02), no una página en blanco (V-01). */
 function EsqueletoDeCampos() {
-  const bloque = 'rounded-control bg-superficie-hundida motion-safe:animate-pulse';
   return (
     <div role="status" aria-busy="true" className="flex flex-col gap-4.5" data-cargando-campos>
       <span className="sr-only">{estados.cargando}</span>
-      <div aria-hidden="true" className={`h-13 ${bloque}`} />
+      <div aria-hidden="true" className={BLOQUE_52} />
       <div aria-hidden="true" className="grid grid-cols-2 gap-2.5">
-        <div className={`h-12 ${bloque}`} />
-        <div className={`h-12 ${bloque}`} />
+        <div className={BLOQUE_48} />
+        <div className={BLOQUE_48} />
       </div>
-      <div aria-hidden="true" className={`h-12 ${bloque}`} />
-      <div aria-hidden="true" className={`h-24 ${bloque}`} />
-      <div aria-hidden="true" className={`h-12 ${bloque}`} />
+      <div aria-hidden="true" className={BLOQUE_48} />
+      <div aria-hidden="true" className={BLOQUE_96} />
+      <div aria-hidden="true" className={BLOQUE_48} />
     </div>
   );
 }

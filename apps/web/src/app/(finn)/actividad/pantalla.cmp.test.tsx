@@ -17,10 +17,9 @@ vi.mock('next/link', async () => {
     createElement('a', { href, ...resto }, children);
   return Object.assign(Enlace, {
     default: Enlace,
-    useLinkStatus: () => ({ pending: enlace.pendiente }),
+    useLinkStatus: () => ({ pending: false }),
   });
 });
-const enlace = vi.hoisted(() => ({ pendiente: false }));
 const reemplazo = vi.hoisted(() => vi.fn());
 vi.mock('next/navigation', () => ({
   usePathname: () => '/actividad',
@@ -169,7 +168,7 @@ describe('PRU-CMP-TX-400 actividad', () => {
     expect(href).toBe(
       `/actividad/t1?volver=${encodeURIComponent('/actividad?texto=sel&cuenta=k1')}`,
     );
-    const mas = [...raiz.querySelectorAll('a')].find((a) => a.textContent === 'Cargar más');
+    const mas = raiz.querySelector('[data-cargar-mas]');
     expect(new URL(mas?.href ?? '').searchParams.get('cursor')).toBe('c|1');
     expect(new URL(mas?.href ?? '').searchParams.get('texto')).toBe('sel');
   });
@@ -375,14 +374,15 @@ describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
       expect(radios.length).toBeGreaterThanOrEqual(4);
     }
     expect(raiz.querySelector('input[name="estado"]')?.getAttribute('value')).toBe('pendiente');
-    expect(raiz.querySelector('[data-cargar-mas]')?.textContent).toBe('Cargar más');
-    enlace.pendiente = true;
-    try {
-      const otra = mostrar(dto([], 'cur-2'));
-      expect(otra.querySelector('[data-cargar-mas]')?.textContent).toBe('Cargando…');
-    } finally {
-      enlace.pendiente = false;
-    }
+    // Mientras navega, `EnlaceFinn` marca el enlace con `aria-busy` y el texto cambia a «Cargando…»
+    const mas = raiz.querySelector<HTMLElement>('[data-cargar-mas]');
+    const visible = () =>
+      [...(mas?.children ?? [])]
+        .filter((x) => getComputedStyle(x).display !== 'none')
+        .map((x) => x.textContent);
+    expect(visible()).toEqual(['Cargar más']);
+    mas?.setAttribute('aria-busy', 'true');
+    expect(visible()).toEqual(['Cargando…']);
   });
 
   it('PRU-CMP-TX-723 [CA-E4-8] en teléfono «Filtros» abre una hoja inferior con el título «Filtros», «Ver resultados» y, con filtros, «Quitar filtros»', async () => {

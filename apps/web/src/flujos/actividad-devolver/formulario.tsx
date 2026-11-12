@@ -142,7 +142,7 @@ export function FormularioActividadDevolver(p: PropsFormularioDevolver) {
       className="w-full"
       {...(operacion.motivoSinEnvio !== undefined
         ? { motivoDeshabilitado: operacion.motivoSinEnvio }
-        : parteSinCorregir && delError !== undefined
+        : parteSinCorregir
           ? { motivoDeshabilitado: t.corregiMonto(delError.nombre) }
           : {})}
     >

@@ -25,6 +25,8 @@ export interface GrupoDeFiltro {
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const BOTON = `inline-flex min-h-11 items-center justify-center rounded-control bg-accion px-4 font-bold text-texto-sobre-accion ${FOCO}`;
 const TONAL = `inline-flex min-h-11 items-center justify-center rounded-control bg-accion-tonal px-4 font-bold text-accion ${FOCO}`;
+const TONAL_PIE = `${TONAL} flex-1`;
+const BOTON_PIE = `${BOTON} flex-1`;
 const DISPARADOR = `inline-flex min-h-12 shrink-0 cursor-pointer items-center gap-1.5 rounded-pastilla px-4 text-etiqueta font-bold @[996px]:hidden ${FOCO}`;
 const ID_HOJA = 'formulario-filtros-hoja';
 
@@ -226,11 +228,11 @@ export function BotonFiltros(p: PropsFiltros) {
           acciones={
             <>
               {activos > 0 ? (
-                <EnlaceFinn href={sinFiltros(p.filtros.texto)} className={`${TONAL} flex-1`}>
+                <EnlaceFinn href={sinFiltros(p.filtros.texto)} className={TONAL_PIE}>
                   {t.quitarFiltros}
                 </EnlaceFinn>
               ) : null}
-              <button type="submit" form={ID_HOJA} className={`${BOTON} flex-1`}>
+              <button type="submit" form={ID_HOJA} className={BOTON_PIE}>
                 {t.verResultados}
               </button>
             </>
