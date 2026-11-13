@@ -5,6 +5,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
+import { empiezaPor } from '../../ayudas/nombres.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { ajustesCiclo as t } from '../../../src/textos/ajustes-ciclo.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
@@ -178,7 +179,7 @@ test.describe('PRU-E2E-AJUS', () => {
   }) => {
     await sembrarOps(ESC45, '2027-11-10');
     await abrir(page, '/ajustes');
-    await page.getByRole('link', { name: t.enlace, exact: true }).click();
+    await page.getByRole('link', { name: empiezaPor(t.enlace) }).click();
     const hoja = page.getByRole('dialog', { name: t.tituloHoja });
     await expect(hoja).toBeVisible();
     await expect(page).toHaveURL(/\/ajustes\/ciclo$/);

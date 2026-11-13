@@ -3,8 +3,7 @@
 // de ícono de 40, el nombre y la flecha. Solo enlaza a las secciones que existen; cada una conserva el texto de su catálogo.
 // [CH-242] Debajo, «Salir» en su propia tarjeta (entrega 3, `16-salir/ajustes-indice`); Apariencia lleva `sun` (GLO-107).
 // [CH-251] Cada fila con su resumen de `ajustes()` (AJU-01): solo formatea lo que trae el DTO. El nombre accesible del
-// enlace es solo el título (`aria-labelledby`); el resumen y los avisos de la fila son su descripción (`aria-describedby`).
-import { useId } from 'react';
+// enlace es todo su texto visible, título y después resumen o aviso (axe `label-content-name-mismatch`, WCAG 2.5.3).
 import { useInstalacion } from '../../../cliente/instalacion';
 import { Icono, type NombreIcono } from '../../../componentes/base/icono';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
@@ -66,7 +65,6 @@ export function ListaAjustes({
   resumen?: ResumenAjustes;
 }) {
   const textos = resumen === undefined ? {} : resumenes(resumen);
-  const base = useId();
   // E5-17: en un iPhone sin instalar, la fila de Notificaciones dice por qué todavía no se puede activar.
   const iosSinInstalar = useInstalacion().oferta === 'ios';
   const lista = (
@@ -74,7 +72,7 @@ export function ListaAjustes({
       data-rol="lista-ajustes"
       className="flex flex-col divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1"
     >
-      {FILAS.map((f, i) => {
+      {FILAS.map((f) => {
         const resumenFila = textos[f.href];
         const atrasado = respaldoAtrasado && f.href === '/ajustes/respaldo';
         const ios = iosSinInstalar && f.href === '/ajustes/notificaciones';
@@ -83,8 +81,6 @@ export function ListaAjustes({
           <li key={f.href}>
             <EnlaceFinn
               href={f.href}
-              aria-labelledby={`${base}-${i}-t`}
-              {...(conDescripcion ? { 'aria-describedby': `${base}-${i}-d` } : {})}
               className="grid min-h-14 grid-cols-[40px_minmax(0,1fr)_16px] items-center gap-3 px-4 py-3 no-underline"
             >
               <span
@@ -94,11 +90,9 @@ export function ListaAjustes({
                 <Icono nombre={f.icono} tamano={20} />
               </span>
               <span className="flex flex-col">
-                <span id={`${base}-${i}-t`} className="text-cuerpo font-semibold text-texto">
-                  {f.texto}
-                </span>
+                <span className="text-cuerpo font-semibold text-texto">{f.texto}</span>
                 {conDescripcion ? (
-                  <span id={`${base}-${i}-d`} className="flex flex-col">
+                  <span className="flex flex-col">
                     {resumenFila === undefined ? null : (
                       <span data-resumen className="text-cuerpo-pequeno text-texto-secundario">
                         {resumenFila}

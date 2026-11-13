@@ -217,7 +217,7 @@ describe('PRU-CMP-AJUS-140 índice de Ajustes', () => {
     expect(resumenDe(otra, '/ajustes/diagnostico')).toBe('2 errores en 7 días');
   });
 
-  it('PRU-CMP-AJUS-791 [FT-72, FT-76] (CH-251) el nombre accesible de cada fila es solo su título y el resumen es su descripción', () => {
+  it('PRU-CMP-AJUS-791 [FT-72, FT-76] (CH-251) el nombre accesible de cada fila es todo su texto visible: empieza por su título e incluye su resumen o aviso', () => {
     const lista = montar(true, {
       diaInicio: 21,
       webhook: { configurado: true },
@@ -225,23 +225,25 @@ describe('PRU-CMP-AJUS-140 índice de Ajustes', () => {
       instituciones: 3,
       erroresSieteDias: 0,
     });
-    const referido = (a: Element, atributo: string) =>
-      (a.getAttribute(atributo) ?? '')
-        .split(' ')
-        .filter(Boolean)
-        .map((id) => document.getElementById(id)?.textContent)
-        .join(' ');
     const fila = (href: string) => lista.querySelector(`a[href="${href}"]`) as Element;
-    expect(referido(fila('/ajustes/ciclo'), 'aria-labelledby')).toBe('Ciclo de los períodos');
-    expect(referido(fila('/ajustes/ciclo'), 'aria-describedby')).toBe('Empieza el día 21');
-    expect(referido(fila('/ajustes/webhook'), 'aria-labelledby')).toBe('Conectar los SMS');
-    expect(referido(fila('/ajustes/webhook'), 'aria-describedby')).toBe('Conectado');
-    expect(referido(fila('/ajustes/exportar'), 'aria-labelledby')).toBe('Exportar tus datos');
-    expect(referido(fila('/ajustes/exportar'), 'aria-describedby')).toBe('JSON y CSV');
-    expect(referido(fila('/ajustes/respaldo'), 'aria-labelledby')).toBe('Respaldo');
-    expect(referido(fila('/ajustes/respaldo'), 'aria-describedby')).toContain('Respaldo atrasado');
-    // Sin resumen ni aviso, la fila no tiene descripción.
-    expect(fila('/ajustes/seguridad').hasAttribute('aria-describedby')).toBe(false);
-    expect(referido(fila('/ajustes/seguridad'), 'aria-labelledby')).toBe('Seguridad');
+    // Sin `aria-labelledby` ni `aria-label`: el nombre sale del contenido (axe `label-content-name-mismatch`).
+    for (const a of lista.querySelectorAll('[data-rol="lista-ajustes"] a')) {
+      expect(a.hasAttribute('aria-labelledby')).toBe(false);
+      expect(a.hasAttribute('aria-label')).toBe(false);
+      expect(a.hasAttribute('aria-describedby')).toBe(false);
+    }
+    const nombre = (href: string) => fila(href).textContent.trim();
+    const casos: readonly (readonly [string, string, string])[] = [
+      ['/ajustes/ciclo', 'Ciclo de los períodos', 'Empieza el día 21'],
+      ['/ajustes/webhook', 'Conectar los SMS', 'Conectado'],
+      ['/ajustes/exportar', 'Exportar tus datos', 'JSON y CSV'],
+      ['/ajustes/respaldo', 'Respaldo', 'Respaldo atrasado'],
+    ];
+    for (const [href, titulo, resumen] of casos) {
+      expect(nombre(href).startsWith(titulo)).toBe(true);
+      expect(nombre(href)).toContain(resumen);
+    }
+    // Sin resumen ni aviso, el nombre es solo el título.
+    expect(nombre('/ajustes/seguridad')).toBe('Seguridad');
   });
 });
