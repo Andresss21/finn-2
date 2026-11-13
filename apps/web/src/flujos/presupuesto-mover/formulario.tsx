@@ -145,8 +145,6 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
             rutaPadre={rutaConResultado(rutaDetalle, {
               tipo: 'movido',
               monto: montoEnviado.current,
-              origenId: c.origenId,
-              destinoId: c.destinoId,
             })}
           />
         )}
