@@ -3,6 +3,7 @@
 // seguir en `/actividad/[transaccionId]/devolver` (OP-33a); sin compra, la devolución a una cuenta y una categoría (OP-33b). Se
 // guarda en un solo viaje (05 §4.4); con la fecha en un período cerrado el servidor pide confirmar (AV-01). No calcula montos
 // (PF-3): lo que queda de cada compra viene del DTO.
+import type { LimitesDeFecha } from '../../formularios/limites-de-fecha';
 import type { ResultadoAccion } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
@@ -55,6 +56,8 @@ export interface PropsFormularioDevolucion {
   readonly accion: AccionEscritura;
   readonly buscar: BuscarCompras;
   readonly hoy: FechaLocal;
+  /** [CH-260] Los límites de la fecha que da el servidor; sin ellos, hasta hoy. */
+  readonly limites?: LimitesDeFecha;
   /** Las compras más recientes con algo por devolver, sin búsqueda. */
   readonly recientes: readonly CompraCandidata[];
   readonly cuentas: readonly OpcionNativa[];
@@ -113,7 +116,7 @@ function Compras({ compras }: { readonly compras: readonly CompraCandidata[] }) 
 }
 
 export function FormularioDevolucion(p: PropsFormularioDevolucion) {
-  const { accion, hoy } = p;
+  const { accion, hoy, limites } = p;
   const [texto, setTexto] = useState('');
   const { buscar } = p;
   const leer = useCallback(
@@ -149,7 +152,7 @@ export function FormularioDevolucion(p: PropsFormularioDevolucion) {
   const operacion = useOperacion({ accion: enviar, creacion: true });
   const formulario = useFormularioFinn<Campos>({
     contrato,
-    valoresIniciales: { total: '', fecha: hoy, cuentaId: '', categoriaId: '' },
+    valoresIniciales: { total: '', fecha: limites?.inicial ?? hoy, cuentaId: '', categoriaId: '' },
     operacion,
   });
   const { setValue, formState } = formulario;
@@ -255,7 +258,8 @@ export function FormularioDevolucion(p: PropsFormularioDevolucion) {
               etiqueta={t.fecha}
               valor={c.fecha as FechaLocal}
               alCambiar={poner('fecha')}
-              maxima={hoy}
+              minima={limites?.minima}
+              maxima={limites?.maxima ?? hoy}
               hoy={hoy}
               error={error('fecha')}
               requerido

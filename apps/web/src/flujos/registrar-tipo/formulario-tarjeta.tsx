@@ -3,6 +3,7 @@
 // cortos de los movimientos de tarjeta que no son compras. La entrada y el avance se guardan en un solo viaje (05 §4.4); la
 // transferencia de deuda pide primero la previsualización porque AV-24 (el cambio en «te falta reservar» de las dos tarjetas) trae
 // sus valores en el aviso. No calcula montos (PF-3): todo lo que muestra lo trae el servidor.
+import type { LimitesDeFecha } from '../../formularios/limites-de-fecha';
 import { mensajeDeRechazo } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { usePathname } from 'next/navigation';
@@ -42,6 +43,8 @@ const SIN_VALORES: ValoresDeUrl = {};
 export interface PropsFormularioRegistrarTarjeta {
   readonly tipo: TipoDeTarjeta;
   readonly hoy: FechaLocal;
+  /** [CH-260] Los límites de la fecha que da el servidor; sin ellos, hasta hoy. */
+  readonly limites?: LimitesDeFecha;
   readonly tarjetas: readonly Cuenta[];
   readonly efectivo: readonly Cuenta[];
   readonly tarjetaPropuesta: string | undefined;
@@ -60,6 +63,7 @@ type DatosAv24 = Readonly<
 export function FormularioRegistrarTarjeta({
   tipo,
   hoy,
+  limites,
   tarjetas,
   efectivo,
   tarjetaPropuesta,
@@ -74,8 +78,8 @@ export function FormularioRegistrarTarjeta({
     registrarMovimientoTarjeta(aEntradaDeAccion(tipo, payload, comercio));
   const operacion = useOperacion({ accion: enviar, creacion: true, previsualizarPrimero: esDeuda });
   const inicial = useMemo(
-    () => valoresIniciales(hoy, tarjetaPropuesta, desdeUrl),
-    [hoy, tarjetaPropuesta, desdeUrl],
+    () => valoresIniciales(limites?.inicial ?? hoy, tarjetaPropuesta, desdeUrl),
+    [hoy, limites, tarjetaPropuesta, desdeUrl],
   );
   const contrato = useMemo(() => contratoDe(tipo), [tipo]);
   const formulario = useFormularioFinn<Campos>({ contrato, valoresIniciales: inicial, operacion });
@@ -248,7 +252,8 @@ export function FormularioRegistrarTarjeta({
             etiqueta={c0.fecha}
             valor={c.fecha as FechaLocal}
             alCambiar={poner('fecha')}
-            maxima={hoy}
+            minima={limites?.minima}
+            maxima={limites?.maxima ?? hoy}
             hoy={hoy}
             error={error('fecha')}
             requerido

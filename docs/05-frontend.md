@@ -546,8 +546,8 @@ Clases: **[P]** sección principal, **[S]** secundaria, **[D]** detalle, **[L]**
   actividad/[transaccionId]/eliminar/                 [C] OP-29
   actividad/[transaccionId]/eventos/eliminar/         [C] OP-34                          ?tipo-evento= &evento= [R2]
   registrar/page.tsx                                  [C] elegir qué registrar
-  registrar/gasto/                                    [L] OP-20 (con split)               ?cuenta=
-  registrar/[tipo]/                                   [C] OP-21, 22, 25, 26, 27, 33b      ?cuenta=
+  registrar/gasto/                                    [L] OP-20 (con split)               ?cuenta=, ?periodo=
+  registrar/[tipo]/                                   [C] OP-21, 22, 25, 26, 27, 33b      ?cuenta=, ?periodo=
   cuentas/page.tsx                                    [P] Cuentas                        ?archivadas=1
   cuentas/ordenar/                                    [C] OP-03
   cuentas/nueva/                                      [L] OP-01                          ?tipo-cuenta= [R2]
@@ -1274,7 +1274,7 @@ Catálogo completo (la regla T9 de V5-18 rechaza cualquier parámetro de §1.3 o
 
 | Parámetro | Significado | Valor | Rutas |
 |---|---|---|---|
-| `?periodo=` | Inicio del período que se ve o al que se aplica la operación | `FechaLocal` | Presupuesto, detalle de categoría, asignar, mover, auto-asignar, detalle de cuenta, gasto semanal |
+| `?periodo=` | Inicio del período que se ve o al que se aplica la operación | `FechaLocal` | Presupuesto, detalle de categoría, asignar, mover, auto-asignar, detalle de cuenta, gasto semanal, `/registrar` y `/registrar/*` **[CH-260]** (el período en contexto: la fecha se limita a él y nunca a después de hoy; los límites los da el servidor; un valor inválido cae en el activo) |
 | `?historial=` | Cantidad de períodos del historial | Entero 1 a 60 | Detalle de LPA |
 | `?filtro=` | Clasificación de las categorías (04 BE-39) | `sobregiradas`, `sin-fondos`, `cubiertas` | Presupuesto |
 | `?categoria=` | Una categoría | Uuid | Actividad (filtra), nueva meta (preselecciona) |

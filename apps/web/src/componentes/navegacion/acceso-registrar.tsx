@@ -7,7 +7,18 @@ import { Icono } from '../base/icono';
 import { EnlaceFinn } from './enlace-finn';
 
 /** N1: Registrar desde un detalle de cuenta abre el gasto con esa cuenta; desde cualquier otra pantalla, `/registrar`. */
-export function rutaRegistrar(pathname: string): string {
+export function rutaRegistrar(
+  pathname: string,
+  busqueda?: { readonly get: (nombre: string) => string | null },
+): string {
+  // [CH-260] Desde Presupuesto en un período (`?periodo=`), Registrar abre con ese período en contexto.
+  const periodo = busqueda?.get('periodo') ?? null;
+  if (
+    periodo !== null &&
+    /^\d{4}-\d\d-\d\d$/.test(periodo) &&
+    /^\/presupuesto(\/|$)/.test(pathname)
+  )
+    return `/registrar?periodo=${periodo}`;
   const detalle = /^\/cuentas\/([^/]+)$/.exec(pathname);
   return detalle?.[1] === undefined
     ? '/registrar'

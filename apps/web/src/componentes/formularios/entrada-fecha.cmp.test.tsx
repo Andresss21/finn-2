@@ -7,6 +7,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
+import { limitesDe } from '../../formularios/limites-de-fecha';
 import { EntradaFecha } from './entrada-fecha';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -157,6 +158,37 @@ describe('PRU-CMP-TX', () => {
     expect(celda(dialogo, '2').disabled).toBe(true);
     expect(celda(dialogo, '3').disabled).toBe(false);
     expect(getComputedStyle(celda(dialogo, '16')).textDecorationLine).toBe('line-through');
+  });
+
+  it('PRU-CMP-TX-811 [FT-21] con los límites del período en contexto, el campo tacha lo que queda fuera del activo (hasta hoy) y de uno anterior (hasta su fin)', async () => {
+    const f = FechaLocal.desdeTexto;
+    const campo = (limites: ReturnType<typeof limitesDe>) => (
+      <EntradaFecha
+        nombre="fecha"
+        etiqueta="Fecha"
+        valor={limites.inicial}
+        alCambiar={() => undefined}
+        minima={limites.minima}
+        maxima={limites.maxima}
+        hoy={HOY}
+      />
+    );
+    // El activo termina después de hoy: el tope es hoy y se abre en hoy.
+    const activo = limitesDe({ inicio: f('2026-09-21'), fin: f('2026-10-20') }, HOY);
+    expect(activo).toEqual({ minima: '2026-09-21', maxima: '2026-10-15', inicial: '2026-10-15' });
+    const raizActivo = montar(campo(activo));
+    const dActivo = await abrir(raizActivo);
+    expect(celda(dActivo, '15').disabled).toBe(false);
+    expect(celda(dActivo, '16').disabled).toBe(true);
+    // Uno anterior: de su inicio a su fin, y se abre en su último día.
+    const pasado = limitesDe({ inicio: f('2026-08-21'), fin: f('2026-09-20') }, HOY);
+    expect(pasado).toEqual({ minima: '2026-08-21', maxima: '2026-09-20', inicial: '2026-09-20' });
+    const raizPasado = montar(campo(pasado));
+    const dPasado = await abrir(raizPasado);
+    expect(dPasado.textContent).toContain('septiembre 2026');
+    expect(celda(dPasado, '20').disabled).toBe(false);
+    expect(celda(dPasado, '21').disabled).toBe(true);
+    expect(celda(dPasado, '1').disabled).toBe(false);
   });
 
   it('PRU-CMP-TX-482 [FT-21] elegir un día cierra el calendario, devuelve el foco al botón y entrega la fecha', async () => {

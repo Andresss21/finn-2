@@ -173,7 +173,7 @@ function CuerpoDelMarco({
     contadores,
     correo,
   };
-  const ruta = rutaRegistrar(pathname);
+  const ruta = rutaRegistrar(pathname, busqueda);
   const volver = volverDeRuta(pathname, busqueda);
   const tipoBarra = barraDeRuta(pathname, busqueda);
   const conAcciones = acciones !== null && acciones.acciones.length > 0;

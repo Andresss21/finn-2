@@ -18,7 +18,7 @@ export interface PropsEntradaFecha {
   readonly etiqueta: string;
   readonly valor: FechaLocal;
   readonly alCambiar: (fecha: FechaLocal) => void;
-  readonly minima?: FechaLocal;
+  readonly minima?: FechaLocal | undefined;
   readonly maxima?: FechaLocal;
   readonly error?: string | undefined;
   readonly requerido?: boolean;

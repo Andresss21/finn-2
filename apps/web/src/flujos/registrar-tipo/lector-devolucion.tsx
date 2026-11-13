@@ -3,12 +3,14 @@
 // búsqueda mientras se escribe es la lectura interactiva de CP-3. Lo único que traduce los errores de la consulta es `consultar()`.
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { devolver } from '../../servidor/acciones/eventos';
+import { limitesDeFecha } from '../../servidor/limites-de-fecha';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { buscarComprasDevolucion } from '../../servidor/lecturas/interactivas';
+import type { BusquedaDePagina } from '../../servidor/parametros';
 import { FormularioDevolucion } from './devolucion-diferida';
 
-export async function LectorDevolucion() {
+export async function LectorDevolucion({ busqueda }: { readonly busqueda: BusquedaDePagina }) {
   const deps = await depsDeConsulta();
   const [dto, compras] = await Promise.all([
     consultar(() =>
@@ -41,6 +43,7 @@ export async function LectorDevolucion() {
       accion={devolver}
       buscar={buscarComprasDevolucion}
       hoy={dto.hoy}
+      limites={await limitesDeFecha(busqueda, dto)}
       recientes={recientes}
       cuentas={cuentas}
       categorias={categorias}
