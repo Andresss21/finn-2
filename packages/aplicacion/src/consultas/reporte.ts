@@ -2,6 +2,8 @@
 // selector puro del dominio (inv. 27); la consulta solo despacha y lee las reglas de comercio [H] donde el selector
 // las pide. Los reportes que son listas van bajo un nombre (`periodos`, `filas`, `comercios`).
 // `patrimonio` renombra `hoy` del selector a `posicionHoy` (CH-39): `hoy` es la fecha del Encabezado.
+// [CH-251] Cada hallazgo sale con su `texto` (06 §3.5.2; catálogo en `textos-hallazgos.ts`), y Tendencia, Ingresos y
+// gastos y Cumplimiento traen el último período de la ventana para su cifra (E5-5).
 // PENDIENTE DE DOMINIO: 6.9 pide `filtros: { cuentas, grupos, categorias }` (CP-12) y ningún selector lo entrega; no se
 // calcula aquí (inv. 27).
 import type { Instantanea, Uuid } from '@finn/dominio';
@@ -10,6 +12,7 @@ import { leerReglasComercio, type LectorTx } from '@finn/db';
 import { parametrosReporte, type ParametrosReporte } from '../contratos/consultas.ts';
 import { consultar, type DepsConsulta, type Encabezado } from './comun.ts';
 import { sinIndefinidos } from './sin-indefinidos.ts';
+import { conTexto, type HallazgoSinTexto } from './textos-hallazgos.ts';
 
 type De<T extends ParametrosReporte['tipo']> = Extract<ParametrosReporte, { tipo: T }>;
 interface Ctx {
@@ -21,20 +24,34 @@ const filtro = (p: {
   readonly cuentaIds?: readonly Uuid[] | undefined;
 }) => sinIndefinidos({ ventana: p.ventana, cuentaIds: p.cuentaIds });
 
+/** El selector con el `texto` de cada hallazgo (06 §3.5.2). */
+const textos = <S extends { readonly hallazgos: readonly HallazgoSinTexto[] }>(
+  s: S,
+): Omit<S, 'hallazgos'> & {
+  readonly hallazgos: (S['hallazgos'][number] & { readonly texto: string })[];
+} => ({ ...s, hallazgos: conTexto<S['hallazgos'][number]>(s.hallazgos) });
+/** [CH-251] El último período de W: el de la cifra (E5-5); ausente si W no tiene ninguno. */
+const ultimo = (i: Instantanea, p: { readonly ventana?: reportes.Ventana | undefined }) =>
+  sinIndefinidos({ ultimoPeriodo: reportes.ultimoPeriodo(i, p.ventana) });
+
 /** El despacho por tipo: el selector del dominio de cada uno. */
 const cuerpos = {
-  ritmo: ({ i }: Ctx) => ritmo(i),
-  realidad: ({ i }: Ctx) => reportes.realidad(i),
+  ritmo: ({ i }: Ctx) => textos(ritmo(i)),
+  realidad: ({ i }: Ctx) => textos(reportes.realidad(i)),
   hormiga: async ({ i, tx }: Ctx, p: De<'hormiga'>) =>
-    reportes.hormiga(
-      i,
-      await leerReglasComercio(tx),
-      sinIndefinidos({ periodo: p.periodo, cuentaIds: p.cuentaIds }),
+    textos(
+      reportes.hormiga(
+        i,
+        await leerReglasComercio(tx),
+        sinIndefinidos({ periodo: p.periodo, cuentaIds: p.cuentaIds }),
+      ),
     ),
-  suscripciones: async ({ i, tx }: Ctx) => reportes.suscripciones(i, await leerReglasComercio(tx)),
-  hallazgos: async ({ i, tx }: Ctx) => reportes.hallazgos(i, await leerReglasComercio(tx)),
-  tarjetas: ({ i }: Ctx, p: De<'tarjetas'>) => reportes.tarjetas(i, filtro(p)),
-  flujo_efectivo: ({ i }: Ctx, p: De<'flujo_efectivo'>) => reportes.flujoEfectivo(i, filtro(p)),
+  suscripciones: async ({ i, tx }: Ctx) =>
+    textos(reportes.suscripciones(i, await leerReglasComercio(tx))),
+  hallazgos: async ({ i, tx }: Ctx) => textos(reportes.hallazgos(i, await leerReglasComercio(tx))),
+  tarjetas: ({ i }: Ctx, p: De<'tarjetas'>) => textos(reportes.tarjetas(i, filtro(p))),
+  flujo_efectivo: ({ i }: Ctx, p: De<'flujo_efectivo'>) =>
+    textos(reportes.flujoEfectivo(i, filtro(p))),
   patrimonio: ({ i }: Ctx, p: De<'patrimonio'>) => {
     const { hoy, serie } = reportes.patrimonio(i, filtro(p));
     return { posicionHoy: hoy, serie };
@@ -42,13 +59,18 @@ const cuerpos = {
   datos_base: ({ i }: Ctx, p: De<'datos_base'>) => datosBase(i, filtro(p)),
   categorias: ({ i }: Ctx, p: De<'categorias'>) =>
     reportes.categorias(i, { ...filtro(p), ...sinIndefinidos({ grupoId: p.grupoId }) }),
-  tendencia: ({ i }: Ctx, p: De<'tendencia'>) => ({ periodos: reportes.tendencia(i, filtro(p)) }),
+  tendencia: ({ i }: Ctx, p: De<'tendencia'>) => ({
+    periodos: reportes.tendencia(i, filtro(p)),
+    ...ultimo(i, p),
+  }),
   ingresos_gastos: ({ i }: Ctx, p: De<'ingresos_gastos'>) => ({
     periodos: reportes.ingresosGastos(i, filtro(p)),
+    ...ultimo(i, p),
   }),
   remanente: ({ i }: Ctx, p: De<'remanente'>) => ({ periodos: reportes.remanente(i, filtro(p)) }),
   cumplimiento: ({ i }: Ctx, p: De<'cumplimiento'>) => ({
     filas: reportes.cumplimiento(i, filtro(p)),
+    ...sinIndefinidos({ resumen: reportes.resumenCumplimiento(i, filtro(p)) }),
   }),
   top_comercios: async ({ i, tx }: Ctx, p: De<'top_comercios'>) => ({
     comercios: reportes.topComercios(i, await leerReglasComercio(tx), {

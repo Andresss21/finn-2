@@ -139,11 +139,11 @@ test.describe('PRU-E2E-TX actividad', () => {
     await preparar(CAFES);
     await abrir(page, '/actividad?tipo=gasto');
     await expect(page.locator('[data-dia="2027-03-03"] h2')).toHaveText('Miércoles 03/03');
-    // En teléfono el botón «Filtros · 1» abre la hoja inferior (ACT-05) y «Ver resultados» aplica
+    // En teléfono el botón «Filtros · 1» abre la hoja inferior (ACT-05) y «Ver N resultados» aplica (CH-250)
     await page.getByRole('button', { name: 'Filtros, 1 activos' }).click();
     const hoja = page.getByRole('dialog');
     await hoja.getByLabel('Categoría').selectOption({ label: 'Cafés' });
-    await hoja.getByRole('button', { name: 'Ver resultados' }).click();
+    await hoja.getByRole('button', { name: /^Ver \d+ resultados?$/ }).click();
     await expect(page).toHaveURL(/categoria=/);
     await expect(page).toHaveURL(/tipo=gasto/);
     await page.getByRole('link', { name: 'Quitar filtro Gasto' }).click();

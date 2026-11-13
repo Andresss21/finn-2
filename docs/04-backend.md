@@ -1896,6 +1896,7 @@ No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; c�
 - **Precondiciones:** saldo = 0 (`cuenta_con_saldo`). Tarjeta: deuda = 0 (`tarjeta_con_deuda`); Disp(pago(t), A) = 0 (`reserva_tarjeta_no_cero`); sin asignaciones futuras en pago(t), o `devolverAsignacionesFuturas = true` (si no, rechazo `reserva_tarjeta_no_cero` con `datos.futuras`).
 - **Hechos:** F2 `asignaciones` futuras de pago(t) si se aceptó; F4 `cuentas.archivada = true`; tarjeta: F4 `categorias.archivada = true` de pago(t) (03 §4.5.4, misma transacción).
 - **Errores:** `cuenta_con_saldo`, `tarjeta_con_deuda`, `reserva_tarjeta_no_cero`, `cuenta_ya_archivada`.
+- **[CH-252] Propuesta** (4.3 [CH-36]): en una tarjeta con asignaciones futuras de pago(t) (montos ≠ 0 en períodos posteriores al activo), `previsualizar` trae `propuesta.asignacionesFuturas = { monto: Centavos; desde: FechaLocal; hasta: FechaLocal }`: su suma, el inicio del primer período y el fin del último (E2-15: «$X de dd/mm–dd/mm vuelven a Listo para asignar»). Viaja con `devolverAsignacionesFuturas` en `true` o en `false` (con el rechazo). No cambia los hechos ni la huella.
 
 #### OP-05 Desarchivar cuenta
 
@@ -2379,7 +2380,7 @@ Conciliación sin CSV: el usuario escribe la fecha y el saldo que muestra su ban
 
 - **Entrada:** `id` (de la conciliación); `cuentaId`; `fechaEstado: FechaLocal`; `saldoEstado: MontoTextoConSigno` (en una tarjeta, positivo = deuda, como en OP-01; el dominio lo convierte a la convención de 01 §0.4); `marcar: { todas: true } | { ids: Uuid[] }`; `revisionVista?`, `huellaImpacto?`.
 - **Idempotencia:** creación (`conciliaciones.id`).
-- **Confirmación:** siempre; previsualizar primero (05 FE-07). La previsualización devuelve en `propuesta` (4.3) **[CH-36]** `saldoFinn` = saldo(cuenta, fechaEstado), `diferencia` = saldoEstado − saldoFinn (convención de ESC-47) y la cantidad de transacciones que marcaría.
+- **Confirmación:** siempre; previsualizar primero (05 FE-07). La previsualización devuelve en `propuesta` (4.3) **[CH-36]** `saldoFinn` = saldo(cuenta, fechaEstado), `diferencia` = saldoEstado − saldoFinn (convención de ESC-47) y la cantidad de transacciones que marcaría. **[CH-252]** En una tarjeta suma `deudaFinn` = −`saldoFinn`, la deuda con el signo con que la escribe el usuario, para «Deuda en Finn al {fecha}» (E2-14); no cambia los hechos ni la huella.
 - **Precondiciones:** cuenta de efectivo o tarjeta (`cuenta_tipo_no_valido`), abierta (`cuenta_archivada`); `fechaEstado ≤ hoy` (`fecha_posterior_a_hoy`) y ≥ apertura (`fecha_anterior_a_apertura`); cada transacción marcada tiene un efecto en la cuenta, fecha ≤ `fechaEstado` (`transaccion_fuera_de_verificacion`) y no está conciliada (`transaccion_ya_conciliada`). Con `{ todas: true }` se marcan las transacciones de la cuenta con fecha ≤ `fechaEstado` en estado pendiente o confirmada.
 - **Hechos:** F3 `conciliaciones` (`cuenta_id`, `fecha_estado`, `saldo_estado`, `terminada_en` = instante, `diferencia_aceptada` = saldoEstado − saldo(cuenta, fechaEstado), `modo = 'saldo'`); F4 `transacciones` marcadas: `estado_bancario = 'conciliada'`, `conciliacion_id` (orden F3 → F4, como OP-47).
 - **Avisos:** después y estado: AV-21 si la diferencia ≠ 0, con la propuesta de ajuste de OP-47.
@@ -2727,9 +2728,9 @@ interface CuentasDto extends Encabezado {
               saldoConfirmado: Centavos;
               usoSinReservarBp: number | null }[];   // [F6] CF-25: S(t) × 10.000 / límite, tope 10.000; null sin límite o con 0
   prestamos: { cuenta: Ref; contraparte: string; capitalPendiente: Centavos;
-               proximaCuota?: { fecha: FechaLocal; monto: Centavos; numero: number } }[];   // con modelo (Anexo A)
+               proximaCuota?: { fecha: FechaLocal; monto: Centavos; numero: number } }[];   // con modelo (Anexo A); [CH-252] también sin modelo
   inversiones: { cuenta: Ref; valor: Centavos }[];
-  archivadas: Ref[];                                   // solo si incluirArchivadas
+  archivadas: (Ref & { institucion?: string })[];      // solo si incluirArchivadas; [CH-252] con su institución
   posicionNeta: {                                      // §4.14
     activos: { efectivo; saldosAFavor; inversiones; porCobrar: Centavos; total: Centavos };
     deudas: { tarjetas; prestamos: Centavos; total: Centavos };
@@ -2742,6 +2743,8 @@ interface CuentasDto extends Encabezado {
 
 - `proximoCorte` y `proximoPago`: primera fecha ≥ hoy con el día de corte o de pago, recortado al fin de mes (§4.14, supuesto 19).
 - `usoLimite`: deuda × 10.000 / límite, mitad hacia arriba (6.0.3).
+- **[CH-252]** `proximaCuota` (talón del préstamo, E2-11 de la entrega 4): con modelo, la primera cuota no pagada de la tabla (Anexo A); sin modelo, la de las condiciones: número = `cuotasPagadasAlCrear` + cuotas registradas + 1, fecha = apertura + número × frecuencia (la regla de las ocurrencias de 01 §4.16: mensual y anual con el día recortado al fin de mes; semanal, quincenal = 14 días y cada N días por días) y monto = `cuotaPactada`. No va si el número pasa de `plazoCuotas`, si el capital pendiente es 0 o si la frecuencia es cada N días sin N.
+- **[CH-252]** `archivadas` trae la institución para «Archivada · {banco}». La fecha de archivo no es un hecho (03 no la guarda y no se agrega sin migración): no se devuelve.
 
 ### 6.6 Detalle de cuenta
 
@@ -2766,6 +2769,7 @@ interface DetalleCuentaDto extends Encabezado {
   }[];
   programadas: { programada: Ref; rol: 'origen' | 'destino'; activa: boolean }[];
   tarjeta?: { color?: string /* [CH-228] el hex guardado */; deuda; saldoAFavor; reservado; faltaReservar; reservaExcedente; limite: Centavos; usoLimite: number;
+              reservadoBp: number | null;                         // [CH-252] CTA-26: reservado × 10.000 / deuda, tope 10.000; null sin deuda
               categoriaPago: Ref;                                 // [CH-222] la categoría de pago de la tarjeta (BE-35)
               cicloFacturacion: { desde: FechaLocal; hasta: FechaLocal };
               desgloseAlPagar: { deudaAnterior; cargosDelCiclo; yaPagado; paraNoGenerarIntereses: Centavos;
@@ -2773,6 +2777,7 @@ interface DetalleCuentaDto extends Encabezado {
   prestamo?: {
     condiciones: CondicionesPrestamoDto;                 // columnas de prestamos (03 §3.6)
     capitalPendiente: Centavos;
+    proximaCuota?: { fecha: FechaLocal; monto: Centavos; numero: number };   // [CH-252] la de 6.5, con modelo o sin él
     amortizacion: { numero: number; fecha: FechaLocal; interes; seguro; capital; saldo: Centavos;
                     estado: 'pagada' | 'parcial' | 'pendiente' | 'atrasada'; pagado: Centavos }[] | null;  // null sin modelo
     comparacion: { proyectadoHastaHoy: Centavos; pagadoHastaHoy: Centavos } | null;
@@ -2785,6 +2790,7 @@ interface DetalleCuentaDto extends Encabezado {
 
 - Lee `conciliaciones` (hechos) y `cambios_posteriores` ([H]).
 - `diferenciaActual` = saldo según el estado − saldo de las conciliadas (DM-8); el selector la calcula por conciliación.
+- **[CH-252]** `tarjeta.reservadoBp`: máx(0, reservado) × 10.000 / deuda, mitad hacia arriba (6.0.3), con tope 10.000, como `usoSinReservarBp` (CF-25); `null` si la deuda es 0. Es la barra «Reservado $X de $Y» del detalle de la tarjeta, que el cliente no calcula. `prestamo.proximaCuota` es la de 6.5.
 
 ### 6.7 Actividad y detalle de transacción
 
@@ -2796,6 +2802,7 @@ interface DetalleCuentaDto extends Encabezado {
 interface ActividadDto extends Encabezado {
   dias: { fecha: FechaLocal; transacciones: TransaccionFila[] }[];
   siguienteCursor?: Cursor;
+  conteo: number; total: Centavos;                     // [CH-250] todas las coincidencias, no solo la página
 }
 interface TransaccionFila {
   id: Uuid; fecha: FechaLocal; tipo: TipoTransaccion;
@@ -2805,12 +2812,14 @@ interface TransaccionFila {
   lineas: { destino: Ref & { tipo: 'categoria' | 'deudor' }; monto: Centavos }[];
   estadoBancario: EstadoBancario; origen: OrigenTransaccion;
   marcas: { porCobrar: boolean; conDevoluciones: boolean; conciliada: boolean; programada: boolean; periodoCerrado: boolean };
+  enCamino?: Centavos;                                 // [CH-250] lo abierto por cobrar de sus líneas, solo si es > 0
 }
 ```
 
 - Los filtros por cuenta, categoría, fechas, montos, estado, tipo y origen se aplican sobre los hechos en memoria.
 - **Búsqueda por texto:** `nota` no se carga en los hechos del motor (5.2), así que `texto` se resuelve con una consulta en la misma instantánea: `SELECT id FROM finn.transacciones WHERE comercio ILIKE $1 OR nota ILIKE $1` (sin índice, como prevé 03 §6; con 50.000 filas es un recorrido secuencial de milisegundos), y el resultado filtra los hechos. El texto se escapa (`%` y `_`).
 - `montoDesde` y `montoHasta` comparan con `total`.
+- **[CH-250]** `conteo` es cuántas transacciones coinciden con el texto y los filtros, en todas las páginas, y `total` la suma de su `montoPresentado` (ACT-04, ACT-08 de la auditoría: «5 transacciones · −$229.09», «2 resultados para …», «Ver N resultados»). `enCamino` es la suma de `abierto` (§4.10) de las líneas de la fila (E6-17: «En camino $40.00»). Se leen de los mismos hechos y del motor, sin lecturas nuevas.
 
 #### 6.7.2 Detalle de transacción
 
@@ -2832,6 +2841,10 @@ interface DetalleTransaccionDto extends Encabezado {
     condonaciones: { id: Uuid; fecha: FechaLocal; monto: Centavos; categoria: Ref }[];
     devoluciones: { transaccionId: Uuid; fecha: FechaLocal; monto: Centavos; caso: 'D-1' | 'D-2' | 'D-3' | 'D-4' }[];
   }[];
+  efectosHoy: {                                        // [CH-250] «Efectos hoy» (ACT-18)
+    categorias: { categoria: Ref; disponible: Centavos }[];   // Disp(c, A) de hoy de cada categoría de sus líneas
+    tarjetas: { cuenta: Ref; deuda: Centavos }[];              // deuda(t) de hoy de cada tarjeta de sus efectos
+  };
   conciliacion?: { id: Uuid; fechaEstado: FechaLocal };
   cambiosPosteriores: { registradoEn: Instante; motivos: MotivoCambio[] }[];
   origenDetalle?: { sms: { texto: string; recibidoEn: Instante; movimientoId: Uuid } }
@@ -2846,6 +2859,7 @@ interface DetalleTransaccionDto extends Encabezado {
 ```
 
 - Lee `nota`, `moneda_original` y `monto_original` de la fila, `movimientos` y `sms_recibidos` ([H], [I]) y `cambios_posteriores` ([H]).
+- **[CH-250]** `efectosHoy` lista, en el orden de las líneas y sin repetir, cada categoría que tocan (una devolución sigue a su línea original) con su Disponible del período activo, y cada tarjeta de los efectos con su deuda de hoy (§4.8). Son los mismos números de Presupuesto y Cuentas; sin categorías ni tarjetas, la interfaz muestra el efecto en cada cuenta.
 
 
 ### 6.8 Bandeja de SMS
@@ -2888,6 +2902,7 @@ interface MovimientoDto {
 - Lee `movimientos`, `movimiento_lineas` ([H]), `sms_recibidos` y el último `sms_procesamientos` de cada SMS ([I]), y `formatos_bancarios` ([H]) para los nombres.
 - `aprobacion` se calcula con las precondiciones de OP-37 y las reglas de exclusión de OP-38 (período cerrado, `pago_tarjeta`, estado distinto de `pendiente`); no es una fórmula nueva.
 - `errorDetalle` es el detalle saneado (7.8).
+- **[CH-250]** La salida de OP-38 (`elementos`) trae `transaccionId` en cada movimiento que tiene transacción: la que creó (`aprobado`, `ya_aplicada`) o la de una aprobación anterior (`movimiento_estado_no_valido` con estado `aprobado`). El «Ver transacción» de AV-19 lleva a `/actividad/[id]`; sin `transaccionId`, al movimiento.
 - **[F6] Frecuentes (CF-22).** Las categorías normales y activas con más líneas en transacciones de tipo gasto con fecha en los últimos `ARRASTRE_FRECUENTES_DIAS` (90) días, hoy incluido; desempate por la línea más reciente y después por el orden del presupuesto. Sin historial, las primeras por orden de grupo y categoría. Se calculan sobre la instantánea, sin lecturas nuevas.
 
 **BE-41. Cuenta de origen propuesta para un pago de tarjeta (ajuste 3).** Para un movimiento con `tipo_propuesto = 'pago_tarjeta'` y cuenta t:
@@ -2902,6 +2917,12 @@ Se deriva de los hechos, sin columna nueva. La interfaz envía `origenPropuesto`
 `consultas.reporte({ tipo, ventana?: 'actual' | 'ultimos_1' | 'ultimos_3' | 'ultimos_6' | 'ultimos_12', cuentaIds?: Uuid[], ... })` — un tipo por llamada.
 
 **[F5] Filtros (CP-12).** Todo DTO de reporte extiende `Encabezado` (6.0.2) y agrega `filtros: { cuentas: Ref[]; grupos: Ref[]; categorias: Ref[] }`, con las archivadas que tuvieron actividad en la ventana, para que la pantalla muestre los filtros por nombre. Vale también para `GastoSemanalDto` (6.9.3) y `DatosBaseDto` (6.9.4).
+
+**[CH-251] Cifra de cada reporte y texto de los hallazgos** (E5-5 y E5-22 de la entrega 4). La cifra principal es siempre un campo del DTO (PF-3):
+- `tendencia` e `ingresos_gastos` suman `ultimoPeriodo?: PeriodoDto`, el último período de W (`cerrado` con `ultimos_n`, `activo` con `actual`; ausente si W está vacía): la cifra es `gastos` o `diferencia` de su fila y la frase dice sus fechas («el último período cerrado, del 21/08 al 20/09»). Selector `ultimoPeriodo`.
+- `cumplimiento` suma `resumen?: { periodo: PeriodoDto; sePasaron: number; categorias: number }` del último período de W: `categorias` = sus filas; `sePasaron` = las de Gastado > máx(Asig, 0) («2 de 8»; una desasignación sin gasto no se pasa). Selector `resumenCumplimiento`.
+- `realidad` suma `alejadas: number`, la cantidad de hallazgos `promedio` (las categorías que se alejan de su promedio); `flujo_efectivo` suma `variacion: Centavos` = saldo final del último período de W − saldo inicial del primero.
+- Todo `HallazgoDto` de `reporte()` y `hallazgosRitmo` de `inicio()` traen `texto` (6.0.3, 06 §3.5.2): la aplicación lo arma con el catálogo de 7.10 sobre los datos del selector (`consultas/textos-hallazgos.ts`); el dominio no tiene textos. La interfaz lo muestra tal cual. Los textos de las acciones (`Asignar {monto}`, `Revisar {categoría}`) siguen en la interfaz.
 
 #### 6.9.1 Definiciones comunes (BE-40) [Propio]
 
@@ -3053,11 +3074,14 @@ interface AjustesDto extends Encabezado {
               respaldoAtrasado: boolean; restauracionAtrasada: boolean };    // > 36 h, > 35 días (03 §7.5)
   diagnostico: { ocurridoEn: Instante; nivel: 'aviso' | 'error'; origen: string; mensaje: string; idError?: string }[]; // 50 últimos (§15)
   exportaciones: { json: string; csv: string };                           // rutas de descarga (OPT-08)
+  resumen: { formatosActivos: number; instituciones: number;              // [CH-251] el índice de Ajustes (AJU-01)
+             erroresSieteDias: number };                                  // eventos `error` con ocurrido_en > finn.ahora() − 7 días
 }
 ```
 
 - Lee tablas [H] (`formatos_bancarios`, `instituciones`), [I] (conteo de `sms_procesamientos` por `formato_id`) y [T] (`token_webhook`, `suscripciones_push`, `estado_respaldo`, `eventos_sistema`).
 - `endpointCorto`: dominio del servicio de push y los últimos 8 caracteres; nunca las claves. **[CH-73]** Lo calcula `endpointCorto(endpoint)`, función pura exportada por `@finn/dominio/valores`: la interfaz la aplica al `endpoint` de `getSubscription()` y lo compara con el de cada fila para reconocer "este dispositivo". `id` es el de `suscripciones_push` y es lo que la interfaz envía a OPT-03.
+- **[CH-251]** `resumen` alimenta las filas del índice («4 activos», «Sin errores en 7 días»); el día del ciclo y «Conectado · último SMS» salen de `ciclo` y `webhook`. «N factores · N sesiones» no está: los factores son de Auth (12.2) y Auth no lista las sesiones sin la clave de servicio; tampoco el tema (se guarda en el dispositivo, FT-77) ni el permiso de notificaciones (del navegador).
 - El estado de los factores TOTP lo da Supabase Auth, no la base; lo define §12 (Parte C). **[F5]** La pantalla lo lee con `estadoSeguridad()` (12.2, CP-4); `AjustesDto` no cambia.
 
 ### 6.12 Otras pantallas conocidas
@@ -3088,7 +3112,9 @@ interface ProgramadasDto extends Encabezado {
 
 #### 6.12.2 Reglas de comercio
 
-`consultas.reglas()` → `{ reglas: { id; patron; categoria: Ref; categoriaArchivada: boolean }[] }`. Las reglas hacia categorías archivadas se muestran marcadas porque se ignoran al sugerir (§4.17, B-10).
+`consultas.reglas()` → `{ reglas: { id; patron; categoria: Ref; categoriaArchivada: boolean; coincideCon: string[] }[] }`. Las reglas hacia categorías archivadas se muestran marcadas porque se ignoran al sugerir (§4.17, B-10).
+
+**[CH-251]** `coincideCon` («Coincide con», E4-22): hasta 3 comercios distintos (sin espacios en los extremos) de las transacciones cuyo comercio normalizado contiene el patrón sin distinguir mayúsculas (§4.17), de la más reciente a la más antigua; selector puro `coincidenciasDeReglas(instantanea, reglas)`. «Usada N veces» no se entrega: ningún hecho guarda qué regla categorizó una transacción o un movimiento, y no se infiere.
 
 #### 6.12.3 Por cobrar
 
@@ -3107,7 +3133,7 @@ interface PorCobrarDto extends Encabezado {
 
 #### 6.12.4 Administración de grupos y categorías
 
-`consultas.estructura()` → árbol `{ grupo: Ref & { archivado, sistema: boolean }; categorias: { categoria: Ref; clase: 'normal' | 'pago'; archivada: boolean; tieneMeta: boolean; puedeEliminar: boolean; puedeArchivar: boolean }[] }[]`. `puedeEliminar` y `puedeArchivar` siguen las precondiciones de OP-09 y OP-13 (`reglas_comercio` es [H]).
+`consultas.estructura()` → árbol `{ grupo: Ref & { archivado, sistema: boolean }; categorias: { categoria: Ref; clase: 'normal' | 'pago'; archivada: boolean; tieneMeta: boolean; puedeEliminar: boolean; puedeArchivar: boolean }[] }[]`. `puedeEliminar` y `puedeArchivar` siguen las precondiciones de OP-09 y OP-13 (`reglas_comercio` es [H]). **[CH-252]** Las categorías archivadas no traen fecha de archivo: no es un hecho (03 no la guarda) y no se agrega sin migración; la pantalla dice «Archivada» sin fecha.
 
 #### 6.12.5 Centro de notificaciones
 
@@ -4447,3 +4473,6 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-234** (Fase 8, decidido por el orquestador con delegación del usuario, 10 de noviembre de 2026, `08-tareas.md` §7). `DetalleCuentaDto.tarjeta.desgloseAlPagar` trae `proximoPago`, la misma fecha que `cuentas()` (6.5) y el detalle de la categoría de pago: la fila «Pagá antes del…» del detalle de la tarjeta (AUDITORIA A17). Lectura sin regla nueva (6.6). Marca **[CH-234]**.
 - **CH-246** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). `Impacto` suma los valores antes y después de cada Δ (`lpaAntes`, `lpaDespues`; `antes` y `despues` en `deltaDisponible`; `saldoAntes`, `saldoDespues`, `reservaAntes` y `reservaDespues` en `deltaTarjetas`), que viajan en `previsualizar` y en `REQUIERE_CONFIRMACION` y no entran en `huellaImpacto` (2.4, 4.3). Marca **[CH-246]**.
 - **CH-E5-4 y CH-247** (diseño, entrega 4 · etapa 5, aprobado por el dueño, y Fase 8, decidido por el orquestador con delegación del usuario; aplicados con TA-595 el 12 de noviembre de 2026, `08-tareas.md` §7, CH-240 c). Textos de `patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento` (con `unknown` y el grado exponencial) y `nombre_repetido` de una institución (7.10); la salida de `validarFormato` suma la repetición del ataque, sin cambiar la política (8.5). Marcas **[CH-240]** y **[CH-247]**.
+- **CH-250** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). `ActividadDto` suma `conteo` y `total` de todas las coincidencias y `TransaccionFila` suma `enCamino` (6.7.1); `DetalleTransaccionDto` suma `efectosHoy` con el Disponible de hoy de cada categoría y la deuda de cada tarjeta (6.7.2); la salida de OP-38 trae `transaccionId` por movimiento (6.8). Lecturas de la instantánea, sin reglas ni migraciones nuevas. Marcas **[CH-250]**.
+- **CH-251** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Datos que la entrega 4 pedía y el servidor no entregaba: la cifra de `tendencia`, `ingresos_gastos` (`ultimoPeriodo`), `cumplimiento` (`resumen`), `realidad` (`alejadas`) y `flujo_efectivo` (`variacion`), y `texto` en cada `HallazgoDto` (6.9); `resumen` en `ajustes()` (6.11); `coincideCon` en `reglas()` (6.12.2). Lecturas sin reglas nuevas ni migración. Marca **[CH-251]**.
+- **CH-252** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Datos que la entrega 4 pide y el servidor no entregaba: `proximaCuota` del préstamo también sin modelo, con las condiciones (6.5, 6.6; E2-11); `archivadas` con su institución (6.5); `tarjeta.reservadoBp` en el detalle (6.6; CTA-26); `propuesta.asignacionesFuturas` en OP-04 (E2-15) y `propuesta.deudaFinn` en OP-53 (E2-14). Solo datos de salida y de previsualización: los hechos y la huella no cambian. La fecha de archivo de cuentas y categorías no es un hecho y no se agrega sin migración (6.5, 6.12.4). Marca **[CH-252]**.

@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { clienteConFrasco, entrarAal2, variable } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { empiezaPor } from '../../ayudas/nombres.ts';
 import { revisarTactil } from '../../ayudas/tactil.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { ingresar } from '../../../../../packages/aplicacion/src/autenticacion/supabase.ts';
@@ -156,7 +157,7 @@ test.describe('PRU-E2E-AJUS', () => {
     await preparar();
     await page.goto('/ajustes');
     await esperarContenido(page);
-    await page.getByRole('link', { name: t.titulo, exact: true }).click();
+    await page.getByRole('link', { name: empiezaPor(t.titulo) }).click();
     await expect(page).toHaveURL(/\/ajustes\/exportar$/);
     await esperarContenido(page);
     await expect(page.getByRole('heading', { level: 1, name: t.titulo })).toBeVisible();

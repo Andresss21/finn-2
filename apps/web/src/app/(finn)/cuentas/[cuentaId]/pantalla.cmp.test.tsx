@@ -651,6 +651,7 @@ describe('PRU-CMP-CTA-260 detalle de cuenta portado del export (CH-142)', () => 
         estado: n < 3 ? 'pagada' : 'pendiente',
         pagado: n < 3 ? 21000 : 0,
       })),
+      proximaCuota: { numero: 3, fecha: '2027-03-20', monto: 21000 }, // [CH-252] la que trae el DTO
     };
     const activo = mostrar(dto({ cuenta: cuentaDe('prestamo'), prestamo }));
     const proxima = activo.querySelector('[data-bloque="proxima-cuota"]');
@@ -864,5 +865,70 @@ describe('PRU-CMP-CTA-721 filtros del detalle sin resultados', () => {
     expect(seccion.querySelector('h2')?.textContent).toBe('Cerrado · Movimientos de ese período');
     expect(seccion.querySelector('[data-selector-periodo="cerrado"]')).not.toBeNull();
     expect(mostrar(dto()).querySelector('[data-movimientos] h2')?.textContent).toBe('Movimientos');
+  });
+});
+
+describe('PRU-CMP-CTA-790 datos del servidor en el detalle de la cuenta (CH-252)', () => {
+  it('PRU-CMP-CTA-790 [Q-detalleCuenta] un préstamo sin modelo muestra la próxima cuota que trae el DTO, «Próxima cuota · 4 de 6» con su fecha, sin tabla', () => {
+    const raiz = mostrar(
+      dto({
+        cuenta: cuentaDe('prestamo'),
+        prestamo: {
+          condiciones: { contraparte: 'Un amigo', cuotaPactada: 5000, plazoCuotas: 6 },
+          capitalPendiente: 15000,
+          comparacion: null,
+          costoFinanciero: { interes: 0, seguro: 0 },
+          amortizacion: null,
+          proximaCuota: { numero: 4, fecha: '2027-05-10', monto: 5000 },
+        },
+      }),
+    );
+    const proxima = raiz.querySelector('[data-bloque="proxima-cuota"]');
+    expect(proxima?.textContent).toContain('Próxima cuota · 4 de 6');
+    expect(proxima?.textContent).toContain('10/05/2027');
+    expect(proxima?.textContent).toContain('$50.00');
+    expect(raiz.querySelector('table')).toBeNull();
+  });
+
+  it('PRU-CMP-CTA-791 [Q-detalleCuenta] la tarjeta dibuja «Reservado $623.43 de $642.18» con 97.08 % y la barra a lo ancho de reservadoBp (9708); sin reservadoBp, las filas de antes', () => {
+    const tarjeta = {
+      categoriaPago: { id: 'pago-visa-oro', nombre: 'Visa Oro' },
+      deuda: 64218,
+      saldoAFavor: 0,
+      reservado: 62343,
+      faltaReservar: 1875,
+      reservaExcedente: 0,
+      limite: 250000,
+      usoLimite: 2569,
+      reservadoBp: 9708,
+      cicloFacturacion: { desde: '2027-02-16', hasta: '2027-03-15' },
+      desgloseAlPagar: {
+        deudaAnterior: 51240,
+        cargosDelCiclo: 42978,
+        yaPagado: 30000,
+        paraNoGenerarIntereses: 21240,
+        proximoPago: '2027-04-05',
+      },
+    };
+    const raiz = mostrar(dto({ cuenta: cuentaDe('tarjeta'), saldo: -64218, tarjeta }));
+    const barra = raiz.querySelector('[data-barra-reservado]') as HTMLElement;
+    const rotulo = barra.querySelector('p > span') as HTMLElement;
+    expect(rotulo.textContent).toMatch(/^Reservado .* de /);
+    expect(
+      [...rotulo.querySelectorAll('[data-centavos]')].map((x) => x.getAttribute('data-centavos')),
+    ).toEqual(['62343', '64218']);
+    expect(barra.textContent).toContain('97.08');
+    const progreso = barra.querySelector('[role="progressbar"]') as HTMLElement;
+    expect(progreso.getAttribute('aria-valuenow')).toBe('97.08');
+    expect((progreso.firstElementChild as HTMLElement).style.width).toBe('97.08%');
+    expect(progreso.className).toContain('patron-sin-reservar');
+    const sinDeuda = mostrar(
+      dto({
+        cuenta: cuentaDe('tarjeta'),
+        tarjeta: { ...tarjeta, deuda: 0, reservado: 0, faltaReservar: 0, reservadoBp: null },
+      }),
+    );
+    expect(sinDeuda.querySelector('[data-barra-reservado]')).toBeNull();
+    expect(sinDeuda.querySelector('[data-bloque="tarjeta"]')?.textContent).toContain('Reservado');
   });
 });

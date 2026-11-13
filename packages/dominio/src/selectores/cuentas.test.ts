@@ -17,7 +17,8 @@ import type {
 } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
-import { cuentas } from './cuentas';
+import { propuestaDeVerificacion } from './conciliacion';
+import { asignacionesFuturasDeTarjeta, cuentas } from './cuentas';
 import { detalleCuenta } from './detalle-cuenta';
 
 const c = (n: number) => Centavos.desdeEntero(Math.round(n * 100));
@@ -411,7 +412,7 @@ describe('PRU-DOM-CTA', () => {
     });
     expect(master).not.toHaveProperty('institucion');
 
-    // Préstamos: la próxima cuota viene de la tabla; sin modelo no hay cuota.
+    // Préstamos: la próxima cuota viene de la tabla; sin modelo, de las condiciones [CH-252] (PRU-DOM-CTA-790).
     expect(lista.prestamos).toEqual([
       {
         cuenta: { id: id('pr'), nombre: 'Casa' },
@@ -423,6 +424,7 @@ describe('PRU-DOM-CTA', () => {
         cuenta: { id: id('pr2'), nombre: 'Amigo' },
         contraparte: 'Un amigo',
         capitalPendiente: c(300),
+        proximaCuota: { fecha: f('2027-02-10'), monto: c(50), numero: 1 }, // [CH-252]
       },
     ]);
 
@@ -560,6 +562,7 @@ describe('PRU-DOM-CTA', () => {
       reservaExcedente: c(0),
       limite: c(1000),
       usoLimite: 1700,
+      reservadoBp: 0, // [CH-252] PRU-DOM-CTA-792
       cicloFacturacion: { desde: f('2027-04-02'), hasta: f('2027-05-01') },
       desgloseAlPagar: {
         deudaAnterior: c(200),
@@ -764,5 +767,176 @@ describe('PRU-DOM-CTA', () => {
       expect(pago).toBe(f(fecha));
       expect(pago).toBe(lista.find((x) => x.cuenta.id === t)?.proximoPago);
     }
+  });
+
+  it('PRU-DOM-CTA-790 [Q-cuentas, Q-detalleCuenta] préstamo sin modelo: el talón sale de las condiciones (cuotas pagadas + 1, apertura + n × frecuencia, cuota pactada); igual en la lista y en el detalle; sin cuotas no hay talón (CH-252, E2-11)', () => {
+    const base = estado();
+    const conPr2 = (cambio: Partial<Hechos['prestamos'][number]>, extra: Partial<Hechos> = {}) =>
+      calcular(
+        {
+          ...hechosDe(base),
+          prestamos: hechosDe(base).prestamos.map((p) =>
+            p.cuentaId === id('pr2') ? { ...p, ...cambio } : p,
+          ),
+          ...extra,
+        },
+        f('2027-04-15'),
+      );
+    const talon = (i: ReturnType<typeof estado>) =>
+      cuentas(i).prestamos.find((p) => p.cuenta.id === id('pr2'))?.proximaCuota;
+    // Abierto el 10/01, mensual, $50.00 en 6 cuotas, ninguna pagada: la cuota 1 del 10/02.
+    expect(talon(base)).toEqual({ fecha: f('2027-02-10'), monto: c(50), numero: 1 });
+    expect(detalleCuenta(base, id('pr2')).prestamo?.proximaCuota).toEqual(talon(base));
+    // Con 2 pagadas al crear y una cuota registrada: la 4, el 10/05.
+    const cuota = {
+      ...(hechosDe(base).transacciones.find((t) => t.id === id('cuota1')) as Transaccion),
+      id: id('cuota-pr2'),
+      fecha: f('2027-03-12'),
+      total: c(50),
+    };
+    const efectosCuota = (
+      [
+        ['ef', -50],
+        ['pr2', -50],
+      ] as const
+    ).map(([k, m]): Efecto => ({
+      id: id(`e-cuota-pr2-${k}`),
+      transaccionId: id('cuota-pr2'),
+      cuentaId: id(k),
+      monto: c(m),
+      interes: null,
+      seguro: null,
+      revision: null,
+    }));
+    const pagadas = conPr2(
+      { cuotasPagadasAlCrear: 2 },
+      {
+        transacciones: [...hechosDe(base).transacciones, cuota],
+        efectos: [...hechosDe(base).efectos, ...efectosCuota],
+        lineas: hechosDe(base).lineas,
+      },
+    );
+    expect(talon(pagadas)).toEqual({ fecha: f('2027-05-10'), monto: c(50), numero: 4 });
+    expect(detalleCuenta(pagadas, id('pr2')).prestamo?.proximaCuota).toEqual(talon(pagadas));
+    // Quincenal (cada 14 días): la cuota 1 es el 24/01.
+    expect(talon(conPr2({ frecuencia: 'quincenal' }))?.fecha).toBe(f('2027-01-24'));
+    // Cada 10 días con 3 pagadas al crear: la 4, el 19/02.
+    expect(
+      talon(conPr2({ frecuencia: 'cada_n_dias', frecuenciaDias: 10, cuotasPagadasAlCrear: 3 })),
+    ).toEqual({ fecha: f('2027-02-19'), monto: c(50), numero: 4 });
+    // Todas pagadas: sin talón, en la lista y en el detalle.
+    const todas = conPr2({ cuotasPagadasAlCrear: 6 });
+    expect(talon(todas)).toBeUndefined();
+    expect(detalleCuenta(todas, id('pr2')).prestamo).not.toHaveProperty('proximaCuota');
+    // Con modelo, el detalle trae la misma cuota que la lista: la 2 del 10/03, de la tabla.
+    expect(detalleCuenta(base, id('pr')).prestamo?.proximaCuota).toEqual({
+      fecha: f('2027-03-10'),
+      monto: c(110),
+      numero: 2,
+    });
+  });
+
+  it('PRU-DOM-CTA-791 [Q-cuentas] las archivadas traen su institución si la tienen; sin institución, solo la referencia (CH-252)', () => {
+    const base = estado();
+    const vieja = hechosDe(base).cuentas.find((k) => k.id === id('vieja')) as Cuenta;
+    const i = calcular(
+      {
+        ...hechosDe(base),
+        cuentas: [
+          ...hechosDe(base).cuentas,
+          { ...vieja, id: id('vieja2'), nombre: 'Vieja del banco', institucionId: id('banco') },
+        ],
+      },
+      f('2027-04-15'),
+    );
+    expect(cuentas(i, { instituciones, incluirArchivadas: true }).archivadas).toEqual([
+      { id: id('vieja'), nombre: 'Vieja', archivada: true },
+      { id: id('vieja2'), nombre: 'Vieja del banco', archivada: true, institucion: 'Banco Uno' },
+    ]);
+  });
+
+  it('PRU-DOM-CTA-792 [Q-detalleCuenta] reservadoBp del detalle de la tarjeta: reservado × 10.000 / deuda con tope 10.000; nulo sin deuda (CH-252, CTA-26)', () => {
+    const base = estado();
+    // Visa: deuda $170.00, sin nada reservado.
+    expect(detalleCuenta(base, id('vi')).tarjeta).toMatchObject({
+      deuda: c(170),
+      reservado: c(0),
+      reservadoBp: 0,
+    });
+    // Sin deuda (la otra tarjeta tiene saldo a favor): nulo.
+    expect(detalleCuenta(base, id('mc')).tarjeta?.reservadoBp).toBeNull();
+    // Lo asignado a Pago Visa en abril menos el pago de $80.00 del 08/04 es lo reservado.
+    for (const [asignado, reservado, bp] of [
+      [165, 85, 5000],
+      [250, 170, 10_000],
+      [300, 220, 10_000],
+    ] as const) {
+      const i = calcular(
+        {
+          ...hechosDe(base),
+          asignaciones: [
+            {
+              id: id('a-vi'),
+              categoriaId: id('pago-vi'),
+              periodoInicio: f('2027-04-01'),
+              monto: c(asignado),
+              revision: null,
+            },
+          ],
+        },
+        f('2027-04-15'),
+      );
+      const t = detalleCuenta(i, id('vi')).tarjeta;
+      expect(t).toMatchObject({ deuda: c(170), reservado: c(reservado), reservadoBp: bp });
+    }
+  });
+
+  it('PRU-DOM-CTA-793 [FT-53] asignacionesFuturasDeTarjeta: la suma de pago(t) en períodos posteriores al activo, del inicio del primero al fin del último; sin futuras, nada (CH-252, E2-15)', () => {
+    const base = estado();
+    const asignacion = (n: string, periodo: string, monto: number) => ({
+      id: id(n),
+      categoriaId: id('pago-vi'),
+      periodoInicio: f(periodo),
+      monto: c(monto),
+      revision: null,
+    });
+    const i = calcular(
+      {
+        ...hechosDe(base),
+        asignaciones: [
+          asignacion('a-activo', '2027-04-01', 40), // la del período activo no cuenta
+          asignacion('a-jul', '2027-07-01', 20),
+          asignacion('a-may', '2027-05-01', 30),
+          asignacion('a-ago', '2027-08-01', 0), // en cero no cuenta
+        ],
+      },
+      f('2027-04-15'),
+    );
+    expect(asignacionesFuturasDeTarjeta(i, id('vi'))).toEqual({
+      monto: c(50),
+      desde: f('2027-05-01'),
+      hasta: f('2027-07-31'),
+    });
+    expect(asignacionesFuturasDeTarjeta(i, id('mc'))).toBeUndefined();
+    expect(asignacionesFuturasDeTarjeta(i, id('ef'))).toBeUndefined();
+  });
+
+  it('PRU-DOM-CTA-794 [FT-44] la propuesta de verificar saldo de una tarjeta trae deudaFinn, la deuda en Finn en positivo; el efectivo no la trae (CH-252, E2-14)', () => {
+    const h = hechosDe(estado());
+    const pedido = (cuenta: string, saldo: number) => ({
+      cuentaId: id(cuenta),
+      fechaEstado: f('2027-04-15'),
+      saldoEstado: c(saldo),
+      marcar: { todas: true } as const,
+    });
+    // Visa debe $170.00 (−170 en la convención de 01 §0.4); el banco dice $175.00 de deuda.
+    expect(propuestaDeVerificacion(h, pedido('vi', 175))).toMatchObject({
+      saldoFinn: c(-170),
+      diferencia: c(-5),
+      deudaFinn: c(170),
+    });
+    // Con $25.00 a favor, la deuda en Finn es −$25.00.
+    expect(propuestaDeVerificacion(h, pedido('mc', 0))?.deudaFinn).toBe(c(-25));
+    expect(propuestaDeVerificacion(h, pedido('ef', 1830))).not.toHaveProperty('deudaFinn');
   });
 });

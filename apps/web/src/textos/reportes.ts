@@ -100,6 +100,20 @@ export const reportes = {
     suscripciones: (comercio: string) => `al año en ${comercio}, que no tenés programada`,
     tarjetas: (tarjeta: string, corte: string) =>
       `sin pagar de ${tarjeta} en el último corte, el ${corte}`,
+    // [CH-251] El período de la cifra (E5-21) y las frases de Tendencia, Ingresos y gastos, Cumplimiento, Realidad y Flujo.
+    periodoActual: 'el período actual',
+    ultimoCerrado: (desde: string, hasta: string) =>
+      `el último período cerrado, del ${desde} al ${hasta}`,
+    ventana: 'los períodos elegidos',
+    tendencia: (cuando: string) => `gastado en ${cuando}`,
+    ingresosGastos: (cuando: string) => `te quedó en ${cuando} (ingresos − gastos)`,
+    deCategorias: (k: number, n: number) => `${k} de ${n}`,
+    cumplimiento: (cuando: string) => `categorías se pasaron de lo asignado en ${cuando}`,
+    realidad: (n: number) =>
+      n === 1
+        ? 'categoría se aleja de tu promedio este período'
+        : 'categorías se alejan de tu promedio este período',
+    flujo: (cuando: string) => `cambió el dinero de tus cuentas de efectivo en ${cuando}`,
   },
   // E5-4: una tabla de más de 3 columnas desplaza en el teléfono.
   tablaAncha: {

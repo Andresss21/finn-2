@@ -4,6 +4,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { empiezaPor } from '../../ayudas/nombres.ts';
 
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { ajustesWebhook } from '../../../src/textos/ajustes-webhook.ts';
@@ -200,7 +201,7 @@ test.describe('PRU-E2E-INICIO', () => {
     await preparar([]);
     await abrir(page, '/ajustes');
     await expect(page.getByRole('heading', { name: 'Ajustes', level: 1 })).toBeVisible();
-    await page.getByRole('link', { name: ajustesWebhook.titulo, exact: true }).click();
+    await page.getByRole('link', { name: empiezaPor(ajustesWebhook.titulo) }).click();
     await expect(page).toHaveURL(/\/ajustes\/webhook$/);
   });
   test('PRU-E2E-INICIO-108 [CA-04.8] aplicar la plantilla completa hace 4 llamadas a la acción, ninguna con más de 15 elementos y con cada grupo antes que sus categorías', async ({

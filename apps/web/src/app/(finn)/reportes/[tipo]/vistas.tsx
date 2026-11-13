@@ -14,7 +14,7 @@ import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { formatearFecha, formatearMesCorto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
-import { CifraReporte } from './cifra';
+import { CifraReporte, cuandoDe } from './cifra';
 import type { TipoDeReporte } from './tipos';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { Flujo } from './flujo';
@@ -197,63 +197,87 @@ export function cuerpoDe(
       );
     }
     case 'tendencia': {
-      const { periodos, periodoActivo } = dto as ReporteDe<'tendencia'>;
+      const { periodos, periodoActivo, ultimoPeriodo } = dto as ReporteDe<'tendencia'>;
       if (sinMovimiento(periodos.flatMap((p) => [p.ingresos, p.gastos, p.otrasEntradas])))
         return null;
       const etiquetas = periodos.map((f) => formatearFecha(f.periodo));
+      // [CH-251] La cifra: lo gastado en el último período de la ventana (E5-5, E5-21).
+      const cifra = periodos.find((f) => f.periodo === ultimoPeriodo?.inicio);
       // [CH-226] Lo gastado por período con lo asignado como tope punteado (A26); el período activo es la barra actual.
       return (
-        <Serie
-          titulo={t.titulos.tendencia}
-          filas={periodos}
-          grafico={
-            <div className="flex flex-col gap-3">
-              <GraficoBarras
-                titulo={t.serieGastos}
-                resumen={t.resumenLinea(etiquetas[0] ?? '', etiquetas.at(-1) ?? '')}
-                tope="punteado"
-                puntos={periodos.map((f) => ({
-                  clave: f.periodo,
-                  etiqueta: formatearMesCorto(f.periodo),
-                  valor: f.gastos,
-                  referencia: f.asignado,
-                  actual: f.periodo === periodoActivo.inicio,
-                }))}
-              />
-              <LeyendaGrafico
-                items={[
-                  { forma: 'barra', texto: t.leyendaTendencia.cerrados },
-                  { forma: 'actual', texto: t.leyendaTendencia.actual },
-                  { forma: 'tope', texto: t.leyendaTendencia.asignado },
-                ]}
-              />
-            </div>
-          }
-          columnas={[campo('ingresos'), campo('gastos'), campo('otrasEntradas'), campo('asignado')]}
-        />
+        <div className="flex flex-col gap-4">
+          {cifra === undefined || ultimoPeriodo === undefined ? null : (
+            <CifraReporte
+              centavos={cifra.gastos}
+              frase={t.cifras.tendencia(cuandoDe(ultimoPeriodo))}
+            />
+          )}
+          <Serie
+            titulo={t.titulos.tendencia}
+            filas={periodos}
+            grafico={
+              <div className="flex flex-col gap-3">
+                <GraficoBarras
+                  titulo={t.serieGastos}
+                  resumen={t.resumenLinea(etiquetas[0] ?? '', etiquetas.at(-1) ?? '')}
+                  tope="punteado"
+                  puntos={periodos.map((f) => ({
+                    clave: f.periodo,
+                    etiqueta: formatearMesCorto(f.periodo),
+                    valor: f.gastos,
+                    referencia: f.asignado,
+                    actual: f.periodo === periodoActivo.inicio,
+                  }))}
+                />
+                <LeyendaGrafico
+                  items={[
+                    { forma: 'barra', texto: t.leyendaTendencia.cerrados },
+                    { forma: 'actual', texto: t.leyendaTendencia.actual },
+                    { forma: 'tope', texto: t.leyendaTendencia.asignado },
+                  ]}
+                />
+              </div>
+            }
+            columnas={[
+              campo('ingresos'),
+              campo('gastos'),
+              campo('otrasEntradas'),
+              campo('asignado'),
+            ]}
+          />
+        </div>
       );
     }
     case 'ingresos_gastos': {
-      const { periodos } = dto as ReporteDe<'ingresos_gastos'>;
+      const { periodos, ultimoPeriodo } = dto as ReporteDe<'ingresos_gastos'>;
       if (
         sinMovimiento(
           periodos.flatMap((p) => [p.ingresos, p.gastos, p.otrasEntradas, p.restituciones]),
         )
       )
         return null;
+      const cifra = periodos.find((f) => f.periodo === ultimoPeriodo?.inicio);
       return (
-        <Serie
-          titulo={t.titulos['ingresos-gastos']}
-          filas={periodos}
-          lineas={[{ titulo: t.serieDiferencia, valor: (f) => f.diferencia }]}
-          columnas={[
-            campo('ingresos'),
-            campo('gastos'),
-            campo('diferencia'),
-            campo('otrasEntradas'),
-            campo('restituciones'),
-          ]}
-        />
+        <div className="flex flex-col gap-4">
+          {cifra === undefined || ultimoPeriodo === undefined ? null : (
+            <CifraReporte
+              centavos={cifra.diferencia}
+              frase={t.cifras.ingresosGastos(cuandoDe(ultimoPeriodo))}
+            />
+          )}
+          <Serie
+            titulo={t.titulos['ingresos-gastos']}
+            filas={periodos}
+            lineas={[{ titulo: t.serieDiferencia, valor: (f) => f.diferencia }]}
+            columnas={[
+              campo('ingresos'),
+              campo('gastos'),
+              campo('diferencia'),
+              campo('otrasEntradas'),
+              campo('restituciones'),
+            ]}
+          />
+        </div>
       );
     }
     case 'remanente': {

@@ -203,10 +203,14 @@ test.describe('PRU-E2E-REP reportes por período', () => {
     await abrir(page, '/reportes/tendencia?ventana=ultimos-3');
     const izquierda = await page.locator('[data-reporte-filtros]').boundingBox();
     const derecha = await reporte.locator('[data-vista-grafico]').first().boundingBox();
+    // [CH-251] La columna del reporte empieza con su cifra (E5-5), arriba del gráfico: la altura se mide desde ella.
+    const cifra = await reporte.locator('[data-cifra-reporte]').first().boundingBox();
     expect(izquierda).not.toBeNull();
     expect(derecha).not.toBeNull();
+    expect(cifra).not.toBeNull();
     expect(derecha?.x ?? 0).toBeGreaterThan((izquierda?.x ?? 0) + (izquierda?.width ?? 0));
-    expect(Math.abs((derecha?.y ?? 0) - (izquierda?.y ?? 0))).toBeLessThan(80);
+    expect(cifra?.x ?? 0).toBeGreaterThan((izquierda?.x ?? 0) + (izquierda?.width ?? 0));
+    expect(Math.abs((cifra?.y ?? 0) - (izquierda?.y ?? 0))).toBeLessThan(80);
     await page.setViewportSize({ width: 390, height: 844 });
     await abrir(page, '/reportes/tendencia?ventana=ultimos-3');
     const arriba = await page.locator('[data-reporte-filtros]').boundingBox();

@@ -6,7 +6,7 @@ import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { COLOR_TEXTO } from '../../../../componentes/dominio/indicador-estado';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
-import { centavosATextoDecimal, formatearMonto } from '../../../../formato';
+import { centavosATextoDecimal } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
 import { CifraReporte } from './cifra';
 import { Tabla } from './vistas-detalle';
@@ -29,13 +29,6 @@ export function enlaceDeCompras(h: Hallazgo): string {
   return `/actividad?${q.toString()}`;
 }
 
-function frase(h: Hallazgo): string {
-  const total = formatearMonto(h.total);
-  return h.agrupacion === 'categoria'
-    ? t.hormiga.porCategoria(h.compras, h.etiqueta, total)
-    : t.hormiga.porComercio(h.compras, h.etiqueta, total);
-}
-
 /** Un hallazgo de hormiga con su enlace a las compras; también lo dibuja el reporte `hallazgos`. */
 export function AvisoHormiga({ hallazgo: h }: { readonly hallazgo: Hallazgo }) {
   return (
@@ -51,7 +44,7 @@ export function AvisoHormiga({ hallazgo: h }: { readonly hallazgo: Hallazgo }) {
           </EnlaceFinn>
         }
       >
-        {frase(h)}
+        {h.texto}
       </AvisoEnLinea>
     </div>
   );

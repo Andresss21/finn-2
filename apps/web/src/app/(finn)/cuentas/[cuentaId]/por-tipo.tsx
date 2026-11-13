@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { IndicadorEstado } from '../../../../componentes/dominio/indicador-estado';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
-import { formatearFecha } from '../../../../formato';
+import { formatearFecha, formatearPorcentaje } from '../../../../formato';
 import { cuentaDetalle } from '../../../../textos/cuenta-detalle';
 import { FilasAmortizacion } from './filas-amortizacion';
 
@@ -77,14 +77,43 @@ export function BloqueTarjeta({
         {tarjeta.reservaExcedente > 0 ? (
           <IndicadorEstado estado="informacion" etiqueta={t.reservaExcedente} />
         ) : null}
-        <p className="flex flex-wrap justify-between gap-2 text-cuerpo-pequeno">
-          <span>
-            {t.reservado} {m(tarjeta.reservado)}
-          </span>
-          <span className="text-texto-secundario">
-            {t.deuda} {m(tarjeta.deuda)}
-          </span>
-        </p>
+        {typeof tarjeta.reservadoBp !== 'number' ? (
+          <p className="flex flex-wrap justify-between gap-2 text-cuerpo-pequeno">
+            <span>
+              {t.reservado} {m(tarjeta.reservado)}
+            </span>
+            <span className="text-texto-secundario">
+              {t.deuda} {m(tarjeta.deuda)}
+            </span>
+          </p>
+        ) : (
+          // [CH-252] CTA-26: «Reservado $X de $Y» con la proporción del servidor; lo sin reservar, con el patrón.
+          <div data-barra-reservado className="flex flex-col gap-1.5">
+            <p className="flex flex-wrap justify-between gap-2 text-cuerpo-pequeno">
+              <span>
+                {t.reservado} {m(tarjeta.reservado)} {t.de} {m(tarjeta.deuda)}
+              </span>
+              <span className="font-semibold tabular-nums">
+                {formatearPorcentaje(tarjeta.reservadoBp)}
+              </span>
+            </p>
+            <div
+              role="progressbar"
+              aria-label={`${t.reservado} ${formatearPorcentaje(tarjeta.reservadoBp)}`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={tarjeta.reservadoBp / 100}
+              aria-valuetext={formatearPorcentaje(tarjeta.reservadoBp)}
+              style={{ borderRadius: 2 }}
+              className="relative h-2 overflow-hidden bg-[image:var(--patron-sin-reservar)]"
+            >
+              <span
+                style={{ width: `${tarjeta.reservadoBp / 100}%` }}
+                className="absolute inset-y-0 left-0 bg-accion"
+              />
+            </div>
+          </div>
+        )}
         {/* CTA-26: la rejilla del diseño es «Corte · Pago · Límite»; las fechas son las del DTO, sin calcular (PF-3). El saldo a favor
             solo aparece cuando existe. */}
         <dl className="grid grid-cols-3 gap-x-3 gap-y-3 text-cuerpo-pequeno">
@@ -142,7 +171,7 @@ export function ProximaCuota({
   const t = cuentaDetalle.prestamo;
   const c = prestamo.condiciones;
   const tabla = prestamo.amortizacion;
-  const proxima = tabla?.find((q) => q.estado !== 'pagada');
+  const proxima = prestamo.proximaCuota; // [CH-252] con modelo o sin él (E2-11)
   return (
     <section data-bloque="proxima-cuota" className={TARJETA}>
       <div className="flex items-end justify-between gap-3">

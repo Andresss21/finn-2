@@ -32,6 +32,8 @@ export const dominio = {
     conciliada: glosario.conciliada,
   },
   sinComercio: 'Sin comercio',
+  /** [CH-250] La marca de una fila con lo que sigue por cobrar (E6-17: sin «te debe»). */
+  enCamino: (monto: string) => `${glosario.enCamino} ${monto}`,
   billete: {
     rotulo: glosario.listoParaAsignar,
     todoAsignado: 'Todo asignado',

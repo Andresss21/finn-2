@@ -4,6 +4,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
+import { empiezaPor } from '../../ayudas/nombres.ts';
 import { revisarTactil } from '../../ayudas/tactil.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { SECRETO_RESPALDO_E2E } from '../../../../../tools/pruebas/e2e/respaldo.ts';
@@ -117,7 +118,7 @@ test.describe('PRU-E2E-AJUS', () => {
       ((await (await page.request.get('/api/exportar/json')).json()) as { hechos: unknown }).hechos;
     await page.goto('/ajustes');
     await esperarContenido(page);
-    await page.getByRole('link', { name: d.enlace, exact: true }).click();
+    await page.getByRole('link', { name: empiezaPor(d.enlace) }).click();
     await expect(page).toHaveURL(/\/ajustes\/diagnostico$/);
     await esperarHidratacion(page);
     await expect(page.getByRole('heading', { level: 1, name: d.titulo })).toBeVisible();

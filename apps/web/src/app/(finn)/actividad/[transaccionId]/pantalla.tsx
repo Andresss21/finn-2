@@ -1,6 +1,6 @@
 // `/actividad/[transaccionId]` (FT-25; 05 §2.6; `pantallas/03-detalle-de-transaccion` del export): de dónde vino la transacción, sus
 // partes con su cobertura, sus efectos, sus eventos, su conciliación y los cambios posteriores. Dibuja lo que trae el DTO: no calcula
-// montos (PF-3). Lo que el DTO no trae (Disponible de cada categoría tras la compra, deuda de la tarjeta) queda fuera.
+// montos (PF-3). «Efectos hoy» dibuja `efectosHoy` del DTO (Disponible de hoy y deuda de la tarjeta, CH-250, ACT-18).
 import type { DetalleTransaccionDto } from '@finn/aplicacion/consultas/detalle-transaccion';
 import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Icono } from '../../../../componentes/base/icono';
@@ -36,6 +36,47 @@ const PASTILLA =
   'inline-flex min-h-8 items-center gap-1.5 rounded-pastilla bg-superficie-hundida px-3 text-cuerpo-pequeno font-medium';
 
 type Linea = DetalleTransaccionDto['lineas'][number];
+
+const nombreDe = (r: { readonly nombre: string; readonly archivada?: true }): string =>
+  r.archivada === true ? t.archivada(r.nombre) : r.nombre;
+
+/** [CH-250] «Efectos hoy» (ACT-18): el Disponible de hoy de cada categoría y la deuda de hoy de cada tarjeta; sin ninguno
+ * (un movimiento entre cuentas de efectivo), el efecto en cada cuenta. */
+function EfectosHoy({ dto }: { readonly dto: DetalleTransaccionDto }) {
+  const { categorias, tarjetas } = dto.efectosHoy;
+  const FILA = 'flex min-h-11 items-center justify-between gap-3 py-2';
+  const NOMBRE = 'min-w-0 truncate text-cuerpo-pequeno text-texto-secundario';
+  return (
+    <ul data-efectos-hoy className={TARJETA_FILAS}>
+      {categorias.map((c) => (
+        <li key={c.categoria.id} data-efecto-categoria className={FILA}>
+          <span className={NOMBRE}>{nombreDe(c.categoria)}</span>
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-cuerpo-pequeno text-texto-secundario">{t.disponible}</span>
+            <Monto
+              centavos={c.disponible}
+              {...(c.disponible < 0 ? { estado: 'problema' as const } : {})}
+            />
+          </span>
+        </li>
+      ))}
+      {tarjetas.map((x) => (
+        <li key={x.cuenta.id} data-efecto-tarjeta className={FILA}>
+          <span className={NOMBRE}>{`${nombreDe(x.cuenta)} · ${t.deuda}`}</span>
+          <Monto centavos={x.deuda} />
+        </li>
+      ))}
+      {categorias.length + tarjetas.length > 0
+        ? null
+        : dto.efectos.map((e) => (
+            <li key={e.cuenta.id} className={FILA}>
+              <span className={NOMBRE}>{nombreDe(e.cuenta)}</span>
+              <Monto centavos={e.monto} />
+            </li>
+          ))}
+    </ul>
+  );
+}
 
 function Seccion({
   titulo,
@@ -306,16 +347,7 @@ export function PantallaDetalleTransaccion({
         </ul>
       </Seccion>
       <Seccion titulo={t.efectosHoy}>
-        <ul className={TARJETA_FILAS}>
-          {dto.efectos.map((e) => (
-            <li key={e.cuenta.id} className="flex items-baseline justify-between gap-3 py-2">
-              <span className="text-cuerpo-pequeno text-texto-secundario">
-                {e.cuenta.archivada === true ? t.archivada(e.cuenta.nombre) : e.cuenta.nombre}
-              </span>
-              <Monto centavos={e.monto} />
-            </li>
-          ))}
-        </ul>
+        <EfectosHoy dto={dto} />
       </Seccion>
       <Eventos lineas={dto.lineas} transaccionId={x.id} sufijo={sufijo} />
       <Origen dto={dto} />

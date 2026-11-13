@@ -1,6 +1,10 @@
 // OP-04 Archivar cuenta (04 §3.1): natural. Si ya está archivada, `ya_aplicada`; sin la cuenta, `no_encontrado`.
 // Saldo 0, deuda 0 y reserva de pago(t) en 0 los verifica el dominio (`cuenta_con_saldo`, `tarjeta_con_deuda`,
-// `reserva_tarjeta_no_cero`); la base lo repite en `g_archivar_cuenta` (inv. 24).
+// `reserva_tarjeta_no_cero`); la base lo repite en `g_archivar_cuenta` (inv. 24). [CH-252] En una tarjeta, la
+// previsualización trae en `propuesta.asignacionesFuturas` el monto y los períodos que «Devolverlas» vuelve a LPA (E2-15).
+import { calcular } from '@finn/dominio';
+import { asignacionesFuturasDeTarjeta } from '@finn/dominio/selectores';
+import { FechaLocal } from '@finn/dominio/valores';
 import { op04, type EntradaOp04, type SalidaCuenta } from '../../contratos/cuentas.ts';
 import type { DefinicionOperacion } from '../marco.ts';
 import { cuentaDe } from './comunes.ts';
@@ -15,6 +19,13 @@ export const OP04: DefinicionOperacion<EntradaOp04, EntradaOp04, SalidaCuenta> =
     return cuenta.archivada ? { tipo: 'ya_aplicada', salida: {} } : { tipo: 'aplicar' };
   },
   resolver: (_tx, e) => Promise.resolve(e),
+  proponer(tx, e, h) {
+    const futuras = asignacionesFuturasDeTarjeta(
+      calcular(h, FechaLocal.desdeTexto(tx.estado.hoy)),
+      e.cuentaId,
+    );
+    return futuras === undefined ? undefined : { asignacionesFuturas: futuras };
+  },
   comando: (e) => ({
     operacion: 'OP-04',
     cuentaId: e.cuentaId,

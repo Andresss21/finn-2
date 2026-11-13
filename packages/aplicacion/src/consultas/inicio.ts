@@ -6,6 +6,7 @@ import type { InicioSel, TransaccionFila } from '@finn/dominio/selectores';
 import { leerHashToken, noLeidasDeAviso, type ContadoresDeBandeja } from '@finn/db';
 import { sinParametros } from '../contratos/consultas.ts';
 import { consultar, type DepsConsulta, type Encabezado } from './comun.ts';
+import { conTexto } from './textos-hallazgos.ts';
 
 /** Las recientes de Inicio: las 5 últimas por (fecha, clave_orden, secuencia) (04 §6.1). */
 const RECIENTES = 5;
@@ -22,12 +23,16 @@ export interface NotificacionDto {
 }
 
 /**
- * Las `accion: Propuesta` de AV-08 y AV-14 y el texto y la acción de `hallazgosRitmo` no están: ningún selector
- * las entrega (3.0.3, 7.10) y armarlas aquí sería calcular montos (inv. 27). Ver el informe de TA-169.
+ * Las `accion: Propuesta` de AV-08 y AV-14 y la acción de `hallazgosRitmo` no están: ningún selector las entrega
+ * (3.0.3, 7.10) y armarlas aquí sería calcular montos (inv. 27). Ver el informe de TA-169. [CH-251] El `texto` de
+ * cada hallazgo sí: es del catálogo (`textos-hallazgos.ts`).
  */
 export type InicioDto = Encabezado &
   Omit<InicioSel, 'atencion'> & {
-    readonly atencion: InicioSel['atencion'] & {
+    readonly atencion: Omit<InicioSel['atencion'], 'hallazgosRitmo'> & {
+      readonly hallazgosRitmo: (InicioSel['atencion']['hallazgosRitmo'][number] & {
+        readonly texto: string;
+      })[];
       readonly bandeja: ContadoresDeBandeja;
       readonly cambiosRetroactivos: NotificacionDto[];
     };
@@ -46,6 +51,7 @@ export function inicio(d: DepsConsulta): Promise<InicioDto> {
         ...sel,
         atencion: {
           ...sel.atencion,
+          hallazgosRitmo: conTexto(sel.atencion.hallazgosRitmo),
           bandeja,
           cambiosRetroactivos: retroactivos.map((n) => ({
             id: n.id,

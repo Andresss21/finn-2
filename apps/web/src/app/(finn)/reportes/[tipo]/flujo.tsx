@@ -7,6 +7,7 @@ import { GraficoBarras } from '../../../../componentes/graficos/grafico-barras';
 import { VistaGrafico } from '../../../../componentes/graficos/vista-grafico';
 import { formatearFecha, formatearMesCorto, formatearMonto } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
+import { CifraReporte, cuandoDe } from './cifra';
 import { AccionFlujo } from './flujo-accion';
 import type { AccionesTarjetas } from './tarjetas-hallazgos';
 import { Tabla } from './vistas-detalle';
@@ -67,8 +68,18 @@ export function Flujo({
   readonly dto: Dto;
   readonly acciones?: AccionesTarjetas;
 }) {
+  const [unico] = dto.periodos;
   return (
     <div className="flex flex-col gap-6">
+      {/* [CH-251] La cifra: saldo final − saldo inicial de la ventana (E5-5); las salidas no van en rojo. */}
+      <CifraReporte
+        centavos={dto.variacion}
+        frase={t.cifras.flujo(
+          dto.periodos.length === 1 && unico !== undefined
+            ? cuandoDe(unico.periodo)
+            : t.cifras.ventana,
+        )}
+      />
       {dto.periodos.length < 2 ? null : (
         <VistaGrafico
           titulo={t.flujo.porPeriodo}

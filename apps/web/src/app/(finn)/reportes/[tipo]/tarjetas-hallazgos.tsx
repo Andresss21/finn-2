@@ -10,7 +10,7 @@ import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Boton } from '../../../../componentes/base/boton';
 import { COLOR_TEXTO } from '../../../../componentes/dominio/indicador-estado';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
-import { centavosATextoDecimal, formatearFecha, formatearMonto } from '../../../../formato';
+import { centavosATextoDecimal, formatearMonto } from '../../../../formato';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { ConfirmacionUnToque } from '../../../../formularios/confirmacion-un-toque';
 import { useUnToque } from '../../../../formularios/use-un-toque';
@@ -116,11 +116,7 @@ export function HallazgosTarjetas({
                       ),
                   })}
             >
-              {t.tarjetas.arrastro(
-                h.tarjeta.nombre,
-                formatearMonto(h.arrastre),
-                formatearFecha(h.corte),
-              )}
+              {h.texto}
             </AvisoEnLinea>
           </div>
         );

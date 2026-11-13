@@ -17,6 +17,7 @@ import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { CerrarFlujoAlMontar } from '../../componentes/navegacion/flujo-de-ruta';
 import { useReemplazarBusqueda } from '../../componentes/navegacion/use-reemplazar-busqueda';
 import { centavosATextoDecimal, formatearFecha, formatearMonto } from '../../formato';
+import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { dominio } from '../../textos/dominio';
@@ -54,6 +55,8 @@ interface Vista {
     readonly saldoFinn: Centavos;
     readonly diferencia: Centavos;
     readonly marcaria: number;
+    /** [CH-252] Solo en una tarjeta: la deuda en Finn ya en positivo (E2-14). */
+    readonly deudaFinn?: Centavos;
   };
   readonly avisos?: readonly {
     readonly codigo: string;
@@ -62,6 +65,8 @@ interface Vista {
   readonly rechazos?: readonly { readonly codigo: string }[];
 }
 type Paso = 'datos' | 'marcar' | 'revisar';
+/** Pausa entre el último cambio del saldo y la previsualización en vivo. */
+const RETARDO_VIVO_MS = 400;
 type Ajuste = NonNullable<Vista['avisos']>[number];
 
 const MENSAJES: Readonly<Record<string, string | undefined>> = t.rechazos;
@@ -97,7 +102,12 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
   const [rechazo, setRechazo] = useState<string>();
   const [ajuste, setAjuste] = useState<Ajuste>();
   const [base, setBase] = useState<Vista['propuesta']>();
-  const siguiente = useRef<Paso | null>(null);
+  const siguiente = useRef<Paso | 'vivo' | null>(null);
+  // Diferencia en vivo (CTA-07): la previsualización de OP-53 con lo escrito; la cifra la dice el servidor (PF-3).
+  const [vivo, setVivo] = useState<{ clave: string; propuesta: Vista['propuesta'] }>();
+  const claveVivo = JSON.stringify([c.fecha, c.saldo, c.signo]);
+  const enVuelo = useRef(claveVivo);
+  const pedidaVivo = useRef('');
   /** Cuántas transacciones marca la verificación que se confirma: lo que dijo el servidor al revisar (PF-3). */
   const marcadas = useRef(0);
   const { estado, error: fallo, exito, previsualizacion } = operacion;
@@ -111,7 +121,14 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
     const v = (previsualizacion ?? {}) as Vista;
     const primero = v.rechazos?.[0];
     if (primero !== undefined) {
+      if (destino === 'vivo') setVivo(undefined);
       setRechazo(primero.codigo);
+      volverAEditar();
+      return;
+    }
+    if (destino === 'vivo') {
+      setRechazo(undefined);
+      setVivo({ clave: enVuelo.current, propuesta: v.propuesta });
       volverAEditar();
       return;
     }
@@ -125,6 +142,22 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
     if (destino === 'revisar') marcadas.current = v.propuesta?.marcaria ?? 0;
     setPaso(destino);
   }, [estado, previsualizacion, volverAEditar]);
+
+  const saldoValido = normalizarMontoEscrito(c.saldo).estado === 'valido';
+  const { enviar: previsualizar } = operacion;
+  useEffect(() => {
+    if (paso !== 'datos' || estado !== 'editando' || c.fecha === '' || !saldoValido) return;
+    if (pedidaVivo.current === claveVivo) return;
+    const id = setTimeout(() => {
+      pedidaVivo.current = claveVivo;
+      enVuelo.current = claveVivo;
+      siguiente.current = 'vivo';
+      void previsualizar({ fecha: c.fecha, saldo: c.saldo, signo: c.signo, marcar: 'todas' });
+    }, RETARDO_VIVO_MS);
+    return () => {
+      clearTimeout(id);
+    };
+  }, [paso, estado, claveVivo, saldoValido, c.fecha, c.saldo, c.signo, previsualizar]);
 
   const marcada = (id: string): boolean => marcas === 'todas' || marcas.has(id);
   const alternar = (id: string) => {
@@ -221,7 +254,9 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
               r === undefined
                 ? []
                 : [
-                    t.saldoFinn(fechaTexto, formatearMonto(r.saldoFinn)),
+                    r.deudaFinn === undefined
+                      ? t.saldoFinn(fechaTexto, formatearMonto(r.saldoFinn))
+                      : t.deudaFinn(fechaTexto, formatearMonto(r.deudaFinn)),
                     t.diferencia(conSigno(r.diferencia)),
                     t.seMarcan(r.marcaria),
                   ]
@@ -244,7 +279,11 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
     return (
       <MarcoCorto superpuesto={superpuesto} titulo={t.titulo} rutaPadre={rutaPadre}>
         <div className="flex flex-col gap-4">
-          <p data-saldo-finn>{t.saldoFinn(fechaTexto, formatearMonto(base.saldoFinn))}</p>
+          <p data-saldo-finn>
+            {base.deudaFinn === undefined
+              ? t.saldoFinn(fechaTexto, formatearMonto(base.saldoFinn))
+              : t.deudaFinn(fechaTexto, formatearMonto(base.deudaFinn))}
+          </p>
           <p data-diferencia className="font-bold">
             {t.diferencia(conSigno(base.diferencia))}
           </p>
@@ -361,6 +400,11 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
           requerido
         />
         <p>{t.candidatas(p.cantidad)}</p>
+        {vivo?.clave === claveVivo && vivo.propuesta !== undefined ? (
+          <p data-diferencia-vivo role="status" className="font-bold">
+            {t.diferencia(conSigno(vivo.propuesta.diferencia))}
+          </p>
+        ) : null}
         {rechazo === undefined ? null : (
           <AvisoEnLinea estado="problema" aparecioDespues>
             {MENSAJES[rechazo] ?? t.rechazos.otro}

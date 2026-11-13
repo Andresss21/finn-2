@@ -4,7 +4,7 @@ import { desgloseAlPagar, fechaDeCorte } from '../calculo/patrimonio';
 import type { Instantanea, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
-import { type Auxiliares, amortizacionDe, diferenciaActual, institucionDe } from './detalle-cuenta';
+import { type Auxiliares, diferenciaActual, institucionDe, proximaCuotaDe } from './detalle-cuenta';
 import { nombres } from './comunes';
 import { puntosBasicos } from './reportes/comunes';
 
@@ -104,21 +104,13 @@ export function cuentas(
       .flatMap((k) => {
         const pr = h.prestamos.find((x) => x.cuentaId === k.id);
         if (pr === undefined) return [];
-        const cuota = amortizacionDe(i, pr)?.find((q) => q.estado !== 'pagada');
+        const cuota = proximaCuotaDe(i, pr); // [CH-252] con modelo o sin él (E2-11)
         return [
           {
             cuenta: n.cuenta(k.id),
             contraparte: pr.contraparte,
             capitalPendiente: saldoDe(k.id)?.saldo ?? Centavos.cero,
-            ...(cuota === undefined
-              ? {}
-              : {
-                  proximaCuota: {
-                    fecha: cuota.fecha,
-                    monto: cuota.proyectado,
-                    numero: cuota.numero,
-                  },
-                }),
+            ...(cuota === undefined ? {} : { proximaCuota: cuota }),
           },
         ];
       }),
@@ -126,7 +118,12 @@ export function cuentas(
       .filter((k) => k.tipo === 'inversion')
       .map((k) => ({ cuenta: n.cuenta(k.id), valor: saldoDe(k.id)?.saldo ?? Centavos.cero })),
     ...(o.incluirArchivadas === true
-      ? { archivadas: h.cuentas.filter((k) => k.archivada).map((k) => n.cuenta(k.id)) }
+      ? {
+          // [CH-252] con su institución, para «Archivada · {banco}»; la fecha de archivo no es un hecho
+          archivadas: h.cuentas
+            .filter((k) => k.archivada)
+            .map((k) => ({ ...n.cuenta(k.id), ...institucionDe(o, k) })),
+        }
       : {}),
     posicionNeta: {
       activos: {
@@ -141,5 +138,25 @@ export function cuentas(
       barras: barras(activos, deudas),
     },
     enCamino: i.lpa.dineroEnCamino,
+  };
+}
+
+/**
+ * [CH-252] Lo que «Devolverlas» (OP-04) vuelve a LPA (E2-15): las asignaciones de pago(t) en períodos posteriores al
+ * activo, con su suma y el rango de esos períodos (inicio del primero, fin del último). `undefined` si no hay.
+ */
+export function asignacionesFuturasDeTarjeta(i: Instantanea, cuentaId: Uuid) {
+  const pago = i.hechos.categorias.find((g) => g.clase === 'pago' && g.tarjetaId === cuentaId);
+  const activo = i.presupuesto.activo.inicio;
+  const futuras = i.hechos.asignaciones
+    .filter((a) => a.categoriaId === pago?.id && a.periodoInicio > activo && a.monto !== 0)
+    .sort((a, b) => (a.periodoInicio < b.periodoInicio ? -1 : 1));
+  const [primera, ultima] = [futuras[0], futuras.at(-1)];
+  if (primera === undefined || ultima === undefined) return undefined;
+  const fin = i.presupuesto.periodos.find((p) => p.inicio === ultima.periodoInicio)?.fin;
+  return {
+    monto: suma(futuras.map((a) => a.monto)),
+    desde: primera.periodoInicio,
+    hasta: fin ?? ultima.periodoInicio,
   };
 }

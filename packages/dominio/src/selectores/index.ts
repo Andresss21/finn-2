@@ -5,7 +5,7 @@ import { type PeriodoDto, periodoDto } from './comunes';
 export { actividad, type TransaccionFila } from './actividad';
 export { type PeriodoDto, type Ref, type SobregiroDto } from './comunes';
 export { ultimoCierre, type UltimoCierre } from './cierre';
-export { cuentas } from './cuentas';
+export { asignacionesFuturasDeTarjeta, cuentas } from './cuentas';
 export { detalleCuenta } from './detalle-cuenta';
 export { detalleTransaccion } from './detalle-transaccion';
 export {
@@ -15,6 +15,7 @@ export {
   type OpcionesDeBandeja,
 } from './bandeja';
 export { sugerencia, type Sugerencia } from './sugerencia';
+export { coincidenciasDeReglas } from './reglas';
 // La `propuesta` de la previsualización de OP-53 (04 §3.8 [CH-36]) y la clasificación de OP-45 (04 §9.5, BE-48)
 export {
   clasificarConciliacion,

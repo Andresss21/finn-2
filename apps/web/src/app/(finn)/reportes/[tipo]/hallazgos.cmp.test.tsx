@@ -5,6 +5,7 @@ import axe from 'axe-core';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { ReporteDto } from '@finn/aplicacion/consultas/reporte';
+import { conTexto } from '@finn/aplicacion/consultas/textos-hallazgos';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../../globals.css';
 import { PantallaReporte, type Nombres } from './pantalla';
@@ -47,7 +48,8 @@ const dto = (hallazgos: unknown[]) =>
     notificacionesNoLeidas: 0,
     bandejaPorRevisar: 0,
     periodo: { inicio: '2027-02-21', fin: '2027-03-20' },
-    hallazgos,
+    // [CH-251] El texto de cada hallazgo es del servidor (06 §3.5.2).
+    hallazgos: conTexto(hallazgos as never),
   }) as unknown as ReporteDto;
 const NOMBRES = { cuentas: [], grupos: [], categorias: [] } as unknown as Nombres;
 
@@ -222,5 +224,22 @@ describe('PRU-CMP-REP hallazgos accionables', () => {
     expect(gestionar).toHaveBeenLastCalledWith(
       expect.objectContaining({ accion: 'activar', programadaId: 'p7', activa: false }),
     );
+  });
+
+  it('PRU-CMP-REP-793 [FT-67, CA-67.1] (CH-251) cada hallazgo muestra el texto del servidor tal cual, sin armarlo con sus montos', () => {
+    const tal = [tarjeta, ritmo, promedio, suscripcion].map((h, k) => ({
+      ...h,
+      texto: `Texto ${k} del servidor.`,
+    }));
+    const raiz = mostrar({ ...dto([]), hallazgos: tal } as unknown as ReporteDto);
+    const filas = [...raiz.querySelectorAll('[data-hallazgo-fila]')];
+    expect(filas.map((f, k) => f.textContent.includes(`Texto ${k} del servidor.`))).toEqual([
+      true,
+      true,
+      true,
+      true,
+    ]);
+    expect(raiz.textContent).not.toContain('Ya te pasaste');
+    expect(raiz.textContent).not.toContain('te cobra');
   });
 });

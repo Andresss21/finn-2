@@ -80,6 +80,8 @@ export interface HallazgoDeFlujo {
 
 export interface FlujoEfectivoSel {
   readonly periodos: readonly PeriodoDeFlujo[];
+  /** [CH-251] La cifra (E5-5): saldo final del último período de W − saldo inicial del primero. */
+  readonly variacion: Centavos;
   /** La propuesta o el enlace con que termina el reporte (3.3, "Acción"). */
   readonly accion: AccionDeFlujo;
   /** Uno si la acción es "Reservar"; si no, ninguno. */
@@ -179,6 +181,10 @@ export function flujoEfectivo(i: Instantanea, parametros: ParametrosFlujo = {}):
     periodo: periodoDto(i, p),
     ...calcular(p),
   }));
+  const variacion = Centavos.restar(
+    periodos.at(-1)?.saldoFinal ?? Centavos.cero,
+    periodos[0]?.saldoInicial ?? Centavos.cero,
+  );
 
   // Acción: se evalúa sobre el período activo, esté o no en la ventana.
   const a = i.presupuesto.activo;
@@ -197,7 +203,7 @@ export function flujoEfectivo(i: Instantanea, parametros: ParametrosFlujo = {}):
             x.clase === 'pago' && x.tarjetaId === mayor.tarjetaId && x.periodo.inicio === a.inicio,
         );
   if (mayor === undefined || pago === undefined || activo.comprasConTarjeta <= pagosTarjeta)
-    return { periodos, accion: { tipo: 'ver', reporte: 'remanente' }, hallazgos: [] };
+    return { periodos, variacion, accion: { tipo: 'ver', reporte: 'remanente' }, hallazgos: [] };
   const accion = {
     tipo: 'reservar',
     tarjeta: nom.cuenta(mayor.tarjetaId),
@@ -207,6 +213,7 @@ export function flujoEfectivo(i: Instantanea, parametros: ParametrosFlujo = {}):
   } as const;
   return {
     periodos,
+    variacion,
     accion,
     hallazgos: [
       {

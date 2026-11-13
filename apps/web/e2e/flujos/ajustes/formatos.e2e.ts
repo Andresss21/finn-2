@@ -6,6 +6,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
+import { empiezaPor } from '../../ayudas/nombres.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { eventosQueNombran } from '../../../../../tools/pruebas/e2e/pila.ts';
 import { ajustesFormatos as t } from '../../../src/textos/ajustes-formatos.ts';
@@ -173,7 +174,7 @@ test.describe('PRU-E2E-AJUS', () => {
   }) => {
     await preparar();
     await abrir(page, '/ajustes');
-    await page.getByRole('link', { name: t.enlace, exact: true }).click();
+    await page.getByRole('link', { name: empiezaPor(t.enlace) }).click();
     await expect(page).toHaveURL(/\/ajustes\/formatos$/);
     const filas = page.locator('[data-formato]');
     await expect(filas).toHaveCount(3);

@@ -14,6 +14,8 @@ export const verificarSaldo = {
   verDiferencia: 'Ver diferencia',
   calculando: 'Calculando…',
   saldoFinn: (fecha: string, monto: string) => `Saldo de Finn al ${fecha}: ${monto}`,
+  // [CH-252] E2-14: en una tarjeta, la deuda en Finn en positivo, como la escribe el usuario.
+  deudaFinn: (fecha: string, monto: string) => `Deuda en Finn al ${fecha}: ${monto}`,
   diferencia: (monto: string) => `Diferencia: ${monto}`,
   // E2-13: el resultado que queda bajo las acciones del detalle cuando no hay diferencia que ajustar.
   verificado: (fecha: string, n: number) =>
