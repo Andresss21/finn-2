@@ -691,5 +691,7 @@
 
   "TA-597": { "estado": "pendiente" },
 
-  "TA-598": { "estado": "terminada", "rama": "ht-11-datos-servidor-2", "pr": 560 }
+  "TA-598": { "estado": "terminada", "rama": "ht-11-datos-servidor-2", "pr": 560 },
+
+  "TA-599": { "estado": "terminada", "rama": "ta-599-datos-faltantes", "pr": 562 }
 }
