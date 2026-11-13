@@ -13,6 +13,9 @@ export const conciliar = {
   tamano: (kb: number) => `${kb} KB`,
   revisar: 'Revisar',
   leyendo: 'Leyendo el archivo…',
+  // CTA-09: lo que trae el archivo (CH-201 c), solo lectura.
+  fechaCorte: 'Fecha de corte',
+  saldoFinalEstado: 'Saldo final del estado',
   saldoEstado: (fecha: string, monto: string) => `Saldo del estado (${fecha}): ${monto}`,
   saldoFinn: (fecha: string, monto: string) => `Saldo de Finn (${fecha}): ${monto}`,
   diferencia: (monto: string) => `Diferencia: ${monto}`,
