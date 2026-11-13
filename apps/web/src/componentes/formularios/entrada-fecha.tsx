@@ -22,6 +22,7 @@ export interface PropsEntradaFecha {
   readonly maxima?: FechaLocal;
   readonly error?: string | undefined;
   readonly requerido?: boolean;
+  readonly sinOpcional?: boolean;
   readonly deshabilitado?: boolean;
   /** Sin la línea «Fecha elegida: …» (S5 no la tiene). */
   readonly sinVistaPrevia?: boolean;
@@ -68,6 +69,7 @@ export function EntradaFecha({
   maxima,
   error,
   requerido = false,
+  sinOpcional = false,
   deshabilitado = false,
   sinVistaPrevia = false,
   hoy,
@@ -113,6 +115,7 @@ export function EntradaFecha({
         ? { 'aria-invalid': true, 'aria-describedby': mensajeEnFila.id }
         : {})}
       requerido={requerido}
+      sinOpcional={sinOpcional}
       name={nombre}
       inputMode="numeric"
       autoComplete="off"

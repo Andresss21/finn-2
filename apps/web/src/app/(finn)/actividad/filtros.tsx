@@ -1,13 +1,14 @@
 'use client';
 // Filtros de `/actividad` (FT-24; 05 §2.2; ACT-02, ACT-05, ACT-06): un formulario GET con los parámetros del catálogo. En computadora es
 // la columna fija «Filtros» de 320 px (`FormularioFiltros`); en teléfono, un botón «Filtros · n» junto al buscador abre una hoja
-// inferior con el mismo formulario (`BotonFiltros`), con «Quitar filtros» y «Ver resultados» en el pie. Estado y origen son selectores
-// segmentados; las demás listas son `SeleccionNativa`. La búsqueda vive en `Buscador` y viaja como campo oculto.
+// inferior con el mismo formulario (`BotonFiltros`), con «Quitar filtros» y «Ver resultados» en el pie. Todas las listas son `SeleccionNativa`;
+// Desde y Hasta usan `EntradaFecha` (dd/mm/aaaa) y viajan como `AAAA-MM-DD` en campos ocultos. La búsqueda vive en `Buscador` y viaja como campo oculto.
+import type { FechaLocal } from '@finn/dominio/valores';
 import { useId, useState, type ReactNode } from 'react';
 import { EntradaTexto } from '../../../componentes/base/campo';
 import { Icono } from '../../../componentes/base/icono';
 import { SeleccionNativa, type OpcionNativa } from '../../../componentes/base/seleccion-nativa';
-import { SelectorSegmentado } from '../../../componentes/base/selector-segmentado';
+import { EntradaFecha } from '../../../componentes/formularios/entrada-fecha';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { SuperpuestoDiferido } from '../../../componentes/navegacion/hoja-diferida';
 import { actividad as t } from '../../../textos/actividad';
@@ -65,12 +66,14 @@ function Campos({
     tipo: filtros['tipo'] ?? '',
     estado: filtros['estado'] ?? '',
     origen: filtros['origen'] ?? '',
+    desde: filtros['desde'] ?? '',
+    hasta: filtros['hasta'] ?? '',
   });
   const poner = (nombre: keyof typeof valores) => (valor: string) => {
     setValores((v) => ({ ...v, [nombre]: valor }));
   };
   const lista = (
-    nombre: 'cuenta' | 'categoria' | 'tipo',
+    nombre: 'cuenta' | 'categoria' | 'tipo' | 'estado' | 'origen',
     etiqueta: string,
     todas: string,
     opciones: readonly OpcionNativa[],
@@ -84,25 +87,20 @@ function Campos({
       opciones={[{ valor: '', etiqueta: todas }, ...opciones]}
     />
   );
-  const segmentado = (
-    nombre: 'estado' | 'origen',
-    etiqueta: string,
-    mapa: Readonly<Record<string, string>>,
-  ) => (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-etiqueta font-bold">{etiqueta}</span>
+  const rotulos = (mapa: Readonly<Record<string, string>>): readonly OpcionNativa[] =>
+    Object.entries(mapa).map(([valor, etiqueta]) => ({ valor, etiqueta }));
+  const fecha = (nombre: 'desde' | 'hasta', etiqueta: string) => (
+    <>
       <input type="hidden" name={nombre} value={valores[nombre]} />
-      <SelectorSegmentado
-        llena
+      <EntradaFecha
+        nombre=""
         etiqueta={etiqueta}
-        valor={valores[nombre]}
+        valor={valores[nombre] as FechaLocal}
         alCambiar={poner(nombre)}
-        opciones={[
-          { valor: '', etiqueta: t.todos },
-          ...Object.entries(mapa).map(([valor, rotulo]) => ({ valor, etiqueta: rotulo })),
-        ]}
+        sinVistaPrevia
+        sinOpcional
       />
-    </div>
+    </>
   );
   return (
     <form id={id} method="get" action="/actividad" className="flex flex-col gap-3">
@@ -130,23 +128,14 @@ function Campos({
           etiqueta,
         })),
       )}
-      {segmentado('estado', t.estadoBancario, t.estados)}
-      {segmentado('origen', t.origen, t.origenes)}
-      <div className="grid grid-cols-2 gap-3">
-        <EntradaTexto
-          etiqueta={t.desde}
-          type="date"
-          name="desde"
-          defaultValue={filtros['desde'] ?? ''}
-        />
-        <EntradaTexto
-          etiqueta={t.hasta}
-          type="date"
-          name="hasta"
-          defaultValue={filtros['hasta'] ?? ''}
-        />
+      {lista('estado', t.estadoBancario, t.todos, rotulos(t.estados))}
+      {lista('origen', t.origen, t.todos, rotulos(t.origenes))}
+      <div className="flex flex-col gap-3">
+        {fecha('desde', t.desde)}
+        {fecha('hasta', t.hasta)}
         <EntradaTexto
           etiqueta={t.montoDesde}
+          sinOpcional
           inputMode="decimal"
           name="monto-desde"
           prefijo="$"
@@ -154,6 +143,7 @@ function Campos({
         />
         <EntradaTexto
           etiqueta={t.montoHasta}
+          sinOpcional
           inputMode="decimal"
           name="monto-hasta"
           prefijo="$"

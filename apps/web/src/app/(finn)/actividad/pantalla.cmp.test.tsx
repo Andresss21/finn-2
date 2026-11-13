@@ -355,7 +355,7 @@ describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
     expect(texto).not.toMatch(/te debe/i);
   });
 
-  it('PRU-CMP-TX-722 [CA-E4-8] el buscador y «Filtros · n» comparten fila, estado y origen son selectores segmentados y «Cargar más» dice «Cargando…» mientras navega', () => {
+  it('PRU-CMP-TX-722 [CA-E4-8] el buscador y «Filtros · n» comparten fila, estado y origen son listas nativas y «Cargar más» dice «Cargando…» mientras navega', () => {
     const raiz = mostrar(dto([], 'cur-2'), { estado: 'pendiente', tipo: 'gasto' });
     const boton = raiz.querySelector<HTMLElement>('[data-boton-filtros]');
     const buscador = raiz.querySelector<HTMLElement>('[role="search"]');
@@ -366,13 +366,11 @@ describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
         (boton?.getBoundingClientRect().top ?? 0) - (buscador?.getBoundingClientRect().top ?? 99),
       ),
     ).toBeLessThan(8);
-    for (const grupo of ['Estado bancario', 'Origen']) {
-      const radios = raiz.querySelectorAll(
-        `[role="radiogroup"][aria-label="${grupo}"] [role="radio"]`,
-      );
-      expect(radios.length).toBeGreaterThanOrEqual(4);
+    for (const nombre of ['estado', 'origen']) {
+      const lista = raiz.querySelector<HTMLSelectElement>(`select[name="${nombre}"]`);
+      expect(lista?.options.length).toBeGreaterThanOrEqual(4);
     }
-    expect(raiz.querySelector('input[name="estado"]')?.getAttribute('value')).toBe('pendiente');
+    expect(raiz.querySelector<HTMLSelectElement>('select[name="estado"]')?.value).toBe('pendiente');
     // Mientras navega, `EnlaceFinn` marca el enlace con `aria-busy` y el texto cambia a «Cargando…»
     const mas = raiz.querySelector<HTMLElement>('[data-cargar-mas]');
     const visible = () =>
