@@ -6,10 +6,9 @@ import type { Metadata } from 'next';
 import { InstalarFinn } from './instalar-finn';
 import { ListaAjustes } from './lista-ajustes';
 import { RecordatorioPrimerosPasos } from './recordatorio-primeros-pasos';
-import { correoDeLaSesion } from '../../../servidor/sesion';
 import { consultar } from '../../../servidor/consultar';
 import { depsDeConsulta } from '../../../servidor/consultas';
-import { resumenSeguridad } from '../../../servidor/sesion';
+import { correoDeLaSesion, resumenSeguridad } from '../../../servidor/sesion';
 import { navegacion } from '../../../textos/navegacion';
 
 export const metadata: Metadata = { title: navegacion.secciones.ajustes };
