@@ -9,6 +9,7 @@ import { esperarMonto } from '../../ayudas/montos.ts';
 import { revisarTactil } from '../../ayudas/tactil.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { formularios } from '../../../src/textos/formularios.ts';
+import { base } from '../../../src/textos/base.ts';
 import { registrarGasto as t } from '../../../src/textos/registrar-gasto.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
@@ -314,16 +315,11 @@ test.describe('PRU-E2E-TX', () => {
     await elegir(page, t.cuenta, 'Ahorro');
     await campo(page, t.total).fill('10');
     await parteConCategoria(page, 1, '10', 'Super');
+    // [CH-260] El campo limita la fecha al período en contexto: una posterior a hoy o anterior a su inicio no se entrega.
     await campo(page, t.fecha).fill('2027-02-11');
-    await guardar(page).click();
-    await expect(
-      page.getByText('La fecha no puede ser posterior a hoy (10/02/2027).'),
-    ).toBeVisible();
+    await expect(page.getByText(base.fechaFuera)).toBeVisible();
     await campo(page, t.fecha).fill('2027-01-10');
-    await guardar(page).click();
-    await expect(
-      page.getByText('Ahorro se abrió el 21/01/2027; la fecha no puede ser anterior.'),
-    ).toBeVisible();
+    await expect(page.getByText(base.fechaFuera)).toBeVisible();
     await expect(page.getByRole('heading', { name: t.listo })).toHaveCount(0);
     await page.goto('/presupuesto');
     await esperarContenido(page);
@@ -454,6 +450,8 @@ test.describe('PRU-E2E-TX', () => {
     // con la fecha en un período cerrado, antes aparece el impacto con el aviso AV-01
     await page.getByRole('button', { name: t.registrarOtro }).click();
     await esperarHidratacion(page);
+    // [CH-260] Un período cerrado se registra abriendo Registrar con ese período en contexto.
+    await abrir(page, '/registrar/gasto?periodo=2027-01-21');
     await elegir(page, t.cuenta, 'T');
     await campo(page, t.fecha).fill('2027-01-25');
     await campo(page, t.total).fill('10');

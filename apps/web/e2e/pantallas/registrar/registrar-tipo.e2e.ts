@@ -65,7 +65,8 @@ test.describe('PRU-E2E-TX', () => {
     page,
   }) => {
     await preparar('2027-03-05', [{ op: 'OP-01', cuenta: 'Ahorro', saldo: 0 }]);
-    await abrir(page, '/registrar/ingreso');
+    // [CH-260] El período cerrado se abre con `?periodo=` (el que empieza el 21 de enero).
+    await abrir(page, '/registrar/ingreso?periodo=2027-01-21');
     await cuenta(page, t.cuentaIngreso, 'Ahorro').click();
     await campo(page, t.fecha).fill('2027-01-25');
     await campo(page, t.total).fill('500');

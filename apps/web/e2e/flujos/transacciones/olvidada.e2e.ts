@@ -102,9 +102,12 @@ const disponible = (page: Page, nombre: string) =>
 /** Escribe el gasto olvidado de una sola parte y lo envía: queda en la previsualización del impacto. */
 async function registrar(
   page: Page,
-  datos: { cuenta: string; fecha: string; total: string; categoria: string },
+  datos: { cuenta: string; fecha: string; total: string; categoria: string; periodo?: string },
 ): Promise<void> {
-  await page.goto('/registrar/gasto');
+  // [CH-260] Un período cerrado se registra con `?periodo=` (el que empieza ese día).
+  await page.goto(
+    datos.periodo === undefined ? '/registrar/gasto' : `/registrar/gasto?periodo=${datos.periodo}`,
+  );
   await esperarHidratacion(page);
   await elegir(page, t.cuenta, datos.cuenta);
   await campo(page, t.fecha).fill(datos.fecha);
@@ -124,7 +127,13 @@ async function abrirPresupuesto(page: Page): Promise<void> {
   await esperarContenido(page);
 }
 
-const OLVIDADO_ESC31 = { cuenta: 'Ahorro', fecha: '2027-02-10', total: '50', categoria: 'Salidas' };
+const OLVIDADO_ESC31 = {
+  cuenta: 'Ahorro',
+  fecha: '2027-02-10',
+  total: '50',
+  categoria: 'Salidas',
+  periodo: '2027-01-21',
+};
 
 test.describe('PRU-E2E-TX', () => {
   test.describe.configure({ timeout: 120_000 });
@@ -174,6 +183,7 @@ test.describe('PRU-E2E-TX', () => {
     await registrar(page, {
       cuenta: 'Ahorro',
       fecha: '2027-03-01',
+      periodo: '2027-02-21',
       total: '350',
       categoria: 'Super',
     });
