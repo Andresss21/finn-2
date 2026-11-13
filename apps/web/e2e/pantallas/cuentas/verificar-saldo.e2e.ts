@@ -120,7 +120,7 @@ test.describe('PRU-E2E-CONC', () => {
     await preparar(TARJETA);
     await abrir(page, verificar);
     await pedirDiferencia(page, t.deudaBanco, '290');
-    await expect(page.getByText(t.saldoFinn('20/10/2027', '−$300.00'))).toBeVisible();
+    await expect(page.getByText(t.deudaFinn('20/10/2027', '$300.00'))).toBeVisible();
     await expect(page.getByText(t.diferencia('+$10.00'))).toBeVisible();
     await expect(marcas(page)).toHaveCount(1); // la deuda inicial es la única candidata y no viene marcada
     await expect(marcas(page).first()).not.toBeChecked();
