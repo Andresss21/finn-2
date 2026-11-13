@@ -244,10 +244,8 @@ export function FormularioRegistrarGasto({
         ? {}
         : {
             acciones: (
-              // [CH-240 E6-21] La barra fija queda a 20 px de los bordes (16 del marco más 4)
-              <div className="w-full max-md:px-1 xl:ml-auto xl:w-[calc(50%-1.125rem)]">
-                {guardar}
-              </div>
+              // [CH-240 E6-18, E6-21] La barra fija queda a 20 px de los bordes: los del pie de `PaginaFlujo`, sin relleno extra
+              <div className="w-full xl:ml-auto xl:w-[calc(50%-1.125rem)]">{guardar}</div>
             ),
           })}
     >
@@ -277,15 +275,22 @@ export function FormularioRegistrarGasto({
           </Suspense>
           <div className="flex flex-col gap-6 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-9">
             <div className="flex flex-col gap-4.5 xl:col-start-1 xl:row-start-1">
-              <SeleccionNativa
-                etiqueta={t.cuenta}
-                alta
-                marcador={t.elegirCuenta}
-                opciones={opcionesCuentas}
-                valor={c.cuentaId}
-                alCambiar={poner('cuentaId')}
-                error={error('cuentaId')}
-              />
+              <div className="flex flex-col gap-1.5">
+                <SeleccionNativa
+                  etiqueta={t.cuenta}
+                  alta
+                  marcador={t.elegirCuenta}
+                  opciones={opcionesCuentas}
+                  valor={c.cuentaId}
+                  alCambiar={poner('cuentaId')}
+                  error={error('cuentaId')}
+                />
+                {cuentaPropuesta !== undefined && c.cuentaId === cuentaPropuesta ? (
+                  <p data-rol="cuerpo-pequeno" className="text-cuerpo-pequeno text-texto-terciario">
+                    {t.cuentaPropuesta}
+                  </p>
+                ) : null}
+              </div>
               <div className="grid grid-cols-2 gap-2.5 [&>*]:min-w-0">
                 <EntradaFecha
                   nombre="fecha"

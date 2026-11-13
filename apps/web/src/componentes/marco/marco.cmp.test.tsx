@@ -347,3 +347,26 @@ describe('PRU-CMP-PWA «Salir» a la vista', () => {
     });
   });
 });
+
+describe('PRU-CMP-PWA correo de la sesión junto a «Salir»', () => {
+  it('PRU-CMP-PWA-782 [] entrega 3: la barra lateral muestra el correo de la sesión encima de «Salir», con su data-rol, y sin correo no dibuja nada', () => {
+    ruta.pathname = '/';
+    ruta.busqueda = '';
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    act(() => {
+      raiz.render(<Marco correo="yo@ejemplo.test">{<main />}</Marco>);
+    });
+    montados.push({ raiz, nodo });
+    const pie = nodo.querySelector('aside [data-pieza="pie-salir"]') as HTMLElement;
+    const correo = pie.querySelector('[data-rol="correo-sesion"]');
+    expect(correo?.textContent).toBe('yo@ejemplo.test');
+    expect(correo?.nextElementSibling?.tagName).toBe('BUTTON');
+    expect(salir.correoEnDispositivo('yo@ejemplo.test')).toBe(
+      'yo@ejemplo.test · en este dispositivo',
+    );
+    const sin = montar('/', '', <main />);
+    expect(sin.querySelector('[data-rol="correo-sesion"]')).toBeNull();
+  });
+});

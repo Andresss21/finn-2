@@ -5,7 +5,8 @@ export const dominio = {
   asignado: glosario.asignado,
   gastado: glosario.gastado,
   disponible: glosario.disponible,
-  disponibleParaPagar: 'Disponible para pagar',
+  /** 06 §5.6 (CA-E6-20): la fila de pago de tarjeta dice «Reservado», no «Disponible para pagar». */
+  reservado: 'Reservado',
   teFaltaReservar: glosario.teFaltaReservar,
   reservadoDeMas: glosario.reservadoDeMas,
   pagoExcedente: 'Pago excedente',

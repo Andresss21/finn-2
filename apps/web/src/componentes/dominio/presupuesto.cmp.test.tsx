@@ -197,7 +197,7 @@ describe('PRU-CMP-PRES-101 componentes de dominio del Presupuesto [CF-13]', () =
       m.getAttribute('data-centavos'),
     );
     expect(montos.filter((_, i) => i % 2 === 0)).toEqual(['1875', '2000', '1500', '0']);
-    expect(textoAccesible(raiz)).toContain('Disponible para pagar $623.43');
+    expect(textoAccesible(raiz)).toContain('Reservado $623.43');
   });
 
   it('PRU-CMP-PRES-101 fila de transacción: monto presentado y cada marca con nombre accesible', () => {

@@ -24,6 +24,8 @@ export const registrarGasto = {
     'Para registrar algo, Finn necesita saber de qué cuenta sale el dinero o a cuál entra.',
   crearCuenta: 'Agregar una cuenta',
   cuenta: 'Cuenta o tarjeta',
+  /** 06 §5.6 (CA-E6-20): bajo la cuenta que viene puesta de entrada. */
+  cuentaPropuesta: 'Propuesta: la cuenta de tu último gasto.',
   fecha: 'Fecha',
   total: 'Total del gasto',
   comercio: 'Comercio',

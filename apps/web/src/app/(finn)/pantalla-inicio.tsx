@@ -177,7 +177,7 @@ export function PantallaInicio({
             {inicioEntrega4.notaSinCuentas}
           </p>
         ) : null}
-        {sinCuentas || registrarSuscripcion === undefined ? null : (
+        {registrarSuscripcion === undefined ? null : (
           <TarjetaActivarNotificaciones registrar={registrarSuscripcion} />
         )}
         {sinCuentas ? null : (
