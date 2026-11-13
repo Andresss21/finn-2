@@ -27,6 +27,8 @@ const ETIQUETAS: Partial<Record<Clave, string>> = {
   plazoCuotas: t.plazoCuotas,
   cuotasPagadasAlCrear: t.cuotasPagadas,
   modeloCalculo: t.modelo,
+  seguroPrimerMes: t.seguroPrimerMes,
+  comision: t.comision,
   rendimientoAnualEsperado: t.rendimiento,
 };
 const OPCIONES: Partial<Record<Clave, Readonly<Record<string, string>>>> = {
@@ -57,7 +59,7 @@ const SECCIONES_PRESTAMO: readonly {
   },
   {
     titulo: t.seccionCondiciones,
-    claves: ['tasaNominalAnual', 'tipoTasa', 'modeloCalculo'],
+    claves: ['tasaNominalAnual', 'tipoTasa', 'modeloCalculo', 'seguroPrimerMes', 'comision'],
     plegada: true,
   },
 ];

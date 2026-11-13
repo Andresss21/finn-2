@@ -33,6 +33,8 @@ const CLAVES = [
   'plazoCuotas',
   'cuotasPagadasAlCrear',
   'modeloCalculo',
+  'seguroPrimerMes',
+  'comision',
   'rendimientoAnualEsperado',
 ] as const;
 export type Clave = (typeof CLAVES)[number];
@@ -78,6 +80,9 @@ export const CAMPOS_DE_TIPO: Readonly<Record<TipoCuenta, readonly Descriptor[]>>
     d('plazoCuotas', 'entero', true),
     d('cuotasPagadasAlCrear', 'entero', true),
     d('modeloCalculo', 'opciones', false),
+    // [CH-261] Con Banco Agrícola, las condiciones que el modelo usa, como en Editar condiciones (OP-01 ya las acepta)
+    d('seguroPrimerMes', 'monto', false, ['modeloCalculo', 'banco_agricola']),
+    d('comision', 'monto', false, ['modeloCalculo', 'banco_agricola']),
   ],
   inversion: [d('rendimientoAnualEsperado', 'porcentaje', false)],
 };
