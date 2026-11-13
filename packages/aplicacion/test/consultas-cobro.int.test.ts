@@ -95,6 +95,7 @@ describe('PRU-INT-COBRO', () => {
         patron: 'netflix',
         categoria: { id: COMIDA, nombre: 'Comida' },
         categoriaArchivada: false,
+        coincideCon: [], // [CH-251] ninguna transacción sembrada se llama «Netflix»: solo una programada
       },
     ]);
 

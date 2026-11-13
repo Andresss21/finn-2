@@ -11,7 +11,7 @@ import {
   sembrarBandejaCompleta,
   sembrarErroresRecientes,
 } from '../../db/test/ayudantes/ajustes-prueba.ts';
-import { crearBasePrueba } from '../../db/test/ayudantes/base.ts';
+import { consultar, crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY, RELOJ } from '../../db/test/ayudantes/hechos-prueba.ts';
 import { sembrarReglaDeComercio } from '../../db/test/ayudantes/reglas-prueba.ts';
 import type { ClaimsSesion, SesionServidor } from '../src/autenticacion/autorizar.ts';
@@ -54,13 +54,22 @@ describe('PRU-INT-REP', () => {
   it('PRU-INT-REP-790 [Q-reporte, FT-60, FT-67, inv. 27] (CH-251) reporte() trae la cifra de Tendencia, Ingresos y gastos, Cumplimiento, Realidad y Flujo de efectivo del selector y cada hallazgo con el texto del catálogo', async () => {
     const { i, reglas: rs } = await instantanea();
     const seis = { ventana: 'ultimos_6' } as const;
-    const ultimo = JSON.parse(JSON.stringify(reportes.ultimoPeriodo(i, 'ultimos_6'))) as object;
-    expect(await reporte(deps(), { tipo: 'tendencia', ...seis })).toMatchObject({
-      ultimoPeriodo: ultimo,
-    });
-    expect(await reporte(deps(), { tipo: 'ingresos_gastos', ...seis })).toMatchObject({
-      ultimoPeriodo: ultimo,
-    });
+    // Con la semilla (hoy 2027-02-05) ningún período cerró: W de `ultimos_6` está vacía y `ultimoPeriodo` no viene (04 §6.9 [CH-251])
+    expect(reportes.ultimoPeriodo(i, 'ultimos_6')).toBeUndefined();
+    for (const tipo of ['tendencia', 'ingresos_gastos'] as const)
+      expect(await reporte(deps(), { tipo, ...seis })).not.toHaveProperty('ultimoPeriodo');
+    // Con el reloj en marzo, el período que empezó el 2027-01-21 ya cerró: es el último de W, el de la cifra (E5-5)
+    const marzo = { reloj: { hoy: '2027-03-10', desfaseMs: 0 } };
+    const iMarzo = await leer(
+      async (tx) => calcular(await cargarHechos(tx), FechaLocal.desdeTexto('2027-03-10')),
+      marzo,
+    );
+    const ultimo = reportes.ultimoPeriodo(iMarzo, 'ultimos_6');
+    expect(ultimo).toMatchObject({ inicio: '2027-01-21', estado: 'cerrado' });
+    for (const tipo of ['tendencia', 'ingresos_gastos'] as const)
+      expect(await reporte({ ...deps(), opciones: () => marzo }, { tipo, ...seis })).toMatchObject({
+        ultimoPeriodo: JSON.parse(JSON.stringify(ultimo)) as object,
+      });
     expect((await reporte(deps(), { tipo: 'tendencia' })).ultimoPeriodo).toEqual(
       JSON.parse(JSON.stringify(reportes.ultimoPeriodo(i))),
     );
@@ -107,10 +116,16 @@ describe('PRU-INT-BAND', () => {
 
 describe('PRU-INT-AJUS', () => {
   it('PRU-INT-AJUS-790 [Q-ajustes, FT-72, FT-76] (CH-251) el resumen del índice cuenta los formatos activos, las instituciones y los errores de los últimos 7 días, sin los avisos ni los errores más viejos', async () => {
-    const vacio = await ajustes(deps());
-    expect(vacio.resumen).toEqual({
-      formatosActivos: 0,
-      instituciones: vacio.instituciones.length,
+    // La migración de datos iniciales ya trae formatos bancarios: la prueba cuenta los activos de su base antes de sembrar
+    const [activos] = await consultar(
+      base.urlAdmin,
+      'SELECT count(*) FROM finn.formatos_bancarios WHERE activo',
+    );
+    const formatosDeLaBase = Number(activos);
+    const antes = await ajustes(deps());
+    expect(antes.resumen).toEqual({
+      formatosActivos: formatosDeLaBase,
+      instituciones: antes.instituciones.length,
       erroresSieteDias: 0,
     });
     await sembrarBandejaCompleta(base); // un formato activo y uno inactivo
@@ -119,7 +134,7 @@ describe('PRU-INT-AJUS', () => {
     // El error sembrado por `sembrarAjustesTecnicos` (2027-02-03) y el de hace 1 día; no el de hace 8 ni los avisos.
     const dto = await ajustes(deps());
     expect(dto.resumen).toEqual({
-      formatosActivos: 1,
+      formatosActivos: formatosDeLaBase + 1,
       instituciones: dto.instituciones.length,
       erroresSieteDias: 2,
     });
