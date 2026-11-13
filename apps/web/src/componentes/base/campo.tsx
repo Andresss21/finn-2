@@ -25,6 +25,8 @@ export interface PropsCampo {
   readonly descripcion?: string;
   readonly error?: string | undefined;
   readonly requerido?: boolean;
+  /** Sin el «Opcional» junto a la etiqueta: donde todo es opcional (los filtros). */
+  readonly sinOpcional?: boolean;
   /** La etiqueta solo para lectores de pantalla: filas compactas donde el contexto ya dice qué es (export S5). */
   readonly etiquetaOculta?: boolean;
   /** El control, o una función que lo arma con las props del campo (cuando el control va dentro de otro componente). */
@@ -46,6 +48,7 @@ export function Campo({
   descripcion,
   error,
   requerido = false,
+  sinOpcional = false,
   etiquetaOculta = false,
   children,
 }: PropsCampo) {
@@ -65,7 +68,9 @@ export function Campo({
     <div className="flex flex-col gap-1">
       <div className={etiquetaOculta ? 'sr-only' : 'flex justify-between gap-2'}>
         <Label htmlFor={id}>{etiqueta}</Label>
-        {requerido ? null : <span className="text-sm text-texto-terciario">{base.opcional}</span>}
+        {requerido || sinOpcional ? null : (
+          <span className="text-sm text-texto-terciario">{base.opcional}</span>
+        )}
       </div>
       {typeof children === 'function' ? children(props) : cloneElement(children, { ...props })}
       {descripcion === undefined ? null : (
@@ -96,6 +101,7 @@ export function EntradaTexto({
   descripcion,
   error,
   requerido,
+  sinOpcional,
   etiquetaOculta,
   prefijo,
   acciones,
@@ -108,6 +114,7 @@ export function EntradaTexto({
       {...(descripcion === undefined ? {} : { descripcion })}
       {...(error === undefined ? {} : { error })}
       {...(requerido === undefined ? {} : { requerido })}
+      {...(sinOpcional === undefined ? {} : { sinOpcional })}
       {...(etiquetaOculta === undefined ? {} : { etiquetaOculta })}
     >
       {(control) =>

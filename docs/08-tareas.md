@@ -1706,6 +1706,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-256** | Alcance de «`data-rol` en todo texto» (CA-E6-21, TA-597, 2026-11-12). **Decidido:** la regla rige para los HTML de referencia del anexo. En la app se exige en los montos, también dentro de botones, y en los bloques que las pruebas direccionan | 08 §29c (TA-597) | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-256]** en la ficha TA-597 |
 | **CH-257** | Salida de la inscripción del primer factor (corrección posterior de TA-597, 2026-11-13). Quien llega a `/ingresar/inscribir` con otra cuenta o sin poder inscribir queda sin salida. **Decidido:** inscribir el factor ofrece «Usar otra cuenta» (salir) como botón tonal de ancho completo bajo «Verificar y entrar», con `salir()` y vuelta a `/ingresar` | 05 §9.5 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-257]** |
 | **CH-258** | Registrar ofrece «Cobro» (corrección posterior de TA-597, 2026-11-13). «Cobro» (lleva a OP-31 en `/por-cobrar/cobrar`) aparece en `/registrar` después de «Ingreso» cuando hay por cobrar abierto, dato de `porCobrar()` en el servidor; subtítulo «Alguien te pagó lo que te debía» | 05 §2.4; 04 OP-31 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-258]** |
+| **CH-259** | C-32 del diseño (13/11/2026): Marco de computadora en pantallas anchas, el bloque de 1144 + 2 × 48 se centra a la derecha de la barra lateral | 06 §3.2 | Aprobado por el diseño; registrado por el orquestador; **aplicado [CH-259]** |
 
 ---
 

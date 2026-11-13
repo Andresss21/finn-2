@@ -55,8 +55,8 @@ test.describe('PRU-E2E-PWA', () => {
     await expect(barra(page)).not.toContainText(navegacion.marca);
 
     if (enEscritorio(page)) {
-      expect(await estilo(page, '#contenido > main', 'padding')).toBe('32px 48px 48px');
-      expect(await estilo(page, '#contenido > main', 'margin-left')).toBe('0px');
+      expect(await estilo(page, '#contenido > main', 'padding')).toBe('32px 0px 48px');
+      expect(await estilo(page, '#contenido > main', 'margin-left')).toBe('48px');
       expect(await estilo(page, '#contenido h1', 'font-size')).toBe('40px');
     } else {
       // El h1 de la pantalla se dibuja dentro de la barra fija de 60 px, a la izquierda de Registrar.
@@ -296,8 +296,8 @@ test.describe('PRU-E2E-PWA', () => {
     await abrir(page, '/cuentas/nueva');
     expect((await principal.boundingBox())?.width ?? 0).toBeLessThanOrEqual(720);
     await abrir(page, '/registrar/gasto');
-    // El ancho del contenido: 1440 − 248 de la barra lateral − 2 × 48 de relleno.
-    expect(Math.round(((await principal.boundingBox())?.width ?? 0) - 96)).toBe(1096);
+    // El ancho del contenido: 1440 − 248 de la barra lateral − 2 × 48 de relleno (margen de `main`).
+    expect(Math.round((await principal.boundingBox())?.width ?? 0)).toBe(1096);
     const columnas = await page
       .locator('#contenido form div.grid')
       .first()

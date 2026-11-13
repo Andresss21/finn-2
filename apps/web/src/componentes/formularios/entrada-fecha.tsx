@@ -22,6 +22,9 @@ export interface PropsEntradaFecha {
   readonly maxima?: FechaLocal;
   readonly error?: string | undefined;
   readonly requerido?: boolean;
+  readonly sinOpcional?: boolean;
+  /** Con el texto vaciado entrega `''` a `alCambiar` (filtros, donde la fecha es opcional); sin esto, solo una fecha completa. */
+  readonly avisarVacio?: boolean;
   readonly deshabilitado?: boolean;
   /** Sin la línea «Fecha elegida: …» (S5 no la tiene). */
   readonly sinVistaPrevia?: boolean;
@@ -68,6 +71,8 @@ export function EntradaFecha({
   maxima,
   error,
   requerido = false,
+  sinOpcional = false,
+  avisarVacio = false,
   deshabilitado = false,
   sinVistaPrevia = false,
   hoy,
@@ -113,6 +118,7 @@ export function EntradaFecha({
         ? { 'aria-invalid': true, 'aria-describedby': mensajeEnFila.id }
         : {})}
       requerido={requerido}
+      sinOpcional={sinOpcional}
       name={nombre}
       inputMode="numeric"
       autoComplete="off"
@@ -124,6 +130,7 @@ export function EntradaFecha({
         const texto = enmascarar(e.target.value);
         setBorrador(texto);
         const f = leer(texto);
+        if (avisarVacio && texto === '') alCambiar('' as FechaLocal);
         if (f === undefined || (minima !== undefined && f < minima)) return;
         if (maxima === undefined || f <= maxima) alCambiar(f);
       }}
