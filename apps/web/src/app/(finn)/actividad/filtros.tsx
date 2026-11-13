@@ -99,6 +99,7 @@ function Campos({
         alCambiar={poner(nombre)}
         sinVistaPrevia
         sinOpcional
+        avisarVacio
       />
     </>
   );
