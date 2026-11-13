@@ -88,7 +88,7 @@ export function SeleccionNativa({
             {...(nombre === undefined ? {} : { name: nombre })}
             value={valor}
             disabled={deshabilitado}
-            className="absolute inset-0 size-full cursor-pointer appearance-none opacity-0"
+            className="fz-seleccion-nativa absolute inset-0 size-full cursor-pointer appearance-none opacity-0"
             onChange={(e) => {
               alCambiar(e.target.value);
             }}
