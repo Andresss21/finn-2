@@ -433,7 +433,7 @@ describe('actividad y detalle de transacción', () => {
     expect(ids(actividad(j, { limite: 500 }))).toHaveLength(7);
   });
 
-  it('PRU-DOM-TX-790 el conteo y el total cubren todas las coincidencias de la búsqueda y los filtros, no solo la página', () => {
+  it('PRU-DOM-TX-790 [Q-actividad] el conteo y el total cubren todas las coincidencias de la búsqueda y los filtros, no solo la página', () => {
     // Gastos del estado conocido: 60 (marzo), 40 y 200 (abril).
     const gastos = actividad(i, { tipo: 'gasto', limite: 1 });
     expect(ids(gastos)).toEqual([id('g-super')]);
@@ -448,7 +448,7 @@ describe('actividad y detalle de transacción', () => {
     expect([nada.conteo, nada.total]).toEqual([0, c(0)]);
   });
 
-  it('PRU-DOM-TX-791 la fila trae «en camino» con lo que sigue abierto por cobrar, y no lo trae sin deudor o ya cerrado', () => {
+  it('PRU-DOM-TX-791 [Q-actividad] la fila trae «en camino» con lo que sigue abierto por cobrar, y no lo trae sin deudor o ya cerrado', () => {
     const filas = new Map(
       actividad(i)
         .dias.flatMap((d) => d.transacciones)
@@ -471,7 +471,7 @@ describe('actividad y detalle de transacción', () => {
     expect(fila).not.toHaveProperty('enCamino');
   });
 
-  it('PRU-DOM-TX-792 «Efectos hoy» trae el Disponible de hoy de cada categoría tocada y la deuda de hoy de la tarjeta, los mismos de Presupuesto y Cuentas', () => {
+  it('PRU-DOM-TX-792 [Q-detalleTransaccion] «Efectos hoy» trae el Disponible de hoy de cada categoría tocada y la deuda de hoy de la tarjeta, los mismos de Presupuesto y Cuentas', () => {
     const disponible = detalleCategoria(i, id('super')).numeros.disponible;
     const deuda = cuentas(i).tarjetas.find((t) => t.cuenta.id === id('vi'))?.deuda;
     expect(deuda).toBe(c(40));

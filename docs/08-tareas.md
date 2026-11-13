@@ -502,7 +502,7 @@ tu: —
 
 ```hito
 despues: TA-597
-requiere: TA-560, TA-561, TA-562, TA-563, TA-564, TA-565, TA-566, TA-567, TA-568, TA-569, TA-570, TA-571, TA-572, TA-573, TA-574, TA-575, TA-576, TA-577, TA-578, TA-579, TA-580, TA-581, TA-582, TA-583, TA-584, TA-585, TA-586, TA-587, TA-588, TA-589, TA-590, TA-591, TA-592, TA-593, TA-594, TA-595, TA-596, TA-597
+requiere: TA-560, TA-561, TA-562, TA-563, TA-564, TA-565, TA-566, TA-567, TA-568, TA-569, TA-570, TA-571, TA-572, TA-573, TA-574, TA-575, TA-576, TA-577, TA-578, TA-579, TA-580, TA-581, TA-582, TA-583, TA-584, TA-585, TA-586, TA-587, TA-588, TA-589, TA-590, TA-591, TA-592, TA-593, TA-594, TA-595, TA-596, TA-597, TA-598
 tu: —
 ```
 
@@ -13886,7 +13886,7 @@ compartido: —
 #### TA-597 Entrega 4 · cierre de B10: impacto en los seis flujos, heredados y semilla **[CH-240]**
 
 ```tarea
-orden: 945
+orden: 946
 bloque: B10
 hito: HT-11
 depende: TA-568, TA-575, TA-580, TA-583, TA-584, TA-585, TA-588, TA-590, TA-595, TA-596
@@ -13920,6 +13920,40 @@ compartido: —
 **Comandos.** `pnpm test:e2e -g "PRU-E2E-PRES-791|PRU-E2E-PWA-79|PRU-E2E-BAND-791"`; `pnpm ci:local`.
 
 **Terminada cuando.** Las pruebas en verde, la E2E completa en verde y la verificación B10 (§29c) de cada pantalla de `DATOS-EJEMPLO.md` §1 a §5 contra su HTML y su PNG, en el momento que dice §1: teléfono 390 × 844 y computadora 1440 × 900, claro y oscuro; reducir movimiento; tocables ≥ 44; contraste. Capturas en `C:/finn/capturas/TA-597/`; en el informe, una línea por criterio y la lista de diferencias de números entre la semilla y las referencias (sin ajustar).
+
+#### TA-598 Datos del servidor de la entrega 4 (CH-250, CH-251, CH-252) **[CH-250]** **[CH-251]** **[CH-252]**
+
+```tarea
+orden: 945
+bloque: B10
+hito: HT-11
+depende: TA-596
+tu: —
+revision: obligatoria
+modelo: opus
+paralelo: no
+tamano: prod=400 archivos=12 ca=0 migraciones=0 total=1200
+cubre: CH-250, CH-251, CH-252
+pru: PRU-DOM-TX-790, PRU-DOM-TX-791, PRU-DOM-TX-792, PRU-INT-BAND-790, PRU-CMP-TX-790, PRU-CMP-TX-791, PRU-CMP-TX-792, PRU-CMP-TX-793, PRU-CMP-BAND-790, PRU-DOM-REP-790, PRU-DOM-REP-791, PRU-DOM-REP-792, PRU-DOM-REP-793, PRU-DOM-REP-794, PRU-DOM-BAND-790, PRU-INT-REP-790, PRU-INT-AJUS-790, PRU-INT-BAND-795, PRU-CMP-REP-790, PRU-CMP-REP-791, PRU-CMP-REP-792, PRU-CMP-REP-793, PRU-CMP-AJUS-790, PRU-CMP-BAND-795, PRU-DOM-CTA-790, PRU-DOM-CTA-791, PRU-DOM-CTA-792, PRU-DOM-CTA-793, PRU-DOM-CTA-794, PRU-INT-CTA-790, PRU-CMP-CTA-790, PRU-CMP-CTA-791, PRU-CMP-CTA-792, PRU-CMP-CTA-793, PRU-CMP-CTA-795, PRU-CMP-CTA-796, PRU-CMP-PRES-795, PRU-CMP-PRES-796
+compartido: —
+```
+
+**Qué construir.** Corrección posterior de HT-11, en un solo PR con excepción de tamaño autorizada por el usuario (el `tamano` de la ficha queda en el tope de DT-01; el medido, unas 830 líneas de producción en 56 archivos, va en «Desvíos» del informe, como en los grupos de PR de HT-11): los datos que la entrega 4 pide y el servidor no entregaba, sin que la interfaz calcule (PF-3).
+- **CH-250:** `ActividadDto.conteo` y `total`, `TransaccionFila.enCamino`, `DetalleTransaccionDto.efectosHoy` y `transaccionId` en la salida de OP-38 (04 §6.7.1, §6.7.2, §6.8).
+- **CH-251:** la cifra de cada reporte, `texto` en cada `HallazgoDto` (`consultas/textos-hallazgos.ts`), `resumen` en `ajustes()` y `coincideCon` en `reglas()` (04 §6.9, §6.11, §6.12.2).
+- **CH-252:** talón sin modelo, archivadas con institución, `deudaFinn` de OP-53, `asignacionesFuturas` de OP-04 y `reservadoBp` (04 §6.5, §6.6, §6.12.4).
+- **Interfaz:** diferencia en vivo de verificar saldo (CTA-07), fecha de corte y saldo final de Conciliar (CTA-09); Mover queda sin «Deshacer» porque OP-15 no devuelve las asignaciones de después.
+- **Sin hacer, con motivo:** «Usada N veces» de Reglas (ningún hecho guarda qué regla categorizó), «N factores · N sesiones» de Ajustes y `archivadaEl` (sin hecho o sin migración).
+
+**Leer.** CH-250, CH-251 y CH-252 (§7); 04 §6.5 a §6.12 y «Enmiendas posteriores»; 06 §3.5.
+
+**Archivos.** `docs/04-backend.md`, `docs/08-tareas.md`, `plan/objetivos.txt`; `packages/dominio/src/selectores/{actividad,conciliacion,cuentas,detalle-cuenta,detalle-transaccion,index,reglas}.ts`, `packages/dominio/src/selectores/reportes/{cifras,flujo-efectivo,index,realidad}.ts`; `packages/aplicacion/src/consultas/{ajustes,inicio,reglas,reporte,textos-hallazgos}.ts`, `packages/aplicacion/src/contratos/bandeja.ts`, `packages/aplicacion/src/errores/formato.ts`, `packages/aplicacion/src/operaciones/bandeja/OP-38-aprobar-todos.ts`, `packages/aplicacion/src/operaciones/cuentas/OP-04-archivar-cuenta.ts`; `packages/db/src/repositorios/ajustes.ts`; `apps/web/src/app/(finn)/{actividad,ajustes,bandeja,cuentas,reportes}/*`, `apps/web/src/componentes/dominio/fila-transaccion.tsx`, `apps/web/src/flujos/{cuentas-archivar,cuentas-conciliar,cuentas-verificar-saldo,reglas-regla}/*`, `apps/web/src/textos/*`; sus pruebas y `apps/web/e2e/pantallas/{actividad/actividad,cuentas/detalle-cuenta}.e2e.ts`.
+
+**Pruebas primero.** Las de `pru`, con lo que cubren entre corchetes en su título.
+
+**Comandos.** `pnpm test:unidad`; `pnpm test:componentes`; `pnpm test:integracion -t "790|791|792|793|794|795"`; `pnpm ci:local`.
+
+**Terminada cuando.** Las pruebas en verde y la CI en verde. Revisión obligatoria (selectores del dominio y consultas): esperá el «mergeá TA-598».
 
 ### Criterios del prompt no aplicables
 

@@ -689,5 +689,7 @@
 
   "TA-596": { "estado": "terminada", "rama": "ht-11-entrega-4c", "pr": 558 },
 
-  "TA-597": { "estado": "pendiente" }
+  "TA-597": { "estado": "pendiente" },
+
+  "TA-598": { "estado": "terminada", "rama": "ht-11-datos-servidor", "pr": 559 }
 }

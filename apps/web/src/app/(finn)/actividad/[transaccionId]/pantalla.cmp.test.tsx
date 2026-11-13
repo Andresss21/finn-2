@@ -272,7 +272,7 @@ describe('FT-25 detalle de una transacción', () => {
     expect([...nodo.querySelectorAll('h2')].map((h) => h.textContent)).toContain(t.efectosHoy);
   });
 
-  it('PRU-CMP-TX-790 «Efectos hoy» muestra el Disponible de hoy de cada categoría y la deuda de la tarjeta que trae el DTO, sin la fila de la cuenta, y cada fila mide 44 px', () => {
+  it('PRU-CMP-TX-790 [Q-detalleTransaccion, FT-25] «Efectos hoy» muestra el Disponible de hoy de cada categoría y la deuda de la tarjeta que trae el DTO, sin la fila de la cuenta, y cada fila mide 44 px', () => {
     const nodo = mostrar(
       dto({
         efectosHoy: {
@@ -298,7 +298,7 @@ describe('FT-25 detalle de una transacción', () => {
     for (const f of filas) expect(f.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
   });
 
-  it('PRU-CMP-TX-791 sin categoría ni tarjeta, «Efectos hoy» muestra el efecto en cada cuenta', () => {
+  it('PRU-CMP-TX-791 [Q-detalleTransaccion, FT-25] sin categoría ni tarjeta, «Efectos hoy» muestra el efecto en cada cuenta', () => {
     const nodo = mostrar(dto());
     const filas = [...nodo.querySelectorAll('[data-efectos-hoy] li')];
     expect(filas).toHaveLength(1);

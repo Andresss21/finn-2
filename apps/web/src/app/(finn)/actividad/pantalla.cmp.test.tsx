@@ -404,7 +404,7 @@ describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
     expect(document.querySelector('[data-testid="velo"]')).not.toBeNull();
   });
 
-  it('PRU-CMP-TX-792 con filtros, «N transacciones · total» y con búsqueda «N resultados para …», con el conteo y el total del DTO; «Quitar filtros» mide 44 px y la hoja dice «Ver N resultados»', async () => {
+  it('PRU-CMP-TX-792 [Q-actividad, FT-24] con filtros, «N transacciones · total» y con búsqueda «N resultados para …», con el conteo y el total del DTO; «Quitar filtros» mide 44 px y la hoja dice «Ver N resultados»', async () => {
     vi.useRealTimers();
     const filas = [fila('a', 'gasto', 'PRICESMART', -14860), fila('b', 'gasto', 'PAMPA', -8049)];
     const conResumen = (conteo: number, total: number) =>
@@ -432,7 +432,7 @@ describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
     );
   });
 
-  it('PRU-CMP-TX-793 sin filtros no hay línea de resumen, y una fila con algo en camino dice «En camino $40.00» en lugar de «Por cobrar», sin «te debe»', () => {
+  it('PRU-CMP-TX-793 [Q-actividad, FT-24] sin filtros no hay línea de resumen, y una fila con algo en camino dice «En camino $40.00» en lugar de «Por cobrar», sin «te debe»', () => {
     const enCamino = {
       ...fila('cine', 'gasto', 'CINEMARK', -6000),
       marcas: { ...MARCAS, porCobrar: true },
