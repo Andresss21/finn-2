@@ -64,7 +64,8 @@ test.describe('PRU-E2E-TX', () => {
   test('PRU-E2E-TX-372 [AV-01] con hoy el 5 de marzo, un ingreso del 25 de enero muestra el impacto en Listo para asignar antes de confirmar', async ({
     page,
   }) => {
-    await preparar('2027-03-05', [{ op: 'OP-01', cuenta: 'Ahorro', saldo: 0 }]);
+    // El saldo inicial (21 de enero) pone ese período en Presupuesto; sin hechos ahí, `?periodo=` no lo abre y cae en el activo.
+    await preparar('2027-03-05', [{ op: 'OP-01', cuenta: 'Ahorro', saldo: 100 }]);
     // [CH-260] El período cerrado se abre con `?periodo=` (el que empieza el 21 de enero).
     await abrir(page, '/registrar/ingreso?periodo=2027-01-21');
     await cuenta(page, t.cuentaIngreso, 'Ahorro').click();

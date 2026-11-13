@@ -1,5 +1,6 @@
 // EntradaFecha con calendario (P1-03 del export; 07 §17: un flujo es una E2E), recorrida en `/registrar/gasto`, donde la fecha va en dos
 // columnas con el Total. El «hoy» sale del reloj del servidor fijo (DP-04) y llega por la prop `hoy` del formulario: la prueba no usa el del navegador.
+// [CH-260] Ahí la fecha va del inicio del período activo (el 21) a hoy: los recorridos con teclado y por mes caben en ese rango.
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarHidratacion } from '../../ayudas/esperas.ts';
@@ -15,17 +16,17 @@ const ESTADO: Op[] = [
   { op: 'OP-21', monto: 1000 },
 ];
 
-async function abrirGasto(page: Page): Promise<void> {
-  fijarRelojServidor(`${HOY}T10:00:00-06:00`);
+async function abrirGasto(page: Page, hoy = HOY): Promise<void> {
+  fijarRelojServidor(`${hoy}T10:00:00-06:00`);
   const escenario: Escenario = {
     id: 'SEM-ENTRADA-FECHA',
     titulo: 'Semilla de EntradaFecha',
     refs: [],
-    hoy: HOY,
+    hoy,
     estadoInicial: ESTADO,
     pasos: [],
   };
-  await sembrar(escenario, HOY);
+  await sembrar(escenario, hoy);
   await page.goto('/registrar/gasto');
   await esperarHidratacion(page);
 }
@@ -80,38 +81,31 @@ test.describe('PRU-E2E-TX', () => {
     ).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('PRU-E2E-TX-482 [FT-21] con el teclado se abre, se recorre con flechas, Inicio, Fin y RePág, se elige con Enter y Esc cierra devolviendo el foco', async ({
+  test('PRU-E2E-TX-482 [FT-21] con el teclado se abre, se recorre con flechas, Inicio, Fin y RePág sin pasar de los límites del período, se elige con Enter y Esc cierra devolviendo el foco', async ({
     page,
   }) => {
-    await abrirGasto(page);
+    // Domingo 14 de marzo: el período activo va del 21 de febrero a hoy.
+    await abrirGasto(page, '2027-03-14');
+    const dia = (nombre: string) =>
+      calendario(page).getByRole('button', { name: nombre, exact: true });
     await botonCalendario(page).focus();
     await page.keyboard.press('Enter');
-    await expect(
-      calendario(page).getByRole('button', { name: '10 de febrero, hoy', exact: true }),
-    ).toBeFocused();
+    await expect(dia('14 de marzo, hoy')).toBeFocused();
     await page.keyboard.press('ArrowLeft');
-    await expect(
-      calendario(page).getByRole('button', { name: '9 de febrero', exact: true }),
-    ).toBeFocused();
+    await expect(dia('13 de marzo')).toBeFocused();
     await page.keyboard.press('Home');
-    await expect(
-      calendario(page).getByRole('button', { name: '8 de febrero', exact: true }),
-    ).toBeFocused(); // lunes
+    await expect(dia('8 de marzo')).toBeFocused(); // lunes
     await page.keyboard.press('End');
-    await expect(
-      calendario(page).getByRole('button', { name: '14 de febrero', exact: true }),
-    ).toBeFocused(); // domingo
-    await page.keyboard.press('ArrowDown');
-    await expect(
-      calendario(page).getByRole('button', { name: '21 de febrero', exact: true }),
-    ).toBeFocused();
-    await page.keyboard.press('PageUp');
-    await expect(calendario(page)).toContainText('enero 2027');
-    await expect(
-      calendario(page).getByRole('button', { name: '21 de enero', exact: true }),
-    ).toBeFocused();
+    await expect(dia('14 de marzo, hoy')).toBeFocused(); // domingo
+    await page.keyboard.press('ArrowDown'); // el 21 queda después de hoy: el foco no se mueve
+    await expect(dia('14 de marzo, hoy')).toBeFocused();
+    await page.keyboard.press('ArrowUp');
+    await expect(dia('7 de marzo')).toBeFocused();
+    await page.keyboard.press('PageUp'); // el 7 de febrero es anterior al período: se detiene en su inicio
+    await expect(calendario(page)).toContainText('febrero 2027');
+    await expect(dia('21 de febrero')).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(fecha(page)).toHaveValue('21/01/2027');
+    await expect(fecha(page)).toHaveValue('21/02/2027');
     await expect(calendario(page)).toHaveCount(0);
     await page.keyboard.press('Enter');
     await expect(calendario(page)).toHaveCount(1);
@@ -119,19 +113,19 @@ test.describe('PRU-E2E-TX', () => {
     await page.keyboard.press('Escape');
     await expect(calendario(page)).toHaveCount(0);
     await expect(botonCalendario(page)).toBeFocused();
-    await expect(fecha(page)).toHaveValue('21/01/2027');
+    await expect(fecha(page)).toHaveValue('21/02/2027');
   });
 
-  test('PRU-E2E-TX-483 [FT-21] las flechas de mes cambian el mes y cada día mide al menos 44 px sin salirse de la pantalla', async ({
+  test('PRU-E2E-TX-483 [FT-21] las flechas de mes cambian el mes dentro del período y cada día mide al menos 44 px sin salirse de la pantalla', async ({
     page,
   }) => {
-    await abrirGasto(page);
+    await abrirGasto(page, '2027-03-14');
     await botonCalendario(page).click();
-    await calendario(page).getByRole('button', { name: 'Mes siguiente' }).click();
     await expect(calendario(page)).toContainText('marzo 2027');
     await calendario(page).getByRole('button', { name: 'Mes anterior' }).click();
-    await calendario(page).getByRole('button', { name: 'Mes anterior' }).click();
-    await expect(calendario(page)).toContainText('enero 2027');
+    await expect(calendario(page)).toContainText('febrero 2027');
+    await calendario(page).getByRole('button', { name: 'Mes siguiente' }).click();
+    await expect(calendario(page)).toContainText('marzo 2027');
     for (const b of await calendario(page).getByRole('gridcell').getByRole('button').all()) {
       const caja = await b.boundingBox();
       expect(caja?.width).toBeGreaterThanOrEqual(44);

@@ -307,7 +307,7 @@ test.describe('PRU-E2E-TX', () => {
     );
   });
 
-  test('PRU-E2E-TX-390 [CA-21.7] una fecha posterior a hoy se rechaza nombrando hoy, y una anterior a la apertura de la cuenta se rechaza nombrando la apertura, y no se guarda nada', async ({
+  test('PRU-E2E-TX-390 [FT-21] con el período activo, una fecha posterior a hoy o anterior al inicio del período queda fuera del rango del campo con «Elegí una fecha dentro del rango permitido.» y no se guarda nada', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC20_PASO1);
@@ -413,8 +413,10 @@ test.describe('PRU-E2E-TX', () => {
   test('PRU-E2E-TX-394 [CA-21.12, AV-01] un gasto de $148.60 con 3 líneas en el período activo se guarda sin previsualizar y dice "Guardado: PRICESMART · $148.60 · T · 3 líneas" con un enlace a cada categoría, y con la fecha en un período cerrado primero pide confirmar con el aviso', async ({
     page,
   }) => {
+    // El saldo inicial de Ahorro (21 de enero) pone ese período en Presupuesto: el cierre de abajo lo abre con `?periodo=`.
     await preparar('2027-03-05', [
-      ...ESC19_PASO1.slice(0, 5),
+      { op: 'OP-01', cuenta: 'Ahorro', saldo: 100 },
+      ...ESC19_PASO1.slice(1, 5),
       { op: 'OP-14', categoria: 'Super', monto: 100 },
       { op: 'OP-14', categoria: 'Mascota', monto: 20 },
     ]);
