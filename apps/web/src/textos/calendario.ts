@@ -3,6 +3,8 @@ export const calendario = {
   titulo: 'Calendario',
   mesAnterior: 'Mes anterior',
   mesSiguiente: 'Mes siguiente',
+  elegirAnio: 'Elegí el año',
+  elegirMes: 'Elegí el mes',
   hoy: 'Hoy',
   esHoy: 'hoy',
   noDisponible: 'no disponible',

@@ -581,6 +581,7 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
   --n: 8;
 }
 
+/* [Corrección posterior] Las entradas usan `backwards`, no `both`: con `both` el `main` conserva `transform`/`opacity` tras terminar (iOS) y pasa a ser el bloque contenedor del `h1` fijo de la barra, que queda encima del primer bloque. */
 /* GLO-01 y GLO-02 (06-identidad-visual §11 [CH-241]): el marco anota de dónde entra la pantalla en `#contenido[data-entrada]`
    (`direccion-entrada.ts`). Cada tiempo es un token; con movimiento reducido la regla global anula la animación. */
 @keyframes fz-entra-derecha {
@@ -619,22 +620,22 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
   }
 }
 #contenido[data-entrada='derecha'] > main:not([data-pagina-flujo]) {
-  animation: fz-entra-derecha var(--duracion-normal) var(--curva-estandar) both;
+  animation: fz-entra-derecha var(--duracion-normal) var(--curva-estandar) backwards;
 }
 #contenido[data-entrada='izquierda'] > main:not([data-pagina-flujo]) {
-  animation: fz-entra-izquierda var(--duracion-normal) var(--curva-estandar) both;
+  animation: fz-entra-izquierda var(--duracion-normal) var(--curva-estandar) backwards;
 }
 #contenido[data-entrada='hija'] > main:not([data-pagina-flujo]) {
-  animation: fz-entra-hija var(--duracion-transicion) var(--curva-entrada) both;
+  animation: fz-entra-hija var(--duracion-transicion) var(--curva-entrada) backwards;
 }
 #contenido[data-entrada='volver'] > main:not([data-pagina-flujo]) {
-  animation: fz-entra-volver var(--duracion-transicion) var(--curva-entrada) both;
+  animation: fz-entra-volver var(--duracion-transicion) var(--curva-entrada) backwards;
 }
 #contenido[data-entrada='registrar'] > main[data-pagina-flujo] {
-  animation: fz-entra-sube var(--duracion-lenta) var(--curva-entrada) both;
+  animation: fz-entra-sube var(--duracion-lenta) var(--curva-entrada) backwards;
 }
 #contenido[data-entrada='cerrar-registrar'] > main:not([data-pagina-flujo]) {
-  animation: fz-item var(--duracion-transicion) var(--curva-estandar) both;
+  animation: fz-item var(--duracion-transicion) var(--curva-estandar) backwards;
 }
 
 /* C7: presionado y transición de botones, pastillas y segmentos. */

@@ -4,6 +4,7 @@
 // los agregan sus fichas. Lo único que traduce los errores de la
 // consulta es `consultar()`.
 import { cuentas } from '@finn/aplicacion/consultas/cuentas';
+import { porCobrar } from '@finn/aplicacion/consultas/por-cobrar';
 import { Icono, type NombreIcono } from '../../componentes/base/icono';
 import { Vacio } from '../../componentes/base/vacio';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
@@ -23,6 +24,10 @@ const BOTON = `inline-flex min-h-12 items-center justify-center rounded-control 
 
 export async function LectorRegistrar() {
   const dto = await consultar(async () => cuentas(await depsDeConsulta()));
+  // [CH-258] «Cobro» solo si hay por cobrar abierto: lo dice el servidor, la interfaz no suma montos.
+  const cobrable = (await consultar(async () => porCobrar(await depsDeConsulta()))).deudores.some(
+    (x) => x.items.some((i) => i.estado !== 'cerrado'),
+  );
   const conDinero = dto.efectivo.length + dto.tarjetas.length;
   // [CH-240 E3-20] El orden y los íconos del diseño; los tipos que las cuentas no permiten no aparecen y la nota dice por qué
   const tipos: readonly { href: string; titulo: string; detalle: string; icono: NombreIcono }[] = [
@@ -43,6 +48,16 @@ export async function LectorRegistrar() {
             titulo: t.tipoIngreso,
             detalle: t.tipoIngresoDetalle,
             icono: 'in' as const,
+          },
+        ]
+      : []),
+    ...(cobrable
+      ? [
+          {
+            href: '/por-cobrar/cobrar',
+            titulo: t.tipoCobro,
+            detalle: t.tipoCobroDetalle,
+            icono: 'user' as const,
           },
         ]
       : []),

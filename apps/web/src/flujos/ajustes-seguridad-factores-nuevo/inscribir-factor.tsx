@@ -49,6 +49,8 @@ export interface PropsInscribirFactor {
   readonly rutaIngresar: string;
   /** Los nombres de los factores que ya existen: un nombre repetido se rechaza en el campo, antes del QR (E2-7). */
   readonly nombresUsados?: readonly string[];
+  /** `salir()` (CH-257): si viene, el primer factor ofrece «Usar otra cuenta» bajo el botón de confirmar. */
+  readonly accionSalir?: AccionEscritura;
 }
 
 /** Grupos de 4 caracteres (05 §9.5, paso 2). */
@@ -166,6 +168,36 @@ function conMarcaDeCierre(completar: AccionEscritura, marcar: boolean): AccionEs
     if (!resultado.ok) fijar(false);
     return resultado;
   };
+}
+
+/** «Usar otra cuenta» (CH-257): cierra la sesión con `salir()` y vuelve a `/ingresar`. Botón tonal de ancho completo. */
+function BotonSalir({
+  accion,
+  rutaIngresar,
+}: {
+  readonly accion: AccionEscritura;
+  readonly rutaIngresar: string;
+}) {
+  const alNoAutorizado = useCallback((): void => {
+    window.location.assign(rutaIngresar);
+  }, [rutaIngresar]);
+  const salida = useOperacion({ accion, alNoAutorizado });
+  useEffect(() => {
+    if (salida.estado === 'listo') window.location.assign(rutaIngresar);
+  }, [salida.estado, rutaIngresar]);
+  return (
+    <Boton
+      variante="secundaria"
+      className="min-h-12 w-full"
+      enviando={salida.estado === 'enviando' || salida.estado === 'listo'}
+      textoEnviando={t.saliendo}
+      onClick={() => {
+        void salida.enviar({});
+      }}
+    >
+      {t.usarOtraCuenta}
+    </Boton>
+  );
 }
 
 function Preparando() {
@@ -367,6 +399,7 @@ function PasoInscripcion({
   esRespaldo,
   destino,
   rutaIngresar,
+  accionSalir,
   alTerminarPrimero,
 }: Omit<PropsInscribirFactor, 'cerrado' | 'nombresUsados'> & {
   readonly alTerminarPrimero: () => void;
@@ -387,7 +420,7 @@ function PasoInscripcion({
     void iniciarInscripcion({ nombre });
   }, [iniciarInscripcion, nombre]);
 
-  return (
+  const paso = (
     <PasoCodigo
       completar={completar}
       alNoAutorizado={alNoAutorizado}
@@ -407,6 +440,13 @@ function PasoInscripcion({
       }}
     />
   );
+  if (accionSalir === undefined || esRespaldo) return paso;
+  return (
+    <div className="flex flex-col gap-5">
+      {paso}
+      <BotonSalir accion={accionSalir} rutaIngresar={rutaIngresar} />
+    </div>
+  );
 }
 
 export function InscribirFactor({
@@ -418,6 +458,7 @@ export function InscribirFactor({
   cerrado = false,
   rutaIngresar,
   nombresUsados = [],
+  accionSalir,
 }: PropsInscribirFactor) {
   const [terminado, setTerminado] = useState(cerrado);
   const [elegido, setElegido] = useState<string | undefined>(esRespaldo ? undefined : nombre);
@@ -433,6 +474,7 @@ export function InscribirFactor({
       esRespaldo={esRespaldo}
       destino={destino}
       rutaIngresar={rutaIngresar}
+      {...(accionSalir === undefined ? {} : { accionSalir })}
       alTerminarPrimero={() => {
         setTerminado(true);
       }}
