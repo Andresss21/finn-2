@@ -12,6 +12,8 @@ export const registrarGasto = {
   tipoGastoDetalle: 'Con división y por cobrar',
   tipoIngreso: 'Ingreso',
   tipoIngresoDetalle: 'Entra a Listo para asignar',
+  tipoCobro: 'Cobro',
+  tipoCobroDetalle: 'Alguien te pagó lo que te debía',
   tipoTransferencia: 'Transferencia',
   tipoTransferenciaDetalle: 'Entre tus cuentas de efectivo',
   notaTipos: (motivos: string) => `Solo aparecen los tipos que tus cuentas permiten: ${motivos}.`,
