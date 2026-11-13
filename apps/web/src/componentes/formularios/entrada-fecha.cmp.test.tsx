@@ -295,3 +295,47 @@ describe('PRU-CMP-VAL-760 campo de fecha sin valor', () => {
     expect(raiz.textContent).not.toContain('undefined');
   });
 });
+
+describe('PRU-CMP-TX-800', () => {
+  it('PRU-CMP-TX-800 [FT-21] el título del calendario abre la elección de año y de mes; elegir ambos vuelve a los días de ese mes y respeta el rango', async () => {
+    const elegidas: string[] = [];
+    function Amplio() {
+      const [valor, setValor] = useState<FechaLocal>(HOY);
+      return (
+        <EntradaFecha
+          nombre="fecha"
+          etiqueta="Fecha"
+          valor={valor}
+          alCambiar={(f) => {
+            elegidas.push(f);
+            setValor(f);
+          }}
+          minima={FechaLocal.desdeTexto('2021-03-10')}
+          maxima={HOY}
+          hoy={HOY}
+          requerido
+        />
+      );
+    }
+    const raiz = montar(<Amplio />);
+    const dialogo = await abrir(raiz);
+    const clic = async (e: Element | null | undefined): Promise<void> => {
+      await act(async () => {
+        await userEvent.click(e as Element);
+      });
+    };
+    const porTexto = (x: string): HTMLButtonElement | undefined =>
+      [...dialogo.querySelectorAll<HTMLButtonElement>('[role=group] button')].find(
+        (b) => b.textContent === x,
+      );
+    await clic(dialogo.querySelector('#calendario-mes'));
+    expect(porTexto('2020')).toBeUndefined();
+    await clic(porTexto('2021'));
+    expect(porTexto('feb')?.disabled).toBe(true);
+    expect(porTexto('mar')?.disabled).toBe(false);
+    await clic(porTexto('mar'));
+    expect(dialogo.querySelector('#calendario-mes')?.textContent).toBe('marzo 2021');
+    await clic(celda(dialogo, '20'));
+    expect(elegidas).toEqual(['2021-03-20']);
+  });
+});

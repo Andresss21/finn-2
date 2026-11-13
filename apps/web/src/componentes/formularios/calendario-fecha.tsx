@@ -27,6 +27,13 @@ const FLECHA =
 const CELDA =
   'size-11 cursor-pointer rounded-pastilla text-sm tabular-nums text-texto focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco disabled:cursor-default disabled:text-texto-deshabilitado disabled:line-through aria-pressed:bg-accion aria-pressed:font-bold aria-pressed:text-texto-sobre-accion data-[hoy=true]:font-bold data-[hoy=true]:ring-2 data-[hoy=true]:ring-inset data-[hoy=true]:ring-foco';
 
+const FLECHA_OCULTA = 'invisible flex size-11 items-center justify-center';
+const PIE = 'flex items-center justify-end border-t border-borde-sutil pt-2';
+const PIE_OCULTO = 'invisible flex items-center justify-end border-t border-borde-sutil pt-2';
+const CELDA_ANIO =
+  'h-11 w-full cursor-pointer rounded-pastilla text-sm tabular-nums text-texto focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco disabled:cursor-default disabled:text-texto-deshabilitado disabled:line-through aria-pressed:bg-accion aria-pressed:font-bold aria-pressed:text-texto-sobre-accion';
+const CELDA_MES = CELDA_ANIO + ' capitalize';
+
 export function CalendarioFecha({
   inicial,
   hoy: hoyRecibido,
@@ -43,6 +50,9 @@ export function CalendarioFecha({
   const limitar = (f: FechaLocal): FechaLocal =>
     minima !== undefined && f < minima ? minima : maxima !== undefined && f > maxima ? maxima : f;
   const [foco, setFoco] = useState<FechaLocal>(() => limitar(inicial));
+  // Vista: los días del mes, o la elección del año y después del mes (para saltar lejos sin tocar las flechas).
+  const [vista, setVista] = useState<'dias' | 'anios' | 'meses'>('dias');
+  const [anioElegido, setAnioElegido] = useState(0);
   const raiz = useRef<HTMLDivElement>(null);
   const moverFoco = useRef(true);
 
@@ -70,12 +80,21 @@ export function CalendarioFecha({
     };
   }, [alCerrar]);
 
-  const { anio, mes } = FechaLocal.partes(foco);
+  const { anio, mes, dia: diaFoco } = FechaLocal.partes(foco);
+  const anios = Array.from(
+    { length: 41 },
+    (_, k) => (minima === undefined ? anio - 30 : FechaLocal.partes(minima).anio) + k,
+  ).filter((a) => maxima === undefined || a <= FechaLocal.partes(maxima).anio);
+  const mesDe = (a: number, m: number): FechaLocal => FechaLocal.desdePartes(a, m, 1);
+  const mesHabilitado = (a: number, m: number): boolean =>
+    (minima === undefined ||
+      FechaLocal.desdePartes(a, m, FechaLocal.diasDelMes(mesDe(a, m))) >= minima) &&
+    (maxima === undefined || mesDe(a, m) <= maxima);
   const celdas: (number | null)[] = [
     ...Array.from({ length: columnaDe(FechaLocal.desdePartes(anio, mes, 1)) }, () => null),
     ...Array.from({ length: FechaLocal.diasDelMes(foco) }, (_, k) => k + 1),
   ];
-  while (celdas.length % 7 !== 0) celdas.push(null);
+  while (celdas.length < 42) celdas.push(null);
   const semanas = Array.from({ length: celdas.length / 7 }, (_, k) =>
     celdas.slice(k * 7, k * 7 + 7),
   );
@@ -122,20 +141,29 @@ export function CalendarioFecha({
         <button
           type="button"
           aria-label={t.mesAnterior}
-          className={FLECHA}
+          className={vista === 'dias' ? FLECHA : FLECHA_OCULTA}
           onClick={() => {
             ir(FechaLocal.sumarMeses(foco, -1));
           }}
         >
           <Icono nombre="arrowL" tamano={18} />
         </button>
-        <span id="calendario-mes" aria-live="polite" className="font-bold capitalize">
-          {`${t.meses[mes - 1] ?? ''} ${anio}`}
-        </span>
+        <button
+          type="button"
+          id="calendario-mes"
+          aria-live="polite"
+          aria-expanded={vista !== 'dias'}
+          className="min-h-11 min-w-11 cursor-pointer px-2 font-bold capitalize focus-visible:outline-3 focus-visible:outline-foco"
+          onClick={() => {
+            setVista(vista === 'dias' ? 'anios' : 'dias');
+          }}
+        >
+          {vista === 'meses' ? anioElegido : `${t.meses[mes - 1] ?? ''} ${anio}`}
+        </button>
         <button
           type="button"
           aria-label={t.mesSiguiente}
-          className={FLECHA}
+          className={vista === 'dias' ? FLECHA : FLECHA_OCULTA}
           onClick={() => {
             ir(FechaLocal.sumarMeses(foco, 1));
           }}
@@ -143,54 +171,102 @@ export function CalendarioFecha({
           <Icono nombre="arrowR" tamano={18} />
         </button>
       </div>
-      <div role="grid" aria-labelledby="calendario-mes" className="flex flex-col gap-1">
-        <div role="row" className="grid grid-cols-[repeat(7,2.75rem)]">
-          {t.iniciales.map((letra, k) => (
-            <span
-              key={t.dias[k]}
-              role="columnheader"
-              aria-label={t.dias[k]}
-              className="text-center text-xs font-semibold uppercase text-texto-terciario"
-            >
-              {letra}
-            </span>
-          ))}
-        </div>
-        {semanas.map((semana, s) => (
-          <div key={s} role="row" className="grid grid-cols-[repeat(7,2.75rem)] gap-y-1">
-            {semana.map((dia, c) => {
-              if (dia === null) return <span key={c} role="gridcell" />;
-              const f = FechaLocal.desdePartes(anio, mes, dia);
-              const ok = habilitada(f);
-              const esHoy = f === hoy;
-              const enfocada = f === foco;
-              const nombre = `${dia} de ${t.meses[mes - 1] ?? ''}${esHoy ? `, ${t.esHoy}` : ''}${ok ? '' : `, ${t.noDisponible}`}`;
-              return (
-                <span key={c} role="gridcell" className="flex justify-center">
+      <div className="relative">
+        {vista === 'dias' ? null : (
+          <div
+            role="group"
+            aria-label={vista === 'anios' ? t.elegirAnio : t.elegirMes}
+            className="absolute inset-0 z-10 grid grid-cols-4 content-start gap-1 overflow-y-auto bg-superficie"
+          >
+            {vista === 'anios'
+              ? anios.map((a) => (
                   <button
+                    key={a}
                     type="button"
-                    aria-label={nombre}
-                    aria-pressed={f === inicial}
-                    aria-current={esHoy ? 'date' : undefined}
-                    data-hoy={esHoy}
-                    data-foco={enfocada}
-                    disabled={!ok}
-                    tabIndex={enfocada ? 0 : -1}
-                    className={CELDA}
+                    aria-pressed={a === anio}
+                    ref={(b) => {
+                      if (a === anio) b?.scrollIntoView({ block: 'center' });
+                    }}
+                    className={CELDA_ANIO}
                     onClick={() => {
-                      alElegir(f);
+                      setAnioElegido(a);
+                      setVista('meses');
                     }}
                   >
-                    {dia}
+                    {a}
                   </button>
-                </span>
-              );
-            })}
+                ))
+              : t.meses.map((nombre, k) => (
+                  <button
+                    key={nombre}
+                    type="button"
+                    aria-pressed={anioElegido === anio && k + 1 === mes}
+                    disabled={!mesHabilitado(anioElegido, k + 1)}
+                    className={CELDA_MES}
+                    onClick={() => {
+                      const d = Math.min(diaFoco, FechaLocal.diasDelMes(mesDe(anioElegido, k + 1)));
+                      ir(FechaLocal.desdePartes(anioElegido, k + 1, d));
+                      setVista('dias');
+                    }}
+                  >
+                    {nombre.slice(0, 3)}
+                  </button>
+                ))}
           </div>
-        ))}
+        )}
+        <div
+          role="grid"
+          aria-labelledby="calendario-mes"
+          className={vista === 'dias' ? 'flex flex-col gap-1' : 'invisible flex flex-col gap-1'}
+        >
+          <div role="row" className="grid grid-cols-[repeat(7,2.75rem)]">
+            {t.iniciales.map((letra, k) => (
+              <span
+                key={t.dias[k]}
+                role="columnheader"
+                aria-label={t.dias[k]}
+                className="text-center text-xs font-semibold uppercase text-texto-terciario"
+              >
+                {letra}
+              </span>
+            ))}
+          </div>
+          {semanas.map((semana, s) => (
+            <div key={s} role="row" className="grid grid-cols-[repeat(7,2.75rem)] gap-y-1">
+              {semana.map((dia, c) => {
+                if (dia === null) return <span key={c} role="gridcell" />;
+                const f = FechaLocal.desdePartes(anio, mes, dia);
+                const ok = habilitada(f);
+                const esHoy = f === hoy;
+                const enfocada = f === foco;
+                const nombre = `${dia} de ${t.meses[mes - 1] ?? ''}${esHoy ? `, ${t.esHoy}` : ''}${ok ? '' : `, ${t.noDisponible}`}`;
+                return (
+                  <span key={c} role="gridcell" className="flex justify-center">
+                    <button
+                      type="button"
+                      aria-label={nombre}
+                      aria-pressed={f === inicial}
+                      aria-current={esHoy ? 'date' : undefined}
+                      data-hoy={esHoy}
+                      data-foco={enfocada}
+                      disabled={!ok}
+                      tabIndex={enfocada ? 0 : -1}
+                      className={CELDA}
+                      onClick={() => {
+                        alElegir(f);
+                      }}
+                    >
+                      {dia}
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
       {hoy !== undefined && habilitada(hoy) ? (
-        <div className="flex items-center justify-end border-t border-borde-sutil pt-2">
+        <div className={vista === 'dias' ? PIE : PIE_OCULTO}>
           <button
             type="button"
             className="min-h-11 min-w-11 cursor-pointer px-2 text-sm font-bold text-enlace focus-visible:outline-3 focus-visible:outline-foco"
