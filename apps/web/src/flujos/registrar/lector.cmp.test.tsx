@@ -56,7 +56,7 @@ async function enlaces(abierto: boolean): Promise<string[]> {
 }
 
 describe('PRU-CMP-TX', () => {
-  it('PRU-CMP-TX-801 [CH-258] «Cobro» lleva a /por-cobrar/cobrar, va después de Ingreso y desaparece sin por cobrar abierto', async () => {
+  it('PRU-CMP-TX-801 [FT-21] «Cobro» lleva a /por-cobrar/cobrar, va después de Ingreso y desaparece sin por cobrar abierto', async () => {
     const con = await enlaces(true);
     expect(con.indexOf('/por-cobrar/cobrar')).toBe(con.indexOf('/registrar/ingreso') + 1);
     expect(await enlaces(false)).not.toContain('/por-cobrar/cobrar');
