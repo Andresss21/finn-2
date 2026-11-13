@@ -100,6 +100,17 @@ export async function sembrarAjustesTecnicos(base: BasePrueba): Promise<void> {
   );
 }
 
+/** [CH-251] Un error de hace 1 día, uno de hace 8 y un aviso de hace 1, con el reloj de la base (`finn.ahora()`). */
+export async function sembrarErroresRecientes(base: BasePrueba): Promise<void> {
+  await comoAdmin(
+    base,
+    `INSERT INTO finn.eventos_sistema (ocurrido_en, nivel, origen, mensaje, datos) VALUES
+      (finn.ahora() - interval '1 day', 'error', 'app', 'error reciente', NULL),
+      (finn.ahora() - interval '8 days', 'error', 'app', 'error viejo', NULL),
+      (finn.ahora() - interval '1 day', 'aviso', 'app', 'aviso reciente', NULL);`,
+  );
+}
+
 /** El estado del respaldo, con las edades como intervalos de la base (`'40 hours'`): independiente del reloj de pared. */
 export async function fijarRespaldo(
   base: BasePrueba,

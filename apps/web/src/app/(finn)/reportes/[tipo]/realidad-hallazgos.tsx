@@ -133,14 +133,7 @@ export function HallazgosRealidad({
                     ),
                   })}
             >
-              {h.causa === 'pasas'
-                ? t.realidad.pasas(
-                    formatearMonto(h.promedioGastado),
-                    h.categoria.nombre,
-                    formatearMonto(h.asignadoPromedio),
-                    sugerido,
-                  )
-                : t.realidad.sobra(formatearMonto(h.promedioGastado), h.categoria.nombre, sugerido)}
+              {h.texto}
             </AvisoEnLinea>
           </div>
         );

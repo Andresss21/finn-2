@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import type { ReporteDe } from '@finn/aplicacion/consultas/reporte';
 import type { Ref } from '@finn/dominio/selectores';
 import type { Centavos } from '@finn/dominio/valores';
-import { CifraReporte } from './cifra';
+import { CifraReporte, cuandoDe } from './cifra';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { GraficoDona, type PorcionDona } from '../../../../componentes/graficos/grafico-dona';
 import { TablaDesplazable } from '../../../../componentes/graficos/tabla-desplazable';
@@ -247,23 +247,33 @@ export function Cumplimiento({
   readonly dto: ReporteDe<'cumplimiento'>;
   readonly nombres: Nombres;
 }) {
+  const r = dto.resumen;
   return (
-    <Tabla
-      titulo={t.titulos.cumplimiento}
-      filas={dto.filas}
-      clave={(f) => `${f.categoria}:${f.periodo}`}
-      columnas={[
-        { id: 'categoria', celda: (f) => nombreDe(nombres.categorias, f.categoria) },
-        { id: 'periodo', celda: (f) => formatearFecha(f.periodo) },
-        { id: 'asignado', celda: (f) => monto(f.asignado) },
-        { id: 'gastado', celda: (f) => monto(f.gastado) },
-        { id: 'diferencia', celda: (f) => monto(f.diferencia) },
-        {
-          id: 'porcentaje',
-          celda: (f) =>
-            f.porcentaje === null ? t.sinPorcentaje : formatearPorcentaje(f.porcentaje),
-        },
-      ]}
-    />
+    <div className="flex flex-col gap-4">
+      {/* [CH-251] La cifra: «k de n» categorías del último período de la ventana que se pasaron (E5-5). */}
+      {r === undefined ? null : (
+        <CifraReporte
+          texto={t.cifras.deCategorias(r.sePasaron, r.categorias)}
+          frase={t.cifras.cumplimiento(cuandoDe(r.periodo))}
+        />
+      )}
+      <Tabla
+        titulo={t.titulos.cumplimiento}
+        filas={dto.filas}
+        clave={(f) => `${f.categoria}:${f.periodo}`}
+        columnas={[
+          { id: 'categoria', celda: (f) => nombreDe(nombres.categorias, f.categoria) },
+          { id: 'periodo', celda: (f) => formatearFecha(f.periodo) },
+          { id: 'asignado', celda: (f) => monto(f.asignado) },
+          { id: 'gastado', celda: (f) => monto(f.gastado) },
+          { id: 'diferencia', celda: (f) => monto(f.diferencia) },
+          {
+            id: 'porcentaje',
+            celda: (f) =>
+              f.porcentaje === null ? t.sinPorcentaje : formatearPorcentaje(f.porcentaje),
+          },
+        ]}
+      />
+    </div>
   );
 }

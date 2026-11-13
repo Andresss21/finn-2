@@ -68,6 +68,8 @@ export interface RealidadSel {
   readonly categorias: readonly CategoriaDeRealidad[];
   /** Por impacto descendente; a igual impacto, realidad antes que promedio y después por clave. */
   readonly hallazgos: readonly (HallazgoDeRealidad | HallazgoDePromedio)[];
+  /** [CH-251] La cifra (E5-5): cuántas categorías se alejan de su promedio (hallazgos de promedio). */
+  readonly alejadas: number;
 }
 
 const valorAbsoluto = (x: Centavos): Centavos => Centavos.max(x, Centavos.negar(x));
@@ -197,5 +199,6 @@ export function realidad(i: Instantanea): RealidadSel {
       ORDEN_DE_TIPO[x.tipo] - ORDEN_DE_TIPO[y.tipo] ||
       (x.clave < y.clave ? -1 : x.clave > y.clave ? 1 : 0),
   );
-  return { periodo: periodoDto(i, a), categorias, hallazgos };
+  const alejadas = hallazgos.filter((x) => x.tipo === 'promedio').length;
+  return { periodo: periodoDto(i, a), categorias, hallazgos, alejadas };
 }

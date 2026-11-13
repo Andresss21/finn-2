@@ -6,8 +6,9 @@ import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { COLOR_TEXTO } from '../../../../componentes/dominio/indicador-estado';
 import { Monto } from '../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
-import { MENOS, formatearFecha, formatearMonto, formatearPorcentaje } from '../../../../formato';
+import { MENOS, formatearFecha, formatearPorcentaje } from '../../../../formato';
 import { reportes as t } from '../../../../textos/reportes';
+import { CifraReporte } from './cifra';
 import { HallazgosRealidad, type AccionesRealidad } from './realidad-hallazgos';
 import { Tabla } from './vistas-detalle';
 
@@ -61,13 +62,7 @@ export function AvisoPromedio({ hallazgo: h }: { readonly hallazgo: HallazgoProm
           </EnlaceFinn>
         }
       >
-        {t.realidad.camino(
-          h.categoria.nombre,
-          formatearMonto(h.gasto),
-          formatearPorcentaje(Math.abs(h.variacion)),
-          h.variacion >= 0,
-          formatearMonto(h.promedio),
-        )}
+        {h.texto}
       </AvisoEnLinea>
     </div>
   );
@@ -84,6 +79,8 @@ export function Realidad({
   const dePromedio = dto.hallazgos.filter((h) => h.tipo === 'promedio');
   return (
     <div className="flex flex-col gap-6">
+      {/* [CH-251] La cifra: cuántas categorías se alejan de su promedio (E5-5). */}
+      <CifraReporte texto={String(dto.alejadas)} frase={t.cifras.realidad(dto.alejadas)} />
       {/* Siempre montada: la salida «Deshacer» sigue en su lugar cuando la revalidación quita el hallazgo. */}
       <section data-seccion-realidad className="flex flex-col gap-2.5">
         <h3 className="text-titulo-seccion">{t.realidad.seccionRealidad}</h3>

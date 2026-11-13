@@ -15,3 +15,4 @@ export { suscripciones } from './suscripciones';
 export { tarjetas } from './tarjetas';
 export { flujoEfectivo } from './flujo-efectivo';
 export { hallazgos } from './hallazgos';
+export { resumenCumplimiento, ultimoPeriodo } from './cifras';

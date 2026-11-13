@@ -1,6 +1,7 @@
 // `consultas.ajustes()` (04 §6.11): el ciclo sale de los hechos del motor ([M] `vigencias_ciclo`); el resto, de [H],
 // [I] y [T] en la misma instantánea de `leer()`: webhook (nunca el hash), formatos con sus usos, suscripciones push
 // (sin claves), respaldo y diagnóstico. Los avisos de atraso (36 h, 35 días) los fija el repositorio (03 §7.5).
+// [CH-251] `resumen`: los conteos del índice (AJU-01). Los factores y las sesiones son de Auth (12.2), no de esta consulta.
 import type { FechaLocal } from '@finn/dominio/valores';
 import { leerAjustesTecnicos } from '@finn/db';
 import { sinParametros } from '../contratos/consultas.ts';
@@ -55,6 +56,12 @@ export interface AjustesDto extends Encabezado {
     readonly idError?: string;
   }[];
   readonly exportaciones: { readonly json: string; readonly csv: string };
+  /** [CH-251] Para el índice: formatos con `activo`, instituciones y eventos `error` de los últimos 7 días (`finn.ahora()`). */
+  readonly resumen: {
+    readonly formatosActivos: number;
+    readonly instituciones: number;
+    readonly erroresSieteDias: number;
+  };
 }
 
 export function ajustes(d: DepsConsulta): Promise<AjustesDto> {
@@ -119,6 +126,11 @@ export function ajustes(d: DepsConsulta): Promise<AjustesDto> {
           ...(e.idError === null ? {} : { idError: e.idError }),
         })),
         exportaciones: EXPORTACIONES,
+        resumen: {
+          formatosActivos: t.formatos.filter((f) => f.activo).length,
+          instituciones: t.instituciones.length,
+          erroresSieteDias: t.erroresSieteDias,
+        },
       };
     },
   );

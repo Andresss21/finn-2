@@ -2912,6 +2912,12 @@ Se deriva de los hechos, sin columna nueva. La interfaz envía `origenPropuesto`
 
 **[F5] Filtros (CP-12).** Todo DTO de reporte extiende `Encabezado` (6.0.2) y agrega `filtros: { cuentas: Ref[]; grupos: Ref[]; categorias: Ref[] }`, con las archivadas que tuvieron actividad en la ventana, para que la pantalla muestre los filtros por nombre. Vale también para `GastoSemanalDto` (6.9.3) y `DatosBaseDto` (6.9.4).
 
+**[CH-251] Cifra de cada reporte y texto de los hallazgos** (E5-5 y E5-22 de la entrega 4). La cifra principal es siempre un campo del DTO (PF-3):
+- `tendencia` e `ingresos_gastos` suman `ultimoPeriodo?: PeriodoDto`, el último período de W (`cerrado` con `ultimos_n`, `activo` con `actual`; ausente si W está vacía): la cifra es `gastos` o `diferencia` de su fila y la frase dice sus fechas («el último período cerrado, del 21/08 al 20/09»). Selector `ultimoPeriodo`.
+- `cumplimiento` suma `resumen?: { periodo: PeriodoDto; sePasaron: number; categorias: number }` del último período de W: `categorias` = sus filas; `sePasaron` = las de Gastado > máx(Asig, 0) («2 de 8»; una desasignación sin gasto no se pasa). Selector `resumenCumplimiento`.
+- `realidad` suma `alejadas: number`, la cantidad de hallazgos `promedio` (las categorías que se alejan de su promedio); `flujo_efectivo` suma `variacion: Centavos` = saldo final del último período de W − saldo inicial del primero.
+- Todo `HallazgoDto` de `reporte()` y `hallazgosRitmo` de `inicio()` traen `texto` (6.0.3, 06 §3.5.2): la aplicación lo arma con el catálogo de 7.10 sobre los datos del selector (`consultas/textos-hallazgos.ts`); el dominio no tiene textos. La interfaz lo muestra tal cual. Los textos de las acciones (`Asignar {monto}`, `Revisar {categoría}`) siguen en la interfaz.
+
 #### 6.9.1 Definiciones comunes (BE-40) [Propio]
 
 **[F6]** Los tipos `ritmo`, `realidad`, `hormiga`, `suscripciones`, `tarjetas`, `hallazgos` (CF-04) y `flujo_efectivo` (CF-02) están en 6.9.7.
@@ -3062,11 +3068,14 @@ interface AjustesDto extends Encabezado {
               respaldoAtrasado: boolean; restauracionAtrasada: boolean };    // > 36 h, > 35 días (03 §7.5)
   diagnostico: { ocurridoEn: Instante; nivel: 'aviso' | 'error'; origen: string; mensaje: string; idError?: string }[]; // 50 últimos (§15)
   exportaciones: { json: string; csv: string };                           // rutas de descarga (OPT-08)
+  resumen: { formatosActivos: number; instituciones: number;              // [CH-251] el índice de Ajustes (AJU-01)
+             erroresSieteDias: number };                                  // eventos `error` con ocurrido_en > finn.ahora() − 7 días
 }
 ```
 
 - Lee tablas [H] (`formatos_bancarios`, `instituciones`), [I] (conteo de `sms_procesamientos` por `formato_id`) y [T] (`token_webhook`, `suscripciones_push`, `estado_respaldo`, `eventos_sistema`).
 - `endpointCorto`: dominio del servicio de push y los últimos 8 caracteres; nunca las claves. **[CH-73]** Lo calcula `endpointCorto(endpoint)`, función pura exportada por `@finn/dominio/valores`: la interfaz la aplica al `endpoint` de `getSubscription()` y lo compara con el de cada fila para reconocer "este dispositivo". `id` es el de `suscripciones_push` y es lo que la interfaz envía a OPT-03.
+- **[CH-251]** `resumen` alimenta las filas del índice («4 activos», «Sin errores en 7 días»); el día del ciclo y «Conectado · último SMS» salen de `ciclo` y `webhook`. «N factores · N sesiones» no está: los factores son de Auth (12.2) y Auth no lista las sesiones sin la clave de servicio; tampoco el tema (se guarda en el dispositivo, FT-77) ni el permiso de notificaciones (del navegador).
 - El estado de los factores TOTP lo da Supabase Auth, no la base; lo define §12 (Parte C). **[F5]** La pantalla lo lee con `estadoSeguridad()` (12.2, CP-4); `AjustesDto` no cambia.
 
 ### 6.12 Otras pantallas conocidas
@@ -3097,7 +3106,9 @@ interface ProgramadasDto extends Encabezado {
 
 #### 6.12.2 Reglas de comercio
 
-`consultas.reglas()` → `{ reglas: { id; patron; categoria: Ref; categoriaArchivada: boolean }[] }`. Las reglas hacia categorías archivadas se muestran marcadas porque se ignoran al sugerir (§4.17, B-10).
+`consultas.reglas()` → `{ reglas: { id; patron; categoria: Ref; categoriaArchivada: boolean; coincideCon: string[] }[] }`. Las reglas hacia categorías archivadas se muestran marcadas porque se ignoran al sugerir (§4.17, B-10).
+
+**[CH-251]** `coincideCon` («Coincide con», E4-22): hasta 3 comercios distintos (sin espacios en los extremos) de las transacciones cuyo comercio normalizado contiene el patrón sin distinguir mayúsculas (§4.17), de la más reciente a la más antigua; selector puro `coincidenciasDeReglas(instantanea, reglas)`. «Usada N veces» no se entrega: ningún hecho guarda qué regla categorizó una transacción o un movimiento, y no se infiere.
 
 #### 6.12.3 Por cobrar
 
@@ -4457,3 +4468,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-246** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). `Impacto` suma los valores antes y después de cada Δ (`lpaAntes`, `lpaDespues`; `antes` y `despues` en `deltaDisponible`; `saldoAntes`, `saldoDespues`, `reservaAntes` y `reservaDespues` en `deltaTarjetas`), que viajan en `previsualizar` y en `REQUIERE_CONFIRMACION` y no entran en `huellaImpacto` (2.4, 4.3). Marca **[CH-246]**.
 - **CH-E5-4 y CH-247** (diseño, entrega 4 · etapa 5, aprobado por el dueño, y Fase 8, decidido por el orquestador con delegación del usuario; aplicados con TA-595 el 12 de noviembre de 2026, `08-tareas.md` §7, CH-240 c). Textos de `patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento` (con `unknown` y el grado exponencial) y `nombre_repetido` de una institución (7.10); la salida de `validarFormato` suma la repetición del ataque, sin cambiar la política (8.5). Marcas **[CH-240]** y **[CH-247]**.
 - **CH-250** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). `ActividadDto` suma `conteo` y `total` de todas las coincidencias y `TransaccionFila` suma `enCamino` (6.7.1); `DetalleTransaccionDto` suma `efectosHoy` con el Disponible de hoy de cada categoría y la deuda de cada tarjeta (6.7.2); la salida de OP-38 trae `transaccionId` por movimiento (6.8). Lecturas de la instantánea, sin reglas ni migraciones nuevas. Marcas **[CH-250]**.
+- **CH-251** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Datos que la entrega 4 pedía y el servidor no entregaba: la cifra de `tendencia`, `ingresos_gastos` (`ultimoPeriodo`), `cumplimiento` (`resumen`), `realidad` (`alejadas`) y `flujo_efectivo` (`variacion`), y `texto` en cada `HallazgoDto` (6.9); `resumen` en `ajustes()` (6.11); `coincideCon` en `reglas()` (6.12.2). Lecturas sin reglas nuevas ni migración. Marca **[CH-251]**.
