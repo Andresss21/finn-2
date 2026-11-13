@@ -253,42 +253,47 @@ describe('PRU-INT-BAND', () => {
   });
 
   it('PRU-INT-BAND-790 [AV-19] OP-38: cada movimiento aprobado trae su transacción, también el que ya estaba aprobado con otro id; el que no tiene transacción no la trae', async () => {
-    // Sigue a PRU-INT-BAND-103: mov(1) quedó aprobado con uuid(3100) y mov(4) está con_coincidencia.
-    const r = await aprobarTodos(
-      {
-        movimientoIds: [mov(1), mov(4)],
-        ids: { [mov(1)]: uuid(3100), [mov(4)]: uuid(3190) },
-      },
-      deps(),
+    // Movimientos propios: un gasto que se aprueba y un pago de tarjeta que el lote no aprueba.
+    await consultar(
+      base.urlAdmin,
+      `BEGIN; SELECT finn.tomar_bloqueo();
+       ${sembrar(30, 'pendiente', E1, FECHA, 1100, 'gasto', { linea: 1100 })}
+       ${sembrar(31, 'pendiente', T1, FECHA, 20000, 'pago_tarjeta')}
+       COMMIT;`,
     );
+    const ids = { [mov(30)]: uuid(3190), [mov(31)]: uuid(3191) };
+    const r = await aprobarTodos({ movimientoIds: [mov(30), mov(31)], ids }, deps());
     expect(r.ok && r.valor.elementos).toEqual([
-      { movimientoId: mov(1), resultado: 'ya_aplicada', transaccionId: uuid(3100) },
+      { movimientoId: mov(30), resultado: 'aprobado', transaccionId: uuid(3190) },
       {
-        movimientoId: mov(4),
-        resultado: {
-          codigo: 'movimiento_estado_no_valido',
-          mensaje: 'Este movimiento ya está con_coincidencia.',
-        },
+        movimientoId: mov(31),
+        resultado: { codigo: 'pago_sin_origen', mensaje: 'Elegí de qué cuenta salió el pago.' },
       },
     ]);
-    const otraVez = await aprobarTodos(
-      { movimientoIds: [mov(1)], ids: { [mov(1)]: uuid(3191) } },
+    // Repetir con el mismo id es ya aplicada con la misma transacción
+    const repetido = await aprobarTodos({ movimientoIds: [mov(30)], ids }, deps());
+    expect(repetido.ok && repetido.valor.elementos).toEqual([
+      { movimientoId: mov(30), resultado: 'ya_aplicada', transaccionId: uuid(3190) },
+    ]);
+    // Con otro id, el movimiento ya aprobado se rechaza y trae la transacción de antes, sin crear otra
+    const otroId = await aprobarTodos(
+      { movimientoIds: [mov(30)], ids: { [mov(30)]: uuid(3192) } },
       deps(),
     );
-    expect(otraVez).toMatchObject({
+    expect(otroId).toMatchObject({
       ok: true,
       avisos: [{ codigo: 'AV-19' }],
       valor: {
         elementos: [
           {
-            movimientoId: mov(1),
+            movimientoId: mov(30),
             resultado: { codigo: 'movimiento_estado_no_valido' },
-            transaccionId: uuid(3100),
+            transaccionId: uuid(3190),
           },
         ],
       },
     });
-    expect((await hechos()).transacciones.some((t) => t.id === uuid(3191))).toBe(false);
+    expect((await hechos()).transacciones.some((t) => t.id === uuid(3192))).toBe(false);
   });
 
   it('PRU-INT-BAND-124 [CA-36.5] OP-38: ninguna transacción que crea el lote tiene una línea sin destino, aunque en el lote haya movimientos sin destino', async () => {
