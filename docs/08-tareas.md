@@ -1707,6 +1707,7 @@ Se aplican al cerrar la fase, con la marca **[F8]** y su línea en "Enmiendas po
 | **CH-257** | Salida de la inscripción del primer factor (corrección posterior de TA-597, 2026-11-13). Quien llega a `/ingresar/inscribir` con otra cuenta o sin poder inscribir queda sin salida. **Decidido:** inscribir el factor ofrece «Usar otra cuenta» (salir) como botón tonal de ancho completo bajo «Verificar y entrar», con `salir()` y vuelta a `/ingresar` | 05 §9.5 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-257]** |
 | **CH-258** | Registrar ofrece «Cobro» (corrección posterior de TA-597, 2026-11-13). «Cobro» (lleva a OP-31 en `/por-cobrar/cobrar`) aparece en `/registrar` después de «Ingreso» cuando hay por cobrar abierto, dato de `porCobrar()` en el servidor; subtítulo «Alguien te pagó lo que te debía» | 05 §2.4; 04 OP-31 | Decidido por el orquestador (delegado por el usuario); **aplicado [CH-258]** |
 | **CH-259** | C-32 del diseño (13/11/2026): Marco de computadora en pantallas anchas, el bloque de 1144 + 2 × 48 se centra a la derecha de la barra lateral | 06 §3.2 | Aprobado por el diseño; registrado por el orquestador; **aplicado [CH-259]** |
+| **CH-260** | Fecha de Registrar (2026-11-13). Hoy el calendario deja elegir fechas futuras o de cualquier período. **Decidido:** Registrar limita la fecha al período en contexto (el activo, o el de `?periodo=` desde Presupuesto) y nunca después de hoy; el servidor no cambia | 05 §2.2, §2.4 | Decidido por el usuario; **aplicado [CH-260]** |
 
 ---
 

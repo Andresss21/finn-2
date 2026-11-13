@@ -2,6 +2,7 @@
 // `formulario({ operacion: 'registrar', tipo, cuentaId })` con el `?cuenta=` de la URL y pasa las tarjetas y las cuentas de efectivo
 // abiertas al formulario. Lo único que traduce los errores de la consulta es `consultar()`.
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
+import { limitesDeFecha } from '../../servidor/limites-de-fecha';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
@@ -34,6 +35,7 @@ export async function LectorRegistrarTarjeta({
       tipo={tipo}
       superpuesto={superpuesto}
       hoy={dto.hoy}
+      limites={await limitesDeFecha(busqueda, dto)}
       tarjetas={tarjetas}
       efectivo={efectivo}
       tarjetaPropuesta={tarjetas.some((c) => c.id === propuesta) ? propuesta : undefined}

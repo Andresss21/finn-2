@@ -3,6 +3,7 @@
 // errores de la consulta es `consultar()`.
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { formatearMonto } from '../../formato';
+import { limitesDeFecha } from '../../servidor/limites-de-fecha';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { valoresDeUrl } from '../../formularios/valores-de-url';
@@ -45,6 +46,7 @@ export async function LectorRegistrarGasto({ busqueda }: { readonly busqueda: Bu
   return (
     <FormularioRegistrarGasto
       hoy={dto.hoy}
+      limites={await limitesDeFecha(busqueda, dto)}
       cuentas={cuentas}
       categorias={categorias}
       deudores={deudores}

@@ -1,6 +1,7 @@
 // Lector de `/registrar/[tipo]` (05 §2.4): llama a `formulario({ operacion: 'registrar', tipo, cuentaId })` con el `?cuenta=` de la
 // URL y pasa las cuentas de efectivo abiertas al formulario. Lo único que traduce los errores de la consulta es `consultar()`.
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
+import { limitesDeFecha } from '../../servidor/limites-de-fecha';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { valoresDeUrl } from '../../formularios/valores-de-url';
@@ -35,6 +36,7 @@ export async function LectorRegistrarTipo({
       tipo={tipo}
       superpuesto={superpuesto}
       hoy={dto.hoy}
+      limites={await limitesDeFecha(busqueda, dto)}
       cuentas={efectivo}
       cuentaPropuesta={efectivo.some((c) => c.id === propuesta) ? propuesta : undefined}
       desdeUrl={valoresDeUrl(busqueda)}

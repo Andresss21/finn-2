@@ -2,6 +2,7 @@
 // `/registrar/aporte-inversion`, `/registrar/retiro-inversion` y `/registrar/ajuste-inversion` (FT-57, OP-25; 05 §2.4): los flujos
 // cortos de aportar a una inversión desde una categoría, retirar hacia Listo para asignar y ajustar su valor. Se guardan en un solo
 // viaje (05 §4.4); con la fecha en un período cerrado el servidor pide confirmar con AV-01. No calcula montos (PF-3).
+import type { LimitesDeFecha } from '../../formularios/limites-de-fecha';
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { usePathname } from 'next/navigation';
@@ -39,6 +40,8 @@ import {
 export interface PropsFormularioRegistrarInversion {
   readonly tipo: TipoDeInversion;
   readonly hoy: FechaLocal;
+  /** [CH-260] Los límites de la fecha que da el servidor; sin ellos, hasta hoy. */
+  readonly limites?: LimitesDeFecha;
   readonly inversiones: readonly Opcion[];
   readonly cuentas: readonly Opcion[];
   readonly categorias: readonly Opcion[];
@@ -86,6 +89,7 @@ function Marco({
 export function FormularioRegistrarInversion({
   tipo,
   hoy,
+  limites,
   inversiones,
   cuentas,
   categorias,
@@ -100,8 +104,8 @@ export function FormularioRegistrarInversion({
   const enviar: AccionEscritura = (payload) => accion(aEntradaDeAccion(tipo, payload));
   const operacion = useOperacion({ accion: enviar, creacion: true });
   const inicial = useMemo(
-    () => valoresIniciales(hoy, inversionPropuesta, cuentaPropuesta),
-    [hoy, inversionPropuesta, cuentaPropuesta],
+    () => valoresIniciales(limites?.inicial ?? hoy, inversionPropuesta, cuentaPropuesta),
+    [hoy, limites, inversionPropuesta, cuentaPropuesta],
   );
   const contrato = useMemo(() => contratoDe(tipo), [tipo]);
   const formulario = useFormularioFinn<Campos>({ contrato, valoresIniciales: inicial, operacion });
@@ -234,7 +238,8 @@ export function FormularioRegistrarInversion({
             etiqueta={t.fecha}
             valor={c.fecha as FechaLocal}
             alCambiar={poner('fecha')}
-            maxima={hoy}
+            minima={limites?.minima}
+            maxima={limites?.maxima ?? hoy}
             hoy={hoy}
             error={error('fecha')}
             requerido

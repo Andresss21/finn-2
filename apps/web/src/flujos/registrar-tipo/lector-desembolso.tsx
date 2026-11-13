@@ -2,6 +2,7 @@
 // `?cuenta=` de la URL y pasa los préstamos y las cuentas de efectivo abiertas al formulario. Lo único que traduce los errores de la
 // consulta es `consultar()`.
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
+import { limitesDeFecha } from '../../servidor/limites-de-fecha';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
@@ -29,6 +30,7 @@ export async function LectorDesembolso({
     <FormularioDesembolso
       superpuesto={superpuesto}
       hoy={dto.hoy}
+      limites={await limitesDeFecha(busqueda, dto)}
       prestamos={prestamos}
       efectivo={efectivo}
       prestamoPropuesto={prestamos.some((c) => c.id === propuesta) ? propuesta : undefined}

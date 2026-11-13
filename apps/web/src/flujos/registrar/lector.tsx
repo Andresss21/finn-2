@@ -9,6 +9,7 @@ import { Icono, type NombreIcono } from '../../componentes/base/icono';
 import { Vacio } from '../../componentes/base/vacio';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import type { BusquedaDePagina } from '../../servidor/parametros';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
@@ -22,7 +23,13 @@ const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visib
 const FILA = `flex min-h-14 items-center gap-3 rounded-control bg-superficie px-4 py-2 ${FOCO}`;
 const BOTON = `inline-flex min-h-12 items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion ${FOCO}`;
 
-export async function LectorRegistrar() {
+export async function LectorRegistrar({
+  busqueda = {},
+}: { readonly busqueda?: BusquedaDePagina } = {}) {
+  // [CH-260] El período en contexto viaja a los formularios de registro; ellos piden sus límites al servidor.
+  const pedido = busqueda['periodo'];
+  const sufijo =
+    typeof pedido === 'string' && /^\d{4}-\d\d-\d\d$/.test(pedido) ? `?periodo=${pedido}` : '';
   const dto = await consultar(async () => cuentas(await depsDeConsulta()));
   // [CH-258] «Cobro» solo si hay por cobrar abierto: lo dice el servidor, la interfaz no suma montos.
   const cobrable = (await consultar(async () => porCobrar(await depsDeConsulta()))).deudores.some(
@@ -140,7 +147,10 @@ export async function LectorRegistrar() {
           <ul className="flex flex-col gap-2">
             {tipos.map((x) => (
               <li key={x.href}>
-                <EnlaceFinn href={x.href} className={FILA}>
+                <EnlaceFinn
+                  href={x.href.startsWith('/registrar/') ? `${x.href}${sufijo}` : x.href}
+                  className={FILA}
+                >
                   <span
                     aria-hidden="true"
                     className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accion-tonal text-accion"

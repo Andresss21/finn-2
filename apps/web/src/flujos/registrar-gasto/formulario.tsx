@@ -3,6 +3,7 @@
 // una categoría o por cobrar a una persona (existente o nueva). Es un flujo largo: siempre página completa (05 §1.4). Se guarda en un
 // solo viaje (05 §4.4); con la fecha en un período cerrado el servidor pide confirmar con AV-01. No calcula montos (PF-3): lo único
 // que muestra por su cuenta es cuánto falta repartir, como ayuda visual (05 §5.1); la suma la valida el servidor.
+import type { LimitesDeFecha } from '../../formularios/limites-de-fecha';
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useId, useMemo, useState } from 'react';
@@ -48,6 +49,8 @@ interface CuentaDelCampo extends Referencia {
 
 export interface PropsFormularioRegistrarGasto {
   readonly hoy: FechaLocal;
+  /** [CH-260] Los límites de la fecha que da el servidor; sin ellos, hasta hoy. */
+  readonly limites?: LimitesDeFecha;
   readonly cuentas: readonly CuentaDelCampo[];
   readonly categorias: readonly Referencia[];
   readonly deudores: readonly Referencia[];
@@ -101,6 +104,7 @@ const aOpciones = (xs: readonly CuentaDelCampo[]): OpcionNativa[] =>
 
 export function FormularioRegistrarGasto({
   hoy,
+  limites,
   cuentas,
   categorias,
   deudores,
@@ -110,8 +114,8 @@ export function FormularioRegistrarGasto({
   const enviar: AccionEscritura = (payload) => registrarGasto(aEntradaDeAccion(payload));
   const operacion = useOperacion({ accion: enviar, creacion: true });
   const inicial = useMemo(
-    () => valoresIniciales(hoy, cuentaPropuesta, desdeUrl),
-    [hoy, cuentaPropuesta, desdeUrl],
+    () => valoresIniciales(limites?.inicial ?? hoy, cuentaPropuesta, desdeUrl),
+    [hoy, limites, cuentaPropuesta, desdeUrl],
   );
   const formulario = useFormularioFinn<Campos>({
     contrato,
@@ -300,6 +304,8 @@ export function FormularioRegistrarGasto({
                   error={error('fecha')}
                   requerido
                   sinVistaPrevia
+                  minima={limites?.minima}
+                  maxima={limites?.maxima ?? hoy}
                   hoy={hoy}
                   mensajeEnFila={{ id: idErrorFecha, alCambiar: setErrorFecha }}
                 />

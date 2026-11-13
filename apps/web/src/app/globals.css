@@ -714,3 +714,64 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
     transform: translateX(4px);
   }
 }
+
+/* Lista de los `select` nativos de `SeleccionNativa` con el diseño de la app (select personalizable). Solo con soporte del
+   navegador; sin él (Safari, Firefox) queda la lista nativa. El `select` sigue invisible sobre el campo: se personaliza su lista. */
+@supports (appearance: base-select) {
+  .fz-seleccion-nativa,
+  .fz-seleccion-nativa::picker(select) {
+    appearance: base-select;
+  }
+  .fz-seleccion-nativa::picker-icon {
+    display: none;
+  }
+  .fz-seleccion-nativa::picker(select) {
+    box-sizing: border-box;
+    margin-block: 4px;
+    padding: 6px;
+    opacity: 1;
+    background: var(--superficie-elevada);
+    color: var(--texto);
+    border: 1px solid var(--borde-sutil);
+    border-radius: var(--radio-contenedor);
+    box-shadow: var(--elevacion-2);
+  }
+  .fz-seleccion-nativa option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: var(--radio-control);
+    font-family: var(--fuente-cuerpo);
+    font-size: 1rem;
+    line-height: 1.5;
+    font-weight: 400;
+    color: var(--texto);
+    cursor: pointer;
+  }
+  .fz-seleccion-nativa option:hover,
+  .fz-seleccion-nativa option:focus-visible {
+    background: var(--superficie-hundida);
+  }
+  .fz-seleccion-nativa option:checked {
+    background: var(--accion-tonal);
+    font-weight: 600;
+  }
+  .fz-seleccion-nativa option::checkmark {
+    order: 1;
+    margin-left: auto;
+    color: var(--accion);
+  }
+  .fz-seleccion-nativa option:disabled {
+    color: var(--texto-terciario);
+    cursor: default;
+  }
+  .fz-seleccion-nativa optgroup {
+    padding: 8px 12px 4px;
+    font-family: var(--fuente-cuerpo);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--texto-secundario);
+  }
+}

@@ -2,6 +2,7 @@
 // `/registrar/desembolso` (FT-56, OP-26; 05 §2.4): el flujo corto del dinero de un préstamo nuevo que llega a una cuenta de efectivo.
 // Se guarda en un solo viaje (05 §4.4); con la fecha en un período cerrado el servidor pide confirmar con AV-01 antes de escribir.
 // No calcula montos (PF-3): el impacto lo trae el servidor.
+import type { LimitesDeFecha } from '../../formularios/limites-de-fecha';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { useMemo } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
@@ -33,6 +34,8 @@ type Cuenta = { readonly id: string; readonly nombre: string };
 
 export interface PropsFormularioDesembolso {
   readonly hoy: FechaLocal;
+  /** [CH-260] Los límites de la fecha que da el servidor; sin ellos, hasta hoy. */
+  readonly limites?: LimitesDeFecha;
   readonly prestamos: readonly Cuenta[];
   readonly efectivo: readonly Cuenta[];
   readonly prestamoPropuesto: string | undefined;
@@ -47,6 +50,7 @@ interface Previsualizacion extends VistaDeImpacto {
 
 export function FormularioDesembolso({
   hoy,
+  limites,
   prestamos,
   efectivo,
   prestamoPropuesto,
@@ -56,8 +60,8 @@ export function FormularioDesembolso({
   const enviar: AccionEscritura = (payload) => registrarDesembolso(aEntradaDeDesembolso(payload));
   const operacion = useOperacion({ accion: enviar, creacion: true });
   const inicial = useMemo(
-    () => valoresInicialesDesembolso(hoy, prestamoPropuesto, cuentaPropuesta),
-    [hoy, prestamoPropuesto, cuentaPropuesta],
+    () => valoresInicialesDesembolso(limites?.inicial ?? hoy, prestamoPropuesto, cuentaPropuesta),
+    [hoy, limites, prestamoPropuesto, cuentaPropuesta],
   );
   const formulario = useFormularioFinn<CamposDesembolso>({
     contrato: contratoDesembolso,
@@ -161,7 +165,8 @@ export function FormularioDesembolso({
             etiqueta={c0.fecha}
             valor={c.fecha as FechaLocal}
             alCambiar={poner('fecha')}
-            maxima={hoy}
+            minima={limites?.minima}
+            maxima={limites?.maxima ?? hoy}
             hoy={hoy}
             error={error('fecha')}
             requerido

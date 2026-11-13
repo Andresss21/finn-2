@@ -55,7 +55,7 @@ test.describe('PRU-E2E-PWA', () => {
       pasos: [],
     };
     await sembrar(escenario, '2027-04-05');
-    await page.goto('/registrar/gasto');
+    await page.goto('/registrar/gasto?periodo=2027-01-21');
     await esperarHidratacion(page);
     await elegir(page, t.cuenta, 'Ahorro');
     await campo(page, t.fecha).fill('2027-02-10');

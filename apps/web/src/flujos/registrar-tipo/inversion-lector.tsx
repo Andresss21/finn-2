@@ -3,6 +3,7 @@
 // cuentas de efectivo y, en el aporte, las categorías. Lo único que traduce los errores de la consulta es `consultar()`.
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import { formatearMonto } from '../../formato';
+import { limitesDeFecha } from '../../servidor/limites-de-fecha';
 import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { aParametrosDeConsulta, type BusquedaDePagina } from '../../servidor/parametros';
@@ -46,6 +47,7 @@ export async function LectorRegistrarInversion({
       tipo={tipo}
       superpuesto={superpuesto}
       hoy={dto.hoy}
+      limites={await limitesDeFecha(busqueda, dto)}
       inversiones={inversiones}
       cuentas={efectivo}
       categorias={categorias}

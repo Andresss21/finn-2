@@ -19,6 +19,7 @@
   { "patron": "apps/web/src/servidor/revalidar.ts", "fts": "marco" },
   { "patron": "apps/web/src/servidor/consultar.ts", "fts": "marco" },
   { "patron": "apps/web/src/servidor/parametros.ts", "fts": "marco" },
+  { "patron": "apps/web/src/servidor/limites-de-fecha.ts", "fts": "FT-21" },
   { "patron": "apps/web/src/app/(finn)/error.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/(finn)/not-found.tsx", "fts": "marco" },
   { "patron": "apps/web/src/app/not-found.tsx", "fts": "marco" },

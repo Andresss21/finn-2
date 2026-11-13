@@ -9,6 +9,7 @@ import { esperarMonto } from '../../ayudas/montos.ts';
 import { revisarTactil } from '../../ayudas/tactil.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { formularios } from '../../../src/textos/formularios.ts';
+import { base } from '../../../src/textos/base.ts';
 import { registrarGasto as t } from '../../../src/textos/registrar-gasto.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
@@ -306,7 +307,7 @@ test.describe('PRU-E2E-TX', () => {
     );
   });
 
-  test('PRU-E2E-TX-390 [CA-21.7] una fecha posterior a hoy se rechaza nombrando hoy, y una anterior a la apertura de la cuenta se rechaza nombrando la apertura, y no se guarda nada', async ({
+  test('PRU-E2E-TX-390 [FT-21] con el período activo, una fecha posterior a hoy o anterior al inicio del período queda fuera del rango del campo con «Elegí una fecha dentro del rango permitido.» y no se guarda nada', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC20_PASO1);
@@ -314,16 +315,11 @@ test.describe('PRU-E2E-TX', () => {
     await elegir(page, t.cuenta, 'Ahorro');
     await campo(page, t.total).fill('10');
     await parteConCategoria(page, 1, '10', 'Super');
+    // [CH-260] El campo limita la fecha al período en contexto: una posterior a hoy o anterior a su inicio no se entrega.
     await campo(page, t.fecha).fill('2027-02-11');
-    await guardar(page).click();
-    await expect(
-      page.getByText('La fecha no puede ser posterior a hoy (10/02/2027).'),
-    ).toBeVisible();
+    await expect(page.getByText(base.fechaFuera)).toBeVisible();
     await campo(page, t.fecha).fill('2027-01-10');
-    await guardar(page).click();
-    await expect(
-      page.getByText('Ahorro se abrió el 21/01/2027; la fecha no puede ser anterior.'),
-    ).toBeVisible();
+    await expect(page.getByText(base.fechaFuera)).toBeVisible();
     await expect(page.getByRole('heading', { name: t.listo })).toHaveCount(0);
     await page.goto('/presupuesto');
     await esperarContenido(page);
@@ -417,8 +413,10 @@ test.describe('PRU-E2E-TX', () => {
   test('PRU-E2E-TX-394 [CA-21.12, AV-01] un gasto de $148.60 con 3 líneas en el período activo se guarda sin previsualizar y dice "Guardado: PRICESMART · $148.60 · T · 3 líneas" con un enlace a cada categoría, y con la fecha en un período cerrado primero pide confirmar con el aviso', async ({
     page,
   }) => {
+    // El saldo inicial de Ahorro (21 de enero) pone ese período en Presupuesto: el cierre de abajo lo abre con `?periodo=`.
     await preparar('2027-03-05', [
-      ...ESC19_PASO1.slice(0, 5),
+      { op: 'OP-01', cuenta: 'Ahorro', saldo: 100 },
+      ...ESC19_PASO1.slice(1, 5),
       { op: 'OP-14', categoria: 'Super', monto: 100 },
       { op: 'OP-14', categoria: 'Mascota', monto: 20 },
     ]);
@@ -454,6 +452,8 @@ test.describe('PRU-E2E-TX', () => {
     // con la fecha en un período cerrado, antes aparece el impacto con el aviso AV-01
     await page.getByRole('button', { name: t.registrarOtro }).click();
     await esperarHidratacion(page);
+    // [CH-260] Un período cerrado se registra abriendo Registrar con ese período en contexto.
+    await abrir(page, '/registrar/gasto?periodo=2027-01-21');
     await elegir(page, t.cuenta, 'T');
     await campo(page, t.fecha).fill('2027-01-25');
     await campo(page, t.total).fill('10');

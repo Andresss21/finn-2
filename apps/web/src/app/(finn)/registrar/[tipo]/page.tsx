@@ -50,7 +50,7 @@ export default async function PaginaRegistrarTipo({ params, searchParams }: Prop
   const tipo = tipoDeRegistro(url);
   if (tipo !== undefined) return <LectorRegistrarTipo tipo={tipo} busqueda={await searchParams} />;
   if (esDesembolso(url)) return <LectorDesembolso busqueda={await searchParams} />;
-  if (url === DEVOLUCION) return <LectorDevolucion />;
+  if (url === DEVOLUCION) return <LectorDevolucion busqueda={await searchParams} />;
   const deTarjeta = tipoDeTarjeta(url);
   if (deTarjeta === undefined) notFound();
   return <LectorRegistrarTarjeta tipo={deTarjeta} busqueda={await searchParams} />;
