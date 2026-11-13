@@ -285,6 +285,18 @@ export async function estadoSeguridad(
   return { aal: 'aal2', factores: todos };
 }
 
+/**
+ * [CH-254] El resumen de Seguridad del índice de Ajustes (AJU-01, 04 §6.11): cuántos factores TOTP verificados tiene la
+ * persona, de `mfa.listFactors()` con su sesión. Las sesiones no van: Auth no las lista sin la clave de servicio.
+ */
+export async function resumenSeguridad(
+  auth: ClienteAuth,
+  permitido: string,
+): Promise<{ readonly factores: number }> {
+  const { factores: todos } = await estadoSeguridad(auth, permitido);
+  return { factores: todos.filter((f) => f.estado === 'verificado').length };
+}
+
 /** Solo con AAL2 y, si el factor está verificado, solo si queda otro verificado (04 §12.2). Uno sin verificar siempre se quita. */
 export const quitarFactor = conUsuario(
   z.object({ factorId: z.string().min(1) }),

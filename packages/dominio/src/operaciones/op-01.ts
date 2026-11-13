@@ -73,7 +73,8 @@ export const SUBTIPO = {
 
 const siguienteOrden = (xs: readonly { readonly orden: number }[]) =>
   Math.max(0, ...xs.map((x) => x.orden)) + 1;
-const NUEVA = { archivada: false, revision: null } as const;
+// [CH-254] Sin fecha de archivo, como la carga de la base (`archivada_el` nula).
+const NUEVA = { archivada: false, archivadaEl: null, revision: null } as const;
 const NULOS = { conciliacionId: null, comercio: null, nota: null, lineaCobradaId: null } as const;
 
 export function op01(antes: H.Instantanea, x: H.ComandoOp01): Efecto | R {

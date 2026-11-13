@@ -10,8 +10,13 @@ export function op05(antes: Instantanea, x: ComandoOp05): Efecto | Rechazo {
   if (!k.archivada) return { codigo: 'cuenta_no_archivada', datos: { cuentaId: k.id } };
   const pago = pagoDe(antes.hechos, k.id);
   const abrir = { archivada: false };
-  const cambios: Cambio[] = [{ tipo: 'actualizar', tabla: 'cuentas', id: k.id, campos: abrir }];
+  // [CH-254] Una activa no tiene fecha de archivo (ck_*_archivada_el); las archivadas antes de la migración no la traen.
+  const sinFecha = (x: { readonly archivadaEl?: unknown }) =>
+    (x.archivadaEl ?? null) === null ? abrir : { ...abrir, archivadaEl: null };
+  const cambios: Cambio[] = [
+    { tipo: 'actualizar', tabla: 'cuentas', id: k.id, campos: sinFecha(k) },
+  ];
   if (pago !== undefined)
-    cambios.push({ tipo: 'actualizar', tabla: 'categorias', id: pago.id, campos: abrir });
+    cambios.push({ tipo: 'actualizar', tabla: 'categorias', id: pago.id, campos: sinFecha(pago) });
   return { cambios };
 }

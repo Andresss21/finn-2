@@ -88,6 +88,8 @@ export const categoriaDetalle = {
     deshacer: 'Deshacer',
     deshaciendo: 'Deshaciendo…',
     deshecho: (nombre: string) => `Deshiciste la asignación de ${nombre}.`,
+    // [CH-254] el «Deshacer» de Mover: el monto que se movió, de vuelta
+    movimientoDeshecho: (monto: string) => `Deshiciste el movimiento de ${monto}.`,
     confirmarDeshacer: 'Confirmar',
   },
   acciones: {

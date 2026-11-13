@@ -23,6 +23,7 @@ export async function LectorReglasRegla({ reglaId }: { readonly reglaId: string 
         categoriaNombre: regla.categoria.nombre,
         categoriaArchivada: regla.categoriaArchivada,
         coincideCon: regla.coincideCon,
+        usos: regla.usos,
       }}
       grupos={await gruposParaRegla()}
     />

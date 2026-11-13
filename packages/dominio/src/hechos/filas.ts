@@ -30,6 +30,9 @@ export interface Cuenta {
   readonly fechaApertura: FechaLocal;
   readonly orden: number;
   readonly archivada: boolean;
+  /** [CH-254] El día en que se archivó (03 §3.4, §3.9); nula si está activa o si se archivó antes de
+   * m_datos_entrega_4. Falta solo en hechos armados a mano, que valen como nula. */
+  readonly archivadaEl?: FechaLocal | null;
   readonly revision: Revision;
 }
 
@@ -87,6 +90,9 @@ export interface Categoria {
   readonly clase: E.ClaseCategoria;
   readonly tarjetaId: Uuid | null;
   readonly archivada: boolean;
+  /** [CH-254] El día en que se archivó (03 §3.4, §3.9); nula si está activa o si se archivó antes de
+   * m_datos_entrega_4. Falta solo en hechos armados a mano, que valen como nula. */
+  readonly archivadaEl?: FechaLocal | null;
   readonly revision: Revision;
 }
 
@@ -236,6 +242,8 @@ export interface Movimiento {
   readonly esperadaProgramadaId: Uuid | null;
   readonly esperadaFecha: FechaLocal | null;
   readonly transaccionId: Uuid | null;
+  /** [CH-254] La regla de comercio que le puso la categoría (OP-35 paso 10, 03 §3.19); falta si no la puso una regla. */
+  readonly reglaId?: Uuid | null;
 }
 
 export interface MovimientoLinea {

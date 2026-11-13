@@ -41,6 +41,8 @@ export interface ResumenAjustes {
   readonly formatosActivos: number;
   readonly instituciones: number;
   readonly erroresSieteDias: number;
+  /** [CH-254] Factores TOTP verificados (`resumenSeguridad()`); sin él, la fila de Seguridad no resume nada. */
+  readonly factores?: number;
 }
 
 const resumenes = (r: ResumenAjustes): Readonly<Record<string, string>> => ({
@@ -52,6 +54,7 @@ const resumenes = (r: ResumenAjustes): Readonly<Record<string, string>> => ({
       : ti.conectadoUltimo(formatearInstante(r.webhook.ultimoSmsEn)),
   '/ajustes/formatos': ti.activos(r.formatosActivos),
   '/ajustes/instituciones': String(r.instituciones),
+  ...(r.factores === undefined ? {} : { '/ajustes/seguridad': ti.factores(r.factores) }),
   '/ajustes/exportar': ti.exportar,
   '/ajustes/diagnostico': ti.errores(r.erroresSieteDias),
 });

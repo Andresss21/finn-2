@@ -217,6 +217,25 @@ describe('PRU-CMP-AJUS-140 índice de Ajustes', () => {
     expect(resumenDe(otra, '/ajustes/diagnostico')).toBe('2 errores en 7 días');
   });
 
+  it('PRU-CMP-AJUS-800 [FT-74] la fila de Seguridad dice cuántos factores trae resumenSeguridad(), en singular o plural, sin sesiones; sin el dato, no resume nada', () => {
+    const base = {
+      diaInicio: 21,
+      webhook: { configurado: true },
+      formatosActivos: 4,
+      instituciones: 3,
+      erroresSieteDias: 0,
+    };
+    const seguridad = (raiz: HTMLElement) =>
+      raiz.querySelector('a[href="/ajustes/seguridad"] [data-resumen]')?.textContent;
+    expect(seguridad(montar(false, { ...base, factores: 2 }))).toBe('2 factores');
+    expect(seguridad(montar(false, { ...base, factores: 1 }))).toBe('1 factor');
+    const sinDato = montar(false, base);
+    expect(seguridad(sinDato)).toBeUndefined();
+    expect(sinDato.querySelector('a[href="/ajustes/seguridad"]')?.textContent).not.toContain(
+      'sesi',
+    );
+  });
+
   it('PRU-CMP-AJUS-791 [FT-72, FT-76] (CH-251) el nombre accesible de cada fila es todo su texto visible: empieza por su título e incluye su resumen o aviso', () => {
     const lista = montar(true, {
       diaInicio: 21,

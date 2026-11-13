@@ -225,6 +225,7 @@ export function generarPeriodos(op: OpcionesVolumen): PeriodoVolumen[] {
           fechaApertura: inicio0,
           orden,
           archivada: false,
+          archivadaEl: null, // [CH-254]
           revision: null,
         });
       cuenta(cuentas.efectivo, 'efectivo', 'Efectivo', 0);
@@ -265,6 +266,7 @@ export function generarPeriodos(op: OpcionesVolumen): PeriodoVolumen[] {
           clase: 'pago',
           tarjetaId: cuentas.visa,
           archivada: false,
+          archivadaEl: null, // [CH-254]
           revision: null,
         },
         {
@@ -275,6 +277,7 @@ export function generarPeriodos(op: OpcionesVolumen): PeriodoVolumen[] {
           clase: 'pago',
           tarjetaId: cuentas.master,
           archivada: false,
+          archivadaEl: null, // [CH-254]
           revision: null,
         },
       );
@@ -287,6 +290,7 @@ export function generarPeriodos(op: OpcionesVolumen): PeriodoVolumen[] {
           clase: 'normal',
           tarjetaId: null,
           archivada: false,
+          archivadaEl: null, // [CH-254]
           revision: null,
         });
       deudores.forEach((d, i) =>

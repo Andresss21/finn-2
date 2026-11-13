@@ -1,11 +1,20 @@
 // OP-15 Mover dinero entre categorías (04 §3.3): valor absoluto sobre las dos celdas Asig(o, p) y Asig(d, p) (4.6.2).
 // Con las dos ya movidas es `ya_aplicada`, con las vistas se aplica y cualquier otra mezcla es
 // `conflicto_desactualizado`. LPA no cambia, así que no hay confirmación; el origen archivado equivale a OP-11.
-import { op15, type EntradaOp15, type SalidaPresupuesto } from '../../contratos/presupuesto.ts';
+// [CH-254] La salida son las dos asignaciones de después, leídas de los hechos (la misma en `ya_aplicada`): el `esperado`
+// de «Deshacer» (E2-13), que la interfaz no calcula (PF-3).
+import type { Hechos } from '@finn/dominio';
+import { Centavos } from '@finn/dominio/valores';
+import { op15, type EntradaOp15, type SalidaOp15 } from '../../contratos/presupuesto.ts';
 import { asignacionEn, categoriaDe } from '../categorias/comunes.ts';
 import type { DefinicionOperacion } from '../marco.ts';
 
-export const OP15: DefinicionOperacion<EntradaOp15, EntradaOp15, SalidaPresupuesto> = {
+const asignacionesDe = (h: Hechos, e: EntradaOp15): SalidaOp15 => ({
+  asignacionOrigen: Centavos.desdeEntero(asignacionEn(h, e.origenId, e.periodoInicio)),
+  asignacionDestino: Centavos.desdeEntero(asignacionEn(h, e.destinoId, e.periodoInicio)),
+});
+
+export const OP15: DefinicionOperacion<EntradaOp15, EntradaOp15, SalidaOp15> = {
   id: 'OP-15',
   contrato: op15,
   idempotencia: 'valor_absoluto',
@@ -17,7 +26,7 @@ export const OP15: DefinicionOperacion<EntradaOp15, EntradaOp15, SalidaPresupues
     const destino = asignacionEn(h, e.destinoId, e.periodoInicio);
     const { asignacionOrigen, asignacionDestino } = e.esperado;
     if (origen === asignacionOrigen - e.monto && destino === asignacionDestino + e.monto)
-      return { tipo: 'ya_aplicada', salida: {} };
+      return { tipo: 'ya_aplicada', salida: asignacionesDe(h, e) };
     if (origen === asignacionOrigen && destino === asignacionDestino) return { tipo: 'aplicar' };
     return {
       tipo: 'conflicto_desactualizado',
@@ -33,5 +42,5 @@ export const OP15: DefinicionOperacion<EntradaOp15, EntradaOp15, SalidaPresupues
     monto: e.monto,
     ids,
   }),
-  salida: () => ({}),
+  salida: (r, e) => asignacionesDe(r.hechosNuevos, e),
 };

@@ -44,7 +44,11 @@ export type PropsIdentidadCuenta =
   | { readonly tipo: 'efectivo'; readonly fila: FilaEfectivo }
   | { readonly tipo: 'prestamo'; readonly fila: FilaPrestamo }
   | { readonly tipo: 'inversion'; readonly fila: FilaInversion }
-  | { readonly tipo: 'archivada'; readonly fila: Ref & { readonly institucion?: string } };
+  | {
+      readonly tipo: 'archivada';
+      /** [CH-254] `archivadaEl`: falta en las archivadas antes de que Finn la guardara («Archivada» a secas). */
+      readonly fila: Ref & { readonly institucion?: string; readonly archivadaEl?: string };
+    };
 
 const t = cuentas.cuenta;
 const BASE = 'relative overflow-hidden rounded-identidad text-texto';
@@ -270,11 +274,14 @@ export function IdentidadCuenta(props: PropsIdentidadCuenta) {
       <Datos
         clase="flex-1"
         nombre={props.fila.nombre}
-        detalle={
-          props.fila.institucion === undefined || props.fila.institucion === ''
+        detalle={[
+          props.fila.archivadaEl === undefined
             ? t.archivada
-            : `${t.archivada} · ${props.fila.institucion}`
-        }
+            : t.archivadaEl(formatearFecha(props.fila.archivadaEl)),
+          ...(props.fila.institucion === undefined || props.fila.institucion === ''
+            ? []
+            : [props.fila.institucion]),
+        ].join(' · ')}
       />
     </article>
   );

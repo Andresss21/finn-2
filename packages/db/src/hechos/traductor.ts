@@ -122,6 +122,7 @@ const FECHAS: ReadonlySet<string> = new Set([
   'fechaEsperada',
   'fechaEstado',
   'esperadaFecha',
+  'archivadaEl', // [CH-254]
 ]);
 const INSTANTES: ReadonlySet<string> = new Set([
   'horaRegistro',

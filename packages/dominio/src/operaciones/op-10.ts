@@ -19,6 +19,11 @@ export function op10(antes: Instantanea, x: ComandoOp10): Efecto | Rechazo {
       return { codigo: 'grupo_archivado', datos: { grupo: g.nombre } };
     cambios.push({ tipo: 'actualizar', tabla: 'grupos', id: g.id, campos: { archivado: false } });
   }
-  cambios.push({ tipo: 'actualizar', tabla: 'categorias', id: c.id, campos: { archivada: false } });
+  // [CH-254] Una activa no tiene fecha de archivo (ck_categorias_archivada_el).
+  const campos =
+    (c.archivadaEl ?? null) === null
+      ? { archivada: false }
+      : { archivada: false, archivadaEl: null };
+  cambios.push({ tipo: 'actualizar', tabla: 'categorias', id: c.id, campos });
   return { cambios };
 }

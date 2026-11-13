@@ -32,6 +32,7 @@ const COLUMNAS: { readonly [T in TablaEscribible]: Record<keyof FilasPorTabla[T]
     fechaApertura: true,
     orden: true,
     archivada: true,
+    archivadaEl: true,
     revision: true,
   },
   tarjetas: {
@@ -84,6 +85,7 @@ const COLUMNAS: { readonly [T in TablaEscribible]: Record<keyof FilasPorTabla[T]
     clase: true,
     tarjetaId: true,
     archivada: true,
+    archivadaEl: true,
     revision: true,
   },
   asignaciones: { id: true, categoriaId: true, periodoInicio: true, monto: true, revision: true },
@@ -204,6 +206,7 @@ const COLUMNAS: { readonly [T in TablaEscribible]: Record<keyof FilasPorTabla[T]
     esperadaProgramadaId: true,
     esperadaFecha: true,
     transaccionId: true,
+    reglaId: true,
   },
   movimiento_lineas: {
     id: true,

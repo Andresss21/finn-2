@@ -260,6 +260,7 @@ model Cuenta {
   fechaApertura   DateTime         @map("fecha_apertura") @db.Date
   orden           Int              @default(0)
   archivada       Boolean          @default(false)
+  archivadaEl     DateTime?        @map("archivada_el") @db.Date // [CH-254]
   revision        BigInt           @default(0)
 
   institucion        Institucion?       @relation(fields: [institucionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cuentas_institucion")
@@ -362,8 +363,9 @@ model Categoria {
   orden     Int            @default(0)
   clase     ClaseCategoria @default(normal)
   tarjetaId String?        @unique(map: "ux_categorias_tarjeta") @map("tarjeta_id") @db.Uuid
-  archivada Boolean        @default(false)
-  revision  BigInt         @default(0)
+  archivada   Boolean        @default(false)
+  archivadaEl DateTime?      @map("archivada_el") @db.Date // [CH-254]
+  revision    BigInt         @default(0)
 
   grupo            Grupo              @relation(fields: [grupoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_categorias_grupo")
   tarjeta          Tarjeta?           @relation(fields: [tarjetaId], references: [cuentaId], onDelete: Restrict, onUpdate: Restrict, map: "fk_categorias_tarjeta")
@@ -606,6 +608,7 @@ model Movimiento {
   esperadaProgramadaId   String?          @map("esperada_programada_id") @db.Uuid
   esperadaFecha          DateTime?        @map("esperada_fecha") @db.Date
   transaccionId          String?          @unique(map: "ux_movimientos_transaccion") @map("transaccion_id") @db.Uuid
+  reglaId                String?          @map("regla_id") @db.Uuid // [CH-254]
 
   sms                  SmsRecibido        @relation(fields: [smsId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_movimientos_sms")
   cuenta               Cuenta?            @relation(fields: [cuentaId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_movimientos_cuenta")
@@ -614,6 +617,7 @@ model Movimiento {
   duplicados           Movimiento[]       @relation("MovimientoDuplicado")
   esperadaProgramada   Programada?        @relation(fields: [esperadaProgramadaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_movimientos_programada")
   transaccion          Transaccion?       @relation("MovimientoAprobado", fields: [transaccionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_movimientos_transaccion")
+  regla                ReglaComercio?     @relation(fields: [reglaId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_movimientos_regla")
   lineas               MovimientoLinea[]
   citadoEnProcesamientos SmsProcesamiento[] @relation("ProcesamientoDuplicadoMovimiento")
 
@@ -622,6 +626,7 @@ model Movimiento {
   @@index([esperadaProgramadaId, esperadaFecha], map: "ix_movimientos_esperada")
   @@index([duplicadoTransaccionId], map: "ix_movimientos_dup_transaccion")
   @@index([duplicadoMovimientoId], map: "ix_movimientos_dup_movimiento")
+  @@index([reglaId], map: "ix_movimientos_regla")
   @@map("movimientos")
   @@schema("finn")
 }
@@ -676,7 +681,8 @@ model ReglaComercio {
   patron      String
   categoriaId String @map("categoria_id") @db.Uuid
 
-  categoria Categoria @relation(fields: [categoriaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reglas_categoria")
+  categoria   Categoria    @relation(fields: [categoriaId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_reglas_categoria")
+  movimientos Movimiento[]
 
   @@index([categoriaId], map: "ix_reglas_categoria")
   @@map("reglas_comercio")

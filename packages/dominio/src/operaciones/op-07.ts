@@ -76,6 +76,7 @@ export function op07(antes: H.Instantanea, x: H.ComandoOp07): Efecto | R {
     clase: 'normal',
     tarjetaId: null,
     archivada: false,
+    archivadaEl: null, // [CH-254]
     revision: null,
   } as const;
   return { cambios: [{ tipo: 'insertar', tabla: 'categorias', fila }] };

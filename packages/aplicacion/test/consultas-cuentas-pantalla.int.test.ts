@@ -95,7 +95,12 @@ describe('PRU-INT-CTA', () => {
     expect(sin.archivadas).toBeUndefined();
     const con = await cuentas(deps(), { incluirArchivadas: true });
     expect(con.efectivo.map((x) => x.cuenta.id)).not.toContain(uuid(1110));
-    expect(con.archivadas).toContainEqual({ id: uuid(1110), nombre: 'Vieja 51', archivada: true });
+    expect(con.archivadas).toContainEqual({
+      id: uuid(1110),
+      nombre: 'Vieja 51',
+      archivada: true,
+      archivadaEl: HOY, // [CH-254] el día en que se archivó
+    });
   });
 
   it('PRU-INT-CTA-104 [CA-51.5] un gasto pendiente de $40.00 baja el saldo y no el saldo confirmado, con $40.00 de diferencia', async () => {

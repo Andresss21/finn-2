@@ -8,6 +8,7 @@ import {
   iniciarInscripcion,
   ingresar,
   quitarFactor,
+  resumenSeguridad,
   salir,
   verificarFactor,
   type ClienteAuth,
@@ -240,6 +241,17 @@ describe('PRU-SEG-ACCESO', () => {
     ).toBe(svg);
     expect(await qrSvgDe(svg)).toBe(svg);
     expect(await qrSvgDe('data:image/png;base64,AAAA')).toBe('interno');
+  });
+
+  it('PRU-SEG-ACCESO-800 [FT-74] resumenSeguridad cuenta solo los factores TOTP verificados de listFactors, con la sesión AAL2 del permitido; sin ella, NO_AUTORIZADO', async () => {
+    const respaldo = { ...verificado, id: 'f4', friendly_name: 'Respaldo' };
+    const dos = falso({ aal: 'aal2', factores: [verificado, colgado, respaldo] }).auth;
+    expect(await resumenSeguridad(dos, FINN)).toEqual({ factores: 2 });
+    const uno = falso({ aal: 'aal2', factores: [colgado, verificado] }).auth;
+    expect(await resumenSeguridad(uno, FINN)).toEqual({ factores: 1 });
+    await expect(resumenSeguridad(falso({ aal: 'aal1' }).auth, FINN)).rejects.toMatchObject({
+      error: { categoria: 'NO_AUTORIZADO' },
+    });
   });
 
   it('PRU-SEG-ACCESO-109 [CA-74.1] [CA-74.2] [CA-74.3] estadoSeguridad lista los factores; quitarFactor protege al único verificado; cerrarOtrasSesiones conserva esta', async () => {

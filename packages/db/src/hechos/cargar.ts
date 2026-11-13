@@ -40,6 +40,7 @@ const ESPECIFICACION: Especificacion = {
     ['fechaApertura', 'fecha'],
     ['orden', 'entero'],
     ['archivada', 'logico'],
+    ['archivadaEl', 'fecha'], // [CH-254] «Archivada el {fecha}»
     REV,
   ],
   tarjetas: [
@@ -92,6 +93,7 @@ const ESPECIFICACION: Especificacion = {
     ['clase', 'texto'],
     ['tarjetaId', 'texto'],
     ['archivada', 'logico'],
+    ['archivadaEl', 'fecha'], // [CH-254] «archivada el {fecha}»
     REV,
   ],
   asignaciones: [

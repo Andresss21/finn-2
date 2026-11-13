@@ -13,6 +13,7 @@ import type { ClaimsSesion, SesionServidor } from '../src/autenticacion/autoriza
 import { cuentas as consultaCuentas } from '../src/consultas/cuentas.ts';
 import type { DepsConsulta } from '../src/consultas/comun.ts';
 import { inicio } from '../src/consultas/inicio.ts';
+import { reglas } from '../src/consultas/reglas.ts';
 import { confirmar, type DefinicionOperacion, type DepsMarco } from '../src/operaciones/marco.ts';
 import { OP01 } from '../src/operaciones/cuentas/index.ts';
 import { OP41 } from '../src/operaciones/bandeja/index.ts';
@@ -358,5 +359,24 @@ describe('PRU-INT-BAND (FT-34: recepción y procesamiento, 2 de 2)', () => {
       const m = await movimientoDe(await llega(texto, `${HOY}T${hora}`));
       expect(m).toMatchObject({ tipo_propuesto: tipo, cuenta: 'Visa BAC' });
     }
+  });
+
+  it('PRU-INT-BAND-800 [Q-reglas, FT-39] el movimiento que categoriza la regla «SELECTOS» guarda su id y reglas() la cuenta una vez más; uno sin coincidencia no la cuenta', async () => {
+    const usos = async () =>
+      (await reglas(depsConsulta())).reglas.find((r) => r.patron === 'SELECTOS')?.usos;
+    const antes = await usos();
+    expect(antes).toBeGreaterThanOrEqual(0);
+    const conRegla = await llega(compra('4821', '9.10', 'SELECTOS LA GLORIA'), `${HOY}T19:40`);
+    const [fila] = await sql<{ regla: string | null }>(
+      `SELECT p.patron AS regla FROM finn.movimientos m LEFT JOIN finn.reglas_comercio p ON p.id = m.regla_id
+        WHERE m.sms_id = '${conRegla}'`,
+    );
+    expect(fila).toEqual({ regla: 'SELECTOS' });
+    expect(await usos()).toBe((antes ?? 0) + 1);
+    const sinRegla = await llega(compra('4821', '9.20', 'PANADERIA LA GLORIA'), `${HOY}T19:45`);
+    expect(await sql(`SELECT regla_id FROM finn.movimientos WHERE sms_id = '${sinRegla}'`)).toEqual(
+      [{ regla_id: null }],
+    );
+    expect(await usos()).toBe((antes ?? 0) + 1);
   });
 });

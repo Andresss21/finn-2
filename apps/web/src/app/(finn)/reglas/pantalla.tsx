@@ -1,11 +1,13 @@
 // `/reglas` (FT-39; 05 §2, §7.2; diseño 09d-reglas): las reglas de comercio con su categoría. La que apunta a una categoría
-// archivada lleva «No se aplica…» (B-10, §4.17). Dibuja lo que trae el DTO: no calcula nada (PF-3).
+// archivada lleva «No se aplica…» (B-10, §4.17). [CH-254] Cada una dice cuántas veces se usó. Dibuja lo que trae el DTO: no
+// calcula nada (PF-3).
 import type { ReglasDto } from '@finn/aplicacion/consultas/reglas';
 import { Icono } from '../../../componentes/base/icono';
 import { Vacio } from '../../../componentes/base/vacio';
 import { IndicadorEstado } from '../../../componentes/dominio/indicador-estado';
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
+import { UsosDeRegla } from '../../../flujos/reglas-regla/coincide-con';
 import { reglas as t } from '../../../textos/reglas';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
@@ -83,6 +85,7 @@ export function PantallaReglas({
                         <span className="text-cuerpo-pequeno text-texto-secundario">
                           {t.hacia(r.categoria.nombre)}
                         </span>
+                        <UsosDeRegla usos={r.usos} />
                         {r.categoriaArchivada ? (
                           <IndicadorEstado estado="cero" etiqueta={t.noSeAplica} />
                         ) : null}

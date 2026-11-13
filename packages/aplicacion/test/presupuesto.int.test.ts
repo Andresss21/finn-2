@@ -541,4 +541,43 @@ describe('PRU-INT-PRES', () => {
     });
     expect(await revision()).toBe(r0);
   });
+
+  it('PRU-INT-PRES-800 [FT-11] OP-15 devuelve las dos asignaciones de después, también si ya estaba aplicada; con ellas como esperado, la inversa deja todo como estaba', async () => {
+    await categoria(960, 'Ida');
+    await categoria(961, 'Vuelta');
+    await asignacion(962, uuid(960), 4000);
+    await asignacion(963, uuid(961), 1050);
+    const A = inicioA(await hechos());
+    const entrada = {
+      origenId: uuid(960),
+      destinoId: uuid(961),
+      periodoInicio: A,
+      monto: '25.50',
+      esperado: { asignacionOrigen: '40.00', asignacionDestino: '10.50' },
+    };
+    const antes = lpa(await hechos());
+    const despues = { asignacionOrigen: 1450, asignacionDestino: 3600 };
+    expect(await ejecutar(OP15, entrada)).toMatchObject({ ok: true, valor: despues });
+    expect(await ejecutar(OP15, entrada)).toMatchObject({
+      ok: true,
+      yaAplicada: true,
+      valor: despues,
+    });
+
+    // «Deshacer»: el mismo monto, origen y destino intercambiados y lo devuelto como esperado.
+    const inversa = {
+      origenId: uuid(961),
+      destinoId: uuid(960),
+      periodoInicio: A,
+      monto: '25.50',
+      esperado: { asignacionOrigen: '36.00', asignacionDestino: '14.50' },
+    };
+    expect(await ejecutar(OP15, inversa)).toMatchObject({
+      ok: true,
+      yaAplicada: false,
+      valor: { asignacionOrigen: 1050, asignacionDestino: 4000 },
+    });
+    const h = await hechos();
+    expect([asig(h, uuid(960)), asig(h, uuid(961)), lpa(h)]).toEqual([4000, 1050, antes]);
+  });
 });

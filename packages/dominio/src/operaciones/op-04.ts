@@ -33,7 +33,7 @@ export function op04(antes: Instantanea, x: ComandoOp04): Efecto | Rechazo {
     }
     for (const a of futuras) cambios.push({ tipo: 'eliminar', tabla: 'asignaciones', id: a.id });
   }
-  const archivar = { archivada: true };
+  const archivar = { archivada: true, archivadaEl: antes.hoy }; // [CH-254] la fecha de archivo
   cambios.push({ tipo: 'actualizar', tabla: 'cuentas', id: cuentaId, campos: archivar });
   if (pago !== undefined)
     cambios.push({ tipo: 'actualizar', tabla: 'categorias', id: pago.id, campos: archivar });

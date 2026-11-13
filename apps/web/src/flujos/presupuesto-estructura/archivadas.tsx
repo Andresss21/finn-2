@@ -8,6 +8,7 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Icono } from '../../componentes/base/icono';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
+import { formatearFecha } from '../../formato';
 import { useUnToque } from '../../formularios/use-un-toque';
 import { desarchivarCategoria } from '../../servidor/acciones/categorias';
 import { estructuraEntrega4 as t } from '../../textos/estructura-entrega-4';
@@ -24,6 +25,8 @@ interface Pedido {
 
 interface Archivada extends Pedido {
   readonly grupoArchivado: boolean;
+  /** [CH-254] De `estructura()`; falta en las archivadas antes de que Finn la guardara. */
+  readonly archivadaEl?: string;
 }
 
 /** Las categorías archivadas, con su grupo; las de un grupo archivado también cuentan (el grupo no se ve en la lista). */
@@ -37,6 +40,7 @@ export function archivadasDe(grupos: readonly GrupoDeEstructura[]): Archivada[] 
         grupo: g.nombre,
         conGrupo: false,
         grupoArchivado: g.archivado,
+        ...(c.archivadaEl === undefined ? {} : { archivadaEl: c.archivadaEl }),
       })),
   );
 }
@@ -100,7 +104,11 @@ export function Archivadas({ grupos }: { readonly grupos: readonly GrupoDeEstruc
                 <div className="flex min-w-0 flex-col">
                   <span className="text-cuerpo font-semibold">{c.nombre}</span>
                   <span className="text-cuerpo-pequeno text-texto-secundario">
-                    {c.grupoArchivado ? t.deGrupoArchivado(c.grupo) : t.deGrupo(c.grupo)}
+                    {c.grupoArchivado
+                      ? t.deGrupoArchivado(c.grupo)
+                      : c.archivadaEl === undefined
+                        ? t.deGrupo(c.grupo)
+                        : t.deGrupoEl(c.grupo, formatearFecha(c.archivadaEl))}
                   </span>
                 </div>
                 {c.grupoArchivado ? null : (

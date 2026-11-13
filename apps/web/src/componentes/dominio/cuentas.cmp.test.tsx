@@ -313,6 +313,22 @@ describe('PRU-CMP-CTA-101 cuentas', () => {
     expect(archivada?.querySelector('[data-centavos]')).toBeNull();
   });
 
+  it('PRU-CMP-CTA-800 [FT-51] la archivada con fecha dice «Archivada el {fecha} · {banco}»; sin fecha, «Archivada · {banco}» o «Archivada»', () => {
+    const raiz = montar(
+      <>
+        <IdentidadCuenta
+          tipo="archivada"
+          fila={{ id: 'a', nombre: 'Ahorro', institucion: 'BAC', archivadaEl: '2026-10-10' }}
+        />
+        <IdentidadCuenta tipo="archivada" fila={{ id: 'b', nombre: 'Caja', institucion: 'BAC' }} />
+        <IdentidadCuenta tipo="archivada" fila={{ id: 'c', nombre: 'Vieja' }} />
+      </>,
+    );
+    expect(
+      [...raiz.querySelectorAll<HTMLElement>('[data-identidad]')].map((x) => textoAccesible(x)),
+    ).toEqual(['AhorroArchivada el 10/10/2026 · BAC', 'CajaArchivada · BAC', 'ViejaArchivada']);
+  });
+
   it('PRU-CMP-CTA-233 [CA-51.5] «En camino» va dentro del contenedor de la posición neta y no se dibuja si es cero', () => {
     const con = montar(<PosicionNeta posicion={posicion} enCamino={c(4000)} />);
     const dentro = con.querySelector('[data-posicion-neta] [data-en-camino]');

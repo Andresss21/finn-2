@@ -657,6 +657,7 @@ describe('PRU-DOM-BAND-103: aprobar todos, descartar, reglas, reprocesar y crear
           ...{ comercio: 'SUPER UNO', tipoPropuesto: 'gasto', nota: null, transaccionId: null },
           ...{ duplicadoTransaccionId: null, duplicadoMovimientoId: null },
           ...{ esperadaProgramadaId: null, esperadaFecha: null },
+          reglaId: 'RG', // [CH-254] la categoría la puso la regla
         },
       },
     ]);
