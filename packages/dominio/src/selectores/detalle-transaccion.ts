@@ -1,8 +1,10 @@
 // Detalle de una transacción (04 §6.7.2): efectos, líneas con sus eventos (§4.5, §4.10), la
 // conciliación y las restricciones de OP-28 y OP-29. La nota, los cambios posteriores y el origen por
 // SMS son [H] o [I] y llegan como parámetro.
+import { destinoDe } from '../calculo/destino';
 import { periodoDe } from '../calculo/periodos';
-import type { CambioPosterior, Instante, Instantanea, Linea, Uuid } from '../hechos';
+import type { CambioPosterior, Efecto, Instante, Instantanea, Linea, Uuid } from '../hechos';
+import type { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
 import { filaDe, indice } from './actividad';
 import { nombres, periodoDto, type Ref } from './comunes';
@@ -21,6 +23,35 @@ type Destino =
   | { readonly categoria: Ref }
   | { readonly deudor: Ref }
   | { readonly lineaOriginal: { readonly id: Uuid; readonly transaccionId: Uuid } };
+
+/**
+ * [CH-250] «Efectos hoy»: el Disponible de hoy (período activo) de cada categoría que tocan las líneas, en su orden y sin
+ * repetir (una devolución sigue a su línea original), y la deuda de hoy de cada tarjeta de los efectos. Solo lee la instantánea.
+ */
+export function efectosHoy(i: Instantanea, lineas: readonly Linea[], efectos: readonly Efecto[]) {
+  const x = indice(i);
+  const n = nombres(i);
+  const activo = i.presupuesto.activo.inicio;
+  const ids = [
+    ...new Set(lineas.map((l) => destinoDe(l, x.linea).categoriaId).filter((c) => c !== null)),
+  ];
+  const categorias = ids.flatMap((categoriaId) => {
+    const celda = i.presupuesto.celdas.find(
+      (c) => c.categoriaId === categoriaId && c.periodo.inicio === activo,
+    );
+    return celda === undefined
+      ? []
+      : [{ categoria: n.categoria(categoriaId), disponible: celda.disponible }];
+  });
+  const tarjetas = [...new Set(efectos.map((e) => e.cuentaId))].flatMap((cuentaId) => {
+    const e = i.tarjetas.find((t) => t.tarjetaId === cuentaId);
+    return e === undefined ? [] : [{ cuenta: n.cuenta(cuentaId), deuda: e.deuda }];
+  });
+  return { categorias, tarjetas } satisfies {
+    categorias: readonly { categoria: Ref; disponible: Centavos }[];
+    tarjetas: readonly { cuenta: Ref; deuda: Centavos }[];
+  };
+}
 
 /**
  * `consultas.detalleTransaccion` (6.7.2). Lanza `RangeError` si la transacción no existe (la consulta
@@ -140,6 +171,7 @@ export function detalleTransaccion(i: Instantanea, transaccionId: Uuid, o: Datos
       ...(e.seguro === null ? {} : { seguro: e.seguro }),
     })),
     lineas: detalle.map((d) => d.linea),
+    efectosHoy: efectosHoy(i, lineas, efectos),
     ...(t.conciliacionId === null
       ? {}
       : {

@@ -40,6 +40,8 @@ interface PropsFiltros {
   readonly filtros: Filtros;
   readonly cuentas: readonly RefDeFiltro[];
   readonly grupos: readonly GrupoDeFiltro[];
+  /** [CH-250] `conteo` de `actividad()`: cuántas coinciden con los filtros de la URL («Ver N resultados»). */
+  readonly conteo?: number;
 }
 
 const contar = (filtros: Filtros): number =>
@@ -233,7 +235,7 @@ export function BotonFiltros(p: PropsFiltros) {
                 </EnlaceFinn>
               ) : null}
               <button type="submit" form={ID_HOJA} className={BOTON_PIE}>
-                {t.verResultados}
+                {p.conteo === undefined ? t.verResultados : t.verNResultados(p.conteo)}
               </button>
             </>
           }

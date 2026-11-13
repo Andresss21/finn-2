@@ -23,6 +23,12 @@ export const actividad = {
   estado: 'Estado',
   estadoBancario: 'Estado bancario',
   verResultados: 'Ver resultados',
+  // [CH-250] El conteo y el total los da el servidor (ACT-04, ACT-08).
+  verNResultados: (n: number) => (n === 1 ? 'Ver 1 resultado' : `Ver ${n} resultados`),
+  resumen: (n: number, total: string) =>
+    `${n} ${n === 1 ? 'transacción' : 'transacciones'} · ${total}`,
+  resultadosPara: (n: number, texto: string) =>
+    `${n} ${n === 1 ? 'resultado' : 'resultados'} para “${texto}”`,
   cargando: 'Cargando…',
   origen: 'Origen',
   desde: 'Desde',

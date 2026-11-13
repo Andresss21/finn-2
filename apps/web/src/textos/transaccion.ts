@@ -13,6 +13,8 @@ export const transaccion = {
   periodo: 'Período',
   cuentas: 'Cuentas',
   efectosHoy: 'Efectos hoy',
+  disponible: 'Disponible',
+  deuda: 'deuda',
   cobrar: 'Cobrar',
   condonar: 'Condonar',
   nota: 'Nota',

@@ -62,6 +62,7 @@ const dto = (parcial: Record<string, unknown> = {}): DetalleTransaccionDto =>
       periodo: activo,
     },
     efectos: [{ cuenta: { id: 'c1', nombre: 'Visa' }, monto: -3000 }],
+    efectosHoy: { categorias: [], tarjetas: [] },
     lineas: [
       {
         id: 'l1',
@@ -269,5 +270,39 @@ describe('FT-25 detalle de una transacción', () => {
     expect(enlaces[1]?.getAttribute('href')).toBe('/por-cobrar/condonar/l2');
     for (const e of enlaces) expect(e.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     expect([...nodo.querySelectorAll('h2')].map((h) => h.textContent)).toContain(t.efectosHoy);
+  });
+
+  it('PRU-CMP-TX-790 «Efectos hoy» muestra el Disponible de hoy de cada categoría y la deuda de la tarjeta que trae el DTO, sin la fila de la cuenta, y cada fila mide 44 px', () => {
+    const nodo = mostrar(
+      dto({
+        efectosHoy: {
+          categorias: [
+            { categoria: { id: 'k1', nombre: 'Supermercado' }, disponible: 6285 },
+            { categoria: { id: 'k2', nombre: 'Farmacia' }, disponible: -515 },
+          ],
+          tarjetas: [{ cuenta: { id: 'c1', nombre: 'Visa Oro' }, deuda: 64218 }],
+        },
+      }),
+    );
+    const filas = [...nodo.querySelectorAll('[data-efectos-hoy] li')];
+    const esperadas = [
+      ['Supermercado', t.disponible, '$62.85'],
+      ['Farmacia', t.disponible, '−$5.15'],
+      [`Visa Oro · ${t.deuda}`, '$642.18'],
+    ];
+    expect(filas).toHaveLength(esperadas.length);
+    filas.forEach((f, k) => {
+      for (const x of esperadas[k] ?? []) expect(f.textContent).toContain(x);
+    });
+    expect(nodo.querySelector('[data-efectos-hoy]')?.textContent).not.toContain('Visa−');
+    for (const f of filas) expect(f.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+  });
+
+  it('PRU-CMP-TX-791 sin categoría ni tarjeta, «Efectos hoy» muestra el efecto en cada cuenta', () => {
+    const nodo = mostrar(dto());
+    const filas = [...nodo.querySelectorAll('[data-efectos-hoy] li')];
+    expect(filas).toHaveLength(1);
+    expect(filas[0]?.textContent).toContain('Visa');
+    expect(filas[0]?.textContent).toContain('−$30.00');
   });
 });

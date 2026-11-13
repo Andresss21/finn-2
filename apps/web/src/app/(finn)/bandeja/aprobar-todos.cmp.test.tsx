@@ -145,6 +145,42 @@ describe('PRU-CMP-BAND', () => {
     expect(aviso?.querySelector('a')?.textContent).toBe(t.verTransaccion);
   });
 
+  it('PRU-CMP-BAND-790 [CA-E6-8] «Ver transacción» lleva a la transacción que trae el servidor y, sin ella, al movimiento; mide 44 px de alto', async () => {
+    aprobar.mockResolvedValue({
+      ok: true,
+      valor: {
+        elementos: [
+          {
+            movimientoId: 'e1',
+            resultado: {
+              codigo: 'movimiento_estado_no_valido',
+              mensaje: 'Este movimiento ya está aprobado.',
+            },
+            transaccionId: 'tx-1',
+          },
+          {
+            movimientoId: 'e2',
+            resultado: { codigo: 'suma_lineas_distinta', mensaje: 'Las partes no suman.' },
+          },
+        ],
+      },
+      yaAplicada: false,
+      avisos: [],
+    });
+    const otro = movimiento('e2', 'FARMACIA SAN NICOLAS', 1200);
+    const nodo = montar(
+      <AprobarTodos accion={aprobar} elegibles={['e1', 'e2']} movimientos={[LISTO, otro]} />,
+    );
+    await tocar(nodo.querySelector('button'));
+    await esperar();
+    const enlaces = [...nodo.querySelectorAll('[data-testid="av-19"] a')];
+    expect(enlaces.map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
+      [t.verTransaccion, '/actividad/tx-1'],
+      [t.verTransaccion, '/bandeja/e2'],
+    ]);
+    for (const a of enlaces) expect(a.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+  });
+
   it('PRU-CMP-BAND-161 [FT-36] sin elegibles el botón «Aprobar todos» no aparece', () => {
     const nodo = montar(<AprobarTodos accion={aprobar} elegibles={[]} movimientos={[PAGO]} />);
     expect(nodo.querySelector('button')).toBeNull();

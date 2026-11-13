@@ -2,6 +2,7 @@
 // uno toma el bloqueo, aplica y confirma por separado, y un fallo no revierte a los demás. Cada elemento es OP-37 con
 // las exclusiones del lote: solo `pendiente`, nada de `pago_tarjeta` (necesita `origenId`) y nada que exija
 // confirmación (AV-01, retroactivo). Los que no se aprueban quedan como están y AV-19 los lista con su motivo.
+import type { Uuid } from '@finn/dominio';
 import {
   elementoOp38,
   type ElementoOp38,
@@ -13,6 +14,7 @@ import {
 } from '../../contratos/bandeja.ts';
 import {
   errorDeValidacion,
+  ExcepcionFinn,
   mensajeDeRechazo,
   type ErrorFinn,
   type ResultadoAccion,
@@ -55,8 +57,16 @@ export const OP38_ELEMENTO: DefinicionOperacion<Elemento, Resuelto, SalidaAproba
   },
   async resolver(tx, e) {
     const c = await resolverMovimiento(tx, e.movimientoId);
-    const { estado, tipoPropuesto } = c.movimiento;
-    if (estado !== 'pendiente') throw rechazo('movimiento_estado_no_valido', { estado });
+    const { estado, tipoPropuesto, transaccionId } = c.movimiento;
+    if (estado !== 'pendiente') {
+      const e = rechazo('movimiento_estado_no_valido', { estado });
+      // [CH-250] Si ya estaba aprobado, su transacción viaja para que AV-19 lleve a ella.
+      if (transaccionId === null) throw e;
+      throw new ExcepcionFinn({
+        ...errorDeValidacion([{ path: [e.campo], message: e.message }]),
+        datos: { transaccionId },
+      });
+    }
     if (tipoPropuesto === 'pago_tarjeta') throw rechazo('pago_sin_origen');
     return { ...c, entrada: e };
   },
@@ -106,9 +116,11 @@ export async function aprobarTodos(
   const salida: SalidaOp38['elementos'][number][] = [];
   for (const el of elementos(analizada.data)) {
     const r = await confirmar(OP38_ELEMENTO, el, deps);
+    const transaccionId = r.ok ? r.valor.transaccionId : r.error.datos?.['transaccionId'];
     salida.push({
       movimientoId: el.movimientoId,
       resultado: r.ok ? (r.yaAplicada ? 'ya_aplicada' : 'aprobado') : motivoDe(r.error),
+      ...(typeof transaccionId === 'string' ? { transaccionId: transaccionId as Uuid } : {}),
     });
   }
   const fallidos = salida.some((x) => typeof x.resultado !== 'string');

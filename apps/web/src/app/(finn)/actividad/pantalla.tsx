@@ -7,6 +7,7 @@ import { FilaTransaccion } from '../../../componentes/dominio/fila-transaccion';
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { VacioSinResultados } from '../../../componentes/navegacion/vacios';
+import { formatearMonto } from '../../../formato';
 import { rotuloDeDia } from '../../../formato/rotulo-de-dia';
 import { actividad as t } from '../../../textos/actividad';
 import { Buscador } from './buscador';
@@ -91,7 +92,7 @@ export function PantallaActividad({
           <div className="min-w-0 flex-1">
             <Buscador texto={texto ?? ''} resto={sinTexto} />
           </div>
-          <BotonFiltros filtros={sinCursor} cuentas={cuentas} grupos={grupos} />
+          <BotonFiltros filtros={sinCursor} cuentas={cuentas} grupos={grupos} conteo={dto.conteo} />
         </div>
         <div className="order-4 flex flex-col gap-4">
           <FichasDeFiltros
@@ -102,8 +103,14 @@ export function PantallaActividad({
               hrefDe(sinCursor, Object.fromEntries(claves.map((k) => [k, undefined])))
             }
           />
-          {filtrado ? (
-            <div className="flex justify-end" data-resumen-filtros>
+          {filtrado && dto.conteo > 0 ? (
+            // ACT-04, ACT-08 [CH-250]: el conteo y el total de todas las coincidencias, tal como los da el servidor.
+            <div className="flex items-center justify-between gap-3" data-resumen-filtros>
+              <p className="min-w-0 text-cuerpo-pequeno text-texto-secundario">
+                {texto === undefined
+                  ? t.resumen(dto.conteo, formatearMonto(dto.total))
+                  : t.resultadosPara(dto.conteo, texto)}
+              </p>
               <EnlaceFinn
                 href={texto === undefined ? '/actividad' : hrefDe({}, { texto })}
                 className={TONAL}
