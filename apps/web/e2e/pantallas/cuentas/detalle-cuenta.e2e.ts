@@ -207,8 +207,8 @@ test.describe('PRU-E2E-CTA', () => {
     await expect(page).toHaveURL(/\/cuentas\/[0-9a-f-]{36}$/);
     await esperarContenido(page);
     const proxima = page.locator('[data-bloque="proxima-cuota"]');
-    // Sin modelo de cálculo no hay tabla: la tarjeta dice la cuota pactada y no inventa «n de N» (PF-3)
-    await expect(proxima).toContainText('Cuota pactada');
+    // Sin modelo de cálculo no hay tabla: [CH-252] la próxima cuota sale de las condiciones en el servidor (E2-11), no del cliente (PF-3)
+    await expect(proxima).toContainText('Próxima cuota · 1 de 36');
     await esperarMonto(proxima.locator('[data-centavos]').first(), 35000);
     const pagar = await proxima.getByRole('link', { name: 'Pagar' }).boundingBox();
     expect(pagar?.height ?? 0).toBeGreaterThanOrEqual(44);

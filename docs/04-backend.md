@@ -1896,6 +1896,7 @@ No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; c�
 - **Precondiciones:** saldo = 0 (`cuenta_con_saldo`). Tarjeta: deuda = 0 (`tarjeta_con_deuda`); Disp(pago(t), A) = 0 (`reserva_tarjeta_no_cero`); sin asignaciones futuras en pago(t), o `devolverAsignacionesFuturas = true` (si no, rechazo `reserva_tarjeta_no_cero` con `datos.futuras`).
 - **Hechos:** F2 `asignaciones` futuras de pago(t) si se aceptó; F4 `cuentas.archivada = true`; tarjeta: F4 `categorias.archivada = true` de pago(t) (03 §4.5.4, misma transacción).
 - **Errores:** `cuenta_con_saldo`, `tarjeta_con_deuda`, `reserva_tarjeta_no_cero`, `cuenta_ya_archivada`.
+- **[CH-252] Propuesta** (4.3 [CH-36]): en una tarjeta con asignaciones futuras de pago(t) (montos ≠ 0 en períodos posteriores al activo), `previsualizar` trae `propuesta.asignacionesFuturas = { monto: Centavos; desde: FechaLocal; hasta: FechaLocal }`: su suma, el inicio del primer período y el fin del último (E2-15: «$X de dd/mm–dd/mm vuelven a Listo para asignar»). Viaja con `devolverAsignacionesFuturas` en `true` o en `false` (con el rechazo). No cambia los hechos ni la huella.
 
 #### OP-05 Desarchivar cuenta
 
@@ -2379,7 +2380,7 @@ Conciliación sin CSV: el usuario escribe la fecha y el saldo que muestra su ban
 
 - **Entrada:** `id` (de la conciliación); `cuentaId`; `fechaEstado: FechaLocal`; `saldoEstado: MontoTextoConSigno` (en una tarjeta, positivo = deuda, como en OP-01; el dominio lo convierte a la convención de 01 §0.4); `marcar: { todas: true } | { ids: Uuid[] }`; `revisionVista?`, `huellaImpacto?`.
 - **Idempotencia:** creación (`conciliaciones.id`).
-- **Confirmación:** siempre; previsualizar primero (05 FE-07). La previsualización devuelve en `propuesta` (4.3) **[CH-36]** `saldoFinn` = saldo(cuenta, fechaEstado), `diferencia` = saldoEstado − saldoFinn (convención de ESC-47) y la cantidad de transacciones que marcaría.
+- **Confirmación:** siempre; previsualizar primero (05 FE-07). La previsualización devuelve en `propuesta` (4.3) **[CH-36]** `saldoFinn` = saldo(cuenta, fechaEstado), `diferencia` = saldoEstado − saldoFinn (convención de ESC-47) y la cantidad de transacciones que marcaría. **[CH-252]** En una tarjeta suma `deudaFinn` = −`saldoFinn`, la deuda con el signo con que la escribe el usuario, para «Deuda en Finn al {fecha}» (E2-14); no cambia los hechos ni la huella.
 - **Precondiciones:** cuenta de efectivo o tarjeta (`cuenta_tipo_no_valido`), abierta (`cuenta_archivada`); `fechaEstado ≤ hoy` (`fecha_posterior_a_hoy`) y ≥ apertura (`fecha_anterior_a_apertura`); cada transacción marcada tiene un efecto en la cuenta, fecha ≤ `fechaEstado` (`transaccion_fuera_de_verificacion`) y no está conciliada (`transaccion_ya_conciliada`). Con `{ todas: true }` se marcan las transacciones de la cuenta con fecha ≤ `fechaEstado` en estado pendiente o confirmada.
 - **Hechos:** F3 `conciliaciones` (`cuenta_id`, `fecha_estado`, `saldo_estado`, `terminada_en` = instante, `diferencia_aceptada` = saldoEstado − saldo(cuenta, fechaEstado), `modo = 'saldo'`); F4 `transacciones` marcadas: `estado_bancario = 'conciliada'`, `conciliacion_id` (orden F3 → F4, como OP-47).
 - **Avisos:** después y estado: AV-21 si la diferencia ≠ 0, con la propuesta de ajuste de OP-47.
@@ -2727,9 +2728,9 @@ interface CuentasDto extends Encabezado {
               saldoConfirmado: Centavos;
               usoSinReservarBp: number | null }[];   // [F6] CF-25: S(t) × 10.000 / límite, tope 10.000; null sin límite o con 0
   prestamos: { cuenta: Ref; contraparte: string; capitalPendiente: Centavos;
-               proximaCuota?: { fecha: FechaLocal; monto: Centavos; numero: number } }[];   // con modelo (Anexo A)
+               proximaCuota?: { fecha: FechaLocal; monto: Centavos; numero: number } }[];   // con modelo (Anexo A); [CH-252] también sin modelo
   inversiones: { cuenta: Ref; valor: Centavos }[];
-  archivadas: Ref[];                                   // solo si incluirArchivadas
+  archivadas: (Ref & { institucion?: string })[];      // solo si incluirArchivadas; [CH-252] con su institución
   posicionNeta: {                                      // §4.14
     activos: { efectivo; saldosAFavor; inversiones; porCobrar: Centavos; total: Centavos };
     deudas: { tarjetas; prestamos: Centavos; total: Centavos };
@@ -2742,6 +2743,8 @@ interface CuentasDto extends Encabezado {
 
 - `proximoCorte` y `proximoPago`: primera fecha ≥ hoy con el día de corte o de pago, recortado al fin de mes (§4.14, supuesto 19).
 - `usoLimite`: deuda × 10.000 / límite, mitad hacia arriba (6.0.3).
+- **[CH-252]** `proximaCuota` (talón del préstamo, E2-11 de la entrega 4): con modelo, la primera cuota no pagada de la tabla (Anexo A); sin modelo, la de las condiciones: número = `cuotasPagadasAlCrear` + cuotas registradas + 1, fecha = apertura + número × frecuencia (la regla de las ocurrencias de 01 §4.16: mensual y anual con el día recortado al fin de mes; semanal, quincenal = 14 días y cada N días por días) y monto = `cuotaPactada`. No va si el número pasa de `plazoCuotas`, si el capital pendiente es 0 o si la frecuencia es cada N días sin N.
+- **[CH-252]** `archivadas` trae la institución para «Archivada · {banco}». La fecha de archivo no es un hecho (03 no la guarda y no se agrega sin migración): no se devuelve.
 
 ### 6.6 Detalle de cuenta
 
@@ -2766,6 +2769,7 @@ interface DetalleCuentaDto extends Encabezado {
   }[];
   programadas: { programada: Ref; rol: 'origen' | 'destino'; activa: boolean }[];
   tarjeta?: { color?: string /* [CH-228] el hex guardado */; deuda; saldoAFavor; reservado; faltaReservar; reservaExcedente; limite: Centavos; usoLimite: number;
+              reservadoBp: number | null;                         // [CH-252] CTA-26: reservado × 10.000 / deuda, tope 10.000; null sin deuda
               categoriaPago: Ref;                                 // [CH-222] la categoría de pago de la tarjeta (BE-35)
               cicloFacturacion: { desde: FechaLocal; hasta: FechaLocal };
               desgloseAlPagar: { deudaAnterior; cargosDelCiclo; yaPagado; paraNoGenerarIntereses: Centavos;
@@ -2773,6 +2777,7 @@ interface DetalleCuentaDto extends Encabezado {
   prestamo?: {
     condiciones: CondicionesPrestamoDto;                 // columnas de prestamos (03 §3.6)
     capitalPendiente: Centavos;
+    proximaCuota?: { fecha: FechaLocal; monto: Centavos; numero: number };   // [CH-252] la de 6.5, con modelo o sin él
     amortizacion: { numero: number; fecha: FechaLocal; interes; seguro; capital; saldo: Centavos;
                     estado: 'pagada' | 'parcial' | 'pendiente' | 'atrasada'; pagado: Centavos }[] | null;  // null sin modelo
     comparacion: { proyectadoHastaHoy: Centavos; pagadoHastaHoy: Centavos } | null;
@@ -2785,6 +2790,7 @@ interface DetalleCuentaDto extends Encabezado {
 
 - Lee `conciliaciones` (hechos) y `cambios_posteriores` ([H]).
 - `diferenciaActual` = saldo según el estado − saldo de las conciliadas (DM-8); el selector la calcula por conciliación.
+- **[CH-252]** `tarjeta.reservadoBp`: máx(0, reservado) × 10.000 / deuda, mitad hacia arriba (6.0.3), con tope 10.000, como `usoSinReservarBp` (CF-25); `null` si la deuda es 0. Es la barra «Reservado $X de $Y» del detalle de la tarjeta, que el cliente no calcula. `prestamo.proximaCuota` es la de 6.5.
 
 ### 6.7 Actividad y detalle de transacción
 
@@ -3107,7 +3113,7 @@ interface PorCobrarDto extends Encabezado {
 
 #### 6.12.4 Administración de grupos y categorías
 
-`consultas.estructura()` → árbol `{ grupo: Ref & { archivado, sistema: boolean }; categorias: { categoria: Ref; clase: 'normal' | 'pago'; archivada: boolean; tieneMeta: boolean; puedeEliminar: boolean; puedeArchivar: boolean }[] }[]`. `puedeEliminar` y `puedeArchivar` siguen las precondiciones de OP-09 y OP-13 (`reglas_comercio` es [H]).
+`consultas.estructura()` → árbol `{ grupo: Ref & { archivado, sistema: boolean }; categorias: { categoria: Ref; clase: 'normal' | 'pago'; archivada: boolean; tieneMeta: boolean; puedeEliminar: boolean; puedeArchivar: boolean }[] }[]`. `puedeEliminar` y `puedeArchivar` siguen las precondiciones de OP-09 y OP-13 (`reglas_comercio` es [H]). **[CH-252]** Las categorías archivadas no traen fecha de archivo: no es un hecho (03 no la guarda) y no se agrega sin migración; la pantalla dice «Archivada» sin fecha.
 
 #### 6.12.5 Centro de notificaciones
 
@@ -4447,3 +4453,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-234** (Fase 8, decidido por el orquestador con delegación del usuario, 10 de noviembre de 2026, `08-tareas.md` §7). `DetalleCuentaDto.tarjeta.desgloseAlPagar` trae `proximoPago`, la misma fecha que `cuentas()` (6.5) y el detalle de la categoría de pago: la fila «Pagá antes del…» del detalle de la tarjeta (AUDITORIA A17). Lectura sin regla nueva (6.6). Marca **[CH-234]**.
 - **CH-246** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). `Impacto` suma los valores antes y después de cada Δ (`lpaAntes`, `lpaDespues`; `antes` y `despues` en `deltaDisponible`; `saldoAntes`, `saldoDespues`, `reservaAntes` y `reservaDespues` en `deltaTarjetas`), que viajan en `previsualizar` y en `REQUIERE_CONFIRMACION` y no entran en `huellaImpacto` (2.4, 4.3). Marca **[CH-246]**.
 - **CH-E5-4 y CH-247** (diseño, entrega 4 · etapa 5, aprobado por el dueño, y Fase 8, decidido por el orquestador con delegación del usuario; aplicados con TA-595 el 12 de noviembre de 2026, `08-tareas.md` §7, CH-240 c). Textos de `patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento` (con `unknown` y el grado exponencial) y `nombre_repetido` de una institución (7.10); la salida de `validarFormato` suma la repetición del ataque, sin cambiar la política (8.5). Marcas **[CH-240]** y **[CH-247]**.
+- **CH-252** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Datos que la entrega 4 pide y el servidor no entregaba: `proximaCuota` del préstamo también sin modelo, con las condiciones (6.5, 6.6; E2-11); `archivadas` con su institución (6.5); `tarjeta.reservadoBp` en el detalle (6.6; CTA-26); `propuesta.asignacionesFuturas` en OP-04 (E2-15) y `propuesta.deudaFinn` en OP-53 (E2-14). Solo datos de salida y de previsualización: los hechos y la huella no cambian. La fecha de archivo de cuentas y categorías no es un hecho y no se agrega sin migración (6.5, 6.12.4). Marca **[CH-252]**.

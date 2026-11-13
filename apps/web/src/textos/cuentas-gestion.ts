@@ -25,6 +25,9 @@ export const cuentasGestion = {
       `¿Archivar ${nombre}? Deja de aparecer en Cuentas y queda de solo lectura.`,
     futuras: 'Asignaciones en períodos futuros de su categoría de pago',
     devolver: 'Devolverlas a Listo para asignar',
+    // [CH-252] E2-15: el monto y los períodos los dice la previsualización (PF-3).
+    devueltas: (monto: string, desde: string, hasta: string) =>
+      `${monto} de ${desde}–${hasta} vuelven a Listo para asignar`,
     dejar: 'Dejarlas como están',
     archivar: 'Archivar',
     archivarCuenta: (nombre: string) => `Archivar ${nombre}`,

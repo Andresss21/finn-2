@@ -13,6 +13,7 @@ import {
   type DepsMarco,
 } from '../src/operaciones/marco.ts';
 import { OP01, OP02, OP03, OP04, OP05, OP06 } from '../src/operaciones/cuentas/index.ts';
+import { OP14 } from '../src/operaciones/presupuesto/index.ts';
 
 const uuid = (n: number): Uuid => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}` as Uuid;
 const E1 = uuid(1); // efectivo con saldo, movimientos y una programada
@@ -688,5 +689,50 @@ describe('PRU-INT-CTA', () => {
         esperado: { subtipoEfectivo: null },
       }),
     ).toMatchObject({ ok: false, error: { categoria: 'INTERNO' } });
+  });
+
+  it('PRU-INT-CTA-790 [FT-53] la previsualización de archivar una tarjeta trae en la propuesta el monto y los períodos de sus asignaciones futuras, con «Devolverlas» o sin elegirlo; sin futuras o en efectivo no hay propuesta (CH-252, E2-15)', async () => {
+    await ejecutar(OP01, tarjeta(1790));
+    await ejecutar(OP01, efectivo(1791));
+    const pago = (await hechos()).categorias.find((c) => c.tarjetaId === uuid(1790))?.id;
+    const hoy = FechaLocal.desdeTexto(HOY);
+    const sinFuturas = await preparar(OP04, {
+      cuentaId: uuid(1790),
+      devolverAsignacionesFuturas: true,
+    });
+    expect(sinFuturas).toMatchObject({ ok: true });
+    expect(sinFuturas.ok && sinFuturas.valor).not.toHaveProperty('propuesta');
+    // $30.00 en el período siguiente al activo y $20.00 en el otro
+    const siguiente = async () =>
+      FechaLocal.sumarDias(
+        calcular(await hechos(), hoy).presupuesto.periodos.at(-1)?.fin ?? hoy,
+        1,
+      );
+    const p1 = FechaLocal.sumarDias(calcular(await hechos(), hoy).presupuesto.activo.fin, 1);
+    const asignar = (periodoInicio: string, montoNuevo: string) =>
+      ejecutar(OP14, { categoriaId: pago, periodoInicio, montoNuevo, esperado: { monto: '0' } });
+    expect(await asignar(p1, '30.00')).toMatchObject({ ok: true });
+    const p2 = await siguiente();
+    expect(await asignar(p2, '20.00')).toMatchObject({ ok: true });
+    const fin2 = calcular(await hechos(), hoy).presupuesto.periodos.find(
+      (p) => p.inicio === p2,
+    )?.fin;
+    const asignacionesFuturas = { monto: 5000, desde: p1, hasta: fin2 };
+    expect(fin2).toBeDefined();
+    expect(
+      await preparar(OP04, { cuentaId: uuid(1790), devolverAsignacionesFuturas: true }),
+    ).toMatchObject({ ok: true, valor: { propuesta: { asignacionesFuturas } } });
+    // Con «Dejarlas como están» el dominio rechaza, y la propuesta viaja igual (para el texto de la opción)
+    expect(
+      await preparar(OP04, { cuentaId: uuid(1790), devolverAsignacionesFuturas: false }),
+    ).toMatchObject({
+      ok: true,
+      valor: {
+        rechazos: [{ codigo: 'reserva_tarjeta_no_cero' }],
+        propuesta: { asignacionesFuturas },
+      },
+    });
+    const efectivoSin = await preparar(OP04, { cuentaId: uuid(1791) });
+    expect(efectivoSin.ok && efectivoSin.valor).not.toHaveProperty('propuesta');
   });
 });

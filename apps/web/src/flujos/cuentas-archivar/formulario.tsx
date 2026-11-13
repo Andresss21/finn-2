@@ -45,7 +45,14 @@ interface Vista {
     readonly lpaDespues?: Centavos;
   } | null;
   readonly avisos?: readonly { readonly codigo: string }[];
+  /** [CH-252] E2-15: lo que «Devolverlas» vuelve a LPA, con o sin rechazo. */
+  readonly propuesta?: {
+    readonly asignacionesFuturas?: { monto: Centavos; desde: string; hasta: string };
+  };
 }
+
+/** «25/10» de una fecha `AAAA-MM-DD`. */
+const diaMes = (f: string): string => `${f.slice(8)}/${f.slice(5, 7)}`;
 
 /** El mensaje de cada bloqueo, armado con los números del detalle. */
 function textoDeBloqueo(codigo: string, p: PropsFormularioCuentasArchivar): string {
@@ -82,6 +89,13 @@ export function FormularioCuentasArchivar(p: PropsFormularioCuentasArchivar) {
   const vista = (operacion.previsualizacion ?? {}) as Vista;
   const cerrar = useCerrarFlujo(rutaPadre, superpuesto);
   const sinBloqueos = bloqueos.length === 0;
+  // La última propuesta que llegó: con «Dejarlas» el servidor rechaza y la opción «Devolverlas» sigue diciendo cuánto vuelve.
+  const [futurasDto, setFuturasDto] =
+    useState<NonNullable<Vista['propuesta']>['asignacionesFuturas']>();
+  const llegada = vista.propuesta?.asignacionesFuturas;
+  useEffect(() => {
+    if (llegada !== undefined) setFuturasDto(llegada);
+  }, [llegada]);
   useEffect(() => {
     if (!sinBloqueos || estado !== 'editando' || pedida === futuras) return;
     setPedida(futuras);
@@ -136,7 +150,19 @@ export function FormularioCuentasArchivar(p: PropsFormularioCuentasArchivar) {
               <Seleccion
                 etiqueta={t.futuras}
                 opciones={[
-                  { valor: DEVOLVER, etiqueta: t.devolver },
+                  {
+                    valor: DEVOLVER,
+                    etiqueta: t.devolver,
+                    ...(futurasDto === undefined
+                      ? {}
+                      : {
+                          descripcion: t.devueltas(
+                            formatearMonto(futurasDto.monto),
+                            diaMes(futurasDto.desde),
+                            diaMes(futurasDto.hasta),
+                          ),
+                        }),
+                  },
                   { valor: 'dejar', etiqueta: t.dejar },
                 ]}
                 valor={futuras}
