@@ -74,7 +74,7 @@ export function FilaPagoTarjeta({
       </span>
       <span className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <span className="text-cuerpo-pequeno text-texto-secundario">
-          {dominio.disponibleParaPagar} <Monto centavos={fila.disponible} />
+          {dominio.reservado} <Monto centavos={fila.disponible} />
         </span>
         <IndicadorEstado estado={p.estado} etiqueta={p.etiqueta} />
       </span>

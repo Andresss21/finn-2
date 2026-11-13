@@ -242,14 +242,15 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await expect(page.locator('[data-seccion="proximos"] [data-proximo]')).toHaveCount(0);
   });
 
-  test('PRU-E2E-PROG-109 [CA-19.5, ESC-44] RUTA-/programadas archivar una categoría con una programada activa sin decidir sobre ella no se envía y la programada sigue activa en Programadas', async ({
+  test('PRU-E2E-PROG-109 [CA-19.5, ESC-44] RUTA-/programadas archivar una categoría con una programada activa trae «Desactivarla» elegida de entrada (E4-24); sin tocar «Archivar» la programada sigue activa en Programadas', async ({
     page,
   }) => {
     await sembrarOps(ESC44_PASO0, '2027-03-05');
     await abrir(page, '/presupuesto/estructura');
     await page.getByRole('link', { name: 'Editar Gimnasio', exact: true }).click();
     await page.getByRole('link', { name: 'Archivar', exact: true }).click();
-    // E4-24: la decisión viene elegida («Desactivarla»), así que no hay un envío sin decidir; sin tocar «Archivar» nada cambia
+    // E4-24 (manda sobre el dibujo de FT-19): la decisión viene elegida («Desactivarla»); `programada_sin_decision` (CA-19.5) sigue
+    // siendo la defensa del servidor (PRU-INT-CATEG-112). Sin tocar «Archivar» nada cambia
     await expect(page.getByLabel(/Programada Gimnasio/)).toHaveValue('desactivar');
     await expect(page).toHaveURL(/\/archivar/);
 

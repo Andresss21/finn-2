@@ -25,6 +25,8 @@ interface PropsNavegacionApp {
   readonly secciones: readonly Seccion[];
   readonly seccionActiva: IdSeccion | null;
   readonly contadores: Contadores;
+  /** El correo de la sesión: encima de «Salir» en la barra lateral. */
+  readonly correo?: string | undefined;
 }
 
 const ICONOS: Record<IdSeccion, NombreIcono> = {
@@ -299,6 +301,7 @@ function BarraLateral({
   secciones,
   seccionActiva,
   contadores,
+  correo,
   registrar,
 }: PropsNavegacionApp & { readonly registrar: ReactNode }) {
   const fila = (alta: boolean) => (s: Seccion) => (
@@ -327,8 +330,17 @@ function BarraLateral({
           </ul>
         </div>
       </nav>
-      {/* Pie (entrega 3): bajo una línea `--borde-sutil`; el correo de la sesión no llega al marco (informe de TA-596). */}
+      {/* Pie (entrega 3): bajo una línea `--borde-sutil`, con el correo de la sesión encima de «Salir». */}
       <div data-pieza="pie-salir" className="mt-auto border-t border-borde-sutil pt-3">
+        {correo === undefined ? null : (
+          <p
+            data-rol="correo-sesion"
+            title={correo}
+            className="text-cuerpo-pequeno truncate px-3 pb-1 text-texto-secundario"
+          >
+            {correo}
+          </p>
+        )}
         <Salir variante="lateral" />
       </div>
     </aside>

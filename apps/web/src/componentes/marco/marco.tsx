@@ -48,15 +48,18 @@ const MasAcciones = lazy(() => import('./mas-acciones').then((m) => ({ default: 
 export function Marco({
   children,
   superpuesto,
+  correo,
 }: {
   readonly children: ReactNode;
   readonly superpuesto?: ReactNode;
+  /** El correo de la sesión, encima de «Salir» en la barra lateral (entrega 3). */
+  readonly correo?: string | undefined;
 }) {
   const [acciones, setAcciones] = useState<AccionesPublicadas | null>(null);
   return (
     <ProveedorEncabezado>
       <ContextoAcciones value={setAcciones}>
-        <CuerpoDelMarco superpuesto={superpuesto} acciones={acciones}>
+        <CuerpoDelMarco superpuesto={superpuesto} acciones={acciones} correo={correo}>
           {children}
         </CuerpoDelMarco>
       </ContextoAcciones>
@@ -68,10 +71,12 @@ function CuerpoDelMarco({
   children,
   superpuesto,
   acciones,
+  correo,
 }: {
   readonly children: ReactNode;
   readonly superpuesto: ReactNode;
   readonly acciones: AccionesPublicadas | null;
+  readonly correo: string | undefined;
 }) {
   const pathname = usePathname();
   const busqueda = useSearchParams();
@@ -162,7 +167,12 @@ function CuerpoDelMarco({
     bandeja: encabezado?.bandejaPorRevisar ?? null,
     notificaciones: encabezado?.notificacionesNoLeidas ?? null,
   };
-  const comun = { secciones: SECCIONES, seccionActiva: seccionDeRuta(pathname), contadores };
+  const comun = {
+    secciones: SECCIONES,
+    seccionActiva: seccionDeRuta(pathname),
+    contadores,
+    correo,
+  };
   const ruta = rutaRegistrar(pathname);
   const volver = volverDeRuta(pathname, busqueda);
   const tipoBarra = barraDeRuta(pathname, busqueda);

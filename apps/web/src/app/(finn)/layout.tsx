@@ -12,11 +12,12 @@ import type { ReactNode } from 'react';
 import { Marco } from '../../componentes/marco/marco';
 import { MarcarLeidaAlAbrir } from '../../componentes/navegacion/marcar-leida-al-abrir';
 import { SuscripcionPush } from '../../componentes/marco/suscripcion-push';
+import { correoDeLaSesion } from '../../servidor/sesion';
 import { marcarLeidas, registrarSuscripcion } from '../../servidor/acciones/notificaciones';
 
 export const dynamic = 'force-dynamic';
 
-export default function LayoutFinn({
+export default async function LayoutFinn({
   children,
   superpuesto,
 }: {
@@ -27,7 +28,7 @@ export default function LayoutFinn({
     ponerAlDia({ memoria: memoriaDeInstancia, opciones: () => ({ reloj: relojDePrueba() }) }),
   );
   return (
-    <Marco superpuesto={superpuesto}>
+    <Marco superpuesto={superpuesto} correo={await correoDeLaSesion()}>
       {children}
       <MarcarLeidaAlAbrir marcarLeidas={marcarLeidas} />
       <SuscripcionPush registrar={registrarSuscripcion} />

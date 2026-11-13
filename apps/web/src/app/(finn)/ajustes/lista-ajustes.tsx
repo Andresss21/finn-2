@@ -60,9 +60,12 @@ const resumenes = (r: ResumenAjustes): Readonly<Record<string, string>> => ({
 export function ListaAjustes({
   respaldoAtrasado = false,
   resumen,
+  correo,
 }: {
   respaldoAtrasado?: boolean;
   resumen?: ResumenAjustes;
+  /** El correo de la sesión: subtítulo de «Salir» (entrega 3). */
+  correo?: string | undefined;
 }) {
   const textos = resumen === undefined ? {} : resumenes(resumen);
   // E5-17: en un iPhone sin instalar, la fila de Notificaciones dice por qué todavía no se puede activar.
@@ -122,7 +125,12 @@ export function ListaAjustes({
     <>
       {lista}
       <div className="overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1">
-        <Salir variante="tarjeta" subtitulo={salir.esteDispositivo} />
+        <Salir
+          variante="tarjeta"
+          subtitulo={
+            correo === undefined ? salir.esteDispositivo : salir.correoEnDispositivo(correo)
+          }
+        />
       </div>
     </>
   );

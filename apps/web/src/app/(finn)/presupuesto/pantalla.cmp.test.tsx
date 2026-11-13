@@ -393,7 +393,7 @@ describe('PRU-CMP-PRES', () => {
     }
   });
 
-  it('PRU-CMP-PRES-233 [CA-09.1] la fila de pago de tarjeta lleva el indicador a la derecha de "Disponible para pagar" y enlaza al detalle de su categoría de pago', async () => {
+  it('PRU-CMP-PRES-233 [CA-09.1] la fila de pago de tarjeta lleva el indicador a la derecha de "Reservado" y enlaza al detalle de su categoría de pago', async () => {
     await page.viewport(1100, 800);
     const n = montar(<PantallaPresupuesto dto={dto()} />);
     const fila = n.querySelector('[data-fila-pago="visa"]') ?? null;
@@ -401,7 +401,7 @@ describe('PRU-CMP-PRES', () => {
     expect(fila?.getAttribute('href')).toBe('/presupuesto/categorias/pago-visa');
     const indicador = fila?.querySelector('[data-estado]')?.getBoundingClientRect();
     const texto = [...(fila?.querySelectorAll('span') ?? [])]
-      .filter((e) => e.textContent.startsWith('Disponible para pagar'))
+      .filter((e) => e.textContent.startsWith('Reservado'))
       .at(-1);
     const caja = texto?.getBoundingClientRect();
     expect(indicador?.left).toBeGreaterThan(caja?.right ?? Infinity);

@@ -11,6 +11,8 @@ import { ResumenListoParaAsignar } from '../../componentes/dominio/billete';
 import { CLAVE_BILLETE_VISTO } from '../../componentes/dominio/cifras-billete';
 import { ProveedorEncabezado } from '../../componentes/marco/proveedor-encabezado';
 import { inicio as t } from '../../textos/inicio';
+import { inicioEntrega4 } from '../../textos/inicio-entrega-4';
+import { notificaciones } from '../../textos/notificaciones';
 import { PantallaInicio } from './pantalla-inicio';
 
 // `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene: se simula `next/link`, nunca `enlace-finn`.
@@ -390,6 +392,33 @@ describe('PRU-CMP-INICIO entrega 4', () => {
       }
     }
     delete document.documentElement.dataset['theme'];
+  });
+});
+
+describe('PRU-CMP-INICIO tarjeta de notificaciones sin cuentas', () => {
+  it('PRU-CMP-INICIO-703 [CA-E5-18] sin cuentas y con el permiso sin decidir la tarjeta «Activá las notificaciones» se ve (E5-15 no pone la condición de cuentas), y «Ahora no» la descarta en el dispositivo', () => {
+    localStorage.clear();
+    vi.stubGlobal('Notification', { permission: 'default', requestPermission: vi.fn() });
+    try {
+      const nodo = montar(
+        <PantallaInicio
+          dto={dto({ primerosPasos: { cuenta: false, categorias: false, sms: false } })}
+          registrarSuscripcion={() => Promise.resolve({ ok: true })}
+        />,
+      );
+      const tarjeta = nodo.querySelector('[data-tarjeta-notificaciones]');
+      expect(tarjeta?.textContent).toContain(inicioEntrega4.tarjetaNotificaciones.titulo);
+      const ahoraNo = [...(tarjeta?.querySelectorAll('button') ?? [])].find(
+        (b) => b.textContent === notificaciones.descartar,
+      );
+      act(() => {
+        ahoraNo?.click();
+      });
+      expect(nodo.querySelector('[data-tarjeta-notificaciones]')).toBeNull();
+    } finally {
+      localStorage.clear();
+      vi.unstubAllGlobals();
+    }
   });
 });
 
