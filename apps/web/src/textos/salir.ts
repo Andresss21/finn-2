@@ -4,6 +4,7 @@ import { salirFila } from './salir-fila.ts';
 export const salir = {
   ...salirFila,
   esteDispositivo: 'En este dispositivo',
+  correoEnDispositivo: (correo: string) => `${correo} · en este dispositivo`,
   cambiosSinEnviar: (n: number) =>
     n === 1 ? 'Tenés 1 cambio sin enviar' : `Tenés ${n} cambios sin enviar`,
   explicacion: (n: number) =>

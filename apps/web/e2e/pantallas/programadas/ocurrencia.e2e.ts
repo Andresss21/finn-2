@@ -197,9 +197,7 @@ test.describe('PRU-E2E-PROG ocurrencia de una programada', () => {
         .locator('[data-centavos]')
         .first();
     await esperarMonto(disponible('Suscripciones'), 0);
-    await expect(
-      page.getByRole('link', { name: /^T .*Disponible para pagar \$20\.00/ }),
-    ).toBeVisible();
+    await expect(page.getByRole('link', { name: /^T .*Reservado \$20\.00/ })).toBeVisible();
   });
 
   test('PRU-E2E-PROG-125 [CA-08.8] RUTA-/programadas/[programadaId]/ocurrencias/[fechaEsperada] con una sola ocurrencia atrasada Inicio no dice "Todo al día" y al registrarla con un toque sí lo dice', async ({

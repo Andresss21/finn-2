@@ -38,6 +38,17 @@ export async function sesionDeLaPeticion(): Promise<SesionServidor> {
   return acceso.sesionDeCliente(await clienteAuth());
 }
 
+/** El correo de la sesión para el marco y Ajustes (entrega 3, «Salir»): del JWT ya verificado; no es dato del motor. Sin él, `undefined`. */
+export async function correoDeLaSesion(): Promise<string | undefined> {
+  try {
+    const { data } = await (await clienteAuth()).getClaims();
+    const correo = (data?.claims as { readonly email?: unknown } | undefined)?.email;
+    return typeof correo === 'string' && correo !== '' ? correo : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** `FINN_USUARIO_ID` ya validado por la configuración al arrancar (04 §14.2); vacío no autoriza a nadie. */
 export const usuarioPermitido = (): string => process.env['FINN_USUARIO_ID'] ?? '';
 

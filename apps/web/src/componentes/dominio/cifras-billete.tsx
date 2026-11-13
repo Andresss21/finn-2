@@ -38,6 +38,7 @@ export function CifrasBillete({
     <Destello valor={centavos}>
       <span
         data-centavos={centavos}
+        data-rol={grande ? 'cifra-principal' : 'cifra'}
         data-rueda={rueda ? '' : undefined}
         className={[
           'whitespace-nowrap tabular-nums',

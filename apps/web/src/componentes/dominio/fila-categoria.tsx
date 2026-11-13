@@ -77,7 +77,7 @@ function metaCubierta(fila: FilaCategoriaDto): boolean {
 // Cada celda de la tabla de computadora (md) tiene su columna; en el teléfono (06 2.6) la fila apila nombre y Disponible,
 // la barra, el Asignado y Gastado y los indicadores. Es el mismo marcado: solo cambia la rejilla.
 const FILA_GRID =
-  'grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2 md:grid-cols-[minmax(0,1.6fr)_repeat(3,110px)] md:gap-y-1.5';
+  'grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2 md:min-h-11 md:grid-cols-[minmax(0,1.6fr)_repeat(3,110px)] md:content-center md:gap-y-1.5';
 const C2 =
   'md:col-start-2 md:row-span-2 md:row-start-1 md:self-center md:text-right md:text-cuerpo';
 const C3 =
