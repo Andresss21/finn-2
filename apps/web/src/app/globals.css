@@ -147,14 +147,15 @@ body {
   #contenido {
     container-type: inline-size;
     /* [CH-259, C-32] El bloque (contenido + relleno) se centra a la derecha de la barra lateral; el encabezado va dentro de él. */
-    padding-left: calc(var(--marco-barra) + var(--marco-sobra) + var(--marco-relleno));
-    padding-right: calc(var(--marco-sobra) + var(--marco-relleno));
+    padding-left: calc(var(--marco-barra) + var(--marco-sobra));
+    padding-right: var(--marco-sobra);
   }
   #contenido > header[data-marco-barra] {
     right: calc(var(--marco-sobra) + var(--marco-relleno));
   }
   #contenido > main {
-    margin-inline: 0;
+    /* El relleno es margen: el contenedor de las consultas (`@container`) sigue siendo el bloque entero, como antes. */
+    margin-inline: var(--marco-relleno);
     /* [CH-220 c, CH-259] 1144 px de contenido más el relleno; flujos y listas de Más secciones, 720 px. */
     max-width: calc(
       var(--ancho-pantalla, calc(var(--marco-contenido) + 2 * var(--marco-relleno))) - 2 *

@@ -79,7 +79,8 @@ test.describe('PRU-E2E-PWA marco en pantallas anchas', () => {
       await esperarContenido(page);
       const campana = await caja(page, CAMPANA);
       await page.locator(CAMPANA).click();
-      const panel = page.getByRole('dialog');
+      // Antes del panel llega un diálogo de carga (`auto`): se espera el de las notificaciones, que cae desde arriba
+      const panel = page.locator('[role="dialog"][data-forma="arriba"]');
       await expect(panel).toBeVisible();
       const p = await panel.boundingBox();
       expect(p).not.toBeNull();
