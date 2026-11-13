@@ -116,6 +116,7 @@ export const cuentaDetalle = {
     titulo: 'Tarjeta',
     deuda: 'Deuda',
     reservado: 'Reservado',
+    de: 'de', // [CH-252] «Reservado $X de $Y» (CTA-26)
     faltaReservar: glosario.teFaltaReservar,
     reservaExcedente: glosario.reservadoDeMas,
     saldoAFavor: 'Saldo a favor',

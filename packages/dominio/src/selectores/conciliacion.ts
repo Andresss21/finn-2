@@ -121,6 +121,8 @@ export type PropuestaDeVerificacion = {
   readonly saldoFinn: Centavos;
   readonly diferencia: Centavos;
   readonly marcaria: number;
+  /** [CH-252] Solo en una tarjeta: −`saldoFinn`, la deuda en positivo, para «Deuda en Finn al {fecha}» (E2-14). */
+  readonly deudaFinn?: Centavos;
 };
 
 /**
@@ -145,5 +147,10 @@ export function propuestaDeVerificacion(
     'todas' in x.marcar
       ? candidatasDeConciliacion(h, k.id, x.fechaEstado).length
       : new Set(x.marcar.ids).size;
-  return { saldoFinn, diferencia: Centavos.restar(banco, saldoFinn), marcaria };
+  return {
+    saldoFinn,
+    diferencia: Centavos.restar(banco, saldoFinn),
+    marcaria,
+    ...(k.tipo === 'tarjeta' ? { deudaFinn: Centavos.negar(saldoFinn) } : {}),
+  };
 }

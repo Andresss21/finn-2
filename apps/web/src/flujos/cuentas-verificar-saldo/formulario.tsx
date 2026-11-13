@@ -54,6 +54,8 @@ interface Vista {
     readonly saldoFinn: Centavos;
     readonly diferencia: Centavos;
     readonly marcaria: number;
+    /** [CH-252] Solo en una tarjeta: la deuda en Finn ya en positivo (E2-14). */
+    readonly deudaFinn?: Centavos;
   };
   readonly avisos?: readonly {
     readonly codigo: string;
@@ -221,7 +223,9 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
               r === undefined
                 ? []
                 : [
-                    t.saldoFinn(fechaTexto, formatearMonto(r.saldoFinn)),
+                    r.deudaFinn === undefined
+                      ? t.saldoFinn(fechaTexto, formatearMonto(r.saldoFinn))
+                      : t.deudaFinn(fechaTexto, formatearMonto(r.deudaFinn)),
                     t.diferencia(conSigno(r.diferencia)),
                     t.seMarcan(r.marcaria),
                   ]
@@ -244,7 +248,11 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
     return (
       <MarcoCorto superpuesto={superpuesto} titulo={t.titulo} rutaPadre={rutaPadre}>
         <div className="flex flex-col gap-4">
-          <p data-saldo-finn>{t.saldoFinn(fechaTexto, formatearMonto(base.saldoFinn))}</p>
+          <p data-saldo-finn>
+            {base.deudaFinn === undefined
+              ? t.saldoFinn(fechaTexto, formatearMonto(base.saldoFinn))
+              : t.deudaFinn(fechaTexto, formatearMonto(base.deudaFinn))}
+          </p>
           <p data-diferencia className="font-bold">
             {t.diferencia(conSigno(base.diferencia))}
           </p>

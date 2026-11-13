@@ -428,6 +428,7 @@ describe('PRU-DOM-CONC-101: conciliación y verificar saldo (01 §5.8; 04 §3.8,
       saldoFinn: c(-77),
       diferencia: c(2),
       marcaria: 3,
+      deudaFinn: c(77), // [CH-252] solo en la tarjeta (PRU-DOM-CTA-794)
     });
     expect(propuestaDeVerificacion(H0, pedido('Ef', 90, { ids: [id('I'), id('I')] }))).toEqual({
       saldoFinn: c(100),

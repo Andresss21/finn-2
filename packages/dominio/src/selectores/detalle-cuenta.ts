@@ -14,6 +14,7 @@ import type {
   TipoTransaccion,
   Uuid,
 } from '../hechos';
+import { fechaDeOcurrencia } from '../calculo/ocurrencias';
 import { bancoAgricola, condicionesAgricola } from '../prestamos/agricola';
 import type { EstadoCuota, PagoPrestamo } from '../prestamos/contrato';
 import { Centavos } from '../valores/centavos';
@@ -99,6 +100,31 @@ export function amortizacionDe(
     pagado: q.pagado.total,
     proyectado: q.proyectado.total,
   }));
+}
+
+/**
+ * [CH-252] La próxima cuota (E2-11): con modelo, la primera no pagada de la tabla; sin modelo, la de las condiciones:
+ * número = cuotas pagadas (al crear + registradas) + 1, fecha = apertura + número × frecuencia (como las ocurrencias
+ * de una programada) y monto = cuota pactada. Nada si ya no quedan cuotas o no queda capital.
+ */
+export function proximaCuotaDe(
+  i: Instantanea,
+  p: Prestamo,
+): { fecha: FechaLocal; monto: Centavos; numero: number } | undefined {
+  const tabla = amortizacionDe(i, p);
+  if (tabla !== null) {
+    const q = tabla.find((x) => x.estado !== 'pagada');
+    return q === undefined ? undefined : { fecha: q.fecha, monto: q.proyectado, numero: q.numero };
+  }
+  const k = i.hechos.cuentas.find((x) => x.id === p.cuentaId);
+  const capital = i.cuentas.find((x) => x.cuentaId === p.cuentaId)?.saldo ?? Centavos.cero;
+  const numero =
+    p.cuotasPagadasAlCrear + pagosDe(i, p.cuentaId).filter((x) => x.tipo === 'cuota').length + 1;
+  const sinN = p.frecuencia === 'cada_n_dias' && p.frecuenciaDias === null;
+  if (k === undefined || capital === 0 || numero > p.plazoCuotas || sinN) return undefined;
+  const regla = { frecuencia: p.frecuencia, frecuenciaDias: p.frecuenciaDias };
+  const fecha = fechaDeOcurrencia({ ...regla, primeraFecha: k.fechaApertura }, numero);
+  return { fecha, monto: p.cuotaPactada, numero };
 }
 
 export interface DetalleCuentaOpciones extends Auxiliares {
@@ -260,6 +286,14 @@ export function detalleCuenta(i: Instantanea, cuentaId: Uuid, o: DetalleCuentaOp
             limite: tarjeta.limiteCredito,
             usoLimite:
               tarjeta.limiteCredito > 0 ? puntosBasicos(estadoT.deuda, tarjeta.limiteCredito) : 0,
+            // [CH-252] CTA-26: reservado × 10.000 / deuda, tope 10.000; null sin deuda
+            reservadoBp:
+              estadoT.deuda > 0
+                ? Math.min(
+                    10_000,
+                    puntosBasicos(Centavos.max(Centavos.cero, estadoT.reservado), estadoT.deuda),
+                  )
+                : null,
             cicloFacturacion: cicloDeFacturacion(tarjeta.diaCorte, i.hoy),
             desgloseAlPagar: (({
               deudaAnterior,
@@ -294,6 +328,7 @@ export function detalleCuenta(i: Instantanea, cuentaId: Uuid, o: DetalleCuentaOp
               cuotasPagadasAlCrear: prestamo.cuotasPagadasAlCrear,
             },
             capitalPendiente: s.saldo,
+            ...((q) => (q === undefined ? {} : { proximaCuota: q }))(proximaCuotaDe(i, prestamo)), // [CH-252]
             amortizacion:
               amortizacion?.map((q) => ({
                 numero: q.numero,
