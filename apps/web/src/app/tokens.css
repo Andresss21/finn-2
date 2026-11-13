@@ -53,6 +53,13 @@
   --tactil-minimo: 44px;
 }
 
+/* [CH-259, C-32] Marco de computadora: el bloque de contenido (1144 + 2 × 48) se centra a la derecha de la barra lateral. */
+:root {
+  --marco-barra: 15.5rem;
+  --marco-contenido: 71.5rem;
+  --marco-relleno: 3rem;
+  --marco-sobra: max(0px, calc((100% - var(--marco-barra) - var(--marco-contenido) - 2 * var(--marco-relleno)) / 2));
+}
 :root {
   color-scheme: light;
   --fondo: #F1F2EE;
