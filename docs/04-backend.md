@@ -1894,14 +1894,14 @@ No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; c�
 - **Entrada:** `cuentaId`; tarjeta: `devolverAsignacionesFuturas: boolean`.
 - **Idempotencia:** natural: si ya está archivada, `ya_aplicada`.
 - **Precondiciones:** saldo = 0 (`cuenta_con_saldo`). Tarjeta: deuda = 0 (`tarjeta_con_deuda`); Disp(pago(t), A) = 0 (`reserva_tarjeta_no_cero`); sin asignaciones futuras en pago(t), o `devolverAsignacionesFuturas = true` (si no, rechazo `reserva_tarjeta_no_cero` con `datos.futuras`).
-- **Hechos:** F2 `asignaciones` futuras de pago(t) si se aceptó; F4 `cuentas.archivada = true`; tarjeta: F4 `categorias.archivada = true` de pago(t) (03 §4.5.4, misma transacción).
+- **Hechos:** F2 `asignaciones` futuras de pago(t) si se aceptó; F4 `cuentas.archivada = true`; tarjeta: F4 `categorias.archivada = true` de pago(t) (03 §4.5.4, misma transacción). **[CH-254]** Las dos con `archivada_el` = `hoy` (03 §3.4, §3.9).
 - **Errores:** `cuenta_con_saldo`, `tarjeta_con_deuda`, `reserva_tarjeta_no_cero`, `cuenta_ya_archivada`.
 - **[CH-252] Propuesta** (4.3 [CH-36]): en una tarjeta con asignaciones futuras de pago(t) (montos ≠ 0 en períodos posteriores al activo), `previsualizar` trae `propuesta.asignacionesFuturas = { monto: Centavos; desde: FechaLocal; hasta: FechaLocal }`: su suma, el inicio del primer período y el fin del último (E2-15: «$X de dd/mm–dd/mm vuelven a Listo para asignar»). Viaja con `devolverAsignacionesFuturas` en `true` o en `false` (con el rechazo). No cambia los hechos ni la huella.
 
 #### OP-05 Desarchivar cuenta
 
 - **Entrada:** `cuentaId`. **Idempotencia:** natural.
-- **Hechos:** F4 `cuentas.archivada = false`; tarjeta: F4 `categorias.archivada = false` de pago(t).
+- **Hechos:** F4 `cuentas.archivada = false`; tarjeta: F4 `categorias.archivada = false` de pago(t). **[CH-254]** Con `archivada_el` = nula si tenía fecha.
 - **Errores:** `cuenta_no_archivada`.
 
 #### OP-06 Eliminar cuenta
@@ -1951,7 +1951,7 @@ No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; c�
   - F4/F3/F2 `asignaciones` de c en A: el valor que deja Disp(c, A) = 0; la variación opuesta en la categoría destino (o ninguna si es LPA).
   - F2 `asignaciones` futuras de c.
   - F4 `programada_lineas.categoria_id` (reasignar) o F4 `programadas.activa = false` (desactivar).
-  - F4 `categorias.archivada = true`. Su meta se conserva (B-11).
+  - F4 `categorias.archivada = true`. Su meta se conserva (B-11). **[CH-254]** Con `archivada_el` = `hoy` (03 §3.9).
 - **Avisos:** ninguno nuevo; la previsualización muestra el resumen de los pasos (no obliga a confirmar, 3.0.5).
 - **Errores:** los de las precondiciones.
 
@@ -1960,7 +1960,7 @@ No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; c�
 - **Entrada:** `categoriaId`; `desarchivarGrupo?: boolean`.
 - **Idempotencia:** natural.
 - **Precondiciones:** su grupo está activo o `desarchivarGrupo = true` (`grupo_archivado`); no es de pago (`categoria_de_pago_con_tarjeta`).
-- **Hechos:** F4 `grupos.archivado = false` (si se pidió); F4 `categorias.archivada = false`.
+- **Hechos:** F4 `grupos.archivado = false` (si se pidió); F4 `categorias.archivada = false`. **[CH-254]** Con `archivada_el` = nula si tenía fecha.
 
 #### OP-11 Sacar el Disponible de una categoría archivada
 
@@ -2006,6 +2006,7 @@ No se repiten en las fichas: `VALIDACION` (contrato), `NO_AUTORIZADO` (2.2.5; c�
 - **Confirmación:** no aplica en general (LPA no cambia); AV-11 nunca se produce.
 - **Precondiciones:** origen ≠ destino (`destino_igual_origen`); destino activo y normal o de pago (`categoria_archivada`); p activo o futuro (`periodo_cerrado`). El origen puede estar archivado (equivale a OP-11).
 - **Hechos:** dos celdas de `asignaciones` (F2/F3/F4).
+- **[CH-254] Salida:** `{ asignacionOrigen: Centavos; asignacionDestino: Centavos }`, Asig(o, p) y Asig(d, p) después de mover, leídas de los hechos; `ya_aplicada` devuelve las mismas. Son el `esperado` de la inversa, «Deshacer» (05 §4.14, E2-13): otra OP-15 con el mismo `monto`, `origenId` y `destinoId` intercambiados.
 - **Avisos:** estado: AV-02, AV-03 si el origen queda sobregirado (YNAB).
 
 #### OP-16 Asignación rápida
@@ -2202,6 +2203,7 @@ El flujo HTTP completo (autenticación, códigos 401/5xx/200, configuración de 
      - F3 `sms_procesamientos` (`intento = 1`, `resultado`, `formato_id`, `formatos_coincidentes`, `tipo_movimiento`, campos extraídos, `cuenta_id`, `esperada_programada_id`/`esperada_fecha`, candidata a duplicado, `categoria_sugerida_id`).
      - F3 `movimientos` con el estado igual al resultado (`autodescartado`, `no_reconocido`, `con_coincidencia`, `posible_duplicado` o `pendiente`), copia editable de los campos (`cuenta_id`, `fecha`, `monto`, `comercio`, `tipo_propuesto`) y las candidatas.
      - F3 `movimiento_lineas`: una línea por el monto con la categoría sugerida (regla de comercio, historial o ninguna).
+     - **[CH-254]** Si la categoría la puso una regla de comercio, `movimientos.regla_id` = esa regla (03 §3.19); por historial o sin categoría, no se escribe. OP-49 hace lo mismo al reprocesar.
   3. **Si el procesamiento falla**: `escribir()` aparte (con bloqueo; si no lo obtiene, el SMS queda sin resultado y se reprocesa solo, ADR-09) con F3 `sms_procesamientos` (`resultado = 'error'`, `error_detalle` saneado según 7.8) y F3 `movimientos` con `estado = 'error'` (N-02).
 - **Avisos:** AV-23 (nuevo, no reconocido, posible duplicado, coincidencia, error), después del `COMMIT` (4.9). Un `autodescartado` no notifica.
 - **Sin efecto presupuestario** (inv. 13): no toca tablas [M].
@@ -2730,7 +2732,7 @@ interface CuentasDto extends Encabezado {
   prestamos: { cuenta: Ref; contraparte: string; capitalPendiente: Centavos;
                proximaCuota?: { fecha: FechaLocal; monto: Centavos; numero: number } }[];   // con modelo (Anexo A); [CH-252] también sin modelo
   inversiones: { cuenta: Ref; valor: Centavos }[];
-  archivadas: (Ref & { institucion?: string })[];      // solo si incluirArchivadas; [CH-252] con su institución
+  archivadas: (Ref & { institucion?: string; archivadaEl?: FechaLocal })[]; // solo si incluirArchivadas; [CH-252] institución; [CH-254] fecha
   posicionNeta: {                                      // §4.14
     activos: { efectivo; saldosAFavor; inversiones; porCobrar: Centavos; total: Centavos };
     deudas: { tarjetas; prestamos: Centavos; total: Centavos };
@@ -2744,7 +2746,7 @@ interface CuentasDto extends Encabezado {
 - `proximoCorte` y `proximoPago`: primera fecha ≥ hoy con el día de corte o de pago, recortado al fin de mes (§4.14, supuesto 19).
 - `usoLimite`: deuda × 10.000 / límite, mitad hacia arriba (6.0.3).
 - **[CH-252]** `proximaCuota` (talón del préstamo, E2-11 de la entrega 4): con modelo, la primera cuota no pagada de la tabla (Anexo A); sin modelo, la de las condiciones: número = `cuotasPagadasAlCrear` + cuotas registradas + 1, fecha = apertura + número × frecuencia (la regla de las ocurrencias de 01 §4.16: mensual y anual con el día recortado al fin de mes; semanal, quincenal = 14 días y cada N días por días) y monto = `cuotaPactada`. No va si el número pasa de `plazoCuotas`, si el capital pendiente es 0 o si la frecuencia es cada N días sin N.
-- **[CH-252]** `archivadas` trae la institución para «Archivada · {banco}». La fecha de archivo no es un hecho (03 no la guarda y no se agrega sin migración): no se devuelve.
+- **[CH-252]** `archivadas` trae la institución para «Archivada · {banco}». ~~La fecha de archivo no es un hecho (03 no la guarda y no se agrega sin migración): no se devuelve.~~ **[CH-254]** Y `archivadaEl?: FechaLocal` (`cuentas.archivada_el`, 03 §3.4) para «Archivada el {fecha} · {banco}»; sin fecha (archivada antes de `m_datos_entrega_4`), «Archivada · {banco}».
 
 ### 6.6 Detalle de cuenta
 
@@ -3082,6 +3084,7 @@ interface AjustesDto extends Encabezado {
 - Lee tablas [H] (`formatos_bancarios`, `instituciones`), [I] (conteo de `sms_procesamientos` por `formato_id`) y [T] (`token_webhook`, `suscripciones_push`, `estado_respaldo`, `eventos_sistema`).
 - `endpointCorto`: dominio del servicio de push y los últimos 8 caracteres; nunca las claves. **[CH-73]** Lo calcula `endpointCorto(endpoint)`, función pura exportada por `@finn/dominio/valores`: la interfaz la aplica al `endpoint` de `getSubscription()` y lo compara con el de cada fila para reconocer "este dispositivo". `id` es el de `suscripciones_push` y es lo que la interfaz envía a OPT-03.
 - **[CH-251]** `resumen` alimenta las filas del índice («4 activos», «Sin errores en 7 días»); el día del ciclo y «Conectado · último SMS» salen de `ciclo` y `webhook`. «N factores · N sesiones» no está: los factores son de Auth (12.2) y Auth no lista las sesiones sin la clave de servicio; tampoco el tema (se guarda en el dispositivo, FT-77) ni el permiso de notificaciones (del navegador).
+- **[CH-254]** «N factores» de la fila de Seguridad sale de `resumenSeguridad()` (12.2): `{ factores: number }`, los TOTP verificados de `mfa.listFactors()` con la sesión de la persona, desde el servidor y con los mismos requisitos de sesión que `estadoSeguridad()`; `AjustesDto` no cambia. Las sesiones siguen sin mostrarse: Auth solo las lista con la clave `service_role` o leyendo el esquema `auth`, y la app no tiene ninguna de las dos (03 §8.6, ADR-22).
 - El estado de los factores TOTP lo da Supabase Auth, no la base; lo define §12 (Parte C). **[F5]** La pantalla lo lee con `estadoSeguridad()` (12.2, CP-4); `AjustesDto` no cambia.
 
 ### 6.12 Otras pantallas conocidas
@@ -3112,9 +3115,9 @@ interface ProgramadasDto extends Encabezado {
 
 #### 6.12.2 Reglas de comercio
 
-`consultas.reglas()` → `{ reglas: { id; patron; categoria: Ref; categoriaArchivada: boolean; coincideCon: string[] }[] }`. Las reglas hacia categorías archivadas se muestran marcadas porque se ignoran al sugerir (§4.17, B-10).
+`consultas.reglas()` → `{ reglas: { id; patron; categoria: Ref; categoriaArchivada: boolean; coincideCon: string[]; usos: number /* [CH-254] */ }[] }`. Las reglas hacia categorías archivadas se muestran marcadas porque se ignoran al sugerir (§4.17, B-10).
 
-**[CH-251]** `coincideCon` («Coincide con», E4-22): hasta 3 comercios distintos (sin espacios en los extremos) de las transacciones cuyo comercio normalizado contiene el patrón sin distinguir mayúsculas (§4.17), de la más reciente a la más antigua; selector puro `coincidenciasDeReglas(instantanea, reglas)`. «Usada N veces» no se entrega: ningún hecho guarda qué regla categorizó una transacción o un movimiento, y no se infiere.
+**[CH-251]** `coincideCon` («Coincide con», E4-22): hasta 3 comercios distintos (sin espacios en los extremos) de las transacciones cuyo comercio normalizado contiene el patrón sin distinguir mayúsculas (§4.17), de la más reciente a la más antigua; selector puro `coincidenciasDeReglas(instantanea, reglas)`. ~~«Usada N veces» no se entrega: ningún hecho guarda qué regla categorizó una transacción o un movimiento, y no se infiere.~~ **[CH-254]** `usos` («Usada N veces»): cuántos movimientos tienen `regla_id` = la regla (03 §3.19), un conteo de `@finn/db` sobre la tabla [H]. Cuenta solo desde `m_datos_entrega_4`; lo de antes no se reconstruye ni se infiere.
 
 #### 6.12.3 Por cobrar
 
@@ -3133,7 +3136,7 @@ interface PorCobrarDto extends Encabezado {
 
 #### 6.12.4 Administración de grupos y categorías
 
-`consultas.estructura()` → árbol `{ grupo: Ref & { archivado, sistema: boolean }; categorias: { categoria: Ref; clase: 'normal' | 'pago'; archivada: boolean; tieneMeta: boolean; puedeEliminar: boolean; puedeArchivar: boolean }[] }[]`. `puedeEliminar` y `puedeArchivar` siguen las precondiciones de OP-09 y OP-13 (`reglas_comercio` es [H]). **[CH-252]** Las categorías archivadas no traen fecha de archivo: no es un hecho (03 no la guarda) y no se agrega sin migración; la pantalla dice «Archivada» sin fecha.
+`consultas.estructura()` → árbol `{ grupo: Ref & { archivado, sistema: boolean }; categorias: { categoria: Ref; clase: 'normal' | 'pago'; archivada: boolean; tieneMeta: boolean; puedeEliminar: boolean; puedeArchivar: boolean }[] }[]`. `puedeEliminar` y `puedeArchivar` siguen las precondiciones de OP-09 y OP-13 (`reglas_comercio` es [H]). ~~**[CH-252]** Las categorías archivadas no traen fecha de archivo: no es un hecho (03 no la guarda) y no se agrega sin migración; la pantalla dice «Archivada» sin fecha.~~ **[CH-254]** Cada categoría archivada trae `archivadaEl?: FechaLocal` (`categorias.archivada_el`, 03 §3.9) para «{grupo} · archivada el {fecha}»; las archivadas antes de `m_datos_entrega_4` no la traen y la pantalla dice solo «archivada».
 
 #### 6.12.5 Centro de notificaciones
 
@@ -3930,6 +3933,8 @@ function estadoSeguridad(): Promise<{
   aal: 'aal1' | 'aal2';
   factores: { id: string; nombre: string | null; creadoEn: Instante; estado: 'verificado' | 'sin_verificar' }[];
 }>;
+// [CH-254] El índice de Ajustes (AJU-01): los factores de estadoSeguridad() con estado 'verificado'; sin sesiones.
+function resumenSeguridad(): Promise<{ factores: number }>;
 // Todas devuelven ResultadoAccion (7.1).
 function ingresar(e: { email: string; contrasena: string }): Promise<ResultadoAccion<{ siguiente: 'verificar' | 'inscribir' | 'listo' }>>;
 function verificarFactor(e: { factorId?: string; codigo: string }): Promise<ResultadoAccion<{}>>;
@@ -4476,3 +4481,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-250** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). `ActividadDto` suma `conteo` y `total` de todas las coincidencias y `TransaccionFila` suma `enCamino` (6.7.1); `DetalleTransaccionDto` suma `efectosHoy` con el Disponible de hoy de cada categoría y la deuda de cada tarjeta (6.7.2); la salida de OP-38 trae `transaccionId` por movimiento (6.8). Lecturas de la instantánea, sin reglas ni migraciones nuevas. Marcas **[CH-250]**.
 - **CH-251** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Datos que la entrega 4 pedía y el servidor no entregaba: la cifra de `tendencia`, `ingresos_gastos` (`ultimoPeriodo`), `cumplimiento` (`resumen`), `realidad` (`alejadas`) y `flujo_efectivo` (`variacion`), y `texto` en cada `HallazgoDto` (6.9); `resumen` en `ajustes()` (6.11); `coincideCon` en `reglas()` (6.12.2). Lecturas sin reglas nuevas ni migración. Marca **[CH-251]**.
 - **CH-252** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Datos que la entrega 4 pide y el servidor no entregaba: `proximaCuota` del préstamo también sin modelo, con las condiciones (6.5, 6.6; E2-11); `archivadas` con su institución (6.5); `tarjeta.reservadoBp` en el detalle (6.6; CTA-26); `propuesta.asignacionesFuturas` en OP-04 (E2-15) y `propuesta.deudaFinn` en OP-53 (E2-14). Solo datos de salida y de previsualización: los hechos y la huella no cambian. La fecha de archivo de cuentas y categorías no es un hecho y no se agrega sin migración (6.5, 6.12.4). Marca **[CH-252]**.
+- **CH-254** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Datos de la entrega 4 que Finn no guardaba o no devolvía, con una migración (03 §3.4, §3.9, §3.19): la salida de OP-15 con las dos asignaciones de después, para «Deshacer» de Mover (E2-13); `movimientos.regla_id` en OP-35 y OP-49 y `usos` en `reglas()` («Usada N veces», E4-22, 6.12.2); `resumenSeguridad()` con los factores verificados para el índice de Ajustes, sin sesiones (AJU-01, 6.11); `archivada_el` en OP-04, OP-05, OP-09 y OP-10, y `archivadaEl` en `estructura()` y `cuentas().archivadas` (6.5, 6.12.4). Reemplaza lo que CH-251 y CH-252 decían de «Usada N veces» y de la fecha de archivo. Marcas **[CH-254]**.

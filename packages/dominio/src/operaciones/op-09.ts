@@ -123,6 +123,7 @@ export function op09(antes: H.Instantanea, x: H.ComandoOp09): Efecto | R {
         campos: { categoriaId: nueva.id },
       });
   }
-  cambios.push({ tipo: 'actualizar', tabla: 'categorias', id: c.id, campos: { archivada: true } });
+  const campos = { archivada: true, archivadaEl: antes.hoy }; // [CH-254] la fecha de archivo
+  cambios.push({ tipo: 'actualizar', tabla: 'categorias', id: c.id, campos });
   return { cambios };
 }

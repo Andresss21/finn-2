@@ -477,3 +477,96 @@ describe('PRU-ESQ-ESQ', () => {
     });
   });
 });
+
+describe('PRU-ESQ-ESQ-800 m_datos_entrega_4', () => {
+  const base = crearBasePrueba();
+  it('PRU-ESQ-ESQ-800 m_datos_entrega_4: tres columnas nulas sin relleno: lo archivado antes queda sin fecha; una activa no puede tener fecha; regla_id apunta a una regla y queda nula si la regla se elimina', async () => {
+    const dir = fileURLToPath(new URL('../prisma/migrations/', import.meta.url));
+    const carpeta = readdirSync(dir).filter((d) => d.endsWith('_m_datos_entrega_4'));
+    expect(carpeta).toHaveLength(1);
+    const sql = readFileSync(join(dir, carpeta[0] ?? '', 'migration.sql'), 'utf8');
+    expect(sql.startsWith('-- finn:manual')).toBe(true);
+    const columnas = async (c: pg.Client): Promise<unknown[]> =>
+      (
+        await c.query<Record<string, unknown>>(
+          `SELECT table_name, column_name, udt_name, is_nullable, column_default FROM information_schema.columns
+           WHERE table_schema = 'finn' AND column_name IN ('archivada_el', 'regla_id') ORDER BY table_name`,
+        )
+      ).rows;
+    const COLUMNAS = [
+      ['categorias', 'archivada_el', 'date'],
+      ['cuentas', 'archivada_el', 'date'],
+      ['movimientos', 'regla_id', 'uuid'],
+    ].map(([table_name, column_name, udt_name]) => ({
+      table_name,
+      column_name,
+      udt_name,
+      is_nullable: 'YES',
+      column_default: null,
+    }));
+
+    // La base de antes, con una categoría y una cuenta ya archivadas; después, la migración tal cual está en disco,
+    // sentencia por sentencia como `migrate deploy`.
+    await con(base.urlMigraciones, async (mig) => {
+      expect(await columnas(mig)).toEqual(COLUMNAS);
+      await mig.query(`ALTER TABLE finn.categorias DROP CONSTRAINT ck_categorias_archivada_el, DROP COLUMN archivada_el;
+        ALTER TABLE finn.cuentas DROP CONSTRAINT ck_cuentas_archivada_el, DROP COLUMN archivada_el;
+        ALTER TABLE finn.movimientos DROP COLUMN regla_id;`);
+      expect(await columnas(mig)).toEqual([]);
+      await mig.query(`DO $$ BEGIN
+          PERFORM finn.tomar_bloqueo();
+          INSERT INTO finn.cuentas (tipo, nombre, subtipo_efectivo, fecha_apertura, archivada)
+            VALUES ('efectivo', 'Vieja', 'corriente', finn.hoy(), true);
+          INSERT INTO finn.grupos (nombre) VALUES ('Casa');
+          INSERT INTO finn.categorias (grupo_id, nombre, archivada)
+            SELECT id, 'Antigua', true FROM finn.grupos WHERE nombre = 'Casa';
+        END $$;`);
+      const lista = sentencias(sql);
+      expect(lista).toHaveLength(7);
+      for (const s of lista) await mig.query(s);
+      expect(await columnas(mig)).toEqual(COLUMNAS);
+      const { rows } = await mig.query<{ n: string }>(
+        `SELECT count(*)::text AS n FROM (SELECT archivada_el FROM finn.cuentas UNION ALL
+           SELECT archivada_el FROM finn.categorias) x WHERE archivada_el IS NOT NULL`,
+      );
+      expect(rows).toEqual([{ n: '0' }]);
+    });
+
+    // Las CHECK y la FK, como finn_app
+    await con(base.url, async (app) => {
+      const hoy = (tabla: string, nombre: string, activa: boolean) =>
+        `UPDATE finn.${tabla} SET archivada = ${activa ? 'false' : 'true'}, archivada_el = finn.hoy() WHERE nombre = '${nombre}'`;
+      expect(await rechazo(app, hoy('categorias', 'Antigua', true))).toBe(
+        '23514 ck_categorias_archivada_el',
+      );
+      expect(await rechazo(app, hoy('cuentas', 'Vieja', true))).toBe(
+        '23514 ck_cuentas_archivada_el',
+      );
+      expect(await rechazo(app, hoy('cuentas', 'Vieja', false))).toBe('ok');
+      const movimiento = (
+        regla: string,
+      ) => `INSERT INTO finn.sms_recibidos (texto, remitente) VALUES ('BAC: compra', 'BAC');
+        INSERT INTO finn.movimientos (sms_id, estado, regla_id)
+          SELECT id, 'no_reconocido', ${regla} FROM finn.sms_recibidos;`;
+      expect(await rechazo(app, movimiento("'00000000-0000-4000-8000-000000000999'"))).toBe(
+        '23503 fk_movimientos_regla',
+      );
+
+      // Con la categoría activa y una regla hacia ella: el movimiento la guarda y, al eliminarla, queda sin regla.
+      await app.query(`BEGIN; SELECT finn.tomar_bloqueo();
+        UPDATE finn.categorias SET archivada = false WHERE nombre = 'Antigua';
+        INSERT INTO finn.reglas_comercio (patron, categoria_id)
+          SELECT 'SUPER', id FROM finn.categorias WHERE nombre = 'Antigua';
+        ${movimiento('(SELECT id FROM finn.reglas_comercio)')}
+        COMMIT;`);
+      const regla = async () =>
+        (await app.query<{ r: string | null }>('SELECT regla_id::text AS r FROM finn.movimientos'))
+          .rows;
+      expect((await regla())[0]?.r).toMatch(/^[0-9a-f-]{36}$/);
+      await app.query(
+        'BEGIN; SELECT finn.tomar_bloqueo(); DELETE FROM finn.reglas_comercio; COMMIT;',
+      );
+      expect(await regla()).toEqual([{ r: null }]);
+    });
+  });
+});

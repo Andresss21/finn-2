@@ -17,6 +17,7 @@ import type {
 } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
+import { estructura } from '../selectores/estructura';
 import { aplicar } from './aplicar';
 
 const c = (n: number) => Centavos.desdeEntero(n * 100);
@@ -54,6 +55,7 @@ const categoria = (
   clase: 'normal',
   tarjetaId: null,
   archivada: false,
+  archivadaEl: null, // [CH-254]
   revision: null,
   ...extra,
 });
@@ -305,7 +307,12 @@ describe('PRU-DOM-CATEG-101: aplicar, grupos y categorías (01 §5.2, 04 §3.2)'
       },
       { tipo: 'eliminar', tabla: 'asignaciones', id: 'asig-LUZ-2027-04-01' },
       { tipo: 'actualizar', tabla: 'programadas', id: 'Q2', campos: { activa: false } },
-      { tipo: 'actualizar', tabla: 'categorias', id: 'LUZ', campos: { archivada: true } },
+      {
+        tipo: 'actualizar',
+        tabla: 'categorias',
+        id: 'LUZ',
+        campos: { archivada: true, archivadaEl: HOY },
+      },
     ]);
     const h = r.hechosNuevos;
     expect(disp(h, 'LUZ')).toBe(c(0));
@@ -342,7 +349,12 @@ describe('PRU-DOM-CATEG-101: aplicar, grupos y categorías (01 §5.2, 04 §3.2)'
       ejecutar(base(), { operacion: 'OP-09', categoriaId: id('VAC'), ids: contador() }),
     );
     expect(vacia.cambios).toEqual([
-      { tipo: 'actualizar', tabla: 'categorias', id: 'VAC', campos: { archivada: true } },
+      {
+        tipo: 'actualizar',
+        tabla: 'categorias',
+        id: 'VAC',
+        campos: { archivada: true, archivadaEl: HOY },
+      },
     ]);
   });
 
@@ -592,5 +604,51 @@ describe('PRU-DOM-MOTOR-113: valores resultantes del impacto en OP-09 y OP-12 (C
     );
     expect(valores(fusion)).toEqual([['SAL', c(60), c(30)]]);
     expect([fusion.lpaAntes, fusion.lpaDespues]).toEqual([LPA, c(725)]);
+  });
+});
+
+describe('PRU-DOM-CATEG-800 fecha de archivo de una categoría', () => {
+  const fila = (h: Hechos, cat: string) =>
+    estructura(calcular(h, HOY))
+      .flatMap((g) => g.categorias)
+      .find((x) => x.categoria.id === cat);
+
+  it('PRU-DOM-CATEG-800 [Q-estructura] archivar guarda hoy como fecha de archivo y estructura() la trae; desarchivar la vuelve a nula y una archivada sin fecha sigue sin ella', () => {
+    const archivada = exito(
+      ejecutar(base(), { operacion: 'OP-09', categoriaId: id('VAC'), ids: contador() }),
+    );
+    expect(archivada.hechosNuevos.categorias.find((x) => x.id === 'VAC')).toMatchObject({
+      archivada: true,
+      archivadaEl: HOY,
+    });
+    expect(fila(archivada.hechosNuevos, 'VAC')).toMatchObject({
+      archivada: true,
+      archivadaEl: HOY,
+    });
+    expect(fila(base(), 'VAC')).not.toHaveProperty('archivadaEl');
+
+    const de = (h: Hechos, cat: string) =>
+      exito(ejecutar(h, { operacion: 'OP-10', categoriaId: id(cat), desarchivarGrupo: true }));
+    const otraVez = de(archivada.hechosNuevos, 'VAC');
+    expect(otraVez.cambios).toEqual([
+      {
+        tipo: 'actualizar',
+        tabla: 'categorias',
+        id: 'VAC',
+        campos: { archivada: false, archivadaEl: null },
+      },
+    ]);
+    expect(fila(otraVez.hechosNuevos, 'VAC')).toMatchObject({ archivada: false });
+    expect(fila(otraVez.hechosNuevos, 'VAC')).not.toHaveProperty('archivadaEl');
+
+    // VIEJA se archivó antes de que Finn guardara la fecha: estructura() no la inventa y desarchivar no la toca.
+    expect(fila(base(), 'VIEJA')).toMatchObject({ archivada: true });
+    expect(fila(base(), 'VIEJA')).not.toHaveProperty('archivadaEl');
+    expect(de(base(), 'VIEJA').cambios).toContainEqual({
+      tipo: 'actualizar',
+      tabla: 'categorias',
+      id: 'VIEJA',
+      campos: { archivada: false },
+    });
   });
 });

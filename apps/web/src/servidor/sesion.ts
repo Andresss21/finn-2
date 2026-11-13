@@ -84,6 +84,9 @@ export const cerrarOtrasSesiones = conCookies(acceso.cerrarOtrasSesiones);
 /** CP-4: la lista de factores de Ajustes > Seguridad. Lanza `ExcepcionFinn`; la página la pasa por `consultar()`. */
 export const estadoSeguridad = async (): Promise<acceso.EstadoSeguridad> =>
   acceso.estadoSeguridad(await clienteAuth(), usuarioPermitido());
+/** [CH-254] «N factores» del índice de Ajustes (AJU-01). Lanza `ExcepcionFinn`; la página la pasa por `consultar()`. */
+export const resumenSeguridad = async (): ReturnType<typeof acceso.resumenSeguridad> =>
+  acceso.resumenSeguridad(await clienteAuth(), usuarioPermitido());
 export const estadoAcceso = async (): Promise<acceso.EstadoAcceso> =>
   acceso.estadoAcceso(await clienteAuth(), usuarioPermitido());
 export const salir = async (): ReturnType<typeof acceso.salir> => acceso.salir(await clienteAuth());

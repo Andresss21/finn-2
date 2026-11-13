@@ -10,7 +10,7 @@ import { useOperacion, type AccionEscritura } from '../../formularios/use-operac
 import { gestionarRegla } from '../../servidor/acciones/bandeja';
 import { reglas as t } from '../../textos/reglas';
 import { ConfirmarEliminar } from '../metas-nueva/confirmar-eliminar';
-import { CoincideCon } from './coincide-con';
+import { CoincideCon, UsosDeRegla } from './coincide-con';
 import {
   AvisoDeFallo,
   CamposRegla,
@@ -29,6 +29,8 @@ export interface PropsFormularioReglaRegla {
     readonly categoriaArchivada: boolean;
     /** [CH-251] Comercios de ejemplo; vacío si ninguno coincide. */
     readonly coincideCon: readonly string[];
+    /** [CH-254] Movimientos que categorizó. */
+    readonly usos: number;
   };
   readonly grupos: readonly GrupoCategorias[];
 }
@@ -93,7 +95,10 @@ export function FormularioReglaRegla({ regla, grupos }: PropsFormularioReglaRegl
             : {})}
           errorDelServidor={repetido ? guardar.error?.mensaje : undefined}
         />
-        <CoincideCon comercios={regla.coincideCon} />
+        <div className="flex flex-col gap-1">
+          <UsosDeRegla usos={regla.usos} />
+          <CoincideCon comercios={regla.coincideCon} />
+        </div>
         {fallo === undefined ? null : (
           <AvisoDeFallo fallo={fallo} reintentar={() => void fallida.reintentar()} />
         )}

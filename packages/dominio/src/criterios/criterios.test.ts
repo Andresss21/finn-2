@@ -521,3 +521,32 @@ describe('PRU-DOM-BAND-101: criterios de comparación (01 §4.17) y OP-35 pasos 
     ]);
   });
 });
+
+describe('PRU-DOM-BAND-800 regla que categorizó el movimiento', () => {
+  it('PRU-DOM-BAND-800 [FT-39] si la categoría la pone una regla, el movimiento guarda su id; por historial, sin comercio o sin coincidencia, no guarda ninguna', () => {
+    const reglas = [regla('r1', 'super', 'CAFE'), regla('r2', 'Super Selectos', 'SUPER')];
+    const porRegla = resultado(
+      recibir({ reglas, interpretacion: reconocido({ comercio: 'SUPER SELECTOS SA' }) }),
+    );
+    expect(porRegla.m.reglaId).toBe('r2');
+    expect(porRegla.linea.categoriaId).toBe('SUPER');
+
+    // Por historial (la misma categoría, sin regla), sin comercio o sin coincidencia: sin regla.
+    for (const extra of [
+      { reglas: [], interpretacion: reconocido({ comercio: 'Super Selectos' }) },
+      { reglas, interpretacion: reconocido({ comercio: null }) },
+      { reglas, interpretacion: reconocido({ comercio: 'Despensa' }) },
+    ]) {
+      const { m } = resultado(recibir(extra));
+      expect(m).not.toHaveProperty('reglaId');
+    }
+    // Una regla hacia una archivada no categoriza, así que tampoco queda guardada.
+    const vieja = resultado(
+      recibir({
+        reglas: [regla('r3', 'super selectos', 'VIEJA')],
+        interpretacion: reconocido({ comercio: 'Super Selectos' }),
+      }),
+    );
+    expect(vieja.m).not.toHaveProperty('reglaId');
+  });
+});

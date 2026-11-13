@@ -99,6 +99,20 @@ describe('PRU-CMP-BAND-150 reglas', () => {
     expect(filas[1]?.getAttribute('data-archivada')).toBe('si');
   });
 
+  it('PRU-CMP-BAND-800 [FT-39] cada regla dice cuántas veces se usó, tal como trae usos el DTO: en plural, en singular y sin usos', () => {
+    const raiz = mostrar(
+      <PantallaReglas
+        dto={dto([
+          { ...regla('r1', 'SUPER SELECTOS', 'Supermercado'), usos: 3 },
+          { ...regla('r2', 'PUMA', 'Gasolina'), usos: 1 },
+          { ...regla('r3', 'STARBUCKS', 'Café'), usos: 0 },
+        ])}
+      />,
+    );
+    const usos = [...raiz.querySelectorAll('[data-regla] [data-usos]')].map((x) => x.textContent);
+    expect(usos).toEqual(['Usada 3 veces', 'Usada 1 vez', 'Todavía no se usó']);
+  });
+
   it('PRU-CMP-BAND-152 [FT-39] el estado vacío no tiene violaciones de accesibilidad', async () => {
     const raiz = mostrar(<PantallaReglas dto={dto([])} />);
     const resultado = await axe.run(raiz, { rules: { 'color-contrast': { enabled: false } } });

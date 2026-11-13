@@ -3,7 +3,7 @@
 // `movimiento_lineas`): nada entra a `calcular` (inv. 13). La fila de `sms_procesamientos` la arma
 // la aplicación con la interpretación y el movimiento que vuelve aquí.
 import { esAutodescarte } from '../criterios/autodescarte';
-import { sugerirCategoria } from '../criterios/categoria';
+import { reglaDeComercio, sugerirCategoria } from '../criterios/categoria';
 import { duplicado } from '../criterios/duplicados';
 import { emparejar } from '../criterios/emparejamiento';
 import type * as H from '../hechos';
@@ -101,6 +101,9 @@ export function op35(antes: H.Instantanea, x: H.ComandoOp35): Efecto {
     duplicadoTransaccionId: dup?.transaccionId ?? null,
     duplicadoMovimientoId: dup?.movimientoId ?? null,
   };
-  // Paso 10: la categoría por regla de comercio, si no por historial, si no ninguna.
-  return efecto(m, sugerirCategoria(h, x.reglas, i.comercio));
+  // Paso 10: la categoría por regla de comercio, si no por historial, si no ninguna. [CH-254] Si la puso una regla, el
+  // movimiento guarda cuál («Usada N veces», 04 §6.12.2).
+  const regla = i.comercio === null ? undefined : reglaDeComercio(h, x.reglas, i.comercio);
+  const conRegla = regla === undefined ? m : { ...m, reglaId: regla.id };
+  return efecto(conRegla, sugerirCategoria(h, x.reglas, i.comercio));
 }

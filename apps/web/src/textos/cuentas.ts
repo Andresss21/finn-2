@@ -29,6 +29,8 @@ export const cuentas = {
     capitalPendiente: 'Capital pendiente',
     valor: 'Valor',
     archivada: 'Archivada',
+    // [CH-254] con la fecha de archivo, si Finn la guardó
+    archivadaEl: (fecha: string) => `Archivada el ${fecha}`,
   },
   posicion: {
     activos: 'Activos',

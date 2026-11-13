@@ -1,6 +1,7 @@
 // Estructura de grupos y categorías (04 §6.12.4) y las precondiciones de OP-09 y OP-13 que también
 // usa el detalle de categoría. Solo lee la instantánea; `reglas_comercio` es [H] y llega aparte.
 import type { Categoria, Instantanea, ReglaComercio, Uuid } from '../hechos';
+import type { FechaLocal } from '../valores/fecha-local';
 
 /** `Ref` de 04 §6.0.3. */
 export interface Ref {
@@ -13,6 +14,8 @@ export interface FilaDeEstructura {
   readonly categoria: Ref;
   readonly clase: Categoria['clase'];
   readonly archivada: boolean;
+  /** [CH-254] El día en que se archivó; falta en una activa y en las archivadas antes de m_datos_entrega_4. */
+  readonly archivadaEl?: FechaLocal;
   readonly tieneMeta: boolean;
   readonly puedeEliminar: boolean;
   readonly puedeArchivar: boolean;
@@ -103,6 +106,7 @@ export function estructura(
         categoria: refDe(c),
         clase: c.clase,
         archivada: c.archivada,
+        ...(c.archivada && c.archivadaEl != null ? { archivadaEl: c.archivadaEl } : {}),
         tieneMeta: conMeta.has(c.id),
         puedeEliminar: puedeEliminar(i, c, reglas),
         puedeArchivar: puedeArchivar(c),

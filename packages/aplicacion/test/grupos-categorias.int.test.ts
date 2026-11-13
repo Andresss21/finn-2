@@ -24,6 +24,8 @@ import {
   OP12,
   OP13,
 } from '../src/operaciones/categorias/index.ts';
+import { OP01, OP04, OP05 } from '../src/operaciones/cuentas/index.ts';
+import { cuentas, estructura } from '@finn/dominio/selectores';
 
 const uuid = (n: number): Uuid => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}` as Uuid;
 const C1 = uuid(11), // Comida: asignación, meta y una programada activa
@@ -580,5 +582,44 @@ describe('PRU-INT-CATEG', () => {
       ok: false,
       error: { categoria: 'NO_ENCONTRADO' },
     });
+  });
+
+  it('PRU-INT-CATEG-800 [Q-estructura] archivar guarda en PostgreSQL el día de hoy, que vuelve al cargar los hechos y llega a estructura(); desarchivar lo borra', async () => {
+    await ejecutar(OP07, grupo(880, 'Archivo'));
+    await ejecutar(OP07, categoria(881, 'Mudanza', uuid(880)));
+    const fila = async () =>
+      estructura(calcular(await hechos(), FechaLocal.desdeTexto(HOY)))
+        .flatMap((g) => g.categorias)
+        .find((x) => x.categoria.id === uuid(881));
+    expect(await fila()).not.toHaveProperty('archivadaEl');
+    expect(await ejecutar(OP09, { categoriaId: uuid(881) })).toMatchObject({ ok: true });
+    expect((await hechos()).categorias.find((x) => x.id === uuid(881))?.archivadaEl).toBe(HOY);
+    expect(await fila()).toMatchObject({ archivada: true, archivadaEl: HOY });
+    expect(await ejecutar(OP10, { categoriaId: uuid(881) })).toMatchObject({ ok: true });
+    expect((await hechos()).categorias.find((x) => x.id === uuid(881))?.archivadaEl).toBeNull();
+    expect(await fila()).not.toHaveProperty('archivadaEl');
+  });
+
+  it('PRU-INT-CTA-800 [Q-cuentas] archivar una cuenta guarda en PostgreSQL el día de hoy, que llega a cuentas().archivadas; desarchivarla lo borra', async () => {
+    const cuentaId = uuid(882);
+    expect(
+      await ejecutar(OP01, {
+        id: cuentaId,
+        tipo: 'efectivo',
+        subtipoEfectivo: 'corriente',
+        nombre: 'Caja chica',
+        saldo: '0',
+      }),
+    ).toMatchObject({ ok: true });
+    const archivada = async () =>
+      cuentas(calcular(await hechos(), FechaLocal.desdeTexto(HOY)), {
+        incluirArchivadas: true,
+      }).archivadas?.find((x) => x.id === cuentaId);
+    expect(await ejecutar(OP04, { cuentaId })).toMatchObject({ ok: true });
+    expect((await hechos()).cuentas.find((x) => x.id === cuentaId)?.archivadaEl).toBe(HOY);
+    expect(await archivada()).toMatchObject({ nombre: 'Caja chica', archivadaEl: HOY });
+    expect(await ejecutar(OP05, { cuentaId })).toMatchObject({ ok: true });
+    expect((await hechos()).cuentas.find((x) => x.id === cuentaId)?.archivadaEl).toBeNull();
+    expect(await archivada()).toBeUndefined();
   });
 });

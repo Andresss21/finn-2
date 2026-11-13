@@ -2,7 +2,7 @@
 // Un id que no es UUID es `notFound()` (7.3, `validacionDeSegmento`); un `?periodo=` que no abre un período redirige a la misma
 // ruta sin ese parámetro (05 §2.2, CP-13). Lo único que traduce los errores es `consultar()`.
 import { detalleCategoria } from '@finn/aplicacion/consultas/detalle-categoria';
-import { asignarEnCategoria } from '../../../../../servidor/acciones/presupuesto';
+import { asignarEnCategoria, moverDinero } from '../../../../../servidor/acciones/presupuesto';
 import {
   leerResultadoPresupuesto,
   PARAMETRO_RESULTADO,
@@ -33,6 +33,7 @@ export async function LectorDetalleCategoria({
       sacar={sacarDisponible}
       resultado={leerResultadoPresupuesto(typeof aviso === 'string' ? aviso : undefined)}
       asignar={asignarEnCategoria}
+      mover={moverDinero}
     />
   );
 }

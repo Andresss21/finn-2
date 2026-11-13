@@ -3,6 +3,7 @@
 // `huellaImpacto` los separa el marco antes de validar.
 import * as z from 'zod';
 import type { Uuid } from '@finn/dominio';
+import type { Centavos } from '@finn/dominio/valores';
 import { fechaLocal, montoTexto, montoTextoConSigno, revision, uuid } from './comunes.ts';
 
 /** OP-14 Asignar o desasignar: `montoNuevo` puede ser negativo (supuesto 6); `esperado` es Asig(c, p) que vio la interfaz. */
@@ -26,6 +27,15 @@ export const op15 = z.object({
   }),
 });
 export type EntradaOp15 = z.output<typeof op15>;
+
+/**
+ * [CH-254] Salida de OP-15: Asig(o, p) y Asig(d, p) después de mover, leídas de los hechos. Son el `esperado` de la
+ * inversa («Deshacer», E2-13): otra OP-15 con el mismo monto y el origen y el destino intercambiados.
+ */
+export interface SalidaOp15 {
+  readonly asignacionOrigen: Centavos;
+  readonly asignacionDestino: Centavos;
+}
 
 /**
  * OP-16 Asignación rápida: el dominio calcula el valor de la variante; `esperado.monto` es Asig(c, p) que vio la

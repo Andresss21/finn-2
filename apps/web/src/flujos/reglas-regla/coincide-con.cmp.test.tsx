@@ -4,7 +4,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import '../../app/globals.css';
-import { CoincideCon } from './coincide-con';
+import { CoincideCon, UsosDeRegla } from './coincide-con';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -36,5 +36,16 @@ describe('PRU-CMP-BAND', () => {
       'Coincide con: PUMA SANTA ELENA, PUMA ESCALON.',
     );
     expect(montar([]).querySelector('[data-coincide-con]')).toBeNull();
+  });
+
+  it('PRU-CMP-BAND-801 [FT-39] editar una regla dice «Usada N veces» con el número que trae el DTO', () => {
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    act(() => {
+      raiz.render(<UsosDeRegla usos={12} />);
+    });
+    montados.push({ raiz, nodo });
+    expect(nodo.querySelector('[data-usos]')?.textContent).toBe('Usada 12 veces');
   });
 });

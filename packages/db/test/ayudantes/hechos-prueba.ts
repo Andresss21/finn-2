@@ -58,6 +58,7 @@ function escritos(
       fechaApertura: fecha('2027-01-21'),
       orden,
       archivada: false,
+      archivadaEl: null, // [CH-254]
     }) as const;
   const t = (
     n: number,
@@ -166,6 +167,7 @@ function escritos(
         clase: 'normal',
         tarjetaId: null,
         archivada: false,
+        archivadaEl: null, // [CH-254]
       },
       {
         id: C2,
@@ -175,6 +177,7 @@ function escritos(
         clase: 'normal',
         tarjetaId: null,
         archivada: false,
+        archivadaEl: null, // [CH-254]
       },
       {
         id: CP,
@@ -184,6 +187,7 @@ function escritos(
         clase: 'pago',
         tarjetaId: T1,
         archivada: false,
+        archivadaEl: null, // [CH-254]
       },
     ],
     asignaciones: [

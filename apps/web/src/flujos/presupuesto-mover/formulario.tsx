@@ -41,7 +41,10 @@ export interface PropsFormularioMover {
   readonly destinoInicial: string;
   /** La pantalla a la que vuelve la página completa al terminar (`cerrarFlujo()`, 05 §1.4). */
   readonly rutaPadre: string;
-  /** E2-13 [CH-248]: con `?volver=` al detalle de una categoría, ahí queda el resultado, con el monto que escribió la persona. */
+  /**
+   * E2-13 [CH-248]: con `?volver=` al detalle de una categoría, ahí queda el resultado, con el monto que escribió la persona
+   * y, [CH-254], la inversa para «Deshacer» con las asignaciones de después que devuelve OP-15.
+   */
   readonly rutaDetalle?: string;
   readonly superpuesto: boolean;
 }
@@ -83,11 +86,13 @@ interface PropsCuerpo {
 function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
   const { periodoInicio, superpuesto, rutaPadre, rutaDetalle } = p;
   const montoEnviado = useRef('');
+  const enviado = useRef<{ origenId: string; destinoId: string } | null>(null);
   const enviar = useCallback<AccionEscritura>(
     (payload) => {
       const { modo, revisionVista, huellaImpacto, origenId, destinoId, monto } = payload as Cruda;
       const normal = normalizarMontoEscrito(monto);
       montoEnviado.current = normal.estado === 'valido' ? normal.texto : '';
+      enviado.current = { origenId, destinoId };
       return moverDinero({
         origenId,
         destinoId,
@@ -134,7 +139,20 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
     void pedirImpacto();
   }, [clave, valido, estado, pedirImpacto]);
 
-  if (estado === 'listo')
+  if (estado === 'listo') {
+    // [CH-254] La inversa de «Deshacer»: el origen y el destino intercambiados, con las asignaciones que devolvió OP-15.
+    const despues = operacion.exito?.valor as Partial<Actuales> | undefined;
+    const inversa =
+      enviado.current === null ||
+      despues?.asignacionOrigen === undefined ||
+      despues.asignacionDestino === undefined
+        ? undefined
+        : {
+            origenId: enviado.current.destinoId,
+            destinoId: enviado.current.origenId,
+            asignacionOrigen: centavosATextoDecimal(despues.asignacionDestino),
+            asignacionDestino: centavosATextoDecimal(despues.asignacionOrigen),
+          };
     return (
       <>
         <p role="status">{t.listo}</p>
@@ -145,11 +163,13 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
             rutaPadre={rutaConResultado(rutaDetalle, {
               tipo: 'movido',
               monto: montoEnviado.current,
+              ...(inversa === undefined ? {} : { inversa }),
             })}
           />
         )}
       </>
     );
+  }
 
   const opciones: readonly OpcionNativa[] = p.categorias.map((k) => ({
     valor: k.id,

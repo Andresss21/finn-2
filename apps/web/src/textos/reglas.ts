@@ -20,6 +20,9 @@ export const reglas = {
   patron: 'El comercio contiene',
   // [CH-251] E4-22: comercios que contienen el patrón (de `ReglaDto.coincideCon`).
   coincideCon: (comercios: readonly string[]) => `Coincide con: ${comercios.join(', ')}.`,
+  // [CH-254] E4-22: movimientos que categorizó la regla (de `ReglaDto.usos`), contados desde que Finn lo guarda.
+  usada: (n: number) =>
+    n === 0 ? 'Todavía no se usó' : n === 1 ? 'Usada 1 vez' : `Usada ${n} veces`,
   categoria: 'Categoría',
   obligatorio: 'Completá este campo.',
   guardar: 'Guardar regla',

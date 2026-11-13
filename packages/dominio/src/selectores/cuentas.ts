@@ -119,10 +119,14 @@ export function cuentas(
       .map((k) => ({ cuenta: n.cuenta(k.id), valor: saldoDe(k.id)?.saldo ?? Centavos.cero })),
     ...(o.incluirArchivadas === true
       ? {
-          // [CH-252] con su institución, para «Archivada · {banco}»; la fecha de archivo no es un hecho
+          // [CH-252] con su institución, para «Archivada · {banco}»; [CH-254] y su fecha de archivo, si la tiene
           archivadas: h.cuentas
             .filter((k) => k.archivada)
-            .map((k) => ({ ...n.cuenta(k.id), ...institucionDe(o, k) })),
+            .map((k) => ({
+              ...n.cuenta(k.id),
+              ...institucionDe(o, k),
+              ...(k.archivadaEl != null ? { archivadaEl: k.archivadaEl } : {}),
+            })),
         }
       : {}),
     posicionNeta: {

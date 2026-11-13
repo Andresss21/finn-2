@@ -20,6 +20,8 @@ import type {
 } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
+import { calcular } from '../calculo/calcular';
+import { cuentas } from '../selectores/cuentas';
 import { aplicar } from './aplicar';
 import { claveOrdenEditada } from './op-02';
 
@@ -52,6 +54,7 @@ const cuenta = (
   fechaApertura: f(apertura),
   orden: 1,
   archivada: false,
+  archivadaEl: null, // [CH-254]
   revision: null,
   ...extra,
 });
@@ -82,6 +85,7 @@ const categoria = (
   clase: tarjetaId === null ? 'normal' : 'pago',
   tarjetaId: tarjetaId === null ? null : id(tarjetaId),
   archivada,
+  archivadaEl: null, // [CH-254]
   revision: null,
 });
 const asignacion = (cat: string, periodo: string, monto: number): Asignacion => ({
@@ -598,19 +602,64 @@ describe('PRU-DOM-CTA-102: aplicar, operaciones de cuentas (01 §5.1, 04 §3.1)'
     ]);
   });
 
+  it('PRU-DOM-CTA-800 [Q-cuentas] archivar una cuenta guarda hoy en ella y en su categoría de pago y cuentas() la trae; desarchivar las vuelve a nulas; la archivada sin fecha sigue sin ella', () => {
+    const archivada = exito(archivar(conU(), 'U')).hechosNuevos;
+    expect(archivada.cuentas.find((k) => k.id === 'U')).toMatchObject({ archivadaEl: HOY });
+    expect(archivada.categorias.find((x) => x.id === 'n1')).toMatchObject({ archivadaEl: HOY });
+    const lista = (h: Hechos) => cuentas(calcular(h, HOY), { incluirArchivadas: true }).archivadas;
+    expect(lista(archivada)?.find((x) => x.id === 'U')).toMatchObject({ archivadaEl: HOY });
+
+    const abrir = exito(ejecutar(archivada, { operacion: 'OP-05', cuentaId: id('U') }));
+    expect(abrir.cambios).toEqual([
+      {
+        tipo: 'actualizar',
+        tabla: 'cuentas',
+        id: 'U',
+        campos: { archivada: false, archivadaEl: null },
+      },
+      {
+        tipo: 'actualizar',
+        tabla: 'categorias',
+        id: 'n1',
+        campos: { archivada: false, archivadaEl: null },
+      },
+    ]);
+    expect(lista(abrir.hechosNuevos)?.some((x) => x.id === 'U')).toBe(false);
+
+    // M se archivó antes de que Finn guardara la fecha: cuentas() no la inventa.
+    const vieja = lista(base())?.find((x) => x.id === 'M');
+    expect(vieja).toBeDefined();
+    expect(vieja).not.toHaveProperty('archivadaEl');
+  });
+
   it('PRU-DOM-CTA-102 OP-04 OP-05: archivar una tarjeta archiva su categoría de pago y, si se acepta, devuelve a LPA sus asignaciones futuras; desarchivar las abre a las dos', () => {
     const r = exito(archivar(conU(['2027-04-01', 30], ['2027-05-01', 5]), 'U', true));
     expect(r.cambios).toEqual([
       { tipo: 'eliminar', tabla: 'asignaciones', id: 'asig-n1-2027-04-01' },
       { tipo: 'eliminar', tabla: 'asignaciones', id: 'asig-n1-2027-05-01' },
-      { tipo: 'actualizar', tabla: 'cuentas', id: 'U', campos: { archivada: true } },
-      { tipo: 'actualizar', tabla: 'categorias', id: 'n1', campos: { archivada: true } },
+      {
+        tipo: 'actualizar',
+        tabla: 'cuentas',
+        id: 'U',
+        campos: { archivada: true, archivadaEl: HOY },
+      },
+      {
+        tipo: 'actualizar',
+        tabla: 'categorias',
+        id: 'n1',
+        campos: { archivada: true, archivadaEl: HOY },
+      },
     ]);
     // Lo asignado a futuro vuelve a LPA.
     expect(r.impacto.deltaLpa).toBe(c(35));
     const efectivo = exito(ejecutar(base(), crear('D', 'efectivo'))).hechosNuevos;
     expect(exito(archivar(efectivo, 'D')).cambios).toEqual([
-      { tipo: 'actualizar', tabla: 'cuentas', id: 'D', campos: { archivada: true } },
+      {
+        tipo: 'actualizar',
+        tabla: 'cuentas',
+        id: 'D',
+        campos: { archivada: true, archivadaEl: HOY },
+      },
     ]);
     const abrir = exito(ejecutar(base(), { operacion: 'OP-05', cuentaId: id('M') }));
     expect(abrir.cambios).toEqual([

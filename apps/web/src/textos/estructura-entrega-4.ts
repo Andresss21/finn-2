@@ -2,8 +2,9 @@
 // Voseo (05 §12.2). Los rechazos del servidor llegan compuestos en `mensaje`.
 export const estructuraEntrega4 = {
   archivadas: (n: number) => `Archivadas · ${n}`,
-  /** La categoría archivada: el grupo al que volvería. La fecha de archivo no viene en `estructura()` (04 §6.12.4). */
+  /** La categoría archivada: el grupo al que volvería y, [CH-254] si Finn la guardó, la fecha de archivo (04 §6.12.4). */
   deGrupo: (grupo: string) => `${grupo} · archivada`,
+  deGrupoEl: (grupo: string, fecha: string) => `${grupo} · archivada el ${fecha}`,
   deGrupoArchivado: (grupo: string) => `${grupo} · grupo archivado`,
   grupoEstaArchivado: (grupo: string) => `${grupo} está archivado.`,
   desarchivar: 'Desarchivar',
