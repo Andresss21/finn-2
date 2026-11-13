@@ -146,12 +146,22 @@ body {
   /* [CH-220] Contenedor de las rejillas de dos columnas: colapsan por el ancho del contenedor y no por el de la ventana. */
   #contenido {
     container-type: inline-size;
+    /* [CH-259, C-32] El bloque (contenido + relleno) se centra a la derecha de la barra lateral; el encabezado va dentro de él. */
+    padding-left: calc(var(--marco-barra) + var(--marco-sobra));
+    padding-right: var(--marco-sobra);
+  }
+  #contenido > header[data-marco-barra] {
+    right: calc(var(--marco-sobra) + var(--marco-relleno));
   }
   #contenido > main {
-    margin-inline: 0;
-    /* [CH-220 c] 1144 px; Inicio fija su `--ancho-pantalla`; flujos y listas de Más secciones, 720 px. */
-    max-width: var(--ancho-pantalla, 71.5rem);
-    padding: 2rem 3rem 3rem;
+    /* El relleno es margen: el contenedor de las consultas (`@container`) sigue siendo el bloque entero, como antes. */
+    margin-inline: var(--marco-relleno);
+    /* [CH-220 c, CH-259] 1144 px de contenido más el relleno; flujos y listas de Más secciones, 720 px. */
+    max-width: calc(
+      var(--ancho-pantalla, calc(var(--marco-contenido) + 2 * var(--marco-relleno))) - 2 *
+        var(--marco-relleno)
+    );
+    padding: 2rem 0 3rem;
   }
   #contenido[data-lista] > main {
     --ancho-pantalla: 45rem;
@@ -169,6 +179,16 @@ body {
   /* [E4-26, Marco] Ningún flujo largo lleva campana: en computadora solo queda la barra lateral. */
   body:has([data-pagina-flujo]) [data-marco-barra] {
     display: none;
+  }
+}
+
+/* [CH-259, C-32] El panel de notificaciones (CF-23) alinea su borde derecho con el de la campana, o sea con el del contenido. */
+@media (width >= 64rem) {
+  .fz-hoja[data-forma='arriba'] {
+    left: auto;
+    right: calc(var(--marco-sobra) + var(--marco-relleno));
+    width: 27.5rem;
+    max-width: calc(100% - var(--marco-barra));
   }
 }
 
