@@ -403,4 +403,50 @@ describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
     ).toBeGreaterThanOrEqual(44);
     expect(document.querySelector('[data-testid="velo"]')).not.toBeNull();
   });
+
+  it('PRU-CMP-TX-792 con filtros, «N transacciones · total» y con búsqueda «N resultados para …», con el conteo y el total del DTO; «Quitar filtros» mide 44 px y la hoja dice «Ver N resultados»', async () => {
+    vi.useRealTimers();
+    const filas = [fila('a', 'gasto', 'PRICESMART', -14860), fila('b', 'gasto', 'PAMPA', -8049)];
+    const conResumen = (conteo: number, total: number) =>
+      ({ ...dto([{ fecha: '2027-02-10', transacciones: filas }]), conteo, total }) as ActividadDto;
+    const filtrada = mostrar(conResumen(5, -22909), { tipo: 'gasto', desde: '2027-01-21' });
+    const resumen = filtrada.querySelector('[data-resumen-filtros]');
+    expect(resumen?.querySelector('p')?.textContent).toBe('5 transacciones · −$229.09');
+    expect(resumen?.querySelector('a')?.textContent).toBe('Quitar filtros');
+    expect(resumen?.querySelector('a')?.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+
+    const buscada = mostrar(conResumen(1, -8049), { texto: 'pampa' });
+    expect(buscada.querySelector('[data-resumen-filtros] p')?.textContent).toBe(
+      '1 resultado para “pampa”',
+    );
+
+    await act(async () => {
+      filtrada.querySelector<HTMLElement>('[data-boton-filtros]')?.click();
+      await Promise.resolve();
+    });
+    await vi.waitFor(() => {
+      expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    });
+    expect(document.querySelector('[role="dialog"] button[type="submit"][form]')?.textContent).toBe(
+      'Ver 5 resultados',
+    );
+  });
+
+  it('PRU-CMP-TX-793 sin filtros no hay línea de resumen, y una fila con algo en camino dice «En camino $40.00» en lugar de «Por cobrar», sin «te debe»', () => {
+    const enCamino = {
+      ...fila('cine', 'gasto', 'CINEMARK', -6000),
+      marcas: { ...MARCAS, porCobrar: true },
+      enCamino: 4000,
+    };
+    const raiz = mostrar({
+      ...dto([{ fecha: '2027-02-10', transacciones: [enCamino] }]),
+      conteo: 1,
+      total: -6000,
+    } as ActividadDto);
+    expect(raiz.querySelector('[data-resumen-filtros]')).toBeNull();
+    const texto = raiz.querySelector('[data-fila-transaccion="cine"]')?.textContent ?? '';
+    expect(texto).toContain('En camino $40.00');
+    expect(texto).not.toContain('Por cobrar');
+    expect(texto).not.toMatch(/te debe/i);
+  });
 });

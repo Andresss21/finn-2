@@ -37,6 +37,8 @@ export interface TransaccionFila {
     readonly programada: boolean;
     readonly periodoCerrado: boolean;
   };
+  /** [CH-250] Lo que sigue abierto por cobrar en las líneas de la fila (§4.10); solo si es > 0. */
+  readonly enCamino?: Centavos;
 }
 
 export interface FiltroDeActividad {
@@ -61,6 +63,10 @@ export interface ActividadDto {
     readonly transacciones: readonly TransaccionFila[];
   }[];
   readonly siguienteCursor?: string;
+  /** [CH-250] Cuántas transacciones coinciden con la búsqueda y los filtros, en todas las páginas. */
+  readonly conteo: number;
+  /** [CH-250] La suma de su `montoPresentado`, en todas las páginas. */
+  readonly total: Centavos;
 }
 
 interface Indice {
@@ -69,6 +75,8 @@ interface Indice {
   readonly linea: ReadonlyMap<Uuid, Linea>;
   /** Transacciones con alguna línea que otra línea devuelve. */
   readonly conDevoluciones: ReadonlySet<Uuid>;
+  /** Lo abierto por cobrar de cada línea con deudor (§4.10). */
+  readonly abierto: ReadonlyMap<Uuid, Centavos>;
 }
 
 const memoria = new WeakMap<Instantanea, Indice>();
@@ -93,6 +101,7 @@ export function indice(i: Instantanea): Indice {
           return o === undefined ? [] : [o.transaccionId];
         }),
       ),
+      abierto: new Map(i.porCobrar.map((p) => [p.lineaId, p.abierto])),
     };
     memoria.set(i, x);
   }
@@ -134,6 +143,10 @@ export function filaDe(i: Instantanea, t: Transaccion): TransaccionFila {
   const n = nombres(i);
   const efectos = x.efectos.get(t.id) ?? [];
   const lineas = x.lineas.get(t.id) ?? [];
+  const enCamino = lineas.reduce(
+    (s, l) => Centavos.sumar(s, x.abierto.get(l.id) ?? Centavos.cero),
+    Centavos.cero,
+  );
   return {
     id: t.id,
     fecha: t.fecha,
@@ -152,6 +165,7 @@ export function filaDe(i: Instantanea, t: Transaccion): TransaccionFila {
       programada: t.origen === 'programada',
       periodoCerrado: t.fecha < i.presupuesto.activo.inicio,
     },
+    ...(enCamino > 0 ? { enCamino } : {}),
   };
 }
 
@@ -200,5 +214,15 @@ export function actividad(i: Instantanea, f: FiltroDeActividad = {}): ActividadD
     if (ultimo?.fecha === t.fecha) ultimo.transacciones.push(filaDe(i, t));
     else dias.push({ fecha: t.fecha, transacciones: [filaDe(i, t)] });
   }
-  return siguienteCursor === undefined ? { dias } : { dias, siguienteCursor };
+  // [CH-250] El conteo y el total cubren todas las coincidencias, no solo la página.
+  const resumen = {
+    conteo: candidatas.length,
+    total: candidatas.reduce(
+      (s, { t }) => Centavos.sumar(s, presentado(t, x.efectos.get(t.id) ?? [])),
+      Centavos.cero,
+    ),
+  };
+  return siguienteCursor === undefined
+    ? { dias, ...resumen }
+    : { dias, siguienteCursor, ...resumen };
 }

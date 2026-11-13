@@ -2796,6 +2796,7 @@ interface DetalleCuentaDto extends Encabezado {
 interface ActividadDto extends Encabezado {
   dias: { fecha: FechaLocal; transacciones: TransaccionFila[] }[];
   siguienteCursor?: Cursor;
+  conteo: number; total: Centavos;                     // [CH-250] todas las coincidencias, no solo la página
 }
 interface TransaccionFila {
   id: Uuid; fecha: FechaLocal; tipo: TipoTransaccion;
@@ -2805,12 +2806,14 @@ interface TransaccionFila {
   lineas: { destino: Ref & { tipo: 'categoria' | 'deudor' }; monto: Centavos }[];
   estadoBancario: EstadoBancario; origen: OrigenTransaccion;
   marcas: { porCobrar: boolean; conDevoluciones: boolean; conciliada: boolean; programada: boolean; periodoCerrado: boolean };
+  enCamino?: Centavos;                                 // [CH-250] lo abierto por cobrar de sus líneas, solo si es > 0
 }
 ```
 
 - Los filtros por cuenta, categoría, fechas, montos, estado, tipo y origen se aplican sobre los hechos en memoria.
 - **Búsqueda por texto:** `nota` no se carga en los hechos del motor (5.2), así que `texto` se resuelve con una consulta en la misma instantánea: `SELECT id FROM finn.transacciones WHERE comercio ILIKE $1 OR nota ILIKE $1` (sin índice, como prevé 03 §6; con 50.000 filas es un recorrido secuencial de milisegundos), y el resultado filtra los hechos. El texto se escapa (`%` y `_`).
 - `montoDesde` y `montoHasta` comparan con `total`.
+- **[CH-250]** `conteo` es cuántas transacciones coinciden con el texto y los filtros, en todas las páginas, y `total` la suma de su `montoPresentado` (ACT-04, ACT-08 de la auditoría: «5 transacciones · −$229.09», «2 resultados para …», «Ver N resultados»). `enCamino` es la suma de `abierto` (§4.10) de las líneas de la fila (E6-17: «En camino $40.00»). Se leen de los mismos hechos y del motor, sin lecturas nuevas.
 
 #### 6.7.2 Detalle de transacción
 
@@ -2832,6 +2835,10 @@ interface DetalleTransaccionDto extends Encabezado {
     condonaciones: { id: Uuid; fecha: FechaLocal; monto: Centavos; categoria: Ref }[];
     devoluciones: { transaccionId: Uuid; fecha: FechaLocal; monto: Centavos; caso: 'D-1' | 'D-2' | 'D-3' | 'D-4' }[];
   }[];
+  efectosHoy: {                                        // [CH-250] «Efectos hoy» (ACT-18)
+    categorias: { categoria: Ref; disponible: Centavos }[];   // Disp(c, A) de hoy de cada categoría de sus líneas
+    tarjetas: { cuenta: Ref; deuda: Centavos }[];              // deuda(t) de hoy de cada tarjeta de sus efectos
+  };
   conciliacion?: { id: Uuid; fechaEstado: FechaLocal };
   cambiosPosteriores: { registradoEn: Instante; motivos: MotivoCambio[] }[];
   origenDetalle?: { sms: { texto: string; recibidoEn: Instante; movimientoId: Uuid } }
@@ -2846,6 +2853,7 @@ interface DetalleTransaccionDto extends Encabezado {
 ```
 
 - Lee `nota`, `moneda_original` y `monto_original` de la fila, `movimientos` y `sms_recibidos` ([H], [I]) y `cambios_posteriores` ([H]).
+- **[CH-250]** `efectosHoy` lista, en el orden de las líneas y sin repetir, cada categoría que tocan (una devolución sigue a su línea original) con su Disponible del período activo, y cada tarjeta de los efectos con su deuda de hoy (§4.8). Son los mismos números de Presupuesto y Cuentas; sin categorías ni tarjetas, la interfaz muestra el efecto en cada cuenta.
 
 
 ### 6.8 Bandeja de SMS
@@ -2888,6 +2896,7 @@ interface MovimientoDto {
 - Lee `movimientos`, `movimiento_lineas` ([H]), `sms_recibidos` y el último `sms_procesamientos` de cada SMS ([I]), y `formatos_bancarios` ([H]) para los nombres.
 - `aprobacion` se calcula con las precondiciones de OP-37 y las reglas de exclusión de OP-38 (período cerrado, `pago_tarjeta`, estado distinto de `pendiente`); no es una fórmula nueva.
 - `errorDetalle` es el detalle saneado (7.8).
+- **[CH-250]** La salida de OP-38 (`elementos`) trae `transaccionId` en cada movimiento que tiene transacción: la que creó (`aprobado`, `ya_aplicada`) o la de una aprobación anterior (`movimiento_estado_no_valido` con estado `aprobado`). El «Ver transacción» de AV-19 lleva a `/actividad/[id]`; sin `transaccionId`, al movimiento.
 - **[F6] Frecuentes (CF-22).** Las categorías normales y activas con más líneas en transacciones de tipo gasto con fecha en los últimos `ARRASTRE_FRECUENTES_DIAS` (90) días, hoy incluido; desempate por la línea más reciente y después por el orden del presupuesto. Sin historial, las primeras por orden de grupo y categoría. Se calculan sobre la instantánea, sin lecturas nuevas.
 
 **BE-41. Cuenta de origen propuesta para un pago de tarjeta (ajuste 3).** Para un movimiento con `tipo_propuesto = 'pago_tarjeta'` y cuenta t:
@@ -4447,3 +4456,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-234** (Fase 8, decidido por el orquestador con delegación del usuario, 10 de noviembre de 2026, `08-tareas.md` §7). `DetalleCuentaDto.tarjeta.desgloseAlPagar` trae `proximoPago`, la misma fecha que `cuentas()` (6.5) y el detalle de la categoría de pago: la fila «Pagá antes del…» del detalle de la tarjeta (AUDITORIA A17). Lectura sin regla nueva (6.6). Marca **[CH-234]**.
 - **CH-246** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). `Impacto` suma los valores antes y después de cada Δ (`lpaAntes`, `lpaDespues`; `antes` y `despues` en `deltaDisponible`; `saldoAntes`, `saldoDespues`, `reservaAntes` y `reservaDespues` en `deltaTarjetas`), que viajan en `previsualizar` y en `REQUIERE_CONFIRMACION` y no entran en `huellaImpacto` (2.4, 4.3). Marca **[CH-246]**.
 - **CH-E5-4 y CH-247** (diseño, entrega 4 · etapa 5, aprobado por el dueño, y Fase 8, decidido por el orquestador con delegación del usuario; aplicados con TA-595 el 12 de noviembre de 2026, `08-tareas.md` §7, CH-240 c). Textos de `patron_invalido`, `banderas_no_permitidas`, `grupos_obligatorios`, `patron_lento` (con `unknown` y el grado exponencial) y `nombre_repetido` de una institución (7.10); la salida de `validarFormato` suma la repetición del ataque, sin cambiar la política (8.5). Marcas **[CH-240]** y **[CH-247]**.
+- **CH-250** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). `ActividadDto` suma `conteo` y `total` de todas las coincidencias y `TransaccionFila` suma `enCamino` (6.7.1); `DetalleTransaccionDto` suma `efectosHoy` con el Disponible de hoy de cada categoría y la deuda de cada tarjeta (6.7.2); la salida de OP-38 trae `transaccionId` por movimiento (6.8). Lecturas de la instantánea, sin reglas ni migraciones nuevas. Marcas **[CH-250]**.

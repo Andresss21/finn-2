@@ -16,6 +16,8 @@ import type {
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { actividad } from './actividad';
+import { cuentas } from './cuentas';
+import { detalleCategoria } from './detalle-categoria';
 import { detalleTransaccion } from './detalle-transaccion';
 
 const c = (n: number) => Centavos.desdeEntero(Math.round(n * 100));
@@ -429,5 +431,62 @@ describe('actividad y detalle de transacción', () => {
     });
     expect(ids(actividad(j, { limite: 0 }))).toHaveLength(1);
     expect(ids(actividad(j, { limite: 500 }))).toHaveLength(7);
+  });
+
+  it('PRU-DOM-TX-790 el conteo y el total cubren todas las coincidencias de la búsqueda y los filtros, no solo la página', () => {
+    // Gastos del estado conocido: 60 (marzo), 40 y 200 (abril).
+    const gastos = actividad(i, { tipo: 'gasto', limite: 1 });
+    expect(ids(gastos)).toEqual([id('g-super')]);
+    expect([gastos.conteo, gastos.total]).toEqual([3, c(-300)]);
+    // Con texto y filtros juntos; el cobro (+30) y la devolución (+20) suman en positivo.
+    const texto = actividad(i, {
+      idsDeTexto: new Set([id('g-super'), id('cobro'), id('dev'), id('g-mar')]),
+      desde: f('2027-04-01'),
+    });
+    expect([texto.conteo, texto.total]).toEqual([3, c(-150)]);
+    const nada = actividad(i, { idsDeTexto: new Set() });
+    expect([nada.conteo, nada.total]).toEqual([0, c(0)]);
+  });
+
+  it('PRU-DOM-TX-791 la fila trae «en camino» con lo que sigue abierto por cobrar, y no lo trae sin deudor o ya cerrado', () => {
+    const filas = new Map(
+      actividad(i)
+        .dias.flatMap((d) => d.transacciones)
+        .map((t) => [t.id, t]),
+    );
+    // 50 por cobrar a Ana, cobrados 30: quedan 20 en camino.
+    expect(filas.get(id('g-super'))?.enCamino).toBe(c(20));
+    expect(filas.get(id('g-prog'))).not.toHaveProperty('enCamino');
+    const cerrada = estado((h) => ({
+      ...h,
+      transacciones: h.transacciones.map((t) =>
+        t.id === id('cobro') ? { ...t, total: c(50) } : t,
+      ),
+      efectos: h.efectos.map((e) => (e.id === id('ef-cobro') ? { ...e, monto: c(50) } : e)),
+    }));
+    const fila = actividad(cerrada)
+      .dias.flatMap((d) => d.transacciones)
+      .find((t) => t.id === id('g-super'));
+    expect(fila?.marcas.porCobrar).toBe(true);
+    expect(fila).not.toHaveProperty('enCamino');
+  });
+
+  it('PRU-DOM-TX-792 «Efectos hoy» trae el Disponible de hoy de cada categoría tocada y la deuda de hoy de la tarjeta, los mismos de Presupuesto y Cuentas', () => {
+    const disponible = detalleCategoria(i, id('super')).numeros.disponible;
+    const deuda = cuentas(i).tarjetas.find((t) => t.cuenta.id === id('vi'))?.deuda;
+    expect(deuda).toBe(c(40));
+    // Compra con tarjeta: su categoría y la deuda de la tarjeta.
+    expect(detalleTransaccion(i, id('g-prog')).efectosHoy).toEqual({
+      categorias: [{ categoria: { id: id('super'), nombre: 'Super' }, disponible }],
+      tarjetas: [{ cuenta: { id: id('vi'), nombre: 'Visa' }, deuda }],
+    });
+    // Compra en efectivo con una parte por cobrar: solo la categoría, una vez; una devolución sigue a su línea original.
+    expect(detalleTransaccion(i, id('g-super')).efectosHoy).toEqual({
+      categorias: [{ categoria: { id: id('super'), nombre: 'Super' }, disponible }],
+      tarjetas: [],
+    });
+    expect(detalleTransaccion(i, id('dev')).efectosHoy.categorias).toHaveLength(1);
+    // Sin líneas de categoría ni tarjeta (saldo inicial en efectivo): nada.
+    expect(detalleTransaccion(i, id('si')).efectosHoy).toEqual({ categorias: [], tarjetas: [] });
   });
 });

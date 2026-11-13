@@ -1,6 +1,7 @@
 // Fila de transacción (05 §10.8; 06-identidad-visual 2.16). Cada marca es un icono con nombre accesible, nunca
 // solo icono. A14/B8: título y «Cuenta · Categoría» en una línea cada uno, y la línea de metadatos con glifo de 12 y su etiqueta. El monto es `montoPresentado`: ya viene con signo del DTO.
 import type { Centavos } from '@finn/dominio/valores';
+import { formatearMonto } from '../../formato';
 import { dominio } from '../../textos/dominio';
 import { Icono, type NombreIcono } from '../base/icono';
 import { Monto } from './monto';
@@ -17,7 +18,14 @@ export interface TransaccionFilaDto {
     readonly programada: boolean;
     readonly periodoCerrado: boolean;
   };
+  /** [CH-250] Lo abierto por cobrar de la fila: la marca dice «En camino $40.00». */
+  readonly enCamino?: Centavos;
 }
+
+const textoDeMarca = (fila: TransaccionFilaDto, m: keyof TransaccionFilaDto['marcas']): string =>
+  m === 'porCobrar' && fila.enCamino !== undefined
+    ? dominio.enCamino(formatearMonto(fila.enCamino))
+    : dominio.marcas[m];
 
 const ICONO_MARCA: Readonly<Record<keyof TransaccionFilaDto['marcas'], NombreIcono>> = {
   porCobrar: 'ticket',
@@ -73,7 +81,7 @@ function FilaDetallada({
           {marcas.map((m) => (
             <span key={m} className={MARCA}>
               <Icono nombre={ICONO_MARCA[m]} tamano={12} />
-              {dominio.marcas[m]}
+              {textoDeMarca(fila, m)}
             </span>
           ))}
         </span>
@@ -117,7 +125,7 @@ export function FilaTransaccion({
         <span className="flex items-center gap-2 text-cuerpo-pequeno text-texto-secundario">
           {dominio.estadoBancario[fila.estadoBancario]}
           {marcas.map((m) => (
-            <Icono key={m} nombre={ICONO_MARCA[m]} tamano={16} etiqueta={dominio.marcas[m]} />
+            <Icono key={m} nombre={ICONO_MARCA[m]} tamano={16} etiqueta={textoDeMarca(fila, m)} />
           ))}
         </span>
       </span>

@@ -156,6 +156,8 @@ export interface SalidaOp38 {
   readonly elementos: readonly {
     readonly movimientoId: Uuid;
     readonly resultado: 'aprobado' | 'ya_aplicada' | NoAprobado;
+    /** [CH-250] La transacción del movimiento: la que creó, o la de antes si ya estaba aprobado. */
+    readonly transaccionId?: Uuid;
   }[];
 }
 /** La previsualización del lote: lo que cada movimiento haría, sin escribir. */

@@ -18,11 +18,14 @@ interface ElementoLote {
   readonly movimientoId: string;
   readonly resultado:
     'aprobado' | 'ya_aplicada' | { readonly codigo: string; readonly mensaje: string };
+  /** [CH-250] La transacción del movimiento, si la tiene (la que creó o la de una aprobación anterior). */
+  readonly transaccionId?: string;
 }
 interface NoAprobado {
   readonly id: string;
   readonly nombre: string;
   readonly motivo: string;
+  readonly href: string;
 }
 
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
@@ -30,6 +33,10 @@ const nombreDe = (m: MovimientoDto | undefined): string =>
   [m?.comercio ?? t.aprobarTodos.sinComercio, m?.monto == null ? '' : formatearMonto(m.monto)]
     .filter((x) => x !== '')
     .join(' ');
+
+/** [CH-250] «Ver transacción»: la transacción si el servidor la dio; si no, el movimiento, que ya muestra su resultado. */
+const hrefDe = (movimientoId: string, transaccionId?: string): string =>
+  transaccionId === undefined ? `/bandeja/${movimientoId}` : `/actividad/${transaccionId}`;
 
 /** AV-19: lo que el servidor rechazó, con su mensaje, y lo que la consulta dejó fuera del lote por una regla de 04 OP-38. */
 function noAprobados(
@@ -45,13 +52,14 @@ function noAprobados(
             id: e.movimientoId,
             nombre: nombreDe(vistos.find((m) => m.id === e.movimientoId)),
             motivo: e.resultado.mensaje,
+            href: hrefDe(e.movimientoId, e.transaccionId),
           },
         ],
   );
   const excluidos = vistos.flatMap((m) => {
     const motivo = t.aprobarTodos.motivos[m.aprobacion.motivoNoElegible ?? ''];
     return !enviados.has(m.id) && m.estado === 'pendiente' && motivo !== undefined
-      ? [{ id: m.id, nombre: nombreDe(m), motivo }]
+      ? [{ id: m.id, nombre: nombreDe(m), motivo, href: hrefDe(m.id) }]
       : [];
   });
   return [...rechazados, ...excluidos];
@@ -107,8 +115,11 @@ export function AprobarTodos({
                   <span className="font-bold">{x.nombre}</span>
                   {': '}
                   {x.motivo}{' '}
-                  {/* [CH-240 E6-6] «Ver transacción» por cada uno: lleva a su movimiento, que ya muestra su resultado */}
-                  <EnlaceFinn href={`/bandeja/${x.id}`} className="font-semibold underline">
+                  {/* [CH-240 E6-6] «Ver transacción» por cada uno: a su transacción o a su movimiento [CH-250] */}
+                  <EnlaceFinn
+                    href={x.href}
+                    className="inline-flex min-h-11 items-center font-semibold underline"
+                  >
                     {t.verTransaccion}
                   </EnlaceFinn>
                 </li>
