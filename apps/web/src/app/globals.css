@@ -147,8 +147,8 @@ body {
   #contenido {
     container-type: inline-size;
     /* [CH-259, C-32] El bloque (contenido + relleno) se centra a la derecha de la barra lateral; el encabezado va dentro de él. */
-    padding-left: calc(var(--marco-barra) + var(--marco-sobra));
-    padding-right: var(--marco-sobra);
+    padding-left: calc(var(--marco-barra) + var(--marco-sobra) + var(--marco-relleno));
+    padding-right: calc(var(--marco-sobra) + var(--marco-relleno));
   }
   #contenido > header[data-marco-barra] {
     right: calc(var(--marco-sobra) + var(--marco-relleno));
@@ -156,8 +156,11 @@ body {
   #contenido > main {
     margin-inline: 0;
     /* [CH-220 c, CH-259] 1144 px de contenido más el relleno; flujos y listas de Más secciones, 720 px. */
-    max-width: var(--ancho-pantalla, calc(var(--marco-contenido) + 2 * var(--marco-relleno)));
-    padding: 2rem var(--marco-relleno) 3rem;
+    max-width: calc(
+      var(--ancho-pantalla, calc(var(--marco-contenido) + 2 * var(--marco-relleno))) - 2 *
+        var(--marco-relleno)
+    );
+    padding: 2rem 0 3rem;
   }
   #contenido[data-lista] > main {
     --ancho-pantalla: 45rem;

@@ -8,7 +8,6 @@ import { expect, sembrar, test } from './configuracion/semilla.ts';
 import { alinearRelojes } from '../../../tools/pruebas/e2e/reloj.ts';
 
 const HOY = '2026-10-15';
-const RELLENO = 48;
 const TOLERANCIA = 1;
 const CAMPANA = 'header[data-marco-barra] a[href="/notificaciones"]';
 
@@ -46,22 +45,27 @@ test.describe('PRU-E2E-PWA marco en pantallas anchas', () => {
         await esperarContenido(page);
         const main = await caja(page, '#contenido > main');
         const flujo = ruta === '/registrar/gasto';
-        const izq = main.x + RELLENO;
+        const izq = main.x;
         const nombre = `${String(ancho)} ${ruta}`;
         expect(Math.abs(izq - izquierdo), `${nombre} borde izquierdo`).toBeLessThanOrEqual(
           TOLERANCIA,
         );
-        const h1 = await caja(page, '#contenido h1');
-        expect(Math.abs(h1.x - izq), `${nombre} título`).toBeLessThanOrEqual(TOLERANCIA);
+        // El encabezado empieza en el borde del contenido: la fila con × y título de un flujo, o el h1 de una pantalla
+        const encabezado = await caja(
+          page,
+          flujo ? '#contenido > main > div:first-child' : '#contenido h1',
+        );
+        expect(Math.abs(encabezado.x - izq), `${nombre} encabezado`).toBeLessThanOrEqual(
+          TOLERANCIA,
+        );
         // El flujo largo no lleva campana ni barra (E4-26) y su ancho depende del flujo
         if (!flujo) {
-          expect(
-            Math.abs(main.width - 2 * RELLENO - esperado),
-            `${nombre} ancho`,
-          ).toBeLessThanOrEqual(TOLERANCIA);
+          expect(Math.abs(main.width - esperado), `${nombre} ancho`).toBeLessThanOrEqual(
+            TOLERANCIA,
+          );
           const campana = await caja(page, CAMPANA);
           expect(
-            Math.abs(campana.x + campana.width - (main.x + main.width - RELLENO)),
+            Math.abs(campana.x + campana.width - (main.x + main.width)),
             `${nombre} campana`,
           ).toBeLessThanOrEqual(TOLERANCIA);
         }
