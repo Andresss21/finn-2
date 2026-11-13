@@ -138,13 +138,7 @@ export function HallazgosSuscripciones({
     <div className="flex flex-col gap-2.5">
       {hallazgos.map((h) => {
         const a = h.accion;
-        const texto = h.desactivada
-          ? t.suscripciones.desactivada(h.comercio, formatearMonto(h.mensual))
-          : t.suscripciones.sinProgramar(
-              h.comercio,
-              formatearMonto(h.mensual),
-              formatearMonto(h.anual),
-            );
+        const texto = h.texto;
         return (
           <div key={h.clave} data-hallazgo-suscripcion={h.clave}>
             <AvisoEnLinea

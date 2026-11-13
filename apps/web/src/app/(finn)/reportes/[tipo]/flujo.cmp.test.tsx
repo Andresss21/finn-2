@@ -4,6 +4,7 @@ import axe from 'axe-core';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { ReporteDto } from '@finn/aplicacion/consultas/reporte';
+import { conTexto } from '@finn/aplicacion/consultas/textos-hallazgos';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../../globals.css';
 import { PantallaReporte, type Nombres } from './pantalla';
@@ -71,7 +72,8 @@ const dto = (periodos: unknown[], hallazgos: unknown[], accion: unknown) =>
     bandejaPorRevisar: 0,
     periodos,
     accion,
-    hallazgos,
+    // [CH-251] El texto de cada hallazgo es del servidor (06 §3.5.2).
+    hallazgos: conTexto(hallazgos as never),
   }) as unknown as ReporteDto;
 const NOMBRES = { cuentas: [], grupos: [], categorias: [] } as unknown as Nombres;
 

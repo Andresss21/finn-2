@@ -15,14 +15,19 @@ import type {
 } from '../../hechos';
 import { Centavos } from '../../valores/centavos';
 import { FechaLocal } from '../../valores/fecha-local';
+import { coincidenciasDeReglas } from '../reglas';
 import {
   categorias,
   cumplimiento,
   existiaEn,
+  flujoEfectivo,
   ingresosGastos,
   patrimonio,
+  realidad,
   remanente,
+  resumenCumplimiento,
   tendencia,
+  ultimoPeriodo,
 } from './index';
 
 const c = (n: number) => Centavos.desdeEntero(Math.round(n * 100));
@@ -454,5 +459,87 @@ describe('PRU-DOM-REP', () => {
     // Abril (actual): súper 20 + 35 + 10. Marzo (último cerrado): renta 300 + vieja 25; el súper sin gasto no suma.
     expect(categorias(i).total).toBe(m(65));
     expect(categorias(i, { ventana: 'ultimos_1' }).total).toBe(m(325));
+  });
+
+  it('PRU-DOM-REP-790 [FT-60, CA-60.4] (CH-251) el último período de la ventana da la cifra de Tendencia e Ingresos y gastos: marzo cerrado con ultimos_3, abril activo con actual y ninguno sin períodos cerrados', () => {
+    expect(ultimoPeriodo(i, 'ultimos_3')).toMatchObject({
+      inicio: inicio('2027-03-01'),
+      fin: inicio('2027-03-31'),
+      estado: 'cerrado',
+    });
+    expect(ultimoPeriodo(i)).toMatchObject({
+      inicio: inicio('2027-04-01'),
+      fin: inicio('2027-04-30'),
+      estado: 'activo',
+    });
+    // Con hoy en el primer período del libro no hay ninguno cerrado.
+    const temprano = calcular(new Libro().hechos(), f('2027-01-10'));
+    expect(ultimoPeriodo(temprano, 'ultimos_6')).toBeUndefined();
+  });
+
+  it('PRU-DOM-REP-791 [FT-60, CA-60.7] (CH-251) Cumplimiento cuenta las categorías del último período de la ventana que se pasaron de lo asignado: en marzo solo la archivada sin asignado; en abril la desasignación sin gasto no cuenta', () => {
+    // Marzo: renta 300/300, súper 100/0 y vieja 0/25.
+    expect(resumenCumplimiento(i, { ventana: 'ultimos_3' })).toMatchObject({
+      periodo: { inicio: inicio('2027-03-01'), estado: 'cerrado' },
+      sePasaron: 1,
+      categorias: 3,
+    });
+    // Abril: súper 350/65, viaje 100/0 y ajuste −20/0.
+    expect(resumenCumplimiento(i)).toMatchObject({
+      periodo: { inicio: inicio('2027-04-01'), estado: 'activo' },
+      sePasaron: 0,
+      categorias: 3,
+    });
+    // Un consumo de súper que pasa los $350.00 de abril.
+    const pasado = estado((l) => {
+      l.mov('g-abr-4', 'gasto', '2027-04-15', [['ef', -300]], [{ cat: 'super', monto: 300 }]);
+    });
+    expect(resumenCumplimiento(pasado)).toMatchObject({ sePasaron: 1, categorias: 3 });
+  });
+
+  it('PRU-DOM-REP-792 [FT-68] (CH-251) Flujo de efectivo: la variación es el saldo final del último período menos el saldo inicial del primero (06 §3.3)', () => {
+    // Efectivo: $0.00 antes del 1 de enero, $1,885.00 al 28 de febrero, $2,160.00 al 31 de marzo y $2,095.00 hoy.
+    expect(flujoEfectivo(i, { ventana: 'ultimos_3' }).variacion).toBe(m(2160));
+    expect(flujoEfectivo(i, { ventana: 'ultimos_1' }).variacion).toBe(m(275));
+    expect(flujoEfectivo(i).variacion).toBe(m(-65));
+  });
+
+  it('PRU-DOM-REP-793 [FT-62, CA-62.2] (CH-251) Realidad cuenta las categorías que se alejan de su promedio: súper va camino a más del doble de su promedio de $56.67', () => {
+    const r = realidad(i);
+    expect(r.alejadas).toBe(1);
+    expect(r.hallazgos.filter((h) => h.tipo === 'promedio').map((h) => h.clave)).toEqual([
+      'categoria:super',
+    ]);
+  });
+});
+
+describe('PRU-DOM-BAND', () => {
+  const i = estado();
+  const regla = (patron: string) => ({ id: id(`regla-${patron}`), patron });
+
+  it('PRU-DOM-BAND-790 [FT-39, CA-39.1] (CH-251) «Coincide con» da los comercios de las transacciones que contienen el patrón, sin mayúsculas, distintos y del más reciente al más antiguo, hasta 3', () => {
+    const r = coincidenciasDeReglas(i, [regla('selectos'), regla('CINE'), regla('zzz')]);
+    expect(r.get(id('regla-selectos'))).toEqual([
+      'SUPER SELECTOS ESCALON',
+      'SUPER SELECTOS STA ELENA',
+    ]);
+    expect(r.get(id('regla-CINE'))).toEqual(['CINEPOLIS']);
+    expect(r.get(id('regla-zzz'))).toEqual([]);
+    const muchos = estado((l) => {
+      for (const [k, sucursal] of ['A', 'B', 'C', 'D'].entries())
+        l.mov(
+          `g-${sucursal}`,
+          'gasto',
+          `2027-04-0${k + 1}`,
+          [['ef', -1]],
+          [{ cat: 'super', monto: 1 }],
+          { comercio: `  PUMA   ${sucursal} ` },
+        );
+    });
+    expect(coincidenciasDeReglas(muchos, [regla('puma')]).get(id('regla-puma'))).toEqual([
+      'PUMA   D',
+      'PUMA   C',
+      'PUMA   B',
+    ]);
   });
 });

@@ -8,7 +8,7 @@ import { escucharInstalacion } from '../../../cliente/instalacion';
 import { instalacion } from '../../../textos/instalacion';
 import { notificaciones } from '../../../textos/notificaciones';
 import { InstalarFinn } from './instalar-finn';
-import { ListaAjustes } from './lista-ajustes';
+import { ListaAjustes, type ResumenAjustes } from './lista-ajustes';
 
 // Solo el límite externo: `next/link` necesita el enrutador de Next, que el navegador de prueba no tiene.
 vi.mock('next/link', async () => {
@@ -41,13 +41,18 @@ afterEach(() => {
   Reflect.deleteProperty(navigator, 'userAgent');
 });
 
-function montar(respaldoAtrasado = false): HTMLElement {
+function montar(respaldoAtrasado = false, resumen?: ResumenAjustes): HTMLElement {
   document.body.style.cssText = 'background: var(--fondo); color: var(--texto)';
   const nodo = document.createElement('main');
   document.body.append(nodo);
   const raiz = createRoot(nodo);
   act(() => {
-    raiz.render(<ListaAjustes respaldoAtrasado={respaldoAtrasado} />);
+    raiz.render(
+      <ListaAjustes
+        respaldoAtrasado={respaldoAtrasado}
+        {...(resumen === undefined ? {} : { resumen })}
+      />,
+    );
   });
   montado = { raiz, nodo };
   return nodo;
@@ -179,5 +184,36 @@ describe('PRU-CMP-AJUS-140 índice de Ajustes', () => {
     } finally {
       soltar();
     }
+  });
+
+  it('PRU-CMP-AJUS-790 [FT-72, FT-76] (CH-251) cada fila trae su resumen de ajustes(): el día del ciclo, el SMS conectado con su último instante, los formatos activos, las instituciones, los formatos de exportación y los errores de 7 días', () => {
+    const resumen = {
+      diaInicio: 21,
+      webhook: { configurado: true, ultimoSmsEn: '2026-10-15T18:41:00.000Z' },
+      formatosActivos: 4,
+      instituciones: 3,
+      erroresSieteDias: 0,
+    };
+    const resumenDe = (raiz: HTMLElement, href: string) =>
+      raiz.querySelector(`a[href="${href}"] [data-resumen]`)?.textContent;
+    const lista = montar(false, resumen);
+    expect(resumenDe(lista, '/ajustes/ciclo')).toBe('Empieza el día 21');
+    expect(resumenDe(lista, '/ajustes/webhook')).toBe('Conectado · último SMS 15/10/2026 12:41');
+    expect(resumenDe(lista, '/ajustes/formatos')).toBe('4 activos');
+    expect(resumenDe(lista, '/ajustes/instituciones')).toBe('3');
+    expect(resumenDe(lista, '/ajustes/exportar')).toBe('JSON y CSV');
+    expect(resumenDe(lista, '/ajustes/diagnostico')).toBe('Sin errores en 7 días');
+    // Lo que no es del servidor no tiene resumen: Notificaciones, Seguridad y Apariencia.
+    for (const href of ['/ajustes/notificaciones', '/ajustes/seguridad', '/ajustes/apariencia'])
+      expect(resumenDe(lista, href)).toBeUndefined();
+    const otra = montar(false, {
+      ...resumen,
+      webhook: { configurado: false },
+      formatosActivos: 1,
+      erroresSieteDias: 2,
+    });
+    expect(resumenDe(otra, '/ajustes/webhook')).toBe('Sin conectar');
+    expect(resumenDe(otra, '/ajustes/formatos')).toBe('1 activo');
+    expect(resumenDe(otra, '/ajustes/diagnostico')).toBe('2 errores en 7 días');
   });
 });

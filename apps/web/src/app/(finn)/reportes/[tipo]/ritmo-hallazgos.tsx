@@ -9,7 +9,7 @@ import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Boton } from '../../../../componentes/base/boton';
 import { COLOR_TEXTO } from '../../../../componentes/dominio/indicador-estado';
 import { EnlaceFinn } from '../../../../componentes/navegacion/enlace-finn';
-import { centavosATextoDecimal, formatearFecha, formatearMonto } from '../../../../formato';
+import { centavosATextoDecimal, formatearMonto } from '../../../../formato';
 import type { AccionEscritura } from '../../../../formularios/use-operacion';
 import { ConfirmacionUnToque } from '../../../../formularios/confirmacion-un-toque';
 import { useUnToque } from '../../../../formularios/use-un-toque';
@@ -28,14 +28,6 @@ interface Entrada {
 
 const ENLACE =
   'inline-flex min-h-11 items-center gap-1.5 text-etiqueta font-bold no-underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-
-function textoDe(h: Hallazgo): string {
-  const exceso = formatearMonto(h.exceso);
-  const fin = formatearFecha(h.fin).slice(0, 5);
-  return h.sobregiroActual === 0
-    ? ti.hallazgo.camino(exceso, h.categoria.nombre, fin)
-    : ti.hallazgo.ya(formatearMonto(h.sobregiroActual), h.categoria.nombre, exceso, fin);
-}
 
 function hrefDe(h: Hallazgo): string {
   const a = h.accion;
@@ -135,7 +127,7 @@ export function HallazgosRitmo({
                 )
               }
             >
-              {textoDe(h)}
+              {h.texto}
             </AvisoEnLinea>
           </div>
         );

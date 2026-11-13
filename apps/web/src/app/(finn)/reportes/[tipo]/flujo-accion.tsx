@@ -108,12 +108,7 @@ export function AccionFlujo({
                   ),
                 })}
           >
-            {t.flujo.hallazgo(
-              formatearMonto(h.comprasConTarjeta),
-              formatearMonto(h.pagosTarjeta),
-              h.tarjeta.nombre,
-              formatearMonto(h.accion.monto),
-            )}
+            {h.texto}
           </AvisoEnLinea>
         </div>
       )}

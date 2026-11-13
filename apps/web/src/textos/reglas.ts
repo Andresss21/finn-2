@@ -18,6 +18,8 @@ export const reglas = {
   hacia: (categoria: string) => `→ ${categoria}`,
   archivadaEnLista: (categoria: string) => `${categoria} (archivada)`,
   patron: 'El comercio contiene',
+  // [CH-251] E4-22: comercios que contienen el patrón (de `ReglaDto.coincideCon`).
+  coincideCon: (comercios: readonly string[]) => `Coincide con: ${comercios.join(', ')}.`,
   categoria: 'Categoría',
   obligatorio: 'Completá este campo.',
   guardar: 'Guardar regla',

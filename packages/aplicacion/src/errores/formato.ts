@@ -28,6 +28,12 @@ export function formatearMonto(c: Centavos, signo: string = MENOS): string {
   return c < 0 ? `${signo}${base}` : base;
 }
 
+const porcentaje = new Intl.NumberFormat('es-SV', { style: 'percent', maximumFractionDigits: 2 });
+
+/** [CH-251] Puntos básicos → `56.82%`, igual que la interfaz (05 §5.4): `Intl` recibe `"<pb>e-4"`, sin flotantes. */
+export const formatearPorcentaje = (pb: number): string =>
+  porcentaje.format(`${pb}e-4` as unknown as number);
+
 /** `AAAA-MM-DD` → `05/10/2026`. */
 export function formatearFecha(f: string): string {
   const [a, m, d] = f.split('-');

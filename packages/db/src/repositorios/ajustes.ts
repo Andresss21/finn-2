@@ -12,6 +12,8 @@ const HORAS_RESPALDO = 36;
 const DIAS_RESTAURACION = 35;
 const HORA_MS = 3_600_000;
 const DIA_MS = 24 * HORA_MS;
+/** [CH-251] Los errores del resumen del índice: los de los últimos 7 días. */
+const DIAS_ERRORES = 7;
 /** Eventos del diagnóstico (04 §15): los 50 últimos. */
 const DIAGNOSTICO_MAX = 50;
 
@@ -45,6 +47,12 @@ export async function leerAjustesTecnicos(tx: LectorTx) {
     orderBy: [{ ocurridoEn: 'desc' }, { id: 'desc' }],
     take: DIAGNOSTICO_MAX,
   });
+  const erroresSieteDias = await p.eventoSistema.count({
+    where: {
+      nivel: 'error',
+      ocurridoEn: { gt: new Date(ahora.getTime() - DIAS_ERRORES * DIA_MS) },
+    },
+  });
   // Sin respaldo o sin restauración registrados no hay nada que cuente: se avisa
   const atrasado = (en: Date | null | undefined, plazoMs: number): boolean =>
     en === null || en === undefined || ahora.getTime() - en.getTime() > plazoMs;
@@ -76,6 +84,7 @@ export async function leerAjustesTecnicos(tx: LectorTx) {
       respaldoAtrasado: atrasado(respaldo?.ultimoRespaldoEn, HORAS_RESPALDO * HORA_MS),
       restauracionAtrasada: atrasado(respaldo?.ultimaRestauracionEn, DIAS_RESTAURACION * DIA_MS),
     },
+    erroresSieteDias,
     diagnostico: eventos.map((e) => {
       const idError =
         typeof e.datos === 'object' && e.datos !== null && !Array.isArray(e.datos)

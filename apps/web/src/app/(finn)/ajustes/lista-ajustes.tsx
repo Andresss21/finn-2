@@ -2,9 +2,12 @@
 // Lista de `/ajustes` (06 FT-72 a FT-77; export de diseño, pantalla 11 «Índice»): una tarjeta con una fila por sección: círculo
 // de ícono de 40, el nombre y la flecha. Solo enlaza a las secciones que existen; cada una conserva el texto de su catálogo.
 // [CH-242] Debajo, «Salir» en su propia tarjeta (entrega 3, `16-salir/ajustes-indice`); Apariencia lleva `sun` (GLO-107).
+// [CH-251] Cada fila con su resumen de `ajustes()` (AJU-01): solo formatea lo que trae el DTO.
 import { useInstalacion } from '../../../cliente/instalacion';
 import { Icono, type NombreIcono } from '../../../componentes/base/icono';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
+import { formatearInstante } from '../../../formato';
+import { ajustesIndice as ti } from '../../../textos/ajustes-indice';
 import { Salir } from '../../../componentes/navegacion/navegacion-app';
 import { ajustesApariencia } from '../../../textos/ajustes-apariencia';
 import { ajustesCiclo } from '../../../textos/ajustes-ciclo';
@@ -30,8 +33,37 @@ const FILAS: readonly { href: string; icono: NombreIcono; texto: string }[] = [
   { href: '/ajustes/apariencia', icono: 'sun', texto: ajustesApariencia.enlace },
 ];
 
+/** [CH-251] Lo que el índice resume de `AjustesDto` (04 §6.11). */
+export interface ResumenAjustes {
+  readonly diaInicio: number;
+  readonly webhook: { readonly configurado: boolean; readonly ultimoSmsEn?: string };
+  readonly formatosActivos: number;
+  readonly instituciones: number;
+  readonly erroresSieteDias: number;
+}
+
+const resumenes = (r: ResumenAjustes): Readonly<Record<string, string>> => ({
+  '/ajustes/ciclo': ti.ciclo(r.diaInicio),
+  '/ajustes/webhook': !r.webhook.configurado
+    ? ti.sinConectar
+    : r.webhook.ultimoSmsEn === undefined
+      ? ti.conectado
+      : ti.conectadoUltimo(formatearInstante(r.webhook.ultimoSmsEn)),
+  '/ajustes/formatos': ti.activos(r.formatosActivos),
+  '/ajustes/instituciones': String(r.instituciones),
+  '/ajustes/exportar': ti.exportar,
+  '/ajustes/diagnostico': ti.errores(r.erroresSieteDias),
+});
+
 /** `respaldoAtrasado`: `AjustesDto.respaldo` (CA-76.1); sin él, la fila de Respaldo no avisa nada. */
-export function ListaAjustes({ respaldoAtrasado = false }: { respaldoAtrasado?: boolean }) {
+export function ListaAjustes({
+  respaldoAtrasado = false,
+  resumen,
+}: {
+  respaldoAtrasado?: boolean;
+  resumen?: ResumenAjustes;
+}) {
+  const textos = resumen === undefined ? {} : resumenes(resumen);
   // E5-17: en un iPhone sin instalar, la fila de Notificaciones dice por qué todavía no se puede activar.
   const iosSinInstalar = useInstalacion().oferta === 'ios';
   const lista = (
@@ -53,6 +85,11 @@ export function ListaAjustes({ respaldoAtrasado = false }: { respaldoAtrasado?: 
             </span>
             <span className="flex flex-col">
               <span className="text-cuerpo font-semibold text-texto">{f.texto}</span>
+              {textos[f.href] === undefined ? null : (
+                <span data-resumen className="text-cuerpo-pequeno text-texto-secundario">
+                  {textos[f.href]}
+                </span>
+              )}
               {respaldoAtrasado && f.href === '/ajustes/respaldo' ? (
                 <span className="text-cuerpo-pequeno font-semibold text-problema-texto">
                   {ajustesRespaldo.atrasadoEnIndice}

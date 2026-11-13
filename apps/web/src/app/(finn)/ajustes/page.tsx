@@ -13,13 +13,16 @@ export const metadata: Metadata = { title: navegacion.secciones.ajustes };
 
 export default async function PaginaAjustes() {
   const { primerosPasos } = await consultar(async () => inicio(await depsDeConsulta()));
-  const { respaldo } = await consultar(async () => ajustes(await depsDeConsulta()));
+  const dto = await consultar(async () => ajustes(await depsDeConsulta()));
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-6 px-5 py-4">
       <h1 className="text-titulo-pantalla">{navegacion.secciones.ajustes}</h1>
       <InstalarFinn />
       <RecordatorioPrimerosPasos pasos={primerosPasos} />
-      <ListaAjustes respaldoAtrasado={respaldo.respaldoAtrasado} />
+      <ListaAjustes
+        respaldoAtrasado={dto.respaldo.respaldoAtrasado}
+        resumen={{ diaInicio: dto.ciclo.diaInicioVigente, webhook: dto.webhook, ...dto.resumen }}
+      />
     </main>
   );
 }
