@@ -4,7 +4,6 @@
 // Pagos de tarjeta va aparte, fijo, sin asa ni flecha. La barra y el resultado los dibuja la lista (`enLugar`), debajo de lo suyo.
 // `Asa` es el punto donde el arrastre (el PR siguiente) se engancha: hoy solo abre la barra «Mover».
 import type { ReactNode } from 'react';
-import { cn } from '../../components/ui/utils';
 import { Icono } from '../../componentes/base/icono';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { estructura as t } from '../../textos/estructura';
@@ -82,7 +81,11 @@ export function GrupoEstructura({
             <Icono
               nombre="chevD"
               tamano={18}
-              className={cn('fz-chev shrink-0 text-texto-secundario', colapsado && '-rotate-90')}
+              className={
+                colapsado
+                  ? 'fz-chev shrink-0 -rotate-90 text-texto-secundario'
+                  : 'fz-chev shrink-0 text-texto-secundario'
+              }
             />
             <span className="text-rotulo min-w-0 text-texto-secundario">{g.nombre}</span>
           </button>
@@ -116,10 +119,11 @@ export function GrupoEstructura({
               {cats.map((c) => (
                 <li key={c.id} data-fila-cat={c.id} className="border-b border-borde-sutil">
                   <div
-                    className={cn(
-                      'flex min-h-14 items-center gap-0.5 py-1 pr-1.5 pl-1',
-                      abierta(c.id) && 'bg-accion-tonal',
-                    )}
+                    className={
+                      abierta(c.id)
+                        ? 'flex min-h-14 items-center gap-0.5 bg-accion-tonal py-1 pr-1.5 pl-1'
+                        : 'flex min-h-14 items-center gap-0.5 py-1 pr-1.5 pl-1'
+                    }
                   >
                     <Asa
                       etiqueta={t.moverCategoria(c.nombre)}

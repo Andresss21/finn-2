@@ -100,8 +100,8 @@ const A7: readonly GrupoDeEstructura[] = [
   grupo('Pagos de tarjeta', ['Visa Oro'], { sistema: true }),
 ];
 
-const q = <T extends Element = HTMLElement>(sel: string): T => {
-  const e = document.querySelector<T>(sel);
+const q = (sel: string): HTMLElement => {
+  const e = document.querySelector<HTMLElement>(sel);
   if (e === null) throw new Error(`no hay ${sel}`);
   return e;
 };

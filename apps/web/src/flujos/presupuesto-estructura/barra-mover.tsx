@@ -3,12 +3,11 @@
 // puede arrastrar (WCAG 2.5.7). Subir y Bajar cruzan de grupo; en el primer o el último lugar quedan con `aria-disabled` (no
 // `disabled`), para que el foco no se pierda al llegar al extremo. Cada botón lleva `data-foco`: la lista lo vuelve a enfocar
 // después de mover, aunque la fila haya cambiado de grupo.
-import { cn } from '../../components/ui/utils';
 import { Icono } from '../../componentes/base/icono';
 import { estructura as t } from '../../textos/estructura';
 
 const BOTON =
-  'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-control bg-superficie px-3.5 text-cuerpo-pequeno font-bold text-accion shadow-[0_0_0_1px_var(--borde-sutil)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco aria-disabled:bg-transparent aria-disabled:text-texto-deshabilitado aria-disabled:shadow-none aria-expanded:bg-accion aria-expanded:text-texto-sobre-accion';
+  'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-control bg-superficie px-3.5 text-cuerpo-pequeno font-bold text-accion ring-1 ring-borde-sutil focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco aria-disabled:bg-transparent aria-disabled:text-texto-deshabilitado aria-disabled:ring-0 aria-expanded:bg-accion aria-expanded:text-texto-sobre-accion';
 
 export interface PropsBarraMover {
   readonly id: string;
@@ -55,10 +54,11 @@ export function BarraMover({
     <div
       role="group"
       aria-label={esGrupo ? t.barraMoverGrupo : t.barraMover}
-      className={cn(
-        'fz-aparece flex flex-col gap-2.5 bg-accion-tonal px-3 pt-2.5 pb-3',
-        esGrupo ? 'rounded-[14px]' : 'border-b border-borde-sutil',
-      )}
+      className={
+        esGrupo
+          ? 'fz-aparece flex flex-col gap-2.5 rounded-contenedor bg-accion-tonal px-3 pt-2.5 pb-3'
+          : 'fz-aparece flex flex-col gap-2.5 border-b border-borde-sutil bg-accion-tonal px-3 pt-2.5 pb-3'
+      }
     >
       <span role="status" className="text-cuerpo-pequeno font-semibold text-texto">
         {estado}

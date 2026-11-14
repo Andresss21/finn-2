@@ -307,7 +307,7 @@ export function ListaEstructura({
     if (aviso?.tipo === 'movido' && aviso.ancla === id) {
       const v = aviso.volver;
       cuerpo.push(
-        <div key="aviso" className={esGrupo ? 'overflow-hidden rounded-[14px]' : ''}>
+        <div key="aviso" className={esGrupo ? 'overflow-hidden rounded-contenedor' : ''}>
           {resultadoEn(
             aviso.texto,
             v === undefined
@@ -347,7 +347,7 @@ export function ListaEstructura({
 
   const cerrar = useCerrarFlujo('/presupuesto', false);
   const sinNormales = !todos.some((g) => g.categorias.some((c) => c.clase === 'normal'));
-  const clases = new Map(
+  const clases = new Map<string, string>(
     todos.flatMap((g) => g.categorias.map((c) => [c.categoria.id, c.clase] as const)),
   );
 
