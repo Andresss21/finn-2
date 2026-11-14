@@ -63,9 +63,12 @@ export function AvisoBorrador({ borrador }: { readonly borrador: EstadoBorrador 
   }, [visible, reloj]);
   return (
     <>
-      <p ref={region} role="status" className="sr-only" data-anuncio-borrador="">
-        {anuncio}
-      </p>
+      {/* La región existe solo mientras hay (o hubo) un borrador: un formulario sin borrador queda con su región de siempre. */}
+      {borrador.recuperado || anuncio !== '' ? (
+        <p ref={region} role="status" className="sr-only" data-anuncio-borrador="">
+          {anuncio}
+        </p>
+      ) : null}
       {visible ? (
         <AvisoEnLinea
           estado="informacion"
