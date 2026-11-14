@@ -103,9 +103,9 @@ export function amortizacionDe(
 
 /**
  * [CH-252] La próxima cuota (E2-11): con modelo, la primera no pagada de la tabla; sin modelo, la de las condiciones:
- * número = cuotas pagadas (al crear + registradas) + 1, fecha = apertura + (número − pagadas al crear) × frecuencia
- * ([CH-261]: la apertura es el punto de partida del préstamo en curso, P13; como las ocurrencias de una programada) y
- * monto = cuota pactada. Nada si ya no quedan cuotas o no queda capital.
+ * número = cuotas pagadas (al crear + registradas) + 1, fecha = apertura + número × frecuencia ([CH-264]: la apertura es la
+ * fecha original del préstamo, también en uno en curso, P13; como las ocurrencias de una programada) y monto = cuota pactada.
+ * Nada si ya no quedan cuotas o no queda capital.
  */
 export function proximaCuotaDe(
   i: Instantanea,
@@ -123,10 +123,7 @@ export function proximaCuotaDe(
   const sinN = p.frecuencia === 'cada_n_dias' && p.frecuenciaDias === null;
   if (k === undefined || capital === 0 || numero > p.plazoCuotas || sinN) return undefined;
   const regla = { frecuencia: p.frecuencia, frecuenciaDias: p.frecuenciaDias };
-  const fecha = fechaDeOcurrencia(
-    { ...regla, primeraFecha: k.fechaApertura },
-    numero - p.cuotasPagadasAlCrear,
-  );
+  const fecha = fechaDeOcurrencia({ ...regla, primeraFecha: k.fechaApertura }, numero);
   return { fecha, monto: p.cuotaPactada, numero };
 }
 

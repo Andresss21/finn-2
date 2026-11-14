@@ -2155,7 +2155,8 @@ En todos los casos manda 00-decisiones.md (o la resolución citada).
 - **Entradas:**
   - del préstamo: monto original M, fecha de apertura F₀, tasa nominal anual i, seguro del primer mes S₁, cuota pactada Q, plazo n;
   - las cuotas y abonos reales registrados (fecha, capital, interés, seguro, número de cuota si se indicó);
-  - **[CH-261]** en un préstamo en curso (P13): las cuotas ya pagadas al crearlo en Finn p₀ y el capital pendiente registrado en la apertura B_p₀ (su saldo inicial). La apertura es su punto de partida: la proyección empieza en la cuota p₀ + 1, y las cuotas 1 a p₀ no se proyectan ni pueden quedar atrasadas. Con p₀ = 0, B₀ = M.
+  - **[CH-261]** en un préstamo en curso (P13): las cuotas ya pagadas al crearlo en Finn p₀ y el capital pendiente registrado B_p₀ (su saldo inicial). ~~La apertura es su punto de partida:~~ **[CH-264]** La apertura F₀ es la fecha original del préstamo y las cuotas pagadas al crear son la 1 a la p₀: la proyección empieza en la cuota p₀ + 1, con fecha F₀ + (p₀ + 1) meses, y las cuotas 1 a p₀ no se proyectan ni pueden quedar atrasadas. Con p₀ = 0, B₀ = M.
+  - **[CH-264]** Sin tasa no hay proyección: el préstamo se trata como sin modelo (OP-01 no acepta el modelo sin tasa). Si los datos no cierran (alguna cuota de la proyección no amortiza capital: Q ≤ I_k + Seg_k), tampoco: el modelo nunca da capital negativo ni un saldo que crece.
 - **Salidas:**
   1. Proyección por cuota: número, fecha, interés, seguro, capital y saldo.
   2. Desglose propuesto para un pago real (supuesto 16).
@@ -2170,7 +2171,7 @@ En todos los casos manda 00-decisiones.md (o la resolución citada).
 
 **Reglas**
 
-1. **Cuota fija mensual Q.** Fecha de la cuota k: F_k = F₀ + k meses (**[CH-261]** F₀ + (k − p₀) meses en un préstamo en curso, desde la cuota p₀ + 1 con B_p₀), con el mismo día de F₀ recortado al último día del mes. *(Validar el recorte.)*
+1. **Cuota fija mensual Q.** Fecha de la cuota k: F_k = F₀ + k meses (~~**[CH-261]** F₀ + (k − p₀) meses en un préstamo en curso~~ **[CH-264]** también en un préstamo en curso, desde la cuota p₀ + 1 con B_p₀), con el mismo día de F₀ recortado al último día del mes. *(Validar el recorte.)*
 2. **Interés:** I_k = redondeo(B_{k−1} × i / 365 × d_k), con d_k = F_k − F_{k−1} en días reales y B₀ = M. *(Validar la base de 365 días en años bisiestos y el tipo de redondeo; se asume mitad hacia arriba al centavo.)*
 3. **Seguro:** Seg_k = redondeo(B_{k−1} × S₁ / M), proporcional al saldo. *(Validar si se aplica sobre el saldo antes de la cuota.)*
 4. **Capital:** C_k = mín(Q − I_k − Seg_k, B_{k−1}). B_k = B_{k−1} − C_k. La última cuota puede ser menor que Q.
