@@ -34,7 +34,10 @@ interface Vista {
   readonly rechazos?: readonly { readonly codigo: string; readonly datos?: Datos }[];
 }
 
-const DIAS = Array.from({ length: 31 }, (_, i) => ({ valor: String(i + 1), etiqueta: String(i + 1) }));
+const DIAS = Array.from({ length: 31 }, (_, i) => ({
+  valor: String(i + 1),
+  etiqueta: String(i + 1),
+}));
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 
 const corto = (f: string): string => formatearFecha(f).slice(0, 5);

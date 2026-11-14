@@ -117,7 +117,9 @@ export function FormularioFormato({
   // Lo que falta se marca desde el primer intento de guardar (CAMPOS-V3 §5); el rechazo del servidor manda en su campo.
   const revision = intentos > 0 ? CONTRATO.safeParse(valores) : undefined;
   const campos: Readonly<Record<string, string>> = {
-    ...Object.fromEntries((revision?.error?.issues ?? []).map((i) => [String(i.path[0]), i.message])),
+    ...Object.fromEntries(
+      (revision?.error?.issues ?? []).map((i) => [String(i.path[0]), i.message]),
+    ),
     ...fallo?.campos,
   };
   const err = (n: string): string | undefined => campos[n];
