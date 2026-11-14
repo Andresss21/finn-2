@@ -2,6 +2,7 @@
 // datos es un `GrupoCampos`; las selecciones van en segmentado (3 opciones o menos) o en la lista propia, las casillas y el
 // interruptor como filas, y Guardar se ve apagado con `aria-disabled` y dice debajo qué falta. Sin subrayados (C-33). Los CA-K3-n
 // de PROMPT-CAMPOS.md §5 van en el texto del título.
+import type { SalidaProbar } from '@finn/aplicacion/operaciones/formatos';
 import axe from 'axe-core';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -117,7 +118,14 @@ const subrayados = (nodo: HTMLElement): string[] =>
 const BAC = '11111111-1111-4111-8111-111111111111';
 const formatoProps = {
   guardar: vi.fn(() => ok({ formatoId: 'f1' })),
-  probar: vi.fn(() => ok({ coincide: true, demasiadoLargo: false })),
+  probar: vi.fn(() =>
+    Promise.resolve({
+      ok: true as const,
+      valor: { coincide: true, demasiadoLargo: false } as SalidaProbar,
+      yaAplicada: false,
+      avisos: [],
+    }),
+  ),
   instituciones: [
     { id: BAC, nombre: 'BAC' },
     { id: '44444444-4444-4444-8444-444444444444', nombre: 'Promerica' },
