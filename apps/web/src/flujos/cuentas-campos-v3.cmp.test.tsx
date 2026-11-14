@@ -89,8 +89,7 @@ const de = (nodo: HTMLElement, etiqueta: string): HTMLInputElement =>
 const filaDe = (el: Element): HTMLElement => el.closest<HTMLElement>('.campo-fila') as HTMLElement;
 const enGrupo = (el: Element): boolean => el.closest('.grupo-campos') !== null;
 const afijo = (el: Element) => filaDe(el).querySelector('.campo-afijo')?.textContent;
-const sufijo = (el: Element) =>
-  filaDe(el).querySelector('.campo-afijo:last-of-type')?.textContent;
+const sufijo = (el: Element) => filaDe(el).querySelector('.campo-afijo:last-of-type')?.textContent;
 const segmentado = (nodo: HTMLElement, etiqueta: string) =>
   nodo.querySelector<HTMLElement>(`[role=radiogroup][aria-label="${etiqueta}"]`);
 const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement =>

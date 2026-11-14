@@ -3,13 +3,16 @@
 // que dice el servidor, elegir qué marcar como conciliado y confirmar. Tres pasos sobre la misma operación: datos (previsualiza
 // con todas las candidatas para traer la diferencia), marcar (todas preseleccionadas solo si la diferencia es exactamente cero, P6-5)
 // y revisar (previsualiza con lo marcado y confirma). No calcula montos (PF-3).
+// [C-45] La fecha y el saldo son un `GrupoCampos` (CAMPOS-V3 §2; en una tarjeta, «Debo · Tengo a favor» en su fila) y cada
+// transacción por marcar es una casilla en fila (§8). «Ver diferencia» sigue §5 y §11; el enlace va sin subrayado (C-33).
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
+import { Casilla } from '../../componentes/base/controles-fila';
 import { Resultado } from '../../componentes/base/resultado';
-import { Monto } from '../../componentes/dominio/monto';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -17,6 +20,7 @@ import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { CerrarFlujoAlMontar } from '../../componentes/navegacion/flujo-de-ruta';
 import { useReemplazarBusqueda } from '../../componentes/navegacion/use-reemplazar-busqueda';
 import { centavosATextoDecimal, formatearFecha, formatearMonto } from '../../formato';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -179,6 +183,12 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
     void operacion.enviar({ ...c, marcar });
   };
   const error = (n: keyof Campos): string | undefined => formState.errors[n]?.message;
+  const guardar = useGuardarV3({
+    contrato,
+    campos: c,
+    intentos: formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
   const vista = (previsualizacion ?? {}) as Vista;
   const fechaTexto = formatearFecha(c.fecha);
 
@@ -224,7 +234,7 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
             accion={
               <EnlaceFinn
                 href={`/registrar/${ruta}?${valores}`}
-                className="inline-flex min-h-11 items-center font-bold text-enlace underline"
+                className="inline-flex min-h-11 items-center font-bold text-enlace"
               >
                 {t.crearAjuste}
               </EnlaceFinn>
@@ -293,38 +303,28 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
           {candidatas.length === 0 ? (
             <p>{t.sinCandidatas}</p>
           ) : (
-            <fieldset className="flex flex-col gap-1">
-              <legend className="mb-2 text-titulo-seccion">{t.marcar}</legend>
+            <section className="flex flex-col gap-2">
+              <h2 className="text-titulo-seccion">{t.marcar}</h2>
               {p.cantidad > candidatas.length ? (
                 <p className="text-cuerpo-pequeno text-texto-secundario">
                   {t.mostrando(candidatas.length, p.cantidad)}
                 </p>
               ) : null}
-              {candidatas.map((x) => (
-                <label
-                  key={x.id}
-                  className="flex min-h-11 items-center gap-3 rounded-contenedor bg-superficie px-3.5"
-                >
-                  <input
-                    type="checkbox"
-                    className="size-5 shrink-0"
-                    checked={marcada(x.id)}
-                    onChange={() => {
+              <GrupoCampos etiqueta={t.marcar}>
+                {candidatas.map((x) => (
+                  <Casilla
+                    key={x.id}
+                    etiqueta={x.comercio ?? dominio.sinComercio}
+                    descripcion={formatearFecha(x.fecha)}
+                    cifra={formatearMonto(x.monto)}
+                    marcada={marcada(x.id)}
+                    alCambiar={() => {
                       alternar(x.id);
                     }}
                   />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">
-                      {x.comercio ?? dominio.sinComercio}
-                    </span>
-                    <span className="text-cuerpo-pequeno text-texto-secundario">
-                      {formatearFecha(x.fecha)}
-                    </span>
-                  </span>
-                  <Monto centavos={x.monto} rol="cifra" />
-                </label>
-              ))}
-            </fieldset>
+                ))}
+              </GrupoCampos>
+            </section>
           )}
           {estado === 'error' && fallo !== undefined ? (
             <AvisoEnLinea estado="problema" aparecioDespues>
@@ -356,7 +356,7 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
 
   return (
     <MarcoCorto superpuesto={superpuesto} titulo={t.titulo} rutaPadre={rutaPadre}>
-      <form onSubmit={verDiferencia} noValidate className="flex flex-col gap-5">
+      <form ref={guardar.forma} onSubmit={verDiferencia} noValidate className="flex flex-col gap-5">
         <Suspense fallback={null}>
           <BorradorVerificarSaldo
             campos={c}
@@ -366,39 +366,47 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
           />
         </Suspense>
         <p>{t.cuenta(cuenta)}</p>
-        <EntradaFecha
-          nombre="fecha"
-          etiqueta={t.fecha}
-          valor={c.fecha as FechaLocal}
-          alCambiar={(fecha) => {
-            setValue('fecha', fecha, { shouldDirty: true, shouldValidate: formState.isSubmitted });
-            if (fecha !== '') reemplazarBusqueda({ fecha });
-          }}
-          maxima={hoy}
-          hoy={hoy}
-          error={error('fecha')}
-          requerido
-        />
-        <EntradaMonto
-          nombre="saldo"
-          etiqueta={tarjeta ? t.deudaBanco : t.saldoBanco}
-          valor={c.saldo}
-          alCambiar={(saldo) => {
-            setValue('saldo', saldo, { shouldDirty: true, shouldValidate: formState.isSubmitted });
-          }}
-          {...(tarjeta
-            ? {
-                conSigno: true,
-                signo: c.signo,
-                alCambiarSigno: (signo: Campos['signo']) => {
-                  setValue('signo', signo, { shouldDirty: true });
-                },
-                etiquetasSigno: { positivo: t.debo, negativo: t.tengoAFavor },
-              }
-            : {})}
-          error={error('saldo')}
-          requerido
-        />
+        <GrupoCampos>
+          <EntradaFecha
+            nombre="fecha"
+            etiqueta={t.fecha}
+            valor={c.fecha as FechaLocal}
+            alCambiar={(fecha) => {
+              setValue('fecha', fecha, {
+                shouldDirty: true,
+                shouldValidate: formState.isSubmitted,
+              });
+              if (fecha !== '') reemplazarBusqueda({ fecha });
+            }}
+            maxima={hoy}
+            hoy={hoy}
+            error={error('fecha')}
+            requerido
+          />
+          <EntradaMonto
+            nombre="saldo"
+            etiqueta={tarjeta ? t.deudaBanco : t.saldoBanco}
+            valor={c.saldo}
+            alCambiar={(saldo) => {
+              setValue('saldo', saldo, {
+                shouldDirty: true,
+                shouldValidate: formState.isSubmitted,
+              });
+            }}
+            {...(tarjeta
+              ? {
+                  conSigno: true,
+                  signo: c.signo,
+                  alCambiarSigno: (signo: Campos['signo']) => {
+                    setValue('signo', signo, { shouldDirty: true });
+                  },
+                  etiquetasSigno: { positivo: t.debo, negativo: t.tengoAFavor },
+                }
+              : {})}
+            error={error('saldo')}
+            requerido
+          />
+        </GrupoCampos>
         <p>{t.candidatas(p.cantidad)}</p>
         {vivo?.clave === claveVivo && vivo.propuesta !== undefined ? (
           <p data-diferencia-vivo role="status" className="font-bold">
@@ -422,9 +430,8 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
           enviando={estado === 'enviando'}
           textoEnviando={t.calculando}
           deshabilitado={!operacion.enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          className="w-full"
+          {...guardar.boton}
         >
           {t.verDiferencia}
         </Boton>

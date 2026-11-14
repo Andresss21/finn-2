@@ -87,7 +87,7 @@ describe('PRU-CMP-CTA-741 archivar y eliminar una cuenta empiezan por el impacto
     expect(nodo.textContent).toContain('Asignaciones en períodos futuros de su categoría de pago');
     expect(boton(nodo, 'Archivar Visa Oro')).toBeDefined();
     expect(boton(nodo, 'Cancelar')).toBeDefined();
-    await userEvent.click(nodo.querySelector('[role="radio"][value="dejar"]') as HTMLElement);
+    await userEvent.click(nodo.querySelector('input[type="radio"][value="dejar"]') as HTMLElement);
     expect(accion).toHaveBeenCalledTimes(2);
     expect(accion.mock.calls[1]?.[0]).toMatchObject({
       modo: 'previsualizar',

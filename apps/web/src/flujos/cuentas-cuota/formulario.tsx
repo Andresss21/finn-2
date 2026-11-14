@@ -1,12 +1,15 @@
 'use client';
 // `/cuentas/[cuentaId]/cuota` (FT-54, OP-24; 05 §2.7): pagar la cuota de un préstamo o abonar a capital. El desglose propuesto se
 // recalcula al cambiar la fecha si la persona no lo editó. No calcula montos (PF-3): el servidor decide la suma y los avisos.
+// [C-45] El pago y el desglose son dos `GrupoCampos` (CAMPOS-V3 §2): «Pagar con» en segmentado o en la lista según cuántas
+// cuentas hay (§6), la categoría con su disponible y los montos en fila con «$». Guardar sigue §5 y §11.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { Resultado } from '../../componentes/base/resultado';
 import { Seleccion } from '../../componentes/base/seleccion';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
@@ -15,6 +18,7 @@ import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { useReemplazarBusqueda } from '../../componentes/navegacion/use-reemplazar-busqueda';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { pagarCuotaPrestamo } from '../../servidor/acciones/transacciones';
@@ -108,6 +112,12 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
     return mensaje === undefined ? {} : { error: mensaje };
   };
 
+  const guardar = useGuardarV3({
+    contrato,
+    campos: c,
+    intentos: formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
   const { estado, error: fallo, exito } = operacion;
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
 
@@ -151,51 +161,54 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
         />
       ) : (
         <form
+          ref={guardar.forma}
           onSubmit={(e) => void formulario.enviar(e)}
           noValidate
           className="flex flex-col gap-5"
         >
           <p>{t.capitalPendiente(formatearMonto(props.capitalPendiente))}</p>
-          <Seleccion
-            etiqueta={t.origen}
-            opciones={origenes.map((x) => ({
-              valor: x.id,
-              etiqueta: x.nombre,
-              descripcion: x.tarjeta ? t.tarjeta : t.efectivo,
-            }))}
-            valor={c.origenId}
-            alCambiar={poner('origenId')}
-            {...conError('origenId')}
-          />
-          <EntradaFecha
-            nombre="fecha"
-            etiqueta={t.fecha}
-            valor={c.fecha as FechaLocal}
-            alCambiar={cambiarFecha}
-            maxima={hoy}
-            hoy={hoy}
-            error={error('fecha')}
-            requerido
-          />
-          <Seleccion
-            etiqueta={t.categoria}
-            opciones={categorias.map((x) => ({
-              valor: x.id,
-              etiqueta: x.nombre,
-              descripcion: t.disponibleDe(x.grupo, formatearMonto(x.disponible)),
-            }))}
-            valor={c.categoriaId}
-            alCambiar={poner('categoriaId')}
-            {...conError('categoriaId')}
-          />
-          <EntradaMonto
-            nombre="total"
-            etiqueta={t.total}
-            valor={c.total}
-            alCambiar={poner('total')}
-            error={error('total')}
-            requerido
-          />
+          <GrupoCampos>
+            <Seleccion
+              etiqueta={t.origen}
+              opciones={origenes.map((x) => ({
+                valor: x.id,
+                etiqueta: x.nombre,
+                descripcion: x.tarjeta ? t.tarjeta : t.efectivo,
+              }))}
+              valor={c.origenId}
+              alCambiar={poner('origenId')}
+              {...conError('origenId')}
+            />
+            <EntradaFecha
+              nombre="fecha"
+              etiqueta={t.fecha}
+              valor={c.fecha as FechaLocal}
+              alCambiar={cambiarFecha}
+              maxima={hoy}
+              hoy={hoy}
+              error={error('fecha')}
+              requerido
+            />
+            <Seleccion
+              etiqueta={t.categoria}
+              opciones={categorias.map((x) => ({
+                valor: x.id,
+                etiqueta: x.nombre,
+                descripcion: t.disponibleDe(x.grupo, formatearMonto(x.disponible)),
+              }))}
+              valor={c.categoriaId}
+              alCambiar={poner('categoriaId')}
+              {...conError('categoriaId')}
+            />
+            <EntradaMonto
+              nombre="total"
+              etiqueta={t.total}
+              valor={c.total}
+              alCambiar={poner('total')}
+              error={error('total')}
+              requerido
+            />
+          </GrupoCampos>
           {esCuota ? (
             <>
               <p>
@@ -205,17 +218,19 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
                     ? t.sinPropuesta
                     : t.sinModelo}
               </p>
-              {(['capital', 'interes', 'seguro'] as const).map((n) => (
-                <EntradaMonto
-                  key={n}
-                  nombre={n}
-                  etiqueta={t[n]}
-                  valor={c[n]}
-                  alCambiar={poner(n)}
-                  error={error(n)}
-                  requerido
-                />
-              ))}
+              <GrupoCampos>
+                {(['capital', 'interes', 'seguro'] as const).map((n) => (
+                  <EntradaMonto
+                    key={n}
+                    nombre={n}
+                    etiqueta={t[n]}
+                    valor={c[n]}
+                    alCambiar={poner(n)}
+                    error={error(n)}
+                    requerido
+                  />
+                ))}
+              </GrupoCampos>
             </>
           ) : (
             <p>{t.abonoNota(formatearMontoTexto('0'))}</p>
@@ -232,9 +247,8 @@ export function FormularioCuentasCuota(props: PropsFormularioCuentasCuota) {
             enviando={estado === 'enviando'}
             textoEnviando={t.guardando}
             deshabilitado={!operacion.enLinea}
-            {...(operacion.motivoSinEnvio === undefined
-              ? {}
-              : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+            className="w-full"
+            {...guardar.boton}
           >
             {esCuota ? t.guardarCuota : t.guardarAbono}
           </Boton>

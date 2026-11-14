@@ -10,6 +10,8 @@ interface PropsFila {
   readonly deshabilitada?: boolean | undefined;
   /** Con nombre, el valor viaja en el formulario. */
   readonly nombre?: string | undefined;
+  /** [C-45] Atributos `data-*` de la fila, para encontrarla (las coincidencias de Conciliar). */
+  readonly atributos?: Readonly<Record<`data-${string}`, string>> | undefined;
 }
 
 /** Los 16 px del check y del guion de la casilla (CAMPOS-V3 §8). */
@@ -33,11 +35,13 @@ function Fila({
   etiqueta,
   descripcion,
   deshabilitada,
+  atributos,
   antes,
   despues,
   children,
 }: {
   readonly id: string;
+  readonly atributos?: PropsFila['atributos'];
   readonly etiqueta: string;
   readonly descripcion: string | undefined;
   readonly deshabilitada: boolean;
@@ -46,7 +50,11 @@ function Fila({
   readonly children: ReactNode;
 }) {
   return (
-    <label className="campo-fila control-fila" {...(deshabilitada ? { 'data-apagado': '' } : {})}>
+    <label
+      className="campo-fila control-fila"
+      {...atributos}
+      {...(deshabilitada ? { 'data-apagado': '' } : {})}
+    >
       {children}
       {antes}
       <span className="control-texto">
@@ -77,6 +85,7 @@ export function Casilla({
   descripcion,
   deshabilitada = false,
   nombre,
+  atributos,
   marcada,
   alCambiar,
   cifra,
@@ -94,6 +103,7 @@ export function Casilla({
       etiqueta={etiqueta}
       descripcion={descripcion}
       deshabilitada={deshabilitada}
+      atributos={atributos}
       antes={
         <span
           aria-hidden="true"

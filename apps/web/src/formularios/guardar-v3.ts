@@ -26,14 +26,21 @@ export function useGuardarV3({
   readonly motivoSinEnvio: string | undefined;
 }) {
   const forma = useRef<HTMLFormElement>(null);
+  // El segmentado no lleva `aria-invalid`: su fila con error sí (`data-error`), y el foco va a su primera opción.
   useEffect(() => {
-    if (intentos > 0) forma.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+    if (intentos > 0)
+      forma.current
+        ?.querySelector<HTMLElement>('[aria-invalid="true"], .campo-fila[data-error] [role=radio]')
+        ?.focus();
   }, [intentos]);
   const faltan = porCorregir(contrato, campos);
   const motivo = motivoSinEnvio ?? (faltan > 0 ? base.corregirCampos(faltan) : undefined);
   return {
     forma,
     /** Las props de `Boton` para guardar: apagado con su motivo. */
-    boton: { apagado: faltan > 0, ...(motivo === undefined ? {} : { motivoDeshabilitado: motivo }) },
+    boton: {
+      apagado: faltan > 0,
+      ...(motivo === undefined ? {} : { motivoDeshabilitado: motivo }),
+    },
   };
 }

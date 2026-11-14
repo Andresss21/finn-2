@@ -3,11 +3,14 @@
 // vista. Es un flujo corto (05 §1.4). Se guarda en un solo viaje (05 §4.4); si el pago supera lo reservado (AV-10) o la fecha es de
 // un período cerrado (AV-01) el servidor pide confirmar y la previsualización trae el saldo a favor que quedaría. No calcula
 // montos (PF-3): el desglose, los atajos y el saldo a favor son del servidor.
+// [C-45] «Desde», el monto y la fecha son filas v3 (CAMPOS-V3 §2): la cuenta en segmentado o en la lista propia según cuántas hay
+// (§6) y el monto con «$». «Pagar» se ve apagado mientras falte algo y dice debajo qué (§5 y §11).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { useMemo, useState } from 'react';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { Pastillas } from '../../componentes/base/pastillas';
 import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
 import { ConfirmacionImpactoDeVista } from '../../componentes/formularios/confirmacion-impacto-de-vista';
@@ -15,6 +18,7 @@ import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { CerrarFlujoAlMontar, useCerrarFlujo } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto, formatearMontoTexto } from '../../formato';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -82,6 +86,12 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
     setValue(n, valor, { shouldDirty: true, shouldValidate: formState.isSubmitted });
   };
   const error = (n: keyof Campos): string | undefined => formState.errors[n]?.message;
+  const guardar = useGuardarV3({
+    contrato,
+    campos: c,
+    intentos: formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
   const { estado, error: fallo, exito } = operacion;
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
   const total = normalizarMontoEscrito(c.total);
@@ -128,20 +138,22 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
         />
       ) : (
         <form
+          ref={guardar.forma}
           onSubmit={(e) => void formulario.enviar(e)}
           noValidate
           className="flex flex-col gap-5"
         >
           <p className="text-cuerpo-pequeno text-texto-secundario">{t.deuda(props.deuda)}</p>
-          <SeleccionNativa
-            etiqueta={t.desde}
-            alta
-            marcador={t.marcador}
-            opciones={opciones}
-            valor={c.origenId}
-            alCambiar={poner('origenId')}
-            error={error('origenId')}
-          />
+          <GrupoCampos>
+            <SeleccionNativa
+              etiqueta={t.desde}
+              marcador={t.marcador}
+              opciones={opciones}
+              valor={c.origenId}
+              alCambiar={poner('origenId')}
+              error={error('origenId')}
+            />
+          </GrupoCampos>
           <dl
             aria-label={t.desglose}
             className="flex flex-col gap-2 rounded-contenedor bg-superficie p-3.5 shadow-elevacion-1"
@@ -161,7 +173,7 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
               alCambiar={poner('total')}
             />
           )}
-          <div className="grid grid-cols-2 gap-2.5 [&>*]:min-w-0">
+          <GrupoCampos>
             <EntradaMonto
               nombre="total"
               etiqueta={t.monto}
@@ -169,9 +181,6 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
               alCambiar={poner('total')}
               error={error('total')}
               requerido
-              prefijo="$"
-              compacto
-              sinVistaPrevia
             />
             <EntradaFecha
               nombre="fecha"
@@ -184,7 +193,7 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
               requerido
               sinVistaPrevia
             />
-          </div>
+          </GrupoCampos>
           {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
             <ErrorDeFlujo
               tipo="corto"
@@ -201,9 +210,7 @@ export function FormularioCuentasPagar(props: PropsFormularioCuentasPagar) {
               enviando={estado === 'enviando'}
               textoEnviando={t.pagando}
               deshabilitado={!operacion.enLinea}
-              {...(operacion.motivoSinEnvio === undefined
-                ? {}
-                : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+              {...guardar.boton}
             >
               {total.estado === 'valido' ? t.pagarMonto(formatearMontoTexto(total.texto)) : t.pagar}
             </Boton>
