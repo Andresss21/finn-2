@@ -9,6 +9,8 @@ export const estructura = {
   nuevaCategoria: 'Nueva categoría',
   usarPlantilla: 'Usar la plantilla de categorías',
   agregarCategoria: (grupo: string) => `Agregar categoría a ${grupo}`,
+  /** [CH-267] Bajada de «Nueva categoría» cuando el grupo viene del botón del grupo (diseño, entrega 4). */
+  enGrupo: (grupo: string) => `En ${grupo}`,
   editar: (nombre: string) => `Editar ${nombre}`,
   editarGrupo: 'Editar grupo',
   listo: 'Listo',

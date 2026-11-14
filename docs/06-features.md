@@ -1972,7 +1972,7 @@ Reglas comunes a todas las fichas:
 
 **Flujo.**
 1. `/presupuesto/estructura` (flujo largo, pantalla completa) → `estructura()`.
-2. Nuevo grupo: `/presupuesto/estructura/grupos/nuevo`; nueva categoría: `/presupuesto/estructura/categorias/nueva?grupo=` (OP-07).
+2. Nuevo grupo: `/presupuesto/estructura/grupos/nuevo`; nueva categoría: `/presupuesto/estructura/categorias/nueva?grupo=` (OP-07). **[CH-267]** Desde el botón de un grupo la categoría es de ese grupo: no se muestra el selector de grupo y bajo el título dice «En {grupo}»; sin `?grupo=` o con uno que no se puede elegir, el selector.
 3. Editar: `/presupuesto/estructura/grupos/[grupoId]` y `/presupuesto/estructura/categorias/[categoriaId]` (OP-08, OP-13).
 4. [1T] Subir o bajar (OP-08 `orden`), con "Deshacer".
 5. Sin categorías normales: la plantilla (FT-04).
@@ -1989,7 +1989,7 @@ Reglas comunes a todas las fichas:
 - "Pagos de tarjeta": sin acciones (`grupo_del_sistema`); sus categorías se muestran sin archivar ni eliminar.
 - Categoría con historial: "Eliminar" deshabilitado con el motivo y los enlaces a archivar (FT-19) o fusionar (FT-20).
 
-**Errores y textos.** `nombre_repetido`, `grupo_archivado`, `grupo_del_sistema`, `categoria_con_historial`, `grupo_no_vacio`, `grupo_con_categorias_activas`, `categoria_de_pago_con_tarjeta`. Sin textos nuevos.
+**Errores y textos.** `nombre_repetido`, `grupo_archivado`, `grupo_del_sistema`, `categoria_con_historial`, `grupo_no_vacio`, `grupo_con_categorias_activas`, `categoria_de_pago_con_tarjeta`. Sin textos nuevos, salvo «En {grupo}» de Nueva categoría (**[CH-267]**, del diseño de la entrega 4).
 
 **Criterios de aceptación.**
 - **CA-18.1** Dado "Supermercado" en "Vida diaria", cuando creo "supermercado" en el mismo grupo, entonces se rechaza con `nombre_repetido`; en otro grupo se acepta.
@@ -4965,3 +4965,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-E5-4 y CH-247** (diseño, entrega 4 · etapa 5, aprobado por el dueño, y Fase 8, decidido por el orquestador con delegación del usuario; aplicados con TA-595 el 12 de noviembre de 2026, CH-240 c). FT-73 remite a los textos de 04 §7.10 para los rechazos de la política de patrones y el nombre repetido de una institución. Instituciones muestra «N formatos» sin «N cuentas», que `AjustesDto` no trae (CH-247 g). Marcas **[CH-240]** y **[CH-247]**.
 - **CH-E5-3** (diseño, entrega 4 · etapa 5; aprobado por el dueño, aplicado con la ficha de Ajustes de B10 el 11 de noviembre de 2026, CH-240 c). FT-03: Conectar los SMS es una pantalla [S] (con «←», campana y barra inferior) y generar el token es el flujo corto `/ajustes/webhook/token` (OPT-01), con la advertencia «El token actual deja de funcionar»; fuera de ese momento no se muestra ningún sufijo del token. La tabla de rutas suma `/ajustes/webhook/token`. Marcas **[CH-240]**.
 - **CH-245** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Entrega 4 del diseño (E3-10) frente a CH-151: Revisar movimiento en computadora va en dos columnas, sin la lista lateral ni «1 de N» con flechas. Cambian la fila de decisiones FD-32, S4 y el texto de la decisión (marca **[CH-245]**); «Siguiente movimiento» después de aprobar o descartar se conserva. Los CA no cambian.
+- **CH-267** (corrección posterior de TA-597, 13 de noviembre de 2026, `08-tareas.md` §7). FT-18: Nueva categoría desde el botón de un grupo no vuelve a pedir el grupo; muestra «En {grupo}» bajo el título, el único texto nuevo de la ficha. Sin `?grupo=` válido, el selector. Marca **[CH-267]**.
