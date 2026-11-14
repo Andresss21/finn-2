@@ -62,6 +62,13 @@ export interface EstadoDelGasto {
 
 const fmt = (c: Centavos): string => formatearMonto(c);
 
+/**
+ * Con alguien y la parte de Vos en $0.00 el gasto entero va a Por cobrar: no hay línea de Vos ni de categorías (OP-20: cada
+ * línea > 0, CB-28) y «¿En qué categorías?» no pide nada. C-45 y C-49 no lo dicen; se sigue de OP-20.
+ */
+const sinParteMia = (c: Campos, mia: Centavos): boolean =>
+  c.conAlguien && c.personas.length > 0 && mia <= 0;
+
 /** El error de un reparto según su modo (C-45 §5): en el momento lo que sobra; al salir o al guardar, lo que falta. */
 function errorDe(
   r: Reparto,
@@ -115,35 +122,40 @@ export function estadoDelGasto(c: Campos, m: Marcas): EstadoDelGasto {
 
   const varias = c.varias && c.filas.length > 1;
   const filas = varias ? c.filas : c.filas.slice(0, 1);
+  // Todo va a Por cobrar: sin parte de Vos no hay líneas de categoría (OP-20, cada línea > 0) ni categoría que pedir
+  const sinParte = sinParteMia(c, mia);
   const categorias = varias
     ? repartir(mia, c.modoCategorias, filas)
     : repartir(mia, 'montos', [{ monto: '', pct: '', auto: true }]);
   const sinElegir = c.conAlguien && !varias ? t.elegiCategoriaTuParte : t.elegiCategoria;
   const errorFilas = filas.map((f) =>
-    f.categoriaId === '' && m.enviado
-      ? sinElegir
-      : varias && c.modoCategorias === 'porcentaje' && centesimasEscritas(f.pct) > CIEN
-        ? t.cadaParte
-        : undefined,
+    sinParte
+      ? undefined
+      : f.categoriaId === '' && m.enviado
+        ? sinElegir
+        : varias && c.modoCategorias === 'porcentaje' && centesimasEscritas(f.pct) > CIEN
+          ? t.cadaParte
+          : undefined,
   );
-  const errorCategorias = varias
-    ? errorDe(
-        categorias,
-        c.modoCategorias,
-        mia,
-        m.categorias || m.enviado,
-        (s) => t.categoriasPasan(c.conAlguien, s),
-        () => t.faltaRepartirV3(fmt(diferencia(mia, categorias.suma))),
-      )
-    : undefined;
-  const categoriasCierran = !varias || cierra(categorias, c.modoCategorias, mia);
+  const errorCategorias =
+    varias && !sinParte
+      ? errorDe(
+          categorias,
+          c.modoCategorias,
+          mia,
+          m.categorias || m.enviado,
+          (s) => t.categoriasPasan(c.conAlguien, s),
+          () => t.faltaRepartirV3(fmt(diferencia(mia, categorias.suma))),
+        )
+      : undefined;
+  const categoriasCierran = !varias || sinParte || cierra(categorias, c.modoCategorias, mia);
 
   const errorTotal = total <= 0 && m.enviado ? base.montoMayorQueCero : undefined;
   const errorConQuien =
     c.conAlguien && c.personas.length === 0 && m.enviado ? t.elegiConQuien : undefined;
-  const lineas = filas.length + (c.conAlguien ? c.personas.length : 0);
+  const lineas = (sinParte ? 0 : filas.length) + (c.conAlguien ? c.personas.length : 0);
   const marcados = [errorTotal, errorConQuien, ...errorFilas].filter(Boolean).length;
-  const sinCategoria = filas.some((f) => f.categoriaId === '');
+  const sinCategoria = !sinParte && filas.some((f) => f.categoriaId === '');
   // C-49 §3: el primer motivo que aplique; con dos errores marcados o más, cuántos campos corregir (C-45 §5)
   const motivo =
     marcados >= 2
@@ -172,9 +184,10 @@ export function estadoDelGasto(c: Campos, m: Marcas): EstadoDelGasto {
       : undefined,
     categorias,
     errorFilas,
-    resumenCategorias: varias
-      ? resumen(errorCategorias, categoriasCierran, categorias.suma, mia)
-      : undefined,
+    resumenCategorias:
+      varias && !sinParte
+        ? resumen(errorCategorias, categoriasCierran, categorias.suma, mia)
+        : undefined,
     lineas,
     enElMaximo: lineas >= MAXIMO_PARTES,
     motivo,
@@ -206,7 +219,11 @@ const conLinea = (x: { readonly lineaId?: string | undefined }) =>
 
 /** Las líneas de OP-20: una por categoría y una por cada persona (por cobrar); una persona nueva se crea con la transacción. */
 export function lineasDe(c: Campos, e: EstadoDelGasto): Parte[] {
-  const filas = c.varias && c.filas.length > 1 ? c.filas : c.filas.slice(0, 1);
+  const filas = sinParteMia(c, e.mia)
+    ? []
+    : c.varias && c.filas.length > 1
+      ? c.filas
+      : c.filas.slice(0, 1);
   return [
     ...filas.map((f, i) => ({
       ...parteVacia(),
