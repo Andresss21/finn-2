@@ -412,7 +412,7 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
       ) as HTMLElement,
     );
     await vi.waitFor(() => {
-      expect(chip('Luis')?.getAttribute('aria-checked')).toBe('true');
+      expect((chip('Luis') as HTMLElement | undefined)?.getAttribute('aria-checked')).toBe('true');
     });
     expect(visible(chip('Luis'))).toBe(`Luis ${base.nueva}`);
     expect(estado.textContent).toBe('');
