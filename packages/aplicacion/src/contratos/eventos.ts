@@ -15,6 +15,30 @@ export const op31 = z.object({
 });
 export type EntradaOp31 = z.output<typeof op31>;
 
+/** [CH-291] OP-31b Cobrar varios: un pago del deudor para sus líneas marcadas (al menos una, sin repetir); el reparto es del dominio. */
+export const op31b = z.object({
+  id: uuid,
+  deudorId: uuid,
+  lineaIds: z
+    .array(uuid)
+    .min(1, { error: 'Marcá al menos un gasto.' })
+    .max(200)
+    .refine((xs) => new Set(xs).size === xs.length, { error: 'Un gasto está repetido.' }),
+  cuentaId: uuid,
+  fecha: fechaLocal,
+  total: montoPositivo,
+});
+export type EntradaOp31b = z.output<typeof op31b>;
+/** Cada cobro que registró, con lo que cobró y el saldo con que quedó la línea; vacío si ya estaba aplicada. */
+export interface SalidaOp31b {
+  readonly id: EntradaOp31b['id'];
+  readonly cobros: readonly {
+    readonly lineaId: EntradaOp31b['id'];
+    readonly monto: EntradaOp31b['total'];
+    readonly queda: EntradaOp31b['total'];
+  }[];
+}
+
 /** OP-52 Renombrar deudor: valor absoluto, con el nombre que vio la interfaz (4.6.2). */
 export const op52 = z.object({
   deudorId: uuid,

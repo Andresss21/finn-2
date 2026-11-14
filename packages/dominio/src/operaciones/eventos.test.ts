@@ -344,7 +344,12 @@ describe('PRU-DOM-COBRO-104: cobrar varios gastos de un deudor con un solo pago 
   const cobrarVarios = (h: Hechos, lineaIds: Uuid[], total: number, extra: object = {}) =>
     aplicarEn(
       h,
-      op({ operacion: 'OP-31b', id: id(`V${++varios}`), cuentaId: id('E'), ...pedido(lineaIds, total, extra) }),
+      op({
+        operacion: 'OP-31b',
+        id: id(`V${++varios}`),
+        cuentaId: id('E'),
+        ...pedido(lineaIds, total, extra),
+      }),
     );
 
   it('PRU-DOM-COBRO-104 [INV-09] la regla de reparto: de la más antigua a la más nueva (a igual fecha, por id), cada saldo completo antes de la siguiente; la última que toca queda parcial y el orden de la entrada no cuenta', () => {

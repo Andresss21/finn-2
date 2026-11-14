@@ -25,8 +25,11 @@ const menor = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 export function repartoDeCobro(h: H.Hechos, x: Pedido): ParteDeCobro[] | H.Rechazo {
   const todas = porCobrar(h);
   const alCobro = porCobrar(h, x.fecha); // B-7, CB-23: el saldo con los eventos hasta la fecha del cobro
-  const marcadas: { readonly lineaId: H.Uuid; readonly fecha: string; readonly abierto: Centavos }[] =
-    [];
+  const marcadas: {
+    readonly lineaId: H.Uuid;
+    readonly fecha: string;
+    readonly abierto: Centavos;
+  }[] = [];
   for (const lineaId of x.lineaIds) {
     const y = todas.find((z) => z.lineaId === lineaId);
     if (y === undefined || y.deudorId !== x.deudorId)
