@@ -280,9 +280,26 @@ describe('PRU-DOM-CTA', () => {
     expect(cuotas.map((q) => q.fecha)).toEqual(
       ['2026-06-08', '2026-07-08', '2026-08-08', '2026-09-08', '2026-10-08', '2026-11-08'].map(f),
     );
-    // Los intereses de la app anterior del usuario, al centavo.
+    // Los intereses de la app anterior del usuario y del banco, al centavo.
     expect(cuotas.map((q) => q.interes)).toEqual(
       ['44.11', '40.46', '39.47', '37.13', '33.65', '32.39'].map(m),
+    );
+    // Capital, interés, seguro y saldo de la tabla del banco: las cuotas 1 a 3, iguales.
+    expect(cuotas.slice(0, 3).map((q) => [q.capital, q.interes, q.seguro, q.saldoFinal])).toEqual(
+      [
+        ['328.90', '44.11', '4.97', '5966.10'],
+        ['332.81', '40.46', '4.71', '5633.29'],
+        ['334.06', '39.47', '4.45', '5299.23'],
+      ].map((fila) => fila.map(m)),
+    );
+    // Diferencia conocida (CH-283): en la 4 el banco cobra seguro 4.19 y la regla 3 da 4.1839 → 4.18, así que desde ahí el
+    // modelo queda 1 centavo abajo del banco (capital 336.67 contra 336.66 y saldo 4,962.56 contra 4,962.57).
+    expect(cuotas.slice(3).map((q) => [q.capital, q.interes, q.seguro, q.saldoFinal])).toEqual(
+      [
+        ['336.67', '37.13', '4.18', '4962.56'],
+        ['340.41', '33.65', '3.92', '4622.15'],
+        ['341.94', '32.39', '3.65', '4280.21'],
+      ].map((fila) => fila.map(m)),
     );
     expect(cuotas[0]).toMatchObject({ dias: 31, saldoInicial: m('6295.00'), seguro: m('4.97') });
     expect(cuotas.at(-1)?.saldoFinal).toBe(m('4280.21'));
