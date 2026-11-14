@@ -9,6 +9,7 @@ import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
+import { ACCION_COLUMNA_IZQUIERDA } from '../../componentes/marco/pagina-flujo';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -177,8 +178,71 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
     <PaginaFlujoDeRuta
       titulo={t.titulo}
       rutaPadre={rutaPadre}
+      lateral={
+        <>
+          {operacion.previsualizacion === undefined ? (
+            estado === 'enviando' ? (
+              <p role="status" className="text-texto-secundario">
+                {t.calculando}
+              </p>
+            ) : null
+          ) : rechazo === undefined ? (
+            <TarjetaImpacto
+              rotulo={t.rotuloImpacto}
+              {...(operacion.impactoCambio ? { nota: t.impactoCambio } : {})}
+              filas={
+                vista.impacto
+                  ? [
+                      t.impactoLpa(
+                        `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
+                      ),
+                      // E4-25, E6-13: cada Disponible que cambia, «valor actual → nuevo» con el valor que dice el servidor.
+                      ...(vista.impacto.deltaDisponible ?? []).flatMap((x) => {
+                        const nombre =
+                          x.categoriaId === categoriaId
+                            ? p.categoria
+                            : p.destinos.find((d) => d.id === x.categoriaId)?.nombre;
+                        return nombre === undefined
+                          ? []
+                          : [
+                              <FilaAntesDespues
+                                key={x.categoriaId}
+                                nombre={nombre}
+                                antes={x.antes}
+                                despues={x.despues}
+                              />,
+                            ];
+                      }),
+                    ]
+                  : []
+              }
+            />
+          ) : (
+            <AvisoEnLinea estado="problema" aparecioDespues>
+              {MENSAJES[rechazo.codigo] ?? t.rechazos.otro}
+            </AvisoEnLinea>
+          )}
+          {estado === 'error' && fallo !== undefined ? (
+            <AvisoEnLinea
+              estado="problema"
+              aparecioDespues
+              {...(REINTENTABLES.includes(fallo.categoria)
+                ? {
+                    accion: (
+                      <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
+                        {formularios.intentarDeNuevo}
+                      </Boton>
+                    ),
+                  }
+                : {})}
+            >
+              {fallo.mensaje}
+            </AvisoEnLinea>
+          ) : null}
+        </>
+      }
       acciones={
-        <div className="w-full">
+        <div className={ACCION_COLUMNA_IZQUIERDA}>
           <Boton
             className="w-full"
             enviando={estado === 'enviando' && confirmo}
@@ -266,65 +330,6 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
             </div>
           );
         })}
-        {operacion.previsualizacion === undefined ? (
-          estado === 'enviando' ? (
-            <p role="status" className="text-texto-secundario">
-              {t.calculando}
-            </p>
-          ) : null
-        ) : rechazo === undefined ? (
-          <TarjetaImpacto
-            rotulo={t.rotuloImpacto}
-            {...(operacion.impactoCambio ? { nota: t.impactoCambio } : {})}
-            filas={
-              vista.impacto
-                ? [
-                    t.impactoLpa(
-                      `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
-                    ),
-                    // E4-25, E6-13: cada Disponible que cambia, «valor actual → nuevo» con el valor que dice el servidor.
-                    ...(vista.impacto.deltaDisponible ?? []).flatMap((x) => {
-                      const nombre =
-                        x.categoriaId === categoriaId
-                          ? p.categoria
-                          : p.destinos.find((d) => d.id === x.categoriaId)?.nombre;
-                      return nombre === undefined
-                        ? []
-                        : [
-                            <FilaAntesDespues
-                              key={x.categoriaId}
-                              nombre={nombre}
-                              antes={x.antes}
-                              despues={x.despues}
-                            />,
-                          ];
-                    }),
-                  ]
-                : []
-            }
-          />
-        ) : (
-          <AvisoEnLinea estado="problema" aparecioDespues>
-            {MENSAJES[rechazo.codigo] ?? t.rechazos.otro}
-          </AvisoEnLinea>
-        )}
-        {estado === 'error' && fallo !== undefined ? (
-          <AvisoEnLinea
-            estado="problema"
-            aparecioDespues
-            {...(REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                      {formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
-          >
-            {fallo.mensaje}
-          </AvisoEnLinea>
-        ) : null}
       </form>
     </PaginaFlujoDeRuta>
   );

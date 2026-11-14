@@ -8,6 +8,7 @@ import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
+import { ACCION_COLUMNA_IZQUIERDA } from '../../componentes/marco/pagina-flujo';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearFechaTexto, formatearMonto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -160,8 +161,53 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
       {...(destinos.length === 0
         ? {}
         : {
+            // [CH-263] El impacto K4 va en la columna derecha desde 1280 px.
+            lateral: (
+              <>
+                {c.destino === '' ? null : operacion.previsualizacion === undefined ? (
+                  estado === 'enviando' ? (
+                    <p role="status" className="text-texto-secundario">
+                      {t.calculando}
+                    </p>
+                  ) : null
+                ) : rechazo === undefined ? (
+                  <TarjetaImpacto
+                    rotulo={t.rotuloImpacto}
+                    {...(operacion.impactoCambio ? { nota: t.impactoCambio } : {})}
+                    avisos={
+                      vista.avisos?.some((a) => a.codigo === 'AV-01') ? [t.periodoCerrado] : []
+                    }
+                    filas={lineas.length === 0 ? [t.sinCambios] : lineas}
+                  />
+                ) : (
+                  <AvisoEnLinea estado="problema" aparecioDespues>
+                    {t.rechazos.otro}
+                  </AvisoEnLinea>
+                )}
+                {estado === 'error' && fallo !== undefined ? (
+                  <AvisoEnLinea
+                    estado="problema"
+                    aparecioDespues
+                    {...(REINTENTABLES.includes(fallo.categoria)
+                      ? {
+                          accion: (
+                            <Boton
+                              variante="secundaria"
+                              onClick={() => void operacion.reintentar()}
+                            >
+                              {formularios.intentarDeNuevo}
+                            </Boton>
+                          ),
+                        }
+                      : {})}
+                  >
+                    {fallo.mensaje}
+                  </AvisoEnLinea>
+                ) : null}
+              </>
+            ),
             acciones: (
-              <div className="w-full">
+              <div className={ACCION_COLUMNA_IZQUIERDA}>
                 <Boton
                   variante="peligro"
                   className="w-full"
@@ -222,41 +268,6 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
             <AvisoEnLinea estado="advertencia">{t.metaDescartada(origen.nombre)}</AvisoEnLinea>
           )}
           <AvisoEnLinea estado="informacion">{t.intro(origen.nombre)}</AvisoEnLinea>
-          {c.destino === '' ? null : operacion.previsualizacion === undefined ? (
-            estado === 'enviando' ? (
-              <p role="status" className="text-texto-secundario">
-                {t.calculando}
-              </p>
-            ) : null
-          ) : rechazo === undefined ? (
-            <TarjetaImpacto
-              rotulo={t.rotuloImpacto}
-              {...(operacion.impactoCambio ? { nota: t.impactoCambio } : {})}
-              avisos={vista.avisos?.some((a) => a.codigo === 'AV-01') ? [t.periodoCerrado] : []}
-              filas={lineas.length === 0 ? [t.sinCambios] : lineas}
-            />
-          ) : (
-            <AvisoEnLinea estado="problema" aparecioDespues>
-              {t.rechazos.otro}
-            </AvisoEnLinea>
-          )}
-          {estado === 'error' && fallo !== undefined ? (
-            <AvisoEnLinea
-              estado="problema"
-              aparecioDespues
-              {...(REINTENTABLES.includes(fallo.categoria)
-                ? {
-                    accion: (
-                      <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                        {formularios.intentarDeNuevo}
-                      </Boton>
-                    ),
-                  }
-                : {})}
-            >
-              {fallo.mensaje}
-            </AvisoEnLinea>
-          ) : null}
         </form>
       )}
     </PaginaFlujoDeRuta>

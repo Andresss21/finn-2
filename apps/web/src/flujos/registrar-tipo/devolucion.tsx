@@ -17,6 +17,7 @@ import { Monto } from '../../componentes/dominio/monto';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { DOS_COLUMNAS } from '../../componentes/marco/pagina-flujo';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearFecha, formatearMontoTexto } from '../../formato';
@@ -204,9 +205,10 @@ export function FormularioDevolucion(p: PropsFormularioDevolucion) {
     );
 
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre="/registrar">
-      <div className="flex flex-col gap-8">
-        <section aria-labelledby="devolucion-compra" className="flex flex-col gap-3">
+    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre="/registrar" ancha>
+      {/* [CH-263] Dos secciones con título: buscar la compra a la izquierda y la devolución sin compra a la derecha. */}
+      <div className={DOS_COLUMNAS[8]}>
+        <section aria-labelledby="devolucion-compra" className="flex min-w-0 flex-col gap-3">
           <h2 id="devolucion-compra" className="text-titulo-seccion">
             {t.buscar}
           </h2>
@@ -233,7 +235,7 @@ export function FormularioDevolucion(p: PropsFormularioDevolucion) {
           )}
         </section>
 
-        <section aria-labelledby="devolucion-sin-compra" className="flex flex-col gap-4">
+        <section aria-labelledby="devolucion-sin-compra" className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-1">
             <h2 id="devolucion-sin-compra" className="text-titulo-seccion">
               {t.sinCompra}
