@@ -15,7 +15,7 @@ import type {
   Uuid,
 } from '../hechos';
 import { fechaDeOcurrencia } from '../calculo/ocurrencias';
-import { bancoAgricola, condicionesDe } from '../prestamos/agricola';
+import { bancoAgricola, condicionesDe, cuotasAntesDeFinn } from '../prestamos/agricola';
 import type { EstadoCuota, PagoPrestamo } from '../prestamos/contrato';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
@@ -98,6 +98,22 @@ export function amortizacionDe(
     estado: q.estado,
     pagado: q.pagado.total,
     proyectado: q.proyectado.total,
+  }));
+}
+
+/**
+ * [CH-283] Las cuotas pagadas antes de Finn (1 a p₀), desde el monto original, para mostrarlas en la tabla. Aparte de
+ * `amortizacionDe`: no entran en la próxima cuota, la comparación ni el costo financiero. Vacío sin modelo (Anexo A).
+ */
+function cuotasAntesDeFinnDe(i: Instantanea, p: Prestamo) {
+  const condiciones = condicionesDe(i.hechos, p);
+  return (condiciones === null ? [] : cuotasAntesDeFinn(condiciones)).map((q) => ({
+    numero: q.numero,
+    fecha: q.fecha,
+    interes: q.interes,
+    seguro: q.seguro,
+    capital: q.capital,
+    saldo: q.saldoFinal,
   }));
 }
 
@@ -340,6 +356,9 @@ export function detalleCuenta(i: Instantanea, cuentaId: Uuid, o: DetalleCuentaOp
                 estado: q.estado,
                 pagado: q.pagado,
               })) ?? null,
+            ...((antes) => (antes.length === 0 ? {} : { cuotasAntesDeFinn: antes }))(
+              cuotasAntesDeFinnDe(i, prestamo),
+            ), // [CH-283] solo presentación
             comparacion:
               amortizacion === null
                 ? null

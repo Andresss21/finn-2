@@ -24,6 +24,7 @@ function estado(
   hoy: string,
   modelo: 'banco_agricola' | null = 'banco_agricola',
   tasa: number | null = 82_500,
+  seguro: number | null = null,
 ) {
   const cuenta = {
     id: id('pr'),
@@ -74,7 +75,7 @@ function estado(
         montoOriginal: c(6295),
         tasaNominalAnualMillonesimas: tasa,
         tipoTasa: 'variable',
-        seguroPrimerMes: null,
+        seguroPrimerMes: seguro === null ? null : c(seguro),
         comision: null,
         frecuencia: 'mensual',
         frecuenciaDias: null,
@@ -207,5 +208,31 @@ describe('préstamo en curso (P13, CH-261, CH-264)', () => {
     }
     expect(saldo).toBe(c(0));
     expect(tabla.at(-1)?.numero).toBeLessThanOrEqual(18);
+  });
+
+  it('PRU-DOM-CTA-841 [Q-detalleCuenta, FT-55] el detalle trae aparte las cuotas 1 a 6 pagadas antes de Finn, desde el monto original con seguro $4.97 (saldo $4,280.21 tras la 6), sin tocar la tabla de las próximas, la comparación, el costo financiero, el capital pendiente ni la próxima cuota (CH-283)', () => {
+    const pr = detalleCuenta(
+      estado(APERTURA, HOY, 'banco_agricola', 82_500, 4.97),
+      id('pr'),
+    ).prestamo;
+    expect(pr?.cuotasAntesDeFinn?.map((q) => q.numero)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(pr?.cuotasAntesDeFinn?.map((q) => q.interes)).toEqual(
+      [44.11, 40.46, 39.47, 37.13, 33.65, 32.39].map(c),
+    );
+    expect(pr?.cuotasAntesDeFinn?.[0]).toMatchObject({ fecha: f('2026-06-08'), seguro: c(4.97) });
+    expect(pr?.cuotasAntesDeFinn?.at(-1)).toMatchObject({
+      fecha: f('2026-11-08'),
+      saldo: c(4280.21),
+    });
+    // Solo presentación: lo demás sale de la tabla desde el capital registrado y de los pagos registrados en Finn.
+    expect(pr?.amortizacion?.[0]?.numero).toBe(7);
+    expect(pr?.amortizacion?.some((q) => q.estado === 'atrasada')).toBe(false);
+    expect(pr?.comparacion).toEqual({ proyectadoHastaHoy: c(0), pagadoHastaHoy: c(0) });
+    expect(pr?.costoFinanciero).toEqual({ interes: c(0), seguro: c(0) });
+    expect(pr?.capitalPendiente).toBe(c(3934.62));
+    expect(pr?.proximaCuota).toMatchObject({ numero: 7, fecha: f('2026-12-08') });
+    // Sin modelo, o sin cuotas pagadas al crear, no hay cuotas antes de Finn.
+    const sinModelo = detalleCuenta(estado(APERTURA, HOY, null, 82_500, 4.97), id('pr')).prestamo;
+    expect(sinModelo?.cuotasAntesDeFinn).toBeUndefined();
   });
 });
