@@ -99,6 +99,19 @@ function repartirPorRestoMayor<K>(
   );
 }
 
+/**
+ * [CH-291] Llena `topes` en su orden con `monto` ≥ 0: cada parte hasta su tope y lo que sobra, a la última (OP-31b, el
+ * excedente de §4.10). Σ partes = monto. Sin división: también la usa la interfaz para mostrar el reparto (PF-3).
+ */
+function llenarEnOrden(monto: Centavos, topes: readonly Centavos[]): Centavos[] {
+  let resto = monto;
+  return topes.map((tope, i) => {
+    const parte = i === topes.length - 1 ? resto : min(resto, tope);
+    resto = restar(resto, parte);
+    return parte;
+  });
+}
+
 export const Centavos = {
   cero: 0 as Centavos,
   desdeEntero,
@@ -113,4 +126,5 @@ export const Centavos = {
   cuotaConTecho,
   proporcionMitadArriba,
   repartirPorRestoMayor,
+  llenarEnOrden,
 } as const;

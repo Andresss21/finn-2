@@ -366,6 +366,18 @@ export interface ComandoOp31 extends AltaTransaccion {
   readonly cuentaId: Uuid; // efectivo o tarjeta
   readonly asignarAPagoTarjeta?: boolean; // solo si el por cobrar fue con tarjeta y C entra en efectivo
 }
+/** [CH-291] OP-31b Cobrar varios: un pago del deudor repartido entre sus líneas marcadas, un OP-31 por línea. */
+export interface ComandoOp31b {
+  readonly operacion: 'OP-31b';
+  readonly id: Uuid; // del primer cobro (la línea más antigua que toca)
+  readonly instante: Instante;
+  readonly ids: GeneradorIds;
+  readonly deudorId: Uuid;
+  readonly lineaIds: readonly Uuid[]; // las marcadas, sin repetir
+  readonly cuentaId: Uuid; // efectivo o tarjeta
+  readonly fecha: FechaLocal;
+  readonly total: Centavos; // el pago
+}
 export interface ComandoOp52 {
   readonly operacion: 'OP-52';
   readonly deudorId: Uuid;
@@ -628,6 +640,7 @@ export type ComandoDominio =
   | ComandoOp30
   // TA-119
   | ComandoOp31
+  | ComandoOp31b
   | ComandoOp52
   // TA-123
   | ComandoOp46

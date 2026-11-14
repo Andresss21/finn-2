@@ -356,6 +356,7 @@ describe('PRU-DOM-MOTOR', () => {
       | 'OP-29'
       | 'OP-30'
       | 'OP-31'
+      | 'OP-31b'
       | 'OP-52'
       | 'OP-46'
       | 'OP-47'
