@@ -1476,3 +1476,191 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
   line-height: 1.45;
   color: var(--informacion-texto);
 }
+/* [CH-276, CH-277] Registrar gasto (C-45 §10, C-49 §2 y §3): la fila de parte (avatar, nombre y destino, cifra y ×), la cifra
+   compacta con «$» o «%» fijo, la fila de categoría con el monto a la derecha, «+ Agregar categoría» y el resumen. */
+.campo-rotulo-seccion {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-secundario);
+}
+.eleccion-chip[aria-disabled='true'],
+.eleccion-otra:disabled {
+  color: var(--texto-deshabilitado);
+  cursor: not-allowed;
+}
+.campo-opcion[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+.campo-opcion[aria-disabled='true'] :is(.campo-opcion-nombre, .campo-detalle) {
+  color: var(--texto-deshabilitado);
+}
+.parte-fila {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+}
+.parte-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--deuda-fondo);
+  color: var(--deuda-texto);
+  font-weight: 700;
+}
+.parte-avatar[data-vos] {
+  background: var(--accion-tonal);
+  color: var(--accion);
+}
+.parte-nombre {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+.parte-destino {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  color: var(--texto-secundario);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.parte-cifra {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.parte-fija {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-stretch: 72%;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto);
+}
+.parte-fija[data-deuda] {
+  color: var(--deuda-texto);
+}
+.parte-entrada {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: var(--radio-control);
+  background: var(--superficie-hundida);
+  color: var(--texto-secundario);
+  font-size: 0.875rem;
+}
+.parte-entrada:focus-within {
+  box-shadow: 0 0 0 2px var(--accion);
+}
+.parte-entrada[data-error] {
+  box-shadow: 0 0 0 2px var(--problema-borde);
+}
+.parte-entrada input {
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--texto);
+}
+.parte-entrada input:focus-visible {
+  outline: none;
+}
+.parte-monto {
+  width: 8ch;
+}
+.parte-pct {
+  width: 5ch;
+}
+.parte-nota {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto-secundario);
+}
+.parte-nota[data-informacion] {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--informacion-texto);
+}
+.parte-quitar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -8px;
+  border: 0;
+  background: transparent;
+  color: var(--texto-secundario);
+  cursor: pointer;
+}
+:is(.parte-quitar, .reparto-agregar button):focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+.reparto-linea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* El blanco del disparador cubre la fila (`::after`): la cifra y la × quedan encima. */
+.reparto-linea > :not(.reparto-eleccion) {
+  position: relative;
+  z-index: 1;
+}
+.reparto-eleccion {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.campo-fila.reparto-agregar {
+  min-height: 52px;
+  padding: 0;
+}
+.reparto-agregar button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--enlace);
+  cursor: pointer;
+}
+.reparto-agregar button:disabled {
+  color: var(--texto-deshabilitado);
+  cursor: not-allowed;
+}
+.reparto-resumen {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--superficie-hundida);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--texto-secundario);
+}
+.reparto-resumen[data-estado='ok'] {
+  background: var(--positivo-fondo);
+  color: var(--positivo-texto);
+}
+.reparto-resumen[data-estado='error'] {
+  background: var(--problema-fondo);
+  color: var(--problema-texto);
+}

@@ -9,7 +9,7 @@ import { Icono } from '../../componentes/base/icono';
 import { SeleccionFila, type OpcionFila } from '../../componentes/base/seleccion-fila';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { formatearMonto } from '../../formato';
-import type { ModoReparto } from '../../formularios/reparto';
+import { textoDeCentavos, type ModoReparto } from '../../formularios/reparto';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
 import { filaVacia, type CamposDeRegistro as Campos, type FilaDeCategoria } from './campos';
 import { CifraDeParte, ResumenReparto } from './entrada-parte';
@@ -170,7 +170,13 @@ export function Categorias({
                     <CifraDeParte
                       modo={c.modoCategorias}
                       etiqueta={pct ? t.porcentajePara(cual) : t.montoPara(cual)}
-                      valor={pct ? f.pct : i === 0 && f.auto ? '' : f.monto}
+                      valor={
+                        pct
+                          ? f.pct
+                          : i === 0 && f.auto
+                            ? textoDeCentavos(e.categorias.montos[0] ?? e.mia)
+                            : f.monto
+                      }
                       monto={monto}
                       nota={pct ? monto : i === 0 && f.auto ? t.loQueQueda : undefined}
                       notaInformativa={!pct}

@@ -221,7 +221,7 @@ export function FormularioRegistrarGasto({
       requestAnimationFrame(() => {
         raiz.current
           ?.querySelector<HTMLElement>(
-'[aria-invalid="true"], [data-estado="error"]')
+'[aria-invalid="true"], [data-error] [aria-haspopup="listbox"], [data-estado="error"]')
           ?.focus();
       });
       return;

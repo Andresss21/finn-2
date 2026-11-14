@@ -73,7 +73,10 @@ export interface PropsChipsPersonas {
   readonly alCambiar: (elegidas: readonly string[]) => void;
   /** Una persona nueva (clave `nueva:{nombre}`): quien lo usa la suma a `personas`; ya viene marcada. */
   readonly alCrear: (persona: PersonaChip) => void;
-  /** [CH-277] Cuántas personas caben: 20 líneas menos las categorías (C-49 §2). Llegado el máximo, no se suma nadie. */
+  /**
+   * [CH-277] Cuántas personas caben: 20 líneas menos las categorías (C-49 §2). Con él, llegado el máximo «Otra persona» y los
+   * chips sin marcar se deshabilitan (lo dice la pantalla); sin él, el máximo es 19 y lo dice la fila en línea (C-45 §9).
+   */
   readonly maximo?: number;
 }
 
@@ -85,9 +88,9 @@ export function ChipsPersonas({
   elegidas,
   alCambiar,
   alCrear,
-  maximo = MAXIMO_PERSONAS,
+  maximo,
 }: PropsChipsPersonas) {
-  const lleno = elegidas.length >= maximo;
+  const lleno = maximo !== undefined && elegidas.length >= maximo;
   const otra = useRef<HTMLButtonElement>(null);
   const [agregando, setAgregando] = useState(false);
   const [aviso, setAviso] = useState('');
@@ -103,7 +106,7 @@ export function ChipsPersonas({
     setAgregando(false);
   };
   const agregar = (escrito: string): string | undefined => {
-    const r = resolverNombre(escrito, personas, elegidas, maximo);
+    const r = resolverNombre(escrito, personas, elegidas, maximo ?? MAXIMO_PERSONAS);
     if (r.tipo === 'vacio') return base.escribiUnNombre;
     if (r.tipo === 'propio') return base.tuParteYaEsta;
     if (r.tipo === 'maximo') return base.maximoPersonas;
