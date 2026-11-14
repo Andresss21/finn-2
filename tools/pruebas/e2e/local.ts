@@ -45,6 +45,11 @@ export function sinSoloServidor(
 // Solo la compilación de producción, como la E2E (05 §14.1). `next dev` (16.4.1) no sirve: su validación estricta de
 // rutas deja /ingresar, /ingresar/verificar, /ingresar/inscribir y /sin-conexion en 404 por la ranura paralela
 // `(finn)/@superpuesto`, y sin /ingresar no se puede entrar. `next build` no hace esa validación.
+/** El día de la última operación de una semilla: el «hoy» del estado que deja (sin operaciones, `inicio`). */
+export function ultimoDia(ops: readonly { readonly hoy?: string }[], inicio: string): string {
+  return ops.reduce((max, op) => (op.hoy !== undefined && op.hoy > max ? op.hoy : max), inicio);
+}
+
 export type OpcionesProbar = { bajar: boolean; compilar: boolean };
 
 export function leerOpciones(argv: readonly string[]): OpcionesProbar {
