@@ -13,7 +13,7 @@ export interface PropsResultado {
   readonly salida?: { readonly etiqueta: string; readonly ejecutar: () => void };
   /** Enlace a la transacción u objeto afectado, por ejemplo «Ver transacción». */
   readonly enlace?: ReactNode;
-  /** [CH-270] Cerrarlo a mano («Cerrar», 44 × 44); sin esto, no se cierra. Nunca se va solo. Por ahora, solo Estructura. */
+  /** [CH-270] Cerrarlo a mano ([CH-272] «Cerrar este aviso», 44 × 44); sin esto, no se cierra. Nunca se va solo. Por ahora, solo Estructura. */
   readonly alCerrar?: () => void;
 }
 
@@ -44,7 +44,7 @@ export function Resultado({ texto, salida, enlace, alCerrar }: PropsResultado) {
         <button
           type="button"
           onClick={alCerrar}
-          aria-label={base.cerrar}
+          aria-label={base.cerrarAviso}
           className="inline-flex size-11 shrink-0 items-center justify-center rounded-pastilla text-texto-secundario"
         >
           <Icono nombre="x" />

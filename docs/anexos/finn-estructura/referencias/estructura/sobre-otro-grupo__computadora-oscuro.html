@@ -1,0 +1,609 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Estructura · sobre-otro-grupo · computadora-oscuro</title><style>@font-face{font-family:"Archivo";src:url(../fuentes/archivo-latin-wdth-wght.woff2) format("woff2");font-weight:100 900;font-stretch:62% 125%}
+@font-face{font-family:"Big Shoulders Display";src:url(../fuentes/big-shoulders-display-latin-700.woff2) format("woff2");font-weight:700}
+@font-face{font-family:"Big Shoulders Display";src:url(../fuentes/big-shoulders-display-latin-800.woff2) format("woff2");font-weight:800}
+body{margin:0}
+.tema-claro{
+  --tarjeta-oro: linear-gradient(135deg, #15120C 0%, #3A301E 40%, #6E5631 78%, #7E6638 100%);
+  --tarjeta-plata: linear-gradient(135deg, #121519 0%, #2B3138 45%, #4A525C 80%, #5C6670 100%);
+  --patron-sin-reservar: repeating-linear-gradient(135deg, var(--deuda-sin-respaldo-borde) 0 3px, var(--deuda-sin-respaldo-fondo) 3px 6px);
+  --fuente-titulo: "Big Shoulders Display", "Archivo", system-ui, sans-serif;
+  --fuente-cuerpo: "Archivo", system-ui, sans-serif;
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 20px;
+  --espacio-6: 24px;
+  --espacio-8: 32px;
+  --espacio-10: 40px;
+  --espacio-12: 48px;
+  --espacio-16: 64px;
+  --radio-control: 10px;
+  --radio-contenedor: 16px;
+  --radio-pastilla: 999px;
+  --radio-superpuesto: 24px;
+  --radio-identidad: 18px;
+  --radio-tarjeta: 20px;
+  --duracion-rapida: 120ms;
+  --duracion-normal: 220ms;
+  --duracion-lenta: 400ms;
+  --duracion-transicion: 340ms;
+  --duracion-ambiental: 5000ms;
+  --curva-estandar: cubic-bezier(.2, .8, .2, 1);
+  --curva-entrada: cubic-bezier(.2, .9, .25, 1);
+  --curva-salida: cubic-bezier(.4, 0, 1, 1);
+  --curva-enfasis: cubic-bezier(.3, 1.4, .5, 1);
+  --capa-marco: 10;
+  --capa-superpuesto: 40;
+  --capa-aviso: 50;
+  --tactil-minimo: 44px;
+
+  color-scheme: light;
+  --fondo: #F1F2EE;
+  --superficie: #FFFFFF;
+  --superficie-elevada: #FFFFFF;
+  --superficie-hundida: #E7E9E3;
+  --borde-sutil: #D9DCD4;
+  --borde-control: #767D87;
+  --foco: #1F47D1;
+  --velo: rgba(16,20,24,.5);
+  --texto: #101418;
+  --texto-secundario: #474E58;
+  --texto-terciario: #61686F;
+  --texto-deshabilitado: #AEB3BA;
+  --enlace: #1F47D1;
+  --accion: #1F47D1;
+  --accion-hover: #1838A8;
+  --accion-presionada: #132C85;
+  --texto-sobre-accion: #FFFFFF;
+  --accion-secundaria: #E7E9E3;
+  --peligro: #B42318;
+  --texto-sobre-peligro: #FFFFFF;
+  --marca: #101418;
+  --texto-sobre-marca: #F1F2EE;
+  --positivo-texto: #0A6B5F;
+  --positivo-fondo: #DDF2EE;
+  --positivo-borde: #13897A;
+  --cero-texto: #474E58;
+  --cero-fondo: #E7E9E3;
+  --cero-borde: #767D87;
+  --advertencia-texto: #835A00;
+  --advertencia-fondo: #FFF0C2;
+  --advertencia-borde: #A87800;
+  --problema-texto: #B8400A;
+  --problema-fondo: #FFE3D3;
+  --problema-borde: #C9521C;
+  --deuda-texto: #5644C2;
+  --deuda-fondo: #ECE9FB;
+  --deuda-borde: #6A58D6;
+  --deuda-sin-respaldo-texto: #A3195B;
+  --deuda-sin-respaldo-fondo: #FCE4EF;
+  --deuda-sin-respaldo-borde: #C02A6E;
+  --informacion-texto: #0E5E86;
+  --informacion-fondo: #E0F0F8;
+  --informacion-borde: #1A76A6;
+  --grafico-serie-1: #2489EA;
+  --grafico-serie-2: #E25A73;
+  --grafico-serie-3: #7A2A90;
+  --grafico-serie-4: #266600;
+  --grafico-serie-5: #99578A;
+  --grafico-serie-6: #739629;
+  --grafico-serie-7: #B16CD9;
+  --grafico-serie-8: #88392E;
+  --grafico-referencia: #474E58;
+  --grafico-rejilla: #D9DCD4;
+  --marca-icono-fondo: #101418;
+  --marca-icono-figura: #F1F2EE;
+  --accion-tonal: #E4E9FB;
+  --grafico-tinta: #101418;
+  --grafico-otras: #61686F;
+  --marca-grabado: rgba(241,242,238,.08);
+  --cuenta-banco: #DCE8EE;
+  --cuenta-ahorro: #E2EBDA;
+  --cuenta-prestamo: #EFE3D8;
+  --cuenta-inversion: #E4E2F0;
+  --cuenta-motivo: rgba(16,20,24,.08);
+  --cuenta-disco: rgba(255,255,255,.7);
+  --tarjeta-oro-texto: #F7F1E3;
+  --tarjeta-plata-texto: #F2F4F6;
+  --elevacion-1: 0 1px 2px rgba(16,20,24,.05), 0 10px 28px -10px rgba(16,20,24,.16);
+  --elevacion-2: 0 8px 24px rgba(16,20,24,.12);
+  --elevacion-3: 0 18px 48px rgba(16,20,24,.22);
+}
+.tema-oscuro{
+  --tarjeta-oro: linear-gradient(135deg, #15120C 0%, #3A301E 40%, #6E5631 78%, #7E6638 100%);
+  --tarjeta-plata: linear-gradient(135deg, #121519 0%, #2B3138 45%, #4A525C 80%, #5C6670 100%);
+  --patron-sin-reservar: repeating-linear-gradient(135deg, var(--deuda-sin-respaldo-borde) 0 3px, var(--deuda-sin-respaldo-fondo) 3px 6px);
+  --fuente-titulo: "Big Shoulders Display", "Archivo", system-ui, sans-serif;
+  --fuente-cuerpo: "Archivo", system-ui, sans-serif;
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 20px;
+  --espacio-6: 24px;
+  --espacio-8: 32px;
+  --espacio-10: 40px;
+  --espacio-12: 48px;
+  --espacio-16: 64px;
+  --radio-control: 10px;
+  --radio-contenedor: 16px;
+  --radio-pastilla: 999px;
+  --radio-superpuesto: 24px;
+  --radio-identidad: 18px;
+  --radio-tarjeta: 20px;
+  --duracion-rapida: 120ms;
+  --duracion-normal: 220ms;
+  --duracion-lenta: 400ms;
+  --duracion-transicion: 340ms;
+  --duracion-ambiental: 5000ms;
+  --curva-estandar: cubic-bezier(.2, .8, .2, 1);
+  --curva-entrada: cubic-bezier(.2, .9, .25, 1);
+  --curva-salida: cubic-bezier(.4, 0, 1, 1);
+  --curva-enfasis: cubic-bezier(.3, 1.4, .5, 1);
+  --capa-marco: 10;
+  --capa-superpuesto: 40;
+  --capa-aviso: 50;
+  --tactil-minimo: 44px;
+
+  color-scheme: dark;
+  --fondo: #0D1013;
+  --superficie: #161A1F;
+  --superficie-elevada: #1F242B;
+  --superficie-hundida: #090B0D;
+  --borde-sutil: #2B3139;
+  --borde-control: #737B86;
+  --foco: #7A93FF;
+  --velo: rgba(0,0,0,.6);
+  --texto: #EEF0EC;
+  --texto-secundario: #AEB5BE;
+  --texto-terciario: #8B939D;
+  --texto-deshabilitado: #4A515A;
+  --enlace: #7A93FF;
+  --accion: #7A93FF;
+  --accion-hover: #97ABFF;
+  --accion-presionada: #B3C2FF;
+  --texto-sobre-accion: #0D1013;
+  --accion-secundaria: #1F242B;
+  --peligro: #FF7A6E;
+  --texto-sobre-peligro: #0D1013;
+  --marca: #EEF0EC;
+  --texto-sobre-marca: #0D1013;
+  --positivo-texto: #4FD1B8;
+  --positivo-fondo: #0F2E2A;
+  --positivo-borde: #2FAE97;
+  --cero-texto: #AEB5BE;
+  --cero-fondo: #1F242B;
+  --cero-borde: #737B86;
+  --advertencia-texto: #F4C04E;
+  --advertencia-fondo: #33280B;
+  --advertencia-borde: #C99A2E;
+  --problema-texto: #FF8A4C;
+  --problema-fondo: #3A1A0C;
+  --problema-borde: #E0702F;
+  --deuda-texto: #ADA2FF;
+  --deuda-fondo: #221E45;
+  --deuda-borde: #8C80F0;
+  --deuda-sin-respaldo-texto: #FF7AB6;
+  --deuda-sin-respaldo-fondo: #3D1129;
+  --deuda-sin-respaldo-borde: #E0559A;
+  --informacion-texto: #6CC4F0;
+  --informacion-fondo: #0B2A3A;
+  --informacion-borde: #3FA3D6;
+  --grafico-serie-1: #0072CE;
+  --grafico-serie-2: #B34B53;
+  --grafico-serie-3: #A047B9;
+  --grafico-serie-4: #438F21;
+  --grafico-serie-5: #975889;
+  --grafico-serie-6: #6A8F02;
+  --grafico-serie-7: #9A47C6;
+  --grafico-serie-8: #A6584C;
+  --grafico-referencia: #AEB5BE;
+  --grafico-rejilla: #2B3139;
+  --marca-icono-fondo: #101418;
+  --marca-icono-figura: #F1F2EE;
+  --accion-tonal: #1C2444;
+  --grafico-tinta: #EEF0EC;
+  --grafico-otras: #8B939D;
+  --marca-grabado: rgba(13,16,19,.08);
+  --cuenta-banco: #13222B;
+  --cuenta-ahorro: #172219;
+  --cuenta-prestamo: #261C15;
+  --cuenta-inversion: #1C1B2A;
+  --cuenta-motivo: rgba(238,240,236,.07);
+  --cuenta-disco: rgba(255,255,255,.07);
+  --tarjeta-oro-texto: #F7F1E3;
+  --tarjeta-plata-texto: #F2F4F6;
+  --elevacion-1: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 30px -12px rgba(0,0,0,.75);
+  --elevacion-2: 0 8px 24px rgba(0,0,0,.45);
+  --elevacion-3: 0 18px 48px rgba(0,0,0,.6);
+}
+
+
+.marco{position:relative;background:var(--fondo);color:var(--texto);box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.marco.tel{width:390px;border-radius:44px;box-shadow:0 0 0 1px var(--borde-sutil),0 28px 64px rgba(16,20,24,.18)}
+.marco.pc{width:1440px;border-radius:14px;box-shadow:0 0 0 1px var(--borde-sutil),0 28px 64px rgba(16,20,24,.14)}
+.marco.fijo{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+.marco.arrastrando,.marco.arrastrando *{cursor:grabbing !important;user-select:none;-webkit-user-select:none}
+:where(.marco) button{font:inherit;color:inherit}
+.btn0{border:none;background:transparent;padding:0;margin:0;cursor:pointer;text-align:left;-webkit-appearance:none;appearance:none}
+.btn0:focus-visible,.enlace-btn:focus-visible,.btn-tonal:focus-visible,.seg:focus-visible,.alternar:focus-visible{outline:2px solid var(--foco);outline-offset:2px;border-radius:10px}
+.enlace-btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 6px;border:none;background:transparent;cursor:pointer;font-family:'Archivo',sans-serif;font-weight:700;font-size:.875rem;line-height:1.35;color:var(--enlace);white-space:nowrap}
+.rotulo{font-family:'Archivo',sans-serif;font-weight:600;font-size:.75rem;line-height:1.3;letter-spacing:.06em;text-transform:uppercase;color:var(--texto-secundario)}
+.cuenta{font-family:'Archivo',sans-serif;font-weight:500;font-size:.8125rem;color:var(--texto-terciario);white-space:nowrap}
+.tarjeta{background:var(--superficie);border-radius:16px;box-shadow:var(--elevacion-1);overflow:hidden;transition:box-shadow var(--duracion-rapida) var(--curva-estandar)}
+.tarjeta.destino{box-shadow:0 0 0 2px var(--accion),var(--elevacion-2)}
+.enc-grupo{display:flex;align-items:center;gap:0;min-height:44px;border-radius:12px;transition:background var(--duracion-rapida) var(--curva-estandar)}
+.enc-grupo.enc-sobre{background:var(--accion-tonal);box-shadow:inset 0 0 0 2px var(--accion)}
+.alternar{display:flex;align-items:center;gap:8px;flex:1;min-width:0;min-height:44px;padding:0 6px;border:none;background:transparent;cursor:pointer;text-align:left;border-radius:10px}
+.chev{display:flex;flex:none;transition:transform var(--duracion-normal) var(--curva-estandar)}
+.enc-dentro{display:flex;align-items:center;gap:0;min-height:60px;padding:4px 4px 4px 6px;border-bottom:1px solid var(--borde-sutil)}
+.enc-dentro .nombre-g{font-family:'Archivo',sans-serif;font-weight:700;font-size:1rem;color:var(--texto)}
+.fila-cat{display:flex;align-items:center;gap:2px;min-height:56px;padding:4px 6px 4px 16px;border-bottom:1px solid var(--borde-sutil);box-sizing:border-box;background:var(--superficie)}
+.fila-cat.con-asa-izq{padding-left:4px}
+.fila-cat.en-barra{background:var(--accion-tonal)}
+.fila-btn{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:48px;border:none;background:transparent;cursor:pointer;text-align:left;padding:0;border-radius:8px}
+.fila-btn:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
+.nombre{font-family:'Archivo',sans-serif;font-weight:600;font-size:1rem;line-height:1.5;color:var(--texto)}
+.sub{font-family:'Archivo',sans-serif;font-weight:400;font-size:.875rem;line-height:1.45;color:var(--texto-secundario)}
+.asa{width:44px;height:44px;flex:none;border:none;background:transparent;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;color:var(--texto-secundario);padding:0}
+.asa:hover{background:var(--superficie-hundida);color:var(--texto)}
+.asa:focus-visible{outline:2px solid var(--foco);outline-offset:-2px}
+.asa-hover{opacity:0;transition:opacity var(--duracion-rapida) var(--curva-estandar)}
+.fila-cat:hover .asa-hover,.enc-grupo:hover .asa-hover,.asa-hover:focus-visible,.ver-asa .asa-hover{opacity:1}
+.ver-asa{background:var(--superficie-hundida)}
+.hueco{margin:6px 8px;min-height:48px;border:2px dashed var(--borde-control);border-radius:12px;background:var(--superficie-hundida);box-sizing:border-box}
+.hueco-grupo{min-height:48px;border:2px dashed var(--borde-control);border-radius:14px;background:var(--superficie-hundida);box-sizing:border-box}
+.levantada{display:flex;align-items:center;gap:6px;min-height:56px;padding:4px 16px 4px 4px;background:var(--superficie-elevada);border-radius:12px;box-shadow:0 0 0 2px var(--accion),var(--elevacion-3);transform:scale(1.03);box-sizing:border-box;position:relative;z-index:3}
+.levantada .asa{cursor:grabbing;color:var(--accion)}
+.destino-txt{display:flex;align-items:center;gap:4px;font-family:'Archivo',sans-serif;font-weight:700;font-size:.8125rem;color:var(--accion)}
+.flotante{position:absolute;z-index:40;pointer-events:none}
+.resultado{display:flex;align-items:center;gap:10px;min-height:56px;padding:4px 4px 4px 14px;background:var(--positivo-fondo);border-bottom:1px solid var(--borde-sutil);box-sizing:border-box}
+.resultado-txt{flex:1;min-width:0;font-family:'Archivo',sans-serif;font-weight:500;font-size:.875rem;line-height:1.4;color:var(--texto)}
+.icono-btn{width:44px;height:44px;flex:none;border:none;background:transparent;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.icono-btn:focus-visible{outline:2px solid var(--foco);outline-offset:-2px}
+.barra-mover{display:flex;flex-direction:column;gap:10px;padding:10px 12px 12px;background:var(--accion-tonal);border-bottom:1px solid var(--borde-sutil)}
+.barra-fila{display:flex;flex-wrap:wrap;gap:8px}
+.btn-tonal{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 14px;border-radius:10px;border:none;background:var(--superficie);color:var(--accion);font-family:'Archivo',sans-serif;font-weight:700;font-size:.875rem;cursor:pointer;box-shadow:0 0 0 1px var(--borde-sutil)}
+.btn-tonal[disabled]{color:var(--texto-deshabilitado);cursor:not-allowed;box-shadow:none;background:transparent}
+.btn-principal{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;border:none;border-radius:12px;background:var(--accion);color:var(--texto-sobre-accion);font-family:'Archivo',sans-serif;font-weight:700;font-size:1rem;cursor:pointer}
+.btn-principal:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
+.btn-ordenar{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border-radius:999px;border:none;background:var(--accion-tonal);color:var(--accion);font-family:'Archivo',sans-serif;font-weight:700;font-size:.875rem;cursor:pointer;white-space:nowrap}
+.btn-ordenar[aria-pressed="true"]{background:var(--accion);color:var(--texto-sobre-accion)}
+.btn-ordenar:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
+.nuevo-grupo{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;border:none;border-radius:12px;background:var(--accion-tonal);color:var(--accion);font-family:'Archivo',sans-serif;font-weight:700;font-size:1rem;cursor:pointer}
+.nueva-cat{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:0 16px;border:none;background:transparent;color:var(--enlace);font-family:'Archivo',sans-serif;font-weight:700;font-size:.875rem;cursor:pointer;text-align:left}
+.nueva-cat:focus-visible,.nuevo-grupo:focus-visible{outline:2px solid var(--foco);outline-offset:-2px}
+.resumen{display:flex;flex-direction:column;justify-content:center;gap:2px;width:100%;min-height:60px;padding:8px 16px;border:none;background:transparent;cursor:pointer;text-align:left;box-sizing:border-box}
+.resumen:focus-visible{outline:2px solid var(--foco);outline-offset:-2px;border-radius:16px}
+.pista{display:flex;align-items:center;gap:10px;padding:6px 4px 6px 14px;border-radius:14px;background:var(--informacion-fondo)}
+.pista-txt{flex:1;font-family:'Archivo',sans-serif;font-weight:500;font-size:.875rem;line-height:1.4;color:var(--informacion-texto)}
+.panel-lateral{width:360px;flex:none;display:flex;flex-direction:column;gap:20px;font-family:'Archivo',sans-serif;color:#101418}
+.seg-grupo{display:flex;gap:2px;padding:3px;background:#E7E8E3;border-radius:11px}
+.seg{min-height:40px;padding:0 14px;border:none;border-radius:8px;background:transparent;font-family:'Archivo',sans-serif;font-weight:500;font-size:.875rem;color:#101418;cursor:pointer;white-space:nowrap}
+.seg.on{background:#FFFFFF;font-weight:700;box-shadow:0 0 0 1px #C9CCC4,0 1px 2px rgba(0,0,0,.08)}
+.aparece{animation:aparecer var(--duracion-normal) var(--curva-enfasis)}
+@keyframes aparecer{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.chev,.tarjeta,.enc-grupo,.asa-hover{transition:none}.aparece{animation:none}.levantada{transform:none}}
+.marco.fijo .barra-listo{position:sticky}
+.btn-tonal[aria-expanded="true"]{background:var(--accion);color:var(--texto-sobre-accion);box-shadow:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style></head><body><div class="tema-oscuro" style="display: inline-block; padding: 40px; background: var(--superficie-hundida)"><!-- C-46 · Estructura · estado «sobre-otro-grupo» · computadora-oscuro -->
+<div style="display: inline-block; width: auto; min-height: 0px; padding: 0px; background: transparent; box-sizing: border-box">
+<div style="display: flex; flex-direction: column; gap: 28px; font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif">
+
+<div style="display: flex; gap: 48px; align-items: flex-start">
+<div class="tema-oscuro" style="flex: none">
+<div class="marco pc arrastrando" style="height: auto" data-marco="1">
+
+
+<div style="display: flex; min-height: 100%; align-items: stretch">
+<aside style="width: 248px; flex: none; padding: 24px 14px; box-sizing: border-box; background: var(--superficie); border-right: 1px solid var(--borde-sutil); display: flex; flex-direction: column; gap: 22px"><div style="display: flex; align-items: center; gap: 10px; padding: 0 8px"><span style="width: 32px; height: 32px; border-radius: 10px; background: var(--marca); display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" height="16" style="fill: var(--fondo); display: block" viewBox="18 14 66 72" width="15"><rect height="72" rx="5" width="18" x="18" y="14"></rect><rect height="20" rx="5" width="43" x="41" y="14"></rect><rect height="18" rx="5" width="29" x="41" y="40"></rect></svg></span><span data-rol="titulo-seccion" style="font-family: &#x27;Big Shoulders Display&#x27;, &#x27;Barlow Condensed&#x27;, &#x27;Arial Narrow&#x27;, sans-serif; font-weight: 700; font-size: 1.375rem; line-height: 1.15; letter-spacing: .01em; text-transform: uppercase; color: var(--texto)">Finn</span></div><button data-rol="cuerpo" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px; box-sizing: border-box; border-radius: 10px; background: var(--accion); color: var(--texto-sobre-accion); border: none; font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: 1rem; line-height: 1.5; font-weight: 600; cursor: pointer" type="button"><svg aria-hidden="true" fill="none" height="18" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--superficie); flex: none; display: block" viewBox="0 0 24 24" width="18"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Registrar</button><nav aria-label="Principal" style="display: flex; flex-direction: column; gap: 2px"><a href="#" style="position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="20" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="20"><path d="M4 10.8L12 4l8 6.8V20h-5.2v-5.6H9.2V20H4v-9.2z"></path></svg><span data-rol="cuerpo" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: 1rem; line-height: 1.5; color: var(--texto-secundario); flex: 1; font-weight: 500">Inicio</span></a><a aria-current="page" href="#" style="position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: var(--superficie-hundida)"><span style="position: absolute; left: -14px; top: 10px; bottom: 10px; width: 3px; background: var(--accion)"></span><svg aria-hidden="true" fill="none" height="20" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-tinta); flex: none; display: block" viewBox="0 0 24 24" width="20"><rect height="7" rx="1.5" width="7" x="4" y="4"></rect><rect height="7" rx="1.5" width="7" x="13" y="4"></rect><rect height="7" rx="1.5" width="7" x="4" y="13"></rect><rect height="7" rx="1.5" width="7" x="13" y="13"></rect></svg><span data-rol="cuerpo" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: 1rem; line-height: 1.5; color: var(--texto); flex: 1; font-weight: 700">Presupuesto</span></a><a href="#" style="position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="20" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="20"><path d="M3 13.2h5l1.6 2.6h4.8l1.6-2.6h5"></path><path d="M5.6 5h12.8L21 13.2V19H3v-5.8L5.6 5z"></path></svg><span data-rol="cuerpo" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: 1rem; line-height: 1.5; color: var(--texto-secundario); flex: 1; font-weight: 500">Bandeja</span><span style="min-width: 24px; height: 24px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: var(--marca); color: var(--texto-sobre-marca); font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">2</span></a><a href="#" style="position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="20" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="20"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg><span data-rol="cuerpo" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: 1rem; line-height: 1.5; color: var(--texto-secundario); flex: 1; font-weight: 500">Actividad</span></a><a href="#" style="position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="20" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="20"><path d="M4 7.5h14.5a1.5 1.5 0 0 1 1.5 1.5v9.5a1.5 1.5 0 0 1-1.5 1.5H4V7.5z"></path><path d="M4 7.5V6a2 2 0 0 1 2-2h10"></path><path d="M15.8 13.8v.1"></path></svg><span data-rol="cuerpo" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: 1rem; line-height: 1.5; color: var(--texto-secundario); flex: 1; font-weight: 500">Cuentas</span></a></nav><div style="display: flex; flex-direction: column; gap: 2px"><span data-rol="rotulo" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 600; font-size: .75rem; line-height: 1.3; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-terciario); padding: 0 12px 6px">Más</span><a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="18" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="18"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20H2"></path></svg><span data-rol="cuerpo-pequeno" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario); flex: 1">Reportes</span></a><a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="18" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="18"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><path d="M12 12v.1"></path></svg><span data-rol="cuerpo-pequeno" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario); flex: 1">Metas</span></a><a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="18" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="18"><path d="M4 12a7 7 0 0 1 12-5l2 2"></path><path d="M18 4v5h-5"></path><path d="M20 12a7 7 0 0 1-12 5l-2-2"></path><path d="M6 20v-5h5"></path></svg><span data-rol="cuerpo-pequeno" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario); flex: 1">Programadas</span></a><a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="18" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="18"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg><span data-rol="cuerpo-pequeno" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario); flex: 1">Por cobrar</span></a><a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="18" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="18"><path d="M3 5h18l-7 8v6l-4 2v-8L3 5z"></path></svg><span data-rol="cuerpo-pequeno" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario); flex: 1">Reglas</span></a><a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="18" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="18"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.6 2.2H4.4L6 16z"></path><path d="M10 21h4"></path></svg><span data-rol="cuerpo-pequeno" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario); flex: 1">Notificaciones</span><span style="min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--accion); color: var(--texto-sobre-accion); font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center">2</span></a><a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: transparent"><svg aria-hidden="true" fill="none" height="18" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--grafico-referencia); flex: none; display: block" viewBox="0 0 24 24" width="18"><path d="M10.23 4.61L10.52 2.11L13.48 2.11L13.77 4.61A7.6 7.6 0 0 1 15.97 5.52L17.95 3.96L20.04 6.05L18.48 8.03A7.6 7.6 0 0 1 19.39 10.23L21.89 10.52L21.89 13.48L19.39 13.77A7.6 7.6 0 0 1 18.48 15.97L20.04 17.95L17.95 20.04L15.97 18.48A7.6 7.6 0 0 1 13.77 19.39L13.48 21.89L10.52 21.89L10.23 19.39A7.6 7.6 0 0 1 8.03 18.48L6.05 20.04L3.96 17.95L5.52 15.97A7.6 7.6 0 0 1 4.61 13.77L2.11 13.48L2.11 10.52L4.61 10.23A7.6 7.6 0 0 1 5.52 8.03L3.96 6.05L6.05 3.96L8.03 5.52A7.6 7.6 0 0 1 10.23 4.61z"></path><circle cx="12" cy="12" r="3"></circle></svg><span data-rol="cuerpo-pequeno" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario); flex: 1">Ajustes</span></a></div><div data-pieza="pie-salir" style="margin-top: auto; display: flex; flex-direction: column; gap: var(--espacio-0-5); padding-top: var(--espacio-3); border-top: 1px solid var(--borde-sutil)"><span data-rol="cuerpo-pequeno" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-terciario); padding: 0 var(--espacio-3) var(--espacio-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">jose@finn.sv</span><button style="display: flex; align-items: center; gap: var(--espacio-3); min-height: 44px; width: 100%; padding: 0 var(--espacio-3); box-sizing: border-box; border: none; border-radius: var(--radio-control); background: transparent; text-align: left; cursor: pointer" type="button"><svg aria-hidden="true" fill="none" height="18" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.5" style="stroke: var(--texto-secundario); flex: none; display: block" viewBox="0 0 24 24" width="18"><path d="M10 4H4.5v16H10"></path><path d="M9.5 12H20"></path><path d="M16 8l4 4-4 4"></path></svg><span data-rol="cuerpo-pequeno" style="font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario); flex: 1">Salir</span></button></div></aside>
+<main style="flex: 1; min-width: 0; padding: 28px 48px 48px; box-sizing: border-box">
+<div style="max-width: 1144px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+<a href="#" style="display: inline-flex; align-items: center; gap: 4px; min-height: 44px; align-self: flex-start; text-decoration: none; font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-weight: 700; font-size: .875rem; color: var(--enlace)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--enlace); flex: none; display: block"><path d="M14.5 6.5L9 12l5.5 5.5"></path></svg>Presupuesto</a>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: -12px"><h1 style="margin: 0; font-family: &#x27;Big Shoulders Display&#x27;, &#x27;Arial Narrow&#x27;, sans-serif; font-weight: 800; font-size: 2.5rem; line-height: 1.05; text-transform: uppercase; color: var(--texto)">Estructura</h1></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 20px">
+
+
+<div style="display: flex; justify-content: flex-end; margin: -8px 0 -12px"><button type="button" class="enlace-btn">Colapsar todos</button></div>
+
+
+
+
+<section data-zona-grupo="casa" data-colapsado="0" data-flip="g-casa" style="display: flex; flex-direction: column; gap: 8px">
+
+<div class="enc-grupo" data-arrastrable="1">
+<button type="button" class="asa" aria-label="Mover el grupo Casa" aria-expanded="false" data-foco="asa-casa"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="alternar" aria-expanded="true" data-arrastrable="1"><span class="chev" style="transform: rotate(0deg)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--texto-secundario); flex: none; display: block"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"></path></svg></span><span class="rotulo">Casa</span></button>
+<button type="button" class="enlace-btn">Editar grupo</button>
+
+</div>
+
+
+
+
+
+<div class="tarjeta">
+
+
+
+
+
+<div class="fila-cat con-asa-izq" data-fila-cat="super" data-arrastrable="1" data-flip="c-super">
+<button type="button" class="asa" aria-label="Mover Supermercado" aria-expanded="false" data-foco="asa-super"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="fila-btn"><span class="nombre">Supermercado</span><span class="sub">Meta mensual $350.00</span></button>
+
+</div>
+
+
+
+
+
+
+
+
+<div class="fila-cat con-asa-izq" data-fila-cat="luz" data-arrastrable="1" data-flip="c-luz">
+<button type="button" class="asa" aria-label="Mover Luz y agua" aria-expanded="false" data-foco="asa-luz"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="fila-btn"><span class="nombre">Luz y agua</span></button>
+
+</div>
+
+
+
+
+
+
+
+
+<div class="fila-cat con-asa-izq" data-fila-cat="internet" data-arrastrable="1" data-flip="c-internet">
+<button type="button" class="asa" aria-label="Mover Internet y teléfono" aria-expanded="false" data-foco="asa-internet"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="fila-btn"><span class="nombre">Internet y teléfono</span></button>
+
+</div>
+
+
+
+
+
+
+
+
+
+</div>
+
+</section>
+
+
+
+
+
+<section data-zona-grupo="comida" data-colapsado="0" data-flip="g-comida" style="display: flex; flex-direction: column; gap: 8px">
+
+<div class="enc-grupo" data-arrastrable="1">
+<button type="button" class="asa" aria-label="Mover el grupo Comida fuera" aria-expanded="false" data-foco="asa-comida"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="alternar" aria-expanded="true" data-arrastrable="1"><span class="chev" style="transform: rotate(0deg)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--texto-secundario); flex: none; display: block"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"></path></svg></span><span class="rotulo">Comida fuera</span></button>
+<button type="button" class="enlace-btn">Editar grupo</button>
+
+</div>
+
+
+
+
+
+<div class="tarjeta destino">
+
+
+
+
+
+<div class="fila-cat con-asa-izq" data-fila-cat="rest" data-arrastrable="1" data-flip="c-rest">
+<button type="button" class="asa" aria-label="Mover Restaurantes" aria-expanded="false" data-foco="asa-rest"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="fila-btn"><span class="nombre">Restaurantes</span></button>
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="hueco" aria-hidden="true" data-flip="hueco"></div>
+
+
+
+
+
+
+
+<div style="position: relative; height: 0"><div style="position: absolute; left: 10px; right: 2px; top: -50px; z-index: 30"><div class="levantada"><span class="asa"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></span><span style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span class="nombre">Farmacia</span><span class="destino-txt"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--accion); flex: none; display: block"><path d="M4 13h4l1.5 3h5L16 13h4"></path><path d="M4 13l2.5-7h11L20 13v6H4z"></path><path d="M12 3v7"></path><path d="M9.5 7.5L12 10l2.5-2.5"></path></svg>→ segunda en Comida fuera</span></span></div></div></div>
+
+
+
+
+
+</div>
+
+</section>
+
+
+
+
+
+<section data-zona-grupo="transporte" data-colapsado="1" data-flip="g-transporte" style="display: flex; flex-direction: column; gap: 8px">
+
+<div class="enc-grupo" data-arrastrable="1">
+<button type="button" class="asa" aria-label="Mover el grupo Transporte" aria-expanded="false" data-foco="asa-transporte"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="alternar" aria-expanded="false" data-arrastrable="1"><span class="chev" style="transform: rotate(-90deg)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--texto-secundario); flex: none; display: block"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"></path></svg></span><span class="rotulo">Transporte</span></button>
+<button type="button" class="enlace-btn">Editar grupo</button>
+
+</div>
+
+
+
+
+
+<div class="tarjeta">
+
+<button type="button" class="resumen" aria-expanded="false"><span class="nombre">1 categoría</span><span class="sub">Gasolina</span></button>
+
+</div>
+
+</section>
+
+
+
+
+
+<section data-zona-grupo="subs" data-colapsado="1" data-flip="g-subs" style="display: flex; flex-direction: column; gap: 8px">
+
+<div class="enc-grupo" data-arrastrable="1">
+<button type="button" class="asa" aria-label="Mover el grupo Suscripciones" aria-expanded="false" data-foco="asa-subs"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="alternar" aria-expanded="false" data-arrastrable="1"><span class="chev" style="transform: rotate(-90deg)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--texto-secundario); flex: none; display: block"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"></path></svg></span><span class="rotulo">Suscripciones</span></button>
+<button type="button" class="enlace-btn">Editar grupo</button>
+
+</div>
+
+
+
+
+
+<div class="tarjeta">
+
+<button type="button" class="resumen" aria-expanded="false"><span class="nombre">1 categoría</span><span class="sub">Netflix</span></button>
+
+</div>
+
+</section>
+
+
+
+
+
+<section data-zona-grupo="ahorro" data-colapsado="0" data-flip="g-ahorro" style="display: flex; flex-direction: column; gap: 8px">
+
+<div class="enc-grupo" data-arrastrable="1">
+<button type="button" class="asa" aria-label="Mover el grupo Ahorro" aria-expanded="false" data-foco="asa-ahorro"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="alternar" aria-expanded="true" data-arrastrable="1"><span class="chev" style="transform: rotate(0deg)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--texto-secundario); flex: none; display: block"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"></path></svg></span><span class="rotulo">Ahorro</span></button>
+<button type="button" class="enlace-btn">Editar grupo</button>
+
+</div>
+
+
+
+
+
+<div class="tarjeta">
+
+
+
+
+
+<div class="fila-cat con-asa-izq" data-fila-cat="fondo" data-arrastrable="1" data-flip="c-fondo">
+<button type="button" class="asa" aria-label="Mover Fondo de emergencia" aria-expanded="false" data-foco="asa-fondo"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="fila-btn"><span class="nombre">Fondo de emergencia</span><span class="sub">Meta para el 30/06/2027 · $3,000.00</span></button>
+
+</div>
+
+
+
+
+
+
+
+
+<div class="fila-cat con-asa-izq" data-fila-cat="viaje" data-arrastrable="1" data-flip="c-viaje">
+<button type="button" class="asa" aria-label="Mover Viaje" aria-expanded="false" data-foco="asa-viaje"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="fila-btn"><span class="nombre">Viaje</span><span class="sub">Meta anual $1,200.00</span></button>
+
+</div>
+
+
+
+
+
+
+
+
+
+</div>
+
+</section>
+
+
+
+
+
+<section data-zona-grupo="deudas" data-colapsado="0" data-flip="g-deudas" style="display: flex; flex-direction: column; gap: 8px">
+
+<div class="enc-grupo" data-arrastrable="1">
+<button type="button" class="asa" aria-label="Mover el grupo Deudas" aria-expanded="false" data-foco="asa-deudas"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="alternar" aria-expanded="true" data-arrastrable="1"><span class="chev" style="transform: rotate(0deg)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--texto-secundario); flex: none; display: block"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"></path></svg></span><span class="rotulo">Deudas</span></button>
+<button type="button" class="enlace-btn">Editar grupo</button>
+
+</div>
+
+
+
+
+
+<div class="tarjeta">
+
+
+
+
+
+<div class="fila-cat con-asa-izq" data-fila-cat="cuota" data-arrastrable="1" data-flip="c-cuota">
+<button type="button" class="asa" aria-label="Mover Cuota del préstamo" aria-expanded="false" data-foco="asa-cuota"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" style="display: block; fill: currentColor"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg></button>
+<button type="button" class="fila-btn"><span class="nombre">Cuota del préstamo</span></button>
+
+</div>
+
+
+
+
+
+
+
+
+
+</div>
+
+</section>
+
+
+</div>
+<div style="display: flex; flex-direction: column; gap: 20px; padding-top: 32px">
+<section style="display: flex; flex-direction: column; gap: 8px">
+<div class="enc-grupo" style="padding-left: 6px"><span class="rotulo" style="flex: 1">Pagos de tarjeta</span><span style="display: flex; align-items: center; gap: 6px; padding-right: 6px; font-family: &#x27;Archivo&#x27;, &#x27;Helvetica Neue&#x27;, system-ui, sans-serif; font-size: .8125rem; color: var(--texto-terciario)"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--texto-terciario); flex: none; display: block"><rect x="5" y="10.5" width="14" height="10" rx="2"></rect><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"></path></svg>Lo administra Finn</span></div>
+<div class="tarjeta">
+
+<div class="fila-cat" style="padding-left: 16px"><span style="display: flex; flex-direction: column; flex: 1; min-height: 48px; justify-content: center"><span class="nombre">Visa Oro</span><span class="sub">Del sistema: sin archivar ni eliminar</span></span></div>
+<div class="fila-cat" style="padding-left: 16px; border-bottom: none"><span style="display: flex; flex-direction: column; flex: 1; min-height: 48px; justify-content: center"><span class="nombre">Mastercard Clásica</span><span class="sub">Del sistema</span></span></div>
+</div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px">
+<div class="enc-grupo"><button type="button" class="alternar" aria-expanded="false"><span class="chev" style="transform: rotate(-90deg)"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--texto-secundario); flex: none; display: block"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"></path></svg></span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--texto-terciario); flex: none; display: block"><rect x="5" y="10.5" width="14" height="10" rx="2"></rect><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"></path></svg><span class="rotulo">Archivadas · 2</span></button></div>
+
+</section>
+<button type="button" class="nuevo-grupo"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--accion); flex: none; display: block"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Nuevo grupo</button>
+<div style="display: flex; justify-content: flex-end; padding-top: 8px"><button type="button" class="btn-principal" style="width: auto; padding: 0 28px">Listo</button></div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+
+<div class="sr" role="status" aria-live="polite" data-anuncio="estructura">Sobre Comida fuera: la segunda.</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div></body></html>

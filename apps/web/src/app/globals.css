@@ -1110,3 +1110,28 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
     transition: none;
   }
 }
+
+/* [CH-272] C-46 §3, Estructura: la flecha gira al colapsar, lo nuevo aparece en `--duracion-rapida` y el resultado entra con
+   opacidad y −4 px. Con movimiento reducido no se anima nada (la regla del principio); las tres señales quedan igual. */
+.fz-chev {
+  transition-property: rotate, transform;
+  transition-duration: var(--duracion-normal);
+  transition-timing-function: var(--curva-estandar);
+}
+@keyframes fz-aparece {
+  from {
+    opacity: 0;
+  }
+}
+.fz-aparece {
+  animation: fz-aparece var(--duracion-rapida) var(--curva-estandar) both;
+}
+@keyframes fz-resultado {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.fz-resultado {
+  animation: fz-resultado var(--duracion-normal) var(--curva-enfasis) both;
+}
