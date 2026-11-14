@@ -289,8 +289,10 @@ describe('PRU-CMP-CTA nueva cuenta con los campos v3', () => {
     expect(crearCuenta).not.toHaveBeenCalled();
     expect(filaDe(saldo).textContent).toContain(t.obligatorio);
     await userEvent.type(saldo, '10');
-    await expect.poll(() => boton.getAttribute('aria-disabled')).toBeNull();
-    expect(boton.getAttribute('aria-describedby')).toBeNull();
+    // Sin motivo, `Boton` deja de envolverse con él: el botón se vuelve a buscar.
+    const listo = () => nodo.querySelector('button[type=submit]') as HTMLButtonElement;
+    await expect.poll(() => listo().getAttribute('aria-disabled')).toBeNull();
+    expect(listo().getAttribute('aria-describedby')).toBeNull();
   });
 
   it.each(['claro', 'oscuro'])(
