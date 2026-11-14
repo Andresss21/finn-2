@@ -16,3 +16,24 @@ export async function elegirOpcion(page: Page, etiqueta: string, nombre: string)
     .toBe(true);
   await control.selectOption({ label: nombre });
 }
+
+/**
+ * [CH-279] Una selección v3 dentro de un grupo (C-45, CAMPOS-V3 §6): con 3 opciones o menos es un segmentado en su fila; con más,
+ * una lista propia que abre su disparador. Elige por el nombre de la opción, después de que React hidrató el control.
+ */
+export async function elegirEnFila(page: Page, etiqueta: string, nombre: string): Promise<void> {
+  const segmentado = page.getByRole('radiogroup', { name: etiqueta, exact: true });
+  const enLista = (await segmentado.count()) === 0;
+  const control = enLista
+    ? page
+        .locator('button[aria-haspopup="listbox"]')
+        .and(page.getByRole('button', { name: new RegExp(`^${etiqueta}`) }))
+    : segmentado.getByRole('radio', { name: nombre, exact: true });
+  await expect
+    .poll(() =>
+      control.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))),
+    )
+    .toBe(true);
+  await control.click();
+  if (enLista) await page.getByRole('option', { name: new RegExp(`^${nombre}`) }).click();
+}

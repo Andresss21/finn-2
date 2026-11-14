@@ -93,9 +93,9 @@ async function editarMonto(page: Page, texto: string, nuevo: string): Promise<vo
   await esperarContenido(page);
   await page.locator('[data-fila-transaccion]').filter({ hasText: texto }).first().click();
   await page.getByRole('link', { name: tx.editar }).click();
-  await page.getByRole('textbox', { name: g.total, exact: true }).fill(nuevo);
+  await page.getByRole('textbox', { name: g.totalV3, exact: true }).fill(nuevo);
   await page.getByRole('button', { name: tx.guardar }).click();
-  await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 1, name: tx.editarGasto })).toHaveCount(0);
 }
 
 /** Sube el CSV y termina con A y B marcadas (pasos 1 y 3 de 06 §4.5). */
@@ -112,7 +112,7 @@ async function irAEditar(page: Page, texto: string): Promise<void> {
   await abrir(page, '/actividad');
   await page.locator('[data-fila-transaccion]').filter({ hasText: texto }).first().click();
   await page.getByRole('link', { name: tx.editar }).click();
-  await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: tx.editarGasto })).toBeVisible();
 }
 
 /** Guarda la edición de una compra conciliada: AV-16 antes (con el texto de lo que cambió, E3-15) y confirmación (P12). */
@@ -120,7 +120,7 @@ async function guardarConciliada(page: Page, aviso: string): Promise<void> {
   await page.getByRole('button', { name: tx.guardar }).click();
   await expect(page.getByText(aviso)).toBeVisible();
   await page.getByRole('button', { name: tx.confirmar }).click();
-  await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 1, name: tx.editarGasto })).toHaveCount(0);
 }
 
 test.describe('PRU-E2E-CONC conciliar con estado de cuenta', () => {
@@ -177,9 +177,9 @@ test.describe('PRU-E2E-CONC conciliar con estado de cuenta', () => {
     await terminar(page).click();
     await expect(page.getByTestId('resultado')).toBeVisible();
     await page.locator('[data-solo-en-finn]').getByRole('link', { name: t.editar }).click();
-    await page.getByRole('textbox', { name: g.total, exact: true }).fill('10');
+    await page.getByRole('textbox', { name: g.totalV3, exact: true }).fill('10');
     await page.getByRole('button', { name: tx.guardar }).click();
-    await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 1, name: tx.editarGasto })).toHaveCount(0);
     await abrir(page, `/cuentas/${T}`);
     const conciliacion = page.locator('[data-conciliacion]');
     await expect(
@@ -344,11 +344,11 @@ test.describe('PRU-E2E-CONC conciliar con estado de cuenta', () => {
   }) => {
     await conciliarConAyB(page);
     await page.locator('[data-solo-en-finn]').getByRole('link', { name: t.editar }).click();
-    await page.getByRole('textbox', { name: g.total, exact: true }).fill('10');
+    await page.getByRole('textbox', { name: g.totalV3, exact: true }).fill('10');
     await page.getByRole('button', { name: tx.guardar }).click();
-    await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 1, name: tx.editarGasto })).toHaveCount(0);
     await irAEditar(page, '$40.00');
-    await page.getByRole('textbox', { name: g.total, exact: true }).fill('45');
+    await page.getByRole('textbox', { name: g.totalV3, exact: true }).fill('45');
     await guardarConciliada(page, tx.conciliadaAdvertencia('T', tx.queCambio.total));
     await abrir(page, `/cuentas/${T}`);
     const conciliacion = page.locator('[data-conciliacion]');

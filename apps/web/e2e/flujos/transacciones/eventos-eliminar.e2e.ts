@@ -291,8 +291,8 @@ test.describe('PRU-E2E-TX eventos de una compra', () => {
     );
     await devolver(page, '10', ['$40.00']);
     await page.getByRole('link', { name: t.editar }).click();
-    await expect(page.getByRole('heading', { level: 1, name: t.editarTitulo })).toBeVisible();
-    await expect(page.locator('[data-cuenta-fija]')).toContainText('Ahorro');
-    await expect(page.locator('[data-cuenta-fija]')).toContainText(/devoluci/i);
+    await expect(page.getByRole('heading', { level: 1, name: t.editarGasto })).toBeVisible();
+    await expect(page.locator('[data-dato-fijo="cuenta"]')).toContainText('Ahorro');
+    await expect(page.locator('[data-dato-fijo="cuenta"]')).toContainText(/devoluci/i);
   });
 });
