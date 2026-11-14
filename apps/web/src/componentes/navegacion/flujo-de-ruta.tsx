@@ -2,7 +2,7 @@
 // `cerrarFlujo()` de 05 §1.4 atado al enrutador de Next: superpuesto, `router.back()` (la pantalla de origen sigue
 // montada); página completa, `router.replace(rutaPadre)`. Va aparte de los componentes para que estos se prueben sin Next.
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, type ComponentProps } from 'react';
+import { useEffect, useRef, type ComponentProps } from 'react';
 import { PaginaFlujo } from '../marco/pagina-flujo';
 import { Superpuesto } from '../marco/superpuesto';
 
@@ -58,6 +58,34 @@ export function CerrarFlujoAlMontar({
     if (superpuesto) router.back();
     else router.replace(rutaPadre);
   }, [router, rutaPadre, superpuesto]);
+  return null;
+}
+
+/**
+ * [CH-285] Un panel (ruta interceptada) que terminó y deja su resultado en la URL de la pantalla de origen (`?resultado=`).
+ * Primero `router.back()`, como todo superpuesto (05 §1.4); cuando el panel ya se desmontó (la vuelta terminó), `replace` a
+ * `ruta` sobre la entrada de la pantalla de origen. Un `replace` hecho desde la ruta interceptada, mientras sigue en vuelo la
+ * actualización que dispara la acción (`revalidatePath`), deja al enrutador de Next 16.4 con dos árboles que no coinciden
+ * seguidos, y la navegación siguiente (abrir otro panel) se hace como carga completa, sin interceptar (bug 16).
+ */
+export function CerrarPanelConResultado({ ruta }: { readonly ruta: string }) {
+  const router = useRouter();
+  const volvio = useRef(false);
+  const pendiente = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => {
+    // En desarrollo, StrictMode monta, desmonta y vuelve a montar enseguida: una sola vuelta, y el `replace` que dejó el
+    // desmontaje simulado se cancela al volver a montar. Solo el desmontaje de verdad lo deja correr.
+    clearTimeout(pendiente.current);
+    if (!volvio.current) {
+      volvio.current = true;
+      router.back();
+    }
+    return () => {
+      pendiente.current = setTimeout(() => {
+        router.replace(ruta);
+      }, 0);
+    };
+  }, [router, ruta]);
   return null;
 }
 
