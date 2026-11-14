@@ -18,8 +18,8 @@ import { SelectorSegmentado } from '../base/selector-segmentado';
 export interface PropsEntradaMonto {
   readonly nombre: string;
   readonly etiqueta: string;
-  /** Texto tal como lo escribió el usuario (estado del formulario). */
-  readonly valor: string;
+  /** Texto tal como lo escribió el usuario (estado del formulario); sin valor, se trata como vacío. */
+  readonly valor: string | undefined;
   readonly alCambiar: (texto: string) => void;
   readonly conSigno?: boolean;
   readonly signo?: Signo;
@@ -47,7 +47,7 @@ const MENSAJE: Record<MotivoInvalido, string> = {
 export function EntradaMonto({
   nombre,
   etiqueta,
-  valor,
+  valor: valorRecibido,
   alCambiar,
   conSigno = false,
   signo = 'positivo',
@@ -62,6 +62,7 @@ export function EntradaMonto({
   sinVistaPrevia = false,
   compacto = false,
 }: PropsEntradaMonto) {
+  const valor = valorRecibido ?? '';
   const resultado = normalizarMontoEscrito(valor);
   const errorLocal =
     resultado.estado === 'incompleto'
