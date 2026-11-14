@@ -634,6 +634,41 @@ describe('PRU-INT-CTA', () => {
     expect(await subtipoDe(1326)).toBeUndefined();
   });
 
+  it('PRU-INT-CTA-830 [CA-50.3] OP-01 de un préstamo con institución y sin contraparte guarda como contraparte el nombre de la institución y la repetición es ya aplicada; sin ninguna de las dos, o con Banco Agrícola sin tasa, es VALIDACION en su campo y no escribe (CH-264, CH-265)', async () => {
+    const lista = await leer((t) => leerInstituciones(t), RELOJ);
+    const agricola = lista.find((x) => x.nombre === 'Banco Agrícola')?.id;
+    expect(agricola).toBeDefined();
+    const prestamo = {
+      id: uuid(1340),
+      tipo: 'prestamo',
+      nombre: 'Préstamo BA',
+      institucionId: agricola,
+      saldo: '3934.62',
+      montoOriginal: '6295.00',
+      tipoTasa: 'fija',
+      frecuencia: 'mensual',
+      cuotaPactada: '377.98',
+      plazoCuotas: 18,
+      cuotasPagadasAlCrear: 6,
+    };
+    const antes = await revision();
+    for (const [entrada, campo] of [
+      [{ ...prestamo, institucionId: undefined }, 'contraparte'],
+      [{ ...prestamo, modeloCalculo: 'banco_agricola' }, 'tasaNominalAnual'],
+      [{ ...prestamo, institucionId: uuid(99_999) }, 'institucionId'],
+    ] as const)
+      expect(await ejecutar(OP01, entrada)).toMatchObject({
+        ok: false,
+        error: { categoria: 'VALIDACION', campos: { [campo]: texto } },
+      });
+    expect(await revision()).toBe(antes);
+    expect(await ejecutar(OP01, prestamo)).toMatchObject({ ok: true, yaAplicada: false });
+    expect((await hechos()).prestamos.find((p) => p.cuentaId === uuid(1340))).toMatchObject({
+      contraparte: 'Banco Agrícola',
+    });
+    expect(await ejecutar(OP01, prestamo)).toMatchObject({ ok: true, yaAplicada: true });
+  });
+
   it('PRU-INT-CTA-320 CH-224 OP-02: OP-02 cambia el subtipo con lo esperado y conserva el actual si no llega; pasar a billetera exige quitar institución y últimos 4 en la misma edición', async () => {
     const institucionId = await bac();
     await ejecutar(OP01, efectivo(1330, { institucionId, ultimos4: '4321' }));

@@ -70,7 +70,8 @@ export const CAMPOS_DE_TIPO: Readonly<Record<TipoCuenta, readonly Descriptor[]>>
     d('color', 'opciones', false),
   ],
   prestamo: [
-    d('contraparte', 'texto', true),
+    // [CH-265] Con una institución elegida, la contraparte es su nombre y la pone OP-01: el campo solo va sin institución
+    d('contraparte', 'texto', true, ['institucionId', 'ninguna']),
     d('montoOriginal', 'monto', true),
     d('tasaNominalAnual', 'porcentaje', false),
     d('tipoTasa', 'opciones', true),
