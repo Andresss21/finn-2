@@ -226,7 +226,7 @@ export function ListaEstructura({
       foco,
     );
   };
-  /** Mover una categoría a un lugar (la barra hoy; el arrastre en el PR siguiente). El grupo de destino se abre. */
+  /** Mover una categoría a un lugar (la barra y el arrastre). El grupo de destino se abre. */
   const moverCategoria = (cid: string, destino: L.Lugar | undefined, foco: string) => {
     if (destino === undefined) return;
     if (colapsados.has(destino.grupoId))

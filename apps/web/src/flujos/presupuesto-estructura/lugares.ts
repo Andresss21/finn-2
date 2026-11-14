@@ -1,7 +1,7 @@
 // [CH-272] C-46: los lugares de la estructura, sin React (ESTRUCTURA-Y-COLAPSO §1.4, §1.5 y §5; la especificación es
 // `docs/anexos/finn-estructura/logica/estructura.js`). Un lugar es la posición en pantalla (sin archivadas ni grupos archivados ni
 // Pagos de tarjeta); OP-08 recibe la posición desde 1 en la lista completa, que sí los cuenta (04 §3.2). Lo usan la barra
-// «Mover» y, en el PR siguiente, el arrastre: los dos producen el mismo `Movimiento`.
+// «Mover» y el arrastre ([CH-275]): los dos producen el mismo `Movimiento`.
 import { estructura as t } from '../../textos/estructura';
 
 export interface CatVista {
