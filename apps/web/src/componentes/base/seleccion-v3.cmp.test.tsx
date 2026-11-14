@@ -275,7 +275,9 @@ describe('PRU-CMP-VAL selección y buscador v3', () => {
     });
     const rotulo = fila.querySelector('.campo-rotulo') as HTMLElement;
     const panel = lista(raiz) as HTMLElement;
-    expect(panel.getBoundingClientRect().top).toBeGreaterThan(rotulo.getBoundingClientRect().bottom);
+    expect(panel.getBoundingClientRect().top).toBeGreaterThan(
+      rotulo.getBoundingClientRect().bottom,
+    );
     // Sin opción elegida, la activa al abrir es la primera.
     expect(panel.getAttribute('aria-activedescendant')).toBe(opcion(raiz, 'Supermercado').id);
   });
@@ -308,11 +310,15 @@ describe('PRU-CMP-VAL selección y buscador v3', () => {
     const grupo = raiz.querySelector('.grupo-campos') as HTMLElement;
     const segmentado = grupo.querySelector('[role="radiogroup"]') as HTMLElement;
     expect(segmentado.getAttribute('aria-label')).toBe('Cuenta');
-    expect(
-      [...segmentado.querySelectorAll('[role="radio"]')].map((r) => r.textContent),
-    ).toEqual(['Supermercado', 'Farmacia', 'Restaurantes']);
+    expect([...segmentado.querySelectorAll('[role="radio"]')].map((r) => r.textContent)).toEqual([
+      'Supermercado',
+      'Farmacia',
+      'Restaurantes',
+    ]);
     expect(grupo.querySelector('[aria-haspopup="listbox"], select')).toBeNull();
-    await userEvent.click(segmentado.querySelectorAll<HTMLElement>('[role="radio"]')[1] as HTMLElement);
+    await userEvent.click(
+      segmentado.querySelectorAll<HTMLElement>('[role="radio"]')[1] as HTMLElement,
+    );
     expect(cambios).toEqual(['farmacia']);
 
     // Fuera del grupo: la nativa sigue con su `<select>` y la de pocas opciones con sus radios.
@@ -343,8 +349,11 @@ describe('PRU-CMP-VAL selección y buscador v3', () => {
 
   it('PRU-CMP-VAL-832 [C-45] CA-K3-7: el buscador de comercio espera 250 ms, dice «Buscando…», resalta lo escrito en 700, anuncia la cantidad, avisa sin resultados y ante un error ofrece «Intentar de nuevo» sin subrayado; lo escrito se respeta', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    const pedidos: { texto: string; resolver: (r: readonly Sugerencia[]) => void; fallar: () => void }[] =
-      [];
+    const pedidos: {
+      texto: string;
+      resolver: (r: readonly Sugerencia[]) => void;
+      fallar: () => void;
+    }[] = [];
     const elegidas: Sugerencia[] = [];
     function Comercio() {
       const [texto, setTexto] = useState('');

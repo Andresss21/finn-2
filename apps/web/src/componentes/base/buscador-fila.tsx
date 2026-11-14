@@ -149,7 +149,9 @@ export function BuscadorFila({
             aria-expanded={conLista}
             aria-controls={`${id}-lista`}
             aria-autocomplete="list"
-            {...(conLista && activa >= 0 ? { 'aria-activedescendant': `${id}-o${String(activa)}` } : {})}
+            {...(conLista && activa >= 0
+              ? { 'aria-activedescendant': `${id}-o${String(activa)}` }
+              : {})}
             autoComplete="off"
             className="campo-entrada"
             value={valor}

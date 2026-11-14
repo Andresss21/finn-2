@@ -39,7 +39,8 @@ export const base = {
   corregirCampos: (n: number) => `Corregí ${n} ${n === 1 ? 'campo' : 'campos'} para guardar.`,
   // [CH-271] Buscador con sugerencias v3 (C-45, CAMPOS-V3 §7), tal cual; «Buscando…» e «Intentar de nuevo» ya estaban.
   comercios: (n: number) => (n === 1 ? '1 comercio' : `${String(n)} comercios`),
-  sinComercios: (texto: string) => `No hay comercios con «${texto}». Se guarda como comercio nuevo.`,
+  sinComercios: (texto: string) =>
+    `No hay comercios con «${texto}». Se guarda como comercio nuevo.`,
   noSePudoBuscar: 'No se pudo buscar.',
   sueleIrA: (categoria: string) => `Suele ir a ${categoria}`,
 } as const;

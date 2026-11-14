@@ -888,7 +888,14 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
   cursor: not-allowed;
 }
 .campo-fila[data-apagado]
-  :is(.campo-rotulo, .campo-entrada, .campo-afijo, .campo-disparador, .campo-disparador-texto, svg) {
+  :is(
+    .campo-rotulo,
+    .campo-entrada,
+    .campo-afijo,
+    .campo-disparador,
+    .campo-disparador-texto,
+    svg
+  ) {
   color: var(--texto-deshabilitado);
   cursor: not-allowed;
 }

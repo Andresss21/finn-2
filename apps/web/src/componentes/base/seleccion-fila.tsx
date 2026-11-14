@@ -36,11 +36,7 @@ export interface PropsSeleccionFila {
 const MAXIMO_SEGMENTADO = 3;
 
 /** Sin tildes ni mayúsculas, para saltar con letras. */
-const llano = (t: string) =>
-  t
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .toLowerCase();
+const llano = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 export function SeleccionFila(props: PropsSeleccionFila) {
   if (props.opciones.length <= MAXIMO_SEGMENTADO) return <SegmentadoFila {...props} />;
@@ -246,7 +242,11 @@ function ListaFila({
                   <Fragment key="sin-grupo">{filas}</Fragment>
                 ) : (
                   <div key={g} role="group" aria-labelledby={`${id}-g${String(i)}`}>
-                    <div id={`${id}-g${String(i)}`} role="presentation" className="campo-panel-grupo">
+                    <div
+                      id={`${id}-g${String(i)}`}
+                      role="presentation"
+                      className="campo-panel-grupo"
+                    >
                       {g}
                     </div>
                     {filas}

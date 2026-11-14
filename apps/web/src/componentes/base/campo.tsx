@@ -119,11 +119,7 @@ export function Campo({
         {...(error === undefined ? {} : { 'data-error': '' })}
         {...(deshabilitado ? { 'data-apagado': '' } : {})}
       >
-        <label
-          htmlFor={id}
-          id={`${id}-l`}
-          className={etiquetaOculta ? 'sr-only' : 'campo-rotulo'}
-        >
+        <label htmlFor={id} id={`${id}-l`} className={etiquetaOculta ? 'sr-only' : 'campo-rotulo'}>
           <span>{etiqueta}</span>
           {opcional}
         </label>
