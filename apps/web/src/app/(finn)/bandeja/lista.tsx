@@ -1,10 +1,16 @@
 'use client';
 // La lista de `/bandeja` (06-identidad-visual §7): resumen con los contadores, las filas compactas (`MovimientoBandeja`) y,
 // sin movimientos, el vacío «Bandeja al día». Lo que muestra es lo que devolvió `bandeja()`, salvo la fila que se aprobó con
-// un toque: la revalidación la saca de la lista y su resultado queda en su lugar (FT-35, 05 §4.15).
+// un toque: la revalidación la saca de la lista y su resultado queda en su lugar (FT-35, 05 §4.15). [CH-281] El resultado es la
+// etiqueta de C-50, pegada arriba de la fila (el monto queda a la vista); la fila se retiene mientras se ve y se recoge.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useConexion } from '../../../cliente/useConexion';
 import { Boton } from '../../../componentes/base/boton';
+import {
+  EtiquetaResultado,
+  FilaQueSale,
+  useEtiqueta,
+} from '../../../componentes/base/etiqueta-resultado';
 import { Icono } from '../../../componentes/base/icono';
 import { Vacio } from '../../../componentes/base/vacio';
 import type { MovimientoDto } from '../../../componentes/dominio/movimiento-bandeja';
@@ -66,6 +72,16 @@ export function ListaBandeja({
   const [otra, setOtra] = useState<string | null>(null);
   const [limite, setLimite] = useState(VISIBLES);
   const { enLinea } = useConexion();
+  const [anuncio, setAnuncio] = useState('');
+  const etiqueta = useEtiqueta(setAnuncio);
+  const { pausar, reanudar } = etiqueta;
+  const alArrastrar = useCallback(
+    (enCurso: boolean) => {
+      if (enCurso) pausar('arrastre');
+      else reanudar('arrastre');
+    },
+    [pausar, reanudar],
+  );
   const pedida = useRef(false);
   const contador = useRef(0);
   const cargar = useCallback(() => {
@@ -126,8 +142,13 @@ export function ListaBandeja({
   }, []);
 
   const filas = [...movimientos];
+  // Con resultado, la fila se ve mientras su etiqueta (la reemplaza la siguiente acción, Escape la quita)
+  const conEtiqueta = etiqueta.estado.actual?.id;
   for (const r of Object.values(retenidas))
-    if ((r.enCurso || r.resultado !== undefined) && !filas.some((m) => m.id === r.movimiento.id))
+    if (
+      (r.enCurso || (r.resultado !== undefined && conEtiqueta === r.movimiento.id)) &&
+      !filas.some((m) => m.id === r.movimiento.id)
+    )
       filas.splice(Math.min(r.indice, filas.length), 0, r.movimiento);
   // «Aprobar todos» ocupa siempre el mismo lugar: su resultado sobrevive a que la lista quede vacía (FT-36)
   const cuerpo = (
@@ -149,37 +170,47 @@ export function ListaBandeja({
         </p>
       )}
       <AprobarTodos accion={aprobarTodos} elegibles={elegibles} movimientos={movimientos} />
+      {/* [CH-281] La región de estado de la pantalla: la frase completa de la etiqueta (C-50 §7) */}
+      <p role="status" data-anuncio="bandeja" className="sr-only">
+        {anuncio}
+      </p>
       {filas.length === 0 ? (
         <Vacio titulo={t.alDia.titulo} texto={t.alDia.texto} icono="inbox" />
       ) : (
         <>
-          <div
+          <ul
             role="list"
             aria-label={t.lista}
             onPointerDownCapture={cargar}
             onKeyDownCapture={cargar}
-            className="divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1"
+            className="fz-tarjeta-etiqueta divide-y divide-borde-sutil rounded-contenedor bg-superficie shadow-elevacion-1"
           >
             {filas
               .map((m, i) => ({ m, i }))
               .filter(({ m, i }) => i < limite || retenidas[m.id] !== undefined)
               .map(({ m }) => (
-                <div key={m.id} role="listitem">
-                  <FilaBandeja
-                    movimiento={m}
-                    hrefRevisar={`/bandeja/${m.id}`}
-                    resultado={retenidas[m.id]?.resultado}
-                    alIniciar={alIniciar}
-                    alTerminar={alTerminar}
-                    {...(enLinea ? {} : { sinConexion: { idMotivo: ID_SIN_CONEXION } })}
-                    {...(destinos === undefined
-                      ? {}
-                      : { conArrastre: true, alElegirCategoria: elegirOtra })}
-                    {...(soltado?.movimientoId === m.id ? { soltado } : {})}
-                  />
-                </div>
+                <FilaQueSale key={m.id} api={etiqueta} id={m.id}>
+                  <div
+                    {...(etiqueta.resaltada(m.id) ? { 'data-resaltada': '' } : {})}
+                    className="fz-resaltable rounded-[inherit]"
+                  >
+                    <FilaBandeja
+                      movimiento={m}
+                      hrefRevisar={`/bandeja/${m.id}`}
+                      etiqueta={etiqueta}
+                      alIniciar={alIniciar}
+                      alTerminar={alTerminar}
+                      {...(enLinea ? {} : { sinConexion: { idMotivo: ID_SIN_CONEXION } })}
+                      {...(destinos === undefined
+                        ? {}
+                        : { conArrastre: true, alElegirCategoria: elegirOtra })}
+                      {...(soltado?.movimientoId === m.id ? { soltado } : {})}
+                    />
+                    <EtiquetaResultado api={etiqueta} id={m.id} posicion="arriba" />
+                  </div>
+                </FilaQueSale>
               ))}
-          </div>
+          </ul>
           {filas.length > limite ? (
             <Boton
               variante="secundaria"
@@ -207,6 +238,7 @@ export function ListaBandeja({
           alSoltar={alSoltar}
           alElegirOtra={elegirOtra}
           deshabilitado={!enLinea}
+          alArrastrar={alArrastrar}
         />
       )}
       {otra === null || destinos === undefined ? null : (

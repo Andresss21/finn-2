@@ -143,6 +143,7 @@ export function ContextoArrastre({
   alSoltar,
   alElegirOtra,
   deshabilitado,
+  alArrastrar,
 }: {
   readonly movimientos: readonly MovimientoDto[];
   readonly destinos: DestinosArrastre;
@@ -151,6 +152,8 @@ export function ContextoArrastre({
   readonly alElegirOtra: (movimientoId: string) => void;
   /** [CH-240 E6-3] Sin conexión el asa y la pulsación larga no empiezan ningún arrastre. */
   readonly deshabilitado?: boolean;
+  /** [CH-281] C-50 §4: la etiqueta de resultado espera mientras hay un arrastre en curso. */
+  readonly alArrastrar?: (enCurso: boolean) => void;
 }) {
   const [activo, setActivo] = useState<string | null>(null);
   const [sobre, setSobre] = useState<string | null>(null);
@@ -228,8 +231,13 @@ export function ContextoArrastre({
   const anuncios: Announcements = {
     onDragStart: ({ active }) => t.tomaste(comercioDe(active.id)),
     onDragOver: ({ over }) => (over === null ? undefined : t.sobre(nombreDe(over.id))),
+    // [CH-281] Soltar sobre una categoría lo anuncia la región de la lista con el resultado (C-50 §8): aquí no se repite
     onDragEnd: ({ active, over }) =>
-      over === null ? t.cancelado : t.soltaste(comercioDe(active.id), nombreDe(over.id)),
+      over === null
+        ? t.cancelado
+        : /^[fg]:/.test(String(over.id))
+          ? undefined
+          : t.soltaste(comercioDe(active.id), nombreDe(over.id)),
     onDragCancel: () => t.cancelado,
   };
   const ids = [
@@ -260,6 +268,7 @@ export function ContextoArrastre({
       onDragStart={({ active }: DragStartEvent) => {
         posicion.current = -1;
         setActivo(String(active.id));
+        alArrastrar?.(true);
       }}
       onDragOver={({ over }: DragOverEvent) => {
         setSobre(over === null ? null : String(over.id));
@@ -268,6 +277,7 @@ export function ContextoArrastre({
         const destino = over === null ? '' : String(over.id);
         setActivo(null);
         setSobre(null);
+        alArrastrar?.(false);
         // Soltar sobre una categoría aprueba; sobre «Otra categoría…» abre el selector; fuera del panel no envía nada
         if (destino.startsWith('f:') || destino.startsWith('g:'))
           alSoltar(String(active.id), destino.slice(2));
@@ -278,6 +288,7 @@ export function ContextoArrastre({
       onDragCancel={({ active }: DragCancelEvent) => {
         setActivo(null);
         setSobre(null);
+        alArrastrar?.(false);
         devolverFoco(String(active.id));
       }}
     >

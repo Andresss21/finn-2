@@ -1207,6 +1207,7 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
 }
 .fz-fila-sale-dentro {
   min-height: 0;
+  border-radius: inherit; /* [CH-281] la fila resaltada de adentro redondea con la tarjeta (Bandeja) */
 }
 .fz-fila-sale[data-recogiendo] > .fz-fila-sale-dentro {
   overflow: hidden;
