@@ -83,12 +83,16 @@ const tocar = async (nodo: HTMLElement, texto: string): Promise<void> => {
   });
   await esperar();
 };
+/** [C-45] El día se elige en la lista propia de la fila (CAMPOS-V3 §6): se abre el disparador y se toca la opción. */
 const elegirDia = async (nodo: HTMLElement, valor: string): Promise<void> => {
-  const select = nodo.querySelector('select');
-  if (select === null) throw new Error('no hay selección del día');
-  await act(async () => {
-    await userEvent.selectOptions(select, valor);
-  });
+  const disparador = nodo.querySelector<HTMLElement>('button[aria-haspopup="listbox"]');
+  if (disparador === null) throw new Error('no hay selección del día');
+  await userEvent.click(disparador);
+  const opcion = [...nodo.querySelectorAll<HTMLElement>('[role=option]')].find(
+    (o) => o.textContent.trim() === valor,
+  );
+  if (opcion === undefined) throw new Error(`no hay el día ${valor}`);
+  await userEvent.click(opcion);
   await esperar();
 };
 const abrirPanel = async (ui: ReactNode): Promise<HTMLElement> => {
@@ -127,16 +131,21 @@ describe('PRU-CMP-AJUS', () => {
 
     expect(nodo.textContent).toContain('El ciclo ya empieza el día 21.');
     expect(nodo.textContent).not.toContain(t.revisar);
+    // [C-45] Apagado con `aria-disabled` y el motivo debajo (CAMPOS-V3 §11); el mensaje también va en la fila del día (§3).
     const confirmar = boton(nodo, t.confirmar);
-    expect(confirmar.disabled).toBe(true);
+    expect(confirmar.getAttribute('aria-disabled')).toBe('true');
     const enlazado = confirmar.getAttribute('aria-describedby');
     expect(enlazado).not.toBeNull();
     expect(document.getElementById(enlazado ?? '')?.textContent).toContain(
       'El ciclo ya empieza el día 21.',
     );
-    const select = nodo.querySelector('select');
-    expect(select?.getAttribute('aria-invalid')).toBe('true');
-    expect(select?.getAttribute('aria-describedby')).toContain(enlazado ?? '');
+    const dia = nodo.querySelector('button[aria-haspopup="listbox"]');
+    expect(dia?.closest('.campo-fila')?.hasAttribute('data-error')).toBe(true);
+    const errorDelDia = (dia?.getAttribute('aria-describedby') ?? '')
+      .split(' ')
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+    expect(errorDelDia).toContain('El ciclo ya empieza el día 21.');
   });
 
   it('PRU-CMP-AJUS-112 [CA-72.5] la previsualización no guarda: solo «Cambiar al día 21» confirma, y «Cancelar» cierra sin confirmar', async () => {

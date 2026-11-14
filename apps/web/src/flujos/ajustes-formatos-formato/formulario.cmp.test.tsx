@@ -169,16 +169,20 @@ describe('PRU-CMP-AJUS', () => {
       ),
     });
     const nodo = montar(<FormularioFormato {...props} />);
-    const activo = nodo.querySelector<HTMLButtonElement>('button[role="switch"]');
+    // [C-45] El interruptor v3 (CAMPOS-V3 §8): toda la fila es el `<label>`, nombrado por su texto.
+    const activo = nodo.querySelector<HTMLInputElement>('[role="switch"]');
     if (activo === null) throw new Error('no hay interruptor');
-    expect(activo.getAttribute('aria-checked')).toBe('true');
-    expect(activo.textContent).toContain(t.campos.activo);
-    expect(activo.getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
+    const filaActivo = activo.closest('label') as HTMLElement;
+    expect(activo.checked).toBe(true);
+    expect(document.getElementById(activo.getAttribute('aria-labelledby') ?? '')?.textContent).toBe(
+      t.campos.activo,
+    );
+    expect(filaActivo.getBoundingClientRect().height).toBeGreaterThanOrEqual(48);
     await act(async () => {
-      activo.click();
+      filaActivo.click();
       await Promise.resolve();
     });
-    expect(activo.getAttribute('aria-checked')).toBe('false');
+    expect(activo.checked).toBe(false);
     expect(nodo.textContent).not.toContain('Eliminar');
 
     await tocar(nodo, t.guardar);

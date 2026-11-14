@@ -26,11 +26,14 @@ export function useGuardarV3({
   readonly motivoSinEnvio: string | undefined;
 }) {
   const forma = useRef<HTMLFormElement>(null);
-  // El segmentado no lleva `aria-invalid`: su fila con error sí (`data-error`), y el foco va a su primera opción.
+  // El segmentado y el disparador de la lista no llevan `aria-invalid`: su fila con error sí (`data-error`), y el foco va a su
+  // primera opción o al disparador.
   useEffect(() => {
     if (intentos > 0)
       forma.current
-        ?.querySelector<HTMLElement>('[aria-invalid="true"], .campo-fila[data-error] [role=radio]')
+        ?.querySelector<HTMLElement>(
+          '[aria-invalid="true"], .campo-fila[data-error] :is([role=radio], [aria-haspopup=listbox])',
+        )
         ?.focus();
   }, [intentos]);
   const faltan = porCorregir(contrato, campos);

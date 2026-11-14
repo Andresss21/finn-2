@@ -39,9 +39,10 @@ function montar(): HTMLElement {
   return nodo;
 }
 
+// [C-45] Con tres opciones, el tema es un segmentado en su fila (CAMPOS-V3 §6): cada opción es un `role="radio"` con su texto.
 const radio = (nodo: HTMLElement, nombre: string): HTMLElement => {
   const r = [...nodo.querySelectorAll<HTMLElement>('[role="radio"]')].find((x) =>
-    (x.closest('label')?.textContent ?? '').startsWith(nombre),
+    x.textContent.startsWith(nombre),
   );
   if (r === undefined) throw new Error(`no hay una opción «${nombre}»`);
   return r;

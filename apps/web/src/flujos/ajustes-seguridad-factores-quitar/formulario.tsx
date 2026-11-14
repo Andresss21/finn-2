@@ -18,7 +18,8 @@ import { autenticacion } from '../../textos/autenticacion';
 import { seguridad as t } from '../../textos/seguridad';
 
 const RUTA_PADRE = '/ajustes/seguridad';
-const ENLACE = 'inline-flex min-h-11 items-center font-bold text-enlace underline';
+// C-33: los enlaces se distinguen por `--enlace` y el peso 700, sin subrayado.
+const ENLACE = 'inline-flex min-h-11 items-center font-bold text-enlace';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 
 export interface PropsFormularioQuitarFactor {

@@ -3,71 +3,37 @@
 // desactivar un formato y probarlo. Flujo largo con borrador; desde 1280 px, en dos columnas con «Probar con un SMS» fija (E5-10, E5-11).
 // La política del patrón la aplica el servidor: sus rechazos llegan en `campos` con el texto de 04 §7.10 y se muestran en el campo que
 // corrige la persona. No se eliminan: «Activo» es un interruptor de toda la fila. Al guardar, la lista muestra el resultado (E5-13).
+// [C-45] Grupos de filas v3 (CAMPOS-V3 §2): los datos del formato, los separadores en segmentado, los formatos de fecha como
+// casillas y «Activo» como interruptor (§8). «Guardar formato» se ve apagado mientras falte la institución, el nombre o el patrón y
+// dice debajo cuántos campos corregir (§5 y §11); la política del patrón sigue siendo del servidor.
 import type { ErrorFinn, ResultadoAccion } from '@finn/aplicacion/errores';
 import type { SalidaProbar } from '@finn/aplicacion/operaciones/formatos';
-import { useCallback, useId, useState, type SyntheticEvent } from 'react';
+import { useCallback, useState, type SyntheticEvent } from 'react';
+import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Campo, EntradaTexto, MensajeError } from '../../componentes/base/campo';
-import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
+import { Campo, EntradaTexto, GrupoCampos, MensajeError } from '../../componentes/base/campo';
+import { Casilla, Interruptor } from '../../componentes/base/controles-fila';
+import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useBorrador } from '../../formularios/use-borrador';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { ajustesFormatos as t } from '../../textos/ajustes-formatos';
 import { formularios } from '../../textos/formularios';
-import { CAJA_SELECT, ProbarFormato, type SmsDePrueba } from './probar';
+import { ProbarFormato, type SmsDePrueba } from './probar';
 
 const RUTA_PADRE = '/ajustes/formatos';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const FORMATOS_FECHA = ['AAAA/MM/DD', 'AAAAMMDD', 'AAAA-MM-DD', 'DD/MM/AAAA'] as const;
-// E5-10: área de texto de 4 líneas que parte en cualquier carácter; la caja es la de `CAJA_SELECT` (L13: clases literales)
-const CAJA_PATRON =
-  'w-full rounded-t-control rounded-b-sm border-b-2 border-borde-control bg-superficie px-3 py-2 font-mono text-base break-all text-texto focus-visible:border-b-4 focus-visible:border-foco focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco aria-invalid:border-2 aria-invalid:border-problema-borde';
-const segmentos = (o: Readonly<Record<string, string>>) =>
+const opciones = (o: Readonly<Record<string, string>>) =>
   Object.entries(o).map(([valor, etiqueta]) => ({ valor, etiqueta }));
-
-/** E5-10: el botón `role="switch"` es toda la fila (48 px), nombrado por su texto y descrito por su ayuda. */
-function InterruptorActivo({
-  activo,
-  alCambiar,
-}: {
-  readonly activo: boolean;
-  readonly alCambiar: (v: boolean) => void;
-}) {
-  const id = useId();
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={activo}
-      aria-labelledby={`${id}-n`}
-      aria-describedby={`${id}-d`}
-      onClick={() => {
-        alCambiar(!activo);
-      }}
-      className="flex min-h-12 w-full items-center gap-4 rounded-control text-left focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
-    >
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span id={`${id}-n`} className="font-medium">
-          {t.campos.activo}
-        </span>
-        <span id={`${id}-d`} className="text-sm text-texto-secundario">
-          {t.campos.activoAyuda}
-        </span>
-      </span>
-      <span
-        aria-hidden="true"
-        className={
-          activo
-            ? 'flex h-7 w-12 shrink-0 items-center justify-end rounded-pastilla bg-accion p-0.5'
-            : 'flex h-7 w-12 shrink-0 items-center justify-start rounded-pastilla bg-borde-control p-0.5'
-        }
-      >
-        <span className="size-6 rounded-pastilla bg-superficie shadow-elevacion-1" />
-      </span>
-    </button>
-  );
-}
+/** Lo obligatorio escrito; la política del patrón (grupos, banderas, lentitud) la aplica el servidor. */
+const CONTRATO = z.object({
+  institucionId: z.string().min(1, t.completar),
+  nombre: z.string().trim().min(1, t.completar),
+  patron: z.string().trim().min(1, t.completar),
+});
 
 export interface FormatoGuardado {
   readonly id: string;
@@ -119,41 +85,6 @@ const inicial = (f: FormatoGuardado | undefined): Campos => ({
 /** Un rechazo cuyo mensaje ya se muestra en su campo no se repite como aviso del formulario. */
 const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
 
-function Seleccionar({
-  etiqueta,
-  valor,
-  opciones,
-  alCambiar,
-  error,
-}: {
-  readonly etiqueta: string;
-  readonly valor: string;
-  readonly opciones: readonly (readonly [string, string])[];
-  readonly alCambiar: (v: string) => void;
-  readonly error: string | undefined;
-}) {
-  return (
-    <Campo etiqueta={etiqueta} requerido {...(error === undefined ? {} : { error })}>
-      {(control) => (
-        <select
-          {...control}
-          className={CAJA_SELECT}
-          value={valor}
-          onChange={(e) => {
-            alCambiar(e.target.value);
-          }}
-        >
-          {opciones.map(([v, e]) => (
-            <option key={v} value={v}>
-              {e}
-            </option>
-          ))}
-        </select>
-      )}
-    </Campo>
-  );
-}
-
 export function FormularioFormato({
   guardar,
   probar,
@@ -173,16 +104,29 @@ export function FormularioFormato({
     }, [formato]),
   });
   const { estado, error: fallo } = operacion;
+  const [intentos, setIntentos] = useState(0);
+  const guardarV3 = useGuardarV3({
+    contrato: CONTRATO,
+    campos: valores,
+    intentos,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
   const poner = <K extends keyof Campos>(n: K, v: Campos[K]) => {
     setValores((c) => ({ ...c, [n]: v }));
   };
-  const campos = fallo?.campos ?? {};
+  // Lo que falta se marca desde el primer intento de guardar (CAMPOS-V3 §5); el rechazo del servidor manda en su campo.
+  const revision = intentos > 0 ? CONTRATO.safeParse(valores) : undefined;
+  const campos: Readonly<Record<string, string>> = {
+    ...Object.fromEntries(
+      (revision?.error?.issues ?? []).map((i) => [String(i.path[0]), i.message]),
+    ),
+    ...fallo?.campos,
+  };
   const err = (n: string): string | undefined => campos[n];
   const conError = (n: string): { error?: string } => {
     const m = err(n);
     return m === undefined ? {} : { error: m };
   };
-  const tipos = Object.entries(t.tipos);
   const alta = formato === undefined;
   const titulo = alta ? t.tituloNuevo : t.tituloEditar;
 
@@ -199,6 +143,8 @@ export function FormularioFormato({
 
   const enviar = (e: SyntheticEvent) => {
     e.preventDefault();
+    setIntentos((n) => n + 1);
+    if (!CONTRATO.safeParse(valores).success) return;
     void operacion.enviar({ ...valores, ...(alta ? {} : { id: formato.id }) });
   };
   const alternarFecha = (f: string) => {
@@ -223,7 +169,7 @@ export function FormularioFormato({
   return (
     <PaginaFlujoDeRuta titulo={titulo} rutaPadre={RUTA_PADRE} ancha>
       <div className="flex flex-col gap-8 xl:grid xl:grid-cols-2 xl:items-start">
-        <form onSubmit={enviar} noValidate className="flex flex-col gap-5">
+        <form ref={guardarV3.forma} onSubmit={enviar} noValidate className="flex flex-col gap-5">
           {borrador.recuperado ? (
             <AvisoEnLinea
               estado="informacion"
@@ -237,114 +183,117 @@ export function FormularioFormato({
               {formularios.borradorRecuperado}
             </AvisoEnLinea>
           ) : null}
-          <Seleccionar
-            etiqueta={t.campos.institucion}
-            valor={valores.institucionId}
-            opciones={[
-              ['', t.campos.elegirInstitucion],
-              ...instituciones.map((i) => [i.id, i.nombre] as const),
-            ]}
-            alCambiar={(v) => {
-              poner('institucionId', v);
-            }}
-            error={err('institucionId')}
-          />
-          <EntradaTexto
-            etiqueta={t.campos.nombre}
-            requerido
-            autoComplete="off"
-            value={valores.nombre}
-            onChange={(e) => {
-              poner('nombre', e.target.value);
-            }}
-            {...conError('nombre')}
-          />
-          <Seleccionar
-            etiqueta={t.campos.tipo}
-            valor={valores.tipoMovimiento}
-            opciones={tipos}
-            alCambiar={(v) => {
-              poner('tipoMovimiento', v);
-            }}
-            error={err('tipoMovimiento')}
-          />
-          <Campo
-            etiqueta={t.campos.patron}
-            descripcion={t.campos.patronAyuda}
-            requerido
-            {...conError('patron')}
-          >
-            {(control) => (
-              <textarea
-                {...control}
-                rows={4}
-                autoComplete="off"
-                spellCheck={false}
-                className={CAJA_PATRON}
-                value={valores.patron}
-                onChange={(e) => {
-                  poner('patron', e.target.value);
-                }}
-              />
-            )}
-          </Campo>
-          <EntradaTexto
-            etiqueta={t.campos.banderas}
-            descripcion={t.campos.banderasAyuda}
-            autoComplete="off"
-            spellCheck={false}
-            value={valores.banderas}
-            onChange={(e) => {
-              poner('banderas', e.target.value);
-            }}
-            {...conError('banderas')}
-          />
-          {(['montoSeparadorMiles', 'montoSeparadorDecimal'] as const).map((n) => {
-            const miles = n === 'montoSeparadorMiles';
-            const m = err(n);
-            return (
-              <div key={n} className="flex flex-col items-start gap-1">
-                <span aria-hidden="true" className="text-sm font-medium">
-                  {miles ? t.campos.miles : t.campos.decimal}
-                </span>
-                <SelectorSegmentado
-                  etiqueta={miles ? t.campos.miles : t.campos.decimal}
-                  opciones={segmentos(miles ? t.separadoresMiles : t.separadoresDecimal)}
-                  valor={valores[n]}
-                  alCambiar={(v) => {
-                    poner(n, v);
+          <GrupoCampos>
+            <SeleccionNativa
+              etiqueta={t.campos.institucion}
+              marcador={t.campos.elegirInstitucion}
+              opciones={instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre }))}
+              valor={valores.institucionId}
+              alCambiar={(v) => {
+                poner('institucionId', v);
+              }}
+              error={err('institucionId')}
+            />
+            <EntradaTexto
+              etiqueta={t.campos.nombre}
+              requerido
+              autoComplete="off"
+              value={valores.nombre}
+              onChange={(e) => {
+                poner('nombre', e.target.value);
+              }}
+              {...conError('nombre')}
+            />
+            <SeleccionNativa
+              etiqueta={t.campos.tipo}
+              marcador={t.campos.tipo}
+              opciones={opciones(t.tipos)}
+              valor={valores.tipoMovimiento}
+              alCambiar={(v) => {
+                poner('tipoMovimiento', v);
+              }}
+              error={err('tipoMovimiento')}
+            />
+            <Campo
+              etiqueta={t.campos.patron}
+              descripcion={t.campos.patronAyuda}
+              requerido
+              {...conError('patron')}
+            >
+              {(control) => (
+                <textarea
+                  {...control}
+                  rows={4}
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="campo-entrada"
+                  value={valores.patron}
+                  onChange={(e) => {
+                    poner('patron', e.target.value);
                   }}
                 />
-                {m === undefined ? null : <MensajeError>{m}</MensajeError>}
-              </div>
-            );
-          })}
-          <fieldset className="flex flex-col gap-1">
-            <legend className="text-sm font-medium">{t.campos.fechas}</legend>
-            <p className="text-sm text-texto-secundario">{t.campos.fechasAyuda}</p>
-            {FORMATOS_FECHA.map((f) => (
-              <label key={f} className="flex min-h-11 items-center gap-3">
-                <input
-                  type="checkbox"
-                  className="size-11 shrink-0"
-                  checked={valores.formatosFecha.includes(f)}
-                  onChange={() => {
+              )}
+            </Campo>
+            <EntradaTexto
+              etiqueta={t.campos.banderas}
+              descripcion={t.campos.banderasAyuda}
+              autoComplete="off"
+              spellCheck={false}
+              value={valores.banderas}
+              onChange={(e) => {
+                poner('banderas', e.target.value);
+              }}
+              {...conError('banderas')}
+            />
+          </GrupoCampos>
+          <GrupoCampos>
+            {(['montoSeparadorMiles', 'montoSeparadorDecimal'] as const).map((n) => (
+              <SeleccionNativa
+                key={n}
+                etiqueta={n === 'montoSeparadorMiles' ? t.campos.miles : t.campos.decimal}
+                marcador={n === 'montoSeparadorMiles' ? t.campos.miles : t.campos.decimal}
+                opciones={opciones(
+                  n === 'montoSeparadorMiles' ? t.separadoresMiles : t.separadoresDecimal,
+                )}
+                valor={valores[n]}
+                alCambiar={(v) => {
+                  poner(n, v);
+                }}
+                error={err(n)}
+              />
+            ))}
+          </GrupoCampos>
+          <section aria-labelledby="formato-fechas" className="flex flex-col gap-2">
+            <h2 id="formato-fechas" className="text-etiqueta text-texto-secundario">
+              {t.campos.fechas}
+            </h2>
+            <p className="text-cuerpo-pequeno text-texto-secundario">{t.campos.fechasAyuda}</p>
+            <GrupoCampos etiqueta={t.campos.fechas}>
+              {FORMATOS_FECHA.map((f) => (
+                <Casilla
+                  key={f}
+                  etiqueta={f}
+                  marcada={valores.formatosFecha.includes(f)}
+                  alCambiar={() => {
                     alternarFecha(f);
                   }}
                 />
-                {f}
-              </label>
-            ))}
+              ))}
+            </GrupoCampos>
             {err('formatosFecha') === undefined ? null : (
-              <p className="text-sm text-problema-texto">{err('formatosFecha')}</p>
+              <MensajeError>{err('formatosFecha') ?? ''}</MensajeError>
             )}
-          </fieldset>
-          <InterruptorActivo
-            activo={valores.activo}
-            alCambiar={(v) => {
-              poner('activo', v);
-            }}
-          />
+          </section>
+          <GrupoCampos>
+            <Interruptor
+              etiqueta={t.campos.activo}
+              descripcion={t.campos.activoAyuda}
+              encendido={valores.activo}
+              alCambiar={(v) => {
+                poner('activo', v);
+              }}
+            />
+          </GrupoCampos>
           {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
             <AvisoEnLinea
               estado="problema"
@@ -367,9 +316,8 @@ export function FormularioFormato({
             enviando={estado === 'enviando'}
             textoEnviando={t.guardando}
             deshabilitado={!operacion.enLinea}
-            {...(operacion.motivoSinEnvio === undefined
-              ? {}
-              : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+            className="w-full"
+            {...guardarV3.boton}
           >
             {t.guardar}
           </Boton>

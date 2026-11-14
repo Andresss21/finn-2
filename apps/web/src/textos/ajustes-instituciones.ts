@@ -17,6 +17,8 @@ export const ajustesInstituciones = {
     n === 0 ? 'sin formatos' : n === 1 ? '1 formato' : `${String(n)} formatos`,
   nombre: 'Nombre',
   crear: 'Crear institución',
+  /** [C-45] El nombre vacío, al tocar «Crear institución» o «Guardar» (CAMPOS-V3 §5). */
+  completar: 'Completá este campo.',
   guardar: 'Guardar',
   cancelar: 'Cancelar',
   guardando: 'Guardando…',

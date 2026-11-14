@@ -1,10 +1,12 @@
 'use client';
 // `/reglas/[reglaId]` (FT-39, OP-41 editar y eliminar; 05 §2): corregir el patrón o la categoría de una regla, o borrarla. Es
 // una pantalla hija: el título y «Volver» los pone el marco (CH-109). `esperado` es lo que vio la persona al abrir (FE-09).
+// [C-45] «Guardar» sigue CAMPOS-V3 §5 y §11: apagado con `aria-disabled` y el motivo debajo, también sin cambios.
 import { useCallback, useState } from 'react';
 import { Boton } from '../../componentes/base/boton';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { CerrarFlujoAlMontar } from '../../componentes/navegacion/flujo-de-ruta';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { gestionarRegla } from '../../servidor/acciones/bandeja';
@@ -67,6 +69,12 @@ export function FormularioReglaRegla({ regla, grupos }: PropsFormularioReglaRegl
     operacion: guardar,
   });
   const valores = formulario.watch();
+  const v3 = useGuardarV3({
+    contrato: CONTRATO_REGLA,
+    campos: valores,
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: guardar.motivoSinEnvio,
+  });
 
   if (guardar.estado === 'listo' || eliminar.estado === 'listo')
     return (
@@ -93,7 +101,15 @@ export function FormularioReglaRegla({ regla, grupos }: PropsFormularioReglaRegl
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-5 px-5 py-4">
       <h1 className="text-titulo-pantalla">{t.tituloEditar}</h1>
-      <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
+      <form
+        ref={v3.forma}
+        onSubmit={(e) => {
+          if (sinCambios) e.preventDefault();
+          else void formulario.enviar(e);
+        }}
+        noValidate
+        className="flex flex-col gap-5"
+      >
         <CamposRegla
           formulario={formulario}
           grupos={grupos}
@@ -120,12 +136,10 @@ export function FormularioReglaRegla({ regla, grupos }: PropsFormularioReglaRegl
             tipo="submit"
             enviando={guardar.estado === 'enviando'}
             textoEnviando={t.guardando}
-            deshabilitado={!guardar.enLinea || sinCambios || ocupado}
-            {...(guardar.motivoSinEnvio === undefined
-              ? sinCambios
-                ? { motivoDeshabilitado: t.sinCambios }
-                : {}
-              : { motivoDeshabilitado: guardar.motivoSinEnvio })}
+            deshabilitado={!guardar.enLinea || ocupado}
+            {...(sinCambios && guardar.motivoSinEnvio === undefined
+              ? { apagado: true, motivoDeshabilitado: t.sinCambios }
+              : v3.boton)}
           >
             {t.guardar}
           </Boton>

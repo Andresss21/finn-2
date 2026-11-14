@@ -210,7 +210,12 @@ test.describe('PRU-E2E-PRES cierre de B10', () => {
     await abrir(page, '/ajustes/ciclo');
     await esperarHidratacion(page);
     antes = acciones();
-    await page.getByLabel(tc.nuevoDia, { exact: true }).selectOption('1');
+    // [C-45] El día es la lista propia de su fila (CAMPOS-V3 §6)
+    await page
+      .locator('button[aria-haspopup="listbox"]')
+      .and(page.getByRole('button', { name: new RegExp(`^${tc.nuevoDia}`) }))
+      .click();
+    await page.getByRole('option', { name: '1', exact: true }).click();
     await expect(page.getByRole('region', { name: tc.revisar })).toContainText(
       'Rige desde el 21/12/2027',
     );

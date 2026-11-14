@@ -6,6 +6,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
+import { elegirEnFila } from '../../ayudas/seleccion-nativa.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
 import type { Page } from '@playwright/test';
@@ -142,7 +143,8 @@ test.describe('PRU-E2E-TX actividad', () => {
     // En teléfono el botón «Filtros · 1» abre la hoja inferior (ACT-05) y «Ver N resultados» aplica (CH-250)
     await page.getByRole('button', { name: 'Filtros, 1 activos' }).click();
     const hoja = page.getByRole('dialog');
-    await hoja.getByLabel('Categoría').selectOption({ label: 'Cafés' });
+    // [C-45] La categoría es una fila v3: segmentado o lista propia según cuántas opciones hay (CAMPOS-V3 §6)
+    await elegirEnFila(page, 'Categoría', 'Cafés');
     await hoja.getByRole('button', { name: /^Ver \d+ resultados?$/ }).click();
     await expect(page).toHaveURL(/categoria=/);
     await expect(page).toHaveURL(/tipo=gasto/);
@@ -166,7 +168,7 @@ test.describe('PRU-E2E-TX actividad', () => {
     expect(l?.width ?? 0).toBeLessThanOrEqual(760);
     await expect(columna.getByRole('heading', { name: 'Filtros · 1' })).toBeVisible();
     await expect(page.getByLabel('Categoría')).toBeVisible();
-    await page.getByLabel('Categoría').selectOption({ label: 'Cafés' });
+    await elegirEnFila(page, 'Categoría', 'Cafés');
     await page.getByRole('button', { name: 'Filtrar' }).click();
     await expect(page).toHaveURL(/categoria=/);
     await expect(page).toHaveURL(/tipo=gasto/);
@@ -182,7 +184,7 @@ test.describe('PRU-E2E-TX actividad', () => {
     await abrir(page, '/actividad?tipo=gasto');
     const c = await page.locator('[data-columna-filtros]').boundingBox();
     expect(Math.round(c?.width ?? 0)).toBe(320);
-    await page.getByLabel('Categoría').selectOption({ label: 'Cafés' });
+    await elegirEnFila(page, 'Categoría', 'Cafés');
     await page.getByRole('button', { name: 'Filtrar' }).click();
     await expect(page).toHaveURL(/categoria=/);
     await expect(page).toHaveURL(/tipo=gasto/);

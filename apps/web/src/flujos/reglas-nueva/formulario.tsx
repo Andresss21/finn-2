@@ -1,14 +1,18 @@
 'use client';
 // `/reglas/nueva` (FT-39, OP-41 crear; 05 §2): crear una regla de comercio sin esperar a aprobar un SMS. Los campos y el aviso
 // de fallo los comparte `/reglas/[reglaId]`. No calcula nada (PF-3).
+// [C-45] El comercio y la categoría son filas de un `GrupoCampos` (CAMPOS-V3 §2); la categoría, la lista propia con sus grupos (§6).
+// «Guardar» se ve apagado mientras falte algo y dice debajo cuántos campos corregir (§5 y §11).
 import * as z from 'zod';
 import { useCallback } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Campo } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
+import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { gestionarRegla } from '../../servidor/acciones/bandeja';
@@ -25,9 +29,6 @@ export const CONTRATO_REGLA = z.object({
 });
 export type CamposDeRegla = z.infer<typeof CONTRATO_REGLA>;
 export const RUTA_PADRE = '/reglas';
-// El campo relleno (06-identidad-visual 2.5) para el texto y para el `<select>` nativo.
-const CAJA =
-  'min-h-12 w-full rounded-t-control rounded-b-sm border-b-2 border-borde-control bg-superficie px-3 text-base text-texto focus-visible:border-b-4 focus-visible:border-foco focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco aria-invalid:border-2 aria-invalid:border-problema-borde';
 
 /** Un fallo que no es del campo del patrón; si se puede repetir, con el botón (4.7). */
 export function AvisoDeFallo({ fallo, reintentar }: { fallo: ErrorFinn; reintentar: () => void }) {
@@ -66,53 +67,37 @@ export function CamposRegla({ formulario, grupos, extra, errorDelServidor }: Pro
   const poner = (campo: keyof CamposDeRegla) => (valor: string) => {
     formulario.setValue(campo, valor, { shouldDirty: true, shouldValidate: isSubmitted });
   };
-  const error = (mensaje: string | undefined) => (mensaje === undefined ? {} : { error: mensaje });
+  const errorPatron = errors.patron?.message ?? errorDelServidor;
   return (
-    <div className="flex flex-col gap-5">
-      <Campo etiqueta={t.patron} requerido {...error(errors.patron?.message ?? errorDelServidor)}>
-        {(props) => (
-          <input
-            {...props}
-            name="patron"
-            value={valores.patron}
-            autoComplete="off"
-            className={CAJA}
-            onChange={(e) => {
-              poner('patron')(e.target.value);
-            }}
-          />
-        )}
-      </Campo>
-      <Campo etiqueta={t.categoria} requerido {...error(errors.categoriaId?.message)}>
-        {(props) => (
-          <select
-            {...props}
-            name="categoriaId"
-            value={valores.categoriaId}
-            onChange={(e) => {
-              poner('categoriaId')(e.target.value);
-            }}
-            className={CAJA}
-          >
-            <option value="" disabled>
-              {t.categoria}
-            </option>
-            {extra === undefined ? null : (
-              <option value={extra.id}>{t.archivadaEnLista(extra.nombre)}</option>
-            )}
-            {grupos.map((g) => (
-              <optgroup key={g.nombre} label={g.nombre}>
-                {g.categorias.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        )}
-      </Campo>
-    </div>
+    <GrupoCampos>
+      <EntradaTexto
+        etiqueta={t.patron}
+        requerido
+        name="patron"
+        autoComplete="off"
+        value={valores.patron}
+        onChange={(e) => {
+          poner('patron')(e.target.value);
+        }}
+        {...(errorPatron === undefined ? {} : { error: errorPatron })}
+      />
+      <SeleccionNativa
+        etiqueta={t.categoria}
+        marcador={t.elegirCategoria}
+        nombre="categoriaId"
+        opciones={[
+          ...(extra === undefined
+            ? []
+            : [{ valor: extra.id, etiqueta: t.archivadaEnLista(extra.nombre) }]),
+          ...grupos.flatMap((g) =>
+            g.categorias.map((c) => ({ valor: c.id, etiqueta: c.nombre, grupo: g.nombre })),
+          ),
+        ]}
+        valor={valores.categoriaId}
+        alCambiar={poner('categoriaId')}
+        error={errors.categoriaId?.message}
+      />
+    </GrupoCampos>
   );
 }
 
@@ -128,6 +113,12 @@ export function FormularioReglaNueva({ grupos }: { readonly grupos: readonly Gru
     operacion,
   });
   const { estado, error: fallo } = operacion;
+  const guardar = useGuardarV3({
+    contrato: CONTRATO_REGLA,
+    campos: formulario.watch(),
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
 
   if (estado === 'listo')
     return (
@@ -139,7 +130,12 @@ export function FormularioReglaNueva({ grupos }: { readonly grupos: readonly Gru
   const repetido = fallo?.codigo === 'patron_repetido';
   return (
     <PaginaFlujoDeRuta titulo={t.tituloNueva} rutaPadre={RUTA_PADRE}>
-      <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
+      <form
+        ref={guardar.forma}
+        onSubmit={(e) => void formulario.enviar(e)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
         <CamposRegla
           formulario={formulario}
           grupos={grupos}
@@ -153,9 +149,8 @@ export function FormularioReglaNueva({ grupos }: { readonly grupos: readonly Gru
           enviando={estado === 'enviando'}
           textoEnviando={t.guardando}
           deshabilitado={!operacion.enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          className="w-full"
+          {...guardar.boton}
         >
           {t.guardar}
         </Boton>

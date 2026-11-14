@@ -7,7 +7,8 @@ import { VolverEnTitulo } from '../../../../componentes/navegacion/volver-en-tit
 import { navegacion } from '../../../../textos/navegacion';
 import { ajustesInstituciones as t } from '../../../../textos/ajustes-instituciones';
 
-const ENLACE = 'inline-flex min-h-11 items-center font-semibold text-enlace underline';
+// C-33: los enlaces se distinguen por `--enlace` y el peso 700, sin subrayado.
+const ENLACE = 'inline-flex min-h-11 items-center font-bold text-enlace';
 const BOTON =
   'inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accion-tonal px-5 text-base font-semibold text-accion hover:bg-superficie-hundida focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 

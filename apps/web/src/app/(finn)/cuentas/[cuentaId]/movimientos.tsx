@@ -13,7 +13,8 @@ import { dominio } from '../../../../textos/dominio';
 const t = cuentaDetalle.movimientos;
 const f = cuentaDetalle.filtros;
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline ${FOCO}`;
+// C-33: sin subrayado; el enlace se distingue por `--enlace` y el peso 700.
+const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-bold text-enlace ${FOCO}`;
 const BOTON = `inline-flex min-h-11 items-center rounded-control bg-superficie-hundida px-4 font-semibold text-texto ${FOCO}`;
 const ENLACE_ACTIVIDAD = `inline-flex min-h-11 items-center font-bold text-enlace ${FOCO}`;
 const TONAL = `inline-flex min-h-12 items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion ${FOCO}`;

@@ -82,7 +82,7 @@ export default function Descartado({
       )}
       <EnlaceFinn
         href="/bandeja"
-        className="inline-flex min-h-11 items-center font-bold text-enlace underline"
+        className="inline-flex min-h-11 items-center font-bold text-enlace"
       >
         {t.revisar.volver}
       </EnlaceFinn>

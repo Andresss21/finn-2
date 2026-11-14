@@ -1508,7 +1508,7 @@ Notas:
 | `/ajustes/exportar` | [S] | `ajustes()` | OPT-08 (descargas por `GET /api/exportar/{json\|csv}`, con enlaces de descarga) | — | — |
 | `/ajustes/respaldo` | [S] | `ajustes()` | Ninguna (OPT-09 la hace GitHub Actions) | — | `respaldoAtrasado` y `restauracionAtrasada` |
 | `/ajustes/diagnostico` | [S] | `ajustes()` | "Ejecutar tareas ahora" (disparador manual de 04 §10.1) | — | Los 50 últimos eventos, con `idError` buscable (04 7.8) |
-| `/ajustes/apariencia` | [S] | `ajustes()` | Tema del dispositivo (next-themes; no escribe en el servidor) | — | — |
+| `/ajustes/apariencia` | [S] | `ajustes()` | Tema del dispositivo (next-themes; no escribe en el servidor) | — **[CH-282]** Sistema, Claro y Oscuro en segmentado (C-45) | — |
 
 ### 2.12 Acceso y otras rutas
 
@@ -3563,3 +3563,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-279** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-45 y C-49). §0.8 y §5.1: la excepción de CH-276 vale en las dos secciones de Editar transacción; §2.6 `/actividad/[transaccionId]/editar` con los campos v3 y, para un gasto, «¿Quién paga?» y «¿En qué categorías?» (C-49 §5); 10.8 `CampoLineas` queda solo para Revisar movimiento. Marcas **[CH-279]**.
 - **CH-278** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-50, `docs/anexos/finn-aviso-de-resultado/`, que enmienda el principio 5). 10.7: la etiqueta de resultado (`EtiquetaResultado`, `DeshacerFila`, `FilaQueSale`, `useEtiqueta`) y el token `--duracion-aviso`; 4.14 regla 3: la salida vive en la etiqueta y después en ↶ de la fila. `/presupuesto/estructura` (2.3): mover, crear, deshacer y desarchivar dejan la etiqueta en la fila. OP-07, OP-08, OP-10 y el servidor no cambian. Marca **[CH-278]**.
 - **CH-280** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-45 y C-49). §2.4 `/registrar/gasto`: el gasto entero a Por cobrar (tu parte en $0.00) se envía sin líneas de categoría (OP-20, cada línea > 0), y las filas de categoría con «Varias» son siempre lista (C-49 §2 manda sobre la regla de pocas opciones de CAMPOS-V3 §6). Marcas **[CH-280]**.
+- **CH-282** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-45 y C-33). §2.6 `/actividad` y §2.11 Ajustes, Seguridad y Reglas con los campos v3 y «Guardar» de CAMPOS-V3 §11; 10.7: `EntradaMonto` con `sinOpcional` y el segmentado de una `SeleccionFila` con `nombre` lleva su valor en el formulario; sin subrayado en los enlaces (C-33). Marcas **[CH-282]**.

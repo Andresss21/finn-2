@@ -45,7 +45,11 @@ async function abrir(page: Page, ruta = RUTA): Promise<void> {
   await esperarHidratacion(page);
 }
 
-const dia = (page: Page) => page.getByLabel(t.nuevoDia, { exact: true });
+/** [C-45] El día es la lista propia de su fila (CAMPOS-V3 §6): el disparador se nombra con el rótulo y el día elegido. */
+const dia = (page: Page) =>
+  page
+    .locator('button[aria-haspopup="listbox"]')
+    .and(page.getByRole('button', { name: new RegExp(`^${t.nuevoDia}`) }));
 /** Con el impacto a la vista, el botón dice a qué día cambia (E6-13); sin él, «Cambiar el ciclo» está deshabilitado. */
 const confirmar = (page: Page) => page.getByRole('button', { name: /^Cambiar al día \d+$/ });
 const futura = (page: Page) => page.locator('[data-ciclo-futura]');
@@ -59,7 +63,8 @@ const disponibleSuper = (page: Page) =>
 
 /** Elige el día: el panel pide solo la previsualización de AV-12 (E6-13). */
 async function pedirCambio(page: Page, valor: string): Promise<void> {
-  await dia(page).selectOption(valor);
+  await dia(page).click();
+  await page.getByRole('option', { name: valor, exact: true }).click();
 }
 
 test.describe('PRU-E2E-AJUS', () => {
@@ -184,20 +189,20 @@ test.describe('PRU-E2E-AJUS', () => {
     await expect(hoja).toBeVisible();
     await expect(page).toHaveURL(/\/ajustes\/ciclo$/);
     // El impacto se pide al servidor con lo elegido, antes de confirmar
-    await dia(page).selectOption('1');
+    await pedirCambio(page, '1');
     const k4 = hoja.getByRole('region', { name: t.revisar });
     await expect(k4).toContainText('Rige desde el 21/12/2027');
     await expect(k4).toContainText('El período del 21/12 al 31/12 será de transición, de 11 días');
     await expect(hoja.getByRole('button', { name: t.confirmarDia(1), exact: true })).toBeEnabled();
 
-    await dia(page).selectOption('21');
-    const mensaje = hoja.getByText('El ciclo ya empieza el día 21.');
-    await expect(mensaje).toBeVisible();
+    await pedirCambio(page, '21');
+    // [C-45] El mensaje va en la fila del día y debajo del botón, que se ve apagado con `aria-disabled` (CAMPOS-V3 §3 y §11)
+    const fila = hoja.locator('.campo-fila[data-error]');
+    await expect(fila).toContainText('El ciclo ya empieza el día 21.');
     await expect(k4).toHaveCount(0);
-    const deshabilitado = hoja.getByRole('button', { name: t.confirmar, exact: true });
-    await expect(deshabilitado).toBeDisabled();
-    const idMensaje = await mensaje.evaluate((e) => e.closest('[id]')?.id ?? '');
-    await expect(deshabilitado).toHaveAttribute('aria-describedby', idMensaje);
-    await expect(dia(page)).toHaveAttribute('aria-invalid', 'true');
+    const apagado = hoja.getByRole('button', { name: t.confirmar, exact: true });
+    await expect(apagado).toHaveAttribute('aria-disabled', 'true');
+    await expect(apagado).toHaveAccessibleDescription(/El ciclo ya empieza el día 21\./);
+    await expect(dia(page)).toHaveAccessibleDescription(/El ciclo ya empieza el día 21\./);
   });
 });

@@ -42,6 +42,8 @@ export const ajustesFormatos = {
     activo: 'Activo',
     activoAyuda: 'Un formato inactivo no se usa para leer los SMS. Los formatos no se eliminan.',
   },
+  /** [C-45] Lo obligatorio sin escribir, al tocar «Guardar formato» (CAMPOS-V3 §5); el texto es el de los demás formularios. */
+  completar: 'Completá este campo.',
   guardar: 'Guardar formato',
   guardando: 'Guardando…',
   listo: 'Formato guardado',

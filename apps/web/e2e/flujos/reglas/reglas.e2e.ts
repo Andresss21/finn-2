@@ -6,6 +6,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { anuncio } from '../../ayudas/etiqueta.ts';
+import { elegirEnFila } from '../../ayudas/seleccion-nativa.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { cuentas } from '../../../src/textos/cuentas.ts';
 import { registrarGasto as g } from '../../../src/textos/registrar-gasto.ts';
@@ -59,7 +60,7 @@ async function escribirRegla(page: Page, patron: string, categoria: string): Pro
   await abrir(page, '/reglas/nueva');
   await esperarHidratacion(page);
   await page.getByLabel(r.patron).fill(patron);
-  await page.getByLabel(r.categoria).selectOption({ label: categoria });
+  await elegirEnFila(page, r.categoria, categoria);
   await page.getByRole('button', { name: r.guardar }).click();
 }
 
@@ -233,7 +234,7 @@ test.describe('PRU-E2E-BAND reglas de comercio', () => {
     await esperarHidratacion(page);
     await expect(page.getByRole('heading', { level: 1, name: r.tituloEditar })).toBeVisible();
     await expect(page.getByRole('link', { name: /^Volver/ })).toHaveCount(1);
-    await page.getByLabel(r.categoria).selectOption({ label: 'Restaurantes' });
+    await elegirEnFila(page, r.categoria, 'Restaurantes');
     await page.getByRole('button', { name: r.guardar }).click();
     await expect(page).toHaveURL(/\/reglas$/);
     await esperarContenido(page);

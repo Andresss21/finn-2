@@ -158,7 +158,7 @@ export function ListaDescartados({
       {hrefMas === undefined ? null : (
         <EnlaceFinn
           href={hrefMas}
-          className="inline-flex min-h-11 items-center font-bold text-enlace underline"
+          className="inline-flex min-h-11 items-center font-bold text-enlace"
         >
           {t.descartados.verMas}
         </EnlaceFinn>

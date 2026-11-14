@@ -27,7 +27,8 @@ test.describe('PRU-E2E-ACCESO', () => {
     await expect(page.getByText(t.nombreNoSeCambia)).toBeVisible();
     await page.getByRole('button', { name: t.seguir, exact: true }).click();
     await expect(page.getByAltText(t.altQr)).toBeVisible();
-    await expect(nombre).toHaveAttribute('readonly', '');
+    // [C-45] Después de «Seguir», el nombre es una fila de solo lectura: texto plano, no un `<input>` (CAMPOS-V3 §3)
+    await expect(page.locator('[data-dato-fijo]')).toContainText('Respaldo');
     const secreto = (await page.getByTestId('secreto').innerText()).replace(/\s/g, '');
     await escribirCodigo(page, codigoDe(secreto));
     await page.getByRole('button', { name: t.verificar, exact: true }).click();

@@ -5,7 +5,6 @@ export const ajustesApariencia = {
   etiqueta: 'Tema',
   descripcion: 'Se guarda en este dispositivo. En otro dispositivo podés elegir uno distinto.',
   sistema: 'Sistema',
-  sistemaDescripcion: 'Sigue el tema de tu dispositivo.',
   claro: 'Claro',
   oscuro: 'Oscuro',
 } as const;

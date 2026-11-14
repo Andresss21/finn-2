@@ -30,6 +30,8 @@ export interface PropsEntradaMonto {
   readonly error?: string | undefined;
   readonly descripcion?: string | undefined;
   readonly requerido?: boolean;
+  /** [C-45] Sin el «Opcional» junto al rótulo: donde todo es opcional (los filtros de Actividad, C-39). */
+  readonly sinOpcional?: boolean;
   readonly deshabilitado?: boolean;
   readonly enterKeyHint?: 'next' | 'done' | 'go' | 'send' | 'enter';
   /** Texto fijo antes del monto, en color secundario (el «$» del Total en el export S5). */
@@ -73,6 +75,7 @@ function EntradaMontoV3({
   error,
   descripcion,
   requerido = false,
+  sinOpcional = false,
   deshabilitado = false,
   enterKeyHint = 'next',
   variante = 'fila',
@@ -140,6 +143,7 @@ function EntradaMontoV3({
           {...(descripcion === undefined ? {} : { descripcion })}
           {...(mensaje === undefined ? {} : { error: mensaje })}
           requerido={requerido}
+          sinOpcional={sinOpcional}
           prefijo={base.moneda}
           {...comunes}
         />

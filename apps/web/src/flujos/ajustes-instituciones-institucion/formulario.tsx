@@ -3,17 +3,20 @@
 // institución. Flujo corto: hoja sobre la lista cuando se llega desde ella (panel de 440 px en computadora); página completa si se abre
 // la URL. El nombre es único sin distinguir mayúsculas; el rechazo (`nombre_repetido`) llega del servidor con el texto de 04 §7.10 en
 // el campo.
+// [C-45] El nombre es una fila de un `GrupoCampos` (CAMPOS-V3 §2); vacío, el botón se ve apagado y dice debajo qué falta (§5 y §11).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import { useState, type ReactNode, type SyntheticEvent } from 'react';
+import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
 import {
   CerrarFlujoAlMontar,
   PaginaFlujoDeRuta,
   SuperpuestoDeRuta,
   useCerrarFlujo,
 } from '../../componentes/navegacion/flujo-de-ruta';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { ajustesInstituciones as t } from '../../textos/ajustes-instituciones';
 import { formularios } from '../../textos/formularios';
@@ -21,6 +24,7 @@ import { formularios } from '../../textos/formularios';
 const RUTA_PADRE = '/ajustes/instituciones';
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
+const CONTRATO = z.object({ nombre: z.string().trim().min(1, t.completar) });
 
 export interface PropsFormularioInstitucion {
   /** `guardarInstitucion` (OPT-07): la pone el lector, así el formulario se prueba sin servidor. */
@@ -42,6 +46,13 @@ export function FormularioInstitucion({
 }: PropsFormularioInstitucion) {
   const operacion = useOperacion({ accion: guardar, creacion: institucion === undefined });
   const [nombre, setNombre] = useState(institucion?.nombre ?? '');
+  const [intentos, setIntentos] = useState(0);
+  const v3 = useGuardarV3({
+    contrato: CONTRATO,
+    campos: { nombre },
+    intentos,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
   const cerrar = useCerrarFlujo(RUTA_PADRE, superpuesto);
   const { estado, error: fallo } = operacion;
   const titulo = institucion === undefined ? t.tituloNueva : t.renombrar(institucion.nombre);
@@ -64,22 +75,27 @@ export function FormularioInstitucion({
 
   const enviar = (e: SyntheticEvent) => {
     e.preventDefault();
+    setIntentos((n) => n + 1);
+    if (!CONTRATO.safeParse({ nombre }).success) return;
     void operacion.enviar({ nombre, ...(institucion === undefined ? {} : { id: institucion.id }) });
   };
-  const errorNombre = fallo?.campos?.['nombre'];
+  const errorNombre =
+    fallo?.campos?.['nombre'] ?? (intentos > 0 && nombre.trim() === '' ? t.completar : undefined);
   return marco(
-    <form onSubmit={enviar} noValidate className="flex flex-col gap-5">
-      <EntradaTexto
-        etiqueta={t.nombre}
-        descripcion={institucion === undefined ? t.ayudaNueva : t.ayudaRenombrar}
-        requerido
-        autoComplete="off"
-        value={nombre}
-        onChange={(e) => {
-          setNombre(e.target.value);
-        }}
-        {...(errorNombre === undefined ? {} : { error: errorNombre })}
-      />
+    <form ref={v3.forma} onSubmit={enviar} noValidate className="flex flex-col gap-5">
+      <GrupoCampos>
+        <EntradaTexto
+          etiqueta={t.nombre}
+          descripcion={institucion === undefined ? t.ayudaNueva : t.ayudaRenombrar}
+          requerido
+          autoComplete="off"
+          value={nombre}
+          onChange={(e) => {
+            setNombre(e.target.value);
+          }}
+          {...(errorNombre === undefined ? {} : { error: errorNombre })}
+        />
+      </GrupoCampos>
       {estado === 'error' &&
       fallo !== undefined &&
       !enSuCampo(fallo) &&
@@ -109,9 +125,7 @@ export function FormularioInstitucion({
           enviando={estado === 'enviando'}
           textoEnviando={t.guardando}
           deshabilitado={!operacion.enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          {...v3.boton}
         >
           {institucion === undefined ? t.crear : t.guardar}
         </Boton>

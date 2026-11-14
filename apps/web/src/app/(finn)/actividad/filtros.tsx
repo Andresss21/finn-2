@@ -3,12 +3,16 @@
 // la columna fija «Filtros» de 320 px (`FormularioFiltros`); en teléfono, un botón «Filtros · n» junto al buscador abre una hoja
 // inferior con el mismo formulario (`BotonFiltros`), con «Quitar filtros» y «Ver resultados» en el pie. Todas las listas son `SeleccionNativa`;
 // Desde y Hasta usan `EntradaFecha` (dd/mm/aaaa) y viajan como `AAAA-MM-DD` en campos ocultos. La búsqueda vive en `Buscador` y viaja como campo oculto.
+// [C-45] Dos `GrupoCampos` (CAMPOS-V3 §2): las listas, que son la lista propia en todos los navegadores (o segmentado con 3 opciones
+// o menos, §6), y las fechas y los montos en una columna sin «Opcional» (C-39). Los montos llevan la máscara v3 y viajan sin comas
+// en campos ocultos, como las fechas.
 import type { FechaLocal } from '@finn/dominio/valores';
 import { useId, useState, type ReactNode } from 'react';
-import { EntradaTexto } from '../../../componentes/base/campo';
+import { GrupoCampos } from '../../../componentes/base/campo';
 import { Icono } from '../../../componentes/base/icono';
 import { SeleccionNativa, type OpcionNativa } from '../../../componentes/base/seleccion-nativa';
 import { EntradaFecha } from '../../../componentes/formularios/entrada-fecha';
+import { EntradaMonto } from '../../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { SuperpuestoDiferido } from '../../../componentes/navegacion/hoja-diferida';
 import { actividad as t } from '../../../textos/actividad';
@@ -68,6 +72,8 @@ function Campos({
     origen: filtros['origen'] ?? '',
     desde: filtros['desde'] ?? '',
     hasta: filtros['hasta'] ?? '',
+    'monto-desde': filtros['monto-desde'] ?? '',
+    'monto-hasta': filtros['monto-hasta'] ?? '',
   });
   const poner = (nombre: keyof typeof valores) => (valor: string) => {
     setValores((v) => ({ ...v, [nombre]: valor }));
@@ -89,68 +95,67 @@ function Campos({
   );
   const rotulos = (mapa: Readonly<Record<string, string>>): readonly OpcionNativa[] =>
     Object.entries(mapa).map(([valor, etiqueta]) => ({ valor, etiqueta }));
-  const fecha = (nombre: 'desde' | 'hasta', etiqueta: string) => (
-    <>
-      <input type="hidden" name={nombre} value={valores[nombre]} />
-      <EntradaFecha
-        nombre=""
-        etiqueta={etiqueta}
-        valor={valores[nombre] as FechaLocal}
-        alCambiar={poner(nombre)}
-        sinVistaPrevia
-        sinOpcional
-        avisarVacio
-      />
-    </>
+  const monto = (nombre: 'monto-desde' | 'monto-hasta', etiqueta: string) => (
+    <EntradaMonto
+      nombre=""
+      etiqueta={etiqueta}
+      valor={valores[nombre]}
+      alCambiar={poner(nombre)}
+      sinOpcional
+    />
   );
+  const fecha = (nombre: 'desde' | 'hasta', etiqueta: string) => (
+    <EntradaFecha
+      nombre=""
+      etiqueta={etiqueta}
+      valor={valores[nombre] as FechaLocal}
+      alCambiar={poner(nombre)}
+      sinVistaPrevia
+      sinOpcional
+      avisarVacio
+    />
+  );
+  // Fuera del grupo: dentro, correrían la primera y la última fila (CAMPOS-V3 §2, los radios de los extremos).
+  const ocultos = (['desde', 'hasta', 'monto-desde', 'monto-hasta'] as const).map((n) => (
+    <input key={n} type="hidden" name={n} value={valores[n]} />
+  ));
   return (
     <form id={id} method="get" action="/actividad" className="flex flex-col gap-3">
       {texto === undefined ? null : <input type="hidden" name="texto" value={texto} />}
-      {lista(
-        'cuenta',
-        t.cuenta,
-        t.todas,
-        cuentas.map((c) => ({ valor: c.id, etiqueta: marcada(c), icono: 'wallet' as const })),
-      )}
-      {lista(
-        'categoria',
-        t.categoria,
-        t.todas,
-        grupos.flatMap((g) =>
-          g.categorias.map((c) => ({ valor: c.id, etiqueta: marcada(c), grupo: g.nombre })),
-        ),
-      )}
-      {lista(
-        'tipo',
-        t.tipo,
-        t.todos,
-        Object.entries(t.tipos).map(([valor, etiqueta]) => ({
-          valor: valor.replaceAll('_', '-'),
-          etiqueta,
-        })),
-      )}
-      {lista('estado', t.estadoBancario, t.todos, rotulos(t.estados))}
-      {lista('origen', t.origen, t.todos, rotulos(t.origenes))}
-      <div className="flex flex-col gap-3">
+      {ocultos}
+      <GrupoCampos>
+        {lista(
+          'cuenta',
+          t.cuenta,
+          t.todas,
+          cuentas.map((c) => ({ valor: c.id, etiqueta: marcada(c), icono: 'wallet' as const })),
+        )}
+        {lista(
+          'categoria',
+          t.categoria,
+          t.todas,
+          grupos.flatMap((g) =>
+            g.categorias.map((c) => ({ valor: c.id, etiqueta: marcada(c), grupo: g.nombre })),
+          ),
+        )}
+        {lista(
+          'tipo',
+          t.tipo,
+          t.todos,
+          Object.entries(t.tipos).map(([valor, etiqueta]) => ({
+            valor: valor.replaceAll('_', '-'),
+            etiqueta,
+          })),
+        )}
+        {lista('estado', t.estadoBancario, t.todos, rotulos(t.estados))}
+        {lista('origen', t.origen, t.todos, rotulos(t.origenes))}
+      </GrupoCampos>
+      <GrupoCampos>
         {fecha('desde', t.desde)}
         {fecha('hasta', t.hasta)}
-        <EntradaTexto
-          etiqueta={t.montoDesde}
-          sinOpcional
-          inputMode="decimal"
-          name="monto-desde"
-          prefijo="$"
-          defaultValue={filtros['monto-desde'] ?? ''}
-        />
-        <EntradaTexto
-          etiqueta={t.montoHasta}
-          sinOpcional
-          inputMode="decimal"
-          name="monto-hasta"
-          prefijo="$"
-          defaultValue={filtros['monto-hasta'] ?? ''}
-        />
-      </div>
+        {monto('monto-desde', t.montoDesde)}
+        {monto('monto-hasta', t.montoHasta)}
+      </GrupoCampos>
       {pie}
     </form>
   );

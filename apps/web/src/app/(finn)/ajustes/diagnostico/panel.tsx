@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { AvisoEnLinea } from '../../../../componentes/base/aviso';
 import { Boton } from '../../../../componentes/base/boton';
-import { EntradaTexto } from '../../../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../../../componentes/base/campo';
 import { formatearInstante } from '../../../../formato';
 import { useOperacion, type AccionEscritura } from '../../../../formularios/use-operacion';
 import { ajustesDiagnostico as t } from '../../../../textos/ajustes-diagnostico';
@@ -96,17 +96,20 @@ export function PanelDiagnostico({ eventos, ejecutar, version }: PropsPanelDiagn
         <h2 id="eventos" className="text-titulo-seccion">
           {t.eventos}
         </h2>
-        <EntradaTexto
-          etiqueta={t.buscar}
-          descripcion={t.buscarAyuda}
-          type="search"
-          value={busqueda}
-          autoComplete="off"
-          spellCheck={false}
-          onChange={(ev) => {
-            setBusqueda(ev.target.value);
-          }}
-        />
+        {/* [C-45] La búsqueda es una fila de un `GrupoCampos` (CAMPOS-V3 §2). */}
+        <GrupoCampos>
+          <EntradaTexto
+            etiqueta={t.buscar}
+            descripcion={t.buscarAyuda}
+            type="search"
+            value={busqueda}
+            autoComplete="off"
+            spellCheck={false}
+            onChange={(ev) => {
+              setBusqueda(ev.target.value);
+            }}
+          />
+        </GrupoCampos>
         {eventos.length === 0 ? (
           <div
             data-rol="sin-eventos"
