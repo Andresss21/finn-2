@@ -859,7 +859,9 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
 .campo-error {
   font-weight: 500;
 }
-.campo-fila:focus-within {
+/* [CH-274] La fila en línea de «Agregar otra persona» entra levantada (CAMPOS-V3 §9). */
+.campo-fila:focus-within,
+.campo-fila:has(> .eleccion-agregar) {
   z-index: 2;
   margin: 0 -6px;
   padding-left: 22px;
@@ -869,7 +871,8 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
   background: var(--superficie-elevada);
   box-shadow: var(--elevacion-3);
 }
-.campo-fila:focus-within .campo-rotulo {
+.campo-fila:focus-within .campo-rotulo,
+.campo-fila:has(> .eleccion-agregar) .campo-rotulo {
   color: var(--accion);
 }
 .campo-fila[data-error] {
@@ -1106,7 +1109,296 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .campo-fila {
+  .campo-fila,
+  [data-control='interruptor']::after {
     transition: none;
   }
+}
+/* [CH-274] Casilla, interruptor y opciones v3 (CAMPOS-V3 §8): la fila entera es el `<label>` y el blanco táctil. El control
+   nativo cubre la fila sin verse; el dibujo (`data-control`) va al lado, oculto a los lectores. */
+.control-fila {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  min-height: 56px;
+  cursor: pointer;
+}
+.control-nativo {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+.control-texto {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+.control-nombre {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--texto);
+}
+.control-cifra {
+  font-size: 1rem;
+  font-weight: 800;
+  font-stretch: 72%;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto);
+}
+.campo-fila[data-apagado] :is(.control-nombre, .campo-detalle, .control-cifra) {
+  color: var(--texto-deshabilitado);
+}
+[data-control] {
+  flex: none;
+  box-sizing: border-box;
+}
+[data-control='casilla'],
+[data-control='opcion'] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--borde-control);
+}
+[data-control='casilla'] {
+  border-radius: 6px;
+}
+[data-control='casilla'][data-marcada] {
+  border-color: var(--accion);
+  background: var(--accion);
+  color: var(--texto-sobre-accion);
+}
+[data-control='opcion'] {
+  border-radius: 999px;
+}
+.control-nativo:checked + [data-control='opcion'] {
+  border-color: var(--accion);
+}
+.control-nativo:checked + [data-control='opcion']::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accion);
+}
+.control-nativo:disabled + [data-control] {
+  border-color: var(--borde-sutil);
+  background: var(--superficie-hundida);
+}
+[data-control='interruptor'] {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--borde-control);
+}
+[data-control='interruptor']::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--superficie);
+  box-shadow: var(--elevacion-1);
+  transition: transform var(--duracion-rapida) var(--curva-estandar);
+}
+.control-nativo:checked ~ [data-control='interruptor'] {
+  background: var(--accion);
+}
+.control-nativo:checked ~ [data-control='interruptor']::after {
+  transform: translateX(18px);
+}
+.control-nativo:disabled ~ [data-control='interruptor'] {
+  background: var(--superficie-hundida);
+}
+.control-nativo:disabled ~ [data-control='interruptor']::after {
+  background: var(--borde-sutil);
+}
+@media (forced-colors: active) {
+  [data-control] {
+    border: 2px solid CanvasText;
+  }
+  .control-nativo:checked ~ [data-control] {
+    background: Highlight;
+  }
+}
+/* [CH-274] Elección v3 (CAMPOS-V3 §9): lo elegido con borde 2 px de acción, fondo tonal y 700; el foco de teclado con
+   contorno de 2 px en `--foco`. */
+.eleccion-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.eleccion-tarjeta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 96px;
+  padding: 14px;
+  border: 1px solid var(--borde-sutil);
+  border-radius: var(--radio-contenedor);
+  background: var(--superficie);
+  color: var(--grafico-tinta);
+  cursor: pointer;
+}
+.eleccion-tarjeta:has(.control-nativo:checked) {
+  padding: 13px;
+  border: 2px solid var(--accion);
+  background: var(--accion-tonal);
+}
+.eleccion-tarjeta:has(.control-nativo:focus-visible) {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+.eleccion-titulo {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--texto);
+}
+.eleccion-tarjeta .campo-detalle {
+  font-size: 0.875rem;
+}
+[role='radiogroup'][data-v3] {
+  gap: 2px;
+  padding: 3px;
+  border-radius: 11px;
+  background: var(--superficie-hundida);
+}
+[role='radiogroup'][data-v3] > [role='radio'] {
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--texto);
+}
+[role='radiogroup'][data-v3] > [role='radio'][aria-checked='true'] {
+  font-weight: 700;
+}
+[role='radiogroup'][data-v3]:not([data-indicador]) > [role='radio'][aria-checked='true'],
+[role='radiogroup'][data-v3] > [data-segmento-indicador] {
+  border-radius: 8px;
+  box-shadow: var(--sombra-segmento);
+}
+[role='radiogroup'][data-v3] > [role='radio']:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+.eleccion-personas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.eleccion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.eleccion-chip,
+.eleccion-otra {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+.eleccion-chip {
+  padding: 0 14px 0 6px;
+  border: 1px solid var(--borde-sutil);
+  font-weight: 500;
+  color: var(--texto);
+}
+.eleccion-chip[aria-checked='true'] {
+  padding: 0 13px 0 5px;
+  border: 2px solid var(--accion);
+  background: var(--accion-tonal);
+  font-weight: 700;
+}
+.eleccion-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--superficie-hundida);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.eleccion-chip[aria-checked='true'] .eleccion-avatar {
+  background: var(--accion);
+  color: var(--texto-sobre-accion);
+}
+.eleccion-nueva {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--informacion-fondo);
+  color: var(--informacion-texto);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.eleccion-otra {
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px dashed var(--borde-control);
+  font-weight: 600;
+  color: var(--enlace);
+}
+:is(.eleccion-chip, .eleccion-otra, .eleccion-cancelar, .eleccion-agregar-boton):focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+.eleccion-agregar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.eleccion-botones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.eleccion-cancelar,
+.eleccion-agregar-boton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.eleccion-cancelar {
+  padding: 0 12px;
+  background: transparent;
+  color: var(--enlace);
+}
+.eleccion-agregar-boton {
+  padding: 0 16px;
+  border-radius: var(--radio-control);
+  background: var(--accion);
+  color: var(--texto-sobre-accion);
+}
+.eleccion-aviso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--informacion-texto);
 }

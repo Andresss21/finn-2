@@ -57,6 +57,14 @@ function token(propiedad: 'color' | 'backgroundColor' | 'borderColor', nombre: s
 }
 
 const fila = (el: Element): HTMLElement => el.closest('.campo-fila') as HTMLElement;
+/** Toca la fila justo donde está ese texto: el control nativo cubre la fila sin verse. */
+async function tocarTexto(texto: HTMLElement): Promise<void> {
+  const caja = fila(texto).getBoundingClientRect();
+  const t = texto.getBoundingClientRect();
+  await userEvent.click(fila(texto), {
+    position: { x: t.left - caja.left + t.width / 2, y: t.top - caja.top + t.height / 2 },
+  });
+}
 const porNombre = (raiz: HTMLElement, rol: string, nombre: string): HTMLElement =>
   [...raiz.querySelectorAll<HTMLElement>(`[role="${rol}"], input`)].find(
     (e) =>
@@ -156,7 +164,7 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
     const texto = [...fila(farmacia).querySelectorAll('span')].find(
       (s) => s.textContent === 'Farmacia',
     ) as HTMLElement;
-    await userEvent.click(texto);
+    await tocarTexto(texto);
     await vi.waitFor(() => {
       expect(farmacia.checked).toBe(true);
     });
@@ -168,7 +176,7 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
       (s) => s.textContent === '$27.65',
     ) as HTMLElement;
     expect(cifra.getBoundingClientRect().left).toBeGreaterThan(texto.getBoundingClientRect().right);
-    await userEvent.click(texto);
+    await tocarTexto(texto);
     await vi.waitFor(() => {
       expect(farmacia.checked).toBe(false);
     });
@@ -207,7 +215,7 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
     expect(pista.getBoundingClientRect().width).toBe(44);
     expect(pista.getBoundingClientRect().height).toBe(26);
     expect(getComputedStyle(pista).backgroundColor).toBe(token('backgroundColor', '--accion'));
-    await userEvent.click(rotulo);
+    await tocarTexto(rotulo);
     await vi.waitFor(() => {
       expect(interruptor.checked).toBe(false);
     });
@@ -327,9 +335,15 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
     const raiz = montar(<Personas />);
     const grupo = raiz.querySelector('[role="group"]') as HTMLElement;
     expect(grupo.getAttribute('aria-label')).toBe('Con quién');
+    // El nombre del chip, sin la inicial del avatar (oculta a los lectores).
+    const visible = (c: HTMLElement) =>
+      [...c.childNodes]
+        .filter((n) => !(n instanceof Element && n.hasAttribute('aria-hidden')))
+        .map((n) => n.textContent)
+        .join('');
     const chip = (nombre: string) =>
-      [...grupo.querySelectorAll<HTMLElement>('[role="checkbox"]')].find(
-        (c) => c.textContent.startsWith(nombre),
+      [...grupo.querySelectorAll<HTMLElement>('[role="checkbox"]')].find((c) =>
+        visible(c).startsWith(nombre),
       ) as HTMLElement;
     expect(chip('Carlos').getAttribute('aria-checked')).toBe('true');
     expect(chip('Ana').getAttribute('aria-checked')).toBe('false');
@@ -383,7 +397,7 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
     await vi.waitFor(() => {
       expect(chip('Luis')?.getAttribute('aria-checked')).toBe('true');
     });
-    expect(chip('Luis').textContent).toBe(`Luis${base.nueva}`);
+    expect(visible(chip('Luis'))).toBe(`Luis ${base.nueva}`);
     expect(estado.textContent).toBe('');
 
     // «yo»: tu parte ya está. Vacío: escribí un nombre. El error va en la fila y en aria-describedby.
