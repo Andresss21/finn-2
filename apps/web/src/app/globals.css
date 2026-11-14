@@ -588,6 +588,14 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
 #contenido > main:not([data-pagina-flujo]) > :nth-child(n + 10) {
   --n: 8;
 }
+/* [CH-287] En teléfono el bloque que lleva el `h1` fijo tampoco se anima aunque no sea el primero (el detalle de categoría
+   pone antes el selector de período): con `transform` (también al terminar, por `both`) sería el bloque contenedor del `h1`, que
+   quedaría encima de «Disponible» en lugar de ir en la barra. */
+@media (width < 64rem) {
+  #contenido > main:not([data-pagina-flujo]) > :has(h1.text-titulo-pantalla) {
+    animation: none;
+  }
+}
 
 /* [Corrección posterior] Las entradas usan `backwards`, no `both`: con `both` el `main` conserva `transform`/`opacity` tras terminar (iOS) y pasa a ser el bloque contenedor del `h1` fijo de la barra, que queda encima del primer bloque. */
 /* GLO-01 y GLO-02 (06-identidad-visual §11 [CH-241]): el marco anota de dónde entra la pantalla en `#contenido[data-entrada]`
