@@ -131,8 +131,7 @@ const anuncio = (n: ParentNode) => n.querySelector('[role=status][data-anuncio-b
 
 function escribir(input: HTMLInputElement, texto: string): void {
   act(() => {
-    const poner = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
-    poner?.call(input, texto);
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, texto);
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
 }

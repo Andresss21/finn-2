@@ -4,9 +4,14 @@
 // mientras sean ciertos. La versión que espera la publica `RegistroServiceWorker` (layout raíz); si hay un `Marco` montado, los
 // dibuja él (sobre el contenido, al lado de la barra lateral), y si no (`/ingresar`), `RegistroServiceWorker`.
 import { useEffect, useSyncExternalStore } from 'react';
-import { cn } from '../../components/ui/utils';
 import { formularios } from '../../textos/formularios';
 import { AvisoEnLinea } from '../base/aviso';
+
+// Clases literales (L13): al lado de la barra lateral con el marco; centrado donde no hay marco.
+const LUGAR = {
+  marco: 'fixed inset-x-4 top-16 z-40 flex flex-col gap-2 md:top-2 md:right-6 md:left-68',
+  solo: 'fixed inset-x-4 top-16 z-40 mx-auto flex max-w-md flex-col gap-2 md:top-6',
+} as const;
 
 let espera: ServiceWorker | null = null;
 let marcos = 0;
@@ -62,12 +67,7 @@ export function AvisosDelMarco({
   }, [conMarco]);
   if (sinConexion === null && version === null) return null;
   return (
-    <div
-      className={cn(
-        'fixed inset-x-4 top-16 z-40 flex flex-col gap-2',
-        conMarco ? 'md:top-2 md:right-6 md:left-68' : 'mx-auto max-w-md md:top-6',
-      )}
-    >
+    <div className={conMarco ? LUGAR.marco : LUGAR.solo}>
       {sinConexion === null ? null : (
         <AvisoEnLinea
           estado="advertencia"

@@ -76,7 +76,8 @@ const oculto = (a: HTMLElement) => q(a, '.sr-only').textContent;
 
 describe('PRU-CMP-VAL-900 el aviso en línea compacto', () => {
   it('PRU-CMP-VAL-900 [C-51] CA-L-1: la versión nueva es una pastilla --superficie-elevada de 48 px con refresh en --informacion-texto, el texto y «Recargar» a la derecha como enlace de texto de 44 px, sin caja teñida; Recargar activa la versión que espera', () => {
-    const espera = { postMessage: vi.fn() } as unknown as ServiceWorker;
+    const postMessage = vi.fn();
+    const espera = { postMessage } as unknown as ServiceWorker;
     const nodo = montar(<AvisosDelMarco sinConexion={null} />);
     expect(avisos(nodo)).toHaveLength(0);
     act(() => {
@@ -105,7 +106,7 @@ describe('PRU-CMP-VAL-900 el aviso en línea compacto', () => {
     act(() => {
       recargar.click();
     });
-    expect(espera.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
   });
 
   it('PRU-CMP-VAL-900 [C-51] CA-L-2: sin conexión es la misma pastilla, con wifioff en --advertencia-texto y sin --marca; con una versión nueva también, sin conexión va primero', () => {
