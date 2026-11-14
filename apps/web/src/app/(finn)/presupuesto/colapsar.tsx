@@ -29,6 +29,11 @@ const ENCABEZADO = {
   abierto: `${BASE_ENCABEZADO} md:pr-17`,
   cerrado: `${BASE_ENCABEZADO} md:pr-3`,
 };
+// [CH-284] El nombre y «· {n} categorías» nunca se pisan: el contador no se parte y, si no entra al lado del nombre, baja
+// entero a su propia línea. Abierto, la fila no tiene montos y el título usa todo el ancho, no solo la primera columna.
+const TITULO_BASE =
+  't-rotulo flex min-w-0 flex-1 flex-wrap items-center gap-x-2 text-texto-secundario md:col-start-1 md:row-start-1';
+const TITULO = { colapsado: TITULO_BASE, abierto: `${TITULO_BASE} md:col-span-4` };
 const BOTON_GRUPO = `flex min-h-11 min-w-0 items-center gap-2 text-left uppercase ${FOCO}`;
 const GIRO = 'transition-transform duration-(--duracion-normal) ease-(--curva-estandar)';
 const FLECHA = { abierta: GIRO, colapsada: `${GIRO} -rotate-90` };
@@ -195,7 +200,7 @@ export function GrupoPresupuesto({
   return (
     <section data-seccion={grupo.id} className="flex flex-col gap-2 md:gap-0">
       <div className={cerrado ? ENCABEZADO.cerrado : ENCABEZADO.abierto}>
-        <h2 className="t-rotulo flex min-w-0 flex-1 items-center gap-2 text-texto-secundario md:col-start-1 md:row-start-1">
+        <h2 className={colapsado ? TITULO.colapsado : TITULO.abierto}>
           {activo ? (
             <button
               type="button"
@@ -218,7 +223,7 @@ export function GrupoPresupuesto({
           {activo ? (
             <span
               data-cantidad-grupo
-              className="hidden text-cuerpo-pequeno normal-case tracking-normal md:inline"
+              className="hidden whitespace-nowrap text-cuerpo-pequeno normal-case tracking-normal md:inline"
             >
               · {t.colapsar.categorias(filas.length)}
             </span>

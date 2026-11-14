@@ -233,9 +233,13 @@ describe('PRU-CMP-BAND', () => {
     const pago = montarElemento(
       <Arnes inicial={{ ...campos('pago_tarjeta', 0), origenId: AHORRO }} />,
     );
-    // [C-45] Una sola cuenta de efectivo: el segmentado v3 en su fila (CA-K3-6)
-    const origen = pago.querySelector(`[role=radiogroup][aria-label="${t.revisar.origen}"]`);
-    expect(origen?.querySelector('[role=radio][aria-checked=true]')?.textContent).toBe('Ahorro');
+    // [C-45] Una sola cuenta de efectivo: la lista propia en su fila, no un segmentado de un botón (CA-K3-6)
+    expect(pago.querySelector(`[role=radiogroup][aria-label="${t.revisar.origen}"]`)).toBeNull();
+    const origen = [...pago.querySelectorAll('label')].find((l) =>
+      l.textContent.startsWith(t.revisar.origen),
+    )?.control;
+    expect(origen?.getAttribute('aria-haspopup')).toBe('listbox');
+    expect(origen?.textContent).toBe('Ahorro');
     expect(origen?.textContent).not.toContain('Visa Oro');
     expect(pago.textContent).not.toContain(t.revisar.elegirCompra);
 

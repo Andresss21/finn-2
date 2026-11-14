@@ -19,6 +19,14 @@ export interface PropsCalendarioFecha {
 }
 
 const LUNES = FechaLocal.desdeTexto('1970-01-05');
+/** Una `FechaLocal` de verdad: ni `''` ni `undefined` (el valor de un campo opcional sin llenar). */
+const esFecha = (f: string | undefined): f is FechaLocal => {
+  try {
+    return f !== undefined && FechaLocal.desdeTexto(f) === f;
+  } catch {
+    return false;
+  }
+};
 const columnaDe = (f: FechaLocal): number => ((FechaLocal.diasEntre(LUNES, f) % 7) + 7) % 7;
 
 // Clases literales (L13).
@@ -49,7 +57,12 @@ export function CalendarioFecha({
   // El foco llega hasta el límite del rango y no pasa de ahí.
   const limitar = (f: FechaLocal): FechaLocal =>
     minima !== undefined && f < minima ? minima : maxima !== undefined && f > maxima ? maxima : f;
-  const [foco, setFoco] = useState<FechaLocal>(() => limitar(inicial));
+  // [CH-284] Una fecha opcional vacía (la fecha de fin de una programada, la de una meta, Desde y Hasta) no es un día: el
+  // calendario abre en el mes de hoy, o en el del límite si no hay hoy. Antes tomaba '' como fecha y la pantalla caía.
+  // Sin ninguno de los tres (no pasa en la app: el Encabezado deja `data-hoy`), abre en una fecha fija en vez de caer.
+  const [foco, setFoco] = useState<FechaLocal>(() =>
+    limitar([inicial, hoy, minima, maxima].find(esFecha) ?? LUNES),
+  );
   // Vista: los días del mes, o la elección del año y después del mes (para saltar lejos sin tocar las flechas).
   const [vista, setVista] = useState<'dias' | 'anios' | 'meses'>('dias');
   const [anioElegido, setAnioElegido] = useState(0);

@@ -234,6 +234,92 @@ describe('PRU-CMP-PROG programadas con los campos v3', () => {
     await expect.poll(() => document.activeElement?.closest('[role=radiogroup]')).toBe(cuenta);
     expect(accion).not.toHaveBeenCalled();
   });
+
+  // El caso que encontró el dueño en producción: un borrador recuperado con la fecha de fin vacía y una sola categoría.
+  const UNA_CATEGORIA = [{ id: 'c9', nombre: 'Compras a plazo' }];
+  const LLENA: Campos = {
+    ...PROGRAMADA,
+    cuentaId: 'o2',
+    comercio: 'Unillantas',
+    monto: '144.16',
+    primeraFecha: '2026-11-17',
+    lineas: [{ monto: '144.16', categoriaId: 'c9' }],
+  };
+  const conUnaCategoria = (inicial: Campos, accion = vi.fn(ok)) => (
+    <FormularioProgramada
+      inicial={inicial}
+      origenes={{ gasto: [{ id: 'o2', nombre: 'BAC Dorada' }], otros: [] }}
+      destinos={{ pago_tarjeta: [], cuota_prestamo: [], aporte_inversion: [] }}
+      categorias={UNA_CATEGORIA}
+      calendarioEditable
+      motivoCalendario=""
+      puedeEliminar={false}
+      accion={accion}
+      accionEliminar={vi.fn(ok)}
+    />
+  );
+
+  it('PRU-CMP-PROG-783 [C-38, C-45, FT-40] con un borrador recuperado y la fecha de fin vacía, abrir su calendario y tocar un día futuro la pone en «Fecha de fin» sin que la pantalla caiga; «Primera fecha» sigue igual', async () => {
+    document.documentElement.dataset['hoy'] = '2026-11-14';
+    try {
+      sessionStorage.setItem(
+        'finn:borrador:v1:/:',
+        JSON.stringify({
+          version: 1,
+          guardadoEn: '2026-11-14T10:00:00Z',
+          campos: LLENA,
+          id: null,
+          esperado: null,
+          revisionAlAbrir: null,
+        }),
+      );
+      const nodo = await montar(conUnaCategoria(PROGRAMADA));
+      await expect.poll(() => nodo.textContent).toContain('Recuperamos lo que estabas escribiendo');
+      expect(de(nodo, tp.primeraFecha).value).toBe('17/11/2026');
+      const fin = de(nodo, tp.fechaFin);
+      expect(fin.value).toBe('');
+      await userEvent.click(
+        filaDe(fin).querySelector('button[aria-haspopup=dialog]') as HTMLButtonElement,
+      );
+      await expect.poll(() => nodo.querySelector('[role=dialog]')).not.toBeNull();
+      const dia = [...nodo.querySelectorAll<HTMLButtonElement>('[role=gridcell] button')].find(
+        (b) => b.getAttribute('aria-label')?.startsWith('30 de '),
+      ) as HTMLButtonElement;
+      expect(dia.disabled).toBe(false);
+      await userEvent.click(dia);
+      await expect.poll(() => de(nodo, tp.fechaFin).value).toBe('30/11/2026');
+      expect(nodo.querySelector('[role=dialog]')).toBeNull();
+      expect(de(nodo, tp.primeraFecha).value).toBe('17/11/2026');
+      expect(boton(nodo, tp.crear).getAttribute('aria-disabled')).toBeNull();
+    } finally {
+      delete document.documentElement.dataset['hoy'];
+    }
+  });
+
+  it('PRU-CMP-PROG-784 [C-45, FT-40] CA-K3-6: con una sola categoría elegible la «Categoría» es la lista propia, no un segmentado de un botón, y no viene elegida; sin ella, «Crear programada» dice «Corregí 1 campo para guardar.» y al tocarlo marca la fila de la categoría y lleva el foco a ella; elegida, se puede crear', async () => {
+    const accion = vi.fn(ok);
+    const nodo = await montar(
+      conUnaCategoria({ ...LLENA, lineas: [{ monto: '', categoriaId: '' }] }, accion),
+    );
+    const categoria = de(nodo, tp.categoria);
+    expect(categoria.getAttribute('aria-haspopup')).toBe('listbox');
+    expect(radiogrupo(nodo, tp.categoria)).toBeNull();
+    expect(categoria.textContent).toContain(tp.categoria);
+    expect(categoria.textContent).not.toContain('Compras a plazo');
+    const crear = boton(nodo, tp.crear);
+    expect(crear.getAttribute('aria-disabled')).toBe('true');
+    expect(descrito(crear)).toBe(base.corregirCampos(1));
+    await tocar(crear);
+    await expect.poll(() => filaDe(categoria).dataset['error']).toBe('');
+    expect(filaDe(categoria).textContent).toContain(tp.elegirCategoria);
+    await expect.poll(() => document.activeElement).toBe(categoria);
+    expect(accion).not.toHaveBeenCalled();
+    await userEvent.click(categoria);
+    const opcion = document.querySelector<HTMLElement>('[role=option]') as HTMLElement;
+    expect(opcion.textContent).toContain('Compras a plazo');
+    await userEvent.click(opcion);
+    await expect.poll(() => boton(nodo, tp.crear).getAttribute('aria-disabled')).toBeNull();
+  });
 });
 
 describe('PRU-CMP-COBRO por cobrar con los campos v3', () => {

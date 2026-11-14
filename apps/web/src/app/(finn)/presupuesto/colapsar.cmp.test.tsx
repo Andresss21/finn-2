@@ -132,8 +132,9 @@ const A7 = {
   totales: { asignado: 99784, gastado: 64795, disponible: 178451 },
 } as unknown as PresupuestoDto;
 
-function montar(filtro?: FiltroDeUrl): HTMLElement {
+function montar(filtro?: FiltroDeUrl, ancho?: string): HTMLElement {
   const nodo = document.createElement('div');
+  if (ancho !== undefined) nodo.style.width = ancho;
   document.body.append(nodo);
   const raiz = createRoot(nodo);
   act(() => {
@@ -284,6 +285,36 @@ describe('PRU-CMP-PRES colapsar grupos (C-47)', () => {
     expect(seccion(n, 'casa')?.querySelector('[data-columnas-grupo]')).toBeNull();
     expect(visible(seccion(n, 'casa')?.querySelector('[data-cantidad-grupo]'))).toBe(true);
   });
+
+  it.each([
+    [414, '100%'],
+    [800, '100%'],
+    [1100, '420px'],
+    [1100, '100%'],
+    [1280, '520px'],
+    [1400, '100%'],
+  ])(
+    'PRU-CMP-PRES-805 [C-47] en %i px con la tabla de %s de ancho, el encabezado de un grupo abierto o colapsado lleva el nombre y «· {n} categorías» sin pisarse: el contador en una sola línea, al lado del nombre o entero debajo',
+    async (ventana, ancho) => {
+      await page.viewport(ventana, 800);
+      localStorage.setItem(CLAVE, JSON.stringify(['comida']));
+      const n = montar(undefined, ancho);
+      for (const id of ['casa', 'comida', 'ahorro']) {
+        const cantidad = seccion(n, id)?.querySelector('[data-cantidad-grupo]');
+        if (!visible(cantidad)) {
+          expect(ventana).toBeLessThan(1024); // sin `md` el contador va en la tarjeta de resumen
+          continue;
+        }
+        const nombre = flecha(n, id)?.lastElementChild as Element;
+        const c = (cantidad as Element).getBoundingClientRect();
+        const m = nombre.getBoundingClientRect();
+        expect((cantidad as Element).getClientRects()).toHaveLength(1);
+        const alLado = c.left >= m.right - 0.5 && c.top < m.bottom && c.bottom > m.top;
+        const debajo = c.top >= m.bottom - 0.5;
+        expect(alLado || debajo).toBe(true);
+      }
+    },
+  );
 
   it('PRU-CMP-PRES-346 [C-47] CA-P-4: con el filtro «Sobregiradas» los grupos se ven abiertos y sin flecha, sin «Colapsar todos»; al volver a «Todas» regresa lo guardado', () => {
     localStorage.setItem(CLAVE, JSON.stringify(['comida']));
