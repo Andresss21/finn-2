@@ -4,6 +4,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { elegirEnFila } from '../../ayudas/seleccion-nativa.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
@@ -60,7 +61,7 @@ async function previsualizarCafeEnSalidas(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Más acciones' }).click();
   await page.getByRole('menuitem', { name: 'Fusionar con otra', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Fusionar categorías', level: 1 })).toBeVisible();
-  await page.getByLabel('Fusionar con').selectOption({ label: 'Salidas' });
+  await elegirEnFila(page, 'Fusionar con', 'Salidas');
   // E4-1: el impacto llega solo, en la tarjeta K4 de la misma pantalla
   await expect(page.getByRole('heading', { name: 'Antes de confirmar' })).toBeVisible();
 }

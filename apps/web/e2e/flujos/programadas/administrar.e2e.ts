@@ -5,6 +5,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { elegirEnFila } from '../../ayudas/seleccion-nativa.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
@@ -78,11 +79,11 @@ const fila = (page: Page, comercio: string) =>
 /** Llena el formulario de una programada de gasto mensual y la crea. */
 async function crearNetflix(page: Page): Promise<void> {
   await abrir(page, '/programadas/nueva');
-  await page.getByLabel('Cuenta', { exact: true }).selectOption({ label: 'Visa Oro' });
+  await elegirEnFila(page, 'Cuenta', 'Visa Oro');
   await page.getByLabel('Comercio', { exact: true }).fill('Netflix');
   await page.getByLabel('Monto', { exact: true }).fill('15.49');
-  await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Streaming' });
-  await page.getByLabel('Primera fecha').fill('2027-02-17');
+  await elegirEnFila(page, 'Categoría', 'Streaming');
+  await page.getByLabel('Primera fecha').fill('17/02/2027');
   await page.getByRole('button', { name: 'Crear programada' }).click();
   await expect(page).toHaveURL(/\/programadas(\?resultado=.*)?$/);
   await esperarContenido(page);
@@ -191,12 +192,12 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     );
     await abrir(page, '/programadas/nueva');
     await page.getByRole('radio', { name: 'Cuota' }).click();
-    await page.getByLabel('Cuenta', { exact: true }).selectOption({ label: 'Ahorro' });
-    await page.getByLabel('Cuenta de destino').selectOption({ label: 'Préstamo' });
+    await elegirEnFila(page, 'Cuenta', 'Ahorro');
+    await elegirEnFila(page, 'Cuenta de destino', 'Préstamo');
     await page.getByLabel('Comercio', { exact: true }).fill('Cuota del préstamo');
     await page.getByLabel('Monto', { exact: true }).fill('210');
-    await page.getByLabel('Categoría', { exact: true }).selectOption({ label: 'Cuotas' });
-    await page.getByLabel('Primera fecha').fill('2027-02-20');
+    await elegirEnFila(page, 'Categoría', 'Cuotas');
+    await page.getByLabel('Primera fecha').fill('20/02/2027');
     await page.getByRole('switch', { name: 'Registrar sola en su fecha' }).check();
     await page.getByRole('button', { name: 'Crear programada' }).click();
     await expect(
@@ -234,7 +235,10 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await abrir(page, '/presupuesto/estructura');
     await page.getByRole('link', { name: 'Editar Gimnasio', exact: true }).click();
     await page.getByRole('link', { name: 'Archivar', exact: true }).click();
-    await page.getByLabel(/Programada Gimnasio/).selectOption({ label: 'Desactivarla' });
+    await page
+      .getByRole('radiogroup', { name: /Programada Gimnasio/ })
+      .getByRole('radio', { name: 'Desactivarla' })
+      .click();
     await page.getByRole('button', { name: 'Archivar Gimnasio', exact: true }).click();
     await expect(page).toHaveURL(/\/presupuesto\/categorias\/[0-9a-f-]+$/);
 

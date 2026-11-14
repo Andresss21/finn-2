@@ -5,6 +5,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { elegirEnFila } from '../../ayudas/seleccion-nativa.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
@@ -91,7 +92,11 @@ test.describe('PRU-E2E-CATEG', () => {
 
     await expect(page.getByRole('heading', { name: 'Archivar categoría', level: 1 })).toBeVisible();
     await expect(page.getByText('Tiene dinero asignado en 1 período futuro.')).toBeVisible();
-    await page.getByLabel(/Programada Gimnasio/).selectOption({ label: 'Desactivarla' });
+    // [C-45] La decisión de la programada es un segmentado en su fila (CAMPOS-V3 §6).
+    await page
+      .getByRole('radiogroup', { name: /Programada Gimnasio/ })
+      .getByRole('radio', { name: 'Desactivarla' })
+      .click();
     // E4-1: la tarjeta de impacto está en la misma pantalla y el pie confirma con el verbo
     await expect(page.getByRole('heading', { name: 'Antes de confirmar' })).toBeVisible();
     await page.getByRole('button', { name: 'Archivar Gimnasio', exact: true }).click();
@@ -124,7 +129,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await abrir(page, '/presupuesto');
     await archivadas(page).getByRole('link', { name: 'Sacar el dinero de Gimnasio' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
-    await page.getByLabel('Poner en').selectOption({ label: 'Salidas' });
+    await elegirEnFila(page, 'Poner en', 'Salidas');
     await page.getByLabel(/Monto a sacar/).fill('10');
     await page.getByRole('button', { name: 'Sacar', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -163,7 +168,11 @@ test.describe('PRU-E2E-PRES', () => {
     await abrir(page, `/presupuesto/categorias/${id}/archivar`);
     const k4 = page.locator('[data-impacto-k4]');
     await expect(k4).toBeVisible();
-    await expect(page.getByLabel(/Programada Gimnasio/)).toHaveValue('desactivar');
+    await expect(
+      page
+        .getByRole('radiogroup', { name: /Programada Gimnasio/ })
+        .getByRole('radio', { name: 'Desactivarla' }),
+    ).toBeChecked();
     // Cada cambio de decisión es una previsualización nueva al servidor (una Server Action por cambio)
     const acciones: string[] = [];
     page.on('request', (r) => {
@@ -171,9 +180,10 @@ test.describe('PRU-E2E-PRES', () => {
         acciones.push(r.postData() ?? '');
     });
     await page
-      .getByLabel(/Programada Gimnasio/)
-      .selectOption({ label: 'Pasarla a otra categoría' });
-    await page.getByLabel('Pasarla a').selectOption({ label: 'Salidas' });
+      .getByRole('radiogroup', { name: /Programada Gimnasio/ })
+      .getByRole('radio', { name: 'Pasarla a otra categoría' })
+      .click();
+    await elegirEnFila(page, 'Pasarla a', 'Salidas');
     await expect.poll(() => acciones.length).toBeGreaterThan(0);
     expect(acciones.at(-1)).toContain('reasignar');
     await expect(k4).toBeVisible();

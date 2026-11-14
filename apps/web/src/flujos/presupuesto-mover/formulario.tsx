@@ -57,9 +57,7 @@ export interface PropsFormularioMover {
 const CONTRATO = z.object({
   origenId: z.string().min(1, { error: t.elegirCategoria }),
   destinoId: z.string().min(1, { error: t.elegirCategoria }),
-  monto: z
-    .string()
-    .refine(esMontoPositivo, { error: tb.montoMayorQueCero }),
+  monto: z.string().refine(esMontoPositivo, { error: tb.montoMayorQueCero }),
 });
 type Campos = z.infer<typeof CONTRATO>;
 type Cruda = Campos & { modo: string; revisionVista?: string; huellaImpacto?: string };

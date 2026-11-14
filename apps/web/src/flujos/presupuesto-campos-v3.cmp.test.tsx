@@ -248,9 +248,7 @@ describe('PRU-CMP-PRES Presupuesto con los campos v3', () => {
   });
 
   it('PRU-CMP-PRES-803 [C-45, FT-11, CA-11.2] CA-K3-3: D-6 en Mover dinero: mover más que el Disponible no marca error en el campo; con origen, destino y monto se pide el impacto al servidor', async () => {
-    vi.mocked(moverDinero).mockImplementation(
-      previsualiza() as unknown as typeof moverDinero,
-    );
+    vi.mocked(moverDinero).mockImplementation(previsualiza() as unknown as typeof moverDinero);
     const nodo = await montar(mover());
     await elegir(de(nodo, tm.origen), 'Salidas');
     await elegir(de(nodo, tm.destino), 'Super');

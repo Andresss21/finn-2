@@ -250,9 +250,7 @@ describe('PRU-CMP-COBRO por cobrar con los campos v3', () => {
     const restaurantes = [...document.querySelectorAll<HTMLElement>('[role=option]')].find((o) =>
       o.textContent.startsWith('Restaurantes'),
     ) as HTMLElement;
-    expect(
-      restaurantes.querySelector<HTMLElement>('.campo-detalle')?.dataset['negativo'],
-    ).toBe('');
+    expect(restaurantes.querySelector<HTMLElement>('.campo-detalle')?.dataset['negativo']).toBe('');
     await userEvent.keyboard('{Escape}');
     await userEvent.clear(monto);
     const condonarBoton = () => boton(nodo, tc.condonar);

@@ -51,9 +51,7 @@ export interface PropsFormularioSacar {
 const LPA = 'lpa';
 const CONTRATO = z.object({
   destino: z.string().min(1),
-  monto: z
-    .string()
-    .refine(esMontoPositivo, { error: tb.montoMayorQueCero }),
+  monto: z.string().refine(esMontoPositivo, { error: tb.montoMayorQueCero }),
 });
 type Campos = z.infer<typeof CONTRATO>;
 type Cruda = Campos & { modo: string };

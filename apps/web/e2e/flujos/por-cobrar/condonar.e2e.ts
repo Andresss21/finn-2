@@ -7,7 +7,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
-import { elegirOpcion, seleccion } from '../../ayudas/seleccion-nativa.ts';
+import { elegirEnFila } from '../../ayudas/seleccion-nativa.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { porCobrarCondonar as t } from '../../../src/textos/por-cobrar-condonar.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
@@ -170,7 +170,7 @@ test.describe('PRU-E2E-COBRO condonar', () => {
     await preparar(ESC21, '2027-02-10');
     await irACondonar(page, 'Beto');
     await expect(page.getByText(t.hastaAbierto('$20.00'))).toBeVisible();
-    await elegirOpcion(page, t.categoria, 'Ropa');
+    await elegirEnFila(page, t.categoria, 'Ropa');
     await expect(monto(page)).toHaveValue('20.00');
     await condonar(page).click();
     await expect(page.locator('[data-aviso="AV-02"]')).toHaveText(t.avisos['AV-02'] ?? '');
@@ -196,7 +196,12 @@ test.describe('PRU-E2E-COBRO condonar', () => {
     await preparar(ESC23, '2027-02-12');
     await irACondonar(page, 'Beto');
     await expect(page.getByText(t.hastaAbierto('$40.00'))).toBeVisible();
-    await expect(seleccion(page, t.categoria)).toHaveValue(/.+/); // propone Salidas, la de la compra
+    // propone Salidas, la de la compra: elegida en el segmentado o en el disparador de la lista (C-45)
+    await expect(
+      page
+        .getByRole('radio', { name: 'Salidas', checked: true })
+        .or(page.getByRole('button', { name: new RegExp(`^${t.categoria} Salidas`) })),
+    ).toBeVisible();
     await condonar(page).click();
     await expect(page.getByRole('dialog')).toHaveCount(0); // sin sobregiro no hay aviso: el flujo se cierra solo
 
@@ -236,14 +241,14 @@ test.describe('PRU-E2E-COBRO condonar', () => {
     await preparar(ESC44, '2027-03-05');
     await irACondonar(page, 'Ana');
     await expect(page.locator('[data-sin-propuesta]')).toHaveText(t.sinPropuesta);
-    await expect(seleccion(page, t.categoria)).toHaveValue('');
-    await expect(
-      seleccion(page, t.categoria).locator('option', { hasText: 'Gimnasio' }),
-    ).toHaveCount(0);
+    await expect(page.getByRole('dialog').getByRole('radio', { checked: true })).toHaveCount(0);
+    await expect(page.getByRole('radio', { name: 'Gimnasio' })).toHaveCount(0);
 
-    await condonar(page).click();
+    // [C-45] Sin categoría, «Condonar» se ve apagado (`aria-disabled`): se toca con el teclado.
+    await condonar(page).focus();
+    await page.keyboard.press('Enter');
     await expect(page.getByText(t.elegirCategoria)).toBeVisible();
-    await elegirOpcion(page, t.categoria, 'Ropa');
+    await elegirEnFila(page, t.categoria, 'Ropa');
     await condonar(page).click();
     await expect(page.locator('[data-aviso="AV-02"]')).toBeVisible(); // Ropa no tenía Disponible
     await page.getByRole('button', { name: t.listo, exact: true }).click();

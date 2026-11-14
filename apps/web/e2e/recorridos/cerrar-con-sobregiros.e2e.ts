@@ -6,6 +6,7 @@
 import { expect, test, sembrar } from '../configuracion/semilla.ts';
 import { entrarAal2 } from '../ayudas/sesion.ts';
 import { esperarContenido } from '../ayudas/esperas.ts';
+import { elegirEnFila } from '../ayudas/seleccion-nativa.ts';
 import { esperarMonto } from '../ayudas/montos.ts';
 import { alinearRelojes, fijarRelojServidor } from '../../../../tools/pruebas/e2e/reloj.ts';
 import type { Escenario, Op } from '../../../../packages/dominio/escenarios/tipos.ts';
@@ -147,8 +148,8 @@ test.describe('PRU-E2E-PRES recorrido 4.6 cerrar con sobregiros', () => {
     await abrir(page, '/presupuesto');
     await page.getByRole('link', { name: 'Mover dinero' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
-    await page.getByLabel('Sacar de').selectOption({ label: 'Ropa' });
-    await page.getByLabel('Poner en').selectOption({ label: 'Salidas' });
+    await elegirEnFila(page, 'Sacar de', 'Ropa');
+    await elegirEnFila(page, 'Poner en', 'Salidas');
     await page.getByLabel(/Monto a mover/).fill('50');
     await page.getByRole('button', { name: 'Mover', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);

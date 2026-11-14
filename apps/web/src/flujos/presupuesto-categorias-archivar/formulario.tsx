@@ -85,7 +85,11 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
         .superRefine((c, ctx) => {
           for (const x of programadas)
             if (['', OTRA].includes(c.programadas[x.id] ?? ''))
-              ctx.addIssue({ code: 'custom', path: ['programadas', x.id], message: t.elegirCategoria });
+              ctx.addIssue({
+                code: 'custom',
+                path: ['programadas', x.id],
+                message: t.elegirCategoria,
+              });
         }),
     [programadas],
   );

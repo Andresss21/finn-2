@@ -69,9 +69,9 @@ const campo = (nodo: HTMLElement, nombre: string): HTMLInputElement => {
 };
 /** [C-45] Con dos categorías, la categoría es un segmentado en su fila (CAMPOS-V3 §6): la elegida, si hay. */
 const categoriaElegida = (nodo: HTMLElement): string | undefined =>
-  nodo
-    .querySelector(`[role=radiogroup][aria-label="${t.categoria}"] [role=radio][aria-checked=true]`)
-    ?.textContent ?? undefined;
+  nodo.querySelector(
+    `[role=radiogroup][aria-label="${t.categoria}"] [role=radio][aria-checked=true]`,
+  )?.textContent ?? undefined;
 const condonar = (): HTMLButtonElement => {
   const b = [...document.querySelectorAll('button')].find((x) =>
     x.textContent.startsWith(t.condonar),

@@ -111,9 +111,9 @@ describe('PRU-CMP-PRES', () => {
     );
     expect(nodo.querySelector('select')).toBeNull();
     expect(nodo.querySelector('[role="radiogroup"]')?.closest('.grupo-campos')).not.toBeNull();
-    expect(nodo.querySelector('input[name="monto"]')?.closest('.campo-fila')?.textContent).toContain(
-      '$',
-    );
+    expect(
+      nodo.querySelector('input[name="monto"]')?.closest('.campo-fila')?.textContent,
+    ).toContain('$');
     expect(nodo.textContent).toContain('Supermercado: Disponible $62.85.');
     expect(alto(boton(nodo, 'Cancelar'))).toBeGreaterThanOrEqual(44);
     expect(alto(boton(nodo, 'Sacar'))).toBeGreaterThanOrEqual(44);

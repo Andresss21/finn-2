@@ -67,9 +67,7 @@ interface Campos {
 
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const contrato = z.object({
-  monto: z
-    .string()
-    .refine(esMontoPositivo, { error: base.montoMayorQueCero }),
+  monto: z.string().refine(esMontoPositivo, { error: base.montoMayorQueCero }),
   fecha: z.string().min(1, t.obligatorio),
   categoriaId: z.string().min(1, t.elegirCategoria),
 });

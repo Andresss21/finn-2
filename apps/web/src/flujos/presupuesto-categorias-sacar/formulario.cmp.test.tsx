@@ -91,7 +91,9 @@ describe('PRU-CMP-CATEG', () => {
     const nodo = montar(<FormularioSacar {...base} accion={accion} />);
     // [C-45] Con dos destinos, «Poner en» es un segmentado en su fila (CAMPOS-V3 §6); al salir, el monto se completa a dos decimales.
     const salidas = [
-      ...nodo.querySelectorAll<HTMLElement>(`[role=radiogroup][aria-label="${t.destino}"] [role=radio]`),
+      ...nodo.querySelectorAll<HTMLElement>(
+        `[role=radiogroup][aria-label="${t.destino}"] [role=radio]`,
+      ),
     ].find((x) => x.textContent === 'Salidas');
     await userEvent.click(salidas as HTMLElement);
     await userEvent.fill(montoEscrito(nodo), '10');
