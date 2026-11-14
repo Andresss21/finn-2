@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>K2 · Campos · anatomia · claro</title>
+<style>@font-face{font-family:"Archivo";src:url(fuentes/archivo-latin-wdth-wght.woff2) format("woff2");font-weight:100 900;font-stretch:62% 125%}
+@font-face{font-family:"Big Shoulders Display";src:url(fuentes/big-shoulders-display-latin-700.woff2) format("woff2");font-weight:700}
+@font-face{font-family:"Big Shoulders Display";src:url(fuentes/big-shoulders-display-latin-800.woff2) format("woff2");font-weight:800}
+body{margin:0;background:#ECEDE8}
+.tema-claro{
+  --tarjeta-oro: linear-gradient(135deg, #15120C 0%, #3A301E 40%, #6E5631 78%, #7E6638 100%);
+  --tarjeta-plata: linear-gradient(135deg, #121519 0%, #2B3138 45%, #4A525C 80%, #5C6670 100%);
+  --patron-sin-reservar: repeating-linear-gradient(135deg, var(--deuda-sin-respaldo-borde) 0 3px, var(--deuda-sin-respaldo-fondo) 3px 6px);
+  --fuente-titulo: "Big Shoulders Display", "Archivo", system-ui, sans-serif;
+  --fuente-cuerpo: "Archivo", system-ui, sans-serif;
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 20px;
+  --espacio-6: 24px;
+  --espacio-8: 32px;
+  --espacio-10: 40px;
+  --espacio-12: 48px;
+  --espacio-16: 64px;
+  --radio-control: 10px;
+  --radio-contenedor: 16px;
+  --radio-pastilla: 999px;
+  --radio-superpuesto: 24px;
+  --radio-identidad: 18px;
+  --radio-tarjeta: 20px;
+  --duracion-rapida: 120ms;
+  --duracion-normal: 220ms;
+  --duracion-lenta: 400ms;
+  --duracion-transicion: 340ms;
+  --duracion-ambiental: 5000ms;
+  --curva-estandar: cubic-bezier(.2, .8, .2, 1);
+  --curva-entrada: cubic-bezier(.2, .9, .25, 1);
+  --curva-salida: cubic-bezier(.4, 0, 1, 1);
+  --curva-enfasis: cubic-bezier(.3, 1.4, .5, 1);
+  --capa-marco: 10;
+  --capa-superpuesto: 40;
+  --capa-aviso: 50;
+  --tactil-minimo: 44px;
+
+  color-scheme: light;
+  --fondo: #F1F2EE;
+  --superficie: #FFFFFF;
+  --superficie-elevada: #FFFFFF;
+  --superficie-hundida: #E7E9E3;
+  --borde-sutil: #D9DCD4;
+  --borde-control: #767D87;
+  --foco: #1F47D1;
+  --velo: rgba(16,20,24,.5);
+  --texto: #101418;
+  --texto-secundario: #474E58;
+  --texto-terciario: #61686F;
+  --texto-deshabilitado: #AEB3BA;
+  --enlace: #1F47D1;
+  --accion: #1F47D1;
+  --accion-hover: #1838A8;
+  --accion-presionada: #132C85;
+  --texto-sobre-accion: #FFFFFF;
+  --accion-secundaria: #E7E9E3;
+  --peligro: #B42318;
+  --texto-sobre-peligro: #FFFFFF;
+  --marca: #101418;
+  --texto-sobre-marca: #F1F2EE;
+  --positivo-texto: #0A6B5F;
+  --positivo-fondo: #DDF2EE;
+  --positivo-borde: #13897A;
+  --cero-texto: #474E58;
+  --cero-fondo: #E7E9E3;
+  --cero-borde: #767D87;
+  --advertencia-texto: #835A00;
+  --advertencia-fondo: #FFF0C2;
+  --advertencia-borde: #A87800;
+  --problema-texto: #B8400A;
+  --problema-fondo: #FFE3D3;
+  --problema-borde: #C9521C;
+  --deuda-texto: #5644C2;
+  --deuda-fondo: #ECE9FB;
+  --deuda-borde: #6A58D6;
+  --deuda-sin-respaldo-texto: #A3195B;
+  --deuda-sin-respaldo-fondo: #FCE4EF;
+  --deuda-sin-respaldo-borde: #C02A6E;
+  --informacion-texto: #0E5E86;
+  --informacion-fondo: #E0F0F8;
+  --informacion-borde: #1A76A6;
+  --grafico-serie-1: #2489EA;
+  --grafico-serie-2: #E25A73;
+  --grafico-serie-3: #7A2A90;
+  --grafico-serie-4: #266600;
+  --grafico-serie-5: #99578A;
+  --grafico-serie-6: #739629;
+  --grafico-serie-7: #B16CD9;
+  --grafico-serie-8: #88392E;
+  --grafico-referencia: #474E58;
+  --grafico-rejilla: #D9DCD4;
+  --marca-icono-fondo: #101418;
+  --marca-icono-figura: #F1F2EE;
+  --accion-tonal: #E4E9FB;
+  --grafico-tinta: #101418;
+  --grafico-otras: #61686F;
+  --marca-grabado: rgba(241,242,238,.08);
+  --cuenta-banco: #DCE8EE;
+  --cuenta-ahorro: #E2EBDA;
+  --cuenta-prestamo: #EFE3D8;
+  --cuenta-inversion: #E4E2F0;
+  --cuenta-motivo: rgba(16,20,24,.08);
+  --cuenta-disco: rgba(255,255,255,.7);
+  --tarjeta-oro-texto: #F7F1E3;
+  --tarjeta-plata-texto: #F2F4F6;
+  --elevacion-1: 0 1px 2px rgba(16,20,24,.05), 0 10px 28px -10px rgba(16,20,24,.16);
+  --elevacion-2: 0 8px 24px rgba(16,20,24,.12);
+  --elevacion-3: 0 18px 48px rgba(16,20,24,.22);
+}
+.tema-oscuro{
+  --tarjeta-oro: linear-gradient(135deg, #15120C 0%, #3A301E 40%, #6E5631 78%, #7E6638 100%);
+  --tarjeta-plata: linear-gradient(135deg, #121519 0%, #2B3138 45%, #4A525C 80%, #5C6670 100%);
+  --patron-sin-reservar: repeating-linear-gradient(135deg, var(--deuda-sin-respaldo-borde) 0 3px, var(--deuda-sin-respaldo-fondo) 3px 6px);
+  --fuente-titulo: "Big Shoulders Display", "Archivo", system-ui, sans-serif;
+  --fuente-cuerpo: "Archivo", system-ui, sans-serif;
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 20px;
+  --espacio-6: 24px;
+  --espacio-8: 32px;
+  --espacio-10: 40px;
+  --espacio-12: 48px;
+  --espacio-16: 64px;
+  --radio-control: 10px;
+  --radio-contenedor: 16px;
+  --radio-pastilla: 999px;
+  --radio-superpuesto: 24px;
+  --radio-identidad: 18px;
+  --radio-tarjeta: 20px;
+  --duracion-rapida: 120ms;
+  --duracion-normal: 220ms;
+  --duracion-lenta: 400ms;
+  --duracion-transicion: 340ms;
+  --duracion-ambiental: 5000ms;
+  --curva-estandar: cubic-bezier(.2, .8, .2, 1);
+  --curva-entrada: cubic-bezier(.2, .9, .25, 1);
+  --curva-salida: cubic-bezier(.4, 0, 1, 1);
+  --curva-enfasis: cubic-bezier(.3, 1.4, .5, 1);
+  --capa-marco: 10;
+  --capa-superpuesto: 40;
+  --capa-aviso: 50;
+  --tactil-minimo: 44px;
+
+  color-scheme: dark;
+  --fondo: #0D1013;
+  --superficie: #161A1F;
+  --superficie-elevada: #1F242B;
+  --superficie-hundida: #090B0D;
+  --borde-sutil: #2B3139;
+  --borde-control: #737B86;
+  --foco: #7A93FF;
+  --velo: rgba(0,0,0,.6);
+  --texto: #EEF0EC;
+  --texto-secundario: #AEB5BE;
+  --texto-terciario: #8B939D;
+  --texto-deshabilitado: #4A515A;
+  --enlace: #7A93FF;
+  --accion: #7A93FF;
+  --accion-hover: #97ABFF;
+  --accion-presionada: #B3C2FF;
+  --texto-sobre-accion: #0D1013;
+  --accion-secundaria: #1F242B;
+  --peligro: #FF7A6E;
+  --texto-sobre-peligro: #0D1013;
+  --marca: #EEF0EC;
+  --texto-sobre-marca: #0D1013;
+  --positivo-texto: #4FD1B8;
+  --positivo-fondo: #0F2E2A;
+  --positivo-borde: #2FAE97;
+  --cero-texto: #AEB5BE;
+  --cero-fondo: #1F242B;
+  --cero-borde: #737B86;
+  --advertencia-texto: #F4C04E;
+  --advertencia-fondo: #33280B;
+  --advertencia-borde: #C99A2E;
+  --problema-texto: #FF8A4C;
+  --problema-fondo: #3A1A0C;
+  --problema-borde: #E0702F;
+  --deuda-texto: #ADA2FF;
+  --deuda-fondo: #221E45;
+  --deuda-borde: #8C80F0;
+  --deuda-sin-respaldo-texto: #FF7AB6;
+  --deuda-sin-respaldo-fondo: #3D1129;
+  --deuda-sin-respaldo-borde: #E0559A;
+  --informacion-texto: #6CC4F0;
+  --informacion-fondo: #0B2A3A;
+  --informacion-borde: #3FA3D6;
+  --grafico-serie-1: #0072CE;
+  --grafico-serie-2: #B34B53;
+  --grafico-serie-3: #A047B9;
+  --grafico-serie-4: #438F21;
+  --grafico-serie-5: #975889;
+  --grafico-serie-6: #6A8F02;
+  --grafico-serie-7: #9A47C6;
+  --grafico-serie-8: #A6584C;
+  --grafico-referencia: #AEB5BE;
+  --grafico-rejilla: #2B3139;
+  --marca-icono-fondo: #101418;
+  --marca-icono-figura: #F1F2EE;
+  --accion-tonal: #1C2444;
+  --grafico-tinta: #EEF0EC;
+  --grafico-otras: #8B939D;
+  --marca-grabado: rgba(13,16,19,.08);
+  --cuenta-banco: #13222B;
+  --cuenta-ahorro: #172219;
+  --cuenta-prestamo: #261C15;
+  --cuenta-inversion: #1C1B2A;
+  --cuenta-motivo: rgba(238,240,236,.07);
+  --cuenta-disco: rgba(255,255,255,.07);
+  --tarjeta-oro-texto: #F7F1E3;
+  --tarjeta-plata-texto: #F2F4F6;
+  --elevacion-1: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 30px -12px rgba(0,0,0,.75);
+  --elevacion-2: 0 8px 24px rgba(0,0,0,.45);
+  --elevacion-3: 0 18px 48px rgba(0,0,0,.6);
+}
+
+
+.grupo{background:var(--superficie);border-radius:16px;box-shadow:var(--elevacion-1);position:relative}
+.fila{position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:64px;padding:10px 16px;box-sizing:border-box;border-bottom:1px solid var(--borde-sutil);transition:box-shadow .12s,background .12s,margin .12s,padding .12s}
+.grupo>.fila:first-child{border-top-left-radius:16px;border-top-right-radius:16px}
+.grupo>.fila:last-child{border-bottom:none;border-bottom-left-radius:16px;border-bottom-right-radius:16px}
+.fila .rot{font-family:'Archivo',system-ui,sans-serif;font-weight:600;font-size:.75rem;line-height:1.3;letter-spacing:.04em;color:var(--texto-secundario)}
+.fila .val{font-family:'Archivo',system-ui,sans-serif;font-weight:600;font-size:1.0625rem;line-height:1.4;color:var(--texto);font-variant-numeric:tabular-nums}
+.fila .ph{color:var(--texto-terciario)}
+.fila:focus-within,.fila.foco{z-index:2;background:var(--superficie-elevada);border-radius:12px;margin:0 -6px;padding-left:22px;padding-right:22px;border-bottom-color:transparent;box-shadow:var(--elevacion-3)}
+.fila:focus-within .rot,.fila.foco .rot{color:var(--accion)}
+.fila.mal{background:var(--problema-fondo)}
+.fila.mal .rot{color:var(--problema-texto)}
+.fila.mal:focus-within,.fila.mal.foco{background:var(--superficie-elevada);box-shadow:0 0 0 2px var(--problema-borde),var(--elevacion-2)}
+.fila.apagada .rot,.fila.apagada .val{color:var(--texto-deshabilitado)}
+.fila.apagada{cursor:not-allowed}
+.billete{display:flex;flex-direction:column;gap:8px;padding:16px 18px 14px;border-radius:20px;background:var(--marca);color:var(--texto-sobre-marca);box-shadow:var(--elevacion-1)}
+.billete .linea{display:flex;align-items:baseline;gap:4px;padding-bottom:4px;border-bottom:2px solid color-mix(in srgb,var(--texto-sobre-marca) 28%,transparent)}
+.billete:focus-within .linea,.billete.foco .linea{border-bottom-color:var(--texto-sobre-marca)}
+.billete.mal .linea{border-bottom-color:var(--problema-borde)}
+.panel{position:absolute;left:8px;right:8px;top:calc(100% - 6px);z-index:30;display:flex;flex-direction:column;gap:2px;padding:6px;background:var(--superficie-elevada);border:1px solid var(--borde-sutil);border-radius:14px;box-shadow:var(--elevacion-3);max-height:340px;overflow:hidden}
+.opcion{display:flex;align-items:center;gap:12px;min-height:48px;padding:6px 10px;border-radius:10px;box-sizing:border-box}
+.opcion.on{background:var(--accion-tonal)}
+.opcion.encima{background:var(--superficie-hundida)}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 6px;border-radius:999px;border:1px solid var(--borde-sutil);background:transparent;font-family:'Archivo',system-ui,sans-serif;font-weight:500;font-size:.9375rem;color:var(--texto);box-sizing:border-box}
+.chip.on{border:2px solid var(--accion);background:var(--accion-tonal);font-weight:700}
+.chip.foco,.seg-op.foco,.boton.foco{outline:2px solid var(--foco);outline-offset:2px}
+.parte{display:grid;grid-template-columns:40px minmax(0,1fr) auto auto;gap:12px;align-items:center}
+</style></head>
+<body><div style="width: 900px; box-sizing: border-box; padding: 40px; background: #ECEDE8; font-family: 'Archivo', system-ui, sans-serif"><div class="tema-claro" style="flex: 1; min-width: 0; box-sizing: border-box; padding: 28px 32px 8px; border-radius: 20px; background: var(--fondo); font-family: 'Archivo', system-ui, sans-serif; color: var(--texto)"><div style="display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 16px"><span style="font-family: 'Big Shoulders Display', 'Archivo', sans-serif; font-weight: 800; font-size: 2rem; line-height: 1.05; letter-spacing: .01em; text-transform: uppercase; color: var(--texto); margin: 0">Día</span><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario)">K2 · Campos · v3</span></div><section style="display: flex; flex-direction: column; gap: 18px; padding: 24px 0 32px; border-top: 1px solid var(--borde-sutil)"><div style="display: flex; flex-direction: column; gap: 4px"><h2 style="font-family: 'Big Shoulders Display', 'Archivo', sans-serif; font-weight: 700; font-size: 1.375rem; line-height: 1.15; letter-spacing: .01em; text-transform: uppercase; color: var(--texto); margin: 0">Anatomía</h2><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario)">Los campos viven como filas dentro de un grupo. Así se ven igual que las listas de Cuentas y Ajustes.</span></div><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 24px; align-items: start"><div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;"><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario); font-size: .8125rem; color: var(--texto-secundario)">Grupo con una fila en foco</span><div class="grupo"><div class="fila "><span style="display: flex; justify-content: space-between; gap: 8px"><span class="rot">Cuenta</span></span><div style="display: flex; align-items: center; gap: 6px; min-height: 26px"><span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span class="val">Visa Oro</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--grafico-tinta); flex: none; display: block"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"></path></svg></div><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario); font-size: .8125rem">Tarjeta · deuda $642.18</span></div><div class="fila "><span style="display: flex; justify-content: space-between; gap: 8px"><span class="rot">Fecha</span></span><div style="display: flex; align-items: center; gap: 6px; min-height: 26px"><span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span class="val">15/10/2026</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--grafico-referencia); flex: none; display: block"><rect x="4" y="5.5" width="16" height="14.5" rx="2"></rect><path d="M4 10h16"></path><path d="M8.5 3.5v4"></path><path d="M15.5 3.5v4"></path></svg></div></div><div class="fila foco"><span style="display: flex; justify-content: space-between; gap: 8px"><span class="rot">Comercio</span></span><div style="display: flex; align-items: center; gap: 6px; min-height: 26px"><span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span class="val">Super Selectos Escalón</span></span></div></div><div class="fila "><span style="display: flex; justify-content: space-between; gap: 8px"><span class="rot">Categoría</span></span><div style="display: flex; align-items: center; gap: 6px; min-height: 26px"><span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span class="val ph">Elegí una categoría</span></span><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter" style="stroke: var(--grafico-tinta); flex: none; display: block"><path d="M6.5 9.5l5.5 5.5 5.5-5.5"></path></svg></div></div></div><div style="display: flex; flex-wrap: wrap; gap: 6px"><span style="font-family: 'Archivo', system-ui, sans-serif; font-size: .75rem; font-weight: 600; color: var(--informacion-texto); background: var(--informacion-fondo); padding: 2px 8px; border-radius: 6px; white-space: nowrap">64 px</span><span style="font-family: 'Archivo', system-ui, sans-serif; font-size: .75rem; font-weight: 600; color: var(--informacion-texto); background: var(--informacion-fondo); padding: 2px 8px; border-radius: 6px; white-space: nowrap">10 × 16</span><span style="font-family: 'Archivo', system-ui, sans-serif; font-size: .75rem; font-weight: 600; color: var(--informacion-texto); background: var(--informacion-fondo); padding: 2px 8px; border-radius: 6px; white-space: nowrap">radio 16</span><span style="font-family: 'Archivo', system-ui, sans-serif; font-size: .75rem; font-weight: 600; color: var(--informacion-texto); background: var(--informacion-fondo); padding: 2px 8px; border-radius: 6px; white-space: nowrap">foco: −6 px · 22 px · radio 12</span></div></div><div style="display: flex; flex-direction: column; gap: 10px"><div style="display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: baseline"><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 500; font-size: .875rem; line-height: 1.35; color: var(--texto); font-weight: 700">Grupo</span><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario)">superficie · radio 16 · elevación 1 · un grupo por bloque de datos</span></div><div style="display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: baseline"><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 500; font-size: .875rem; line-height: 1.35; color: var(--texto); font-weight: 700">Fila</span><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario)">alto mínimo 64 · relleno 10 × 16 · separador 1 px borde-sutil</span></div><div style="display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: baseline"><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 500; font-size: .875rem; line-height: 1.35; color: var(--texto); font-weight: 700">Rótulo</span><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario)">Archivo 600 · 12 px · espaciado .04em · texto-secundario</span></div><div style="display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: baseline"><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 500; font-size: .875rem; line-height: 1.35; color: var(--texto); font-weight: 700">Valor</span><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario)">Archivo 600 · 17 px · cifras tabulares · texto (vacío: texto-terciario)</span></div><div style="display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: baseline"><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 500; font-size: .875rem; line-height: 1.35; color: var(--texto); font-weight: 700">Foco</span><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario)">la fila se levanta: superficie-elevada · radio 12 · sale 6 px a cada lado · relleno lateral 22 · elevación 3 · rótulo en acción</span></div><div style="display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: baseline"><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 500; font-size: .875rem; line-height: 1.35; color: var(--texto); font-weight: 700">Error</span><span style="font-family: 'Archivo', system-ui, sans-serif; font-weight: 400; font-size: .875rem; line-height: 1.45; color: var(--texto-secundario)">fondo problema-fondo · rótulo problema-texto · mensaje con ícono dentro de la fila</span></div></div></div></section></div></div></body></html>
