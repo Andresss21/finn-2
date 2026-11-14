@@ -55,13 +55,13 @@ describe('PRU-DOM-CATEG-801 lugares y ordinales de la estructura', () => {
   });
 
   it('PRU-DOM-CATEG-801 [C-46] el resumen de un grupo colapsado: «A», «A y B», «A, B y C», «A, B y {n − 2} más» y sin categorías', () => {
-    expect(t.resumen(['Gasolina'])).toBe('Gasolina');
-    expect(t.resumen(['Fondo de emergencia', 'Viaje'])).toBe('Fondo de emergencia y Viaje');
-    expect(t.resumen(['A', 'B', 'C'])).toBe('A, B y C');
-    expect(t.resumen(['Supermercado', 'Luz y agua', 'Internet y teléfono', 'Farmacia'])).toBe(
+    expect(t.resumen('Gasolina')).toBe('Gasolina');
+    expect(t.resumen('Fondo de emergencia', 'Viaje')).toBe('Fondo de emergencia y Viaje');
+    expect(t.resumen('A', 'B', 'C')).toBe('A, B y C');
+    expect(t.resumen('Supermercado', 'Luz y agua', 'Internet y teléfono', 'Farmacia')).toBe(
       'Supermercado, Luz y agua y 2 más',
     );
-    expect(t.resumen([])).toBe('Todavía no tiene categorías.');
+    expect(t.resumen()).toBe('Todavía no tiene categorías.');
     expect([t.categorias(1), t.categorias(4)]).toEqual(['1 categoría', '4 categorías']);
   });
 

@@ -28,7 +28,7 @@ export const estructura = {
   expandirTodos: 'Expandir todos',
   categorias: (n: number) => (n === 1 ? '1 categoría' : `${String(n)} categorías`),
   /** El resumen de un grupo colapsado, en el orden del grupo. */
-  resumen: (n: readonly string[]): string =>
+  resumen: (...n: readonly string[]): string =>
     n.length === 0
       ? 'Todavía no tiene categorías.'
       : n.length <= 2

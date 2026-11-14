@@ -110,7 +110,7 @@ export function GrupoEstructura({
           >
             <span className="text-cuerpo font-semibold">{t.categorias(cats.length)}</span>
             <span className="text-cuerpo-pequeno text-texto-secundario">
-              {t.resumen(cats.map((c) => c.nombre))}
+              {t.resumen(...cats.map((c) => c.nombre))}
             </span>
           </button>
         ) : (
