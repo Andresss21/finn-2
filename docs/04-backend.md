@@ -2782,6 +2782,7 @@ interface DetalleCuentaDto extends Encabezado {
     proximaCuota?: { fecha: FechaLocal; monto: Centavos; numero: number };   // [CH-252] la de 6.5, con modelo o sin él
     amortizacion: { numero: number; fecha: FechaLocal; interes; seguro; capital; saldo: Centavos;
                     estado: 'pagada' | 'parcial' | 'pendiente' | 'atrasada'; pagado: Centavos }[] | null;  // null sin modelo
+    cuotasAntesDeFinn?: { numero: number; fecha: FechaLocal; interes; seguro; capital; saldo: Centavos }[];  // [CH-283] 01 A.1 salida 6; solo con modelo y p₀ > 0
     comparacion: { proyectadoHastaHoy: Centavos; pagadoHastaHoy: Centavos } | null;
     costoFinanciero: { interes: Centavos; seguro: Centavos };   // Σ del desglose registrado (H6)
   };
@@ -2793,6 +2794,7 @@ interface DetalleCuentaDto extends Encabezado {
 - Lee `conciliaciones` (hechos) y `cambios_posteriores` ([H]).
 - `diferenciaActual` = saldo según el estado − saldo de las conciliadas (DM-8); el selector la calcula por conciliación.
 - **[CH-252]** `tarjeta.reservadoBp`: máx(0, reservado) × 10.000 / deuda, mitad hacia arriba (6.0.3), con tope 10.000, como `usoSinReservarBp` (CF-25); `null` si la deuda es 0. Es la barra «Reservado $X de $Y» del detalle de la tarjeta, que el cliente no calcula. `prestamo.proximaCuota` es la de 6.5.
+- **[CH-283]** `prestamo.cuotasAntesDeFinn`: las cuotas 1 a p₀ de un préstamo en curso, desde el monto original (01 A.1 salida 6), para la tabla. No va sin modelo, con p₀ = 0 o si no hay ninguna. No entran en `amortizacion`, `proximaCuota`, `comparacion` ni `costoFinanciero`.
 
 ### 6.7 Actividad y detalle de transacción
 

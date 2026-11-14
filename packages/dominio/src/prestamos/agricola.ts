@@ -104,6 +104,34 @@ function desglose(
   return { dias, interes, seguro, capital: Centavos.min(resto, saldo) };
 }
 
+/**
+ * [CH-283] Las cuotas 1 a p₀ de un préstamo en curso, pagadas antes de Finn, calculadas desde el monto original con las reglas
+ * 1 a 4 (B₀ = M). Son solo presentación: no se proyectan, no se emparejan ni quedan atrasadas, y no cambian la proyección, que
+ * sigue saliendo del capital registrado. Vacío sin cuotas pagadas, sin monto original o si desde M alguna no amortiza (CH-264).
+ */
+export function cuotasAntesDeFinn(c: CondicionesModelo): CuotaProyectada[] {
+  const filas: CuotaProyectada[] = [];
+  let saldo = c.montoOriginal;
+  for (let k = 1; k <= Math.min(pagadasAntes(c), c.plazoCuotas) && saldo > 0; k++) {
+    const { dias, interes, seguro, capital } = desglose(c, k, saldo);
+    if (capital <= 0) return [];
+    const saldoFinal = Centavos.restar(saldo, capital);
+    filas.push({
+      tipo: 'cuota',
+      numero: k,
+      fecha: fechaCuota(c, k),
+      dias,
+      saldoInicial: saldo,
+      interes,
+      seguro,
+      capital,
+      saldoFinal,
+    });
+    saldo = saldoFinal;
+  }
+  return filas;
+}
+
 /** Orden determinista de los pagos reales: (fecha, id), sin depender del orden de llegada. */
 const ordenar = (pagos: readonly PagoPrestamo[]): PagoPrestamo[] =>
   [...pagos].sort((a, b) => FechaLocal.comparar(a.fecha, b.fecha) || (a.id < b.id ? -1 : 1));

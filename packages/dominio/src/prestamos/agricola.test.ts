@@ -3,7 +3,7 @@ import type { Prestamo, Uuid } from '../hechos';
 import { op48 } from '../operaciones/op-48';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
-import { bancoAgricola, condicionesAgricola } from './agricola';
+import { bancoAgricola, condicionesAgricola, cuotasAntesDeFinn } from './agricola';
 import type { CondicionesModelo, PagoPrestamo } from './contrato';
 
 const m = (t: string) => Centavos.desdeTexto(t);
@@ -261,5 +261,64 @@ describe('PRU-DOM-CTA', () => {
       campo: 'prestamoId',
       datos: { prestamoId: id('pr') },
     });
+  });
+
+  it('PRU-DOM-CTA-840 [Q-detalleCuenta, FT-55] las cuotas pagadas antes de Finn se calculan desde el monto original con las reglas de A.2: el préstamo del usuario de $6,295.00 al 8.25 %, seguro $4.97, apertura 08/05/2026 y 6 de 18 pagadas da las cuotas 1 a 6 al centavo y el saldo $4,280.21 tras la 6, aunque el capital registrado sea otro (CH-283)', () => {
+    const real: CondicionesModelo = {
+      montoOriginal: m('6295.00'),
+      fechaApertura: f('2026-05-08'),
+      tasaNominalAnualMillonesimas: 82_500,
+      seguroPrimerMes: m('4.97'),
+      cuotaPactada: m('377.98'),
+      plazoCuotas: 18,
+      cuotasPagadas: 6,
+      saldoInicial: m('3934.62'),
+    };
+    const cuotas = cuotasAntesDeFinn(real);
+    expect(cuotas.map((q) => q.numero)).toEqual([1, 2, 3, 4, 5, 6]);
+    // La cuota k vence en F₀ + k meses (A.2 regla 1).
+    expect(cuotas.map((q) => q.fecha)).toEqual(
+      ['2026-06-08', '2026-07-08', '2026-08-08', '2026-09-08', '2026-10-08', '2026-11-08'].map(f),
+    );
+    // Los intereses de la app anterior del usuario y del banco, al centavo.
+    expect(cuotas.map((q) => q.interes)).toEqual(
+      ['44.11', '40.46', '39.47', '37.13', '33.65', '32.39'].map(m),
+    );
+    // Capital, interés, seguro y saldo de la tabla del banco: las cuotas 1 a 3, iguales.
+    expect(cuotas.slice(0, 3).map((q) => [q.capital, q.interes, q.seguro, q.saldoFinal])).toEqual(
+      [
+        ['328.90', '44.11', '4.97', '5966.10'],
+        ['332.81', '40.46', '4.71', '5633.29'],
+        ['334.06', '39.47', '4.45', '5299.23'],
+      ].map((fila) => fila.map(m)),
+    );
+    // Diferencia conocida (CH-283): en la 4 el banco cobra seguro 4.19 y la regla 3 da 4.1839 → 4.18, así que desde ahí el
+    // modelo queda 1 centavo abajo del banco (capital 336.67 contra 336.66 y saldo 4,962.56 contra 4,962.57).
+    expect(cuotas.slice(3).map((q) => [q.capital, q.interes, q.seguro, q.saldoFinal])).toEqual(
+      [
+        ['336.67', '37.13', '4.18', '4962.56'],
+        ['340.41', '33.65', '3.92', '4622.15'],
+        ['341.94', '32.39', '3.65', '4280.21'],
+      ].map((fila) => fila.map(m)),
+    );
+    expect(cuotas[0]).toMatchObject({ dias: 31, saldoInicial: m('6295.00'), seguro: m('4.97') });
+    expect(cuotas.at(-1)?.saldoFinal).toBe(m('4280.21'));
+    // Cada cuota cierra con la cuota pactada y encadena el saldo.
+    for (const [k, q] of cuotas.entries()) {
+      expect(Centavos.sumar(Centavos.sumar(q.interes, q.seguro), q.capital)).toBe(m('377.98'));
+      expect(q.saldoFinal).toBe(Centavos.restar(q.saldoInicial, q.capital));
+      if (k > 0) expect(q.saldoInicial).toBe(cuotas[k - 1]?.saldoFinal);
+    }
+    // La proyección (las próximas, desde el capital registrado) no cambia: sigue en la 7.
+    expect(bancoAgricola.proyectar(real, [])[0]).toMatchObject({
+      numero: 7,
+      saldoInicial: m('3934.62'),
+    });
+
+    // Sin cuotas pagadas al crear, o con un monto original en 0, no hay cuotas antes de Finn.
+    expect(cuotasAntesDeFinn(ejemplo)).toEqual([]);
+    expect(cuotasAntesDeFinn({ ...real, montoOriginal: Centavos.cero })).toEqual([]);
+    // Si desde el monto original alguna no amortiza (Q ≤ I_k + Seg_k), tampoco: nunca capital negativo (CH-264).
+    expect(cuotasAntesDeFinn({ ...real, cuotaPactada: m('40.00') })).toEqual([]);
   });
 });

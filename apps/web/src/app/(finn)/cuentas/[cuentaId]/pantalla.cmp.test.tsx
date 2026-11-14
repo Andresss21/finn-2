@@ -801,6 +801,75 @@ describe('PRU-CMP-CTA tabla de amortización', () => {
   });
 });
 
+describe('PRU-CMP-CTA cuotas pagadas antes de Finn', () => {
+  it('PRU-CMP-CTA-351 [FT-55] la tabla muestra antes de las próximas las cuotas pagadas antes de Finn, atenuadas, con «Pagada antes de Finn» (color, glifo y nombre) y sin monto pagado; la próxima sigue marcada y «Ver tabla completa» cuenta y muestra todas', async () => {
+    const prestamo = {
+      condiciones: {
+        contraparte: 'Banco Agrícola',
+        montoOriginal: 629500,
+        cuotaPactada: 37798,
+        plazoCuotas: 18,
+        cuotasPagadasAlCrear: 6,
+      },
+      capitalPendiente: 393462,
+      comparacion: { proyectadoHastaHoy: 0, pagadoHastaHoy: 0 },
+      costoFinanciero: { interes: 0, seguro: 0 },
+      cuotasAntesDeFinn: Array.from({ length: 6 }, (_, i) => ({
+        numero: i + 1,
+        fecha: `2026-${String(i + 6).padStart(2, '0')}-08`,
+        interes: 4411,
+        seguro: 497,
+        capital: 32890,
+        saldo: 600000 - i * 30000,
+      })),
+      amortizacion: Array.from({ length: 12 }, (_, i) => ({
+        numero: i + 7,
+        fecha: '2026-12-08',
+        interes: 2668,
+        seguro: 0,
+        capital: 35130,
+        saldo: 358332 - i * 30000,
+        estado: 'pendiente',
+        pagado: 0,
+      })),
+    };
+    const raiz = mostrar(dto({ cuenta: cuentaDe('prestamo'), prestamo }));
+    const filas = () => [...raiz.querySelectorAll('[data-bloque="prestamo"] tbody tr')];
+    const numero = (tr: Element | undefined) => tr?.querySelector('td')?.textContent;
+    // Una antes de la actual (la 6, pagada antes de Finn), la 7 marcada y las siguientes, y la fila del botón.
+    expect(filas()).toHaveLength(7);
+    expect(filas().slice(0, 6).map(numero)).toEqual(['6', '7', '8', '9', '10', '11']);
+    const sexta = filas()[0] as HTMLElement;
+    expect(sexta.hasAttribute('data-antes-de-finn')).toBe(true);
+    expect(sexta.getAttribute('aria-current')).toBeNull();
+    const sonda = document.createElement('span');
+    sonda.style.color = 'var(--texto-secundario)';
+    document.body.append(sonda);
+    expect(getComputedStyle(sexta).color).toBe(getComputedStyle(sonda).color);
+    sonda.remove();
+    const indicador = sexta.querySelector('[data-estado]');
+    expect(indicador?.getAttribute('data-estado')).toBe('cero');
+    expect(indicador?.querySelector('svg')).not.toBeNull();
+    expect(indicador?.textContent).toBe('Pagada antes de Finn');
+    const celdas = [...sexta.querySelectorAll('td')].map((td) => td.textContent);
+    expect(celdas[6]).toBe('—');
+    expect(numero(raiz.querySelector('tbody tr[aria-current="step"]') ?? undefined)).toBe('7');
+    expect(raiz.querySelector('[data-bloque="prestamo"]')?.textContent).not.toContain('Atrasada');
+    const ver = [...raiz.querySelectorAll('button')].find((b) =>
+      b.textContent.startsWith('Ver tabla completa'),
+    ) as HTMLButtonElement;
+    expect(ver.textContent).toBe('Ver tabla completa (18 cuotas)');
+    await act(async () => {
+      await userEvent.click(ver);
+    });
+    expect(filas()).toHaveLength(18);
+    expect(filas().map(numero)).toEqual(Array.from({ length: 18 }, (_, i) => String(i + 1)));
+    expect(filas().filter((tr) => tr.hasAttribute('data-antes-de-finn'))).toHaveLength(6);
+    // El contador del talón sigue saliendo de las condiciones y de la tabla de las próximas (CH-261).
+    expect(raiz.textContent).toContain('Cuotas pagadas 6 de 18');
+  });
+});
+
 describe('PRU-CMP-CTA «Reservar $X» en el detalle de la tarjeta', () => {
   const tarjeta = (faltaReservar: number, deuda = 64218) => ({
     categoriaPago: { id: 'pago-visa-oro', nombre: 'Visa Oro' },

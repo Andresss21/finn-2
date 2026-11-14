@@ -215,6 +215,9 @@ export function BloquePrestamo({
   const t = cuentaDetalle.prestamo;
   const c = prestamo.condiciones;
   const proxima = prestamo.amortizacion?.find((q) => q.estado !== 'pagada')?.numero;
+  // [CH-283] Las cuotas pagadas antes de Finn van primero, atenuadas; la ventana de A18 cuenta desde la próxima.
+  const antes = prestamo.cuotasAntesDeFinn ?? [];
+  const indiceProxima = prestamo.amortizacion?.findIndex((q) => q.numero === proxima) ?? -1;
   return (
     <div data-bloque="prestamo" className="flex flex-col gap-6">
       <section className="flex flex-col gap-2.5">
@@ -268,26 +271,41 @@ export function BloquePrestamo({
               </thead>
               <FilasAmortizacion
                 columnas={8}
-                actual={Math.max(
-                  0,
-                  prestamo.amortizacion.findIndex((q) => q.numero === proxima),
-                )}
-                filas={prestamo.amortizacion.map((q) => (
-                  <tr
-                    key={q.numero}
-                    {...(q.numero === proxima ? { 'aria-current': 'step' as const } : {})}
-                    className={q.numero === proxima ? 'rounded-control bg-superficie-hundida' : ''}
-                  >
-                    <td className="px-1 py-2">{q.numero}</td>
-                    <td className="px-1 py-2">{formatearFecha(q.fecha)}</td>
-                    <td className="px-1 py-2">{m(q.capital)}</td>
-                    <td className="px-1 py-2">{m(q.interes)}</td>
-                    <td className="px-1 py-2">{m(q.seguro)}</td>
-                    <td className="px-1 py-2">{m(q.saldo)}</td>
-                    <td className="px-1 py-2">{m(q.pagado)}</td>
-                    <td className="px-1 py-2">{t.estados[q.estado]}</td>
-                  </tr>
-                ))}
+                actual={indiceProxima < 0 ? 0 : antes.length + indiceProxima}
+                filas={[
+                  ...antes.map((q) => (
+                    <tr key={q.numero} data-antes-de-finn className="text-texto-secundario">
+                      <td className="px-1 py-2">{q.numero}</td>
+                      <td className="px-1 py-2">{formatearFecha(q.fecha)}</td>
+                      <td className="px-1 py-2">{m(q.capital)}</td>
+                      <td className="px-1 py-2">{m(q.interes)}</td>
+                      <td className="px-1 py-2">{m(q.seguro)}</td>
+                      <td className="px-1 py-2">{m(q.saldo)}</td>
+                      <td className="px-1 py-2">{t.sinPagoEnFinn}</td>
+                      <td className="px-1 py-2">
+                        <IndicadorEstado estado="cero" etiqueta={t.pagadaAntesDeFinn} />
+                      </td>
+                    </tr>
+                  )),
+                  ...prestamo.amortizacion.map((q) => (
+                    <tr
+                      key={q.numero}
+                      {...(q.numero === proxima ? { 'aria-current': 'step' as const } : {})}
+                      className={
+                        q.numero === proxima ? 'rounded-control bg-superficie-hundida' : ''
+                      }
+                    >
+                      <td className="px-1 py-2">{q.numero}</td>
+                      <td className="px-1 py-2">{formatearFecha(q.fecha)}</td>
+                      <td className="px-1 py-2">{m(q.capital)}</td>
+                      <td className="px-1 py-2">{m(q.interes)}</td>
+                      <td className="px-1 py-2">{m(q.seguro)}</td>
+                      <td className="px-1 py-2">{m(q.saldo)}</td>
+                      <td className="px-1 py-2">{m(q.pagado)}</td>
+                      <td className="px-1 py-2">{t.estados[q.estado]}</td>
+                    </tr>
+                  )),
+                ]}
               />
             </table>
           </div>
