@@ -295,10 +295,14 @@ test.describe('PRU-E2E-CONC conciliar con estado de cuenta', () => {
     await subir(page, CSV);
     const filaD = page.locator('[data-solo-en-estado]');
     await expect(filaD).toContainText('COMPRA D');
-    await filaD
-      .getByRole('radiogroup', { name: t.categoriaDe('COMPRA D') })
-      .getByRole('radio', { name: 'Super', exact: true })
-      .click();
+    // [C-45] La categoría es una selección v3 (CAMPOS-V3 §6): segmentado con 3 o menos; con más, la lista propia.
+    const segmentado = filaD.getByRole('radiogroup', { name: t.categoriaDe('COMPRA D') });
+    if ((await segmentado.count()) > 0)
+      await segmentado.getByRole('radio', { name: 'Super', exact: true }).click();
+    else {
+      await filaD.locator('[aria-haspopup=listbox]').click();
+      await page.getByRole('option').filter({ hasText: 'Super' }).first().click();
+    }
     await filaD.getByRole('button', { name: t.agregar, exact: true }).click();
     await expect(filaD).toContainText(t.agregadoComo.gasto);
     await abrir(page, '/actividad');
