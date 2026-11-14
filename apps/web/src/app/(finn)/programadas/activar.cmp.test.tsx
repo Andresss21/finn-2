@@ -1,10 +1,23 @@
 // MAS-105, E6-14: en la lista de Programadas solo se reactiva. Una fila activa no dibuja nada (Desactivar vive en la hoja de editar);
 // una pausada ofrece «Reactivar» y, hecho, deja «Reactivaste …» en su lugar. Se prueba con una acción simulada, sin servidor.
-import { act } from 'react';
+import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../globals.css';
 import { Activar } from './activar';
+
+// [CH-281] `Activar` cierra la hoja de editar al desactivar (`flujo-de-ruta`): `next/link` y `next/navigation` necesitan el
+// enrutador de Next, que el navegador de prueba no tiene.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: vi.fn(), back: vi.fn(), push: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => '/programadas',
+}));
+vi.mock('next/link', async () => {
+  const { createElement } = await import('react');
+  const Enlace = ({ href, children, ...resto }: { href: string; children?: ReactNode }) =>
+    createElement('a', { href, ...resto }, children);
+  return Object.assign(Enlace, { default: Enlace, useLinkStatus: () => ({ pending: false }) });
+});
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
