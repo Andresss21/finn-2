@@ -28,6 +28,7 @@ export const seguridad = {
   cancelar: 'Cancelar',
   quitarNombre: (nombre: string) => `Quitar ${nombre}`,
   quitaste: (nombre: string) => `Quitaste ${nombre}.`,
+  quitado: 'Quitado', // [CH-281] C-50 §8, la etiqueta de la fila que se va
   agregaste: (nombre: string) =>
     `Agregaste ${nombre}. Ya podés ingresar con cualquiera de los dos factores.`,
   intentarDeNuevo: 'Intentar de nuevo',

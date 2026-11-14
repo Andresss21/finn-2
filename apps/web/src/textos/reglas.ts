@@ -34,6 +34,9 @@ export const reglas = {
   eliminar: 'Eliminar regla',
   eliminando: 'Eliminando…',
   eliminada: 'Regla eliminada',
+  // [CH-281] C-50 §8: el resultado de eliminar, en la lista (texto nuevo)
+  eliminadaPalabra: 'Eliminada',
+  eliminaste: (comercio: string) => `Eliminaste la regla de ${comercio}.`,
   confirmarEliminar: (patron: string) =>
     `¿Eliminar la regla «${patron}»? Los próximos SMS de ese comercio tomarán la categoría del historial.`,
   confirmarSi: 'Eliminar',

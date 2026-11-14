@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { Boton } from '../../../componentes/base/boton';
 import { Resultado } from '../../../componentes/base/resultado';
+import { CerrarFlujoAlMontar } from '../../../componentes/navegacion/flujo-de-ruta';
 import { useOperacion, type AccionEscritura } from '../../../formularios/use-operacion';
 import { programadas as t } from '../../../textos/programadas';
 
@@ -14,6 +15,7 @@ export function Activar({
   activa,
   accion,
   soloReactivar = false,
+  rutaAlDesactivar,
 }: {
   readonly programadaId: string;
   readonly nombre: string;
@@ -22,6 +24,8 @@ export function Activar({
   readonly accion: AccionEscritura;
   /** En la lista solo se reactiva (MAS-105): desactivar vive en la hoja de editar. Una fila activa no dibuja nada. */
   readonly soloReactivar?: boolean;
+  /** [CH-281] En la hoja de editar: desactivar vuelve a la lista con «Desactivada» en la fila (C-50 §8), sin resultado aquí. */
+  readonly rutaAlDesactivar?: string;
 }) {
   const [inicial] = useState(activa);
   const cambio = useOperacion({ accion });
@@ -32,6 +36,8 @@ export function Activar({
   if (soloReactivar && inicial) return null;
   const hecho = cambio.estado === 'listo';
   const revertido = inversa.estado === 'listo';
+  if (hecho && inicial && rutaAlDesactivar !== undefined)
+    return <CerrarFlujoAlMontar rutaPadre={rutaAlDesactivar} />;
   return (
     <div data-accion="activar" className="flex flex-col gap-2">
       {hecho ? (

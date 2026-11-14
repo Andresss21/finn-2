@@ -3,6 +3,11 @@
 // Sin metas: la lista de `categoriasSinMeta`, cada una con su enlace a crear la meta.
 import type { MetasDto } from '@finn/aplicacion/consultas/metas';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
+import {
+  FilaConEtiqueta,
+  FilaQueSeFue,
+  type Llegada,
+} from '../../../componentes/base/etiqueta-al-llegar';
 import { Icono } from '../../../componentes/base/icono';
 import { Resultado } from '../../../componentes/base/resultado';
 import { Vacio } from '../../../componentes/base/vacio';
@@ -11,7 +16,7 @@ import { Monto } from '../../../componentes/dominio/monto';
 import { indicadorDeMeta, ResumenMeta } from '../../../componentes/dominio/resumen-meta';
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
-import { formatearFecha } from '../../../formato';
+import { formatearFecha, formatearMonto } from '../../../formato';
 import type { ResultadoMeta } from '../../../flujos/metas-meta/resultado';
 import { metas as t } from '../../../textos/metas';
 
@@ -22,6 +27,8 @@ const ENLACE =
 const FILA =
   'grid min-h-14 grid-cols-[minmax(0,1fr)_auto_1rem] items-center gap-3 px-4 py-3 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const LISTA = 'overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1';
+// [CH-281] C-50 §3: las tarjetas de metas dejan ver la etiqueta que sobresale arriba de la primera fila (CA-A-11).
+const LISTA_ETIQUETA = 'fz-tarjeta-etiqueta rounded-contenedor bg-superficie shadow-elevacion-1';
 const ITEM = 'border-b border-borde-sutil last:border-b-0';
 const ITEM_TARJETA = 'flex flex-col gap-3 border-b border-borde-sutil p-4 last:border-b-0';
 
@@ -39,9 +46,15 @@ function Subtitulo({ m }: { readonly m: Meta }) {
   );
 }
 
-function Tarjeta({ m }: { readonly m: Meta }) {
+function Tarjeta({ m, llegada }: { readonly m: Meta; readonly llegada: Llegada | undefined }) {
   return (
-    <li data-meta={m.id} data-vencida="no" className={ITEM_TARJETA}>
+    <FilaConEtiqueta
+      id={m.id}
+      llegada={llegada}
+      data-meta={m.id}
+      data-vencida="no"
+      className={ITEM_TARJETA}
+    >
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-cuerpo min-w-0 font-semibold">{m.categoria.nombre}</h2>
         <span data-objetivo className="text-cuerpo-pequeno text-texto-secundario">
@@ -68,14 +81,20 @@ function Tarjeta({ m }: { readonly m: Meta }) {
           {t.fila.detalle}
         </EnlaceFinn>
       </div>
-    </li>
+    </FilaConEtiqueta>
   );
 }
 
-function FilaOtra({ m }: { readonly m: Meta }) {
+function FilaOtra({ m, llegada }: { readonly m: Meta; readonly llegada: Llegada | undefined }) {
   const { estado, etiqueta } = indicadorDeMeta({ ...m, progresoBp: m.progreso });
   return (
-    <li data-meta={m.id} data-vencida={m.vencida ? 'si' : 'no'} className={ITEM}>
+    <FilaConEtiqueta
+      id={m.id}
+      llegada={llegada}
+      data-meta={m.id}
+      data-vencida={m.vencida ? 'si' : 'no'}
+      className={ITEM}
+    >
       <EnlaceFinn href={`/metas/${m.id}`} className={FILA}>
         <span className="flex min-w-0 flex-col">
           <span className="text-cuerpo font-semibold">{m.categoria.nombre}</span>
@@ -86,7 +105,7 @@ function FilaOtra({ m }: { readonly m: Meta }) {
         <IndicadorEstado estado={estado} etiqueta={etiqueta} />
         <Icono nombre="chevR" tamano={16} />
       </EnlaceFinn>
-    </li>
+    </FilaConEtiqueta>
   );
 }
 
@@ -125,7 +144,17 @@ export function PantallaMetas({
 }) {
   const { metas, categoriasSinMeta } = dto;
   const deLaMeta =
-    resultado === undefined ? undefined : metas.find((m) => m.id === resultado.metaId);
+    resultado === undefined || resultado.tipo === 'eliminada'
+      ? undefined
+      : metas.find((m) => m.id === resultado.metaId);
+  // [CH-281] C-50 §8: ajustar deja «Ajustada» en la fila de la meta; extender sigue como banda en el lugar del aviso
+  const llegada = (m: Meta): Llegada | undefined =>
+    resultado?.tipo === 'ajustada' && resultado.metaId === m.id
+      ? {
+          palabra: t.resultado.ajustadaPalabra,
+          frase: t.resultado.ajustada(m.categoria.nombre, formatearMonto(m.monto)),
+        }
+      : undefined;
   const nueva = categoriasSinMeta[0];
   const crear = nueva === undefined ? undefined : `/metas/nueva?categoria=${nueva.id}`;
   const pide = metas.filter((m) => !m.vencida);
@@ -141,14 +170,24 @@ export function PantallaMetas({
           </EnlaceFinn>
         )}
       </div>
-      {resultado === undefined || deLaMeta === undefined ? null : (
+      {resultado?.tipo === 'eliminada' ? (
+        <FilaQueSeFue
+          id="meta-eliminada"
+          llegada={{
+            palabra: t.resultado.eliminadaPalabra,
+            frase: t.resultado.eliminada(resultado.nombre),
+          }}
+        >
+          {resultado.nombre}
+        </FilaQueSeFue>
+      ) : null}
+      {resultado?.tipo !== 'extendida' || deLaMeta === undefined ? null : (
         <div data-resultado-flujo={resultado.tipo}>
           <Resultado
-            texto={
-              resultado.tipo === 'extendida'
-                ? t.resultado.extendida(deLaMeta.categoria.nombre, formatearFecha(resultado.fecha))
-                : t.resultado.ajustada(deLaMeta.categoria.nombre)
-            }
+            texto={t.resultado.extendida(
+              deLaMeta.categoria.nombre,
+              formatearFecha(resultado.fecha),
+            )}
           />
         </div>
       )}
@@ -192,9 +231,9 @@ export function PantallaMetas({
         />
       ) : null}
       {pide.length === 0 ? null : (
-        <ul className={LISTA}>
+        <ul className={LISTA_ETIQUETA}>
           {pide.map((m) => (
-            <Tarjeta key={m.id} m={m} />
+            <Tarjeta key={m.id} m={m} llegada={llegada(m)} />
           ))}
         </ul>
       )}
@@ -203,9 +242,9 @@ export function PantallaMetas({
           <h2 id="otras" className="text-titulo-seccion">
             {t.otras}
           </h2>
-          <ul className={LISTA}>
+          <ul className={LISTA_ETIQUETA}>
             {otras.map((m) => (
-              <FilaOtra key={m.id} m={m} />
+              <FilaOtra key={m.id} m={m} llegada={llegada(m)} />
             ))}
           </ul>
         </section>

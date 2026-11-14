@@ -4,6 +4,7 @@
 // En computadora son dos columnas (MAS-107): el horizonte y los atrasados a la izquierda, los próximos y las programadas a la derecha.
 import type { ProgramadasDto } from '@finn/aplicacion/consultas/programadas';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
+import { FilaConEtiqueta } from '../../../componentes/base/etiqueta-al-llegar';
 import { Icono } from '../../../componentes/base/icono';
 import { Pastillas } from '../../../componentes/base/pastillas';
 import { Vacio } from '../../../componentes/base/vacio';
@@ -22,6 +23,9 @@ import { InsigniaDeFecha } from '../../../componentes/dominio/insignia-fecha';
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const CONTENEDOR =
   'flex flex-col divide-y divide-borde-sutil overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1';
+// [CH-281] C-50 §3: la tarjeta de las programadas deja ver la etiqueta que sobresale arriba de la primera fila (CA-A-11).
+const TARJETA_ETIQUETA =
+  'fz-tarjeta-etiqueta flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie shadow-elevacion-1';
 const FILA = `flex min-h-17 items-center gap-3 px-4 py-3 ${FOCO}`;
 const FILA_PAUSADA = `${FILA} text-texto-secundario`;
 const BOTON = `inline-flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-control bg-superficie-hundida px-4 font-semibold text-texto ${FOCO}`;
@@ -44,6 +48,8 @@ export function PantallaProgramadas({
   );
   const proximos = dto.proximosPagos.filter((o) => !o.atrasada);
   const sinModelo = dto.programadas.filter((p) => p.activa && p.avisoSinModelo);
+  // [CH-281] Desactivar (E6-14) vuelve de la hoja de editar con la etiqueta en la fila, ya en pausa
+  const desactivada = resultado?.tipo === 'desactivada' ? resultado.programadaId : undefined;
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4 lg:mx-0 lg:max-w-none">
       <PublicarEncabezado encabezado={dto} />
@@ -155,9 +161,19 @@ export function PantallaProgramadas({
             </section>
             <section aria-label={t.titulo} data-seccion="todas" className="flex flex-col gap-2.5">
               <h2 className="text-titulo-seccion">{t.titulo}</h2>
-              <ul className={CONTENEDOR}>
+              <ul className={TARJETA_ETIQUETA}>
                 {dto.programadas.map((p) => (
-                  <li key={p.id} data-programada={p.id} className="flex flex-col">
+                  <FilaConEtiqueta
+                    key={p.id}
+                    id={p.id}
+                    data-programada={p.id}
+                    className="flex flex-col"
+                    llegada={
+                      desactivada === p.id && !p.activa
+                        ? { palabra: t.desactivada, frase: t.desactivadaResultado(p.comercio) }
+                        : undefined
+                    }
+                  >
                     <EnlaceFinn
                       href={`/programadas/${p.id}`}
                       className={p.activa ? FILA : FILA_PAUSADA}
@@ -188,7 +204,7 @@ export function PantallaProgramadas({
                         soloReactivar
                       />
                     </div>
-                  </li>
+                  </FilaConEtiqueta>
                 ))}
               </ul>
             </section>

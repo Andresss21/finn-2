@@ -53,6 +53,12 @@ export const bandeja = {
   dividido: (n: number) => `Dividido en ${n} partes`,
   porCobrarA: (nombre: string) => `Por cobrar: ${nombre}`,
   verTransaccion: 'Ver transacción',
+  // [CH-281] C-50 §8: la etiqueta sobre la fila y la frase de la región de estado (aprobar con un toque o soltando, descartar)
+  etiqueta: {
+    aprobado: 'Aprobado',
+    descartado: 'Descartado',
+    descartadoFrase: (...partes: string[]) => `Descartado: ${partes.join(' · ')}`,
+  },
   mostrarMas: (k: number) => `Mostrar ${k} más`,
   // [CH-240 E6-3] Sin conexión en la Bandeja: un solo aviso, que es el motivo de las acciones de todas las filas
   sinConexion:

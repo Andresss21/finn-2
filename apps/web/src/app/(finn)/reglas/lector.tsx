@@ -11,7 +11,13 @@ const normal = (s: string): string =>
     .replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase('es');
 
-export async function LectorReglas({ q }: { readonly q: string }) {
+export async function LectorReglas({
+  q,
+  eliminada,
+}: {
+  readonly q: string;
+  readonly eliminada?: string;
+}) {
   const dto = await consultar(async () => reglas(await depsDeConsulta()));
   const buscado = normal(q);
   const lista =
@@ -20,5 +26,12 @@ export async function LectorReglas({ q }: { readonly q: string }) {
       : dto.reglas.filter(
           (r) => normal(r.patron).includes(buscado) || normal(r.categoria.nombre).includes(buscado),
         );
-  return <PantallaReglas dto={{ ...dto, reglas: lista }} q={q} total={dto.reglas.length} />;
+  return (
+    <PantallaReglas
+      dto={{ ...dto, reglas: lista }}
+      q={q}
+      total={dto.reglas.length}
+      {...(eliminada === undefined ? {} : { eliminada })}
+    />
+  );
 }

@@ -2,6 +2,7 @@
 // archivada lleva «No se aplica…» (B-10, §4.17). [CH-254] Cada una dice cuántas veces se usó. Dibuja lo que trae el DTO: no
 // calcula nada (PF-3).
 import type { ReglasDto } from '@finn/aplicacion/consultas/reglas';
+import { FilaQueSeFue } from '../../../componentes/base/etiqueta-al-llegar';
 import { Icono } from '../../../componentes/base/icono';
 import { Vacio } from '../../../componentes/base/vacio';
 import { IndicadorEstado } from '../../../componentes/dominio/indicador-estado';
@@ -20,12 +21,15 @@ export function PantallaReglas({
   dto,
   q = '',
   total = dto.reglas.length,
+  eliminada,
 }: {
   readonly dto: ReglasDto;
   /** [CH-227 b] El texto buscado (`?q=`); `dto.reglas` ya viene filtrada por el lector. */
   readonly q?: string;
   /** Cuántas reglas hay sin filtrar: sin ninguna, el vacío explica cómo se crean. */
   readonly total?: number;
+  /** [CH-281] El comercio de la regla que se acaba de eliminar (`?eliminada=`): su fila se queda con «Eliminada» y se recoge. */
+  readonly eliminada?: string;
 }) {
   const nueva = (
     <EnlaceFinn href="/reglas/nueva" className={BOTON}>
@@ -37,6 +41,14 @@ export function PantallaReglas({
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-5 py-4">
       <PublicarEncabezado encabezado={dto} />
       <h1 className="text-titulo-pantalla">{t.titulo}</h1>
+      {eliminada === undefined ? null : (
+        <FilaQueSeFue
+          id="regla-eliminada"
+          llegada={{ palabra: t.eliminadaPalabra, frase: t.eliminaste(eliminada) }}
+        >
+          {eliminada}
+        </FilaQueSeFue>
+      )}
       {total === 0 ? (
         <Vacio titulo={t.vacioTitulo} texto={t.vacioTexto} icono="cero" accion={nueva} />
       ) : (

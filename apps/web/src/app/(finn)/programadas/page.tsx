@@ -19,6 +19,7 @@ export default async function PaginaProgramadas({
   const pedido = busqueda['horizonte'];
   // E6-14 [CH-248]: `?resultado=` es de la interfaz: no llega a la consulta y se valida al leer.
   const aviso = busqueda['resultado'];
+  const nombre = busqueda['nombre'];
   const horizonte = pedido === '7' ? 7 : 30;
   const dto = await consultar(async () =>
     consultaProgramadas(await depsDeConsulta(), { horizonteDias: horizonte }),
@@ -27,7 +28,10 @@ export default async function PaginaProgramadas({
     <PantallaProgramadas
       dto={dto}
       horizonte={horizonte}
-      resultado={leerResultadoProgramada(typeof aviso === 'string' ? aviso : undefined)}
+      resultado={leerResultadoProgramada(
+        typeof aviso === 'string' ? aviso : undefined,
+        typeof nombre === 'string' ? nombre : undefined,
+      )}
     />
   );
 }

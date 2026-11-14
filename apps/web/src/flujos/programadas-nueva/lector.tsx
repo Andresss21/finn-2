@@ -11,6 +11,7 @@ import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { programadas as t } from '../../textos/programadas';
 import { FormularioProgramada } from './formulario';
+import { rutaProgramadasConResultado } from './resultado';
 import { Activar } from '../../app/(finn)/programadas/activar';
 import type { Campos } from './campos';
 
@@ -85,6 +86,10 @@ export async function LectorProgramada({ programadaId }: { readonly programadaId
                 nombre={p.programada.nombre}
                 activa={p.activa}
                 accion={gestionarProgramada}
+                rutaAlDesactivar={rutaProgramadasConResultado({
+                  tipo: 'desactivada',
+                  programadaId,
+                })}
               />
             ),
           })}

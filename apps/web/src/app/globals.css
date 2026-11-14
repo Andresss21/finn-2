@@ -462,24 +462,12 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
   stroke-dasharray: 1;
   animation: fz-dona var(--duracion-grafico) var(--curva-estandar) both;
 }
-/* C2: aprobar en la Bandeja. La fila sale a la derecha, el resultado entra en su lugar y el contador rebota. */
-@keyframes fz-fila-sale {
-  to {
-    opacity: 0;
-    transform: translateX(24px);
-  }
-}
+/* C2: aprobar en la Bandeja, el contador rebota. [CH-281] La fila que sale y su resultado son los de C-50 (`.fz-fila-sale`, más
+   abajo): la salida a la derecha y `fz-resultado-entra` se quitan. */
 @keyframes fz-rebote {
   from {
     transform: scale(0.85);
   }
-}
-.fz-fila-sale {
-  pointer-events: none;
-  animation: fz-fila-sale var(--duracion-normal) var(--curva-salida) both;
-}
-.fz-resultado-entra {
-  animation: fz-pop-in var(--duracion-transicion) var(--curva-enfasis) both;
 }
 .fz-rebote {
   animation: fz-rebote var(--duracion-transicion) var(--curva-enfasis);
