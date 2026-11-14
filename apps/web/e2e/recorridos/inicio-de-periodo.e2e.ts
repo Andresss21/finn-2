@@ -205,7 +205,7 @@ test.describe('PRU-E2E-PRES recorrido 4.3 inicio de período', () => {
     await expect(page.locator('[data-aviso-meta]')).toContainText('Fondo');
     await page.getByRole('link', { name: 'Extender la fecha' }).click();
     await page.getByRole('button', { name: 'Extender la fecha' }).click();
-    await page.getByLabel('Fecha objetivo', { exact: true }).fill('2027-06-20');
+    await page.getByLabel('Fecha objetivo', { exact: true }).fill('20/06/2027');
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
     await expect(page).toHaveURL(/\/metas(\?resultado=.*)?$/);
     await esperarContenido(page);

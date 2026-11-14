@@ -67,7 +67,7 @@ test.describe('PRU-E2E-META flujo de una meta', () => {
     await expect(page.getByText('Meta vencida')).toBeVisible();
     await page.getByRole('button', { name: 'Extender la fecha' }).click();
     await expect(page.getByLabel('Fecha objetivo', { exact: true })).toBeFocused();
-    await page.getByLabel('Fecha objetivo', { exact: true }).fill('2027-07-15');
+    await page.getByLabel('Fecha objetivo', { exact: true }).fill('15/07/2027');
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
     await expect(page).toHaveURL(/\/metas\?resultado=extendida%3A/);

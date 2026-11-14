@@ -3,11 +3,14 @@
 // la categoría que elijas. Flujo corto: desde la app se abre superpuesto. Se guarda en un solo viaje; si la fecha es de un período cerrado
 // el servidor pide confirmar con AV-01. Después, AV-02 o AV-03 si la categoría queda sobregirada. No calcula montos (PF-3): el tope, el
 // Disponible y la categoría propuesta son del servidor, y el rechazo por pasarse del saldo abierto llega ya compuesto.
+// [C-45] El monto, la fecha y la categoría son filas de un `GrupoCampos` (CAMPOS-V3 §2 y §6): el monto con «$» y la categoría en
+// la lista propia con su Disponible (el negativo en problema). «Condonar» se ve apagado mientras falte algo y dice debajo qué.
 import type { FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useMemo, type ReactNode } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { Resultado } from '../../componentes/base/resultado';
 import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
@@ -19,9 +22,11 @@ import {
   useCerrarFlujo,
 } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMontoTexto } from '../../formato';
-import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
+import { esMontoPositivo, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
+import { base } from '../../textos/base';
 import { formularios } from '../../textos/formularios';
 import { porCobrarCondonar as t } from '../../textos/por-cobrar-condonar';
 import { PieDeHoja } from '../pie-de-hoja';
@@ -62,9 +67,7 @@ interface Campos {
 
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const contrato = z.object({
-  monto: z
-    .string()
-    .refine((s) => normalizarMontoEscrito(s).estado === 'valido', { error: t.obligatorio }),
+  monto: z.string().refine(esMontoPositivo, { error: base.montoMayorQueCero }),
   fecha: z.string().min(1, t.obligatorio),
   categoriaId: z.string().min(1, t.elegirCategoria),
 });
@@ -131,6 +134,8 @@ export function FormularioCondonar(p: PropsFormularioCondonar) {
         valor: x.id,
         etiqueta: x.nombre,
         detalle: t.disponibleDe(x.disponible),
+        // El Disponible llega formateado del DTO (PF-3): el negativo empieza con U+2212.
+        negativo: x.disponible.startsWith('−'),
       })),
     [p.categorias],
   );
@@ -139,6 +144,13 @@ export function FormularioCondonar(p: PropsFormularioCondonar) {
   };
   const error = (n: keyof Campos): string | undefined => formState.errors[n]?.message;
   const monto = normalizarMontoEscrito(c.monto);
+  const guardar = useGuardarV3({
+    contrato,
+    campos: c,
+    intentos: formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+    monto: 'monto',
+  });
   const titulo = t.titulo(p.deudor);
 
   // Terminó: sin avisos se cierra; con AV-02 o AV-03 se queda a decirlo (06 FT-47, paso 2)
@@ -186,41 +198,40 @@ export function FormularioCondonar(p: PropsFormularioCondonar) {
         </Suspense>
       ) : (
         <form
+          ref={guardar.forma}
           onSubmit={(e) => void formulario.enviar(e)}
           noValidate
           className="flex flex-col gap-5"
         >
-          <EntradaMonto
-            nombre="monto"
-            etiqueta={t.monto}
-            valor={c.monto}
-            alCambiar={poner('monto')}
-            error={error('monto')}
-            descripcion={t.hastaAbierto(p.abierto)}
-            requerido
-            prefijo="$"
-            sinVistaPrevia
-          />
-          <EntradaFecha
-            nombre="fecha"
-            etiqueta={t.fecha}
-            valor={c.fecha as FechaLocal}
-            alCambiar={poner('fecha')}
-            maxima={hoy}
-            hoy={hoy}
-            error={error('fecha')}
-            requerido
-            sinVistaPrevia
-          />
-          <SeleccionNativa
-            etiqueta={t.categoria}
-            alta
-            marcador={t.marcador}
-            opciones={opciones}
-            valor={c.categoriaId}
-            alCambiar={poner('categoriaId')}
-            error={error('categoriaId')}
-          />
+          <GrupoCampos>
+            <EntradaMonto
+              nombre="monto"
+              etiqueta={t.monto}
+              valor={c.monto}
+              alCambiar={poner('monto')}
+              error={error('monto')}
+              descripcion={t.hastaAbierto(p.abierto)}
+              requerido
+            />
+            <EntradaFecha
+              nombre="fecha"
+              etiqueta={t.fecha}
+              valor={c.fecha as FechaLocal}
+              alCambiar={poner('fecha')}
+              maxima={hoy}
+              hoy={hoy}
+              error={error('fecha')}
+              requerido
+            />
+            <SeleccionNativa
+              etiqueta={t.categoria}
+              marcador={t.marcador}
+              opciones={opciones}
+              valor={c.categoriaId}
+              alCambiar={poner('categoriaId')}
+              error={error('categoriaId')}
+            />
+          </GrupoCampos>
           {p.categoriaPropuesta === undefined ? (
             <p data-sin-propuesta className="text-cuerpo-pequeno text-texto-secundario">
               {t.sinPropuesta}
@@ -251,9 +262,7 @@ export function FormularioCondonar(p: PropsFormularioCondonar) {
               enviando={estado === 'enviando'}
               textoEnviando={t.condonando}
               deshabilitado={!operacion.enLinea}
-              {...(operacion.motivoSinEnvio === undefined
-                ? {}
-                : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+              {...guardar.boton}
             >
               {monto.estado === 'valido'
                 ? t.condonarMonto(formatearMontoTexto(monto.texto))

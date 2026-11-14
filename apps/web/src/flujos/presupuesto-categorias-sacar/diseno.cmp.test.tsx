@@ -86,7 +86,9 @@ describe('PRU-CMP-PRES', () => {
         }}
       />,
     );
-    expect(nodo.querySelector('select')).not.toBeNull();
+    // [C-45] El destino es una fila de un grupo v3, sin `<select>` (CAMPOS-V3 §6).
+    expect(nodo.querySelector('.grupo-campos')).not.toBeNull();
+    expect(nodo.querySelector('select')).toBeNull();
     expect(nodo.querySelectorAll('[aria-labelledby="fusion-resumen"] li')).toHaveLength(5);
     expect(nodo.textContent).toContain('Se descarta la meta de Restaurantes.');
     const fusionar = boton(nodo, 'Fusionar');
@@ -94,7 +96,7 @@ describe('PRU-CMP-PRES', () => {
     expect(alto(fusionar)).toBeGreaterThanOrEqual(44);
   });
 
-  it('PRU-CMP-PRES-252 [FT-19] Sacar dibuja «Poner en» como selección nativa con el Disponible de cada destino, el monto con «$» y el pie «Cancelar» y «Sacar»', () => {
+  it('PRU-CMP-PRES-252 [FT-19] Sacar dibuja «Poner en» como fila v3 (C-45), el monto con «$» y el pie «Cancelar» y «Sacar»', () => {
     const nodo = montar(
       <FormularioSacar
         accion={sinAccion}
@@ -107,14 +109,17 @@ describe('PRU-CMP-PRES', () => {
         superpuesto={false}
       />,
     );
-    expect(nodo.querySelector('select')).not.toBeNull();
-    expect(nodo.querySelectorAll('[role="radiogroup"]')).toHaveLength(0);
+    expect(nodo.querySelector('select')).toBeNull();
+    expect(nodo.querySelector('[role="radiogroup"]')?.closest('.grupo-campos')).not.toBeNull();
+    expect(
+      nodo.querySelector('input[name="monto"]')?.closest('.campo-fila')?.textContent,
+    ).toContain('$');
     expect(nodo.textContent).toContain('Supermercado: Disponible $62.85.');
     expect(alto(boton(nodo, 'Cancelar'))).toBeGreaterThanOrEqual(44);
     expect(alto(boton(nodo, 'Sacar'))).toBeGreaterThanOrEqual(44);
   });
 
-  it('PRU-CMP-PRES-253 [FT-19] Archivar dibuja el destino del Disponible como selección nativa, lo asignado a futuro en una tarjeta y «Archivar» en el pie fijo, fuera del formulario y de 44 px o más', () => {
+  it('PRU-CMP-PRES-253 [FT-19] Archivar dibuja el destino del Disponible como fila v3 (C-45), lo asignado a futuro en una tarjeta y «Archivar» en el pie fijo, fuera del formulario y de 44 px o más', () => {
     const nodo = montar(
       <FormularioArchivar
         accion={sinAccion}
@@ -126,8 +131,8 @@ describe('PRU-CMP-PRES', () => {
         destinos={[{ id: 's', nombre: 'Salidas', disponible: c(5) }]}
       />,
     );
-    expect(nodo.querySelector('select')).not.toBeNull();
-    expect(nodo.querySelectorAll('[role="radiogroup"]')).toHaveLength(0);
+    expect(nodo.querySelector('select')).toBeNull();
+    expect(nodo.querySelector('[role="radiogroup"]')?.closest('.grupo-campos')).not.toBeNull();
     expect(nodo.querySelector('[data-futuras]')?.className).toContain('shadow-elevacion-1');
     const archivar = boton(nodo, 'Archivar Supermercado');
     expect(archivar?.closest('form')).toBeNull();

@@ -67,6 +67,11 @@ const campo = (nodo: HTMLElement, nombre: string): HTMLInputElement => {
   if (c === null) throw new Error(`no hay un campo «${nombre}»`);
   return c;
 };
+/** [C-45] Con dos categorías, la categoría es un segmentado en su fila (CAMPOS-V3 §6): la elegida, si hay. */
+const categoriaElegida = (nodo: HTMLElement): string | undefined =>
+  nodo.querySelector(
+    `[role=radiogroup][aria-label="${t.categoria}"] [role=radio][aria-checked=true]`,
+  )?.textContent ?? undefined;
 const condonar = (): HTMLButtonElement => {
   const b = [...document.querySelectorAll('button')].find((x) =>
     x.textContent.startsWith(t.condonar),
@@ -81,7 +86,7 @@ describe('PRU-CMP-COBRO condonar', () => {
     expect(campo(nodo, 'monto').value).toBe('15.00');
     expect(nodo.textContent).toContain(t.hastaAbierto('$15.00'));
     expect(condonar().textContent).toBe(t.condonarMonto('$15.00'));
-    expect(nodo.querySelector<HTMLSelectElement>('select')?.value).toBe('c2');
+    expect(categoriaElegida(nodo)).toBe('Salidas');
     expect(nodo.querySelector('[data-sin-propuesta]')).toBeNull();
   });
 
@@ -95,7 +100,7 @@ describe('PRU-CMP-COBRO condonar', () => {
     });
     expect(accion.mock.calls[0]?.[0]).toMatchObject({
       lineaId: 'l1',
-      monto: '10',
+      monto: '10.00',
       fecha: '2027-02-12',
       categoriaId: 'c2',
       modo: 'confirmar',
@@ -132,8 +137,10 @@ describe('PRU-CMP-COBRO condonar', () => {
       <FormularioCondonar {...base} accion={accion} categoriaPropuesta={undefined} />,
     );
     expect(nodo.querySelector('[data-sin-propuesta]')?.textContent).toBe(t.sinPropuesta);
-    expect(nodo.querySelector<HTMLSelectElement>('select')?.value).toBe('');
-    await userEvent.click(condonar());
+    expect(categoriaElegida(nodo)).toBeUndefined();
+    // [C-45] «Condonar» se ve apagado (`aria-disabled`): se toca con el teclado, el puntero espera a que se habilite.
+    condonar().focus();
+    await userEvent.keyboard('{Enter}');
     await vi.waitFor(() => {
       expect(nodo.textContent).toContain(t.elegirCategoria);
     });

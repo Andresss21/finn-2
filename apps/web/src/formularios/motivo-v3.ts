@@ -6,7 +6,6 @@
 import { useEffect, type RefObject } from 'react';
 import type * as z from 'zod';
 import { base } from '../textos/base';
-import { registrarGasto as g } from '../textos/registrar-gasto';
 
 /** Qué falta para guardar: «Escribí el monto para guardar.» si es solo el monto; si no, cuántos campos corregir. */
 export function motivoQueFalta(
@@ -17,7 +16,7 @@ export function motivoQueFalta(
   const r = contrato.safeParse(valores);
   if (r.success) return undefined;
   const rutas = new Set(r.error.issues.map((i) => i.path.join('.')));
-  return rutas.size === 1 && rutas.has(monto) ? g.motivoMonto : base.corregirCampos(rutas.size);
+  return rutas.size === 1 && rutas.has(monto) ? base.motivoMonto : base.corregirCampos(rutas.size);
 }
 
 /** Después de tocar Guardar con errores, el foco va al primero (CA-K3-13). */

@@ -11,6 +11,7 @@ import { expect, test, sembrar } from '../configuracion/semilla.ts';
 import { entrarAal2 } from '../ayudas/sesion.ts';
 import { anuncio } from '../ayudas/etiqueta.ts';
 import { esperarContenido, esperarHidratacion } from '../ayudas/esperas.ts';
+import { elegirEnFila } from '../ayudas/seleccion-nativa.ts';
 import { generarTokenWebhook } from '../ayudas/webhook.ts';
 import { alinearRelojes, fijarRelojServidor } from '../../../../tools/pruebas/e2e/reloj.ts';
 import { cuentaDetalle } from '../../src/textos/cuenta-detalle.ts';
@@ -242,11 +243,11 @@ test.describe('PRU-E2E-PRES cierre de B10', () => {
     await abrir(page, `/presupuesto/categorias/${gimnasio}/archivar`);
     await expect(page.locator('[data-impacto-k4]')).toBeVisible();
     expect(acciones(), 'archivar previsualiza').toBeGreaterThan(antes);
-    const programada = page.getByLabel(/Programada Gimnasio/);
+    const programada = page.getByRole('radiogroup', { name: /Programada Gimnasio/ });
     await esperarHidratacion(page);
     antes = acciones();
-    await programada.selectOption({ label: 'Pasarla a otra categoría' });
-    await page.getByLabel('Pasarla a').selectOption({ label: 'Salidas' });
+    await programada.getByRole('radio', { name: 'Pasarla a otra categoría' }).click();
+    await elegirEnFila(page, 'Pasarla a', 'Salidas');
     await expect.poll(acciones).toBeGreaterThan(antes);
     await expect(page.locator('[data-impacto-k4]')).toBeVisible();
     await expect(
@@ -259,11 +260,11 @@ test.describe('PRU-E2E-PRES cierre de B10', () => {
     await abrir(page, `/presupuesto/categorias/${cafe}/fusionar`);
     await esperarHidratacion(page);
     antes = acciones();
-    await page.getByLabel('Fusionar con').selectOption({ label: 'Salidas' });
+    await elegirEnFila(page, 'Fusionar con', 'Salidas');
     await expect(page.getByRole('heading', { name: 'Antes de confirmar' })).toBeVisible();
     expect(acciones(), 'fusionar previsualiza').toBeGreaterThan(antes);
     antes = acciones();
-    await page.getByLabel('Fusionar con').selectOption({ label: 'Super' });
+    await elegirEnFila(page, 'Fusionar con', 'Super');
     await expect.poll(acciones).toBeGreaterThan(antes);
     await expect(page.getByRole('heading', { name: 'Antes de confirmar' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Fusionar', exact: true })).toBeVisible();

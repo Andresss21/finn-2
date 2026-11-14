@@ -6,6 +6,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { entrarAal2 } from './ayudas/sesion.ts';
 import { esperarContenido } from './ayudas/esperas.ts';
+import { elegirEnFila } from './ayudas/seleccion-nativa.ts';
 import { expect, sembrar, test } from './configuracion/semilla.ts';
 import { fijarRelojServidor } from '../../../tools/pruebas/e2e/reloj.ts';
 import { conciliar as tc } from '../src/textos/conciliar.ts';
@@ -134,7 +135,7 @@ test.describe('PRU-E2E-PWA flujos largos en dos columnas', () => {
       );
 
       await abrir(page, `/presupuesto/categorias/${String(id)}/fusionar`);
-      await page.getByLabel('Fusionar con').selectOption({ label: 'Casa' });
+      await elegirEnFila(page, 'Fusionar con', 'Casa');
       await comprobar(
         page,
         `${String(ancho)} fusionar`,

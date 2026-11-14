@@ -70,6 +70,12 @@ export function normalizarMontoEscrito(escrito: string | undefined): ResultadoMo
   return { estado: 'valido', texto, esCero: false };
 }
 
+/** [C-45] Un monto que se puede guardar donde el cero no vale: si no, «Escribí un monto mayor que $0.00.» (CAMPOS-V3 §5). */
+export function esMontoPositivo(escrito: string | undefined): boolean {
+  const m = normalizarMontoEscrito(escrito);
+  return m.estado === 'valido' && !m.esCero;
+}
+
 /** Con signo negativo se antepone `-`, nunca a un cero (`montoTextoConSigno`). */
 export function aplicarSigno(texto: string, signo: Signo): string {
   return signo === 'negativo' && !/^[0.]*$/.test(texto) ? `-${texto}` : texto;

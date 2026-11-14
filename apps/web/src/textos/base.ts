@@ -38,6 +38,7 @@ export const base = {
   montoMayorQueCero: 'Escribí un monto mayor que $0.00.',
   montoMaximoV3: 'El máximo es $21,474,836.47.',
   fechaIncompleta: 'Completá la fecha como dd/mm/aaaa.',
+  motivoMonto: 'Escribí el monto para guardar.',
   corregirCampos: (n: number) => `Corregí ${n} ${n === 1 ? 'campo' : 'campos'} para guardar.`,
   // [CH-271] Buscador con sugerencias v3 (C-45, CAMPOS-V3 §7), tal cual; «Buscando…» e «Intentar de nuevo» ya estaban.
   comercios: (n: number) => (n === 1 ? '1 comercio' : `${String(n)} comercios`),

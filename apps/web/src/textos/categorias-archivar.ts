@@ -19,7 +19,9 @@ export const categoriasArchivar = {
   desactivar: 'Desactivarla',
   pasarla: 'Pasarla a otra categoría',
   pasarlaA: 'Pasarla a',
-  elegir: 'Elegí una opción.',
+  // [C-45] La categoría sin elegir y su error (CAMPOS-V3 §5 y §6), tal cual.
+  marcador: 'Elegí una categoría',
+  elegirCategoria: 'Elegí una categoría.',
   archivar: 'Archivar',
   // E4-1: el verbo del pie lleva el nombre de la categoría.
   archivarNombre: (nombre: string) => `Archivar ${nombre}`,
@@ -46,7 +48,6 @@ export const categoriasArchivar = {
     disponible: (nombre: string, monto: string) => `${nombre}: ${glosario.disponible} ${monto}.`,
     destino: 'Poner en',
     monto: 'Monto a sacar',
-    obligatorio: 'Ingresá un monto.',
     sacar: 'Sacar',
     sacando: 'Sacando…',
     listo: 'Dinero sacado',

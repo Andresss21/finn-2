@@ -2,9 +2,11 @@
 // [C-45] Guardar de la familia v3 (CAMPOS-V3 §5 y §11; 05 §4.3): el botón se ve apagado mientras el contrato no pasa, sigue
 // tocable (`aria-disabled`) y dice debajo cuántos campos corregir. Al tocarlo, el formulario marca los errores y el foco va al
 // primero, también a los campos que no se registran con `register` (montos, fechas, porcentajes y selecciones).
+// Con `monto`, si lo único que falta es ese monto dice «Escribí el monto para guardar.» (`motivoQueFalta`, CAMPOS-V3 §5).
 import { useEffect, useRef } from 'react';
 import type * as z from 'zod';
 import { base } from '../textos/base';
+import { motivoQueFalta } from './motivo-v3';
 
 /** Cuántos campos faltan o están mal según el contrato del formulario. */
 export function porCorregir(contrato: z.ZodType, campos: unknown): number {
@@ -17,6 +19,7 @@ export function useGuardarV3({
   campos,
   intentos,
   motivoSinEnvio,
+  monto,
 }: {
   readonly contrato: z.ZodType;
   readonly campos: unknown;
@@ -24,6 +27,8 @@ export function useGuardarV3({
   readonly intentos: number;
   /** El de `useOperacion` (sin conexión), que manda sobre el de los campos. */
   readonly motivoSinEnvio: string | undefined;
+  /** El nombre del campo del monto, para decir «Escribí el monto para guardar.» cuando es lo único que falta. */
+  readonly monto?: string;
 }) {
   const forma = useRef<HTMLFormElement>(null);
   // El segmentado y el disparador de la lista no llevan `aria-invalid`: su fila con error sí (`data-error`), y el foco va a su
@@ -37,7 +42,13 @@ export function useGuardarV3({
         ?.focus();
   }, [intentos]);
   const faltan = porCorregir(contrato, campos);
-  const motivo = motivoSinEnvio ?? (faltan > 0 ? base.corregirCampos(faltan) : undefined);
+  const motivo =
+    motivoSinEnvio ??
+    (monto === undefined
+      ? faltan > 0
+        ? base.corregirCampos(faltan)
+        : undefined
+      : motivoQueFalta(contrato, campos, monto));
   return {
     forma,
     /** Las props de `Boton` para guardar: apagado con su motivo. */

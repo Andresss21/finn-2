@@ -45,12 +45,12 @@ test.describe('PRU-E2E-META flujo de nueva meta', () => {
     await esperarContenido(page);
     await page.getByRole('radio', { name: 'Para una fecha' }).click();
     await page.getByLabel('Monto de la meta').fill('600');
-    await page.getByLabel('Fecha objetivo', { exact: true }).fill('2027-01-01');
+    await page.getByLabel('Fecha objetivo', { exact: true }).fill('01/01/2027');
     await page.getByRole('button', { name: 'Crear meta' }).click();
     await expect(page.getByText('La fecha objetivo no puede ser anterior a hoy.')).toBeVisible();
     await expect(page).toHaveURL(/\/metas\/nueva/);
 
-    await page.getByLabel('Fecha objetivo', { exact: true }).fill('2027-05-15');
+    await page.getByLabel('Fecha objetivo', { exact: true }).fill('15/05/2027');
     await page.getByRole('button', { name: 'Crear meta' }).click();
     await expect(page).toHaveURL(/\/metas$/);
     await esperarContenido(page);

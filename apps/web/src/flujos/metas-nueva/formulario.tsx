@@ -1,6 +1,8 @@
 'use client';
 // `/metas/nueva` (FT-17, OP-18 crear; 05 §2.3): el flujo corto de crear la meta de una categoría. Editar y eliminar son de TA-442
 // (`/metas/[metaId]`, CH-83). No calcula montos (PF-3).
+// [C-45] Campos v3 (CAMPOS-V3 §2, §6 y §8): la categoría, el tipo (cuatro opciones en fila) y el modo (segmentado), y el monto y la
+// fecha, en sus `GrupoCampos`. «Crear meta» se ve apagado mientras falte algo y dice debajo qué (§5 y §11).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { useCallback } from 'react';
@@ -9,14 +11,16 @@ import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { GrupoCampos } from '../../componentes/base/campo';
 import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
-import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
+import { Opciones } from '../../componentes/base/controles-fila';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { gestionarMeta } from '../../servidor/acciones/presupuesto';
+import { base } from '../../textos/base';
 import { formularios } from '../../textos/formularios';
 import { metas as t } from '../../textos/metas';
 
@@ -41,9 +45,8 @@ export const CONTRATO = z
       ctx.addIssue({ code: 'custom', path: [path], message });
     };
     const monto = normalizarMontoEscrito(c.monto);
-    if (monto.estado !== 'valido') falla('monto', t.obligatorio);
-    else if (monto.esCero) falla('monto', t.montoMayorACero);
-    if (c.categoriaId === '') falla('categoriaId', t.obligatorio);
+    if (monto.estado !== 'valido' || monto.esCero) falla('monto', base.montoMayorQueCero);
+    if (c.categoriaId === '') falla('categoriaId', t.categoriaObligatoria);
     if (c.tipo === 'para_fecha' && c.fechaObjetivo === '') falla('fechaObjetivo', t.obligatorio);
   });
 export type Campos = z.infer<typeof CONTRATO>;
@@ -97,6 +100,13 @@ export function FormularioMeta({ categorias, categoriaInicial }: PropsFormulario
   // Con la categoría ya elegida (S4 del export 09a) el título la nombra y no hay selector.
   const fija = categorias.find((x) => x.id === categoriaInicial);
   const { estado, error: fallo } = operacion;
+  const guardar = useGuardarV3({
+    contrato: CONTRATO,
+    campos: c,
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+    monto: 'monto',
+  });
 
   if (estado === 'listo')
     return (
@@ -110,9 +120,13 @@ export function FormularioMeta({ categorias, categoriaInicial }: PropsFormulario
       titulo={fija === undefined ? t.tituloNueva : t.tituloPara(fija.nombre)}
       rutaPadre={RUTA_PADRE}
     >
-      <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
+      <form
+        ref={guardar.forma}
+        onSubmit={(e) => void formulario.enviar(e)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
         {fija === undefined ? (
-          // [CH-271] Muestra de la selección v3 (C-45): la categoría es una fila con la lista propia de Finn.
           <GrupoCampos>
             <SeleccionNativa
               etiqueta={t.categoria}
@@ -124,22 +138,27 @@ export function FormularioMeta({ categorias, categoriaInicial }: PropsFormulario
             />
           </GrupoCampos>
         ) : null}
-        <SelectorSegmentado
-          etiqueta={t.tipo}
-          opciones={opciones(t.tipos)}
-          valor={c.tipo}
-          alCambiar={poner('tipo')}
-        />
-        {porPeriodo ? (
-          <SelectorSegmentado
-            etiqueta={t.modo}
-            opciones={opciones(t.modos)}
-            valor={c.modoMeta}
-            alCambiar={poner('modoMeta')}
+        <section className="flex flex-col gap-2">
+          <h2 aria-hidden="true" className="text-cuerpo-pequeno font-semibold">
+            {t.tipo}
+          </h2>
+          <Opciones
+            etiqueta={t.tipo}
+            opciones={opciones(t.tipos)}
+            valor={c.tipo}
+            alCambiar={poner('tipo')}
           />
-        ) : null}
-        {/* [CH-268] Muestra de la familia v3 (C-45): el monto y la fecha son un grupo de filas. */}
+        </section>
         <GrupoCampos>
+          {porPeriodo ? (
+            <SeleccionNativa
+              etiqueta={t.modo}
+              marcador={t.modo}
+              opciones={opciones(t.modos)}
+              valor={c.modoMeta}
+              alCambiar={poner('modoMeta')}
+            />
+          ) : null}
           <EntradaMonto
             nombre="monto"
             etiqueta={t.monto}
@@ -181,9 +200,7 @@ export function FormularioMeta({ categorias, categoriaInicial }: PropsFormulario
           enviando={estado === 'enviando'}
           textoEnviando={t.creando}
           deshabilitado={!operacion.enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          {...guardar.boton}
         >
           {t.crear}
         </Boton>

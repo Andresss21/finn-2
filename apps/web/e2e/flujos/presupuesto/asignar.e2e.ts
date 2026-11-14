@@ -244,7 +244,8 @@ test.describe('PRU-E2E-PRES', () => {
     await expect(page.getByText('El valor actual de Asignado es $700.00.')).toBeVisible();
     // "Usar el valor actual" conserva lo escrito y la siguiente vez se envía
     await page.getByRole('button', { name: 'Usar el valor actual' }).click();
-    await expect(campoMonto(page)).toHaveValue('800');
+    // [C-45] Al salir del campo, el monto se completa a dos decimales (CAMPOS-V3 §5).
+    await expect(campoMonto(page)).toHaveValue('800.00');
     await guardar(page).click();
     await expect(page).toHaveURL(/\/presupuesto$/);
     await esperarContenido(page);

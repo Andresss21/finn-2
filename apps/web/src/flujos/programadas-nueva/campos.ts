@@ -1,7 +1,8 @@
 // Los campos de `/programadas/nueva` (FT-40, OP-42 crear): texto, como los escribe la persona (05 §4.2). De ellos sale la entrada de OP-42,
 // con los tipos con destino y las partes del gasto. También la edición (TA-474). No calcula montos (PF-3).
 import * as z from 'zod';
-import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import { esMontoPositivo, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import { base } from '../../textos/base';
 import { programadas as t } from '../../textos/programadas';
 
 export const TIPOS = ['gasto', 'pago_tarjeta', 'cuota_prestamo', 'aporte_inversion'] as const;
@@ -46,10 +47,9 @@ export const contrato: z.ZodType<Campos, Campos> = z
     const falla = (path: (string | number)[], message: string): void => {
       ctx.addIssue({ code: 'custom', path, message });
     };
+    // [C-45] Los textos de CAMPOS-V3 §5: el monto vacío o en cero y la categoría sin elegir.
     const positivo = (texto: string, path: (string | number)[]): void => {
-      const m = normalizarMontoEscrito(texto);
-      if (m.estado !== 'valido') falla(path, t.obligatorio);
-      else if (m.esCero) falla(path, t.montoMayorACero);
+      if (!esMontoPositivo(texto)) falla(path, base.montoMayorQueCero);
     };
     if (c.comercio.trim() === '') falla(['comercio'], t.obligatorio);
     if (c.cuentaId === '') falla(['cuentaId'], t.elegirCuenta);
@@ -60,7 +60,7 @@ export const contrato: z.ZodType<Campos, Campos> = z
       falla(['frecuenciaDias'], t.obligatorio);
     if (c.tipo !== 'pago_tarjeta')
       c.lineas.forEach((l, i) => {
-        if (l.categoriaId === '') falla(['lineas', i, 'categoriaId'], t.obligatorio);
+        if (l.categoriaId === '') falla(['lineas', i, 'categoriaId'], t.elegirCategoria);
         if (c.lineas.length > 1) positivo(l.monto, ['lineas', i, 'monto']);
       });
   });

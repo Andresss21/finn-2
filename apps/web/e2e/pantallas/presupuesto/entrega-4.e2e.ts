@@ -3,6 +3,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { elegirEnFila } from '../../ayudas/seleccion-nativa.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import type { Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
@@ -134,8 +135,8 @@ test.describe('PRU-E2E-PRES entrega 4', () => {
   }) => {
     await sembrarOps(OPS, '2027-02-10');
     await abrir(page, '/presupuesto/mover');
-    await page.getByLabel('Sacar de').selectOption({ label: 'Super' });
-    await page.getByLabel('Poner en').selectOption({ label: 'Salidas' });
+    await elegirEnFila(page, 'Sacar de', 'Super');
+    await elegirEnFila(page, 'Poner en', 'Salidas');
     await page.getByLabel(/Monto a mover/).fill('600');
     const boton = page.getByRole('button', { name: 'Mover', exact: true });
     // D-6: el aviso y los dos Disponibles vienen de la previsualización de OP-15 [CH-246].

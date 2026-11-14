@@ -13,6 +13,7 @@ export const metas = {
   categoria: 'Categoría',
   // [CH-271] La categoría sin elegir (CAMPOS-V3 §6), tal cual.
   elegirCategoria: 'Elegí una categoría',
+  categoriaObligatoria: 'Elegí una categoría.',
   tipo: 'Tipo de meta',
   tipoNoSeCambia: 'El tipo no se cambia. Para otro tipo, eliminá la meta y creá otra.',
   tipos: { mensual: 'Mensual', semanal: 'Semanal', anual: 'Anual', para_fecha: 'Para una fecha' },
@@ -22,7 +23,6 @@ export const metas = {
   fechaObjetivo: 'Fecha objetivo',
   fechaObjetivoAnual: 'Fecha objetivo (si no, un año desde hoy)',
   obligatorio: 'Completá este campo.',
-  montoMayorACero: 'Ingresá un monto mayor que cero.',
   crear: 'Crear meta',
   creando: 'Creando…',
   creada: 'Meta creada',

@@ -2,17 +2,21 @@
 // `/metas/[metaId]` (FT-17, OP-18 editar y eliminar; 05 §2.3): el flujo corto de cambiar el monto, el modo o la fecha de una
 // meta, o de eliminarla; con «Extender la fecha» y «Ajustar el monto» si venció. Es el formulario de `/metas/nueva` sin el tipo
 // ni la categoría. Envía solo lo que cambió, con lo que vio la persona como `esperado` (4.6.2). No calcula montos (PF-3).
+// [C-45] El tipo (fila «Solo lectura»), el modo (segmentado), el monto y la fecha son filas de un `GrupoCampos` (CAMPOS-V3 §2 y
+// §3). «Guardar cambios» se ve apagado sin monto y dice debajo qué falta (§5 y §11).
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { DatoFijo } from '../../componentes/formularios/dato-fijo';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
+import { GrupoCampos } from '../../componentes/base/campo';
+import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { centavosATextoDecimal, formatearFecha } from '../../formato';
 import { normalizarMontoEscrito, sumarMontosEscritos } from '../../formularios/normalizar-monto';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { gestionarMeta } from '../../servidor/acciones/presupuesto';
@@ -125,6 +129,13 @@ function Cuerpo(p: {
     });
   };
   const { estado, error: fallo } = operacion;
+  const guardar = useGuardarV3({
+    contrato: CONTRATO,
+    campos: c,
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+    monto: 'monto',
+  });
   const actuales = fallo?.datos?.['actuales'] as Record<string, unknown> | undefined;
   const conflicto = fallo?.codigo === 'conflicto_desactualizado' && actuales !== undefined;
 
@@ -149,11 +160,16 @@ function Cuerpo(p: {
   const motivo = !operacion.enLinea
     ? operacion.motivoSinEnvio
     : hayCambio
-      ? undefined
+      ? guardar.boton.motivoDeshabilitado
       : t.sinCambios;
   return (
     <PaginaFlujoDeRuta titulo={t.tituloEditar(meta.categoria)} rutaPadre={RUTA_PADRE}>
-      <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
+      <form
+        ref={guardar.forma}
+        onSubmit={(e) => void formulario.enviar(e)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
         {meta.vencida ? (
           <AvisoEnLinea
             estado="advertencia"
@@ -174,38 +190,41 @@ function Cuerpo(p: {
             {t.vencida.texto(meta.categoria, formatearFecha(meta.fechaObjetivo ?? ''))}
           </AvisoEnLinea>
         ) : null}
-        <DatoFijo
-          nombre="tipo"
-          rotulo={t.tipo}
-          valor={t.tipos[meta.tipo]}
-          motivo={t.tipoNoSeCambia}
-        />
-        {porPeriodo ? (
-          <SelectorSegmentado
-            etiqueta={t.modo}
-            opciones={opciones(t.modos)}
-            valor={c.modoMeta}
-            alCambiar={poner('modoMeta')}
+        <GrupoCampos>
+          <DatoFijo
+            nombre="tipo"
+            rotulo={t.tipo}
+            valor={t.tipos[meta.tipo]}
+            motivo={t.tipoNoSeCambia}
           />
-        ) : null}
-        <EntradaMonto
-          nombre="monto"
-          etiqueta={t.monto}
-          valor={c.monto}
-          alCambiar={poner('monto')}
-          error={errors.monto?.message}
-          requerido
-        />
-        {porPeriodo ? null : (
-          <EntradaFecha
-            nombre="fechaObjetivo"
-            etiqueta={meta.tipo === 'anual' ? t.fechaObjetivoAnual : t.fechaObjetivo}
-            valor={c.fechaObjetivo as FechaLocal}
-            alCambiar={poner('fechaObjetivo')}
-            error={errors.fechaObjetivo?.message}
-            requerido={meta.tipo === 'para_fecha'}
+          {porPeriodo ? (
+            <SeleccionNativa
+              etiqueta={t.modo}
+              marcador={t.modo}
+              opciones={opciones(t.modos)}
+              valor={c.modoMeta}
+              alCambiar={poner('modoMeta')}
+            />
+          ) : null}
+          <EntradaMonto
+            nombre="monto"
+            etiqueta={t.monto}
+            valor={c.monto}
+            alCambiar={poner('monto')}
+            error={errors.monto?.message}
+            requerido
           />
-        )}
+          {porPeriodo ? null : (
+            <EntradaFecha
+              nombre="fechaObjetivo"
+              etiqueta={meta.tipo === 'anual' ? t.fechaObjetivoAnual : t.fechaObjetivo}
+              valor={c.fechaObjetivo as FechaLocal}
+              alCambiar={poner('fechaObjetivo')}
+              error={errors.fechaObjetivo?.message}
+              requerido={meta.tipo === 'para_fecha'}
+            />
+          )}
+        </GrupoCampos>
         {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
           <AvisoEnLinea
             estado="problema"
@@ -233,7 +252,8 @@ function Cuerpo(p: {
           tipo="submit"
           enviando={estado === 'enviando'}
           textoEnviando={t.guardando}
-          deshabilitado={motivo !== undefined}
+          deshabilitado={!operacion.enLinea || !hayCambio}
+          apagado={guardar.boton.apagado}
           {...(motivo === undefined ? {} : { motivoDeshabilitado: motivo })}
         >
           {t.guardar}

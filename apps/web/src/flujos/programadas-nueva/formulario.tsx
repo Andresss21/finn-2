@@ -3,6 +3,9 @@
 // gasto, frecuencia, primera fecha, fin y registro automático. Los destinos salen del catálogo del servidor. Con `programadaId` edita
 // (OP-42 `editar`, OP-51 eliminar); con `calendarioEditable = false` la primera fecha y la frecuencia se muestran sin edición y con el motivo.
 // No calcula montos (PF-3): la suma de las partes la valida el servidor.
+// [C-45] Campos v3 (CAMPOS-V3 §2, §6 y §8): el tipo en opciones en fila y cada bloque (cuentas, comercio y montos; categoría o
+// partes; calendario; registro automático) en su `GrupoCampos`. «Crear programada» o «Guardar» se ve apagado mientras falte algo
+// y dice debajo qué; al tocarlo marca los errores y lleva el foco al primero (§5 y §11).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { DatoFijo } from '../../componentes/formularios/dato-fijo';
@@ -10,13 +13,13 @@ import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
-import { Interruptor } from '../../componentes/base/controles-fila';
+import { Interruptor, Opciones } from '../../componentes/base/controles-fila';
 import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
-import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { CampoLineas } from '../../componentes/formularios/campo-lineas';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { formatearFecha } from '../../formato';
@@ -105,6 +108,12 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
     ponerLineas(tipo === 'pago_tarjeta' ? [] : [c.lineas[0] ?? PARTE_VACIA]);
   };
   const { estado, error: fallo } = operacion;
+  const guardar = useGuardarV3({
+    contrato,
+    campos: c,
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
   const falla = fallo ?? eliminacion.error;
   const erroresLineas = errors.lineas as
     | readonly ({ monto?: { message?: string }; categoriaId?: { message?: string } } | undefined)[]
@@ -149,7 +158,12 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
       titulo={edita ? t.tituloEditar(p.nombre ?? '') : t.tituloNueva}
       rutaPadre={RUTA_PADRE}
     >
-      <form onSubmit={(e) => void alEnviar(e)} noValidate className="flex flex-col gap-5">
+      <form
+        ref={guardar.forma}
+        onSubmit={(e) => void alEnviar(e)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
         {edita ? null : (
           <Suspense fallback={null}>
             <BorradorProgramada
@@ -160,49 +174,55 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             />
           </Suspense>
         )}
-        {edita ? (
-          <DatoFijo
-            nombre="tipo"
-            rotulo={t.tipo}
-            valor={t.tipos[c.tipo]}
-            motivo={t.tipoNoSeCambia}
-          />
-        ) : (
-          <SelectorSegmentado
-            etiqueta={t.tipo}
-            opciones={opciones(t.tipos)}
-            valor={c.tipo}
-            alCambiar={cambiarTipo}
-          />
+        {edita ? null : (
+          <section className="flex flex-col gap-2">
+            <h2 aria-hidden="true" className="text-cuerpo-pequeno font-semibold">
+              {t.tipo}
+            </h2>
+            <Opciones
+              etiqueta={t.tipo}
+              opciones={opciones(t.tipos)}
+              valor={c.tipo}
+              alCambiar={cambiarTipo}
+            />
+          </section>
         )}
-        <SeleccionNativa
-          etiqueta={t.cuenta}
-          opciones={deRefs(origenes)}
-          valor={c.cuentaId}
-          alCambiar={poner('cuentaId')}
-          marcador={t.elegirCuenta}
-          {...errorDe(errors.cuentaId?.message)}
-        />
-        {c.tipo === 'gasto' ? null : (
+        <GrupoCampos>
+          {edita ? (
+            <DatoFijo
+              nombre="tipo"
+              rotulo={t.tipo}
+              valor={t.tipos[c.tipo]}
+              motivo={t.tipoNoSeCambia}
+            />
+          ) : null}
           <SeleccionNativa
-            etiqueta={t.cuentaDestino}
-            opciones={deRefs(destinos)}
-            valor={c.cuentaDestinoId}
-            alCambiar={poner('cuentaDestinoId')}
+            etiqueta={t.cuenta}
+            opciones={deRefs(origenes)}
+            valor={c.cuentaId}
+            alCambiar={poner('cuentaId')}
             marcador={t.elegirCuenta}
-            {...errorDe(errors.cuentaDestinoId?.message)}
+            {...errorDe(errors.cuentaId?.message)}
           />
-        )}
-        <EntradaTexto
-          etiqueta={t.comercio}
-          requerido
-          value={c.comercio}
-          onChange={(e) => {
-            poner('comercio')(e.target.value);
-          }}
-          {...errorDe(errors.comercio?.message)}
-        />
-        <div className="grid grid-cols-2 gap-3">
+          {c.tipo === 'gasto' ? null : (
+            <SeleccionNativa
+              etiqueta={t.cuentaDestino}
+              opciones={deRefs(destinos)}
+              valor={c.cuentaDestinoId}
+              alCambiar={poner('cuentaDestinoId')}
+              marcador={t.elegirCuenta}
+              {...errorDe(errors.cuentaDestinoId?.message)}
+            />
+          )}
+          <EntradaTexto
+            etiqueta={t.comercio}
+            requerido
+            value={c.comercio}
+            onChange={(e) => {
+              poner('comercio')(e.target.value);
+            }}
+            {...errorDe(errors.comercio?.message)}
+          />
           <EntradaMonto
             nombre="monto"
             etiqueta={t.monto}
@@ -218,7 +238,7 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             alCambiar={poner('tolerancia')}
             error={errors.tolerancia?.message}
           />
-        </div>
+        </GrupoCampos>
         {c.tipo === 'pago_tarjeta' ? null : varias ? (
           <CampoLineas
             etiqueta={t.partes}
@@ -236,7 +256,7 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             }}
             error={fallo?.codigo === 'suma_lineas_distinta' ? fallo.mensaje : undefined}
             renderParte={(i) => (
-              <>
+              <GrupoCampos>
                 <EntradaMonto
                   nombre={`lineas.${i}.monto`}
                   etiqueta={t.montoDeParte(String(i + 1))}
@@ -257,21 +277,23 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
                   marcador={t.categoria}
                   {...errorDe(erroresLineas?.[i]?.categoriaId?.message)}
                 />
-              </>
+              </GrupoCampos>
             )}
           />
         ) : (
           <>
-            <SeleccionNativa
-              etiqueta={t.categoria}
-              opciones={deRefs(p.categorias)}
-              valor={c.lineas[0]?.categoriaId ?? ''}
-              alCambiar={(v) => {
-                ponerLineas([{ monto: c.monto, categoriaId: v }]);
-              }}
-              marcador={t.categoria}
-              {...errorDe(erroresLineas?.[0]?.categoriaId?.message)}
-            />
+            <GrupoCampos>
+              <SeleccionNativa
+                etiqueta={t.categoria}
+                opciones={deRefs(p.categorias)}
+                valor={c.lineas[0]?.categoriaId ?? ''}
+                alCambiar={(v) => {
+                  ponerLineas([{ monto: c.monto, categoriaId: v }]);
+                }}
+                marcador={t.categoria}
+                {...errorDe(erroresLineas?.[0]?.categoriaId?.message)}
+              />
+            </GrupoCampos>
             {c.tipo === 'gasto' ? (
               <Boton
                 variante="discreta"
@@ -287,65 +309,67 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             ) : null}
           </>
         )}
-        {calendarioEditable ? (
-          <>
-            <SeleccionNativa
-              etiqueta={t.frecuencia}
-              opciones={FRECUENCIAS.map((f) => ({ valor: f, etiqueta: t.frecuencias[f] }))}
-              valor={c.frecuencia}
-              alCambiar={(v) => {
-                poner('frecuencia')(v as Campos['frecuencia']);
-              }}
-              marcador={t.frecuencia}
-            />
-            {c.frecuencia === 'cada_n_dias' ? (
-              <EntradaTexto
-                etiqueta={t.cadaDias}
-                requerido
-                inputMode="numeric"
-                value={c.frecuenciaDias}
-                onChange={(e) => {
-                  poner('frecuenciaDias')(e.target.value.replace(/\D/g, ''));
+        <GrupoCampos>
+          {calendarioEditable ? (
+            <>
+              <SeleccionNativa
+                etiqueta={t.frecuencia}
+                opciones={FRECUENCIAS.map((f) => ({ valor: f, etiqueta: t.frecuencias[f] }))}
+                valor={c.frecuencia}
+                alCambiar={(v) => {
+                  poner('frecuencia')(v as Campos['frecuencia']);
                 }}
-                {...errorDe(errors.frecuenciaDias?.message)}
+                marcador={t.frecuencia}
               />
-            ) : null}
-            <EntradaFecha
-              nombre="primeraFecha"
-              etiqueta={t.primeraFecha}
-              valor={c.primeraFecha as FechaLocal}
-              alCambiar={poner('primeraFecha')}
-              error={errors.primeraFecha?.message}
-              requerido
-            />
-          </>
-        ) : (
-          // E4-16, E4-19: con historial, la frecuencia y la primera fecha son datos fijos, no controles deshabilitados.
-          <>
-            <DatoFijo
-              nombre="frecuencia"
-              rotulo={t.frecuencia}
-              valor={
-                c.frecuencia === 'cada_n_dias'
-                  ? `${t.frecuencias[c.frecuencia]} · ${c.frecuenciaDias}`
-                  : t.frecuencias[c.frecuencia]
-              }
-            />
-            <DatoFijo
-              nombre="primeraFecha"
-              rotulo={t.primeraFecha}
-              valor={formatearFecha(c.primeraFecha)}
-              motivo={p.motivoCalendario}
-            />
-          </>
-        )}
-        <EntradaFecha
-          nombre="fechaFin"
-          etiqueta={t.fechaFin}
-          valor={c.fechaFin as FechaLocal}
-          alCambiar={poner('fechaFin')}
-          error={errors.fechaFin?.message}
-        />
+              {c.frecuencia === 'cada_n_dias' ? (
+                <EntradaTexto
+                  etiqueta={t.cadaDias}
+                  requerido
+                  inputMode="numeric"
+                  value={c.frecuenciaDias}
+                  onChange={(e) => {
+                    poner('frecuenciaDias')(e.target.value.replace(/\D/g, ''));
+                  }}
+                  {...errorDe(errors.frecuenciaDias?.message)}
+                />
+              ) : null}
+              <EntradaFecha
+                nombre="primeraFecha"
+                etiqueta={t.primeraFecha}
+                valor={c.primeraFecha as FechaLocal}
+                alCambiar={poner('primeraFecha')}
+                error={errors.primeraFecha?.message}
+                requerido
+              />
+            </>
+          ) : (
+            // E4-16, E4-19: con historial, la frecuencia y la primera fecha son datos fijos, no controles deshabilitados.
+            <>
+              <DatoFijo
+                nombre="frecuencia"
+                rotulo={t.frecuencia}
+                valor={
+                  c.frecuencia === 'cada_n_dias'
+                    ? `${t.frecuencias[c.frecuencia]} · ${c.frecuenciaDias}`
+                    : t.frecuencias[c.frecuencia]
+                }
+              />
+              <DatoFijo
+                nombre="primeraFecha"
+                rotulo={t.primeraFecha}
+                valor={formatearFecha(c.primeraFecha)}
+                motivo={p.motivoCalendario}
+              />
+            </>
+          )}
+          <EntradaFecha
+            nombre="fechaFin"
+            etiqueta={t.fechaFin}
+            valor={c.fechaFin as FechaLocal}
+            alCambiar={poner('fechaFin')}
+            error={errors.fechaFin?.message}
+          />
+        </GrupoCampos>
         {/* [CH-274] Muestra del interruptor v3 (C-45, CAMPOS-V3 §8): la fila entera es el blanco y el control va a la derecha. */}
         <GrupoCampos>
           <Interruptor
@@ -376,9 +400,7 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
           enviando={estado === 'enviando'}
           textoEnviando={edita ? t.guardando : t.creando}
           deshabilitado={!operacion.enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          {...guardar.boton}
         >
           {edita ? t.guardar : t.crear}
         </Boton>

@@ -1,13 +1,16 @@
 'use client';
 // Los cuatro flujos cortos de la estructura (FT-18; 05 §2.3, §15.2): nuevo grupo y nueva categoría (OP-07), y editar (OP-08:
 // nombre y grupo; OP-13: eliminar o archivar). No calcula nada: qué se elimina lo dice `estructura()`.
+// [C-45] El nombre y el grupo son filas de un `GrupoCampos` (C-46; CAMPOS-V3 §2 y §6): el grupo en segmentado o en la lista propia
+// según cuántos hay. «Crear» o «Guardar» se ve apagado sin nombre y dice debajo qué falta; al tocarlo marca el error y lleva el
+// foco al nombre (§5 y §11).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { GrupoDeEstructura } from '@finn/dominio/selectores';
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
 import {
   CerrarFlujoAlMontar,
@@ -15,6 +18,7 @@ import {
   SuperpuestoDeRuta,
 } from '../../componentes/navegacion/flujo-de-ruta';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import {
@@ -118,6 +122,12 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
     valoresIniciales: inicial,
     operacion,
   });
+  const guardar = useGuardarV3({
+    contrato: CONTRATO,
+    campos: formulario.watch(),
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
   const baja = useOperacion({ accion: eliminarEnEstructura });
   const [archivando, setArchivando] = useState(false);
   const quitar = (archivar: boolean): void => {
@@ -179,34 +189,42 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
     ? operacion.motivoSinEnvio
     : sinCambios
       ? t.sinCambios
-      : undefined;
+      : guardar.boton.motivoDeshabilitado;
   return envuelve(
     TITULOS[modo],
     <>
-      <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
-        <EntradaTexto
-          etiqueta={t.nombre}
-          requerido
-          autoComplete="off"
-          {...(errorNombre === undefined ? {} : { error: errorNombre })}
-          {...formulario.register('nombre')}
-        />
-        {esGrupo || grupoFijo !== undefined ? null : (
-          <Seleccion
-            etiqueta={t.grupo}
-            opciones={elegibles.map((g) => ({ valor: g.grupo.id, etiqueta: g.grupo.nombre }))}
-            valor={formulario.watch('grupoId')}
-            alCambiar={(v) => {
-              formulario.setValue('grupoId', v, { shouldDirty: true });
-            }}
+      <form
+        ref={guardar.forma}
+        onSubmit={(e) => void formulario.enviar(e)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
+        <GrupoCampos>
+          <EntradaTexto
+            etiqueta={t.nombre}
+            requerido
+            autoComplete="off"
+            {...(errorNombre === undefined ? {} : { error: errorNombre })}
+            {...formulario.register('nombre')}
           />
-        )}
+          {esGrupo || grupoFijo !== undefined ? null : (
+            <Seleccion
+              etiqueta={t.grupo}
+              opciones={elegibles.map((g) => ({ valor: g.grupo.id, etiqueta: g.grupo.nombre }))}
+              valor={formulario.watch('grupoId')}
+              alCambiar={(v) => {
+                formulario.setValue('grupoId', v, { shouldDirty: true });
+              }}
+            />
+          )}
+        </GrupoCampos>
         <Fallo e={estado === 'error' ? operacion.error : undefined} />
         <Boton
           tipo="submit"
           enviando={estado === 'enviando'}
           textoEnviando={nuevo ? t.creando : t.guardando}
-          deshabilitado={motivo !== undefined}
+          deshabilitado={!operacion.enLinea || sinCambios}
+          apagado={guardar.boton.apagado}
           {...(motivo === undefined ? {} : { motivoDeshabilitado: motivo })}
         >
           {nuevo ? t.crear : t.guardar}
