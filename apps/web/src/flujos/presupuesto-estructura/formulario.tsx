@@ -67,13 +67,13 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
   const elegibles = grupos.filter(
     (g) => (!g.grupo.archivado && !g.grupo.sistema) || g.grupo.id === grupoDe,
   );
+  const propuesto = elegibles.find((g) => g.grupo.id === p.grupoInicial)?.grupo;
+  // [CH-267] Desde el botón de un grupo (`?grupo=` elegible) la categoría nueva es de ese grupo: no se vuelve a preguntar.
+  const grupoFijo = nuevo && !esGrupo ? propuesto : undefined;
+  const descripcion = grupoFijo === undefined ? {} : { descripcion: t.enGrupo(grupoFijo.nombre) };
   const inicial: Campos = {
     nombre: actual?.nombre ?? '',
-    grupoId:
-      grupoDe ??
-      elegibles.find((g) => g.grupo.id === p.grupoInicial)?.grupo.id ??
-      elegibles[0]?.grupo.id ??
-      '',
+    grupoId: grupoDe ?? propuesto?.id ?? elegibles[0]?.grupo.id ?? '',
   };
 
   /** OP-07 u OP-08 desde lo escrito; en OP-08 solo lo que cambió, con lo que vio la persona como `esperado`. */
@@ -123,9 +123,11 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
 
   const envuelve = (titulo: string, hijos: ReactNode) =>
     superpuesto ? (
-      <SuperpuestoDeRuta titulo={titulo}>{hijos}</SuperpuestoDeRuta>
+      <SuperpuestoDeRuta titulo={titulo} {...descripcion}>
+        {hijos}
+      </SuperpuestoDeRuta>
     ) : (
-      <PaginaFlujoDeRuta titulo={titulo} rutaPadre={RAIZ}>
+      <PaginaFlujoDeRuta titulo={titulo} rutaPadre={RAIZ} {...descripcion}>
         {hijos}
       </PaginaFlujoDeRuta>
     );
@@ -178,7 +180,7 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
           {...(errorNombre === undefined ? {} : { error: errorNombre })}
           {...formulario.register('nombre')}
         />
-        {esGrupo ? null : (
+        {esGrupo || grupoFijo !== undefined ? null : (
           <Seleccion
             etiqueta={t.grupo}
             opciones={elegibles.map((g) => ({ valor: g.grupo.id, etiqueta: g.grupo.nombre }))}
