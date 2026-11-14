@@ -346,7 +346,9 @@ describe('PRU-CMP-CTA pantallas de Cuentas con los campos v3', () => {
     await expect.poll(() => nodo.querySelector('[data-diferencia-vivo]')).not.toBeNull();
     expect(ver().getAttribute('aria-disabled')).toBeNull();
     await userEvent.click(ver());
-    await expect.poll(() => nodo.querySelectorAll('.control-fila').length, { timeout: 3000 }).toBe(2);
+    await expect
+      .poll(() => nodo.querySelectorAll('.control-fila').length, { timeout: 3000 })
+      .toBe(2);
     const fila = nodo.querySelector('.control-fila') as HTMLElement;
     expect(enGrupo(fila)).toBe(true);
     const casilla = fila.querySelector('input[type=checkbox]') as HTMLInputElement;
