@@ -135,9 +135,7 @@ export function ListaEstructura({
       const activo = document.activeElement;
       if (activo === null || activo === document.body)
         document
-          .querySelector<HTMLElement>(
-            `[data-foco="${esGrupo ? 'grupo' : 'fila'}-${resultado.id}"]`,
-          )
+          .querySelector<HTMLElement>(`[data-foco="${esGrupo ? 'grupo' : 'fila'}-${resultado.id}"]`)
           ?.focus();
     }, 0);
   }, [arbol, clave, colapsados, guardar, mostrar, resultado]);

@@ -210,12 +210,7 @@ export function EtiquetaResultado({
 export function DeshacerFila({ api, id }: { readonly api: ApiEtiqueta; readonly id: string }) {
   const u = api.estado.ultimo;
   const a = u?.accion;
-  if (
-    u?.inverso === undefined ||
-    a === undefined ||
-    'href' in a ||
-    !deshacerEnFila(api.estado, id)
-  )
+  if (u?.inverso === undefined || a === undefined || 'href' in a || !deshacerEnFila(api.estado, id))
     return null;
   return (
     <button

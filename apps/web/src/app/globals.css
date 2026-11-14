@@ -1160,13 +1160,13 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
   animation: fz-etiqueta-entra var(--duracion-normal) var(--curva-enfasis) both;
   transition: opacity var(--duracion-normal) var(--curva-salida);
 }
-.fz-etiqueta[data-posicion="arriba"] {
+.fz-etiqueta[data-posicion='arriba'] {
   top: 0;
 }
 .fz-etiqueta-sola {
   padding-right: var(--espacio-3);
 }
-.fz-etiqueta[data-fase="saliendo"] {
+.fz-etiqueta[data-fase='saliendo'] {
   opacity: 0;
 }
 .fz-etiqueta-palabra {

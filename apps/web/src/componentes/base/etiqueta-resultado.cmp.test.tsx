@@ -8,12 +8,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
-import {
-  DeshacerFila,
-  EtiquetaResultado,
-  FilaQueSale,
-  useEtiqueta,
-} from './etiqueta-resultado';
+import { DeshacerFila, EtiquetaResultado, FilaQueSale, useEtiqueta } from './etiqueta-resultado';
 
 vi.mock('next/link', async () => {
   const { createElement } = await import('react');
@@ -133,7 +128,9 @@ const q = (sel: string): HTMLElement => {
   if (e === null) throw new Error(`no hay ${sel}`);
   return e;
 };
-const etiquetas = (): HTMLElement[] => [...document.querySelectorAll<HTMLElement>('[data-etiqueta]')];
+const etiquetas = (): HTMLElement[] => [
+  ...document.querySelectorAll<HTMLElement>('[data-etiqueta]'),
+];
 const fila = (f: string): HTMLElement => q(`[data-fila="${f}"]`);
 const principal = (f: string): HTMLElement => q(`[data-principal="${f}"]`);
 const region = (): string => q('[data-region]').textContent;

@@ -124,7 +124,9 @@ const filasDe = (g: string): string[] =>
     (f) => f.querySelector('[data-foco^="fila-"]')?.textContent.trim().split(/\s/)[0] ?? '',
   );
 const fila = (c: string): HTMLElement => q(`[data-fila-cat="${id(c)}"]`);
-const etiquetas = (): HTMLElement[] => [...document.querySelectorAll<HTMLElement>('[data-etiqueta]')];
+const etiquetas = (): HTMLElement[] => [
+  ...document.querySelectorAll<HTMLElement>('[data-etiqueta]'),
+];
 const deshacerFila = (): HTMLElement | null => document.querySelector('[data-deshacer-fila]');
 function avanzar(ms: number): void {
   act(() => {
@@ -427,7 +429,10 @@ describe('PRU-CMP-CATEG-139 la etiqueta de resultado en la estructura', () => {
     await vi.waitFor(() => {
       expect(desarchivarCategoria).toHaveBeenCalledTimes(1);
     });
-    const desarchivada = [grupo('Casa', ['Supermercado', 'Luz y agua', 'Gimnasio']), ...A7.slice(1)];
+    const desarchivada = [
+      grupo('Casa', ['Supermercado', 'Luz y agua', 'Gimnasio']),
+      ...A7.slice(1),
+    ];
     await act(() => {
       raiz.render(<ListaEstructura grupos={desarchivada} />);
       return Promise.resolve();

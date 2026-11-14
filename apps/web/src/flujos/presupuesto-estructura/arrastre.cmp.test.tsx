@@ -118,7 +118,9 @@ const filasDe = (g: string): string[] =>
   );
 const levantada = (): HTMLElement | null => document.querySelector('[data-fila-levantada]');
 const anuncio = (): string => q('[data-anuncio="estructura"]').textContent;
-const etiquetas = (): HTMLElement[] => [...document.querySelectorAll<HTMLElement>('[data-etiqueta]')];
+const etiquetas = (): HTMLElement[] => [
+  ...document.querySelectorAll<HTMLElement>('[data-etiqueta]'),
+];
 /** Con el reloj simulado, espera la respuesta de OP-08 sin avanzar el tiempo (vi.waitFor lo avanzaría). */
 async function hasta(cond: () => boolean): Promise<void> {
   for (let i = 0; i < 50 && !cond(); i++)
@@ -261,7 +263,9 @@ describe('PRU-CMP-CATEG-135 arrastrar una categoría desde el asa', () => {
     expect(filaF.hasAttribute('data-resaltada')).toBe(true);
     const rf = filaF.getBoundingClientRect();
     const re = et?.getBoundingClientRect();
-    expect(Math.abs((re?.top ?? 0) + (re?.height ?? 0) / 2 - (rf.top + rf.height / 2))).toBeLessThanOrEqual(1);
+    expect(
+      Math.abs((re?.top ?? 0) + (re?.height ?? 0) / 2 - (rf.top + rf.height / 2)),
+    ).toBeLessThanOrEqual(1);
     expect(rf.right - (re?.right ?? 0)).toBeCloseTo(8, 0);
     const restaurantes = q(`[data-fila-cat="${id('Restaurantes')}"]`).firstElementChild;
     expect(rf.height).toBe(restaurantes?.getBoundingClientRect().height);
@@ -369,7 +373,6 @@ describe('PRU-CMP-CATEG-136 cancelar o soltar sin cambios', () => {
     expect(document.querySelector('[data-deshacer-fila]')).toBeNull();
     expect(op08()).toHaveLength(2);
   });
-
 
   it('PRU-CMP-CATEG-136 [C-46] CA-E-8: Escape, `pointercancel` y soltar fuera de la pantalla no envían nada, la fila vuelve a su lugar y se anuncia «Arrastre cancelado. Farmacia volvió a su lugar.»; soltar en el mismo lugar tampoco envía nada', async () => {
     await montar();
