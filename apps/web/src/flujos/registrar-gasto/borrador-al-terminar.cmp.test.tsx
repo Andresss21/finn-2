@@ -129,7 +129,7 @@ async function correrEsperas(): Promise<void> {
 }
 
 describe('PRU-CMP-TX Registrar gasto: borrador al guardar y al descartar', () => {
-  it('PRU-CMP-TX-871 [FT-21] al guardar con ok se borra el borrador: otro gasto en la pestaña abre vacío, sin «Descartar borrador» ni el id del ya guardado', async () => {
+  it('PRU-CMP-TX-943 [FT-21] al guardar con ok se borra el borrador: otro gasto en la pestaña abre vacío, sin «Descartar borrador» ni el id del ya guardado', async () => {
     vi.mocked(accion).mockImplementation((p: unknown) =>
       Promise.resolve({
         ok: true,
@@ -158,7 +158,7 @@ describe('PRU-CMP-TX Registrar gasto: borrador al guardar y al descartar', () =>
     expect((vi.mocked(accion).mock.calls.at(-1)?.[0] as { id: string }).id).not.toBe(primero);
   });
 
-  it('PRU-CMP-TX-872 [FT-21] «Descartar borrador» vacía los campos, no vuelve a escribir el borrador y el gasto siguiente lleva un id nuevo', async () => {
+  it('PRU-CMP-TX-944 [FT-21] «Descartar borrador» vacía los campos, no vuelve a escribir el borrador y el gasto siguiente lleva un id nuevo', async () => {
     vi.mocked(accion).mockImplementation((p: unknown) =>
       Promise.resolve({
         ok: true,
