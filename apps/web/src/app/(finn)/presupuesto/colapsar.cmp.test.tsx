@@ -199,9 +199,7 @@ describe('PRU-CMP-PRES colapsar grupos (C-47)', () => {
     expect(disponible?.textContent).toContain('−$26.30');
     expect(color(disponible)).toBe(token('--problema-texto'));
     const montos = r?.querySelector<HTMLElement>('[data-resumen-montos]');
-    expect(loVisible(montos)).toBe(
-      'Asignado $120.00 · Gastado $146.30',
-    );
+    expect(loVisible(montos)).toBe('Asignado $120.00 · Gastado $146.30');
     expect(
       [...(montos?.querySelectorAll('[data-centavos]') ?? [])].map((e) =>
         e.getAttribute('data-centavos'),
@@ -225,16 +223,20 @@ describe('PRU-CMP-PRES colapsar grupos (C-47)', () => {
     const ahorro = resumen(n, 'ahorro');
     expect(ahorro?.querySelector('[data-resumen-cantidad]')?.textContent).toBe('2 categorías');
     expect(
-      ahorro?.querySelector('[data-resumen-disponible] [data-centavos]')?.getAttribute('data-centavos'),
+      ahorro
+        ?.querySelector('[data-resumen-disponible] [data-centavos]')
+        ?.getAttribute('data-centavos'),
     ).toBe('153462');
     expect(ahorro?.querySelector('[data-resumen-disponible]')?.textContent).toContain('$1,534.62');
-    expect(
-      color(ahorro?.querySelector('[data-resumen-disponible] [data-centavos]')),
-    ).toBe(token('--positivo-texto'));
+    expect(color(ahorro?.querySelector('[data-resumen-disponible] [data-centavos]'))).toBe(
+      token('--positivo-texto'),
+    );
     expect(ahorro?.querySelector('[data-resumen-avisos]')?.textContent).toBe(
       'Falta para la meta · 2 categorías',
     );
-    const transporte = resumen(n, 'transporte')?.querySelector('[data-resumen-disponible] [data-centavos]');
+    const transporte = resumen(n, 'transporte')?.querySelector(
+      '[data-resumen-disponible] [data-centavos]',
+    );
     expect(color(transporte)).toBe(token('--deuda-sin-respaldo-texto'));
     expect(resumen(n, 'transporte')?.textContent).toContain('Deuda sin reservar');
     const casa = resumen(n, 'casa');
@@ -301,7 +303,9 @@ describe('PRU-CMP-PRES colapsar grupos (C-47)', () => {
     localStorage.setItem('finn.colapsados.estructura', JSON.stringify(['casa']));
     const n = montar();
     const todos = () =>
-      [...n.querySelectorAll('button')].find((b) => /^(Colapsar|Expandir) todos$/.test(b.textContent));
+      [...n.querySelectorAll('button')].find((b) =>
+        /^(Colapsar|Expandir) todos$/.test(b.textContent),
+      );
     expect(todos()?.textContent).toBe('Colapsar todos');
     expect(Math.round(todos()?.getBoundingClientRect().height ?? 0)).toBeGreaterThanOrEqual(44);
     tocar(todos() ?? null);

@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { Pastillas } from '../../../componentes/base/pastillas';
 import { Vacio } from '../../../componentes/base/vacio';
 import { SacarDeUnToque } from './sacar-un-toque';
+import { ColapsoPresupuesto, GrupoPresupuesto } from './colapsar';
 import type { AccionEscritura } from '../../../formularios/use-operacion';
 import { FilaCategoria } from '../../../componentes/dominio/fila-categoria';
 import { FilaPagoTarjeta } from '../../../componentes/dominio/fila-pago';
@@ -196,35 +197,39 @@ export function PantallaPresupuesto({
                   </span>
                 ))}
               </div>
-              {gruposConFilas.map((g) => (
-                <Seccion
-                  key={g.grupo.id}
-                  titulo={g.grupo.nombre}
-                  atributo={g.grupo.id}
-                  derecha={
-                    <span className="font-semibold md:hidden">
-                      <span className="sr-only">{t.grupoTotal(g.grupo.nombre)} </span>
-                      <Monto centavos={g.totales.disponible} />
-                    </span>
-                  }
-                >
-                  <div className={GRUPO}>
-                    {g.categorias.map((fila) => (
-                      <FilaCategoria
-                        key={fila.categoria.id}
-                        fila={fila}
-                        periodoCerrado={cerrado}
-                        hrefDetalle={conPeriodo(`/presupuesto/categorias/${fila.categoria.id}`)}
-                        {...(cerrado
-                          ? {}
-                          : {
-                              hrefAsignar: conPeriodo(`/presupuesto/asignar/${fila.categoria.id}`),
-                            })}
-                      />
-                    ))}
-                  </div>
-                </Seccion>
-              ))}
+              {/* [CH-273] C-47: los grupos de usuario se colapsan; con un filtro, abiertos y sin flecha. */}
+              <ColapsoPresupuesto
+                ids={gruposConFilas.map((g) => g.grupo.id)}
+                activo={filtro === undefined}
+              >
+                {gruposConFilas.map((g) => (
+                  <GrupoPresupuesto
+                    key={g.grupo.id}
+                    grupo={g.grupo}
+                    filas={g.categorias}
+                    totales={g.totales}
+                    cerrado={cerrado}
+                  >
+                    <div className={GRUPO}>
+                      {g.categorias.map((fila) => (
+                        <FilaCategoria
+                          key={fila.categoria.id}
+                          fila={fila}
+                          periodoCerrado={cerrado}
+                          hrefDetalle={conPeriodo(`/presupuesto/categorias/${fila.categoria.id}`)}
+                          {...(cerrado
+                            ? {}
+                            : {
+                                hrefAsignar: conPeriodo(
+                                  `/presupuesto/asignar/${fila.categoria.id}`,
+                                ),
+                              })}
+                        />
+                      ))}
+                    </div>
+                  </GrupoPresupuesto>
+                ))}
+              </ColapsoPresupuesto>
             </>
           )}
         </div>
