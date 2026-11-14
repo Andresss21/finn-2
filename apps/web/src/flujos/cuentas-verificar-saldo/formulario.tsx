@@ -19,7 +19,12 @@ import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { CerrarFlujoAlMontar } from '../../componentes/navegacion/flujo-de-ruta';
 import { useReemplazarBusqueda } from '../../componentes/navegacion/use-reemplazar-busqueda';
-import { centavosATextoDecimal, formatearFecha, formatearMonto } from '../../formato';
+import {
+  centavosATextoDecimal,
+  completarDecimales,
+  formatearFecha,
+  formatearMonto,
+} from '../../formato';
 import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -109,7 +114,8 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
   const siguiente = useRef<Paso | 'vivo' | null>(null);
   // Diferencia en vivo (CTA-07): la previsualización de OP-53 con lo escrito; la cifra la dice el servidor (PF-3).
   const [vivo, setVivo] = useState<{ clave: string; propuesta: Vista['propuesta'] }>();
-  const claveVivo = JSON.stringify([c.fecha, c.saldo, c.signo]);
+  // [C-45] Al salir, el saldo se completa a dos decimales («175» → «175.00»): es el mismo monto y no pide otra diferencia.
+  const claveVivo = JSON.stringify([c.fecha, completarDecimales(c.saldo), c.signo]);
   const enVuelo = useRef(claveVivo);
   const pedidaVivo = useRef('');
   /** Cuántas transacciones marca la verificación que se confirma: lo que dijo el servidor al revisar (PF-3). */

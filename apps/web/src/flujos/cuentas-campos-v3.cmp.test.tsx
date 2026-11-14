@@ -194,6 +194,12 @@ const verificar = (accion = vi.fn(ok)) => (
   />
 );
 
+/** Un botón apagado (`aria-disabled`) se toca con el teclado: el puntero de Playwright espera a que se habilite. */
+async function tocar(b: HTMLElement): Promise<void> {
+  b.focus();
+  await userEvent.keyboard('{Enter}');
+}
+
 async function escribir(el: HTMLElement, texto: string): Promise<void> {
   await userEvent.clear(el);
   await userEvent.type(el, texto);
@@ -243,7 +249,7 @@ describe('PRU-CMP-CTA pantallas de Cuentas con los campos v3', () => {
     await expect.poll(() => guardar().getAttribute('aria-disabled')).toBe('true');
     expect(guardar().disabled).toBe(false);
     expect(descrito(guardar())).toBe(base.corregirCampos(1));
-    await userEvent.click(guardar());
+    await tocar(guardar());
     await expect.poll(() => filaDe(nombre).dataset['error']).toBe('');
     await expect.poll(() => document.activeElement).toBe(nombre);
     expect(accion).not.toHaveBeenCalled();
@@ -285,7 +291,7 @@ describe('PRU-CMP-CTA pantallas de Cuentas con los campos v3', () => {
     const guardar = () => boton(nodo, tcu.guardarCuota);
     expect(guardar().getAttribute('aria-disabled')).toBe('true');
     expect(descrito(guardar())).toBe(base.corregirCampos(4));
-    await userEvent.click(guardar());
+    await tocar(guardar());
     await expect.poll(() => filaDe(origen).dataset['error']).toBe('');
     expect(filaDe(origen).textContent).toContain(tcu.elegirOrigen);
     await expect.poll(() => document.activeElement?.closest('[role=radiogroup]')).toBe(origen);
@@ -307,7 +313,7 @@ describe('PRU-CMP-CTA pantallas de Cuentas con los campos v3', () => {
     await escribir(fecha, '31022027');
     expect(fecha.value).toBe('31/02/2027');
     expect(filaDe(fecha).textContent).toContain(base.fechaNoExiste);
-    await userEvent.click(pagarBoton());
+    await tocar(pagarBoton());
     expect(pagarTarjeta).not.toHaveBeenCalled();
     await expect.poll(() => filaDe(desde).dataset['error']).toBe('');
 
@@ -340,13 +346,13 @@ describe('PRU-CMP-CTA pantallas de Cuentas con los campos v3', () => {
     await expect.poll(() => nodo.querySelector('[data-diferencia-vivo]')).not.toBeNull();
     expect(ver().getAttribute('aria-disabled')).toBeNull();
     await userEvent.click(ver());
-    await expect.poll(() => nodo.querySelectorAll('.control-fila')).toHaveLength(2);
+    await expect.poll(() => nodo.querySelectorAll('.control-fila').length, { timeout: 3000 }).toBe(2);
     const fila = nodo.querySelector('.control-fila') as HTMLElement;
     expect(enGrupo(fila)).toBe(true);
     const casilla = fila.querySelector('input[type=checkbox]') as HTMLInputElement;
     expect(casilla.checked).toBe(false);
     expect(fila.querySelector('.control-cifra')?.textContent).toBe('−$12.50');
-    await userEvent.click(fila.querySelector('.control-nombre') as HTMLElement);
+    await userEvent.click(fila);
     expect(casilla.checked).toBe(true);
   });
 
@@ -367,7 +373,7 @@ describe('PRU-CMP-CTA pantallas de Cuentas con los campos v3', () => {
     expect(revisar.disabled).toBe(false);
     expect(revisar.getAttribute('aria-disabled')).toBe('true');
     expect(descrito(revisar)).toBe(tc.falta);
-    await userEvent.click(revisar);
+    await tocar(revisar);
     expect(iniciar).not.toHaveBeenCalled();
     await expect.poll(() => document.activeElement).toBe(boton(nodo, tc.elegirArchivo));
   });
@@ -394,7 +400,7 @@ describe('PRU-CMP-CTA pantallas de Cuentas con los campos v3', () => {
     const filas = grupo.querySelectorAll('.control-fila');
     expect(filas).toHaveLength(2);
     expect(grupo.querySelector<HTMLInputElement>('input[value=devolver]')?.checked).toBe(true);
-    await userEvent.click(filas[1]?.querySelector('.control-nombre') as HTMLElement);
+    await userEvent.click(filas[1] as HTMLElement);
     expect(grupo.querySelector<HTMLInputElement>('input[value=dejar]')?.checked).toBe(true);
   });
 
