@@ -60,7 +60,8 @@ afterEach(() => {
   sessionStorage.clear();
   delete document.documentElement.dataset['theme'];
   vi.mocked(asignarEnCategoria).mockClear();
-  vi.mocked(moverDinero).mockClear();
+  vi.mocked(moverDinero).mockReset();
+  vi.mocked(moverDinero).mockImplementation(() => new Promise(() => undefined));
   vi.mocked(crearEnEstructura).mockClear();
 });
 
@@ -247,6 +248,9 @@ describe('PRU-CMP-PRES Presupuesto con los campos v3', () => {
   });
 
   it('PRU-CMP-PRES-803 [C-45, FT-11, CA-11.2] CA-K3-3: D-6 en Mover dinero: mover más que el Disponible no marca error en el campo; con origen, destino y monto se pide el impacto al servidor', async () => {
+    vi.mocked(moverDinero).mockImplementation(
+      previsualiza() as unknown as typeof moverDinero,
+    );
     const nodo = await montar(mover());
     await elegir(de(nodo, tm.origen), 'Salidas');
     await elegir(de(nodo, tm.destino), 'Super');
@@ -254,11 +258,10 @@ describe('PRU-CMP-PRES Presupuesto con los campos v3', () => {
     await userEvent.type(monto, '1500.456');
     expect(monto.value).toBe('1,500.45');
     await vi.waitFor(() => {
-      expect(moverDinero).toHaveBeenCalledTimes(1);
+      expect(moverDinero).toHaveBeenLastCalledWith(
+        expect.objectContaining({ origenId: 'c3', destinoId: 'c1', monto: '1500.45' }),
+      );
     });
-    expect(moverDinero).toHaveBeenLastCalledWith(
-      expect.objectContaining({ origenId: 'c3', destinoId: 'c1', monto: '1500.45' }),
-    );
     expect(filaDe(monto).dataset['error']).toBeUndefined();
   });
 
@@ -362,12 +365,14 @@ describe('PRU-CMP-CATEG categorías con los campos v3', () => {
     'PRU-CMP-CATEG-738 [C-45] CA-K3-14: en el tema %s Asignar, Mover, Sacar, Archivar, Fusionar y Nueva categoría no tienen violaciones de axe',
     async (tema) => {
       document.documentElement.dataset['theme'] = tema;
+      // El impacto queda pedido: el botón de confirmar no cambia de color mientras axe mide.
+      const enVuelo = () => vi.fn(() => new Promise<never>(() => undefined));
       const raices = [
         await montar(asignar()),
         await montar(mover()),
         await montar(sacar()),
-        await montar(archivar()),
-        await montar(fusionar()),
+        await montar(archivar(enVuelo())),
+        await montar(fusionar(enVuelo())),
         await montar(estructura()),
       ];
       for (const raiz of raices) {

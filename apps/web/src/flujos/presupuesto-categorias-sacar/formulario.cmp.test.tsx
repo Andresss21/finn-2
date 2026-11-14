@@ -89,14 +89,16 @@ describe('PRU-CMP-CATEG', () => {
   it('PRU-CMP-CATEG-106 [CA-19.4] elegir otra categoría y otro monto envía también el Asignado del destino que vio', async () => {
     const accion = vi.fn(ok);
     const nodo = montar(<FormularioSacar {...base} accion={accion} />);
-    const select = nodo.querySelector('select') as HTMLSelectElement;
-    const salidas = [...select.options].find((x) => x.text === 'Salidas');
-    await userEvent.selectOptions(select, (salidas as HTMLOptionElement).value);
+    // [C-45] Con dos destinos, «Poner en» es un segmentado en su fila (CAMPOS-V3 §6); al salir, el monto se completa a dos decimales.
+    const salidas = [
+      ...nodo.querySelectorAll<HTMLElement>(`[role=radiogroup][aria-label="${t.destino}"] [role=radio]`),
+    ].find((x) => x.textContent === 'Salidas');
+    await userEvent.click(salidas as HTMLElement);
     await userEvent.fill(montoEscrito(nodo), '10');
     await userEvent.click(boton(nodo, t.sacar));
     expect(accion).toHaveBeenLastCalledWith({
       categoriaId: ID,
-      monto: '10',
+      monto: '10.00',
       destino: { categoriaId: OTRA },
       esperado: { asignacionOrigen: '25.00', asignacionDestino: '10.00' },
       modo: 'confirmar',

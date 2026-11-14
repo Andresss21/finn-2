@@ -68,14 +68,31 @@ const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement => {
 const tocar = async (nodo: HTMLElement, texto: string): Promise<void> => {
   await userEvent.click(boton(nodo, texto));
 };
-/** Elige `opcion` en el `<select>` nativo cuya etiqueta contiene `grupo`. */
+/**
+ * [C-45] Elige `opcion` en la selección v3 cuyo rótulo contiene `grupo`: con 3 opciones o menos es un segmentado en su fila; con
+ * más, la lista propia que abre su disparador (CAMPOS-V3 §6).
+ */
 const elegir = async (nodo: HTMLElement, grupo: string, opcion: string): Promise<void> => {
+  const segmentado = [...nodo.querySelectorAll<HTMLElement>('[role=radiogroup]')].find((g) =>
+    g.getAttribute('aria-label')?.includes(grupo),
+  );
+  if (segmentado !== undefined) {
+    const radio = [...segmentado.querySelectorAll<HTMLElement>('[role=radio]')].find(
+      (r) => r.textContent === opcion,
+    );
+    if (radio === undefined) throw new Error(`no hay «${opcion}» en «${grupo}»`);
+    await userEvent.click(radio);
+    return;
+  }
   const etiqueta = [...nodo.querySelectorAll('label')].find((l) => l.textContent.includes(grupo));
-  const select = nodo.querySelector<HTMLSelectElement>(`select[id="${etiqueta?.htmlFor}"]`);
-  if (select === null) throw new Error(`no hay «${grupo}»`);
-  const o = [...select.options].find((x) => x.text === opcion);
+  const disparador = etiqueta?.control;
+  if (!(disparador instanceof HTMLElement)) throw new Error(`no hay «${grupo}»`);
+  await userEvent.click(disparador);
+  const o = [...document.querySelectorAll<HTMLElement>('[role=option]')].find((x) =>
+    x.textContent.startsWith(opcion),
+  );
   if (o === undefined) throw new Error(`no hay «${opcion}» en «${grupo}»`);
-  await userEvent.selectOptions(select, o.value);
+  await userEvent.click(o);
 };
 
 const PROG = [{ id: PROGRAMADA, comercio: 'Gimnasio', monto: 3000 as never }];
@@ -138,7 +155,8 @@ describe('PRU-CMP-CATEG', () => {
 
     await elegir(nodo, 'Programada', t.pasarla);
     expect(accion).toHaveBeenCalledTimes(1);
-    expect(boton(nodo, t.archivarNombre('Gimnasio')).disabled).toBe(true);
+    // [C-45] Sin el destino, el botón se ve apagado (`aria-disabled`) y dice qué falta (CAMPOS-V3 §11).
+    expect(boton(nodo, t.archivarNombre('Gimnasio')).getAttribute('aria-disabled')).toBe('true');
   });
 
   it('PRU-CMP-CATEG-103 [CA-E4-1, CA-E4-24] cambiar una decisión vuelve a pedir el impacto al servidor con lo elegido y una programada puede pasar a otra categoría', async () => {

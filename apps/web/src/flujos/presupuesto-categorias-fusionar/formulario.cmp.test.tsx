@@ -77,14 +77,31 @@ const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement => {
 const tocar = async (nodo: HTMLElement, texto: string): Promise<void> => {
   await userEvent.click(boton(nodo, texto));
 };
-/** Elige `opcion` en el `<select>` nativo cuya etiqueta contiene `grupo`. */
+/**
+ * [C-45] Elige `opcion` en la selección v3 cuyo rótulo contiene `grupo`: con 3 opciones o menos es un segmentado en su fila; con
+ * más, la lista propia que abre su disparador (CAMPOS-V3 §6).
+ */
 const elegirDestinoEn = async (nodo: HTMLElement, grupo: string, opcion: string): Promise<void> => {
+  const segmentado = [...nodo.querySelectorAll<HTMLElement>('[role=radiogroup]')].find((g) =>
+    g.getAttribute('aria-label')?.includes(grupo),
+  );
+  if (segmentado !== undefined) {
+    const radio = [...segmentado.querySelectorAll<HTMLElement>('[role=radio]')].find(
+      (r) => r.textContent === opcion,
+    );
+    if (radio === undefined) throw new Error(`no hay «${opcion}» en «${grupo}»`);
+    await userEvent.click(radio);
+    return;
+  }
   const etiqueta = [...nodo.querySelectorAll('label')].find((l) => l.textContent.includes(grupo));
-  const select = nodo.querySelector<HTMLSelectElement>(`select[id="${etiqueta?.htmlFor}"]`);
-  if (select === null) throw new Error(`no hay «${grupo}»`);
-  const o = [...select.options].find((x) => x.text === opcion);
+  const disparador = etiqueta?.control;
+  if (!(disparador instanceof HTMLElement)) throw new Error(`no hay «${grupo}»`);
+  await userEvent.click(disparador);
+  const o = [...document.querySelectorAll<HTMLElement>('[role=option]')].find((x) =>
+    x.textContent.startsWith(opcion),
+  );
   if (o === undefined) throw new Error(`no hay «${opcion}» en «${grupo}»`);
-  await userEvent.selectOptions(select, o.value);
+  await userEvent.click(o);
 };
 const elegirDestino = (nodo: HTMLElement, nombre: string): Promise<void> =>
   elegirDestinoEn(nodo, 'Fusionar con', nombre);
@@ -119,7 +136,8 @@ describe('PRU-CMP-CATEG', () => {
       t.metaDescartada('Café'),
     ])
       expect(nodo.textContent).toContain(linea);
-    expect(boton(nodo, t.fusionar).disabled).toBe(true);
+    // [C-45] Sin destino, «Fusionar» se ve apagado (`aria-disabled`) y dice qué falta (CAMPOS-V3 §11).
+    expect(boton(nodo, t.fusionar).getAttribute('aria-disabled')).toBe('true');
     expect(accion).not.toHaveBeenCalled();
     expect(nodo.textContent).toContain(t.destino);
   });
