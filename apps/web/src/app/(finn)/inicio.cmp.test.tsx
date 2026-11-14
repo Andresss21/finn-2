@@ -347,6 +347,24 @@ describe('PRU-CMP-INICIO entrega 4', () => {
     ],
   };
 
+  it('PRU-CMP-INICIO-704 [C-51, FT-08] CA-L-11: con movimientos por revisar no hay ningún aviso en línea: la Bandeja es la primera fila de «Necesita tu atención», con «2 por revisar» y su flecha, y lleva a /bandeja', () => {
+    const nodo = montar(
+      <PantallaInicio
+        dto={dto({
+          bandejaPorRevisar: 2,
+          atencion: {
+            faltaReservar: [{ tarjeta: { id: 't-1', nombre: 'Visa Oro' }, monto: centavos(1875) }],
+          },
+        })}
+      />,
+    );
+    expect(nodo.querySelector('[data-aviso-en-linea]')).toBeNull();
+    const bandeja = enlace(nodo, t.bandeja(2));
+    expect(bandeja.getAttribute('href')).toBe('/bandeja');
+    expect(bandeja.parentElement?.firstElementChild).toBe(bandeja);
+    expect(bandeja.querySelector('[data-icono="chevR"]')).not.toBeNull();
+  });
+
   it('PRU-CMP-INICIO-701 [CA-E4-12] ninguna fila de «Necesita tu atención» tiene un monto (data-rol de cifra), a 390 y a 1440 px', () => {
     for (const ancho of [390, 1440]) {
       const nodo = montar(<PantallaInicio dto={dto({ atencion })} />);
