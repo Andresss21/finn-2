@@ -2,7 +2,7 @@
 // [CH-271] Selección v3 (C-45, CAMPOS-V3 §6): dentro de `GrupoCampos`, `Seleccion` y `SeleccionNativa` son una fila con un
 // disparador y una lista propia en todos los navegadores, nunca el `<select>` del sistema. Patrón *listbox* de ARIA: el foco
 // pasa a la lista, que marca la activa con `aria-activedescendant`, y vuelve al disparador al cerrar. Con 3 opciones o menos,
-// segmentado, salvo `soloLista` (filas de categoría de C-49 §2).
+// segmentado, salvo `soloLista` (filas de categoría de C-49 §2, CH-280).
 import {
   Fragment,
   useEffect,

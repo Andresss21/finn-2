@@ -64,7 +64,7 @@ const fmt = (c: Centavos): string => formatearMonto(c);
 
 /**
  * Con alguien y la parte de Vos en $0.00 el gasto entero va a Por cobrar: no hay línea de Vos ni de categorías (OP-20: cada
- * línea > 0, CB-28) y «¿En qué categorías?» no pide nada. C-45 y C-49 no lo dicen; se sigue de OP-20.
+ * línea > 0, CB-28) y «¿En qué categorías?» no pide nada [CH-280].
  */
 const sinParteMia = (c: Campos, mia: Centavos): boolean =>
   c.conAlguien && c.personas.length > 0 && mia <= 0;
