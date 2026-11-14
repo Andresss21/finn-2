@@ -1,6 +1,7 @@
 // Botón de Finn (05 §10.7). `<button>` nativo; deshabilitado con motivo visible; enviando sin perder el foco (4.3).
 import { useId, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Button } from '../../components/ui/button';
+import { cn } from '../../components/ui/utils';
 import { base } from '../../textos/base';
 
 type VarianteBoton = 'principal' | 'secundaria' | 'peligro' | 'discreta' | 'pastilla';
@@ -59,7 +60,7 @@ export function Boton({
       type={tipo}
       disabled={deshabilitado}
       aria-disabled={enviando || apagado ? true : undefined}
-      className={apagado && !enviando ? `${APAGADO} ${className ?? ''}` : className}
+      className={apagado && !enviando ? cn(APAGADO, className) : className}
       aria-describedby={conMotivo ? idMotivo : resto['aria-describedby']}
       // Enviando no usa `disabled` (se perdería el foco): se ignora el clic y el envío del formulario.
       onClick={

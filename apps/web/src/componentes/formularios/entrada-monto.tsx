@@ -79,8 +79,7 @@ function EntradaMontoV3({
   const cursor = useRef<number | undefined>(undefined);
   const id = useId();
   // En el momento: lo que no se arregla escribiendo más (CAMPOS-V3 §5). Lo vacío y el cero los marca quien guarda.
-  const mensaje =
-    normalizarMontoEscrito(valor).estado === 'invalido' ? base.montoMaximoV3 : error;
+  const mensaje = normalizarMontoEscrito(valor).estado === 'invalido' ? base.montoMaximoV3 : error;
 
   useLayoutEffect(() => {
     const el = entrada.current;

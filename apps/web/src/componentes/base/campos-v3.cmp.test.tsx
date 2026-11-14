@@ -180,9 +180,7 @@ describe('PRU-CMP-VAL campos v3', () => {
     const raiz = montar(<Formulario errorNombre="Escribí un nombre." />);
     const nombre = entrada(raiz, 'nombre');
     const f = fila(nombre);
-    expect(getComputedStyle(f).backgroundColor).toBe(
-      token('backgroundColor', '--problema-fondo'),
-    );
+    expect(getComputedStyle(f).backgroundColor).toBe(token('backgroundColor', '--problema-fondo'));
     expect(getComputedStyle(rotulo(nombre)).color).toBe(token('color', '--problema-texto'));
     expect(nombre.getAttribute('aria-invalid')).toBe('true');
     const mensaje = f.querySelector('.campo-error');
@@ -283,8 +281,7 @@ describe('PRU-CMP-VAL campos v3', () => {
     expect(forzado?.estilo.getPropertyValue('outline-style')).toBe('solid');
     expect(forzado?.estilo.getPropertyValue('outline-color').toLowerCase()).toBe('canvastext');
     const reducido = todas.find(
-      (r) =>
-        r.condicion.includes('prefers-reduced-motion: reduce') && r.selector === '.campo-fila',
+      (r) => r.condicion.includes('prefers-reduced-motion: reduce') && r.selector === '.campo-fila',
     );
     expect(reducido?.estilo.getPropertyValue('transition-property')).toBe('none');
   });

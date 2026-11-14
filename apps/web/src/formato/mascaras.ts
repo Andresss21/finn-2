@@ -8,7 +8,10 @@ function mascara(texto: string, enteros: number): string {
   const punto = t.indexOf('.');
   const entera = (punto < 0 ? t : t.slice(0, punto)).replace(/^0+(?=\d)/, '').slice(0, enteros);
   if (punto < 0) return entera;
-  return `${entera === '' ? '0' : entera}.${t.slice(punto + 1).replace(/\./g, '').slice(0, 2)}`;
+  return `${entera === '' ? '0' : entera}.${t
+    .slice(punto + 1)
+    .replace(/\./g, '')
+    .slice(0, 2)}`;
 }
 
 /** Monto escrito → valor sin comas: «1,236.456» → «1236.45»; máximo 9 cifras enteras (el exceso se marca, no se corta). */
