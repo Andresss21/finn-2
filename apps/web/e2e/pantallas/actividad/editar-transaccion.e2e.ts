@@ -4,7 +4,6 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
-import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { cuentasGestion } from '../../../src/textos/cuentas-gestion.ts';
@@ -38,14 +37,25 @@ async function irAEditar(page: Page, texto: string): Promise<void> {
   await page.locator('[data-fila-transaccion]').filter({ hasText: texto }).first().click();
   await expect(page.getByRole('link', { name: t.editar })).toBeVisible();
   await page.getByRole('link', { name: t.editar }).click();
-  await expect(page.getByRole('heading', { level: 1, name: t.editarTitulo })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: t.editarGasto })).toBeVisible();
 }
 
-const monto = (page: Page) => page.getByRole('textbox', { name: g.total, exact: true });
+// [CH-279] Campos v3 (C-45, C-49 §5): todas las de este archivo editan un gasto («Editar gasto»); el total es el billete y, con
+// pocas opciones, la cuenta y la categoría son segmentados en su fila (CA-K3-6)
+const monto = (page: Page) => page.getByRole('textbox', { name: g.totalV3, exact: true });
+/** Elige después de que React hidrató el control (un toque anterior se perdería). */
+async function elegir(page: Page, grupo: string, nombre: string): Promise<void> {
+  const opcion = page.getByRole('radiogroup', { name: grupo }).getByRole('radio', { name: nombre });
+  await expect
+    .poll(() => opcion.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))))
+    .toBe(true);
+  await opcion.click();
+  await expect(opcion).toHaveAttribute('aria-checked', 'true');
+}
 const guardar = (page: Page) => page.getByRole('button', { name: t.guardar });
 const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').first();
 const terminada = (page: Page) =>
-  expect(page.getByRole('heading', { level: 1, name: t.editarTitulo })).toHaveCount(0);
+  expect(page.getByRole('heading', { level: 1, name: t.editarGasto })).toHaveCount(0);
 
 // ESC-17 hasta el paso 2 (hoy 12 feb): D60, T70 y D20 de Super, el 10 feb
 const HOY17 = '2027-02-12';
@@ -135,7 +145,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
   }) => {
     await preparar(ESC17, HOY17);
     await irAEditar(page, '$70.00');
-    await elegirOpcion(page, g.cuenta, 'Ahorro');
+    await elegir(page, g.cuentaV3, 'Ahorro');
     await guardar(page).click();
     await terminada(page);
 
@@ -193,7 +203,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
   }) => {
     await preparar(ESC47, '2027-02-16');
     await irAEditar(page, '$40.00');
-    await elegirOpcion(page, g.categoriaDeParte('1'), 'Casa');
+    await elegir(page, g.categoria, 'Casa');
     await guardar(page).click();
     await expect(page.getByText(t.conciliadaInformacion('T'))).toBeVisible();
     await page.getByRole('button', { name: t.confirmar }).click();
@@ -219,7 +229,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
       '2027-02-12',
     );
     await irAEditar(page, '$40.00');
-    await expect(page.locator('[data-cuenta-fija]')).toContainText('Ahorro');
+    await expect(page.locator('[data-dato-fijo="cuenta"]')).toContainText('Ahorro');
     await expect(page.getByText(/devoluci/i)).toBeVisible();
   });
 
@@ -247,12 +257,13 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
       '2027-02-12',
     );
     await irAEditar(page, '$50.00');
-    await page.getByRole('textbox', { name: g.montoDeParte('1') }).fill('40');
-    await page.getByRole('textbox', { name: g.montoDeParte('2') }).fill('10');
+    // «¿Quién paga?» en Montos: Vos (Super) $20.00 y Ana $30.00
+    await page.getByRole('textbox', { name: g.tuParte }).fill('40');
+    await page.getByRole('textbox', { name: g.montoDe('Ana') }).fill('10');
     await guardar(page).click();
 
     await expect(page.getByText(/\$15\.00 cobrado/)).toBeVisible();
-    await expect(page.getByRole('heading', { level: 1, name: t.editarTitulo })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: t.editarGasto })).toBeVisible();
   });
 
   test('PRU-E2E-TX-417 [CA-25.7] RUTA-/actividad/[transaccionId]/editar si otra pestaña editó la transacción después de abrir el flujo, al enviar responde conflicto_desactualizado', async ({
@@ -275,22 +286,19 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
     await expect(page.getByRole('button', { name: formularios.usarValorActual })).toBeVisible();
   });
 
-  test('PRU-E2E-TX-470 [CA-25.1] la edición pone la cuenta en una selección de 52 px con su detalle, Fecha y Total en dos columnas, las partes en filas compactas y «Guardar cambios» en el pie fijo', async ({
+  test('PRU-E2E-TX-470 [CA-25.1, C-45] la edición pone el total en el billete, la cuenta, la fecha y el comercio en un grupo de filas, las partes en «¿Quién paga?» y «¿En qué categorías?» y «Guardar cambios» en el pie fijo', async ({
     page,
   }) => {
     await preparar(ESC17, HOY17);
     await irAEditar(page, '$70.00');
-    const cuenta = page.getByLabel(g.cuenta, { exact: true });
-    await expect(cuenta.locator('xpath=..')).toContainText(g.deudaDeCuenta('$70.00'));
-    expect((await cuenta.locator('xpath=..').boundingBox())?.height).toBe(52);
-    const fecha = await page.getByLabel(g.fecha).boundingBox();
-    const total = await page.getByRole('textbox', { name: g.total, exact: true }).boundingBox();
-    expect(Math.abs((fecha?.y ?? 0) - (total?.y ?? 99))).toBeLessThan(2);
-    expect(total?.x ?? 0).toBeGreaterThan((fecha?.x ?? 0) + (fecha?.width ?? 0) - 1);
-    const destino = await page.getByLabel(g.categoriaDeParte('1'), { exact: true }).boundingBox();
-    const parte = await page.getByRole('textbox', { name: g.montoDeParte('1') }).boundingBox();
-    expect(Math.abs((destino?.y ?? 0) - (parte?.y ?? 99))).toBeLessThan(2);
-    expect(parte?.width).toBe(120);
+    await expect(page.locator('.campo-billete')).toHaveCount(1);
+    await expect(monto(page)).toHaveValue('70.00');
+    const datos = page.locator('.grupo-campos').first();
+    await expect(datos.getByRole('radiogroup', { name: g.cuentaV3 })).toBeVisible();
+    await expect(datos.getByLabel(g.fecha)).toBeVisible();
+    await expect(datos.getByRole('textbox', { name: g.comercio })).toBeVisible();
+    await expect(page.getByRole('heading', { name: g.quienPaga })).toBeVisible();
+    await expect(page.getByRole('heading', { name: g.enQueCategorias })).toBeVisible();
     const pie = await guardar(page).boundingBox();
     const alto = page.viewportSize()?.height ?? 0;
     expect((pie?.y ?? 0) + (pie?.height ?? 0)).toBeGreaterThan(alto - 40);
@@ -326,7 +334,7 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
     await page.getByRole('button', { name: t.volverAEditar }).click();
 
     await page.getByLabel(g.fecha).fill('2027-02-03');
-    await elegirOpcion(page, g.categoriaDeParte('1'), 'Casa');
+    await elegir(page, g.categoria, 'Casa');
     await guardar(page).click();
     await expect(page.getByText(t.conciliadaInformacion('T'))).toBeVisible();
     await expect(page.getByText(t.conciliadaAdvertencia('T', 'la fecha'))).toHaveCount(0);
@@ -369,8 +377,8 @@ test.describe('PRU-E2E-TX edición de una transacción', () => {
     await irAEditar(page, '$100.00');
     // Los campos están (no el formulario vacío de ACT-28) y los tres bloqueados dicen «Solo lectura»
     await expect(page.getByLabel(g.fecha)).toBeDisabled();
-    await expect(page.getByRole('textbox', { name: g.total, exact: true })).toBeDisabled();
-    await expect(page.locator('[data-cuenta-fija]')).toContainText(t.soloLectura);
+    await expect(monto(page)).toBeDisabled();
+    await expect(page.locator('[data-dato-fijo="cuenta"]')).toContainText(t.soloLectura);
     await expect(page.getByRole('textbox', { name: g.comercio })).toBeEnabled();
     await expect(guardar(page)).toBeEnabled();
   });

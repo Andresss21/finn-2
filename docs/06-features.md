@@ -2268,7 +2268,7 @@ Reglas comunes a todas las fichas:
 - Operaciones: OP-28.
 - Consultas: `detalleTransaccion()`, `formulario` (`editar_transaccion`), `sugerencia` (CP-3).
 - Rutas: `/actividad/[transaccionId]`, `/actividad/[transaccionId]/editar`.
-- Componentes: `Monto`, `CampoLineas`, `EntradaMonto`, `EntradaFecha`, `ConfirmacionImpacto`.
+- Componentes: `Monto`, `CampoLineas`, `EntradaMonto`, `EntradaFecha`, `ConfirmacionImpacto`. **[CH-279]** Con los campos v3 (C-45), un gasto se edita con «¿Quién paga?» y «¿En qué categorías?» de FT-21 en lugar de `CampoLineas` (C-49 §5, CA-R-13): «Editar gasto», «Varias» en Montos con sus montos, una columna de 720; una parte con cobros o devoluciones no cambia de destino ni se quita (E3-16).
 
 **Reglas.** 01 OP-28 (tabla de campos), I6, supuesto 5 (clave de orden al cambiar la fecha), P12 y N6 (conciliada), criterio YNAB de 2.3 (cambio de medio), A-1, CB-24, CB-30, CB-32; 04 §6.7.2 (`restricciones`), §6.14.4 (archivadas marcadas).
 
@@ -4974,4 +4974,5 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-272** (corrección posterior de TA-597, 13 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-46 y C-48). FT-18: grupos que se colapsan, el asa con la barra «Mover» (Subir y Bajar que cruzan de grupo, Otro grupo, Listo) en lugar de las flechas de las filas, el resultado debajo de lo movido o creado con «Deshacer» y «Cerrar este aviso», y sus textos. FT-09: C-48, «Editar estructura» en los tres puntos del teléfono. Los CA no cambian. Marca **[CH-272]**.
 - **CH-275** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-46). FT-18: ordenar arrastrando desde el asa (4 px), entre grupos y con grupos colapsados, con sus textos y anuncios. Los CA no cambian. Marca **[CH-275]**.
 - **CH-277** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-45 y C-49). FT-21: el paso 3 del flujo son «¿Quién paga?» y «¿En qué categorías?»; los textos de C-45 y C-49; CA-21.5 y CA-21.6 se marcan en el cliente antes de enviar y el servidor valida igual. CA-21.1 y CA-21.2 se cumplen con «Varias». Marcas **[CH-277]**.
+- **CH-279** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-45 y C-49). FT-25: los campos v3 y, para un gasto, las dos secciones de FT-21 (C-49 §5, CA-R-13), con los bloqueos de E3-16 de antemano. Marcas **[CH-279]**.
 - **CH-278** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-50). FT-18: el resultado de mover, crear, deshacer y desarchivar es la etiqueta de resultado sobre la fila, que se va sola, con ↶ en la fila después de mover, y sus textos. Los CA no cambian. Marca **[CH-278]**.

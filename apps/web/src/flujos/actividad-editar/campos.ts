@@ -3,7 +3,14 @@
 // el valor que se vio en `esperado` (04 §4.6.2). La parte lleva su `lineaId` para que el servidor la reconozca (CB-03).
 import type { Centavos } from '@finn/dominio/valores';
 import { centavosATextoDecimal } from '../../formato';
-import { destinoDe, monto, type Parte } from '../registrar-gasto/campos';
+import { sumarMontosEscritos } from '../../formularios/normalizar-monto';
+import {
+  destinoDe,
+  filaVacia,
+  monto,
+  type CamposDeRegistro,
+  type Parte,
+} from '../registrar-gasto/campos';
 import type { Campos } from '../bandeja-movimiento/campos';
 
 export { contrato, type Campos } from '../bandeja-movimiento/campos';
@@ -53,6 +60,47 @@ export function camposIniciales(d: DatosDeTransaccion): Campos {
   };
 }
 
+/** [C-49 §5] Un gasto se edita con «¿Quién paga?» y «¿En qué categorías?»: los campos de esas secciones más los de OP-28. */
+export type CamposDeEdicion = Campos & Omit<CamposDeRegistro, keyof Campos>;
+
+/**
+ * [C-49 §5, CA-R-13] Las partes del gasto en las dos secciones: las de categoría son las filas («Varias» con dos o más, en Montos y
+ * ninguna como «Lo que queda»); las de por cobrar, las personas en Montos, y Vos lo que va a categorías (la suma de lo que ya está).
+ */
+export function conSecciones(c: Campos): CamposDeEdicion {
+  const enCategoria = c.lineas.filter((l) => l.destino === 'categoria');
+  const porCobrar = c.lineas.filter((l) => l.destino === 'por_cobrar');
+  const linea = (l: Parte) => {
+    const id = lineaIdDe(l);
+    return id === undefined ? {} : { lineaId: id };
+  };
+  const mia = sumarMontosEscritos(enCategoria.map((l) => l.monto));
+  return {
+    ...c,
+    conAlguien: porCobrar.length > 0,
+    nuevas: [],
+    vos: { clave: 'vos', monto: mia === undefined ? '' : centavosATextoDecimal(mia), pct: '' },
+    personas: porCobrar.map((l) => ({ clave: l.deudorId, monto: l.monto, pct: '', ...linea(l) })),
+    modoPersonas: 'montos',
+    varias: enCategoria.length > 1,
+    modoCategorias: 'montos',
+    filas:
+      enCategoria.length === 0
+        ? [filaVacia()]
+        : enCategoria.map((l) => ({
+            categoriaId: l.categoriaId,
+            monto: l.monto,
+            pct: '',
+            auto: false,
+            ...linea(l),
+          })),
+  };
+}
+
+/** Las partes como se comparan: sin importar el orden, que al editar sale de las dos secciones. */
+const partes = (xs: readonly Parte[]): string =>
+  JSON.stringify(xs.map((l) => JSON.stringify([l.monto, destinoDe(l)])).sort());
+
 const vacioANulo = (texto: string): string | null => (texto.trim() === '' ? null : texto.trim());
 
 /** La entrada de OP-28 con lo que cambió respecto de `base`; `undefined` si no cambió nada. `visto` pisa lo que se vio de `base`. */
@@ -62,10 +110,7 @@ export function entradaDeEdicion(
   c: Campos,
   visto: Partial<Record<string, unknown>> = {},
 ): Record<string, unknown> | undefined {
-  const lineasCambiaron =
-    c.tipo === 'gasto' &&
-    JSON.stringify(c.lineas.map((l) => [l.monto, destinoDe(l)])) !==
-      JSON.stringify(base.lineas.map((l) => [l.monto, destinoDe(l)]));
+  const lineasCambiaron = c.tipo === 'gasto' && partes(c.lineas) !== partes(base.lineas);
   const cambios: Record<string, unknown> = {
     ...(c.cuentaId === base.cuentaId ? {} : { cuentaId: c.cuentaId }),
     ...(c.fecha === base.fecha ? {} : { fecha: c.fecha }),

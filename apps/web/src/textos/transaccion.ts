@@ -47,6 +47,8 @@ export const transaccion = {
   motivos: { monto: 'monto', fecha: 'fecha', cuenta: 'cuenta', eliminacion: 'eliminación' },
   archivada: actividad.archivada,
   editarTitulo: 'Editar transacción',
+  /** [C-49 §5] Editar un gasto: con «¿Quién paga?» y «¿En qué categorías?». */
+  editarGasto: 'Editar gasto',
   guardar: 'Guardar cambios',
   guardando: 'Guardando…',
   revisar: 'Revisá el impacto',

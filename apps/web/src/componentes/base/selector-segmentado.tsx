@@ -119,6 +119,8 @@ export function SelectorSegmentado({
             key={o.valor}
             type="button"
             role="radio"
+            // El valor de la opción, como el de un radio nativo (lo leen las E2E de Transferir)
+            value={o.valor}
             aria-checked={marcada}
             tabIndex={marcada || (activa === undefined && k === 0) ? 0 : -1}
             data-state={marcada ? 'checked' : 'unchecked'}

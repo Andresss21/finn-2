@@ -5,7 +5,7 @@
 // pulsación larga necesita una pantalla táctil.
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
-import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
+import { elegirEnFila, elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { generarTokenWebhook } from '../../ayudas/webhook.ts';
@@ -284,7 +284,7 @@ test.describe('PRU-E2E-BAND', () => {
       page.getByLabel(g.categoriaDeParte('1'), { exact: true }).locator('option:checked'),
     ).toHaveText('Supermercado');
     // Con la cuenta elegida, «Aprobar» guarda la categoría y aprueba por el camino normal de FT-35
-    await elegirOpcion(page, g.cuenta, 'T');
+    await elegirEnFila(page, g.cuentaV3, 'T');
     await page.getByRole('button', { name: /^Aprobar/ }).click();
     await expect(page.getByTestId('resultado')).toContainText('Supermercado');
   });

@@ -416,7 +416,9 @@ function Flujo({
         form={ID_FORMULARIO}
         enviando={enviando}
         textoEnviando={conCoincidencia ? t.revisar.confirmando : t.revisar.aprobando}
-        deshabilitado={!aprobar.enLinea || motivoFaltan !== undefined}
+        deshabilitado={!aprobar.enLinea}
+        // [C-45] CAMPOS-V3 §11: con faltantes se ve apagado y sigue tocable; al tocarlo, el contrato marca lo que falta
+        apagado={motivoFaltan !== undefined}
         className="w-full"
         {...(motivoAprobar === undefined ? {} : { motivoDeshabilitado: motivoAprobar })}
       >
@@ -434,7 +436,14 @@ function Flujo({
     <PaginaFlujoDeRuta {...marco} ancha acciones={pie}>
       <form
         id={ID_FORMULARIO}
-        onSubmit={(e) => void alEnviar(conCoincidencia)(e)}
+        onSubmit={(e) => {
+          // [C-45] Con faltantes no se envía: se marcan y el foco va al primero (CA-K3-13)
+          if (motivoFaltan === undefined) void alEnviar(conCoincidencia)(e);
+          else {
+            e.preventDefault();
+            void formulario.trigger(undefined, { shouldFocus: true });
+          }
+        }}
         noValidate
         className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8"
       >

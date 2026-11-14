@@ -4,7 +4,6 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
-import { seleccion } from '../../ayudas/seleccion-nativa.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { generarTokenWebhook } from '../../ayudas/webhook.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
@@ -68,18 +67,18 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(page.getByRole('region', { name: t.revisar.sms })).toBeVisible();
   });
 
-  test('PRU-E2E-BAND-191 [FT-35] la cuenta es una selección de 52 px con la deuda de la tarjeta, Fecha y Monto van en dos columnas con «$», sin «Se entiende como» ni «Fecha elegida», y el tipo es un selector segmentado', async ({
+  test('PRU-E2E-BAND-191 [FT-35, C-45] la cuenta, la fecha, el monto con «$» y el comercio son filas de un grupo v3 (la cuenta, con dos, un segmentado), sin «Se entiende como» ni «Fecha elegida», y el tipo es un selector segmentado', async ({
     page,
   }) => {
     await abrirElMovimiento(page);
-    const cuenta = seleccion(page, g.cuenta);
-    await expect(cuenta.locator('xpath=..')).toContainText(g.deudaDeCuenta('$0.00'));
-    expect((await cuenta.locator('xpath=..').boundingBox())?.height).toBe(52);
-    const fecha = await campo(page, g.fecha).boundingBox();
-    const monto = await campo(page, t.revisar.monto).boundingBox();
-    expect(Math.abs((fecha?.y ?? 0) - (monto?.y ?? 99))).toBeLessThan(2);
-    expect(monto?.x ?? 0).toBeGreaterThan((fecha?.x ?? 0) + (fecha?.width ?? 0) - 1);
-    await expect(campo(page, t.revisar.monto).locator('xpath=..')).toContainText('$');
+    const datos = page.locator('.grupo-campos').first();
+    const cuenta = datos.getByRole('radiogroup', { name: g.cuentaV3 });
+    await expect(cuenta.getByRole('radio', { name: 'T', exact: true })).toBeChecked();
+    await expect(datos.getByLabel(g.fecha, { exact: true })).toBeVisible();
+    await expect(datos.getByLabel(t.revisar.monto, { exact: true })).toBeVisible();
+    await expect(
+      campo(page, t.revisar.monto).locator('xpath=ancestor::*[contains(@class,"campo-fila")][1]'),
+    ).toContainText('$');
     await expect(page.getByText('Se entiende como')).toHaveCount(0);
     await expect(page.getByText('Fecha elegida')).toHaveCount(0);
     const tipo = page.getByRole('radiogroup', { name: t.revisar.tipo });
