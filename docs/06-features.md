@@ -2118,7 +2118,7 @@ Reglas comunes a todas las fichas:
 **Reglas.** 01 OP-20, P5, P10, N3, inv. 6, 8, 12, 20; 01 §4.17 (sugerencia por regla y por historial); 04 OP-20 y `DestinoLinea` (`deudorNuevo` reutiliza el deudor del mismo nombre); 05 §4.11 (borrador), §5.2 (montos), PF-3 (la suma la valida el servidor; el cliente solo ayuda a ver la diferencia).
 
 **Estados.**
-- Borrador recuperado: "Recuperamos lo que estabas escribiendo" y "Descartar borrador" (05 §4.11).
+- Borrador recuperado: "Recuperamos lo que estabas escribiendo" y "Descartar borrador" (05 §4.11). **[CH-286]** C-51: el aviso dice además "Lo guardamos en este dispositivo cuando saliste sin guardar.", sale una sola vez por borrador, sin acción, y se va solo; "Descartar borrador" es un enlace al pie, a la izquierda de guardar, y al tocarlo se anuncia "Descartaste el borrador.".
 - Sin cuentas: `/registrar` enlaza a `/cuentas/nueva`.
 - Cuenta archivada: no se ofrece en la lista.
 
@@ -4979,3 +4979,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-278** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-50). FT-18: el resultado de mover, crear, deshacer y desarchivar es la etiqueta de resultado sobre la fila, que se va sola, con ↶ en la fila después de mover, y sus textos. Los CA no cambian. Marca **[CH-278]**.
 - **CH-282** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-45 y C-33). FT-72: «Cambiar el ciclo» con el mismo día queda apagado con `aria-disabled` y el mensaje en la fila y debajo del botón (CA-72.4). FT-77: el tema en segmentado, sin la línea de Sistema. FT-24, FT-39, FT-73 y FT-74: los campos v3. Los CA no cambian. Marca **[CH-282]**.
 - **CH-283** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7). FT-55: en un préstamo en curso con modelo, la tabla muestra las cuotas pagadas antes de Finn, desde el monto original, atenuadas y con "Pagada antes de Finn"; solo presentación. Los CA no cambian. Marca **[CH-283]**.
+- **CH-286** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-51). FT-21: el borrador recuperado avisa una sola vez por borrador y «Descartar borrador» va al pie (enmienda E3-17); textos nuevos: «Descartaste el borrador.» y los nombres ocultos de tono de los avisos («Información:», «Advertencia:», «Problema:», «Listo:»). FT-08 no cambia: la Bandeja ya es la primera fila de «Necesita tu atención». Los CA no cambian. Marca **[CH-286]**.

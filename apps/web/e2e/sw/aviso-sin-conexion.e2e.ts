@@ -18,9 +18,11 @@ test.describe('PRU-E2E-PWA', () => {
     await page.goto('/registrar/gasto');
     await esperarHidratacion(page);
     await context.setOffline(true);
+    // [CH-286] C-51: la pastilla del aviso en línea, con el tono nombrado oculto antes del título.
     const aviso = page.locator('[data-sin-conexion]');
-    await expect(aviso).toHaveText(navegacion.sinConexion);
-    expect(await aviso.evaluate((e) => getComputedStyle(e).borderTopLeftRadius)).toBe('16px');
+    const titulo = aviso.locator('.fz-aviso-titulo');
+    await expect(titulo).toHaveText(`Advertencia: ${navegacion.sinConexion}`);
+    expect(await aviso.evaluate((e) => getComputedStyle(e).borderTopLeftRadius)).toBe('999px');
     expect((await aviso.boundingBox())?.height).toBe(48);
 
     // El pie del flujo: «Guardar» deshabilitado con su motivo escrito y enlazado, también a 1280 px de ventana.
@@ -38,7 +40,7 @@ test.describe('PRU-E2E-PWA', () => {
     await context.setOffline(true);
     await page.getByRole('link', { name: 'Ir al destino de navegación' }).click();
     await expect(page).toHaveURL('/pruebas/navegacion');
-    await expect(aviso).toHaveText(navegacion.sinConexionNavegacion);
+    await expect(titulo).toHaveText(`Advertencia: ${navegacion.sinConexionNavegacion}`);
   });
 
   test('PRU-E2E-PWA-742 [CA-E6-5, CA-E6-11] /sin-conexion con un borrador en la pestaña dice que sigue guardado, con el visto y sin montos ni enlaces', async ({

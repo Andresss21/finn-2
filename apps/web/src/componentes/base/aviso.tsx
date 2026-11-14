@@ -75,9 +75,10 @@ export function AvisoEnLinea({
         encabezado.length <= LARGO_PASTILLA
       : forma === 'pastilla';
   const rol = aparecioDespues ? (estado === 'problema' ? 'alert' : 'status') : undefined;
-  const conAccion = accion === undefined || accion === null ? null : (
-    <div className="fz-aviso-accion">{accion}</div>
-  );
+  const conAccion =
+    accion === undefined || accion === null ? null : (
+      <div className="fz-aviso-accion">{accion}</div>
+    );
   return (
     <div
       {...resto}

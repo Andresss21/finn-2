@@ -113,9 +113,8 @@ function avanzar(ms: number): void {
 }
 const aviso = (n: ParentNode) => n.querySelector<HTMLElement>('[data-aviso-borrador]');
 const descartar = (n: ParentNode) =>
-  [...n.querySelectorAll('button')].find(
-    (b) => b.textContent === formularios.descartarBorrador,
-  ) ?? null;
+  [...n.querySelectorAll('button')].find((b) => b.textContent === formularios.descartarBorrador) ??
+  null;
 const crear = (n: ParentNode) =>
   [...n.querySelectorAll('button')].find((b) => b.textContent.trim() === tp.crear) ?? null;
 const comercio = (n: ParentNode): HTMLInputElement =>
@@ -123,10 +122,11 @@ const comercio = (n: ParentNode): HTMLInputElement =>
     .filter((l) => l.textContent.trim().startsWith(tp.comercio))
     .map((l) => l.control)
     .find((c): c is HTMLInputElement => c instanceof HTMLInputElement) as HTMLInputElement;
-const guardado = () => JSON.parse(sessionStorage.getItem(CLAVE) ?? 'null') as {
-  avisoVisto?: boolean;
-  campos: Campos;
-} | null;
+const guardado = () =>
+  JSON.parse(sessionStorage.getItem(CLAVE) ?? 'null') as {
+    avisoVisto?: boolean;
+    campos: Campos;
+  } | null;
 const anuncio = (n: ParentNode) => n.querySelector('[role=status][data-anuncio-borrador]');
 
 function escribir(input: HTMLInputElement, texto: string): void {
@@ -176,7 +176,9 @@ describe('PRU-CMP-VAL-901 el borrador recuperado', () => {
     avanzar(10_000);
     expect(aviso(nodo)?.dataset['fase']).toBe('visible');
     act(() => {
-      a.dispatchEvent(new PointerEvent('pointerout', { bubbles: true, relatedTarget: document.body }));
+      a.dispatchEvent(
+        new PointerEvent('pointerout', { bubbles: true, relatedTarget: document.body }),
+      );
     });
     avanzar(2999);
     expect(aviso(nodo)?.dataset['fase']).toBe('visible');
