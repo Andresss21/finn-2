@@ -2,6 +2,7 @@
 // Selector segmentado (06-identidad-visual 2.3): `role="radiogroup"` con botones nativos `role="radio"`; las flechas cambian la
 // opción y mueven el foco. Sin Radix, para no sumar su biblioteca de radios a las rutas que no la usan (05 §13.1).
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEnGrupo } from './campo';
 
 export interface OpcionSegmento {
   readonly valor: string;
@@ -45,6 +46,8 @@ export function SelectorSegmentado({
   llena = false,
 }: PropsSelectorSegmentado) {
   const grupo = useRef<HTMLDivElement>(null);
+  // [CH-274] Dentro de `GrupoCampos`, el segmentado v3 (C-45, CAMPOS-V3 §9; clases en globals.css). Fuera, como hoy.
+  const v3 = useEnGrupo();
   const [medida, setMedida] = useState<Medida | null>(null);
   const activa = opciones.some((o) => o.valor === valor)
     ? valor
@@ -90,6 +93,7 @@ export function SelectorSegmentado({
       role="radiogroup"
       aria-label={etiqueta}
       data-indicador={medida === null ? undefined : ''}
+      data-v3={v3 ? '' : undefined}
       className={
         llena
           ? 'relative flex gap-0.5 rounded-control bg-superficie-hundida p-0.75'

@@ -9,7 +9,8 @@ import { DatoFijo } from '../../componentes/formularios/dato-fijo';
 import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
+import { Interruptor } from '../../componentes/base/controles-fila';
 import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { CampoLineas } from '../../componentes/formularios/campo-lineas';
@@ -343,18 +344,14 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
           alCambiar={poner('fechaFin')}
           error={errors.fechaFin?.message}
         />
-        <label className="flex min-h-11 items-center gap-3">
-          <input
-            type="checkbox"
-            role="switch"
-            checked={c.registroAutomatico}
-            onChange={(e) => {
-              poner('registroAutomatico')(e.target.checked);
-            }}
-            className="size-11"
+        {/* [CH-274] Muestra del interruptor v3 (C-45, CAMPOS-V3 §8): la fila entera es el blanco y el control va a la derecha. */}
+        <GrupoCampos>
+          <Interruptor
+            etiqueta={t.registroAutomatico}
+            encendido={c.registroAutomatico}
+            alCambiar={poner('registroAutomatico')}
           />
-          <span className="text-cuerpo">{t.registroAutomatico}</span>
-        </label>
+        </GrupoCampos>
         {falla !== undefined && !enSuCampo(falla) ? (
           <AvisoEnLinea
             estado="problema"

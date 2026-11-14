@@ -45,4 +45,14 @@ export const base = {
     `No hay comercios con «${texto}». Se guarda como comercio nuevo.`,
   noSePudoBuscar: 'No se pudo buscar.',
   sueleIrA: (categoria: string) => `Suele ir a ${categoria}`,
+  // [CH-274] Elección v3 (C-45, CAMPOS-V3 §9): chips de personas y «Agregar otra persona», tal cual.
+  otraPersona: 'Otra persona',
+  nueva: 'Nueva',
+  nombreDeLaPersona: 'Nombre de la persona',
+  agregar: 'Agregar',
+  cancelar: 'Cancelar',
+  yaTenias: (nombre: string) => `Ya tenías a ${nombre} en Por cobrar: la sumamos.`,
+  tuParteYaEsta: 'Tu parte ya está: escribí el nombre de la otra persona.',
+  escribiUnNombre: 'Escribí un nombre.',
+  maximoPersonas: 'Llegaste al máximo: hasta 19 personas.',
 } as const;
