@@ -155,8 +155,8 @@ export function PantallaMetas({
           frase: t.resultado.ajustada(m.categoria.nombre, formatearMonto(m.monto)),
         }
       : undefined;
-  const nueva = categoriasSinMeta[0];
-  const crear = nueva === undefined ? undefined : `/metas/nueva?categoria=${nueva.id}`;
+  // [CH-289] «Nueva meta» no fija categoría: la pantalla pide elegirla entre las que no tienen meta.
+  const crear = categoriasSinMeta.length === 0 ? undefined : '/metas/nueva';
   const pide = metas.filter((m) => !m.vencida);
   const otras = metas.filter((m) => m.vencida);
   return (

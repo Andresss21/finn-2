@@ -61,7 +61,8 @@ export const enSuCampo = (e: ErrorFinn): boolean =>
 
 export function FormularioMeta({ categorias, categoriaInicial }: PropsFormularioMeta) {
   const inicial: Campos = {
-    categoriaId: categorias.find((c) => c.id === categoriaInicial)?.id ?? categorias[0]?.id ?? '',
+    // [CH-289] Sin `?categoria=` no se preelige ninguna, ni con una sola: la elige el usuario.
+    categoriaId: categorias.find((c) => c.id === categoriaInicial)?.id ?? '',
     tipo: 'mensual',
     modoMeta: 'acumular',
     monto: '',

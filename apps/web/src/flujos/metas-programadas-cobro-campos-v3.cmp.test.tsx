@@ -169,6 +169,9 @@ const renombrar = (accion = vi.fn(ok)) => (
 describe('PRU-CMP-META metas con los campos v3', () => {
   it('PRU-CMP-META-782 [C-45, FT-17] CA-K3-6 y CA-K3-13: en Nueva meta el tipo son opciones en fila, el modo un segmentado y el monto lleva «$», todo en grupos; sin monto, «Crear meta» dice «Escribí el monto para guardar.» y al tocarlo marca «Escribí un monto mayor que $0.00.» y lleva el foco al monto', async () => {
     const nodo = await montar(nueva());
+    // Sin `?categoria=` no viene elegida (CH-289): se elige primero para que solo falte el monto.
+    await userEvent.click(de(nodo, tm.categoria));
+    await userEvent.click(document.querySelector<HTMLElement>('[role=option]') as HTMLElement);
     const tipo = radiogrupo(nodo, tm.tipo);
     expect(tipo.classList.contains('grupo-campos')).toBe(true);
     expect(tipo.querySelectorAll('.control-fila')).toHaveLength(4);
