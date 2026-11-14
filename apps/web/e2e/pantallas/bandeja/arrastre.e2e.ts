@@ -5,6 +5,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
+import { anuncio, etiqueta } from '../../ayudas/etiqueta.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
 import { formularios } from '../../../src/textos/formularios.ts';
@@ -100,7 +101,7 @@ test.describe('PRU-E2E-BAND arrastre de la entrega 4', () => {
     await page.keyboard.press('Escape');
     await expect(panel).toHaveCount(0);
     await expect(el).toBeFocused();
-    await expect(page.getByTestId('resultado')).toHaveCount(0);
+    await expect(etiqueta(page)).toHaveCount(0);
 
     await page.keyboard.press('Space');
     await expect(panel).toBeVisible();
@@ -113,7 +114,7 @@ test.describe('PRU-E2E-BAND arrastre de la entrega 4', () => {
     await expect(page.locator('[data-destino][data-sobre]')).toContainText('Farmacia');
     await expect(region).toHaveText(t.arrastre.sobre('Farmacia'));
     await page.keyboard.press('Space');
-    await expect(page.getByTestId('resultado')).toContainText(
+    await expect(anuncio(page, 'bandeja')).toContainText(
       t.aprobado('FARMACIA SAN NICOLAS', '$12.00', 'T', 'Farmacia'),
     );
     await expect(page.getByRole('link', { name: t.verTransaccion })).toBeVisible();
@@ -174,7 +175,7 @@ test.describe('PRU-E2E-BAND arrastre de la entrega 4', () => {
       fila(page, 'Selectos').getByRole('link', { name: /Revisar|Elegir/ }),
     ).toBeVisible();
     await f.getByRole('button', { name: /^Aprobar/ }).click();
-    await expect(page.getByTestId('resultado')).toContainText(
+    await expect(anuncio(page, 'bandeja')).toContainText(
       t.aprobado('La Pizza', '$18.00', 'T', 'Restaurantes'),
     );
   });

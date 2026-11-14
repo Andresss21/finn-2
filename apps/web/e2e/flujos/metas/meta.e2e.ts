@@ -4,6 +4,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { anuncio } from '../../ayudas/etiqueta.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import type { Escenario, Op } from '../../../../../packages/dominio/escenarios/tipos.ts';
@@ -88,7 +89,11 @@ test.describe('PRU-E2E-META flujo de una meta', () => {
     await page.getByRole('button', { name: 'Eliminar meta' }).click();
     await expect(page.getByText(/¿Eliminar la meta de Laptop\?/)).toBeVisible();
     await page.getByRole('button', { name: 'Eliminar', exact: true }).click();
-    await expect(page).toHaveURL(/\/metas$/);
+    // [CH-281] C-50: la fila de Laptop se queda con «Eliminada» y se recoge
+    await expect(page).toHaveURL(/\/metas\?resultado=eliminada&nombre=Laptop$/);
+    await expect(anuncio(page, 'meta-eliminada')).toHaveText(
+      'Eliminaste la meta de Laptop. Lo asignado y el Disponible no cambian.',
+    );
     await esperarContenido(page);
     await expect(page.locator('[data-meta]')).toHaveCount(0);
     await expect(page.getByText('Todavía no tenés metas')).toBeVisible();
@@ -117,7 +122,10 @@ test.describe('PRU-E2E-META flujo de una meta', () => {
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
     await expect(page).toHaveURL(/\/metas\?resultado=ajustada%3A/);
-    await expect(page.locator('[data-resultado-flujo="ajustada"]')).toBeVisible();
+    // [CH-281] C-50: «Ajustada» en la fila de Gas, con la frase en su región de estado
+    await expect(meta(page, 'Gas').getByRole('status')).toHaveText(
+      'Ajustaste la meta de Gas a $300.00.',
+    );
     await esperarContenido(page);
     await esperarMonto(meta(page, 'Gas').locator('[data-objetivo] [data-centavos]'), 30000);
   });

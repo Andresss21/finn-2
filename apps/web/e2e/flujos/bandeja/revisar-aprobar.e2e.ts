@@ -6,6 +6,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { anuncio, etiqueta } from '../../ayudas/etiqueta.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
@@ -80,18 +81,17 @@ test.describe('PRU-E2E-BAND', () => {
       .getByRole('button', { name: cuentas.bandeja.accionDe(cuentas.bandeja.aprobar, 'Super') })
       .click();
 
-    await expect(page.getByTestId('resultado')).toHaveText(
-      `${t.aprobado('Super', '$12.00', 'T', 'Super')}${t.verTransaccion}`,
-    );
-    await expect(page.getByRole('link', { name: t.verTransaccion })).toHaveAttribute(
+    // [CH-281] C-50: la frase en la región de la lista y «Aprobado» con «Ver transacción» sobre la fila
+    await expect(anuncio(page, 'bandeja')).toHaveText(t.aprobado('Super', '$12.00', 'T', 'Super'));
+    await expect(etiqueta(page).getByRole('link', { name: t.verTransaccion })).toHaveAttribute(
       'href',
       /^\/actividad\/[0-9a-f-]{36}$/,
     );
-    // El movimiento ya no está por revisar: queda solo el resultado en su lugar
-    await expect(page.getByRole('button', { name: /^Aprobar/ })).toHaveCount(0);
+    // El movimiento ya no está por revisar: la fila se recoge a los 3 s
+    await expect(page.getByRole('button', { name: /^Aprobar/ })).toHaveCount(0, { timeout: 10_000 });
   });
 
-  test('PRU-E2E-BAND-481 [CA-35.1] aprobar de un toque: la fila sale, el resultado entra con fz-pop-in y sin «Deshacer», y el contador baja y rebota', async ({
+  test('PRU-E2E-BAND-481 [CA-35.1] aprobar de un toque: la fila se queda con la etiqueta «Aprobado» pegada arriba y sin «Deshacer», y el contador baja y rebota', async ({
     page,
   }) => {
     const otro: Op = {
@@ -114,13 +114,12 @@ test.describe('PRU-E2E-BAND', () => {
       .getByRole('button', { name: cuentas.bandeja.accionDe(cuentas.bandeja.aprobar, 'Super') })
       .click();
 
-    const resultado = page.getByTestId('resultado');
-    await expect(resultado).toHaveText(
-      `${t.aprobado('Super', '$12.00', 'T', 'Super')}${t.verTransaccion}`,
-    );
-    // [CH-220 C2] El resultado entra con fz-pop-in en el lugar de la fila; sin «Deshacer».
-    await expect(page.locator('[data-resultado-entra]')).toHaveCSS('animation-name', 'fz-pop-in');
+    // [CH-281] C-50 (reemplaza la salida de CH-220 C2): la etiqueta va pegada arriba de la fila, que sigue a la vista
+    const resultado = etiqueta(page);
+    await expect(resultado).toHaveText(`${t.etiqueta.aprobado}${t.verTransaccion}`);
+    await expect(resultado).toHaveAttribute('data-posicion', 'arriba');
     expect(await resultado.boundingBox()).not.toBeNull();
+    await expect(anuncio(page, 'bandeja')).toHaveText(t.aprobado('Super', '$12.00', 'T', 'Super'));
     await expect(page.getByRole('button', { name: /Deshacer/ })).toHaveCount(0);
     // El contador baja a 1 y rebota (escala .85 → 1).
     await expect(contador).toHaveAttribute('data-contador', '1');

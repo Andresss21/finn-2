@@ -46,7 +46,10 @@ test.describe('PRU-E2E-ACCESO', () => {
     await page.waitForURL(
       (u) => u.pathname === '/ajustes/seguridad' && u.searchParams.has('quitado'),
     );
-    await expect(page.getByText(seguridad.quitaste('Respaldo'))).toBeVisible();
+    // [CH-281] C-50: la frase va a la región de estado de la fila que se va
+    await expect(page.locator('[data-anuncio="factor-quitado"]')).toHaveText(
+      seguridad.quitaste('Respaldo'),
+    );
     await expect(page.locator('[data-factor]')).toHaveCount(1);
   });
 });

@@ -7,6 +7,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { elegirEnFila, elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
+import { anuncio, etiqueta } from '../../ayudas/etiqueta.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { generarTokenWebhook } from '../../ayudas/webhook.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
@@ -154,7 +155,7 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(asa(f)).toHaveCount(1);
     await expect(f.getByRole('button', { name: /^Aprobar/ })).toBeVisible();
     await f.getByRole('button', { name: /^Aprobar/ }).click();
-    await expect(page.getByTestId('resultado')).toContainText(
+    await expect(anuncio(page, 'bandeja')).toContainText(
       t.aprobado('La Pizza', '$18.00', 'T', 'Restaurantes'),
     );
   });
@@ -174,10 +175,11 @@ test.describe('PRU-E2E-BAND', () => {
     });
     await arrastrarAl(page, asa(f), 'Supermercado');
 
-    await expect(page.getByTestId('resultado')).toContainText(
-      t.aprobado('Selectos', '$35.00', 'T', 'Supermercado'),
+    // [CH-281] C-50: la región dice «Soltaste …» y el resultado; la etiqueta «Aprobado» lleva «Ver transacción»
+    await expect(anuncio(page, 'bandeja')).toHaveText(
+      `${t.arrastre.soltaste('Selectos', 'Supermercado')} ${t.aprobado('Selectos', '$35.00', 'T', 'Supermercado')}`,
     );
-    await expect(page.getByRole('link', { name: t.verTransaccion })).toBeVisible();
+    await expect(etiqueta(page).getByRole('link', { name: t.verTransaccion })).toBeVisible();
     await expect(page.getByRole('button', { name: /Deshacer/ })).toHaveCount(0);
     // Una sola llamada de escritura, con la variante { categoriaId }
     const escrituras = llamadas.filter((c) => c.includes('categoriaId'));
@@ -194,7 +196,7 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(f).toContainText('→ Restaurantes');
 
     await arrastrarAl(page, asa(f), 'Farmacia');
-    await expect(page.getByTestId('resultado')).toContainText(
+    await expect(anuncio(page, 'bandeja')).toContainText(
       t.aprobado('La Pizza', '$18.00', 'T', 'Farmacia'),
     );
     // La transacción tiene una sola línea, a Farmacia: lo muestra su detalle
@@ -344,12 +346,15 @@ test.describe('PRU-E2E-BAND', () => {
     for (let i = 0; i < pasos; i += 1) await page.keyboard.press('ArrowDown');
     await expect(region).toHaveText(t.arrastre.sobre('Supermercado'));
     await page.keyboard.press('Space');
-    await expect(region).toHaveText(t.arrastre.soltaste('Selectos', 'Supermercado'));
-
-    await expect(page.getByTestId('resultado')).toContainText(
-      t.aprobado('Selectos', '$35.00', 'T', 'Supermercado'),
+    // [CH-281] C-50 §8: «Soltaste …» va con el resultado en la región de la lista, una sola vez
+    await expect(anuncio(page, 'bandeja')).toHaveText(
+      `${t.arrastre.soltaste('Selectos', 'Supermercado')} ${t.aprobado('Selectos', '$35.00', 'T', 'Supermercado')}`,
     );
-    await expect(page.getByRole('button', { name: cuentas.bandeja.aprobar })).toHaveCount(0);
+    await expect(region).not.toHaveText(t.arrastre.soltaste('Selectos', 'Supermercado'));
+    // La fila se queda 3 s con la etiqueta y se recoge
+    await expect(page.getByRole('button', { name: cuentas.bandeja.aprobar })).toHaveCount(0, {
+      timeout: 10_000,
+    });
   });
 
   test('PRU-E2E-BAND-227 [CA-78.9] con un arrastre en curso, Escape o soltar fuera del panel no envía ninguna operación y la fila queda como estaba', async ({
@@ -374,7 +379,7 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(panel).toHaveCount(0);
 
     expect(llamadas).toHaveLength(0);
-    await expect(page.getByTestId('resultado')).toHaveCount(0);
+    await expect(etiqueta(page)).toHaveCount(0);
     await expect(f).toBeVisible();
     await expect(asa(f)).toHaveCount(1);
     // Sin categoría la fila no trae «Aprobar»: su enlace a la revisión sigue ahí (WCAG 2.5.7)
@@ -410,10 +415,10 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(page.locator('[data-panel-destinos]')).toHaveCount(0);
     await expect(page.getByRole('dialog', { name: t.arrastre.selector.titulo })).toBeVisible();
     expect(llamadas).toHaveLength(0);
-    await expect(page.getByTestId('resultado')).toHaveCount(0);
+    await expect(etiqueta(page)).toHaveCount(0);
 
     await elegirOpcion(page, t.arrastre.selector.etiqueta, 'Mascota');
-    await expect(page.getByTestId('resultado')).toContainText(
+    await expect(anuncio(page, 'bandeja')).toContainText(
       t.aprobado('Selectos', '$35.00', 'T', 'Mascota'),
     );
     expect(llamadas.filter((c) => c.includes('categoriaId'))).toHaveLength(1);

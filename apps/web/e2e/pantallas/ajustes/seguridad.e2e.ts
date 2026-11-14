@@ -101,7 +101,8 @@ test.describe('PRU-E2E-ACCESO', () => {
     await page.waitForURL(`**/ajustes/seguridad/factores/${respaldo}/quitar`);
     await page.getByRole('button', { name: t.quitarNombre('Respaldo') }).click();
     await page.waitForURL((u) => u.pathname === '/ajustes/seguridad');
-    await expect(page.getByText(t.quitaste('Respaldo'))).toBeVisible();
+    // [CH-281] C-50: la fila de Respaldo se queda con «Quitado» y se recoge; la frase va a la región de estado
+    await expect(page.locator('[data-anuncio="factor-quitado"]')).toHaveText(t.quitaste('Respaldo'));
     await expect(page.getByRole('heading', { name: t.titulo, level: 1 })).toBeVisible();
     await expect(page.locator('[data-factor]')).toHaveCount(1);
     await expect(page.locator(`[data-factor="${id}"]`)).toBeVisible();

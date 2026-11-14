@@ -220,7 +220,9 @@ test.describe('PRU-E2E-PROG administrar programadas', () => {
     await fila(page, 'Netflix').getByRole('link').click();
     await esperarContenido(page);
     await page.getByRole('button', { name: 'Desactivar', exact: true }).click();
-    await expect(page.getByTestId('resultado')).toBeVisible();
+    // [CH-281] C-50: desactivar vuelve a la lista con «Desactivada» en la fila
+    await expect(page).toHaveURL(/\/programadas\?resultado=desactivada/);
+    await expect(fila(page, 'Netflix').getByRole('status')).toContainText('Desactivaste Netflix');
     await abrir(page, '/presupuesto');
     await esperarMonto(lpa(page), 100000);
   });

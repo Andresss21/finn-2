@@ -5,6 +5,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { anuncio, etiqueta } from '../../ayudas/etiqueta.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
@@ -79,12 +80,12 @@ test.describe('PRU-E2E-BAND', () => {
     await expect(filas(page)).toHaveCount(1);
 
     await page.getByRole('button', { name: accion(cuentas.bandeja.descartar, 'Super') }).click();
-    const resultado = page.getByTestId('resultado');
-    await expect(resultado).toContainText(t.descartaste('Super $12.00'));
-    await expect(page.getByText(t.alDia.titulo)).toHaveCount(0);
-    await expect(filas(page)).toHaveCount(0);
+    // [CH-281] C-50: «Descartado» con «Restaurar» sobre la fila, que se queda 3 s y se recoge
+    await expect(anuncio(page, 'bandeja')).toHaveText(t.etiqueta.descartadoFrase('Super', '$12.00'));
+    await expect(etiqueta(page).getByRole('button', { name: t.restaurar })).toBeVisible();
+    await expect(filas(page)).toHaveCount(0, { timeout: 10_000 });
 
-    // La revalidación ya sacó el movimiento de los activos: el resultado sigue en su lugar
+    // La revalidación ya sacó el movimiento de los activos
     await abrir(page);
     await expect(page.getByText(t.alDia.titulo)).toBeVisible();
 
