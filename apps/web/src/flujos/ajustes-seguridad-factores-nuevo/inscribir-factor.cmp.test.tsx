@@ -219,6 +219,7 @@ describe('PRU-CMP-ACCESO inscribir: preparando, copiado y error (CH-240)', () =>
     await vi.waitFor(() => {
       expect(nodo.querySelector('input[autocomplete="one-time-code"]')).not.toBeNull();
     });
-    expect((nodo.querySelector('input') as HTMLInputElement).readOnly).toBe(true);
+    // [C-45] Solo lectura es texto plano en su fila, no un `<input>` (CAMPOS-V3 §3).
+    expect(nodo.querySelector('[data-dato-fijo]')?.textContent).toContain('Mi gestor');
   });
 });

@@ -269,14 +269,14 @@ describe('PRU-CMP-TX-460 actividad del diseño', () => {
     );
   });
 
-  it('PRU-CMP-TX-460 cada filtro de lista es un select nativo con su etiqueta, su nombre y la opción de la URL elegida', () => {
+  it('PRU-CMP-TX-460 cada filtro de lista es una fila v3 con su rótulo, su nombre en el formulario y la opción de la URL elegida', () => {
     const raiz = mostrar(dto([]), { categoria: 'c1', cuenta: 'k1', estado: 'pendiente' });
-    const lista = (etiqueta: string) => {
-      const id = [...raiz.querySelectorAll('label')].find(
-        (l) => l.textContent === etiqueta,
-      )?.htmlFor;
-      return raiz.querySelector<HTMLSelectElement>(`select[id="${id ?? ''}"]`);
-    };
+    // [C-45] La lista propia o el segmentado (CAMPOS-V3 §6) llevan el valor en un campo oculto de su fila.
+    const lista = (etiqueta: string) =>
+      [...raiz.querySelectorAll('.campo-rotulo')]
+        .find((l) => l.textContent === etiqueta)
+        ?.closest('.campo-fila')
+        ?.querySelector<HTMLInputElement>('input[type="hidden"]');
     expect(
       ['Cuenta', 'Categoría', 'Tipo', 'Estado bancario', 'Origen'].map((e) => lista(e)?.name),
     ).toEqual(['cuenta', 'categoria', 'tipo', 'estado', 'origen']);
@@ -351,7 +351,7 @@ describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
     expect(texto).not.toMatch(/te debe/i);
   });
 
-  it('PRU-CMP-TX-722 [CA-E4-8] el buscador y «Filtros · n» comparten fila, estado y origen son listas nativas y «Cargar más» dice «Cargando…» mientras navega', () => {
+  it('PRU-CMP-TX-722 [CA-E4-8] el buscador y «Filtros · n» comparten fila, estado y origen son listas y «Cargar más» dice «Cargando…» mientras navega', () => {
     const raiz = mostrar(dto([], 'cur-2'), { estado: 'pendiente', tipo: 'gasto' });
     const boton = raiz.querySelector<HTMLElement>('[data-boton-filtros]');
     const buscador = raiz.querySelector<HTMLElement>('[role="search"]');
@@ -362,11 +362,16 @@ describe('PRU-CMP-TX-721 actividad de la entrega 4', () => {
         (boton?.getBoundingClientRect().top ?? 0) - (buscador?.getBoundingClientRect().top ?? 99),
       ),
     ).toBeLessThan(8);
+    // [C-45] Listas propias (CAMPOS-V3 §6), no segmentados: el valor viaja en el campo oculto de su fila.
     for (const nombre of ['estado', 'origen']) {
-      const lista = raiz.querySelector<HTMLSelectElement>(`select[name="${nombre}"]`);
-      expect(lista?.options.length).toBeGreaterThanOrEqual(4);
+      const filaLista = raiz
+        .querySelector(`input[type="hidden"][name="${nombre}"]`)
+        ?.closest('.campo-fila');
+      expect(filaLista?.querySelector('button[aria-haspopup="listbox"]')).not.toBeNull();
     }
-    expect(raiz.querySelector<HTMLSelectElement>('select[name="estado"]')?.value).toBe('pendiente');
+    expect(raiz.querySelector<HTMLInputElement>('input[type="hidden"][name="estado"]')?.value).toBe(
+      'pendiente',
+    );
     // Mientras navega, `EnlaceFinn` marca el enlace con `aria-busy` y el texto cambia a «Cargando…»
     const mas = raiz.querySelector<HTMLElement>('[data-cargar-mas]');
     const visible = () =>
