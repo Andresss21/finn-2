@@ -70,7 +70,7 @@ test.describe('PRU-E2E-BAND', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-BAND-120 [CA-35.1] un toque en «Aprobar» reemplaza la fila por «Aprobado: Super · $12.00 · T · Super» y «Ver transacción» abre la transacción creada', async ({
+  test('PRU-E2E-BAND-120 [CA-35.1] un toque en «Aprobar» deja «Aprobado» con «Ver transacción» sobre la fila, anuncia «Aprobado: Super · $12.00 · T · Super» y la fila se recoge', async ({
     page,
   }) => {
     await preparar(CON_HISTORIAL, `${DIA_20}T20:00:00`);

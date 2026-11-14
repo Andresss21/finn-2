@@ -72,7 +72,7 @@ test.describe('PRU-E2E-BAND', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-BAND-150 [CA-37.1] «Descartar» un pendiente lo saca de la lista y deja «Descartaste … Restaurar» en su lugar; «Restaurar» lo devuelve a la lista', async ({
+  test('PRU-E2E-BAND-150 [CA-37.1] «Descartar» un pendiente deja «Descartado» con «Restaurar» sobre su fila, que se recoge y sale de la lista; «Restaurar» lo devuelve a la lista', async ({
     page,
   }) => {
     await preparar([...HISTORIAL, sms('a', 'Super', 12, '15:00')]);
