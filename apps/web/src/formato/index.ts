@@ -20,3 +20,10 @@ export {
 } from './fecha-texto.ts';
 export { formatearInstante } from './instante-texto.ts';
 export { formatearPorcentaje } from './porcentaje.ts';
+export {
+  completarDecimales,
+  conMiles,
+  enmascararFecha,
+  enmascararMonto,
+  enmascararPorcentaje,
+} from './mascaras.ts';
