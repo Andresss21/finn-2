@@ -511,9 +511,9 @@ describe('PRU-CMP-CTA-401 identidad de efectivo por el subtipo', () => {
 });
 
 describe('PRU-CMP-CTA-711 alta de préstamo por secciones', () => {
-  function AltaPrestamo(): ReactNode {
+  function AltaPrestamo({ institucionId = 'ninguna' }: { institucionId?: string }): ReactNode {
     const { register, watch } = useForm<Campos>({
-      defaultValues: valoresIniciales('2027-02-05', 'prestamo', ''),
+      defaultValues: { ...valoresIniciales('2027-02-05', 'prestamo', ''), institucionId },
     });
     return (
       <CamposDeTipo
@@ -538,6 +538,20 @@ describe('PRU-CMP-CTA-711 alta de préstamo por secciones', () => {
     expect(raiz.querySelector('[data-seccion="Cuotas"]')?.textContent).toContain('Cuota pactada');
     expect(raiz.querySelector('[data-seccion="El préstamo"]')?.textContent).toContain(
       'Quién te prestó',
+    );
+  });
+
+  it('PRU-CMP-CTA-830 [CA-50.3] «Quién te prestó» va solo con «Sin institución»: con una institución elegida desaparece, porque la contraparte es su nombre y la pone OP-01 (CH-265)', () => {
+    const sin = montar(<AltaPrestamo />);
+    expect(sin.querySelector('[data-seccion="El préstamo"]')?.textContent).toContain(
+      'Quién te prestó',
+    );
+    const con = montar(<AltaPrestamo institucionId="00000000-0000-4000-8000-000000000001" />);
+    expect(con.querySelector('[data-seccion="El préstamo"]')?.textContent).not.toContain(
+      'Quién te prestó',
+    );
+    expect(con.querySelector('[data-seccion="El préstamo"]')?.textContent).toContain(
+      'Monto original',
     );
   });
 

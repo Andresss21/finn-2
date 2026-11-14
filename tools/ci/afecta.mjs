@@ -1,17 +1,16 @@
 // tools/ci/afecta.mjs — qué toca el diff y qué corre (TA-012; 07 §6.1, §6.5 M1 a M3, §32.2 M5; 08 DT-07; DP-34).
-//   node tools/ci/afecta.mjs [--archivos a,b]  JSON con afecta_db, afecta_web, integracion, e2e y cierre
-//   node tools/ci/afecta.mjs rapido            `pnpm ci:rapido`: controles fijos, matriz y suites de `rapido`
-//   node tools/ci/afecta.mjs e2e               `pnpm ci:e2e`: en main o con `cierre`, la suite completa de `movil`; si no, las afectadas
+//   node tools/ci/afecta.mjs [--archivos a,b]  JSON con afecta_db, afecta_web e integracion
+//   node tools/ci/afecta.mjs rapido            `pnpm ci:rapido`: controles fijos y suites de `rapido` (CH-266: sin
+//                                              navegadores, inventario, matriz ni `componentes`; van al nocturno)
+//   node tools/ci/afecta.mjs e2e               `pnpm ci:e2e`: con FINN_E2E_GREP (el nocturno: `todas`) o las afectadas
 //                                              (en CI, el fragmento FINN_E2E_FRAGMENTO=i/n; CH-231)
 //   node tools/ci/afecta.mjs e2e-unir          `pnpm ci:e2e-unir`: une los fragmentos; FINN_E2E_FRAGMENTOS = su resultado
-//   node tools/ci/afecta.mjs local             `pnpm ci:local` (DT-07): rapido y, según el diff, integracion y e2e; con
-//                                              un diff solo de interfaz, modo corto (CH-231)
+//   node tools/ci/afecta.mjs local             `pnpm ci:local` (DT-07): rapido y, con afecta_db, integracion (CH-266)
 //   node tools/ci/afecta.mjs nocturno          `pnpm ci:nocturno` (TA-013): las suites del nocturno que ya existen
 //   node tools/ci/afecta.mjs cierre-previo     en `pnpm ci:cierre` (CH-239): en main con E2E parcial, suma el informe de
 //                                              la última E2E completa de main; cierre-guardar la reemplaza tras M15
-// Entorno: FINN_EVENTO (pull_request | push; vacío en local), FINN_BORRADOR (true | false), FINN_ACCION (la acción del
-// pull_request), FINN_BASE (por defecto origin/main; en main, el commit anterior al push). Con GITHUB_OUTPUT, las
-// decisiones quedan como salidas del paso. M4 (07 §6.5): el modo sale del estado que ci.yml restauró de la caché.
+// Entorno: FINN_EVENTO (pull_request | push; vacío en local y en el nocturno), FINN_BASE (por defecto origin/main; en
+// main, el commit anterior al push). Con GITHUB_OUTPUT, las decisiones quedan como salidas del paso.
 import { spawnSync } from 'node:child_process';
 import {
   appendFileSync,
@@ -27,8 +26,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { afectadas, clase, claseDe, seleccionE2E } from '../pruebas/afectadas.ts';
-import { ESTADO, e2eDePr, recortesAplicables } from './minutos.ts';
-import { BASE_E2E, COMPLETA, REUTILIZA, baseE2e, registroE2e, shaDe } from './reutiliza-e2e.ts';
+import { BASE_E2E, COMPLETA, baseE2e, registroE2e, shaDe } from './reutiliza-e2e.ts';
 import { cargarEntradas, verificar } from '../pruebas/matriz.ts';
 import { cambiosDeEstado } from '../pruebas/resumen.ts';
 
@@ -88,49 +86,24 @@ function aTerminada(b) {
   return cambios.filter((c) => c.endsWith('→ terminada')).map((c) => c.split(':')[0]);
 }
 
-/** M4: en ahorro, e2e de PR solo al pasar a listo (07 §6.5, §32.3). Sin estado del mes, normal. */
-function e2eSegunModo() {
-  const estado = existsSync(ESTADO) ? JSON.parse(readFileSync(ESTADO, 'utf8')) : null;
-  return (
-    evento !== 'pull_request' || e2eDePr(recortesAplicables(estado, new Date()), env('FINN_ACCION'))
-  );
-}
-
-/** CH-231 c (TA-555): en main, la corrida del PR cuya E2E completa se reutiliza; la deja `ci:reutiliza-e2e` en REUTILIZA. */
-function reutilizada() {
-  if (evento !== 'push' || !existsSync(REUTILIZA)) return '';
-  const id = String(JSON.parse(readFileSync(REUTILIZA, 'utf8')).run_id ?? '');
-  return /^\d+$/.test(id) ? id : '';
-}
-
-/** M1: integracion con afecta_db o PR listo. M2: e2e en PR listo con afecta_web. En main, todo (07 §6.1).
- * El PR que pasa una ficha a `terminada`, y `ci:local` con esa ficha, corren e2e aunque no esté listo ni toque la web
- * (07 §13.2, paso 4; M15 lo exige en `cierre`; CH-70).
+/** M1 (CH-266): integracion solo con afecta_db, en PR, en main y en local. La E2E, `componentes`, el inventario, la
+ * matriz con resultados (M15) y `cierre` corren en nocturno.yml y no bloquean merges ni despliegues.
  * afecta_docs: el diff toca docs/ o tools/docs/ y `rapido` corre docs:comprobar (07 §13.7).
- * solo_interfaz (CH-231): todo el diff es interfaz (INTERFAZ) y no toca la base; `ci:local` usa el modo corto.
- * e2e_completa (CH-231): en CI, un cambio de CI corre la suite E2E completa, no solo las afectadas (`^$` casi siempre):
- * así un cambio del workflow o del arnés se prueba entero en el PR. En local, como antes.
- * reutiliza_e2e (CH-231 c, TA-555): en main, sin E2E propia si `reutilizada()` da la corrida de un PR con el mismo árbol.
- * clase_e2e (CH-239): la clase del diff (0 a 3, `clase` de afectadas.ts), que elige la E2E en `grepE2E`; en main, contra
- * `base_e2e` (la última E2E completa de main) y, sin ella, 3. Documentos y plan no cuentan para solo_interfaz. */
+ * solo_interfaz (CH-231), e2e_completa (CH-231) y clase_e2e (CH-239): quedan para `pnpm ci:e2e` a demanda (`grepE2E`);
+ * clase_e2e es la clase del diff (0 a 3, `clase` de afectadas.ts) y, en main sin `base_e2e`, 3. */
 function decidir(archivos, b, be) {
   const db = archivos.some((a) => CI.test(a) || DB.test(a));
   const web = archivos.some((a) => CI.test(a) || WEB.test(a));
   const enMain = evento === 'push';
-  const listo = evento === 'pull_request' && env('FINN_BORRADOR') !== 'true';
   const cierra = aTerminada(b).length > 0;
-  const reutiliza = reutilizada();
   const propios = archivos.filter((a) => clase(a, MAPA) > 0);
   return {
     afecta_db: db,
     afecta_web: web,
-    integracion: enMain || listo || db,
-    e2e: enMain ? reutiliza === '' : cierra || ((listo || evento === '') && web && e2eSegunModo()),
-    cierre: enMain || cierra,
+    integracion: db,
     afecta_docs: archivos.some((a) => DOCS.test(a)),
     solo_interfaz: propios.length > 0 && !db && !cierra && propios.every((a) => INTERFAZ.test(a)),
     e2e_completa: evento !== '' && archivos.some((a) => CI.test(a)),
-    reutiliza_e2e: reutiliza,
     clase_e2e: enMain && be === '' ? 3 : claseDe(archivos, MAPA),
     base_e2e: be,
   };
@@ -183,12 +156,9 @@ function grepE2E(archivos, sinMarco = false) {
   return seleccionE2E(d.clase_e2e, a.grepE2E);
 }
 
-function rapido(archivos, b, d) {
-  // CMP si cambió la web (07 §6.1) o si corre `cierre`, que necesita su resultado (M15, CH-61); Chromium: paso navegadores
-  const cmp = d.afecta_web || d.cierre ? ' --project componentes' : '';
-  const informe =
-    '--reporter=default --reporter=json --outputFile.json=test-results/informes/rapido.json';
-  const ok = correr([
+/** CH-266: sin navegadores, inventario, matriz ni `componentes` (van al job `suites` del nocturno). */
+function rapido(b, d) {
+  return correr([
     ['plan:verificar', 'pnpm plan:verificar'],
     ['typecheck', 'pnpm typecheck'],
     ['lint', 'pnpm lint'],
@@ -198,20 +168,18 @@ function rapido(archivos, b, d) {
     ['C1', 'node tools/db/verificar-migraciones.mjs packages/db/prisma/migrations'],
     ['C2', 'bash tools/db/inmutabilidad.sh'],
     ['firmas', 'bash tools/pruebas/firmas.sh origin/main'],
-    // Siempre y antes del inventario: `vitest list` recolecta `componentes` en Chromium
-    ...(enCi ? [['navegadores', NAVEGADORES]] : []),
-    ['inventario', 'pnpm pruebas:listar'],
-    ['matriz', 'pnpm pruebas:matriz'],
     ...(d.afecta_docs ? [['docs', 'pnpm docs:comprobar']] : []),
     ['minutos', 'node tools/ci/minutos.ts rapido'],
     [
       'pruebas',
-      `node tools/pruebas/vitest.mjs --project unidad --project escenarios-motor --project contratos${cmp} ${informe}`,
+      `node tools/pruebas/vitest.mjs --project unidad --project escenarios-motor --project contratos ${jsonEn('rapido')}`,
     ],
   ]);
-  if (ok) salidas({ grep_e2e: grepE2E(archivos) });
-  return ok;
 }
+
+/** El informe JSON de Vitest en test-results/informes/<n>.json, el que lee M15 en `cierre`. */
+const jsonEn = (n) =>
+  `--reporter=default --reporter=json --outputFile.json=test-results/informes/${n}.json`;
 
 /** CH-231: en CI, `e2e-fragmento` corre un fragmento `i/n` de Playwright (`--shard`) con su propia pila; el informe
  * blob lo une el job `e2e` (`e2eUnir`), que también avisa las inestables. */
@@ -273,6 +241,17 @@ function nocturno() {
   if (process.env.FINN_NOCTURNO === 'ren') return ren();
   // Job `respaldo` (TA-251; 07 §19.6, nivel RES): volcado, cifrado con age y restauración sin `auth`
   if (process.env.FINN_NOCTURNO === 'respaldo') return correr([['RES', 'pnpm test:respaldo']]);
+  // Job `suites` (CH-266): lo que salió de `rapido` y de los PR, con los informes que lee M15 en `cierre`
+  if (process.env.FINN_NOCTURNO === 'suites') {
+    const vitest = correr([
+      ['navegadores', NAVEGADORES],
+      [
+        'pruebas',
+        `node tools/pruebas/vitest.mjs --project unidad --project escenarios-motor --project contratos --project componentes ${jsonEn('rapido')}`,
+      ],
+    ]);
+    return correr([['integracion', `pnpm test:integracion ${jsonEn('integracion')}`]]) && vitest;
+  }
   const prop = correr([
     [
       'PROP',
@@ -418,22 +397,15 @@ console.log(modo === 'decidir' ? JSON.stringify(d) : `afecta (base ${b}): ${JSON
 salidas(d);
 
 let ok = true;
-if (modo === 'rapido') ok = rapido(archivos, b, d);
+if (modo === 'rapido') ok = rapido(b, d);
 else if (modo === 'e2e') ok = e2e(archivos);
 else if (modo === 'e2e-unir') ok = e2eUnir();
 else if (modo === 'local') {
-  // CH-231: con un diff solo de interfaz, la E2E local es la de los archivos cambiados y la del mapa, sin expandir el
-  // marco; la suite completa la corre la CI del PR. Con cualquier otro diff, como siempre (DT-07). CH-239: documentos y
-  // plan no cuentan, y en las clases 1 y 2 la E2E es la de su clase (`grepE2E`).
-  console.log(
-    d.solo_interfaz
-      ? `ci:local: modo CORTO (el diff toca solo la interfaz, clase ${d.clase_e2e}): E2E de su clase (CH-239) o de las fichas afectadas sin expandir el marco`
-      : 'ci:local: modo COMPLETO (el diff toca algo más que la interfaz)',
-  );
-  ok = rapido(archivos, b, d);
-  if (ok && d.afecta_db) ok = correr([['integracion', 'pnpm ci:integracion']]);
-  if (ok && d.e2e) ok = e2e(archivos, d.solo_interfaz);
-  console.log(`ci:local: modo ${d.solo_interfaz ? 'corto' : 'completo'}, ${ok ? 'verde' : 'rojo'}`);
+  // CH-266: lo mismo que la CI del PR, sin E2E; a demanda quedan `pnpm test:e2e`, `test:componentes`, `pruebas:listar`
+  // y `pruebas:matriz`.
+  ok = rapido(b, d);
+  if (ok && d.integracion) ok = correr([['integracion', 'pnpm ci:integracion']]);
+  console.log(`ci:local: ${ok ? 'verde' : 'rojo'}${d.integracion ? ' (con integracion)' : ''}`);
 } else if (modo === 'nocturno') ok = nocturno();
 else if (modo !== 'decidir') {
   console.error(

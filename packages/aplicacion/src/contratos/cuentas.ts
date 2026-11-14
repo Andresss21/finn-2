@@ -64,13 +64,21 @@ const sinSubtipoEfectivo = {
   subtipoEfectivo: z.never({ error: 'Solo una cuenta de efectivo tiene subtipo.' }).optional(),
 };
 
-/** Coherencia de un préstamo (03 §3.6): `frecuenciaDias` solo con `cada_n_dias`; pagadas ≤ plazo. */
+/**
+ * Coherencia de un préstamo (03 §3.6): `frecuenciaDias` solo con `cada_n_dias`; pagadas ≤ plazo. [CH-264] El modelo Banco
+ * Agrícola calcula con la tasa (01 A.1): sin ella, no se elige. [CH-265] Sin institución, la contraparte es obligatoria; con
+ * institución, si no llega, es el nombre de la institución (lo pone OP-01).
+ */
 function coherentePrestamo(
   p: {
     frecuencia: string;
     frecuenciaDias?: number | undefined;
     plazoCuotas: number;
     cuotasPagadasAlCrear: number;
+    modeloCalculo?: string | undefined;
+    tasaNominalAnual?: number | undefined;
+    contraparte?: string | undefined;
+    institucionId?: string | undefined;
   },
   ctx: z.RefinementCtx,
 ): void {
@@ -81,6 +89,10 @@ function coherentePrestamo(
     falla('frecuenciaDias', 'Indicá los días solo cuando la frecuencia es cada N días.');
   if (p.cuotasPagadasAlCrear > p.plazoCuotas)
     falla('cuotasPagadasAlCrear', 'Las cuotas pagadas no pueden pasar del plazo.');
+  if (p.modeloCalculo === 'banco_agricola' && p.tasaNominalAnual === undefined)
+    falla('tasaNominalAnual', 'Con el modelo Banco Agrícola, indicá la tasa anual.');
+  if (p.contraparte === undefined && p.institucionId === undefined)
+    falla('contraparte', 'Indicá quién te prestó o elegí una institución.');
 }
 
 const comunes = {
@@ -124,7 +136,7 @@ export const op01 = z.discriminatedUnion('tipo', [
       ...sinSubtipoEfectivo,
       tipo: z.literal('prestamo'),
       saldo: montoTexto,
-      contraparte: PRESTAMO.contraparte,
+      contraparte: PRESTAMO.contraparte.optional(), // [CH-265] con institución, su nombre
       montoOriginal: PRESTAMO.montoOriginal,
       tasaNominalAnual: PRESTAMO.tasaNominalAnual.optional(),
       tipoTasa: PRESTAMO.tipoTasa,
