@@ -130,7 +130,8 @@ export function ListaEstructura({
         ? { id: g.id, palabra: t.creado, frase: t.grupoCreado(g.nombre) }
         : { id: resultado.id, palabra: t.creada, frase: t.categoriaCreada(nombre, g.nombre) },
     );
-    const espera = setTimeout(() => {
+    // Sin limpiar al volver a correr: mostrar la etiqueta vuelve a dibujar la lista antes de este momento.
+    setTimeout(() => {
       const activo = document.activeElement;
       if (activo === null || activo === document.body)
         document
@@ -139,9 +140,6 @@ export function ListaEstructura({
           )
           ?.focus();
     }, 0);
-    return () => {
-      clearTimeout(espera);
-    };
   }, [arbol, clave, colapsados, guardar, mostrar, resultado]);
   // E4-6: lo desarchivado lleva «Desarchivada» con «Archivarla de nuevo» cuando ya está en su grupo (posición 5 de §3).
   const [desarchivada, setDesarchivada] = useState<Desarchivada | null>(null);
