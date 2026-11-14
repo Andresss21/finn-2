@@ -17,11 +17,17 @@ import { estructura as t } from '../../textos/estructura';
 import { FormularioEstructura } from './formulario';
 import { ListaEstructura } from './lista';
 
-const enrutador = vi.hoisted(() => ({ replace: vi.fn(), back: vi.fn() }));
+// Estable, como el de Next: un efecto que depende del enrutador no se repite en cada render.
+const enrutador = vi.hoisted(() => ({
+  replace: vi.fn(),
+  back: vi.fn(),
+  push: vi.fn(),
+  refresh: vi.fn(),
+}));
 // `next/link` y `next/navigation` necesitan el enrutador de Next, y las acciones son del servidor: se simulan.
 vi.mock('next/navigation', () => ({
   usePathname: () => '/presupuesto/estructura/categorias/nueva',
-  useRouter: () => ({ ...enrutador, push: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => enrutador,
 }));
 vi.mock('next/link', async () => {
   const { createElement } = await import('react');
@@ -228,8 +234,11 @@ const CON_VETERINARIO: readonly GrupoDeEstructura[] = [
 const resultados = (): HTMLElement[] => [
   ...document.querySelectorAll<HTMLElement>('[role="status"]'),
 ];
+/** «Cerrar» del resultado (el marco del flujo tiene el suyo). */
 const cerrar = (): HTMLButtonElement[] => [
-  ...document.querySelectorAll<HTMLButtonElement>(`button[aria-label="${base.cerrar}"]`),
+  ...document.querySelectorAll<HTMLButtonElement>(
+    `[role="status"] button[aria-label="${base.cerrar}"]`,
+  ),
 ];
 const seccion = (grupoId: string): HTMLElement => {
   const s = document.querySelector<HTMLElement>(`section[aria-labelledby="g-${grupoId}"]`);
@@ -296,10 +305,13 @@ describe('PRU-CMP-CATEG-129 resultado de crear, en el lugar', () => {
       expect(getComputedStyle(e).textDecorationLine, e.outerHTML).toBe('none');
 
     const [x] = cerrar();
+    expect(cerrar()).toHaveLength(1);
     expect(x?.getBoundingClientRect().width).toBeGreaterThanOrEqual(44);
     expect(x?.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     await userEvent.click(x ?? document.body);
-    expect(resultados()).toHaveLength(0);
+    await vi.waitFor(() => {
+      expect(resultados()).toHaveLength(0);
+    });
     expect(raiz.textContent).not.toContain(t.categoriaCreada('Veterinario', 'Hogar'));
   });
 
@@ -331,8 +343,11 @@ describe('PRU-CMP-CATEG-130 el resultado de Subir o Bajar se cierra y lo reempla
     expect(resultados()).toHaveLength(1);
     expect(document.body.textContent).not.toContain(t.categoriaCreada('Veterinario', 'Hogar'));
     expect(boton(t.deshacer)).toBeDefined();
+    expect(cerrar()).toHaveLength(1);
     await userEvent.click(cerrar()[0] ?? document.body);
-    expect(resultados()).toHaveLength(0);
+    await vi.waitFor(() => {
+      expect(resultados()).toHaveLength(0);
+    });
     expect(editarEnEstructura).toHaveBeenCalledTimes(1);
   });
 });

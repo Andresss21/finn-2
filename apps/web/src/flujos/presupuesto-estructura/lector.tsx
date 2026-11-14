@@ -7,6 +7,7 @@ import { consultar } from '../../servidor/consultar';
 import { depsDeConsulta } from '../../servidor/consultas';
 import { FormularioEstructura, type ModoEstructura } from './formulario';
 import { ListaEstructura } from './lista';
+import type { ResultadoEstructura } from './resultado';
 
 export interface PropsLectorEstructura {
   readonly modo: 'lista' | ModoEstructura;
@@ -14,6 +15,8 @@ export interface PropsLectorEstructura {
   /** `?grupo=` de la nueva categoría. */
   readonly grupo?: string;
   readonly superpuesto?: boolean;
+  /** [CH-270] `?resultado=` de la lista, ya validado. */
+  readonly resultado?: ResultadoEstructura;
 }
 
 export async function LectorEstructura({
@@ -21,9 +24,11 @@ export async function LectorEstructura({
   id,
   grupo,
   superpuesto = false,
+  resultado,
 }: PropsLectorEstructura) {
   const { grupos } = await consultar(async () => estructura(await depsDeConsulta()));
-  if (modo === 'lista') return <ListaEstructura grupos={grupos} />;
+  if (modo === 'lista')
+    return <ListaEstructura grupos={grupos} {...(resultado === undefined ? {} : { resultado })} />;
   const fila = grupos.flatMap((g) => g.categorias).find((c) => c.categoria.id === id);
   const motivoHistorial =
     fila === undefined || fila.puedeEliminar

@@ -74,14 +74,14 @@ test.describe('PRU-E2E-CATEG', () => {
     await page.getByRole('link', { name: t.nuevoGrupo, exact: true }).click();
     await nombre(page).fill('Hogar');
     await crear(page).click();
-    await expect(page.getByText(t.grupoCreado)).toBeVisible();
+    await expect(page.getByText(t.grupoCreado('Hogar'))).toBeVisible();
 
     await abrir(page);
     await page.getByRole('link', { name: t.agregarCategoria('Gastos') }).click();
     await nombre(page).fill('supermercado');
     await crear(page).click();
     await expect(page.getByText(/ya existe/i)).toBeVisible();
-    await expect(page.getByText(t.categoriaCreada)).toHaveCount(0);
+    await expect(page.getByText(t.categoriaCreada('supermercado', 'Gastos'))).toHaveCount(0);
 
     // Desde el botón de otro grupo la categoría es de ese grupo, sin selector
     await abrir(page);
@@ -90,7 +90,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await expect(page.getByRole('radio')).toHaveCount(0);
     await nombre(page).fill('supermercado');
     await crear(page).click();
-    await expect(page.getByText(t.categoriaCreada)).toBeVisible();
+    await expect(page.getByText(t.categoriaCreada('supermercado', 'Hogar'))).toBeVisible();
   });
 
   test('PRU-E2E-CATEG-102 [CA-18.2] una categoría sin historial se elimina y desaparece; con una asignación, "Eliminar" queda deshabilitado con el motivo y los enlaces a archivar y fusionar', async ({
@@ -149,7 +149,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await page.getByRole('link', { name: t.nuevoGrupo, exact: true }).click();
     await nombre(page).fill('Hogar');
     await page.getByRole('button', { name: t.crear, exact: true }).click();
-    await expect(page.getByText(t.grupoCreado)).toBeVisible();
+    await expect(page.getByText(t.grupoCreado('Hogar'))).toBeVisible();
 
     await abrir(page);
     const grupos = page.getByRole('heading', { level: 2, name: /^(Gastos|Hogar)$/ });
