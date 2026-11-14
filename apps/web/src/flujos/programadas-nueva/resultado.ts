@@ -30,8 +30,7 @@ export function leerResultadoProgramada(
   const [tipo, id, resto] = (valor ?? '').split(':');
   if (resto !== undefined) return undefined;
   const limpio = nombre?.trim().slice(0, NOMBRE_MAXIMO) ?? '';
-  if (tipo === 'eliminada' && id === undefined && limpio !== '')
-    return { tipo, nombre: limpio };
+  if (tipo === 'eliminada' && id === undefined && limpio !== '') return { tipo, nombre: limpio };
   if ((tipo === 'ajustada' || tipo === 'desactivada') && id !== undefined && UUID.test(id))
     return { tipo, programadaId: id };
   return undefined;

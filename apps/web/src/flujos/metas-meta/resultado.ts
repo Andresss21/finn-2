@@ -32,7 +32,8 @@ export function leerResultadoMeta(
   nombre?: string,
 ): ResultadoMeta | undefined {
   const limpio = nombre?.trim().slice(0, NOMBRE_MAXIMO) ?? '';
-  if (valor === 'eliminada') return limpio === '' ? undefined : { tipo: 'eliminada', nombre: limpio };
+  if (valor === 'eliminada')
+    return limpio === '' ? undefined : { tipo: 'eliminada', nombre: limpio };
   const [tipo, metaId, fecha, resto] = (valor ?? '').split(':');
   if (resto !== undefined || metaId === undefined || !UUID.test(metaId)) return undefined;
   if (tipo === 'ajustada' && fecha === undefined) return { tipo, metaId };

@@ -81,7 +81,9 @@ test.describe('PRU-E2E-BAND', () => {
 
     await page.getByRole('button', { name: accion(cuentas.bandeja.descartar, 'Super') }).click();
     // [CH-281] C-50: «Descartado» con «Restaurar» sobre la fila, que se queda 3 s y se recoge
-    await expect(anuncio(page, 'bandeja')).toHaveText(t.etiqueta.descartadoFrase('Super', '$12.00'));
+    await expect(anuncio(page, 'bandeja')).toHaveText(
+      t.etiqueta.descartadoFrase('Super', '$12.00'),
+    );
     await expect(etiqueta(page).getByRole('button', { name: t.restaurar })).toBeVisible();
     await expect(filas(page)).toHaveCount(0, { timeout: 10_000 });
 

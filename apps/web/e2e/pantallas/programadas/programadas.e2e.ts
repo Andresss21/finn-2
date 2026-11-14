@@ -94,7 +94,9 @@ test.describe('PRU-E2E-PROG pantalla de programadas', () => {
     );
     await expect(fila(page, 'Netflix').locator('[data-etiqueta]')).toHaveText('Desactivada');
     await fila(page, 'Netflix').getByRole('button', { name: 'Reactivar', exact: true }).click();
-    await expect(fila(page, 'Netflix').getByTestId('resultado')).toContainText('Reactivaste Netflix.');
+    await expect(fila(page, 'Netflix').getByTestId('resultado')).toContainText(
+      'Reactivaste Netflix.',
+    );
     await abrir(page, '/programadas');
     await expect(fila(page, 'Netflix')).not.toContainText('Desactivada');
     await expect(proximos(page)).toHaveCount(1);

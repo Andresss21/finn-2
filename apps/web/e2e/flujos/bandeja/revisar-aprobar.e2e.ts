@@ -88,7 +88,9 @@ test.describe('PRU-E2E-BAND', () => {
       /^\/actividad\/[0-9a-f-]{36}$/,
     );
     // El movimiento ya no está por revisar: la fila se recoge a los 3 s
-    await expect(page.getByRole('button', { name: /^Aprobar/ })).toHaveCount(0, { timeout: 10_000 });
+    await expect(page.getByRole('button', { name: /^Aprobar/ })).toHaveCount(0, {
+      timeout: 10_000,
+    });
   });
 
   test('PRU-E2E-BAND-481 [CA-35.1] aprobar de un toque: la fila se queda con la etiqueta «Aprobado» pegada arriba y sin «Deshacer», y el contador baja y rebota', async ({
