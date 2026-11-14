@@ -347,6 +347,46 @@ describe('PRU-CMP-VAL selección y buscador v3', () => {
     expect(nombreAccesible(disparador(otra))).toBe('Categoría Viaje');
   });
 
+  it('PRU-CMP-VAL-893 [C-45] CA-K3-6: con una sola opción la selección es la lista propia, sin segmentado de un botón y sin preelegirla; con 2 sigue el segmentado', async () => {
+    const cambios: string[] = [];
+    const raiz = montar(
+      <>
+        <GrupoCampos>
+          <SeleccionNativa
+            etiqueta="Categoría"
+            marcador="Elegí una categoría"
+            opciones={CATEGORIAS.slice(0, 1)}
+            valor=""
+            alCambiar={(v) => cambios.push(v)}
+          />
+        </GrupoCampos>
+        <GrupoCampos>
+          <SeleccionNativa
+            etiqueta="Cuenta"
+            marcador="Elegí una cuenta"
+            opciones={CATEGORIAS.slice(0, 2)}
+            valor=""
+            alCambiar={() => {}}
+          />
+        </GrupoCampos>
+      </>,
+    );
+    const [una, dos] = [...raiz.querySelectorAll<HTMLElement>('.grupo-campos')] as [
+      HTMLElement,
+      HTMLElement,
+    ];
+    expect(una.querySelector('[role="radiogroup"]')).toBeNull();
+    expect(nombreAccesible(disparador(una))).toBe('Categoría Elegí una categoría');
+    expect(cambios).toEqual([]);
+    await userEvent.click(disparador(una));
+    const opciones = [...document.querySelectorAll<HTMLElement>('[role="option"]')];
+    expect(opciones.map((o) => o.textContent)).toEqual(['SupermercadoDisponible $62.85']);
+    await userEvent.click(opciones[0] as HTMLElement);
+    expect(cambios).toEqual(['super']);
+    expect(dos.querySelectorAll('[role="radio"]')).toHaveLength(2);
+    expect(dos.querySelector('[aria-haspopup="listbox"]')).toBeNull();
+  });
+
   it('PRU-CMP-VAL-832 [C-45] CA-K3-7: el buscador de comercio espera 250 ms, dice «Buscando…», resalta lo escrito en 700, anuncia la cantidad, avisa sin resultados y ante un error ofrece «Intentar de nuevo» sin subrayado; lo escrito se respeta', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const pedidos: {

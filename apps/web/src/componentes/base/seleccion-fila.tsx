@@ -1,8 +1,9 @@
 'use client';
 // [CH-271] Selección v3 (C-45, CAMPOS-V3 §6): dentro de `GrupoCampos`, `Seleccion` y `SeleccionNativa` son una fila con un
 // disparador y una lista propia en todos los navegadores, nunca el `<select>` del sistema. Patrón *listbox* de ARIA: el foco
-// pasa a la lista, que marca la activa con `aria-activedescendant`, y vuelve al disparador al cerrar. Con 3 opciones o menos,
-// segmentado, salvo `soloLista` (filas de categoría de C-49 §2, CH-280).
+// pasa a la lista, que marca la activa con `aria-activedescendant`, y vuelve al disparador al cerrar. Con 2 o 3 opciones,
+// segmentado, salvo `soloLista` (filas de categoría de C-49 §2, CH-280). [CH-284] Con una sola, la lista y sin preelegir: un
+// segmentado de un elemento parece un botón y no deja ver si está elegido.
 import {
   Fragment,
   useEffect,
@@ -49,13 +50,15 @@ export interface PropsSeleccionFila {
   readonly soloLista?: boolean | undefined;
 }
 
+const MINIMO_SEGMENTADO = 2;
 const MAXIMO_SEGMENTADO = 3;
 
 /** Sin tildes ni mayúsculas, para saltar con letras. */
 const llano = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 export function SeleccionFila(props: PropsSeleccionFila) {
-  if (props.soloLista !== true && props.opciones.length <= MAXIMO_SEGMENTADO)
+  const n = props.opciones.length;
+  if (props.soloLista !== true && n >= MINIMO_SEGMENTADO && n <= MAXIMO_SEGMENTADO)
     return <SegmentadoFila {...props} />;
   return <ListaFila {...props} />;
 }
