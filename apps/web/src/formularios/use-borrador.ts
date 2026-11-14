@@ -39,6 +39,17 @@ export function leerGuardado(clave: string): Guardado | null {
   }
 }
 
+const esObjeto = (v: unknown): v is Readonly<Record<string, unknown>> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
+ * Los campos del borrador sobre los valores iniciales del formulario: la clave que el borrador no trae (un campo agregado
+ * después de guardarlo) toma su valor inicial, en vez de quedar `undefined`.
+ */
+export function completarConIniciales(iniciales: unknown, guardados: unknown): unknown {
+  return esObjeto(iniciales) && esObjeto(guardados) ? { ...iniciales, ...guardados } : guardados;
+}
+
 export interface OpcionesBorrador<Campos> {
   /** Ruta del flujo sin parámetros de búsqueda; por omisión, la de la pestaña. */
   readonly ruta?: string;
@@ -47,7 +58,10 @@ export interface OpcionesBorrador<Campos> {
   /** Los campos actuales del formulario (`watch()`): serializables. */
   readonly campos: Campos;
   readonly operacion: Pick<Operacion, 'estado' | 'error' | 'paraBorrador' | 'restaurarBorrador'>;
-  /** Pone los campos del borrador en el formulario (`reset(campos)`). */
+  /**
+   * Pone los campos del borrador en el formulario (`reset(campos)`). Recibe el borrador completado con los valores iniciales:
+   * un borrador guardado antes de que el formulario tuviera un campo no trae esa clave, y el campo toma su valor inicial.
+   */
   readonly restaurar: (campos: Campos) => void;
   /** Vuelve el formulario a sus valores iniciales (al descartar). */
   readonly alDescartar: () => void;
@@ -71,7 +85,7 @@ export function useBorrador<Campos>(opciones: OpcionesBorrador<Campos>) {
     leido.current = clave;
     const guardado = leerGuardado(clave);
     if (guardado === null) return;
-    restaurar(guardado.campos as Campos);
+    restaurar(completarConIniciales(JSON.parse(inicial.current), guardado.campos) as Campos);
     restaurarBorrador({ id: guardado.id, esperado: guardado.esperado });
     setRecuperado(true);
   }, [clave, restaurar, restaurarBorrador]);

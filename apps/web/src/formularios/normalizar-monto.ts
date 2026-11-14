@@ -16,9 +16,12 @@ export type Signo = 'positivo' | 'negativo';
 /** 21474836.47 en centavos, de 10 cifras, para comparar como texto sin aritmética. */
 const MAXIMO_CIFRAS = '2147483647';
 
-/** Al teclear: se descarta todo carácter que no sea dígito, `.` o `,`. El signo nunca va en el texto. */
-export function filtrarTecleo(texto: string): string {
-  return texto.replace(/[^\d.,]/g, '');
+/**
+ * Al teclear: se descarta todo carácter que no sea dígito, `.` o `,`. El signo nunca va en el texto. Un valor ausente (un
+ * campo que el estado del formulario todavía no tiene) se trata como vacío.
+ */
+export function filtrarTecleo(texto: string | undefined): string {
+  return (texto ?? '').replace(/[^\d.,]/g, '');
 }
 
 const cuenta = (texto: string, caracter: string): number => texto.split(caracter).length - 1;
@@ -50,7 +53,7 @@ export function limpiarPegado(
 }
 
 /** Texto escrito (ya filtrado) → texto decimal que se envía, o el motivo por el que no se puede. */
-export function normalizarMontoEscrito(escrito: string): ResultadoMonto {
+export function normalizarMontoEscrito(escrito: string | undefined): ResultadoMonto {
   const t = filtrarTecleo(escrito);
   if (t === '') return { estado: 'vacio' };
   if (cuenta(t, '.') + cuenta(t, ',') > 1)
