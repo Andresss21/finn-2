@@ -171,7 +171,7 @@ export function FilaBandeja({
         { tipo: 'aprobado', valor },
       );
     }
-  }, [estado, error, exito, m, hrefRevisar, alTerminar]);
+  }, [estado, error, exito, m, comercio, hrefRevisar, alTerminar]);
 
   // Descartar deja la etiqueta con «Restaurar»; restaurar la quita (la revalidación devuelve la fila a la lista)
   const enviarRestaurar = restaurar.enviar;
