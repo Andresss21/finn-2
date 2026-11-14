@@ -15,7 +15,14 @@ interface PropsFila {
 /** Los 16 px del check y del guion de la casilla (CAMPOS-V3 §8). */
 function Trazo({ d }: { readonly d: string }) {
   return (
-    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="2.4">
+    <svg
+      aria-hidden="true"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      strokeWidth="2.4"
+    >
       <path d={d} stroke="currentColor" strokeLinecap="square" strokeLinejoin="miter" />
     </svg>
   );
@@ -88,7 +95,11 @@ export function Casilla({
       descripcion={descripcion}
       deshabilitada={deshabilitada}
       antes={
-        <span aria-hidden="true" data-control="casilla" data-marcada={marcada === false ? undefined : ''}>
+        <span
+          aria-hidden="true"
+          data-control="casilla"
+          data-marcada={marcada === false ? undefined : ''}
+        >
           {marcada === false ? null : <Trazo d={mixta ? 'M6.5 12h11' : 'M5 12.5l4.5 4.5L19 7.5'} />}
         </span>
       }
@@ -177,7 +188,13 @@ export function Opciones({
   return (
     <div role="radiogroup" aria-label={etiqueta} className="grupo-campos">
       {opciones.map((o) => (
-        <Opcion key={o.valor} opcion={o} grupo={nombre ?? grupo} valor={valor} alCambiar={alCambiar} />
+        <Opcion
+          key={o.valor}
+          opcion={o}
+          grupo={nombre ?? grupo}
+          valor={valor}
+          alCambiar={alCambiar}
+        />
       ))}
     </div>
   );

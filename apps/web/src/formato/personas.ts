@@ -38,7 +38,8 @@ export function resolverNombre(
   if (PROPIOS.has(clave)) return { tipo: 'propio' };
   const persona = conocidas.find((p) => comparable(p.nombre) === clave);
   // Quien ya está marcado no suma una persona más.
-  if (persona !== undefined && elegidas.includes(persona.clave)) return { tipo: 'existente', persona };
+  if (persona !== undefined && elegidas.includes(persona.clave))
+    return { tipo: 'existente', persona };
   if (elegidas.length >= MAXIMO_PERSONAS) return { tipo: 'maximo' };
   return persona === undefined ? { tipo: 'nueva', nombre } : { tipo: 'existente', persona };
 }

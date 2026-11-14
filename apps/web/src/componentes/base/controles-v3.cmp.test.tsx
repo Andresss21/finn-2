@@ -68,8 +68,7 @@ async function tocarTexto(texto: HTMLElement): Promise<void> {
 const porNombre = (raiz: HTMLElement, rol: string, nombre: string): HTMLElement =>
   [...raiz.querySelectorAll<HTMLElement>(`[role="${rol}"], input`)].find(
     (e) =>
-      (e.getAttribute('role') ?? (e as HTMLInputElement).type) === rol &&
-      nombreDe(e) === nombre,
+      (e.getAttribute('role') ?? (e as HTMLInputElement).type) === rol && nombreDe(e) === nombre,
   ) as HTMLElement;
 function nombreDe(e: HTMLElement): string {
   const ids = e.getAttribute('aria-labelledby');
@@ -122,7 +121,12 @@ function Casillas() {
           { valor: 'gasto', etiqueta: 'Gasto' },
           { valor: 'ingreso', etiqueta: 'Ingreso' },
           { valor: 'transferencia', etiqueta: 'Transferencia' },
-          { valor: 'pago', etiqueta: 'Pago de tarjeta', descripcion: 'No tenés tarjetas', deshabilitada: true },
+          {
+            valor: 'pago',
+            etiqueta: 'Pago de tarjeta',
+            descripcion: 'No tenés tarjetas',
+            deshabilitada: true,
+          },
         ]}
       />
     </>
@@ -215,7 +219,9 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
     const rotulo = [...fila(interruptor).querySelectorAll('span')].find(
       (s) => s.textContent === 'Registrar sola',
     ) as HTMLElement;
-    expect(pista.getBoundingClientRect().left).toBeGreaterThan(rotulo.getBoundingClientRect().right);
+    expect(pista.getBoundingClientRect().left).toBeGreaterThan(
+      rotulo.getBoundingClientRect().right,
+    );
     expect(pista.getBoundingClientRect().width).toBe(44);
     expect(pista.getBoundingClientRect().height).toBe(26);
     expect(getComputedStyle(pista).backgroundColor).toBe(token('backgroundColor', '--accion'));
@@ -236,9 +242,7 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
     await vi.waitFor(() => {
       expect(ingreso.checked).toBe(true);
     });
-    expect(
-      (porNombre(raiz, 'radio', 'Gasto') as HTMLInputElement).checked,
-    ).toBe(false);
+    expect((porNombre(raiz, 'radio', 'Gasto') as HTMLInputElement).checked).toBe(false);
     expect((porNombre(raiz, 'radio', 'Pago de tarjeta') as HTMLInputElement).disabled).toBe(true);
     // Las flechas mueven la elección (radios nativos con el mismo nombre).
     ingreso.focus();
@@ -258,7 +262,12 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
           alCambiar={setV}
           opciones={[
             { valor: 'solo', titulo: 'Solo yo', detalle: 'Todo va a la categoría', icono: 'user' },
-            { valor: 'con', titulo: 'Con alguien', detalle: 'Su parte queda por cobrar', icono: 'user' },
+            {
+              valor: 'con',
+              titulo: 'Con alguien',
+              detalle: 'Su parte queda por cobrar',
+              icono: 'user',
+            },
           ]}
         />
       );
@@ -398,7 +407,9 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
     });
     await userEvent.keyboard('luis');
     await userEvent.click(
-      [...raiz.querySelectorAll('button')].find((b) => b.textContent === base.agregar) as HTMLElement,
+      [...raiz.querySelectorAll('button')].find(
+        (b) => b.textContent === base.agregar,
+      ) as HTMLElement,
     );
     await vi.waitFor(() => {
       expect(chip('Luis')?.getAttribute('aria-checked')).toBe('true');
@@ -451,7 +462,9 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
     }
     const raiz = montar(<Muchas />);
     await userEvent.click(
-      [...raiz.querySelectorAll('button')].find((b) => b.textContent === base.otraPersona) as HTMLElement,
+      [...raiz.querySelectorAll('button')].find(
+        (b) => b.textContent === base.otraPersona,
+      ) as HTMLElement,
     );
     await userEvent.keyboard('Luis{Enter}');
     await vi.waitFor(() => {
@@ -471,8 +484,18 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
             valor="con"
             alCambiar={() => {}}
             opciones={[
-              { valor: 'solo', titulo: 'Solo yo', detalle: 'Todo va a la categoría', icono: 'user' },
-              { valor: 'con', titulo: 'Con alguien', detalle: 'Su parte queda por cobrar', icono: 'user' },
+              {
+                valor: 'solo',
+                titulo: 'Solo yo',
+                detalle: 'Todo va a la categoría',
+                icono: 'user',
+              },
+              {
+                valor: 'con',
+                titulo: 'Con alguien',
+                detalle: 'Su parte queda por cobrar',
+                icono: 'user',
+              },
             ]}
           />
           <GrupoCampos>
@@ -490,7 +513,9 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
         </>,
       );
       await userEvent.click(
-        [...raiz.querySelectorAll('button')].find((b) => b.textContent === base.otraPersona) as HTMLElement,
+        [...raiz.querySelectorAll('button')].find(
+          (b) => b.textContent === base.otraPersona,
+        ) as HTMLElement,
       );
       await userEvent.keyboard('yo{Enter}');
       await vi.waitFor(() => {
