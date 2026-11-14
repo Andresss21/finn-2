@@ -417,7 +417,7 @@ describe('PRU-CMP-CATEG-139 la etiqueta de resultado en la estructura', () => {
     expect(filasDe('Casa')).toEqual(['Supermercado', 'Luz', 'Internet', 'Farmacia']);
   });
 
-  it('PRU-CMP-CATEG-139 [C-50, E4-6] «Desarchivar» deja «Desarchivada» con «Archivarla de nuevo» en la fila, ya en su grupo abierto, y anuncia «Desarchivaste Gimnasio: volvió a Casa.»', async () => {
+  it('PRU-CMP-CATEG-139 [C-50] E4-6: «Desarchivar» deja «Desarchivada» con «Archivarla de nuevo» en la fila, ya en su grupo abierto, y anuncia «Desarchivaste Gimnasio: volvió a Casa.»', async () => {
     const conArchivada = [
       grupo('Casa', ['Supermercado', 'Luz y agua'], { archivadas: ['Gimnasio'] }),
       ...A7.slice(1),

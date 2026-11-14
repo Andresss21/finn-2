@@ -17,6 +17,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
+import { cn } from '../../components/ui/utils';
 import { EnlaceFinn } from '../navegacion/enlace-finn';
 import {
   crearEtiquetaReloj,
@@ -51,9 +52,10 @@ const ENFOCABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1
 /** Un token de tiempo en ms, como lo resuelve el navegador; `undefined` si no está. */
 function leerMs(token: string): number | undefined {
   const v = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
-  const n = Number.parseFloat(v);
-  if (!Number.isFinite(n)) return undefined;
-  return v.endsWith('ms') ? n : n * MS_POR_S;
+  const m = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(v);
+  if (m === null) return undefined;
+  const n = Number(m[1]);
+  return m[2] === 'ms' ? n : n * MS_POR_S;
 }
 const reducido = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -157,11 +159,12 @@ export function EtiquetaResultado({
   const r = api.estado.actual;
   if (r?.id !== id) return null;
   const a = r.accion;
-  const escape = (e: KeyboardEvent<HTMLDivElement>) => {
+  // Escape con el foco adentro (en su acción, lo único enfocable) la quita en el momento.
+  const escape = (e: KeyboardEvent<HTMLElement>) => {
     if (e.key !== 'Escape') return;
     e.stopPropagation();
     // El foco no se pierde: vuelve a lo anterior de la fila (su botón principal).
-    let x = e.currentTarget.previousElementSibling;
+    let x = e.currentTarget.closest('[data-etiqueta]')?.previousElementSibling ?? null;
     let destino: HTMLElement | null = null;
     while (x !== null && destino === null) {
       destino = ultimoEnfocable(x);
@@ -188,16 +191,15 @@ export function EtiquetaResultado({
       onBlur={(e: FocusEvent<HTMLDivElement>) => {
         if (!e.currentTarget.contains(e.relatedTarget)) api.reanudar('foco');
       }}
-      onKeyDown={escape}
     >
       <Icono nombre="check" tamano={18} className="shrink-0 text-positivo-texto" />
       <span className="fz-etiqueta-palabra">{r.palabra}</span>
       {a === undefined ? null : 'href' in a ? (
-        <EnlaceFinn href={a.href} className="fz-etiqueta-accion">
+        <EnlaceFinn href={a.href} className="fz-etiqueta-accion" onKeyDown={escape}>
           {a.texto}
         </EnlaceFinn>
       ) : (
-        <button type="button" onClick={a.alTocar} className="fz-etiqueta-accion">
+        <button type="button" onClick={a.alTocar} onKeyDown={escape} className="fz-etiqueta-accion">
           {a.icono === undefined ? null : <Icono nombre={a.icono} tamano={18} />}
           {a.texto}
         </button>
@@ -243,7 +245,7 @@ export function FilaQueSale({
     <li
       data-fila-sale={id}
       {...(recoge ? { 'data-recogiendo': '' } : {})}
-      className={className === undefined ? 'fz-fila-sale' : `fz-fila-sale ${className}`}
+      className={cn('fz-fila-sale', className)}
     >
       <div className="fz-fila-sale-dentro">{children}</div>
     </li>
