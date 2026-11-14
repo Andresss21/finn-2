@@ -4,8 +4,8 @@
 // (barra inferior y lateral), el enlace «Saltar al contenido» y el indicador global de navegación en curso (FE-39). No mueve
 // el foco al navegar (11.2).
 // Teléfono: el título es el `h1` de la página, que `globals.css` pone en la barra; una hija (`volverDeRuta`) lleva «Volver
-// a…» y la campana (más «Más acciones» si la pantalla publica `PublicarAcciones`, CH-115), las demás Registrar, campana y ☰;
-// `PaginaFlujo` oculta las barras. Computadora: campana (y «Más acciones») arriba a la derecha.
+// a…» (la `FlechaVolver`, CH-288) y la campana (más «Más acciones» si la pantalla publica `PublicarAcciones`, CH-115), las
+// demás Registrar, campana y ☰; `PaginaFlujo` oculta las barras. Computadora: campana (y «Más acciones») arriba a la derecha.
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
   lazy,
@@ -29,6 +29,8 @@ import {
   EVENTO_SIN_CONEXION,
 } from '../navegacion/enlace-finn';
 import { direccionDeEntrada } from '../navegacion/direccion-entrada';
+import { FlechaVolver } from '../navegacion/flecha-volver';
+import { registrarHistorial } from '../navegacion/volver-anterior';
 import { useRefrescar } from '../navegacion/use-refrescar';
 import { EVENTO_ARRASTRE } from './arrastre';
 import { MasSecciones, NavegacionApp } from '../navegacion/navegacion-app';
@@ -158,9 +160,11 @@ function CuerpoDelMarco({
       window.removeEventListener('resize', ajustar);
     };
   }, [pathname]);
-  // 05 §14.3: las pruebas esperan este atributo antes de interactuar.
+  // 05 §14.3: las pruebas esperan este atributo antes de interactuar. [CH-288] Desde acá se anotan las pantallas que recorre la
+  // pestaña, para que la flecha «Volver» sepa si la anterior es de Finn.
   useEffect(() => {
     document.documentElement.setAttribute('data-hidratado', 'si');
+    registrarHistorial();
   }, []);
 
   // `null` = sin dato todavía (1.6): ningún cero inventado.
@@ -221,13 +225,13 @@ function CuerpoDelMarco({
           className="fixed inset-x-0 top-0 z-30 flex h-15 items-center gap-1 bg-fondo pr-2 pl-5 md:absolute md:top-8 md:right-12 md:left-auto md:h-11 md:gap-2.5 md:bg-transparent md:p-0"
         >
           {volver === null ? null : (
-            <EnlaceFinn
+            <FlechaVolver
               href={volver.ruta}
-              aria-label={volver.etiqueta}
+              etiqueta={volver.etiqueta}
               className="-ml-2 inline-flex size-11 items-center justify-center text-texto md:hidden"
             >
               <Icono nombre="arrowL" tamano={22} />
-            </EnlaceFinn>
+            </FlechaVolver>
           )}
           <span className="flex-1 md:hidden" />
           {tipoBarra === 'principal' ? (

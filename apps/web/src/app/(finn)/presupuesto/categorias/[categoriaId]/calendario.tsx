@@ -16,7 +16,7 @@ const c = categoriaDetalle.calendario;
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const DIAS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const DIA = 'flex h-11 flex-col items-center justify-center rounded-control text-cuerpo-pequeno';
-const ENLACE = `inline-flex min-h-11 items-center px-2 font-semibold underline ${FOCO}`;
+const ENLACE = `inline-flex min-h-11 items-center px-2 font-bold text-enlace ${FOCO}`;
 
 interface Props {
   readonly consumos: DetalleCategoria['consumos'];
