@@ -1,13 +1,13 @@
 'use client';
 // «Archivadas · N» al pie de Estructura (E4-6, E4-31; OP-10, 05 §4.14): las categorías archivadas, plegadas, con «Desarchivar» de un
-// toque y, si su grupo también está archivado, «Desarchivar también {grupo}» (`desarchivarGrupo = true`). El resultado queda en el
-// lugar con «Archivarla de nuevo», que abre el flujo largo de Archivar. No calcula nada (PF-3): lo que se dice sale de `estructura()`.
+// toque y, si su grupo también está archivado, «Desarchivar también {grupo}» (`desarchivarGrupo = true`). [CH-278] El resultado es
+// la etiqueta «Desarchivada» con «Archivarla de nuevo» en la fila, ya en su grupo: la dibuja la lista (`alDesarchivar`, C-50).
+// El error sigue como aviso en línea. No calcula nada (PF-3): lo que se dice sale de `estructura()`.
 import type { GrupoDeEstructura } from '@finn/dominio/selectores';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Icono } from '../../componentes/base/icono';
-import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { formatearFecha } from '../../formato';
 import { useUnToque } from '../../formularios/use-un-toque';
 import { desarchivarCategoria } from '../../servidor/acciones/categorias';
@@ -16,14 +16,14 @@ import { estructuraEntrega4 as t } from '../../textos/estructura-entrega-4';
 const RESUMEN =
   'flex min-h-11 cursor-pointer list-none items-center gap-2 text-rotulo text-texto-secundario focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco [&::-webkit-details-marker]:hidden';
 
-interface Pedido {
+export interface Desarchivada {
   readonly id: string;
   readonly nombre: string;
   readonly grupo: string;
   readonly conGrupo: boolean;
 }
 
-interface Archivada extends Pedido {
+interface Archivada extends Desarchivada {
   readonly grupoArchivado: boolean;
   /** [CH-254] De `estructura()`; falta en las archivadas antes de que Finn la guardara. */
   readonly archivadaEl?: string;
@@ -45,24 +45,32 @@ export function archivadasDe(grupos: readonly GrupoDeEstructura[]): Archivada[] 
   );
 }
 
-export function Archivadas({ grupos }: { readonly grupos: readonly GrupoDeEstructura[] }) {
+export function Archivadas({
+  grupos,
+  alDesarchivar,
+}: {
+  readonly grupos: readonly GrupoDeEstructura[];
+  readonly alDesarchivar: (d: Desarchivada) => void;
+}) {
   const lista = archivadasDe(grupos);
   const un = useUnToque({ accion: desarchivarCategoria });
-  const pedido = useRef<Pedido | undefined>(undefined);
-  const [resultado, setResultado] = useState<Pedido | undefined>();
+  const pedido = useRef<Desarchivada | undefined>(undefined);
+  const avisar = useRef(alDesarchivar);
+  useEffect(() => {
+    avisar.current = alDesarchivar;
+  });
   const { exito } = un;
   useEffect(() => {
-    if (exito !== undefined) setResultado(pedido.current);
+    if (exito !== undefined && pedido.current !== undefined) avisar.current(pedido.current);
   }, [exito]);
   const ocupado = un.estado === 'enviando';
-  if (lista.length === 0 && resultado === undefined) return null;
-  const tocar = (p: Pedido) => {
+  if (lista.length === 0) return null;
+  const tocar = (p: Desarchivada) => {
     pedido.current = p;
-    setResultado(undefined);
     void un.tocar({ categoriaId: p.id, ...(p.conGrupo ? { desarchivarGrupo: true } : {}) });
   };
   return (
-    <details open={resultado !== undefined || undefined} className="group flex flex-col gap-2">
+    <details className="group flex flex-col gap-2">
       <summary className={RESUMEN}>
         <span className="group-open:rotate-90">
           <Icono nombre="chevR" tamano={16} />
@@ -70,24 +78,6 @@ export function Archivadas({ grupos }: { readonly grupos: readonly GrupoDeEstruc
         {t.archivadas(lista.length)}
       </summary>
       <div className="flex flex-col gap-2">
-        {resultado === undefined ? null : (
-          <AvisoEnLinea
-            estado="informacion"
-            aparecioDespues
-            accion={
-              <EnlaceFinn
-                href={`/presupuesto/categorias/${resultado.id}/archivar`}
-                className="inline-flex min-h-11 items-center font-bold text-enlace"
-              >
-                {t.archivarDeNuevo}
-              </EnlaceFinn>
-            }
-          >
-            {resultado.conGrupo
-              ? t.desarchivasteConGrupo(resultado.nombre, resultado.grupo)
-              : t.desarchivaste(resultado.nombre, resultado.grupo)}
-          </AvisoEnLinea>
-        )}
         {un.error === undefined ? null : (
           <AvisoEnLinea estado="problema" aparecioDespues>
             {un.error.mensaje}

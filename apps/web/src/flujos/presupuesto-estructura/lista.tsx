@@ -2,8 +2,10 @@
 // `/presupuesto/estructura` (FT-18; 05 §2.3, §4.14): la lista de grupos y categorías con sus enlaces de alta y edición. [CH-272]
 // C-46: los grupos se colapsan (recordado en el dispositivo) y el asa abre la barra «Mover», que manda un OP-08 por toque con
 // `orden` (y `grupoId` al cruzar de grupo). La lista muestra el lugar nuevo mientras espera y, si OP-08 rechaza, vuelve al anterior
-// con el error en línea. Un solo resultado a la vez, debajo de lo que se movió o creó; nunca se va solo (principio 5). El orden
-// nunca depende de arrastrar (WCAG 2.5.7). No calcula montos: los lugares salen del árbol de `estructura()` (`lugares.ts`).
+// con el error en línea. El orden nunca depende de arrastrar (WCAG 2.5.7). No calcula montos: los lugares salen del árbol de
+// `estructura()` (`lugares.ts`). [CH-278] C-50: el resultado de mover, crear, deshacer y desarchivar es la etiqueta sobre la
+// fila (`EtiquetaResultado`), una a la vez, que se va sola; mover deja ↶ en la fila hasta la siguiente acción y «Deshacer»
+// devuelve lo movido a donde estaba antes del primer paso. La frase va a la única región de estado de la pantalla.
 // [CH-275] El arrastre desde el asa (`arrastre.tsx`, con `import()` después de cargar): mientras dura, la lista dibuja el lugar
 // donde caería (el hueco), el destino y la fila levantada; al soltar usa los mismos `moverCategoria` y `moverGrupo` que la barra.
 import type { ResultadoAccion } from '@finn/aplicacion/errores';
@@ -12,16 +14,22 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom';
 import { useColapsados } from '../../cliente/useColapsados';
 import { Boton } from '../../componentes/base/boton';
+import {
+  DeshacerFila,
+  EtiquetaResultado,
+  useEtiqueta,
+  type ResultadoEtiqueta,
+} from '../../componentes/base/etiqueta-resultado';
 import { Icono } from '../../componentes/base/icono';
-import { Resultado } from '../../componentes/base/resultado';
 import { Vacio } from '../../componentes/base/vacio';
 import { PaginaFlujoDeRuta, useCerrarFlujo } from '../../componentes/navegacion/flujo-de-ruta';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { useOperacion } from '../../formularios/use-operacion';
 import { editarEnEstructura } from '../../servidor/acciones/categorias';
 import { estructura as t } from '../../textos/estructura';
+import { estructuraEntrega4 as t4 } from '../../textos/estructura-entrega-4';
 import { formularios } from '../../textos/formularios';
-import { Archivadas } from './archivadas';
+import { Archivadas, type Desarchivada } from './archivadas';
 import type { Apunte, Tomar } from './arrastre';
 import { BarraMover } from './barra-mover';
 import { useFlip } from './flip';
@@ -34,20 +42,14 @@ const CLAVE = 'finn.colapsados.estructura';
 const PRINCIPAL =
   'inline-flex min-h-12 items-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
-type Aviso =
-  | { readonly tipo: 'creado'; readonly r: ResultadoEstructura }
-  | {
-      readonly tipo: 'movido';
-      readonly ancla: string;
-      readonly texto: string;
-      /** El árbol de antes y el OP-08 que lo devuelve: «Deshacer». */
-      readonly volver?: {
-        readonly antes: L.Arbol;
-        readonly entrada: L.EntradaMover;
-        readonly texto: string;
-      };
-    }
-  | { readonly tipo: 'error'; readonly ancla: string; readonly texto: string };
+/** [CH-278] Dónde estaba lo movido antes del primer paso: «Deshacer» y ↶ lo devuelven ahí (CA-A-7). */
+interface Volver {
+  readonly id: string;
+  readonly tipo: 'grupo' | 'categoria';
+  readonly lugar: L.Lugar;
+  readonly idx: number;
+  readonly volvio: string;
+}
 
 interface Arrastre {
   readonly tipo: 'grupo' | 'categoria';
@@ -85,18 +87,14 @@ export function ListaEstructura({
     setBase(todos);
     setArbol(aArbol(todos));
   }
-  const clave = resultado === undefined ? '' : `${resultado.tipo}:${resultado.id}`;
-  const [claveVista, setClaveVista] = useState(clave);
-  const [aviso, setAviso] = useState<Aviso | null>(
-    resultado === undefined ? null : { tipo: 'creado', r: resultado },
+  const [error, setError] = useState<{ readonly ancla: string; readonly texto: string } | null>(
+    null,
   );
-  if (clave !== claveVista) {
-    setClaveVista(clave);
-    if (resultado !== undefined) setAviso({ tipo: 'creado', r: resultado });
-    else if (aviso?.tipo === 'creado') setAviso(null);
-  }
   const [barra, setBarra] = useState<{ readonly id: string; readonly otro: boolean } | null>(null);
   const [anuncio, setAnuncio] = useState('');
+  const etiqueta = useEtiqueta(setAnuncio);
+  const { mostrar } = etiqueta;
+  const volver = useRef<Volver | null>(null);
   const { colapsados, guardar } = useColapsados(CLAVE);
   const usuarios = L.usuarios(arbol);
   const guardarDe = (ids: Iterable<string>) => {
@@ -113,18 +111,58 @@ export function ListaEstructura({
     const e = document.querySelector<HTMLElement>(`[data-foco="${f}"]`);
     if (e !== null && document.activeElement !== e) e.focus();
   });
+  // [CH-270] Lo creado (`?resultado=`): «Creada» en la fila nueva o «Creado» en el encabezado del grupo nuevo (C-50 §8). Si el
+  // panel devolvió el foco a su disparador, queda ahí; si no, va a lo creado.
+  const clave = resultado === undefined ? '' : `${resultado.tipo}:${resultado.id}`;
+  const creado = useRef('');
   useEffect(() => {
-    if (aviso?.tipo !== 'creado') return;
-    // Si el panel devolvió el foco a su disparador («Nueva categoría» o «Nuevo grupo», junto al resultado), queda ahí.
-    const espera = setTimeout(() => {
+    if (resultado === undefined || creado.current === clave) return;
+    const esGrupo = resultado.tipo === 'grupo';
+    const g = esGrupo
+      ? arbol.find((x) => x.id === resultado.id)
+      : L.lugarDeCategoria(arbol, resultado.id)?.grupo;
+    if (g === undefined) return;
+    creado.current = clave;
+    if (!esGrupo && colapsados.has(g.id)) guardar([...colapsados].filter((x) => x !== g.id));
+    const nombre = g.categorias.find((c) => c.id === resultado.id)?.nombre ?? '';
+    mostrar(
+      esGrupo
+        ? { id: g.id, palabra: t.creado, frase: t.grupoCreado(g.nombre) }
+        : { id: resultado.id, palabra: t.creada, frase: t.categoriaCreada(nombre, g.nombre) },
+    );
+    // Sin limpiar al volver a correr: mostrar la etiqueta vuelve a dibujar la lista antes de este momento.
+    setTimeout(() => {
       const activo = document.activeElement;
       if (activo === null || activo === document.body)
-        document.querySelector<HTMLElement>('[data-foco="aviso"]')?.focus();
+        document
+          .querySelector<HTMLElement>(`[data-foco="${esGrupo ? 'grupo' : 'fila'}-${resultado.id}"]`)
+          ?.focus();
     }, 0);
-    return () => {
-      clearTimeout(espera);
-    };
-  }, [aviso, claveVista]);
+  }, [arbol, clave, colapsados, guardar, mostrar, resultado]);
+  // E4-6: lo desarchivado lleva «Desarchivada» con «Archivarla de nuevo» cuando ya está en su grupo (posición 5 de §3).
+  const [desarchivada, setDesarchivada] = useState<Desarchivada | null>(null);
+  useEffect(() => {
+    if (desarchivada === null) return;
+    const l = L.lugarDeCategoria(arbol, desarchivada.id);
+    const visible =
+      l !== undefined &&
+      L.usuarios(arbol).some((g) => g.id === l.grupo.id) &&
+      l.grupo.categorias.some((c) => c.id === desarchivada.id && !c.archivada);
+    if (!visible) return;
+    setDesarchivada(null);
+    if (colapsados.has(l.grupo.id)) guardar([...colapsados].filter((x) => x !== l.grupo.id));
+    mostrar({
+      id: desarchivada.id,
+      palabra: t.desarchivada,
+      frase: desarchivada.conGrupo
+        ? t4.desarchivasteConGrupo(desarchivada.nombre, desarchivada.grupo)
+        : t4.desarchivaste(desarchivada.nombre, desarchivada.grupo),
+      accion: {
+        texto: t4.archivarDeNuevo,
+        href: `/presupuesto/categorias/${desarchivada.id}/archivar`,
+      },
+    });
+  }, [arbol, colapsados, desarchivada, guardar, mostrar]);
 
   const ultimo = useRef<ResultadoAccion<unknown> | null>(null);
   const llamar = useCallback(async (e: unknown) => {
@@ -183,13 +221,16 @@ export function ListaEstructura({
     entrada: L.EntradaMover,
     antes: L.Arbol,
     despues: L.Arbol,
-    exito: Aviso,
+    exito: () => void,
     foco: string,
   ) => {
     if (enVuelo.current) return;
     enVuelo.current = true;
     setArbol(despues);
-    setAviso(null);
+    setError(null);
+    // La acción siguiente reemplaza la etiqueta y se lleva el ↶.
+    etiqueta.cerrar();
+    etiqueta.otraAccion();
     enfocar.current = foco;
     ultimo.current = null;
     try {
@@ -199,7 +240,7 @@ export function ListaEstructura({
     }
     const r = ultimo.current as ResultadoAccion<unknown> | null;
     if (r?.ok === true) {
-      setAviso(exito);
+      exito();
       return;
     }
     setArbol(antes);
@@ -209,36 +250,92 @@ export function ListaEstructura({
           ? formularios.incierto
           : formularios.sinConexion
         : r.error.mensaje;
-    setAviso({ tipo: 'error', ancla: entrada.id, texto });
+    setError({ ancla: entrada.id, texto });
   };
-  const aplicar = (m: L.Movimiento | undefined, id: string, foco: string) => {
+  const nombreDe = (id: string) =>
+    arbol.flatMap((g) => [g, ...g.categorias]).find((x) => x.id === id)?.nombre ?? '';
+  /** «Deshacer» (en la etiqueta o en ↶): lo movido vuelve a donde estaba antes del primer paso, con «Volvió» y el foco en su fila. */
+  const deshacer = (id: string) => {
+    const v = volver.current;
+    if (v?.id !== id) return;
+    const m =
+      v.tipo === 'grupo' ? L.moverGrupo(arbol, id, v.idx) : L.moverCategoria(arbol, id, v.lugar);
+    const listo: ResultadoEtiqueta = { id, palabra: t.volvioPalabra, frase: v.volvio };
+    const exito = () => {
+      volver.current = null;
+      mostrar(listo);
+    };
+    const foco = `${v.tipo === 'grupo' ? 'grupo' : 'fila'}-${id}`;
+    if (m !== undefined) {
+      void enviar(m.entrada, arbol, m.despues, exito, foco);
+      return;
+    }
+    etiqueta.otraAccion();
+    enfocar.current = foco;
+    exito();
+  };
+  const deshacerAhora = useRef(deshacer);
+  useEffect(() => {
+    deshacerAhora.current = deshacer;
+  });
+  const aplicar = (
+    m: L.Movimiento | undefined,
+    tipo: Volver['tipo'],
+    id: string,
+    foco: string,
+    soltado: boolean,
+  ) => {
     if (m === undefined) return;
+    // Varios pasos seguidos de la misma fila (la barra «Mover») se deshacen juntos.
+    const previo = volver.current?.id === id && etiqueta.conInverso(id) ? volver.current : null;
+    const l = L.lugarDeCategoria(arbol, id);
+    const origen: Volver = previo ?? {
+      id,
+      tipo,
+      lugar: { grupoId: l?.grupo.id ?? '', idx: l?.idx ?? 0 },
+      idx: L.lugarDeGrupo(arbol, id).idx,
+      volvio: m.volvio,
+    };
+    const nombre = nombreDe(id);
     void enviar(
       m.entrada,
       arbol,
       m.despues,
-      {
-        tipo: 'movido',
-        ancla: id,
-        texto: m.texto,
-        volver: { antes: arbol, entrada: m.inversa, texto: m.volvio },
+      () => {
+        volver.current = origen;
+        mostrar({
+          id,
+          palabra: tipo === 'grupo' ? t.movido : t.movida,
+          frase: soltado ? t.soltaste(m.texto) : m.texto,
+          accion: {
+            texto: t.deshacer,
+            icono: 'undo',
+            alTocar: () => {
+              deshacerAhora.current(id);
+            },
+          },
+          inverso: tipo === 'grupo' ? t.deshacerGrupo(nombre) : t.deshacerCategoria(nombre),
+        });
       },
       foco,
     );
   };
   /** Mover una categoría a un lugar (la barra y el arrastre). El grupo de destino se abre. */
-  const moverCategoria = (cid: string, destino: L.Lugar | undefined, foco: string) => {
+  const moverCategoria = (
+    cid: string,
+    destino: L.Lugar | undefined,
+    foco: string,
+    soltado = false,
+  ) => {
     if (destino === undefined) return;
     if (colapsados.has(destino.grupoId))
       guardarDe([...colapsados].filter((x) => x !== destino.grupoId));
-    aplicar(L.moverCategoria(arbol, cid, destino), cid, foco);
+    aplicar(L.moverCategoria(arbol, cid, destino), 'categoria', cid, foco, soltado);
   };
-  const moverGrupo = (gid: string, idx: number | undefined, foco: string) => {
-    if (idx !== undefined) aplicar(L.moverGrupo(arbol, gid, idx), gid, foco);
+  const moverGrupo = (gid: string, idx: number | undefined, foco: string, soltado = false) => {
+    if (idx !== undefined) aplicar(L.moverGrupo(arbol, gid, idx), 'grupo', gid, foco, soltado);
   };
 
-  const nombreDe = (id: string) =>
-    arbol.flatMap((g) => [g, ...g.categorias]).find((x) => x.id === id)?.nombre ?? '';
   /** El árbol con lo tomado donde caería, y lo que dicen la fila levantada y el anuncio. */
   const previa = (x: Arrastre) =>
     (x.tipo === 'grupo' ? L.moverGrupo(arbol, x.id, x.a.idx) : L.moverCategoria(arbol, x.id, x.a))
@@ -276,6 +373,7 @@ export function ListaEstructura({
           ? { grupoId: '', idx: L.lugarDeGrupo(arbol, id).idx, colapsado: false }
           : { grupoId: l?.grupo.id ?? '', idx: l?.idx ?? 0, colapsado: false };
       fijar({ tipo, id, caja, a });
+      etiqueta.pausar('arrastre');
       setAnuncio(tipo === 'grupo' ? t.tomasteGrupo(nombreDe(id)) : t.tomaste(nombreDe(id)));
     },
     alApuntar: (a: Apunte) => {
@@ -290,6 +388,8 @@ export function ListaEstructura({
     },
     alSoltar: (caja: DOMRect | undefined) => {
       const x = terminar(caja);
+      // Soltar en el mismo lugar vuelve a contar la etiqueta; en otro, la nueva la reemplaza (CA-A-5).
+      etiqueta.reanudar('arrastre');
       if (x === null) return;
       const m =
         x.tipo === 'grupo'
@@ -299,12 +399,12 @@ export function ListaEstructura({
         setAnuncio(t.mismoLugar(nombreDe(x.id)));
         return;
       }
-      setAnuncio(t.soltaste(m.texto));
-      if (x.tipo === 'grupo') moverGrupo(x.id, x.a.idx, `asa-${x.id}`);
-      else moverCategoria(x.id, x.a, `asa-${x.id}`);
+      if (x.tipo === 'grupo') moverGrupo(x.id, x.a.idx, `asa-${x.id}`, true);
+      else moverCategoria(x.id, x.a, `asa-${x.id}`, true);
     },
     alCancelar: (caja: DOMRect | undefined) => {
       const x = terminar(caja);
+      etiqueta.reanudar('arrastre');
       if (x !== null) setAnuncio(t.cancelado(nombreDe(x.id)));
     },
   };
@@ -341,24 +441,14 @@ export function ListaEstructura({
     enfocar.current = `subir-${id}`;
   };
 
-  const resultadoEn = (texto: string, volver?: () => void) => (
-    <div
-      data-aviso
-      data-foco="aviso"
-      role="status"
-      tabIndex={-1}
-      className="fz-resultado border-b border-borde-sutil bg-positivo-fondo focus-visible:outline-3 focus-visible:outline-foco"
-    >
-      <Resultado
-        texto={texto}
-        {...(volver === undefined ? {} : { salida: { etiqueta: t.deshacer, ejecutar: volver } })}
-        alCerrar={() => {
-          setAviso(null);
-        }}
-      />
-    </div>
+  /** [CH-278] Dentro de la fila o del encabezado, después de su contenido: el ↶ y la etiqueta. */
+  const enFila = (id: string): ReactNode => (
+    <>
+      <DeshacerFila api={etiqueta} id={id} />
+      <EtiquetaResultado api={etiqueta} id={id} />
+    </>
   );
-  /** Lo que va debajo de una fila o de un encabezado: su barra «Mover» y el resultado o el error. */
+  /** Lo que va debajo de una fila o de un encabezado: su barra «Mover» y el error. */
   const enLugar = (id: string): ReactNode => {
     const esGrupo = usuarios.some((g) => g.id === id);
     const cuerpo: ReactNode[] = [];
@@ -437,7 +527,7 @@ export function ListaEstructura({
         ),
       );
     }
-    if (aviso?.tipo === 'error' && aviso.ancla === id)
+    if (error?.ancla === id)
       cuerpo.push(
         <p
           key="error"
@@ -445,47 +535,9 @@ export function ListaEstructura({
           className="text-cuerpo-pequeno flex items-center gap-2 px-4 py-2 text-problema-texto"
         >
           <Icono nombre="problema" tamano={16} />
-          {aviso.texto}
+          {error.texto}
         </p>,
       );
-    if (aviso?.tipo === 'movido' && aviso.ancla === id) {
-      const v = aviso.volver;
-      cuerpo.push(
-        <div key="aviso" className={esGrupo ? 'overflow-hidden rounded-contenedor' : ''}>
-          {resultadoEn(
-            aviso.texto,
-            v === undefined
-              ? undefined
-              : () => {
-                  if (enVuelo.current) return;
-                  void enviar(
-                    v.entrada,
-                    arbol,
-                    v.antes,
-                    { tipo: 'movido', ancla: id, texto: v.texto },
-                    `asa-${id}`,
-                  );
-                },
-          )}
-        </div>,
-      );
-    }
-    if (aviso?.tipo === 'creado') {
-      const { r } = aviso;
-      const g =
-        r.tipo === 'grupo'
-          ? arbol.find((x) => x.id === r.id)
-          : L.lugarDeCategoria(arbol, r.id)?.grupo;
-      const nombre = g?.categorias.find((c) => c.id === r.id)?.nombre ?? '';
-      if (g !== undefined && (r.tipo === 'grupo' ? `vacio-${r.id}` : r.id) === id)
-        cuerpo.push(
-          <div key="creado">
-            {resultadoEn(
-              r.tipo === 'grupo' ? t.grupoCreado(g.nombre) : t.categoriaCreada(nombre, g.nombre),
-            )}
-          </div>,
-        );
-    }
     return cuerpo.length === 0 ? null : cuerpo;
   };
 
@@ -511,7 +563,14 @@ export function ListaEstructura({
             .map((g) => (
               <GrupoSistema key={g.id} grupo={g} />
             ))}
-          <Archivadas grupos={todos} />
+          <Archivadas
+            grupos={todos}
+            alDesarchivar={(d) => {
+              etiqueta.cerrar();
+              etiqueta.otraAccion();
+              setDesarchivada(d);
+            }}
+          />
           <EnlaceFinn
             href={`${RAIZ}/grupos/nuevo`}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-accion-tonal font-semibold text-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco"
@@ -602,6 +661,8 @@ export function ListaEstructura({
             editable={(id) => clases.get(id) === 'normal'}
             abierta={(id) => barra?.id === id}
             enLugar={enLugar}
+            enFila={enFila}
+            resaltada={etiqueta.resaltada}
             alternar={() => {
               alternar(g);
             }}

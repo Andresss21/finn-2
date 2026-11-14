@@ -1,7 +1,9 @@
 'use client';
 // [CH-272] Un grupo de la estructura (C-46; ESTRUCTURA-Y-COLAPSO §1.1 a §1.3): encabezado con el asa, la flecha y el nombre (que
 // colapsan) y «Editar grupo»; abierto, sus categorías con su asa y, al pie, «Nueva categoría»; colapsado, la fila de resumen.
-// Pagos de tarjeta va aparte, fijo, sin asa ni flecha. La barra y el resultado los dibuja la lista (`enLugar`), debajo de lo suyo.
+// Pagos de tarjeta va aparte, fijo, sin asa ni flecha. La barra y el error los dibuja la lista (`enLugar`), debajo de lo suyo.
+// [CH-278] C-50: la etiqueta de resultado y el ↶ van dentro de la fila o del encabezado, después de su contenido (`enFila`), y
+// la fila se resalta mientras se ve (`resaltada`).
 // [CH-275] `Asa` abre la barra «Mover» al tocarla y, cuando llegó el arrastre, lo empieza al presionarla (`alPresionar`). Mientras
 // se arrastra, la lista marca el hueco (`hueco`, `huecoGrupo`) y el destino (`destino`, `sobreColapsado`); `data-zona`,
 // `data-colapsado` y `data-flip` son lo que leen el arrastre y el movimiento.
@@ -50,8 +52,11 @@ export interface PropsGrupo {
   /** Las categorías que no son normales (las de pago) no se editan desde la lista. */
   readonly editable: (categoriaId: string) => boolean;
   readonly abierta: (id: string) => boolean;
-  /** La barra y el resultado de una categoría o del grupo; `vacio-{grupoId}` es el lugar del resultado de un grupo recién creado. */
+  /** La barra y el error de una categoría o del grupo, debajo de su fila. */
   readonly enLugar: (id: string) => ReactNode;
+  /** [CH-278] La etiqueta de resultado y el ↶ de una categoría o del grupo, dentro de su fila. */
+  readonly enFila: (id: string) => ReactNode;
+  readonly resaltada: (id: string) => boolean;
   readonly alternar: () => void;
   readonly tocarAsa: (tipo: 'grupo' | 'categoria', id: string) => void;
   /** [CH-275] Presionar un asa empieza el arrastre (cuando el módulo ya cargó). */
@@ -73,6 +78,8 @@ export function GrupoEstructura({
   editable,
   abierta,
   enLugar,
+  enFila,
+  resaltada,
   alternar,
   tocarAsa,
   presionar,
@@ -82,7 +89,6 @@ export function GrupoEstructura({
   sobreColapsado = false,
 }: PropsGrupo) {
   const cats = g.categorias.filter((c) => !c.archivada);
-  const vacio = enLugar(`vacio-${g.id}`);
   const presionarEn = (tipo: 'grupo' | 'categoria', id: string) =>
     presionar === undefined
       ? undefined
@@ -105,7 +111,8 @@ export function GrupoEstructura({
     <section {...zona} {...(colapsado ? { 'data-colapsado': String(cats.length) } : {})}>
       <div
         {...(sobreColapsado ? { 'data-sobre-colapsado': '' } : {})}
-        className="fz-sobre flex min-h-11 items-center rounded-control"
+        {...(resaltada(g.id) ? { 'data-resaltada': '' } : {})}
+        className="fz-sobre relative flex min-h-11 items-center rounded-control"
       >
         <Asa
           etiqueta={t.moverGrupo(g.nombre)}
@@ -121,6 +128,7 @@ export function GrupoEstructura({
             type="button"
             aria-expanded={!colapsado}
             onClick={alternar}
+            data-foco={`grupo-${g.id}`}
             className="flex min-h-11 w-full items-center gap-2 rounded-control px-1.5 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foco"
           >
             <Icono
@@ -142,6 +150,7 @@ export function GrupoEstructura({
         >
           {t.editarGrupo}
         </EnlaceFinn>
+        {enFila(g.id)}
       </div>
       {sobreColapsado ? (
         <p className="text-etiqueta px-2 font-semibold text-accion">{t.soltaAqui}</p>
@@ -177,10 +186,11 @@ export function GrupoEstructura({
                     className="border-b border-borde-sutil"
                   >
                     <div
+                      {...(resaltada(c.id) ? { 'data-resaltada': '' } : {})}
                       className={
                         abierta(c.id)
-                          ? 'flex min-h-14 items-center gap-0.5 bg-accion-tonal py-1 pr-1.5 pl-1'
-                          : 'flex min-h-14 items-center gap-0.5 py-1 pr-1.5 pl-1'
+                          ? 'fz-resaltable flex min-h-14 items-center gap-0.5 bg-accion-tonal py-1 pr-1.5 pl-1'
+                          : 'fz-resaltable flex min-h-14 items-center gap-0.5 py-1 pr-1.5 pl-1'
                       }
                     >
                       <Asa
@@ -195,6 +205,7 @@ export function GrupoEstructura({
                       {editable(c.id) ? (
                         <EnlaceFinn
                           href={`${RAIZ}/categorias/${c.id}`}
+                          data-foco={`fila-${c.id}`}
                           className="text-cuerpo inline-flex min-h-12 min-w-0 flex-1 items-center rounded-lg font-semibold"
                           aria-label={t.editar(c.nombre)}
                         >
@@ -205,18 +216,18 @@ export function GrupoEstructura({
                           {c.nombre}
                         </span>
                       )}
+                      {enFila(c.id)}
                     </div>
                     {enLugar(c.id)}
                   </li>
                 ),
               )}
-              {cats.length === 0 && vacio === null ? (
+              {cats.length === 0 ? (
                 <li className="text-cuerpo-pequeno border-b border-borde-sutil px-4 py-3 text-texto-secundario">
                   {t.sinCategorias}
                 </li>
               ) : null}
             </ul>
-            {cats.length === 0 ? vacio : null}
             <EnlaceFinn
               href={`${RAIZ}/categorias/nueva?grupo=${g.id}`}
               className="inline-flex min-h-12 w-full items-center gap-2 px-4 text-cuerpo-pequeno font-bold text-enlace"

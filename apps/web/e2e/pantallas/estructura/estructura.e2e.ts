@@ -57,6 +57,8 @@ const nombre = (page: Page) => page.getByLabel(t.nombre, { exact: true });
 const crear = (page: Page) => page.getByRole('button', { name: t.crear, exact: true });
 const mover = (page: Page, accion: string) =>
   page.getByRole('button', { name: accion, exact: true });
+/** [CH-278] La región de estado de la estructura: ahí va la frase del resultado (C-50); la etiqueta lleva una palabra. */
+const anunciado = (page: Page) => page.locator('[data-anuncio="estructura"]');
 /** [CH-272] Las filas que se pueden mover (con su asa, C-46), en el orden en que se ven. */
 const filas = (page: Page) =>
   page.getByRole('listitem').filter({ has: page.getByRole('button', { name: /^Mover / }) });
@@ -74,7 +76,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await page.getByRole('link', { name: t.nuevoGrupo, exact: true }).click();
     await nombre(page).fill('Hogar');
     await crear(page).click();
-    await expect(page.getByText(t.grupoCreado('Hogar'))).toBeVisible();
+    await expect(anunciado(page)).toHaveText(t.grupoCreado('Hogar'));
 
     await abrir(page);
     await page.getByRole('link', { name: t.agregarCategoria('Gastos') }).click();
@@ -90,7 +92,8 @@ test.describe('PRU-E2E-CATEG', () => {
     await expect(page.getByRole('radio')).toHaveCount(0);
     await nombre(page).fill('supermercado');
     await crear(page).click();
-    await expect(page.getByText(t.categoriaCreada('supermercado', 'Hogar'))).toBeVisible();
+    await expect(anunciado(page)).toHaveText(t.categoriaCreada('supermercado', 'Hogar'));
+    await expect(page.locator('[data-etiqueta]')).toHaveText(t.creada);
   });
 
   test('PRU-E2E-CATEG-102 [CA-18.2] una categoría sin historial se elimina y desaparece; con una asignación, "Eliminar" queda deshabilitado con el motivo y los enlaces a archivar y fusionar', async ({
@@ -149,7 +152,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await page.getByRole('link', { name: t.nuevoGrupo, exact: true }).click();
     await nombre(page).fill('Hogar');
     await page.getByRole('button', { name: t.crear, exact: true }).click();
-    await expect(page.getByText(t.grupoCreado('Hogar'))).toBeVisible();
+    await expect(anunciado(page)).toHaveText(t.grupoCreado('Hogar'));
 
     await abrir(page);
     const grupos = page.getByRole('heading', { level: 2, name: /^(Gastos|Hogar)$/ });
