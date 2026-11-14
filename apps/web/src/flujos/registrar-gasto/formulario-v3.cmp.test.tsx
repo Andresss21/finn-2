@@ -95,6 +95,10 @@ async function montar(props: Partial<PropsFormularioRegistrarGasto> = {}): Promi
     return Promise.resolve();
   });
   montados.push({ raiz, nodo });
+  // las dos secciones se cargan aparte (05 §13.1)
+  await vi.waitFor(() => {
+    expect(document.querySelector(`[aria-label="${t.cuantasCategorias}"]`)).not.toBeNull();
+  });
   return nodo;
 }
 
@@ -333,7 +337,7 @@ describe('PRU-CMP-TX registrar gasto con los campos v3', () => {
     await userEvent.click(conTexto('.eleccion-otra', base.otraPersona));
     await userEvent.keyboard('luis{Enter}');
     await vi.waitFor(() => {
-      expect(chip('Luis')?.textContent).toContain(base.nueva);
+      expect(chip('Luis').textContent).toContain(base.nueva);
     });
     expect(document.body.textContent).toContain(t.nuevaDestino);
     await tocarGuardar();

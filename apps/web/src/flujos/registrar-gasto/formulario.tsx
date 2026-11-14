@@ -7,7 +7,7 @@
 import type { LimitesDeFecha } from '../../formularios/limites-de-fecha';
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
-import { lazy, Suspense, useCallback, useMemo, useRef, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useRef, useState, type SyntheticEvent } from 'react';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
@@ -33,9 +33,8 @@ import {
   valoresIniciales,
   type CamposDeRegistro,
 } from './campos';
-import { Categorias, type CategoriaDelCampo } from './categorias';
+import type { CategoriaDelCampo } from './categorias';
 import { estadoDelGasto, lineasDe, NUEVA, type Marcas } from './estado';
-import { QuienPaga } from './quien-paga';
 
 interface Referencia {
   readonly id: string;
@@ -82,6 +81,9 @@ const SinCuentas = lazy(() => import('./sin-cuentas'));
 const ResultadoGasto = lazy(() => import('./resultado-gasto'));
 const BorradorGasto = lazy(() => import('./borrador-gasto'));
 const SugerenciaComercio = lazy(() => import('./sugerencia-comercio'));
+// Las dos secciones se cargan aparte: el HTML del servidor ya las trae y el presupuesto de bytes de la ruta no las cuenta (05 §13.1)
+const QuienPaga = lazy(() => import('./quien-paga').then((m) => ({ default: m.QuienPaga })));
+const Categorias = lazy(() => import('./categorias').then((m) => ({ default: m.Categorias })));
 
 const aOpciones = (xs: readonly CuentaDelCampo[]): OpcionFila[] =>
   xs.map((x) => ({ valor: x.id, etiqueta: x.nombre, detalle: x.detalle }));
@@ -220,7 +222,7 @@ export function FormularioRegistrarGasto({
     }) ?? e.motivo;
 
   // CA-K3-13: sin todo listo no se envía; se marcan los errores y el foco va al primero (en el cuadro siguiente, ya dibujados)
-  const alEnviar = (ev: FormEvent<HTMLFormElement>) => {
+  const alEnviar = (ev: SyntheticEvent<HTMLFormElement>) => {
     if (!e.listo || errorFecha !== undefined) {
       ev.preventDefault();
       setMarcas({ personas: true, categorias: true, enviado: true });
@@ -349,34 +351,36 @@ export function FormularioRegistrarGasto({
               className="flex flex-col gap-6 xl:col-start-2 xl:row-span-2 xl:row-start-1"
               data-campo-lineas
             >
-              <QuienPaga
-                c={c}
-                e={e}
-                conocidas={deudores.map((d) => ({ clave: d.id, nombre: d.nombre }))}
-                destinoDeVos={
-                  c.varias && c.filas.length > 1
-                    ? t.nCategorias(c.filas.length)
-                    : nombreDeCategoria(c.filas[0]?.categoriaId ?? '') || t.elegiUnaCategoria
-                }
-                poner={ponerVarios}
-                alSalir={marcar('personas')}
-              />
-              <Categorias
-                c={c}
-                e={e}
-                categorias={categorias}
-                errorServidor={deLasPartes}
-                personaUnica={
-                  unaSola === undefined
-                    ? undefined
-                    : unaSola.startsWith(NUEVA)
-                      ? unaSola.slice(NUEVA.length)
-                      : deudores.find((d) => d.id === unaSola)?.nombre
-                }
-                poner={ponerVarios}
-                alSalir={marcar('categorias')}
-                anunciar={setAnuncio}
-              />
+              <Suspense fallback={null}>
+                <QuienPaga
+                  c={c}
+                  e={e}
+                  conocidas={deudores.map((d) => ({ clave: d.id, nombre: d.nombre }))}
+                  destinoDeVos={
+                    c.varias && c.filas.length > 1
+                      ? t.nCategorias(c.filas.length)
+                      : nombreDeCategoria(c.filas[0]?.categoriaId ?? '') || t.elegiUnaCategoria
+                  }
+                  poner={ponerVarios}
+                  alSalir={marcar('personas')}
+                />
+                <Categorias
+                  c={c}
+                  e={e}
+                  categorias={categorias}
+                  errorServidor={deLasPartes}
+                  personaUnica={
+                    unaSola === undefined
+                      ? undefined
+                      : unaSola.startsWith(NUEVA)
+                        ? unaSola.slice(NUEVA.length)
+                        : deudores.find((d) => d.id === unaSola)?.nombre
+                  }
+                  poner={ponerVarios}
+                  alSalir={marcar('categorias')}
+                  anunciar={setAnuncio}
+                />
+              </Suspense>
             </div>
             <div className="xl:col-start-1 xl:row-start-2">
               <GrupoCampos>
