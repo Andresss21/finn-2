@@ -11,6 +11,8 @@ export const metas = {
   sinCategorias: 'Todas tus categorías ya tienen meta.',
   volver: 'Volver a Metas',
   categoria: 'Categoría',
+  // [CH-271] La categoría sin elegir (CAMPOS-V3 §6), tal cual.
+  elegirCategoria: 'Elegí una categoría',
   tipo: 'Tipo de meta',
   tipoNoSeCambia: 'El tipo no se cambia. Para otro tipo, eliminá la meta y creá otra.',
   tipos: { mensual: 'Mensual', semanal: 'Semanal', anual: 'Anual', para_fecha: 'Para una fecha' },
