@@ -1,23 +1,22 @@
 'use client';
-// `/registrar/gasto` (FT-21, OP-20; 05 §2.4): un gasto en efectivo o con tarjeta, repartido en una o varias partes, cada una con
-// una categoría o por cobrar a una persona (existente o nueva). Es un flujo largo: siempre página completa (05 §1.4). Se guarda en un
-// solo viaje (05 §4.4); con la fecha en un período cerrado el servidor pide confirmar con AV-01. No calcula montos (PF-3): lo único
-// que muestra por su cuenta es cuánto falta repartir, como ayuda visual (05 §5.1); la suma la valida el servidor.
+// `/registrar/gasto` (FT-21, OP-20; 05 §2.4): un gasto en efectivo o con tarjeta. Es un flujo largo: siempre página completa (05 §1.4).
+// Se guarda en un solo viaje (05 §4.4); con la fecha en un período cerrado el servidor pide confirmar con AV-01. [CH-276, CH-277]
+// Armado con los campos v3 (C-45 §4.8): el total como billete, los datos en un grupo, «¿Quién paga?» y «¿En qué categorías?»
+// (C-49). Las líneas salen de esas dos secciones al guardar (`lineasDe`): una por categoría y una por cada persona; cada monto
+// que la app propone se ve antes de guardar (PF-3 ampliado por CH-276) y el servidor sigue validando la suma.
 import type { LimitesDeFecha } from '../../formularios/limites-de-fecha';
 import type { ErrorFinn } from '@finn/aplicacion/errores';
-import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { lazy, Suspense, useId, useMemo, useState } from 'react';
-import { useFieldArray } from 'react-hook-form';
+import type { FechaLocal } from '@finn/dominio/valores';
+import { lazy, Suspense, useCallback, useMemo, useRef, useState, type FormEvent } from 'react';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto, MensajeError } from '../../componentes/base/campo';
-import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
+import { SeleccionFila, type OpcionFila } from '../../componentes/base/seleccion-fila';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
-import { formatearMonto, formatearMontoTexto } from '../../formato';
-import { faltaRepartir, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import { formatearMontoTexto } from '../../formato';
 import type { ValoresDeUrl } from '../../formularios/valores-de-url';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -26,15 +25,17 @@ import { formularios } from '../../textos/formularios';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
 import {
   aEntradaDeAccion,
-  contrato,
+  contratoDeRegistro,
   DEUDOR_NUEVO,
   deudoresReutilizados,
   motivoDeGuardar,
-  parteVacia,
   textoDeAviso,
   valoresIniciales,
-  type Campos,
+  type CamposDeRegistro,
 } from './campos';
+import { Categorias, type CategoriaDelCampo } from './categorias';
+import { estadoDelGasto, lineasDe, NUEVA, type Marcas } from './estado';
+import { QuienPaga } from './quien-paga';
 
 interface Referencia {
   readonly id: string;
@@ -52,7 +53,7 @@ export interface PropsFormularioRegistrarGasto {
   /** [CH-260] Los límites de la fecha que da el servidor; sin ellos, hasta hoy. */
   readonly limites?: LimitesDeFecha;
   readonly cuentas: readonly CuentaDelCampo[];
-  readonly categorias: readonly Referencia[];
+  readonly categorias: readonly CategoriaDelCampo[];
   readonly deudores: readonly Referencia[];
   readonly cuentaPropuesta: string | undefined;
   /** `?fecha=`, `?total=` y `?comercio=` de la propuesta de ajuste de AV-21 (CH-212). */
@@ -65,10 +66,12 @@ interface Previsualizacion extends VistaDeImpacto {
 
 const SIN_VALORES: ValoresDeUrl = {};
 const ID_FORMULARIO = 'formulario-registrar-gasto';
-/** Los rechazos de negocio que se muestran junto al campo de las partes (CA-21.5), no como aviso del formulario. */
+/** Los rechazos de negocio que se muestran junto al resumen de las categorías (CA-21.5, CA-R-15). */
 const DE_LAS_PARTES = ['suma_lineas_distinta', 'linea_sin_destino'];
-/** Un rechazo cuyo mensaje ya se muestra en su campo no se repite como aviso del formulario. */
-const enSuCampo = (e: ErrorFinn): boolean => Object.values(e.campos ?? {}).includes(e.mensaje);
+const SIN_MARCAS: Marcas = { personas: false, categorias: false, enviado: false };
+/** Un rechazo cuyo mensaje ya se muestra en un campo de datos no se repite; los de las líneas no tienen campo propio. */
+const enSuCampo = (e: ErrorFinn): boolean =>
+  Object.entries(e.campos ?? {}).some(([ruta, m]) => !ruta.startsWith('lineas') && m === e.mensaje);
 
 const ConfirmacionImpacto = lazy(() =>
   import('../../componentes/formularios/confirmacion-impacto-de-vista').then((m) => ({
@@ -78,29 +81,10 @@ const ConfirmacionImpacto = lazy(() =>
 const SinCuentas = lazy(() => import('./sin-cuentas'));
 const ResultadoGasto = lazy(() => import('./resultado-gasto'));
 const BorradorGasto = lazy(() => import('./borrador-gasto'));
-// Las líneas se cargan aparte: el HTML del servidor ya las trae y el presupuesto de bytes de la ruta no las cuenta (05 §13.1)
-const LineasDeGasto = lazy(() => import('./lineas'));
 const SugerenciaComercio = lazy(() => import('./sugerencia-comercio'));
 
-/** A quién o a qué categoría fue una línea, para el resultado: el nombre escrito si es una persona nueva. */
-const nombreDelDestino = (
-  l: Campos['lineas'][number],
-  categorias: readonly Referencia[],
-  deudores: readonly Referencia[],
-): string =>
-  l.destino === 'categoria'
-    ? (categorias.find((x) => x.id === l.categoriaId)?.nombre ?? '')
-    : l.deudorId === DEUDOR_NUEVO
-      ? l.deudorNuevo.trim()
-      : (deudores.find((x) => x.id === l.deudorId)?.nombre ?? '');
-
-const aOpciones = (xs: readonly CuentaDelCampo[]): OpcionNativa[] =>
-  xs.map((x) => ({
-    valor: x.id,
-    etiqueta: x.nombre,
-    detalle: x.detalle,
-    icono: x.tipo === 'tarjeta' ? 'card' : 'wallet',
-  }));
+const aOpciones = (xs: readonly CuentaDelCampo[]): OpcionFila[] =>
+  xs.map((x) => ({ valor: x.id, etiqueta: x.nombre, detalle: x.detalle }));
 
 export function FormularioRegistrarGasto({
   hoy,
@@ -117,31 +101,44 @@ export function FormularioRegistrarGasto({
     () => valoresIniciales(limites?.inicial ?? hoy, cuentaPropuesta, desdeUrl),
     [hoy, limites, cuentaPropuesta, desdeUrl],
   );
-  const formulario = useFormularioFinn<Campos>({
-    contrato,
+  const formulario = useFormularioFinn<CamposDeRegistro>({
+    contrato: contratoDeRegistro,
     valoresIniciales: inicial,
     operacion,
   });
-  const { setValue, formState, control, reset } = formulario;
-  const partes = useFieldArray({ control, name: 'lineas' });
+  const { setValue, getValues, formState, reset } = formulario;
   const c = formulario.watch();
+  const [marcas, setMarcas] = useState<Marcas>(SIN_MARCAS);
+  const [anuncio, setAnuncio] = useState('');
+  const raiz = useRef<HTMLFormElement>(null);
+  const e = estadoDelGasto(c, marcas);
 
   const poner = (nombre: Parameters<typeof setValue>[0]) => (valor: string) => {
     setValue(nombre, valor as never, { shouldDirty: true, shouldValidate: formState.isSubmitted });
   };
+  /** Las secciones cambian varios campos juntos. */
+  const ponerVarios = (parcial: Partial<CamposDeRegistro>) => {
+    for (const [k, v] of Object.entries(parcial))
+      setValue(k as keyof CamposDeRegistro, v as never, { shouldDirty: true });
+  };
+  const usarSugerencia = useCallback(
+    (categoria: Referencia) => {
+      const filas = getValues('filas');
+      const [primera, ...resto] = filas;
+      // C-49 §1: llena «Una» (o la primera fila) solo si está vacía; nunca cambia una elegida
+      if (primera !== undefined && primera.categoriaId === '' && !filas.some((f) => f.categoriaId === categoria.id))
+        setValue('filas', [{ ...primera, categoriaId: categoria.id }, ...resto], { shouldDirty: true });
+    },
+    [getValues, setValue],
+  );
   const error = (n: 'cuentaId' | 'fecha' | 'total'): string | undefined =>
     formState.errors[n]?.message;
-  const errorDeParte = (
-    i: number,
-    n: 'monto' | 'categoriaId' | 'deudorId' | 'deudorNuevo',
-  ): string | undefined => formState.errors.lineas?.[i]?.[n]?.message;
 
   const { estado, error: fallo, exito } = operacion;
-  // [CH-240 E3-18] El error de la fecha va a lo ancho de la fila Fecha · Total y «Guardar» espera a que se corrija
+  // [CH-240 E3-18] «Guardar» espera a que se corrija la fecha
   const [errorFecha, setErrorFecha] = useState<string | undefined>(undefined);
-  const idErrorFecha = useId();
   // [CH-240 E6-21] Con `suma_lineas_distinta`, «Guardar» dice por qué hasta que cambien las partes o el total
-  const huellaPartes = JSON.stringify([c.total, c.lineas]);
+  const huellaPartes = JSON.stringify([c.total, c.vos, c.personas, c.filas, c.varias]);
   const [sumaRechazada, setSumaRechazada] = useState<{
     readonly rechazo: ErrorFinn;
     readonly huella: string;
@@ -154,7 +151,6 @@ export function FormularioRegistrarGasto({
   )
     setSumaRechazada({ rechazo: fallo, huella: huellaPartes });
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
-  const opcionesCuentas = aOpciones(cuentas);
 
   if (cuentas.length === 0)
     return (
@@ -165,9 +161,14 @@ export function FormularioRegistrarGasto({
       </PaginaFlujoDeRuta>
     );
 
+  const nombreDeCategoria = (id: string) => categorias.find((x) => x.id === id)?.nombre ?? '';
+  const nombreDePersona = (l: CamposDeRegistro['lineas'][number]) =>
+    l.deudorId === DEUDOR_NUEVO
+      ? l.deudorNuevo
+      : (deudores.find((x) => x.id === l.deudorId)?.nombre ?? '');
+
   if (estado === 'listo' && exito !== undefined) {
     const nombreDeCuenta = cuentas.find((x) => x.id === c.cuentaId)?.nombre ?? '';
-    const reutilizados = deudoresReutilizados(c, deudores);
     return (
       <PaginaFlujoDeRuta titulo={t.listo} rutaPadre="/registrar">
         <Suspense fallback={null}>
@@ -180,11 +181,11 @@ export function FormularioRegistrarGasto({
             )}
             transaccionId={(exito.valor as { id: string }).id}
             partes={c.lineas.map((l, i) => ({
-              clave: partes.fields[i]?.id ?? String(i),
+              clave: String(i),
               nombre:
                 l.destino === 'categoria'
-                  ? nombreDelDestino(l, categorias, deudores)
-                  : t.teDebe(nombreDelDestino(l, categorias, deudores)),
+                  ? nombreDeCategoria(l.categoriaId)
+                  : t.teDebe(nombreDePersona(l)),
               href:
                 l.destino === 'categoria'
                   ? `/presupuesto/categorias/${l.categoriaId}`
@@ -192,52 +193,60 @@ export function FormularioRegistrarGasto({
               verTexto: l.destino === 'categoria' ? t.verLaCategoria : t.verEnPorCobrar,
               monto: formatearMontoTexto(l.monto),
             }))}
-            reutilizados={reutilizados}
+            reutilizados={deudoresReutilizados(c, deudores)}
           />
         </Suspense>
       </PaginaFlujoDeRuta>
     );
   }
 
-  const falta: Centavos | undefined = faltaRepartir(
-    c.total,
-    c.lineas.map((l) => l.monto),
-  );
-  // Repartido del todo no dice nada: lo dice la suma de las líneas (S5). Falta o sobra sí.
-  const ayuda =
-    falta === undefined || falta === 0
-      ? undefined
-      : falta > 0
-        ? t.faltaRepartir(formatearMonto(falta))
-        : t.sobraRepartir;
   const deLasPartes =
     estado === 'error' && fallo !== undefined && DE_LAS_PARTES.includes(fallo.codigo)
       ? fallo.mensaje
       : undefined;
-  const errorDeLasPartes = deLasPartes ?? formState.errors.lineas?.message;
+  const motivoGuardar =
+    motivoDeGuardar({
+      sinConexion: operacion.motivoSinEnvio,
+      fechaConError: errorFecha !== undefined,
+      textoFecha: t.corregiFecha,
+      sumaRechazada:
+        sumaRechazada?.huella === huellaPartes ? sumaRechazada.rechazo.mensaje : undefined,
+    }) ?? e.motivo;
 
-  const totalValido = normalizarMontoEscrito(c.total).estado === 'valido';
-
-  const motivoGuardar = motivoDeGuardar({
-    sinConexion: operacion.motivoSinEnvio,
-    fechaConError: errorFecha !== undefined,
-    textoFecha: t.corregiFecha,
-    sumaRechazada:
-      sumaRechazada?.huella === huellaPartes ? sumaRechazada.rechazo.mensaje : undefined,
-  });
+  // CA-K3-13: sin todo listo no se envía; se marcan los errores y el foco va al primero (en el cuadro siguiente, ya dibujados)
+  const alEnviar = (ev: FormEvent<HTMLFormElement>) => {
+    if (!e.listo || errorFecha !== undefined) {
+      ev.preventDefault();
+      setMarcas({ personas: true, categorias: true, enviado: true });
+      requestAnimationFrame(() => {
+        raiz.current
+          ?.querySelector<HTMLElement>(
+'[aria-invalid="true"], [data-estado="error"]')
+          ?.focus();
+      });
+      return;
+    }
+    setValue('lineas', lineasDe(c, e));
+    void formulario.enviar(ev);
+  };
   const guardar = (
     <Boton
       tipo="submit"
       form={ID_FORMULARIO}
       enviando={estado === 'enviando'}
       textoEnviando={t.guardando}
-      deshabilitado={!operacion.enLinea || motivoGuardar !== undefined}
+      deshabilitado={!operacion.enLinea}
+      apagado={motivoGuardar !== undefined}
       className="w-full"
       {...(motivoGuardar === undefined ? {} : { motivoDeshabilitado: motivoGuardar })}
     >
-      {totalValido ? t.guardarMonto(formatearMontoTexto(c.total)) : t.guardar}
+      {e.total > 0 ? t.guardarMonto(formatearMontoTexto(c.total)) : t.guardar}
     </Boton>
   );
+  const unaSola = c.personas.length === 1 ? c.personas[0]?.clave : undefined;
+  const marcar = (k: 'personas' | 'categorias') => () => {
+    if (!marcas[k]) setMarcas({ ...marcas, [k]: true });
+  };
 
   return (
     <PaginaFlujoDeRuta
@@ -269,33 +278,41 @@ export function FormularioRegistrarGasto({
         </Suspense>
       ) : (
         <form
+          ref={raiz}
           id={ID_FORMULARIO}
-          onSubmit={(e) => void formulario.enviar(e)}
+          onSubmit={alEnviar}
           noValidate
           className="flex flex-col gap-6"
         >
           <Suspense fallback={null}>
             <BorradorGasto campos={c} inicial={inicial} operacion={operacion} reset={reset} />
           </Suspense>
+          <p role="status" className="sr-only">
+            {anuncio}
+          </p>
           <div className="flex flex-col gap-6 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-9">
-            <div className="flex flex-col gap-4.5 xl:col-start-1 xl:row-start-1">
-              <div className="flex flex-col gap-1.5">
-                <SeleccionNativa
-                  etiqueta={t.cuenta}
-                  alta
+            <div className="flex flex-col gap-5 xl:col-start-1 xl:row-start-1">
+              <EntradaMonto
+                nombre="total"
+                etiqueta={t.totalV3}
+                variante="total"
+                valor={c.total}
+                alCambiar={poner('total')}
+                error={e.errorTotal ?? error('total')}
+                requerido
+              />
+              <GrupoCampos>
+                <SeleccionFila
+                  etiqueta={t.cuentaV3}
                   marcador={t.elegirCuenta}
-                  opciones={opcionesCuentas}
+                  opciones={aOpciones(cuentas)}
                   valor={c.cuentaId}
                   alCambiar={poner('cuentaId')}
                   error={error('cuentaId')}
+                  {...(cuentaPropuesta !== undefined && c.cuentaId === cuentaPropuesta
+                    ? { descripcion: t.cuentaPropuesta }
+                    : {})}
                 />
-                {cuentaPropuesta !== undefined && c.cuentaId === cuentaPropuesta ? (
-                  <p data-rol="cuerpo-pequeno" className="text-cuerpo-pequeno text-texto-terciario">
-                    {t.cuentaPropuesta}
-                  </p>
-                ) : null}
-              </div>
-              <div className="grid grid-cols-2 gap-2.5 [&>*]:min-w-0">
                 <EntradaFecha
                   nombre="fecha"
                   etiqueta={t.fecha}
@@ -307,65 +324,57 @@ export function FormularioRegistrarGasto({
                   minima={limites?.minima}
                   maxima={limites?.maxima ?? hoy}
                   hoy={hoy}
-                  mensajeEnFila={{ id: idErrorFecha, alCambiar: setErrorFecha }}
+                  alCambiarMensaje={setErrorFecha}
                 />
-                <EntradaMonto
-                  nombre="total"
-                  etiqueta={t.total}
-                  valor={c.total}
-                  alCambiar={poner('total')}
-                  error={error('total')}
-                  requerido
-                  prefijo="$"
-                  sinVistaPrevia
+                <EntradaTexto
+                  etiqueta={t.comercio}
+                  autoComplete="off"
+                  {...formulario.register('comercio')}
                 />
-                {errorFecha === undefined ? null : (
-                  <div id={idErrorFecha} className="col-span-2">
-                    <MensajeError>{errorFecha}</MensajeError>
-                  </div>
-                )}
-              </div>
-              <EntradaTexto
-                etiqueta={t.comercio}
-                autoComplete="off"
-                {...formulario.register('comercio')}
-              />
+              </GrupoCampos>
               {c.comercio.trim().length >= 2 ? (
                 <Suspense fallback={null}>
-                  <SugerenciaComercio
-                    comercio={c.comercio}
-                    alUsar={(categoria) => {
-                      poner('lineas.0.destino')('categoria');
-                      poner('lineas.0.categoriaId')(categoria.id);
-                    }}
-                  />
+                  <SugerenciaComercio comercio={c.comercio} alUsar={usarSugerencia} />
                 </Suspense>
               ) : null}
             </div>
-            <div className="xl:col-start-2 xl:row-span-2 xl:row-start-1">
-              <Suspense fallback={null}>
-                <LineasDeGasto
-                  lineas={c.lineas}
-                  claves={partes.fields.map((f) => f.id)}
-                  categorias={categorias}
-                  deudores={deudores}
-                  total={c.total}
-                  error={errorDeParte}
-                  errorDeLasPartes={errorDeLasPartes}
-                  ayuda={ayuda}
-                  poner={poner}
-                  registroDeudorNuevo={(i) => formulario.register(`lineas.${i}.deudorNuevo`)}
-                  alAgregar={() => {
-                    partes.append(parteVacia());
-                  }}
-                  alQuitar={(i) => {
-                    partes.remove(i);
-                  }}
-                />
-              </Suspense>
+            <div
+              className="flex flex-col gap-6 xl:col-start-2 xl:row-span-2 xl:row-start-1"
+              data-campo-lineas
+            >
+              <QuienPaga
+                c={c}
+                e={e}
+                conocidas={deudores.map((d) => ({ clave: d.id, nombre: d.nombre }))}
+                destinoDeVos={
+                  c.varias && c.filas.length > 1
+                    ? t.nCategorias(c.filas.length)
+                    : nombreDeCategoria(c.filas[0]?.categoriaId ?? '') || t.elegiUnaCategoria
+                }
+                poner={ponerVarios}
+                alSalir={marcar('personas')}
+              />
+              <Categorias
+                c={c}
+                e={e}
+                categorias={categorias}
+                errorServidor={deLasPartes}
+                personaUnica={
+                  unaSola === undefined
+                    ? undefined
+                    : unaSola.startsWith(NUEVA)
+                      ? unaSola.slice(NUEVA.length)
+                      : deudores.find((d) => d.id === unaSola)?.nombre
+                }
+                poner={ponerVarios}
+                alSalir={marcar('categorias')}
+                anunciar={setAnuncio}
+              />
             </div>
             <div className="xl:col-start-1 xl:row-start-2">
-              <EntradaTexto etiqueta={t.nota} autoComplete="off" {...formulario.register('nota')} />
+              <GrupoCampos>
+                <EntradaTexto etiqueta={t.nota} autoComplete="off" {...formulario.register('nota')} />
+              </GrupoCampos>
             </div>
           </div>
           {estado === 'error' &&

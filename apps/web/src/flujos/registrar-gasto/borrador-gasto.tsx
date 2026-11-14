@@ -8,7 +8,7 @@ import { Boton } from '../../componentes/base/boton';
 import { useBorrador } from '../../formularios/use-borrador';
 import type { Operacion } from '../../formularios/use-operacion';
 import { formularios } from '../../textos/formularios';
-import type { Campos } from './campos';
+import type { CamposDeRegistro as Campos } from './campos';
 
 export default function BorradorGasto({
   campos,

@@ -20,6 +20,19 @@ const PARTE = z.object({
 });
 export type Parte = z.infer<typeof PARTE>;
 
+const MODO = z.enum(['iguales', 'porcentaje', 'montos']);
+/** [CH-276] Una persona de «¿Quién paga?»: `clave` es el id del deudor o `nueva:{nombre}`. */
+const PERSONA = z.object({ clave: z.string(), monto: z.string(), pct: z.string() });
+/** [CH-277] Una fila de «¿En qué categorías?»; `auto` es «Lo que queda» (C-49 §2). */
+const FILA = z.object({
+  categoriaId: z.string(),
+  monto: z.string(),
+  pct: z.string(),
+  auto: z.boolean(),
+});
+export type PersonaDeGasto = z.infer<typeof PERSONA>;
+export type FilaDeCategoria = z.infer<typeof FILA>;
+
 const CAMPOS = z.object({
   cuentaId: z.string(),
   fecha: z.string(),
@@ -30,13 +43,27 @@ const CAMPOS = z.object({
 });
 export type Campos = z.infer<typeof CAMPOS>;
 
+// [CH-276, CH-277] Lo que la persona eligió en las dos secciones de Registrar gasto (C-45 §4.8, C-49): las `lineas` que viajan
+// salen de aquí al guardar (`lineasDe`). Viaja en el borrador como todo lo escrito. Revisar y Editar siguen con `Campos`.
+const CAMPOS_DE_REGISTRO = CAMPOS.extend({
+  conAlguien: z.boolean(),
+  nuevas: z.array(z.string()),
+  vos: PERSONA,
+  personas: z.array(PERSONA),
+  modoPersonas: MODO,
+  varias: z.boolean(),
+  modoCategorias: MODO,
+  filas: z.array(FILA),
+});
+export type CamposDeRegistro = z.infer<typeof CAMPOS_DE_REGISTRO>;
+
 const montoValido = (texto: string): boolean => normalizarMontoEscrito(texto).estado === 'valido';
 
 /**
  * El contrato de la pantalla: lo obligatorio escrito y que cada parte tenga destino (`linea_sin_destino`, inv. 8). Que las
  * partes sumen el total y los rechazos de negocio los dice el servidor (PF-3): el botón nunca se bloquea por la suma.
  */
-export const contrato = CAMPOS.superRefine((c, ctx) => {
+function revisar(c: Campos, ctx: z.RefinementCtx): void {
   if (c.cuentaId === '')
     ctx.addIssue({ code: 'custom', path: ['cuentaId'], message: t.elegirCuenta });
   if (c.fecha === '') ctx.addIssue({ code: 'custom', path: ['fecha'], message: t.completar });
@@ -62,7 +89,9 @@ export const contrato = CAMPOS.superRefine((c, ctx) => {
         message: t.lineaSinDestino,
       });
   });
-});
+}
+export const contrato = CAMPOS.superRefine(revisar);
+export const contratoDeRegistro = CAMPOS_DE_REGISTRO.superRefine(revisar);
 
 export const monto = (texto: string): string => {
   const r = normalizarMontoEscrito(texto);
@@ -101,17 +130,32 @@ export const parteVacia = (): Parte => ({
   deudorNuevo: '',
 });
 
+export const filaVacia = (auto = false): FilaDeCategoria => ({
+  categoriaId: '',
+  monto: '',
+  pct: '',
+  auto,
+});
+
 /** Los valores con que abre el formulario: la fecha es el `hoy` del servidor, nunca la del dispositivo (05 §5.5). */
 export const valoresIniciales = (
   hoy: string,
   cuentaPropuesta: string | undefined,
   inicial: ValoresDeUrl = {},
-): Campos => ({
+): CamposDeRegistro => ({
   cuentaId: cuentaPropuesta ?? '',
   fecha: inicial.fecha ?? hoy,
   total: inicial.total ?? '',
   comercio: inicial.comercio ?? '',
   nota: '',
+  conAlguien: false,
+  nuevas: [],
+  vos: { clave: 'vos', monto: '', pct: '' },
+  personas: [],
+  modoPersonas: 'iguales',
+  varias: false,
+  modoCategorias: 'montos',
+  filas: [filaVacia()],
   // El ajuste es un gasto de una sola parte: el monto de la parte es el de la propuesta, copiado tal cual (PF-3)
   lineas: [{ ...parteVacia(), monto: inicial.total ?? '' }],
 });

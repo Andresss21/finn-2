@@ -3,7 +3,15 @@
 // disparador y una lista propia en todos los navegadores, nunca el `<select>` del sistema. Patrón *listbox* de ARIA: el foco
 // pasa a la lista, que marca la activa con `aria-activedescendant`, y vuelve al disparador al cerrar. Con 3 opciones o menos,
 // segmentado.
-import { Fragment, useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import { Campo, MensajeError } from './campo';
 import { Icono } from './icono';
 import { SelectorSegmentado } from './selector-segmentado';
@@ -17,6 +25,8 @@ export interface OpcionFila {
   readonly negativo?: boolean | undefined;
   /** Las opciones con el mismo grupo van juntas, bajo su rótulo. */
   readonly grupo?: string | undefined;
+  /** [CH-277] No se puede elegir: el porqué va en lugar del detalle («Ya está en otra fila», C-49 §2). */
+  readonly deshabilitada?: string | undefined;
 }
 
 export interface PropsSeleccionFila {
@@ -31,6 +41,10 @@ export interface PropsSeleccionFila {
   readonly deshabilitada?: boolean | undefined;
   /** Con nombre, el valor viaja en el formulario. */
   readonly nombre?: string | undefined;
+  /** [CH-277] Filas de reparto (C-49 §2): rótulo solo para lectores, la lista abierta al aparecer y el monto a la derecha. */
+  readonly etiquetaOculta?: boolean | undefined;
+  readonly abiertaAlMontar?: boolean | undefined;
+  readonly derecha?: ReactNode;
 }
 
 const MAXIMO_SEGMENTADO = 3;
@@ -76,11 +90,14 @@ function ListaFila({
   error,
   deshabilitada = false,
   nombre,
+  etiquetaOculta = false,
+  abiertaAlMontar = false,
+  derecha,
 }: PropsSeleccionFila) {
   const id = useId();
   const disparador = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const [abierta, setAbierta] = useState(false);
+  const [abierta, setAbierta] = useState(abiertaAlMontar);
   const [activa, setActiva] = useState(0);
   // El orden de la lista es el de los grupos: el teclado recorre lo que se ve.
   const grupos = [...new Set(opciones.map((o) => o.grupo))];
@@ -103,6 +120,7 @@ function ListaFila({
     disparador.current?.focus();
   };
   const elegir = (o: OpcionFila | undefined) => {
+    if (o?.deshabilitada !== undefined) return;
     if (o !== undefined && o.valor !== valor) alCambiar(o.valor);
     cerrar();
   };
@@ -133,6 +151,7 @@ function ListaFila({
     <Campo
       etiqueta={etiqueta}
       requerido
+      etiquetaOculta={etiquetaOculta}
       deshabilitado={deshabilitada}
       {...(descripcion === undefined ? {} : { descripcion })}
       {...(error === undefined ? {} : { error })}
@@ -145,6 +164,7 @@ function ListaFila({
             if (!e.currentTarget.contains(e.relatedTarget)) setAbierta(false);
           }}
         >
+          <Envoltura derecha={derecha}>
           <button
             ref={disparador}
             type="button"
@@ -195,6 +215,7 @@ function ListaFila({
               {elegida.detalle}
             </span>
           )}
+          </Envoltura>
           {nombre === undefined ? null : <input type="hidden" name={nombre} value={valor} />}
           {abierta ? (
             <div
@@ -214,6 +235,7 @@ function ListaFila({
                       id={idOpcion(k)}
                       role="option"
                       aria-selected={o === elegida}
+                      {...(o.deshabilitada === undefined ? {} : { 'aria-disabled': true })}
                       {...(k === activa ? { 'data-activa': '' } : {})}
                       // Las teclas las maneja la lista; el puntero elige con mousedown, que deja el foco en ella.
                       tabIndex={-1}
@@ -228,12 +250,14 @@ function ListaFila({
                     >
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="campo-opcion-nombre">{o.etiqueta}</span>
-                        {o.detalle === undefined ? null : (
+                        {(o.deshabilitada ?? o.detalle) === undefined ? null : (
                           <span
                             className="campo-detalle"
-                            {...(o.negativo === true ? { 'data-negativo': '' } : {})}
+                            {...(o.negativo === true && o.deshabilitada === undefined
+                              ? { 'data-negativo': '' }
+                              : {})}
                           >
-                            {o.detalle}
+                            {o.deshabilitada ?? o.detalle}
                           </span>
                         )}
                       </span>
@@ -261,5 +285,16 @@ function ListaFila({
         </div>
       )}
     </Campo>
+  );
+}
+
+/** [CH-277] Con algo a la derecha (el monto de una fila de reparto), el disparador y su detalle van en una columna a su lado. */
+function Envoltura({ derecha, children }: { readonly derecha: ReactNode; readonly children: ReactNode }) {
+  if (derecha === undefined) return <>{children}</>;
+  return (
+    <div className="reparto-linea">
+      <div className="reparto-eleccion">{children}</div>
+      {derecha}
+    </div>
   );
 }
