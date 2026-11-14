@@ -3,11 +3,14 @@
 // archivada hacia Listo para asignar o hacia otra categoría. Abre con la propuesta de AV-14 (todo el Disponible a Listo para
 // asignar) y envía `esperado` con las asignaciones que vio al abrir (CP-10a). `conflicto_desactualizado` ofrece los valores actuales.
 // No calcula montos (PF-3): el Disponible y los topes los dice el servidor.
+// [C-45] El destino y el monto son filas de un `GrupoCampos` (CAMPOS-V3 §2 y §6): el destino en segmentado o en la lista propia
+// según cuántos hay y el monto con «$». «Sacar» se ve apagado mientras falte el monto y dice debajo qué falta (§5 y §11).
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import {
@@ -16,9 +19,11 @@ import {
   SuperpuestoDeRuta,
 } from '../../componentes/navegacion/flujo-de-ruta';
 import { centavosATextoDecimal, formatearMonto } from '../../formato';
-import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
+import { esMontoPositivo, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
+import { base as tb } from '../../textos/base';
 import { categoriasArchivar } from '../../textos/categorias-archivar';
 import { formularios } from '../../textos/formularios';
 import { PieDeHoja } from '../pie-de-hoja';
@@ -48,7 +53,7 @@ const CONTRATO = z.object({
   destino: z.string().min(1),
   monto: z
     .string()
-    .refine((v) => normalizarMontoEscrito(v).estado === 'valido', { error: t.obligatorio }),
+    .refine(esMontoPositivo, { error: tb.montoMayorQueCero }),
 });
 type Campos = z.infer<typeof CONTRATO>;
 type Cruda = Campos & { modo: string };
@@ -99,6 +104,13 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
   });
   const { estado, error: fallo } = operacion;
   const c = formulario.watch();
+  const guardar = useGuardarV3({
+    contrato: CONTRATO,
+    campos: c,
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+    monto: 'monto',
+  });
   const actuales = fallo?.datos?.['actuales'] as Actuales | undefined;
   const conflicto = fallo?.codigo === 'conflicto_desactualizado' && actuales !== undefined;
 
@@ -116,36 +128,41 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
       valor: d.id,
       etiqueta: d.nombre,
       detalle: categoriasArchivar.disponibleDe(formatearMonto(d.disponible)),
+      negativo: d.disponible < 0,
     })),
   ];
   const errores = formulario.formState.errors;
   return (
-    <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
-      <SeleccionNativa
-        alta
-        marcador={t.destino}
-        etiqueta={t.destino}
-        opciones={opciones}
-        valor={c.destino}
-        alCambiar={(v) => {
-          formulario.setValue('destino', v, { shouldDirty: true });
-        }}
-      />
-      <EntradaMonto
-        nombre="monto"
-        etiqueta={t.monto}
-        valor={c.monto}
-        alCambiar={(v) => {
-          formulario.setValue('monto', v, {
-            shouldDirty: true,
-            shouldValidate: formulario.formState.isSubmitted,
-          });
-        }}
-        error={errores.monto?.message}
-        requerido
-        prefijo="$"
-        sinVistaPrevia
-      />
+    <form
+      ref={guardar.forma}
+      onSubmit={(e) => void formulario.enviar(e)}
+      noValidate
+      className="flex flex-col gap-5"
+    >
+      <GrupoCampos>
+        <SeleccionNativa
+          marcador={t.destino}
+          etiqueta={t.destino}
+          opciones={opciones}
+          valor={c.destino}
+          alCambiar={(v) => {
+            formulario.setValue('destino', v, { shouldDirty: true });
+          }}
+        />
+        <EntradaMonto
+          nombre="monto"
+          etiqueta={t.monto}
+          valor={c.monto}
+          alCambiar={(v) => {
+            formulario.setValue('monto', v, {
+              shouldDirty: true,
+              shouldValidate: formulario.formState.isSubmitted,
+            });
+          }}
+          error={errores.monto?.message}
+          requerido
+        />
+      </GrupoCampos>
       <p className="text-cuerpo-pequeno text-texto-secundario">
         {t.disponible(p.categoria, formatearMonto(p.disponible))}
       </p>
@@ -189,9 +206,7 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
           enviando={estado === 'enviando'}
           textoEnviando={t.sacando}
           deshabilitado={!operacion.enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          {...guardar.boton}
         >
           {t.sacar}
         </Boton>

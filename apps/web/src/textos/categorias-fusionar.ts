@@ -8,6 +8,9 @@ export const categoriasFusionar = {
   intro: (origen: string) =>
     `Todo el historial de ${origen} pasa a la categoría que elijas, como si siempre hubieran sido una sola.`,
   destino: 'Fusionar con',
+  // [C-45] La categoría sin elegir y su error (CAMPOS-V3 §5 y §6), tal cual.
+  marcador: 'Elegí una categoría',
+  elegirCategoria: 'Elegí una categoría.',
   sinDestinos: 'No hay otra categoría activa con la que fusionar. Creá o desarchivá una y volvé.',
   resumenTitulo: 'Lo que se mueve',
   periodos: (n: number) => (n === 1 ? '1 período con asignación' : `${n} períodos con asignación`),

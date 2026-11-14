@@ -7,7 +7,6 @@ export const presupuestoMover = {
   origen: 'Sacar de',
   destino: 'Poner en',
   monto: 'Monto a mover',
-  obligatorio: 'Ingresá un monto.',
   elegirCategoria: 'Elegí una categoría.',
   disponibleDe: (monto: string) => `${glosario.disponible} ${monto}`,
   mover: 'Mover',

@@ -1,12 +1,15 @@
 'use client';
 // `/por-cobrar/deudores/[deudorId]/renombrar` (FT-48, OP-52; 05 §2, §4.7): el flujo corto de corregir el nombre de un deudor.
 // Envía el nombre nuevo con el que vio la persona como `esperado` (4.6.2). No calcula montos (PF-3): el nombre no toca ninguno.
+// [C-45] El nombre es una fila de un `GrupoCampos` (CAMPOS-V3 §2). Vacío, «Guardar nombre» se ve apagado y dice debajo qué falta;
+// al tocarlo marca el error y lleva el foco al nombre (§5 y §11).
 import { useCallback, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { formularios } from '../../textos/formularios';
@@ -55,6 +58,12 @@ function Cuerpo({ accion, deudorId, nombre: visto, inicial, alUsarActual }: Prop
   const enSuCampo = Object.values(fallo?.campos ?? {}).includes(fallo?.mensaje ?? '');
   const escrito = formulario.watch('nombre');
   const error = formulario.formState.errors.nombre?.message;
+  const guardar = useGuardarV3({
+    contrato: CONTRATO,
+    campos: { nombre: escrito },
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
 
   if (estado === 'listo')
     return (
@@ -67,17 +76,24 @@ function Cuerpo({ accion, deudorId, nombre: visto, inicial, alUsarActual }: Prop
     ? operacion.motivoSinEnvio
     : escrito.trim() === visto
       ? t.sinCambios
-      : undefined;
+      : guardar.boton.motivoDeshabilitado;
   return (
     <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={RUTA_PADRE}>
-      <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
-        <EntradaTexto
-          etiqueta={t.nombre}
-          requerido
-          autoComplete="off"
-          {...(error === undefined ? {} : { error })}
-          {...formulario.register('nombre')}
-        />
+      <form
+        ref={guardar.forma}
+        onSubmit={(e) => void formulario.enviar(e)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
+        <GrupoCampos>
+          <EntradaTexto
+            etiqueta={t.nombre}
+            requerido
+            autoComplete="off"
+            {...(error === undefined ? {} : { error })}
+            {...formulario.register('nombre')}
+          />
+        </GrupoCampos>
         {estado === 'error' && fallo !== undefined && !enSuCampo ? (
           <AvisoEnLinea
             estado="problema"
@@ -105,7 +121,8 @@ function Cuerpo({ accion, deudorId, nombre: visto, inicial, alUsarActual }: Prop
           tipo="submit"
           enviando={estado === 'enviando'}
           textoEnviando={t.guardando}
-          deshabilitado={motivo !== undefined}
+          deshabilitado={!operacion.enLinea || escrito.trim() === visto}
+          apagado={guardar.boton.apagado}
           {...(motivo === undefined ? {} : { motivoDeshabilitado: motivo })}
         >
           {t.guardar}

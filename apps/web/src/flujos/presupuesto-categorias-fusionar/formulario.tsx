@@ -2,15 +2,19 @@
 // `/presupuesto/categorias/[categoriaId]/fusionar` (FT-20, OP-12; 05 §2.3, §4.4): el flujo largo de fusionar una categoría en
 // otra. Muestra el resumen de lo que se mueve, deja elegir el destino, previsualiza y confirma siempre (AV-13, AV-01). El
 // impacto (Δ Listo para asignar, Δ Disponible del destino y lo que suma cada período) lo dice el servidor: no se calcula acá (PF-3).
+// [C-45] «Fusionar con» es una fila de un `GrupoCampos` con la lista propia (CAMPOS-V3 §2 y §6); las dos columnas de C-40 no
+// cambian. Sin destino, «Fusionar» se ve apagado y dice debajo qué falta; al tocarlo marca el error y lleva el foco a la lista.
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { ACCION_COLUMNA_IZQUIERDA } from '../../componentes/marco/pagina-flujo';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearFechaTexto, formatearMonto } from '../../formato';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { categoriasFusionar as t } from '../../textos/categorias-fusionar';
@@ -60,7 +64,7 @@ interface Vista {
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 const PREFIJO = 'asignado:';
 const ID_FORMULARIO = 'formulario-fusionar';
-const CONTRATO = z.object({ destino: z.string().min(1, { error: t.destino }) });
+const CONTRATO = z.object({ destino: z.string().min(1, { error: t.elegirCategoria }) });
 const conSigno = (c: Centavos): string => `${c > 0 ? '+' : ''}${formatearMonto(c)}`;
 
 export function FormularioFusionar(p: PropsFormularioFusionar) {
@@ -86,6 +90,12 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
   const { estado, error: fallo } = operacion;
   const c = formulario.watch();
   const destino = destinos.find((d) => d.id === c.destino);
+  const guardar = useGuardarV3({
+    contrato: CONTRATO,
+    campos: c,
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
   const vista = (operacion.previsualizacion ?? {}) as Vista;
   const rutaPadre = `/presupuesto/categorias/${c.destino === '' ? origen.id : c.destino}`;
 
@@ -213,11 +223,14 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
                   className="w-full"
                   enviando={estado === 'enviando' && confirmo}
                   textoEnviando={t.fusionando}
-                  deshabilitado={!puedeConfirmar}
-                  {...(operacion.motivoSinEnvio === undefined
-                    ? {}
-                    : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+                  deshabilitado={!puedeConfirmar && !(operacion.enLinea && c.destino === '')}
+                  {...guardar.boton}
                   onClick={() => {
+                    // Sin destino, tocarlo marca el error y lleva el foco a la lista (CAMPOS-V3 §5).
+                    if (c.destino === '') {
+                      void formulario.enviar();
+                      return;
+                    }
                     setConfirmo(true);
                     void operacion.confirmar();
                   }}
@@ -232,6 +245,7 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
         <AvisoEnLinea estado="informacion">{t.sinDestinos}</AvisoEnLinea>
       ) : (
         <form
+          ref={guardar.forma}
           id={ID_FORMULARIO}
           onSubmit={(e) => {
             e.preventDefault();
@@ -239,19 +253,21 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
           noValidate
           className="flex flex-col gap-5"
         >
-          <SeleccionNativa
-            alta
-            marcador={t.destino}
-            etiqueta={t.destino}
-            opciones={opciones}
-            valor={c.destino}
-            alCambiar={(v) => {
-              formulario.setValue('destino', v, { shouldDirty: true });
-            }}
-            {...(formulario.formState.errors.destino?.message === undefined
-              ? {}
-              : { error: formulario.formState.errors.destino.message })}
-          />
+          <GrupoCampos>
+            <SeleccionNativa
+              marcador={t.marcador}
+              etiqueta={t.destino}
+              opciones={opciones}
+              valor={c.destino}
+              alCambiar={(v) => {
+                formulario.setValue('destino', v, {
+                  shouldDirty: true,
+                  shouldValidate: formulario.formState.isSubmitted,
+                });
+              }}
+              error={formulario.formState.errors.destino?.message}
+            />
+          </GrupoCampos>
           <section aria-labelledby="fusion-resumen" className="flex flex-col gap-2.5">
             <h2 id="fusion-resumen" className="text-titulo-seccion">
               {t.resumenTitulo}

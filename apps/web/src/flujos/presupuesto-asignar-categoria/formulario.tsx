@@ -2,12 +2,15 @@
 // `/presupuesto/asignar/[categoriaId]` (FT-10, OP-14; 05 §2.3, §4.4, §4.7): el flujo corto de cambiar lo asignado a una categoría
 // en un período activo o futuro. Muestra lo que trae el servidor y envía el valor absoluto con `esperado` (lo que vio al abrir).
 // AV-11 llega como `REQUIERE_CONFIRMACION`; `conflicto_desactualizado` ofrece el valor actual. No calcula montos (PF-3).
+// [C-45] El monto y su signo son filas de un `GrupoCampos` (CAMPOS-V3 §2): el monto con «$» y el signo en segmentado. «Guardar»
+// se ve apagado mientras falte el monto y dice debajo qué falta (§5 y §11).
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { Monto } from '../../componentes/dominio/monto';
@@ -17,6 +20,7 @@ import {
   SuperpuestoDeRuta,
 } from '../../componentes/navegacion/flujo-de-ruta';
 import { centavosATextoDecimal, formatearMonto } from '../../formato';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { aplicarSigno, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -153,6 +157,13 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
   const { estado, error: fallo } = operacion;
   const c = formulario.watch();
   const vista = (operacion.previsualizacion ?? {}) as Vista;
+  const guardar = useGuardarV3({
+    contrato: CONTRATO,
+    campos: c,
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+    monto: 'monto',
+  });
   const actual = (fallo?.datos?.['actuales'] as { monto?: Centavos } | undefined)?.monto;
   const conflicto = fallo?.codigo === 'conflicto_desactualizado' && actual !== undefined;
 
@@ -194,7 +205,12 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
       />
     );
   return (
-    <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
+    <form
+      ref={guardar.forma}
+      onSubmit={(e) => void formulario.enviar(e)}
+      noValidate
+      className="flex flex-col gap-5"
+    >
       {p.meta === undefined ? null : (
         <p className="text-cuerpo-pequeno text-texto-secundario">
           {t.metaPide} <Monto centavos={p.meta.pedido} />
@@ -223,25 +239,26 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
         />
       )}
       <CampoConFoco>
-        <EntradaMonto
-          nombre="monto"
-          etiqueta={t.nuevoAsignado}
-          valor={c.monto}
-          alCambiar={(v) => {
-            formulario.setValue('monto', v, {
-              shouldDirty: true,
-              shouldValidate: formulario.formState.isSubmitted,
-            });
-          }}
-          conSigno
-          sinVistaPrevia
-          signo={c.signo}
-          alCambiarSigno={(s) => {
-            formulario.setValue('signo', s, { shouldDirty: true });
-          }}
-          error={formulario.formState.errors.monto?.message}
-          requerido
-        />
+        <GrupoCampos>
+          <EntradaMonto
+            nombre="monto"
+            etiqueta={t.nuevoAsignado}
+            valor={c.monto}
+            alCambiar={(v) => {
+              formulario.setValue('monto', v, {
+                shouldDirty: true,
+                shouldValidate: formulario.formState.isSubmitted,
+              });
+            }}
+            conSigno
+            signo={c.signo}
+            alCambiarSigno={(s) => {
+              formulario.setValue('signo', s, { shouldDirty: true });
+            }}
+            error={formulario.formState.errors.monto?.message}
+            requerido
+          />
+        </GrupoCampos>
       </CampoConFoco>
       {estado === 'error' && fallo !== undefined && !conflicto ? (
         <ErrorDeFlujo tipo="corto" error={fallo} alReintentar={() => void operacion.reintentar()} />
@@ -270,9 +287,7 @@ function Cuerpo({ p, esperado, inicial, alUsarActual }: PropsCuerpo) {
           enviando={estado === 'enviando'}
           textoEnviando={t.guardando}
           deshabilitado={!operacion.enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          {...guardar.boton}
         >
           {t.guardar}
         </Boton>

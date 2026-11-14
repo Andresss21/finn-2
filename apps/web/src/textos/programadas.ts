@@ -65,7 +65,8 @@ export const programadas = {
   registroAutomatico: 'Registrar sola en su fecha',
   obligatorio: 'Completá este campo.',
   elegirCuenta: 'Elegí una cuenta.',
-  montoMayorACero: 'Ingresá un monto mayor que cero.',
+  // [C-45] CAMPOS-V3 §5, tal cual.
+  elegirCategoria: 'Elegí una categoría.',
   crear: 'Crear programada',
   creando: 'Creando…',
   guardar: 'Guardar',

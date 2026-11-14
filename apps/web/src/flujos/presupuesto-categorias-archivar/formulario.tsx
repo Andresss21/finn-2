@@ -3,15 +3,20 @@
 // lo que decide la persona (a dónde va el Disponible, con qué se cubre un sobregiro y qué pasa con cada programada), previsualiza
 // y confirma. Lo que no hay que decidir no se pregunta; las asignaciones futuras siempre se devuelven (OP-09 las pide así). No
 // calcula montos (PF-3): el impacto lo dice el servidor.
+// [C-45] Cada decisión es un `GrupoCampos` (CAMPOS-V3 §2 y §6): el destino del Disponible en la lista propia y la de cada programada
+// en segmentado, con «Pasarla a» en su mismo grupo. Las dos columnas de C-40 no cambian. Sin el destino de una programada,
+// «Archivar» se ve apagado y dice debajo qué falta; al tocarlo marca el error y lleva el foco a la lista (§5 y §11).
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { ACCION_COLUMNA_IZQUIERDA } from '../../componentes/marco/pagina-flujo';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { categoriasArchivar as t } from '../../textos/categorias-archivar';
@@ -80,7 +85,7 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
         .superRefine((c, ctx) => {
           for (const x of programadas)
             if (['', OTRA].includes(c.programadas[x.id] ?? ''))
-              ctx.addIssue({ code: 'custom', path: ['programadas', x.id], message: t.elegir });
+              ctx.addIssue({ code: 'custom', path: ['programadas', x.id], message: t.elegirCategoria });
         }),
     [programadas],
   );
@@ -128,6 +133,12 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
   const c = formulario.watch();
   const vista = (operacion.previsualizacion ?? {}) as Vista;
   const errores = formulario.formState.errors;
+  const guardar = useGuardarV3({
+    contrato,
+    campos: c,
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
 
   // E4-1: el impacto se pide al servidor con lo elegido, al abrir y cada vez que cambia una decisión. Si hay una llamada en
   // vuelo se espera a que termine: `useOperacion` ignora el doble envío (FE-12).
@@ -158,6 +169,7 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
       valor: d.id,
       etiqueta: d.nombre,
       detalle: t.disponibleDe(formatearMonto(d.disponible)),
+      negativo: d.disponible < 0,
     })),
   ];
   // E4-24: dos opciones; «Pasarla a otra categoría» abre el selector del destino.
@@ -247,11 +259,14 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
             className="w-full"
             enviando={estado === 'enviando' && confirmo}
             textoEnviando={t.archivando}
-            deshabilitado={!puedeConfirmar}
-            {...(operacion.motivoSinEnvio === undefined
-              ? {}
-              : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+            deshabilitado={!puedeConfirmar && !(operacion.enLinea && sinDestino)}
+            {...guardar.boton}
             onClick={() => {
+              // Sin el destino de una programada, tocarlo marca el error y lleva el foco a la lista (CAMPOS-V3 §5).
+              if (sinDestino) {
+                void formulario.enviar();
+                return;
+              }
               setConfirmo(true);
               void operacion.confirmar();
             }}
@@ -262,6 +277,7 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
       }
     >
       <form
+        ref={guardar.forma}
         id={ID_FORMULARIO}
         onSubmit={(e) => {
           e.preventDefault();
@@ -275,18 +291,19 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
         </div>
         {nada ? <p>{t.nadaQueDecidir(p.categoria)}</p> : null}
         {disponible === 0 ? null : (
-          <SeleccionNativa
-            alta
-            marcador={t.elegir}
-            etiqueta={
-              disponible > 0 ? t.destinoDisponible(montoTexto) : t.cubrirSobregiro(montoTexto)
-            }
-            opciones={opcionesDestino}
-            valor={c.destino}
-            alCambiar={(v) => {
-              formulario.setValue('destino', v, { shouldDirty: true });
-            }}
-          />
+          <GrupoCampos>
+            <SeleccionNativa
+              marcador={t.marcador}
+              etiqueta={
+                disponible > 0 ? t.destinoDisponible(montoTexto) : t.cubrirSobregiro(montoTexto)
+              }
+              opciones={opcionesDestino}
+              valor={c.destino}
+              alCambiar={(v) => {
+                formulario.setValue('destino', v, { shouldDirty: true });
+              }}
+            />
+          </GrupoCampos>
         )}
         {futuras === 0 ? null : (
           <p data-futuras className="rounded-contenedor bg-superficie p-3.5 shadow-elevacion-1">
@@ -303,10 +320,9 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
             });
           };
           return (
-            <div key={x.id} className="flex flex-col gap-3">
+            <GrupoCampos key={x.id}>
               <SeleccionNativa
-                alta
-                marcador={t.elegir}
+                marcador={t.marcador}
                 etiqueta={t.programada(x.comercio, formatearMonto(x.monto))}
                 opciones={opcionesProgramada}
                 valor={pasar ? OTRA : DESACTIVAR}
@@ -316,8 +332,7 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
               />
               {pasar ? (
                 <SeleccionNativa
-                  alta
-                  marcador={t.elegir}
+                  marcador={t.marcador}
                   etiqueta={t.pasarlaA}
                   opciones={opcionesDestinoProgramada}
                   valor={decision === OTRA ? '' : decision}
@@ -327,7 +342,7 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
                     : { error: errores.programadas[x.id]?.message })}
                 />
               ) : null}
-            </div>
+            </GrupoCampos>
           );
         })}
       </form>

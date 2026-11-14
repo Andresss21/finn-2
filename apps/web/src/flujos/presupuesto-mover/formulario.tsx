@@ -4,11 +4,14 @@
 // (CP-10a). D-6 (CA-11.2): mover más que el Disponible se acepta; con origen, destino y monto válidos se pide la previsualización
 // de OP-15 y el impacto va en la misma pantalla (el aviso con el negativo y los dos Disponibles). Los rechazos los dice el
 // servidor al confirmar. `conflicto_desactualizado` ofrece los valores actuales. No calcula montos (PF-3).
+// [C-45] Origen, destino y monto son filas de un `GrupoCampos` (CAMPOS-V3 §2 y §6): las categorías en la lista propia con su
+// Disponible (el negativo en problema) y el monto con «$». «Mover» se ve apagado mientras falte algo y dice debajo qué (§5 y §11).
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
@@ -18,10 +21,12 @@ import {
   SuperpuestoDeRuta,
 } from '../../componentes/navegacion/flujo-de-ruta';
 import { centavosATextoDecimal, formatearMonto } from '../../formato';
-import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
+import { esMontoPositivo, normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { moverDinero } from '../../servidor/acciones/presupuesto';
+import { base as tb } from '../../textos/base';
 import { presupuestoMover as t } from '../../textos/presupuesto-mover';
 import { rutaConResultado } from '../presupuesto-asignar-categoria/resultado';
 import { PieDeHoja } from '../pie-de-hoja';
@@ -54,7 +59,7 @@ const CONTRATO = z.object({
   destinoId: z.string().min(1, { error: t.elegirCategoria }),
   monto: z
     .string()
-    .refine((v) => normalizarMontoEscrito(v).estado === 'valido', { error: t.obligatorio }),
+    .refine(esMontoPositivo, { error: tb.montoMayorQueCero }),
 });
 type Campos = z.infer<typeof CONTRATO>;
 type Cruda = Campos & { modo: string; revisionVista?: string; huellaImpacto?: string };
@@ -122,13 +127,19 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
     actuales?.asignacionOrigen !== undefined &&
     actuales.asignacionDestino !== undefined;
 
+  const guardar = useGuardarV3({
+    contrato: CONTRATO,
+    campos: c,
+    intentos: formulario.formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+    monto: 'monto',
+  });
   const vista = (operacion.previsualizacion ?? {}) as Vista;
   const rechazo = vista.rechazos?.[0];
   // D-6: la previsualización se pide con lo elegido apenas el formulario es válido y cada vez que cambia. Si hay una llamada en
   // vuelo se espera a que termine: `useOperacion` ignora el doble envío (FE-12).
   const clave = JSON.stringify([c.origenId, c.destinoId, c.monto]);
-  const valido =
-    c.origenId !== '' && c.destinoId !== '' && normalizarMontoEscrito(c.monto).estado === 'valido';
+  const valido = CONTRATO.safeParse(c).success;
   const pedida = useRef<string | null>(null);
   const [confirmo, setConfirmo] = useState(false);
   const { enviar: pedirImpacto } = formulario;
@@ -175,11 +186,19 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
     valor: k.id,
     etiqueta: k.nombre,
     detalle: t.disponibleDe(formatearMonto(k.disponible)),
+    negativo: k.disponible < 0,
   }));
   const nombreDe = (id: string) => p.categorias.find((k) => k.id === id)?.nombre ?? '';
   const errores = formulario.formState.errors;
+  const poner = (n: keyof Campos) => (v: string) => {
+    formulario.setValue(n, v, {
+      shouldDirty: true,
+      shouldValidate: formulario.formState.isSubmitted,
+    });
+  };
   return (
     <form
+      ref={guardar.forma}
       onSubmit={(e) => {
         e.preventDefault();
         if (estado === 'confirmando' && valido && pedida.current === clave) {
@@ -190,43 +209,32 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
       noValidate
       className="flex flex-col gap-5"
     >
-      <SeleccionNativa
-        alta
-        marcador={t.elegirCategoria}
-        etiqueta={t.origen}
-        opciones={opciones}
-        valor={c.origenId}
-        alCambiar={(v) => {
-          formulario.setValue('origenId', v, { shouldDirty: true });
-        }}
-        {...(errores.origenId?.message === undefined ? {} : { error: errores.origenId.message })}
-      />
-      <SeleccionNativa
-        alta
-        marcador={t.elegirCategoria}
-        etiqueta={t.destino}
-        opciones={opciones}
-        valor={c.destinoId}
-        alCambiar={(v) => {
-          formulario.setValue('destinoId', v, { shouldDirty: true });
-        }}
-        {...(errores.destinoId?.message === undefined ? {} : { error: errores.destinoId.message })}
-      />
-      <EntradaMonto
-        nombre="monto"
-        etiqueta={t.monto}
-        valor={c.monto}
-        alCambiar={(v) => {
-          formulario.setValue('monto', v, {
-            shouldDirty: true,
-            shouldValidate: formulario.formState.isSubmitted,
-          });
-        }}
-        error={errores.monto?.message}
-        requerido
-        prefijo="$"
-        sinVistaPrevia
-      />
+      <GrupoCampos>
+        <SeleccionNativa
+          marcador={t.elegirCategoria}
+          etiqueta={t.origen}
+          opciones={opciones}
+          valor={c.origenId}
+          alCambiar={poner('origenId')}
+          error={errores.origenId?.message}
+        />
+        <SeleccionNativa
+          marcador={t.elegirCategoria}
+          etiqueta={t.destino}
+          opciones={opciones}
+          valor={c.destinoId}
+          alCambiar={poner('destinoId')}
+          error={errores.destinoId?.message}
+        />
+        <EntradaMonto
+          nombre="monto"
+          etiqueta={t.monto}
+          valor={c.monto}
+          alCambiar={poner('monto')}
+          error={errores.monto?.message}
+          requerido
+        />
+      </GrupoCampos>
       {valido && operacion.previsualizacion === undefined && estado === 'enviando' ? (
         <p role="status" className="text-texto-secundario">
           {t.calculando}
@@ -280,9 +288,7 @@ function Cuerpo({ p, asignados, inicial, alUsarActuales }: PropsCuerpo) {
           enviando={estado === 'enviando' && confirmo}
           textoEnviando={t.moviendo}
           deshabilitado={!operacion.enLinea || (estado === 'enviando' && !confirmo)}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          {...guardar.boton}
         >
           {t.mover}
         </Boton>
