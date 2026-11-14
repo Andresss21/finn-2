@@ -443,7 +443,7 @@ describe('PRU-CMP-TX registrar gasto con los campos v3', () => {
     }
   });
 
-  it('PRU-CMP-TX-883 [C-45, C-49] CA-K3-16 y CA-R-7 con tu parte en $0.00: el gasto entero va a Carlos; «¿En qué categorías?» no pide categoría, Guardar no tiene motivo y se envía solo la línea por cobrar (OP-20: cada línea > 0)', async () => {
+  it('PRU-CMP-TX-883 [C-45, C-49] CA-K3-16 y CA-R-7 con tu parte en $0.00: el gasto entero va a Carlos; «¿En qué categorías?» no pide categoría, Guardar no tiene motivo y se envía solo la línea por cobrar, porque OP-20 pide cada línea mayor que cero', async () => {
     ok();
     await montar();
     await escribir(total(), '30');
