@@ -3586,9 +3586,9 @@ Reglas comunes a todas las fichas:
 
 **Reglas.** 01 Anexo A (A.1 contrato y límites; A.2 Banco Agrícola, ⚠ para validar), Q6, P3; 04 OP-48, §6.6.
 
-**Estados.** Sin modelo: la tabla no se muestra, con "Este préstamo no tiene un modelo de cálculo; el capital pendiente es el que registraste." **(nuevo)**. ⚠ El modelo de Banco Agrícola se valida contra un estado de cuenta real.
+**Estados.** Sin modelo: la tabla no se muestra, con "Este préstamo no tiene un modelo de cálculo; el capital pendiente es el que registraste." **(nuevo)**. **[CH-283]** Préstamo en curso con modelo: las cuotas 1 a p₀ se muestran primero, calculadas desde el monto original (01 A.1 salida 6), atenuadas y con el estado "Pagada antes de Finn" **(nuevo)**; no son atrasadas ni entran en lo proyectado o pagado hasta hoy, ni en el interés o el seguro pagados. ⚠ El modelo de Banco Agrícola se valida contra un estado de cuenta real.
 
-**Errores y textos.** `conflicto_desactualizado`. Texto nuevo: el de "Estados".
+**Errores y textos.** `conflicto_desactualizado`. Texto nuevo: el de "Estados" (**[CH-283]** y "Pagada antes de Finn").
 
 **Criterios de aceptación.**
 - **CA-55.1 ⚠** Dado el ejemplo de A.2 (M = $10,000.00, 12 %, seguro $5.00, cuota $350.00, apertura 15 de enero de 2027), cuando abro la tabla, entonces la cuota 1 es interés $101.92, seguro $5.00, capital $243.08 y saldo $9,756.92, y la 2 es $89.82, $4.88, $255.30 y $9,501.62.
@@ -4978,3 +4978,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-279** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-45 y C-49). FT-25: los campos v3 y, para un gasto, las dos secciones de FT-21 (C-49 §5, CA-R-13), con los bloqueos de E3-16 de antemano. Marcas **[CH-279]**.
 - **CH-278** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-50). FT-18: el resultado de mover, crear, deshacer y desarchivar es la etiqueta de resultado sobre la fila, que se va sola, con ↶ en la fila después de mover, y sus textos. Los CA no cambian. Marca **[CH-278]**.
 - **CH-282** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-45 y C-33). FT-72: «Cambiar el ciclo» con el mismo día queda apagado con `aria-disabled` y el mensaje en la fila y debajo del botón (CA-72.4). FT-77: el tema en segmentado, sin la línea de Sistema. FT-24, FT-39, FT-73 y FT-74: los campos v3. Los CA no cambian. Marca **[CH-282]**.
+- **CH-283** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7). FT-55: en un préstamo en curso con modelo, la tabla muestra las cuotas pagadas antes de Finn, desde el monto original, atenuadas y con "Pagada antes de Finn"; solo presentación. Los CA no cambian. Marca **[CH-283]**.

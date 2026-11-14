@@ -2155,7 +2155,7 @@ En todos los casos manda 00-decisiones.md (o la resolución citada).
 - **Entradas:**
   - del préstamo: monto original M, fecha de apertura F₀, tasa nominal anual i, seguro del primer mes S₁, cuota pactada Q, plazo n;
   - las cuotas y abonos reales registrados (fecha, capital, interés, seguro, número de cuota si se indicó);
-  - **[CH-261]** en un préstamo en curso (P13): las cuotas ya pagadas al crearlo en Finn p₀ y el capital pendiente registrado B_p₀ (su saldo inicial). ~~La apertura es su punto de partida:~~ **[CH-264]** La apertura F₀ es la fecha original del préstamo y las cuotas pagadas al crear son la 1 a la p₀: la proyección empieza en la cuota p₀ + 1, con fecha F₀ + (p₀ + 1) meses, y las cuotas 1 a p₀ no se proyectan ni pueden quedar atrasadas. Con p₀ = 0, B₀ = M.
+  - **[CH-261]** en un préstamo en curso (P13): las cuotas ya pagadas al crearlo en Finn p₀ y el capital pendiente registrado B_p₀ (su saldo inicial). ~~La apertura es su punto de partida:~~ **[CH-264]** La apertura F₀ es la fecha original del préstamo y las cuotas pagadas al crear son la 1 a la p₀: la proyección empieza en la cuota p₀ + 1, con fecha F₀ + (p₀ + 1) meses, y las cuotas 1 a p₀ no se proyectan ni pueden quedar atrasadas. Con p₀ = 0, B₀ = M. **[CH-283]** Las cuotas 1 a p₀ sí se muestran, como presentación: se calculan desde M con las reglas 1 a 4 de A.2 (B₀ = M, F_k = F₀ + k meses) y llevan el estado «Pagada antes de Finn» (salida 6). El saldo de la p₀ calculada puede no coincidir con B_p₀: son dos datos distintos y la proyección sigue saliendo de B_p₀.
   - **[CH-264]** Sin tasa no hay proyección: el préstamo se trata como sin modelo (OP-01 no acepta el modelo sin tasa). Si los datos no cierran (alguna cuota de la proyección no amortiza capital: Q ≤ I_k + Seg_k), tampoco: el modelo nunca da capital negativo ni un saldo que crece.
 - **Salidas:**
   1. Proyección por cuota: número, fecha, interés, seguro, capital y saldo.
@@ -2163,9 +2163,11 @@ En todos los casos manda 00-decisiones.md (o la resolución citada).
   3. Emparejamiento de un pago real con su cuota.
   4. Estado de cada cuota: pagada, parcial, pendiente o atrasada.
   5. Comparación entre lo proyectado y lo pagado.
+  6. **[CH-283]** En un préstamo en curso, las cuotas 1 a p₀ calculadas desde M (número, fecha, interés, seguro, capital y saldo). No se emparejan, no tienen estado de la salida 4 ni entran en la comparación de la salida 5. Si desde M alguna no amortiza capital, o M es 0, no hay ninguna.
 - **Límites:**
   - El modelo nunca cambia hechos ni números del presupuesto.
   - El capital pendiente siempre es el de §4.3 (el capital registrado), no el que proyecta el modelo.
+  - **[CH-283]** Las cuotas de la salida 6 son solo presentación: no cambian hechos, saldos, Listo para asignar ni cuentas, ni lo proyectado o pagado hasta hoy, ni el interés y el seguro pagados (que salen solo de los pagos registrados en Finn).
 
 ### A.2 Modelo "Banco Agrícola" (de Finn 1.0) — ⚠ para validar contra un estado de cuenta real
 
