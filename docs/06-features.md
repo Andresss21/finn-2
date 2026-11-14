@@ -1973,9 +1973,9 @@ Reglas comunes a todas las fichas:
 
 **Flujo.**
 1. `/presupuesto/estructura` (flujo largo, pantalla completa) → `estructura()`.
-2. Nuevo grupo: `/presupuesto/estructura/grupos/nuevo`; nueva categoría: `/presupuesto/estructura/categorias/nueva?grupo=` (OP-07). **[CH-267]** Desde el botón de un grupo la categoría es de ese grupo: no se muestra el selector de grupo y bajo el título dice «En {grupo}»; sin `?grupo=` o con uno que no se puede elegir, el selector.
+2. Nuevo grupo: `/presupuesto/estructura/grupos/nuevo`; nueva categoría: `/presupuesto/estructura/categorias/nueva?grupo=` (OP-07). **[CH-267]** Desde el botón de un grupo la categoría es de ese grupo: no se muestra el selector de grupo y bajo el título dice «En {grupo}»; sin `?grupo=` o con uno que no se puede elegir, el selector. **[CH-270]** Al crear, el panel se cierra y el resultado queda en la lista, en el grupo de lo creado y sobre «Nueva categoría» (C-42, principio 5 del diseño): «Creaste el grupo {nombre}. Todavía no tiene categorías.» o «Creaste la categoría {nombre} en {grupo}.»; sin pantalla de resultado ni «Volver a la estructura».
 3. Editar: `/presupuesto/estructura/grupos/[grupoId]` y `/presupuesto/estructura/categorias/[categoriaId]` (OP-08, OP-13).
-4. [1T] Subir o bajar (OP-08 `orden`), con "Deshacer".
+4. [1T] Subir o bajar (OP-08 `orden`), con "Deshacer". **[CH-270]** Un solo resultado a la vista (el de crear o el de mover): lo reemplaza la acción siguiente y se cierra con «Cerrar»; nunca se va solo.
 5. Sin categorías normales: la plantilla (FT-04).
 
 **Piezas.**
@@ -1990,7 +1990,7 @@ Reglas comunes a todas las fichas:
 - "Pagos de tarjeta": sin acciones (`grupo_del_sistema`); sus categorías se muestran sin archivar ni eliminar.
 - Categoría con historial: "Eliminar" deshabilitado con el motivo y los enlaces a archivar (FT-19) o fusionar (FT-20).
 
-**Errores y textos.** `nombre_repetido`, `grupo_archivado`, `grupo_del_sistema`, `categoria_con_historial`, `grupo_no_vacio`, `grupo_con_categorias_activas`, `categoria_de_pago_con_tarjeta`. Sin textos nuevos, salvo «En {grupo}» de Nueva categoría (**[CH-267]**, del diseño de la entrega 4).
+**Errores y textos.** `nombre_repetido`, `grupo_archivado`, `grupo_del_sistema`, `categoria_con_historial`, `grupo_no_vacio`, `grupo_con_categorias_activas`, `categoria_de_pago_con_tarjeta`. Sin textos nuevos, salvo «En {grupo}» de Nueva categoría (**[CH-267]**, del diseño de la entrega 4) y los resultados de crear (**[CH-270]**): «Creaste el grupo {nombre}. Todavía no tiene categorías.» (C-42) y «Creaste la categoría {nombre} en {grupo}.», que reemplazan «Grupo creado» y «Categoría creada».
 
 **Criterios de aceptación.**
 - **CA-18.1** Dado "Supermercado" en "Vida diaria", cuando creo "supermercado" en el mismo grupo, entonces se rechaza con `nombre_repetido`; en otro grupo se acepta.
@@ -4968,3 +4968,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-245** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Entrega 4 del diseño (E3-10) frente a CH-151: Revisar movimiento en computadora va en dos columnas, sin la lista lateral ni «1 de N» con flechas. Cambian la fila de decisiones FD-32, S4 y el texto de la decisión (marca **[CH-245]**); «Siguiente movimiento» después de aprobar o descartar se conserva. Los CA no cambian.
 - **CH-267** (corrección posterior de TA-597, 13 de noviembre de 2026, `08-tareas.md` §7). FT-18: Nueva categoría desde el botón de un grupo no vuelve a pedir el grupo; muestra «En {grupo}» bajo el título, el único texto nuevo de la ficha. Sin `?grupo=` válido, el selector. Marca **[CH-267]**.
 - **CH-269** (corrección posterior de TA-597, 13 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-43). FT-09: «Editar estructura» en «Más acciones» («En Presupuesto»), y sin ninguna categoría «Todavía no tenés categorías» con «Usar la lista sugerida» y «Armarlas a mano», sin filtros; el vacío del filtro queda para cuando hay categorías. Marca **[CH-269]**.
+- **CH-270** (corrección posterior de TA-597, 13 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-42, extendida). FT-18: crear un grupo o una categoría cierra el panel y deja el resultado en la lista, con «Creaste el grupo {nombre}. Todavía no tiene categorías.» o «Creaste la categoría {nombre} en {grupo}.»; el resultado de crear y el de mover se cierran con «Cerrar» y los reemplaza la acción siguiente. Los CA no cambian. Marca **[CH-270]**.

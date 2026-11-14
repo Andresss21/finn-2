@@ -3,10 +3,11 @@
 // toque, "Subir" y "Bajar" (OP-08 `orden`) con "Deshacer" (OP-08 con los valores intercambiados). El orden nunca depende de
 // arrastrar (WCAG 2.5.7). No calcula nada: la posición es la del árbol que entrega `estructura()`.
 import type { GrupoDeEstructura } from '@finn/dominio/selectores';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Icono } from '../../componentes/base/icono';
+import { Resultado } from '../../componentes/base/resultado';
 import { Vacio } from '../../componentes/base/vacio';
 import { PaginaFlujoDeRuta, useCerrarFlujo } from '../../componentes/navegacion/flujo-de-ruta';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
@@ -14,6 +15,7 @@ import { useUnToque } from '../../formularios/use-un-toque';
 import { editarEnEstructura } from '../../servidor/acciones/categorias';
 import { estructura as t } from '../../textos/estructura';
 import { Archivadas } from './archivadas';
+import type { ResultadoEstructura } from './resultado';
 
 const RAIZ = '/presupuesto/estructura';
 const ENLACE = 'inline-flex min-h-11 items-center px-3 font-semibold text-enlace';
@@ -34,9 +36,35 @@ interface Hermano {
 
 export function ListaEstructura({
   grupos: todos,
+  resultado,
 }: {
   readonly grupos: readonly GrupoDeEstructura[];
+  /** [CH-270] Lo que dejó crear un grupo o una categoría (`?resultado=`, ya validado). */
+  readonly resultado?: ResultadoEstructura;
 }) {
+  // [CH-270] Un solo resultado a la vista: el de crear o el de Subir/Bajar. La acción siguiente lo reemplaza y «Cerrar» lo quita;
+  // nunca se va solo (principio 5). Un `?resultado=` nuevo (otra creación) vuelve a mostrarlo.
+  const clave = resultado === undefined ? '' : `${resultado.tipo}:${resultado.id}`;
+  const [claveVista, setClaveVista] = useState(clave);
+  const [visible, setVisible] = useState<'creado' | 'movido' | null>(
+    clave === '' ? null : 'creado',
+  );
+  if (clave !== claveVista) {
+    setClaveVista(clave);
+    setVisible(clave === '' ? (visible === 'creado' ? null : visible) : 'creado');
+  }
+  const lugar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (visible !== 'creado') return;
+    // Si el panel devolvió el foco a su disparador («Nueva categoría» o «Nuevo grupo», junto al resultado), queda ahí.
+    const espera = setTimeout(() => {
+      const activo = document.activeElement;
+      if (activo === null || activo === document.body) lugar.current?.focus();
+    }, 0);
+    return () => {
+      clearTimeout(espera);
+    };
+  }, [visible, claveVista]);
   // E4-6: las archivadas (y las de un grupo archivado) salen de la lista y viven en «Archivadas · N» al pie.
   const grupos = todos
     .map((x, i) => ({
@@ -74,6 +102,7 @@ export function ListaEstructura({
           aria-label={(d < 0 ? t.subirA : t.bajarA)(nombre)}
           onClick={() => {
             movido.current = nombre;
+            setVisible('movido');
             void un.tocar({ tipo, id, orden: pos + d, esperado: { orden: pos } });
           }}
         >
@@ -82,6 +111,33 @@ export function ListaEstructura({
       ),
     );
   const sinNormales = !grupos.some((g) => g.categorias.some((c) => c.clase === 'normal'));
+  const quitar = () => {
+    setVisible(null);
+  };
+  // El resultado de crear va en el grupo de lo creado, sobre «Nueva categoría»; con los nombres de `estructura()`.
+  const delCreado =
+    visible !== 'creado' || resultado === undefined
+      ? undefined
+      : grupos.find((x) =>
+          resultado.tipo === 'grupo'
+            ? x.grupo.id === resultado.id
+            : x.categorias.some((c) => c.categoria.id === resultado.id),
+        );
+  const creado =
+    delCreado === undefined || resultado === undefined
+      ? undefined
+      : {
+          grupoId: delCreado.grupo.id,
+          esGrupo: resultado.tipo === 'grupo',
+          texto:
+            resultado.tipo === 'grupo'
+              ? t.grupoCreado(delCreado.grupo.nombre)
+              : t.categoriaCreada(
+                  delCreado.categorias.find((c) => c.categoria.id === resultado.id)?.categoria
+                    .nombre ?? '',
+                  delCreado.grupo.nombre,
+                ),
+        };
   const cerrar = useCerrarFlujo('/presupuesto', false);
 
   return (
@@ -95,18 +151,19 @@ export function ListaEstructura({
       }
     >
       <div className="flex flex-col gap-5">
-        {un.salida === null ? null : (
-          <AvisoEnLinea
-            estado="informacion"
-            aparecioDespues
-            accion={
-              <Boton variante="discreta" deshabilitado={ocupado} onClick={() => void un.deshacer()}>
-                {un.salida.etiqueta}
-              </Boton>
-            }
-          >
-            {un.salida.descripcion}
-          </AvisoEnLinea>
+        {visible !== 'movido' || un.salida === null ? null : (
+          <div role="status" className="rounded-contenedor bg-superficie shadow-elevacion-1">
+            <Resultado
+              texto={un.salida.descripcion}
+              salida={{
+                etiqueta: un.salida.etiqueta,
+                ejecutar: () => {
+                  if (!ocupado) void un.deshacer();
+                },
+              }}
+              alCerrar={quitar}
+            />
+          </div>
         )}
         {fallo === undefined ? null : (
           <AvisoEnLinea estado="problema" aparecioDespues>
@@ -189,12 +246,22 @@ export function ListaEstructura({
                         })}
                   </li>
                 ))}
-                {categorias.length === 0 ? (
+                {categorias.length === 0 && !(creado?.esGrupo && creado.grupoId === g.id) ? (
                   <li className="text-cuerpo-pequeno border-b border-borde-sutil px-4 py-3 text-texto-secundario">
                     {t.sinCategorias}
                   </li>
                 ) : null}
               </ul>
+              {creado?.grupoId === g.id ? (
+                <div
+                  role="status"
+                  ref={lugar}
+                  tabIndex={-1}
+                  className="border-b border-borde-sutil focus-visible:outline-3 focus-visible:outline-foco"
+                >
+                  <Resultado texto={creado.texto} alCerrar={quitar} />
+                </div>
+              ) : null}
               {g.sistema || g.archivado ? null : (
                 <div>
                   <EnlaceFinn

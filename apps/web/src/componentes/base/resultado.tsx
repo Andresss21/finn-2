@@ -3,6 +3,7 @@
 // Se anuncia por la región del marco (11.3); aquí es un contenedor `data-testid="resultado"` con la salida o el enlace.
 import type { ReactNode } from 'react';
 import { cn } from '../../components/ui/utils';
+import { base } from '../../textos/base';
 import { ACCION_TONAL } from './accion-tonal';
 import { Icono } from './icono';
 
@@ -12,9 +13,11 @@ export interface PropsResultado {
   readonly salida?: { readonly etiqueta: string; readonly ejecutar: () => void };
   /** Enlace a la transacción u objeto afectado, por ejemplo «Ver transacción». */
   readonly enlace?: ReactNode;
+  /** [CH-270] Cerrarlo a mano («Cerrar», 44 × 44); sin esto, no se cierra. Nunca se va solo. Por ahora, solo Estructura. */
+  readonly alCerrar?: () => void;
 }
 
-export function Resultado({ texto, salida, enlace }: PropsResultado) {
+export function Resultado({ texto, salida, enlace, alCerrar }: PropsResultado) {
   return (
     <div
       data-testid="resultado"
@@ -36,6 +39,16 @@ export function Resultado({ texto, salida, enlace }: PropsResultado) {
       )}
       {enlace === undefined ? null : (
         <span className={cn('inline-flex min-h-11 items-center', ACCION_TONAL)}>{enlace}</span>
+      )}
+      {alCerrar === undefined ? null : (
+        <button
+          type="button"
+          onClick={alCerrar}
+          aria-label={base.cerrar}
+          className="inline-flex size-11 shrink-0 items-center justify-center rounded-pastilla text-texto-secundario"
+        >
+          <Icono nombre="x" />
+        </button>
       )}
     </div>
   );
