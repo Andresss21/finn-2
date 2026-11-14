@@ -3,8 +3,9 @@
 // principal (BE-31) y la comparación de 4.6.1 contra la cuenta que ya exista con ese id.
 import type { SubtipoCuenta } from '@finn/dominio';
 import { Centavos } from '@finn/dominio/valores';
+import { nombreDeInstitucion, type LectorTx } from '@finn/db';
 import { op01, type EntradaOp01, type SalidaCuenta } from '../../contratos/cuentas.ts';
-import type { DefinicionOperacion } from '../marco.ts';
+import { ErrorValidacion, type DefinicionOperacion } from '../marco.ts';
 import { coincide } from './comunes.ts';
 
 const TABLA = { tarjeta: 'tarjetas', prestamo: 'prestamos', inversion: 'inversiones' } as const;
@@ -27,7 +28,7 @@ function subtipoDe(e: EntradaOp01): SubtipoCuenta | undefined {
     case 'prestamo':
       return {
         tipo: 'prestamo',
-        contraparte: e.contraparte,
+        contraparte: e.contraparte ?? '', // [CH-265] `conContraparte` ya la puso
         montoOriginal: e.montoOriginal,
         tasaNominalAnualMillonesimas: e.tasaNominalAnual ?? null,
         tipoTasa: e.tipoTasa,
@@ -63,14 +64,27 @@ const cuentaDe = (e: EntradaOp01) => ({
 const efectoInicial = (e: EntradaOp01) =>
   e.tipo === 'tarjeta' ? Centavos.negar(e.saldo) : e.saldo;
 
+/**
+ * [CH-265] Un préstamo con institución y sin contraparte toma como contraparte el nombre de la institución: lo pone el servidor,
+ * no la interfaz. El contrato ya exige una de las dos.
+ */
+async function conContraparte(lector: LectorTx, e: EntradaOp01): Promise<EntradaOp01> {
+  if (e.tipo !== 'prestamo' || e.contraparte !== undefined || e.institucionId === undefined)
+    return e;
+  const nombre = await nombreDeInstitucion(lector, e.institucionId);
+  if (nombre === null) throw new ErrorValidacion('institucionId', 'Esa institución no existe.');
+  return { ...e, contraparte: nombre };
+}
+
 export const OP01: DefinicionOperacion<EntradaOp01, EntradaOp01, SalidaCuenta> = {
   id: 'OP-01',
   contrato: op01,
   idempotencia: 'creacion',
   idPrincipal: (e) => e.id,
-  comprobarIdempotencia(_tx, e, h) {
-    const cuenta = h.cuentas.find((c) => c.id === e.id);
+  async comprobarIdempotencia(tx, entrada, h) {
+    const cuenta = h.cuentas.find((c) => c.id === entrada.id);
     if (cuenta === undefined) return { tipo: 'aplicar' };
+    const e = await conContraparte(tx, entrada); // [CH-265] la misma contraparte que se guardó
     const sub = subtipoDe(e);
     const filaSub =
       e.tipo === 'efectivo' ? undefined : h[TABLA[e.tipo]].find((s) => s.cuentaId === e.id);
@@ -85,7 +99,7 @@ export const OP01: DefinicionOperacion<EntradaOp01, EntradaOp01, SalidaCuenta> =
       monto === efectoInicial(e);
     return igual ? { tipo: 'ya_aplicada', salida: { id: e.id } } : { tipo: 'conflicto_id' };
   },
-  resolver: (_tx, e) => Promise.resolve(e),
+  resolver: (tx, e) => conContraparte(tx, e),
   comando: (e, instante, ids) => {
     const subtipo = subtipoDe(e);
     return {

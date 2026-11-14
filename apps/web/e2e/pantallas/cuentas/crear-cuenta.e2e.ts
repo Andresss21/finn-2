@@ -225,4 +225,49 @@ test.describe('PRU-E2E-CTA', () => {
     await expect(proxima).toContainText('7 de 18');
     await expect(proxima).toContainText('Cuotas pagadas 6 de 18');
   });
+
+  // [CH-264] [CH-265] El caso del usuario: Banco Agrícola elegido como institución, abierto el 08/05/2026 con 6 de 18 pagadas.
+  test('PRU-E2E-CTA-830 [CA-50.3] con Banco Agrícola como institución no pido «Quién te prestó»; el modelo sin tasa se rechaza en la tasa y, con 8.25 %, la próxima cuota es la 7 del 08/12/2026 y ninguna sale atrasada', async ({
+    page,
+  }) => {
+    await preparar('2026-11-13');
+    await abrir(page, `${RUTA}?tipo-cuenta=prestamo`);
+    await campo(page, t.nombre).fill('Préstamo BA');
+    await expect(campo(page, t.contraparte)).toBeVisible();
+    const institucion = campo(page, t.institucion);
+    await expect
+      .poll(() =>
+        institucion.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))),
+      )
+      .toBe(true);
+    await institucion.selectOption({ label: 'Banco Agrícola' });
+    await expect(campo(page, t.contraparte)).toHaveCount(0);
+    await campo(page, t.apertura).fill('2026-05-08');
+    await campo(page, t.montoOriginal).fill('6295');
+    await campo(page, t.saldo.prestamo).fill('3934.62');
+    await campo(page, t.cuotaPactada).fill('377.98');
+    await campo(page, t.plazoCuotas).fill('18');
+    await campo(page, t.cuotasPagadas).fill('6');
+    await page.getByText(t.seccionCondiciones).click();
+    await page
+      .getByRole('radiogroup', { name: t.modelo })
+      .getByRole('radio', { name: t.modelos.banco_agricola })
+      .click();
+    await crear(page).click();
+    await expect(
+      page.getByText('Con el modelo Banco Agrícola, indicá la tasa anual.'),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/cuentas\/nueva/);
+    await campo(page, t.tasaAnual).fill('8.25');
+    await crear(page).click();
+    await alTerminar(page);
+    await page.getByText('Préstamo BA').first().click();
+    await expect(page).toHaveURL(/\/cuentas\/[^/]+$/);
+    const proxima = page.locator('[data-bloque="proxima-cuota"]');
+    await expect(proxima).toContainText('7 de 18');
+    await expect(proxima).toContainText('08/12/2026');
+    await expect(proxima).toContainText('Cuotas pagadas 6 de 18');
+    await expect(page.getByText('Atrasada')).toHaveCount(0);
+    await expect(page.getByText('Banco Agrícola').first()).toBeVisible();
+  });
 });

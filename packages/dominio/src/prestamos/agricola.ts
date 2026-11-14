@@ -25,7 +25,8 @@ const VENTANA_DIAS = 10;
 
 /**
  * Condiciones del modelo de un préstamo (2.2.5): solo Banco Agrícola, mensual y con tasa. [CH-261] En un préstamo en curso
- * (P13), `saldoInicial` es el capital pendiente registrado en la apertura, y la tabla arranca en la cuota siguiente a las pagadas.
+ * (P13), `saldoInicial` es el capital pendiente registrado, y la tabla arranca en la cuota siguiente a las pagadas. [CH-264]
+ * Si los datos no cierran (alguna cuota no amortiza: Q ≤ I_k + Seg_k), no hay tabla: el préstamo queda como sin modelo.
  */
 export function condicionesAgricola(
   p: Prestamo,
@@ -34,7 +35,7 @@ export function condicionesAgricola(
 ): CondicionesModelo | null {
   if (p.modeloCalculo !== 'banco_agricola' || p.frecuencia !== 'mensual') return null;
   if (p.tasaNominalAnualMillonesimas === null) return null;
-  return {
+  const c: CondicionesModelo = {
     montoOriginal: p.montoOriginal,
     fechaApertura: apertura,
     tasaNominalAnualMillonesimas: p.tasaNominalAnualMillonesimas,
@@ -45,6 +46,22 @@ export function condicionesAgricola(
       ? {}
       : { cuotasPagadas: p.cuotasPagadasAlCrear, saldoInicial }),
   };
+  return cierra(c) ? c : null;
+}
+
+/**
+ * [CH-264] Los datos cierran si cada cuota de la proyección sin pagos amortiza capital: así el capital nunca es negativo y el
+ * saldo nunca crece (un abono solo baja el saldo y con él el interés y el seguro). Se detiene en la primera que no amortiza,
+ * antes de que el saldo crezca.
+ */
+function cierra(c: CondicionesModelo): boolean {
+  let saldo = c.saldoInicial ?? c.montoOriginal;
+  for (let k = pagadasAntes(c) + 1; k <= c.plazoCuotas && saldo > 0; k++) {
+    const { capital } = desglose(c, k, saldo);
+    if (capital <= 0) return false;
+    saldo = Centavos.restar(saldo, capital);
+  }
+  return true;
 }
 
 /** [CH-261] Las condiciones del préstamo con su apertura y su saldo inicial (P13) desde los hechos; `null` sin modelo. */
@@ -63,9 +80,12 @@ export function condicionesDe(h: Hechos, p: Prestamo): CondicionesModelo | null 
 /** [CH-261] Cuotas pagadas antes de Finn (p₀); 0 en un préstamo nuevo. */
 const pagadasAntes = (c: CondicionesModelo): number => c.cuotasPagadas ?? 0;
 
-/** F_k = F₀ + (k − p₀) meses, recortado al último día del mes (regla 1; [CH-261] p₀ = 0 en un préstamo nuevo). */
+/**
+ * F_k = F₀ + k meses, recortado al último día del mes (regla 1). [CH-264] F₀ es la fecha original del préstamo también en uno en
+ * curso: las cuotas 1 a p₀ ya vencieron y se pagaron antes de Finn.
+ */
 const fechaCuota = (c: CondicionesModelo, k: number): FechaLocal =>
-  FechaLocal.sumarMeses(c.fechaApertura, k - pagadasAntes(c));
+  FechaLocal.sumarMeses(c.fechaApertura, k);
 
 /** Reglas 2 a 4 para la cuota k con saldo inicial B. */
 function desglose(
