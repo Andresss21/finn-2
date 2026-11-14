@@ -449,9 +449,10 @@ describe('PRU-CMP-PRES', () => {
     expect(raiz.textContent).not.toContain('Ninguna categoría cumple este filtro');
     expect(raiz.textContent).not.toContain('Quitar filtros');
     expect(raiz.textContent).not.toContain('Sobregiradas');
-    // Lo demás sigue: Listo para asignar y los pagos de tarjeta.
+    // Lo demás sigue: Listo para asignar, los pagos de tarjeta y, con ellos, los totales.
     expect(raiz.querySelector('[data-seccion="pagos-tarjeta"]')?.textContent).toContain('Visa Oro');
     expect(hrefs(raiz)).toContain('/presupuesto/listo-para-asignar');
+    expect(raiz.querySelector('[data-seccion="totales"]')).not.toBeNull();
   });
 
   it('PRU-CMP-PRES-341 [FT-09] la pantalla publica «Editar estructura» al menú «En Presupuesto», con categorías y sin ellas', () => {

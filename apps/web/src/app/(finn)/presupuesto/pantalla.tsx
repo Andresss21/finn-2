@@ -118,6 +118,9 @@ export function PantallaPresupuesto({
   const sinFilas = gruposConFilas.length === 0;
   // [CH-269] Sin filtro y sin filas no hay ninguna categoría, aunque haya pagos de tarjeta o archivadas con dinero.
   const sinCategorias = sinFilas && filtro === undefined;
+  // Los totales se ocultan como antes de CH-269: solo si tampoco hay pagos de tarjeta ni archivadas con dinero.
+  const sinTotales =
+    sinCategorias && dto.pagosTarjeta.length === 0 && dto.archivadasConDinero.length === 0;
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-4 md:gap-7">
@@ -268,7 +271,7 @@ export function PantallaPresupuesto({
             </div>
           )}
 
-          {sinCategorias ? null : (
+          {sinTotales ? null : (
             <section data-seccion="totales" aria-label={t.totales} className={O6}>
               <dl className="contents">
                 {(
