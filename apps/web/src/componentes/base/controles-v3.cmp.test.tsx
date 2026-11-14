@@ -78,7 +78,8 @@ function nombreDe(e: HTMLElement): string {
       .split(' ')
       .map((id) => document.getElementById(id)?.textContent ?? '')
       .join(' ');
-  return e.getAttribute('aria-label') ?? e.textContent.trim();
+  const etiqueta = (e as HTMLInputElement).labels?.[0];
+  return e.getAttribute('aria-label') ?? (etiqueta ?? e).textContent.trim();
 }
 
 function Casillas() {
@@ -200,9 +201,12 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
     // Con foco, la fila se levanta como un campo: superficie elevada y sale 6 px a cada lado.
     supermercado.focus();
     const levantada = getComputedStyle(fila(supermercado));
-    expect(levantada.backgroundColor).toBe(token('backgroundColor', '--superficie-elevada'));
-    expect(levantada.marginLeft).toBe('-6px');
+    // La fila se levanta con una transición de 120 ms.
+    await vi.waitFor(() => {
+      expect(levantada.marginLeft).toBe('-6px');
+    });
     expect(levantada.marginRight).toBe('-6px');
+    expect(levantada.backgroundColor).toBe(token('backgroundColor', '--superficie-elevada'));
 
     // Interruptor: `role="switch"`, a la derecha, anuncia su estado.
     const interruptor = porNombre(raiz, 'switch', 'Registrar sola') as HTMLInputElement;
@@ -371,7 +375,9 @@ describe('PRU-CMP-VAL casilla, interruptor, opciones y elección v3', () => {
     await vi.waitFor(() => {
       expect(document.activeElement).toBe(entrada());
     });
-    expect(getComputedStyle(fila(entrada() as HTMLElement)).marginLeft).toBe('-6px');
+    await vi.waitFor(() => {
+      expect(getComputedStyle(fila(entrada() as HTMLElement)).marginLeft).toBe('-6px');
+    });
     const estado = raiz.querySelector('[role="status"]') as HTMLElement;
 
     // «ana» (ya existe): se marca la Ana existente, no se crea otra y se avisa.
