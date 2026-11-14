@@ -87,6 +87,8 @@ export function useBorrador<Campos>(opciones: OpcionesBorrador<Campos>) {
   const [avisar, setAvisar] = useState(false);
   const [anuncio, setAnuncio] = useState('');
   const serializado = JSON.stringify(campos);
+  /** [CH-290] El id de creación y el `esperado` de la operación antes de restaurar: «Descartar borrador» vuelve a ellos. */
+  const alAbrir = useRef<ReturnType<typeof paraBorrador> | null>(null);
 
   // Leer: después de montar. Hasta entonces no se escribe, para no pisar el borrador con los valores iniciales.
   useEffect(() => {
@@ -94,6 +96,7 @@ export function useBorrador<Campos>(opciones: OpcionesBorrador<Campos>) {
     leido.current = clave;
     const guardado = leerGuardado(clave);
     if (guardado === null) return;
+    alAbrir.current = paraBorrador();
     restaurar(completarConIniciales(JSON.parse(inicial.current), guardado.campos) as Campos);
     restaurarBorrador({ id: guardado.id, esperado: guardado.esperado });
     setRecuperado(true);
@@ -101,7 +104,7 @@ export function useBorrador<Campos>(opciones: OpcionesBorrador<Campos>) {
     if (guardado.avisoVisto === true) return;
     almacen.escribir(clave, JSON.stringify({ ...guardado, avisoVisto: true }));
     setAvisar(true);
-  }, [clave, restaurar, restaurarBorrador]);
+  }, [clave, restaurar, restaurarBorrador, paraBorrador]);
 
   // Escribir: 500 ms después del último cambio; sin cambios respecto de los valores iniciales, no hay borrador.
   useEffect(() => {
@@ -147,12 +150,15 @@ export function useBorrador<Campos>(opciones: OpcionesBorrador<Campos>) {
 
   const descartar = useCallback((): void => {
     borrar();
+    // [CH-290] El id del borrador descartado pudo haberse enviado ya: el formulario vacío empieza con el de cuando se abrió.
+    if (alAbrir.current !== null) restaurarBorrador(alAbrir.current);
+    alAbrir.current = null;
     visto.current = false;
     setRecuperado(false);
     setAvisar(false);
     setAnuncio(formularios.descartasteBorrador);
     alDescartar();
-  }, [borrar, alDescartar]);
+  }, [borrar, alDescartar, restaurarBorrador]);
 
   /**
    * `recuperado`: hay un borrador restaurado («Descartar borrador» al pie). `avisar`: es la primera vez que se abre este borrador

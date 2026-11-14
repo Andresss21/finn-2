@@ -76,7 +76,7 @@ const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement | undefined 
   [...nodo.querySelectorAll('button')].find((b) => b.textContent?.trim() === texto);
 
 describe('PRU-CMP-CTA Verificar saldo: borrador al terminar', () => {
-  it('PRU-CMP-CTA-869 [FT-44, FE-14, AV-21] al confirmar la verificación con diferencia ofrece «Crear el ajuste» y se borra el borrador restaurado aunque el paso «Revisar» ya no muestre los datos; al volver a abrir no se restaura el id ya guardado', async () => {
+  it('PRU-CMP-CTA-869 [FT-44, AV-21] al confirmar la verificación con diferencia ofrece «Crear el ajuste» y se borra el borrador restaurado aunque el paso «Revisar» ya no muestre los datos; al volver a abrir no se restaura el id ya guardado', async () => {
     sessionStorage.setItem(
       CLAVE,
       JSON.stringify({
