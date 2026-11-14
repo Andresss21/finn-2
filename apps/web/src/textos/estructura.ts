@@ -36,8 +36,10 @@ export const estructura = {
   creando: 'Creando…',
   sinCambios: 'Todavía no cambiaste nada.',
   obligatorio: 'Escribí un nombre.',
-  grupoCreado: 'Grupo creado',
-  categoriaCreada: 'Categoría creada',
+  /** [CH-270] El resultado en el lugar de Nuevo grupo (C-42) y de Nueva categoría, en la lista, con «Cerrar». */
+  grupoCreado: (grupo: string) => `Creaste el grupo ${grupo}. Todavía no tiene categorías.`,
+  categoriaCreada: (categoria: string, grupo: string) =>
+    `Creaste la categoría ${categoria} en ${grupo}.`,
   guardado: 'Cambios guardados',
   eliminado: 'Eliminado',
   grupoArchivado: 'Grupo archivado',

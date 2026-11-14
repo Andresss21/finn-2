@@ -3,13 +3,17 @@
 // nombre y grupo; OP-13: eliminar o archivar). No calcula nada: qué se elimina lo dice `estructura()`.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { GrupoDeEstructura } from '@finn/dominio/selectores';
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
-import { PaginaFlujoDeRuta, SuperpuestoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import {
+  CerrarFlujoAlMontar,
+  PaginaFlujoDeRuta,
+  SuperpuestoDeRuta,
+} from '../../componentes/navegacion/flujo-de-ruta';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -19,6 +23,7 @@ import {
   eliminarEnEstructura,
 } from '../../servidor/acciones/categorias';
 import { estructura as t } from '../../textos/estructura';
+import { rutaEstructuraConResultado } from './resultado';
 
 export type ModoEstructura = 'grupo-nuevo' | 'categoria-nueva' | 'grupo' | 'categoria';
 export interface PropsFormularioEstructura {
@@ -37,7 +42,8 @@ const RAIZ = '/presupuesto/estructura';
 const CONTRATO = z.object({ nombre: z.string().trim().min(1, t.obligatorio), grupoId: z.string() });
 type Campos = z.infer<typeof CONTRATO>;
 type Cruda = Campos & { modo: string; id?: string; esperado?: Record<string, unknown> };
-const ENLACE = 'inline-flex min-h-11 items-center px-3 font-semibold text-enlace underline';
+// C-33: ningún enlace lleva subrayado.
+const ENLACE = 'inline-flex min-h-11 items-center px-3 font-semibold text-enlace';
 const TITULOS = {
   'grupo-nuevo': t.tituloGrupoNuevo,
   'categoria-nueva': t.tituloCategoriaNueva,
@@ -76,11 +82,14 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
     grupoId: grupoDe ?? propuesto?.id ?? elegibles[0]?.grupo.id ?? '',
   };
 
+  /** [CH-270] El id de creación del último envío (FE-08): el de lo creado, para el resultado en la lista. */
+  const creado = useRef<string | undefined>(undefined);
   /** OP-07 u OP-08 desde lo escrito; en OP-08 solo lo que cambió, con lo que vio la persona como `esperado`. */
   const enviarFormulario = useCallback<AccionEscritura>(
     (payload) => {
       const c = payload as Cruda;
       const nombre = c.nombre.trim();
+      creado.current = c.id;
       if (nuevo)
         return crearEnEstructura({
           tipo,
@@ -131,13 +140,15 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
         {hijos}
       </PaginaFlujoDeRuta>
     );
+  // [CH-270] Crear cierra el panel y deja el resultado en la lista (C-42), sin pantalla de resultado.
+  if (nuevo && operacion.estado === 'listo' && creado.current !== undefined)
+    return envuelve(
+      TITULOS[modo],
+      <CerrarFlujoAlMontar rutaPadre={rutaEstructuraConResultado({ tipo, id: creado.current })} />,
+    );
   const hecho =
     operacion.estado === 'listo'
-      ? nuevo
-        ? esGrupo
-          ? t.grupoCreado
-          : t.categoriaCreada
-        : t.guardado
+      ? t.guardado
       : baja.estado === 'listo'
         ? archivando
           ? t.grupoArchivado
