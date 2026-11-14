@@ -16,7 +16,7 @@ export type NombreDePersona =
   | { readonly tipo: 'propio' }
   | { readonly tipo: 'maximo' };
 
-const PROPIOS = new Set(['vos', 'yo']);
+const PROPIOS: readonly string[] = ['vos', 'yo'];
 const comparable = (t: string) => capitalizarNombre(t).toLocaleLowerCase('es');
 
 /** Sin espacios de más y cada palabra con mayúscula inicial; el resto, como se escribió. */
@@ -37,7 +37,7 @@ export function resolverNombre(
   const nombre = capitalizarNombre(escrito);
   if (nombre === '') return { tipo: 'vacio' };
   const clave = nombre.toLocaleLowerCase('es');
-  if (PROPIOS.has(clave)) return { tipo: 'propio' };
+  if (PROPIOS.includes(clave)) return { tipo: 'propio' };
   const persona = conocidas.find((p) => comparable(p.nombre) === clave);
   // Quien ya está marcado no suma una persona más.
   if (persona !== undefined && elegidas.includes(persona.clave))
