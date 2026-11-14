@@ -106,7 +106,17 @@ export const estructura = {
   creando: 'Creando…',
   sinCambios: 'Todavía no cambiaste nada.',
   obligatorio: 'Escribí un nombre.',
-  /** [CH-270] El resultado en el lugar de Nuevo grupo (C-42) y de Nueva categoría, en la lista, con «Cerrar». */
+  // [CH-278] C-50 (AVISO-DE-RESULTADO §8): la palabra de la etiqueta concuerda con lo que se movió o creó; la frase va a la región
+  // de estado y el ↶ que queda en la fila nombra lo que vuelve.
+  movida: 'Movida',
+  movido: 'Movido',
+  creada: 'Creada',
+  creado: 'Creado',
+  volvioPalabra: 'Volvió',
+  desarchivada: 'Desarchivada',
+  deshacerCategoria: (c: string) => `Deshacer: ${c} vuelve a su lugar`,
+  deshacerGrupo: (g: string) => `Deshacer: el grupo ${g} vuelve a su lugar`,
+  /** [CH-270] La frase de lo creado (Nuevo grupo, C-42, y Nueva categoría); [CH-278] va a la región de estado. */
   grupoCreado: (grupo: string) => `Creaste el grupo ${grupo}. Todavía no tiene categorías.`,
   categoriaCreada: (categoria: string, grupo: string) =>
     `Creaste la categoría ${categoria} en ${grupo}.`,
