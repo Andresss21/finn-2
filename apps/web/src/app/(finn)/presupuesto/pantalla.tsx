@@ -29,7 +29,7 @@ export type FiltroDeUrl = 'sobregiradas' | 'sin-fondos' | 'cubiertas';
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const BOTON = `inline-flex min-h-11 items-center justify-center rounded-control bg-superficie-hundida px-4 font-semibold text-texto ${FOCO}`;
 const TONAL = `inline-flex min-h-11 flex-1 items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion hover:bg-superficie-hundida ${FOCO}`;
-const ACCION = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline ${FOCO}`;
+const ACCION = `inline-flex min-h-11 items-center rounded-control px-2 font-bold text-enlace ${FOCO}`;
 const CONTENEDOR = 'flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie';
 // Cada bloque de la derecha (franja, pagos, totales, archivadas) en teléfono es un hijo directo de `<main>` (`contents`), para
 // ordenarlo con `order`; en computadora es una columna.
@@ -44,7 +44,7 @@ const O6 =
 const O7 = 'order-7 md:order-none';
 const ENCABEZADO_TABLA =
   'hidden gap-3 border-b-2 border-texto pb-2 pl-3 md:grid md:grid-cols-[minmax(0,1.6fr)_repeat(3,110px)]';
-const COMO_SE_COMPONE = `-mt-4 inline-flex min-h-11 items-center justify-end text-etiqueta font-bold text-enlace hover:underline ${FOCO}`;
+const COMO_SE_COMPONE = `-mt-4 inline-flex min-h-11 items-center justify-end text-etiqueta font-bold text-enlace ${FOCO}`;
 const GRUPO = `${CONTENEDOR} md:rounded-none md:bg-transparent`;
 const PAGOS = `${CONTENEDOR} shadow-elevacion-1`;
 

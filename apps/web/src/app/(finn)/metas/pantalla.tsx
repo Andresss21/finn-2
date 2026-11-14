@@ -23,7 +23,7 @@ import { metas as t } from '../../../textos/metas';
 const BOTON =
   'inline-flex min-h-11 items-center justify-center rounded-control bg-accion px-4 font-semibold text-texto-sobre-accion focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE =
-  'inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+  'inline-flex min-h-11 items-center rounded-control px-2 font-bold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const FILA =
   'grid min-h-14 grid-cols-[minmax(0,1fr)_auto_1rem] items-center gap-3 px-4 py-3 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const LISTA = 'overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1';
