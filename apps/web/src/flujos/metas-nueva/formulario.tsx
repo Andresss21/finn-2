@@ -7,7 +7,8 @@ import { useCallback } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Campo, GrupoCampos } from '../../componentes/base/campo';
+import { GrupoCampos } from '../../componentes/base/campo';
+import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -111,30 +112,17 @@ export function FormularioMeta({ categorias, categoriaInicial }: PropsFormulario
     >
       <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
         {fija === undefined ? (
-          <Campo
-            etiqueta={t.categoria}
-            requerido
-            {...(errors.categoriaId?.message === undefined
-              ? {}
-              : { error: errors.categoriaId.message })}
-          >
-            {(props) => (
-              <select
-                {...props}
-                value={c.categoriaId}
-                onChange={(e) => {
-                  poner('categoriaId')(e.target.value);
-                }}
-                className="min-h-11 rounded-control border border-borde bg-superficie px-3 text-base"
-              >
-                {categorias.map((x) => (
-                  <option key={x.id} value={x.id}>
-                    {x.nombre}
-                  </option>
-                ))}
-              </select>
-            )}
-          </Campo>
+          // [CH-271] Muestra de la selección v3 (C-45): la categoría es una fila con la lista propia de Finn.
+          <GrupoCampos>
+            <SeleccionNativa
+              etiqueta={t.categoria}
+              marcador={t.elegirCategoria}
+              opciones={categorias.map((x) => ({ valor: x.id, etiqueta: x.nombre }))}
+              valor={c.categoriaId}
+              alCambiar={poner('categoriaId')}
+              error={errors.categoriaId?.message}
+            />
+          </GrupoCampos>
         ) : null}
         <SelectorSegmentado
           etiqueta={t.tipo}
