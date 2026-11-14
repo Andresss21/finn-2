@@ -7,7 +7,7 @@ import { useCallback } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Campo } from '../../componentes/base/campo';
+import { Campo, GrupoCampos } from '../../componentes/base/campo';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -150,24 +150,27 @@ export function FormularioMeta({ categorias, categoriaInicial }: PropsFormulario
             alCambiar={poner('modoMeta')}
           />
         ) : null}
-        <EntradaMonto
-          nombre="monto"
-          etiqueta={t.monto}
-          valor={c.monto}
-          alCambiar={poner('monto')}
-          error={errors.monto?.message}
-          requerido
-        />
-        {porPeriodo ? null : (
-          <EntradaFecha
-            nombre="fechaObjetivo"
-            etiqueta={c.tipo === 'anual' ? t.fechaObjetivoAnual : t.fechaObjetivo}
-            valor={c.fechaObjetivo as FechaLocal}
-            alCambiar={poner('fechaObjetivo')}
-            error={errors.fechaObjetivo?.message}
-            requerido={c.tipo === 'para_fecha'}
+        {/* [CH-268] Muestra de la familia v3 (C-45): el monto y la fecha son un grupo de filas. */}
+        <GrupoCampos>
+          <EntradaMonto
+            nombre="monto"
+            etiqueta={t.monto}
+            valor={c.monto}
+            alCambiar={poner('monto')}
+            error={errors.monto?.message}
+            requerido
           />
-        )}
+          {porPeriodo ? null : (
+            <EntradaFecha
+              nombre="fechaObjetivo"
+              etiqueta={c.tipo === 'anual' ? t.fechaObjetivoAnual : t.fechaObjetivo}
+              valor={c.fechaObjetivo as FechaLocal}
+              alCambiar={poner('fechaObjetivo')}
+              error={errors.fechaObjetivo?.message}
+              requerido={c.tipo === 'para_fecha'}
+            />
+          )}
+        </GrupoCampos>
         {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
           <AvisoEnLinea
             estado="problema"

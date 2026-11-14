@@ -20,13 +20,22 @@ import { EntradaPorcentaje } from '../formularios/entrada-porcentaje';
 import { Boton } from './boton';
 import { EntradaTexto, GrupoCampos } from './campo';
 
-// Las pruebas operan con el teclado y el puntero reales: las actualizaciones de React llegan fuera de `act`.
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = false;
+// Las pruebas operan con el teclado y el puntero reales: las actualizaciones de React llegan fuera de `act`, que solo
+// envuelve el montaje y el desmontaje.
+const entorno = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
+function conAct(accion: () => void): void {
+  entorno.IS_REACT_ACT_ENVIRONMENT = true;
+  try {
+    act(accion);
+  } finally {
+    entorno.IS_REACT_ACT_ENVIRONMENT = false;
+  }
+}
 
 const montados: { raiz: Root; nodo: HTMLElement }[] = [];
 afterEach(() => {
   for (const { raiz, nodo } of montados.splice(0)) {
-    act(() => {
+    conAct(() => {
       raiz.unmount();
     });
     nodo.remove();
@@ -39,7 +48,7 @@ function montar(ui: ReactNode): HTMLElement {
   nodo.style.cssText = 'background: var(--fondo); color: var(--texto); padding: 24px; width: 420px';
   document.body.append(nodo);
   const raiz = createRoot(nodo);
-  act(() => {
+  conAct(() => {
     raiz.render(ui);
   });
   montados.push({ raiz, nodo });
@@ -149,7 +158,7 @@ describe('PRU-CMP-VAL campos v3', () => {
     expect(getComputedStyle(rotulo(monto)).color).toBe(token('color', '--texto-secundario'));
     expect(getComputedStyle(rotulo(monto)).fontSize).toBe('12px');
     expect(getComputedStyle(monto).fontSize).toBe('17px');
-    act(() => {
+    conAct(() => {
       monto.focus();
     });
     terminar();
@@ -180,7 +189,7 @@ describe('PRU-CMP-VAL campos v3', () => {
     expect(mensaje?.textContent).toBe('Escribí un nombre.');
     expect(mensaje?.querySelector('svg[data-icono="problema"]')).not.toBeNull();
     expect((nombre.getAttribute('aria-describedby') ?? '').split(' ')).toContain(mensaje?.id);
-    act(() => {
+    conAct(() => {
       nombre.focus();
     });
     terminar();
@@ -445,7 +454,9 @@ describe('PRU-CMP-VAL campos v3', () => {
     expect(boton.disabled).toBe(false);
     expect(boton.getAttribute('aria-disabled')).toBe('true');
     expect(descrito(boton)).toBe('Escribí el nombre para guardar.');
-    await userEvent.click(boton);
+    // Playwright no toca un `aria-disabled` con el puntero; la persona sí puede, y con el teclado también.
+    boton.focus();
+    await userEvent.keyboard('{Enter}');
     await expect.poll(() => raiz.querySelectorAll('.campo-fila[data-error]').length).toBe(2);
     expect(enviar).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(entrada(raiz, 'nombre'));

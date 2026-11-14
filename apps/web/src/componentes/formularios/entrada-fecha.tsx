@@ -2,11 +2,12 @@
 // Entrada de fechas (05 §5.3, §5.5, FE-19; P1-03 del export): campo de texto dd/mm/aaaa con las barras automáticas y un botón que
 // abre el calendario. Entrega una `FechaLocal` ('AAAA-MM-DD') sin `Date`. El valor inicial es el `hoy` del Encabezado que pasa
 // el llamador, nunca la fecha del dispositivo. El calendario y sus textos se cargan solo al abrirlo (05 §13.1).
+// [CH-268] En un `GrupoCampos` es una fila v3 (C-45): el calendario de C-38 a la derecha y lo incompleto se marca al salir.
 import { FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { formatearFecha } from '../../formato';
+import { enmascararFecha, formatearFecha } from '../../formato';
 import { base } from '../../textos/base';
-import { EntradaTexto } from '../base/campo';
+import { EntradaTexto, useEnGrupo } from '../base/campo';
 import { Icono } from '../base/icono';
 
 const Calendario = lazy(() =>
@@ -40,17 +41,11 @@ export interface PropsEntradaFecha {
   };
 }
 
-/** Lo escrito → `dd/mm/aaaa` con las barras puestas; acepta también un `AAAA-MM-DD` pegado completo. */
-const enmascarar = (t: string): string => {
-  const iso = /^(\d{4})-(\d\d)-(\d\d)$/.exec(t);
-  return iso
-    ? `${iso[3]}/${iso[2]}/${iso[1]}`
-    : t
-        .replace(/\D/g, '')
-        .slice(0, 8)
-        .replace(/^(\d\d)(\d)/, '$1/$2')
-        .replace(/^(\d\d\/\d\d)(\d)/, '$1/$2');
-};
+const BOTON =
+  'flex size-11 cursor-pointer items-center justify-center rounded-pastilla text-texto-secundario focus-visible:outline-3 focus-visible:outline-foco aria-expanded:bg-accion-tonal aria-expanded:text-accion disabled:cursor-default disabled:text-texto-deshabilitado';
+const BOTON_CAJA = `absolute inset-y-0 right-1 my-auto ${BOTON}`;
+// En la fila, el ícono de 18 a la derecha del valor (CAMPOS-V3 §2), con su blanco de 44 sin agrandar la fila.
+const BOTON_FILA = `-my-3 -mr-3 shrink-0 ${BOTON}`;
 
 /** `dd/mm/aaaa` completo → `FechaLocal`, o `undefined` si falta o el día no existe. */
 function leer(t: string): FechaLocal | undefined {
@@ -82,6 +77,8 @@ export function EntradaFecha({
   const [borrador, setBorrador] = useState<string>(valor ? formatearFecha(valor) : '');
   const [anterior, setAnterior] = useState<string>(valor);
   const [abierto, setAbierto] = useState(false);
+  const enGrupo = useEnGrupo();
+  const [tocada, setTocada] = useState(false);
   const boton = useRef<HTMLButtonElement>(null);
   if (valor !== anterior) {
     setAnterior(valor);
@@ -95,7 +92,9 @@ export function EntradaFecha({
     ? base.fechaFuera
     : borrador.length === 10 && fecha === undefined
       ? base.fechaNoExiste
-      : error;
+      : enGrupo && tocada && borrador.length > 0 && borrador.length < 10
+        ? base.fechaIncompleta
+        : error;
 
   const avisar = mensajeEnFila?.alCambiar;
   useEffect(() => {
@@ -126,8 +125,12 @@ export function EntradaFecha({
       className="pr-12 tabular-nums"
       value={borrador}
       disabled={deshabilitado}
+      soloDigitos={false}
+      onBlur={() => {
+        setTocada(true);
+      }}
       onChange={(e) => {
-        const texto = enmascarar(e.target.value);
+        const texto = enmascararFecha(e.target.value);
         setBorrador(texto);
         const f = leer(texto);
         if (avisarVacio && texto === '') alCambiar('' as FechaLocal);
@@ -143,12 +146,12 @@ export function EntradaFecha({
             aria-expanded={abierto}
             aria-haspopup="dialog"
             disabled={deshabilitado}
-            className="absolute inset-y-0 right-1 my-auto flex size-11 cursor-pointer items-center justify-center rounded-pastilla text-texto-secundario focus-visible:outline-3 focus-visible:outline-foco aria-expanded:bg-accion-tonal aria-expanded:text-accion disabled:cursor-default disabled:text-texto-deshabilitado"
+            className={enGrupo ? BOTON_FILA : BOTON_CAJA}
             onClick={() => {
               setAbierto(!abierto);
             }}
           >
-            <Icono nombre="cal" />
+            <Icono nombre="cal" {...(enGrupo ? { tamano: 18 } : {})} />
           </button>
           {abierto ? (
             <Suspense fallback={null}>
