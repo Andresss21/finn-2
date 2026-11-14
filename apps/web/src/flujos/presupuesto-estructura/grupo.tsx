@@ -2,8 +2,10 @@
 // [CH-272] Un grupo de la estructura (C-46; ESTRUCTURA-Y-COLAPSO §1.1 a §1.3): encabezado con el asa, la flecha y el nombre (que
 // colapsan) y «Editar grupo»; abierto, sus categorías con su asa y, al pie, «Nueva categoría»; colapsado, la fila de resumen.
 // Pagos de tarjeta va aparte, fijo, sin asa ni flecha. La barra y el resultado los dibuja la lista (`enLugar`), debajo de lo suyo.
-// `Asa` es el punto donde el arrastre (el PR siguiente) se engancha: hoy solo abre la barra «Mover».
-import type { ReactNode } from 'react';
+// [CH-275] `Asa` abre la barra «Mover» al tocarla y, cuando llegó el arrastre, lo empieza al presionarla (`alPresionar`). Mientras
+// se arrastra, la lista marca el hueco (`hueco`, `huecoGrupo`) y el destino (`destino`, `sobreColapsado`); `data-zona`,
+// `data-colapsado` y `data-flip` son lo que leen el arrastre y el movimiento.
+import type { PointerEvent, ReactNode } from 'react';
 import { Icono } from '../../componentes/base/icono';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { estructura as t } from '../../textos/estructura';
@@ -17,11 +19,13 @@ export function Asa({
   abierta,
   id,
   alTocar,
+  alPresionar,
 }: {
   readonly etiqueta: string;
   readonly abierta: boolean;
   readonly id: string;
   readonly alTocar: () => void;
+  readonly alPresionar?: ((e: PointerEvent) => void) | undefined;
 }) {
   return (
     <button
@@ -29,6 +33,7 @@ export function Asa({
       aria-label={etiqueta}
       aria-expanded={abierta}
       data-foco={`asa-${id}`}
+      {...(alPresionar === undefined ? {} : { 'data-arrastre': '', onPointerDown: alPresionar })}
       onClick={alTocar}
       className="inline-flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded-control text-texto-secundario hover:bg-superficie-hundida hover:text-texto focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foco"
     >
@@ -47,6 +52,16 @@ export interface PropsGrupo {
   readonly enLugar: (id: string) => ReactNode;
   readonly alternar: () => void;
   readonly tocarAsa: (tipo: 'grupo' | 'categoria', id: string) => void;
+  /** [CH-275] Presionar un asa empieza el arrastre (cuando el módulo ya cargó). */
+  readonly presionar?: ((e: PointerEvent, tipo: 'grupo' | 'categoria', id: string) => void) | undefined;
+  /** La categoría que se arrastra: su fila es el hueco punteado. */
+  readonly hueco?: string | undefined;
+  /** Este grupo es el que se arrastra. */
+  readonly huecoGrupo?: boolean;
+  /** Otro grupo abierto donde caería la categoría: la tarjeta se resalta. */
+  readonly destino?: boolean;
+  /** Un grupo colapsado bajo la categoría: el encabezado se resalta y se abre en un momento. */
+  readonly sobreColapsado?: boolean;
 }
 
 export function GrupoEstructura({
@@ -57,12 +72,38 @@ export function GrupoEstructura({
   enLugar,
   alternar,
   tocarAsa,
+  presionar,
+  hueco,
+  huecoGrupo = false,
+  destino = false,
+  sobreColapsado = false,
 }: PropsGrupo) {
   const cats = g.categorias.filter((c) => !c.archivada);
   const vacio = enLugar(`vacio-${g.id}`);
+  const presionarEn = (tipo: 'grupo' | 'categoria', id: string) =>
+    presionar === undefined
+      ? undefined
+      : (e: PointerEvent) => {
+          presionar(e, tipo, id);
+        };
+  const zona = {
+    'aria-labelledby': `g-${g.id}`,
+    'data-zona': g.id,
+    'data-flip': `g-${g.id}`,
+    className: 'flex flex-col gap-2',
+  };
+  if (huecoGrupo)
+    return (
+      <section {...zona} data-hueco="">
+        <div aria-hidden="true" className="fz-hueco-grupo" />
+      </section>
+    );
   return (
-    <section aria-labelledby={`g-${g.id}`} className="flex flex-col gap-2">
-      <div className="flex min-h-11 items-center">
+    <section {...zona} {...(colapsado ? { 'data-colapsado': String(cats.length) } : {})}>
+      <div
+        {...(sobreColapsado ? { 'data-sobre-colapsado': '' } : {})}
+        className="fz-sobre flex min-h-11 items-center rounded-control"
+      >
         <Asa
           etiqueta={t.moverGrupo(g.nombre)}
           abierta={abierta(g.id)}
@@ -70,6 +111,7 @@ export function GrupoEstructura({
           alTocar={() => {
             tocarAsa('grupo', g.id);
           }}
+          alPresionar={presionarEn('grupo', g.id)}
         />
         <h2 id={`g-${g.id}`} className="min-w-0 flex-1">
           <button
@@ -98,8 +140,11 @@ export function GrupoEstructura({
           {t.editarGrupo}
         </EnlaceFinn>
       </div>
+      {sobreColapsado ? (
+        <p className="text-etiqueta px-2 font-semibold text-accion">{t.soltaAqui}</p>
+      ) : null}
       {enLugar(g.id)}
-      <div className={TARJETA}>
+      <div {...(destino ? { 'data-destino': '' } : {})} className={`fz-destino ${TARJETA}`}>
         {colapsado ? (
           <button
             type="button"
@@ -116,8 +161,18 @@ export function GrupoEstructura({
         ) : (
           <div className="fz-aparece">
             <ul>
-              {cats.map((c) => (
-                <li key={c.id} data-fila-cat={c.id} className="border-b border-borde-sutil">
+              {cats.map((c) =>
+                c.id === hueco ? (
+                  <li key={c.id} data-fila-cat={c.id} data-hueco="" data-flip={`c-${c.id}`}>
+                    <div aria-hidden="true" className="fz-hueco" />
+                  </li>
+                ) : (
+                <li
+                  key={c.id}
+                  data-fila-cat={c.id}
+                  data-flip={`c-${c.id}`}
+                  className="border-b border-borde-sutil"
+                >
                   <div
                     className={
                       abierta(c.id)
@@ -132,6 +187,7 @@ export function GrupoEstructura({
                       alTocar={() => {
                         tocarAsa('categoria', c.id);
                       }}
+                      alPresionar={presionarEn('categoria', c.id)}
                     />
                     {editable(c.id) ? (
                       <EnlaceFinn
@@ -149,7 +205,8 @@ export function GrupoEstructura({
                   </div>
                   {enLugar(c.id)}
                 </li>
-              ))}
+                ),
+              )}
               {cats.length === 0 && vacio === null ? (
                 <li className="text-cuerpo-pequeno border-b border-borde-sutil px-4 py-3 text-texto-secundario">
                   {t.sinCategorias}

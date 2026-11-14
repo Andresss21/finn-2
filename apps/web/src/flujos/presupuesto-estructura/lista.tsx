@@ -4,9 +4,12 @@
 // `orden` (y `grupoId` al cruzar de grupo). La lista muestra el lugar nuevo mientras espera y, si OP-08 rechaza, vuelve al anterior
 // con el error en línea. Un solo resultado a la vez, debajo de lo que se movió o creó; nunca se va solo (principio 5). El orden
 // nunca depende de arrastrar (WCAG 2.5.7). No calcula montos: los lugares salen del árbol de `estructura()` (`lugares.ts`).
+// [CH-275] El arrastre desde el asa (`arrastre.tsx`, con `import()` después de cargar): mientras dura, la lista dibuja el lugar
+// donde caería (el hueco), el destino y la fila levantada; al soltar usa los mismos `moverCategoria` y `moverGrupo` que la barra.
 import type { ResultadoAccion } from '@finn/aplicacion/errores';
 import type { GrupoDeEstructura } from '@finn/dominio/selectores';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useColapsados } from '../../cliente/useColapsados';
 import { Boton } from '../../componentes/base/boton';
 import { Icono } from '../../componentes/base/icono';
@@ -19,7 +22,9 @@ import { editarEnEstructura } from '../../servidor/acciones/categorias';
 import { estructura as t } from '../../textos/estructura';
 import { formularios } from '../../textos/formularios';
 import { Archivadas } from './archivadas';
+import type { Apunte, Tomar } from './arrastre';
 import { BarraMover } from './barra-mover';
+import { useFlip } from './flip';
 import { GrupoEstructura, GrupoSistema } from './grupo';
 import * as L from './lugares';
 import type { ResultadoEstructura } from './resultado';
@@ -43,6 +48,14 @@ type Aviso =
       };
     }
   | { readonly tipo: 'error'; readonly ancla: string; readonly texto: string };
+
+interface Arrastre {
+  readonly tipo: 'grupo' | 'categoria';
+  readonly id: string;
+  /** Dónde estaba lo tomado: ahí aparece la fila levantada. */
+  readonly caja: DOMRect;
+  readonly a: Apunte;
+}
 
 const aArbol = (gs: readonly GrupoDeEstructura[]): L.Arbol =>
   gs.map(({ grupo, categorias }) => ({
@@ -120,6 +133,50 @@ export function ListaEstructura({
     return r;
   }, []);
   const op = useOperacion({ accion: llamar });
+
+  // [CH-275] El arrastre llega después de cargar la página, en el primer momento libre (como la Bandeja, 05 §13.3).
+  const [modulo, setModulo] = useState<typeof import('./arrastre') | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    let libre = (): void => undefined;
+    const cargar = () => {
+      void import('./arrastre').then((m) => {
+        if (vivo) setModulo(m);
+      });
+    };
+    const programar = () => {
+      if (typeof window.requestIdleCallback === 'function') {
+        const i = window.requestIdleCallback(cargar, { timeout: 2000 });
+        libre = () => {
+          window.cancelIdleCallback(i);
+        };
+      } else {
+        const i = window.setTimeout(cargar, 200);
+        libre = () => {
+          window.clearTimeout(i);
+        };
+      }
+    };
+    if (document.readyState === 'complete') programar();
+    else window.addEventListener('load', programar, { once: true });
+    return () => {
+      vivo = false;
+      window.removeEventListener('load', programar);
+      libre();
+    };
+  }, []);
+  const tomar = useRef<Tomar | null>(null);
+  const registrar = useCallback((f: Tomar | null) => {
+    tomar.current = f;
+  }, []);
+  const [arrastre, setArrastre] = useState<Arrastre | null>(null);
+  const actual = useRef<Arrastre | null>(null);
+  const fijar = (x: Arrastre | null) => {
+    actual.current = x;
+    setArrastre(x);
+  };
+  const raiz = useRef<HTMLDivElement>(null);
+  const flip = useFlip(raiz);
   const enVuelo = useRef(false);
   /** Un OP-08: el lugar nuevo enseguida; con `ok`, el resultado; si no, el lugar de antes y el error debajo de la fila. */
   const enviar = async (
@@ -179,6 +236,93 @@ export function ListaEstructura({
   const moverGrupo = (gid: string, idx: number | undefined, foco: string) => {
     if (idx !== undefined) aplicar(L.moverGrupo(arbol, gid, idx), gid, foco);
   };
+
+  const nombreDe = (id: string) =>
+    arbol.flatMap((g) => [g, ...g.categorias]).find((x) => x.id === id)?.nombre ?? '';
+  /** El árbol con lo tomado donde caería, y lo que dicen la fila levantada y el anuncio. */
+  const previa = (x: Arrastre) =>
+    (x.tipo === 'grupo' ? L.moverGrupo(arbol, x.id, x.a.idx) : L.moverCategoria(arbol, x.id, x.a))
+      ?.despues ?? arbol;
+  const describirArrastre = (x: Arrastre) => {
+    const p = previa(x);
+    if (x.tipo === 'grupo') {
+      const { idx, n } = L.lugarDeGrupo(p, x.id);
+      const ord = L.sinArticulo(L.ordinal(idx, n, false));
+      const cats = p.find((g) => g.id === x.id)?.categorias.filter((c) => !c.archivada).length;
+      return { hacia: t.haciaGrupo(ord, cats ?? 0), anuncio: t.grupoLugar(nombreDe(x.id), ord) };
+    }
+    const l = L.lugarDeCategoria(p, x.id);
+    const ord = L.ordinal(l?.idx ?? 0, l?.n ?? 1, true);
+    const grupo = l?.grupo.nombre ?? '';
+    return {
+      hacia: t.haciaCategoria(L.sinArticulo(ord), grupo),
+      anuncio: t.sobre(grupo, ord, x.a.colapsado),
+    };
+  };
+  /** Al soltar o cancelar, la fila parte de donde quedó la levantada (FLIP). */
+  const terminar = (caja: DOMRect | undefined) => {
+    const x = actual.current;
+    fijar(null);
+    if (x !== null && caja !== undefined) flip(`${x.tipo === 'grupo' ? 'g' : 'c'}-${x.id}`, caja);
+    return x;
+  };
+  const arrastrar = {
+    registrar,
+    alTomar: (tipo: 'grupo' | 'categoria', id: string, caja: DOMRect) => {
+      setBarra(null);
+      const l = L.lugarDeCategoria(arbol, id);
+      const a =
+        tipo === 'grupo'
+          ? { grupoId: '', idx: L.lugarDeGrupo(arbol, id).idx, colapsado: false }
+          : { grupoId: l?.grupo.id ?? '', idx: l?.idx ?? 0, colapsado: false };
+      fijar({ tipo, id, caja, a });
+      setAnuncio(tipo === 'grupo' ? t.tomasteGrupo(nombreDe(id)) : t.tomaste(nombreDe(id)));
+    },
+    alApuntar: (a: Apunte) => {
+      const x = actual.current;
+      if (x === null) return;
+      fijar({ ...x, a });
+      setAnuncio(describirArrastre({ ...x, a }).anuncio);
+    },
+    alAbrir: (gid: string) => {
+      guardarDe([...colapsados].filter((x) => x !== gid));
+      setAnuncio(t.seAbrio(nombreDe(gid)));
+    },
+    alSoltar: (caja: DOMRect | undefined) => {
+      const x = terminar(caja);
+      if (x === null) return;
+      const m =
+        x.tipo === 'grupo'
+          ? L.moverGrupo(arbol, x.id, x.a.idx)
+          : L.moverCategoria(arbol, x.id, x.a);
+      if (m === undefined) {
+        setAnuncio(t.mismoLugar(nombreDe(x.id)));
+        return;
+      }
+      setAnuncio(t.soltaste(m.texto));
+      if (x.tipo === 'grupo') moverGrupo(x.id, x.a.idx, `asa-${x.id}`);
+      else moverCategoria(x.id, x.a, `asa-${x.id}`);
+    },
+    alCancelar: (caja: DOMRect | undefined) => {
+      const x = terminar(caja);
+      if (x !== null) setAnuncio(t.cancelado(nombreDe(x.id)));
+    },
+  };
+  // Mientras se arrastra: el árbol con el hueco donde caería (sobre un grupo colapsado, solo sin la categoría); al tomar un
+  // grupo, todos colapsados sin tocar lo guardado.
+  const vista: L.Arbol =
+    arrastre === null
+      ? arbol
+      : arrastre.tipo === 'categoria' && arrastre.a.colapsado
+        ? arbol.map((g) => ({
+            ...g,
+            categorias: g.categorias.filter((c) => c.id !== arrastre.id),
+          }))
+        : previa(arrastre);
+  const cerradosVista =
+    arrastre?.tipo === 'grupo' ? new Set(usuarios.map((g) => g.id)) : colapsados;
+  const cat = arrastre?.tipo === 'categoria' ? arrastre : null;
+  const origen = cat === null ? undefined : L.lugarDeCategoria(arbol, cat.id)?.grupo.id;
 
   const alternar = (g: L.GrupoVista) => {
     const cerrado = colapsados.has(g.id);
@@ -356,7 +500,7 @@ export function ListaEstructura({
       titulo={t.titulo}
       rutaPadre="/presupuesto"
       acciones={
-        <Boton onClick={cerrar} className="min-h-12 flex-1">
+        <Boton onClick={cerrar} className="min-h-12 flex-1" inert={arrastre !== null}>
           {t.listo}
         </Boton>
       }
@@ -378,7 +522,35 @@ export function ListaEstructura({
         </>
       }
     >
-      <div className="flex flex-col gap-5">
+      <div ref={raiz} className="flex flex-col gap-5">
+        {modulo === null ? null : <modulo.ContextoArrastre {...arrastrar} />}
+        {arrastre === null
+          ? null
+          : createPortal(
+              <div
+                data-fila-levantada
+                className="fz-levantada pointer-events-none fixed z-50 flex min-h-14 items-center gap-1.5 rounded-xl bg-superficie-elevada py-1 pr-4 pl-1"
+                style={{
+                  left: arrastre.caja.left,
+                  top: arrastre.caja.top,
+                  width: arrastre.caja.width,
+                }}
+              >
+                <span className="inline-flex size-11 shrink-0 items-center justify-center text-accion">
+                  <Icono nombre="grip" />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-cuerpo truncate font-semibold">
+                    {nombreDe(arrastre.id)}
+                  </span>
+                  <span className="text-etiqueta flex items-center gap-1 font-bold text-accion">
+                    <Icono nombre="in" tamano={18} />
+                    {describirArrastre(arrastre).hacia}
+                  </span>
+                </span>
+              </div>,
+              document.body,
+            )}
         <div role="status" data-anuncio="estructura" className="sr-only">
           {anuncio}
         </div>
@@ -409,11 +581,24 @@ export function ListaEstructura({
             </button>
           </div>
         )}
-        {usuarios.map((g) => (
+        {L.usuarios(vista).map((g) => (
           <GrupoEstructura
             key={g.id}
             grupo={g}
-            colapsado={colapsados.has(g.id)}
+            colapsado={cerradosVista.has(g.id)}
+            presionar={
+              modulo === null
+                ? undefined
+                : (e, tipo, id) => {
+                    tomar.current?.(e, tipo, id);
+                  }
+            }
+            hueco={cat?.id}
+            huecoGrupo={arrastre?.tipo === 'grupo' && arrastre.id === g.id}
+            destino={cat !== null && cat.a.grupoId === g.id && g.id !== origen}
+            sobreColapsado={
+              cat !== null && cat.a.colapsado && cat.a.grupoId === g.id && colapsados.has(g.id)
+            }
             editable={(id) => clases.get(id) === 'normal'}
             abierta={(id) => barra?.id === id}
             enLugar={enLugar}

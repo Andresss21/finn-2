@@ -48,7 +48,10 @@ export function ordinal(i: number, n: number, fem: boolean): string {
   return `${fem ? 'la' : 'el'} ${o}`;
 }
 
-export const usuarios = (a: Arbol): GrupoVista[] => a.filter((g) => !g.archivado && !g.sistema);
+/** [CH-275] El ordinal de «→ segunda en Comida fuera»: sin artículo. */
+export const sinArticulo = (o: string): string => o.replace(/^(la|el) /, '');
+
+export const usuarios =(a: Arbol): GrupoVista[] => a.filter((g) => !g.archivado && !g.sistema);
 const visibles = (g: GrupoVista): CatVista[] => g.categorias.filter((c) => !c.archivada);
 const grupoDe = (a: Arbol, cid: string): GrupoVista | undefined =>
   a.find((g) => g.categorias.some((c) => c.id === cid));
