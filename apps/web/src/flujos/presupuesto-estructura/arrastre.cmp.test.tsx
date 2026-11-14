@@ -450,7 +450,7 @@ describe('PRU-CMP-CATEG-138 el movimiento del arrastre', () => {
     const original = window.matchMedia.bind(window);
     vi.spyOn(window, 'matchMedia').mockImplementation((consulta: string) =>
       consulta.includes('prefers-reduced-motion')
-        ? ({ ...original(consulta), matches: true, media: consulta } as MediaQueryList)
+        ? (Object.create(original(consulta), { matches: { value: true } }) as MediaQueryList)
         : original(consulta),
     );
     await act(async () => {

@@ -17,7 +17,8 @@ export function useFlip(raiz: RefObject<HTMLElement | null>): (clave: string, r:
     const base = r.getBoundingClientRect();
     const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const estilo = getComputedStyle(r);
-    const duracion = parseFloat(estilo.getPropertyValue('--duracion-normal')) || 220;
+    const duracion =
+      Number(estilo.getPropertyValue('--duracion-normal').trim().replace(/ms$/, '')) || 220;
     const curva = estilo.getPropertyValue('--curva-estandar').trim() || 'ease';
     const nuevas = new Map<string, Punto>();
     const corridas = new Map<Element, Punto>();

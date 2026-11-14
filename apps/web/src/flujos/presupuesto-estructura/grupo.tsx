@@ -13,6 +13,8 @@ import type { GrupoVista } from './lugares';
 
 const RAIZ = '/presupuesto/estructura';
 const TARJETA = 'overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1';
+const TARJETA_ZONA =
+  'fz-destino overflow-hidden rounded-contenedor bg-superficie shadow-elevacion-1';
 
 export function Asa({
   etiqueta,
@@ -145,7 +147,7 @@ export function GrupoEstructura({
         <p className="text-etiqueta px-2 font-semibold text-accion">{t.soltaAqui}</p>
       ) : null}
       {enLugar(g.id)}
-      <div {...(destino ? { 'data-destino': '' } : {})} className={`fz-destino ${TARJETA}`}>
+      <div {...(destino ? { 'data-destino': '' } : {})} className={TARJETA_ZONA}>
         {colapsado ? (
           <button
             type="button"
