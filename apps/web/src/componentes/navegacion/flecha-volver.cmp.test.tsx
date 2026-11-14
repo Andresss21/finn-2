@@ -135,9 +135,7 @@ describe('PRU-CMP-PWA flecha «Volver» a la pantalla anterior', () => {
     // Recarga: la anterior es de Finn, pero de otro documento.
     const recarga = historial(['/metas', '/presupuesto/categorias/c1'], 1);
     expect(anteriorEnFinn(recarga, ORIGEN)).toBeNull();
-    expect(
-      anteriorEnFinn(historial(['https://ejemplo.com/', '/cuentas/a1']), ORIGEN),
-    ).toBeNull();
+    expect(anteriorEnFinn(historial(['https://ejemplo.com/', '/cuentas/a1']), ORIGEN)).toBeNull();
     expect(anteriorEnFinn(undefined, ORIGEN)).toBeNull();
 
     const ir = vi.spyOn(window.history, 'go').mockImplementation(() => undefined);
@@ -157,13 +155,14 @@ describe('PRU-CMP-PWA flecha «Volver» a la pantalla anterior', () => {
       ['/presupuesto/estructura?resultado=categoria:c9', '/presupuesto/categorias/c9'],
       ['/registrar/gasto', '/actividad/t1'],
     ] as const;
-    for (const rutas of casos) expect(anteriorEnFinn(historial(rutas), ORIGEN), rutas[0]).toBeNull();
+    for (const rutas of casos)
+      expect(anteriorEnFinn(historial(rutas), ORIGEN), rutas[0]).toBeNull();
 
     // Una pantalla de verdad sí: la lista de Cuentas, Ajustes > Formatos y el detalle de una cuenta.
     expect(anteriorEnFinn(historial(['/cuentas', '/cuentas/a1']), ORIGEN)?.ruta).toBe('/cuentas');
-    expect(anteriorEnFinn(historial(['/ajustes/formatos', '/ajustes/instituciones']), ORIGEN)?.ruta).toBe(
-      '/ajustes/formatos',
-    );
+    expect(
+      anteriorEnFinn(historial(['/ajustes/formatos', '/ajustes/instituciones']), ORIGEN)?.ruta,
+    ).toBe('/ajustes/formatos');
     expect(anteriorEnFinn(historial(['/cuentas/a1', '/actividad/t1']), ORIGEN)?.ruta).toBe(
       '/cuentas/a1',
     );
