@@ -12,7 +12,9 @@ export interface PersonaConocida {
 export type NombreDePersona =
   | { readonly tipo: 'existente'; readonly persona: PersonaConocida }
   | { readonly tipo: 'nueva'; readonly nombre: string }
-  | { readonly tipo: 'vacio' | 'propio' | 'maximo' };
+  | { readonly tipo: 'vacio' }
+  | { readonly tipo: 'propio' }
+  | { readonly tipo: 'maximo' };
 
 const PROPIOS = new Set(['vos', 'yo']);
 const comparable = (t: string) => capitalizarNombre(t).toLocaleLowerCase('es');
