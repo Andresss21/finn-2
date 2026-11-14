@@ -237,8 +237,13 @@ test.describe('PRU-E2E-PRES entrega 4', () => {
     const fila = page.locator('[data-archivada]').filter({ hasText: 'Gimnasio' });
     await expect(fila).toBeVisible();
     await fila.getByRole('button', { name: 'Desarchivar', exact: true }).click();
-    await expect(page.getByText(/^Desarchivaste Gimnasio: volvió a /)).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Archivarla de nuevo' })).toBeVisible();
+    // [CH-278] C-50: la frase va a la región de estado y la etiqueta «Desarchivada» queda en la fila, ya en su grupo.
+    await expect(page.locator('[data-anuncio="estructura"]')).toHaveText(
+      /^Desarchivaste Gimnasio: volvió a /,
+    );
+    const etiqueta = page.locator('[data-etiqueta]');
+    await expect(etiqueta).toContainText('Desarchivada');
+    await expect(etiqueta.getByRole('link', { name: 'Archivarla de nuevo' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Editar Gimnasio', exact: true })).toBeVisible();
   });
 });

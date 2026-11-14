@@ -1,7 +1,7 @@
 // [CH-275] C-46 (ESTRUCTURA-Y-COLAPSO §1.3, §3 y §4; `docs/anexos/finn-estructura/`): ordenar la estructura arrastrando desde el
 // asa. El gesto es el de dnd-kit (`@dnd-kit/core`, cargado con `import()`), con eventos de puntero y de teclado reales: 4 px desde
 // el asa, Escape, `pointercancel` o soltar fuera de la pantalla. OP-08 se simula: qué acepta lo deciden el servidor, la integración
-// y la E2E.
+// y la E2E. [CH-278] El resultado de soltar es la etiqueta de C-50 sobre la fila, que espera mientras dura otro arrastre.
 import type { GrupoDeEstructura } from '@finn/dominio/selectores';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -114,12 +114,26 @@ const abierto = (g: string): string | null =>
   seccion(g).querySelector('h2 button')?.getAttribute('aria-expanded') ?? null;
 const filasDe = (g: string): string[] =>
   [...seccion(g).querySelectorAll('[data-fila-cat]:not([data-hueco])')].map(
-    (f) => f.firstElementChild?.textContent.trim().split(/\s/)[0] ?? '',
+    (f) => f.querySelector('[data-foco^="fila-"]')?.textContent.trim().split(/\s/)[0] ?? '',
   );
 const levantada = (): HTMLElement | null => document.querySelector('[data-fila-levantada]');
 const anuncio = (): string => q('[data-anuncio="estructura"]').textContent;
-const resultado = (): string =>
-  document.querySelector('[data-testid="resultado"]')?.textContent ?? '';
+const etiquetas = (): HTMLElement[] => [
+  ...document.querySelectorAll<HTMLElement>('[data-etiqueta]'),
+];
+/** Con el reloj simulado, espera la respuesta de OP-08 sin avanzar el tiempo (vi.waitFor lo avanzaría). */
+async function hasta(cond: () => boolean): Promise<void> {
+  for (let i = 0; i < 50 && !cond(); i++)
+    await act(async () => {
+      await Promise.resolve();
+    });
+  expect(cond()).toBe(true);
+}
+function avanzar(ms: number): void {
+  act(() => {
+    vi.advanceTimersByTime(ms);
+  });
+}
 const op08 = (): unknown[] => vi.mocked(editarEnEstructura).mock.calls.map((c) => c[0]);
 
 /** Un evento de puntero del ratón principal en `x`, `y`. */
@@ -217,7 +231,7 @@ describe('PRU-CMP-CATEG-135 arrastrar una categoría desde el asa', () => {
     expect(levantada()).toBeNull();
   });
 
-  it('PRU-CMP-CATEG-135 [C-46] CA-E-4: sobre Comida fuera, debajo de Restaurantes, la tarjeta se resalta y el hueco va segundo; al soltar se envía un único OP-08 con grupoId y orden, Farmacia queda segunda y el resultado va debajo', async () => {
+  it('PRU-CMP-CATEG-135 [C-46, C-50] CA-E-4 y CA-A-1: sobre Comida fuera, debajo de Restaurantes, la tarjeta se resalta y el hueco va segundo; al soltar se envía un único OP-08 con grupoId y orden; Farmacia queda segunda, resaltada, con «Movida» y «Deshacer» centrada contra el borde derecho, sin que la lista se corra, y se anuncia «Soltaste. Moviste Farmacia a Comida fuera: ahora es la segunda.»', async () => {
     await montar();
     await presionar(asa('Farmacia'));
     const p = debajoDe('Restaurantes');
@@ -230,7 +244,7 @@ describe('PRU-CMP-CATEG-135 arrastrar una categoría desde el asa', () => {
 
     await soltar();
     await vi.waitFor(() => {
-      expect(resultado()).toContain(t.movidaAGrupo('Farmacia', 'Comida fuera', 'la segunda'));
+      expect(etiquetas()).toHaveLength(1);
     });
     expect(op08()).toHaveLength(1);
     expect(op08()[0]).toMatchObject({
@@ -241,9 +255,20 @@ describe('PRU-CMP-CATEG-135 arrastrar una categoría desde el asa', () => {
       esperado: { grupoId: id('Casa'), orden: 4 },
     });
     expect(filasDe('Comida fuera')).toEqual(['Restaurantes', 'Farmacia']);
+    quietas();
+    const filaF = q(`[data-fila-cat="${id('Farmacia')}"]`).firstElementChild as HTMLElement;
+    const et = etiquetas()[0];
+    expect(et?.parentElement).toBe(filaF);
+    expect(et?.textContent).toBe(`${t.movida}${t.deshacer}`);
+    expect(filaF.hasAttribute('data-resaltada')).toBe(true);
+    const rf = filaF.getBoundingClientRect();
+    const re = et?.getBoundingClientRect();
     expect(
-      q(`[data-fila-cat="${id('Farmacia')}"]`).querySelector('[data-testid="resultado"]'),
-    ).not.toBeNull();
+      Math.abs((re?.top ?? 0) + (re?.height ?? 0) / 2 - (rf.top + rf.height / 2)),
+    ).toBeLessThanOrEqual(1);
+    expect(rf.right - (re?.right ?? 0)).toBeCloseTo(8, 0);
+    const restaurantes = q(`[data-fila-cat="${id('Restaurantes')}"]`).firstElementChild;
+    expect(rf.height).toBe(restaurantes?.getBoundingClientRect().height);
     expect(anuncio()).toBe(t.soltaste(t.movidaAGrupo('Farmacia', 'Comida fuera', 'la segunda')));
     expect(levantada()).toBeNull();
     expect(seccion('Comida fuera').querySelector('[data-destino]')).toBeNull();
@@ -264,7 +289,7 @@ describe('PRU-CMP-CATEG-135 arrastrar una categoría desde el asa', () => {
 
     await soltar();
     await vi.waitFor(() => {
-      expect(resultado()).toContain(t.movidaAGrupo('Farmacia', 'Ahorro', 'la última'));
+      expect(anuncio()).toBe(t.soltaste(t.movidaAGrupo('Farmacia', 'Ahorro', 'la última')));
     });
     expect(op08()[0]).toMatchObject({ grupoId: id('Ahorro'), orden: 3 });
     expect(abierto('Ahorro')).toBe('true');
@@ -307,6 +332,48 @@ describe('PRU-CMP-CATEG-135 arrastrar una categoría desde el asa', () => {
 });
 
 describe('PRU-CMP-CATEG-136 cancelar o soltar sin cambios', () => {
+  it('PRU-CMP-CATEG-136 [C-50] CA-A-5: mientras se arrastra otra categoría la etiqueta de Farmacia espera; al cancelar o soltar en el mismo lugar cuenta 3000 ms otra vez; soltando en otro lugar la etiqueta nueva la reemplaza y el ↶ de Farmacia se va', async () => {
+    await montar();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    await presionar(asa('Farmacia'));
+    const p = debajoDe('Restaurantes');
+    await moverA(p.x, p.y);
+    await soltar();
+    await hasta(() => etiquetas().length === 1);
+    expect(etiquetas()[0]?.dataset['etiqueta']).toBe(id('Farmacia'));
+
+    await presionar(asa('Gasolina'));
+    avanzar(10_000);
+    expect(etiquetas()[0]?.dataset['fase']).toBe('visible');
+    await act(() => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape', bubbles: true }),
+      );
+      return Promise.resolve();
+    });
+    avanzar(2999);
+    expect(etiquetas()[0]?.dataset['fase']).toBe('visible');
+    avanzar(1);
+    expect(etiquetas()[0]?.dataset['fase']).toBe('saliendo');
+    avanzar(220);
+    expect(etiquetas()).toHaveLength(0);
+    expect(document.querySelector(`[data-deshacer-fila="${id('Farmacia')}"]`)).not.toBeNull();
+
+    await presionar(asa('Gasolina'));
+    await soltar();
+    expect(anuncio()).toBe(t.mismoLugar('Gasolina'));
+    expect(document.querySelector(`[data-deshacer-fila="${id('Farmacia')}"]`)).not.toBeNull();
+
+    await presionar(asa('Gasolina'));
+    const d = debajoDe('Farmacia');
+    await moverA(d.x, d.y);
+    await soltar();
+    await hasta(() => etiquetas()[0]?.dataset['etiqueta'] === id('Gasolina'));
+    expect(etiquetas()).toHaveLength(1);
+    expect(document.querySelector('[data-deshacer-fila]')).toBeNull();
+    expect(op08()).toHaveLength(2);
+  });
+
   it('PRU-CMP-CATEG-136 [C-46] CA-E-8: Escape, `pointercancel` y soltar fuera de la pantalla no envían nada, la fila vuelve a su lugar y se anuncia «Arrastre cancelado. Farmacia volvió a su lugar.»; soltar en el mismo lugar tampoco envía nada', async () => {
     await montar();
     const p = debajoDe('Restaurantes');
@@ -385,7 +452,7 @@ describe('PRU-CMP-CATEG-137 arrastrar un grupo', () => {
     expect(anuncio()).toBe(t.grupoLugar('Ahorro', 'segundo'));
     await soltar();
     await vi.waitFor(() => {
-      expect(resultado()).toContain(t.grupoMovido('Ahorro', 'el segundo'));
+      expect(etiquetas()[0]?.textContent).toBe(`${t.movido}${t.deshacer}`);
     });
     expect(op08()[0]).toMatchObject({ tipo: 'grupo', id: id('Ahorro'), orden: 2 });
     expect(anuncio()).toBe(t.soltaste(t.grupoMovido('Ahorro', 'el segundo')));

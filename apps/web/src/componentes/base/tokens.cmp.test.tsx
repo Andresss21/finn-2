@@ -27,6 +27,14 @@ const TOKENS_JSON = import.meta.glob<string>('../../app/tokens.json', {
   eager: true,
 });
 
+// [CH-278] C-50 aprobó `--duracion-aviso` en su propia entrega.
+const AVISO = crudas(
+  import.meta.glob<string>(
+    '../../../../../docs/anexos/finn-aviso-de-resultado/estilos/tokens-propuesta.css',
+    { query: '?raw', import: 'default', eager: true },
+  ),
+);
+
 const anexo = (nombre: string): string =>
   Object.entries(ANEXO).find(([r]) => r.endsWith(`/${nombre}`))?.[1] ?? '';
 const produccion = (): string[] => Object.keys(PRODUCCION);
@@ -64,7 +72,13 @@ function tabla(): { viejo: string; nuevo: string; propuesto: boolean }[] {
 
 describe('PRU-CMP-PWA', () => {
   it('PRU-CMP-PWA-701 [D-10] las variables de movimiento de tokens.css son las del anexo aprobado, y las 17 propias de la app resuelven al token de su fila', () => {
-    const aprobadas = new Set(declaradas(anexo('tokens.css'), PREFIJOS_TIEMPO));
+    const aprobadas = new Set([
+      ...declaradas(anexo('tokens.css'), PREFIJOS_TIEMPO),
+      ...(/--duracion-aviso:\s*3000ms;/.test(sinComentarios(Object.values(AVISO)[0] ?? ''))
+        ? ['--duracion-aviso']
+        : []),
+    ]);
+    expect(aprobadas).toContain('--duracion-aviso');
     const css = leer(TOKENS);
     const propias = declaradas(css, PREFIJOS_TIEMPO);
     expect(propias.filter((v) => !aprobadas.has(v))).toEqual([]);

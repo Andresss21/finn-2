@@ -3,8 +3,8 @@
 // selector de grupo se muestra como siempre. Quién acepta el grupo lo decide el servidor (OP-07), que prueban la integración y la E2E.
 // La lista de la estructura: el nombre accesible de cada enlace y botón contiene su texto visible (WCAG 2.5.3).
 // [CH-270] Crear un grupo o una categoría cierra el panel y deja el resultado en la lista (C-42, principio 5): sin pantalla de
-// resultado ni «Volver a la estructura». El resultado (y el de Subir o Bajar) se cierra con «Cerrar» y lo reemplaza la acción
-// siguiente; nunca se va solo. [CH-272] Subir y Bajar viven en la barra «Mover» del asa (C-46) y la × es «Cerrar este aviso».
+// resultado ni «Volver a la estructura». [CH-272] Subir y Bajar viven en la barra «Mover» del asa (C-46). [CH-278] El resultado
+// es la etiqueta de C-50 sobre lo creado o lo movido, con la frase en la región de estado; la reemplaza la acción siguiente.
 import type { GrupoDeEstructura } from '@finn/dominio/selectores';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -12,7 +12,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
 import { crearEnEstructura, editarEnEstructura } from '../../servidor/acciones/categorias';
-import { base } from '../../textos/base';
 import { estructura as t } from '../../textos/estructura';
 import { FormularioEstructura } from './formulario';
 import { ListaEstructura } from './lista';
@@ -230,16 +229,12 @@ const CON_VETERINARIO: readonly GrupoDeEstructura[] = [
   { ...grupo(GASTOS, 'Gastos'), categorias: [categoria(SUPER, 'Super')] },
   { ...grupo(HOGAR, 'Hogar'), categorias: [categoria(VETERINARIO, 'Veterinario')] },
 ];
-/** El resultado en el lugar: su región `status` con el texto. */
-const resultados = (): HTMLElement[] => [
-  ...document.querySelectorAll<HTMLElement>('[data-aviso][role="status"]'),
+/** [CH-278] La etiqueta de resultado (C-50) y la región de estado de la pantalla. */
+const etiquetas = (): HTMLElement[] => [
+  ...document.querySelectorAll<HTMLElement>('[data-etiqueta]'),
 ];
-/** «Cerrar este aviso» del resultado (el marco del flujo tiene su «Cerrar»). */
-const cerrar = (): HTMLButtonElement[] => [
-  ...document.querySelectorAll<HTMLButtonElement>(
-    `[data-aviso] button[aria-label="${base.cerrarAviso}"]`,
-  ),
-];
+const anuncio = (): string =>
+  document.querySelector('[data-anuncio="estructura"]')?.textContent ?? '';
 const seccion = (grupoId: string): HTMLElement => {
   const s = document.querySelector<HTMLElement>(`section[aria-labelledby="g-${grupoId}"]`);
   if (s === null) throw new Error(`no hay sección del grupo ${grupoId}`);
@@ -279,54 +274,48 @@ describe('PRU-CMP-CATEG-128 crear cierra el panel con el resultado en la lista',
 });
 
 describe('PRU-CMP-CATEG-129 resultado de crear, en el lugar', () => {
-  it('PRU-CMP-CATEG-129 [FT-18] la categoría creada deja «Creaste la categoría Veterinario en Hogar.» en su grupo, sobre «Nueva categoría», anunciado y con el foco; «Cerrar» (44 × 44) lo quita y nada lleva subrayado', async () => {
+  it('PRU-CMP-CATEG-129 [FT-18, C-50] CA-A-8: la categoría creada lleva la etiqueta «Creada» sin acción en su fila, resaltada; se anuncia «Creaste la categoría Veterinario en Hogar.», el foco va a la fila, no queda ↶ y nada lleva subrayado', async () => {
     const raiz = await montar(
       <ListaEstructura
         grupos={CON_VETERINARIO}
         resultado={{ tipo: 'categoria', id: VETERINARIO }}
       />,
     );
-    const [estado] = resultados();
-    expect(resultados()).toHaveLength(1);
-    expect(estado?.textContent).toContain(t.categoriaCreada('Veterinario', 'Hogar'));
-    expect(seccion(HOGAR).contains(estado ?? null)).toBe(true);
-    const nueva = [...seccion(HOGAR).querySelectorAll('a')].find((a) =>
-      a.textContent.includes(t.nuevaCategoria),
-    );
-    expect(nueva).toBeDefined();
-    expect(
-      (estado?.compareDocumentPosition(nueva ?? document.body) ?? 0) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
     await vi.waitFor(() => {
-      expect(estado?.contains(document.activeElement)).toBe(true);
+      expect(etiquetas()).toHaveLength(1);
     });
+    const [et] = etiquetas();
+    expect(et?.textContent).toBe(t.creada);
+    expect(et?.querySelector('button, a')).toBeNull();
+    const fila = document.querySelector(`[data-fila-cat="${VETERINARIO}"]`);
+    expect(fila?.contains(et ?? null)).toBe(true);
+    expect(et?.parentElement?.hasAttribute('data-resaltada')).toBe(true);
+    expect(anuncio()).toBe(t.categoriaCreada('Veterinario', 'Hogar'));
+    expect(seccion(HOGAR).textContent).not.toContain(t.categoriaCreada('Veterinario', 'Hogar'));
+    await vi.waitFor(() => {
+      expect(document.activeElement?.getAttribute('aria-label')).toBe(t.editar('Veterinario'));
+    });
+    expect(document.querySelector('[data-deshacer-fila]')).toBeNull();
     for (const e of raiz.querySelectorAll('a, button'))
       expect(getComputedStyle(e).textDecorationLine, e.outerHTML).toBe('none');
-
-    const [x] = cerrar();
-    expect(cerrar()).toHaveLength(1);
-    expect(x?.getBoundingClientRect().width).toBeGreaterThanOrEqual(44);
-    expect(x?.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
-    await userEvent.click(x ?? document.body);
-    await vi.waitFor(() => {
-      expect(resultados()).toHaveLength(0);
-    });
-    expect(raiz.textContent).not.toContain(t.categoriaCreada('Veterinario', 'Hogar'));
   });
 
-  it('PRU-CMP-CATEG-129 [FT-18] el grupo creado dice «Creaste el grupo Hogar. Todavía no tiene categorías.» en su lugar, en vez de «Este grupo no tiene categorías.»', async () => {
+  it('PRU-CMP-CATEG-129 [FT-18, C-50] el grupo creado lleva «Creado» en su encabezado, resaltado, y se anuncia «Creaste el grupo Hogar. Todavía no tiene categorías.»', async () => {
     await montar(<ListaEstructura grupos={GRUPOS} resultado={{ tipo: 'grupo', id: HOGAR }} />);
-    const [estado] = resultados();
-    expect(estado?.textContent).toContain(t.grupoCreado('Hogar'));
-    expect(seccion(HOGAR).contains(estado ?? null)).toBe(true);
-    expect(seccion(HOGAR).textContent).not.toContain(t.sinCategorias);
-    expect(seccion(GASTOS).textContent).toContain(t.sinCategorias);
+    await vi.waitFor(() => {
+      expect(etiquetas()).toHaveLength(1);
+    });
+    const [et] = etiquetas();
+    expect(et?.textContent).toBe(t.creado);
+    expect(seccion(HOGAR).contains(et ?? null)).toBe(true);
+    expect(et?.parentElement?.hasAttribute('data-resaltada')).toBe(true);
+    expect(seccion(HOGAR).querySelector('h2')?.parentElement).toBe(et?.parentElement);
+    expect(anuncio()).toBe(t.grupoCreado('Hogar'));
   });
 });
 
-describe('PRU-CMP-CATEG-130 el resultado de Subir o Bajar se cierra y lo reemplaza la acción siguiente', () => {
-  it('PRU-CMP-CATEG-130 [FT-18, CA-18.3] «Bajar» Gastos en su barra «Mover» reemplaza el resultado de crear por «Moviste el grupo Gastos: ahora es el segundo.» con «Deshacer» y «Cerrar este aviso», que lo quita sin deshacer', async () => {
+describe('PRU-CMP-CATEG-130 el resultado de Subir o Bajar reemplaza al de crear', () => {
+  it('PRU-CMP-CATEG-130 [FT-18, CA-18.3, C-50] «Bajar» Gastos en su barra «Mover» reemplaza «Creada» por «Movido» con «Deshacer» en el encabezado de Gastos y anuncia «Moviste el grupo Gastos: ahora es el segundo.»', async () => {
     await montar(
       <ListaEstructura
         grupos={CON_VETERINARIO}
@@ -342,16 +331,12 @@ describe('PRU-CMP-CATEG-130 el resultado de Subir o Bajar se cierra y lo reempla
     );
     await userEvent.click(bajar ?? document.body);
     await vi.waitFor(() => {
-      expect(resultados()[0]?.textContent).toContain(t.grupoMovido('Gastos', 'el segundo'));
+      expect(anuncio()).toBe(t.grupoMovido('Gastos', 'el segundo'));
     });
-    expect(resultados()).toHaveLength(1);
-    expect(document.body.textContent).not.toContain(t.categoriaCreada('Veterinario', 'Hogar'));
+    expect(etiquetas()).toHaveLength(1);
+    expect(etiquetas()[0]?.textContent).toBe(`${t.movido}${t.deshacer}`);
+    expect(seccion(GASTOS).contains(etiquetas()[0] ?? null)).toBe(true);
     expect(boton(t.deshacer)).toBeDefined();
-    expect(cerrar()).toHaveLength(1);
-    await userEvent.click(cerrar()[0] ?? document.body);
-    await vi.waitFor(() => {
-      expect(resultados()).toHaveLength(0);
-    });
     expect(editarEnEstructura).toHaveBeenCalledTimes(1);
   });
 });
