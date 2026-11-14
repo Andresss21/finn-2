@@ -66,6 +66,10 @@ function EntradaMontoV3({
   etiqueta,
   valor: valorRecibido,
   alCambiar,
+  conSigno = false,
+  signo = 'positivo',
+  alCambiarSigno,
+  etiquetasSigno = { positivo: '+', negativo: '−' },
   error,
   descripcion,
   requerido = false,
@@ -104,11 +108,12 @@ function EntradaMontoV3({
 
   function alPegar(e: ClipboardEvent<HTMLInputElement>) {
     e.preventDefault();
-    const { texto } = limpiarPegado(e.clipboardData.getData('text'), false);
+    const { texto, negativo } = limpiarPegado(e.clipboardData.getData('text'), conSigno);
     const { selectionStart, selectionEnd } = e.currentTarget;
     const desde = sinComas(vista, selectionStart ?? vista.length);
     const hasta = sinComas(vista, selectionEnd ?? vista.length);
     alCambiar(enmascararMonto(`${valor.slice(0, desde)}${texto}${valor.slice(hasta)}`));
+    if (negativo && alCambiarSigno !== undefined) alCambiarSigno('negativo');
   }
 
   const comunes = {
@@ -129,14 +134,36 @@ function EntradaMontoV3({
 
   if (variante === 'fila')
     return (
-      <EntradaTexto
-        etiqueta={etiqueta}
-        {...(descripcion === undefined ? {} : { descripcion })}
-        {...(mensaje === undefined ? {} : { error: mensaje })}
-        requerido={requerido}
-        prefijo={base.moneda}
-        {...comunes}
-      />
+      <>
+        <EntradaTexto
+          etiqueta={etiqueta}
+          {...(descripcion === undefined ? {} : { descripcion })}
+          {...(mensaje === undefined ? {} : { error: mensaje })}
+          requerido={requerido}
+          prefijo={base.moneda}
+          {...comunes}
+        />
+        {/* El signo va aparte, como en la caja: su propia fila del grupo con el segmentado v3 (CAMPOS-V3 §9). */}
+        {conSigno && alCambiarSigno !== undefined ? (
+          <div className="campo-fila">
+            <span aria-hidden="true" className="campo-rotulo">
+              {base.signoDelMonto}
+            </span>
+            <SelectorSegmentado
+              etiqueta={base.signoDelMonto}
+              opciones={[
+                { valor: 'positivo', etiqueta: etiquetasSigno.positivo },
+                { valor: 'negativo', etiqueta: etiquetasSigno.negativo },
+              ]}
+              valor={signo}
+              alCambiar={(v) => {
+                alCambiarSigno(v === 'negativo' ? 'negativo' : 'positivo');
+              }}
+              llena
+            />
+          </div>
+        ) : null}
+      </>
     );
   const idAyuda = `${id}-d`;
   const idError = `${id}-e`;

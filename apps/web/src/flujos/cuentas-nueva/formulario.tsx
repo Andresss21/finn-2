@@ -4,13 +4,13 @@
 // montos (PF-3): el impacto y los avisos los trae el servidor.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
-import { lazy, Suspense, useCallback, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
+import { SeleccionFila } from '../../componentes/base/seleccion-fila';
 import { ElegirTipo } from './elegir-tipo';
-import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
@@ -19,6 +19,7 @@ import { useBorrador } from '../../formularios/use-borrador';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { crearCuenta } from '../../servidor/acciones/cuentas';
+import { base } from '../../textos/base';
 import { cuentasNuevaBase as t } from '../../textos/cuentas-nueva-base';
 import type { TextosSubtipo } from '../../textos/cuenta-subtipo';
 import { formularios } from '../../textos/formularios';
@@ -26,6 +27,7 @@ import {
   CONTRATO,
   aEntradaDeAccion,
   avisoDeNombreRepetido,
+  camposPorCorregir,
   conBanco,
   nombrePropuesto,
   valoresIniciales,
@@ -135,6 +137,15 @@ export function FormularioCuentaNueva({
   };
   const institucionElegida = instituciones.find((i) => i.id === c.institucionId)?.nombre;
   const avisoDeNombre = avisoDeNombreRepetido(c.tipo, c.nombre, nombresTarjetaUsados);
+  // [C-45] CAMPOS-V3 §5 y §11: «Crear cuenta» se ve apagado mientras falte algo, sigue tocable y dice debajo qué falta. Al
+  // tocarlo, el contrato marca los errores y el foco va al primero, también a los campos que no se registran con `register`.
+  const faltan = camposPorCorregir(c);
+  const motivo = operacion.motivoSinEnvio ?? (faltan > 0 ? base.corregirCampos(faltan) : undefined);
+  const forma = useRef<HTMLFormElement>(null);
+  const intentos = formState.submitCount;
+  useEffect(() => {
+    if (intentos > 0) forma.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [intentos]);
 
   const { estado, error: fallo, exito } = operacion;
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
@@ -176,6 +187,7 @@ export function FormularioCuentaNueva({
         </Suspense>
       ) : (
         <form
+          ref={forma}
           onSubmit={(e) => void formulario.enviar(e)}
           noValidate
           data-columnas={dosColumnas ? 2 : 1}
@@ -201,9 +213,10 @@ export function FormularioCuentaNueva({
               </AvisoEnLinea>
             ) : null}
             <ElegirTipo valor={c.tipo} alCambiar={ponerYProponer('tipo')} />
-            {c.tipo === 'efectivo' ? (
-              <div className="flex flex-col gap-2">
-                <SelectorSegmentado
+            {/* [C-45] Los datos de la cuenta, un grupo de filas v3 (CAMPOS-V3 §2); el subtipo, en segmentado (§6). */}
+            <GrupoCampos>
+              {c.tipo === 'efectivo' ? (
+                <SeleccionFila
                   etiqueta={subtipo.etiqueta}
                   opciones={Object.entries(subtipo.opciones).map(([valor, etiqueta]) => ({
                     valor,
@@ -211,78 +224,74 @@ export function FormularioCuentaNueva({
                   }))}
                   valor={c.subtipoEfectivo}
                   alCambiar={ponerYProponer('subtipoEfectivo')}
-                  llena
+                  descripcion={subtipo.ayudas[c.subtipoEfectivo]}
                 />
-                <p className="text-cuerpo-pequeno text-texto-secundario">
-                  {subtipo.ayudas[c.subtipoEfectivo]}
-                </p>
-              </div>
-            ) : null}
-            <EntradaTexto
-              etiqueta={t.nombre}
-              requerido
-              autoComplete="off"
-              {...conError('nombre')}
-              {...formulario.register('nombre')}
-            />
+              ) : null}
+              <EntradaTexto
+                etiqueta={t.nombre}
+                requerido
+                autoComplete="off"
+                {...conError('nombre')}
+                {...formulario.register('nombre')}
+              />
+              {conBanco(c) ? (
+                <>
+                  <Seleccion
+                    etiqueta={t.institucion}
+                    opciones={[
+                      { valor: 'ninguna', etiqueta: t.sinInstitucion },
+                      ...instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre })),
+                    ]}
+                    valor={c.institucionId}
+                    alCambiar={poner('institucionId')}
+                  />
+                  <EntradaTexto
+                    etiqueta={t.ultimos4}
+                    inputMode="numeric"
+                    maxLength={4}
+                    autoComplete="off"
+                    {...conError('ultimos4')}
+                    {...formulario.register('ultimos4')}
+                  />
+                </>
+              ) : null}
+              <EntradaFecha
+                nombre="fechaApertura"
+                etiqueta={t.apertura}
+                valor={c.fechaApertura as FechaLocal}
+                alCambiar={poner('fechaApertura')}
+                maxima={hoy}
+                hoy={hoy}
+                error={error('fechaApertura')}
+                requerido
+              />
+              <EntradaMonto
+                nombre="saldo"
+                etiqueta={t.saldo[c.tipo]}
+                valor={c.saldo}
+                alCambiar={poner('saldo')}
+                error={error('saldo')}
+                requerido
+                {...(c.tipo === 'efectivo'
+                  ? { descripcion: t.entraALpa }
+                  : c.tipo === 'inversion'
+                    ? { descripcion: t.inversionFuera }
+                    : {})}
+                {...(c.tipo === 'tarjeta'
+                  ? {
+                      conSigno: true,
+                      signo: c.signo,
+                      alCambiarSigno: poner('signo'),
+                      etiquetasSigno: { positivo: t.debo, negativo: t.tengoAFavor },
+                    }
+                  : {})}
+              />
+            </GrupoCampos>
             {avisoDeNombre === undefined ? null : (
               <AvisoEnLinea estado="advertencia" aparecioDespues>
                 {avisoDeNombre}
               </AvisoEnLinea>
             )}
-            {conBanco(c) ? (
-              <>
-                <Seleccion
-                  etiqueta={t.institucion}
-                  opciones={[
-                    { valor: 'ninguna', etiqueta: t.sinInstitucion },
-                    ...instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre })),
-                  ]}
-                  valor={c.institucionId}
-                  alCambiar={poner('institucionId')}
-                />
-                <EntradaTexto
-                  etiqueta={t.ultimos4}
-                  inputMode="numeric"
-                  maxLength={4}
-                  autoComplete="off"
-                  placeholder={subtipo.opcional}
-                  {...conError('ultimos4')}
-                  {...formulario.register('ultimos4')}
-                />
-              </>
-            ) : null}
-            <EntradaFecha
-              nombre="fechaApertura"
-              etiqueta={t.apertura}
-              valor={c.fechaApertura as FechaLocal}
-              alCambiar={poner('fechaApertura')}
-              maxima={hoy}
-              hoy={hoy}
-              error={error('fechaApertura')}
-              requerido
-            />
-            <EntradaMonto
-              nombre="saldo"
-              etiqueta={t.saldo[c.tipo]}
-              valor={c.saldo}
-              alCambiar={poner('saldo')}
-              error={error('saldo')}
-              requerido
-              {...(c.tipo === 'efectivo'
-                ? { descripcion: t.entraALpa }
-                : c.tipo === 'inversion'
-                  ? { descripcion: t.inversionFuera }
-                  : {})}
-              {...(c.tipo === 'tarjeta'
-                ? {
-                    conSigno: true,
-                    signo: c.signo,
-                    alCambiarSigno: poner('signo'),
-                    etiquetasSigno: { positivo: t.debo, negativo: t.tengoAFavor },
-                  }
-                : {})}
-            />
             {c.tipo === 'efectivo' && c.subtipoEfectivo === 'billetera' ? (
               <Suspense fallback={<div className="min-h-42" aria-hidden="true" />}>
                 <VistaBilletera nombre={c.nombre} saldo={c.saldo} />
@@ -323,9 +332,9 @@ export function FormularioCuentaNueva({
               enviando={estado === 'enviando'}
               textoEnviando={t.guardando}
               deshabilitado={!operacion.enLinea}
-              {...(operacion.motivoSinEnvio === undefined
-                ? {}
-                : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+              apagado={faltan > 0}
+              className="w-full"
+              {...(motivo === undefined ? {} : { motivoDeshabilitado: motivo })}
             >
               {t.guardar}
             </Boton>

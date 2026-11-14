@@ -2,13 +2,16 @@
 // Los campos propios de la tarjeta, el préstamo y la inversión de `/cuentas/nueva` (FT-50), con sus etiquetas y opciones. El
 // formulario los carga al elegir uno de esos tipos (05 §13.3): con efectivo, el tipo por defecto, no van en el JS de la ruta
 // (05 §13.1). Qué campos son, cuáles se piden y cuándo se muestran lo dicen los descriptores de `campos.ts`.
+// [C-45] Cada bloque es un `GrupoCampos` (CAMPOS-V3 §2): montos en fila con «$», porcentajes con «%», enteros sin letras y
+// selecciones en segmentado o en la lista propia según cuántas opciones tienen (§6). El color va fuera del grupo.
 import type { UseFormRegister } from 'react-hook-form';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { EntradaPorcentaje } from '../../componentes/formularios/entrada-porcentaje';
 import { cuentasNuevaTipos as t } from '../../textos/cuentas-nueva-tipos';
-import { CAMPOS_DE_TIPO, visible, type Campos, type Clave } from './campos';
+import { CAMPOS_DE_TIPO, visible, type Campos, type Clave, type Descriptor } from './campos';
 import { ColorTarjeta } from './color-tarjeta';
 
 const ETIQUETAS: Partial<Record<Clave, string>> = {
@@ -106,27 +109,21 @@ function CamposPlanos({
   institucion,
   claves,
 }: PropsCamposDeTipo & { readonly claves?: readonly Clave[] }) {
-  return CAMPOS_DE_TIPO[c.tipo].map((x) => {
-    if (claves !== undefined && !claves.includes(x.n)) return null;
-    if (!visible(x, c)) return null;
-    const etiqueta = ETIQUETAS[x.n] ?? '';
-    const mensaje = error(x.n);
-    if (x.clase === 'monto')
-      return (
-        <EntradaMonto
-          key={x.n}
-          nombre={x.n}
-          etiqueta={etiqueta}
-          valor={c[x.n]}
-          alCambiar={poner(x.n)}
-          error={mensaje}
-          requerido={x.requerido}
-        />
-      );
-    if (x.n === 'color')
-      return (
+  const campos = CAMPOS_DE_TIPO[c.tipo].filter(
+    (x) => (claves === undefined || claves.includes(x.n)) && visible(x, c),
+  );
+  const filas = campos.filter((x) => x.n !== 'color');
+  return (
+    <>
+      {filas.length === 0 ? null : (
+        <GrupoCampos>
+          {filas.map((x) => (
+            <Fila key={x.n} x={x} c={c} poner={poner} error={error} register={register} />
+          ))}
+        </GrupoCampos>
+      )}
+      {filas.length === campos.length ? null : (
         <ColorTarjeta
-          key={x.n}
           valor={c.color}
           alCambiar={poner('color')}
           vista={{
@@ -136,32 +133,66 @@ function CamposPlanos({
             ...(institucion === undefined ? {} : { institucion }),
           }}
         />
-      );
-    if (x.clase === 'opciones')
-      return (
-        <Seleccion
-          key={x.n}
-          etiqueta={etiqueta}
-          opciones={Object.entries(OPCIONES[x.n] ?? {}).map(([valor, e]) => ({
-            valor,
-            etiqueta: e,
-          }))}
-          valor={c[x.n]}
-          alCambiar={poner(x.n)}
-          {...(mensaje === undefined ? {} : { error: mensaje })}
-        />
-      );
+      )}
+    </>
+  );
+}
+
+function Fila({
+  x,
+  c,
+  poner,
+  error,
+  register,
+}: Omit<PropsCamposDeTipo, 'institucion'> & { readonly x: Descriptor }) {
+  const etiqueta = ETIQUETAS[x.n] ?? '';
+  const mensaje = error(x.n);
+  const ayuda = x.n === 'rendimientoAnualEsperado' ? t.rendimientoInfo : undefined;
+  if (x.clase === 'monto')
     return (
-      <EntradaTexto
-        key={x.n}
+      <EntradaMonto
+        nombre={x.n}
         etiqueta={etiqueta}
+        valor={c[x.n]}
+        alCambiar={poner(x.n)}
+        error={mensaje}
         requerido={x.requerido}
-        inputMode={x.clase === 'texto' ? 'text' : x.clase === 'entero' ? 'numeric' : 'decimal'}
-        autoComplete="off"
-        {...(x.n === 'rendimientoAnualEsperado' ? { descripcion: t.rendimientoInfo } : {})}
-        {...(mensaje === undefined ? {} : { error: mensaje })}
-        {...register(x.n)}
       />
     );
-  });
+  if (x.clase === 'porcentaje')
+    return (
+      <EntradaPorcentaje
+        nombre={x.n}
+        etiqueta={etiqueta}
+        valor={c[x.n]}
+        alCambiar={poner(x.n)}
+        error={mensaje}
+        descripcion={ayuda}
+        requerido={x.requerido}
+      />
+    );
+  if (x.clase === 'opciones')
+    return (
+      <Seleccion
+        etiqueta={etiqueta}
+        opciones={Object.entries(OPCIONES[x.n] ?? {}).map(([valor, e]) => ({
+          valor,
+          etiqueta: e,
+        }))}
+        valor={c[x.n]}
+        alCambiar={poner(x.n)}
+        {...(mensaje === undefined ? {} : { error: mensaje })}
+      />
+    );
+  // Texto o entero: con `inputMode="numeric"`, `EntradaTexto` no deja letras (C-41).
+  return (
+    <EntradaTexto
+      etiqueta={etiqueta}
+      requerido={x.requerido}
+      inputMode={x.clase === 'texto' ? 'text' : 'numeric'}
+      autoComplete="off"
+      {...(mensaje === undefined ? {} : { error: mensaje })}
+      {...register(x.n)}
+    />
+  );
 }
