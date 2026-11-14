@@ -2,9 +2,10 @@
 // La casilla de AV-22 de `/por-cobrar/cobrar` (BE-36, O1): reservar lo cobrado para la tarjeta con que se pagó la compra. Viene
 // marcada y se puede desmarcar. Dice el monto solo cuando coincide con el saldo abierto que trajo el servidor (PF-3: no calcula
 // la parte que se restituye).
-import { useId } from 'react';
+import { Casilla } from '../../componentes/base/controles-fila';
 import { porCobrarCobrar as t } from '../../textos/por-cobrar-cobrar';
 
+/** [C-45] Una fila v3 del grupo de datos (CAMPOS-V3 §8): toda la fila es el blanco, con la ayuda debajo del texto. */
 export function CasillaReservar({
   marcada,
   alCambiar,
@@ -17,28 +18,12 @@ export function CasillaReservar({
   /** El monto que se reserva, ya formateado, o `undefined` si no se sabe sin calcularlo. */
   readonly monto: string | undefined;
 }) {
-  const id = useId();
-  const texto = monto === undefined ? t.reservarLoCobrado(tarjeta) : t.reservar(monto, tarjeta);
   return (
-    <div className="flex items-start gap-3">
-      <input
-        id={id}
-        type="checkbox"
-        checked={marcada}
-        onChange={(e) => {
-          alCambiar(e.target.checked);
-        }}
-        aria-describedby={`${id}-ayuda`}
-        className="size-11 shrink-0 accent-accion"
-      />
-      <div className="flex min-h-11 flex-col justify-center gap-0.5">
-        <label htmlFor={id} className="text-cuerpo">
-          {texto}
-        </label>
-        <p id={`${id}-ayuda`} className="text-cuerpo-pequeno text-texto-secundario">
-          {t.reservarAyuda}
-        </p>
-      </div>
-    </div>
+    <Casilla
+      etiqueta={monto === undefined ? t.reservarLoCobrado(tarjeta) : t.reservar(monto, tarjeta)}
+      descripcion={t.reservarAyuda}
+      marcada={marcada}
+      alCambiar={alCambiar}
+    />
   );
 }

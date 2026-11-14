@@ -6,7 +6,6 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
 import { esperarMonto } from '../../ayudas/montos.ts';
-import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { revisarTactil } from '../../ayudas/tactil.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { categoriaPago } from '../../../src/textos/categoria-pago.ts';
@@ -147,6 +146,20 @@ async function abrir(page: Page, ruta: string): Promise<void> {
 }
 
 const campo = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exact: true });
+/**
+ * [CH-279] La cuenta es una fila v3 (C-45): con dos cuentas, un segmentado (CA-K3-6). Elige después de que React hidrató el
+ * control (un toque anterior se perdería).
+ */
+async function elegirCuenta(page: Page, nombre: string): Promise<void> {
+  const opcion = page
+    .getByRole('radiogroup', { name: t.cuenta })
+    .getByRole('radio', { name: nombre });
+  await expect
+    .poll(() => opcion.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))))
+    .toBe(true);
+  await opcion.click();
+  await expect(opcion).toHaveAttribute('aria-checked', 'true');
+}
 const botonCobrar = (page: Page) => page.getByRole('button', { name: /^Cobrar \$/ });
 const lpa = (page: Page) => page.locator('[data-resumen-lpa] [data-centavos]').first();
 const numero = (page: Page, clave: string) =>
@@ -166,7 +179,7 @@ async function cobrar(
   datos: { monto?: string; cuenta?: string; fecha?: string; sinReservar?: boolean },
 ): Promise<void> {
   await irACobrar(page);
-  if (datos.cuenta !== undefined) await elegirOpcion(page, t.cuenta, datos.cuenta);
+  if (datos.cuenta !== undefined) await elegirCuenta(page, datos.cuenta);
   if (datos.fecha !== undefined) await campo(page, t.fecha).fill(datos.fecha);
   if (datos.monto !== undefined) await campo(page, t.monto).fill(datos.monto);
   if (datos.sinReservar === true) await page.getByRole('checkbox').uncheck();
@@ -191,7 +204,7 @@ test.describe('PRU-E2E-COBRO flujo de cobrar', () => {
     await sembrarOps(ESC20_PASO2, '2027-02-10');
     await irACobrar(page);
     await abrir(page, page.url()); // una carga completa, como el resto de las E2E que miden el tamaño táctil
-    await elegirOpcion(page, t.cuenta, 'Ahorro'); // espera a que React hidrate el flujo
+    await elegirCuenta(page, 'Ahorro'); // espera a que React hidrate el flujo
     await page.keyboard.press('Tab'); // el primer Tab muestra «Saltar al contenido» (11.2): se mide ya visible
     await revisarTactil(page);
     await expect(campo(page, t.monto)).toHaveValue('25.00'); // el saldo abierto que propone el servidor
@@ -247,7 +260,7 @@ test.describe('PRU-E2E-COBRO flujo de cobrar', () => {
   }) => {
     await sembrarOps(ESC48_PASO1, '2027-02-10');
     await irACobrar(page);
-    await elegirOpcion(page, t.cuenta, 'T');
+    await elegirCuenta(page, 'T');
     await expect(page.getByRole('checkbox')).toHaveCount(0); // sin casilla: el depósito en la tarjeta es el pago implícito
     await campo(page, t.monto).fill('30');
     await botonCobrar(page).click();
@@ -310,12 +323,13 @@ test.describe('PRU-E2E-COBRO flujo de cobrar', () => {
     await abrir(page, '/actividad');
     await page.locator('[data-fila-transaccion]').filter({ hasText: '$50.00' }).first().click();
     await page.getByRole('link', { name: tx.editar }).click();
-    await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toBeVisible();
-    await page.getByRole('textbox', { name: g.montoDeParte('1') }).fill('40');
-    await page.getByRole('textbox', { name: g.montoDeParte('2') }).fill('10');
+    // [CH-279] Un gasto se edita con «¿Quién paga?» (C-49 §5): Vos (Super) $20.00 y Ana $30.00, en Montos
+    await expect(page.getByRole('heading', { level: 1, name: tx.editarGasto })).toBeVisible();
+    await page.getByRole('textbox', { name: g.tuParte }).fill('40');
+    await page.getByRole('textbox', { name: g.montoDe('Ana') }).fill('10');
     await page.getByRole('button', { name: tx.guardar }).click();
     await expect(page.getByText(/\$15\.00 cobrado/)).toBeVisible();
-    await expect(page.getByRole('heading', { level: 1, name: tx.editarTitulo })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: tx.editarGasto })).toBeVisible();
   });
 
   test('PRU-E2E-COBRO-128 [CA-26.4] RUTA-/actividad/[transaccionId]/eliminar una compra con un cobro hecho por el flujo no se elimina: explica transaccion_con_eventos', async ({

@@ -1,12 +1,14 @@
 'use client';
-// Los campos de `/bandeja/[movimientoId]` (FT-35, OP-36; S4 y S5 del export, CH-136): cuenta con `SeleccionNativa`, fecha y monto en
-// dos columnas con el «$», comercio, tipo como selector segmentado, las partes en líneas compactas (las de Registrar gasto) y la
-// nota. Se cargan aparte del resto del flujo para que la ruta no pase su presupuesto de bytes (05 §13.1). `Edicion` sigue siendo de
+// Los campos de `/bandeja/[movimientoId]` (FT-35, OP-36; S4 y S5 del export, CH-136): cuenta, fecha, monto, comercio, tipo como
+// selector segmentado, las partes en líneas compactas y la nota. Se cargan aparte del resto del flujo para que la ruta no pase su presupuesto de bytes (05 §13.1). `Edicion` sigue siendo de
 // «Editar transacción» (FT-25). CH-226 (A12, D8): la fecha con «Hoy» y «Ayer», el origen de un pago y «Elegí la compra».
+// [C-45] Campos v3: Cuenta, Fecha, Monto y Comercio en un grupo de filas (el monto en fila: el billete es de Registrar y de
+// Editar, CAMPOS-V3 §4), el tipo como segmentado v3 y la nota en su grupo. C-45 y C-49 no dicen nada de Revisar: las partes
+// siguen en líneas compactas (no «¿Quién paga?» ni «¿En qué categorías?»), dentro de una caja de grupo.
 import type { FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense } from 'react';
 import type { UseFieldArrayReturn, UseFormReturn } from 'react-hook-form';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, EstiloV3, GrupoCampos } from '../../componentes/base/campo';
 import { Icono } from '../../componentes/base/icono';
 import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
@@ -19,8 +21,12 @@ import LineasDeGasto from '../registrar-gasto/lineas';
 import { conCompra, type Campos, type CompraCandidata } from './campos';
 import type { BuscarCompras } from './eleccion-compra';
 
-/** Clases literales (L13): el borde del campo al que le falta un dato que el SMS no trae. */
-const BORDE_FALTANTE = '[&_input]:border-2 [&_input]:border-advertencia-texto';
+/**
+ * Clases literales (L13): el borde del campo al que le falta un dato que el SMS no trae. Con `!`: la entrada de una fila v3 no
+ * lleva borde (`.campo-entrada`, fuera de las capas de Tailwind).
+ */
+const BORDE_FALTANTE =
+  '[&_input[name=fecha]]:border-2! [&_input[name=fecha]]:border-advertencia-texto!';
 
 interface Referencia {
   readonly id: string;
@@ -94,18 +100,17 @@ export default function CamposMovimiento({
   ): string | undefined => formState.errors.lineas?.[i]?.[n]?.message;
   return (
     <>
-      <SeleccionNativa
-        etiqueta={g.cuenta}
-        alta
-        marcador={g.elegirCuenta}
-        opciones={aOpciones(cuentas)}
-        valor={c.cuentaId}
-        alCambiar={poner('cuentaId')}
-        error={error('cuentaId')}
-      />
-      <div className="grid grid-cols-2 gap-2.5 [&>*]:min-w-0">
-        {/* [CH-240 E3-13] El campo que falta lleva el borde de advertencia (`--advertencia-texto`) */}
-        <div className={c.fecha === '' ? BORDE_FALTANTE : ''}>
+      {/* [CH-240 E3-13] La fecha que falta lleva el borde de advertencia (`--advertencia-texto`) */}
+      <div className={c.fecha === '' ? BORDE_FALTANTE : undefined}>
+        <GrupoCampos>
+          <SeleccionNativa
+            etiqueta={g.cuentaV3}
+            marcador={g.elegirCuenta}
+            opciones={aOpciones(cuentas)}
+            valor={c.cuentaId}
+            alCambiar={poner('cuentaId')}
+            error={error('cuentaId')}
+          />
           <EntradaFechaConAtajos
             nombre="fecha"
             etiqueta={g.fecha}
@@ -117,20 +122,23 @@ export default function CamposMovimiento({
             hoy={hoy}
             atajos={ATAJOS}
           />
-        </div>
-        <EntradaMonto
-          nombre="total"
-          etiqueta={t.revisar.monto}
-          valor={c.total}
-          alCambiar={poner('total')}
-          error={error('total')}
-          requerido
-          prefijo="$"
-          sinVistaPrevia
-        />
+          <EntradaMonto
+            nombre="total"
+            etiqueta={t.revisar.monto}
+            valor={c.total}
+            alCambiar={poner('total')}
+            error={error('total')}
+            requerido
+          />
+          <EntradaTexto
+            etiqueta={g.comercio}
+            autoComplete="off"
+            {...formulario.register('comercio')}
+          />
+        </GrupoCampos>
       </div>
       {c.fecha === '' ? (
-        // [CH-240 E3-13] El SMS no trae la fecha: la línea va a lo ancho de la fila Fecha · Monto
+        // [CH-240 E3-13] El SMS no trae la fecha: la línea va debajo del grupo, en advertencia
         <p
           data-rol="fecha-faltante"
           className="-mt-2 flex items-start gap-1.5 text-cuerpo-pequeno text-advertencia-texto"
@@ -139,31 +147,33 @@ export default function CamposMovimiento({
           {t.revisar.fechaFaltante}
         </p>
       ) : null}
-      <EntradaTexto etiqueta={g.comercio} autoComplete="off" {...formulario.register('comercio')} />
       <div className="flex flex-col gap-1.5">
         <span className="text-etiqueta">{t.revisar.tipo}</span>
-        <SelectorSegmentado
-          etiqueta={t.revisar.tipo}
-          opciones={TIPOS}
-          valor={c.tipo}
-          llena
-          alCambiar={(tipo) => {
-            poner('tipo')(tipo);
-            if ((tipo === 'gasto' || tipo === 'devolucion') && c.lineas.length === 0)
-              partes.append({ ...parteVacia(), monto: c.total });
-          }}
-        />
+        <EstiloV3>
+          <SelectorSegmentado
+            etiqueta={t.revisar.tipo}
+            opciones={TIPOS}
+            valor={c.tipo}
+            llena
+            alCambiar={(tipo) => {
+              poner('tipo')(tipo);
+              if ((tipo === 'gasto' || tipo === 'devolucion') && c.lineas.length === 0)
+                partes.append({ ...parteVacia(), monto: c.total });
+            }}
+          />
+        </EstiloV3>
       </div>
       {c.tipo === 'pago_tarjeta' ? (
-        <SeleccionNativa
-          etiqueta={t.revisar.origen}
-          alta
-          marcador={t.revisar.elegirOrigen}
-          opciones={aOpciones(cuentas.filter((x) => x.tipo === 'efectivo'))}
-          valor={c.origenId ?? ''}
-          alCambiar={poner('origenId')}
-          error={error('origenId')}
-        />
+        <GrupoCampos>
+          <SeleccionNativa
+            etiqueta={t.revisar.origen}
+            marcador={t.revisar.elegirOrigen}
+            opciones={aOpciones(cuentas.filter((x) => x.tipo === 'efectivo'))}
+            valor={c.origenId ?? ''}
+            alCambiar={poner('origenId')}
+            error={error('origenId')}
+          />
+        </GrupoCampos>
       ) : null}
       {c.tipo === 'devolucion' ? (
         <Suspense fallback={null}>
@@ -200,26 +210,30 @@ export default function CamposMovimiento({
         </p>
       ) : null}
       {c.tipo === 'gasto' || (c.tipo === 'devolucion' && !sobreCompra) ? (
-        <LineasDeGasto
-          lineas={c.lineas}
-          claves={partes.fields.map((f) => f.id)}
-          categorias={categorias}
-          deudores={deudores}
-          total={c.total}
-          error={errorDeParte}
-          errorDeLasPartes={deLasPartes ?? formState.errors.lineas?.message}
-          ayuda={ayuda}
-          poner={poner}
-          registroDeudorNuevo={(i) => formulario.register(`lineas.${i}.deudorNuevo`)}
-          alAgregar={() => {
-            partes.append(parteVacia());
-          }}
-          alQuitar={(i) => {
-            partes.remove(i);
-          }}
-        />
+        <div className="grupo-campos p-4">
+          <LineasDeGasto
+            lineas={c.lineas}
+            claves={partes.fields.map((f) => f.id)}
+            categorias={categorias}
+            deudores={deudores}
+            total={c.total}
+            error={errorDeParte}
+            errorDeLasPartes={deLasPartes ?? formState.errors.lineas?.message}
+            ayuda={ayuda}
+            poner={poner}
+            registroDeudorNuevo={(i) => formulario.register(`lineas.${i}.deudorNuevo`)}
+            alAgregar={() => {
+              partes.append(parteVacia());
+            }}
+            alQuitar={(i) => {
+              partes.remove(i);
+            }}
+          />
+        </div>
       ) : null}
-      <EntradaTexto etiqueta={g.nota} autoComplete="off" {...formulario.register('nota')} />
+      <GrupoCampos>
+        <EntradaTexto etiqueta={g.nota} autoComplete="off" {...formulario.register('nota')} />
+      </GrupoCampos>
     </>
   );
 }

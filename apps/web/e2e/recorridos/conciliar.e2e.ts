@@ -123,7 +123,7 @@ test.describe('PRU-E2E-CONC recorrido 4.5 conciliar', () => {
     await abrir(page, '/actividad');
     await page.locator('[data-fila-transaccion]').filter({ hasText: '$40.00' }).first().click();
     await page.getByRole('link', { name: tx.editar }).click();
-    await page.getByRole('textbox', { name: g.total, exact: true }).fill('45');
+    await page.getByRole('textbox', { name: g.totalV3, exact: true }).fill('45');
     await page.getByRole('button', { name: tx.guardar }).click();
     await expect(page.getByText(tx.conciliadaAdvertencia('T', tx.queCambio.total))).toBeVisible();
     await page.getByRole('button', { name: tx.confirmar }).click();

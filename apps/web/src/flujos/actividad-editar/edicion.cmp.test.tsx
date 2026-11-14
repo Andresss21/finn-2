@@ -1,15 +1,17 @@
-// FT-25, campos de la edición (07 §17: un texto o un estado de una pantalla es una CMP). Portados de `pantallas/03-detalle-de-transaccion`
-// del export: la cuenta en una selección de 52 px con su detalle, o fija con «Solo lectura»; Fecha y Total en dos columnas; las partes
-// compactas de Registrar gasto. La interfaz muestra, el servidor valida (PF-3).
+// FT-25, campos de la edición (07 §17: un texto o un estado de una pantalla es una CMP). [C-45, C-49 §5] Campos v3: el total es el
+// billete; Cuenta, Fecha y Comercio van en un grupo de filas (la cuenta fija, en «Solo lectura»); un gasto usa las secciones de
+// Registrar gasto. La interfaz muestra, el servidor valida (PF-3).
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { afterEach, describe, expect, it } from 'vitest';
 import '../../app/globals.css';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
 import { transaccion as t } from '../../textos/transaccion';
 import type { Campos } from '../bandeja-movimiento/campos';
 import { parteVacia } from '../registrar-gasto/campos';
+import { estadoDelGasto } from '../registrar-gasto/estado';
+import { conSecciones, type CamposDeEdicion } from './campos';
 import Edicion, { type PropsEdicion } from './edicion';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -26,6 +28,7 @@ afterEach(() => {
 
 const CUENTA = '11111111-1111-4111-8111-111111111111';
 const CATEGORIA = '22222222-2222-4222-8222-222222222222';
+const OTRA = '33333333-3333-4333-8333-333333333333';
 const inicial: Campos = {
   cuentaId: CUENTA,
   fecha: '2027-02-20',
@@ -35,26 +38,45 @@ const inicial: Campos = {
   tipo: 'gasto',
   lineas: [
     { ...parteVacia(), monto: '20.00', categoriaId: CATEGORIA },
-    { ...parteVacia(), monto: '10.00', categoriaId: CATEGORIA },
+    { ...parteVacia(), monto: '10.00', categoriaId: OTRA },
   ],
 };
+const SIN_MARCAS = { personas: false, categorias: false, enviado: false };
 
 function Arnes({ extra }: { readonly extra: Partial<PropsEdicion> }) {
-  const formulario = useForm<Campos>({ defaultValues: inicial });
-  const partes = useFieldArray({ control: formulario.control, name: 'lineas' });
+  const formulario = useForm<CamposDeEdicion>({ defaultValues: conSecciones(inicial) });
+  const c = formulario.watch();
   return (
     <Edicion
       formulario={formulario}
-      partes={partes}
       cuentas={[
         { id: CUENTA, nombre: 'Visa Oro', tipo: 'tarjeta', detalle: g.deudaDeCuenta('$642.18') },
       ]}
-      categorias={[{ id: CATEGORIA, nombre: 'Supermercado' }]}
+      categorias={[
+        {
+          id: CATEGORIA,
+          nombre: 'Supermercado',
+          grupo: 'Casa',
+          disponible: '$1.00',
+          negativo: false,
+        },
+        { id: OTRA, nombre: 'Farmacia', grupo: 'Casa', disponible: '$2.00', negativo: false },
+        // Con 4 o más la categoría es una lista (con 3 o menos, segmentado: CA-K3-6)
+        ...['Luz', 'Agua'].map((nombre) => ({
+          id: `${nombre}-id`,
+          nombre,
+          grupo: 'Casa',
+          disponible: '$3.00',
+          negativo: false,
+        })),
+      ]}
       deudores={[]}
+      e={estadoDelGasto(c, SIN_MARCAS)}
       deLasPartes={undefined}
-      ayuda={g.todoRepartido}
       sinCuenta={false}
       soloEtiquetas={false}
+      alSalir={() => () => undefined}
+      anunciar={() => undefined}
       {...extra}
     />
   );
@@ -74,35 +96,40 @@ function montar(extra: Partial<PropsEdicion> = {}): HTMLElement {
 }
 
 describe('PRU-CMP-TX edición de una transacción', () => {
-  it('PRU-CMP-TX-471 [CA-25.1] la cuenta es una selección de 52 px con su deuda, Fecha y Total van en la misma fila y las partes son filas con selección, monto y ×', () => {
+  it('PRU-CMP-TX-471 [CA-25.1, C-45] el total es el billete; Cuenta (con su deuda), Fecha y Comercio van en un grupo de filas; un gasto con dos categorías abre «Varias» con una fila por categoría y su monto', () => {
     const nodo = montar();
-    const cuenta = nodo.querySelector<HTMLSelectElement>(`select[id]`);
-    expect(cuenta?.parentElement?.textContent).toContain('Deuda $642.18');
-    expect(cuenta?.parentElement?.getBoundingClientRect().height).toBe(52);
-    expect(nodo.querySelectorAll('input[type="radio"]')).toHaveLength(0);
-    const fecha = nodo.querySelector('input[name="fecha"]')?.getBoundingClientRect();
-    const total = nodo.querySelector('input[name="total"]')?.getBoundingClientRect();
-    expect(Math.abs((fecha?.top ?? 0) - (total?.top ?? 99))).toBeLessThan(2);
-    expect(nodo.querySelectorAll('[data-parte]')).toHaveLength(2);
-    expect(nodo.querySelector('[data-testid="suma-lineas"]')?.textContent).toContain('$30.00');
-    for (const quitar of nodo.querySelectorAll('button[aria-label^="Quitar"]'))
-      expect(quitar.getBoundingClientRect().width).toBeGreaterThanOrEqual(44);
+    expect(nodo.querySelector<HTMLInputElement>('.campo-billete input[name="total"]')?.value).toBe(
+      '30.00',
+    );
+    const [datos] = nodo.querySelectorAll('.grupo-campos');
+    expect(datos?.textContent).toContain('Visa Oro');
+    expect(datos?.querySelector('input[name="fecha"]')).not.toBeNull();
+    expect(datos?.querySelector('input[name="comercio"]')).not.toBeNull();
+    expect(nodo.querySelectorAll('select')).toHaveLength(0);
+    expect(
+      nodo.querySelector<HTMLInputElement>(`[aria-label="${g.montoPara('Supermercado')}"]`)?.value,
+    ).toBe('20.00');
+    expect(
+      nodo.querySelector<HTMLInputElement>(`[aria-label="${g.montoPara('Farmacia')}"]`)?.value,
+    ).toBe('10.00');
+    expect(nodo.textContent).toContain(g.repartido('$30.00', '$30.00'));
   });
 
-  it('PRU-CMP-TX-472 [CA-25.5, CB-24] con la cuenta fija se dibuja en solo lectura con su motivo y, archivada, Fecha y Total no se editan', () => {
+  it('PRU-CMP-TX-472 [CA-25.5, CB-24, C-45] con la cuenta fija se dibuja en «Solo lectura» con su motivo y, archivada, Fecha y Total no se editan', () => {
     const conMotivo = montar({ motivoCuenta: 'Tiene una devolución vinculada.' });
-    const fija = conMotivo.querySelector('[data-cuenta-fija]');
+    const fija = conMotivo.querySelector('[data-dato-fijo="cuenta"]');
     expect(fija?.textContent).toContain(t.soloLectura);
     expect(fija?.textContent).toContain('Visa Oro');
     expect(fija?.textContent).toContain('Tiene una devolución vinculada.');
-    expect(conMotivo.querySelectorAll('select')).toHaveLength(2);
 
     const archivada = montar({ soloEtiquetas: true, motivoCuenta: 'Archivada.' });
-    expect(archivada.querySelector('[data-cuenta-fija]')?.textContent).not.toContain('Archivada.');
+    expect(archivada.querySelector('[data-dato-fijo="cuenta"]')?.textContent).not.toContain(
+      'Archivada.',
+    );
     expect(archivada.querySelector<HTMLInputElement>('input[name="fecha"]')?.disabled).toBe(true);
     expect(archivada.querySelector<HTMLInputElement>('input[name="total"]')?.disabled).toBe(true);
     const sinCuenta = montar({ sinCuenta: true });
-    expect(sinCuenta.querySelectorAll('select')).toHaveLength(2);
-    expect(sinCuenta.querySelector('[data-cuenta-fija]')).toBeNull();
+    expect(sinCuenta.querySelector('[data-dato-fijo="cuenta"]')).toBeNull();
+    expect(sinCuenta.textContent).not.toContain('Visa Oro');
   });
 });

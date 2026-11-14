@@ -7,8 +7,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
 import type { AccionEscritura } from '../../formularios/use-operacion';
+import { registrarGasto as g } from '../../textos/registrar-gasto';
 import { transaccion as t } from '../../textos/transaccion';
-import { parteVacia } from '../registrar-gasto/campos';
+import { parteVacia, type Parte } from '../registrar-gasto/campos';
 import type { Campos } from './campos';
 import { FormularioActividadEditar, type PropsFormularioActividadEditar } from './formulario';
 
@@ -51,6 +52,9 @@ async function montar(ui: ReactNode): Promise<HTMLElement> {
 const CUENTA = '11111111-1111-4111-8111-111111111111';
 const CATEGORIA = '22222222-2222-4222-8222-222222222222';
 const OTRA = '33333333-3333-4333-8333-333333333333';
+const LUZ = '44444444-4444-4444-8444-444444444444';
+const REST = '55555555-5555-4555-8555-555555555555';
+const CARLOS = '66666666-6666-4666-8666-666666666666';
 const inicial: Campos = {
   cuentaId: CUENTA,
   fecha: '2027-02-20',
@@ -64,11 +68,14 @@ const base: Omit<PropsFormularioActividadEditar, 'accion'> = {
   transaccionId: 't1',
   inicial,
   cuentas: [{ id: CUENTA, nombre: 'Visa Oro', tipo: 'tarjeta', detalle: 'Deuda $642.18' }],
+  // Con 4 categorías o más, la categoría es una lista (con 3 o menos, segmentado: CA-K3-6)
   categorias: [
-    { id: CATEGORIA, nombre: 'Supermercado' },
-    { id: OTRA, nombre: 'Farmacia' },
+    { id: CATEGORIA, nombre: 'Supermercado', grupo: 'Casa', disponible: '$62.85', negativo: false },
+    { id: OTRA, nombre: 'Farmacia', grupo: 'Casa', disponible: '$27.65', negativo: false },
+    { id: LUZ, nombre: 'Luz y agua', grupo: 'Casa', disponible: '$6.60', negativo: false },
+    { id: REST, nombre: 'Restaurantes', grupo: 'Fuera', disponible: '−$26.30', negativo: true },
   ],
-  deudores: [],
+  deudores: [{ id: CARLOS, nombre: 'Carlos' }],
   sinCuenta: false,
   soloEtiquetas: false,
   detalle: '/actividad/t1',
@@ -127,7 +134,7 @@ describe('PRU-CMP-TX editar una transacción', () => {
     expect(nodo.querySelector('[data-cargando-campos]')).toBeNull();
     expect(campo(nodo, 'fecha').disabled).toBe(true);
     expect(campo(nodo, 'total').disabled).toBe(true);
-    expect(nodo.querySelector('[data-cuenta-fija]')?.textContent).toContain(t.soloLectura);
+    expect(nodo.querySelector('[data-dato-fijo="cuenta"]')?.textContent).toContain(t.soloLectura);
     expect(campo(nodo, 'comercio').disabled).toBe(false);
     await vi.waitFor(() => {
       expect(guardar().disabled).toBe(false);
@@ -187,5 +194,134 @@ describe('PRU-CMP-TX editar una transacción', () => {
     await vi.waitFor(() => {
       expect(guardar().disabled).toBe(false);
     });
+  });
+});
+
+/** La transacción de CA-R-13: Supermercado $96.10, Farmacia $22.50 y Carlos $30.00, cada parte con su línea. */
+const parte = (lineaId: string, monto: string, destino: Partial<Parte>): Parte =>
+  ({ ...parteVacia(), lineaId, monto, ...destino }) as Parte;
+const dividida: Campos = {
+  ...inicial,
+  total: '148.60',
+  lineas: [
+    parte('l1', '96.10', { categoriaId: CATEGORIA }),
+    parte('l2', '22.50', { categoriaId: OTRA }),
+    parte('l3', '30.00', { destino: 'por_cobrar', deudorId: CARLOS }),
+  ],
+};
+const MOTIVO_E3_16 = 'Esa parte tiene cobros o devoluciones; no puede cambiar de destino.';
+const etiquetado = (nombre: string): HTMLInputElement => {
+  const el = document.querySelector<HTMLInputElement>(`[aria-label="${nombre}"]`);
+  if (el === null) throw new Error(`no hay un control «${nombre}»`);
+  return el;
+};
+const radio = (grupo: string, texto: string): HTMLElement => {
+  const r = [
+    ...document.querySelectorAll<HTMLElement>(
+      `[role="radiogroup"][aria-label="${grupo}"] [role="radio"]`,
+    ),
+  ].find((x) => x.textContent.trim() === texto);
+  if (r === undefined) throw new Error(`no hay «${texto}» en «${grupo}»`);
+  return r;
+};
+const motivo = () =>
+  document.getElementById(guardar().getAttribute('aria-describedby') ?? '')?.textContent;
+async function escribir(el: HTMLInputElement, texto: string): Promise<void> {
+  await userEvent.clear(el);
+  await userEvent.type(el, texto);
+}
+async function montarDividida(accion: AccionEscritura): Promise<HTMLElement> {
+  const nodo = await montar(
+    <FormularioActividadEditar
+      {...base}
+      inicial={dividida}
+      bloqueo={{ lineas: ['l2', 'l3'], motivo: MOTIVO_E3_16 }}
+      accion={accion}
+    />,
+  );
+  await vi.waitFor(() => {
+    expect(document.querySelector(`[aria-label="${g.cuantasCategorias}"]`)).not.toBeNull();
+  });
+  return nodo;
+}
+
+describe('PRU-CMP-TX editar una transacción con los campos v3', () => {
+  it('PRU-CMP-TX-880 [C-49, C-45] CA-R-13: Supermercado $96.10, Farmacia $22.50 y Carlos $30.00 abren con «Varias» en Montos y esos montos, sin «Lo que queda», en una columna de 720 con «Guardar cambios»; las partes con eventos no cambian de destino ni se quitan (E3-16) y cada parte viaja con su línea', async () => {
+    const accion = vi.fn<AccionEscritura>(() => ok());
+    const nodo = await montarDividida(accion);
+    expect(document.querySelector('h1')?.textContent).toBe(t.editarGasto);
+    // C-30: una columna de 720, no las dos de Registrar gasto
+    expect(document.querySelector('[data-pagina-flujo]')?.className).not.toContain(
+      '--ancho-pantalla:none',
+    );
+    expect(nodo.querySelector<HTMLInputElement>('.campo-billete input')?.value).toBe('148.60');
+    expect(radio(g.cuantasCategorias, g.varias).getAttribute('aria-checked')).toBe('true');
+    expect(radio(g.comoRepartir, g.montos).getAttribute('aria-checked')).toBe('true');
+    expect(etiquetado(g.montoPara('Supermercado')).value).toBe('96.10');
+    expect(etiquetado(g.montoPara('Farmacia')).value).toBe('22.50');
+    expect(document.body.textContent).not.toContain(g.loQueQueda);
+    expect(etiquetado(g.tuParte).value).toBe('118.60');
+    expect(etiquetado(g.montoDe('Carlos')).value).toBe('30.00');
+    expect(guardar().textContent).toBe(t.guardar);
+    // E3-16: Farmacia no cambia de categoría y Carlos no se quita
+    const farmacia = etiquetado(g.montoPara('Farmacia')).closest('.campo-fila');
+    expect(farmacia?.querySelector<HTMLButtonElement>('[aria-haspopup="listbox"]')?.disabled).toBe(
+      true,
+    );
+    expect(farmacia?.textContent).toContain(MOTIVO_E3_16);
+    expect(document.querySelector(`[aria-label="${g.quitarA('Carlos')}"]`)).toBeNull();
+    expect(document.querySelector(`[role="img"][aria-label="${MOTIVO_E3_16}"]`)).not.toBeNull();
+    await userEvent.click(
+      [...document.querySelectorAll<HTMLElement>('[role="checkbox"]')].find((x) =>
+        x.textContent.includes('Carlos'),
+      ) as HTMLElement,
+    );
+    expect(etiquetado(g.montoDe('Carlos')).value).toBe('30.00');
+    // Repartir distinto entre las categorías: cada parte viaja con su línea (OP-28, CB-03)
+    await escribir(etiquetado(g.montoPara('Supermercado')), '86.10');
+    await escribir(etiquetado(g.montoPara('Farmacia')), '32.50');
+    await userEvent.click(guardar());
+    await vi.waitFor(() => {
+      expect(accion).toHaveBeenCalledTimes(1);
+    });
+    expect(accion.mock.calls[0]?.[0]).toMatchObject({
+      lineas: [
+        { lineaId: 'l1', monto: '86.10', destino: { categoriaId: CATEGORIA } },
+        { lineaId: 'l2', monto: '32.50', destino: { categoriaId: OTRA } },
+        { lineaId: 'l3', monto: '30.00', destino: { deudorId: CARLOS } },
+      ],
+    });
+  });
+
+  it('PRU-CMP-TX-881 [C-49, C-45] CA-K3-13 al editar: las categorías que pasan tu parte se marcan en el momento, «Guardar cambios» queda apagado con el motivo de C-49 y tocarlo no envía; una transacción que no es gasto no tiene las secciones', async () => {
+    const accion = vi.fn<AccionEscritura>(() => ok());
+    await montarDividida(accion);
+    await escribir(etiquetado(g.montoPara('Farmacia')), '30');
+    expect(document.body.textContent).toContain(g.categoriasPasan(true, '$7.50'));
+    expect(guardar().getAttribute('aria-disabled')).toBe('true');
+    expect(motivo()).toBe(g.motivoCategorias(true));
+    await userEvent.click(guardar(), { force: true });
+    expect(accion).not.toHaveBeenCalled();
+
+    for (const { raiz, nodo } of montados.splice(0)) {
+      act(() => {
+        raiz.unmount();
+      });
+      nodo.remove();
+    }
+    const ingreso = await montar(
+      <FormularioActividadEditar
+        {...base}
+        inicial={{ ...inicial, tipo: 'ingreso', lineas: [] }}
+        accion={accion}
+      />,
+    );
+    await vi.waitFor(() => {
+      expect(ingreso.querySelector('.campo-billete input[name="total"]')).not.toBeNull();
+    });
+    expect(document.querySelector('h1')?.textContent).toBe(t.editarTitulo);
+    expect(ingreso.querySelector(`[aria-label="${g.cuantasCategorias}"]`)).toBeNull();
+    expect(ingreso.querySelector('.grupo-campos input[name="fecha"]')).not.toBeNull();
+    expect(ingreso.querySelector('.grupo-campos input[name="comercio"]')).not.toBeNull();
   });
 });

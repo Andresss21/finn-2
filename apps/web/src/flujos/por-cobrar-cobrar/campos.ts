@@ -2,6 +2,8 @@
 // (`sin_saldo_abierto`, `fecha_posterior_a_hoy`, `cuenta_archivada`…) son del servidor: la interfaz no suma ni compara (PF-3).
 import * as z from 'zod';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import { centavosEscritos } from '../../formularios/reparto';
+import { base } from '../../textos/base';
 import { porCobrarCobrar as t } from '../../textos/por-cobrar-cobrar';
 
 const CAMPOS = z.object({
@@ -13,9 +15,7 @@ const CAMPOS = z.object({
 });
 export type Campos = z.infer<typeof CAMPOS>;
 
-const escrito = (texto: string): boolean => normalizarMontoEscrito(texto).estado === 'valido';
-
-/** Lo obligatorio escrito; que el monto sea mayor que cero y la fecha válida lo dice el servidor. */
+/** Lo obligatorio escrito; que la fecha sea válida y lo que se puede cobrar lo dice el servidor. */
 export const contrato = CAMPOS.superRefine((c, ctx) => {
   const falta = (path: keyof Campos, message: string) => {
     ctx.addIssue({ code: 'custom', path: [path], message });
@@ -23,7 +23,8 @@ export const contrato = CAMPOS.superRefine((c, ctx) => {
   if (c.lineaId === '') falta('lineaId', t.marcadorPartida);
   if (c.cuentaId === '') falta('cuentaId', t.elegirCuenta);
   if (c.fecha === '') falta('fecha', t.completar);
-  if (!escrito(c.total)) falta('total', t.completar);
+  // [C-45] CAMPOS-V3 §5: el monto, mayor que cero
+  if (centavosEscritos(c.total) <= 0) falta('total', base.montoMayorQueCero);
 });
 
 /** La casilla solo viaja si hay propuesta AV-22 con esa cuenta (`conCasilla`, que decide el lector): si no, no se envía. */

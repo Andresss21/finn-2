@@ -50,8 +50,15 @@ export async function LectorActividadEditar({
       tipo: 'otra' as const,
     })),
   ];
-  const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((g) =>
-    g.categorias.map((x) => ({ id: x.categoria.id, nombre: nombre(x.categoria) })),
+  // [C-49 §6] Con su grupo y su Disponible del catálogo, tal cual: el negativo lo dice el signo, sin calcular (PF-3)
+  const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((gr) =>
+    gr.categorias.map((x) => ({
+      id: x.categoria.id,
+      nombre: nombre(x.categoria),
+      grupo: gr.grupo.nombre,
+      disponible: formatearMonto(x.disponible),
+      negativo: x.disponible < 0,
+    })),
   );
   const deudores = (dto.catalogos.deudores ?? []).map((x) => ({
     id: x.deudor.id,
@@ -66,6 +73,11 @@ export async function LectorActividadEditar({
       cuentas={cuentas}
       categorias={categorias}
       deudores={deudores}
+      // [E3-16] Una parte con cobros o devoluciones no cambia de destino ni se quita: lo sabe `restricciones`
+      bloqueo={{
+        lineas: c.restricciones.lineasConEventos,
+        motivo: mensajeDeRechazo({ codigo: 'linea_con_eventos_cambio_destino' }) ?? '',
+      }}
       sinCuenta={c.efectos.length !== 1}
       soloEtiquetas={archivada}
       {...(c.restricciones.puedeCambiarCuenta

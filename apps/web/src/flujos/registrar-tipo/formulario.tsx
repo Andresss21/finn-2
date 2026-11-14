@@ -2,17 +2,18 @@
 // `/registrar/ingreso` y `/registrar/transferencia` (FT-22 y FT-23, OP-21 y OP-22; 05 §2.4): los flujos cortos de registrar un
 // ingreso y de mover dinero entre dos cuentas de efectivo. Se guardan en un solo viaje (05 §4.4); con la fecha en un período
 // cerrado el servidor pide confirmar con AV-01 antes de escribir. No calcula montos (PF-3): el impacto lo trae el servidor.
+// [C-45] Campos v3: el total del ingreso es el billete (CAMPOS-V3 §4); los datos van en un grupo de filas y «Guardar» sigue §11.
 import type { LimitesDeFecha } from '../../formularios/limites-de-fecha';
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useRef, type ReactNode } from 'react';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { NotaFija } from './nota-fija';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
 import { Resultado } from '../../componentes/base/resultado';
-import { Seleccion } from '../../componentes/base/seleccion';
+import { SeleccionFila } from '../../componentes/base/seleccion-fila';
 import { Vacio } from '../../componentes/base/vacio';
 import { ConfirmacionImpactoDeVista as ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto-de-vista';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
@@ -20,6 +21,7 @@ import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta, SuperpuestoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMontoTexto } from '../../formato';
+import { motivoQueFalta, useFocoAlPrimerError } from '../../formularios/motivo-v3';
 import type { ValoresDeUrl } from '../../formularios/valores-de-url';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -114,6 +116,9 @@ export function FormularioRegistrarTipo({
     return mensaje === undefined ? {} : { error: mensaje };
   };
   const opciones = cuentas.map((x) => ({ valor: x.id, etiqueta: x.nombre }));
+  const forma = useRef<HTMLFormElement>(null);
+  useFocoAlPrimerError(forma, formState.submitCount);
+  const motivo = operacion.motivoSinEnvio ?? motivoQueFalta(contrato, c);
   const nombreDe = (id: string): string => cuentas.find((x) => x.id === id)?.nombre ?? '';
 
   const { estado, error: fallo, exito } = operacion;
@@ -177,63 +182,68 @@ export function FormularioRegistrarTipo({
         />
       ) : (
         <form
+          ref={forma}
           onSubmit={(e) => void formulario.enviar(e)}
           noValidate
           className="flex flex-col gap-5"
         >
+          {/* El total del ingreso es el billete (uno por pantalla); el de una transferencia, una fila del grupo */}
           {esIngreso ? (
-            <Seleccion
-              etiqueta={t.cuentaIngreso}
-              opciones={opciones}
-              valor={c.cuentaId}
-              alCambiar={poner('cuentaId')}
-              {...conError('cuentaId')}
-            />
-          ) : (
-            <>
-              <Seleccion
-                etiqueta={t.origen}
-                opciones={opciones}
-                valor={c.origenId}
-                alCambiar={poner('origenId')}
-                {...conError('origenId')}
-              />
-              <Seleccion
-                etiqueta={t.destino}
-                opciones={opciones}
-                valor={c.destinoId}
-                alCambiar={poner('destinoId')}
-                {...conError('destinoId')}
-              />
-            </>
-          )}
-          <EntradaFecha
-            nombre="fecha"
-            etiqueta={t.fecha}
-            valor={c.fecha as FechaLocal}
-            alCambiar={poner('fecha')}
-            minima={limites?.minima}
-            maxima={limites?.maxima ?? hoy}
-            hoy={hoy}
-            error={error('fecha')}
-            requerido
-          />
-          <EntradaMonto
-            nombre="total"
-            etiqueta={t.total}
-            valor={c.total}
-            alCambiar={poner('total')}
-            error={error('total')}
-            requerido
-          />
-          {esIngreso ? (
-            <EntradaTexto
-              etiqueta={t.descripcion}
-              autoComplete="off"
-              {...conError('descripcion')}
-              {...formulario.register('descripcion')}
+            <EntradaMonto
+              nombre="total"
+              etiqueta={t.total}
+              variante="total"
+              valor={c.total}
+              alCambiar={poner('total')}
+              error={error('total')}
+              requerido
             />
           ) : null}
+          <GrupoCampos>
+            {(esIngreso ? (['cuentaId'] as const) : (['origenId', 'destinoId'] as const)).map(
+              (n) => (
+                <SeleccionFila
+                  key={n}
+                  etiqueta={
+                    n === 'cuentaId' ? t.cuentaIngreso : n === 'origenId' ? t.origen : t.destino
+                  }
+                  marcador={t.elegirCuenta}
+                  opciones={opciones}
+                  valor={c[n]}
+                  alCambiar={poner(n)}
+                  {...conError(n)}
+                />
+              ),
+            )}
+            <EntradaFecha
+              nombre="fecha"
+              etiqueta={t.fecha}
+              valor={c.fecha as FechaLocal}
+              alCambiar={poner('fecha')}
+              minima={limites?.minima}
+              maxima={limites?.maxima ?? hoy}
+              hoy={hoy}
+              error={error('fecha')}
+              requerido
+            />
+            {esIngreso ? (
+              <EntradaTexto
+                etiqueta={t.descripcion}
+                autoComplete="off"
+                {...conError('descripcion')}
+                {...formulario.register('descripcion')}
+              />
+            ) : (
+              <EntradaMonto
+                nombre="total"
+                etiqueta={t.total}
+                valor={c.total}
+                alCambiar={poner('total')}
+                error={error('total')}
+                requerido
+              />
+            )}
+          </GrupoCampos>
           {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
             <AvisoEnLinea
               estado="problema"
@@ -258,9 +268,9 @@ export function FormularioRegistrarTipo({
             enviando={estado === 'enviando'}
             textoEnviando={t.guardando}
             deshabilitado={!operacion.enLinea}
-            {...(operacion.motivoSinEnvio === undefined
-              ? {}
-              : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+            apagado={motivo !== undefined}
+            className="w-full"
+            {...(motivo === undefined ? {} : { motivoDeshabilitado: motivo })}
           >
             {esIngreso ? t.guardarIngreso : t.guardarTransferencia}
           </Boton>

@@ -1,10 +1,12 @@
 'use client';
 // `/actividad/[transaccionId]/editar` (FT-25, OP-28; 05 §2.6): corregir el monto, la fecha, la cuenta, el comercio, las partes o la nota
-// de una transacción. Reúsa los campos de la edición de un movimiento (FT-35). Solo se envía lo que cambió, cada campo con el valor que se
-// vio (04 §4.6.2); con AV-01 o AV-16 el servidor pide confirmar antes. Es un flujo largo: siempre página completa (05 §1.4). No calcula
-// montos (PF-3): la suma de las partes la valida el servidor.
-import { lazy, Suspense, useRef, useState } from 'react';
-import { useFieldArray } from 'react-hook-form';
+// de una transacción. Solo se envía lo que cambió, cada campo con el valor que se
+// vio (04 §4.6.2); con AV-01 o AV-16 el servidor pide confirmar antes. Es un flujo largo: siempre página completa (05 §1.4).
+// [C-45, C-49 §5] Un gasto se edita con las secciones de Registrar gasto en una columna de 720 (C-30): sus partes salen de ellas al
+// guardar (`lineasDe`, cada una con su línea), los montos que se proponen los da `formularios/reparto` (CH-276) y el servidor valida
+// la suma. «Guardar cambios» sigue CAMPOS-V3 §11 y el orden de motivos de C-49 §3.
+import { lazy, Suspense, useMemo, useRef, useState, type SyntheticEvent } from 'react';
+import type * as z from 'zod';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
@@ -14,15 +16,23 @@ import {
   PaginaFlujoDeRuta,
   useCerrarFlujo,
 } from '../../componentes/navegacion/flujo-de-ruta';
-import { formatearMonto } from '../../formato';
-import { faltaRepartir } from '../../formularios/normalizar-monto';
+import { motivoQueFalta } from '../../formularios/motivo-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { estados } from '../../textos/estados';
 import { formularios } from '../../textos/formularios';
-import { registrarGasto as g } from '../../textos/registrar-gasto';
 import { transaccion as t } from '../../textos/transaccion';
-import { contrato, entradaDeEdicion, vistoDeConflicto, type Campos } from './campos';
+import type { CategoriaDelCampo } from '../registrar-gasto/categorias';
+import { estadoDelGasto, lineasDe, type Marcas } from '../registrar-gasto/estado';
+import type { Bloqueo } from '../registrar-gasto/quien-paga';
+import {
+  conSecciones,
+  contrato,
+  entradaDeEdicion,
+  vistoDeConflicto,
+  type Campos,
+  type CamposDeEdicion,
+} from './campos';
 
 interface Referencia {
   readonly id: string;
@@ -32,8 +42,10 @@ export interface PropsFormularioActividadEditar {
   readonly transaccionId: string;
   readonly inicial: Campos;
   readonly cuentas: readonly CuentaDeEdicion[];
-  readonly categorias: readonly Referencia[];
+  readonly categorias: readonly CategoriaDelCampo[];
   readonly deudores: readonly Referencia[];
+  /** [E3-16] Las líneas con cobros o devoluciones y por qué no cambian de destino ni se quitan. */
+  readonly bloqueo?: Bloqueo;
   /** La transacción mueve más de una cuenta: no se ofrece cambiarla. */
   readonly sinCuenta: boolean;
   /** Cuenta archivada (CB-24): solo categoría, comercio y nota. */
@@ -67,6 +79,11 @@ const ConfirmacionImpacto = lazy(() =>
 );
 // Los campos se cargan aparte: el HTML del servidor ya los trae y el presupuesto de bytes de la ruta no los cuenta (05 §13.1)
 const Edicion = lazy(() => import('./edicion'));
+
+const SIN_MARCAS: Marcas = { personas: false, categorias: false, enviado: false };
+const CONTRATO = contrato as unknown as z.ZodType<CamposDeEdicion, CamposDeEdicion>;
+/** Los montos de las partes sin importar el orden, que al editar sale de las dos secciones. */
+const montos = (c: Campos): string => JSON.stringify(c.lineas.map((l) => l.monto).sort());
 
 const BLOQUE_52 = 'h-13 rounded-control bg-superficie-hundida motion-safe:animate-pulse';
 const BLOQUE_48 = 'h-12 rounded-control bg-superficie-hundida motion-safe:animate-pulse';
@@ -111,6 +128,7 @@ export function FormularioActividadEditar({
   cuentas,
   categorias,
   deudores,
+  bloqueo,
   sinCuenta,
   soloEtiquetas,
   motivoCuenta,
@@ -120,13 +138,18 @@ export function FormularioActividadEditar({
   const operacion = useOperacion({ accion });
   const cerrar = useCerrarFlujo(detalle, false);
   const visto = useRef<Record<string, unknown>>({}); // lo que la persona vio y ya cambió (conflicto), sobre `base`
-  const formulario = useFormularioFinn<Campos>({
-    contrato,
-    valoresIniciales: inicial,
+  const valoresIniciales = useMemo(() => conSecciones(inicial), [inicial]);
+  const formulario = useFormularioFinn<CamposDeEdicion>({
+    contrato: CONTRATO,
+    valoresIniciales,
     operacion,
   });
-  const partes = useFieldArray({ control: formulario.control, name: 'lineas' });
   const c = formulario.watch();
+  const gasto = inicial.tipo === 'gasto';
+  const [marcas, setMarcas] = useState<Marcas>(SIN_MARCAS);
+  const [anuncio, setAnuncio] = useState('');
+  const forma = useRef<HTMLFormElement>(null);
+  const e = gasto ? estadoDelGasto(c, marcas) : undefined;
   const { estado, error: fallo, enLinea } = operacion;
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
   const deLasPartes =
@@ -142,7 +165,7 @@ export function FormularioActividadEditar({
   if (rechazable && rechazo?.fallo !== fallo) setRechazo({ fallo, escrito });
   const sinCorregir = rechazable && rechazo?.escrito === escrito;
 
-  const alEnviar = formulario.handleSubmit(() => {
+  const enviarCambios = formulario.handleSubmit(() => {
     // `getValues` y no el resultado del contrato: este quita el `lineaId` de cada parte
     const entrada = entradaDeEdicion(transaccionId, inicial, formulario.getValues(), visto.current);
     if (entrada === undefined) cerrar();
@@ -152,12 +175,30 @@ export function FormularioActividadEditar({
     }
     return undefined;
   });
+  // CA-K3-13: un gasto que no cierra no se envía; se marcan los errores y el foco va al primero (ya dibujados, en el cuadro siguiente)
+  const alEnviar = (ev: SyntheticEvent<HTMLFormElement>) => {
+    if (e !== undefined && !e.listo) {
+      ev.preventDefault();
+      setMarcas({ personas: true, categorias: true, enviado: true });
+      requestAnimationFrame(() => {
+        forma.current
+          ?.querySelector<HTMLElement>(
+            '[aria-invalid="true"], [data-error] [aria-haspopup="listbox"], [data-estado="error"]',
+          )
+          ?.focus();
+      });
+      return;
+    }
+    if (e !== undefined) formulario.setValue('lineas', lineasDe(c, e));
+    void enviarCambios(ev);
+  };
+  const titulo = gasto ? t.editarGasto : t.editarTitulo;
 
   if (estado === 'listo') return <CerrarFlujoAlMontar rutaPadre={detalle} />;
 
   if (estado === 'confirmando')
     return (
-      <PaginaFlujoDeRuta titulo={t.editarTitulo} rutaPadre={detalle}>
+      <PaginaFlujoDeRuta titulo={titulo} rutaPadre={detalle}>
         <Suspense fallback={null}>
           <ConfirmacionImpacto
             titulo={t.revisar}
@@ -169,10 +210,7 @@ export function FormularioActividadEditar({
                     enviada,
                     cuentas.find((x) => x.id === inicial.cuentaId)?.nombre ?? '',
                     // «Repartir distinto» solo si cambió el monto de alguna parte; cambiar solo una categoría no lo es
-                    enviada !== undefined &&
-                      'lineas' in enviada &&
-                      JSON.stringify(c.lineas.map((l) => l.monto)) !==
-                        JSON.stringify(inicial.lineas.map((l) => l.monto)),
+                    enviada !== undefined && 'lineas' in enviada && montos(c) !== montos(inicial),
                   )
                 : (t.avisos[a.codigo] ?? a.codigo),
             )}
@@ -186,19 +224,11 @@ export function FormularioActividadEditar({
       </PaginaFlujoDeRuta>
     );
 
-  const falta = faltaRepartir(
-    c.total,
-    c.lineas.map((l) => l.monto),
-  );
-  const ayuda =
-    falta === undefined
-      ? undefined
-      : falta > 0
-        ? g.faltaRepartir(formatearMonto(falta))
-        : falta < 0
-          ? g.sobraRepartir
-          : g.todoRepartido;
-
+  // CAMPOS-V3 §11: lo que falta se ve apagado y sigue tocable; sin conexión, cargando o con un rechazo sin corregir, deshabilitado
+  const falta = e === undefined ? motivoQueFalta(contrato, c) : e.motivo;
+  const motivo =
+    operacion.motivoSinEnvio ??
+    (sinCorregir ? t.corregiParaGuardar : !camposListos ? t.cargandoCampos : falta);
   const guardar = (
     <Boton
       tipo="submit"
@@ -206,27 +236,26 @@ export function FormularioActividadEditar({
       enviando={estado === 'enviando'}
       textoEnviando={t.guardando}
       deshabilitado={!enLinea || !camposListos || sinCorregir}
+      apagado={falta !== undefined}
       className="w-full"
-      {...(operacion.motivoSinEnvio !== undefined
-        ? { motivoDeshabilitado: operacion.motivoSinEnvio }
-        : sinCorregir
-          ? { motivoDeshabilitado: t.corregiParaGuardar }
-          : !camposListos
-            ? { motivoDeshabilitado: t.cargandoCampos }
-            : {})}
+      {...(motivo === undefined ? {} : { motivoDeshabilitado: motivo })}
     >
       {t.guardar}
     </Boton>
   );
 
   return (
-    <PaginaFlujoDeRuta titulo={t.editarTitulo} rutaPadre={detalle} acciones={guardar}>
+    <PaginaFlujoDeRuta titulo={titulo} rutaPadre={detalle} acciones={guardar}>
       <form
+        ref={forma}
         id={ID_FORMULARIO}
-        onSubmit={(e) => void alEnviar(e)}
+        onSubmit={alEnviar}
         noValidate
-        className="flex flex-col gap-4.5"
+        className="flex flex-col gap-5"
       >
+        <p role="status" className="sr-only">
+          {anuncio}
+        </p>
         {soloEtiquetas ? (
           <AvisoEnLinea estado="cero" titulo={t.cuentaArchivada}>
             {motivoCuenta}
@@ -238,12 +267,16 @@ export function FormularioActividadEditar({
               setCamposListos(true);
             }}
             formulario={formulario}
-            partes={partes}
             cuentas={cuentas}
             categorias={categorias}
             deudores={deudores}
+            e={e}
             deLasPartes={deLasPartes}
-            ayuda={ayuda}
+            bloqueo={bloqueo}
+            alSalir={(k) => () => {
+              if (!marcas[k]) setMarcas({ ...marcas, [k]: true });
+            }}
+            anunciar={setAnuncio}
             sinCuenta={sinCuenta}
             soloEtiquetas={soloEtiquetas}
             {...(motivoCuenta === undefined ? {} : { motivoCuenta })}

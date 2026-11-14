@@ -2,6 +2,8 @@
 // Los valores del formulario son texto, como los escribe la persona (05 §4.2); el contrato completo lo aplica el servidor.
 import * as z from 'zod';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
+import { centavosEscritos } from '../../formularios/reparto';
+import { base } from '../../textos/base';
 import type { ValoresDeUrl } from '../../formularios/valores-de-url';
 import { registrarTipo as t } from '../../textos/registrar-tipo';
 
@@ -34,8 +36,9 @@ export const contratoDe = (tipo: TipoDeRegistro) =>
     for (const n of CUENTAS[tipo])
       if (c[n] === '') ctx.addIssue({ code: 'custom', path: [n], message: t.elegirCuenta });
     if (c.fecha === '') ctx.addIssue({ code: 'custom', path: ['fecha'], message: t.completar });
-    if (normalizarMontoEscrito(c.total).estado !== 'valido')
-      ctx.addIssue({ code: 'custom', path: ['total'], message: t.completar });
+    // [C-45] CAMPOS-V3 §5: el monto, mayor que cero
+    if (centavosEscritos(c.total) <= 0)
+      ctx.addIssue({ code: 'custom', path: ['total'], message: base.montoMayorQueCero });
   });
 
 const monto = (texto: string): string => {

@@ -22,13 +22,20 @@ export type Parte = z.infer<typeof PARTE>;
 
 const MODO = z.enum(['iguales', 'porcentaje', 'montos']);
 /** [CH-276] Una persona de «¿Quién paga?»: `clave` es el id del deudor o `nueva:{nombre}`. */
-const PERSONA = z.object({ clave: z.string(), monto: z.string(), pct: z.string() });
+const PERSONA = z.object({
+  clave: z.string(),
+  monto: z.string(),
+  pct: z.string(),
+  /** Al editar (C-49 §5), la línea de OP-28 que ya existe. */
+  lineaId: z.string().optional(),
+});
 /** [CH-277] Una fila de «¿En qué categorías?»; `auto` es «Lo que queda» (C-49 §2). */
 const FILA = z.object({
   categoriaId: z.string(),
   monto: z.string(),
   pct: z.string(),
   auto: z.boolean(),
+  lineaId: z.string().optional(),
 });
 export type PersonaDeGasto = z.infer<typeof PERSONA>;
 export type FilaDeCategoria = z.infer<typeof FILA>;
