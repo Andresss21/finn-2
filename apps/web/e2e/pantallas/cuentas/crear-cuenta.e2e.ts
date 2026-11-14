@@ -176,4 +176,53 @@ test.describe('PRU-E2E-CTA', () => {
       'ahorro',
     );
   });
+  // [CH-261] [CH-262] El préstamo en curso del usuario: 6 de 18 cuotas pagadas y Banco Agrícola con sus condiciones.
+  test('PRU-E2E-CTA-410 [CA-50.3] con Banco Agrícola pido seguro y comisión al crear un préstamo con 6 de 18 cuotas pagadas; el detalle sigue en la 7 y a 1440 px el formulario va en dos columnas sin desplazamiento horizontal', async ({
+    page,
+  }) => {
+    await preparar('2026-11-13');
+    if (test.info().project.name === 'escritorio')
+      await page.setViewportSize({ width: 1440, height: 900 });
+    await abrir(page, `${RUTA}?tipo-cuenta=prestamo`);
+    await campo(page, t.nombre).fill('Préstamo BA');
+    await campo(page, t.contraparte).fill('Banco Agrícola');
+    await campo(page, t.montoOriginal).fill('6295');
+    await campo(page, t.saldo.prestamo).fill('3934.62');
+    await campo(page, t.cuotaPactada).fill('377.98');
+    await campo(page, t.plazoCuotas).fill('18');
+    await campo(page, t.cuotasPagadas).fill('6');
+    await page.getByText(t.seccionCondiciones).click();
+    await campo(page, t.tasaAnual).fill('8.25');
+    await expect(campo(page, t.seguroPrimerMes)).toHaveCount(0);
+    await page
+      .getByRole('radiogroup', { name: t.modelo })
+      .getByRole('radio', { name: t.modelos.banco_agricola })
+      .click();
+    await campo(page, t.seguroPrimerMes).fill('5');
+    await campo(page, t.comision).fill('62.95');
+    if (test.info().project.name === 'escritorio') {
+      const formulario = page.locator('form[data-columnas="2"]');
+      const [izquierda, derecha] = await Promise.all([
+        formulario.locator(':scope > div').nth(0).boundingBox(),
+        formulario.locator(':scope > div').nth(1).boundingBox(),
+      ]);
+      expect(Math.round((await formulario.boundingBox())?.width ?? 0)).toBe(1096);
+      expect(Math.abs((izquierda?.width ?? 0) - (derecha?.width ?? 0))).toBeLessThanOrEqual(1);
+      expect(derecha?.x ?? 0).toBeGreaterThan((izquierda?.x ?? 0) + (izquierda?.width ?? 0));
+      await expect(
+        formulario.locator(':scope > div').nth(1).getByRole('button', { name: t.guardar }),
+      ).toBeVisible();
+      const desborde = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(desborde).toBe(0);
+    }
+    await crear(page).click();
+    await alTerminar(page);
+    await page.getByText('Préstamo BA').first().click();
+    await expect(page).toHaveURL(/\/cuentas\/[^/]+$/);
+    const proxima = page.locator('[data-bloque="proxima-cuota"]');
+    await expect(proxima).toContainText('7 de 18');
+    await expect(proxima).toContainText('Cuotas pagadas 6 de 18');
+  });
 });

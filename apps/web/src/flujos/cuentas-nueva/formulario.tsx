@@ -138,6 +138,9 @@ export function FormularioCuentaNueva({
 
   const { estado, error: fallo, exito } = operacion;
   const vista = (operacion.previsualizacion ?? {}) as Previsualizacion;
+  // [CH-262] Con condiciones (tarjeta o préstamo), desde 1280 px el formulario va en dos columnas a todo el ancho; la confirmación
+  // va en una de 720 (E4-1). Los otros tipos, una columna de 720.
+  const dosColumnas = (c.tipo === 'tarjeta' || c.tipo === 'prestamo') && estado !== 'confirmando';
 
   // Terminó: `cerrarFlujo()` a la ruta padre (05 §1.4). Cuentas ya trae la cuenta nueva y su estado (la tarjeta con deuda, AV-07).
   if (estado === 'listo' && exito !== undefined)
@@ -148,7 +151,7 @@ export function FormularioCuentaNueva({
     );
 
   return (
-    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={RUTA_PADRE}>
+    <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={RUTA_PADRE} ancha={dosColumnas}>
       {estado === 'confirmando' ? (
         <Suspense fallback={null}>
           <ConfirmacionImpacto
@@ -175,148 +178,158 @@ export function FormularioCuentaNueva({
         <form
           onSubmit={(e) => void formulario.enviar(e)}
           noValidate
-          className="flex flex-col gap-5"
+          data-columnas={dosColumnas ? 2 : 1}
+          className={
+            dosColumnas
+              ? 'flex flex-col gap-5 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-8'
+              : 'flex flex-col gap-5'
+          }
         >
-          {borrador.recuperado ? (
-            <AvisoEnLinea
-              estado="informacion"
-              aparecioDespues
-              accion={
-                <Boton variante="secundaria" onClick={borrador.descartar}>
-                  {formularios.descartarBorrador}
-                </Boton>
-              }
-            >
-              {formularios.borradorRecuperado}
-            </AvisoEnLinea>
-          ) : null}
-          <ElegirTipo valor={c.tipo} alCambiar={ponerYProponer('tipo')} />
-          {c.tipo === 'efectivo' ? (
-            <div className="flex flex-col gap-2">
-              <SelectorSegmentado
-                etiqueta={subtipo.etiqueta}
-                opciones={Object.entries(subtipo.opciones).map(([valor, etiqueta]) => ({
-                  valor,
-                  etiqueta,
-                }))}
-                valor={c.subtipoEfectivo}
-                alCambiar={ponerYProponer('subtipoEfectivo')}
-                llena
-              />
-              <p className="text-cuerpo-pequeno text-texto-secundario">
-                {subtipo.ayudas[c.subtipoEfectivo]}
-              </p>
-            </div>
-          ) : null}
-          <EntradaTexto
-            etiqueta={t.nombre}
-            requerido
-            autoComplete="off"
-            {...conError('nombre')}
-            {...formulario.register('nombre')}
-          />
-          {avisoDeNombre === undefined ? null : (
-            <AvisoEnLinea estado="advertencia" aparecioDespues>
-              {avisoDeNombre}
-            </AvisoEnLinea>
-          )}
-          {conBanco(c) ? (
-            <>
-              <Seleccion
-                etiqueta={t.institucion}
-                opciones={[
-                  { valor: 'ninguna', etiqueta: t.sinInstitucion },
-                  ...instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre })),
-                ]}
-                valor={c.institucionId}
-                alCambiar={poner('institucionId')}
-              />
-              <EntradaTexto
-                etiqueta={t.ultimos4}
-                inputMode="numeric"
-                maxLength={4}
-                autoComplete="off"
-                placeholder={subtipo.opcional}
-                {...conError('ultimos4')}
-                {...formulario.register('ultimos4')}
-              />
-            </>
-          ) : null}
-          <EntradaFecha
-            nombre="fechaApertura"
-            etiqueta={t.apertura}
-            valor={c.fechaApertura as FechaLocal}
-            alCambiar={poner('fechaApertura')}
-            maxima={hoy}
-            hoy={hoy}
-            error={error('fechaApertura')}
-            requerido
-          />
-          <EntradaMonto
-            nombre="saldo"
-            etiqueta={t.saldo[c.tipo]}
-            valor={c.saldo}
-            alCambiar={poner('saldo')}
-            error={error('saldo')}
-            requerido
-            {...(c.tipo === 'efectivo'
-              ? { descripcion: t.entraALpa }
-              : c.tipo === 'inversion'
-                ? { descripcion: t.inversionFuera }
-                : {})}
-            {...(c.tipo === 'tarjeta'
-              ? {
-                  conSigno: true,
-                  signo: c.signo,
-                  alCambiarSigno: poner('signo'),
-                  etiquetasSigno: { positivo: t.debo, negativo: t.tengoAFavor },
+          {/* [CH-262] Izquierda: tipo, nombre, institución, apertura y saldo; derecha: el resto del tipo y «Crear cuenta». */}
+          <div className="flex min-w-0 flex-col gap-5">
+            {borrador.recuperado ? (
+              <AvisoEnLinea
+                estado="informacion"
+                aparecioDespues
+                accion={
+                  <Boton variante="secundaria" onClick={borrador.descartar}>
+                    {formularios.descartarBorrador}
+                  </Boton>
                 }
-              : {})}
-          />
-          {c.tipo === 'efectivo' && c.subtipoEfectivo === 'billetera' ? (
-            <Suspense fallback={<div className="min-h-42" aria-hidden="true" />}>
-              <VistaBilletera nombre={c.nombre} saldo={c.saldo} />
-            </Suspense>
-          ) : null}
-          {c.tipo === 'efectivo' ? null : (
-            <Suspense fallback={<div className="min-h-60" aria-hidden="true" />}>
-              <CamposDeTipo
-                c={c}
-                poner={poner}
-                error={error}
-                register={formulario.register}
-                institucion={institucionElegida}
-              />
-            </Suspense>
-          )}
-          {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
-            <AvisoEnLinea
-              estado="problema"
-              aparecioDespues
-              {...(REINTENTABLES.includes(fallo.categoria)
+              >
+                {formularios.borradorRecuperado}
+              </AvisoEnLinea>
+            ) : null}
+            <ElegirTipo valor={c.tipo} alCambiar={ponerYProponer('tipo')} />
+            {c.tipo === 'efectivo' ? (
+              <div className="flex flex-col gap-2">
+                <SelectorSegmentado
+                  etiqueta={subtipo.etiqueta}
+                  opciones={Object.entries(subtipo.opciones).map(([valor, etiqueta]) => ({
+                    valor,
+                    etiqueta,
+                  }))}
+                  valor={c.subtipoEfectivo}
+                  alCambiar={ponerYProponer('subtipoEfectivo')}
+                  llena
+                />
+                <p className="text-cuerpo-pequeno text-texto-secundario">
+                  {subtipo.ayudas[c.subtipoEfectivo]}
+                </p>
+              </div>
+            ) : null}
+            <EntradaTexto
+              etiqueta={t.nombre}
+              requerido
+              autoComplete="off"
+              {...conError('nombre')}
+              {...formulario.register('nombre')}
+            />
+            {avisoDeNombre === undefined ? null : (
+              <AvisoEnLinea estado="advertencia" aparecioDespues>
+                {avisoDeNombre}
+              </AvisoEnLinea>
+            )}
+            {conBanco(c) ? (
+              <>
+                <Seleccion
+                  etiqueta={t.institucion}
+                  opciones={[
+                    { valor: 'ninguna', etiqueta: t.sinInstitucion },
+                    ...instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre })),
+                  ]}
+                  valor={c.institucionId}
+                  alCambiar={poner('institucionId')}
+                />
+                <EntradaTexto
+                  etiqueta={t.ultimos4}
+                  inputMode="numeric"
+                  maxLength={4}
+                  autoComplete="off"
+                  placeholder={subtipo.opcional}
+                  {...conError('ultimos4')}
+                  {...formulario.register('ultimos4')}
+                />
+              </>
+            ) : null}
+            <EntradaFecha
+              nombre="fechaApertura"
+              etiqueta={t.apertura}
+              valor={c.fechaApertura as FechaLocal}
+              alCambiar={poner('fechaApertura')}
+              maxima={hoy}
+              hoy={hoy}
+              error={error('fechaApertura')}
+              requerido
+            />
+            <EntradaMonto
+              nombre="saldo"
+              etiqueta={t.saldo[c.tipo]}
+              valor={c.saldo}
+              alCambiar={poner('saldo')}
+              error={error('saldo')}
+              requerido
+              {...(c.tipo === 'efectivo'
+                ? { descripcion: t.entraALpa }
+                : c.tipo === 'inversion'
+                  ? { descripcion: t.inversionFuera }
+                  : {})}
+              {...(c.tipo === 'tarjeta'
                 ? {
-                    accion: (
-                      <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                        {formularios.intentarDeNuevo}
-                      </Boton>
-                    ),
+                    conSigno: true,
+                    signo: c.signo,
+                    alCambiarSigno: poner('signo'),
+                    etiquetasSigno: { positivo: t.debo, negativo: t.tengoAFavor },
                   }
                 : {})}
+            />
+            {c.tipo === 'efectivo' && c.subtipoEfectivo === 'billetera' ? (
+              <Suspense fallback={<div className="min-h-42" aria-hidden="true" />}>
+                <VistaBilletera nombre={c.nombre} saldo={c.saldo} />
+              </Suspense>
+            ) : null}
+          </div>
+          <div className="flex min-w-0 flex-col gap-5">
+            {c.tipo === 'efectivo' ? null : (
+              <Suspense fallback={<div className="min-h-60" aria-hidden="true" />}>
+                <CamposDeTipo
+                  c={c}
+                  poner={poner}
+                  error={error}
+                  register={formulario.register}
+                  institucion={institucionElegida}
+                />
+              </Suspense>
+            )}
+            {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
+              <AvisoEnLinea
+                estado="problema"
+                aparecioDespues
+                {...(REINTENTABLES.includes(fallo.categoria)
+                  ? {
+                      accion: (
+                        <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
+                          {formularios.intentarDeNuevo}
+                        </Boton>
+                      ),
+                    }
+                  : {})}
+              >
+                {fallo.mensaje}
+              </AvisoEnLinea>
+            ) : null}
+            <Boton
+              tipo="submit"
+              enviando={estado === 'enviando'}
+              textoEnviando={t.guardando}
+              deshabilitado={!operacion.enLinea}
+              {...(operacion.motivoSinEnvio === undefined
+                ? {}
+                : { motivoDeshabilitado: operacion.motivoSinEnvio })}
             >
-              {fallo.mensaje}
-            </AvisoEnLinea>
-          ) : null}
-          <Boton
-            tipo="submit"
-            enviando={estado === 'enviando'}
-            textoEnviando={t.guardando}
-            deshabilitado={!operacion.enLinea}
-            {...(operacion.motivoSinEnvio === undefined
-              ? {}
-              : { motivoDeshabilitado: operacion.motivoSinEnvio })}
-          >
-            {t.guardar}
-          </Boton>
+              {t.guardar}
+            </Boton>
+          </div>
         </form>
       )}
     </PaginaFlujoDeRuta>

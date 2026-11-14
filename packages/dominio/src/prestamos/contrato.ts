@@ -12,6 +12,12 @@ export interface CondicionesModelo {
   readonly seguroPrimerMes: Centavos;
   readonly cuotaPactada: Centavos;
   readonly plazoCuotas: number;
+  /**
+   * [CH-261] Préstamo en curso (P13): las cuotas ya pagadas al crearlo en Finn (p₀) y el capital pendiente registrado en la
+   * apertura (B_p₀). La proyección empieza en la cuota p₀ + 1, con fecha F₀ + 1 mes, sobre ese saldo. Sin ellas, p₀ = 0 y B₀ = M.
+   */
+  readonly cuotasPagadas?: number;
+  readonly saldoInicial?: Centavos;
 }
 
 /** Cuota o abono a capital registrado (A.1): fecha, desglose y número de cuota si se indicó. */

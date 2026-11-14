@@ -27,6 +27,8 @@ export const cuentasNuevaTipos = {
   cuotaPactada: 'Cuota pactada',
   plazoCuotas: 'Cantidad de cuotas',
   cuotasPagadas: 'Cuotas que ya pagaste',
+  seguroPrimerMes: 'Seguro del primer mes', // [CH-261] los de Editar condiciones (cuentas-condiciones.ts)
+  comision: 'Comisión',
   rendimiento: 'Rendimiento anual esperado (%)',
   rendimientoInfo: 'Solo informativo: Finn no proyecta el valor.',
   // E2-9: secciones de la alta de un préstamo y el aviso de información sin modelo (FT-50)

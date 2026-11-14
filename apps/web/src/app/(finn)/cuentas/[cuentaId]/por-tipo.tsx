@@ -194,7 +194,11 @@ export function ProximaCuota({
       </div>
       {tabla === null ? null : (
         <p className="text-cuerpo-pequeno">
-          {t.cuotasPagadas(tabla.filter((q) => q.estado === 'pagada').length, c.plazoCuotas)}
+          {t.cuotasPagadas(
+            // [CH-261] las pagadas antes de Finn (P13) no están en la tabla: arranca en la siguiente
+            c.cuotasPagadasAlCrear + tabla.filter((q) => q.estado === 'pagada').length,
+            c.plazoCuotas,
+          )}
         </p>
       )}
     </section>
