@@ -21,6 +21,7 @@ import { formatearMontoTexto } from '../../formato';
 import type { ValoresDeUrl } from '../../formularios/valores-de-url';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
+import { useBorrarBorradorAlTerminar } from '../../formularios/borrar-al-terminar';
 import { registrarGasto } from '../../servidor/acciones/transacciones';
 import { formularios } from '../../textos/formularios';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
@@ -145,6 +146,8 @@ export function FormularioRegistrarGasto({
     formState.errors[n]?.message;
 
   const { estado, error: fallo, exito } = operacion;
+  // [CH-290] El borrador se borra al terminar aunque `BorradorGasto` ya no esté montado (el resultado lo reemplaza).
+  useBorrarBorradorAlTerminar(estado === 'listo');
   // [CH-240 E3-18] «Guardar» espera a que se corrija la fecha
   const [errorFecha, setErrorFecha] = useState<string | undefined>(undefined);
   // [CH-240 E6-21] Con `suma_lineas_distinta`, «Guardar» dice por qué hasta que cambien las partes o el total

@@ -26,6 +26,7 @@ import {
   formatearFecha,
   formatearMonto,
 } from '../../formato';
+import { useBorrarBorradorAlTerminar } from '../../formularios/borrar-al-terminar';
 import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -124,6 +125,8 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
   const marcadas = useRef(0);
   const { estado, error: fallo, exito, previsualizacion } = operacion;
   const { volverAEditar } = operacion;
+  // [CH-290] El borrador se borra al terminar aunque `BorradorVerificarSaldo` ya no esté montado («Revisar»).
+  useBorrarBorradorAlTerminar(estado === 'listo');
 
   // Al llegar una previsualización se pasa al paso que se pidió; un rechazo vuelve a editar con su mensaje.
   useEffect(() => {

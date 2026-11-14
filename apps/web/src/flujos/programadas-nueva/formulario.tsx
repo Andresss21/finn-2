@@ -23,6 +23,7 @@ import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navega
 import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
+import { useBorrarBorradorAlTerminar } from '../../formularios/borrar-al-terminar';
 import { formatearFecha } from '../../formato';
 import { ConfirmarEliminar } from '../metas-nueva/confirmar-eliminar';
 import { rutaProgramadasConResultado } from './resultado';
@@ -110,6 +111,8 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
     ponerLineas(tipo === 'pago_tarjeta' ? [] : [c.lineas[0] ?? PARTE_VACIA]);
   };
   const { estado, error: fallo } = operacion;
+  // [CH-290] El borrador se borra al terminar aunque `BorradorProgramada` ya no esté montado (el resultado lo reemplaza).
+  useBorrarBorradorAlTerminar(estado === 'listo' || eliminacion.estado === 'listo');
   const guardar = useGuardarV3({
     contrato,
     campos: c,
