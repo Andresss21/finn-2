@@ -280,8 +280,11 @@ describe('PRU-CMP-VAL campos v3', () => {
     expect(forzado?.estilo.getPropertyValue('outline-width')).toBe('2px');
     expect(forzado?.estilo.getPropertyValue('outline-style')).toBe('solid');
     expect(forzado?.estilo.getPropertyValue('outline-color').toLowerCase()).toBe('canvastext');
+    // La regla puede ir agrupada con otros selectores («.campo-fila, [data-control='interruptor']::after»): se busca en la lista
     const reducido = todas.find(
-      (r) => r.condicion.includes('prefers-reduced-motion: reduce') && r.selector === '.campo-fila',
+      (r) =>
+        r.condicion.includes('prefers-reduced-motion: reduce') &&
+        r.selector.split(',').some((s) => s.trim() === '.campo-fila'),
     );
     expect(reducido?.estilo.getPropertyValue('transition-property')).toBe('none');
   });
