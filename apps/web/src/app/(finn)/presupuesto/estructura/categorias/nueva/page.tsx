@@ -1,4 +1,4 @@
-// `/presupuesto/estructura/categorias/nueva` (05 §2.3, FT-18, OP-07): crear una categoría; `?grupo=` propone su grupo.
+// `/presupuesto/estructura/categorias/nueva` (05 §2.3, FT-18, OP-07): crear una categoría; `?grupo=` fija su grupo [CH-267].
 import type { Metadata } from 'next';
 import { LectorEstructura } from '../../../../../../flujos/presupuesto-estructura/lector';
 import type { BusquedaDePagina } from '../../../../../../servidor/parametros';

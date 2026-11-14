@@ -1280,7 +1280,7 @@ Catálogo completo (la regla T9 de V5-18 rechaza cualquier parámetro de §1.3 o
 | `?categoria=` | Una categoría | Uuid | Actividad (filtra), nueva meta (preselecciona) |
 | `?categoria-origen=`, `?categoria-destino=` | Las dos categorías de un movimiento de dinero | Uuid | Mover |
 | `?categorias=` | Varias categorías | Uuids separados por comas | Gasto semanal |
-| `?grupo=` | Un grupo | Uuid | Nueva categoría (preselecciona), reporte de categorías (filtra) |
+| `?grupo=` | Un grupo | Uuid | Nueva categoría (**[CH-267]** fija el grupo: sin selector de grupo y con «En {grupo}» bajo el título; uno que no se puede elegir o no existe cae en el selector), reporte de categorías (filtra) |
 | `?cuenta=` | Una cuenta | Uuid | Actividad (filtra), registrar (preselecciona) |
 | `?cuentas=` | Varias cuentas | Uuids separados por comas | Reportes |
 | `?tipo=` | Tipo de **transacción** (`TipoTransaccion`) | Enumerado con guiones | Actividad, detalle de cuenta |
@@ -3541,3 +3541,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-242** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). «Salir» a la vista: `salir()` se invoca también desde la hoja «Más secciones», el pie de la barra lateral y `/ajustes`, y con borradores en la pestaña pregunta antes «Tenés N cambios sin enviar» (9.6 y 15.3). `salir()` no cambia. Marcas **[CH-242]**. Lo aplicó TA-596.
 - **CH-248** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). El catálogo de 2.2 suma los parámetros de resultado que ya existen en la interfaz: `?motivo=sesion-vencida` (`/ingresar`; 7.5 y 9.3), `?resultado=` (detalle de cuenta), `?agregado=` y `?quitado=` (Seguridad), `?guardado=` (Formatos) y `?enfocar=` (detalle de meta). Marcas **[CH-248]**. Documenta lo implementado; no cambia código.
 - **CH-254** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). `?resultado=movido:…` del detalle de categoría suma la inversa de Mover (2.2) y la tabla de 4.14 suma su «Deshacer»: OP-15 devuelve las dos asignaciones de después (04 OP-15), que la interfaz usa como `esperado` sin calcular (PF-3). Marca **[CH-254]**.
+- **CH-267** (corrección posterior de TA-597, 13 de noviembre de 2026, `08-tareas.md` §7). `?grupo=` de Nueva categoría (2.2) deja de preseleccionar en un selector: con un grupo que se puede elegir, la categoría es de ese grupo, sin selector y con «En {grupo}» bajo el título; sin él, o con uno que no se puede elegir, el selector de siempre. OP-07 no cambia. Marca **[CH-267]**.
