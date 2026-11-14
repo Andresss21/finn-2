@@ -2,7 +2,6 @@
 // datos es un `GrupoCampos`; las selecciones van en segmentado (3 opciones o menos) o en la lista propia, las casillas y el
 // interruptor como filas, y Guardar se ve apagado con `aria-disabled` y dice debajo qué falta. Sin subrayados (C-33). Los CA-K3-n
 // de PROMPT-CAMPOS.md §5 van en el texto del título.
-import type { SalidaProbar } from '@finn/aplicacion/operaciones/formatos';
 import axe from 'axe-core';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -121,7 +120,7 @@ const formatoProps = {
   probar: vi.fn(() =>
     Promise.resolve({
       ok: true as const,
-      valor: { coincide: true, demasiadoLargo: false } as SalidaProbar,
+      valor: { coincide: true, demasiadoLargo: false },
       yaAplicada: false,
       avisos: [],
     }),
