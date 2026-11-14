@@ -120,7 +120,9 @@ describe('PRU-CMP-VAL selección y buscador v3', () => {
     expect(raiz.querySelector('select')).toBeNull();
     expect(boton.getAttribute('aria-expanded')).toBe('false');
     expect(nombreAccesible(boton)).toBe('Categoría Supermercado');
-    expect(boton.textContent).toContain('Disponible $62.85');
+    const fila = boton.closest('.campo-fila') as HTMLElement;
+    expect(fila.textContent).toContain('Disponible $62.85');
+    expect(boton.textContent).toBe('Supermercado');
 
     // Con Intro.
     boton.focus();
@@ -187,7 +189,7 @@ describe('PRU-CMP-VAL selección y buscador v3', () => {
     expect(cambios).toEqual(['restaurantes']);
     expect(document.activeElement).toBe(boton);
     expect(nombreAccesible(boton)).toBe('Categoría Restaurantes');
-    const detalle = [...boton.querySelectorAll('span')].find(
+    const detalle = [...fila.querySelectorAll('span')].find(
       (s) => s.textContent === 'Disponible −$26.30',
     ) as HTMLElement;
     expect(getComputedStyle(detalle).color).toBe(token('color', '--problema-texto'));
@@ -251,9 +253,8 @@ describe('PRU-CMP-VAL selección y buscador v3', () => {
     const [conError, apagada] = [
       ...raiz.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="listbox"]'),
     ] as [HTMLButtonElement, HTMLButtonElement];
-    const marcador = [...conError.querySelectorAll('span')].find(
-      (s) => s.textContent === 'Elegí una categoría',
-    ) as HTMLElement;
+    const marcador = conError.querySelector('.campo-marcador') as HTMLElement;
+    expect(marcador.textContent).toBe('Elegí una categoría');
     expect(getComputedStyle(marcador).color).toBe(token('color', '--texto-terciario'));
     const fila = conError.closest('.campo-fila') as HTMLElement;
     expect(getComputedStyle(fila).backgroundColor).toBe(

@@ -153,7 +153,11 @@ function ListaFila({
             ref={disparador}
             type="button"
             id={control.id}
-            aria-describedby={control['aria-describedby']}
+            aria-describedby={
+              [control['aria-describedby'], elegida?.detalle === undefined ? '' : `${id}-d`]
+                .filter(Boolean)
+                .join(' ') || undefined
+            }
             aria-haspopup="listbox"
             aria-expanded={abierta}
             aria-labelledby={`${control.id}-l ${id}-v`}
@@ -169,18 +173,15 @@ function ListaFila({
               abrir();
             }}
           >
-            <span className="campo-disparador-texto">
-              <span id={`${id}-v`} className={elegida === undefined ? 'campo-marcador' : undefined}>
-                {elegida?.etiqueta ?? marcador}
-              </span>
-              {elegida?.detalle === undefined ? null : (
-                <span
-                  className="campo-detalle"
-                  {...(elegida.negativo === true ? { 'data-negativo': '' } : {})}
-                >
-                  {elegida.detalle}
-                </span>
-              )}
+            <span
+              id={`${id}-v`}
+              className={
+                elegida === undefined
+                  ? 'campo-disparador-texto campo-marcador'
+                  : 'campo-disparador-texto'
+              }
+            >
+              {elegida?.etiqueta ?? marcador}
             </span>
             <Icono
               nombre="chevD"
@@ -188,6 +189,16 @@ function ListaFila({
               className={abierta ? 'shrink-0 rotate-180' : 'shrink-0'}
             />
           </button>
+          {/* La línea secundaria va debajo del valor, fuera del botón (la referencia): describe, no nombra. */}
+          {elegida?.detalle === undefined ? null : (
+            <span
+              id={`${id}-d`}
+              className="campo-detalle"
+              {...(elegida.negativo === true ? { 'data-negativo': '' } : {})}
+            >
+              {elegida.detalle}
+            </span>
+          )}
           {nombre === undefined ? null : <input type="hidden" name={nombre} value={valor} />}
           {abierta ? (
             <div
