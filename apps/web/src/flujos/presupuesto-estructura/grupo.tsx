@@ -53,7 +53,8 @@ export interface PropsGrupo {
   readonly alternar: () => void;
   readonly tocarAsa: (tipo: 'grupo' | 'categoria', id: string) => void;
   /** [CH-275] Presionar un asa empieza el arrastre (cuando el módulo ya cargó). */
-  readonly presionar?: ((e: PointerEvent, tipo: 'grupo' | 'categoria', id: string) => void) | undefined;
+  readonly presionar?:
+    ((e: PointerEvent, tipo: 'grupo' | 'categoria', id: string) => void) | undefined;
   /** La categoría que se arrastra: su fila es el hueco punteado. */
   readonly hueco?: string | undefined;
   /** Este grupo es el que se arrastra. */
@@ -167,44 +168,44 @@ export function GrupoEstructura({
                     <div aria-hidden="true" className="fz-hueco" />
                   </li>
                 ) : (
-                <li
-                  key={c.id}
-                  data-fila-cat={c.id}
-                  data-flip={`c-${c.id}`}
-                  className="border-b border-borde-sutil"
-                >
-                  <div
-                    className={
-                      abierta(c.id)
-                        ? 'flex min-h-14 items-center gap-0.5 bg-accion-tonal py-1 pr-1.5 pl-1'
-                        : 'flex min-h-14 items-center gap-0.5 py-1 pr-1.5 pl-1'
-                    }
+                  <li
+                    key={c.id}
+                    data-fila-cat={c.id}
+                    data-flip={`c-${c.id}`}
+                    className="border-b border-borde-sutil"
                   >
-                    <Asa
-                      etiqueta={t.moverCategoria(c.nombre)}
-                      abierta={abierta(c.id)}
-                      id={c.id}
-                      alTocar={() => {
-                        tocarAsa('categoria', c.id);
-                      }}
-                      alPresionar={presionarEn('categoria', c.id)}
-                    />
-                    {editable(c.id) ? (
-                      <EnlaceFinn
-                        href={`${RAIZ}/categorias/${c.id}`}
-                        className="text-cuerpo inline-flex min-h-12 min-w-0 flex-1 items-center rounded-lg font-semibold"
-                        aria-label={t.editar(c.nombre)}
-                      >
-                        {c.nombre}
-                      </EnlaceFinn>
-                    ) : (
-                      <span className="text-cuerpo min-w-0 flex-1 py-2.5 font-semibold">
-                        {c.nombre}
-                      </span>
-                    )}
-                  </div>
-                  {enLugar(c.id)}
-                </li>
+                    <div
+                      className={
+                        abierta(c.id)
+                          ? 'flex min-h-14 items-center gap-0.5 bg-accion-tonal py-1 pr-1.5 pl-1'
+                          : 'flex min-h-14 items-center gap-0.5 py-1 pr-1.5 pl-1'
+                      }
+                    >
+                      <Asa
+                        etiqueta={t.moverCategoria(c.nombre)}
+                        abierta={abierta(c.id)}
+                        id={c.id}
+                        alTocar={() => {
+                          tocarAsa('categoria', c.id);
+                        }}
+                        alPresionar={presionarEn('categoria', c.id)}
+                      />
+                      {editable(c.id) ? (
+                        <EnlaceFinn
+                          href={`${RAIZ}/categorias/${c.id}`}
+                          className="text-cuerpo inline-flex min-h-12 min-w-0 flex-1 items-center rounded-lg font-semibold"
+                          aria-label={t.editar(c.nombre)}
+                        >
+                          {c.nombre}
+                        </EnlaceFinn>
+                      ) : (
+                        <span className="text-cuerpo min-w-0 flex-1 py-2.5 font-semibold">
+                          {c.nombre}
+                        </span>
+                      )}
+                    </div>
+                    {enLugar(c.id)}
+                  </li>
                 ),
               )}
               {cats.length === 0 && vacio === null ? (

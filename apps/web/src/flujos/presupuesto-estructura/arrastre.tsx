@@ -136,7 +136,8 @@ export function ContextoArrastre(props: PropsArrastre) {
       const l = levantada();
       if (l !== null) l.style.translate = `0 ${String(s.y - s.y0)}px`;
       const a = apuntar(objetivo.current, s.x, s.y);
-      const clave = a === undefined ? s.clave : `${a.grupoId}:${String(a.idx)}:${String(a.colapsado)}`;
+      const clave =
+        a === undefined ? s.clave : `${a.grupoId}:${String(a.idx)}:${String(a.colapsado)}`;
       if (a === undefined || clave === s.clave) return;
       s.clave = clave;
       window.clearTimeout(s.espera);
@@ -200,7 +201,14 @@ export function ContextoArrastre(props: PropsArrastre) {
         const zona = document.querySelector(
           tipo === 'grupo' ? `section[data-zona="${id}"]` : `[data-fila-cat="${id}"]`,
         );
-        estado.current = { x: e.clientX, y: e.clientY, y0: e.clientY, clave: '', espera: 0, cuadro: 0 };
+        estado.current = {
+          x: e.clientX,
+          y: e.clientY,
+          y0: e.clientY,
+          clave: '',
+          espera: 0,
+          cuadro: 0,
+        };
         avisarArrastre(true);
         p.current.alTomar(tipo, id, (zona ?? document.body).getBoundingClientRect());
         arrancar.current();

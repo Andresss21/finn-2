@@ -86,8 +86,7 @@ export const estructura = {
     `→ ${ord} lugar · ${n === 1 ? '1 categoría' : `${String(n)} categorías`}`,
   soltaAqui: 'Soltá aquí para dejarla al final · se abre en un momento',
   tomaste: (c: string) => `Tomaste ${c}.`,
-  tomasteGrupo: (g: string) =>
-    `Tomaste el grupo ${g}. Los grupos se colapsan mientras lo movés.`,
+  tomasteGrupo: (g: string) => `Tomaste el grupo ${g}. Los grupos se colapsan mientras lo movés.`,
   sobre: (g: string, ord: string, alFinal: boolean) =>
     `Sobre ${g}: ${ord}${alFinal ? ', al final' : ''}.`,
   seAbrio: (g: string) => `Se abrió ${g}.`,

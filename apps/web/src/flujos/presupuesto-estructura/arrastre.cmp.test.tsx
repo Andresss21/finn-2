@@ -182,7 +182,9 @@ describe('PRU-CMP-CATEG-135 arrastrar una categoría desde el asa', () => {
     await montar();
     // El cuerpo es el enlace a «Editar categoría»: presionarlo y moverlo no toma nada.
     const cuerpo = q(`[data-fila-cat="${id('Farmacia')}"] a`);
-    expect(cuerpo.getAttribute('href')).toBe(`/presupuesto/estructura/categorias/${id('Farmacia')}`);
+    expect(cuerpo.getAttribute('href')).toBe(
+      `/presupuesto/estructura/categorias/${id('Farmacia')}`,
+    );
     await presionar(cuerpo, 12);
     await soltar();
     expect(levantada()).toBeNull();
@@ -242,9 +244,7 @@ describe('PRU-CMP-CATEG-135 arrastrar una categoría desde el asa', () => {
     expect(
       q(`[data-fila-cat="${id('Farmacia')}"]`).querySelector('[data-testid="resultado"]'),
     ).not.toBeNull();
-    expect(anuncio()).toBe(
-      t.soltaste(t.movidaAGrupo('Farmacia', 'Comida fuera', 'la segunda')),
-    );
+    expect(anuncio()).toBe(t.soltaste(t.movidaAGrupo('Farmacia', 'Comida fuera', 'la segunda')));
     expect(levantada()).toBeNull();
     expect(seccion('Comida fuera').querySelector('[data-destino]')).toBeNull();
   });
@@ -372,8 +372,7 @@ describe('PRU-CMP-CATEG-137 arrastrar un grupo', () => {
     localStorage.setItem(CLAVE, JSON.stringify([id('Transporte')]));
     await montar();
     await presionar(asaGrupo('Ahorro'));
-    for (const g of ['Casa', 'Comida fuera', 'Transporte'])
-      expect(abierto(g)).toBe('false');
+    for (const g of ['Casa', 'Comida fuera', 'Transporte']) expect(abierto(g)).toBe('false');
     expect(anuncio()).toBe(t.tomasteGrupo('Ahorro'));
     expect(levantada()?.textContent).toContain(t.haciaGrupo('último', 2));
     expect(seccion('Ahorro').hasAttribute('data-hueco')).toBe(true);
@@ -441,7 +440,8 @@ describe('PRU-CMP-CATEG-138 el movimiento del arrastre', () => {
     expect(levantar?.estilo.getPropertyValue('scale')).toBe('1.03');
     expect(levantar?.estilo.getPropertyValue('box-shadow')).toContain('--elevacion-3');
     const quieta = reglas().find(
-      (r) => r.selector === '.fz-levantada' && r.condicion.includes('prefers-reduced-motion: reduce'),
+      (r) =>
+        r.selector === '.fz-levantada' && r.condicion.includes('prefers-reduced-motion: reduce'),
     );
     expect(quieta?.estilo.getPropertyValue('scale')).toBe('none');
 
