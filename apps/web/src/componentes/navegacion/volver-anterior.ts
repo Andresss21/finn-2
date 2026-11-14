@@ -87,7 +87,7 @@ export function anteriorEnFinn(
 export function etiquetaDeVuelta(ruta: string): string {
   const pathname = ruta.split('?')[0] ?? ruta;
   const id = seccionDeRuta(pathname);
-  const esSeccion =
-    id !== null && (SECCIONES.some((s) => s.ruta === pathname) || /^\/reportes\//.test(pathname));
-  return navegacion.volverA(esSeccion && id !== null ? navegacion.secciones[id] : null);
+  if (id === null) return navegacion.volverA(null);
+  const esSeccion = SECCIONES.some((s) => s.ruta === pathname) || /^\/reportes\//.test(pathname);
+  return navegacion.volverA(esSeccion ? navegacion.secciones[id] : null);
 }
