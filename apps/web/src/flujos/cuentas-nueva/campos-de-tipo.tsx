@@ -81,7 +81,9 @@ export function CamposDeTipo(props: PropsCamposDeTipo) {
               {s.titulo}
             </summary>
             <div className="flex flex-col gap-5 pt-2">
-              <AvisoEnLinea estado="informacion">{t.avisoSinModelo}</AvisoEnLinea>
+              {props.c.modeloCalculo === 'ninguno' && (
+                <AvisoEnLinea estado="informacion">{t.avisoSinModelo}</AvisoEnLinea>
+              )}
               {cuerpo}
             </div>
           </details>

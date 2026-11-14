@@ -143,7 +143,7 @@ export function ListaEstructura({
                   <EnlaceFinn
                     href={`${RAIZ}/grupos/${g.id}`}
                     className={ENLACE}
-                    aria-label={t.editar(g.nombre)}
+                    aria-label={t.editarGrupoDe(g.nombre)}
                   >
                     {t.editarGrupo}
                   </EnlaceFinn>

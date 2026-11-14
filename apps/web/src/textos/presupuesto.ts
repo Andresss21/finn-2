@@ -16,11 +16,17 @@ export const presupuesto = {
     texto: estados.sinResultados.texto,
     quitar: estados.sinResultados.quitar,
   },
+  // [CH-269] C-43: sin ninguna categoría, la lista sugerida o armarlas a mano.
   sinCategorias: {
-    titulo: 'Todavía no hay categorías',
+    titulo: 'Todavía no tenés categorías',
     texto: 'Creá tus grupos y categorías para empezar a repartir tu dinero.',
-    accion: 'Ir a grupos y categorías',
+    sugerida: 'Usar la lista sugerida',
+    aMano: 'Armarlas a mano',
   },
+  // [CH-269] C-43: el acceso a la estructura en «Más acciones».
+  enPresupuesto: 'En Presupuesto',
+  editarEstructura: 'Editar estructura',
+  editarEstructuraDetalle: 'Grupos, categorías y su orden',
   acciones: {
     etiqueta: 'Acciones del período',
     mover: 'Mover dinero',

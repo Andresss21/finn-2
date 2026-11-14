@@ -10,6 +10,8 @@ export interface AccionPantalla {
   readonly ruta?: string;
   readonly motivo?: string;
   readonly icono?: NombreIcono;
+  /** [CH-269] Bajada de una acción con enlace (C-43: «Editar estructura · Grupos, categorías y su orden»). */
+  readonly detalle?: string;
   /** Eliminar: al final, separada por una línea y en `peligro`. */
   readonly peligro?: boolean;
 }

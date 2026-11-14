@@ -1,6 +1,7 @@
 // FT-18 Nueva categoría (07 §17: un texto, un estado o el foco de un componente es una CMP; 05 §2.3): desde el botón de un grupo
 // (`?grupo=` válido) la categoría es de ese grupo, sin volver a preguntarlo; sin `?grupo=`, o con uno que no se puede elegir, el
 // selector de grupo se muestra como siempre. Quién acepta el grupo lo decide el servidor (OP-07), que prueban la integración y la E2E.
+// La lista de la estructura: el nombre accesible de cada enlace y botón contiene su texto visible (WCAG 2.5.3).
 import type { GrupoDeEstructura } from '@finn/dominio/selectores';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -10,6 +11,7 @@ import '../../app/globals.css';
 import { crearEnEstructura } from '../../servidor/acciones/categorias';
 import { estructura as t } from '../../textos/estructura';
 import { FormularioEstructura } from './formulario';
+import { ListaEstructura } from './lista';
 
 // `next/link` y `next/navigation` necesitan el enrutador de Next, y las acciones son del servidor: se simulan.
 vi.mock('next/navigation', () => ({
@@ -28,6 +30,7 @@ vi.mock('../../servidor/acciones/categorias', () => ({
   ),
   editarEnEstructura: vi.fn(),
   eliminarEnEstructura: vi.fn(),
+  desarchivarCategoria: vi.fn(),
 }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -154,5 +157,45 @@ describe('PRU-CMP-CATEG-126 nueva categoría sin un grupo válido en la direcci�
         nodo.remove();
       }
     }
+  });
+});
+
+describe('PRU-CMP-CATEG-127 nombres accesibles de la lista de la estructura', () => {
+  it('PRU-CMP-CATEG-127 [FT-18] «Editar grupo», «Nueva categoría», las categorías y Subir/Bajar tienen un nombre accesible que contiene su texto visible, y el de «Editar grupo» nombra el grupo', async () => {
+    const conCategorias: readonly GrupoDeEstructura[] = GRUPOS.map((g, i) =>
+      i > 1
+        ? g
+        : {
+            ...g,
+            categorias: ['Super', 'Luz'].map((nombre, k) => ({
+              categoria: {
+                id: `${String(i)}${String(k)}000000-0000-4000-8000-000000000000` as GrupoDeEstructura['grupo']['id'],
+                nombre,
+              },
+              clase: 'normal' as const,
+              archivada: false,
+              tieneMeta: false,
+              puedeEliminar: true,
+              puedeArchivar: true,
+            })),
+          },
+    );
+    const raiz = await montar(<ListaEstructura grupos={conCategorias} />);
+    const visible = (e: Element): string => {
+      const copia = e.cloneNode(true) as Element;
+      for (const x of copia.querySelectorAll('.sr-only')) x.remove();
+      return copia.textContent.replace(/\s+/g, ' ').trim();
+    };
+    const controles = [...raiz.querySelectorAll('a, button')];
+    expect(controles.length).toBeGreaterThan(4);
+    for (const c of controles) {
+      const nombre = c.getAttribute('aria-label') ?? c.textContent;
+      expect(nombre.replace(/\s+/g, ' ').trim(), c.outerHTML).toContain(visible(c));
+    }
+    const editarGrupo = controles.filter((c) => visible(c) === t.editarGrupo);
+    expect(editarGrupo.map((c) => c.getAttribute('aria-label'))).toEqual([
+      t.editarGrupoDe('Gastos'),
+      t.editarGrupoDe('Hogar'),
+    ]);
   });
 });

@@ -258,4 +258,36 @@ test.describe('PRU-E2E-PRES', () => {
       );
     }
   });
+
+  for (const [ancho, alto, etiqueta] of [
+    [390, 844, 'teléfono'],
+    [1440, 900, 'computadora'],
+  ] as const) {
+    test(`PRU-E2E-PRES-340 [FT-09] en ${etiqueta} (${String(ancho)} px), sin categorías Presupuesto dice «Todavía no tenés categorías» sin filtros, y «Editar estructura» del menú «En Presupuesto» lleva a la estructura`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: ancho, height: alto });
+      await sembrarOps(
+        [
+          { op: 'OP-01', cuenta: 'Ahorro' },
+          { op: 'OP-01', cuenta: 'T', tipo: 'tarjeta' },
+        ],
+        P2,
+      );
+      await abrir(page);
+      await expect(
+        page.getByRole('heading', { name: 'Todavía no tenés categorías' }),
+      ).toBeVisible();
+      await expect(
+        page.locator('main').getByRole('link', { name: 'Usar la lista sugerida' }),
+      ).toHaveAttribute('href', '/presupuesto/estructura/plantilla');
+      await expect(page.locator('main').getByRole('link', { name: 'Sobregiradas' })).toHaveCount(0);
+      await expect(page.getByText('Ninguna categoría cumple este filtro')).toHaveCount(0);
+      await page.getByRole('button', { name: 'Más acciones' }).click();
+      const menu = page.getByRole('menu', { name: 'Más acciones' });
+      await expect(menu.getByText('En Presupuesto')).toBeVisible();
+      await menu.getByRole('menuitem', { name: /^Editar estructura/ }).click();
+      await expect(page).toHaveURL(/\/presupuesto\/estructura$/);
+    });
+  }
 });
