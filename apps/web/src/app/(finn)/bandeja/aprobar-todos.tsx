@@ -118,7 +118,7 @@ export function AprobarTodos({
                   {/* [CH-240 E6-6] «Ver transacción» por cada uno: a su transacción o a su movimiento [CH-250] */}
                   <EnlaceFinn
                     href={x.href}
-                    className="inline-flex min-h-11 items-center font-semibold underline"
+                    className="inline-flex min-h-11 items-center font-bold text-enlace"
                   >
                     {t.verTransaccion}
                   </EnlaceFinn>

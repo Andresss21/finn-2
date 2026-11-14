@@ -24,6 +24,8 @@ export const reglas = {
   usada: (n: number) =>
     n === 0 ? 'Todavía no se usó' : n === 1 ? 'Usada 1 vez' : `Usada ${n} veces`,
   categoria: 'Categoría',
+  /** [C-45] La categoría sin elegir, en su fila (CAMPOS-V3 §6). */
+  elegirCategoria: 'Elegí una categoría',
   obligatorio: 'Completá este campo.',
   guardar: 'Guardar regla',
   guardando: 'Guardando…',

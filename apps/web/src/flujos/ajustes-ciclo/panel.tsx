@@ -4,13 +4,17 @@
 // tarjeta «Antes de confirmar»; «Cambiar al día N» confirma siempre. Con el mismo día, `ciclo_sin_cambio` va en el campo y el botón
 // queda deshabilitado, enlazado a ese mensaje. Los días del período de transición son un conteo de fechas del aviso, no un monto
 // (PF-3). No importa nada de Next: lo prueba un componente.
-import { useEffect, useId, useRef, useState } from 'react';
+// [C-45] El día es una fila de un `GrupoCampos` con la lista propia (CAMPOS-V3 §6); `ciclo_sin_cambio` va en la fila y «Cambiar el
+// ciclo» se ve apagado con `aria-disabled` y el motivo debajo (§5 y §11): al tocarlo, el foco va al día.
+import { useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Campo, MensajeError } from '../../componentes/base/campo';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { Resultado } from '../../componentes/base/resultado';
+import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
 import { formatearFecha } from '../../formato';
 import { diasDelTramo } from '../../formato/dias-del-tramo';
+import { useFocoAlPrimerError } from '../../formularios/motivo-v3';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { ajustesCiclo as t } from '../../textos/ajustes-ciclo';
 import { formularios } from '../../textos/formularios';
@@ -30,11 +34,8 @@ interface Vista {
   readonly rechazos?: readonly { readonly codigo: string; readonly datos?: Datos }[];
 }
 
-const DIAS = Array.from({ length: 31 }, (_, i) => String(i + 1));
+const DIAS = Array.from({ length: 31 }, (_, i) => ({ valor: String(i + 1), etiqueta: String(i + 1) }));
 const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
-// Mismo aspecto que el campo relleno de `Input`; la clase del estado inválido va en la misma cadena (L15).
-const CAJA =
-  'min-h-12 w-full rounded-t-control rounded-b-sm border-b-2 border-borde-control bg-superficie px-3 text-base text-texto focus-visible:border-b-4 focus-visible:border-foco focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco aria-invalid:border-2 aria-invalid:border-problema-borde';
 
 const corto = (f: string): string => formatearFecha(f).slice(0, 5);
 
@@ -53,7 +54,9 @@ export function PanelCiclo({ accion, diaVigente, futura, alCerrar }: PropsPanelC
   const [pedidoPara, setPedidoPara] = useState<string>();
   const [aplicado, setAplicado] = useState<{ dia: number; desde: string }>();
   const { estado, error: fallo, enviar } = operacion;
-  const idError = useId();
+  const campos = useRef<HTMLDivElement>(null);
+  const [intentos, setIntentos] = useState(0);
+  useFocoAlPrimerError(campos, intentos);
   const vista = operacion.previsualizacion as Vista | undefined;
   const rechazo = vista?.rechazos?.[0];
   const av12 = vista?.avisos?.find((a) => a.codigo === 'AV-12');
@@ -127,32 +130,17 @@ export function PanelCiclo({ accion, diaVigente, futura, alCerrar }: PropsPanelC
   return (
     <div className="flex flex-col gap-6">
       {resumen}
-      <div className="flex flex-col gap-1">
-        <Campo etiqueta={t.nuevoDia} requerido>
-          {(control) => (
-            <select
-              {...control}
-              aria-describedby={sinCambio && alDia ? idError : control['aria-describedby']}
-              aria-invalid={sinCambio && alDia ? true : undefined}
-              className={CAJA}
-              value={dia}
-              onChange={(e) => {
-                setDia(e.target.value);
-              }}
-            >
-              {DIAS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          )}
-        </Campo>
-        {sinCambio && alDia && mensajeRechazo !== undefined ? (
-          <div id={idError}>
-            <MensajeError>{mensajeRechazo}</MensajeError>
-          </div>
-        ) : null}
+      <div ref={campos}>
+        <GrupoCampos>
+          <SeleccionNativa
+            etiqueta={t.nuevoDia}
+            marcador={t.nuevoDia}
+            opciones={DIAS}
+            valor={dia}
+            alCambiar={setDia}
+            error={sinCambio && alDia ? mensajeRechazo : undefined}
+          />
+        </GrupoCampos>
       </div>
       {calculando ? (
         <p role="status" className="text-cuerpo-pequeno text-texto-secundario">
@@ -230,7 +218,15 @@ export function PanelCiclo({ accion, diaVigente, futura, alCerrar }: PropsPanelC
             {t.confirmarDia(Number(datos['diaInicio']))}
           </Boton>
         ) : (
-          <Boton deshabilitado aria-describedby={sinCambio && alDia ? idError : undefined}>
+          <Boton
+            apagado
+            {...(sinCambio && alDia && mensajeRechazo !== undefined
+              ? { motivoDeshabilitado: mensajeRechazo }
+              : {})}
+            onClick={() => {
+              setIntentos((n) => n + 1);
+            }}
+          >
             {t.confirmar}
           </Boton>
         )}

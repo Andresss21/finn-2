@@ -68,9 +68,12 @@ function SegmentadoFila({
   alCambiar,
   descripcion,
   error,
+  nombre,
 }: PropsSeleccionFila) {
   return (
     <div className="campo-fila" {...(error === undefined ? {} : { 'data-error': '' })}>
+      {/* [C-45] Con nombre, el valor viaja en el formulario, como en la lista (los filtros GET de Actividad). */}
+      {nombre === undefined ? null : <input type="hidden" name={nombre} value={valor} />}
       <span aria-hidden="true" className="campo-rotulo">
         {etiqueta}
       </span>

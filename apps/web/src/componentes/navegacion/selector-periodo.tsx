@@ -111,7 +111,7 @@ export function SelectorPeriodo({
       {esActivo ? null : (
         <EnlaceFinn
           href={hrefDe()}
-          className="inline-flex min-h-11 items-center justify-center text-cuerpo-pequeno text-enlace hover:underline"
+          className="inline-flex min-h-11 items-center justify-center text-cuerpo-pequeno font-bold text-enlace"
         >
           {dominio.periodo.irAlActual}
         </EnlaceFinn>

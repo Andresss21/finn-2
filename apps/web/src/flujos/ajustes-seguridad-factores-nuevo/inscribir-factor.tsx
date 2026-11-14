@@ -7,18 +7,22 @@
 // temblor ni espera. Solo presentación: `completarInscripcion` y la sesión no cambian.
 // [CH-240, E2-6, E2-7] Preparando (esqueleto con `aria-busy` y el envío deshabilitado con su motivo), copiado en el botón, error
 // con «Intentar de nuevo»; el respaldo pide su nombre antes del QR y vuelve a Seguridad con el resultado, sin pantalla de cierre.
+// [C-45] El nombre del respaldo es una fila de un `GrupoCampos`: vacío o repetido, «Seguir» se ve apagado con el motivo debajo y al
+// tocarlo marca el error en la fila con el foco (CAMPOS-V3 §5 y §11); después de «Seguir» es una fila de solo lectura (§3).
 import { useCallback, useEffect, useMemo, useRef, useState, type SyntheticEvent } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
 import { Icono } from '../../componentes/base/icono';
 import { CodigoTotp, useErrorDeCodigo } from '../../componentes/formularios/codigo-totp';
+import { DatoFijo } from '../../componentes/formularios/dato-fijo';
 import { useMovimientoReducido } from '../../componentes/movimiento/use-movimiento-reducido';
 import { duracionToken } from '../../componentes/movimiento/use-salida';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { Barra } from '../../componentes/navegacion/esqueleto';
 import { useIrA } from '../../componentes/navegacion/use-ir-a';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { CASILLAS, campoCodigo } from '../../app/ingresar/codigo';
@@ -104,34 +108,54 @@ function PasoNombre({
   readonly alSeguir: (nombre: string) => void;
 }) {
   const [valor, setValor] = useState(nombre);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const [intentos, setIntentos] = useState(0);
+  const contrato = useMemo(
+    () =>
+      z.object({
+        nombre: z
+          .string()
+          .trim()
+          .min(1, t.escribiNombre)
+          .refine(
+            (n) => !usados.some((u) => u.trim().toLowerCase() === n.toLowerCase()),
+            t.nombreRepetido,
+          ),
+      }),
+    [usados],
+  );
+  const guardar = useGuardarV3({
+    contrato,
+    campos: { nombre: valor },
+    intentos,
+    motivoSinEnvio: undefined,
+  });
+  const revision = contrato.safeParse({ nombre: valor });
+  const error = intentos > 0 ? revision.error?.issues[0]?.message : undefined;
   const enviar = (e: SyntheticEvent): void => {
     e.preventDefault();
-    const limpio = valor.trim();
-    const repetido = usados.some((u) => u.trim().toLowerCase() === limpio.toLowerCase());
-    if (limpio === '' || repetido) {
-      setError(limpio === '' ? t.escribiNombre : t.nombreRepetido);
-      return;
-    }
-    setError(undefined);
-    alSeguir(limpio);
+    setIntentos((n) => n + 1);
+    if (revision.success) alSeguir(revision.data.nombre);
   };
   return (
-    <form onSubmit={enviar} noValidate className="flex flex-col gap-5">
+    <form ref={guardar.forma} onSubmit={enviar} noValidate className="flex flex-col gap-5">
       <h1 className={TITULO}>{t.tituloFactorRespaldo}</h1>
       <p className="text-cuerpo-pequeno text-texto-secundario">{t.introFactorRespaldo}</p>
-      <EntradaTexto
-        etiqueta={t.nombreDelFactor}
-        requerido
-        descripcion={t.nombreNoSeCambia}
-        autoComplete="off"
-        value={valor}
-        onChange={(e) => {
-          setValor(e.target.value);
-        }}
-        {...(error === undefined ? {} : { error })}
-      />
-      <Boton tipo="submit">{t.seguir}</Boton>
+      <GrupoCampos>
+        <EntradaTexto
+          etiqueta={t.nombreDelFactor}
+          requerido
+          descripcion={t.nombreNoSeCambia}
+          autoComplete="off"
+          value={valor}
+          onChange={(e) => {
+            setValor(e.target.value);
+          }}
+          {...(error === undefined ? {} : { error })}
+        />
+      </GrupoCampos>
+      <Boton tipo="submit" className="w-full" {...guardar.boton}>
+        {t.seguir}
+      </Boton>
     </form>
   );
 }
@@ -285,13 +309,9 @@ function PasoCodigo({
       <h1 className={TITULO}>{titulo}</h1>
       <p className="text-cuerpo-pequeno text-texto-secundario">{t.introInscribir}</p>
       {nombreFijo === undefined ? null : (
-        <EntradaTexto
-          etiqueta={t.nombreDelFactor}
-          requerido
-          readOnly
-          value={nombreFijo}
-          onChange={() => undefined}
-        />
+        <GrupoCampos>
+          <DatoFijo rotulo={t.nombreDelFactor} valor={nombreFijo} motivo={t.nombreNoSeCambia} />
+        </GrupoCampos>
       )}
       {errorDeInicio !== undefined ? (
         <>

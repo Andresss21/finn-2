@@ -2,20 +2,21 @@
 // Probar el formato en edición contra uno de los 20 SMS recientes sin reconocer o con error (OPT-06; 06 FT-73, CA-73.3): muestra los
 // grupos que capturó y qué normalizador falló, en la tabla Grupo · Capturó · Se lee como (E5-10, CA-E5-13). Es una lectura: no guarda
 // nada. El texto del SMS y lo que se lee de cada grupo (`campos`) los trae el servidor; acá solo se formatean.
+// [C-45] El SMS se elige en la lista propia, en su fila (CAMPOS-V3 §6): el texto como valor y la fecha y el estado como línea
+// secundaria. Es siempre lista, aun con uno a tres SMS: un segmentado no entra con textos de 60 caracteres.
 import type { ResultadoAccion } from '@finn/aplicacion/errores';
 import type { SalidaProbar } from '@finn/aplicacion/operaciones/formatos';
 import { useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { Campo } from '../../componentes/base/campo';
+import { GrupoCampos } from '../../componentes/base/campo';
+import { SeleccionFila } from '../../componentes/base/seleccion-fila';
 import { formatearFecha, formatearInstante, formatearMonto } from '../../formato';
 import { ajustesFormatos } from '../../textos/ajustes-formatos';
 import { formularios } from '../../textos/formularios';
 
 const t = ajustesFormatos.probar;
 const LARGO_VISTA = 60;
-export const CAJA_SELECT =
-  'min-h-12 w-full rounded-t-control rounded-b-sm border-b-2 border-borde-control bg-superficie px-3 text-base text-texto focus-visible:border-b-4 focus-visible:border-foco focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco aria-invalid:border-2 aria-invalid:border-problema-borde';
 
 export interface SmsDePrueba {
   readonly smsId: string;
@@ -85,25 +86,23 @@ export function ProbarFormato({ probar, sms, formato }: PropsProbar) {
       <h2 id="probar-titulo" className="text-titulo-seccion">
         {t.titulo}
       </h2>
-      <Campo etiqueta={t.elegir} requerido descripcion={t.nada}>
-        {(control) => (
-          <select
-            {...control}
-            className={CAJA_SELECT}
-            value={smsId}
-            onChange={(e) => {
-              setSmsId(e.target.value);
-              setEstado({ tipo: 'quieto' });
-            }}
-          >
-            {sms.map((s) => (
-              <option key={s.smsId} value={s.smsId}>
-                {`${formatearInstante(s.recibidoEn)} · ${s.estado === 'error' ? t.conError : t.noReconocido} · ${s.texto.slice(0, LARGO_VISTA)}`}
-              </option>
-            ))}
-          </select>
-        )}
-      </Campo>
+      <GrupoCampos>
+        <SeleccionFila
+          etiqueta={t.elegir}
+          descripcion={t.nada}
+          soloLista
+          opciones={sms.map((s) => ({
+            valor: s.smsId,
+            etiqueta: s.texto.slice(0, LARGO_VISTA),
+            detalle: `${formatearInstante(s.recibidoEn)} · ${s.estado === 'error' ? t.conError : t.noReconocido}`,
+          }))}
+          valor={smsId}
+          alCambiar={(v) => {
+            setSmsId(v);
+            setEstado({ tipo: 'quieto' });
+          }}
+        />
+      </GrupoCampos>
       <Boton
         variante="secundaria"
         enviando={estado.tipo === 'probando'}

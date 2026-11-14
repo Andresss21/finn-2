@@ -1,13 +1,15 @@
 'use client';
 // Panel del tema (FT-77; 05 §10.6): Sistema, Claro y Oscuro. next-themes lo guarda en `localStorage` del dispositivo
 // (`finn-tema`) y pone `data-theme` en `<html>`; no escribe en el servidor. No importa nada de Next, para probarse aparte.
+// [C-45] El tema es una fila de un `GrupoCampos`: con tres opciones, segmentado (CAMPOS-V3 §6, CA-K3-6).
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import { GrupoCampos } from '../../../../componentes/base/campo';
 import { Seleccion, type Opcion } from '../../../../componentes/base/seleccion';
 import { ajustesApariencia as t } from '../../../../textos/ajustes-apariencia';
 
 const OPCIONES: readonly Opcion[] = [
-  { valor: 'system', etiqueta: t.sistema, descripcion: t.sistemaDescripcion },
+  { valor: 'system', etiqueta: t.sistema },
   { valor: 'claro', etiqueta: t.claro },
   { valor: 'oscuro', etiqueta: t.oscuro },
 ];
@@ -27,12 +29,14 @@ export function PanelApariencia() {
     setMontado(true);
   }, []);
   return (
-    <Seleccion
-      etiqueta={t.etiqueta}
-      descripcion={t.descripcion}
-      opciones={OPCIONES}
-      valor={montado && theme !== undefined ? (ANTIGUOS[theme] ?? theme) : 'system'}
-      alCambiar={setTheme}
-    />
+    <GrupoCampos>
+      <Seleccion
+        etiqueta={t.etiqueta}
+        descripcion={t.descripcion}
+        opciones={OPCIONES}
+        valor={montado && theme !== undefined ? (ANTIGUOS[theme] ?? theme) : 'system'}
+        alCambiar={setTheme}
+      />
+    </GrupoCampos>
   );
 }

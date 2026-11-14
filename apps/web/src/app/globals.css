@@ -840,6 +840,12 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
 .campo-afijo {
   color: var(--texto-terciario);
 }
+/* [C-45] El patrón de un formato (E5-10): área de texto de 4 líneas en su fila, monoespaciada, que parte en cualquier carácter. */
+textarea.campo-entrada {
+  resize: none;
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
 .campo-ayuda {
   font-size: 0.8125rem;
   color: var(--texto-secundario);

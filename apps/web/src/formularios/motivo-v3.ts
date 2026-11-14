@@ -23,6 +23,12 @@ export function motivoQueFalta(
 /** Después de tocar Guardar con errores, el foco va al primero (CA-K3-13). */
 export function useFocoAlPrimerError(forma: RefObject<HTMLElement | null>, intentos: number): void {
   useEffect(() => {
-    if (intentos > 0) forma.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+    // [C-45] El disparador de la lista y el segmentado no llevan `aria-invalid`: su fila con error sí (`data-error`).
+    if (intentos > 0)
+      forma.current
+        ?.querySelector<HTMLElement>(
+          '[aria-invalid="true"], .campo-fila[data-error] :is([role=radio], [aria-haspopup=listbox])',
+        )
+        ?.focus();
   }, [forma, intentos]);
 }

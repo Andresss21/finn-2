@@ -253,7 +253,7 @@ export function MovimientoBandeja({
           ))}
           <EnlaceFinn
             href={hrefRevisar}
-            className="inline-flex min-h-11 min-w-11 items-center px-2 text-enlace font-semibold underline"
+            className="inline-flex min-h-11 min-w-11 items-center px-2 font-bold text-enlace"
           >
             {elegir === undefined ? (ENLACE[vista] ?? t.revisar) : t.revisar}
           </EnlaceFinn>

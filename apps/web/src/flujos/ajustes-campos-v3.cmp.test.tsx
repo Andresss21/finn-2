@@ -59,7 +59,7 @@ afterEach(() => {
 
 async function montar(ui: ReactNode): Promise<HTMLElement> {
   document.body.style.cssText = 'background: var(--fondo); color: var(--texto)';
-  const nodo = document.createElement('main');
+  const nodo = document.createElement('div');
   document.body.append(nodo);
   const raiz = createRoot(nodo);
   await act(() => {
@@ -92,7 +92,9 @@ const disparador = (f: HTMLElement) =>
   f.querySelector<HTMLButtonElement>('button[aria-haspopup="listbox"]');
 const segmentado = (f: HTMLElement) => f.querySelector<HTMLElement>('[role=radiogroup]');
 const boton = (nodo: HTMLElement, texto: string): HTMLButtonElement => {
-  const b = [...nodo.querySelectorAll('button')].find((x) => x.textContent.trim().startsWith(texto));
+  const b = [...nodo.querySelectorAll('button')].find((x) =>
+    x.textContent.trim().startsWith(texto),
+  );
   if (b === undefined) throw new Error(`no hay un botón «${texto}»`);
   return b;
 };
@@ -138,7 +140,13 @@ const GRUPOS = [
       { id: 'c2', nombre: 'Cafés' },
     ],
   },
-  { nombre: 'Casa', categorias: [{ id: 'c3', nombre: 'Luz' }] },
+  {
+    nombre: 'Casa',
+    categorias: [
+      { id: 'c3', nombre: 'Luz' },
+      { id: 'c4', nombre: 'Agua' },
+    ],
+  },
 ];
 
 describe('PRU-CMP-AJUS Ajustes y Seguridad con los campos v3', () => {
@@ -219,9 +227,12 @@ describe('PRU-CMP-AJUS Ajustes y Seguridad con los campos v3', () => {
     expect(fila(nodo, tf.campos.banderas).textContent).toContain(base.opcional);
     expect(nodo.querySelector('select')).toBeNull();
     const casilla = fila(nodo, 'AAAA/MM/DD');
-    const marca = casilla.querySelector<HTMLInputElement>('input[type=checkbox]') as HTMLInputElement;
+    const marca = casilla.querySelector<HTMLInputElement>(
+      'input[type=checkbox]',
+    ) as HTMLInputElement;
     expect(marca.checked).toBe(false);
-    await userEvent.click(casilla.querySelector('.control-nombre') as HTMLElement);
+    // El control nativo cubre la fila: tocar el texto es tocar la casilla.
+    await userEvent.click(casilla);
     expect(marca.checked).toBe(true);
     const activo = fila(nodo, tf.campos.activo);
     const interruptor = activo.querySelector<HTMLInputElement>('[role=switch]') as HTMLInputElement;
@@ -230,7 +241,11 @@ describe('PRU-CMP-AJUS Ajustes y Seguridad con los campos v3', () => {
     const caja = activo.getBoundingClientRect();
     const pista = activo.querySelector('[data-control="interruptor"]')?.getBoundingClientRect();
     expect((pista?.right ?? 0) > caja.left + caja.width / 2).toBe(true);
-    expect((await axe.run(nodo)).violations).toEqual([]);
+    expect(
+      (await axe.run(nodo)).violations.map(
+        (v) => `${v.id}: ${v.nodes.map((n) => n.html.slice(0, 160)).join(' | ')}`,
+      ),
+    ).toEqual([]);
   });
 
   it('PRU-CMP-AJUS-943 [C-45, FT-73] CA-K3-13: un formato nuevo sin institución, nombre ni patrón tiene «Guardar formato» apagado con «Corregí 3 campos para guardar.»; al tocarlo no envía, marca los errores y el foco va a la institución', async () => {
@@ -271,7 +286,7 @@ describe('PRU-CMP-AJUS Ajustes y Seguridad con los campos v3', () => {
     expect(campo.hasAttribute('data-error')).toBe(true);
     expect(document.activeElement).toBe(campo.querySelector('input'));
     await userEvent.type(campo.querySelector('input') as HTMLInputElement, 'Davivienda');
-    expect(crear.getAttribute('aria-disabled')).toBeNull();
+    expect(boton(nodo, ti.crear).getAttribute('aria-disabled')).toBeNull();
   });
 
   it('PRU-CMP-AJUS-946 [C-45, FT-74] con un solo factor, la hoja de quitar ofrece «Agregar» y «Volver» como enlaces sin subrayado (C-33)', async () => {
@@ -347,7 +362,7 @@ describe('PRU-CMP-BAND reglas con los campos v3', () => {
     const panel = nodo.querySelector('[role=listbox]') as HTMLElement;
     expect(panel.textContent).toContain('Comida');
     expect(panel.textContent).toContain('Casa');
-    expect(panel.querySelectorAll('[role=option]').length).toBe(3);
+    expect(panel.querySelectorAll('[role=option]').length).toBe(4);
   });
 
   it('PRU-CMP-BAND-941 [C-45, FT-39] CA-K3-13: editar una regla sin cambios tiene «Guardar» apagado con «Todavía no cambiaste nada.» y al tocarlo no envía', async () => {
