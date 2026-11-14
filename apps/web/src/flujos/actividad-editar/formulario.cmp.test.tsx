@@ -324,4 +324,33 @@ describe('PRU-CMP-TX editar una transacción con los campos v3', () => {
     expect(ingreso.querySelector('.grupo-campos input[name="fecha"]')).not.toBeNull();
     expect(ingreso.querySelector('.grupo-campos input[name="comercio"]')).not.toBeNull();
   });
+
+  it('PRU-CMP-TX-885 [C-49, C-45] CA-R-13 con el gasto entero a Por cobrar: tu parte abre en $0.00, «Guardar cambios» no pide categoría y, al cambiar el comercio, se guarda sin tocar las líneas', async () => {
+    const accion = vi.fn<AccionEscritura>(() => ok());
+    const nodo = await montar(
+      <FormularioActividadEditar
+        {...base}
+        inicial={{
+          ...inicial,
+          lineas: [parte('l1', '30.00', { destino: 'por_cobrar', deudorId: CARLOS })],
+        }}
+        accion={accion}
+      />,
+    );
+    await vi.waitFor(() => {
+      expect(document.querySelector(`[aria-label="${g.cuantasCategorias}"]`)).not.toBeNull();
+    });
+    expect(etiquetado(g.tuParte).value).toBe('0.00');
+    expect(etiquetado(g.montoDe('Carlos')).value).toBe('30.00');
+    expect(guardar().getAttribute('aria-disabled')).not.toBe('true');
+    expect(motivo()).toBeUndefined();
+    await userEvent.fill(campo(nodo, 'comercio'), 'COSTCO');
+    await userEvent.click(guardar());
+    await vi.waitFor(() => {
+      expect(accion).toHaveBeenCalledTimes(1);
+    });
+    expect(accion.mock.calls[0]?.[0]).toMatchObject({ comercio: 'COSTCO' });
+    expect(accion.mock.calls[0]?.[0]).not.toHaveProperty('lineas');
+    expect(document.body.textContent).not.toContain(g.elegiCategoriaTuParte);
+  });
 });

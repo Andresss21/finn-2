@@ -442,4 +442,62 @@ describe('PRU-CMP-TX registrar gasto con los campos v3', () => {
       ).toEqual([]);
     }
   });
+
+  it('PRU-CMP-TX-883 [C-45, C-49] CA-K3-16 y CA-R-7 con tu parte en $0.00: el gasto entero va a Carlos; «¿En qué categorías?» no pide categoría, Guardar no tiene motivo y se envía solo la línea por cobrar (OP-20: cada línea > 0)', async () => {
+    ok();
+    await montar();
+    await escribir(total(), '30');
+    await userEvent.click(tarjeta(t.conAlguien));
+    await userEvent.click(chip('Carlos'));
+    await userEvent.click(radio(t.comoRepartirPersonas, t.montos));
+    await escribir(etiquetado(t.tuParte), '0');
+    await escribir(etiquetado(t.montoDe('Carlos')), '30');
+    await userEvent.tab();
+    expect(resumenes()).toEqual([t.repartido('$30.00', '$30.00')]);
+    expect(guardar().getAttribute('aria-disabled')).not.toBe('true');
+    expect(motivo()).toBeUndefined();
+    await tocarGuardar();
+    await vi.waitFor(() => {
+      expect(enviado()?.lineas).toEqual([{ monto: '30.00', destino: { deudorId: CARLOS } }]);
+    });
+    expect(vi.mocked(accion)).toHaveBeenCalledTimes(1);
+  });
+
+  it('PRU-CMP-TX-884 [C-49] CA-R-2, CA-R-3 y CA-R-16 con 3 categorías: con «Una» la categoría es segmentado (CA-K3-6), pero con «Varias» cada fila es la lista con su Disponible, el monto y la ×, nunca segmentado', async () => {
+    ok();
+    await montar({
+      categorias: [
+        categoria(SUPER, 'Supermercado', 'Casa', '$62.85'),
+        categoria(LUZ, 'Luz y agua', 'Casa', '$6.60'),
+        categoria(FARMACIA, 'Farmacia', 'Casa', '$27.65'),
+      ],
+    });
+    await escribir(total(), '148.60');
+    await userEvent.click(radio(t.categoria, 'Supermercado'));
+    expect(disparadores()).toHaveLength(1); // solo la Cuenta
+    await userEvent.click(radio(t.cuantasCategorias, t.varias));
+    expect(document.querySelector(`[role="radiogroup"][aria-label="${t.categoria}"]`)).toBeNull();
+    expect(disparadores()).toHaveLength(3);
+    expect(disparadores()[1]?.textContent).toContain('Supermercado');
+    expect(disparadores()[1]?.closest('.reparto-linea')?.textContent).toContain(
+      t.disponible('$62.85'),
+    );
+    expect(etiquetado(t.montoPara('Supermercado')).value).toBe('148.60');
+    expect(opcion('Supermercado').getAttribute('aria-disabled')).toBe('true');
+    await userEvent.click(opcion('Farmacia'));
+    await escribir(etiquetado(t.montoPara('Farmacia')), '52.50');
+    expect(etiquetado(t.montoPara('Supermercado')).value).toBe('96.10');
+    await userEvent.click(conTexto('.reparto-agregar button', t.agregarCategoria));
+    await userEvent.click(opcion('Luz y agua'));
+    expect(disparadores()).toHaveLength(4);
+    expect(etiquetado(t.quitarCategoria('Luz y agua'))).toBeTruthy();
+    await userEvent.click(etiquetado(t.quitarCategoria('Luz y agua')));
+    await tocarGuardar();
+    await vi.waitFor(() => {
+      expect(enviado()?.lineas).toEqual([
+        { monto: '96.10', destino: { categoriaId: SUPER } },
+        { monto: '52.50', destino: { categoriaId: FARMACIA } },
+      ]);
+    });
+  });
 });
