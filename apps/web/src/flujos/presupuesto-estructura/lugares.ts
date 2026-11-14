@@ -1,7 +1,7 @@
 // [CH-272] C-46: los lugares de la estructura, sin React (ESTRUCTURA-Y-COLAPSO §1.4, §1.5 y §5; la especificación es
 // `docs/anexos/finn-estructura/logica/estructura.js`). Un lugar es la posición en pantalla (sin archivadas ni grupos archivados ni
 // Pagos de tarjeta); OP-08 recibe la posición desde 1 en la lista completa, que sí los cuenta (04 §3.2). Lo usan la barra
-// «Mover» y, en el PR siguiente, el arrastre: los dos producen el mismo `Movimiento`.
+// «Mover» y el arrastre ([CH-275]): los dos producen el mismo `Movimiento`.
 import { estructura as t } from '../../textos/estructura';
 
 export interface CatVista {
@@ -47,6 +47,9 @@ export function ordinal(i: number, n: number, fem: boolean): string {
   const o = (fem ? t.ordinalesF : t.ordinalesM)[i] ?? `${String(i + 1)}.${fem ? 'ª' : 'º'}`;
   return `${fem ? 'la' : 'el'} ${o}`;
 }
+
+/** [CH-275] El ordinal de «→ segunda en Comida fuera»: sin artículo. */
+export const sinArticulo = (o: string): string => o.replace(/^(la|el) /, '');
 
 export const usuarios = (a: Arbol): GrupoVista[] => a.filter((g) => !g.archivado && !g.sistema);
 const visibles = (g: GrupoVista): CatVista[] => g.categorias.filter((c) => !c.archivada);

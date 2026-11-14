@@ -80,6 +80,20 @@ export const estructura = {
   expandisteTodos: 'Expandiste todos los grupos.',
   anuncioMover: (c: string, ord: string, g: string) => `Mover ${c}: ${ord} de ${g}.`,
   barraCerrada: 'Barra Mover cerrada.',
+  // [CH-275] C-46: el arrastre desde el asa (ESTRUCTURA-Y-COLAPSO §1.3, §4 y §5). El ordinal de «→ …» va sin artículo.
+  haciaCategoria: (ord: string, g: string) => `→ ${ord} en ${g}`,
+  haciaGrupo: (ord: string, n: number) =>
+    `→ ${ord} lugar · ${n === 1 ? '1 categoría' : `${String(n)} categorías`}`,
+  soltaAqui: 'Soltá aquí para dejarla al final · se abre en un momento',
+  tomaste: (c: string) => `Tomaste ${c}.`,
+  tomasteGrupo: (g: string) => `Tomaste el grupo ${g}. Los grupos se colapsan mientras lo movés.`,
+  sobre: (g: string, ord: string, alFinal: boolean) =>
+    `Sobre ${g}: ${ord}${alFinal ? ', al final' : ''}.`,
+  seAbrio: (g: string) => `Se abrió ${g}.`,
+  grupoLugar: (g: string, ord: string) => `${g}: ${ord} lugar.`,
+  soltaste: (resultado: string) => `Soltaste. ${resultado}`,
+  mismoLugar: (c: string) => `Soltaste ${c} en su mismo lugar.`,
+  cancelado: (c: string) => `Arrastre cancelado. ${c} volvió a su lugar.`,
   archivado: 'Archivado',
   archivada: 'Archivada',
   delSistema: 'Lo administra Finn',

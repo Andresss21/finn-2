@@ -1139,6 +1139,55 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
 .fz-resultado {
   animation: fz-resultado var(--duracion-normal) var(--curva-enfasis) both;
 }
+/* [CH-275] C-46 §1.3 y §3, Estructura: el arrastre. El hueco punteado, la fila levantada (escala 1.03 con `--elevacion-3`, en
+   `--duracion-normal`) y el destino resaltado (en `--duracion-rapida`). Con movimiento reducido, sin escala; las tres señales
+   (anillo, glifo y «→ …») quedan igual. */
+.fz-hueco {
+  margin: 6px 8px;
+  min-height: 48px;
+  border: 2px dashed var(--borde-control);
+  border-radius: 12px;
+  background: var(--superficie-hundida);
+}
+.fz-hueco-grupo {
+  min-height: 48px;
+  border: 2px dashed var(--borde-control);
+  border-radius: 14px;
+  background: var(--superficie-hundida);
+}
+@keyframes fz-tomar {
+  from {
+    scale: 1;
+    box-shadow: 0 0 0 2px var(--accion);
+  }
+}
+.fz-levantada {
+  scale: 1.03;
+  box-shadow:
+    0 0 0 2px var(--accion),
+    var(--elevacion-3);
+  animation: fz-tomar var(--duracion-normal) var(--curva-estandar) both;
+}
+.fz-destino,
+.fz-sobre {
+  transition-property: box-shadow, background-color;
+  transition-duration: var(--duracion-rapida);
+  transition-timing-function: var(--curva-estandar);
+}
+.fz-destino[data-destino] {
+  box-shadow:
+    0 0 0 2px var(--accion),
+    var(--elevacion-2);
+}
+.fz-sobre[data-sobre-colapsado] {
+  background: var(--accion-tonal);
+  box-shadow: inset 0 0 0 2px var(--accion);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fz-levantada {
+    scale: none;
+  }
+}
 /* [CH-274] Casilla, interruptor y opciones v3 (CAMPOS-V3 §8): la fila entera es el `<label>` y el blanco táctil. El control
    nativo cubre la fila sin verse; el dibujo (`data-control`) va al lado, oculto a los lectores. */
 .control-fila {
