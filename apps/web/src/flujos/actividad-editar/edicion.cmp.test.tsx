@@ -61,6 +61,14 @@ function Arnes({ extra }: { readonly extra: Partial<PropsEdicion> }) {
           negativo: false,
         },
         { id: OTRA, nombre: 'Farmacia', grupo: 'Casa', disponible: '$2.00', negativo: false },
+        // Con 4 o más la categoría es una lista (con 3 o menos, segmentado: CA-K3-6)
+        ...['Luz', 'Agua'].map((nombre) => ({
+          id: `${nombre}-id`,
+          nombre,
+          grupo: 'Casa',
+          disponible: '$3.00',
+          negativo: false,
+        })),
       ]}
       deudores={[]}
       e={estadoDelGasto(c, SIN_MARCAS)}

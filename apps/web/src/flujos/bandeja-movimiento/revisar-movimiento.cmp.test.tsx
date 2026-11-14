@@ -127,30 +127,28 @@ const resumen = (extra: Partial<ResumenDelMovimiento> = {}): ResumenDelMovimient
 });
 
 describe('PRU-CMP-BAND', () => {
-  it('PRU-CMP-BAND-210 [FT-35] la cuenta es una selección nativa de 52 px con la deuda de la tarjeta, Fecha y Monto van en dos columnas con «$» y no hay radios para la cuenta ni líneas «Se entiende como»', () => {
+  it('PRU-CMP-BAND-210 [FT-35, C-45] la cuenta, la fecha, el monto con «$» y el comercio son filas de un grupo v3 (el monto en fila, no billete), con la cuenta de la tarjeta elegida, la nota en su grupo y sin líneas «Se entiende como»', () => {
     const nodo = montarElemento(<Arnes inicial={campos('gasto', 1)} />);
-    const cuenta = nodo.querySelector<HTMLSelectElement>('select');
-    expect(cuenta?.labels[0]?.textContent).toContain(g.cuenta);
-    const caja = cuenta?.parentElement;
-    expect(caja?.getBoundingClientRect().height).toBe(52);
-    expect(caja?.textContent).toContain('Deuda $642.18');
-    const fecha = nodo.querySelector<HTMLElement>('input[name=fecha]');
-    const monto = nodo.querySelector<HTMLElement>('input[name=total]');
-    const f = fecha?.getBoundingClientRect();
-    const m = monto?.getBoundingClientRect();
-    expect(Math.abs((f?.top ?? 0) - (m?.top ?? 99))).toBeLessThan(2);
-    expect((m?.left ?? 0) > (f?.left ?? 99)).toBe(true);
-    expect(monto?.parentElement?.textContent).toContain('$');
+    const grupos = [...nodo.querySelectorAll('.grupo-campos')];
+    const [datos, nota] = [grupos[0], grupos.at(-1)];
+    // Con 2 cuentas, la cuenta es un segmentado en su fila (CA-K3-6)
+    const cuenta = datos?.querySelector(`[role=radiogroup][aria-label="${g.cuentaV3}"]`);
+    expect(cuenta?.querySelector('[role=radio][aria-checked=true]')?.textContent).toBe('Visa Oro');
+    const monto = datos?.querySelector<HTMLElement>('input[name=total]');
+    expect(datos?.querySelector('input[name=fecha]')).not.toBeNull();
+    expect(monto?.closest('.campo-fila')?.textContent).toContain('$');
+    expect(datos?.querySelector('input[name=comercio]')).not.toBeNull();
+    expect(nodo.querySelector('.campo-billete')).toBeNull();
+    expect(nota?.textContent).toContain(g.nota);
     expect(nodo.textContent).not.toContain('Se entiende como');
     expect(nodo.textContent).not.toContain('Fecha elegida');
-    expect(nodo.querySelectorAll('[role=radiogroup]')).toHaveLength(1);
   });
 
   it('PRU-CMP-BAND-211 [FT-35] el tipo es un selector segmentado de cuatro opciones iguales de al menos 44 px, con la del movimiento marcada, y cambiarlo con las flechas mueve la marca', () => {
     const nodo = montarElemento(<Arnes inicial={campos('gasto', 1)} />);
-    const grupo = nodo.querySelector('[role=radiogroup]');
-    expect(grupo?.getAttribute('aria-label')).toBe(t.revisar.tipo);
-    const opciones = [...nodo.querySelectorAll<HTMLElement>('[role=radio]')];
+    const grupo = nodo.querySelector(`[role=radiogroup][aria-label="${t.revisar.tipo}"]`);
+    expect(grupo).not.toBeNull();
+    const opciones = [...(grupo?.querySelectorAll<HTMLElement>('[role=radio]') ?? [])];
     expect(opciones.map((o) => o.textContent)).toEqual(Object.values(t.revisar.tipos));
     expect(opciones.every((o) => o.getBoundingClientRect().height >= 44)).toBe(true);
     expect(opciones.map((o) => Math.round(o.getBoundingClientRect().width))).toSatisfy(
@@ -167,7 +165,11 @@ describe('PRU-CMP-BAND', () => {
 
   it('PRU-CMP-BAND-212 [FT-35] un tipo que el servidor no propuso no deja ninguna opción marcada y un ingreso no ofrece líneas', () => {
     const sin = montarElemento(<Arnes inicial={campos('', 0)} />);
-    expect(sin.querySelectorAll('[role=radio][aria-checked=true]')).toHaveLength(0);
+    expect(
+      sin.querySelectorAll(
+        `[role=radiogroup][aria-label="${t.revisar.tipo}"] [role=radio][aria-checked=true]`,
+      ),
+    ).toHaveLength(0);
     expect(sin.querySelector('[data-campo-lineas]')).toBeNull();
     const ingreso = montarElemento(<Arnes inicial={campos('ingreso', 0)} />);
     expect(ingreso.querySelector('[data-campo-lineas]')).toBeNull();
@@ -231,11 +233,10 @@ describe('PRU-CMP-BAND', () => {
     const pago = montarElemento(
       <Arnes inicial={{ ...campos('pago_tarjeta', 0), origenId: AHORRO }} />,
     );
-    const origen = [...pago.querySelectorAll<HTMLSelectElement>('select')].find(
-      (s) => s.labels[0]?.textContent.includes(t.revisar.origen) === true,
-    );
-    expect(origen?.value).toBe(AHORRO);
-    expect([...(origen?.options ?? [])].map((o) => o.value)).not.toContain(VISA);
+    // [C-45] Una sola cuenta de efectivo: el segmentado v3 en su fila (CA-K3-6)
+    const origen = pago.querySelector(`[role=radiogroup][aria-label="${t.revisar.origen}"]`);
+    expect(origen?.querySelector('[role=radio][aria-checked=true]')?.textContent).toBe('Ahorro');
+    expect(origen?.textContent).not.toContain('Visa Oro');
     expect(pago.textContent).not.toContain(t.revisar.elegirCompra);
 
     // Devolución: «Elegí la compra» con las candidatas; al elegir, su línea con lo que queda y el monto copiado

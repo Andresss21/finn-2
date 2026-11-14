@@ -21,6 +21,13 @@ import LineasDeGasto from '../registrar-gasto/lineas';
 import { conCompra, type Campos, type CompraCandidata } from './campos';
 import type { BuscarCompras } from './eleccion-compra';
 
+/**
+ * Clases literales (L13): el borde del campo al que le falta un dato que el SMS no trae. Con `!`: la entrada de una fila v3 no
+ * lleva borde (`.campo-entrada`, fuera de las capas de Tailwind).
+ */
+const BORDE_FALTANTE =
+  '[&_input[name=fecha]]:border-2! [&_input[name=fecha]]:border-advertencia-texto!';
+
 interface Referencia {
   readonly id: string;
   readonly nombre: string;
@@ -93,40 +100,43 @@ export default function CamposMovimiento({
   ): string | undefined => formState.errors.lineas?.[i]?.[n]?.message;
   return (
     <>
-      <GrupoCampos>
-        <SeleccionNativa
-          etiqueta={g.cuentaV3}
-          marcador={g.elegirCuenta}
-          opciones={aOpciones(cuentas)}
-          valor={c.cuentaId}
-          alCambiar={poner('cuentaId')}
-          error={error('cuentaId')}
-        />
-        <EntradaFechaConAtajos
-          nombre="fecha"
-          etiqueta={g.fecha}
-          valor={c.fecha as FechaLocal}
-          alCambiar={poner('fecha')}
-          error={error('fecha')}
-          requerido
-          sinVistaPrevia
-          hoy={hoy}
-          atajos={ATAJOS}
-        />
-        <EntradaMonto
-          nombre="total"
-          etiqueta={t.revisar.monto}
-          valor={c.total}
-          alCambiar={poner('total')}
-          error={error('total')}
-          requerido
-        />
-        <EntradaTexto
-          etiqueta={g.comercio}
-          autoComplete="off"
-          {...formulario.register('comercio')}
-        />
-      </GrupoCampos>
+      {/* [CH-240 E3-13] La fecha que falta lleva el borde de advertencia (`--advertencia-texto`) */}
+      <div className={c.fecha === '' ? BORDE_FALTANTE : undefined}>
+        <GrupoCampos>
+          <SeleccionNativa
+            etiqueta={g.cuentaV3}
+            marcador={g.elegirCuenta}
+            opciones={aOpciones(cuentas)}
+            valor={c.cuentaId}
+            alCambiar={poner('cuentaId')}
+            error={error('cuentaId')}
+          />
+          <EntradaFechaConAtajos
+            nombre="fecha"
+            etiqueta={g.fecha}
+            valor={c.fecha as FechaLocal}
+            alCambiar={poner('fecha')}
+            error={error('fecha')}
+            requerido
+            sinVistaPrevia
+            hoy={hoy}
+            atajos={ATAJOS}
+          />
+          <EntradaMonto
+            nombre="total"
+            etiqueta={t.revisar.monto}
+            valor={c.total}
+            alCambiar={poner('total')}
+            error={error('total')}
+            requerido
+          />
+          <EntradaTexto
+            etiqueta={g.comercio}
+            autoComplete="off"
+            {...formulario.register('comercio')}
+          />
+        </GrupoCampos>
+      </div>
       {c.fecha === '' ? (
         // [CH-240 E3-13] El SMS no trae la fecha: la línea va debajo del grupo, en advertencia
         <p

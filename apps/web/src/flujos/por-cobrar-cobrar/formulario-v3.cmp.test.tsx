@@ -99,8 +99,8 @@ describe('PRU-CMP-COBRO cobrar con los campos v3', () => {
     expect(grupo?.querySelector('input[name="fecha"]')).not.toBeNull();
     const casilla = grupo?.querySelector<HTMLInputElement>('input[type="checkbox"]');
     expect(casilla?.checked).toBe(true);
-    // CA-K3-8: tocar el texto de la fila cambia la casilla
-    await userEvent.click(grupo?.querySelector('.control-nombre') as HTMLElement);
+    // CA-K3-8: tocar la fila cambia la casilla (el control nativo la cubre sin verse)
+    await userEvent.click(casilla?.closest('.campo-fila') as HTMLElement);
     expect(casilla?.checked).toBe(false);
     await userEvent.clear(total());
     expect(cobrar().getAttribute('aria-disabled')).toBe('true');

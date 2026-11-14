@@ -94,8 +94,11 @@ export function QuienPaga({
             elegidas={c.personas.map((p) => p.clave)}
             maximo={MAXIMO_PARTES - (c.varias ? c.filas.length : 1)}
             alCambiar={(claves) => {
+              // Una persona fija (E3-16) sigue elegida: tocarla no cambia nada
+              const nuevas = [...new Set([...fijas.map((p) => p.clave), ...claves])];
+              if (nuevas.length === c.personas.length && claves.length < nuevas.length) return;
               repartirEntre(
-                [...new Set([...fijas.map((p) => p.clave), ...claves])].map(
+                nuevas.map(
                   (clave) =>
                     c.personas.find((p) => p.clave === clave) ?? { clave, monto: '', pct: '' },
                 ),
