@@ -47,6 +47,8 @@
   --duracion-temblor: 380ms;
   --retardo-cascada: 40ms;
   --duracion-confirmacion: 650ms;
+  /* [CH-278] C-50: lo que se ve la etiqueta de resultado antes de irse sola; la interfaz lo lee, no lo escribe. */
+  --duracion-aviso: 3000ms;
   --capa-marco: 10;
   --capa-superpuesto: 40;
   --capa-aviso: 50;
