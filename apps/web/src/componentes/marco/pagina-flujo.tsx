@@ -26,6 +26,20 @@ const ANCHO = {
     'mx-auto flex min-h-dvh max-w-160 flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:45rem] xl:[--ancho-pantalla:none]',
 } as const;
 
+/**
+ * [CH-263, D-1, E5-11] Flujo largo con dos bloques naturales (el formulario y su impacto, o dos secciones con título) en una
+ * página `ancha`: dos columnas iguales con separación 36 desde 1280 px de ventana. Por debajo no cambia nada: las columnas son
+ * `contents` y el contenedor sigue siendo la pila de siempre, con su separación (la clave del mapa) y el orden del DOM.
+ */
+export const DOS_COLUMNAS = {
+  5: 'flex flex-col gap-5 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-9',
+  8: 'flex flex-col gap-8 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-9',
+} as const;
+/** Cada columna de `DOS_COLUMNAS[5]`: desde 1280 px, una pila con la misma separación que el contenedor. */
+export const COLUMNA = 'contents xl:flex xl:min-w-0 xl:flex-col xl:gap-5';
+/** La acción principal al pie de la columna izquierda cuando la derecha es el impacto (CH-263). */
+export const ACCION_COLUMNA_IZQUIERDA = 'w-full xl:w-[calc(50%-1.125rem)]';
+
 export function PaginaFlujo({
   titulo,
   descripcion,

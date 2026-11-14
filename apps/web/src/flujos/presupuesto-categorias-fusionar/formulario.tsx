@@ -8,6 +8,11 @@ import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
+import {
+  ACCION_COLUMNA_IZQUIERDA,
+  COLUMNA,
+  DOS_COLUMNAS,
+} from '../../componentes/marco/pagina-flujo';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearFechaTexto, formatearMonto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -160,8 +165,9 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
       {...(destinos.length === 0
         ? {}
         : {
+            ancha: true,
             acciones: (
-              <div className="w-full">
+              <div className={ACCION_COLUMNA_IZQUIERDA}>
                 <Boton
                   variante="peligro"
                   className="w-full"
@@ -191,72 +197,77 @@ export function FormularioFusionar(p: PropsFormularioFusionar) {
             e.preventDefault();
           }}
           noValidate
-          className="flex flex-col gap-5"
+          className={DOS_COLUMNAS[5]}
         >
-          <SeleccionNativa
-            alta
-            marcador={t.destino}
-            etiqueta={t.destino}
-            opciones={opciones}
-            valor={c.destino}
-            alCambiar={(v) => {
-              formulario.setValue('destino', v, { shouldDirty: true });
-            }}
-            {...(formulario.formState.errors.destino?.message === undefined
-              ? {}
-              : { error: formulario.formState.errors.destino.message })}
-          />
-          <section aria-labelledby="fusion-resumen" className="flex flex-col gap-2.5">
-            <h2 id="fusion-resumen" className="text-titulo-seccion">
-              {t.resumenTitulo}
-            </h2>
-            <ul className="divide-y divide-borde-sutil rounded-contenedor bg-superficie px-4 py-1 shadow-elevacion-1">
-              {filas.map((f) => (
-                <li key={f} className="py-2.5 text-texto-secundario">
-                  {f}
-                </li>
-              ))}
-            </ul>
-          </section>
-          {resumen.meta === undefined ? null : (
-            <AvisoEnLinea estado="advertencia">{t.metaDescartada(origen.nombre)}</AvisoEnLinea>
-          )}
-          <AvisoEnLinea estado="informacion">{t.intro(origen.nombre)}</AvisoEnLinea>
-          {c.destino === '' ? null : operacion.previsualizacion === undefined ? (
-            estado === 'enviando' ? (
-              <p role="status" className="text-texto-secundario">
-                {t.calculando}
-              </p>
-            ) : null
-          ) : rechazo === undefined ? (
-            <TarjetaImpacto
-              rotulo={t.rotuloImpacto}
-              {...(operacion.impactoCambio ? { nota: t.impactoCambio } : {})}
-              avisos={vista.avisos?.some((a) => a.codigo === 'AV-01') ? [t.periodoCerrado] : []}
-              filas={lineas.length === 0 ? [t.sinCambios] : lineas}
+          {/* [CH-263] A la izquierda, el destino y lo que se mueve; a la derecha, la tarjeta K4 del impacto. */}
+          <div className={COLUMNA}>
+            <SeleccionNativa
+              alta
+              marcador={t.destino}
+              etiqueta={t.destino}
+              opciones={opciones}
+              valor={c.destino}
+              alCambiar={(v) => {
+                formulario.setValue('destino', v, { shouldDirty: true });
+              }}
+              {...(formulario.formState.errors.destino?.message === undefined
+                ? {}
+                : { error: formulario.formState.errors.destino.message })}
             />
-          ) : (
-            <AvisoEnLinea estado="problema" aparecioDespues>
-              {t.rechazos.otro}
-            </AvisoEnLinea>
-          )}
-          {estado === 'error' && fallo !== undefined ? (
-            <AvisoEnLinea
-              estado="problema"
-              aparecioDespues
-              {...(REINTENTABLES.includes(fallo.categoria)
-                ? {
-                    accion: (
-                      <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                        {formularios.intentarDeNuevo}
-                      </Boton>
-                    ),
-                  }
-                : {})}
-            >
-              {fallo.mensaje}
-            </AvisoEnLinea>
-          ) : null}
+            <section aria-labelledby="fusion-resumen" className="flex flex-col gap-2.5">
+              <h2 id="fusion-resumen" className="text-titulo-seccion">
+                {t.resumenTitulo}
+              </h2>
+              <ul className="divide-y divide-borde-sutil rounded-contenedor bg-superficie px-4 py-1 shadow-elevacion-1">
+                {filas.map((f) => (
+                  <li key={f} className="py-2.5 text-texto-secundario">
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </section>
+            {resumen.meta === undefined ? null : (
+              <AvisoEnLinea estado="advertencia">{t.metaDescartada(origen.nombre)}</AvisoEnLinea>
+            )}
+            <AvisoEnLinea estado="informacion">{t.intro(origen.nombre)}</AvisoEnLinea>
+          </div>
+          <div className={COLUMNA}>
+            {c.destino === '' ? null : operacion.previsualizacion === undefined ? (
+              estado === 'enviando' ? (
+                <p role="status" className="text-texto-secundario">
+                  {t.calculando}
+                </p>
+              ) : null
+            ) : rechazo === undefined ? (
+              <TarjetaImpacto
+                rotulo={t.rotuloImpacto}
+                {...(operacion.impactoCambio ? { nota: t.impactoCambio } : {})}
+                avisos={vista.avisos?.some((a) => a.codigo === 'AV-01') ? [t.periodoCerrado] : []}
+                filas={lineas.length === 0 ? [t.sinCambios] : lineas}
+              />
+            ) : (
+              <AvisoEnLinea estado="problema" aparecioDespues>
+                {t.rechazos.otro}
+              </AvisoEnLinea>
+            )}
+            {estado === 'error' && fallo !== undefined ? (
+              <AvisoEnLinea
+                estado="problema"
+                aparecioDespues
+                {...(REINTENTABLES.includes(fallo.categoria)
+                  ? {
+                      accion: (
+                        <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
+                          {formularios.intentarDeNuevo}
+                        </Boton>
+                      ),
+                    }
+                  : {})}
+              >
+                {fallo.mensaje}
+              </AvisoEnLinea>
+            ) : null}
+          </div>
         </form>
       )}
     </PaginaFlujoDeRuta>

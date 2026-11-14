@@ -9,6 +9,11 @@ import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
+import {
+  ACCION_COLUMNA_IZQUIERDA,
+  COLUMNA,
+  DOS_COLUMNAS,
+} from '../../componentes/marco/pagina-flujo';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -177,8 +182,9 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
     <PaginaFlujoDeRuta
       titulo={t.titulo}
       rutaPadre={rutaPadre}
+      ancha
       acciones={
-        <div className="w-full">
+        <div className={ACCION_COLUMNA_IZQUIERDA}>
           <Boton
             className="w-full"
             enviando={estado === 'enviando' && confirmo}
@@ -203,128 +209,133 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
           e.preventDefault();
         }}
         noValidate
-        className="flex flex-col gap-5"
+        className={DOS_COLUMNAS[5]}
       >
-        <div className="flex flex-col gap-1.5">
-          <p className="font-semibold">{p.categoria}</p>
-          <p className="text-cuerpo-pequeno text-texto-secundario">{t.intro(p.categoria)}</p>
-        </div>
-        {nada ? <p>{t.nadaQueDecidir(p.categoria)}</p> : null}
-        {disponible === 0 ? null : (
-          <SeleccionNativa
-            alta
-            marcador={t.elegir}
-            etiqueta={
-              disponible > 0 ? t.destinoDisponible(montoTexto) : t.cubrirSobregiro(montoTexto)
-            }
-            opciones={opcionesDestino}
-            valor={c.destino}
-            alCambiar={(v) => {
-              formulario.setValue('destino', v, { shouldDirty: true });
-            }}
-          />
-        )}
-        {futuras === 0 ? null : (
-          <p data-futuras className="rounded-contenedor bg-superficie p-3.5 shadow-elevacion-1">
-            {t.futuras(futuras)}
-          </p>
-        )}
-        {programadas.map((x) => {
-          const decision = c.programadas[x.id] ?? DESACTIVAR;
-          const pasar = decision !== DESACTIVAR;
-          const poner = (v: string) => {
-            formulario.setValue(`programadas.${x.id}`, v, {
-              shouldDirty: true,
-              shouldValidate: formulario.formState.isSubmitted,
-            });
-          };
-          return (
-            <div key={x.id} className="flex flex-col gap-3">
-              <SeleccionNativa
-                alta
-                marcador={t.elegir}
-                etiqueta={t.programada(x.comercio, formatearMonto(x.monto))}
-                opciones={opcionesProgramada}
-                valor={pasar ? OTRA : DESACTIVAR}
-                alCambiar={(v) => {
-                  poner(v === DESACTIVAR ? DESACTIVAR : OTRA);
-                }}
-              />
-              {pasar ? (
+        {/* [CH-263] A la izquierda, las decisiones; a la derecha, la tarjeta K4 del impacto. */}
+        <div className={COLUMNA}>
+          <div className="flex flex-col gap-1.5">
+            <p className="font-semibold">{p.categoria}</p>
+            <p className="text-cuerpo-pequeno text-texto-secundario">{t.intro(p.categoria)}</p>
+          </div>
+          {nada ? <p>{t.nadaQueDecidir(p.categoria)}</p> : null}
+          {disponible === 0 ? null : (
+            <SeleccionNativa
+              alta
+              marcador={t.elegir}
+              etiqueta={
+                disponible > 0 ? t.destinoDisponible(montoTexto) : t.cubrirSobregiro(montoTexto)
+              }
+              opciones={opcionesDestino}
+              valor={c.destino}
+              alCambiar={(v) => {
+                formulario.setValue('destino', v, { shouldDirty: true });
+              }}
+            />
+          )}
+          {futuras === 0 ? null : (
+            <p data-futuras className="rounded-contenedor bg-superficie p-3.5 shadow-elevacion-1">
+              {t.futuras(futuras)}
+            </p>
+          )}
+          {programadas.map((x) => {
+            const decision = c.programadas[x.id] ?? DESACTIVAR;
+            const pasar = decision !== DESACTIVAR;
+            const poner = (v: string) => {
+              formulario.setValue(`programadas.${x.id}`, v, {
+                shouldDirty: true,
+                shouldValidate: formulario.formState.isSubmitted,
+              });
+            };
+            return (
+              <div key={x.id} className="flex flex-col gap-3">
                 <SeleccionNativa
                   alta
                   marcador={t.elegir}
-                  etiqueta={t.pasarlaA}
-                  opciones={opcionesDestinoProgramada}
-                  valor={decision === OTRA ? '' : decision}
-                  alCambiar={poner}
-                  {...(errores.programadas?.[x.id]?.message === undefined
-                    ? {}
-                    : { error: errores.programadas[x.id]?.message })}
+                  etiqueta={t.programada(x.comercio, formatearMonto(x.monto))}
+                  opciones={opcionesProgramada}
+                  valor={pasar ? OTRA : DESACTIVAR}
+                  alCambiar={(v) => {
+                    poner(v === DESACTIVAR ? DESACTIVAR : OTRA);
+                  }}
                 />
-              ) : null}
-            </div>
-          );
-        })}
-        {operacion.previsualizacion === undefined ? (
-          estado === 'enviando' ? (
-            <p role="status" className="text-texto-secundario">
-              {t.calculando}
-            </p>
-          ) : null
-        ) : rechazo === undefined ? (
-          <TarjetaImpacto
-            rotulo={t.rotuloImpacto}
-            {...(operacion.impactoCambio ? { nota: t.impactoCambio } : {})}
-            filas={
-              vista.impacto
-                ? [
-                    t.impactoLpa(
-                      `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
+                {pasar ? (
+                  <SeleccionNativa
+                    alta
+                    marcador={t.elegir}
+                    etiqueta={t.pasarlaA}
+                    opciones={opcionesDestinoProgramada}
+                    valor={decision === OTRA ? '' : decision}
+                    alCambiar={poner}
+                    {...(errores.programadas?.[x.id]?.message === undefined
+                      ? {}
+                      : { error: errores.programadas[x.id]?.message })}
+                  />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+        <div className={COLUMNA}>
+          {operacion.previsualizacion === undefined ? (
+            estado === 'enviando' ? (
+              <p role="status" className="text-texto-secundario">
+                {t.calculando}
+              </p>
+            ) : null
+          ) : rechazo === undefined ? (
+            <TarjetaImpacto
+              rotulo={t.rotuloImpacto}
+              {...(operacion.impactoCambio ? { nota: t.impactoCambio } : {})}
+              filas={
+                vista.impacto
+                  ? [
+                      t.impactoLpa(
+                        `${vista.impacto.deltaLpa > 0 ? '+' : ''}${formatearMonto(vista.impacto.deltaLpa)}`,
+                      ),
+                      // E4-25, E6-13: cada Disponible que cambia, «valor actual → nuevo» con el valor que dice el servidor.
+                      ...(vista.impacto.deltaDisponible ?? []).flatMap((x) => {
+                        const nombre =
+                          x.categoriaId === categoriaId
+                            ? p.categoria
+                            : p.destinos.find((d) => d.id === x.categoriaId)?.nombre;
+                        return nombre === undefined
+                          ? []
+                          : [
+                              <FilaAntesDespues
+                                key={x.categoriaId}
+                                nombre={nombre}
+                                antes={x.antes}
+                                despues={x.despues}
+                              />,
+                            ];
+                      }),
+                    ]
+                  : []
+              }
+            />
+          ) : (
+            <AvisoEnLinea estado="problema" aparecioDespues>
+              {MENSAJES[rechazo.codigo] ?? t.rechazos.otro}
+            </AvisoEnLinea>
+          )}
+          {estado === 'error' && fallo !== undefined ? (
+            <AvisoEnLinea
+              estado="problema"
+              aparecioDespues
+              {...(REINTENTABLES.includes(fallo.categoria)
+                ? {
+                    accion: (
+                      <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
+                        {formularios.intentarDeNuevo}
+                      </Boton>
                     ),
-                    // E4-25, E6-13: cada Disponible que cambia, «valor actual → nuevo» con el valor que dice el servidor.
-                    ...(vista.impacto.deltaDisponible ?? []).flatMap((x) => {
-                      const nombre =
-                        x.categoriaId === categoriaId
-                          ? p.categoria
-                          : p.destinos.find((d) => d.id === x.categoriaId)?.nombre;
-                      return nombre === undefined
-                        ? []
-                        : [
-                            <FilaAntesDespues
-                              key={x.categoriaId}
-                              nombre={nombre}
-                              antes={x.antes}
-                              despues={x.despues}
-                            />,
-                          ];
-                    }),
-                  ]
-                : []
-            }
-          />
-        ) : (
-          <AvisoEnLinea estado="problema" aparecioDespues>
-            {MENSAJES[rechazo.codigo] ?? t.rechazos.otro}
-          </AvisoEnLinea>
-        )}
-        {estado === 'error' && fallo !== undefined ? (
-          <AvisoEnLinea
-            estado="problema"
-            aparecioDespues
-            {...(REINTENTABLES.includes(fallo.categoria)
-              ? {
-                  accion: (
-                    <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
-                      {formularios.intentarDeNuevo}
-                    </Boton>
-                  ),
-                }
-              : {})}
-          >
-            {fallo.mensaje}
-          </AvisoEnLinea>
-        ) : null}
+                  }
+                : {})}
+            >
+              {fallo.mensaje}
+            </AvisoEnLinea>
+          ) : null}
+        </div>
       </form>
     </PaginaFlujoDeRuta>
   );

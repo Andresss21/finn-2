@@ -12,6 +12,7 @@ import { Boton } from '../../componentes/base/boton';
 import { Icono } from '../../componentes/base/icono';
 import { Resultado } from '../../componentes/base/resultado';
 import { Monto } from '../../componentes/dominio/monto';
+import { COLUMNA, DOS_COLUMNAS } from '../../componentes/marco/pagina-flujo';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { almacen } from '../../cliente/almacen';
@@ -305,122 +306,127 @@ export function FormularioConciliar({
     const fecha = formatearFecha(leida.fechaEstado);
     const fallo = fin.estado === 'error' ? fin.error : undefined;
     return (
-      <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
-        <div className="flex flex-col gap-5">
-          <p>{t.cuenta(cuenta)}</p>
-          <dl className="flex flex-col gap-1 rounded-contenedor bg-superficie px-3.5 py-2">
-            <div className="flex justify-between gap-3" data-fecha-corte>
-              <dt className="text-texto-secundario">{t.fechaCorte}</dt>
-              <dd className="font-semibold">{fecha}</dd>
+      <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre} ancha>
+        {/* [CH-263] El resumen y «Coinciden» a la izquierda; lo que no coincide y «Terminar», a la derecha. */}
+        <div className={DOS_COLUMNAS[5]}>
+          <div className={COLUMNA}>
+            <p>{t.cuenta(cuenta)}</p>
+            <dl className="flex flex-col gap-1 rounded-contenedor bg-superficie px-3.5 py-2">
+              <div className="flex justify-between gap-3" data-fecha-corte>
+                <dt className="text-texto-secundario">{t.fechaCorte}</dt>
+                <dd className="font-semibold">{fecha}</dd>
+              </div>
+              <div className="flex justify-between gap-3" data-saldo-final>
+                <dt className="text-texto-secundario">{t.saldoFinalEstado}</dt>
+                <dd>
+                  <Monto centavos={leida.saldoFinal} rol="cifra" />
+                </dd>
+              </div>
+            </dl>
+            <div className="flex flex-col gap-1">
+              <p data-saldo-estado>{t.saldoEstado(fecha, formatearMonto(leida.saldoFinal))}</p>
+              <p data-saldo-finn>{t.saldoFinn(fecha, formatearMonto(c.saldoFinn))}</p>
+              <p data-diferencia className="font-bold">
+                {t.diferencia(conSigno(c.diferencia))}
+              </p>
             </div>
-            <div className="flex justify-between gap-3" data-saldo-final>
-              <dt className="text-texto-secundario">{t.saldoFinalEstado}</dt>
-              <dd>
-                <Monto centavos={leida.saldoFinal} rol="cifra" />
-              </dd>
-            </div>
-          </dl>
-          <div className="flex flex-col gap-1">
-            <p data-saldo-estado>{t.saldoEstado(fecha, formatearMonto(leida.saldoFinal))}</p>
-            <p data-saldo-finn>{t.saldoFinn(fecha, formatearMonto(c.saldoFinn))}</p>
-            <p data-diferencia className="font-bold">
-              {t.diferencia(conSigno(c.diferencia))}
-            </p>
+            <section className="flex flex-col gap-2">
+              <h2 className="text-titulo-seccion">{t.coinciden(c.coincidencias.length)}</h2>
+              <fieldset className="flex flex-col gap-1">
+                <legend className="mb-1 text-cuerpo-pequeno text-texto-secundario">
+                  {t.coincidenAyuda}
+                </legend>
+                {c.coincidencias.map((x) => (
+                  <label key={x.transaccionId} data-coincidencia={x.transaccionId} className={CAJA}>
+                    <input
+                      type="checkbox"
+                      className="size-5 shrink-0"
+                      checked={marcadas.has(x.transaccionId)}
+                      onChange={() => {
+                        alternar(x.transaccionId);
+                      }}
+                    />
+                    <Fila
+                      comercio={x.comercio ?? dominio.sinComercio}
+                      fecha={x.fecha}
+                      monto={x.monto}
+                    />
+                  </label>
+                ))}
+              </fieldset>
+            </section>
           </div>
-          <section className="flex flex-col gap-2">
-            <h2 className="text-titulo-seccion">{t.coinciden(c.coincidencias.length)}</h2>
-            <fieldset className="flex flex-col gap-1">
-              <legend className="mb-1 text-cuerpo-pequeno text-texto-secundario">
-                {t.coincidenAyuda}
-              </legend>
-              {c.coincidencias.map((x) => (
-                <label key={x.transaccionId} data-coincidencia={x.transaccionId} className={CAJA}>
-                  <input
-                    type="checkbox"
-                    className="size-5 shrink-0"
-                    checked={marcadas.has(x.transaccionId)}
-                    onChange={() => {
-                      alternar(x.transaccionId);
-                    }}
-                  />
-                  <Fila
-                    comercio={x.comercio ?? dominio.sinComercio}
-                    fecha={x.fecha}
-                    monto={x.monto}
-                  />
-                </label>
-              ))}
-            </fieldset>
-          </section>
-          {c.soloEnEstado.length === 0 ? null : (
-            <section className="flex flex-col gap-2">
-              <h2 className="text-titulo-seccion">{t.soloEnEstado(c.soloEnEstado.length)}</h2>
-              <p className="text-cuerpo-pequeno text-texto-secundario">{t.soloEnEstadoNota}</p>
-              <ul className="flex flex-col gap-1">
-                {c.soloEnEstado.map((i) => {
-                  const m = leida.movimientos.find((x) => x.indice === i);
-                  if (m === undefined) return null;
-                  const tipo = ALTAS_SOPORTADAS.find((a: TipoAlta) =>
-                    (m.monto < 0 ? tiposAlta.cargo : tiposAlta.abono).includes(a),
-                  );
-                  return (
-                    <li key={i} data-solo-en-estado={i} className={CAJA_AGREGAR}>
-                      <Fila comercio={m.descripcion} fecha={m.fecha} monto={m.monto} />
-                      {tipo === undefined ? null : (
-                        <Agregar
-                          agregar={agregar}
-                          cuentaId={cuentaId}
-                          carga={leida.carga}
-                          movimiento={m}
-                          tipo={tipo}
-                          categorias={categorias}
-                        />
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
-          {soloEnFinn.length === 0 ? null : (
-            <section className="flex flex-col gap-2">
-              <h2 className="text-titulo-seccion">{t.soloEnFinn(soloEnFinn.length)}</h2>
-              {listaSoloEnFinn}
-            </section>
-          )}
-          <p className="text-cuerpo-pequeno text-texto-secundario">{t.nota}</p>
-          {fallo === undefined ? null : (
-            <AvisoEnLinea
-              estado="problema"
-              aparecioDespues
-              {...(REINTENTABLES.includes(fallo.categoria)
-                ? {
-                    accion: (
-                      <Boton variante="secundaria" onClick={() => void fin.reintentar()}>
-                        {formularios.intentarDeNuevo}
-                      </Boton>
-                    ),
-                  }
-                : {})}
-            >
-              {fallo.mensaje}
-              {fallo.codigo === 'firma_vencida' || fallo.codigo === 'firma_no_valida'
-                ? ` ${t.vencida}`
-                : ''}
-            </AvisoEnLinea>
-          )}
-          <div className="flex gap-3">
-            <Boton
-              enviando={fin.estado === 'enviando'}
-              textoEnviando={t.terminando}
-              deshabilitado={!fin.enLinea}
-              onClick={() => void terminarConciliacion()}
-            >
-              {t.terminar}
-            </Boton>
-            <Boton variante="secundaria" onClick={elegirOtro}>
-              {t.elegirOtro}
-            </Boton>
+          <div className={COLUMNA}>
+            {c.soloEnEstado.length === 0 ? null : (
+              <section className="flex flex-col gap-2">
+                <h2 className="text-titulo-seccion">{t.soloEnEstado(c.soloEnEstado.length)}</h2>
+                <p className="text-cuerpo-pequeno text-texto-secundario">{t.soloEnEstadoNota}</p>
+                <ul className="flex flex-col gap-1">
+                  {c.soloEnEstado.map((i) => {
+                    const m = leida.movimientos.find((x) => x.indice === i);
+                    if (m === undefined) return null;
+                    const tipo = ALTAS_SOPORTADAS.find((a: TipoAlta) =>
+                      (m.monto < 0 ? tiposAlta.cargo : tiposAlta.abono).includes(a),
+                    );
+                    return (
+                      <li key={i} data-solo-en-estado={i} className={CAJA_AGREGAR}>
+                        <Fila comercio={m.descripcion} fecha={m.fecha} monto={m.monto} />
+                        {tipo === undefined ? null : (
+                          <Agregar
+                            agregar={agregar}
+                            cuentaId={cuentaId}
+                            carga={leida.carga}
+                            movimiento={m}
+                            tipo={tipo}
+                            categorias={categorias}
+                          />
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+            {soloEnFinn.length === 0 ? null : (
+              <section className="flex flex-col gap-2">
+                <h2 className="text-titulo-seccion">{t.soloEnFinn(soloEnFinn.length)}</h2>
+                {listaSoloEnFinn}
+              </section>
+            )}
+            <p className="text-cuerpo-pequeno text-texto-secundario">{t.nota}</p>
+            {fallo === undefined ? null : (
+              <AvisoEnLinea
+                estado="problema"
+                aparecioDespues
+                {...(REINTENTABLES.includes(fallo.categoria)
+                  ? {
+                      accion: (
+                        <Boton variante="secundaria" onClick={() => void fin.reintentar()}>
+                          {formularios.intentarDeNuevo}
+                        </Boton>
+                      ),
+                    }
+                  : {})}
+              >
+                {fallo.mensaje}
+                {fallo.codigo === 'firma_vencida' || fallo.codigo === 'firma_no_valida'
+                  ? ` ${t.vencida}`
+                  : ''}
+              </AvisoEnLinea>
+            )}
+            <div className="flex gap-3">
+              <Boton
+                enviando={fin.estado === 'enviando'}
+                textoEnviando={t.terminando}
+                deshabilitado={!fin.enLinea}
+                onClick={() => void terminarConciliacion()}
+              >
+                {t.terminar}
+              </Boton>
+              <Boton variante="secundaria" onClick={elegirOtro}>
+                {t.elegirOtro}
+              </Boton>
+            </div>
           </div>
         </div>
       </PaginaFlujoDeRuta>
