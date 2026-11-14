@@ -28,4 +28,13 @@ export const base = {
   fechaVistaPrevia: (fecha: string) => `Fecha elegida: ${fecha}`,
   fechaNoExiste: 'Esa fecha no existe. Escribila como dd/mm/aaaa.',
   abrirCalendario: 'Elegir en el calendario',
+  // [CH-268] Campos v3 (C-45, CAMPOS-V3 §3 a §5): los textos de los componentes base, tal cual.
+  soloLectura: 'Solo lectura',
+  moneda: '$',
+  porcentaje: '%',
+  comasSolas: 'Las comas de miles se ponen solas.',
+  montoMayorQueCero: 'Escribí un monto mayor que $0.00.',
+  montoMaximoV3: 'El máximo es $21,474,836.47.',
+  fechaIncompleta: 'Completá la fecha como dd/mm/aaaa.',
+  corregirCampos: (n: number) => `Corregí ${n} ${n === 1 ? 'campo' : 'campos'} para guardar.`,
 } as const;

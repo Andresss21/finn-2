@@ -775,3 +775,192 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
     color: var(--texto-secundario);
   }
 }
+
+/* [CH-268] Campos y controles v3 (C-45; docs/anexos/finn-campos-v3/CAMPOS-V3.md §2 a §4 y campos-v3.css). Solo dentro de
+   `GrupoCampos` y en el billete del total: fuera de ellos el campo sigue con la caja de 06-identidad-visual §2.2 hasta que
+   su pantalla se migre. */
+.grupo-campos {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--superficie);
+  border-radius: var(--radio-contenedor);
+  box-shadow: var(--elevacion-1);
+}
+.campo-fila {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--espacio-0-5);
+  min-height: var(--espacio-16);
+  padding: 10px var(--espacio-4);
+  border-bottom: 1px solid var(--borde-sutil);
+  background: var(--superficie);
+  transition-property: box-shadow, background-color, margin, padding;
+  transition-duration: var(--duracion-rapida);
+}
+.campo-fila:first-child {
+  border-top-left-radius: var(--radio-contenedor);
+  border-top-right-radius: var(--radio-contenedor);
+}
+.campo-fila:last-child {
+  border-bottom: none;
+  border-bottom-left-radius: var(--radio-contenedor);
+  border-bottom-right-radius: var(--radio-contenedor);
+}
+.campo-rotulo {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+  font-family: var(--fuente-cuerpo);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  color: var(--texto-secundario);
+}
+.campo-nota {
+  font-weight: 500;
+  color: var(--texto-terciario);
+}
+.campo-valor {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-1);
+}
+.campo-entrada,
+.campo-afijo {
+  font-family: var(--fuente-cuerpo);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+.campo-entrada {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--texto);
+}
+.campo-entrada:focus-visible {
+  outline: none;
+}
+.campo-entrada::placeholder,
+.campo-afijo {
+  color: var(--texto-terciario);
+}
+.campo-ayuda {
+  font-size: 0.8125rem;
+  color: var(--texto-secundario);
+}
+.campo-error {
+  font-weight: 500;
+}
+.campo-fila:focus-within {
+  z-index: 2;
+  margin: 0 -6px;
+  padding-left: 22px;
+  padding-right: 22px;
+  border-radius: 12px;
+  border-bottom-color: transparent;
+  background: var(--superficie-elevada);
+  box-shadow: var(--elevacion-3);
+}
+.campo-fila:focus-within .campo-rotulo {
+  color: var(--accion);
+}
+.campo-fila[data-error] {
+  background: var(--problema-fondo);
+}
+.campo-fila[data-error] .campo-rotulo {
+  color: var(--problema-texto);
+}
+.campo-fila[data-error]:focus-within {
+  background: var(--superficie-elevada);
+  box-shadow:
+    0 0 0 2px var(--problema-borde),
+    var(--elevacion-2);
+}
+.campo-fila[data-apagado] {
+  cursor: not-allowed;
+}
+.campo-fila[data-apagado] :is(.campo-rotulo, .campo-entrada, .campo-afijo, svg) {
+  color: var(--texto-deshabilitado);
+  cursor: not-allowed;
+}
+.campo-billete {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  padding: var(--espacio-4) 18px 14px;
+  border-radius: var(--radio-tarjeta);
+  background: var(--marca);
+  color: var(--texto-sobre-marca);
+  box-shadow: var(--elevacion-1);
+}
+.campo-billete-rotulo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.campo-billete-linea {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--espacio-1);
+  padding-bottom: var(--espacio-1);
+}
+/* La línea de 2 px: el texto sobre la marca al 28 %, entera con foco y en problema con error (CAMPOS-V3 §4). */
+.campo-billete-linea::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--texto-sobre-marca);
+  opacity: 0.28;
+}
+.campo-billete:focus-within .campo-billete-linea::after {
+  opacity: 1;
+}
+.campo-billete[data-error] .campo-billete-linea::after {
+  background: var(--problema-borde);
+  opacity: 1;
+}
+.campo-billete-signo {
+  font-size: 1.75rem;
+  font-weight: 800;
+  opacity: 0.7;
+}
+.campo-billete-cifra {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  caret-color: currentColor;
+}
+.campo-billete-cifra:focus-visible {
+  outline: none;
+}
+.campo-billete-ayuda {
+  font-size: 0.8125rem;
+  opacity: 0.75;
+}
+@media (forced-colors: active) {
+  .campo-fila:focus-within,
+  .campo-billete:focus-within {
+    outline: 2px solid CanvasText;
+    outline-offset: -2px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .campo-fila {
+    transition: none;
+  }
+}

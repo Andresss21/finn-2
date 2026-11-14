@@ -1,0 +1,29 @@
+/* K2 · Campos v3 · CSS de referencia (los tokens vienen de tokens.css) */
+.grupo{background:var(--superficie);border-radius:16px;box-shadow:var(--elevacion-1);position:relative}
+.fila{position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:64px;padding:10px 16px;box-sizing:border-box;border-bottom:1px solid var(--borde-sutil);transition:box-shadow .12s,background .12s,margin .12s,padding .12s}
+.grupo>.fila:first-child{border-top-left-radius:16px;border-top-right-radius:16px}
+.grupo>.fila:last-child{border-bottom:none;border-bottom-left-radius:16px;border-bottom-right-radius:16px}
+.fila .rot{font-family:'Archivo',system-ui,sans-serif;font-weight:600;font-size:.75rem;line-height:1.3;letter-spacing:.04em;color:var(--texto-secundario)}
+.fila .val{font-family:'Archivo',system-ui,sans-serif;font-weight:600;font-size:1.0625rem;line-height:1.4;color:var(--texto);font-variant-numeric:tabular-nums}
+.fila .ph{color:var(--texto-terciario)}
+.fila:focus-within,.fila.foco{z-index:2;background:var(--superficie-elevada);border-radius:12px;margin:0 -6px;padding-left:22px;padding-right:22px;border-bottom-color:transparent;box-shadow:var(--elevacion-3)}
+.fila:focus-within .rot,.fila.foco .rot{color:var(--accion)}
+.fila.mal{background:var(--problema-fondo)}
+.fila.mal .rot{color:var(--problema-texto)}
+.fila.mal:focus-within,.fila.mal.foco{background:var(--superficie-elevada);box-shadow:0 0 0 2px var(--problema-borde),var(--elevacion-2)}
+.fila.apagada .rot,.fila.apagada .val{color:var(--texto-deshabilitado)}
+.fila.apagada{cursor:not-allowed}
+.billete{display:flex;flex-direction:column;gap:8px;padding:16px 18px 14px;border-radius:20px;background:var(--marca);color:var(--texto-sobre-marca);box-shadow:var(--elevacion-1)}
+.billete .linea{display:flex;align-items:baseline;gap:4px;padding-bottom:4px;border-bottom:2px solid color-mix(in srgb,var(--texto-sobre-marca) 28%,transparent)}
+.billete:focus-within .linea,.billete.foco .linea{border-bottom-color:var(--texto-sobre-marca)}
+.billete.mal .linea{border-bottom-color:var(--problema-borde)}
+.panel{position:absolute;left:8px;right:8px;top:calc(100% - 6px);z-index:30;display:flex;flex-direction:column;gap:2px;padding:6px;background:var(--superficie-elevada);border:1px solid var(--borde-sutil);border-radius:14px;box-shadow:var(--elevacion-3);max-height:340px;overflow:hidden}
+.opcion{display:flex;align-items:center;gap:12px;min-height:48px;padding:6px 10px;border-radius:10px;box-sizing:border-box}
+.opcion.on{background:var(--accion-tonal)}
+.opcion.encima{background:var(--superficie-hundida)}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 6px;border-radius:999px;border:1px solid var(--borde-sutil);background:transparent;font-family:'Archivo',system-ui,sans-serif;font-weight:500;font-size:.9375rem;color:var(--texto);box-sizing:border-box}
+.chip.on{border:2px solid var(--accion);background:var(--accion-tonal);font-weight:700}
+.chip.foco,.seg-op.foco,.boton.foco{outline:2px solid var(--foco);outline-offset:2px}
+.parte{display:grid;grid-template-columns:40px minmax(0,1fr) auto auto;gap:12px;align-items:center}
+@media (forced-colors: active){.fila:focus-within,.fila.foco{outline:2px solid CanvasText;outline-offset:-2px}}
+@media (prefers-reduced-motion: reduce){.fila{transition:none}}
