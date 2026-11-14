@@ -33,7 +33,7 @@ import { PantallaPagoTarjeta } from './pago';
 import { MontoDestello } from '../../../../../componentes/dominio/monto-destello';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-semibold text-texto underline ${FOCO}`;
+const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-bold text-enlace ${FOCO}`;
 const PRINCIPAL = `inline-flex min-h-12 items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion ${FOCO}`;
 const TONAL = `inline-flex min-h-12 items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion ${FOCO}`;
 const CONTENEDOR = 'flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie';

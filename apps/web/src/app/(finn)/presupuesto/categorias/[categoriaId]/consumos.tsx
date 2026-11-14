@@ -11,7 +11,7 @@ import { categoriaDetalle } from '../../../../../textos/categoria-detalle';
 
 const t = categoriaDetalle.consumos;
 const ENLACE =
-  'inline-flex min-h-11 items-center px-2 font-semibold underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+  'inline-flex min-h-11 items-center px-2 font-bold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
 export function Consumos({
   consumos,

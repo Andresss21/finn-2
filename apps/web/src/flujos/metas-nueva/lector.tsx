@@ -32,7 +32,7 @@ export async function LectorMetasNueva({ busqueda }: { readonly busqueda: Busque
         <p>{t.sinCategorias}</p>
         <EnlaceFinn
           href="/metas"
-          className="inline-flex min-h-11 items-center font-semibold underline"
+          className="inline-flex min-h-11 items-center font-bold text-enlace"
         >
           {t.volver}
         </EnlaceFinn>
