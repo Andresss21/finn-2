@@ -13,6 +13,8 @@ export const estructura = {
   enGrupo: (grupo: string) => `En ${grupo}`,
   editar: (nombre: string) => `Editar ${nombre}`,
   editarGrupo: 'Editar grupo',
+  /** Nombre accesible de «Editar grupo»: contiene el texto visible (WCAG 2.5.3, axe `label-content-name-mismatch`). */
+  editarGrupoDe: (grupo: string) => `Editar grupo ${grupo}`,
   listo: 'Listo',
   vacioTitulo: 'Todavía no hay categorías',
   vacioTexto: 'Creá tus grupos y categorías, o empezá con una lista sugerida y ajustala.',
