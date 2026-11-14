@@ -111,14 +111,19 @@ export function Campo({
       </div>
     );
   if (enGrupo)
-    // CAMPOS-V3 §3: «Opcional» va dentro del `<label>` (05 §10.7); ayuda y error, dentro de la fila.
+    // CAMPOS-V3 §3: «Opcional» va dentro del `<label>` (05 §10.7); ayuda y error, dentro de la fila. [CH-271] El `<label>` lleva
+    // el id `{id}-l`: la selección se nombra con el rótulo más el valor (CAMPOS-V3 §6).
     return (
       <div
         className="campo-fila"
         {...(error === undefined ? {} : { 'data-error': '' })}
         {...(deshabilitado ? { 'data-apagado': '' } : {})}
       >
-        <label htmlFor={id} className={etiquetaOculta ? 'sr-only' : 'campo-rotulo'}>
+        <label
+          htmlFor={id}
+          id={`${id}-l`}
+          className={etiquetaOculta ? 'sr-only' : 'campo-rotulo'}
+        >
           <span>{etiqueta}</span>
           {opcional}
         </label>

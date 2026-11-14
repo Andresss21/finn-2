@@ -887,9 +887,148 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
 .campo-fila[data-apagado] {
   cursor: not-allowed;
 }
-.campo-fila[data-apagado] :is(.campo-rotulo, .campo-entrada, .campo-afijo, svg) {
+.campo-fila[data-apagado]
+  :is(.campo-rotulo, .campo-entrada, .campo-afijo, .campo-disparador, .campo-disparador-texto, svg) {
   color: var(--texto-deshabilitado);
   cursor: not-allowed;
+}
+/* [CH-271] Selección y buscador v3 (CAMPOS-V3 §6 y §7): el disparador ocupa la fila, la lista es propia en todos los
+   navegadores y se abre debajo de la fila sin tapar el rótulo. */
+.campo-disparador {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--grafico-tinta);
+  text-align: left;
+  cursor: pointer;
+}
+/* Toda la fila es el blanco del disparador. */
+.campo-disparador::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.campo-disparador:focus-visible {
+  outline: none;
+}
+.campo-disparador-texto {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--texto);
+}
+.campo-marcador {
+  color: var(--texto-terciario);
+}
+.campo-valor > [data-icono='search'] {
+  color: var(--grafico-referencia);
+}
+.campo-detalle {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--texto-secundario);
+}
+.campo-detalle[data-negativo] {
+  color: var(--problema-texto);
+}
+.campo-panel {
+  position: absolute;
+  top: calc(100% - 6px);
+  right: 8px;
+  left: 8px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 340px;
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid var(--borde-sutil);
+  border-radius: 14px;
+  background: var(--superficie-elevada);
+  box-shadow: var(--elevacion-3);
+}
+.campo-panel:focus-visible {
+  outline: none;
+}
+.campo-panel-grupo {
+  padding: 8px 10px 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-secundario);
+}
+.campo-opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  min-height: 48px;
+  padding: 6px 10px;
+  border-radius: var(--radio-control);
+  color: var(--accion);
+  cursor: pointer;
+}
+.campo-opcion[data-activa] {
+  background: var(--superficie-hundida);
+}
+.campo-opcion[aria-selected='true'] {
+  background: var(--accion-tonal);
+}
+.campo-opcion-nombre {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--texto);
+}
+.campo-opcion[aria-selected='true'] .campo-opcion-nombre {
+  font-weight: 700;
+}
+.campo-panel-mensaje {
+  padding: 10px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--texto-secundario);
+}
+.campo-panel-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 4px 4px 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--problema-texto);
+}
+/* C-33: un botón tonal, sin subrayado. */
+.campo-reintentar {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radio-control);
+  background: var(--accion-tonal);
+  color: var(--accion);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.campo-reintentar:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
 }
 .campo-billete {
   display: flex;
