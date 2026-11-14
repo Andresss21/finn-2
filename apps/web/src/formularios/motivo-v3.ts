@@ -1,7 +1,8 @@
 'use client';
 // [C-45] «Guardar» de los formularios v3 (CAMPOS-V3 §5 y §11): se ve apagado mientras falte algo, sigue tocable y dice debajo qué
 // falta; al tocarlo, el contrato marca los errores y el foco va al primero. Lo usan Registrar ingreso, Cobrar y Editar
-// transacción; Registrar gasto tiene su propio motivo (C-49 §3).
+// transacción; Registrar gasto tiene su propio motivo (C-49 §3). Las pantallas de Cuentas tienen el suyo (#588): aquí el
+// único faltante del monto dice «Escribí el monto para guardar.» (CAMPOS-V3 §5).
 import { useEffect, type RefObject } from 'react';
 import type * as z from 'zod';
 import { base } from '../textos/base';

@@ -21,7 +21,7 @@ import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta, SuperpuestoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMontoTexto } from '../../formato';
-import { motivoQueFalta, useFocoAlPrimerError } from '../../formularios/guardar-v3';
+import { motivoQueFalta, useFocoAlPrimerError } from '../../formularios/motivo-v3';
 import type { ValoresDeUrl } from '../../formularios/valores-de-url';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';

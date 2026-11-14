@@ -21,7 +21,7 @@ import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impact
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMontoTexto } from '../../formato';
-import { motivoQueFalta, useFocoAlPrimerError } from '../../formularios/guardar-v3';
+import { motivoQueFalta, useFocoAlPrimerError } from '../../formularios/motivo-v3';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';

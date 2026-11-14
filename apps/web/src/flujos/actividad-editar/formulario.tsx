@@ -16,7 +16,7 @@ import {
   PaginaFlujoDeRuta,
   useCerrarFlujo,
 } from '../../componentes/navegacion/flujo-de-ruta';
-import { motivoQueFalta } from '../../formularios/guardar-v3';
+import { motivoQueFalta } from '../../formularios/motivo-v3';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
 import { estados } from '../../textos/estados';
