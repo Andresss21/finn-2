@@ -6,6 +6,7 @@
 // [C-45] La fecha y el saldo son un `GrupoCampos` (CAMPOS-V3 §2; en una tarjeta, «Debo · Tengo a favor» en su fila) y cada
 // transacción por marcar es una casilla en fila (§8). «Ver diferencia» sigue §5 y §11; el enlace va sin subrayado (C-33).
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
+import { usePathname } from 'next/navigation';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { PieConBorrador } from '../../componentes/formularios/borrador-recuperado';
@@ -26,6 +27,8 @@ import {
   formatearFecha,
   formatearMonto,
 } from '../../formato';
+import { almacen } from '../../cliente/almacen';
+import { claveDeBorrador } from '../../formularios/clave-borrador';
 import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -124,6 +127,13 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
   const marcadas = useRef(0);
   const { estado, error: fallo, exito, previsualizacion } = operacion;
   const { volverAEditar } = operacion;
+  // [Bug 20] 05 §4.11: el borrador se borra al terminar con `ok: true`. Se confirma en «Revisar», donde el borrador (que vive con
+  // los datos) ya no está montado: sin esto quedaba con el id de la verificación guardada y la próxima la previsualizaba con
+  // ese id, que la base ya tiene (INTERNO).
+  const ruta = usePathname();
+  useEffect(() => {
+    if (estado === 'listo') almacen.borrar(claveDeBorrador(ruta));
+  }, [estado, ruta]);
 
   // Al llegar una previsualización se pasa al paso que se pidió; un rechazo vuelve a editar con su mensaje.
   useEffect(() => {
