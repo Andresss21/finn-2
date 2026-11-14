@@ -5,7 +5,8 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
 import { base } from '../../textos/base';
-import { Campo, MensajeError } from './campo';
+import { Campo, MensajeError, useEnGrupo } from './campo';
+import { SeleccionFila } from './seleccion-fila';
 
 export interface Opcion {
   readonly valor: string;
@@ -43,6 +44,19 @@ export function Seleccion({
   deshabilitada = false,
 }: PropsSeleccion) {
   const idEtiqueta = useId();
+  // [CH-271] Dentro de `GrupoCampos`, la selección v3 (C-45): fila, lista propia y segmentado con 3 o menos.
+  if (useEnGrupo())
+    return (
+      <SeleccionFila
+        etiqueta={etiqueta}
+        opciones={opciones.map((o) => ({ ...o, detalle: o.descripcion }))}
+        valor={valor}
+        alCambiar={alCambiar}
+        descripcion={descripcion}
+        error={error}
+        deshabilitada={deshabilitada}
+      />
+    );
   if (opciones.length > MAXIMO_VISIBLES) {
     return (
       <Suspense

@@ -4,8 +4,9 @@
 // nombre, el teclado y el valor son los del `<select>`. No reemplaza a `Seleccion` (Mover, Cuentas y Revisar movimiento).
 import { Fragment } from 'react';
 import { cn } from '../../components/ui/utils';
-import { Campo } from './campo';
+import { Campo, useEnGrupo } from './campo';
 import { Icono, type NombreIcono } from './icono';
+import { SeleccionFila } from './seleccion-fila';
 
 export interface OpcionNativa {
   readonly valor: string;
@@ -15,6 +16,8 @@ export interface OpcionNativa {
   readonly icono?: NombreIcono;
   /** Las opciones con el mismo grupo se agrupan en la lista. */
   readonly grupo?: string;
+  /** [CH-271] Dentro de `GrupoCampos`, el detalle es un negativo y va en problema (CAMPOS-V3 §6). */
+  readonly negativo?: boolean;
 }
 
 export interface PropsSeleccionNativa {
@@ -50,6 +53,20 @@ export function SeleccionNativa({
   deshabilitado = false,
   nombre,
 }: PropsSeleccionNativa) {
+  // [CH-271] Dentro de `GrupoCampos`, la selección v3 (C-45): la lista es propia, no la del sistema. Fuera, como hasta ahora.
+  if (useEnGrupo())
+    return (
+      <SeleccionFila
+        etiqueta={etiqueta}
+        opciones={opciones}
+        valor={valor}
+        alCambiar={alCambiar}
+        marcador={marcador}
+        error={error}
+        deshabilitada={deshabilitado}
+        nombre={nombre}
+      />
+    );
   const elegida = opciones.find((o) => o.valor === valor);
   const lista = (grupo: string | undefined) =>
     opciones
