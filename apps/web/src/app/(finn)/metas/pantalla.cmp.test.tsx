@@ -140,11 +140,32 @@ describe('PRU-CMP-META-101 metas', () => {
     expect(raiz.querySelector('[data-meta="m1"]')?.getAttribute('data-vencida')).toBe('no');
   });
 
-  it('PRU-CMP-META-101 sin metas lo dice y ofrece crear una con la primera categoría sin meta', () => {
+  it('PRU-CMP-META-101 sin metas lo dice y ofrece crear una eligiendo la categoría', () => {
     const raiz = mostrar(<PantallaMetas dto={dto([], [{ id: 'c9', nombre: 'Gas' }])} />);
     expect(raiz.textContent).toContain('Todavía no tenés metas');
     const crear = [...raiz.querySelectorAll('a')].find((a) => a.textContent === 'Crear una meta');
-    expect(crear?.getAttribute('href')).toBe('/metas/nueva?categoria=c9');
+    expect(crear?.getAttribute('href')).toBe('/metas/nueva');
+  });
+
+  it('PRU-CMP-META-133 [FT-17] con una meta y categorías sin meta, «Nueva meta» lleva a /metas/nueva sin fijar categoría, con una o con varias; sin ninguna, no aparece', () => {
+    const nuevaMeta = (raiz: HTMLElement) =>
+      [...raiz.querySelectorAll('a')].find((a) => a.textContent === 'Nueva meta');
+    const varias = mostrar(
+      <PantallaMetas
+        dto={dto(
+          [meta()],
+          [
+            { id: 'c8', nombre: 'Pago de préstamo' },
+            { id: 'c9', nombre: 'Viaje' },
+          ],
+        )}
+      />,
+    );
+    expect(nuevaMeta(varias)?.getAttribute('href')).toBe('/metas/nueva');
+    const una = mostrar(<PantallaMetas dto={dto([meta()], [{ id: 'c9', nombre: 'Viaje' }])} />);
+    expect(nuevaMeta(una)?.getAttribute('href')).toBe('/metas/nueva');
+    const ninguna = mostrar(<PantallaMetas dto={dto([meta()])} />);
+    expect(nuevaMeta(ninguna)).toBeUndefined();
   });
 
   it('PRU-CMP-META-101 [CA-17.6] el detalle de una categoría de pago no ofrece crear una meta', () => {
