@@ -1,5 +1,10 @@
 'use client';
 // Formulario del flujo de prueba `/pruebas/eco` (TA-210): usa `useFormularioFinn` y `useOperacion` como lo hará cada flujo.
+import {
+  AvisoBorrador,
+  DescartarBorrador,
+  PieConBorrador,
+} from '../../../../componentes/formularios/borrador-recuperado.tsx';
 import { useCallback } from 'react';
 import { AvisoEnLinea } from '../../../../componentes/base/aviso.tsx';
 import { Boton } from '../../../../componentes/base/boton.tsx';
@@ -61,19 +66,7 @@ export function FormularioEco({
     ['OCUPADO', 'INCIERTO', 'INTERNO'].includes(error.categoria);
   return (
     <form onSubmit={(e) => void formulario.enviar(e)} noValidate>
-      {borrador.recuperado ? (
-        <AvisoEnLinea
-          estado="informacion"
-          aparecioDespues
-          accion={
-            <Boton variante="secundaria" onClick={borrador.descartar}>
-              {formularios.descartarBorrador}
-            </Boton>
-          }
-        >
-          {formularios.borradorRecuperado}
-        </AvisoEnLinea>
-      ) : null}
+      <AvisoBorrador borrador={borrador} />
       <EntradaTexto
         etiqueta={'Buscar'}
         name="buscar"
@@ -87,16 +80,18 @@ export function FormularioEco({
         {...formulario.register('texto')}
         {...(mensajeTexto === undefined ? {} : { error: mensajeTexto })}
       />
-      <Boton
-        tipo="submit"
-        enviando={estado === 'enviando'}
-        deshabilitado={!operacion.enLinea}
-        {...(operacion.motivoSinEnvio === undefined
-          ? {}
-          : { motivoDeshabilitado: operacion.motivoSinEnvio })}
-      >
-        {'Guardar'}
-      </Boton>
+      <PieConBorrador descartar={<DescartarBorrador borrador={borrador} />}>
+        <Boton
+          tipo="submit"
+          enviando={estado === 'enviando'}
+          deshabilitado={!operacion.enLinea}
+          {...(operacion.motivoSinEnvio === undefined
+            ? {}
+            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+        >
+          {'Guardar'}
+        </Boton>
+      </PieConBorrador>
       {estado === 'confirmando' ? (
         <AvisoEnLinea
           estado="advertencia"

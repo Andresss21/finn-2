@@ -9,6 +9,7 @@ import { Superpuesto, type DesdeSuperpuesto } from '../marco/superpuesto';
 import { PaginaFlujo } from '../marco/pagina-flujo';
 import { AvisoEnLinea, type EstadoFinanciero } from './aviso';
 import { ErrorPantalla } from './error-pantalla';
+import { base } from '../../textos/base';
 import { formularios } from '../../textos/formularios';
 import { Boton } from './boton';
 import { Resultado } from './resultado';
@@ -289,7 +290,7 @@ describe('PRU-CMP-VAL-103 superpuestos, avisos, resultados y vacíos', () => {
     expect(cerrar).toHaveBeenCalledTimes(1);
   });
 
-  it('PRU-CMP-VAL-103 el aviso en línea comunica cada estado con tres señales: color, glifo y texto', () => {
+  it('PRU-CMP-VAL-103 [C-51] el aviso en línea comunica cada estado con tres señales: color y forma del glifo y el tono nombrado antes del título, sobre el mismo fondo sin teñir', () => {
     const raiz = montar(
       <>
         {estados.map((e) => (
@@ -301,17 +302,21 @@ describe('PRU-CMP-VAL-103 superpuestos, avisos, resultados y vacíos', () => {
     );
     const fondos = new Set<string>();
     const glifos = new Set<string>();
+    const colores = new Set<string>();
     for (const e of estados) {
       const aviso = raiz.querySelector<HTMLElement>(`[data-estado="${e}"]`) as HTMLElement;
-      const glifo = aviso.querySelector('svg[role=img]') as SVGElement;
-      expect(glifo.getAttribute('aria-label'), e).toBeTruthy();
+      const glifo = aviso.querySelector('.fz-aviso-glifo svg') as SVGElement;
+      expect(glifo.getAttribute('aria-hidden'), e).toBe('true');
       glifos.add(glifo.innerHTML);
+      colores.add(getComputedStyle(glifo).color);
       fondos.add(getComputedStyle(aviso).backgroundColor);
+      expect(aviso.querySelector('.sr-only')?.textContent).toBe(`${base.tonos[e]}: `);
       expect(aviso.textContent).toContain(`Título ${e}`);
       expect(getComputedStyle(aviso).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
     }
     expect(glifos.size).toBe(estados.length);
-    expect(fondos.size).toBe(estados.length);
+    expect(colores.size).toBe(estados.length);
+    expect(fondos.size).toBe(1);
   });
 
   it('PRU-CMP-VAL-103 el aviso lleva role=status solo si aparece después de cargar la pantalla', () => {

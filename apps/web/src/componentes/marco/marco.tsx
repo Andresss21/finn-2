@@ -39,6 +39,7 @@ import {
   seccionDeRuta,
   volverDeRuta,
 } from '../navegacion/secciones';
+import { AvisosDelMarco } from './avisos-del-marco';
 import { ContextoAcciones, type AccionesPublicadas } from './publicar-acciones';
 import { ProveedorEncabezado, useEncabezado } from './proveedor-encabezado';
 
@@ -186,17 +187,13 @@ function CuerpoDelMarco({
       >
         {navegacion.saltar}
       </a>
-      {enLinea ? null : (
-        // E6-3 (entrega 4): forma aprobada, `--marca` de 48 px de alto y radio 16, con la nube tachada.
-        <div
-          role="status"
-          data-sin-conexion
-          className="text-etiqueta fixed inset-x-4 top-16 z-40 flex min-h-12 items-center gap-2 rounded-contenedor bg-marca px-3.5 py-2.5 text-texto-sobre-marca md:top-2 md:right-6 md:left-68"
-        >
-          <Icono nombre="wifioff" tamano={18} />
-          <span>{bloqueada ? navegacion.sinConexionNavegacion : navegacion.sinConexion}</span>
-        </div>
-      )}
+      {/* [CH-286] E6-3 con C-51: sin conexión y la versión nueva, en la pastilla del aviso en línea (ya no la franja `--marca`). */}
+      <AvisosDelMarco
+        conMarco
+        sinConexion={
+          enLinea ? null : bloqueada ? navegacion.sinConexionNavegacion : navegacion.sinConexion
+        }
+      />
       {pendientes.size > 0 ? (
         // E6-2: franja de 3 px (`--accion` sobre `--accion-tonal`) debajo del margen seguro; con movimiento reducido
         // queda fija al 38 % (la regla de movimiento de `globals.css` anula la animación).

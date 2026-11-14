@@ -3,10 +3,14 @@
 // después del último cambio, se lee después de montar (en un efecto, para no romper la hidratación) y se borra al
 // terminar con `ok: true`, al descartar y ante `NO_ENCONTRADO`. Conserva el id de creación y la copia de `esperado` de
 // cuando se abrió, así que un cambio hecho en otra parte termina en `conflicto_desactualizado`. No calcula montos (PF-3).
+// [CH-286] C-51 (enmienda E3-17): el aviso «Recuperamos…» sale una sola vez por borrador. Al leerlo se marca `avisoVisto` en la
+// misma clave (el formato no cambia de versión: el borrador guardado antes, sin la marca, avisa una vez y queda marcado); las
+// escrituras siguientes la conservan, y un borrador nuevo (después de guardar o descartar) la empieza sin marcar.
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { almacen } from '../cliente/almacen';
 import { instanteActual } from '../formato/instante';
+import { formularios } from '../textos/formularios';
 import { claveDeBorrador, PREFIJO_BORRADOR } from './clave-borrador';
 import type { Operacion } from './use-operacion';
 
@@ -20,6 +24,8 @@ interface Guardado {
   readonly id: string | null;
   readonly esperado: Readonly<Record<string, unknown>> | undefined;
   readonly revisionAlAbrir: string | null;
+  /** [CH-286] El aviso de borrador recuperado ya salió para este borrador. */
+  readonly avisoVisto?: true;
 }
 
 /** Al salir de la sesión (4.11): se borran todos los borradores de la pestaña. */
@@ -77,6 +83,9 @@ export function useBorrador<Campos>(opciones: OpcionesBorrador<Campos>) {
   const leido = useRef<string | null>(null); // la clave ya leída
   const terminado = useRef(false);
   const [recuperado, setRecuperado] = useState(false);
+  const visto = useRef(false); // el borrador de esta clave ya avisó
+  const [avisar, setAvisar] = useState(false);
+  const [anuncio, setAnuncio] = useState('');
   const serializado = JSON.stringify(campos);
 
   // Leer: después de montar. Hasta entonces no se escribe, para no pisar el borrador con los valores iniciales.
@@ -88,6 +97,10 @@ export function useBorrador<Campos>(opciones: OpcionesBorrador<Campos>) {
     restaurar(completarConIniciales(JSON.parse(inicial.current), guardado.campos) as Campos);
     restaurarBorrador({ id: guardado.id, esperado: guardado.esperado });
     setRecuperado(true);
+    visto.current = true;
+    if (guardado.avisoVisto === true) return;
+    almacen.escribir(clave, JSON.stringify({ ...guardado, avisoVisto: true }));
+    setAvisar(true);
   }, [clave, restaurar, restaurarBorrador]);
 
   // Escribir: 500 ms después del último cambio; sin cambios respecto de los valores iniciales, no hay borrador.
@@ -106,6 +119,7 @@ export function useBorrador<Campos>(opciones: OpcionesBorrador<Campos>) {
         id,
         esperado,
         revisionAlAbrir: revisionAlAbrir ?? null,
+        ...(visto.current ? { avisoVisto: true as const } : {}),
       };
       almacen.escribir(clave, JSON.stringify(guardado));
     }, ESPERA_MS);
@@ -123,7 +137,9 @@ export function useBorrador<Campos>(opciones: OpcionesBorrador<Campos>) {
     if (estado === 'listo' || error?.categoria === 'NO_ENCONTRADO') {
       terminado.current = true;
       borrar();
+      visto.current = false;
       setRecuperado(false);
+      setAvisar(false);
     } else if (estado === 'editando') {
       terminado.current = false;
     }
@@ -131,9 +147,16 @@ export function useBorrador<Campos>(opciones: OpcionesBorrador<Campos>) {
 
   const descartar = useCallback((): void => {
     borrar();
+    visto.current = false;
     setRecuperado(false);
+    setAvisar(false);
+    setAnuncio(formularios.descartasteBorrador);
     alDescartar();
   }, [borrar, alDescartar]);
 
-  return { recuperado, descartar, borrar };
+  /**
+   * `recuperado`: hay un borrador restaurado («Descartar borrador» al pie). `avisar`: es la primera vez que se abre este borrador
+   * (el aviso momentáneo). `anuncio`: lo que dice la región de estado del borrador.
+   */
+  return { recuperado, avisar, anuncio, descartar, borrar };
 }

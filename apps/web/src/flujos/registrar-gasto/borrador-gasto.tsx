@@ -3,11 +3,9 @@
 // ruta) y, una vez montado, restaura lo escrito en la pestaña con el mismo id de creación y ofrece descartarlo.
 import { useCallback } from 'react';
 import type { UseFormReset } from 'react-hook-form';
-import { AvisoEnLinea } from '../../componentes/base/aviso';
-import { Boton } from '../../componentes/base/boton';
+import { AvisoBorrador, DescartarEnPie } from '../../componentes/formularios/borrador-recuperado';
 import { useBorrador } from '../../formularios/use-borrador';
 import type { Operacion } from '../../formularios/use-operacion';
-import { formularios } from '../../textos/formularios';
 import type { CamposDeRegistro as Campos } from './campos';
 
 export default function BorradorGasto({
@@ -15,11 +13,14 @@ export default function BorradorGasto({
   inicial,
   operacion,
   reset,
+  pie,
 }: {
   readonly campos: Campos;
   readonly inicial: Campos;
   readonly operacion: Operacion;
   readonly reset: UseFormReset<Campos>;
+  /** [CH-286] Dónde va «Descartar borrador», en el pie del formulario. */
+  readonly pie: HTMLElement | null;
 }) {
   const borrador = useBorrador<Campos>({
     campos,
@@ -34,19 +35,11 @@ export default function BorradorGasto({
       reset(inicial);
     }, [reset, inicial]),
   });
-  if (!borrador.recuperado) return null;
+  // [CH-286] C-51: el aviso momentáneo arriba y «Descartar borrador» al pie, en el lugar que deja el formulario.
   return (
-    <AvisoEnLinea
-      estado="informacion"
-      aparecioDespues
-      titulo={formularios.borradorRecuperado}
-      accion={
-        <Boton variante="discreta" onClick={borrador.descartar}>
-          {formularios.descartarBorrador}
-        </Boton>
-      }
-    >
-      {formularios.borradorCuerpo}
-    </AvisoEnLinea>
+    <>
+      <AvisoBorrador borrador={borrador} />
+      <DescartarEnPie borrador={borrador} pie={pie} />
+    </>
   );
 }

@@ -2,14 +2,14 @@
 // `RegistroServiceWorker` (05 §8.4, FE-54, FE-55), en el layout raíz: registra `/serwist/sw.js` solo en producción, sin
 // `SerwistProvider` (su `cacheOnNavigation` guardaría cada URL, FE-20, y `reloadOnOnline` perdería lo escrito, FE-21).
 // Si hay una versión instalada esperando, muestra el aviso de 7.6; "Recargar" la activa y la página se recarga una vez.
+// [CH-286] El aviso es el del sistema de C-51 (`AvisosDelMarco`), arriba del contenido y no al pie.
 import { useEffect, useState } from 'react';
 import { escucharInstalacion } from '../../cliente/instalacion';
-import { formularios } from '../../textos/formularios';
-import { AvisoEnLinea } from '../base/aviso';
-import { Boton } from '../base/boton';
+import { AvisosDelMarco, publicarVersionNueva, useHayMarco } from './avisos-del-marco';
 
 export function RegistroServiceWorker() {
   const [espera, setEspera] = useState<ServiceWorker | null>(null);
+  const hayMarco = useHayMarco();
 
   // Instalación a pedido (8.7): se guarda el evento aunque no haya service worker (desarrollo).
   useEffect(() => escucharInstalacion(), []);
@@ -48,25 +48,10 @@ export function RegistroServiceWorker() {
     };
   }, []);
 
-  if (espera === null) return null;
-  return (
-    <div className="fixed inset-x-0 bottom-24 z-50 mx-auto max-w-md px-4 md:bottom-6">
-      <AvisoEnLinea
-        estado="informacion"
-        aparecioDespues
-        accion={
-          <Boton
-            variante="secundaria"
-            onClick={() => {
-              espera.postMessage({ type: 'SKIP_WAITING' });
-            }}
-          >
-            {formularios.recargar}
-          </Boton>
-        }
-      >
-        {formularios.versionNueva}
-      </AvisoEnLinea>
-    </div>
-  );
+  // [CH-286] C-51 (E6-8): la versión que espera va a los avisos del sistema; los dibuja el `Marco`, o este componente donde no hay.
+  useEffect(() => {
+    publicarVersionNueva(espera);
+  }, [espera]);
+  if (hayMarco) return null;
+  return <AvisosDelMarco sinConexion={null} />;
 }

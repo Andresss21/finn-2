@@ -90,7 +90,8 @@ describe('PRU-CMP-INICIO', () => {
     );
     const nodo = montar(accion as unknown as AccionEscritura);
     await tocar(boton(nodo, t.devolverReserva('$30.00')));
-    expect(nodo.querySelector('[role="status"]')?.textContent).toContain('No se pudo guardar.');
+    // [CH-286] Un problema que aparece después es `role="alert"` (C-51 §6).
+    expect(nodo.querySelector('[role="alert"]')?.textContent).toContain('No se pudo guardar.');
     expect(nodo.textContent).not.toContain(t.deshacer);
   });
 });

@@ -100,7 +100,9 @@ const PROG = [{ id: PROGRAMADA, comercio: 'Gimnasio', monto: 3000 as never }];
 const conImpacto = async (nodo: HTMLElement): Promise<void> => {
   await vi.waitFor(() => {
     expect(
-      nodo.querySelector('[data-impacto-k4]') ?? nodo.querySelector('[role="status"]:not(:empty)'),
+      // [CH-286] El rechazo es un problema: `role="alert"` (C-51 §6).
+      nodo.querySelector('[data-impacto-k4]') ??
+        nodo.querySelector('[role="status"]:not(:empty), [role="alert"]:not(:empty)'),
     ).not.toBeNull();
   });
 };

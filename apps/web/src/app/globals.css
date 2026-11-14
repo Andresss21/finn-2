@@ -1763,3 +1763,118 @@ textarea.campo-entrada {
   background: var(--problema-fondo);
   color: var(--problema-texto);
 }
+/* [CH-286] C-51, aviso en línea: línea compacta (AVISOS-EN-LINEA §2, §3 y §6; `componentes/base/aviso.tsx`). Una sola forma
+   para toda la familia, sin caja teñida ni borde: `--superficie-elevada` sobre `--fondo` y `--superficie-hundida` dentro de una
+   superficie (hojas, paneles y tarjetas, donde en día `--superficie-elevada` es el mismo blanco). Pastilla de 48 px si es una
+   línea, con la acción a la derecha; rectángulo si tiene descripción, con la acción debajo. La acción es siempre un enlace de
+   texto: los botones con fondo que lleguen como acción pierden el fondo. El problema suma un borde interior de 1 px. El
+   momentáneo (borrador recuperado) entra y se va con opacidad; con movimiento reducido no anima (la regla del principio). */
+.fz-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-3);
+  min-height: 48px;
+  padding: var(--espacio-3) var(--espacio-4);
+  border-radius: var(--radio-contenedor);
+  background: var(--superficie-elevada);
+  color: var(--texto);
+  font-family: var(--fuente-cuerpo);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  transition: opacity var(--duracion-normal) var(--curva-salida);
+}
+:where(.bg-superficie, .bg-superficie-elevada, .fz-hoja, [data-superficie]) .fz-aviso {
+  background: var(--superficie-hundida);
+}
+.fz-aviso[data-forma='pastilla'] {
+  align-items: center;
+  padding: var(--espacio-2) var(--espacio-4);
+  border-radius: var(--radio-pastilla);
+}
+.fz-aviso[data-estado='problema'] {
+  box-shadow: inset 0 0 0 1px var(--problema-borde);
+}
+.fz-aviso[data-fase] {
+  animation: fz-aparece var(--duracion-normal) var(--curva-enfasis) both;
+}
+.fz-aviso[data-fase='saliendo'] {
+  opacity: 0;
+}
+.fz-aviso-glifo {
+  display: flex;
+  flex: none;
+  padding-top: 2px;
+}
+.fz-aviso[data-forma='pastilla'] > .fz-aviso-glifo {
+  padding-top: 0;
+}
+.fz-aviso-texto {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+.fz-aviso-titulo {
+  font-weight: 600;
+  color: var(--texto);
+}
+.fz-aviso-descripcion {
+  font-weight: 400;
+  color: var(--texto-secundario);
+}
+.fz-aviso-accion {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  margin: 0 0 calc(var(--espacio-2) * -1) calc(var(--espacio-2) * -1);
+}
+.fz-aviso[data-forma='pastilla'] > .fz-aviso-accion {
+  margin: calc(var(--espacio-2) * -1) 0;
+}
+.fz-aviso-accion :is(a, button),
+.fz-enlace-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  width: auto;
+  height: auto;
+  min-height: var(--tactil-minimo);
+  padding: 0 var(--espacio-2);
+  border: none;
+  border-radius: var(--radio-control);
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--fuente-cuerpo);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--enlace);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+.fz-aviso[data-forma='pastilla'] > .fz-aviso-accion :is(a, button) {
+  white-space: nowrap;
+}
+.fz-aviso-accion :is(a, button):focus-visible,
+.fz-enlace-accion:focus-visible,
+.fz-aviso-cerrar:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+.fz-aviso-cerrar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--tactil-minimo);
+  height: var(--tactil-minimo);
+  margin: calc(var(--espacio-2) * -1) calc(var(--espacio-2) * -1) calc(var(--espacio-2) * -1) 0;
+  border: none;
+  border-radius: var(--radio-control);
+  background: transparent;
+  color: var(--texto-secundario);
+  cursor: pointer;
+}

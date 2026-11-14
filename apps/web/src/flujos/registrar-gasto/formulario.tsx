@@ -9,6 +9,7 @@ import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useCallback, useMemo, useRef, useState, type SyntheticEvent } from 'react';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
+import { PieConBorrador } from '../../componentes/formularios/borrador-recuperado';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
@@ -112,6 +113,7 @@ export function FormularioRegistrarGasto({
   const c = formulario.watch();
   const [marcas, setMarcas] = useState<Marcas>(SIN_MARCAS);
   const [anuncio, setAnuncio] = useState('');
+  const [pieBorrador, setPieBorrador] = useState<HTMLElement | null>(null);
   const raiz = useRef<HTMLFormElement>(null);
   const e = estadoDelGasto(c, marcas);
 
@@ -267,7 +269,10 @@ export function FormularioRegistrarGasto({
         : {
             acciones: (
               // [CH-240 E6-18, E6-21] La barra fija queda a 20 px de los bordes: los del pie de `PaginaFlujo`, sin relleno extra
-              <div className="w-full xl:ml-auto xl:w-[calc(50%-1.125rem)]">{guardar}</div>
+              <div className="w-full xl:ml-auto xl:w-[calc(50%-1.125rem)]">
+                {/* [CH-286] C-51: «Descartar borrador» a la izquierda de guardar, mientras haya borrador. */}
+                <PieConBorrador lugar={setPieBorrador}>{guardar}</PieConBorrador>
+              </div>
             ),
           })}
     >
@@ -294,7 +299,13 @@ export function FormularioRegistrarGasto({
           className="flex flex-col gap-6"
         >
           <Suspense fallback={null}>
-            <BorradorGasto campos={c} inicial={inicial} operacion={operacion} reset={reset} />
+            <BorradorGasto
+              campos={c}
+              inicial={inicial}
+              operacion={operacion}
+              reset={reset}
+              pie={pieBorrador}
+            />
           </Suspense>
           <p role="status" className="sr-only">
             {anuncio}

@@ -20,6 +20,16 @@ export const base = {
     'deuda-sin-respaldo': 'Deuda sin respaldo',
     informacion: 'Información',
   },
+  /** [CH-286] El tono de un aviso en línea, nombrado para el lector antes del título (C-51 §2 y §6). */
+  tonos: {
+    positivo: 'Listo',
+    cero: 'En cero',
+    advertencia: 'Advertencia',
+    problema: 'Problema',
+    deuda: 'Deuda',
+    'deuda-sin-respaldo': 'Deuda sin respaldo',
+    informacion: 'Información',
+  },
   resultados: (n: string) => (n === '1' ? '1 resultado' : `${n} resultados`),
   signoDelMonto: 'Signo del monto',
   montoIncompleto: 'Escribí un monto.',

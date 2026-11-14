@@ -15,6 +15,8 @@ export const formularios = {
   borradorRecuperado: 'Recuperamos lo que estabas escribiendo',
   descartarBorrador: 'Descartar borrador',
   borradorCuerpo: 'Lo guardamos en este dispositivo cuando saliste sin guardar.',
+  /** [CH-286] El anuncio al tocar «Descartar borrador» (C-51 §4). */
+  descartasteBorrador: 'Descartaste el borrador.',
   usarValorActual: 'Usar el valor actual',
   incierto: 'No pudimos confirmar si se guardó. Volvé a intentarlo; no se duplicará.',
   huboCambios: 'Hubo cambios desde que abriste esto. Al guardar se verifica.',

@@ -1,6 +1,6 @@
 'use client';
-// `ErrorDeFlujo` (E6-5, `T3-errores-de-flujo`; 05 §4.7, 04 §7.7): el error de un formulario, arriba del pie, en una caja
-// `--problema-fondo` con `dang` y `role="alert"`, con el texto del servidor (`mensaje`). Un patrón por tipo de flujo:
+// `ErrorDeFlujo` (E6-5, `T3-errores-de-flujo`; 05 §4.7, 04 §7.7): el error de un formulario, arriba del pie, en el aviso en
+// línea de problema ([CH-286] C-51) con `dang` y `role="alert"`, con el texto del servidor (`mensaje`). Un patrón por tipo de flujo:
 // - corto: `OCUPADO` e `INCIERTO` (después del reintento automático) con «Intentar de nuevo»;
 // - largo: `VALIDACION` en el campo y UN solo resumen aquí, `INTERNO` con la referencia e «Intentar de nuevo»,
 //   `conflicto_id` con «Ver lo guardado» y «Guardar como nuevo».
@@ -8,8 +8,8 @@
 // barra fija del pie.
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import { formularios } from '../../textos/formularios';
+import { AvisoEnLinea } from '../base/aviso';
 import { Boton } from '../base/boton';
-import { Icono } from '../base/icono';
 
 export interface PropsErrorDeFlujo {
   readonly tipo: 'corto' | 'largo';
@@ -35,36 +35,31 @@ export function ErrorDeFlujo({
       : error.categoria === 'INTERNO' ||
         error.categoria === 'OCUPADO' ||
         error.categoria === 'INCIERTO';
+  const accion =
+    tipo === 'largo' && conflictoId ? (
+      <>
+        {alVerGuardado === undefined ? null : (
+          <Boton variante="secundaria" onClick={alVerGuardado}>
+            {formularios.verGuardado}
+          </Boton>
+        )}
+        {alGuardarComoNuevo === undefined ? null : (
+          <Boton variante="secundaria" onClick={alGuardarComoNuevo}>
+            {formularios.guardarComoNuevo}
+          </Boton>
+        )}
+      </>
+    ) : reintentable && alReintentar !== undefined ? (
+      <Boton variante="secundaria" onClick={alReintentar}>
+        {formularios.intentarDeNuevo}
+      </Boton>
+    ) : null;
+  // [CH-286] C-51: el aviso en línea de problema (borde interior, `dang`, `role="alert"`); las acciones, enlaces de texto.
   return (
-    <div
-      role="alert"
-      data-error-de-flujo={tipo}
-      className="flex flex-col items-start gap-3 rounded-contenedor bg-problema-fondo p-3.5 text-problema-texto"
-    >
-      <p className="flex items-start gap-2.5 font-semibold">
-        <span className="mt-0.5 shrink-0">
-          <Icono nombre="dang" tamano={20} />
-        </span>
-        <span>{error.mensaje}</span>
-      </p>
-      {tipo === 'largo' && conflictoId ? (
-        <div className="flex flex-wrap gap-2">
-          {alVerGuardado === undefined ? null : (
-            <Boton variante="secundaria" onClick={alVerGuardado}>
-              {formularios.verGuardado}
-            </Boton>
-          )}
-          {alGuardarComoNuevo === undefined ? null : (
-            <Boton variante="secundaria" onClick={alGuardarComoNuevo}>
-              {formularios.guardarComoNuevo}
-            </Boton>
-          )}
-        </div>
-      ) : reintentable && alReintentar !== undefined ? (
-        <Boton variante="secundaria" onClick={alReintentar}>
-          {formularios.intentarDeNuevo}
-        </Boton>
-      ) : null}
+    <div data-error-de-flujo={tipo}>
+      <AvisoEnLinea estado="problema" aparecioDespues accion={accion}>
+        {error.mensaje}
+      </AvisoEnLinea>
     </div>
   );
 }

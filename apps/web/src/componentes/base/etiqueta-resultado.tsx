@@ -22,6 +22,9 @@ import { EnlaceFinn } from '../navegacion/enlace-finn';
 import {
   crearEtiquetaReloj,
   deshacerEnFila,
+  leerMs,
+  relojDeVentana,
+  reducido,
   type EstadoReloj,
   type MotivoEspera,
 } from './etiqueta-tiempo';
@@ -46,18 +49,7 @@ export interface ResultadoEtiqueta {
   readonly alIrse?: () => void;
 }
 
-const MS_POR_S = 1000;
 const ENFOCABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-/** Un token de tiempo en ms, como lo resuelve el navegador; `undefined` si no está. */
-function leerMs(token: string): number | undefined {
-  const v = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
-  const m = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(v);
-  if (m === null) return undefined;
-  const n = Number(m[1]);
-  return m[2] === 'ms' ? n : n * MS_POR_S;
-}
-const reducido = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function ultimoEnfocable(e: Element | null): HTMLElement | null {
   if (e === null) return null;
@@ -93,12 +85,7 @@ export function useEtiqueta(anunciar: (frase: string) => void) {
     crearEtiquetaReloj<ResultadoEtiqueta>({
       duracion: () => leerMs('--duracion-aviso'),
       salida: () => (reducido() ? 0 : (leerMs('--duracion-normal') ?? 0)),
-      reloj: {
-        poner: (f, ms) => window.setTimeout(f, ms),
-        quitar: (i) => {
-          window.clearTimeout(i);
-        },
-      },
+      reloj: relojDeVentana,
       alCambiar: setEstado,
       alIrse: (r) => {
         if (r.alIrse === undefined) return;
