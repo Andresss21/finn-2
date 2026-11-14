@@ -11,6 +11,13 @@ export default async function PaginaMetas({
 }: {
   readonly searchParams: Promise<BusquedaDePagina>;
 }) {
-  const aviso = (await searchParams)['resultado'];
-  return <LectorMetas resultado={typeof aviso === 'string' ? aviso : undefined} />;
+  const busqueda = await searchParams;
+  const aviso = busqueda['resultado'];
+  const nombre = busqueda['nombre']; // [CH-281] la categoría de la meta eliminada
+  return (
+    <LectorMetas
+      resultado={typeof aviso === 'string' ? aviso : undefined}
+      nombre={typeof nombre === 'string' ? nombre : undefined}
+    />
+  );
 }

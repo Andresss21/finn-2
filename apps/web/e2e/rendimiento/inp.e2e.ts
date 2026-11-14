@@ -4,6 +4,7 @@
 // fija FINN_REN_ROJO (regla de persistencia de 07 §6.6). Lo que aquí falla es no poder medir.
 import { expect, test } from '../configuracion/semilla.ts';
 import { entrarAal2 } from '../ayudas/sesion.ts';
+import { etiqueta as etiquetaResultado } from '../ayudas/etiqueta.ts';
 import { elegirOpcion } from '../ayudas/seleccion-nativa.ts';
 import { esperarContenido } from '../ayudas/esperas.ts';
 import { mediana } from '../../../../tools/pruebas/rendimiento/clasificar.ts';
@@ -106,7 +107,7 @@ const ESCENARIOS: Record<string, Paso> = {
         .first()
         .getByRole('button', { name: /^Aprobar/ })
         .click();
-      await expect(page.getByTestId('resultado')).toBeVisible();
+      await expect(etiquetaResultado(page)).toBeVisible(); // [CH-281] la etiqueta de C-50
     },
   },
   'abrir y cerrar un flujo superpuesto': {

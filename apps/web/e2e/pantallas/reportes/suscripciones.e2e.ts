@@ -193,7 +193,8 @@ test.describe('PRU-E2E-REP suscripciones detectadas', () => {
     await fila(page, 'NETFLIX').getByRole('link').click();
     await esperarContenido(page);
     await page.getByRole('button', { name: 'Desactivar', exact: true }).click();
-    await expect(page.getByTestId('resultado')).toContainText('Desactivaste NETFLIX');
+    // [CH-281] C-50: vuelve a la lista con «Desactivada» en la fila y la frase en su región de estado
+    await expect(fila(page, 'NETFLIX').getByRole('status')).toContainText('Desactivaste NETFLIX');
 
     // El 17/06 cae mientras está desactivada; el 18/06 se reactiva desde el reporte (CF-20).
     fijarRelojServidor('2027-06-18T10:00:00-06:00');

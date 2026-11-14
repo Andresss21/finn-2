@@ -136,6 +136,10 @@ function Cuerpo(p: {
       >
         {baja.estado !== 'listo' && enviado.current !== undefined ? (
           <CerrarFlujoAlMontar rutaPadre={rutaMetasConResultado(enviado.current)} />
+        ) : baja.estado === 'listo' ? (
+          <CerrarFlujoAlMontar
+            rutaPadre={rutaMetasConResultado({ tipo: 'eliminada', nombre: meta.categoria })}
+          />
         ) : (
           <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
         )}

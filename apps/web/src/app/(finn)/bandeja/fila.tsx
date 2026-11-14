@@ -2,21 +2,21 @@
 // Una fila de `/bandeja` con «Aprobar», «Es otro gasto» y «Descartar» de un toque (FT-35, FT-37, FE-24, FE-25, 05 §4.14, §4.15),
 // cada acción con su propio `useOperacion`. Si el servidor pide confirmar o datos al aprobar, traspasa al flujo
 // `/bandeja/[movimientoId]`; si no, el resultado dice lo que se hizo (CP-15) y, al descartar, ofrece «Restaurar» (OP-39).
-// [CH-220 C2] Al aprobar, la fila sale (240 ms) y el resultado entra en el mismo lugar con `fz-pop-in`; sin «Deshacer».
+// [CH-281] El resultado es la etiqueta de C-50 sobre la fila (AVISO-DE-RESULTADO §8): «Aprobado» con «Ver transacción» o
+// «Descartado» con «Restaurar»; la fila se queda los ms de `--duracion-aviso` y se recoge (la lista la retiene hasta entonces).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import { useEffect, useRef } from 'react';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
 import { Boton } from '../../../componentes/base/boton';
-import { Resultado } from '../../../componentes/base/resultado';
+import type { AccionEtiqueta, ApiEtiqueta } from '../../../componentes/base/etiqueta-resultado';
 import {
   MovimientoBandeja,
   type AccionBandeja,
   type MovimientoDto,
 } from '../../../componentes/dominio/movimiento-bandeja';
-import { useSalida } from '../../../componentes/movimiento/use-salida';
-import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { textoAprobado, type ValorAprobado } from '../../../flujos/bandeja-movimiento/aprobado';
-import { textoDescartado, type ResultadoFila } from '../../../flujos/bandeja-movimiento/descarte';
+import type { ResultadoFila } from '../../../flujos/bandeja-movimiento/descarte';
+import { formatearMonto } from '../../../formato';
 import {
   entradaDeReproceso,
   referenciaDe,
@@ -30,6 +30,7 @@ import {
   resolverCoincidencia,
 } from '../../../servidor/acciones/bandeja';
 import { bandeja as t } from '../../../textos/bandeja';
+import { cuentas } from '../../../textos/cuentas';
 import { formularios } from '../../../textos/formularios';
 
 /** Al soltar sobre una categoría, estos dos se quedan en la fila: el flujo no los arregla (FT-78). */
@@ -62,7 +63,8 @@ const REINTENTABLES = ['OCUPADO', 'INCIERTO', 'INTERNO'];
 interface Props {
   readonly movimiento: MovimientoDto;
   readonly hrefRevisar: string;
-  readonly resultado: ResultadoFila | undefined;
+  /** [CH-281] La etiqueta de la lista (una por pantalla, C-50). */
+  readonly etiqueta: ApiEtiqueta;
   readonly alIniciar: (id: string) => void;
   readonly alTerminar: (id: string, valor: ResultadoFila | undefined) => void;
   /** FT-78: la fila reserva el lugar del asa; `ContextoArrastre` la monta cuando llega la librería. */
@@ -77,7 +79,7 @@ interface Props {
 export function FilaBandeja({
   movimiento: m,
   hrefRevisar,
-  resultado,
+  etiqueta,
   alIniciar,
   alTerminar,
   conArrastre,
@@ -95,14 +97,29 @@ export function FilaBandeja({
   const ultimoSoltado = useRef(0);
   const porArrastre = useRef<string | undefined>(undefined);
   const origenId = m.origenPropuesto?.id;
-  // El resultado de aprobar espera a que la fila termine de salir.
-  const aprobado = useRef<ResultadoFila | undefined>(undefined);
-  const salida = useSalida(() => {
-    alTerminar(m.id, aprobado.current);
-  }, '--duracion-normal');
-  const salirFila = useRef(salida.salir);
+  // Cada resultado se muestra una vez; la etiqueta cambia con su estado, así que los efectos la leen de un ref
+  const mostrado = useRef<unknown>(undefined);
+  const api = useRef(etiqueta);
   useEffect(() => {
-    salirFila.current = salida.salir;
+    api.current = etiqueta;
+  });
+  const comercio = m.comercio ?? cuentas.bandeja.sinComercio;
+  /** La etiqueta en esta fila; al irse, la lista deja de retenerla (la fila ya se recogió). */
+  const mostrar = (palabra: string, frase: string, accion: AccionEtiqueta, r: ResultadoFila) => {
+    alTerminar(m.id, r);
+    api.current.mostrar({
+      id: m.id,
+      palabra,
+      frase,
+      accion,
+      alIrse: () => {
+        alTerminar(m.id, undefined);
+      },
+    });
+  };
+  const mostrarRef = useRef(mostrar);
+  useEffect(() => {
+    mostrarRef.current = mostrar;
   });
 
   // FT-78: soltar sobre una categoría es una sola llamada a OP-37 con `{ categoriaId }` y las líneas que vio la lista
@@ -137,55 +154,51 @@ export function FilaBandeja({
     else if (estado === 'error' && error !== undefined) {
       if (necesitaElFlujo(error, porArrastre.current !== undefined)) traspasar();
       else alTerminar(m.id, undefined);
-    } else if (estado === 'listo' && exito !== undefined) {
-      aprobado.current = { tipo: 'aprobado', valor: exito.valor as ValorAprobado };
-      salirFila.current();
+    } else if (estado === 'listo' && exito !== undefined && mostrado.current !== exito) {
+      mostrado.current = exito;
+      const valor = exito.valor as ValorAprobado;
+      const destino = valor.aprobado?.destino;
+      // Al soltar, la frase empieza con «Soltaste {comercio} en {categoría}.» (§8)
+      const soltaste =
+        porArrastre.current !== undefined && destino !== undefined && 'categoria' in destino
+          ? `${t.arrastre.soltaste(comercio, destino.categoria.nombre)} `
+          : '';
+      mostrarRef.current(
+        t.etiqueta.aprobado,
+        soltaste + textoAprobado(valor),
+        { texto: t.verTransaccion, href: `/actividad/${valor.transaccionId}` },
+        { tipo: 'aprobado', valor },
+      );
     }
-  }, [estado, error, exito, m.id, hrefRevisar, alTerminar]);
+  }, [estado, error, exito, m, comercio, hrefRevisar, alTerminar]);
 
-  // Descartar deja el resultado en el lugar de la fila; restaurar lo quita (la revalidación la devuelve a la lista)
+  // Descartar deja la etiqueta con «Restaurar»; restaurar la quita (la revalidación devuelve la fila a la lista)
+  const enviarRestaurar = restaurar.enviar;
   useEffect(() => {
-    if (descartar.estado === 'listo') alTerminar(m.id, { tipo: 'descartado' });
-    else if (descartar.estado === 'error') alTerminar(m.id, undefined);
-  }, [descartar.estado, m.id, alTerminar]);
+    if (descartar.estado === 'listo' && mostrado.current !== descartar.exito) {
+      mostrado.current = descartar.exito;
+      mostrarRef.current(
+        t.etiqueta.descartado,
+        t.etiqueta.descartadoFrase(
+          ...[comercio, m.monto === null ? '' : formatearMonto(m.monto)].filter((x) => x !== ''),
+        ),
+        {
+          texto: t.restaurar,
+          icono: 'undo',
+          alTocar: () => {
+            void enviarRestaurar({ movimientoId: m.id, accion: 'restaurar' });
+          },
+        },
+        { tipo: 'descartado' },
+      );
+    } else if (descartar.estado === 'error') alTerminar(m.id, undefined);
+  }, [descartar.estado, descartar.exito, comercio, m.id, m.monto, enviarRestaurar, alTerminar]);
   useEffect(() => {
-    if (restaurar.estado === 'listo') alTerminar(m.id, undefined);
+    if (restaurar.estado !== 'listo') return;
+    api.current.cerrar();
+    alTerminar(m.id, undefined);
   }, [restaurar.estado, m.id, alTerminar]);
 
-  if (resultado?.tipo === 'aprobado')
-    return (
-      <div data-resultado-entra className="fz-resultado-entra">
-        <Resultado
-          texto={textoAprobado(resultado.valor)}
-          enlace={
-            <EnlaceFinn href={`/actividad/${resultado.valor.transaccionId}`}>
-              {t.verTransaccion}
-            </EnlaceFinn>
-          }
-        />
-      </div>
-    );
-  if (resultado?.tipo === 'descartado')
-    return (
-      <>
-        <Resultado
-          texto={textoDescartado(m.comercio, m.monto)}
-          salida={{
-            etiqueta: t.restaurar,
-            ejecutar: () => {
-              void restaurar.enviar({ movimientoId: m.id, accion: 'restaurar' });
-            },
-          }}
-        />
-        {restaurar.estado === 'error' && restaurar.error !== undefined ? (
-          <div className="px-4 pb-3.5">
-            <AvisoEnLinea estado="problema" aparecioDespues>
-              {restaurar.error.mensaje}
-            </AvisoEnLinea>
-          </div>
-        ) : null}
-      </>
-    );
   const referencia = referenciaDe(m.procesamiento?.errorDetalle);
   const alAccionar = (accion: AccionBandeja): void => {
     if (accion === 'aprobar') {
@@ -214,10 +227,7 @@ export function FilaBandeja({
   const mensaje = fallida?.error;
   return (
     <>
-      <div
-        {...(salida.saliendo ? { 'data-saliendo': '', className: 'fz-fila-sale' } : {})}
-        onAnimationEnd={salida.saliendo ? salida.alTerminarAnimacion : undefined}
-      >
+      <div>
         <MovimientoBandeja
           movimiento={m}
           hrefRevisar={hrefRevisar}

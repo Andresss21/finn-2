@@ -5,6 +5,7 @@ import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
 import { esperarContenido } from '../../ayudas/esperas.ts';
+import { anuncio, etiqueta } from '../../ayudas/etiqueta.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { bandeja as t } from '../../../src/textos/bandeja.ts';
 import { cuentas } from '../../../src/textos/cuentas.ts';
@@ -82,7 +83,7 @@ test.describe('PRU-E2E-BAND', () => {
     const otra = await context.newPage();
     await abrirBandeja(otra);
     await aprobar(otra, '$13.00').click();
-    await expect(otra.getByTestId('resultado')).toContainText(t.aprobado('Super', '$13.00'));
+    await expect(anuncio(otra, 'bandeja')).toContainText(t.aprobado('Super', '$13.00'));
     await otra.close();
 
     // Los tres toques seguidos, en el mismo instante: la revalidación del primero no los alcanza a quitar
@@ -94,13 +95,15 @@ test.describe('PRU-E2E-BAND', () => {
         });
     });
 
-    await expect(page.getByTestId('resultado')).toHaveCount(2);
-    for (const monto of ['$12.00', '$14.00'])
-      await expect(
-        page.getByTestId('resultado').filter({ hasText: t.aprobado('Super', monto, 'T', 'Super') }),
-      ).toHaveCount(1);
+    // [CH-281] C-50: una sola etiqueta a la vista, la del último que respondió; la región dice su frase
+    await expect(anuncio(page, 'bandeja')).toHaveText(
+      new RegExp(`^${t.aprobado('Super', '\\$1[24]\\.00', 'T', 'Super')}$`),
+    );
+    await expect(etiqueta(page)).toHaveCount(1);
     // La que falló no deja un resultado propio: la revalidación la quita (su mensaje lo cubre PRU-E2E-BAND-142)
-    await expect(page.getByTestId('resultado').filter({ hasText: '$13.00' })).toHaveCount(0);
+    await expect(
+      page.locator('[data-fila-sale]').filter({ hasText: '$13.00' }).locator('[data-etiqueta]'),
+    ).toHaveCount(0);
   });
 
   test('PRU-E2E-BAND-142 [CA-35.10] un movimiento aprobado en otra pestaña muestra «Este movimiento ya está aprobado.» al tocar «Aprobar» y al revisar la lista desaparece', async ({
@@ -114,7 +117,7 @@ test.describe('PRU-E2E-BAND', () => {
     const otra = await context.newPage();
     await abrirBandeja(otra);
     await aprobar(otra, '$12.00').click();
-    await expect(otra.getByTestId('resultado')).toBeVisible();
+    await expect(anuncio(otra, 'bandeja')).toContainText(t.aprobado('Super', '$12.00'));
     await otra.close();
 
     await aprobar(page, '$12.00').click();

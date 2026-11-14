@@ -52,7 +52,12 @@ export const metas = {
   resultado: {
     extendida: (categoria: string, fecha: string) =>
       `Extendiste la meta de ${categoria} al ${fecha}.`,
-    ajustada: (categoria: string) => `Ajustaste la meta de ${categoria}.`,
+    // [CH-281] C-50 §8: «Ajustada» en la fila de la meta y «Eliminada» en la fila que se va
+    ajustada: (categoria: string, monto: string) => `Ajustaste la meta de ${categoria} a ${monto}.`,
+    ajustadaPalabra: 'Ajustada',
+    eliminadaPalabra: 'Eliminada',
+    eliminada: (categoria: string) =>
+      `Eliminaste la meta de ${categoria}. Lo asignado y el Disponible no cambian.`,
   },
   fila: {
     porPeriodo: 'Monto del período',

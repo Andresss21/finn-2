@@ -164,3 +164,25 @@ describe('PRU-CMP-BAND buscador de reglas', () => {
     expect(fila.querySelector('[data-icono="chevR"]')).not.toBeNull();
   });
 });
+
+describe('PRU-CMP-BAND-893 la etiqueta de resultado en Reglas', () => {
+  it('PRU-CMP-BAND-893 [C-50] CA-A-13: eliminar la regla deja la fila de SUPER SELECTOS con «Eliminada», anuncia el texto nuevo «Eliminaste la regla de SUPER SELECTOS.» y se recoge a los 3000 ms, aunque no quede ninguna regla', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      const raiz = mostrar(<PantallaReglas dto={dto([])} eliminada="SUPER SELECTOS" />);
+      const sale = raiz.querySelector('[data-fila-sale]') as HTMLElement;
+      expect(sale.textContent).toBe('SUPER SELECTOSEliminada');
+      expect(sale.querySelector('[data-etiqueta] a, [data-etiqueta] button')).toBeNull();
+      const regiones = raiz.querySelectorAll('[role="status"]');
+      expect(regiones).toHaveLength(1);
+      expect(regiones[0]?.textContent).toBe('Eliminaste la regla de SUPER SELECTOS.');
+      act(() => {
+        vi.advanceTimersByTime(3400);
+      });
+      expect(raiz.querySelector('[data-fila-sale], [role="status"]')).toBeNull();
+      expect(raiz.textContent).toContain(t.vacioTitulo);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

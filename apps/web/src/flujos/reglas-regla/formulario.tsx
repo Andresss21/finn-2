@@ -73,7 +73,14 @@ export function FormularioReglaRegla({ regla, grupos }: PropsFormularioReglaRegl
       <main className="mx-auto flex max-w-xl flex-col gap-3 px-5 py-4">
         <h1 className="text-titulo-pantalla">{t.tituloEditar}</h1>
         <p role="status">{eliminar.estado === 'listo' ? t.eliminada : t.guardada}</p>
-        <CerrarFlujoAlMontar rutaPadre={RUTA_PADRE} />
+        {/* [CH-281] C-50 §8: eliminar vuelve a la lista con «Eliminada» en la fila que se va; lleva el comercio, que ya no está */}
+        <CerrarFlujoAlMontar
+          rutaPadre={
+            eliminar.estado === 'listo'
+              ? `${RUTA_PADRE}?eliminada=${encodeURIComponent(regla.patron)}`
+              : RUTA_PADRE
+          }
+        />
       </main>
     );
 

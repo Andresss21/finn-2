@@ -9,6 +9,7 @@
 import { mkdirSync } from 'node:fs';
 import { expect, test, sembrar } from '../configuracion/semilla.ts';
 import { entrarAal2 } from '../ayudas/sesion.ts';
+import { anuncio } from '../ayudas/etiqueta.ts';
 import { esperarContenido, esperarHidratacion } from '../ayudas/esperas.ts';
 import { generarTokenWebhook } from '../ayudas/webhook.ts';
 import { alinearRelojes, fijarRelojServidor } from '../../../../tools/pruebas/e2e/reloj.ts';
@@ -586,7 +587,7 @@ test.describe('PRU-E2E-BAND cierre de B10', () => {
       .filter({ hasText: 'SUPER SELECTOS' })
       .getByRole('button', { name: /^Aprobar/ })
       .click();
-    await expect(page.getByTestId('resultado')).toContainText('SUPER SELECTOS');
+    await expect(anuncio(page, 'bandeja')).toContainText('SUPER SELECTOS');
     for (const modo of MODOS) {
       await enModo(modo);
       for (const [nombre, ruta] of pantallas()) {

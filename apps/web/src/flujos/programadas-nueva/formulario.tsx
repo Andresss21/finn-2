@@ -124,7 +124,9 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
       >
         {/* E6-14 [CH-248]: eliminar y guardar los cambios dejan su resultado en la lista; crear vuelve como antes. */}
         {eliminacion.estado === 'listo' ? (
-          <CerrarFlujoAlMontar rutaPadre={rutaProgramadasConResultado({ tipo: 'eliminada' })} />
+          <CerrarFlujoAlMontar
+            rutaPadre={rutaProgramadasConResultado({ tipo: 'eliminada', nombre: p.nombre ?? '' })}
+          />
         ) : edita ? (
           <CerrarFlujoAlMontar
             rutaPadre={rutaProgramadasConResultado({ tipo: 'ajustada', programadaId })}

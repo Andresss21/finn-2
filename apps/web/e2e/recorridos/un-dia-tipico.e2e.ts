@@ -8,6 +8,7 @@
 // notificación en el centro, no por la entrega real (CA-70.7, lista manual).
 import { expect, test } from '../configuracion/semilla.ts';
 import { entrarAal2 } from '../ayudas/sesion.ts';
+import { anuncio } from '../ayudas/etiqueta.ts';
 import { esperarContenido, esperarHidratacion } from '../ayudas/esperas.ts';
 import { esperarMonto } from '../ayudas/montos.ts';
 import { alinearRelojes } from '../../../../tools/pruebas/e2e/reloj.ts';
@@ -159,7 +160,7 @@ test.describe('PRU-E2E-BAND recorrido 4.2 un día típico', () => {
     await fila(page, 'SUPER SELECTOS')
       .getByRole('button', { name: /^Aprobar/ })
       .click();
-    await expect(page.getByTestId('resultado')).toContainText(
+    await expect(anuncio(page, 'bandeja')).toContainText(
       t.aprobado('SUPER SELECTOS', '$35.00', 'Visa Oro', 'Supermercado'),
     );
     await expect(page.getByRole('button', { name: /Deshacer/ })).toHaveCount(0);
@@ -172,7 +173,7 @@ test.describe('PRU-E2E-BAND recorrido 4.2 un día típico', () => {
     }).toPass();
     await esperarHidratacion(page);
     await arrastrarAl(page, fila(page, 'FARMACIA').locator('[data-asa]'), 'Farmacia');
-    await expect(page.getByTestId('resultado')).toContainText(
+    await expect(anuncio(page, 'bandeja')).toContainText(
       t.aprobado('FARMACIA', '$9.50', 'Visa Oro', 'Farmacia'),
     );
     await expect(page.getByRole('button', { name: /Deshacer/ })).toHaveCount(0);
