@@ -155,7 +155,7 @@ describe('PRU-CMP-META-781 el resultado en la lista de Metas', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const nodo = montar(
       <PantallaMetas
-        dto={{ ...dto, metas: [] } as MetasDto}
+        dto={{ ...dto, metas: [] }}
         resultado={{ tipo: 'eliminada', nombre: 'Viaje' }}
       />,
     );

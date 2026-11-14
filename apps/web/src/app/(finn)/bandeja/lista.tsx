@@ -179,7 +179,6 @@ export function ListaBandeja({
       ) : (
         <>
           <ul
-            role="list"
             aria-label={t.lista}
             onPointerDownCapture={cargar}
             onKeyDownCapture={cargar}
@@ -192,7 +191,7 @@ export function ListaBandeja({
                 <FilaQueSale key={m.id} api={etiqueta} id={m.id}>
                   <div
                     {...(etiqueta.resaltada(m.id) ? { 'data-resaltada': '' } : {})}
-                    className="fz-resaltable rounded-[inherit]"
+                    className="fz-resaltable"
                   >
                     <FilaBandeja
                       movimiento={m}

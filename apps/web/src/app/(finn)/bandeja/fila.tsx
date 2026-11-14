@@ -5,7 +5,6 @@
 // [CH-281] El resultado es la etiqueta de C-50 sobre la fila (AVISO-DE-RESULTADO §8): «Aprobado» con «Ver transacción» o
 // «Descartado» con «Restaurar»; la fila se queda los ms de `--duracion-aviso` y se recoge (la lista la retiene hasta entonces).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
-import type { Centavos } from '@finn/dominio/valores';
 import { useEffect, useRef } from 'react';
 import { AvisoEnLinea } from '../../../componentes/base/aviso';
 import { Boton } from '../../../componentes/base/boton';
@@ -181,9 +180,7 @@ export function FilaBandeja({
       mostrarRef.current(
         t.etiqueta.descartado,
         t.etiqueta.descartadoFrase(
-          ...[comercio, m.monto === null ? '' : formatearMonto(m.monto as Centavos)].filter(
-            (x) => x !== '',
-          ),
+          ...[comercio, m.monto === null ? '' : formatearMonto(m.monto)].filter((x) => x !== ''),
         ),
         {
           texto: t.restaurar,
