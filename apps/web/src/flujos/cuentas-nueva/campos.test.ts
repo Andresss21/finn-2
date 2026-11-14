@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { op01 } from '@finn/aplicacion/contratos';
 import { cuentaSubtipo } from '../../textos/cuenta-subtipo';
 import {
+  CAMPOS_DE_TIPO,
   CONTRATO,
   aEntradaDeAccion,
   avisoDeNombreRepetido,
@@ -10,6 +11,7 @@ import {
   entradaDeOp01,
   nombrePropuesto,
   valoresIniciales,
+  visible,
   type Campos,
   type TipoCuenta,
 } from './campos';
@@ -110,6 +112,35 @@ describe('PRU-DOM-CTA', () => {
     const modelo = entradaDeOp01({ ...prestamo, modeloCalculo: 'banco_agricola' });
     expect(modelo).toMatchObject({ modeloCalculo: 'banco_agricola' });
     expect(op01.safeParse({ ...modelo, id: ID }).success).toBe(true);
+  });
+
+  it('PRU-DOM-CTA-813 [CA-50.3] con el modelo Banco Agrícola el préstamo envía en OP-01 el seguro del primer mes y la comisión; sin modelo no se muestran ni se envían (CH-261)', () => {
+    const prestamo = con('prestamo', {
+      nombre: 'Préstamo',
+      saldo: '3934.62',
+      contraparte: 'Banco Agrícola',
+      montoOriginal: '6295',
+      cuotaPactada: '377.98',
+      plazoCuotas: '18',
+      cuotasPagadasAlCrear: '6',
+      tasaNominalAnual: '8.25',
+      seguroPrimerMes: '5',
+      comision: '62.95',
+    });
+    const seguro = CAMPOS_DE_TIPO.prestamo.find((x) => x.n === 'seguroPrimerMes');
+    expect(seguro !== undefined && visible(seguro, prestamo)).toBe(false);
+    expect(entradaDeOp01(prestamo)).not.toHaveProperty('seguroPrimerMes');
+    expect(entradaDeOp01(prestamo)).not.toHaveProperty('comision');
+    const agricola = { ...prestamo, modeloCalculo: 'banco_agricola' };
+    expect(seguro !== undefined && visible(seguro, agricola)).toBe(true);
+    const entrada = entradaDeOp01(agricola);
+    expect(entrada).toMatchObject({
+      modeloCalculo: 'banco_agricola',
+      seguroPrimerMes: '5',
+      comision: '62.95',
+      cuotasPagadasAlCrear: 6,
+    });
+    expect(op01.safeParse({ ...entrada, id: ID }).success).toBe(true);
   });
 
   it('PRU-DOM-CTA-106 [CA-50.4]el formulario avisa antes de enviar si el nombre de la tarjeta ya se usa, sin distinguir mayúsculas, y distingue la archivada', () => {

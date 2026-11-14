@@ -1,7 +1,7 @@
 // Modelo "Banco Agrícola" (01 Anexo A.2). Los puntos marcados "validar" en A.2 quedan como están:
 // PRU-MAN-CTA-001 los contrasta con un estado de cuenta real (07 §22.1). Interés y seguro usan la
 // proporción mitad hacia arriba de `Centavos` (01 §0.4, ADR-15 [CH-17]).
-import type { Prestamo, Uuid } from '../hechos';
+import type { Hechos, Prestamo, Uuid } from '../hechos';
 import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import type {
@@ -23,8 +23,15 @@ const DEN_INTERES = 365_000_000;
 /** Ventana del emparejamiento por fecha, en días (regla 7). */
 const VENTANA_DIAS = 10;
 
-/** Condiciones del modelo de un préstamo (2.2.5): solo Banco Agrícola, mensual y con tasa. */
-export function condicionesAgricola(p: Prestamo, apertura: FechaLocal): CondicionesModelo | null {
+/**
+ * Condiciones del modelo de un préstamo (2.2.5): solo Banco Agrícola, mensual y con tasa. [CH-261] En un préstamo en curso
+ * (P13), `saldoInicial` es el capital pendiente registrado en la apertura, y la tabla arranca en la cuota siguiente a las pagadas.
+ */
+export function condicionesAgricola(
+  p: Prestamo,
+  apertura: FechaLocal,
+  saldoInicial: Centavos = p.montoOriginal,
+): CondicionesModelo | null {
   if (p.modeloCalculo !== 'banco_agricola' || p.frecuencia !== 'mensual') return null;
   if (p.tasaNominalAnualMillonesimas === null) return null;
   return {
@@ -34,12 +41,31 @@ export function condicionesAgricola(p: Prestamo, apertura: FechaLocal): Condicio
     seguroPrimerMes: p.seguroPrimerMes ?? Centavos.cero,
     cuotaPactada: p.cuotaPactada,
     plazoCuotas: p.plazoCuotas,
+    ...(p.cuotasPagadasAlCrear === 0
+      ? {}
+      : { cuotasPagadas: p.cuotasPagadasAlCrear, saldoInicial }),
   };
 }
 
-/** F_k = F₀ + k meses, recortado al último día del mes (regla 1). */
+/** [CH-261] Las condiciones del préstamo con su apertura y su saldo inicial (P13) desde los hechos; `null` sin modelo. */
+export function condicionesDe(h: Hechos, p: Prestamo): CondicionesModelo | null {
+  const apertura = h.cuentas.find((k) => k.id === p.cuentaId)?.fechaApertura;
+  if (apertura === undefined) return null;
+  const iniciales = new Set(
+    h.transacciones.filter((t) => t.tipo === 'saldo_inicial').map((t) => t.id),
+  );
+  const saldoInicial = h.efectos
+    .filter((e) => e.cuentaId === p.cuentaId && iniciales.has(e.transaccionId))
+    .reduce((s, e) => Centavos.sumar(s, e.monto), Centavos.cero);
+  return condicionesAgricola(p, apertura, saldoInicial);
+}
+
+/** [CH-261] Cuotas pagadas antes de Finn (p₀); 0 en un préstamo nuevo. */
+const pagadasAntes = (c: CondicionesModelo): number => c.cuotasPagadas ?? 0;
+
+/** F_k = F₀ + (k − p₀) meses, recortado al último día del mes (regla 1; [CH-261] p₀ = 0 en un préstamo nuevo). */
 const fechaCuota = (c: CondicionesModelo, k: number): FechaLocal =>
-  FechaLocal.sumarMeses(c.fechaApertura, k);
+  FechaLocal.sumarMeses(c.fechaApertura, k - pagadasAntes(c));
 
 /** Reglas 2 a 4 para la cuota k con saldo inicial B. */
 function desglose(
@@ -69,9 +95,9 @@ const ordenar = (pagos: readonly PagoPrestamo[]): PagoPrestamo[] =>
 function proyectar(c: CondicionesModelo, pagos: readonly PagoPrestamo[]): FilaProyeccion[] {
   const abonos = ordenar(pagos.filter((p) => p.tipo === 'abono'));
   const filas: FilaProyeccion[] = [];
-  let saldo = c.montoOriginal;
+  let saldo = c.saldoInicial ?? c.montoOriginal; // [CH-261] B_p₀ en un préstamo en curso
   let a = 0;
-  for (let k = 1; k <= c.plazoCuotas && saldo > 0; k++) {
+  for (let k = pagadasAntes(c) + 1; k <= c.plazoCuotas && saldo > 0; k++) {
     const fecha = fechaCuota(c, k);
     for (
       let ab = abonos[a];

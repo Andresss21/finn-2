@@ -637,6 +637,7 @@ describe('PRU-CMP-CTA-260 detalle de cuenta portado del export (CH-142)', () => 
         montoOriginal: 600000,
         cuotaPactada: 21000,
         plazoCuotas: 36,
+        cuotasPagadasAlCrear: 0,
       },
       capitalPendiente: 421000,
       comparacion: null,
@@ -666,6 +667,42 @@ describe('PRU-CMP-CTA-260 detalle de cuenta portado del export (CH-142)', () => 
     );
     const vieja = mostrar(dto({ cuenta: cuentaDe('prestamo', { archivada: true }), prestamo }));
     expect(vieja.querySelector('[data-bloque="proxima-cuota"]')).toBeNull();
+  });
+
+  it('PRU-CMP-CTA-810 [Q-detalleCuenta] un préstamo creado con 6 de 18 cuotas pagadas cuenta esas 6 aunque la tabla arranque en la 7 (CH-261, P13)', () => {
+    const prestamo = {
+      condiciones: {
+        contraparte: 'Banco Agrícola',
+        montoOriginal: 629500,
+        cuotaPactada: 37798,
+        plazoCuotas: 18,
+        cuotasPagadasAlCrear: 6,
+      },
+      capitalPendiente: 393462,
+      comparacion: null,
+      costoFinanciero: { interes: 0, seguro: 0 },
+      amortizacion: (
+        [
+          [7, '2026-12-13'],
+          [8, '2027-01-13'],
+        ] as const
+      ).map(([n, fecha]) => ({
+        numero: n,
+        fecha,
+        interes: 2668,
+        seguro: 0,
+        capital: 35130,
+        saldo: 358332,
+        estado: 'pendiente',
+        pagado: 0,
+      })),
+      proximaCuota: { numero: 7, fecha: '2026-12-13', monto: 37798 },
+    };
+    const raiz = mostrar(dto({ cuenta: cuentaDe('prestamo'), prestamo }));
+    const proxima = raiz.querySelector('[data-bloque="proxima-cuota"]');
+    expect(proxima?.textContent).toContain('Próxima cuota · 7 de 18');
+    expect(proxima?.textContent).toContain('Cuotas pagadas 6 de 18');
+    expect(raiz.querySelector('tbody tr')?.textContent).not.toContain('Atrasada');
   });
 
   it('PRU-CMP-CTA-262 [CA-52.5] la fila de un movimiento dice la fecha, con qué se relaciona y su estado, y una cuenta sin movimientos ofrece Registrar con esta cuenta', () => {

@@ -769,7 +769,7 @@ describe('PRU-DOM-CTA', () => {
     }
   });
 
-  it('PRU-DOM-CTA-790 [Q-cuentas, Q-detalleCuenta] préstamo sin modelo: el talón sale de las condiciones (cuotas pagadas + 1, apertura + n × frecuencia, cuota pactada); igual en la lista y en el detalle; sin cuotas no hay talón (CH-252, E2-11)', () => {
+  it('PRU-DOM-CTA-790 [Q-cuentas, Q-detalleCuenta] préstamo sin modelo: el talón sale de las condiciones (cuotas pagadas + 1, apertura + (n − pagadas al crear) × frecuencia, cuota pactada); igual en la lista y en el detalle; sin cuotas no hay talón (CH-252, CH-261, E2-11)', () => {
     const base = estado();
     const conPr2 = (cambio: Partial<Hechos['prestamos'][number]>, extra: Partial<Hechos> = {}) =>
       calcular(
@@ -787,7 +787,8 @@ describe('PRU-DOM-CTA', () => {
     // Abierto el 10/01, mensual, $50.00 en 6 cuotas, ninguna pagada: la cuota 1 del 10/02.
     expect(talon(base)).toEqual({ fecha: f('2027-02-10'), monto: c(50), numero: 1 });
     expect(detalleCuenta(base, id('pr2')).prestamo?.proximaCuota).toEqual(talon(base));
-    // Con 2 pagadas al crear y una cuota registrada: la 4, el 10/05.
+    // Con 2 pagadas al crear y una cuota registrada: la 4, el 10/03 (apertura + 2 meses: las pagadas al crear son anteriores
+    // a la apertura, CH-261).
     const cuota = {
       ...(hechosDe(base).transacciones.find((t) => t.id === id('cuota1')) as Transaccion),
       id: id('cuota-pr2'),
@@ -816,14 +817,14 @@ describe('PRU-DOM-CTA', () => {
         lineas: hechosDe(base).lineas,
       },
     );
-    expect(talon(pagadas)).toEqual({ fecha: f('2027-05-10'), monto: c(50), numero: 4 });
+    expect(talon(pagadas)).toEqual({ fecha: f('2027-03-10'), monto: c(50), numero: 4 });
     expect(detalleCuenta(pagadas, id('pr2')).prestamo?.proximaCuota).toEqual(talon(pagadas));
     // Quincenal (cada 14 días): la cuota 1 es el 24/01.
     expect(talon(conPr2({ frecuencia: 'quincenal' }))?.fecha).toBe(f('2027-01-24'));
-    // Cada 10 días con 3 pagadas al crear: la 4, el 19/02.
+    // Cada 10 días con 3 pagadas al crear: la 4, el 20/01 (apertura + 10 días, CH-261).
     expect(
       talon(conPr2({ frecuencia: 'cada_n_dias', frecuenciaDias: 10, cuotasPagadasAlCrear: 3 })),
-    ).toEqual({ fecha: f('2027-02-19'), monto: c(50), numero: 4 });
+    ).toEqual({ fecha: f('2027-01-20'), monto: c(50), numero: 4 });
     // Todas pagadas: sin talón, en la lista y en el detalle.
     const todas = conPr2({ cuotasPagadasAlCrear: 6 });
     expect(talon(todas)).toBeUndefined();

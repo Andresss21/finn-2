@@ -4,7 +4,7 @@
 // préstamo (Anexo A, `desglosePropuesto`) y la entrada trae el que confirmó o corrigió el usuario.
 import { capitalPendiente } from '../calculo/saldos';
 import type * as H from '../hechos';
-import { bancoAgricola, condicionesAgricola } from '../prestamos/agricola';
+import { bancoAgricola, condicionesDe } from '../prestamos/agricola';
 import type { DesgloseCuota, EstadoCuota, PagoPrestamo } from '../prestamos/contrato';
 import { amortizacionDe, pagosDe } from '../selectores/detalle-cuenta';
 import { Centavos } from '../valores/centavos';
@@ -32,8 +32,7 @@ const PROPUESTO = '~propuesto' as H.Uuid;
 /** Las condiciones del modelo de cálculo del préstamo; `null` si no tiene modelo que calcule (QB-1). */
 export function condicionesDelModelo(h: H.Hechos, prestamoId: H.Uuid) {
   const p = h.prestamos.find((x) => x.cuentaId === prestamoId);
-  const apertura = h.cuentas.find((k) => k.id === prestamoId)?.fechaApertura;
-  return p === undefined || apertura === undefined ? null : condicionesAgricola(p, apertura);
+  return p === undefined ? null : condicionesDe(h, p); // [CH-261] con las cuotas pagadas al crear (P13)
 }
 
 /**

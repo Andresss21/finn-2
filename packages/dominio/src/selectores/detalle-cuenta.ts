@@ -15,7 +15,7 @@ import type {
   Uuid,
 } from '../hechos';
 import { fechaDeOcurrencia } from '../calculo/ocurrencias';
-import { bancoAgricola, condicionesAgricola } from '../prestamos/agricola';
+import { bancoAgricola, condicionesDe } from '../prestamos/agricola';
 import type { EstadoCuota, PagoPrestamo } from '../prestamos/contrato';
 import { Centavos } from '../valores/centavos';
 import type { FechaLocal } from '../valores/fecha-local';
@@ -80,8 +80,7 @@ export function amortizacionDe(
   i: Instantanea,
   p: Prestamo,
 ): readonly (FilaDeAmortizacion & { readonly proyectado: Centavos })[] | null {
-  const apertura = i.hechos.cuentas.find((k) => k.id === p.cuentaId)?.fechaApertura;
-  const condiciones = apertura === undefined ? null : condicionesAgricola(p, apertura);
+  const condiciones = condicionesDe(i.hechos, p); // [CH-261] con las cuotas pagadas al crear (P13)
   if (condiciones === null) return null;
   const pagos = pagosDe(i, p.cuentaId);
   const saldos = new Map(
@@ -104,8 +103,9 @@ export function amortizacionDe(
 
 /**
  * [CH-252] La próxima cuota (E2-11): con modelo, la primera no pagada de la tabla; sin modelo, la de las condiciones:
- * número = cuotas pagadas (al crear + registradas) + 1, fecha = apertura + número × frecuencia (como las ocurrencias
- * de una programada) y monto = cuota pactada. Nada si ya no quedan cuotas o no queda capital.
+ * número = cuotas pagadas (al crear + registradas) + 1, fecha = apertura + (número − pagadas al crear) × frecuencia
+ * ([CH-261]: la apertura es el punto de partida del préstamo en curso, P13; como las ocurrencias de una programada) y
+ * monto = cuota pactada. Nada si ya no quedan cuotas o no queda capital.
  */
 export function proximaCuotaDe(
   i: Instantanea,
@@ -123,7 +123,10 @@ export function proximaCuotaDe(
   const sinN = p.frecuencia === 'cada_n_dias' && p.frecuenciaDias === null;
   if (k === undefined || capital === 0 || numero > p.plazoCuotas || sinN) return undefined;
   const regla = { frecuencia: p.frecuencia, frecuenciaDias: p.frecuenciaDias };
-  const fecha = fechaDeOcurrencia({ ...regla, primeraFecha: k.fechaApertura }, numero);
+  const fecha = fechaDeOcurrencia(
+    { ...regla, primeraFecha: k.fechaApertura },
+    numero - p.cuotasPagadasAlCrear,
+  );
   return { fecha, monto: p.cuotaPactada, numero };
 }
 
