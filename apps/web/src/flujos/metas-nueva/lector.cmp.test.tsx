@@ -65,6 +65,7 @@ async function abrir(
   const raiz = createRoot(nodo);
   await act(() => {
     raiz.render(arbol);
+    return Promise.resolve();
   });
   montados.push({ raiz, nodo });
   return nodo;
