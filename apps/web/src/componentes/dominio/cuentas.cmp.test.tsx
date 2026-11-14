@@ -511,9 +511,19 @@ describe('PRU-CMP-CTA-401 identidad de efectivo por el subtipo', () => {
 });
 
 describe('PRU-CMP-CTA-711 alta de préstamo por secciones', () => {
-  function AltaPrestamo({ institucionId = 'ninguna' }: { institucionId?: string }): ReactNode {
+  function AltaPrestamo({
+    institucionId = 'ninguna',
+    modeloCalculo = 'ninguno',
+  }: {
+    institucionId?: string;
+    modeloCalculo?: string;
+  }): ReactNode {
     const { register, watch } = useForm<Campos>({
-      defaultValues: { ...valoresIniciales('2027-02-05', 'prestamo', ''), institucionId },
+      defaultValues: {
+        ...valoresIniciales('2027-02-05', 'prestamo', ''),
+        institucionId,
+        modeloCalculo,
+      },
     });
     return (
       <CamposDeTipo
@@ -526,7 +536,7 @@ describe('PRU-CMP-CTA-711 alta de préstamo por secciones', () => {
     );
   }
 
-  it('PRU-CMP-CTA-711 el préstamo se divide en «El préstamo», «Cuotas» y «Condiciones · opcional» plegada, con el aviso de que no hay modelo', () => {
+  it('PRU-CMP-CTA-711 el préstamo se divide en «El préstamo», «Cuotas» y «Condiciones · opcional» plegada, con el aviso de que no hay modelo mientras sea «Sin modelo»', () => {
     const raiz = montar(<AltaPrestamo />);
     const titulos = [...raiz.querySelectorAll('h2, summary')].map((x) => x.textContent);
     expect(titulos).toEqual(['El préstamo', 'Cuotas', 'Condiciones · opcional']);
@@ -538,6 +548,16 @@ describe('PRU-CMP-CTA-711 alta de préstamo por secciones', () => {
     expect(raiz.querySelector('[data-seccion="Cuotas"]')?.textContent).toContain('Cuota pactada');
     expect(raiz.querySelector('[data-seccion="El préstamo"]')?.textContent).toContain(
       'Quién te prestó',
+    );
+  });
+
+  it('PRU-CMP-CTA-840 [FT-50] el aviso de que no hay modelo va solo con «Sin modelo» (sin elegir): al elegir Banco Agrícola desaparece (E2-9)', () => {
+    const aviso = 'no tiene un modelo de cálculo';
+    const sin = montar(<AltaPrestamo />);
+    expect(sin.querySelector('details[data-seccion="condiciones"]')?.textContent).toContain(aviso);
+    const con = montar(<AltaPrestamo modeloCalculo="banco_agricola" />);
+    expect(con.querySelector('details[data-seccion="condiciones"]')?.textContent).not.toContain(
+      aviso,
     );
   });
 

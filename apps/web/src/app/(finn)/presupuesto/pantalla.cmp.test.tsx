@@ -4,6 +4,11 @@ import { page } from 'vitest/browser';
 import type { PresupuestoDto } from '@finn/aplicacion/consultas/presupuesto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../../../app/globals.css';
+import { MasAcciones } from '../../../componentes/marco/mas-acciones';
+import {
+  ContextoAcciones,
+  type AccionesPublicadas,
+} from '../../../componentes/marco/publicar-acciones';
 import { PantallaPresupuesto } from './pantalla';
 
 // `next/link` necesita `process` y el enrutador de Next, que el navegador de prueba no tiene: se simula `next/link`, nunca
@@ -179,7 +184,7 @@ describe('PRU-CMP-PRES', () => {
 
   it('PRU-CMP-PRES-103 sin categorías enlaza a la estructura; con un filtro sin filas dice "Ninguna categoría cumple este filtro" y ofrece quitar filtros', () => {
     const vacio = montar(<PantallaPresupuesto dto={dto({ grupos: [], pagosTarjeta: [] })} />);
-    expect(vacio.querySelector('h2')?.textContent).toBe('Todavía no hay categorías');
+    expect(vacio.querySelector('h2')?.textContent).toBe('Todavía no tenés categorías');
     expect(hrefs(vacio)).toContain('/presupuesto/estructura');
 
     const filtrado = montar(
@@ -427,5 +432,67 @@ describe('PRU-CMP-PRES', () => {
     expect(n.querySelector('[data-selector-periodo="activo"]')?.textContent).toContain(
       '21/02 – 20/03/2027',
     );
+  });
+
+  it('PRU-CMP-PRES-340 [FT-09] sin ninguna categoría, aunque haya pagos de tarjeta, dice «Todavía no tenés categorías» con «Usar la lista sugerida» y «Armarlas a mano», sin filtros ni el vacío del filtro', () => {
+    const raiz = montar(<PantallaPresupuesto dto={dto({ grupos: [] })} />);
+    const vacio = raiz.querySelector('#categorias');
+    expect(vacio?.querySelector('h2')?.textContent).toBe('Todavía no tenés categorías');
+    const enlaces = [...(vacio?.querySelectorAll('a') ?? [])].map((a) => [
+      a.textContent,
+      a.getAttribute('href'),
+    ]);
+    expect(enlaces).toEqual([
+      ['Usar la lista sugerida', '/presupuesto/estructura/plantilla'],
+      ['Armarlas a mano', '/presupuesto/estructura'],
+    ]);
+    expect(raiz.textContent).not.toContain('Ninguna categoría cumple este filtro');
+    expect(raiz.textContent).not.toContain('Quitar filtros');
+    expect(raiz.textContent).not.toContain('Sobregiradas');
+    // Lo demás sigue: Listo para asignar, los pagos de tarjeta y, con ellos, los totales.
+    expect(raiz.querySelector('[data-seccion="pagos-tarjeta"]')?.textContent).toContain('Visa Oro');
+    expect(hrefs(raiz)).toContain('/presupuesto/listo-para-asignar');
+    expect(raiz.querySelector('[data-seccion="totales"]')).not.toBeNull();
+  });
+
+  it('PRU-CMP-PRES-341 [FT-09] la pantalla publica «Editar estructura» al menú «En Presupuesto», con categorías y sin ellas', () => {
+    for (const grupos of [undefined, []]) {
+      const publicadas: AccionesPublicadas[] = [];
+      montar(
+        <ContextoAcciones value={(a) => a !== null && publicadas.push(a)}>
+          <PantallaPresupuesto dto={dto(grupos === undefined ? {} : { grupos })} />
+        </ContextoAcciones>,
+      );
+      const ultima = publicadas.at(-1);
+      expect(ultima?.titulo).toBe('En Presupuesto');
+      expect(ultima?.acciones.map((a) => [a.etiqueta, a.detalle, a.ruta])).toEqual([
+        ['Editar estructura', 'Grupos, categorías y su orden', '/presupuesto/estructura'],
+      ]);
+    }
+  });
+
+  it('PRU-CMP-PRES-342 [FT-09] «Más acciones» dibuja la bajada de una acción con enlace, sin deshabilitarla', async () => {
+    const raiz = montar(
+      <MasAcciones
+        titulo="En Presupuesto"
+        acciones={[
+          {
+            etiqueta: 'Editar estructura',
+            detalle: 'Grupos, categorías y su orden',
+            ruta: '/presupuesto/estructura',
+          },
+        ]}
+      />,
+    );
+    await act(async () => {
+      (raiz.querySelector('button') as HTMLButtonElement).click();
+      await Promise.resolve();
+    });
+    const item = raiz.querySelector('[role=menuitem]');
+    expect(item?.tagName).toBe('A');
+    expect(item?.getAttribute('href')).toBe('/presupuesto/estructura');
+    expect(item?.hasAttribute('aria-disabled')).toBe(false);
+    expect(item?.textContent).toBe('Editar estructuraGrupos, categorías y su orden');
+    expect(raiz.querySelector('[role=menu]')?.textContent).toContain('En Presupuesto');
   });
 });

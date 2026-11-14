@@ -101,8 +101,10 @@ export function MasAcciones({ titulo, acciones }: AccionesPublicadas) {
                 )}
                 <span className="text-cuerpo flex flex-col gap-0.5">
                   {a.etiqueta}
-                  {a.motivo === undefined ? null : (
-                    <span className="text-cuerpo-pequeno text-texto-secundario">{a.motivo}</span>
+                  {(a.motivo ?? a.detalle) === undefined ? null : (
+                    <span className="text-cuerpo-pequeno text-texto-secundario">
+                      {a.motivo ?? a.detalle}
+                    </span>
                   )}
                 </span>
               </>

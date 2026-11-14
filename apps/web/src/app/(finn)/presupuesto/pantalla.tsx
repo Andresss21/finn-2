@@ -12,6 +12,7 @@ import { FilaCategoria } from '../../../componentes/dominio/fila-categoria';
 import { FilaPagoTarjeta } from '../../../componentes/dominio/fila-pago';
 import { ResumenListoParaAsignar } from '../../../componentes/dominio/billete';
 import { Monto } from '../../../componentes/dominio/monto';
+import { PublicarAcciones } from '../../../componentes/marco/publicar-acciones';
 import { PublicarEncabezado } from '../../../componentes/marco/proveedor-encabezado';
 import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { EntradaDePeriodo } from '../../../componentes/navegacion/direccion-periodo';
@@ -45,6 +46,17 @@ const ENCABEZADO_TABLA =
 const COMO_SE_COMPONE = `-mt-4 inline-flex min-h-11 items-center justify-end text-etiqueta font-bold text-enlace hover:underline ${FOCO}`;
 const GRUPO = `${CONTENEDOR} md:rounded-none md:bg-transparent`;
 const PAGOS = `${CONTENEDOR} shadow-elevacion-1`;
+
+/** [CH-269] C-43: «Editar estructura» en el menú «En Presupuesto», como «En Cuentas» (E6-11). */
+const ACCIONES = [
+  {
+    etiqueta: t.editarEstructura,
+    detalle: t.editarEstructuraDetalle,
+    ruta: '/presupuesto/estructura',
+    icono: 'grid',
+  },
+] as const;
+const PRINCIPAL = `inline-flex min-h-11 items-center justify-center rounded-control bg-accion px-5 font-semibold text-texto-sobre-accion ${FOCO}`;
 
 const OPCIONES_FILTRO: readonly { readonly valor?: FiltroDeUrl; readonly etiqueta: string }[] = [
   { etiqueta: t.filtros.todas },
@@ -104,15 +116,16 @@ export function PantallaPresupuesto({
     conPeriodo('/presupuesto', valor === undefined ? {} : { filtro: valor });
   const gruposConFilas = dto.grupos.filter((g) => g.categorias.length > 0);
   const sinFilas = gruposConFilas.length === 0;
-  const sinCategorias =
-    sinFilas &&
-    filtro === undefined &&
-    dto.pagosTarjeta.length === 0 &&
-    dto.archivadasConDinero.length === 0;
+  // [CH-269] Sin filtro y sin filas no hay ninguna categoría, aunque haya pagos de tarjeta o archivadas con dinero.
+  const sinCategorias = sinFilas && filtro === undefined;
+  // Los totales se ocultan como antes de CH-269: solo si tampoco hay pagos de tarjeta ni archivadas con dinero.
+  const sinTotales =
+    sinCategorias && dto.pagosTarjeta.length === 0 && dto.archivadasConDinero.length === 0;
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-4 md:gap-7">
       <PublicarEncabezado encabezado={dto} />
+      <PublicarAcciones titulo={t.enPresupuesto} acciones={ACCIONES} />
       {/* C12: las categorías entran desde el lado del período al que se fue */}
       <EntradaDePeriodo key={periodo.inicio} inicio={periodo.inicio} objetivo="categorias" />
       <h1 className="text-titulo-pantalla">{t.titulo}</h1>
@@ -129,18 +142,20 @@ export function PantallaPresupuesto({
             parametros={filtro === undefined ? {} : { filtro }}
           />
         </div>
-        <div className={O3}>
-          <Pastillas
-            etiqueta={t.filtros.etiqueta}
-            reemplazar
-            valor={filtro ?? ''}
-            opciones={OPCIONES_FILTRO.map((o) => ({
-              valor: o.valor ?? '',
-              etiqueta: o.etiqueta,
-              href: hrefFiltro(o.valor),
-            }))}
-          />
-        </div>
+        {sinCategorias ? null : (
+          <div className={O3}>
+            <Pastillas
+              etiqueta={t.filtros.etiqueta}
+              reemplazar
+              valor={filtro ?? ''}
+              opciones={OPCIONES_FILTRO.map((o) => ({
+                valor: o.valor ?? '',
+                etiqueta: o.etiqueta,
+                href: hrefFiltro(o.valor),
+              }))}
+            />
+          </div>
+        )}
       </div>
 
       <div className="contents md:grid md:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] md:items-start md:gap-7">
@@ -150,9 +165,12 @@ export function PantallaPresupuesto({
               titulo={t.sinCategorias.titulo}
               texto={t.sinCategorias.texto}
               accion={
-                <EnlaceFinn href="/presupuesto/estructura" className={BOTON}>
-                  {t.sinCategorias.accion}
-                </EnlaceFinn>
+                <span className="flex flex-wrap justify-center gap-2">
+                  <EnlaceFinn href="/presupuesto/estructura/plantilla" className={PRINCIPAL}>
+                    {t.sinCategorias.sugerida}
+                  </EnlaceFinn>
+                  <EnlaceFinn href="/presupuesto/estructura">{t.sinCategorias.aMano}</EnlaceFinn>
+                </span>
               }
             />
           ) : sinFilas ? (
@@ -253,7 +271,7 @@ export function PantallaPresupuesto({
             </div>
           )}
 
-          {sinCategorias ? null : (
+          {sinTotales ? null : (
             <section data-seccion="totales" aria-label={t.totales} className={O6}>
               <dl className="contents">
                 {(
