@@ -128,14 +128,15 @@ describe('mergear: paso 1, checks', () => {
     expect(r.merge).toBeUndefined();
   });
 
-  it('integracion y e2e cuentan si corrieron; omitidos no', () => {
+  it('integracion cuenta si corrió; omitida no (CH-266)', () => {
     const rojo = correr({
       checks: [
         { name: 'rapido', bucket: 'pass' },
-        { name: 'e2e', bucket: 'fail' },
+        { name: 'integracion', bucket: 'fail' },
       ],
     });
     expect(rojo.codigo).toBe(1);
+    expect(rojo.texto).toContain('integracion: fail');
     const omitido = correr({
       checks: [
         { name: 'rapido', bucket: 'pass' },
@@ -145,11 +146,20 @@ describe('mergear: paso 1, checks', () => {
     expect(omitido.codigo).toBe(0);
   });
 
-  it('cierre es obligatorio cuando una ficha pasa a terminada', () => {
-    const r = correr({ featuresCabeza: '{"FT-30":"terminada"}' });
-    expect(r.codigo).toBe(1);
-    expect(r.texto).toContain('cierre: no corrió');
-    expect(r.texto).toContain('FT-30: pendiente → terminada');
+  it('e2e y cierre ya no son checks de merge: corren en el nocturno (CH-266)', () => {
+    const r = correr({
+      checks: [
+        { name: 'rapido', bucket: 'pass' },
+        { name: 'e2e', bucket: 'fail' },
+        { name: 'cierre', bucket: 'fail' },
+      ],
+    });
+    expect(r.codigo).toBe(0);
+    expect(r.texto).not.toMatch(/paso 1: (e2e|cierre)/);
+    // Una ficha que pasa a terminada tampoco exige `cierre` en el PR
+    const ficha = correr({ featuresCabeza: '{"FT-30":"terminada"}' });
+    expect(ficha.texto).not.toContain('cierre: no corrió');
+    expect(ficha.texto).toContain('FT-30: pendiente → terminada');
   });
 
   it('sin checks falla salvo --sin-ci, que queda en el resumen', () => {
@@ -239,7 +249,7 @@ describe('mergear: paso 5 y 6, resumen y --dry-run', () => {
         { contenidos: { 'cabeza:pruebas/manuales/resultados.md': resultados }, etiquetas, ...c },
         { dryRun: true },
       ).texto;
-    // Una corrida de ci.yml en main en verde no basta: puede no haber desplegado (sin integracion, docs)
+    // Una corrida de ci.yml en main en verde no basta: puede no haber desplegado (desplegar falló o se canceló)
     expect(caso({ contienen: ['e10'] })).toContain(
       'despliegue de emergencia pendiente: commit bbb2222 del 2026-12-03, sin una corrida completa de desplegar que lo contenga',
     );

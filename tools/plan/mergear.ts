@@ -37,11 +37,10 @@ const DEL_USUARIO = [
   'plan/tu.md',
 ];
 const DIFF_COMPLETO = /^(packages\/db\/prisma\/migrations\/|CLAUDE\.md$|\.claude\/settings\.json$)/;
-const CHECKS = (aTerminada: boolean): [string, boolean][] => [
+// CH-266: `e2e` y `cierre` corren en el nocturno y no bloquean el merge
+const CHECKS: [string, boolean][] = [
   ['rapido', true],
-  ['cierre', aTerminada],
   ['integracion', false],
-  ['e2e', false],
 ];
 
 export function mergear(
@@ -84,7 +83,7 @@ export function mergear(
   if (!ficha['revision'])
     fallas.push(`la tarea "${tarea}" del título no está en docs/08-tareas.md`);
 
-  // Resumen de fichas antes del paso 1: `cierre` se exige si el PR pasa una ficha a terminada (07 §22.2)
+  // Resumen de fichas (07 §22.2); desde CH-266 no cambia los checks del paso 1
   const docs = (ref: string, p: string): string => show(ref, `docs/${p}.md`);
   const e: Entradas = {
     ...{
@@ -113,7 +112,7 @@ export function mergear(
   };
   const fichas = resumen(base5.features, e);
 
-  // Paso 1: checks (07 §6.3): verde en rapido (y cierre si corresponde), y en integracion y e2e si corrieron
+  // Paso 1: checks (07 §6.3): verde en rapido y, si corrió, en integracion (CH-266)
   const rc = run('gh', ['pr', 'checks', n, '--json', 'name,bucket']);
   const vacio = /no checks reported/.test(rc.stderr) ? [] : null;
   const checks = rc.stdout.trim().startsWith('[')
@@ -124,7 +123,7 @@ export function mergear(
     out(1, 'AVISO --sin-ci: el PR no tiene checks; CI sin verificar');
   else if (!checks.length)
     fallas.push('paso 1: el PR no tiene checks (--sin-ci solo hasta TA-012)');
-  for (const [nombre, exigido] of checks?.length ? CHECKS(fichas.aTerminada) : []) {
+  for (const [nombre, exigido] of checks?.length ? CHECKS : []) {
     const b = checks?.find((c) => c.name === nombre)?.bucket ?? 'skipping';
     if (b === 'pass') out(1, `${nombre}: pass`);
     else if (b !== 'skipping') fallas.push(`paso 1: ${nombre}: ${b}`);
@@ -288,8 +287,9 @@ export function mergear(
 
 /**
  * 07 §31.5 (TA-263): el último despliegue de emergencia (sin contar ensayos) sigue pendiente hasta que `desplegar`
- * complete, E2E incluida, una corrida de main que lo contenga. La señal es la etiqueta `desplegado-<corrida>-<intento>`,
- * que `desplegar` crea al terminar; una corrida verde de ci.yml no basta, porque sin `integracion` salta `desplegar`.
+ * complete una corrida de main que lo contenga (con `rapido` en verde; la E2E corre en el nocturno, CH-266). La señal es
+ * la etiqueta `desplegado-<corrida>-<intento>`, que `desplegar` crea al terminar; una corrida verde de `rapido` no
+ * basta, porque `desplegar` puede fallar o cancelarse.
  * main es lineal (squash): si la etiqueta vigente no contiene el commit, ninguna anterior lo contiene.
  */
 function emergencia(

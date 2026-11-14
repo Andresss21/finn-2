@@ -53,6 +53,7 @@ Si un documento contradice a otro, o la tarea pide algo que un documento prohíb
 - Niveles y archivos: `docs/07-pruebas.md` §1 y §2.3. Una prueba vive en un solo nivel.
 - `pnpm pruebas:ft FT-nn` te dice qué falta de una ficha.
 - `pnpm test:integracion` necesita Docker Desktop encendido. La E2E local la corre un solo agente a la vez: `pnpm test:e2e` toma el candado (DT-22) y espera si otro lo tiene.
+- `pnpm ci:local` y la CI del PR no corren la E2E, `componentes`, el inventario ni la matriz: corren en el nocturno y no bloquean (CH-266). Si tocás pruebas o el mapa, corré a mano `pnpm pruebas:listar` y `pnpm pruebas:matriz`.
 - Ninguna prueba usa el reloj de pared, `sleep` ni un orden implícito (07 §7.1).
 
 ## Rol del orquestador
