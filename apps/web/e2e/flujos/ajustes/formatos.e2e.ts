@@ -5,7 +5,7 @@
 import { expect, test, sembrar } from '../../configuracion/semilla.ts';
 import { entrarAal2 } from '../../ayudas/sesion.ts';
 import { esperarContenido, esperarHidratacion } from '../../ayudas/esperas.ts';
-import { elegirOpcion } from '../../ayudas/seleccion-nativa.ts';
+import { elegirEnFila } from '../../ayudas/seleccion-nativa.ts';
 import { empiezaPor } from '../../ayudas/nombres.ts';
 import { fijarRelojServidor } from '../../../../../tools/pruebas/e2e/reloj.ts';
 import { eventosQueNombran } from '../../../../../tools/pruebas/e2e/pila.ts';
@@ -54,7 +54,7 @@ async function llenarFormato(
   datos: { nombre: string; patron: string; conFecha?: boolean },
 ): Promise<void> {
   await abrir(page, '/ajustes/formatos/nuevo');
-  await elegirOpcion(page, t.campos.institucion, 'BAC');
+  await elegirEnFila(page, t.campos.institucion, 'BAC');
   await page.getByLabel(t.campos.nombre, { exact: true }).fill(datos.nombre);
   await page.getByLabel(t.campos.patron, { exact: true }).fill(datos.patron);
   if (datos.conFecha === true) await page.getByLabel('AAAA/MM/DD', { exact: true }).check();
