@@ -200,6 +200,10 @@ export function propuesta<F extends { readonly monto: string; readonly pct: stri
   return filas.map((f, i) => ({ ...f, monto: textoDeCentavos(montos[i] ?? total) }));
 }
 
+/** Al editar (C-49 §5) cada parte conserva su línea, así OP-28 la reconoce (CB-03). */
+const conLinea = (x: { readonly lineaId?: string | undefined }) =>
+  x.lineaId === undefined ? {} : { lineaId: x.lineaId };
+
 /** Las líneas de OP-20: una por categoría y una por cada persona (por cobrar); una persona nueva se crea con la transacción. */
 export function lineasDe(c: Campos, e: EstadoDelGasto): Parte[] {
   const filas = c.varias && c.filas.length > 1 ? c.filas : c.filas.slice(0, 1);
@@ -208,11 +212,13 @@ export function lineasDe(c: Campos, e: EstadoDelGasto): Parte[] {
       ...parteVacia(),
       monto: textoDeCentavos(e.categorias.montos[i] ?? e.mia),
       categoriaId: f.categoriaId,
+      ...conLinea(f),
     })),
     ...(c.conAlguien ? c.personas : []).map((p, i) => ({
       ...parteVacia(),
       monto: textoDeCentavos(e.personas.montos[i + 1] ?? e.mia),
       destino: 'por_cobrar' as const,
+      ...conLinea(p),
       ...(p.clave.startsWith(NUEVA)
         ? { deudorId: DEUDOR_NUEVO, deudorNuevo: p.clave.slice(NUEVA.length) }
         : { deudorId: p.clave }),

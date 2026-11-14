@@ -20,6 +20,14 @@ export const MODOS = (): { valor: ModoReparto; etiqueta: string }[] => [
   { valor: 'montos', etiqueta: t.montos },
 ];
 
+/** [C-49 §5, E3-16] Al editar: las líneas con cobros o devoluciones no cambian de destino ni se quitan, y por qué. */
+export interface Bloqueo {
+  readonly lineas: readonly string[];
+  readonly motivo: string;
+}
+export const fija = (b: Bloqueo | undefined, x: { readonly lineaId?: string | undefined }) =>
+  x.lineaId !== undefined && b?.lineas.includes(x.lineaId) === true;
+
 export interface PropsQuienPaga {
   readonly c: Campos;
   readonly e: EstadoDelGasto;
@@ -29,9 +37,19 @@ export interface PropsQuienPaga {
   readonly destinoDeVos: string;
   readonly poner: (parcial: Partial<Campos>) => void;
   readonly alSalir: () => void;
+  readonly bloqueo?: Bloqueo | undefined;
 }
 
-export function QuienPaga({ c, e, conocidas, destinoDeVos, poner, alSalir }: PropsQuienPaga) {
+export function QuienPaga({
+  c,
+  e,
+  conocidas,
+  destinoDeVos,
+  poner,
+  alSalir,
+  bloqueo,
+}: PropsQuienPaga) {
+  const fijas = c.personas.filter((p) => fija(bloqueo, p));
   const id = useId();
   const personas: PersonaChip[] = [
     ...conocidas,
@@ -63,6 +81,7 @@ export function QuienPaga({ c, e, conocidas, destinoDeVos, poner, alSalir }: Pro
         ]}
         valor={c.conAlguien ? 'alguien' : 'solo'}
         alCambiar={(v) => {
+          if (v === 'solo' && fijas.length > 0) return;
           poner({ conAlguien: v === 'alguien' });
         }}
       />
@@ -76,7 +95,7 @@ export function QuienPaga({ c, e, conocidas, destinoDeVos, poner, alSalir }: Pro
             maximo={MAXIMO_PARTES - (c.varias ? c.filas.length : 1)}
             alCambiar={(claves) => {
               repartirEntre(
-                claves.map(
+                [...new Set([...fijas.map((p) => p.clave), ...claves])].map(
                   (clave) =>
                     c.personas.find((p) => p.clave === clave) ?? { clave, monto: '', pct: '' },
                 ),
@@ -150,6 +169,10 @@ export function QuienPaga({ c, e, conocidas, destinoDeVos, poner, alSalir }: Pro
                   />
                   {esVos ? (
                     <span aria-hidden="true" />
+                  ) : fija(bloqueo, p) ? (
+                    <span role="img" className="parte-quitar" aria-label={bloqueo?.motivo}>
+                      <Icono nombre="lock" tamano={18} />
+                    </span>
                   ) : (
                     <button
                       type="button"

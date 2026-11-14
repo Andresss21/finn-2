@@ -14,7 +14,7 @@ import { registrarGasto as t } from '../../textos/registrar-gasto';
 import { filaVacia, type CamposDeRegistro as Campos, type FilaDeCategoria } from './campos';
 import { CifraDeParte, ResumenReparto } from './entrada-parte';
 import { propuesta, type EstadoDelGasto } from './estado';
-import { MODOS } from './quien-paga';
+import { fija, MODOS, type Bloqueo } from './quien-paga';
 
 /** Una categoría del catálogo con su Disponible ya formateado (S5): `negativo` lo pinta en problema. */
 export interface CategoriaDelCampo {
@@ -36,6 +36,7 @@ export interface PropsCategorias {
   readonly poner: (parcial: Partial<Campos>) => void;
   readonly alSalir: () => void;
   readonly anunciar: (texto: string) => void;
+  readonly bloqueo?: Bloqueo | undefined;
 }
 
 export function Categorias({
@@ -47,6 +48,7 @@ export function Categorias({
   poner,
   alSalir,
   anunciar,
+  bloqueo,
 }: PropsCategorias) {
   const id = useId();
   // La fila recién agregada abre su lista (C-49 §1).
@@ -106,7 +108,7 @@ export function Categorias({
                     filas: [{ ...primera, monto: '', pct: '', auto: true }, filaVacia()],
                   });
                   anunciar(t.anuncioVarias);
-                } else {
+                } else if (!c.filas.slice(1).some((f) => fija(bloqueo, f))) {
                   poner({ varias: false, filas: [{ ...primera, auto: false }] });
                   anunciar(t.anuncioUna(nombre(primera.categoriaId) ?? t.elegiUnaCategoria));
                 }
@@ -141,6 +143,7 @@ export function Categorias({
         {(varias ? c.filas : [primera]).map((f, i) => {
           const cual = nombre(f.categoriaId) ?? t.filaN(i + 1);
           const pct = c.modoCategorias === 'porcentaje';
+          const bloqueada = fija(bloqueo, f);
           const monto = formatearMonto(e.categorias.montos[i] ?? e.mia);
           const escribir = (v: string) => {
             cambiarFilas(
@@ -159,6 +162,8 @@ export function Categorias({
               opciones={opciones(i)}
               valor={f.categoriaId}
               error={e.errorFilas[i]}
+              deshabilitada={bloqueada}
+              descripcion={bloqueada ? bloqueo?.motivo : undefined}
               alCambiar={(v) => {
                 cambiarFilas(c.filas.map((x, k) => (k === i ? { ...x, categoriaId: v } : x)));
                 if (varias) anunciar(t.anuncioEnFila(nombre(v) ?? '', i + 1));
@@ -183,7 +188,7 @@ export function Categorias({
                       alCambiar={escribir}
                       alSalir={alSalir}
                     />
-                    {c.filas.length >= 3 ? (
+                    {c.filas.length >= 3 && !bloqueada ? (
                       <button
                         type="button"
                         className="parte-quitar"

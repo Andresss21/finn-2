@@ -3,14 +3,17 @@
 // Es un flujo corto (05 §1.4). Se guarda en un solo viaje (05 §4.4) y sin «Antes de guardar» (P6-27 a): el servidor solo pide
 // confirmar si la fecha es de un período cerrado (AV-01). Si la compra fue con tarjeta y el cobro entra en efectivo, la casilla de
 // reservar viene marcada (AV-22, BE-36). No calcula montos (PF-3): la restitución, el excedente y el pago implícito son del servidor.
+// [C-45] Campos v3: el monto es el billete (CAMPOS-V3 §4), la partida, la cuenta, la fecha y la casilla van en un grupo de filas
+// y «Cobrar» sigue §11 (apagado con el motivo debajo).
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { Resultado } from '../../componentes/base/resultado';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { Vacio } from '../../componentes/base/vacio';
-import { SeleccionNativa } from '../../componentes/base/seleccion-nativa';
+import { SeleccionFila } from '../../componentes/base/seleccion-fila';
 import { ConfirmacionImpactoDeVista } from '../../componentes/formularios/confirmacion-impacto-de-vista';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -18,6 +21,7 @@ import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impact
 import { EnlaceFinn } from '../../componentes/navegacion/enlace-finn';
 import { PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMontoTexto } from '../../formato';
+import { motivoQueFalta, useFocoAlPrimerError } from '../../formularios/guardar-v3';
 import { normalizarMontoEscrito } from '../../formularios/normalizar-monto';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -108,10 +112,12 @@ export function FormularioPorCobrarCobrar(props: PropsFormularioPorCobrarCobrar)
         valor: x.id,
         etiqueta: x.nombre,
         detalle: x.detalle,
-        icono: x.tarjeta ? ('card' as const) : ('bank' as const),
       })),
     [cuentas],
   );
+  const forma = useRef<HTMLFormElement>(null);
+  useFocoAlPrimerError(forma, formState.submitCount);
+  const motivo = operacion.motivoSinEnvio ?? motivoQueFalta(contrato, c);
 
   if (partida === undefined)
     return (
@@ -177,6 +183,7 @@ export function FormularioPorCobrarCobrar(props: PropsFormularioPorCobrarCobrar)
         />
       ) : (
         <form
+          ref={forma}
           onSubmit={(e) => void formulario.enviar(e)}
           noValidate
           className="flex flex-col gap-5"
@@ -184,34 +191,41 @@ export function FormularioPorCobrarCobrar(props: PropsFormularioPorCobrarCobrar)
           <p className="text-cuerpo-pequeno text-texto-secundario">
             {t.subtitulo(partida.comercio, partida.abierto)}
           </p>
-          {partidas.length > 1 ? (
-            <SeleccionNativa
-              etiqueta={t.partida}
-              alta
-              marcador={t.marcadorPartida}
-              opciones={partidas.map((p) => ({
-                valor: p.id,
-                etiqueta: `${p.deudor} · ${p.comercio}`,
-                detalle: p.abierto,
-              }))}
-              valor={c.lineaId}
-              alCambiar={(id) => {
-                poner('lineaId')(id);
-                poner('total')(partidaDe(id)?.abiertoTexto ?? '');
-              }}
-              error={error('lineaId')}
-            />
-          ) : null}
-          <SeleccionNativa
-            etiqueta={t.cuenta}
-            alta
-            marcador={t.marcadorCuenta}
-            opciones={opcionesCuenta}
-            valor={c.cuentaId}
-            alCambiar={poner('cuentaId')}
-            error={error('cuentaId')}
+          <EntradaMonto
+            nombre="total"
+            etiqueta={t.monto}
+            variante="total"
+            valor={c.total}
+            alCambiar={poner('total')}
+            error={error('total')}
+            requerido
           />
-          <div className="grid grid-cols-2 gap-2.5 [&>*]:min-w-0">
+          <GrupoCampos>
+            {partidas.length > 1 ? (
+              <SeleccionFila
+                etiqueta={t.partida}
+                marcador={t.marcadorPartida}
+                opciones={partidas.map((p) => ({
+                  valor: p.id,
+                  etiqueta: `${p.deudor} · ${p.comercio}`,
+                  detalle: p.abierto,
+                }))}
+                valor={c.lineaId}
+                alCambiar={(id) => {
+                  poner('lineaId')(id);
+                  poner('total')(partidaDe(id)?.abiertoTexto ?? '');
+                }}
+                error={error('lineaId')}
+              />
+            ) : null}
+            <SeleccionFila
+              etiqueta={t.cuenta}
+              marcador={t.marcadorCuenta}
+              opciones={opcionesCuenta}
+              valor={c.cuentaId}
+              alCambiar={poner('cuentaId')}
+              error={error('cuentaId')}
+            />
             <EntradaFecha
               nombre="fecha"
               etiqueta={t.fecha}
@@ -223,25 +237,15 @@ export function FormularioPorCobrarCobrar(props: PropsFormularioPorCobrarCobrar)
               requerido
               sinVistaPrevia
             />
-            <EntradaMonto
-              nombre="total"
-              etiqueta={t.monto}
-              valor={c.total}
-              alCambiar={poner('total')}
-              error={error('total')}
-              requerido
-              prefijo="$"
-              sinVistaPrevia
-            />
-          </div>
-          {conCasilla(c) && partida.tarjeta !== undefined ? (
-            <CasillaReservar
-              marcada={c.reservar}
-              alCambiar={ponerReservar}
-              tarjeta={partida.tarjeta.nombre}
-              monto={totalFormateado === partida.abierto ? partida.abierto : undefined}
-            />
-          ) : null}
+            {conCasilla(c) && partida.tarjeta !== undefined ? (
+              <CasillaReservar
+                marcada={c.reservar}
+                alCambiar={ponerReservar}
+                tarjeta={partida.tarjeta.nombre}
+                monto={totalFormateado === partida.abierto ? partida.abierto : undefined}
+              />
+            ) : null}
+          </GrupoCampos>
           {estado === 'error' && fallo !== undefined && !enSuCampo(fallo) ? (
             <AvisoEnLinea
               estado="problema"
@@ -265,9 +269,9 @@ export function FormularioPorCobrarCobrar(props: PropsFormularioPorCobrarCobrar)
               enviando={estado === 'enviando'}
               textoEnviando={t.cobrando}
               deshabilitado={!operacion.enLinea}
-              {...(operacion.motivoSinEnvio === undefined
-                ? {}
-                : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+              apagado={motivo !== undefined}
+              className="w-full"
+              {...(motivo === undefined ? {} : { motivoDeshabilitado: motivo })}
             >
               {totalFormateado === undefined ? t.cobrar : t.cobrarMonto(totalFormateado)}
             </Boton>
