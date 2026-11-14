@@ -60,7 +60,9 @@ export function partesIguales(total: Centavos, n: number): Centavos[] {
 
 /** Porcentaje con redondeo mitad hacia arriba; con Σ = 100 % la diferencia del redondeo va a la primera. */
 export function porPorcentaje(total: Centavos, centesimas: readonly number[]): Centavos[] {
-  const montos = centesimas.map((h) => Centavos.proporcionMitadArriba(total, Math.min(h, CIEN), CIEN));
+  const montos = centesimas.map((h) =>
+    Centavos.proporcionMitadArriba(total, Math.min(h, CIEN), CIEN),
+  );
   if (montos.length === 0 || centesimas.reduce((a, h) => a + h, 0) !== CIEN) return montos;
   return [Centavos.restar(total, sumar(montos.slice(1))), ...montos.slice(1)];
 }
@@ -70,7 +72,11 @@ export const centesimasDe = (monto: Centavos, total: Centavos): number =>
   total <= 0 ? 0 : Centavos.proporcionMitadArriba(Centavos.max(monto, Centavos.cero), CIEN, total);
 
 /** Reparte `total` entre las filas según el modo. En Montos, la fila «Lo que queda» nunca baja de 0. */
-export function repartir(total: Centavos, modo: ModoReparto, filas: readonly FilaEscrita[]): Reparto {
+export function repartir(
+  total: Centavos,
+  modo: ModoReparto,
+  filas: readonly FilaEscrita[],
+): Reparto {
   const base = Centavos.max(total, Centavos.cero);
   const pcts = filas.map((f) => centesimasEscritas(f.pct));
   let montos: Centavos[];

@@ -126,8 +126,14 @@ export function FormularioRegistrarGasto({
       const filas = getValues('filas');
       const [primera, ...resto] = filas;
       // C-49 §1: llena «Una» (o la primera fila) solo si está vacía; nunca cambia una elegida
-      if (primera !== undefined && primera.categoriaId === '' && !filas.some((f) => f.categoriaId === categoria.id))
-        setValue('filas', [{ ...primera, categoriaId: categoria.id }, ...resto], { shouldDirty: true });
+      if (
+        primera !== undefined &&
+        primera.categoriaId === '' &&
+        !filas.some((f) => f.categoriaId === categoria.id)
+      )
+        setValue('filas', [{ ...primera, categoriaId: categoria.id }, ...resto], {
+          shouldDirty: true,
+        });
     },
     [getValues, setValue],
   );
@@ -221,7 +227,8 @@ export function FormularioRegistrarGasto({
       requestAnimationFrame(() => {
         raiz.current
           ?.querySelector<HTMLElement>(
-'[aria-invalid="true"], [data-error] [aria-haspopup="listbox"], [data-estado="error"]')
+            '[aria-invalid="true"], [data-error] [aria-haspopup="listbox"], [data-estado="error"]',
+          )
           ?.focus();
       });
       return;
@@ -373,7 +380,11 @@ export function FormularioRegistrarGasto({
             </div>
             <div className="xl:col-start-1 xl:row-start-2">
               <GrupoCampos>
-                <EntradaTexto etiqueta={t.nota} autoComplete="off" {...formulario.register('nota')} />
+                <EntradaTexto
+                  etiqueta={t.nota}
+                  autoComplete="off"
+                  {...formulario.register('nota')}
+                />
               </GrupoCampos>
             </div>
           </div>

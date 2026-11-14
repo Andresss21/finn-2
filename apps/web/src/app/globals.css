@@ -1612,6 +1612,11 @@ body:has([data-pagina-flujo]) [data-sin-conexion] {
   align-items: center;
   gap: 8px;
 }
+/* [CH-277] El disparador mide 44 de alto sin mover la fila (05 §14.4): el margen negativo devuelve lo agregado. */
+.campo-disparador {
+  min-height: 44px;
+  margin-block: -9px;
+}
 /* El blanco del disparador cubre la fila (`::after`): la cifra y la × quedan encima. */
 .reparto-linea > :not(.reparto-eleccion) {
   position: relative;

@@ -45,7 +45,8 @@ export function QuienPaga({ c, e, conocidas, destinoDeVos, poner, alSalir }: Pro
   };
   const escribir = (k: number, campo: 'monto' | 'pct', valor: string) => {
     if (k === 0) poner({ vos: { ...c.vos, [campo]: valor } });
-    else poner({ personas: c.personas.map((p, i) => (i === k - 1 ? { ...p, [campo]: valor } : p)) });
+    else
+      poner({ personas: c.personas.map((p, i) => (i === k - 1 ? { ...p, [campo]: valor } : p)) });
   };
   const filas = [c.vos, ...c.personas];
   return (
@@ -109,7 +110,11 @@ export function QuienPaga({ c, e, conocidas, destinoDeVos, poner, alSalir }: Pro
               const pct = formatearPorcentaje(centesimasDe(monto, e.total));
               return (
                 <div key={p.clave} className="campo-fila parte-fila">
-                  <span aria-hidden="true" className="parte-avatar" data-vos={esVos ? '' : undefined}>
+                  <span
+                    aria-hidden="true"
+                    className="parte-avatar"
+                    data-vos={esVos ? '' : undefined}
+                  >
                     {nombre.charAt(0)}
                   </span>
                   <span className="flex min-w-0 flex-col">

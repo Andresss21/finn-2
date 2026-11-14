@@ -17,7 +17,13 @@ import {
 } from '../../formularios/reparto';
 import { base } from '../../textos/base';
 import { registrarGasto as t } from '../../textos/registrar-gasto';
-import { DEUDOR_NUEVO, MAXIMO_PARTES, parteVacia, type CamposDeRegistro as Campos, type Parte } from './campos';
+import {
+  DEUDOR_NUEVO,
+  MAXIMO_PARTES,
+  parteVacia,
+  type CamposDeRegistro as Campos,
+  type Parte,
+} from './campos';
 
 export const NUEVA = 'nueva:';
 const CIEN = 10000;
@@ -68,7 +74,8 @@ function errorDe(
   if (modo === 'iguales') return undefined;
   if (modo === 'porcentaje') {
     if (r.pasaDe100) return t.cadaParte;
-    if (r.pctSuma > CIEN) return t.sobranPct(textoDeCentesimas(r.pctSuma), textoDeCentesimas(r.pctSuma - CIEN));
+    if (r.pctSuma > CIEN)
+      return t.sobranPct(textoDeCentesimas(r.pctSuma), textoDeCentesimas(r.pctSuma - CIEN));
     return r.pctSuma < CIEN && falta
       ? t.faltaPct(
           textoDeCentesimas(r.pctSuma),
@@ -111,7 +118,7 @@ export function estadoDelGasto(c: Campos, m: Marcas): EstadoDelGasto {
   const categorias = varias
     ? repartir(mia, c.modoCategorias, filas)
     : repartir(mia, 'montos', [{ monto: '', pct: '', auto: true }]);
-  const sinElegir = (c.conAlguien && !varias ? t.elegiCategoriaTuParte : t.elegiCategoria);
+  const sinElegir = c.conAlguien && !varias ? t.elegiCategoriaTuParte : t.elegiCategoria;
   const errorFilas = filas.map((f) =>
     f.categoriaId === '' && m.enviado
       ? sinElegir

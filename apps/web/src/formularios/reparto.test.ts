@@ -31,14 +31,22 @@ describe('PRU-DOM-VAL montos propuestos de Registrar gasto', () => {
 
   it('PRU-DOM-VAL-861 [C-45, C-49] CA-K3-10 y CA-R-6: porcentaje con redondeo mitad hacia arriba; con 100 % la diferencia va a la primera fila', () => {
     // 40/20/20 de $1,236.40: faltan 20 % ($247.28)
-    const r = repartir(c('1236.40'), 'porcentaje', [fila('', '40'), fila('', '20'), fila('', '20')]);
+    const r = repartir(c('1236.40'), 'porcentaje', [
+      fila('', '40'),
+      fila('', '20'),
+      fila('', '20'),
+    ]);
     expect(r.pctSuma).toBe(8000);
     expect(textoDeCentavos(Centavos.restar(c('1236.40'), r.suma))).toBe('247.28');
     // 60/40 de $148.60: $89.16 y $59.44; 60/20: $89.16 y $29.72
     expect(textos(porPorcentaje(c('148.60'), [6000, 4000]))).toEqual(['89.16', '59.44']);
     expect(textos(porPorcentaje(c('148.60'), [6000, 2000]))).toEqual(['89.16', '29.72']);
     // 33.33 × 3 no llega a 100: sin ajuste; 33.34/33.33/33.33 sí, y la primera absorbe el redondeo
-    expect(textos(porPorcentaje(c('100'), [3334, 3333, 3333]))).toEqual(['33.34', '33.33', '33.33']);
+    expect(textos(porPorcentaje(c('100'), [3334, 3333, 3333]))).toEqual([
+      '33.34',
+      '33.33',
+      '33.33',
+    ]);
     expect(textos(porPorcentaje(c('0.05'), [5000, 5000]))).toEqual(['0.02', '0.03']);
     expect(repartir(c('10'), 'porcentaje', [fila('', '120')]).pasaDe100).toBe(true);
     expect(centesimasEscritas('12.5')).toBe(1250);
@@ -53,9 +61,9 @@ describe('PRU-DOM-VAL montos propuestos de Registrar gasto', () => {
     expect(textos(queda.montos)).toEqual(['96.10', '52.50']);
     expect(textoDeCentavos(queda.suma)).toBe('148.60');
     // tu parte baja a $108.60: la fila «Lo que queda» se ajusta sola a $86.10
-    expect(textos(repartir(c('108.60'), 'montos', [fila('', '', true), fila('22.50')]).montos)).toEqual(
-      ['86.10', '22.50'],
-    );
+    expect(
+      textos(repartir(c('108.60'), 'montos', [fila('', '', true), fila('22.50')]).montos),
+    ).toEqual(['86.10', '22.50']);
     // escrita, no cambia: 96.10 + 22.50 pasan tu parte de $108.60 por $10.00
     const escrita = repartir(c('108.60'), 'montos', [fila('96.10'), fila('22.50')]);
     expect(textoDeCentavos(Centavos.restar(escrita.suma, c('108.60')))).toBe('10.00');

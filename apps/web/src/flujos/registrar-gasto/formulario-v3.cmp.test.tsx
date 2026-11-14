@@ -98,7 +98,9 @@ async function montar(props: Partial<PropsFormularioRegistrarGasto> = {}): Promi
   return nodo;
 }
 
-const todos = <T extends Element>(selector: string): T[] => [...document.querySelectorAll<T>(selector)];
+const todos = <T extends Element>(selector: string): T[] => [
+  ...document.querySelectorAll<T>(selector),
+];
 const conTexto = (selector: string, texto: string): HTMLElement => {
   const el = todos<HTMLElement>(selector).find((x) => x.textContent.trim() === texto);
   if (el === undefined) throw new Error(`no hay ${selector} con «${texto}»`);
@@ -109,7 +111,8 @@ const etiquetado = (nombre: string): HTMLInputElement => {
   if (el === null) throw new Error(`no hay un control «${nombre}»`);
   return el;
 };
-const total = () => document.querySelector<HTMLInputElement>('.campo-billete input') as HTMLInputElement;
+const total = () =>
+  document.querySelector<HTMLInputElement>('.campo-billete input') as HTMLInputElement;
 const radio = (grupo: string, texto: string) =>
   conTexto(`[role="radiogroup"][aria-label="${grupo}"] [role="radio"]`, texto);
 const tarjeta = (titulo: string) =>
@@ -120,8 +123,8 @@ const chip = (nombre: string) =>
   ) as HTMLElement;
 const disparadores = () => todos<HTMLButtonElement>('button[aria-haspopup="listbox"]');
 const opcion = (nombre: string) =>
-  todos<HTMLElement>('[role="option"]').find((o) =>
-    o.querySelector('.campo-opcion-nombre')?.textContent === nombre,
+  todos<HTMLElement>('[role="option"]').find(
+    (o) => o.querySelector('.campo-opcion-nombre')?.textContent === nombre,
   ) as HTMLElement;
 const resumenes = () => todos<HTMLElement>('.reparto-resumen').map((r) => r.textContent.trim());
 const guardar = () =>
@@ -134,7 +137,9 @@ const enviado = () => vi.mocked(accion).mock.calls.at(-1)?.[0] as { lineas: unkn
 /** Apagado (`aria-disabled`) sigue siendo tocable: Playwright lo toma por deshabilitado, así que se fuerza el clic. */
 const tocarGuardar = () => userEvent.click(guardar(), { force: true });
 const ok = () =>
-  vi.mocked(accion).mockResolvedValue({ ok: true, valor: { id: 't1' }, yaAplicada: false, avisos: [] } as never);
+  vi
+    .mocked(accion)
+    .mockResolvedValue({ ok: true, valor: { id: 't1' }, yaAplicada: false, avisos: [] } as never);
 
 async function escribir(el: HTMLInputElement, texto: string): Promise<void> {
   await userEvent.clear(el);
@@ -164,7 +169,9 @@ describe('PRU-CMP-TX registrar gasto con los campos v3', () => {
     expect(radio(t.cuantasCategorias, t.una).getAttribute('aria-checked')).toBe('true');
     expect(disparadores()).toHaveLength(2); // Cuenta y Categoría
     await escribir(total(), '148.60');
-    const comercio = todos<HTMLLabelElement>('label').find((l) => l.textContent.startsWith(t.comercio));
+    const comercio = todos<HTMLLabelElement>('label').find((l) =>
+      l.textContent.startsWith(t.comercio),
+    );
     await userEvent.type(comercio?.control as HTMLInputElement, 'PRICESMART');
     await vi.waitFor(() => {
       expect(disparadores()[1]?.textContent).toContain('Supermercado');
@@ -264,7 +271,11 @@ describe('PRU-CMP-TX registrar gasto con los campos v3', () => {
     await userEvent.click(chip('Carlos'));
     await userEvent.click(chip('Ana'));
     expect(radio(t.comoRepartirPersonas, t.iguales).getAttribute('aria-checked')).toBe('true');
-    expect(todos('.parte-fija').map((x) => x.textContent)).toEqual(['$412.14', '$412.13', '$412.13']);
+    expect(todos('.parte-fija').map((x) => x.textContent)).toEqual([
+      '$412.14',
+      '$412.13',
+      '$412.13',
+    ]);
     expect(resumenes()).toEqual([t.repartido('$1,236.40', '$1,236.40')]);
     await userEvent.click(radio(t.comoRepartirPersonas, t.porcentaje));
     await escribir(etiquetado(t.tuPorcentaje), '40');
@@ -384,7 +395,9 @@ describe('PRU-CMP-TX registrar gasto con los campos v3', () => {
     await variasCon('148.60', 'Supermercado', 'Farmacia', '50');
     await tocarGuardar();
     await vi.waitFor(() => {
-      expect(document.body.textContent).toContain('Las partes suman $148.59 y el total es $148.60.');
+      expect(document.body.textContent).toContain(
+        'Las partes suman $148.59 y el total es $148.60.',
+      );
     });
     expect(etiquetado(t.montoPara('Farmacia')).value).toBe('50.00');
     expect(motivo()).toBe('Las partes suman $148.59 y el total es $148.60.');
@@ -394,7 +407,9 @@ describe('PRU-CMP-TX registrar gasto con los campos v3', () => {
     await userEvent.click(opcion('Netflix'));
     await userEvent.click(tarjeta(t.conAlguien));
     for (const d of deudores) await userEvent.click(chip(d.nombre));
-    expect(conTexto('.reparto-agregar button', t.agregarCategoria).disabled).toBe(true);
+    expect(conTexto('.reparto-agregar button', t.agregarCategoria).hasAttribute('disabled')).toBe(
+      true,
+    );
     expect(conTexto('.eleccion-otra', base.otraPersona).hasAttribute('disabled')).toBe(true);
     expect(document.body.textContent).toContain(t.maximoLineas);
   });
@@ -406,7 +421,9 @@ describe('PRU-CMP-TX registrar gasto con los campos v3', () => {
     await userEvent.click(chip('Carlos'));
     await elegirEn(disparadores()[1] as HTMLButtonElement, 'Supermercado');
     await userEvent.click(radio(t.cuantasCategorias, t.varias));
-    expect(document.querySelector('[role="listbox"]')?.getAttribute('aria-labelledby')).toBeTruthy();
+    expect(
+      document.querySelector('[role="listbox"]')?.getAttribute('aria-labelledby'),
+    ).toBeTruthy();
     expect(opcion('Supermercado').getAttribute('aria-disabled')).toBe('true');
     await userEvent.click(opcion('Farmacia'));
     for (const nombre of [t.cuantasCategorias, t.comoRepartir, t.comoRepartirPersonas, t.quienPaga])
@@ -416,7 +433,9 @@ describe('PRU-CMP-TX registrar gasto con los campos v3', () => {
     for (const tema of ['light', 'dark']) {
       document.documentElement.dataset['theme'] = tema;
       const r = await axe.run(nodo);
-      expect(r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);
+      expect(
+        r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
+      ).toEqual([]);
     }
   });
 });

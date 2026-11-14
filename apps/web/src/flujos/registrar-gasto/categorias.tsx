@@ -70,7 +70,9 @@ export function Categorias({
   const agregar = (filas: readonly FilaDeCategoria[]) => {
     setAbrir(filas.length);
     const nuevas = [...filas, filaVacia()];
-    cambiarFilas(c.modoCategorias === 'porcentaje' ? propuesta('porcentaje', e.mia, nuevas) : nuevas);
+    cambiarFilas(
+      c.modoCategorias === 'porcentaje' ? propuesta('porcentaje', e.mia, nuevas) : nuevas,
+    );
   };
   const primera = c.filas[0] ?? filaVacia();
   const quitar = (i: number) => {
@@ -117,10 +119,7 @@ export function Categorias({
         <>
           <p className="text-cuerpo-pequeno text-texto-secundario">
             {c.conAlguien
-              ? t.repartisTuParte(
-                  formatearMonto(e.mia),
-                  personaUnica,
-                )
+              ? t.repartisTuParte(formatearMonto(e.mia), personaUnica)
               : t.repartisElTotal(formatearMonto(e.total))}
           </p>
           <EstiloV3>

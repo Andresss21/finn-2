@@ -165,56 +165,56 @@ function ListaFila({
           }}
         >
           <Envoltura derecha={derecha}>
-          <button
-            ref={disparador}
-            type="button"
-            id={control.id}
-            aria-describedby={
-              [control['aria-describedby'], elegida?.detalle === undefined ? '' : `${id}-d`]
-                .filter(Boolean)
-                .join(' ') || undefined
-            }
-            aria-haspopup="listbox"
-            aria-expanded={abierta}
-            aria-labelledby={`${control.id}-l ${id}-v`}
-            disabled={deshabilitada}
-            className="campo-disparador"
-            onClick={() => {
-              if (abierta) setAbierta(false);
-              else abrir();
-            }}
-            onKeyDown={(e) => {
-              if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-              e.preventDefault();
-              abrir();
-            }}
-          >
-            <span
-              id={`${id}-v`}
-              className={
-                elegida === undefined
-                  ? 'campo-disparador-texto campo-marcador'
-                  : 'campo-disparador-texto'
+            <button
+              ref={disparador}
+              type="button"
+              id={control.id}
+              aria-describedby={
+                [control['aria-describedby'], elegida?.detalle === undefined ? '' : `${id}-d`]
+                  .filter(Boolean)
+                  .join(' ') || undefined
               }
+              aria-haspopup="listbox"
+              aria-expanded={abierta}
+              aria-labelledby={`${control.id}-l ${id}-v`}
+              disabled={deshabilitada}
+              className="campo-disparador"
+              onClick={() => {
+                if (abierta) setAbierta(false);
+                else abrir();
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+                e.preventDefault();
+                abrir();
+              }}
             >
-              {elegida?.etiqueta ?? marcador}
-            </span>
-            <Icono
-              nombre="chevD"
-              tamano={18}
-              className={abierta ? 'shrink-0 rotate-180' : 'shrink-0'}
-            />
-          </button>
-          {/* La línea secundaria va debajo del valor, fuera del botón (la referencia): describe, no nombra. */}
-          {elegida?.detalle === undefined ? null : (
-            <span
-              id={`${id}-d`}
-              className="campo-detalle"
-              {...(elegida.negativo === true ? { 'data-negativo': '' } : {})}
-            >
-              {elegida.detalle}
-            </span>
-          )}
+              <span
+                id={`${id}-v`}
+                className={
+                  elegida === undefined
+                    ? 'campo-disparador-texto campo-marcador'
+                    : 'campo-disparador-texto'
+                }
+              >
+                {elegida?.etiqueta ?? marcador}
+              </span>
+              <Icono
+                nombre="chevD"
+                tamano={18}
+                className={abierta ? 'shrink-0 rotate-180' : 'shrink-0'}
+              />
+            </button>
+            {/* La línea secundaria va debajo del valor, fuera del botón (la referencia): describe, no nombra. */}
+            {elegida?.detalle === undefined ? null : (
+              <span
+                id={`${id}-d`}
+                className="campo-detalle"
+                {...(elegida.negativo === true ? { 'data-negativo': '' } : {})}
+              >
+                {elegida.detalle}
+              </span>
+            )}
           </Envoltura>
           {nombre === undefined ? null : <input type="hidden" name={nombre} value={valor} />}
           {abierta ? (
@@ -289,7 +289,13 @@ function ListaFila({
 }
 
 /** [CH-277] Con algo a la derecha (el monto de una fila de reparto), el disparador y su detalle van en una columna a su lado. */
-function Envoltura({ derecha, children }: { readonly derecha: ReactNode; readonly children: ReactNode }) {
+function Envoltura({
+  derecha,
+  children,
+}: {
+  readonly derecha: ReactNode;
+  readonly children: ReactNode;
+}) {
   if (derecha === undefined) return <>{children}</>;
   return (
     <div className="reparto-linea">
