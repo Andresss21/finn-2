@@ -1,6 +1,7 @@
 // Textos de `/registrar` y `/registrar/gasto` (FT-21; 05 §12). Los de rechazo del servidor (`suma_lineas_distinta`,
 // `cuenta_archivada`…) llegan ya compuestos en `mensaje`; `lineaSinDestino` repite el de 04 §7.5 porque el contrato de la
 // pantalla lo muestra junto a la parte antes de enviar (OP-20 no tiene una línea sin destino que rechazar).
+import { base } from './base.ts';
 import { glosario } from './glosario.ts';
 
 export const registrarGasto = {
@@ -152,7 +153,7 @@ export const registrarGasto = {
   elegiCategoria: 'Elegí una categoría.',
   elegiCategoriaTuParte: 'Elegí la categoría de tu parte.',
   elegiConQuien: 'Elegí con quién lo dividís.',
-  motivoMonto: 'Escribí el monto para guardar.',
+  motivoMonto: base.motivoMonto,
   motivoPartes: 'Terminá de repartir el total.',
   motivoCategoria: 'Elegí una categoría para guardar.',
   motivoFilas: 'Elegí la categoría de cada fila para guardar.',
