@@ -14,6 +14,7 @@ import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
 import {
   CerrarFlujoAlMontar,
+  CerrarPanelConResultado,
   PaginaFlujoDeRuta,
   SuperpuestoDeRuta,
 } from '../../componentes/navegacion/flujo-de-ruta';
@@ -150,12 +151,19 @@ export function FormularioEstructura(p: PropsFormularioEstructura) {
         {hijos}
       </PaginaFlujoDeRuta>
     );
-  // [CH-270] Crear cierra el panel y deja el resultado en la lista (C-42), sin pantalla de resultado.
-  if (nuevo && operacion.estado === 'listo' && creado.current !== undefined)
+  // [CH-270] Crear cierra el panel y deja el resultado en la lista (C-42), sin pantalla de resultado. [CH-285] El panel vuelve
+  // con `router.back()` y recién después pone `?resultado=`: un `replace` desde el panel dejaba abrir el siguiente como página.
+  if (nuevo && operacion.estado === 'listo' && creado.current !== undefined) {
+    const ruta = rutaEstructuraConResultado({ tipo, id: creado.current });
     return envuelve(
       TITULOS[modo],
-      <CerrarFlujoAlMontar rutaPadre={rutaEstructuraConResultado({ tipo, id: creado.current })} />,
+      superpuesto ? (
+        <CerrarPanelConResultado ruta={ruta} />
+      ) : (
+        <CerrarFlujoAlMontar rutaPadre={ruta} />
+      ),
     );
+  }
   const hecho =
     operacion.estado === 'listo'
       ? t.guardado

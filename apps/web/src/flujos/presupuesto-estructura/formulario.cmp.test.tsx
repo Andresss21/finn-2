@@ -5,12 +5,15 @@
 // [CH-270] Crear un grupo o una categoría cierra el panel y deja el resultado en la lista (C-42, principio 5): sin pantalla de
 // resultado ni «Volver a la estructura». [CH-272] Subir y Bajar viven en la barra «Mover» del asa (C-46). [CH-278] El resultado
 // es la etiqueta de C-50 sobre lo creado o lo movido, con la frase en la región de estado; la reemplaza la acción siguiente.
+// [CH-285] El panel se cierra con «atrás» y `?resultado=` llega con un `replace` recién cuando el panel se desmontó: el bug de
+// abrir el segundo panel como página solo existe con el enrutador real de Next (lo cubre la E2E de estructura); aquí, el orden.
 import type { GrupoDeEstructura } from '@finn/dominio/selectores';
-import { act, type ReactNode } from 'react';
+import { act, StrictMode, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
+import { CerrarPanelConResultado } from '../../componentes/navegacion/flujo-de-ruta';
 import { crearEnEstructura, editarEnEstructura } from '../../servidor/acciones/categorias';
 import { estructura as t } from '../../textos/estructura';
 import { FormularioEstructura } from './formulario';
@@ -242,33 +245,82 @@ const seccion = (grupoId: string): HTMLElement => {
 };
 
 describe('PRU-CMP-CATEG-128 crear cierra el panel con el resultado en la lista', () => {
-  it('PRU-CMP-CATEG-128 [FT-18] «Crear» una categoría o un grupo lleva a la estructura con `?resultado=` y el id creado, sin pantalla de resultado ni «Volver a la estructura»', async () => {
-    for (const [modo, tipo] of [
-      ['categoria-nueva', 'categoria'],
-      ['grupo-nuevo', 'grupo'],
-    ] as const) {
-      await montar(
-        <FormularioEstructura modo={modo} superpuesto grupos={GRUPOS} grupoInicial={HOGAR} />,
-      );
-      await userEvent.fill(nombreDe(), 'Veterinario');
-      await userEvent.click(boton(t.crear));
-      await vi.waitFor(() => {
-        expect(enrutador.replace).toHaveBeenCalledTimes(1);
-      });
-      const id = (vi.mocked(crearEnEstructura).mock.calls[0]?.[0] as { id: string }).id;
-      expect(id).toMatch(/^[0-9a-f-]{36}$/);
-      expect(enrutador.replace).toHaveBeenCalledWith(
-        `/presupuesto/estructura?resultado=${tipo}%3A${id}`,
-      );
-      expect(document.body.textContent).not.toContain(t.volver);
-      for (const { raiz, nodo } of montados.splice(0)) {
-        act(() => {
-          raiz.unmount();
+  it('PRU-CMP-CATEG-128 [FT-18] «Crear» una categoría o un grupo lleva a la estructura con `?resultado=` y el id creado, sin pantalla de resultado ni «Volver a la estructura»: el panel vuelve con «atrás» y pone `?resultado=` recién al desmontarse; la página completa, con `replace`', async () => {
+    for (const superpuesto of [true, false])
+      for (const [modo, tipo] of [
+        ['categoria-nueva', 'categoria'],
+        ['grupo-nuevo', 'grupo'],
+      ] as const) {
+        await montar(
+          <FormularioEstructura
+            modo={modo}
+            superpuesto={superpuesto}
+            grupos={GRUPOS}
+            grupoInicial={HOGAR}
+          />,
+        );
+        await userEvent.fill(nombreDe(), 'Veterinario');
+        await userEvent.click(boton(t.crear));
+        const id = (): string =>
+          (vi.mocked(crearEnEstructura).mock.calls[0]?.[0] as { id: string }).id;
+        if (superpuesto) {
+          await vi.waitFor(() => {
+            expect(enrutador.back).toHaveBeenCalledTimes(1);
+          });
+          // Mientras el panel sigue montado (la vuelta no terminó), no hay `replace` desde la ruta interceptada.
+          expect(enrutador.replace).not.toHaveBeenCalled();
+        }
+        expect(document.body.textContent).not.toContain(t.volver);
+        for (const { raiz, nodo } of montados.splice(0)) {
+          act(() => {
+            raiz.unmount();
+          });
+          nodo.remove();
+        }
+        await vi.waitFor(() => {
+          expect(enrutador.replace).toHaveBeenCalledTimes(1);
         });
-        nodo.remove();
+        expect(id()).toMatch(/^[0-9a-f-]{36}$/);
+        expect(enrutador.replace).toHaveBeenCalledWith(
+          `/presupuesto/estructura?resultado=${tipo}%3A${id()}`,
+        );
+        expect(enrutador.back).toHaveBeenCalledTimes(superpuesto ? 1 : 0);
+        vi.mocked(crearEnEstructura).mockClear();
+        enrutador.replace.mockClear();
+        enrutador.back.mockClear();
       }
-      vi.mocked(crearEnEstructura).mockClear();
-      enrutador.replace.mockClear();
+  });
+});
+
+describe('PRU-CMP-CATEG-739 el panel que se cerró con resultado no se reabre como página', () => {
+  it('PRU-CMP-CATEG-739 [FT-18, C-50] el panel de crear hace una sola vuelta atrás aunque StrictMode lo monte dos veces, y el reemplazo con el resultado llega una vez, solo cuando el panel se desmonta de verdad', () => {
+    const ruta = '/presupuesto/estructura?resultado=categoria%3A1';
+    vi.useFakeTimers();
+    try {
+      const nodo = document.createElement('div');
+      document.body.append(nodo);
+      const raiz = createRoot(nodo);
+      act(() => {
+        raiz.render(
+          <StrictMode>
+            <CerrarPanelConResultado ruta={ruta} />
+          </StrictMode>,
+        );
+      });
+      // El desmontaje simulado de StrictMode no deja pasar el `replace`.
+      vi.runAllTimers();
+      expect(enrutador.back).toHaveBeenCalledTimes(1);
+      expect(enrutador.replace).not.toHaveBeenCalled();
+      act(() => {
+        raiz.unmount();
+      });
+      nodo.remove();
+      vi.runAllTimers();
+      expect(enrutador.replace).toHaveBeenCalledTimes(1);
+      expect(enrutador.replace).toHaveBeenCalledWith(ruta);
+      expect(enrutador.back).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
     }
   });
 });
