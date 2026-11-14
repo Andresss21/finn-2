@@ -24,7 +24,7 @@ import {
   deshacerEnFila,
   type EstadoReloj,
   type MotivoEspera,
-} from './etiqueta-reloj';
+} from './etiqueta-tiempo';
 import { Icono, type NombreIcono } from './icono';
 
 export type AccionEtiqueta =

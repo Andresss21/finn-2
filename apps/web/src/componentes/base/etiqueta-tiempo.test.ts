@@ -1,7 +1,7 @@
 // [CH-278] C-50 (AVISO-DE-RESULTADO §4 y §5; `docs/anexos/finn-aviso-de-resultado/logica/aviso.js`): el reloj de la etiqueta de
 // resultado, con un reloj simulado que avanza a mano (07 §7.1). La duración llega de afuera, como la lee la interfaz del token.
 import { describe, expect, it } from 'vitest';
-import { crearEtiquetaReloj, deshacerEnFila, type EstadoReloj } from './etiqueta-reloj';
+import { crearEtiquetaReloj, deshacerEnFila, type EstadoReloj } from './etiqueta-tiempo';
 
 interface R {
   readonly id: string;
