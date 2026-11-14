@@ -140,8 +140,7 @@ export function FormularioCuentaNueva({
   // [C-45] CAMPOS-V3 §5 y §11: «Crear cuenta» se ve apagado mientras falte algo, sigue tocable y dice debajo qué falta. Al
   // tocarlo, el contrato marca los errores y el foco va al primero, también a los campos que no se registran con `register`.
   const faltan = camposPorCorregir(c);
-  const motivo =
-    operacion.motivoSinEnvio ?? (faltan > 0 ? base.corregirCampos(faltan) : undefined);
+  const motivo = operacion.motivoSinEnvio ?? (faltan > 0 ? base.corregirCampos(faltan) : undefined);
   const forma = useRef<HTMLFormElement>(null);
   const intentos = formState.submitCount;
   useEffect(() => {

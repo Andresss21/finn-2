@@ -34,6 +34,13 @@ async function abrir(page: Page, ruta = RUTA): Promise<void> {
 }
 
 const campo = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exact: true });
+/** [C-45] Un campo opcional lleva «Opcional» dentro de su `<label>` (CAMPOS-V3 §3): se busca por el rótulo sin `exact`. */
+const opcional = (page: Page, etiqueta: string) => page.getByLabel(etiqueta);
+/** [C-45] Con cuatro opciones o más, la institución es la lista propia de la selección v3 (CAMPOS-V3 §6). */
+async function elegirInstitucion(page: Page, nombre: string): Promise<void> {
+  await page.getByRole('button', { name: t.institucion }).click();
+  await page.getByRole('option', { name: nombre, exact: true }).click();
+}
 const crear = (page: Page) => page.getByRole('button', { name: t.guardar });
 /** Al terminar, el flujo se cierra a Cuentas (`cerrarFlujo()`, 05 §1.4): la cuenta nueva ya está ahí. */
 const alTerminar = (page: Page) => expect(page).toHaveURL(/\/cuentas$/);
@@ -126,13 +133,13 @@ test.describe('PRU-E2E-CTA', () => {
     ]);
     await abrir(page);
     await campo(page, t.nombre).fill('Otra del BAC');
-    await page.getByRole('radio', { name: 'BAC', exact: true }).click();
-    await campo(page, t.ultimos4).fill('4821');
+    await elegirInstitucion(page, 'BAC');
+    await opcional(page, t.ultimos4).fill('4821');
     await campo(page, t.saldo.efectivo).fill('10');
     await crear(page).click();
     await expect(page.getByText('Ya tenés una cuenta de BAC terminada en 4821.')).toBeVisible();
 
-    await page.getByRole('radio', { name: 'Banco Agrícola' }).click();
+    await elegirInstitucion(page, 'Banco Agrícola');
     await crear(page).click();
     await alTerminar(page);
   });
@@ -149,7 +156,7 @@ test.describe('PRU-E2E-CTA', () => {
       .click();
     await expect(campo(page, t.nombre)).toHaveValue(s.nombres.billetera);
     await expect(page.getByText(s.ayudas.billetera)).toBeVisible();
-    await expect(campo(page, t.ultimos4)).toHaveCount(0);
+    await expect(opcional(page, t.ultimos4)).toHaveCount(0);
     await campo(page, t.saldo.efectivo).fill('40');
     await crear(page).click();
     await alTerminar(page);
@@ -160,7 +167,7 @@ test.describe('PRU-E2E-CTA', () => {
       .getByRole('radio', { name: s.opciones.ahorro })
       .click();
     await expect(campo(page, t.nombre)).toHaveValue(s.nombres.ahorro);
-    await expect(campo(page, t.ultimos4)).toHaveValue('');
+    await expect(opcional(page, t.ultimos4)).toHaveValue('');
     await campo(page, t.saldo.efectivo).fill('500');
     await crear(page).click();
     await alTerminar(page);
@@ -192,14 +199,14 @@ test.describe('PRU-E2E-CTA', () => {
     await campo(page, t.plazoCuotas).fill('18');
     await campo(page, t.cuotasPagadas).fill('6');
     await page.getByText(t.seccionCondiciones).click();
-    await campo(page, t.tasaAnual).fill('8.25');
-    await expect(campo(page, t.seguroPrimerMes)).toHaveCount(0);
+    await opcional(page, t.tasaAnual).fill('8.25');
+    await expect(opcional(page, t.seguroPrimerMes)).toHaveCount(0);
     await page
       .getByRole('radiogroup', { name: t.modelo })
       .getByRole('radio', { name: t.modelos.banco_agricola })
       .click();
-    await campo(page, t.seguroPrimerMes).fill('5');
-    await campo(page, t.comision).fill('62.95');
+    await opcional(page, t.seguroPrimerMes).fill('5');
+    await opcional(page, t.comision).fill('62.95');
     if (test.info().project.name === 'escritorio') {
       const formulario = page.locator('form[data-columnas="2"]');
       const [izquierda, derecha] = await Promise.all([
@@ -234,10 +241,7 @@ test.describe('PRU-E2E-CTA', () => {
     await abrir(page, `${RUTA}?tipo-cuenta=prestamo`);
     await campo(page, t.nombre).fill('Préstamo BA');
     await expect(campo(page, t.contraparte)).toBeVisible();
-    await page
-      .getByRole('radiogroup', { name: t.institucion })
-      .getByRole('radio', { name: 'Banco Agrícola' })
-      .click();
+    await elegirInstitucion(page, 'Banco Agrícola');
     await expect(campo(page, t.contraparte)).toHaveCount(0);
     await campo(page, t.apertura).fill('2026-05-08');
     await campo(page, t.montoOriginal).fill('6295');
@@ -255,7 +259,7 @@ test.describe('PRU-E2E-CTA', () => {
       page.getByText('Con el modelo Banco Agrícola, indicá la tasa anual.'),
     ).toBeVisible();
     await expect(page).toHaveURL(/\/cuentas\/nueva/);
-    await campo(page, t.tasaAnual).fill('8.25');
+    await opcional(page, t.tasaAnual).fill('8.25');
     await crear(page).click();
     // La apertura cae en un período cerrado: AV-01 pide confirmar
     await page.getByRole('button', { name: t.confirmar }).click();
