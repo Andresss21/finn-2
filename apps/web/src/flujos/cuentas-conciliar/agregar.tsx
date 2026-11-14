@@ -6,6 +6,7 @@ import type { Centavos } from '@finn/dominio/valores';
 import { useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
 import { centavosATextoDecimal } from '../../formato';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -75,17 +76,20 @@ export function Agregar({
   const fallo = operacion.estado === 'error' ? operacion.error : undefined;
   return (
     <div className="flex basis-full flex-col gap-2 pb-2">
+      {/* [C-45] La categoría, una fila v3 con la lista propia o el segmentado (CAMPOS-V3 §6). */}
       {tipo === 'gasto' ? (
-        <Seleccion
-          etiqueta={t.categoriaDe(m.descripcion)}
-          opciones={categorias.map((c) => ({ valor: c.id, etiqueta: c.nombre }))}
-          valor={categoriaId}
-          alCambiar={(v) => {
-            idAlta.current = crypto.randomUUID();
-            setCategoriaId(v);
-          }}
-          {...(falta ? { error: t.elegirCategoria } : {})}
-        />
+        <GrupoCampos>
+          <Seleccion
+            etiqueta={t.categoriaDe(m.descripcion)}
+            opciones={categorias.map((c) => ({ valor: c.id, etiqueta: c.nombre }))}
+            valor={categoriaId}
+            alCambiar={(v) => {
+              idAlta.current = crypto.randomUUID();
+              setCategoriaId(v);
+            }}
+            {...(falta ? { error: t.elegirCategoria } : {})}
+          />
+        </GrupoCampos>
       ) : null}
       {fallo === undefined ? null : (
         <AvisoEnLinea estado="problema" aparecioDespues>

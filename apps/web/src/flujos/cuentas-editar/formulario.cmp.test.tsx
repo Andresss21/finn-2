@@ -102,7 +102,7 @@ describe('PRU-CMP-CTA-400 editar el subtipo de efectivo', () => {
     expect(entrada).not.toHaveProperty('nombre');
   });
 
-  it('PRU-CMP-CTA-400 [FT-53] una cuenta que no es de efectivo no muestra el segmentado y los últimos 4 dicen «Opcional»', async () => {
+  it('PRU-CMP-CTA-400 [FT-53] una cuenta que no es de efectivo no muestra el segmentado y los últimos 4 dicen «Opcional» en su rótulo', async () => {
     const nodo = await montar(
       <FormularioCuentasEditar
         accion={vi.fn(ok)}
@@ -118,9 +118,9 @@ describe('PRU-CMP-CTA-400 editar el subtipo de efectivo', () => {
       />,
     );
     expect(nodo.querySelector(`[aria-label="${cuentaSubtipo.etiqueta}"]`)).toBe(null);
-    expect(nodo.querySelector('input[maxlength="4"]')?.getAttribute('placeholder')).toBe(
-      cuentaSubtipo.opcional,
-    );
+    // [C-45] «Opcional» va junto al rótulo de la fila (CAMPOS-V3 §3), no como marcador.
+    const ultimos4 = nodo.querySelector('input[maxlength="4"]') as HTMLInputElement;
+    expect(ultimos4.labels?.[0]?.textContent).toContain(cuentaSubtipo.opcional);
   });
 
   it('PRU-CMP-CTA-400 editar una tarjeta muestra límite, tasa, corte y pago y envía solo los que cambian, con lo visto', async () => {
@@ -147,7 +147,7 @@ describe('PRU-CMP-CTA-400 editar el subtipo de efectivo', () => {
     const campo = (etiqueta: string) =>
       [...nodo.querySelectorAll('label')].find((l) => l.textContent.startsWith(etiqueta))
         ?.control as HTMLInputElement;
-    expect(campo('Límite de crédito').value).toBe('2500.00');
+    expect(campo('Límite de crédito').value).toBe('2,500.00');
     expect(campo('Día de corte').value).toBe('15');
     await userEvent.clear(campo('Día de corte'));
     await userEvent.type(campo('Día de corte'), '20');

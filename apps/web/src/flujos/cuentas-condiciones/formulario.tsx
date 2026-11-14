@@ -2,13 +2,17 @@
 // `/cuentas/[cuentaId]/condiciones` (FT-55, OP-48; 05 §2.7, §4.7): el flujo largo de registrar o corregir la tasa, el seguro, la
 // cuota y el plazo de un préstamo. Envía solo lo que cambió, cada campo con el valor que vio la persona (`esperado`). No
 // calcula montos (PF-3): la tabla de amortización la dibuja el detalle con lo que dice el servidor.
+// [C-45] Los campos son un `GrupoCampos` (CAMPOS-V3 §2): montos con «$», la tasa con «%», enteros sin letras y las opciones en
+// segmentado o en la lista propia según cuántas son (§6). «Guardar condiciones» sigue §5 y §11.
 import { useCallback, useMemo, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
 import { Seleccion } from '../../componentes/base/seleccion';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { EntradaPorcentaje } from '../../componentes/formularios/entrada-porcentaje';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useBorrador } from '../../formularios/use-borrador';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -77,6 +81,12 @@ function Cuerpo({
   const poner = (n: Clave) => (valor: string) => {
     setValue(n, valor, { shouldDirty: true, shouldValidate: formState.isSubmitted });
   };
+  const guardar = useGuardarV3({
+    contrato,
+    campos: c,
+    intentos: formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
   const { estado, error: fallo } = operacion;
   const actuales = fallo?.datos?.['actuales'] as Record<string, unknown> | undefined;
   const conflicto = fallo?.codigo === 'conflicto_desactualizado' && actuales !== undefined;
@@ -90,6 +100,18 @@ function Cuerpo({
     if (x.clase === 'monto')
       return (
         <EntradaMonto
+          key={x.n}
+          nombre={x.n}
+          etiqueta={x.etiqueta}
+          valor={c[x.n]}
+          alCambiar={poner(x.n)}
+          error={mensaje}
+          requerido={x.requerido}
+        />
+      );
+    if (x.clase === 'porcentaje')
+      return (
+        <EntradaPorcentaje
           key={x.n}
           nombre={x.n}
           etiqueta={x.etiqueta}
@@ -115,7 +137,7 @@ function Cuerpo({
         key={x.n}
         etiqueta={x.etiqueta}
         requerido={x.requerido}
-        inputMode={x.clase === 'texto' ? 'text' : x.clase === 'entero' ? 'numeric' : 'decimal'}
+        inputMode={x.clase === 'texto' ? 'text' : 'numeric'}
         autoComplete="off"
         {...conError}
         {...formulario.register(x.n)}
@@ -132,7 +154,12 @@ function Cuerpo({
 
   return (
     <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
-      <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
+      <form
+        ref={guardar.forma}
+        onSubmit={(e) => void formulario.enviar(e)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
         <p className="text-cuerpo-pequeno text-texto-secundario">{t.nota}</p>
         {borrador.recuperado ? (
           <AvisoEnLinea
@@ -147,7 +174,7 @@ function Cuerpo({
             {formularios.borradorRecuperado}
           </AvisoEnLinea>
         ) : null}
-        {DESCRIPTORES.map(campo)}
+        <GrupoCampos>{DESCRIPTORES.map(campo)}</GrupoCampos>
         {estado === 'error' && fallo !== undefined && !enSuCampo ? (
           <AvisoEnLinea
             estado="problema"
@@ -176,9 +203,8 @@ function Cuerpo({
           enviando={estado === 'enviando'}
           textoEnviando={t.guardando}
           deshabilitado={!operacion.enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          className="w-full"
+          {...guardar.boton}
         >
           {t.guardar}
         </Boton>

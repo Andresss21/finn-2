@@ -3,12 +3,16 @@
 // servidor, marcar las coincidencias y terminar. La carga firmada vive solo en el estado del componente; el borrador guarda la
 // huella SHA-256 del archivo y las marcas, y las restaura si se vuelve a subir el mismo archivo (CA-43.7). No calcula montos (PF-3).
 // «Agregar» desde el estado (OP-46) lo arma `agregar.tsx`.
+// [C-45] Las coincidencias son casillas en fila dentro de un `GrupoCampos` (CAMPOS-V3 §8); «Revisar» sin archivo se ve apagado,
+// sigue tocable y lleva el foco a «Elegir archivo» (§5 y §11). Los enlaces van sin subrayado (C-33).
 import type { SalidaOp45 } from '@finn/aplicacion/operaciones/conciliacion';
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
+import { GrupoCampos } from '../../componentes/base/campo';
+import { Casilla } from '../../componentes/base/controles-fila';
 import { Icono } from '../../componentes/base/icono';
 import { Resultado } from '../../componentes/base/resultado';
 import { Monto } from '../../componentes/dominio/monto';
@@ -126,6 +130,7 @@ export function FormularioConciliar({
   const fin = useOperacion({ accion: terminar });
   const [archivo, setArchivo] = useState<File | null>(null);
   const entradaArchivo = useRef<HTMLInputElement>(null);
+  const zonaArchivo = useRef<HTMLDivElement>(null);
   const [marcadas, setMarcadas] = useState<ReadonlySet<string>>(new Set());
   const [ajuste, setAjuste] = useState<Ajuste>();
   const huella = useRef('');
@@ -162,7 +167,10 @@ export function FormularioConciliar({
   };
 
   const revisar = async () => {
-    if (archivo === null) return;
+    if (archivo === null) {
+      zonaArchivo.current?.querySelector('button')?.focus();
+      return;
+    }
     const bytes = new Uint8Array(await archivo.arrayBuffer());
     huella.current = await huellaDe(bytes);
     await subida.enviar({ cuentaId, archivo: bytes });
@@ -228,7 +236,7 @@ export function FormularioConciliar({
           >
             <EnlaceFinn
               href={`/actividad/${x.transaccionId}/editar`}
-              className="inline-flex min-h-11 items-center font-bold text-enlace underline"
+              className="inline-flex min-h-11 items-center font-bold text-enlace"
             >
               {t.editar}
             </EnlaceFinn>
@@ -265,7 +273,7 @@ export function FormularioConciliar({
             enlace={
               <EnlaceFinn
                 href={rutaPadre}
-                className="inline-flex min-h-11 items-center font-bold text-enlace underline"
+                className="inline-flex min-h-11 items-center font-bold text-enlace"
               >
                 {t.verCuenta}
               </EnlaceFinn>
@@ -280,7 +288,7 @@ export function FormularioConciliar({
               accion={
                 <EnlaceFinn
                   href={`/registrar/${ruta}?${valores}`}
-                  className="inline-flex min-h-11 items-center font-bold text-enlace underline"
+                  className="inline-flex min-h-11 items-center font-bold text-enlace"
                 >
                   {t.crearAjuste}
                 </EnlaceFinn>
@@ -407,28 +415,24 @@ export function FormularioConciliar({
           </div>
           <section className="flex flex-col gap-2">
             <h2 className="text-titulo-seccion">{t.coinciden(c.coincidencias.length)}</h2>
-            <fieldset className="flex flex-col gap-1">
-              <legend className="mb-1 text-cuerpo-pequeno text-texto-secundario">
-                {t.coincidenAyuda}
-              </legend>
-              {c.coincidencias.map((x) => (
-                <label key={x.transaccionId} data-coincidencia={x.transaccionId} className={CAJA}>
-                  <input
-                    type="checkbox"
-                    className="size-5 shrink-0"
-                    checked={marcadas.has(x.transaccionId)}
-                    onChange={() => {
+            <p className="text-cuerpo-pequeno text-texto-secundario">{t.coincidenAyuda}</p>
+            {c.coincidencias.length === 0 ? null : (
+              <GrupoCampos etiqueta={t.coincidenAyuda}>
+                {c.coincidencias.map((x) => (
+                  <Casilla
+                    key={x.transaccionId}
+                    atributos={{ 'data-coincidencia': x.transaccionId }}
+                    etiqueta={x.comercio ?? dominio.sinComercio}
+                    descripcion={formatearFecha(x.fecha)}
+                    cifra={formatearMonto(x.monto)}
+                    marcada={marcadas.has(x.transaccionId)}
+                    alCambiar={() => {
                       alternar(x.transaccionId);
                     }}
                   />
-                  <Fila
-                    comercio={x.comercio ?? dominio.sinComercio}
-                    fecha={x.fecha}
-                    monto={x.monto}
-                  />
-                </label>
-              ))}
-            </fieldset>
+                ))}
+              </GrupoCampos>
+            )}
           </section>
         </div>
       </PaginaFlujoDeRuta>
@@ -441,6 +445,7 @@ export function FormularioConciliar({
       <div className="flex flex-col gap-5">
         <p>{t.cuenta(cuenta)}</p>
         <div
+          ref={zonaArchivo}
           data-zona-archivo
           className={[
             'flex flex-col items-center gap-2 rounded-contenedor border-2 border-dashed p-6 text-center',
@@ -491,8 +496,13 @@ export function FormularioConciliar({
         <Boton
           enviando={subida.estado === 'enviando'}
           textoEnviando={t.leyendo}
-          deshabilitado={!subida.enLinea || archivo === null}
-          {...(archivo === null ? { motivoDeshabilitado: t.falta } : {})}
+          deshabilitado={!subida.enLinea}
+          apagado={archivo === null}
+          {...(subida.motivoSinEnvio === undefined
+            ? archivo === null
+              ? { motivoDeshabilitado: t.falta }
+              : {}
+            : { motivoDeshabilitado: subida.motivoSinEnvio })}
           onClick={() => void revisar()}
         >
           {t.revisar}

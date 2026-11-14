@@ -2,11 +2,13 @@
 // `/cuentas/[cuentaId]/archivar` (FT-53, OP-04; 05 §2.7): el flujo corto de archivar una cuenta. Con bloqueos (saldo, deuda,
 // reserva) los explica en texto y no deja continuar; en una tarjeta ofrece devolver las asignaciones futuras de su categoría de
 // pago. No calcula montos (PF-3): todo sale del detalle.
+// [C-45] Qué hacer con las asignaciones futuras son opciones en fila (CAMPOS-V3 §8): cada una lleva su línea de detalle (lo que
+// vuelve a Listo para asignar), que un segmentado no muestra.
 import type { Centavos } from '@finn/dominio/valores';
 import { useCallback, useEffect, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
-import { Seleccion } from '../../componentes/base/seleccion';
+import { Opciones } from '../../componentes/base/controles-fila';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { CerrarFlujoAlMontar, useCerrarFlujo } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
@@ -147,27 +149,32 @@ export function FormularioCuentasArchivar(p: PropsFormularioCuentasArchivar) {
           <>
             <p>{t.pregunta(p.nombre)}</p>
             {esTarjeta ? (
-              <Seleccion
-                etiqueta={t.futuras}
-                opciones={[
-                  {
-                    valor: DEVOLVER,
-                    etiqueta: t.devolver,
-                    ...(futurasDto === undefined
-                      ? {}
-                      : {
-                          descripcion: t.devueltas(
-                            formatearMonto(futurasDto.monto),
-                            diaMes(futurasDto.desde),
-                            diaMes(futurasDto.hasta),
-                          ),
-                        }),
-                  },
-                  { valor: 'dejar', etiqueta: t.dejar },
-                ]}
-                valor={futuras}
-                alCambiar={cambiar}
-              />
+              <section className="flex flex-col gap-2">
+                <h2 aria-hidden="true" className="text-cuerpo-pequeno font-semibold">
+                  {t.futuras}
+                </h2>
+                <Opciones
+                  etiqueta={t.futuras}
+                  opciones={[
+                    {
+                      valor: DEVOLVER,
+                      etiqueta: t.devolver,
+                      ...(futurasDto === undefined
+                        ? {}
+                        : {
+                            descripcion: t.devueltas(
+                              formatearMonto(futurasDto.monto),
+                              diaMes(futurasDto.desde),
+                              diaMes(futurasDto.hasta),
+                            ),
+                          }),
+                    },
+                    { valor: 'dejar', etiqueta: t.dejar },
+                  ]}
+                  valor={futuras}
+                  alCambiar={cambiar}
+                />
+              </section>
             ) : null}
             {estado === 'error' && fallo !== undefined ? (
               <ErrorDeFlujo

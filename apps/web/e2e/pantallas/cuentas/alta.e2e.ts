@@ -81,7 +81,7 @@ test.describe('PRU-E2E-CTA altas', () => {
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
     await expect(page).toHaveURL(detalle);
     await abrir(page, `${detalle}/editar`);
-    await expect(campo(page, t.limiteCredito)).toHaveValue('3000.00');
+    await expect(campo(page, t.limiteCredito)).toHaveValue('3,000.00'); // [C-45] comas de miles en la vista
     await expect(campo(page, t.diaCorte)).toHaveValue('20');
   });
 });

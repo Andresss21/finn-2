@@ -2,20 +2,24 @@
 // `/cuentas/[cuentaId]/editar` (FT-53, OP-02; 05 §2.7, §4.7): el flujo largo de corregir el nombre, la institución, los últimos
 // cuatro dígitos y la fecha de apertura; en una tarjeta, también el límite, la tasa, el día de corte y el de pago (CTA-01). Envía solo lo que cambió, cada campo con el valor que vio la persona (`esperado`); si
 // la apertura cambia de período, la confirmación trae AV-01. No calcula montos (PF-3): el impacto lo dice el servidor.
+// [C-45] Los datos y los de la tarjeta son dos `GrupoCampos` (CAMPOS-V3 §2): el límite en fila con «$», la tasa con «%», los días
+// sin letras y el subtipo en segmentado. «Guardar cambios» se ve apagado mientras falte algo y dice debajo qué (§5 y §11).
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { useCallback, useState } from 'react';
 import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
-import { EntradaTexto } from '../../componentes/base/campo';
+import { EntradaTexto, GrupoCampos } from '../../componentes/base/campo';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
+import { EntradaPorcentaje } from '../../componentes/formularios/entrada-porcentaje';
 import { cuentasNuevaTipos as tarjeta } from '../../textos/cuentas-nueva-tipos';
 import { Seleccion } from '../../componentes/base/seleccion';
-import { SelectorSegmentado } from '../../componentes/base/selector-segmentado';
+import { SeleccionFila } from '../../componentes/base/seleccion-fila';
 import { ConfirmacionImpacto } from '../../componentes/formularios/confirmacion-impacto';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
+import { useGuardarV3 } from '../../formularios/guardar-v3';
 import { useBorrador } from '../../formularios/use-borrador';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
 import { useOperacion, type AccionEscritura } from '../../formularios/use-operacion';
@@ -169,6 +173,12 @@ function Cuerpo({
     const error = formState.errors[campo]?.message;
     return error === undefined ? {} : { error };
   };
+  const guardar = useGuardarV3({
+    contrato: CONTRATO,
+    campos: c,
+    intentos: formState.submitCount,
+    motivoSinEnvio: operacion.motivoSinEnvio,
+  });
   const { estado, error: fallo } = operacion;
   const vista = (operacion.previsualizacion ?? {}) as Vista;
   const actuales = fallo?.datos?.['actuales'] as Record<string, string | number | null> | undefined;
@@ -211,7 +221,12 @@ function Cuerpo({
 
   return (
     <PaginaFlujoDeRuta titulo={t.titulo} rutaPadre={rutaPadre}>
-      <form onSubmit={(e) => void formulario.enviar(e)} noValidate className="flex flex-col gap-5">
+      <form
+        ref={guardar.forma}
+        onSubmit={(e) => void formulario.enviar(e)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
         {borrador.recuperado ? (
           <AvisoEnLinea
             estado="informacion"
@@ -225,71 +240,76 @@ function Cuerpo({
             {formularios.borradorRecuperado}
           </AvisoEnLinea>
         ) : null}
-        <EntradaTexto
-          etiqueta={n.nombre}
-          requerido
-          autoComplete="off"
-          {...conError('nombre')}
-          {...formulario.register('nombre')}
-        />
-        {c.subtipoEfectivo === '' ? null : (
-          <div className="flex flex-col gap-2">
-            <SelectorSegmentado
+        <GrupoCampos>
+          <EntradaTexto
+            etiqueta={n.nombre}
+            requerido
+            autoComplete="off"
+            {...conError('nombre')}
+            {...formulario.register('nombre')}
+          />
+          {c.subtipoEfectivo === '' ? null : (
+            <SeleccionFila
               etiqueta={s.etiqueta}
-              opciones={SUBTIPOS.map((valor) => ({
-                valor,
-                etiqueta: s.opciones[valor],
-              }))}
+              opciones={SUBTIPOS.map((valor) => ({ valor, etiqueta: s.opciones[valor] }))}
               valor={c.subtipoEfectivo}
               alCambiar={poner('subtipoEfectivo')}
-              llena
+              descripcion={s.ayudas[c.subtipoEfectivo as (typeof SUBTIPOS)[number]]}
             />
-            <p className="text-cuerpo-pequeno text-texto-secundario">
-              {s.ayudas[c.subtipoEfectivo as (typeof SUBTIPOS)[number]]}
-            </p>
-          </div>
-        )}
-        {c.subtipoEfectivo === 'billetera' ? null : (
-          <>
-            <Seleccion
-              etiqueta={n.institucion}
-              opciones={[
-                { valor: SIN_INSTITUCION, etiqueta: n.sinInstitucion },
-                ...instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre })),
-              ]}
-              valor={c.institucionId}
-              alCambiar={poner('institucionId')}
-            />
-            <EntradaTexto
-              etiqueta={n.ultimos4}
-              inputMode="numeric"
-              maxLength={4}
-              autoComplete="off"
-              placeholder={s.opcional}
-              {...conError('ultimos4')}
-              {...formulario.register('ultimos4')}
-            />
-          </>
-        )}
+          )}
+          {c.subtipoEfectivo === 'billetera' ? null : (
+            <>
+              <Seleccion
+                etiqueta={n.institucion}
+                opciones={[
+                  { valor: SIN_INSTITUCION, etiqueta: n.sinInstitucion },
+                  ...instituciones.map((i) => ({ valor: i.id, etiqueta: i.nombre })),
+                ]}
+                valor={c.institucionId}
+                alCambiar={poner('institucionId')}
+              />
+              <EntradaTexto
+                etiqueta={n.ultimos4}
+                inputMode="numeric"
+                maxLength={4}
+                autoComplete="off"
+                {...conError('ultimos4')}
+                {...formulario.register('ultimos4')}
+              />
+            </>
+          )}
+          <EntradaFecha
+            nombre="fechaApertura"
+            etiqueta={n.apertura}
+            valor={c.fechaApertura as FechaLocal}
+            alCambiar={poner('fechaApertura')}
+            maxima={hoy}
+            hoy={hoy}
+            error={formState.errors.fechaApertura?.message}
+            requerido
+          />
+        </GrupoCampos>
         {esTarjeta ? (
-          <>
+          <GrupoCampos>
             <EntradaMonto
               nombre="limiteCredito"
               etiqueta={tarjeta.limiteCredito}
               valor={c.limiteCredito}
               alCambiar={poner('limiteCredito')}
+              error={formState.errors.limiteCredito?.message}
               requerido
             />
-            <EntradaTexto
+            <EntradaPorcentaje
+              nombre="tasaAnual"
               etiqueta={tarjeta.tasaAnual}
-              inputMode="decimal"
-              autoComplete="off"
-              {...conError('tasaAnual')}
-              {...formulario.register('tasaAnual')}
+              valor={c.tasaAnual}
+              alCambiar={poner('tasaAnual')}
+              error={formState.errors.tasaAnual?.message}
             />
             <EntradaTexto
               etiqueta={tarjeta.diaCorte}
               inputMode="numeric"
+              maxLength={2}
               autoComplete="off"
               requerido
               {...conError('diaCorte')}
@@ -298,23 +318,14 @@ function Cuerpo({
             <EntradaTexto
               etiqueta={tarjeta.diaPago}
               inputMode="numeric"
+              maxLength={2}
               autoComplete="off"
               requerido
               {...conError('diaPago')}
               {...formulario.register('diaPago')}
             />
-          </>
+          </GrupoCampos>
         ) : null}
-        <EntradaFecha
-          nombre="fechaApertura"
-          etiqueta={n.apertura}
-          valor={c.fechaApertura as FechaLocal}
-          alCambiar={poner('fechaApertura')}
-          maxima={hoy}
-          hoy={hoy}
-          error={formState.errors.fechaApertura?.message}
-          requerido
-        />
         {estado === 'error' && fallo !== undefined && !enSuCampo ? (
           <AvisoEnLinea
             estado="problema"
@@ -343,9 +354,8 @@ function Cuerpo({
           enviando={estado === 'enviando'}
           textoEnviando={t.guardando}
           deshabilitado={!operacion.enLinea}
-          {...(operacion.motivoSinEnvio === undefined
-            ? {}
-            : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+          className="w-full"
+          {...guardar.boton}
         >
           {t.guardar}
         </Boton>

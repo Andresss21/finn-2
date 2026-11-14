@@ -74,16 +74,21 @@ async function abrir(page: Page, ruta: string): Promise<void> {
 
 const campo = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exact: true });
 const pagar = (page: Page) => page.getByRole('button', { name: /^Pagar \$/ });
-/** La cuenta es una selección nativa: se elige por el nombre de su opción, cuando React ya hidrató el control. */
-async function desde(page: Page, nombre: string): Promise<void> {
-  const control = campo(page, t.desde);
-  await expect
-    .poll(() =>
-      control.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))),
-    )
-    .toBe(true);
-  await control.selectOption({ label: nombre });
+/** [C-45] Una selección v3 (CAMPOS-V3 §6): segmentado con 3 opciones o menos; con más, la lista propia de Finn. */
+async function elegirV3(page: Page, etiqueta: string, nombre: string): Promise<void> {
+  const grupo = page.getByRole('radiogroup', { name: etiqueta, exact: true });
+  if ((await grupo.count()) > 0) {
+    await grupo.getByRole('radio', { name: nombre, exact: true }).click();
+    return;
+  }
+  await page
+    .locator('.campo-fila')
+    .filter({ has: page.getByText(etiqueta, { exact: true }) })
+    .locator('[aria-haspopup=listbox]')
+    .click();
+  await page.getByRole('option').filter({ hasText: nombre }).first().click();
 }
+const desde = (page: Page, nombre: string) => elegirV3(page, t.desde, nombre);
 /** Una fila del desglose: su etiqueta y el monto que dibuja. */
 const fila = (page: Page, etiqueta: string) =>
   page.getByRole('term').filter({ hasText: etiqueta }).locator('xpath=..');
