@@ -234,13 +234,10 @@ test.describe('PRU-E2E-CTA', () => {
     await abrir(page, `${RUTA}?tipo-cuenta=prestamo`);
     await campo(page, t.nombre).fill('Préstamo BA');
     await expect(campo(page, t.contraparte)).toBeVisible();
-    const institucion = campo(page, t.institucion);
-    await expect
-      .poll(() =>
-        institucion.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))),
-      )
-      .toBe(true);
-    await institucion.selectOption({ label: 'Banco Agrícola' });
+    await page
+      .getByRole('radiogroup', { name: t.institucion })
+      .getByRole('radio', { name: 'Banco Agrícola' })
+      .click();
     await expect(campo(page, t.contraparte)).toHaveCount(0);
     await campo(page, t.apertura).fill('2026-05-08');
     await campo(page, t.montoOriginal).fill('6295');
@@ -260,6 +257,8 @@ test.describe('PRU-E2E-CTA', () => {
     await expect(page).toHaveURL(/\/cuentas\/nueva/);
     await campo(page, t.tasaAnual).fill('8.25');
     await crear(page).click();
+    // La apertura cae en un período cerrado: AV-01 pide confirmar
+    await page.getByRole('button', { name: t.confirmar }).click();
     await alTerminar(page);
     await page.getByText('Préstamo BA').first().click();
     await expect(page).toHaveURL(/\/cuentas\/[^/]+$/);
