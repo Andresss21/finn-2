@@ -26,12 +26,13 @@ interface PropsFilaCategoria {
   readonly hrefAsignar?: string;
 }
 
-interface Indicador {
+export interface Indicador {
   readonly estado: EstadoFinanciero;
   readonly etiqueta: string;
 }
 
-function indicadores(fila: FilaCategoriaDto): Indicador[] {
+/** Los avisos de la fila; [CH-273] también los agrupa el resumen de un grupo colapsado (C-47). */
+export function indicadores(fila: FilaCategoriaDto): Indicador[] {
   const lista: Indicador[] = [];
   const tipo = fila.sobregiro?.tipo;
   if (tipo === 'debito' || tipo === 'mixto') {

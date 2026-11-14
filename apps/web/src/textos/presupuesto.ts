@@ -36,6 +36,18 @@ export const presupuesto = {
   },
   columnaCategoria: 'Categoría',
   grupoTotal: (grupo: string) => `Total de ${grupo}`,
+  // [CH-273] C-47: grupos que se colapsan (ESTRUCTURA-Y-COLAPSO §2, §4 y §5).
+  colapsar: {
+    todos: 'Colapsar todos',
+    expandirTodos: 'Expandir todos',
+    categorias: (n: number) => (n === 1 ? '1 categoría' : `${String(n)} categorías`),
+    aviso: (etiqueta: string, n: number) =>
+      n === 1 ? etiqueta : `${etiqueta} · ${String(n)} categorías`,
+    colapsaste: (grupo: string) => `Colapsaste ${grupo}.`,
+    expandiste: (grupo: string) => `Expandiste ${grupo}.`,
+    colapsasteTodos: 'Colapsaste todos los grupos.',
+    expandisteTodos: 'Expandiste todos los grupos.',
+  },
   pagosTarjeta: 'Pagos de tarjeta',
   totales: 'Totales del período',
   archivadas: {
