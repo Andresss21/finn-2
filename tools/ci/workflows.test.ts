@@ -455,9 +455,9 @@ describe('workflows: nocturno.yml (07 §6.1, §6.5; CH-02)', () => {
     expect(c.permissions).toBeUndefined();
     const correr = { minutos: { result: 'success', outputs: { correr: 'true' } } };
     // Corre aunque `suites` o `e2e` hayan fallado: M15 dice qué ficha terminada quedó sin verde
-    expect(cumple(c.if, { ...correr, suites: { result: 'failure' }, e2e: { result: 'failure' } })).toBe(
-      true,
-    );
+    expect(
+      cumple(c.if, { ...correr, suites: { result: 'failure' }, e2e: { result: 'failure' } }),
+    ).toBe(true);
     expect(cumple(c.if, { minutos: { result: 'success', outputs: { correr: 'false' } } })).toBe(
       false,
     );
