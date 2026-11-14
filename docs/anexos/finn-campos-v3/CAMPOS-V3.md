@@ -187,10 +187,7 @@ Ocupa todo el ancho, alto 52 y radio 12. Listo: `--accion`. Falta algo: `--super
 - **Blancos táctiles:** 44 × 44 como mínimo en todo; las filas tienen 56 o 64.
 - **Nombres accesibles:** todo control tiene `<label>` o `aria-label`, y los errores van en `aria-describedby`. Un error que aparece en el momento se anuncia una vez: el mensaje tiene `role="alert"` solo al aparecer.
 
-## 13. Abierto (no decidido en esta entrega)
+## 13. Lo que quedó abierto (ya cerrado)
 
-- **P-1 · División entre categorías.**
-  - FT-21 y 05 piden repartir una compra entre varias categorías (Supermercado $96.10 · Farmacia $22.50 · Carlos $30.00).
-  - La pieza «¿Quién paga?» resuelve el reparto entre personas, pero la parte de Vos va a una sola categoría.
-  - **Propuesta para decidir:** una acción «Dividir mi parte en categorías» en la fila de Vos que abra filas de categoría (`CampoLineas`) con la misma fila de parte. Hasta que se decida, `CampoLineas` sigue como está en 05.
-- **P-2 · «Editar estructura» en el menú ☰ del teléfono.** La pregunta del dueño sigue abierta: dejarla como grupo «En Presupuesto» (C-43), que solo aparece en Presupuesto, o pasarla a una fila al pie de la lista de categorías.
+- **P-1 · División entre categorías.** Cerrado por C-49: la sección «¿En qué categorías?» va después de «¿Quién paga?», con «Una · Varias» (ver `reparto-categorias/REPARTO-ENTRE-CATEGORIAS.md`).
+- **P-2 · «Editar estructura» en el teléfono.** Cerrado por C-48: los tres puntos junto a la campana, solo en Presupuesto.
