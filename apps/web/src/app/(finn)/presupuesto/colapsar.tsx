@@ -22,6 +22,23 @@ const COLUMNAS = 'md:grid md:grid-cols-[minmax(0,1.6fr)_repeat(3,110px)] md:gap-
 type GrupoDto = PresupuestoDto['grupos'][number];
 type FilaDto = GrupoDto['categorias'][number];
 const CELDA = 'hidden text-right md:row-span-2 md:row-start-1 md:block md:self-center';
+// L13: las clases se arman acá, fuera del JSX, como mapas de literales.
+const TODOS = `inline-flex min-h-11 items-center px-1 text-etiqueta font-bold text-enlace ${FOCO}`;
+const BASE_ENCABEZADO = `flex items-center justify-between gap-3 px-1 md:pt-3.5 md:pb-1 md:pl-3 ${COLUMNAS}`;
+const ENCABEZADO = {
+  abierto: `${BASE_ENCABEZADO} md:pr-17`,
+  cerrado: `${BASE_ENCABEZADO} md:pr-3`,
+};
+const BOTON_GRUPO = `flex min-h-11 min-w-0 items-center gap-2 text-left uppercase ${FOCO}`;
+const GIRO = 'transition-transform duration-(--duracion-normal) ease-(--curva-estandar)';
+const FLECHA = { abierta: GIRO, colapsada: `${GIRO} -rotate-90` };
+const COLUMNA = {
+  asignado: `${CELDA} md:col-start-2`,
+  gastado: `${CELDA} md:col-start-3`,
+  disponible: `${CELDA} md:col-start-4`,
+};
+const TARJETA_RESUMEN = `rounded-contenedor bg-superficie shadow-elevacion-1 md:hidden ${APARECE}`;
+const BOTON_RESUMEN = `flex min-h-15 w-full flex-col gap-2 rounded-contenedor px-4 py-3.5 text-left ${FOCO}`;
 
 /** El texto guardado → los ids de grupo. Cualquier cosa que no sea una lista de textos cuenta como ninguno. */
 export function leerColapsados(texto: string | null): string[] {
@@ -101,7 +118,7 @@ export function ColapsoPresupuesto({
               if (todos) guardar([], t.colapsar.expandisteTodos);
               else guardar(ids, t.colapsar.colapsasteTodos);
             }}
-            className={`inline-flex min-h-11 items-center px-1 text-etiqueta font-bold text-enlace ${FOCO}`}
+            className={TODOS}
           >
             {todos ? t.colapsar.expandirTodos : t.colapsar.todos}
           </button>
@@ -142,7 +159,7 @@ function avisosDelGrupo(filas: readonly FilaDto[]): (Indicador & { readonly n: n
 
 function Avisos({ lista }: { readonly lista: readonly (Indicador & { readonly n: number })[] }) {
   return lista.length === 0 ? null : (
-    <span className={`flex flex-wrap gap-x-3 gap-y-1 normal-case tracking-normal`}>
+    <span className="flex flex-wrap gap-x-3 gap-y-1 normal-case tracking-normal">
       {lista.map((a) => (
         <IndicadorEstado
           key={a.etiqueta}
@@ -177,22 +194,20 @@ export function GrupoPresupuesto({
   };
   return (
     <section data-seccion={grupo.id} className="flex flex-col gap-2 md:gap-0">
-      <div
-        className={`flex items-center justify-between gap-3 px-1 md:pt-3.5 md:pb-1 md:pl-3 ${COLUMNAS} ${cerrado ? 'md:pr-3' : 'md:pr-17'}`}
-      >
+      <div className={cerrado ? ENCABEZADO.cerrado : ENCABEZADO.abierto}>
         <h2 className="t-rotulo flex min-w-0 flex-1 items-center gap-2 text-texto-secundario md:col-start-1 md:row-start-1">
           {activo ? (
             <button
               type="button"
               aria-expanded={!colapsado}
               onClick={tocar}
-              className={`flex min-h-11 min-w-0 items-center gap-2 text-left uppercase ${FOCO}`}
+              className={BOTON_GRUPO}
             >
               <span className="flex">
                 <Icono
                   nombre="chevD"
                   tamano={18}
-                  className={`transition-transform duration-(--duracion-normal) ease-(--curva-estandar) ${colapsado ? '-rotate-90' : ''}`}
+                  className={colapsado ? FLECHA.colapsada : FLECHA.abierta}
                 />
               </span>
               <span>{grupo.nombre}</span>
@@ -219,15 +234,15 @@ export function GrupoPresupuesto({
               <Avisos lista={avisos} />
             </span>
             <span data-columnas-grupo className="contents">
-              <span data-columna="asignado" className={`${CELDA} md:col-start-2`}>
+              <span data-columna="asignado" className={COLUMNA.asignado}>
                 <span className="sr-only">{dominio.asignado} </span>
                 <Monto centavos={totales.asignado} />
               </span>
-              <span data-columna="gastado" className={`${CELDA} md:col-start-3`}>
+              <span data-columna="gastado" className={COLUMNA.gastado}>
                 <span className="sr-only">{dominio.gastado} </span>
                 <Monto centavos={totales.gastado} />
               </span>
-              <span data-columna="disponible" className={`${CELDA} md:col-start-4`}>
+              <span data-columna="disponible" className={COLUMNA.disponible}>
                 <span className="sr-only">{dominio.disponible} </span>
                 <Monto centavos={totales.disponible} rol="cifra" {...conEstado} />
               </span>
@@ -236,13 +251,13 @@ export function GrupoPresupuesto({
         ) : null}
       </div>
       {colapsado ? (
-        <div className={`rounded-contenedor bg-superficie shadow-elevacion-1 md:hidden ${APARECE}`}>
+        <div className={TARJETA_RESUMEN}>
           <button
             type="button"
             data-resumen-grupo
             aria-expanded={false}
             onClick={tocar}
-            className={`flex min-h-15 w-full flex-col gap-2 rounded-contenedor px-4 py-3.5 text-left ${FOCO}`}
+            className={BOTON_RESUMEN}
           >
             <span className="flex w-full items-baseline justify-between gap-2.5">
               <span data-resumen-cantidad className="text-cuerpo font-semibold text-texto">
