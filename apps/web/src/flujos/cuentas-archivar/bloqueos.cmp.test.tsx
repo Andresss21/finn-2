@@ -112,7 +112,9 @@ describe('PRU-CMP-CTA-732 subir el estado de cuenta', () => {
     expect(nativo?.className).toContain('sr-only');
     expect(nativo?.labels?.[0]?.textContent).toBe('Archivo CSV');
     const revisar = [...raiz.querySelectorAll('button')].find((b) => b.textContent === 'Revisar');
-    expect(revisar?.disabled).toBe(true);
+    // [C-45] Apagado pero tocable (CAMPOS-V3 §11): `aria-disabled`, no `disabled`.
+    expect(revisar?.disabled).toBe(false);
+    expect(revisar?.getAttribute('aria-disabled')).toBe('true');
     expect(raiz.textContent).toContain('Subí el archivo CSV.');
     const elegir = [...raiz.querySelectorAll('button')].find(
       (b) => b.textContent === 'Elegir archivo',
