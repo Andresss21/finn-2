@@ -137,7 +137,12 @@ function puntero(tipo: string, en: EventTarget, x: number, y: number): void {
     }),
   );
 }
+/** Termina los movimientos en curso (FLIP): las medidas son las del lugar final. */
+const quietas = (): void => {
+  for (const a of document.getAnimations()) a.finish();
+};
 const centro = (e: Element): { x: number; y: number } => {
+  quietas();
   const r = e.getBoundingClientRect();
   return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 };
@@ -167,6 +172,7 @@ async function soltar(x = actual.x, y = actual.y): Promise<void> {
 }
 /** Debajo de una fila: el lugar que sigue a ella en su grupo. */
 const debajoDe = (c: string): { x: number; y: number } => {
+  quietas();
   const r = q(`[data-fila-cat="${id(c)}"]`).getBoundingClientRect();
   return { x: r.left + r.width / 2, y: r.bottom + 4 };
 };
@@ -373,6 +379,7 @@ describe('PRU-CMP-CATEG-137 arrastrar un grupo', () => {
     expect(seccion('Ahorro').hasAttribute('data-hueco')).toBe(true);
     expect(JSON.parse(localStorage.getItem(CLAVE) ?? '[]')).toEqual([id('Transporte')]);
 
+    quietas();
     const r = seccion('Comida fuera').getBoundingClientRect();
     await moverA(r.left + 40, r.top + 2);
     expect(levantada()?.textContent).toContain(t.haciaGrupo('segundo', 2));
