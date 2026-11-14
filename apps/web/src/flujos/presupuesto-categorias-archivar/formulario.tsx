@@ -9,11 +9,7 @@ import * as z from 'zod';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
 import { SeleccionNativa, type OpcionNativa } from '../../componentes/base/seleccion-nativa';
-import {
-  ACCION_COLUMNA_IZQUIERDA,
-  COLUMNA,
-  DOS_COLUMNAS,
-} from '../../componentes/marco/pagina-flujo';
+import { ACCION_COLUMNA_IZQUIERDA } from '../../componentes/marco/pagina-flujo';
 import { CerrarFlujoAlMontar, PaginaFlujoDeRuta } from '../../componentes/navegacion/flujo-de-ruta';
 import { formatearMonto } from '../../formato';
 import { useFormularioFinn } from '../../formularios/use-formulario-finn';
@@ -182,100 +178,8 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
     <PaginaFlujoDeRuta
       titulo={t.titulo}
       rutaPadre={rutaPadre}
-      ancha
-      acciones={
-        <div className={ACCION_COLUMNA_IZQUIERDA}>
-          <Boton
-            className="w-full"
-            enviando={estado === 'enviando' && confirmo}
-            textoEnviando={t.archivando}
-            deshabilitado={!puedeConfirmar}
-            {...(operacion.motivoSinEnvio === undefined
-              ? {}
-              : { motivoDeshabilitado: operacion.motivoSinEnvio })}
-            onClick={() => {
-              setConfirmo(true);
-              void operacion.confirmar();
-            }}
-          >
-            {t.archivarNombre(p.categoria)}
-          </Boton>
-        </div>
-      }
-    >
-      <form
-        id={ID_FORMULARIO}
-        onSubmit={(e) => {
-          e.preventDefault();
-        }}
-        noValidate
-        className={DOS_COLUMNAS[5]}
-      >
-        {/* [CH-263] A la izquierda, las decisiones; a la derecha, la tarjeta K4 del impacto. */}
-        <div className={COLUMNA}>
-          <div className="flex flex-col gap-1.5">
-            <p className="font-semibold">{p.categoria}</p>
-            <p className="text-cuerpo-pequeno text-texto-secundario">{t.intro(p.categoria)}</p>
-          </div>
-          {nada ? <p>{t.nadaQueDecidir(p.categoria)}</p> : null}
-          {disponible === 0 ? null : (
-            <SeleccionNativa
-              alta
-              marcador={t.elegir}
-              etiqueta={
-                disponible > 0 ? t.destinoDisponible(montoTexto) : t.cubrirSobregiro(montoTexto)
-              }
-              opciones={opcionesDestino}
-              valor={c.destino}
-              alCambiar={(v) => {
-                formulario.setValue('destino', v, { shouldDirty: true });
-              }}
-            />
-          )}
-          {futuras === 0 ? null : (
-            <p data-futuras className="rounded-contenedor bg-superficie p-3.5 shadow-elevacion-1">
-              {t.futuras(futuras)}
-            </p>
-          )}
-          {programadas.map((x) => {
-            const decision = c.programadas[x.id] ?? DESACTIVAR;
-            const pasar = decision !== DESACTIVAR;
-            const poner = (v: string) => {
-              formulario.setValue(`programadas.${x.id}`, v, {
-                shouldDirty: true,
-                shouldValidate: formulario.formState.isSubmitted,
-              });
-            };
-            return (
-              <div key={x.id} className="flex flex-col gap-3">
-                <SeleccionNativa
-                  alta
-                  marcador={t.elegir}
-                  etiqueta={t.programada(x.comercio, formatearMonto(x.monto))}
-                  opciones={opcionesProgramada}
-                  valor={pasar ? OTRA : DESACTIVAR}
-                  alCambiar={(v) => {
-                    poner(v === DESACTIVAR ? DESACTIVAR : OTRA);
-                  }}
-                />
-                {pasar ? (
-                  <SeleccionNativa
-                    alta
-                    marcador={t.elegir}
-                    etiqueta={t.pasarlaA}
-                    opciones={opcionesDestinoProgramada}
-                    valor={decision === OTRA ? '' : decision}
-                    alCambiar={poner}
-                    {...(errores.programadas?.[x.id]?.message === undefined
-                      ? {}
-                      : { error: errores.programadas[x.id]?.message })}
-                  />
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-        <div className={COLUMNA}>
+      lateral={
+        <>
           {operacion.previsualizacion === undefined ? (
             estado === 'enviando' ? (
               <p role="status" className="text-texto-secundario">
@@ -335,7 +239,97 @@ export function FormularioArchivar(p: PropsFormularioArchivar) {
               {fallo.mensaje}
             </AvisoEnLinea>
           ) : null}
+        </>
+      }
+      acciones={
+        <div className={ACCION_COLUMNA_IZQUIERDA}>
+          <Boton
+            className="w-full"
+            enviando={estado === 'enviando' && confirmo}
+            textoEnviando={t.archivando}
+            deshabilitado={!puedeConfirmar}
+            {...(operacion.motivoSinEnvio === undefined
+              ? {}
+              : { motivoDeshabilitado: operacion.motivoSinEnvio })}
+            onClick={() => {
+              setConfirmo(true);
+              void operacion.confirmar();
+            }}
+          >
+            {t.archivarNombre(p.categoria)}
+          </Boton>
         </div>
+      }
+    >
+      <form
+        id={ID_FORMULARIO}
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+        noValidate
+        className="flex flex-col gap-5"
+      >
+        <div className="flex flex-col gap-1.5">
+          <p className="font-semibold">{p.categoria}</p>
+          <p className="text-cuerpo-pequeno text-texto-secundario">{t.intro(p.categoria)}</p>
+        </div>
+        {nada ? <p>{t.nadaQueDecidir(p.categoria)}</p> : null}
+        {disponible === 0 ? null : (
+          <SeleccionNativa
+            alta
+            marcador={t.elegir}
+            etiqueta={
+              disponible > 0 ? t.destinoDisponible(montoTexto) : t.cubrirSobregiro(montoTexto)
+            }
+            opciones={opcionesDestino}
+            valor={c.destino}
+            alCambiar={(v) => {
+              formulario.setValue('destino', v, { shouldDirty: true });
+            }}
+          />
+        )}
+        {futuras === 0 ? null : (
+          <p data-futuras className="rounded-contenedor bg-superficie p-3.5 shadow-elevacion-1">
+            {t.futuras(futuras)}
+          </p>
+        )}
+        {programadas.map((x) => {
+          const decision = c.programadas[x.id] ?? DESACTIVAR;
+          const pasar = decision !== DESACTIVAR;
+          const poner = (v: string) => {
+            formulario.setValue(`programadas.${x.id}`, v, {
+              shouldDirty: true,
+              shouldValidate: formulario.formState.isSubmitted,
+            });
+          };
+          return (
+            <div key={x.id} className="flex flex-col gap-3">
+              <SeleccionNativa
+                alta
+                marcador={t.elegir}
+                etiqueta={t.programada(x.comercio, formatearMonto(x.monto))}
+                opciones={opcionesProgramada}
+                valor={pasar ? OTRA : DESACTIVAR}
+                alCambiar={(v) => {
+                  poner(v === DESACTIVAR ? DESACTIVAR : OTRA);
+                }}
+              />
+              {pasar ? (
+                <SeleccionNativa
+                  alta
+                  marcador={t.elegir}
+                  etiqueta={t.pasarlaA}
+                  opciones={opcionesDestinoProgramada}
+                  valor={decision === OTRA ? '' : decision}
+                  alCambiar={poner}
+                  {...(errores.programadas?.[x.id]?.message === undefined
+                    ? {}
+                    : { error: errores.programadas[x.id]?.message })}
+                />
+              ) : null}
+            </div>
+          );
+        })}
       </form>
     </PaginaFlujoDeRuta>
   );

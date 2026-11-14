@@ -128,7 +128,7 @@ test.describe('PRU-E2E-PWA flujos largos en dos columnas', () => {
       await comprobar(
         page,
         `${String(ancho)} archivar`,
-        page.locator('#contenido > main form > div > div').first(),
+        page.locator('#contenido > main form > div').first(),
         k4,
         columnas,
       );
