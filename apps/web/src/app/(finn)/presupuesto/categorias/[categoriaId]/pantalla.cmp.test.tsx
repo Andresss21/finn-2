@@ -747,3 +747,66 @@ describe('PRU-CMP-CATEG entrega 4', () => {
     }
   });
 });
+
+describe('PRU-CMP-PRES-806 encabezado del detalle sin encimar', () => {
+  const montarEnMarco = (nombre: string): HTMLElement => {
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    act(() => {
+      raiz.render(
+        <Marco>
+          <PantallaDetalleCategoria
+            dto={dto({
+              categoria: { id: ID, nombre },
+              grupo: { id: 'g', nombre: 'Deudas' },
+            })}
+            desarchivar={desarchivar}
+          />
+        </Marco>,
+      );
+    });
+    montados.push({ raiz, nodo });
+    return nodo;
+  };
+  const seEncimanVerticalmente = (a: DOMRect, b: DOMRect): boolean =>
+    a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+
+  it.each([
+    [390, 'Compras a plazo'],
+    [390, 'Compras a plazo con la tarjeta de crédito del banco'],
+    [1280, 'Compras a plazo'],
+    [1280, 'Compras a plazo con la tarjeta de crédito del banco'],
+  ])(
+    'PRU-CMP-PRES-806 [FT-14] en %i px con «%s», el grupo, el título y el rótulo «Disponible» no se pisan, mientras los bloques entran y después: en teléfono el título va en la barra fija, en computadora en su fila entre el grupo y «Disponible»',
+    async (ancho, nombre) => {
+      await page.viewport(ancho, 844);
+      const nodo = montarEnMarco(nombre);
+      const encabezado = nodo.querySelector('main header') as HTMLElement;
+      const grupo = encabezado.querySelector('p') as HTMLElement;
+      const h1 = encabezado.querySelector('h1') as HTMLElement;
+      const disponible = [...encabezado.querySelectorAll('p')].find(
+        (p) => p.textContent === 'Disponible',
+      ) as HTMLElement;
+      const revisar = (): void => {
+        const g = grupo.getBoundingClientRect();
+        const titulo = h1.getBoundingClientRect();
+        const d = disponible.getBoundingClientRect();
+        if (ancho < 1024) {
+          // CH-109: en teléfono el `h1` va en la barra de 60 px de arriba, fuera del contenido.
+          expect(titulo.top).toBe(0);
+          expect(titulo.bottom).toBeLessThanOrEqual(g.top + 0.5);
+        } else {
+          expect(titulo.top).toBeGreaterThanOrEqual(g.bottom - 0.5);
+          expect(d.top).toBeGreaterThanOrEqual(titulo.bottom - 0.5);
+        }
+        expect(seEncimanVerticalmente(titulo, d)).toBe(false);
+        expect(seEncimanVerticalmente(titulo, g)).toBe(false);
+      };
+      // Recién montada, los bloques de C5 están entrando; después, con las animaciones terminadas.
+      revisar();
+      for (const animacion of document.getAnimations()) animacion.finish();
+      revisar();
+    },
+  );
+});
