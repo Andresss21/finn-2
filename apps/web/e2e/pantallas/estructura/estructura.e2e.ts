@@ -57,9 +57,9 @@ const nombre = (page: Page) => page.getByLabel(t.nombre, { exact: true });
 const crear = (page: Page) => page.getByRole('button', { name: t.crear, exact: true });
 const mover = (page: Page, accion: string) =>
   page.getByRole('button', { name: accion, exact: true });
-/** Las filas que se pueden subir o bajar, en el orden en que se ven. */
+/** [CH-272] Las filas que se pueden mover (con su asa, C-46), en el orden en que se ven. */
 const filas = (page: Page) =>
-  page.getByRole('listitem').filter({ has: page.getByRole('button', { name: /^(Subir|Bajar) / }) });
+  page.getByRole('listitem').filter({ has: page.getByRole('button', { name: /^Mover / }) });
 
 test.describe('PRU-E2E-CATEG', () => {
   test.beforeEach(async ({ context, baseURL }) => {
@@ -154,6 +154,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await abrir(page);
     const grupos = page.getByRole('heading', { level: 2, name: /^(Gastos|Hogar)$/ });
     await expect(grupos).toHaveText(['Gastos', 'Hogar']);
+    await mover(page, t.moverGrupo('Gastos')).click();
     await mover(page, t.bajarA('Gastos')).click();
     await expect(grupos).toHaveText(['Hogar', 'Gastos']);
     await mover(page, t.deshacer).click();
@@ -181,16 +182,17 @@ test.describe('PRU-E2E-CATEG', () => {
     await expect(filas(page)).toHaveCount(4);
     await expect(filas(page)).toHaveText([/^Alfa/, /^Beta/, /^Gama/, /^Delta/]);
     await tactilEnMain(page);
-    // La primera no se sube y la última no se baja
-    await expect(mover(page, t.subirA('Alfa'))).toHaveCount(0);
-    await expect(mover(page, t.bajarA('Delta'))).toHaveCount(0);
-
+    // [CH-272] Subir y Bajar viven en la barra «Mover» del asa: la primera no se sube y la última no se baja
+    await mover(page, t.moverCategoria('Alfa')).click();
+    await expect(mover(page, t.subirA('Alfa'))).toHaveAttribute('aria-disabled', 'true');
     await mover(page, t.bajarA('Alfa')).click();
     await expect(filas(page)).toHaveText([/^Beta/, /^Alfa/, /^Gama/, /^Delta/]);
     await mover(page, t.deshacer).click();
     await expect(filas(page)).toHaveText([/^Alfa/, /^Beta/, /^Gama/, /^Delta/]);
     await expect(mover(page, t.deshacer)).toHaveCount(0);
 
+    await mover(page, t.moverCategoria('Delta')).click();
+    await expect(mover(page, t.bajarA('Delta'))).toHaveAttribute('aria-disabled', 'true');
     await mover(page, t.subirA('Delta')).click();
     await expect(filas(page)).toHaveText([/^Alfa/, /^Beta/, /^Delta/, /^Gama/]);
     await mover(page, t.deshacer).click();
@@ -234,7 +236,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await expect(page.getByRole('link', { name: t.editar('Gastos'), exact: true })).toHaveText(
       t.editarGrupo,
     );
-    await expect(mover(page, t.bajarA('Supermercado'))).toBeVisible();
+    await expect(mover(page, t.moverCategoria('Supermercado'))).toBeVisible();
     await tactilEnMain(page);
     await page.getByRole('button', { name: t.listo, exact: true }).click();
     await expect(page).toHaveURL(/\/presupuesto$/);
