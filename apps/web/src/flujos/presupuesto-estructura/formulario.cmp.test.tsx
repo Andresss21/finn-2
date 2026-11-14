@@ -293,7 +293,7 @@ describe('PRU-CMP-CATEG-128 crear cierra el panel con el resultado en la lista',
 });
 
 describe('PRU-CMP-CATEG-739 el panel que se cerró con resultado no se reabre como página', () => {
-  it('PRU-CMP-CATEG-739 [FT-18, C-50] `CerrarPanelConResultado` hace una sola vuelta aunque StrictMode monte dos veces, y el `replace` con `?resultado=` llega una vez, solo cuando el panel se desmonta de verdad', async () => {
+  it('PRU-CMP-CATEG-739 [FT-18, C-50] `CerrarPanelConResultado` hace una sola vuelta aunque StrictMode monte dos veces, y el `replace` con `?resultado=` llega una vez, solo cuando el panel se desmonta de verdad', () => {
     const ruta = '/presupuesto/estructura?resultado=categoria%3A1';
     vi.useFakeTimers();
     try {
