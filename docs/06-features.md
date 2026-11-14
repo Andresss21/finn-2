@@ -1599,10 +1599,11 @@ Reglas comunes a todas las fichas:
 - Período cerrado: solo lectura, sin enlaces de asignar, mover ni auto-asignar; incluye las archivadas que tuvieron asignación o actividad en él.
 - Período futuro: Disponible proyectado con actividad cero; las filas de tarjeta no muestran "te falta reservar" (inv. 2).
 - Período de transición (Q5): el selector lo dice ("Período de transición, 11 días") **(nuevo)**.
-- Sin categorías: enlace a la estructura (FT-04, FT-18).
-- Filtro sin filas: "Ninguna categoría cumple este filtro" y "Quitar filtros".
+- Sin categorías: enlace a la estructura (FT-04, FT-18). **[CH-269]** Sin filtro y sin filas, aunque haya pagos de tarjeta o archivadas con dinero: «Todavía no tenés categorías» con «Usar la lista sugerida» (`/presupuesto/estructura/plantilla`, la de FT-04) y «Armarlas a mano» (`/presupuesto/estructura`), sin los filtros; Listo para asignar y los pagos de tarjeta siguen como están.
+- Filtro sin filas: "Ninguna categoría cumple este filtro" y "Quitar filtros" (**[CH-269]** solo cuando hay categorías).
+- **[CH-269]** Acceso a la estructura: «Más acciones» con el grupo «En Presupuesto» y «Editar estructura · Grupos, categorías y su orden» → `/presupuesto/estructura` (C-43, el patrón de Cuentas, E6-11).
 
-**Errores y textos.** `periodo_no_valido` (un `?periodo=` inválido redirige sin el parámetro, 05 §2.2). Texto nuevo: el del período de transición.
+**Errores y textos.** `periodo_no_valido` (un `?periodo=` inválido redirige sin el parámetro, 05 §2.2). Texto nuevo: el del período de transición. **[CH-269]** Y los de C-43: «Todavía no tenés categorías», «Usar la lista sugerida», «Armarlas a mano», «En Presupuesto», «Editar estructura» y «Grupos, categorías y su orden».
 
 **Criterios de aceptación.**
 - **CA-09.1** Dado el paso 1 de ESC-49, cuando abro `/presupuesto?periodo=<inicio de P2>`, entonces Super muestra Disponible $700.00, y en P3, $1,000.00; en el período activo, $400.00.
@@ -4966,3 +4967,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-E5-3** (diseño, entrega 4 · etapa 5; aprobado por el dueño, aplicado con la ficha de Ajustes de B10 el 11 de noviembre de 2026, CH-240 c). FT-03: Conectar los SMS es una pantalla [S] (con «←», campana y barra inferior) y generar el token es el flujo corto `/ajustes/webhook/token` (OPT-01), con la advertencia «El token actual deja de funcionar»; fuera de ese momento no se muestra ningún sufijo del token. La tabla de rutas suma `/ajustes/webhook/token`. Marcas **[CH-240]**.
 - **CH-245** (Fase 8, decidido por el orquestador con delegación del usuario, 12 de noviembre de 2026, `08-tareas.md` §7). Entrega 4 del diseño (E3-10) frente a CH-151: Revisar movimiento en computadora va en dos columnas, sin la lista lateral ni «1 de N» con flechas. Cambian la fila de decisiones FD-32, S4 y el texto de la decisión (marca **[CH-245]**); «Siguiente movimiento» después de aprobar o descartar se conserva. Los CA no cambian.
 - **CH-267** (corrección posterior de TA-597, 13 de noviembre de 2026, `08-tareas.md` §7). FT-18: Nueva categoría desde el botón de un grupo no vuelve a pedir el grupo; muestra «En {grupo}» bajo el título, el único texto nuevo de la ficha. Sin `?grupo=` válido, el selector. Marca **[CH-267]**.
+- **CH-269** (corrección posterior de TA-597, 13 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-43). FT-09: «Editar estructura» en «Más acciones» («En Presupuesto»), y sin ninguna categoría «Todavía no tenés categorías» con «Usar la lista sugerida» y «Armarlas a mano», sin filtros; el vacío del filtro queda para cuando hay categorías. Marca **[CH-269]**.
