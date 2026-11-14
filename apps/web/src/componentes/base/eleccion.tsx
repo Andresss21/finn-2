@@ -4,7 +4,7 @@
 // personas (`role="checkbox"` en un `group`) con «Otra persona» y su fila en línea. Las personas las recibe quien lo usa; la
 // regla de los nombres está en `formato/personas`.
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
-import { resolverNombre } from '../../formato/personas';
+import { MAXIMO_PERSONAS, resolverNombre } from '../../formato/personas';
 import { base } from '../../textos/base';
 import { Campo, GrupoCampos } from './campo';
 import { Icono, type NombreIcono } from './icono';
@@ -73,6 +73,11 @@ export interface PropsChipsPersonas {
   readonly alCambiar: (elegidas: readonly string[]) => void;
   /** Una persona nueva (clave `nueva:{nombre}`): quien lo usa la suma a `personas`; ya viene marcada. */
   readonly alCrear: (persona: PersonaChip) => void;
+  /**
+   * [CH-277] Cuántas personas caben: 20 líneas menos las categorías (C-49 §2). Con él, llegado el máximo «Otra persona» y los
+   * chips sin marcar se deshabilitan (lo dice la pantalla); sin él, el máximo es 19 y lo dice la fila en línea (C-45 §9).
+   */
+  readonly maximo?: number;
 }
 
 const CHECK = 'M5 12.5l4.5 4.5L19 7.5';
@@ -83,7 +88,9 @@ export function ChipsPersonas({
   elegidas,
   alCambiar,
   alCrear,
+  maximo,
 }: PropsChipsPersonas) {
+  const lleno = maximo !== undefined && elegidas.length >= maximo;
   const otra = useRef<HTMLButtonElement>(null);
   const [agregando, setAgregando] = useState(false);
   const [aviso, setAviso] = useState('');
@@ -99,7 +106,7 @@ export function ChipsPersonas({
     setAgregando(false);
   };
   const agregar = (escrito: string): string | undefined => {
-    const r = resolverNombre(escrito, personas, elegidas);
+    const r = resolverNombre(escrito, personas, elegidas, maximo ?? MAXIMO_PERSONAS);
     if (r.tipo === 'vacio') return base.escribiUnNombre;
     if (r.tipo === 'propio') return base.tuParteYaEsta;
     if (r.tipo === 'maximo') return base.maximoPersonas;
@@ -120,14 +127,17 @@ export function ChipsPersonas({
       <div role="group" aria-label={etiqueta} className="eleccion-chips">
         {personas.map((p) => {
           const marcada = elegidas.includes(p.clave);
+          const apagada = lleno && !marcada;
           return (
             <button
               key={p.clave}
               type="button"
               role="checkbox"
               aria-checked={marcada}
+              {...(apagada ? { 'aria-disabled': true } : {})}
               className="eleccion-chip"
               onClick={() => {
+                if (apagada) return;
                 alCambiar(marcada ? elegidas.filter((c) => c !== p.clave) : [...elegidas, p.clave]);
               }}
             >
@@ -151,6 +161,7 @@ export function ChipsPersonas({
             ref={otra}
             type="button"
             className="eleccion-otra"
+            disabled={lleno}
             onClick={() => {
               setAviso('');
               setAgregando(true);

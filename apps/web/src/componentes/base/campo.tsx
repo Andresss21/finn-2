@@ -64,6 +64,11 @@ export function GrupoCampos({
   );
 }
 
+/** [CH-276] Piezas v3 sueltas, fuera de una caja de grupo: el segmentado de los modos y «Una · Varias» (C-45 §9, C-49 §1). */
+export function EstiloV3({ children }: { readonly children: ReactNode }) {
+  return <EnGrupo.Provider value>{children}</EnGrupo.Provider>;
+}
+
 export function MensajeError({ children }: { readonly children: string }) {
   return (
     <p className="flex items-center gap-1 text-sm text-problema-texto">

@@ -2105,7 +2105,7 @@ Reglas comunes a todas las fichas:
 **Flujo.**
 1. "Registrar" (marco) → `/registrar` → `/registrar/gasto?cuenta=` (flujo largo) → `formulario({ operacion: 'registrar', tipo: 'gasto' })`.
 2. Cuenta (preseleccionada: la del último gasto o `?cuenta=`), fecha (por defecto `hoy` del `Encabezado`), total, comercio con sugerencia de categoría (`sugerencia`, CP-3), nota y moneda original opcional.
-3. Líneas (`CampoLineas`, 1 a 20): categoría o por cobrar (deudor existente o nuevo).
+3. Líneas (`CampoLineas`, 1 a 20): categoría o por cobrar (deudor existente o nuevo). **[CH-277]** En la pantalla son dos secciones (C-45 §4.8, C-49): «¿Quién paga?» («Solo yo · Con alguien», las personas en chips con «Otra persona» y su parte en partes iguales, porcentaje o montos) y «¿En qué categorías?» («Una · Varias», con la primera fila «Lo que queda»); una categoría no se repite y son hasta 20 líneas entre categorías y personas. La app propone montos que se ven antes de guardar (CH-276).
 4. Si la fecha cae en un período cerrado: confirmación AV-01 (FT-27).
 5. OP-20; vuelve al origen. Después, en el destino: AV-02, AV-03, AV-07 o AV-09 si aparecen.
 
@@ -2122,15 +2122,15 @@ Reglas comunes a todas las fichas:
 - Sin cuentas: `/registrar` enlaza a `/cuentas/nueva`.
 - Cuenta archivada: no se ofrece en la lista.
 
-**Errores y textos.** `suma_lineas_distinta`, `linea_sin_destino`, `categoria_archivada`, `categoria_de_pago_no_permitida`, `cuenta_archivada`, `cuenta_tipo_no_valido`, `fecha_posterior_a_hoy`, `fecha_anterior_a_apertura`. Sin textos nuevos (el de la diferencia, "Falta repartir {monto}", ya está en 05 §12.1).
+**Errores y textos.** `suma_lineas_distinta`, `linea_sin_destino`, `categoria_archivada`, `categoria_de_pago_no_permitida`, `cuenta_archivada`, `cuenta_tipo_no_valido`, `fecha_posterior_a_hoy`, `fecha_anterior_a_apertura`. Sin textos nuevos (el de la diferencia, "Falta repartir {monto}", ya está en 05 §12.1). **[CH-277]** Los de C-45 §5 y §9 y los de C-49 §1 a §7 (`REPARTO-ENTRE-CATEGORIAS.md`), tal cual; el orden de los motivos de «Guardar» es el de C-49 §3.
 
 **Criterios de aceptación.**
 - **CA-21.1** Dado el paso 1 de ESC-19, cuando registro una compra con T de $150.00 con $110.00 en Super y $40.00 en Mascota, entonces Super queda en −$10.00, Mascota en −$20.00, Pago T en $120.00 y "Te falta reservar" en $30.00 (paso 2).
 - **CA-21.2** Dado el paso 1 de ESC-24, cuando registro una compra con T de $200.00 con $90.00 en Super, $30.00 en Mascota y $80.00 por cobrar a Ana, entonces Super queda en $10.00, Mascota en $20.00, Pago T en $120.00 y "Te falta reservar" en $80.00 (paso 2).
 - **CA-21.3** Dado el paso 1 de ESC-20, cuando registro una compra con débito de $50.00 con $25.00 en Super y $25.00 por cobrar a Ana, entonces Listo para asignar baja a $675.00 y "En camino" es $25.00 (paso 2).
 - **CA-21.4** Dado un deudor "Ana", cuando escribo "ana" como deudor nuevo, entonces la línea queda a nombre del deudor existente y el resultado lo dice.
-- **CA-21.5** Dado líneas que suman $149.00 con un total de $150.00, cuando envío, entonces se rechaza con "Las partes suman $149.00 y el total es $150.00." junto al campo de líneas.
-- **CA-21.6** Dado una línea sin categoría ni deudor, cuando envío, entonces se rechaza con `linea_sin_destino` y no se crea nada.
+- **CA-21.5** Dado líneas que suman $149.00 con un total de $150.00, cuando envío, entonces se rechaza con "Las partes suman $149.00 y el total es $150.00." junto al campo de líneas. **[CH-277]** En la pantalla v3 lo marca el cliente antes de enviar («Falta repartir $1.00.» y el motivo de «Guardar») y no se envía; el servidor sigue rechazando con `suma_lineas_distinta`, cuyo mensaje queda junto al resumen (CA-R-15).
+- **CA-21.6** Dado una línea sin categoría ni deudor, cuando envío, entonces se rechaza con `linea_sin_destino` y no se crea nada. **[CH-277]** En la pantalla v3 la fila sin categoría se marca en el cliente («Elegí una categoría.») y no se envía; el servidor sigue con `linea_sin_destino`.
 - **CA-21.7** Dado una fecha posterior a hoy o anterior a la apertura de la cuenta, cuando envío, entonces se rechaza con el código que corresponde y el mensaje nombra la fecha límite.
 - **CA-21.8** Dado el paso 1 de ESC-12, cuando registro un cargo con T de $25.00 en "Intereses y comisiones", entonces Int queda en −$5.00 con sobregiro de tarjeta $5.00 y Pago T en $20.00 (paso 2).
 - **CA-21.9** Dado un formulario a medio llenar, cuando recargo la pestaña, entonces se restauran los campos y las líneas, con el mismo id de creación.
@@ -4973,3 +4973,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-273** (corrección posterior de TA-597, 13 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-47). FT-09: los grupos de usuario se colapsan, con el resumen de `grupos[].totales` (teléfono) o los totales en las columnas (computadora) y los avisos agrupados; con un filtro, abiertos y sin flecha; lo colapsado se guarda en el dispositivo. Los CA no cambian. Marca **[CH-273]**.
 - **CH-272** (corrección posterior de TA-597, 13 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-46 y C-48). FT-18: grupos que se colapsan, el asa con la barra «Mover» (Subir y Bajar que cruzan de grupo, Otro grupo, Listo) en lugar de las flechas de las filas, el resultado debajo de lo movido o creado con «Deshacer» y «Cerrar este aviso», y sus textos. FT-09: C-48, «Editar estructura» en los tres puntos del teléfono. Los CA no cambian. Marca **[CH-272]**.
 - **CH-275** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-46). FT-18: ordenar arrastrando desde el asa (4 px), entre grupos y con grupos colapsados, con sus textos y anuncios. Los CA no cambian. Marca **[CH-275]**.
+- **CH-277** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-45 y C-49). FT-21: el paso 3 del flujo son «¿Quién paga?» y «¿En qué categorías?»; los textos de C-45 y C-49; CA-21.5 y CA-21.6 se marcan en el cliente antes de enviar y el servidor valida igual. CA-21.1 y CA-21.2 se cumplen con «Varias». Marcas **[CH-277]**.

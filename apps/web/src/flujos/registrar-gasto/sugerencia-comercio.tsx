@@ -1,12 +1,12 @@
 'use client';
 // La sugerencia de categoría de `/registrar/gasto` (CP-3, 01 §4.17): mientras se escribe el comercio, la categoría de su regla o,
 // sin regla, la de la última compra aprobada ahí. Se carga recién cuando hay un comercio escrito (05 §13.1: el presupuesto de bytes de
-// la ruta). Es solo una ayuda: usarla es un toque, y sus errores no son del formulario.
+// la ruta). Es solo una ayuda y sus errores no son del formulario. [CH-277] Llena la categoría de «Una» si está vacía, sin tocar
+// una elegida (C-49 §1), y dice «Suele ir a {categoría}» debajo del comercio.
 import { useEffect } from 'react';
-import { Boton } from '../../componentes/base/boton';
 import { useLecturaInteractiva } from '../../formularios/use-lectura-interactiva';
 import { sugerencia } from '../../servidor/lecturas/interactivas';
-import { registrarGasto as t } from '../../textos/registrar-gasto';
+import { base } from '../../textos/base';
 
 export interface CategoriaSugerida {
   readonly id: string;
@@ -29,19 +29,14 @@ export default function SugerenciaComercio({
   useEffect(() => {
     consultar(comercio);
   }, [comercio, consultar]);
-  if (resultado === null) return null;
-  const { categoria } = resultado;
+  const categoria = resultado?.categoria;
+  useEffect(() => {
+    if (categoria !== undefined) alUsar(categoria);
+  }, [categoria, alUsar]);
+  if (categoria === undefined) return null;
   return (
-    <div className="flex flex-wrap items-center gap-2" data-testid="sugerencia">
-      <p className="text-cuerpo-pequeno text-texto">{t.sugerencia(categoria.nombre)}</p>
-      <Boton
-        variante="secundaria"
-        onClick={() => {
-          alUsar(categoria);
-        }}
-      >
-        {t.usarSugerencia}
-      </Boton>
-    </div>
+    <p className="campo-ayuda" data-testid="sugerencia">
+      {base.sueleIrA(categoria.nombre)}
+    </p>
   );
 }

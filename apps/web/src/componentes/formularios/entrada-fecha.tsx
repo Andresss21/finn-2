@@ -35,6 +35,8 @@ export interface PropsEntradaFecha {
    * [CH-240 E3-18] El mensaje va a lo ancho de la fila Fecha · Total, fuera de la celda: el campo lo entrega aquí y solo lleva
    * `aria-invalid` y `aria-describedby` hacia el elemento `id`.
    */
+  /** [CH-276] Avisa el mensaje sin sacarlo de la fila (el motivo de «Guardar» lo necesita). */
+  readonly alCambiarMensaje?: (mensaje: string | undefined) => void;
   readonly mensajeEnFila?: {
     readonly id: string;
     readonly alCambiar: (mensaje: string | undefined) => void;
@@ -72,6 +74,7 @@ export function EntradaFecha({
   sinVistaPrevia = false,
   hoy,
   mensajeEnFila,
+  alCambiarMensaje,
 }: PropsEntradaFecha) {
   // El borrador se guarda aparte: el valor del formulario solo cambia con una fecha completa, que exista y dentro del rango.
   const [borrador, setBorrador] = useState<string>(valor ? formatearFecha(valor) : '');
@@ -96,7 +99,7 @@ export function EntradaFecha({
         ? base.fechaIncompleta
         : error;
 
-  const avisar = mensajeEnFila?.alCambiar;
+  const avisar = mensajeEnFila?.alCambiar ?? alCambiarMensaje;
   useEffect(() => {
     avisar?.(mensaje);
   }, [avisar, mensaje]);

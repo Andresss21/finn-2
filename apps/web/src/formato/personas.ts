@@ -33,6 +33,7 @@ export function resolverNombre(
   escrito: string,
   conocidas: readonly PersonaConocida[],
   elegidas: readonly string[],
+  maximo = MAXIMO_PERSONAS,
 ): NombreDePersona {
   const nombre = capitalizarNombre(escrito);
   if (nombre === '') return { tipo: 'vacio' };
@@ -42,6 +43,6 @@ export function resolverNombre(
   // Quien ya está marcado no suma una persona más.
   if (persona !== undefined && elegidas.includes(persona.clave))
     return { tipo: 'existente', persona };
-  if (elegidas.length >= MAXIMO_PERSONAS) return { tipo: 'maximo' };
+  if (elegidas.length >= maximo) return { tipo: 'maximo' };
   return persona === undefined ? { tipo: 'nueva', nombre } : { tipo: 'existente', persona };
 }

@@ -35,8 +35,15 @@ export async function LectorRegistrarGasto({ busqueda }: { readonly busqueda: Bu
       detalle: t.deudaDeCuenta(formatearMonto(x.deuda)),
     })),
   ];
+  // [CH-277] Con su grupo y su Disponible del catálogo, tal cual (C-49 §6, E4-2): el negativo lo dice el signo, sin calcular.
   const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((g) =>
-    g.categorias.map((x) => ({ id: x.categoria.id, nombre: x.categoria.nombre })),
+    g.categorias.map((x) => ({
+      id: x.categoria.id,
+      nombre: x.categoria.nombre,
+      grupo: g.grupo.nombre,
+      disponible: formatearMonto(x.disponible),
+      negativo: x.disponible < 0,
+    })),
   );
   const deudores = (dto.catalogos.deudores ?? []).map((x) => ({
     id: x.deudor.id,

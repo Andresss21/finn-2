@@ -77,35 +77,56 @@ async function abrir(page: Page, ruta: string): Promise<void> {
 }
 
 const campo = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exact: true });
-/** La cuenta y el destino de cada línea son selecciones nativas del export (K2, S5): se elige por el nombre de la opción. */
-const elegir = async (page: Page, etiqueta: string, nombre: string): Promise<void> => {
-  const control = campo(page, etiqueta);
-  // React pone el valor del estado al hidratar el control: un cambio hecho antes se perdería (los campos de texto lo repiten, este no)
-  await expect
-    .poll(() =>
-      control.evaluate((el) => Object.keys(el).some((k) => k.startsWith('__reactProps$'))),
-    )
-    .toBe(true);
-  await control.selectOption({ label: nombre });
+// [CH-276, CH-277] Los campos v3 (C-45 §4.8, C-49): el total es el billete «Total»; la cuenta, con 3 cuentas o menos, un segmentado
+// en su fila (CA-K3-6); la categoría, una lista propia; las personas, chips; los montos de cada fila se nombran «Monto para …».
+const total = (page: Page) => campo(page, t.totalV3);
+const comercio = (page: Page) => page.getByLabel(t.comercio);
+const elegirCuenta = async (page: Page, nombre: string): Promise<void> => {
+  await page
+    .getByRole('radiogroup', { name: t.cuentaV3 })
+    .getByRole('radio', { name: nombre })
+    .click();
 };
-const elegida = (page: Page, etiqueta: string) => campo(page, etiqueta).locator('option:checked');
+const opcion = (page: Page, nombre: string) =>
+  page
+    .getByRole('option')
+    .filter({ has: page.locator('.campo-opcion-nombre', { hasText: new RegExp(`^${nombre}$`) }) });
+const disparadorDeCategoria = (page: Page) =>
+  page.getByRole('button', { name: new RegExp(`^${t.categoria} `) }).first();
+/** Con «Una», la categoría del gasto (o de tu parte). */
+async function categoria(page: Page, nombre: string): Promise<void> {
+  await disparadorDeCategoria(page).click();
+  await opcion(page, nombre).click();
+}
+/** «Varias»: la primera queda como «Lo que queda»; cada otra se elige en su fila (la lista abre sola) y lleva su monto. */
+async function varias(
+  page: Page,
+  primera: string,
+  otras: readonly (readonly [string, string])[],
+): Promise<void> {
+  await categoria(page, primera);
+  await page
+    .getByRole('radiogroup', { name: t.cuantasCategorias })
+    .getByRole('radio', { name: t.varias })
+    .click();
+  for (const [k, [nombre, monto]] of otras.entries()) {
+    if (k > 0) await page.getByRole('button', { name: t.agregarCategoria }).click();
+    await opcion(page, nombre).click();
+    await campo(page, t.montoPara(nombre)).fill(monto);
+  }
+}
+/** «Con alguien» con una persona nueva, escrita en «Otra persona». */
+async function conPersonaNueva(page: Page, nombre: string): Promise<void> {
+  await page.getByRole('radio', { name: t.conAlguien }).click();
+  await page.getByRole('button', { name: base.otraPersona }).click();
+  await campo(page, base.nombreDeLaPersona).fill(nombre);
+  await page.getByRole('button', { name: base.agregar }).click();
+}
+const resumenes = (page: Page) => page.locator('.reparto-resumen');
 /** Con el total escrito el botón dice «Guardar $X» (S5); sin él, «Guardar gasto». */
 const guardar = (page: Page) => page.getByRole('button', { name: /^Guardar/ });
-
-/** Escribe una parte con categoría: su monto y la categoría elegida. */
-async function parteConCategoria(
-  page: Page,
-  n: number,
-  monto: string,
-  categoria: string,
-): Promise<void> {
-  await campo(page, t.montoDeParte(String(n))).fill(monto);
-  await elegir(page, t.categoriaDeParte(String(n)), categoria);
-}
-
-async function agregarParte(page: Page): Promise<void> {
-  await page.getByRole('button', { name: t.agregarLinea }).click();
-}
+/** Apagado (`aria-disabled`, C-45 §11) sigue tocable: Playwright lo toma por deshabilitado, así que el clic se fuerza. */
+const tocarGuardar = (page: Page) => guardar(page).click({ force: true });
 
 const fila = (page: Page, nombre: string) =>
   page.locator('[data-fila-categoria]').filter({ hasText: nombre });
@@ -131,16 +152,12 @@ test.describe('PRU-E2E-TX', () => {
     await page.keyboard.press('Tab'); // el primer Tab muestra «Saltar al contenido» (11.2): se mide ya visible
     await revisarTactil(page);
     await expect(campo(page, t.fecha)).toHaveValue('10/02/2027');
-    await elegir(page, t.cuenta, 'T');
-    await campo(page, t.total).fill('150');
-    await parteConCategoria(page, 1, '110', 'Super');
-    await expect(page.getByTestId('falta-repartir')).toHaveText(t.faltaRepartir('$40.00'));
-    await agregarParte(page);
-    await parteConCategoria(page, 2, '40', 'Mascota');
-    await expect(page.getByTestId('falta-repartir')).toHaveCount(0);
-    await expect(page.getByTestId('suma-lineas')).toHaveText(
-      `${t.sumaDeLineas}$150.00${t.sumaDe}$150.00`,
-    );
+    await elegirCuenta(page, 'T');
+    await total(page).fill('150');
+    // [CH-277] «Varias»: Super queda como «Lo que queda» y pasa a $110.00 sola al escribir Mascota (C-49 §2)
+    await varias(page, 'Super', [['Mascota', '40']]);
+    await expect(campo(page, t.montoPara('Super'))).toHaveValue('110.00');
+    await expect(resumenes(page)).toHaveText(t.repartido('$150.00', '$150.00'));
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await expect(page.getByTestId('resultado').locator('p')).toHaveText(
@@ -159,16 +176,18 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-10', ESC24_PASO1);
     await abrir(page, '/registrar/gasto');
-    await elegir(page, t.cuenta, 'T');
-    await campo(page, t.total).fill('200');
-    await parteConCategoria(page, 1, '90', 'Super');
-    await agregarParte(page);
-    await parteConCategoria(page, 2, '30', 'Mascota');
-    await agregarParte(page);
-    await campo(page, t.montoDeParte('3')).fill('80');
-    // sin deudores todavía, la persona se escribe: se elige «Otra persona» entre las que me deben y aparece su nombre
-    await elegir(page, t.categoriaDeParte('3'), t.porCobrarA(t.otraPersona));
-    await campo(page, t.deudorNuevoDeParte('3')).fill('Ana');
+    await elegirCuenta(page, 'T');
+    await total(page).fill('200');
+    // sin deudores todavía, Ana se escribe en «Otra persona» y se crea con la transacción (C-45 §9)
+    await conPersonaNueva(page, 'Ana');
+    await page
+      .getByRole('radiogroup', { name: t.comoRepartirPersonas })
+      .getByRole('radio', { name: t.montos })
+      .click();
+    await campo(page, t.tuParte).fill('120');
+    await campo(page, t.montoDe('Ana')).fill('80');
+    await varias(page, 'Super', [['Mascota', '30']]);
+    await expect(campo(page, t.montoPara('Super'))).toHaveValue('90.00');
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await expect(page.getByTestId('resultado').locator('p')).toHaveText(
@@ -187,13 +206,12 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-10', ESC20_PASO1);
     await abrir(page, '/registrar/gasto');
-    await elegir(page, t.cuenta, 'Ahorro');
-    await campo(page, t.total).fill('50');
-    await parteConCategoria(page, 1, '25', 'Super');
-    await agregarParte(page);
-    await campo(page, t.montoDeParte('2')).fill('25');
-    await elegir(page, t.categoriaDeParte('2'), t.porCobrarA(t.otraPersona));
-    await campo(page, t.deudorNuevoDeParte('2')).fill('Ana');
+    await elegirCuenta(page, 'Ahorro');
+    await total(page).fill('50');
+    // en partes iguales: Vos $25.00 y Ana $25.00 (C-45 §10)
+    await conPersonaNueva(page, 'Ana');
+    await categoria(page, 'Super');
+    await expect(resumenes(page)).toHaveText(t.repartido('$50.00', '$50.00'));
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await page.goto('/presupuesto');
@@ -202,61 +220,69 @@ test.describe('PRU-E2E-TX', () => {
     await expect(page.locator('[data-en-camino]').first()).toContainText('$25.00');
   });
 
-  test('PRU-E2E-TX-379 [CA-21.4] con un deudor "Ana" ya creado, escribir "ana" como otra persona deja la parte a nombre de Ana y el resultado lo dice', async ({
+  test('PRU-E2E-TX-379 [CA-21.4] con un deudor "Ana" ya creado, escribir "ana" como otra persona marca a Ana, lo dice y la parte queda a su nombre', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC20_PASO2);
     await abrir(page, '/registrar/gasto');
-    await campo(page, t.total).fill('40');
-    await elegir(page, t.cuenta, 'Ahorro');
-    await parteConCategoria(page, 1, '20', 'Super');
-    await agregarParte(page);
-    await campo(page, t.montoDeParte('2')).fill('20');
-    await expect(
-      campo(page, t.categoriaDeParte('2')).locator('option', { hasText: t.porCobrarA('Ana') }),
-    ).toHaveCount(1);
-    await elegir(page, t.categoriaDeParte('2'), t.porCobrarA(t.otraPersona));
-    await campo(page, t.deudorNuevoDeParte('2')).fill('ana');
+    await total(page).fill('40');
+    await elegirCuenta(page, 'Ahorro');
+    await page.getByRole('radio', { name: t.conAlguien }).click();
+    await expect(page.getByRole('checkbox', { name: 'Ana' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+    await page.getByRole('button', { name: base.otraPersona }).click();
+    await campo(page, base.nombreDeLaPersona).fill('ana');
+    await page.getByRole('button', { name: base.agregar }).click();
+    // [CH-276] se reutiliza la Ana existente sin importar mayúsculas y se avisa antes de guardar (C-45 §9)
+    await expect(page.getByText(base.yaTenias('Ana'))).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: 'Ana' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await expect(page.getByRole('checkbox')).toHaveCount(1);
+    await categoria(page, 'Super');
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
-    await expect(page.getByTestId('deudor-existente')).toHaveText(t.deudorExistente('Ana'));
+    await expect(page.getByText(t.teDebe('Ana'))).toBeVisible();
   });
 
-  test('PRU-E2E-TX-380 [CA-21.5] con partes que suman $149.00 y un total de $150.00, enviar muestra "Las partes suman $149.00 y el total es $150.00." junto al campo de las partes y no guarda', async ({
+  test('PRU-E2E-TX-380 [CA-21.5] con categorías que suman $149.00 y un total de $150.00 la pantalla dice «Falta repartir $1.00.», Guardar dice por qué y no se guarda nada', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
-    await elegir(page, t.cuenta, 'T');
-    await campo(page, t.total).fill('150');
-    await parteConCategoria(page, 1, '110', 'Super');
-    await agregarParte(page);
-    await parteConCategoria(page, 2, '39', 'Mascota');
-    await expect(page.getByTestId('falta-repartir')).toHaveText(t.faltaRepartir('$1.00'));
-    await guardar(page).click();
-    await expect(
-      page
-        .locator('[data-campo-lineas]')
-        .getByText('Las partes suman $149.00 y el total es $150.00.'),
-    ).toBeVisible();
+    await elegirCuenta(page, 'T');
+    await total(page).fill('150');
+    await varias(page, 'Super', [['Mascota', '39']]);
+    // [CH-277] escrita, Super deja de ser «Lo que queda»: al salir del campo se marca lo que falta (C-49 §3). El servidor sigue
+    // validando la suma con `suma_lineas_distinta` (CA-R-15, en la prueba de componentes PRU-CMP-TX-870).
+    await campo(page, t.montoPara('Super')).fill('110');
+    await campo(page, t.montoPara('Super')).blur();
+    await expect(resumenes(page)).toHaveText(t.faltaRepartirV3('$1.00'));
+    await expect(guardar(page)).toHaveAttribute('aria-disabled', 'true');
+    await expect(page.getByText(t.motivoCategorias(false))).toBeVisible();
+    await tocarGuardar(page);
     await expect(page.getByRole('heading', { name: t.listo })).toHaveCount(0);
-    // el servidor no guardó nada: Super y Mascota siguen como en el paso 1
+    // no se guardó nada: Super y Mascota siguen como en el paso 1
     await page.goto('/presupuesto');
     await esperarContenido(page);
     await esperarMonto(disponible(page, 'Super'), 10000);
     await esperarMonto(disponible(page, 'Mascota'), 2000);
   });
 
-  test('PRU-E2E-TX-381 [CA-21.6] una parte sin categoría ni deudor se rechaza con "Cada parte necesita una categoría o un por cobrar." y no se crea nada', async ({
+  test('PRU-E2E-TX-381 [CA-21.6] un gasto sin categoría no se envía: la fila dice «Elegí una categoría.» y no se crea nada', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
-    await elegir(page, t.cuenta, 'T');
-    await campo(page, t.total).fill('50');
-    await campo(page, t.montoDeParte('1')).fill('50');
-    await guardar(page).click();
-    await expect(page.getByText(t.lineaSinDestino)).toBeVisible();
+    await elegirCuenta(page, 'T');
+    await total(page).fill('50');
+    await tocarGuardar(page);
+    // [CH-277] la línea sin destino se marca en el cliente antes de enviar; el servidor sigue con `linea_sin_destino`
+    await expect(page.getByText(t.elegiCategoria)).toBeVisible();
+    await expect(page.getByText(t.motivoCategoria)).toBeVisible();
     await expect(page.getByRole('heading', { name: t.listo })).toHaveCount(0);
     await page.goto('/presupuesto');
     await esperarContenido(page);
@@ -312,9 +338,9 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-10', ESC20_PASO1);
     await abrir(page, '/registrar/gasto');
-    await elegir(page, t.cuenta, 'Ahorro');
-    await campo(page, t.total).fill('10');
-    await parteConCategoria(page, 1, '10', 'Super');
+    await elegirCuenta(page, 'Ahorro');
+    await total(page).fill('10');
+    await categoria(page, 'Super');
     // [CH-260] El campo limita la fecha al período en contexto: una posterior a hoy o anterior a su inicio no se entrega.
     await campo(page, t.fecha).fill('2027-02-11');
     await expect(page.getByText(base.fechaFuera)).toBeVisible();
@@ -331,9 +357,9 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-16', ESC12_PASO1);
     await abrir(page, '/registrar/gasto');
-    await elegir(page, t.cuenta, 'T');
-    await campo(page, t.total).fill('25');
-    await parteConCategoria(page, 1, '25', 'Intereses y comisiones');
+    await elegirCuenta(page, 'T');
+    await total(page).fill('25');
+    await categoria(page, 'Intereses y comisiones');
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await page.goto('/presupuesto');
@@ -346,23 +372,22 @@ test.describe('PRU-E2E-TX', () => {
     await esperarMonto(sobregiro.locator('[data-centavos]').first(), 500);
   });
 
-  test('PRU-E2E-TX-392 [CA-21.9] con el formulario a medio llenar, recargar la pestaña restaura los campos y las partes y permite descartar el borrador', async ({
+  test('PRU-E2E-TX-392 [CA-21.9] con el formulario a medio llenar, recargar la pestaña restaura los campos y las categorías y permite descartar el borrador', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
-    await elegir(page, t.cuenta, 'T');
-    await campo(page, t.total).fill('150');
-    await campo(page, t.comercio).fill('PriceSmart');
-    await parteConCategoria(page, 1, '110', 'Super');
-    await agregarParte(page);
-    await campo(page, t.montoDeParte('2')).fill('40');
-    // el borrador se escribe 500 ms después del último cambio: se espera a que tenga la segunda parte
+    await elegirCuenta(page, 'T');
+    await total(page).fill('150');
+    await comercio(page).fill('PriceSmart');
+    await varias(page, 'Super', [['Mascota', '40']]);
+    await total(page).focus(); // al salir, el monto se completa a dos decimales (C-45 §5)
+    // el borrador se escribe 500 ms después del último cambio: se espera a que tenga la segunda categoría
     await expect
       .poll(() =>
         page.evaluate(() =>
           Object.entries<string>(sessionStorage as unknown as Record<string, string>).some(
-            ([k, v]) => k.startsWith('finn:borrador:') && v.includes('"monto":"40"'),
+            ([k, v]) => k.startsWith('finn:borrador:') && v.includes('"monto":"40.00"'),
           ),
         ),
       )
@@ -370,17 +395,16 @@ test.describe('PRU-E2E-TX', () => {
     await page.reload();
     await esperarHidratacion(page);
     await expect(page.getByText(formularios.borradorRecuperado)).toBeVisible();
-    await expect(campo(page, t.total)).toHaveValue('150');
-    await expect(campo(page, t.comercio)).toHaveValue('PriceSmart');
-    await expect(campo(page, t.montoDeParte('1'))).toHaveValue('110');
-    await expect(campo(page, t.montoDeParte('2'))).toHaveValue('40');
-    await expect(elegida(page, t.categoriaDeParte('1'))).toHaveText('Super');
+    await expect(total(page)).toHaveValue('150.00');
+    await expect(comercio(page)).toHaveValue('PriceSmart');
+    await expect(campo(page, t.montoPara('Super'))).toHaveValue('110.00');
+    await expect(campo(page, t.montoPara('Mascota'))).toHaveValue('40.00');
     await page.getByRole('button', { name: formularios.descartarBorrador }).click();
-    await expect(campo(page, t.total)).toHaveValue('');
+    await expect(total(page)).toHaveValue('');
     await expect(page.getByText(formularios.borradorRecuperado)).toHaveCount(0);
   });
 
-  test('PRU-E2E-TX-393 [CA-21.10] con una compra aprobada de "Mercado" en Super, escribir ese comercio sugiere Super y un toque lo pone en la parte 1', async ({
+  test('PRU-E2E-TX-393 [CA-21.10] con una compra aprobada de "Mercado" en Super, escribir ese comercio sugiere Super y lo pone en la categoría vacía', async ({
     page,
   }) => {
     await preparar('2027-02-21', [
@@ -402,12 +426,13 @@ test.describe('PRU-E2E-TX', () => {
       { op: 'OP-37', etiqueta: 'sms', categoria: 'Super', aprobado: '2027-02-21T08:00' },
     ]);
     await abrir(page, '/registrar/gasto');
-    await campo(page, t.comercio).fill('Mercado');
-    await expect(page.getByTestId('sugerencia')).toContainText(t.sugerencia('Super'));
-    await page.getByRole('button', { name: t.usarSugerencia }).click();
-    await expect(elegida(page, t.categoriaDeParte('1'))).toHaveText('Super');
-    await campo(page, t.comercio).fill('Otro sitio');
+    await comercio(page).fill('Mercado');
+    // [CH-277] la sugerencia llena «Una» si está vacía y nunca cambia una categoría elegida (C-49 §1)
+    await expect(page.getByTestId('sugerencia')).toHaveText(base.sueleIrA('Super'));
+    await expect(disparadorDeCategoria(page)).toContainText('Super');
+    await comercio(page).fill('Otro sitio');
     await expect(page.getByTestId('sugerencia')).toHaveCount(0);
+    await expect(disparadorDeCategoria(page)).toContainText('Super');
   });
 
   test('PRU-E2E-TX-394 [CA-21.12, AV-01] un gasto de $148.60 con 3 líneas en el período activo se guarda sin previsualizar y dice "Guardado: PRICESMART · $148.60 · T · 3 líneas" con un enlace a cada categoría, y con la fecha en un período cerrado primero pide confirmar con el aviso', async ({
@@ -421,14 +446,18 @@ test.describe('PRU-E2E-TX', () => {
       { op: 'OP-14', categoria: 'Mascota', monto: 20 },
     ]);
     await abrir(page, '/registrar/gasto');
-    await elegir(page, t.cuenta, 'T');
-    await campo(page, t.total).fill('148.60');
-    await campo(page, t.comercio).fill('PRICESMART');
-    await parteConCategoria(page, 1, '100', 'Super');
-    await agregarParte(page);
-    await parteConCategoria(page, 2, '40', 'Mascota');
-    await agregarParte(page);
-    await parteConCategoria(page, 3, '8.60', 'Super');
+    await elegirCuenta(page, 'T');
+    await total(page).fill('148.60');
+    await comercio(page).fill('PRICESMART');
+    // [CH-277] una categoría no se repite (C-49 §2): las 3 líneas son Super $100.00, Mascota $40.00 y Ana $8.60 por cobrar
+    await conPersonaNueva(page, 'Ana');
+    await page
+      .getByRole('radiogroup', { name: t.comoRepartirPersonas })
+      .getByRole('radio', { name: t.montos })
+      .click();
+    await campo(page, t.tuParte).fill('140');
+    await campo(page, t.montoDe('Ana')).fill('8.60');
+    await varias(page, 'Super', [['Mascota', '40']]);
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     await expect(page.getByTestId('resultado').locator('p')).toHaveText(
@@ -439,25 +468,24 @@ test.describe('PRU-E2E-TX', () => {
     await expect(
       partes
         .filter({ has: page.getByText('Super', { exact: true }) })
-        .getByRole('link', { name: t.verLaCategoria })
-        .first(),
+        .getByRole('link', { name: t.verLaCategoria }),
     ).toHaveAttribute('href', /\/presupuesto\/categorias\/.+/);
     await expect(
       partes
         .filter({ has: page.getByText('Mascota', { exact: true }) })
         .getByRole('link', { name: t.verLaCategoria }),
     ).toBeVisible();
-    // una por línea: Super $100.00, Mascota $40.00 y el resto de $8.60 en Super
-    await expect(page.getByRole('link', { name: t.verLaCategoria })).toHaveCount(3);
+    await expect(page.getByRole('link', { name: t.verLaCategoria })).toHaveCount(2);
+    await expect(page.getByRole('link', { name: t.verEnPorCobrar })).toHaveCount(1);
     // con la fecha en un período cerrado, antes aparece el impacto con el aviso AV-01
     await page.getByRole('button', { name: t.registrarOtro }).click();
     await esperarHidratacion(page);
     // [CH-260] Un período cerrado se registra abriendo Registrar con ese período en contexto.
     await abrir(page, '/registrar/gasto?periodo=2027-01-21');
-    await elegir(page, t.cuenta, 'T');
+    await elegirCuenta(page, 'T');
     await campo(page, t.fecha).fill('2027-01-25');
-    await campo(page, t.total).fill('10');
-    await parteConCategoria(page, 1, '10', 'Super');
+    await total(page).fill('10');
+    await categoria(page, 'Super');
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.revisar })).toBeVisible();
     await expect(page.getByText(t.avisoPeriodoCerrado)).toBeVisible();
@@ -465,53 +493,66 @@ test.describe('PRU-E2E-TX', () => {
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
   });
 
-  test('PRU-E2E-TX-440 [CA-21.1] la cuenta se elige en una selección de 52 px que dice la deuda de la tarjeta , Fecha y Total van en dos columnas y el Total lleva el prefijo «$» sin la línea «Se entiende como»', async ({
+  test('PRU-E2E-TX-440 [CA-21.1] el total es el billete con «$» y «Las comas de miles se ponen solas.», la cuenta dice la deuda de la tarjeta y no hay «Se entiende como» ni «Fecha elegida»', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
-    await elegir(page, t.cuenta, 'T');
-    await expect(campo(page, t.cuenta).locator('xpath=..')).toContainText(t.deudaDeCuenta('$0.00'));
-    expect((await campo(page, t.cuenta).locator('xpath=..').boundingBox())?.height).toBe(52);
-    await campo(page, t.total).fill('150');
-    const fecha = await campo(page, t.fecha).boundingBox();
-    const total = await campo(page, t.total).boundingBox();
-    expect(Math.abs((fecha?.y ?? 0) - (total?.y ?? 99))).toBeLessThan(2);
-    expect(total?.x ?? 0).toBeGreaterThan((fecha?.x ?? 0) + (fecha?.width ?? 0) - 1);
-    await expect(campo(page, t.total).locator('xpath=..')).toContainText('$');
+    await elegirCuenta(page, 'T');
+    // [CH-276] C-45 §4: el total va como billete, arriba y solo; la fecha y la cuenta son filas del grupo de datos
+    await total(page).fill('1236.4');
+    await expect(total(page)).toHaveValue('1,236.4');
+    await campo(page, t.fecha).focus();
+    await expect(total(page)).toHaveValue('1,236.40');
+    const billete = page.locator('.campo-billete');
+    await expect(billete).toContainText('$');
+    await expect(billete).toContainText(base.comasSolas);
     await expect(page.getByText('Se entiende como')).toHaveCount(0);
     await expect(page.getByText('Fecha elegida')).toHaveCount(0);
   });
 
-  test('PRU-E2E-TX-441 [CA-21.1] dividir dice «Dividir · opcional · N líneas», cada línea es una fila con selección, monto y × en la misma altura y «+ Agregar línea» suma otra', async ({
+  test('PRU-E2E-TX-441 [CA-21.1] «¿En qué categorías?» abre en «Una»; «Varias» suma una fila con su lista abierta, cada fila tiene la categoría y el monto en la misma altura, desde tres filas hay × y «+ Agregar categoría» suma otra', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
-    const lineas = page.locator('[data-campo-lineas]');
-    await expect(lineas).toContainText(t.dividir);
-    await expect(lineas).toContainText(t.opcional);
-    await expect(lineas).toContainText(t.lineas('1'));
-    await agregarParte(page);
-    await expect(lineas).toContainText(t.lineas('2'));
-    const destino = await campo(page, t.categoriaDeParte('2')).boundingBox();
-    const monto = await campo(page, t.montoDeParte('2')).boundingBox();
-    const quitar = await page.getByRole('button', { name: t.quitarParte('2') }).boundingBox();
-    expect(Math.abs((destino?.y ?? 0) - (monto?.y ?? 99))).toBeLessThan(2);
-    expect(monto?.width).toBe(120);
-    expect(quitar?.width).toBe(44);
-    expect((quitar?.x ?? 0) > (monto?.x ?? 99)).toBe(true);
-    await page.getByRole('button', { name: t.quitarParte('2') }).click();
-    await expect(lineas).toContainText(t.lineas('1'));
+    const cuantas = page.getByRole('radiogroup', { name: t.cuantasCategorias });
+    await expect(cuantas.getByRole('radio', { name: t.una })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await total(page).fill('30');
+    await categoria(page, 'Super');
+    await cuantas.getByRole('radio', { name: t.varias }).click();
+    await expect(page.getByRole('listbox')).toBeVisible();
+    await expect(opcion(page, 'Super')).toHaveAttribute('aria-disabled', 'true');
+    await opcion(page, 'Mascota').click();
+    await expect(page.getByRole('button', { name: t.quitarCategoria('Mascota') })).toHaveCount(0);
+    const disparador = await page.getByRole('button', { name: /^Categoría Mascota/ }).boundingBox();
+    const monto = await campo(page, t.montoPara('Mascota')).boundingBox();
+    expect(
+      Math.abs(
+        (disparador?.y ?? 0) +
+          (disparador?.height ?? 0) / 2 -
+          (monto?.y ?? 99) -
+          (monto?.height ?? 0) / 2,
+      ),
+    ).toBeLessThan(12);
+    await page.getByRole('button', { name: t.agregarCategoria }).click();
+    await page.keyboard.press('Escape');
+    const quitar = page.getByRole('button', { name: t.quitarCategoria('Mascota') });
+    expect((await quitar.boundingBox())?.width).toBe(44);
+    await quitar.click();
+    await expect(page.getByRole('button', { name: /^Categoría / })).toHaveCount(2);
   });
 
-  test('PRU-E2E-TX-442 [CA-21.12] el botón dice «Guardar $X» con el total escrito y queda en un pie fijo abajo en teléfono y bajo las líneas, a la derecha, en computadora', async ({
+  test('PRU-E2E-TX-442 [CA-21.12] el botón dice «Guardar $X» con el total escrito y queda en un pie fijo abajo en teléfono y bajo las secciones, a la derecha, en computadora', async ({
     page,
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
     await expect(guardar(page)).toHaveText(t.guardar);
-    await campo(page, t.total).fill('150');
+    await total(page).fill('150');
     await expect(guardar(page)).toHaveText(t.guardarMonto('$150.00'));
     const boton = await guardar(page).boundingBox();
     const lineas = await page.locator('[data-campo-lineas]').boundingBox();
@@ -529,11 +570,9 @@ test.describe('PRU-E2E-TX', () => {
   }) => {
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
-    await elegir(page, t.cuenta, 'T');
-    await campo(page, t.total).fill('150');
-    await parteConCategoria(page, 1, '110', 'Super');
-    await agregarParte(page);
-    await parteConCategoria(page, 2, '40', 'Mascota');
+    await elegirCuenta(page, 'T');
+    await total(page).fill('150');
+    await varias(page, 'Super', [['Mascota', '40']]);
     await guardar(page).click();
     await expect(page.getByRole('heading', { name: t.listo })).toBeVisible();
     const detalle = page.getByRole('list', { name: t.lineasGuardadas });
@@ -545,17 +584,17 @@ test.describe('PRU-E2E-TX', () => {
     await expect(page.getByRole('button', { name: t.registrarOtro })).toBeVisible();
   });
 
-  test('PRU-E2E-TX-444 [CA-21.1] en computadora la pantalla va en dos columnas iguales: los datos a la izquierda y las líneas a la derecha', async ({
+  test('PRU-E2E-TX-444 [CA-21.1] en computadora la pantalla va en dos columnas iguales: el total y los datos a la izquierda, «¿Quién paga?» y las categorías a la derecha', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await preparar('2027-02-10', ESC19_PASO1);
     await abrir(page, '/registrar/gasto');
     await expect(page.locator('[data-campo-lineas]')).toBeVisible();
-    const cuenta = await campo(page, t.cuenta).boundingBox();
-    const lineas = await page.locator('[data-campo-lineas]').boundingBox();
-    expect(Math.abs((cuenta?.width ?? 0) - (lineas?.width ?? 99))).toBeLessThan(2);
-    expect(lineas?.x ?? 0).toBeGreaterThan((cuenta?.x ?? 0) + (cuenta?.width ?? 0));
-    expect(Math.abs((cuenta?.y ?? 0) - (lineas?.y ?? 99))).toBeLessThan(60);
+    const datos = await page.locator('.campo-billete').boundingBox();
+    const secciones = await page.locator('[data-campo-lineas]').boundingBox();
+    expect(Math.abs((datos?.width ?? 0) - (secciones?.width ?? 99))).toBeLessThan(2);
+    expect(secciones?.x ?? 0).toBeGreaterThan((datos?.x ?? 0) + (datos?.width ?? 0));
+    expect(Math.abs((datos?.y ?? 0) - (secciones?.y ?? 99))).toBeLessThan(60);
   });
 });
