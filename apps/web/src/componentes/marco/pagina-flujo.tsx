@@ -15,6 +15,11 @@ export interface PropsPaginaFlujo {
   readonly acciones?: ReactNode;
   /** Computadora a dos columnas (S5 del export): el ancho de Inicio en lugar del de un flujo corto. */
   readonly ancha?: boolean;
+  /**
+   * [CH-263] El segundo bloque natural del flujo (el impacto K4, o lo que sigue al primer grupo con título): con él la página es
+   * `ancha` y desde 1280 px va en la columna derecha. Por debajo sigue a `children` en la misma pila, separado 20 px.
+   */
+  readonly lateral?: ReactNode;
 }
 
 // Clases literales (L13).
@@ -26,6 +31,18 @@ const ANCHO = {
     'mx-auto flex min-h-dvh max-w-160 flex-col bg-fondo text-texto md:min-h-0 md:[--ancho-pantalla:45rem] xl:[--ancho-pantalla:none]',
 } as const;
 
+/**
+ * [CH-263, D-1, E5-11] Flujo largo con dos bloques naturales: dos columnas iguales con separación 36 desde 1280 px de ventana. Por
+ * debajo no cambia nada: el contenedor es la pila de siempre (la clave es su separación) y las columnas, `contents`.
+ */
+export const DOS_COLUMNAS = {
+  5: 'flex flex-col gap-5 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-9',
+  8: 'flex flex-col gap-8 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-9',
+} as const;
+const COLUMNA = 'contents xl:flex xl:min-w-0 xl:flex-col xl:gap-5';
+/** La acción principal al pie de la columna izquierda cuando la derecha es el impacto (CH-263). */
+export const ACCION_COLUMNA_IZQUIERDA = 'w-full xl:w-[calc(50%-1.125rem)]';
+
 export function PaginaFlujo({
   titulo,
   descripcion,
@@ -33,9 +50,10 @@ export function PaginaFlujo({
   children,
   acciones,
   ancha = false,
+  lateral,
 }: PropsPaginaFlujo) {
   return (
-    <main data-pagina-flujo className={ancha ? ANCHO.ancha : ANCHO.normal}>
+    <main data-pagina-flujo className={ancha || lateral !== undefined ? ANCHO.ancha : ANCHO.normal}>
       <div className="sticky top-0 z-30 flex min-h-15 items-center gap-1 bg-fondo pr-2 pl-5 md:static md:p-0">
         <button
           type="button"
@@ -52,7 +70,16 @@ export function PaginaFlujo({
       {descripcion === undefined ? null : (
         <p className="text-cuerpo-pequeno px-5 text-texto-secundario md:px-0">{descripcion}</p>
       )}
-      <div className="flex-1 px-5 py-3 md:px-0">{children}</div>
+      <div className="flex-1 px-5 py-3 md:px-0">
+        {lateral === undefined ? (
+          children
+        ) : (
+          <div className={DOS_COLUMNAS[5]}>
+            <div className={COLUMNA}>{children}</div>
+            <div className={COLUMNA}>{lateral}</div>
+          </div>
+        )}
+      </div>
       {acciones === undefined ? null : (
         <div className="sticky bottom-0 flex gap-3 border-t border-borde-sutil bg-superficie px-5 pt-3 pb-6.5 md:static md:border-0 md:bg-transparent md:px-0">
           {acciones}
