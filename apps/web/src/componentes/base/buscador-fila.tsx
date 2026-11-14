@@ -177,6 +177,7 @@ export function BuscadorFila({
                   key={s.valor}
                   id={`${id}-o${String(k)}`}
                   role="option"
+                  tabIndex={-1}
                   aria-selected={k === activa}
                   {...(k === activa ? { 'data-activa': '' } : {})}
                   className="campo-opcion"

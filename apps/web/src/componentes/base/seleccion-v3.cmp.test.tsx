@@ -367,7 +367,13 @@ describe('PRU-CMP-VAL selección y buscador v3', () => {
             alElegir={(s) => elegidas.push(s)}
             buscar={(t) =>
               new Promise((resolver, rechazar) => {
-                pedidos.push({ texto: t, resolver, fallar: () => rechazar(new Error('red')) });
+                pedidos.push({
+                  texto: t,
+                  resolver,
+                  fallar: () => {
+                    rechazar(new Error('red'));
+                  },
+                });
               })
             }
           />

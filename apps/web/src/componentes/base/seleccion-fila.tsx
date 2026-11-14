@@ -91,7 +91,7 @@ function ListaFila({
   useEffect(() => {
     if (!abierta) return;
     panel.current?.focus();
-    document.getElementById(idOpcion(activa))?.scrollIntoView?.({ block: 'nearest' });
+    document.getElementById(idOpcion(activa))?.scrollIntoView({ block: 'nearest' });
   });
 
   const abrir = () => {
@@ -215,11 +215,14 @@ function ListaFila({
                       role="option"
                       aria-selected={o === elegida}
                       {...(k === activa ? { 'data-activa': '' } : {})}
+                      // Las teclas las maneja la lista; el puntero elige con mousedown, que deja el foco en ella.
+                      tabIndex={-1}
                       className="campo-opcion"
                       onPointerMove={() => {
                         setActiva(k);
                       }}
-                      onClick={() => {
+                      onMouseDown={(e) => {
+                        e.preventDefault();
                         elegir(o);
                       }}
                     >
