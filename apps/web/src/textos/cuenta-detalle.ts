@@ -169,6 +169,9 @@ export const cuentaDetalle = {
       pendiente: 'Pendiente',
       atrasada: 'Atrasada',
     },
+    // [CH-283] Las cuotas 1 a p₀, pagadas antes de Finn: atenuadas y sin monto pagado en Finn.
+    pagadaAntesDeFinn: 'Pagada antes de Finn',
+    sinPagoEnFinn: '—',
     proyectadoHastaHoy: 'Proyectado hasta hoy',
     pagadoHastaHoy: 'Pagado hasta hoy',
   },
