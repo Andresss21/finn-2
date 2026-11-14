@@ -6,6 +6,8 @@ export const base = {
   sinResultados: 'Sin resultados',
   errorBusqueda: 'No pudimos buscar. Probá de nuevo.',
   cerrar: 'Cerrar',
+  /** [CH-272] La × de un resultado en el lugar (C-46). */
+  cerrarAviso: 'Cerrar este aviso',
   errorTitulo: 'Algo salió mal',
   errorTexto: 'No pudimos mostrar esto. Probá de nuevo.',
   reintentar: 'Intentar de nuevo',

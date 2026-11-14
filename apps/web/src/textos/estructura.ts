@@ -22,8 +22,64 @@ export const estructura = {
   bajar: 'Bajar',
   subirA: (nombre: string) => `Subir ${nombre}`,
   bajarA: (nombre: string) => `Bajar ${nombre}`,
-  movido: (nombre: string) => `Moviste ${nombre}.`,
   deshacer: 'Deshacer',
+  // [CH-272] C-46: colapsar los grupos y la barra «Mover» (ESTRUCTURA-Y-COLAPSO §5, docs/anexos/finn-estructura/).
+  colapsarTodos: 'Colapsar todos',
+  expandirTodos: 'Expandir todos',
+  categorias: (n: number) => (n === 1 ? '1 categoría' : `${String(n)} categorías`),
+  /** El resumen de un grupo colapsado, en el orden del grupo. */
+  resumen: (...n: readonly string[]): string =>
+    n.length === 0
+      ? 'Todavía no tiene categorías.'
+      : n.length <= 2
+        ? n.join(' y ')
+        : n.length === 3
+          ? `${n[0] ?? ''}, ${n[1] ?? ''} y ${n[2] ?? ''}`
+          : `${n[0] ?? ''}, ${n[1] ?? ''} y ${String(n.length - 2)} más`,
+  ordinalesF: [
+    'primera',
+    'segunda',
+    'tercera',
+    'cuarta',
+    'quinta',
+    'sexta',
+    'séptima',
+    'octava',
+    'novena',
+    'décima',
+  ],
+  ordinalesM: [
+    'primero',
+    'segundo',
+    'tercero',
+    'cuarto',
+    'quinto',
+    'sexto',
+    'séptimo',
+    'octavo',
+    'noveno',
+    'décimo',
+  ],
+  moverCategoria: (c: string) => `Mover ${c}`,
+  moverGrupo: (g: string) => `Mover el grupo ${g}`,
+  barraMover: 'Mover',
+  barraMoverGrupo: 'Mover el grupo',
+  otroGrupo: 'Otro grupo',
+  llevarlaA: 'Llevarla al final de:',
+  esDe: (c: string, ord: string, g: string) => `${c} es ${ord} de ${g}.`,
+  esGrupo: (g: string, ord: string) => `${g} es ${ord} grupo.`,
+  movidaEnGrupo: (c: string, ord: string, g: string) => `Moviste ${c}: ahora es ${ord} de ${g}.`,
+  movidaAGrupo: (c: string, g: string, ord: string) => `Moviste ${c} a ${g}: ahora es ${ord}.`,
+  grupoMovido: (g: string, ord: string) => `Moviste el grupo ${g}: ahora es ${ord}.`,
+  volvio: (c: string, ord: string, g: string) => `${c} volvió a su lugar: ${ord} de ${g}.`,
+  grupoVolvio: (g: string) => `El grupo ${g} volvió a su lugar.`,
+  /** Región de anuncios de la pantalla (§4), cortés. */
+  colapsaste: (g: string) => `Colapsaste ${g}.`,
+  expandiste: (g: string) => `Expandiste ${g}.`,
+  colapsasteTodos: 'Colapsaste todos los grupos.',
+  expandisteTodos: 'Expandiste todos los grupos.',
+  anuncioMover: (c: string, ord: string, g: string) => `Mover ${c}: ${ord} de ${g}.`,
+  barraCerrada: 'Barra Mover cerrada.',
   archivado: 'Archivado',
   archivada: 'Archivada',
   delSistema: 'Lo administra Finn',

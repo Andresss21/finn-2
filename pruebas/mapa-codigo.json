@@ -212,6 +212,7 @@
   { "patron": "apps/web/src/app/(finn)/primeros-pasos.tsx", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/recordatorio-primeros-pasos.tsx", "fts": ["FT-04"] },
   { "patron": "apps/web/src/cliente/usePrimerosPasosOcultos.ts", "fts": ["FT-04"] },
+  { "patron": "apps/web/src/cliente/useColapsados.ts", "fts": ["FT-18"] },
   { "patron": "apps/web/src/app/(finn)/presupuesto/estructura/plantilla/**", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/page.tsx", "fts": ["FT-04"] },
   { "patron": "apps/web/src/app/(finn)/ajustes/lista-ajustes.tsx", "fts": ["FT-04"] },
