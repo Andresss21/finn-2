@@ -307,7 +307,7 @@ describe('PRU-CMP-AJUS Ajustes y Seguridad con los campos v3', () => {
 });
 
 describe('PRU-CMP-ACCESO factor de respaldo con los campos v3', () => {
-  it('PRU-CMP-ACCESO-940 [C-45, FT-74] CA-K3-13: el nombre del factor de respaldo va en un grupo; vacío, «Seguir» se ve apagado con el motivo y al tocarlo marca «Escribí un nombre para el factor.» en la fila con el foco; después queda como fila de solo lectura', async () => {
+  it('PRU-CMP-ACCESO-940 [C-45, FT-02] CA-K3-13: el nombre del factor de respaldo va en un grupo; vacío, «Seguir» se ve apagado con el motivo y al tocarlo marca «Escribí un nombre para el factor.» en la fila con el foco; después queda como fila de solo lectura', async () => {
     const iniciar = vi.fn(() =>
       ok({ factorId: 'f-1', qrSvg: '<svg xmlns="http://www.w3.org/2000/svg"/>', secreto: 'ABCD' }),
     );
