@@ -109,7 +109,12 @@ describe('PRU-DOM-CTA', () => {
       cuotasPagadasAlCrear: '10',
     });
     expect(entradaDeOp01(prestamo)).not.toHaveProperty('modeloCalculo');
-    const modelo = entradaDeOp01({ ...prestamo, modeloCalculo: 'banco_agricola' });
+    // [CH-264] el modelo calcula con la tasa: va con ella
+    const modelo = entradaDeOp01({
+      ...prestamo,
+      modeloCalculo: 'banco_agricola',
+      tasaNominalAnual: '12',
+    });
     expect(modelo).toMatchObject({ modeloCalculo: 'banco_agricola' });
     expect(op01.safeParse({ ...modelo, id: ID }).success).toBe(true);
   });
@@ -141,6 +146,40 @@ describe('PRU-DOM-CTA', () => {
       cuotasPagadasAlCrear: 6,
     });
     expect(op01.safeParse({ ...entrada, id: ID }).success).toBe(true);
+  });
+
+  it('PRU-DOM-CTA-833 [CA-50.3] OP-01 rechaza el modelo Banco Agrícola sin tasa, con el mensaje en el campo de la tasa; con una institución elegida «Quién te prestó» no se muestra ni se envía y OP-01 lo acepta; sin institución es obligatorio (CH-264, CH-265)', () => {
+    const usuario = con('prestamo', {
+      nombre: 'Préstamo BA',
+      saldo: '3934.62',
+      contraparte: 'Banco Agrícola',
+      fechaApertura: '2026-05-08',
+      montoOriginal: '6295',
+      cuotaPactada: '377.98',
+      plazoCuotas: '18',
+      cuotasPagadasAlCrear: '6',
+      modeloCalculo: 'banco_agricola',
+    });
+    const sinTasa = op01.safeParse({ ...entradaDeOp01(usuario), id: ID });
+    expect(sinTasa.error?.issues.map((i) => i.path.join('.'))).toEqual(['tasaNominalAnual']);
+    const conTasa = entradaDeOp01({ ...usuario, tasaNominalAnual: '8.25' });
+    expect(op01.safeParse({ ...conTasa, id: ID }).success).toBe(true);
+
+    const contraparte = CAMPOS_DE_TIPO.prestamo.find((x) => x.n === 'contraparte');
+    const conInstitucion = { ...usuario, tasaNominalAnual: '8.25', institucionId: ID };
+    expect(contraparte !== undefined && visible(contraparte, conInstitucion)).toBe(false);
+    expect(contraparte !== undefined && visible(contraparte, usuario)).toBe(true);
+    const entrada = entradaDeOp01(conInstitucion);
+    expect(entrada).not.toHaveProperty('contraparte');
+    expect(entrada).toMatchObject({ institucionId: ID });
+    expect(CONTRATO.safeParse({ ...conInstitucion, contraparte: '' }).success).toBe(true);
+    expect(op01.safeParse({ ...entrada, id: ID }).success).toBe(true);
+
+    const sinNadie = { ...usuario, tasaNominalAnual: '8.25', contraparte: '' };
+    const formulario = CONTRATO.safeParse(sinNadie);
+    expect(formulario.error?.issues.map((i) => i.path.join('.'))).toEqual(['contraparte']);
+    const servidor = op01.safeParse({ ...entradaDeOp01(sinNadie), id: ID });
+    expect(servidor.error?.issues.map((i) => i.path.join('.'))).toEqual(['contraparte']);
   });
 
   it('PRU-DOM-CTA-106 [CA-50.4]el formulario avisa antes de enviar si el nombre de la tarjeta ya se usa, sin distinguir mayúsculas, y distingue la archivada', () => {

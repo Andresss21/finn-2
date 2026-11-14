@@ -17,7 +17,6 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ESTADO, decidir as decidirModo, type Estado, type Recorte } from './minutos.ts';
 
 type Paso = {
   id?: string;
@@ -133,12 +132,10 @@ const LECTURA = { contents: 'read', actions: 'read', 'pull-requests': 'read' };
 const INSTALAR = 'pnpm install --frozen-lockfile';
 // Lo único que cada job ejecuta, además de la instalación (DP-34). `rapido` lleva `integracion` por M5 (DP-33).
 const SCRIPTS: Record<string, string[]> = {
-  rapido: ['ci:reutiliza-e2e', 'ci:rapido', 'ci:integracion'],
-  'e2e-fragmento': ['ci:e2e'],
-  e2e: ['ci:e2e-unir'],
-  cierre: ['ci:cierre'],
+  rapido: ['ci:rapido', 'ci:integracion'],
   desplegar: ['ci:politica-patrones', 'ci:desplegar'],
 };
+const PLAYWRIGHT = '~/.cache/ms-playwright';
 const PREPARACION = ['gitleaks', 'pg-version', 'pg-imagen'];
 
 describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
@@ -148,149 +145,39 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(Object.keys(wf.on).sort()).toEqual(['pull_request', 'push']);
   });
 
-  it('workflows: jobs rapido, e2e-fragmento, e2e, cierre y desplegar; sin integracion aparte (M5, CH-231)', () => {
-    expect(Object.keys(wf.jobs).sort()).toEqual([
-      'cierre',
-      'desplegar',
-      'e2e',
-      'e2e-fragmento',
-      'rapido',
-    ]);
-    for (const [n, j] of Object.entries(wf.jobs))
-      expect(j.name).toBe(n === 'e2e-fragmento' ? `${n}-\${{ matrix.fragmento }}` : n);
+  it('workflows: jobs rapido y desplegar; sin integracion aparte (M5) ni E2E ni cierre, que van al nocturno (CH-266)', () => {
+    expect(Object.keys(wf.jobs).sort()).toEqual(['desplegar', 'rapido']);
+    for (const [n, j] of Object.entries(wf.jobs)) expect(j.name).toBe(n);
   });
 
-  it('workflows: needs — e2e-fragmento depende de rapido; e2e de los dos; cierre de rapido y e2e; rapido de nadie', () => {
+  it('workflows: needs — desplegar depende solo de rapido; rapido de nadie (CH-266)', () => {
     expect(lista(job('rapido').needs)).toEqual([]);
-    expect(lista(job('e2e-fragmento').needs)).toEqual(['rapido']);
-    expect(lista(job('e2e').needs).sort()).toEqual(['e2e-fragmento', 'rapido']);
-    expect(lista(job('cierre').needs).sort()).toEqual(['e2e', 'rapido']);
+    expect(lista(job('desplegar').needs)).toEqual(['rapido']);
   });
 
-  it('workflows: desplegar solo en main, con todo en verde en la misma corrida e integracion dentro de rapido (07 §6.1, M5)', () => {
+  it('workflows: desplegar solo en main y con rapido en verde, con o sin integracion dentro (07 §6.1, M5, CH-266)', () => {
     const d = job('desplegar');
-    expect(lista(d.needs).sort()).toEqual(['cierre', 'e2e', 'rapido']);
-    const verde = { rapido: ok(), e2e: ok(), cierre: ok() };
+    const verde = { rapido: ok() };
     expect(cumple(d.if, verde)).toBe(true);
+    // Un diff sin base (documentos, interfaz) despliega sin integracion; su rojo ya hace fallar `rapido`
+    expect(cumple(d.if, { rapido: ok({ integracion: 'false' }) })).toBe(true);
     expect(cumple(d.if, verde, PR)).toBe(false);
     expect(cumple(d.if, verde, { ref: 'refs/heads/otra' })).toBe(false);
-    expect(cumple(d.if, { ...verde, rapido: ok({ integracion: 'false' }) })).toBe(false);
-    for (const r of ['failure', 'cancelled', 'skipped']) {
-      expect(cumple(d.if, { ...verde, rapido: { ...ok(), result: r } }), r).toBe(false);
-      expect(cumple(d.if, { ...verde, e2e: { result: r } }), r).toBe(false);
-      expect(cumple(d.if, { ...verde, cierre: { result: r } }), r).toBe(false);
-    }
+    for (const r of ['failure', 'cancelled', 'skipped'])
+      expect(cumple(d.if, { rapido: { ...ok(), result: r } }), r).toBe(false);
     expect(cumple(d.if, verde, {}, true)).toBe(false);
   });
 
-  it('workflows: desplegar acepta e2e saltado solo con reutiliza_e2e, y nunca e2e rojo ni cierre sin correr (TA-555)', () => {
-    const d = job('desplegar').if;
-    const reusa = ok({ reutiliza_e2e: '4242' });
-    expect(cumple(d, { rapido: reusa, e2e: { result: 'skipped' }, cierre: ok() })).toBe(true);
-    expect(cumple(d, { rapido: ok(), e2e: { result: 'skipped' }, cierre: ok() })).toBe(false);
-    expect(cumple(d, { rapido: reusa, e2e: { result: 'failure' }, cierre: ok() })).toBe(false);
-    expect(cumple(d, { rapido: reusa, e2e: { result: 'cancelled' }, cierre: ok() })).toBe(false);
-    for (const r of ['skipped', 'failure'])
-      expect(cumple(d, { rapido: reusa, e2e: { result: 'skipped' }, cierre: { result: r } })).toBe(
-        false,
-      );
-  });
-
-  it('workflows: cierre de main baja informes-e2e de la corrida reutilizada, solo con reutiliza_e2e (TA-555)', () => {
-    const pasos = job('cierre').steps;
-    const bajadas = pasos.filter((p) => p.uses?.startsWith('actions/download-artifact@'));
-    expect(bajadas.map((p) => p.if)).toEqual([
-      undefined,
-      "needs.rapido.outputs.reutiliza_e2e != ''",
-    ]);
-    expect(bajadas[1]?.with).toEqual({
-      name: 'informes-e2e',
-      path: 'test-results/informes',
-      'run-id': '${{ needs.rapido.outputs.reutiliza_e2e }}',
-      'github-token': '${{ github.token }}',
-    });
-    expect(pasos.indexOf(bajadas[1] as Paso)).toBeLessThan(
-      pasos.findIndex((p) => p.run === 'pnpm ci:cierre'),
-    );
-    // Lo lee con el permiso actions: read del workflow, sin escribir nada (pruebas:puerta y M15 no cambian)
-    expect(job('cierre').permissions).toBeUndefined();
-    expect(wf.permissions['actions']).toBe('read');
-    expect(pkg.scripts['ci:cierre']).toContain(
-      'matriz.ts verificar --resultados test-results/informes',
-    );
-  });
-
-  it('workflows: cierre corre con reutiliza_e2e en main y, en un PR, con cierre o con la E2E completa en verde (CH-237)', () => {
-    const c = job('cierre').if;
-    const main = {
-      rapido: ok({ cierre: 'true', reutiliza_e2e: '4242' }),
-      e2e: { result: 'skipped' },
-    };
-    expect(cumple(c, main)).toBe(true);
-    expect(cumple(c, { ...main, e2e: { result: 'failure' } })).toBe(false);
-    const pr = (grep: string, e2e: string, cierre = 'false'): boolean =>
-      cumple(c, { rapido: ok({ cierre, grep_e2e: grep }), e2e: { result: e2e } }, PR);
-    expect(pr('todas', 'success')).toBe(true);
-    expect(pr('todas', 'skipped')).toBe(false);
-    expect(pr('todas', 'failure')).toBe(false);
-    expect(pr('PRU-E2E-INI-001', 'success')).toBe(false);
-    expect(pr('^$', 'skipped')).toBe(false);
-    expect(pr('PRU-E2E-INI-001', 'success', 'true')).toBe(true);
-    expect(pr('^$', 'skipped', 'true')).toBe(true);
-    const rojo = { ...ok({ cierre: 'true' }), result: 'failure' };
-    expect(cumple(c, { rapido: rojo, e2e: ok() })).toBe(false);
-  });
-
-  it('workflows: en main, rapido y cierre restauran la base de la última E2E completa y solo cierre la guarda, tras ci:cierre (CH-239)', () => {
-    const restaura = (n: string): number =>
-      job(n).steps.findIndex(
-        (p) =>
-          p.uses?.startsWith('actions/cache/restore@') &&
-          p.with?.['path'] === 'test-results/e2e-base',
-      );
-    for (const n of ['rapido', 'cierre']) {
-      const pasos = job(n).steps;
-      const i = restaura(n);
-      expect(pasos[i]?.if, n).toBe("github.event_name == 'push'");
-      expect(pasos[i]?.with?.['restore-keys'], n).toBe('e2e-base-');
-      expect(i, n).toBeLessThan(pasos.findIndex((p) => p.run === `pnpm ci:${n}`));
-    }
-    expect(job('rapido').outputs?.['base_e2e']).toBe('${{ steps.rapido.outputs.base_e2e }}');
-    const pasos = job('cierre').steps;
-    const cierre = pasos.findIndex((p) => p.run === 'pnpm ci:cierre');
-    expect(pasos[cierre]?.id).toBe('cierre');
-    expect(pasos[cierre]?.env).toEqual({
-      FINN_E2E_GREP: '${{ needs.rapido.outputs.grep_e2e }}',
-      FINN_REUTILIZA_E2E: '${{ needs.rapido.outputs.reutiliza_e2e }}',
-      FINN_BASE_E2E: '${{ needs.rapido.outputs.base_e2e }}',
-    });
-    const guardar = Object.values(wf.jobs).flatMap((j) =>
-      j.steps.filter(
-        (p) => /cache\/save@/.test(p.uses ?? '') && p.with?.['path'] === 'test-results/e2e-base',
-      ),
-    );
-    expect(guardar).toHaveLength(1);
-    expect(pasos.indexOf(guardar[0] as Paso)).toBeGreaterThan(cierre);
-    expect(guardar[0]?.if).toBe(
-      "github.event_name == 'push' && steps.cierre.outputs.base_e2e_nueva != ''",
-    );
-    expect(guardar[0]?.with?.['key']).toBe('e2e-base-${{ github.run_id }}');
-    expect(pkg.scripts['ci:cierre']).toContain(
-      'node tools/ci/afecta.mjs cierre-previo && node tools/pruebas/matriz.ts verificar --resultados test-results/informes && node tools/ci/afecta.mjs cierre-guardar',
-    );
-  });
-
-  it('workflows: ci:reutiliza-e2e corre solo en main, antes de ci:rapido y es el único paso de rapido con el token (TA-555)', () => {
-    const pasos = job('rapido').steps;
-    const i = pasos.findIndex((p) => p.run === 'pnpm ci:reutiliza-e2e');
-    expect(pasos[i]?.if).toBe("github.event_name == 'push'");
-    expect(pasos[i]?.env).toEqual({ GITHUB_TOKEN: '${{ github.token }}' });
-    expect(i).toBeLessThan(pasos.findIndex((p) => p.run === 'pnpm ci:rapido'));
-    expect(pasos.find((p) => p.run === 'pnpm ci:rapido')?.env).toBeUndefined();
-    expect(job('rapido').outputs?.['reutiliza_e2e']).toBe(
-      '${{ steps.rapido.outputs.reutiliza_e2e }}',
-    );
-    expect(pkg.scripts['ci:reutiliza-e2e']).toBe('node tools/ci/reutiliza-e2e.ts');
+  it('workflows: ci.yml no instala navegadores, no restaura e2e-base ni corre ci:reutiliza-e2e (CH-266)', () => {
+    const pasos = Object.values(wf.jobs).flatMap((j) => j.steps);
+    expect(pasos.some((p) => p.with?.['path'] === PLAYWRIGHT)).toBe(false);
+    expect(pasos.some((p) => p.with?.['path'] === 'test-results/e2e-base')).toBe(false);
+    expect(pasos.some((p) => /reutiliza-e2e|playwright/.test(p.run ?? ''))).toBe(false);
+    const afecta = readFileSync(join(raiz, 'tools', 'ci', 'afecta.mjs'), 'utf8');
+    const rapido = /function rapido\([^)]*\) \{[\s\S]*?\n\}/.exec(afecta)?.[0] ?? '';
+    expect(rapido).toContain('--project unidad --project escenarios-motor --project contratos');
+    for (const fuera of ['NAVEGADORES', 'pruebas:listar', 'pruebas:matriz', 'componentes'])
+      expect(rapido, fuera).not.toContain(fuera);
   });
 
   it('workflows: desplegar corre politica-patrones sin secretos y da los secretos solo a ci:desplegar, sin guardia que lo saltee (TA-260)', () => {
@@ -320,17 +207,13 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(fijada).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  it('workflows: e2e, integracion y cierre corren según las salidas de rapido', () => {
+  it('workflows: integracion corre según la salida de rapido, que publica solo afecta_db, afecta_web e integracion (CH-266)', () => {
     const r = job('rapido');
-    for (const s of ['afecta_db', 'afecta_web', 'integracion', 'e2e', 'cierre'])
+    expect(Object.keys(r.outputs ?? {}).sort()).toEqual(['afecta_db', 'afecta_web', 'integracion']);
+    for (const s of ['afecta_db', 'afecta_web', 'integracion'])
       expect(r.outputs?.[s]).toBe(`\${{ steps.rapido.outputs.${s} }}`);
     const integ = r.steps.find((p) => p.run === 'pnpm ci:integracion');
     expect(integ?.if).toBe("steps.rapido.outputs.integracion == 'true'");
-    expect(job('e2e-fragmento').if).toBe("needs.rapido.outputs.e2e == 'true'");
-    expect(job('e2e').if).toBe("${{ !cancelled() && needs.rapido.outputs.e2e == 'true' }}");
-    expect(job('cierre').if).toContain("needs.rapido.result == 'success'");
-    expect(job('cierre').if).toContain("needs.rapido.outputs.cierre == 'true'");
-    expect(job('cierre').if).toContain('!cancelled()');
   });
 
   it('workflows: concurrencia pr-<número> con cancelación en PR; sin cancelación en main', () => {
@@ -364,71 +247,10 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(pkg.scripts['ci:integracion']).toContain('publicar-resultados.mjs integracion');
   });
 
-  // El proyecto `componentes` recolecta en Chromium: sin él `vitest list` sale con 0 y sin JSON (corrida 41143522674)
-  it('workflows: todo job que lista las pruebas tiene Chromium antes de listar', () => {
-    const instalar = 'pnpm exec playwright install --with-deps chromium';
-    const cierre = pkg.scripts['ci:cierre'] ?? '';
-    expect(cierre.startsWith(`${instalar} && pnpm pruebas:listar && `)).toBe(true);
-    for (const n of ['rapido', 'cierre']) {
-      const pasos = job(n).steps;
-      const cache = pasos.findIndex((p) => p.with?.['path'] === '~/.cache/ms-playwright');
-      expect(cache, n).toBeGreaterThanOrEqual(0);
-      expect(cache, n).toBeLessThan(pasos.findIndex((p) => p.run === `pnpm ci:${n}`));
-    }
-    // En `rapido`, sin depender de si cambió la web y antes del inventario
-    const afecta = readFileSync(join(raiz, 'tools', 'ci', 'afecta.mjs'), 'utf8');
-    expect(afecta).toMatch(
-      /\.\.\.\(enCi \? \[\['navegadores', NAVEGADORES\]\] : \[\]\),\s+\['inventario', 'pnpm pruebas:listar'\]/,
-    );
-  });
-
-  it('workflows: permisos mínimos; rapido agrega statuses: write (CH-16), e2e issues: write (07 §7.3) y desplegar solo contents: write (CH-64)', () => {
+  it('workflows: permisos mínimos; rapido agrega statuses: write (CH-16) y desplegar solo contents: write (CH-64)', () => {
     expect(wf.permissions).toEqual(LECTURA);
     expect(job('rapido').permissions).toEqual({ ...LECTURA, statuses: 'write' });
-    expect(job('e2e').permissions).toEqual({ ...LECTURA, issues: 'write' });
-    expect(job('e2e-fragmento').permissions).toBeUndefined();
-    expect(job('cierre').permissions).toBeUndefined();
     expect(job('desplegar').permissions).toEqual({ contents: 'write' });
-  });
-
-  it('workflows: la E2E corre en fragmentos 1..n con --shard i/n, sin cortar a los demás si uno falla, y cada uno sube su blob (CH-231)', () => {
-    const f = job('e2e-fragmento');
-    const fragmentos = f.strategy?.matrix?.['fragmento'] ?? [];
-    expect(f.strategy?.['fail-fast']).toBe(false);
-    expect(fragmentos).toEqual(Array.from({ length: fragmentos.length }, (_, i) => i + 1));
-    expect(fragmentos.length).toBeGreaterThanOrEqual(3);
-    expect(f.env?.['FINN_E2E_FRAGMENTO']).toBe(`\${{ matrix.fragmento }}/${fragmentos.length}`);
-    expect(f.env?.['FINN_E2E_GREP']).toBe('${{ needs.rapido.outputs.grep_e2e }}');
-    const subidas = f.steps.filter((p) => p.uses?.startsWith('actions/upload-artifact@'));
-    expect(subidas.map((p) => [p.with?.['name'], p.with?.['path'], p.if])).toEqual([
-      ['e2e-blob-${{ matrix.fragmento }}', 'test-results/e2e-blob/', '${{ !cancelled() }}'],
-      ['e2e-trazas-${{ matrix.fragmento }}', 'apps/web/test-results/', '${{ !cancelled() }}'],
-    ]);
-    // Ningún artefacto de un fragmento entra en `cierre` (descarga `informes-*`)
-    for (const s of subidas) expect(String(s.with?.['name'])).not.toMatch(/^informes-/);
-    // La medida de tamaño (TA-222) la guarda solo el fragmento que corrió tamano.e2e.ts
-    const guardar = f.steps.find((p) => p.uses?.startsWith('actions/cache/save@'));
-    expect(guardar?.if).toContain("github.event_name == 'push'");
-    expect(guardar?.if).toContain("hashFiles('test-results/tamanos-main/tamanos.json') != ''");
-  });
-
-  it('workflows: el job e2e une los blobs, pasa solo con todos los fragmentos en verde y sube informes-e2e como antes (CH-231)', () => {
-    const pasos = job('e2e').steps;
-    const bajar = pasos.findIndex((p) => p.uses?.startsWith('actions/download-artifact@'));
-    const unir = pasos.findIndex((p) => p.run === 'pnpm ci:e2e-unir');
-    expect(pasos[bajar]?.with).toMatchObject({
-      pattern: 'e2e-blob-*',
-      'merge-multiple': true,
-      path: 'test-results/e2e-blob',
-    });
-    expect(bajar).toBeLessThan(unir);
-    expect(pasos[unir]?.env?.['FINN_E2E_FRAGMENTOS']).toBe('${{ needs.e2e-fragmento.result }}');
-    // El filtro usado queda en e2e-completa.json para que main sepa si la E2E fue completa (TA-555)
-    expect(pasos[unir]?.env?.['FINN_E2E_GREP']).toBe('${{ needs.rapido.outputs.grep_e2e }}');
-    const subir = pasos.find((p) => p.uses?.startsWith('actions/upload-artifact@'));
-    expect(subir?.with).toMatchObject({ name: 'informes-e2e', path: 'apps/web/test-results/' });
-    expect(subir?.if).toBe('${{ !cancelled() }}');
-    expect(pkg.scripts['ci:e2e-unir']).toBe('node tools/ci/afecta.mjs e2e-unir');
   });
 
   it('workflows: rapido restaura el modo de M4 por prefijo antes de ci:rapido, sin guardarlo (07 §6.5)', () => {
@@ -459,10 +281,9 @@ describe('workflows: ci.yml (07 §6.1, §6.2)', () => {
     expect(g?.run).toContain('releases/download/v${GITLEAKS_VERSION}/');
     expect(g?.run).toMatch(/echo "\$\{GITLEAKS_SHA256\} {2}\S+" \| sha256sum -c -/);
     expect(i).toBeLessThan(pasos.findIndex((p) => p.run === 'pnpm ci:rapido'));
-    for (const n of ['e2e-fragmento', 'e2e', 'cierre'])
-      expect(job(n).steps.some((p) => p.id === 'gitleaks' || /gitleaks/.test(p.run ?? ''))).toBe(
-        false,
-      );
+    expect(
+      job('desplegar').steps.some((p) => p.id === 'gitleaks' || /gitleaks/.test(p.run ?? '')),
+    ).toBe(false);
   });
 
   it('workflows: la imagen de PostgreSQL se baja por digest de versiones.env, con caché, antes de ci:integracion y solo con integracion (CH-22)', () => {
@@ -533,10 +354,9 @@ describe('workflows: nocturno.yml (07 §6.1, §6.5; CH-02)', () => {
     });
   });
 
-  it('workflows: las suites dependen de minutos, corren con correr y llaman solo a pnpm ci:nocturno', () => {
-    const suites = Object.entries(n.jobs).filter(([x]) => x !== 'minutos');
-    expect(suites.length).toBeGreaterThan(0);
-    for (const [x, j] of suites) {
+  it('workflows: prop, ren, respaldo y suites dependen de minutos, corren con correr y llaman solo a pnpm ci:nocturno', () => {
+    for (const x of ['prop', 'ren', 'respaldo', 'suites']) {
+      const j = nj(x);
       expect(j.name).toBe(x);
       expect(lista(j.needs), x).toEqual(['minutos']);
       expect(j.if, x).toBe("needs.minutos.outputs.correr == 'true'");
@@ -545,6 +365,118 @@ describe('workflows: nocturno.yml (07 §6.1, §6.5; CH-02)', () => {
       expect(runs, x).toEqual([INSTALAR, 'pnpm ci:nocturno']);
     }
     expect(pkg.scripts['ci:nocturno']).toBe('node tools/ci/afecta.mjs nocturno');
+    expect(Object.keys(n.jobs).sort()).toEqual([
+      'cierre',
+      'e2e',
+      'e2e-fragmento',
+      'minutos',
+      'prop',
+      'ren',
+      'respaldo',
+      'suites',
+    ]);
+  });
+
+  it('workflows: suites corre en Chromium unidad, escenarios, contratos, componentes e integracion, y sube sus informes para M15 (CH-266)', () => {
+    const s = nj('suites');
+    expect(s.env).toEqual({ FINN_NOCTURNO: 'suites' });
+    const cache = s.steps.findIndex((p) => p.with?.['path'] === PLAYWRIGHT);
+    expect(cache).toBeGreaterThanOrEqual(0);
+    expect(cache).toBeLessThan(s.steps.findIndex((p) => p.run === 'pnpm ci:nocturno'));
+    const subir = s.steps.find((p) => p.uses?.startsWith('actions/upload-artifact@'));
+    expect(subir?.with).toMatchObject({ name: 'informes-suites', path: 'test-results/informes/' });
+    expect(subir?.if).toBe('${{ !cancelled() }}');
+    const afecta = readFileSync(join(raiz, 'tools', 'ci', 'afecta.mjs'), 'utf8');
+    const suites = /FINN_NOCTURNO === 'suites'\) \{[\s\S]*?\n {2}\}/.exec(afecta)?.[0] ?? '';
+    expect(suites).toMatch(/\['navegadores', NAVEGADORES\],\s+\[\s+'pruebas'/);
+    for (const p of ['unidad', 'escenarios-motor', 'contratos', 'componentes'])
+      expect(suites).toContain(`--project ${p}`);
+    expect(suites).toContain("jsonEn('rapido')");
+    expect(suites).toContain("pnpm test:integracion ${jsonEn('integracion')}");
+  });
+
+  it('workflows: la E2E completa corre en fragmentos 1..n con --shard i/n, sin cortar a los demás si uno falla, y cada uno sube su blob (CH-231, CH-266)', () => {
+    const f = nj('e2e-fragmento');
+    expect(f.name).toBe('e2e-fragmento-${{ matrix.fragmento }}');
+    expect(lista(f.needs)).toEqual(['minutos']);
+    expect(f.if).toBe("needs.minutos.outputs.correr == 'true'");
+    const fragmentos = f.strategy?.matrix?.['fragmento'] ?? [];
+    expect(f.strategy?.['fail-fast']).toBe(false);
+    expect(fragmentos).toEqual(Array.from({ length: fragmentos.length }, (_, i) => i + 1));
+    expect(fragmentos.length).toBeGreaterThanOrEqual(3);
+    expect(f.env).toEqual({
+      FINN_E2E_GREP: 'todas',
+      FINN_E2E_FRAGMENTO: `\${{ matrix.fragmento }}/${fragmentos.length}`,
+    });
+    expect(f.steps.flatMap((p) => (p.run ? [p.run.trim()] : []))).toEqual([
+      INSTALAR,
+      'pnpm ci:e2e',
+    ]);
+    const subidas = f.steps.filter((p) => p.uses?.startsWith('actions/upload-artifact@'));
+    expect(subidas.map((p) => [p.with?.['name'], p.with?.['path'], p.if])).toEqual([
+      ['e2e-blob-${{ matrix.fragmento }}', 'test-results/e2e-blob/', '${{ !cancelled() }}'],
+      ['e2e-trazas-${{ matrix.fragmento }}', 'apps/web/test-results/', '${{ !cancelled() }}'],
+    ]);
+    // Ningún artefacto de un fragmento entra en `cierre` (descarga `informes-*`)
+    for (const s of subidas) expect(String(s.with?.['name'])).not.toMatch(/^informes-/);
+  });
+
+  it('workflows: el job e2e une los blobs, pasa solo con todos los fragmentos en verde y sube informes-e2e (CH-231, CH-266)', () => {
+    const e = nj('e2e');
+    expect(lista(e.needs).sort()).toEqual(['e2e-fragmento', 'minutos']);
+    expect(e.permissions).toEqual({ contents: 'read', issues: 'write' });
+    const verde = { minutos: { result: 'success', outputs: { correr: 'true' } } };
+    expect(cumple(e.if, { ...verde, 'e2e-fragmento': { result: 'failure' } })).toBe(true);
+    expect(cumple(e.if, { minutos: { result: 'success', outputs: { correr: 'false' } } })).toBe(
+      false,
+    );
+    expect(cumple(e.if, verde, {}, true)).toBe(false);
+    const pasos = e.steps;
+    const bajar = pasos.findIndex((p) => p.uses?.startsWith('actions/download-artifact@'));
+    const unir = pasos.findIndex((p) => p.run === 'pnpm ci:e2e-unir');
+    expect(pasos[bajar]?.with).toMatchObject({
+      pattern: 'e2e-blob-*',
+      'merge-multiple': true,
+      path: 'test-results/e2e-blob',
+    });
+    expect(bajar).toBeLessThan(unir);
+    expect(pasos[unir]?.env?.['FINN_E2E_FRAGMENTOS']).toBe('${{ needs.e2e-fragmento.result }}');
+    expect(pasos[unir]?.env?.['FINN_E2E_GREP']).toBe('todas');
+    const subir = pasos.find((p) => p.uses?.startsWith('actions/upload-artifact@'));
+    expect(subir?.with).toMatchObject({ name: 'informes-e2e', path: 'apps/web/test-results/' });
+    expect(subir?.if).toBe('${{ !cancelled() }}');
+    expect(pkg.scripts['ci:e2e-unir']).toBe('node tools/ci/afecta.mjs e2e-unir');
+  });
+
+  // El proyecto `componentes` recolecta en Chromium: sin él `vitest list` sale con 0 y sin JSON (corrida 41143522674)
+  it('PRU-SEG-OPER-111 [M15] CH-266: cierre del nocturno corre M15 con los informes de suites y e2e de la corrida, con Chromium antes de listar', () => {
+    const c = nj('cierre');
+    expect(lista(c.needs).sort()).toEqual(['e2e', 'minutos', 'suites']);
+    expect(c.permissions).toBeUndefined();
+    const correr = { minutos: { result: 'success', outputs: { correr: 'true' } } };
+    // Corre aunque `suites` o `e2e` hayan fallado: M15 dice qué ficha terminada quedó sin verde
+    expect(
+      cumple(c.if, { ...correr, suites: { result: 'failure' }, e2e: { result: 'failure' } }),
+    ).toBe(true);
+    expect(cumple(c.if, { minutos: { result: 'success', outputs: { correr: 'false' } } })).toBe(
+      false,
+    );
+    expect(cumple(c.if, correr, {}, true)).toBe(false);
+    const pasos = c.steps;
+    const cierre = pasos.findIndex((p) => p.run === 'pnpm ci:cierre');
+    const bajar = pasos.findIndex((p) => p.uses?.startsWith('actions/download-artifact@'));
+    expect(pasos[bajar]?.with).toEqual({
+      pattern: 'informes-*',
+      'merge-multiple': true,
+      path: 'test-results/informes',
+    });
+    expect(bajar).toBeLessThan(cierre);
+    const cache = pasos.findIndex((p) => p.with?.['path'] === PLAYWRIGHT);
+    expect(cache).toBeGreaterThanOrEqual(0);
+    expect(cache).toBeLessThan(cierre);
+    expect(pkg.scripts['ci:cierre']).toMatch(
+      /^pnpm exec playwright install --with-deps chromium && pnpm pruebas:listar && .*matriz\.ts verificar --resultados test-results\/informes/,
+    );
   });
 });
 
@@ -576,8 +508,8 @@ describe('workflows: fuentes sin red en el build (CH-58)', () => {
 });
 
 describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
-  // Herméticas: afecta.mjs lee ESTADO relativo al cwd, así que corre en un directorio vacío y no ve el modo real del
-  // mes que `rapido` restauró de la caché; su `new Date()` queda fijo en el mes de estas pruebas (07 §7.1).
+  // Herméticas: afecta.mjs lee pruebas/ y test-results/ relativos al cwd, así que corre en un directorio vacío; su
+  // `new Date()` queda fijo en el mes de estas pruebas (07 §7.1).
   const RELOJ = `data:text/javascript,${encodeURIComponent(
     `const D = Date; globalThis.Date = class extends D { constructor(...a) { super(...(a.length ? a : ['2026-10-19T12:00:00Z'])); } };`,
   )}`;
@@ -618,25 +550,23 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     expect(r.status, r.stderr).toBe(0);
     return JSON.parse(r.stdout) as Record<string, boolean>;
   };
-  const conModo = (mes: string, recortes: Recorte[]): void => {
-    const f = join(cwd, ESTADO);
-    mkdirSync(dirname(f), { recursive: true });
-    writeFileSync(f, JSON.stringify({ mes, modo: 'ahorro', recortes }));
+  // CH-266: la decisión ya no trae e2e, cierre ni reutiliza_e2e; la E2E y `cierre` corren en el nocturno
+  const SIN_E2E = ['e2e', 'cierre', 'reutiliza_e2e', 'grep_e2e'];
+  const sinE2e = (d: Record<string, boolean>): void => {
+    for (const k of SIN_E2E) expect(d, k).not.toHaveProperty(k);
   };
 
-  it('workflows: PR en borrador que solo toca docs no corre integracion ni e2e (M1, M2)', () => {
-    const d = decidir('pull_request', 'true', ['docs/07-pruebas.md']);
-    expect(d).toMatchObject({
-      afecta_db: false,
-      afecta_web: false,
-      integracion: false,
-      e2e: false,
-    });
+  it('workflows: PR que solo toca docs no corre integracion, en borrador ni listo (M1, CH-266)', () => {
+    for (const borrador of ['true', 'false']) {
+      const d = decidir('pull_request', borrador, ['docs/07-pruebas.md']);
+      expect(d).toMatchObject({ afecta_db: false, afecta_web: false, integracion: false });
+      sinE2e(d);
+    }
   });
 
-  it('workflows: PR en borrador que toca la base corre integracion, no e2e', () => {
+  it('workflows: PR que toca la base corre integracion', () => {
     const d = decidir('pull_request', 'true', ['packages/db/prisma/schema.prisma']);
-    expect(d).toMatchObject({ afecta_db: true, integracion: true, e2e: false });
+    expect(d).toMatchObject({ afecta_db: true, integracion: true });
   });
 
   it('workflows: un cambio en servidor/ corre integracion: PRU-SEG-ACCESO-001 es la barrera de las acciones de cada ficha', () => {
@@ -644,64 +574,44 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
     expect(d).toMatchObject({ afecta_db: true, integracion: true });
   });
 
-  it('workflows: PR en borrador que solo toca tools/humo corre integracion (PRU-SEG-OPER-103 y 106 viven ahí), no e2e', () => {
+  it('workflows: PR que solo toca tools/humo corre integracion (PRU-SEG-OPER-103 y 106 viven ahí)', () => {
     const d = decidir('pull_request', 'true', ['tools/humo/patron.ts']);
-    expect(d).toMatchObject({ afecta_db: true, integracion: true, e2e: false });
+    expect(d).toMatchObject({ afecta_db: true, integracion: true });
   });
 
-  it('workflows: PR en borrador que solo toca tools/respaldo corre integracion, no e2e (CH-58)', () => {
+  it('workflows: PR que solo toca tools/respaldo corre integracion (CH-58)', () => {
     const d = decidir('pull_request', 'true', ['tools/respaldo/restaurar.sh']);
-    expect(d).toMatchObject({ afecta_db: true, integracion: true, e2e: false });
+    expect(d).toMatchObject({ afecta_db: true, integracion: true });
   });
 
-  it('workflows: PR listo corre integracion siempre y e2e solo con afecta_web', () => {
-    expect(decidir('pull_request', 'false', ['docs/x.md'])).toMatchObject({
+  it('workflows: PR listo con un cambio de interfaz no corre integracion ni E2E (CH-266)', () => {
+    const d = decidir('pull_request', 'false', ['apps/web/src/x.tsx'], 'ready_for_review');
+    expect(d).toMatchObject({ afecta_web: true, afecta_db: false, integracion: false });
+    sinE2e(d);
+  });
+
+  it('workflows: el PR o ci:local que pasa una ficha a terminada no corre E2E ni cierre: M15 va al nocturno (CH-266)', () => {
+    mkdirSync(join(cwd, 'pruebas'));
+    writeFileSync(join(cwd, 'pruebas', 'features.json'), JSON.stringify({ 'FT-01': 'terminada' }));
+    for (const evento of ['pull_request', '']) {
+      const d = decidir(evento, 'true', ['pruebas/features.json']);
+      expect(d).toMatchObject({ afecta_web: false, integracion: false });
+      sinE2e(d);
+    }
+  });
+
+  it('workflows: en main, integracion solo con afecta_db y sin E2E ni cierre (M1, CH-266)', () => {
+    const docs = decidir('push', '', ['docs/x.md']);
+    expect(docs).toMatchObject({ integracion: false });
+    sinE2e(docs);
+    expect(decidir('push', '', ['packages/aplicacion/src/x.ts'])).toMatchObject({
       integracion: true,
-      e2e: false,
     });
-    expect(decidir('pull_request', 'false', ['apps/web/src/x.tsx'])).toMatchObject({
-      afecta_web: true,
-      e2e: true,
-    });
-  });
-
-  it('workflows: los recortes de un estado guardado antes de CH-46 no se aplican, ni en synchronize (CH-61)', () => {
-    conModo('202610', ['e2e-pr-al-pasar-a-listo', 'nocturno-semanal']);
-    const web = ['apps/web/src/x.tsx'];
-    expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({ e2e: true });
-    conModo('202610', ['e2e-pr-al-pasar-a-listo', 'e2e-pr-suspendido']);
-    expect(decidir('pull_request', 'false', web, 'ready_for_review')).toMatchObject({ e2e: true });
-    expect(decidir('push', '', web, '')).toMatchObject({ e2e: true });
-  });
-
-  it('workflows: el PR que pasa una ficha a terminada corre e2e y cierre, en borrador y sin tocar la web (07 §13.2)', () => {
-    mkdirSync(join(cwd, 'pruebas'));
-    writeFileSync(join(cwd, 'pruebas', 'features.json'), JSON.stringify({ 'FT-01': 'terminada' }));
-    const d = decidir('pull_request', 'true', ['pruebas/features.json']);
-    expect(d).toMatchObject({ afecta_web: false, e2e: true, cierre: true });
-  });
-
-  it('PRU-SEG-OPER-111 [M15] CH-70: en local, una ficha que se cierra corre e2e sin tocar la web; sin fichas que se cierran, solo con afecta_web', () => {
-    expect(decidir('', '', ['docs/x.md'])).toMatchObject({ e2e: false, cierre: false });
-    expect(decidir('', '', ['apps/web/src/x.tsx'])).toMatchObject({ e2e: true, cierre: false });
-    mkdirSync(join(cwd, 'pruebas'));
-    writeFileSync(join(cwd, 'pruebas', 'features.json'), JSON.stringify({ 'FT-01': 'terminada' }));
-    const d = decidir('', '', ['pruebas/features.json']);
-    expect(d).toMatchObject({ afecta_web: false, e2e: true, cierre: true });
-  });
-
-  it('workflows: el estado que minutos escribe en el mes en curso pisa los recortes guardados (CH-46)', () => {
-    const web = ['apps/web/src/x.tsx'];
-    conModo('202610', ['e2e-pr-al-pasar-a-listo', 'e2e-pr-suspendido']);
-    const f = join(cwd, ESTADO);
-    const nuevo = decidirModo(
-      1954,
-      new Date('2026-10-19T08:15:00Z'),
-      0,
-      JSON.parse(readFileSync(f, 'utf8')) as Partial<Estado>,
-    );
-    writeFileSync(f, JSON.stringify(nuevo));
-    expect(decidir('pull_request', 'false', web, 'synchronize')).toMatchObject({ e2e: true });
+    // El archivo que dejaba `ci:reutiliza-e2e` ya no cambia la decisión
+    const f = join(cwd, 'test-results', 'reutiliza-e2e.json');
+    mkdirSync(dirname(f), { recursive: true });
+    writeFileSync(f, JSON.stringify({ reutiliza: true, run_id: 4242 }));
+    sinE2e(decidir('push', '', ['apps/web/src/x.tsx']));
   });
 
   it('workflows: ci:local corto solo con un diff de interfaz: solo-interfaz, mixto, dominio, servidor y arnés (CH-231)', () => {
@@ -855,36 +765,6 @@ describe('workflows: decisiones de tools/ci/afecta.mjs', () => {
       expect(s.status, r).toBe(1);
       expect(s.stderr).toMatch(/los fragmentos terminaron/);
     }
-  });
-
-  it('workflows: en main, con la corrida que dejó ci:reutiliza-e2e, e2e=false y reutiliza_e2e=<run_id>; en PR o con un id inválido, nada (TA-555)', () => {
-    const conReutiliza = (contenido: string): void => {
-      const f = join(cwd, 'test-results', 'reutiliza-e2e.json');
-      mkdirSync(dirname(f), { recursive: true });
-      writeFileSync(f, contenido);
-    };
-    expect(decidir('push', '', ['docs/x.md'])).toMatchObject({ e2e: true, reutiliza_e2e: '' });
-    conReutiliza(JSON.stringify({ reutiliza: true, run_id: 4242 }));
-    expect(decidir('push', '', ['apps/web/src/x.tsx'])).toMatchObject({
-      integracion: true,
-      e2e: false,
-      cierre: true,
-      reutiliza_e2e: '4242',
-    });
-    expect(decidir('pull_request', 'false', ['apps/web/src/x.tsx'])).toMatchObject({
-      e2e: true,
-      reutiliza_e2e: '',
-    });
-    conReutiliza(JSON.stringify({ run_id: '42; rm -rf' }));
-    expect(decidir('push', '', ['docs/x.md'])).toMatchObject({ e2e: true, reutiliza_e2e: '' });
-  });
-
-  it('workflows: en main corren integracion, e2e y cierre siempre', () => {
-    expect(decidir('push', '', ['docs/x.md'])).toMatchObject({
-      integracion: true,
-      e2e: true,
-      cierre: true,
-    });
   });
 });
 
