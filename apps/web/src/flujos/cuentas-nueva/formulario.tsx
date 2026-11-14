@@ -2,6 +2,11 @@
 // `/cuentas/nueva` (FT-50, OP-01; 05 §2.3): el flujo largo de crear una cuenta con su saldo inicial. Borrador (4.11), aviso previo
 // de la tarjeta con nombre repetido (BE-35) y la confirmación con AV-01 si la apertura cae en un período cerrado. No calcula
 // montos (PF-3): el impacto y los avisos los trae el servidor.
+import {
+  AvisoBorrador,
+  DescartarBorrador,
+  PieConBorrador,
+} from '../../componentes/formularios/borrador-recuperado';
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -199,19 +204,7 @@ export function FormularioCuentaNueva({
         >
           {/* [CH-262] Izquierda: tipo, nombre, institución, apertura y saldo; derecha: el resto del tipo y «Crear cuenta». */}
           <div className="flex min-w-0 flex-col gap-5">
-            {borrador.recuperado ? (
-              <AvisoEnLinea
-                estado="informacion"
-                aparecioDespues
-                accion={
-                  <Boton variante="secundaria" onClick={borrador.descartar}>
-                    {formularios.descartarBorrador}
-                  </Boton>
-                }
-              >
-                {formularios.borradorRecuperado}
-              </AvisoEnLinea>
-            ) : null}
+            <AvisoBorrador borrador={borrador} />
             <ElegirTipo valor={c.tipo} alCambiar={ponerYProponer('tipo')} />
             {/* [C-45] Los datos de la cuenta, un grupo de filas v3 (CAMPOS-V3 §2); el subtipo, en segmentado (§6). */}
             <GrupoCampos>
@@ -327,17 +320,19 @@ export function FormularioCuentaNueva({
                 {fallo.mensaje}
               </AvisoEnLinea>
             ) : null}
-            <Boton
-              tipo="submit"
-              enviando={estado === 'enviando'}
-              textoEnviando={t.guardando}
-              deshabilitado={!operacion.enLinea}
-              apagado={faltan > 0}
-              className="w-full"
-              {...(motivo === undefined ? {} : { motivoDeshabilitado: motivo })}
-            >
-              {t.guardar}
-            </Boton>
+            <PieConBorrador descartar={<DescartarBorrador borrador={borrador} />}>
+              <Boton
+                tipo="submit"
+                enviando={estado === 'enviando'}
+                textoEnviando={t.guardando}
+                deshabilitado={!operacion.enLinea}
+                apagado={faltan > 0}
+                className="w-full"
+                {...(motivo === undefined ? {} : { motivoDeshabilitado: motivo })}
+              >
+                {t.guardar}
+              </Boton>
+            </PieConBorrador>
           </div>
         </form>
       )}

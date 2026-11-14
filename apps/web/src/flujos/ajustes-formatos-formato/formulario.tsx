@@ -6,6 +6,11 @@
 // [C-45] Grupos de filas v3 (CAMPOS-V3 §2): los datos del formato, los separadores en segmentado, los formatos de fecha como
 // casillas y «Activo» como interruptor (§8). «Guardar formato» se ve apagado mientras falte la institución, el nombre o el patrón y
 // dice debajo cuántos campos corregir (§5 y §11); la política del patrón sigue siendo del servidor.
+import {
+  AvisoBorrador,
+  DescartarBorrador,
+  PieConBorrador,
+} from '../../componentes/formularios/borrador-recuperado';
 import type { ErrorFinn, ResultadoAccion } from '@finn/aplicacion/errores';
 import type { SalidaProbar } from '@finn/aplicacion/operaciones/formatos';
 import { useCallback, useState, type SyntheticEvent } from 'react';
@@ -170,19 +175,7 @@ export function FormularioFormato({
     <PaginaFlujoDeRuta titulo={titulo} rutaPadre={RUTA_PADRE} ancha>
       <div className="flex flex-col gap-8 xl:grid xl:grid-cols-2 xl:items-start">
         <form ref={guardarV3.forma} onSubmit={enviar} noValidate className="flex flex-col gap-5">
-          {borrador.recuperado ? (
-            <AvisoEnLinea
-              estado="informacion"
-              aparecioDespues
-              accion={
-                <Boton variante="secundaria" onClick={borrador.descartar}>
-                  {formularios.descartarBorrador}
-                </Boton>
-              }
-            >
-              {formularios.borradorRecuperado}
-            </AvisoEnLinea>
-          ) : null}
+          <AvisoBorrador borrador={borrador} />
           <GrupoCampos>
             <SeleccionNativa
               etiqueta={t.campos.institucion}
@@ -311,16 +304,18 @@ export function FormularioFormato({
               {fallo.mensaje}
             </AvisoEnLinea>
           ) : null}
-          <Boton
-            tipo="submit"
-            enviando={estado === 'enviando'}
-            textoEnviando={t.guardando}
-            deshabilitado={!operacion.enLinea}
-            className="w-full"
-            {...guardarV3.boton}
-          >
-            {t.guardar}
-          </Boton>
+          <PieConBorrador descartar={<DescartarBorrador borrador={borrador} />}>
+            <Boton
+              tipo="submit"
+              enviando={estado === 'enviando'}
+              textoEnviando={t.guardando}
+              deshabilitado={!operacion.enLinea}
+              className="w-full"
+              {...guardarV3.boton}
+            >
+              {t.guardar}
+            </Boton>
+          </PieConBorrador>
         </form>
         <ProbarFormato probar={probar} sms={smsParaProbar} formato={paraProbar} />
       </div>

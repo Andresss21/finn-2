@@ -10,6 +10,8 @@ interface PropsIcono {
   /** Lado en píxeles; los dibujos son de 24. */
   readonly tamano?: number;
   readonly className?: string;
+  /** [CH-286] El grosor del trazo, si el diseño lo pide distinto del de su familia (el glifo del aviso en línea, 1.7). */
+  readonly trazo?: number;
 }
 
 const dibujo = (nombre: NombreIcono): { trazo: number; contenido: string } =>
@@ -17,7 +19,7 @@ const dibujo = (nombre: NombreIcono): { trazo: number; contenido: string } =>
     ? { trazo: 1.8, contenido: GLIFOS[nombre as keyof typeof GLIFOS] }
     : { trazo: 1.5, contenido: ICONOS[nombre as keyof typeof ICONOS] };
 
-export function Icono({ nombre, etiqueta, tamano = 20, className }: PropsIcono) {
+export function Icono({ nombre, etiqueta, tamano = 20, className, trazo: otro }: PropsIcono) {
   const { trazo, contenido } = dibujo(nombre);
   return (
     <svg
@@ -27,7 +29,7 @@ export function Icono({ nombre, etiqueta, tamano = 20, className }: PropsIcono) 
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={trazo}
+      strokeWidth={otro ?? trazo}
       strokeLinecap="square"
       strokeLinejoin="miter"
       data-icono={nombre}

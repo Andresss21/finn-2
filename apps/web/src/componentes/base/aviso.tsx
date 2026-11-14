@@ -1,34 +1,56 @@
-// Aviso en línea (06-identidad-visual 2.14, 05 §10.7): tres señales por estado, color, glifo y texto (nunca solo color).
-import type { ReactNode } from 'react';
+// Aviso en línea (06-identidad-visual 2.14, 05 §10.7). [CH-286] Línea compacta de C-51 (`docs/anexos/finn-avisos-en-linea/`,
+// AVISOS-EN-LINEA §2 y §6): una sola forma para toda la familia, sin caja teñida. `--superficie-elevada` sobre `--fondo` y
+// `--superficie-hundida` dentro de una superficie (lo resuelve `globals.css`); pastilla si es una línea, rectángulo si tiene
+// descripción. Tres señales por tono: color del glifo, forma del glifo y título, con el tono nombrado oculto antes del título.
+// La acción es siempre un enlace de texto, aunque llegue como botón con fondo (`.fz-aviso-accion`); el problema suma su borde.
+import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../components/ui/utils';
 import { base } from '../../textos/base';
-import { ACCION_TONAL } from './accion-tonal';
-import { Icono } from './icono';
+import { Icono, type NombreIcono } from './icono';
 
 export type EstadoFinanciero =
   'positivo' | 'cero' | 'advertencia' | 'problema' | 'deuda' | 'deuda-sin-respaldo' | 'informacion';
 
 // Clases completas (no armadas con plantillas) para que Tailwind las encuentre.
-const CLASES: Record<EstadoFinanciero, { caja: string; texto: string }> = {
-  positivo: { caja: 'bg-positivo-fondo', texto: 'text-positivo-texto' },
-  cero: { caja: 'bg-cero-fondo', texto: 'text-cero-texto' },
-  advertencia: { caja: 'bg-advertencia-fondo', texto: 'text-advertencia-texto' },
-  problema: { caja: 'bg-problema-fondo', texto: 'text-problema-texto' },
-  deuda: { caja: 'bg-deuda-fondo', texto: 'text-deuda-texto' },
-  'deuda-sin-respaldo': {
-    caja: 'bg-deuda-sin-respaldo-fondo',
-    texto: 'text-deuda-sin-respaldo-texto',
-  },
-  informacion: { caja: 'bg-informacion-fondo', texto: 'text-informacion-texto' },
+const COLOR_GLIFO: Record<EstadoFinanciero, string> = {
+  positivo: 'text-positivo-texto',
+  cero: 'text-cero-texto',
+  advertencia: 'text-advertencia-texto',
+  problema: 'text-problema-texto',
+  deuda: 'text-deuda-texto',
+  'deuda-sin-respaldo': 'text-deuda-sin-respaldo-texto',
+  informacion: 'text-informacion-texto',
 };
+// §2: `info`, `warn`, `dang` y `check`; los demás estados conservan su glifo.
+const GLIFO: Partial<Record<EstadoFinanciero, NombreIcono>> = {
+  informacion: 'info',
+  advertencia: 'warn',
+  problema: 'dang',
+  positivo: 'check',
+};
+/** Hasta este largo un título sin descripción entra en una línea del teléfono: pastilla (§2, «Forma»). */
+const LARGO_PASTILLA = 40;
 
-export interface PropsAvisoEnLinea {
+export interface PropsAvisoEnLinea extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'children' | 'title' | 'role'
+> {
   readonly estado: EstadoFinanciero;
-  readonly titulo?: string;
-  readonly children: ReactNode;
+  /** Con título, `children` es la descripción, en su propia línea; sin él, `children` es el título. */
+  readonly titulo?: ReactNode;
+  readonly children?: ReactNode;
+  /** Un enlace o un botón: se ve como enlace de texto (`--enlace`, 700, 44 px). */
   readonly accion?: ReactNode;
-  /** `true` si aparece después de cargar la pantalla: lleva `role="status"`; si viene con ella, no lleva rol. */
+  /** `true` si aparece después de cargar la pantalla: `role="status"` (`alert` si es un problema); si viene con ella, sin rol. */
   readonly aparecioDespues?: boolean;
+  /** Un glifo propio del caso (`refresh`, `wifioff`, `undo`, `lock`) en lugar del del tono. */
+  readonly icono?: NombreIcono;
+  /** Por omisión, pastilla si es un título corto sin descripción. */
+  readonly forma?: 'pastilla' | 'rectangulo';
+  /** Solo las bandas de C-50 §9: la × de 44 × 44. */
+  readonly alCerrar?: () => void;
+  /** El aviso momentáneo mientras se va (opacidad en `--duracion-normal`). */
+  readonly fase?: 'visible' | 'saliendo';
 }
 
 export function AvisoEnLinea({
@@ -37,24 +59,59 @@ export function AvisoEnLinea({
   children,
   accion,
   aparecioDespues = false,
+  icono,
+  forma,
+  alCerrar,
+  fase,
+  className,
+  ...resto
 }: PropsAvisoEnLinea) {
-  const clases = CLASES[estado];
+  const encabezado = titulo ?? children;
+  const descripcion = titulo === undefined ? undefined : children;
+  const pastilla =
+    forma === undefined
+      ? descripcion === undefined &&
+        typeof encabezado === 'string' &&
+        encabezado.length <= LARGO_PASTILLA
+      : forma === 'pastilla';
+  const rol = aparecioDespues ? (estado === 'problema' ? 'alert' : 'status') : undefined;
+  const conAccion = accion === undefined || accion === null ? null : (
+    <div className="fz-aviso-accion">{accion}</div>
+  );
   return (
     <div
-      {...(aparecioDespues ? { role: 'status' } : {})}
+      {...resto}
+      {...(rol === undefined ? {} : { role: rol })}
+      data-aviso-en-linea=""
       data-estado={estado}
-      className={cn('flex items-start gap-3 rounded-contenedor px-3.5 py-3', clases.caja)}
+      data-forma={pastilla ? 'pastilla' : 'rectangulo'}
+      {...(fase === undefined ? {} : { 'data-fase': fase })}
+      className={cn('fz-aviso', className)}
     >
-      <span className={cn('mt-0.5 shrink-0', clases.texto)}>
-        <Icono nombre={estado} etiqueta={base.estados[estado]} />
+      <span className={cn('fz-aviso-glifo', COLOR_GLIFO[estado])}>
+        <Icono nombre={icono ?? GLIFO[estado] ?? estado} tamano={18} trazo={1.7} />
       </span>
-      <div className="min-w-0 flex-1">
-        {titulo === undefined ? null : (
-          <p className={cn('text-etiqueta font-bold', clases.texto)}>{titulo}</p>
+      <div className="fz-aviso-texto">
+        <div className="fz-aviso-titulo">
+          <span className="sr-only">{`${base.tonos[estado]}: `}</span>
+          {encabezado}
+        </div>
+        {descripcion === undefined ? null : (
+          <div className="fz-aviso-descripcion">{descripcion}</div>
         )}
-        <div className="text-cuerpo-pequeno text-texto">{children}</div>
-        {accion === undefined ? null : <div className={cn('mt-2', ACCION_TONAL)}>{accion}</div>}
+        {pastilla ? null : conAccion}
       </div>
+      {pastilla ? conAccion : null}
+      {alCerrar === undefined ? null : (
+        <button
+          type="button"
+          onClick={alCerrar}
+          aria-label={base.cerrarAviso}
+          className="fz-aviso-cerrar"
+        >
+          <Icono nombre="x" tamano={18} />
+        </button>
+      )}
     </div>
   );
 }

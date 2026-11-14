@@ -1,5 +1,6 @@
 // [CH-278] C-50 (`docs/anexos/finn-aviso-de-resultado/`, AVISO-DE-RESULTADO §4 y §5): el reloj de la etiqueta de resultado,
-// sin React. Una sola etiqueta a la vez: `mostrar` reemplaza a la anterior y se va sola a los ms de `--duracion-aviso`, que
+// sin React ([CH-286] `leerMs`, `reducido` y `relojDeVentana`, al final, leen del navegador y los usa también el aviso
+// momentáneo de C-51). Una sola etiqueta a la vez: `mostrar` reemplaza a la anterior y se va sola a los ms de `--duracion-aviso`, que
 // llegan de afuera (`duracion()`; sin valor, no se va). Cada motivo de espera (puntero, foco, arrastre) la detiene; cuando no
 // queda ninguno, cuenta la duración completa otra vez. Si el resultado tiene inverso, queda `ultimo` para el ↶ de la fila
 // hasta la siguiente acción. La especificación es `logica/aviso.js` del anexo; esta es su adaptación, no una copia.
@@ -117,3 +118,24 @@ export function deshacerEnFila<R extends { readonly id: string }>(
     (e.actual === null || e.actual.id !== id || e.fase === 'saliendo')
   );
 }
+
+const MS_POR_S = 1000;
+
+/** Un token de tiempo en ms, como lo resuelve el navegador; `undefined` si no está. Solo en el navegador. */
+export function leerMs(token: string): number | undefined {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+  const m = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(v);
+  if (m === null) return undefined;
+  const n = Number(m[1]);
+  return m[2] === 'ms' ? n : n * MS_POR_S;
+}
+/** `prefers-reduced-motion: reduce`. Solo en el navegador. */
+export const reducido = (): boolean =>
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** [CH-286] Los temporizadores de la ventana, que comparten la etiqueta (C-50) y el aviso momentáneo (C-51). */
+export const relojDeVentana: Reloj = {
+  poner: (f, ms) => window.setTimeout(f, ms),
+  quitar: (i) => {
+    window.clearTimeout(i);
+  },
+};

@@ -4,8 +4,7 @@
 // Las marcas no se guardan: dependen de la diferencia que dice el servidor en cada previsualización.
 import { useCallback } from 'react';
 import type { UseFormReset } from 'react-hook-form';
-import { AvisoEnLinea } from '../../componentes/base/aviso';
-import { Boton } from '../../componentes/base/boton';
+import { AvisoBorrador, DescartarEnPie } from '../../componentes/formularios/borrador-recuperado';
 import { useBorrador } from '../../formularios/use-borrador';
 import type { Operacion } from '../../formularios/use-operacion';
 import { formularios } from '../../textos/formularios';
@@ -16,11 +15,14 @@ export default function BorradorVerificarSaldo({
   inicial,
   operacion,
   reset,
+  pie,
 }: {
   readonly campos: Campos;
   readonly inicial: Campos;
   readonly operacion: Operacion;
   readonly reset: UseFormReset<Campos>;
+  /** [CH-286] Dónde va «Descartar borrador», en el pie del formulario. */
+  readonly pie: HTMLElement | null;
 }) {
   const borrador = useBorrador<Campos>({
     campos,
@@ -35,18 +37,11 @@ export default function BorradorVerificarSaldo({
       reset(inicial);
     }, [reset, inicial]),
   });
-  if (!borrador.recuperado) return null;
+  // [CH-286] C-51: el aviso momentáneo arriba y «Descartar borrador» al pie, en el lugar que deja el formulario.
   return (
-    <AvisoEnLinea
-      estado="informacion"
-      aparecioDespues
-      accion={
-        <Boton variante="secundaria" onClick={borrador.descartar}>
-          {formularios.descartarBorrador}
-        </Boton>
-      }
-    >
-      {formularios.borradorRecuperado}
-    </AvisoEnLinea>
+    <>
+      <AvisoBorrador borrador={borrador} />
+      <DescartarEnPie borrador={borrador} pie={pie} />
+    </>
   );
 }

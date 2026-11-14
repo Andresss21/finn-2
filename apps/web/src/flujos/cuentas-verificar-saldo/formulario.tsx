@@ -8,6 +8,7 @@
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
+import { PieConBorrador } from '../../componentes/formularios/borrador-recuperado';
 import { ErrorDeFlujo } from '../../componentes/formularios/error-de-flujo';
 import { Boton } from '../../componentes/base/boton';
 import { GrupoCampos } from '../../componentes/base/campo';
@@ -107,6 +108,7 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
   const c = formulario.watch();
 
   const [paso, setPaso] = useState<Paso>('datos');
+  const [pieBorrador, setPieBorrador] = useState<HTMLElement | null>(null);
   const [marcas, setMarcas] = useState<'todas' | ReadonlySet<string>>(new Set());
   const [rechazo, setRechazo] = useState<string>();
   const [ajuste, setAjuste] = useState<Ajuste>();
@@ -369,6 +371,7 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
             inicial={inicial}
             operacion={operacion}
             reset={reset}
+            pie={pieBorrador}
           />
         </Suspense>
         <p>{t.cuenta(cuenta)}</p>
@@ -431,16 +434,18 @@ export function FormularioVerificarSaldo(p: PropsFormularioVerificarSaldo) {
             alReintentar={() => void operacion.reintentar()}
           />
         ) : null}
-        <Boton
-          tipo="submit"
-          enviando={estado === 'enviando'}
-          textoEnviando={t.calculando}
-          deshabilitado={!operacion.enLinea}
-          className="w-full"
-          {...guardar.boton}
-        >
-          {t.verDiferencia}
-        </Boton>
+        <PieConBorrador lugar={setPieBorrador}>
+          <Boton
+            tipo="submit"
+            enviando={estado === 'enviando'}
+            textoEnviando={t.calculando}
+            deshabilitado={!operacion.enLinea}
+            className="w-full"
+            {...guardar.boton}
+          >
+            {t.verDiferencia}
+          </Boton>
+        </PieConBorrador>
       </form>
     </MarcoCorto>
   );

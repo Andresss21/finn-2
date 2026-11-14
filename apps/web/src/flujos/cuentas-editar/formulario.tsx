@@ -4,6 +4,11 @@
 // la apertura cambia de período, la confirmación trae AV-01. No calcula montos (PF-3): el impacto lo dice el servidor.
 // [C-45] Los datos y los de la tarjeta son dos `GrupoCampos` (CAMPOS-V3 §2): el límite en fila con «$», la tasa con «%», los días
 // sin letras y el subtipo en segmentado. «Guardar cambios» se ve apagado mientras falte algo y dice debajo qué (§5 y §11).
+import {
+  AvisoBorrador,
+  DescartarBorrador,
+  PieConBorrador,
+} from '../../componentes/formularios/borrador-recuperado';
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { useCallback, useState } from 'react';
 import * as z from 'zod';
@@ -227,19 +232,7 @@ function Cuerpo({
         noValidate
         className="flex flex-col gap-5"
       >
-        {borrador.recuperado ? (
-          <AvisoEnLinea
-            estado="informacion"
-            aparecioDespues
-            accion={
-              <Boton variante="secundaria" onClick={borrador.descartar}>
-                {formularios.descartarBorrador}
-              </Boton>
-            }
-          >
-            {formularios.borradorRecuperado}
-          </AvisoEnLinea>
-        ) : null}
+        <AvisoBorrador borrador={borrador} />
         <GrupoCampos>
           <EntradaTexto
             etiqueta={n.nombre}
@@ -349,16 +342,18 @@ function Cuerpo({
             {fallo.mensaje}
           </AvisoEnLinea>
         ) : null}
-        <Boton
-          tipo="submit"
-          enviando={estado === 'enviando'}
-          textoEnviando={t.guardando}
-          deshabilitado={!operacion.enLinea}
-          className="w-full"
-          {...guardar.boton}
-        >
-          {t.guardar}
-        </Boton>
+        <PieConBorrador descartar={<DescartarBorrador borrador={borrador} />}>
+          <Boton
+            tipo="submit"
+            enviando={estado === 'enviando'}
+            textoEnviando={t.guardando}
+            deshabilitado={!operacion.enLinea}
+            className="w-full"
+            {...guardar.boton}
+          >
+            {t.guardar}
+          </Boton>
+        </PieConBorrador>
       </form>
     </PaginaFlujoDeRuta>
   );

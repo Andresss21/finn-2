@@ -9,6 +9,7 @@
 import type { ErrorFinn } from '@finn/aplicacion/errores';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { DatoFijo } from '../../componentes/formularios/dato-fijo';
+import { PieConBorrador } from '../../componentes/formularios/borrador-recuperado';
 import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
@@ -83,6 +84,7 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
   });
   const eliminacion = useOperacion({ accion: p.accionEliminar });
   const [confirmando, setConfirmando] = useState(false);
+  const [pieBorrador, setPieBorrador] = useState<HTMLElement | null>(null);
   const formulario = useFormularioFinn<Campos>({
     contrato,
     valoresIniciales: inicial,
@@ -171,6 +173,7 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
               inicial={inicial}
               operacion={operacion}
               reset={formulario.reset}
+              pie={pieBorrador}
             />
           </Suspense>
         )}
@@ -395,15 +398,17 @@ export function FormularioProgramada(p: PropsFormularioProgramada) {
             {falla.mensaje}
           </AvisoEnLinea>
         ) : null}
-        <Boton
-          tipo="submit"
-          enviando={estado === 'enviando'}
-          textoEnviando={edita ? t.guardando : t.creando}
-          deshabilitado={!operacion.enLinea}
-          {...guardar.boton}
-        >
-          {edita ? t.guardar : t.crear}
-        </Boton>
+        <PieConBorrador lugar={setPieBorrador}>
+          <Boton
+            tipo="submit"
+            enviando={estado === 'enviando'}
+            textoEnviando={edita ? t.guardando : t.creando}
+            deshabilitado={!operacion.enLinea}
+            {...guardar.boton}
+          >
+            {edita ? t.guardar : t.crear}
+          </Boton>
+        </PieConBorrador>
         {edita && p.activar !== undefined ? (
           <div className="flex flex-col gap-1">
             {p.activar}

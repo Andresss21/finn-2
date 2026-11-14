@@ -4,6 +4,11 @@
 // calcula montos (PF-3): la tabla de amortización la dibuja el detalle con lo que dice el servidor.
 // [C-45] Los campos son un `GrupoCampos` (CAMPOS-V3 §2): montos con «$», la tasa con «%», enteros sin letras y las opciones en
 // segmentado o en la lista propia según cuántas son (§6). «Guardar condiciones» sigue §5 y §11.
+import {
+  AvisoBorrador,
+  DescartarBorrador,
+  PieConBorrador,
+} from '../../componentes/formularios/borrador-recuperado';
 import { useCallback, useMemo, useState } from 'react';
 import { AvisoEnLinea } from '../../componentes/base/aviso';
 import { Boton } from '../../componentes/base/boton';
@@ -161,19 +166,7 @@ function Cuerpo({
         className="flex flex-col gap-5"
       >
         <p className="text-cuerpo-pequeno text-texto-secundario">{t.nota}</p>
-        {borrador.recuperado ? (
-          <AvisoEnLinea
-            estado="informacion"
-            aparecioDespues
-            accion={
-              <Boton variante="secundaria" onClick={borrador.descartar}>
-                {formularios.descartarBorrador}
-              </Boton>
-            }
-          >
-            {formularios.borradorRecuperado}
-          </AvisoEnLinea>
-        ) : null}
+        <AvisoBorrador borrador={borrador} />
         <GrupoCampos>{DESCRIPTORES.map(campo)}</GrupoCampos>
         {estado === 'error' && fallo !== undefined && !enSuCampo ? (
           <AvisoEnLinea
@@ -198,16 +191,18 @@ function Cuerpo({
             {fallo.mensaje}
           </AvisoEnLinea>
         ) : null}
-        <Boton
-          tipo="submit"
-          enviando={estado === 'enviando'}
-          textoEnviando={t.guardando}
-          deshabilitado={!operacion.enLinea}
-          className="w-full"
-          {...guardar.boton}
-        >
-          {t.guardar}
-        </Boton>
+        <PieConBorrador descartar={<DescartarBorrador borrador={borrador} />}>
+          <Boton
+            tipo="submit"
+            enviando={estado === 'enviando'}
+            textoEnviando={t.guardando}
+            deshabilitado={!operacion.enLinea}
+            className="w-full"
+            {...guardar.boton}
+          >
+            {t.guardar}
+          </Boton>
+        </PieConBorrador>
       </form>
     </PaginaFlujoDeRuta>
   );

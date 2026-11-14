@@ -61,7 +61,8 @@ function contraste(a: string, b: string): number {
     return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
   };
   const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m) as [number, number];
-  return (x + 0.05) / (y + 0.05);
+  // Con dos decimales, como los da AVISOS-EN-LINEA §6.
+  return Math.round(((x + 0.05) / (y + 0.05)) * 100) / 100;
 }
 const q = (n: ParentNode, s: string): HTMLElement => {
   const e = n.querySelector<HTMLElement>(s);
