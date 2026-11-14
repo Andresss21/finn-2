@@ -35,6 +35,8 @@
     "test:integracion": "vitest run --project integracion --coverage.enabled=false --passWithNoTests",
     "test:componentes": "vitest run --project componentes --coverage.enabled=false --passWithNoTests",
     "test:e2e": "node tools/pruebas/e2e.mjs",
+    "probar": "node tools/probar/servir.mjs",
+    "probar:codigo": "node tools/probar/codigo.mjs",
     "bench": "vitest bench --run --project unidad --passWithNoTests",
     "ci:rapido": "node tools/ci/afecta.mjs rapido",
     "ci:integracion": "node tools/ci/publicar-resultados.mjs integracion -- pnpm test:integracion --reporter=default --reporter=json --outputFile.json=test-results/informes/integracion.json",

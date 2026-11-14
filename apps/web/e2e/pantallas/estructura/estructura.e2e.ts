@@ -83,7 +83,12 @@ test.describe('PRU-E2E-CATEG', () => {
     await expect(page.getByText(/ya existe/i)).toBeVisible();
     await expect(page.getByText(t.categoriaCreada)).toHaveCount(0);
 
-    await page.getByRole('radio', { name: 'Hogar' }).click();
+    // Desde el botón de otro grupo la categoría es de ese grupo, sin selector
+    await abrir(page);
+    await page.getByRole('link', { name: t.agregarCategoria('Hogar') }).click();
+    await expect(page.getByText(t.enGrupo('Hogar'), { exact: true })).toBeVisible();
+    await expect(page.getByRole('radio')).toHaveCount(0);
+    await nombre(page).fill('supermercado');
     await crear(page).click();
     await expect(page.getByText(t.categoriaCreada)).toBeVisible();
   });
@@ -192,7 +197,7 @@ test.describe('PRU-E2E-CATEG', () => {
     await expect(filas(page)).toHaveText([/^Alfa/, /^Beta/, /^Gama/, /^Delta/]);
   });
 
-  test('PRU-E2E-CATEG-105 [CA-18.4] el grupo "Pagos de tarjeta" se muestra sin acciones y no se ofrece como grupo de una categoría nueva', async ({
+  test('PRU-E2E-CATEG-105 [CA-18.4] el grupo "Pagos de tarjeta" se muestra sin acciones y no se ofrece como grupo de una categoría nueva; desde el botón de un grupo no se vuelve a pedir el grupo', async ({
     page,
   }) => {
     await preparar([{ op: 'OP-07', categoria: 'Suelta' }]);
@@ -203,6 +208,13 @@ test.describe('PRU-E2E-CATEG', () => {
       page.getByRole('link', { name: t.agregarCategoria('Pagos de tarjeta') }),
     ).toHaveCount(0);
     await page.getByRole('link', { name: t.agregarCategoria('Gastos') }).click();
+    await expect(nombre(page)).toBeVisible();
+    await expect(page.getByText(t.enGrupo('Gastos'), { exact: true })).toBeVisible();
+    await expect(page.getByRole('radio')).toHaveCount(0);
+    await tactilEnMain(page);
+
+    // Sin `?grupo=` en la dirección, el selector ofrece los grupos elegibles, sin "Pagos de tarjeta"
+    await abrir(page, `${RUTA}/categorias/nueva`);
     await expect(nombre(page)).toBeVisible();
     await expect(page.getByRole('radio', { name: 'Pagos de tarjeta' })).toHaveCount(0);
     await expect(page.getByRole('radio', { name: 'Gastos' })).toBeChecked();

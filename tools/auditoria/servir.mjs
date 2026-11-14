@@ -10,11 +10,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rutaCandado, tomarCandado } from '../pruebas/e2e/candado.ts';
 import { bajarPila, levantarPila } from '../pruebas/e2e/pila.ts';
+import { entornoServidor } from '../pruebas/e2e/local.ts';
 import { ARCHIVO_RELOJ, borrarRelojServidor } from '../pruebas/e2e/reloj.ts';
-import { SECRETO_RESPALDO_E2E } from '../pruebas/e2e/respaldo.ts';
-
-// El de apps/web/e2e/ayudas/tarea-diaria.ts (ese módulo importa Playwright; aquí solo hace falta el valor de prueba)
-const SECRETO_TAREA_E2E = 'secreto-local-de-la-e2e-solo-para-pruebas-0000';
 
 export const ARCHIVO_ENTORNO = join(tmpdir(), 'finn-auditoria-entorno.json');
 const web = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'apps', 'web');
@@ -42,14 +39,7 @@ for (const senal of ['SIGINT', 'SIGTERM']) process.on(senal, () => cerrar(130));
 
 try {
   console.log('auditoría: levantando la pila local');
-  const entorno = {
-    ...(await levantarPila()),
-    FINN_ENTORNO: 'pruebas',
-    FINN_RELOJ_ARCHIVO: ARCHIVO_RELOJ,
-    CRON_SECRET: SECRETO_TAREA_E2E,
-    RESPALDO_SECRET: SECRETO_RESPALDO_E2E,
-    NEXT_TELEMETRY_DISABLED: '1',
-  };
+  const entorno = entornoServidor(await levantarPila(), ARCHIVO_RELOJ);
   borrarRelojServidor();
   writeFileSync(ARCHIVO_ENTORNO, JSON.stringify(entorno));
   const env = { ...process.env, ...entorno };
