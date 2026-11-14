@@ -27,7 +27,7 @@ const esFecha = (f: string | undefined): f is FechaLocal => {
     return false;
   }
 };
-const columnaDe =(f: FechaLocal): number => ((FechaLocal.diasEntre(LUNES, f) % 7) + 7) % 7;
+const columnaDe = (f: FechaLocal): number => ((FechaLocal.diasEntre(LUNES, f) % 7) + 7) % 7;
 
 // Clases literales (L13).
 const FLECHA =
