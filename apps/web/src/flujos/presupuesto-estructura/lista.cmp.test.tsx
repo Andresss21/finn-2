@@ -9,10 +9,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '../../app/globals.css';
 import { editarEnEstructura } from '../../servidor/acciones/categorias';
+import { base } from '../../textos/base';
 import { estructura as t } from '../../textos/estructura';
 import { ListaEstructura } from './lista';
 
-const enrutador = vi.hoisted(() => ({ replace: vi.fn(), back: vi.fn(), push: vi.fn(), refresh: vi.fn() }));
+const enrutador = vi.hoisted(() => ({
+  replace: vi.fn(),
+  back: vi.fn(),
+  push: vi.fn(),
+  refresh: vi.fn(),
+}));
 vi.mock('next/navigation', () => ({
   usePathname: () => '/presupuesto/estructura',
   useRouter: () => enrutador,
@@ -110,14 +116,20 @@ const seccion = (g: string): HTMLElement => q(`section[aria-labelledby="g-${id(g
 const alternar = (g: string): HTMLButtonElement =>
   seccion(g).querySelector<HTMLButtonElement>('h2 button') ?? porNombre(g);
 const filasDe = (g: string): string[] =>
-  [...seccion(g).querySelectorAll('[data-fila-cat]')].map((f) => f.textContent.trim().split(/\s/)[0] ?? '');
+  [...seccion(g).querySelectorAll('[data-fila-cat]')].map(
+    (f) => f.firstElementChild?.textContent.trim().split(/\s/)[0] ?? '',
+  );
 const fila = (c: string): HTMLElement => q(`[data-fila-cat="${id(c)}"]`);
-const resultados = (): HTMLElement[] => [...document.querySelectorAll<HTMLElement>('[data-testid="resultado"]')];
+const resultados = (): HTMLElement[] => [
+  ...document.querySelectorAll<HTMLElement>('[data-testid="resultado"]'),
+];
 const anuncio = (): string => q('[data-anuncio="estructura"]').textContent;
-const barra = (): HTMLElement | null => document.querySelector('[role="group"][aria-label^="Mover"]');
+const barra = (): HTMLElement | null =>
+  document.querySelector('[role="group"][aria-label^="Mover"]');
 /** Un botón de la barra abierta, por su texto. */
 const enBarra = (texto: string): HTMLElement =>
-  [...(barra()?.querySelectorAll('button') ?? [])].find((b) => b.textContent === texto) ?? document.body;
+  [...(barra()?.querySelectorAll('button') ?? [])].find((b) => b.textContent === texto) ??
+  document.body;
 const op08 = (i = 0): unknown => vi.mocked(editarEnEstructura).mock.calls[i]?.[0];
 
 describe('PRU-CMP-CATEG-131 colapsar los grupos de la estructura', () => {
@@ -160,7 +172,9 @@ describe('PRU-CMP-CATEG-131 colapsar los grupos de la estructura', () => {
 describe('PRU-CMP-CATEG-132 la barra «Mover» de una categoría', () => {
   it('PRU-CMP-CATEG-132 [C-46] CA-E-12: Enter sobre el asa de Farmacia abre la barra con su estado y el foco en «Subir»; «Subir» la deja tercera con un OP-08, el resultado va debajo y el foco sigue en «Subir»; «Listo» devuelve el foco al asa. Las filas no tienen flechas', async () => {
     await montar();
-    expect(document.querySelectorAll(`[data-fila-cat] button[aria-label^="${t.subir} "]`)).toHaveLength(0);
+    expect(
+      document.querySelectorAll(`[data-fila-cat] button[aria-label^="${t.subir} "]`),
+    ).toHaveLength(0);
     const asa = porNombre(t.moverCategoria('Farmacia'));
     expect(asa.getAttribute('aria-expanded')).toBe('false');
     asa.focus();
@@ -174,9 +188,16 @@ describe('PRU-CMP-CATEG-132 la barra «Mover» de una categoría', () => {
 
     await userEvent.click(porNombre(t.subirA('Farmacia')));
     await vi.waitFor(() => {
-      expect(resultados()[0]?.textContent).toContain(t.movidaEnGrupo('Farmacia', 'la tercera', 'Casa'));
+      expect(resultados()[0]?.textContent).toContain(
+        t.movidaEnGrupo('Farmacia', 'la tercera', 'Casa'),
+      );
     });
-    expect(op08()).toMatchObject({ tipo: 'categoria', id: id('Farmacia'), orden: 3, esperado: { orden: 4 } });
+    expect(op08()).toMatchObject({
+      tipo: 'categoria',
+      id: id('Farmacia'),
+      orden: 3,
+      esperado: { orden: 4 },
+    });
     expect(filasDe('Casa')).toEqual(['Supermercado', 'Luz', 'Farmacia', 'Internet']);
     expect(fila('Farmacia').contains(resultados()[0] ?? null)).toBe(true);
     expect(barra()?.textContent).toContain(t.esDe('Farmacia', 'la tercera', 'Casa'));
@@ -197,9 +218,15 @@ describe('PRU-CMP-CATEG-132 la barra «Mover» de una categoría', () => {
     await userEvent.click(porNombre(t.moverCategoria('Restaurantes')));
     await userEvent.click(porNombre(t.subirA('Restaurantes')));
     await vi.waitFor(() => {
-      expect(resultados()[0]?.textContent).toContain(t.movidaAGrupo('Restaurantes', 'Casa', 'la última'));
+      expect(resultados()[0]?.textContent).toContain(
+        t.movidaAGrupo('Restaurantes', 'Casa', 'la última'),
+      );
     });
-    expect(op08()).toMatchObject({ grupoId: id('Casa'), orden: 5, esperado: { grupoId: id('Comida fuera'), orden: 1 } });
+    expect(op08()).toMatchObject({
+      grupoId: id('Casa'),
+      orden: 5,
+      esperado: { grupoId: id('Comida fuera'), orden: 1 },
+    });
     expect(alternar('Casa').getAttribute('aria-expanded')).toBe('true');
     expect(filasDe('Casa').at(-1)).toBe('Restaurantes');
     await vi.waitFor(() => {
@@ -224,7 +251,9 @@ describe('PRU-CMP-CATEG-132 la barra «Mover» de una categoría', () => {
       expect(filasDe('Ahorro')).toEqual(['Fondo', 'Viaje', 'Farmacia']);
     });
     expect(op08()).toMatchObject({ grupoId: id('Ahorro'), orden: 3 });
-    expect(resultados()[0]?.textContent).toContain(t.movidaAGrupo('Farmacia', 'Ahorro', 'la última'));
+    expect(resultados()[0]?.textContent).toContain(
+      t.movidaAGrupo('Farmacia', 'Ahorro', 'la última'),
+    );
   });
 });
 
@@ -247,11 +276,13 @@ describe('PRU-CMP-CATEG-133 el resultado en el lugar', () => {
     await userEvent.click(porNombre(t.moverCategoria('Gasolina')));
     await userEvent.click(porNombre(t.subirA('Gasolina')));
     await vi.waitFor(() => {
-      expect(resultados()[0]?.textContent).toContain(t.movidaAGrupo('Gasolina', 'Comida fuera', 'la segunda'));
+      expect(resultados()[0]?.textContent).toContain(
+        t.movidaAGrupo('Gasolina', 'Comida fuera', 'la segunda'),
+      );
     });
     expect(resultados()).toHaveLength(1);
     expect(fila('Gasolina').contains(resultados()[0] ?? null)).toBe(true);
-    const x = porNombre(t.cerrarAviso);
+    const x = porNombre(base.cerrarAviso);
     expect(x.getBoundingClientRect().width).toBeGreaterThanOrEqual(44);
     expect(x.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     await userEvent.click(x);
@@ -261,14 +292,20 @@ describe('PRU-CMP-CATEG-133 el resultado en el lugar', () => {
   it('PRU-CMP-CATEG-133 [C-46] CA-E-11: si OP-08 responde `nombre_repetido`, la fila vuelve a su lugar con el mensaje debajo en `role="alert"`', async () => {
     vi.mocked(editarEnEstructura).mockResolvedValueOnce({
       ok: false,
-      error: { categoria: 'NEGOCIO', codigo: 'nombre_repetido', mensaje: 'Ya existe Farmacia en Ahorro.' },
+      error: {
+        categoria: 'NEGOCIO',
+        codigo: 'nombre_repetido',
+        mensaje: 'Ya existe Farmacia en Ahorro.',
+      },
     } as never);
     await montar();
     await userEvent.click(porNombre(t.moverCategoria('Farmacia')));
     await userEvent.click(porNombre(t.otroGrupo));
     await userEvent.click(enBarra('Ahorro'));
     await vi.waitFor(() => {
-      expect(fila('Farmacia').querySelector('[role="alert"]')?.textContent).toContain('Ya existe Farmacia en Ahorro.');
+      expect(fila('Farmacia').querySelector('[role="alert"]')?.textContent).toContain(
+        'Ya existe Farmacia en Ahorro.',
+      );
     });
     expect(filasDe('Casa').at(-1)).toBe('Farmacia');
     expect(filasDe('Ahorro')).toEqual(['Fondo', 'Viaje']);
@@ -281,7 +318,9 @@ describe('PRU-CMP-CATEG-134 grupos y Pagos de tarjeta', () => {
     await montar();
     expect(seccion('Pagos de tarjeta').querySelector('button[aria-expanded]')).toBeNull();
     expect(seccion('Pagos de tarjeta').textContent).toContain(t.delSistema);
-    expect(document.querySelector(`button[aria-label="${t.moverGrupo('Pagos de tarjeta')}"]`)).toBeNull();
+    expect(
+      document.querySelector(`button[aria-label="${t.moverGrupo('Pagos de tarjeta')}"]`),
+    ).toBeNull();
 
     await userEvent.click(porNombre(t.moverGrupo('Transporte')));
     expect(barra()?.textContent).toContain(t.esGrupo('Transporte', 'el tercero'));
@@ -290,7 +329,12 @@ describe('PRU-CMP-CATEG-134 grupos y Pagos de tarjeta', () => {
     await vi.waitFor(() => {
       expect(resultados()[0]?.textContent).toContain(t.grupoMovido('Transporte', 'el segundo'));
     });
-    expect(op08()).toMatchObject({ tipo: 'grupo', id: id('Transporte'), orden: 2, esperado: { orden: 3 } });
+    expect(op08()).toMatchObject({
+      tipo: 'grupo',
+      id: id('Transporte'),
+      orden: 2,
+      esperado: { orden: 3 },
+    });
     expect(seccion('Transporte').contains(resultados()[0] ?? null)).toBe(true);
     const orden = [...document.querySelectorAll('section h2')].map((h) => h.textContent.trim());
     expect(orden.slice(0, 3)).toEqual(['Casa', 'Transporte', 'Comida fuera']);

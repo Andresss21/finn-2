@@ -54,7 +54,12 @@ const grupoDe = (a: Arbol, cid: string): GrupoVista | undefined =>
   a.find((g) => g.categorias.some((c) => c.id === cid));
 
 /** La posición desde 1 en la lista completa que deja `id` en el lugar `idx` de las visibles. */
-function ordenEn(todos: readonly { id: string }[], vis: readonly { id: string }[], id: string, idx: number) {
+function ordenEn(
+  todos: readonly { id: string }[],
+  vis: readonly { id: string }[],
+  id: string,
+  idx: number,
+) {
   const resto = todos.filter((x) => x.id !== id).map((x) => x.id);
   const otros = vis.filter((x) => x.id !== id).map((x) => x.id);
   const ancla = otros[idx];

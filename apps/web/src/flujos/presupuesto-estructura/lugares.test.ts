@@ -132,8 +132,18 @@ describe('PRU-DOM-CATEG-801 lugares y ordinales de la estructura', () => {
     expect(lugarDeGrupo(A7, 'transporte')).toEqual({ idx: 2, n: 4 });
     expect(vecinoDeGrupo(A7, 'transporte', -1)).toBe(1);
     const m = moverGrupo(A7, 'transporte', 1);
-    expect(m?.entrada).toEqual({ tipo: 'grupo', id: 'transporte', orden: 2, esperado: { orden: 4 } });
-    expect(m?.inversa).toEqual({ tipo: 'grupo', id: 'transporte', orden: 4, esperado: { orden: 2 } });
+    expect(m?.entrada).toEqual({
+      tipo: 'grupo',
+      id: 'transporte',
+      orden: 2,
+      esperado: { orden: 4 },
+    });
+    expect(m?.inversa).toEqual({
+      tipo: 'grupo',
+      id: 'transporte',
+      orden: 4,
+      esperado: { orden: 2 },
+    });
     expect(m?.despues.map((g) => g.id)).toEqual([
       'casa',
       'transporte',

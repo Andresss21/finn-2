@@ -4,7 +4,7 @@
 // La lista de la estructura: el nombre accesible de cada enlace y botón contiene su texto visible (WCAG 2.5.3).
 // [CH-270] Crear un grupo o una categoría cierra el panel y deja el resultado en la lista (C-42, principio 5): sin pantalla de
 // resultado ni «Volver a la estructura». El resultado (y el de Subir o Bajar) se cierra con «Cerrar» y lo reemplaza la acción
-// siguiente; nunca se va solo.
+// siguiente; nunca se va solo. [CH-272] Subir y Bajar viven en la barra «Mover» del asa (C-46) y la × es «Cerrar este aviso».
 import type { GrupoDeEstructura } from '@finn/dominio/selectores';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -177,7 +177,7 @@ describe('PRU-CMP-CATEG-126 nueva categoría sin un grupo válido en la direcci�
 });
 
 describe('PRU-CMP-CATEG-127 nombres accesibles de la lista de la estructura', () => {
-  it('PRU-CMP-CATEG-127 [FT-18] «Editar grupo», «Nueva categoría», las categorías y Subir/Bajar tienen un nombre accesible que contiene su texto visible, y el de «Editar grupo» nombra el grupo', async () => {
+  it('PRU-CMP-CATEG-127 [FT-18] «Editar grupo», «Nueva categoría», las categorías y el asa tienen un nombre accesible que contiene su texto visible, y el de «Editar grupo» nombra el grupo', async () => {
     const conCategorias: readonly GrupoDeEstructura[] = GRUPOS.map((g, i) =>
       i > 1
         ? g
@@ -230,14 +230,14 @@ const CON_VETERINARIO: readonly GrupoDeEstructura[] = [
   { ...grupo(GASTOS, 'Gastos'), categorias: [categoria(SUPER, 'Super')] },
   { ...grupo(HOGAR, 'Hogar'), categorias: [categoria(VETERINARIO, 'Veterinario')] },
 ];
-/** El resultado en el lugar: la región `status` con su texto. */
+/** El resultado en el lugar: su región `status` con el texto. */
 const resultados = (): HTMLElement[] => [
-  ...document.querySelectorAll<HTMLElement>('[role="status"]'),
+  ...document.querySelectorAll<HTMLElement>('[data-aviso][role="status"]'),
 ];
-/** «Cerrar» del resultado (el marco del flujo tiene el suyo). */
+/** «Cerrar este aviso» del resultado (el marco del flujo tiene su «Cerrar»). */
 const cerrar = (): HTMLButtonElement[] => [
   ...document.querySelectorAll<HTMLButtonElement>(
-    `[role="status"] button[aria-label="${base.cerrar}"]`,
+    `[data-aviso] button[aria-label="${base.cerrarAviso}"]`,
   ),
 ];
 const seccion = (grupoId: string): HTMLElement => {
@@ -326,19 +326,23 @@ describe('PRU-CMP-CATEG-129 resultado de crear, en el lugar', () => {
 });
 
 describe('PRU-CMP-CATEG-130 el resultado de Subir o Bajar se cierra y lo reemplaza la acción siguiente', () => {
-  it('PRU-CMP-CATEG-130 [FT-18, CA-18.3] «Bajar» Gastos reemplaza el resultado de crear por «Moviste Gastos.» con «Deshacer» y «Cerrar»; «Cerrar» lo quita sin deshacer', async () => {
+  it('PRU-CMP-CATEG-130 [FT-18, CA-18.3] «Bajar» Gastos en su barra «Mover» reemplaza el resultado de crear por «Moviste el grupo Gastos: ahora es el segundo.» con «Deshacer» y «Cerrar este aviso», que lo quita sin deshacer', async () => {
     await montar(
       <ListaEstructura
         grupos={CON_VETERINARIO}
         resultado={{ tipo: 'categoria', id: VETERINARIO }}
       />,
     );
+    const asa = document.querySelector<HTMLButtonElement>(
+      `button[aria-label="${t.moverGrupo('Gastos')}"]`,
+    );
+    await userEvent.click(asa ?? document.body);
     const bajar = document.querySelector<HTMLButtonElement>(
       `button[aria-label="${t.bajarA('Gastos')}"]`,
     );
     await userEvent.click(bajar ?? document.body);
     await vi.waitFor(() => {
-      expect(resultados()[0]?.textContent).toContain(t.movido('Gastos'));
+      expect(resultados()[0]?.textContent).toContain(t.grupoMovido('Gastos', 'el segundo'));
     });
     expect(resultados()).toHaveLength(1);
     expect(document.body.textContent).not.toContain(t.categoriaCreada('Veterinario', 'Hogar'));
