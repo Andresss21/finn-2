@@ -326,6 +326,49 @@ describe('PRU-CMP-VAL-760 campo de fecha sin valor', () => {
     expect(texto(raiz).value).toBe('');
     expect(raiz.textContent).not.toContain('undefined');
   });
+
+  it.each([
+    ['vacía, con el hoy por la prop', '', true],
+    ['vacía, con el hoy de <html data-hoy>', '', false],
+    ['sin valor (undefined), con el hoy de <html data-hoy>', undefined, false],
+  ])(
+    'PRU-CMP-VAL-892 [C-38, FT-21] una fecha opcional %s abre el calendario en el mes de hoy, sin día elegido ni límites, y tocar un día la entrega sin romper la pantalla',
+    async (_caso, valor, conProp) => {
+      document.documentElement.dataset['hoy'] = HOY;
+      try {
+        const elegidas: string[] = [];
+        function Opcional() {
+          const [v, setV] = useState(valor as FechaLocal);
+          return (
+            <EntradaFecha
+              nombre="fin"
+              etiqueta="Fecha de fin"
+              valor={v}
+              alCambiar={(f) => {
+                elegidas.push(f);
+                setV(f);
+              }}
+              {...(conProp ? { hoy: HOY } : {})}
+            />
+          );
+        }
+        const raiz = montar(<Opcional />);
+        const dialogo = await abrir(raiz);
+        expect(dialogo.querySelector('[aria-pressed=true]')).toBeNull();
+        expect(celda(dialogo, '15').getAttribute('aria-current')).toBe('date');
+        // Una fecha futura vale: la fecha de fin no tiene el tope del período (C-38 es de Registrar).
+        expect(celda(dialogo, '31').disabled).toBe(false);
+        await act(async () => {
+          await userEvent.click(celda(dialogo, '31'));
+        });
+        expect(elegidas).toEqual(['2026-10-31']);
+        expect(texto(raiz).value).toBe('31/10/2026');
+        expect(raiz.querySelector('[role=dialog]')).toBeNull();
+      } finally {
+        delete document.documentElement.dataset['hoy'];
+      }
+    },
+  );
 });
 
 describe('PRU-CMP-TX-800', () => {
