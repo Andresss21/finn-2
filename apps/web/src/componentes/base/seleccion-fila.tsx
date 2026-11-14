@@ -58,7 +58,14 @@ export function SeleccionFila(props: PropsSeleccionFila) {
 }
 
 /** CAMPOS-V3 §6, pocas opciones: todas a la vista como segmentado, en su fila. */
-function SegmentadoFila({ etiqueta, opciones, valor, alCambiar, error }: PropsSeleccionFila) {
+function SegmentadoFila({
+  etiqueta,
+  opciones,
+  valor,
+  alCambiar,
+  descripcion,
+  error,
+}: PropsSeleccionFila) {
   return (
     <div className="campo-fila" {...(error === undefined ? {} : { 'data-error': '' })}>
       <span aria-hidden="true" className="campo-rotulo">
@@ -71,6 +78,7 @@ function SegmentadoFila({ etiqueta, opciones, valor, alCambiar, error }: PropsSe
         alCambiar={alCambiar}
         llena
       />
+      {descripcion === undefined ? null : <p className="campo-ayuda">{descripcion}</p>}
       {error === undefined ? null : (
         <div className="campo-error">
           <MensajeError>{error}</MensajeError>

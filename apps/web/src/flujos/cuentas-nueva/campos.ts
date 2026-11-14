@@ -127,6 +127,12 @@ export const CONTRATO = z
   });
 export type Campos = z.infer<typeof CONTRATO>;
 
+/** [C-45] Cuántos campos faltan o están mal para crear la cuenta: el motivo debajo de «Crear cuenta» (CAMPOS-V3 §5 y §11). */
+export function camposPorCorregir(c: Campos): number {
+  const r = CONTRATO.safeParse(c);
+  return r.success ? 0 : new Set(r.error.issues.map((i) => i.path.join('.'))).size;
+}
+
 const monto = (texto: string): string => {
   const r = normalizarMontoEscrito(texto);
   return r.estado === 'valido' ? r.texto : texto;
