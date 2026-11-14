@@ -56,8 +56,23 @@ async function abrir(page: Page, ruta: string): Promise<void> {
 const cuota = `/cuentas/${PRESTAMO}/cuota?modalidad=cuota`;
 const abono = `/cuentas/${PRESTAMO}/cuota?modalidad=abono`;
 const campo = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exact: true });
-const opcion = (page: Page, grupo: string, nombre: string) =>
-  page.getByRole('radiogroup', { name: grupo }).getByRole('radio', { name: nombre });
+/** [C-45] Una selección v3 (CAMPOS-V3 §6): segmentado con 3 opciones o menos; con más, la lista propia de Finn. */
+async function elegirV3(page: Page, etiqueta: string, nombre: string): Promise<void> {
+  const grupo = page.getByRole('radiogroup', { name: etiqueta, exact: true });
+  if ((await grupo.count()) > 0) {
+    await grupo.getByRole('radio', { name: nombre, exact: true }).click();
+    return;
+  }
+  await page
+    .locator('.campo-fila')
+    .filter({ has: page.getByText(etiqueta, { exact: true }) })
+    .locator('[aria-haspopup=listbox]')
+    .click();
+  await page.getByRole('option').filter({ hasText: nombre }).first().click();
+}
+const opcion = (page: Page, grupo: string, nombre: string) => ({
+  click: () => elegirV3(page, grupo, nombre),
+});
 
 async function llenarCuota(page: Page, desglose: [string, string, string]): Promise<void> {
   await opcion(page, t.origen, 'Ahorro').click();

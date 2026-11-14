@@ -32,7 +32,7 @@ export function FilasAmortizacion({
               onClick={() => {
                 setCompleta(true);
               }}
-              className="inline-flex min-h-11 items-center px-3 font-semibold text-enlace underline"
+              className="inline-flex min-h-11 items-center px-3 font-semibold text-enlace"
             >
               {cuentaDetalle.prestamo.verTablaCompleta(filas.length)}
             </button>

@@ -37,7 +37,8 @@ export function EntradaPorcentaje({
       type="text"
       inputMode="decimal"
       autoComplete="off"
-      value={enmascararPorcentaje(valor ?? '')}
+      // Lo que llega guardado se ve entero (una tasa de cuatro decimales, 04 §3.9 y DB-13); la máscara corre al escribir.
+      value={valor ?? ''}
       disabled={deshabilitado}
       className="tabular-nums"
       onChange={(e) => {

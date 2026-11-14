@@ -84,7 +84,7 @@ describe('PRU-CMP-CTA-792 archivar una tarjeta con asignaciones futuras', () => 
     };
     const nodo = await montar(<FormularioCuentasArchivar accion={accion} {...props} />);
     expect(nodo.textContent).toContain(DEVUELTAS);
-    await userEvent.click(nodo.querySelector('[role="radio"][value="dejar"]') as HTMLElement);
+    await userEvent.click(nodo.querySelector('input[type="radio"][value="dejar"]') as HTMLElement);
     expect(accion).toHaveBeenCalledTimes(2);
     expect(nodo.textContent).toContain(DEVUELTAS);
 
