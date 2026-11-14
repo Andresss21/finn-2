@@ -15,6 +15,7 @@ import {
   sinSoloServidor,
   SOLO_SERVIDOR,
   textoAcceso,
+  ultimoDia,
 } from './local.ts';
 
 let dir: string;
@@ -49,6 +50,12 @@ describe('probar: la app local con la pila de la E2E', () => {
     const siembra = sinSoloServidor({ ...servidor, PATH: 'x' });
     for (const v of SOLO_SERVIDOR) expect(siembra).not.toHaveProperty(v);
     expect(siembra).toMatchObject({ ...pila, PATH: 'x' });
+  });
+
+  it('probar: el reloj del servidor va al día de la última operación de la semilla, no al primero', () => {
+    const ops = [{ hoy: '2026-03-21' }, {}, { hoy: '2026-10-15' }, { hoy: '2026-09-28' }];
+    expect(ultimoDia(ops, '2026-03-21')).toBe('2026-10-15');
+    expect(ultimoDia([], '2026-03-21')).toBe('2026-03-21');
   });
 
   it('probar: el estado queda en el directorio temporal, se lee igual y se borra', () => {

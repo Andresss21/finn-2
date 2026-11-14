@@ -14,4 +14,4 @@ Necesita Docker Desktop encendido.
 3. Para terminar: Ctrl+C, o `pnpm probar --bajar` desde otra terminal. Eso baja la pila y suelta el candado.
 
 Mientras está arriba tiene el candado de la E2E local (DT-22): `pnpm test:e2e` de los agentes espera a que la bajes.
-El reloj del servidor arranca en el día de la semilla (21 de marzo de 2026) y avanza desde ahí.
+El reloj del servidor arranca en el último día de la semilla (15 de octubre de 2026) y avanza desde ahí.
