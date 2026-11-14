@@ -157,6 +157,7 @@ export function Categorias({
               key={`${String(i)}-${String(c.filas.length)}`}
               etiqueta={t.categoria}
               etiquetaOculta={varias}
+              soloLista={varias}
               abiertaAlMontar={varias && abrir === i}
               marcador={t.elegiUnaCategoria}
               opciones={opciones(i)}
