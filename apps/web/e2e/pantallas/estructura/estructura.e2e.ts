@@ -96,6 +96,40 @@ test.describe('PRU-E2E-CATEG', () => {
     await expect(page.locator('[data-etiqueta]')).toHaveText(t.creada);
   });
 
+  test('PRU-E2E-CATEG-733 [FT-18, C-50] después de crear una categoría en el panel, «Nueva categoría» y «Nuevo grupo» vuelven a abrir el panel sobre la lista, sin cargar la página otra vez', async ({
+    page,
+  }) => {
+    await preparar([{ op: 'OP-07', categoria: 'Supermercado' }]);
+    await abrir(page);
+    // Una marca en la ventana: una carga completa de la página la borra (el bug 16 abría el segundo panel como página).
+    await page.evaluate(() => {
+      (window as unknown as { finnMarca?: string }).finnMarca = 'misma-carga';
+    });
+    const misma = () =>
+      page.evaluate(() => (window as unknown as { finnMarca?: string }).finnMarca ?? null);
+    const panel = page.getByRole('dialog');
+    for (const nueva of ['Luz', 'Agua', 'Internet']) {
+      await page.getByRole('link', { name: t.agregarCategoria('Gastos') }).click();
+      await expect(panel).toBeVisible();
+      await expect(panel.getByLabel(t.nombre, { exact: true })).toBeVisible();
+      // La lista sigue debajo del panel: no es la página completa de «Nueva categoría».
+      await expect(page.locator('section[aria-labelledby^="g-"]').first()).toBeVisible();
+      await panel.getByLabel(t.nombre, { exact: true }).fill(nueva);
+      await panel.getByRole('button', { name: t.crear, exact: true }).click();
+      await expect(anunciado(page)).toHaveText(t.categoriaCreada(nueva, 'Gastos'));
+      await expect(panel).toHaveCount(0);
+      await expect(page).toHaveURL(/\/presupuesto\/estructura\?resultado=categoria/);
+      expect(await misma()).toBe('misma-carga');
+    }
+    await page.getByRole('link', { name: t.nuevoGrupo, exact: true }).click();
+    await expect(panel).toBeVisible();
+    expect(await misma()).toBe('misma-carga');
+    // «Atrás» del navegador cierra el panel y deja la lista, no un panel anterior.
+    await page.goBack();
+    await expect(panel).toHaveCount(0);
+    await expect(page).toHaveURL(/\/presupuesto\/estructura\?resultado=categoria/);
+  });
+
   test('PRU-E2E-CATEG-102 [CA-18.2] una categoría sin historial se elimina y desaparece; con una asignación, "Eliminar" queda deshabilitado con el motivo y los enlaces a archivar y fusionar', async ({
     page,
   }) => {
