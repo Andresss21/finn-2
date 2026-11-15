@@ -46,8 +46,15 @@ export async function LectorMovimiento({
       detalle: g.deudaDeCuenta(formatearMonto(x.deuda)),
     })),
   ];
-  const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((g) =>
-    g.categorias.map((x) => ({ id: x.categoria.id, nombre: x.categoria.nombre })),
+  // [CH-292] Con su grupo y su Disponible del catálogo, tal cual (C-49 §6): el negativo lo dice el signo, sin calcular (PF-3)
+  const categorias = (dto.catalogos.categorias?.grupos ?? []).flatMap((gr) =>
+    gr.categorias.map((x) => ({
+      id: x.categoria.id,
+      nombre: x.categoria.nombre,
+      grupo: gr.grupo.nombre,
+      disponible: formatearMonto(x.disponible),
+      negativo: x.disponible < 0,
+    })),
   );
   const deudores = (dto.catalogos.deudores ?? []).map((x) => ({
     id: x.deudor.id,
@@ -97,6 +104,9 @@ export async function LectorMovimiento({
               },
             }),
         ...(m.origenPropuesto === undefined ? {} : { origenId: m.origenPropuesto.id }),
+        ...(m.categoriaSugerida !== null && categorias.some((x) => x.id === m.categoriaSugerida?.id)
+          ? { sugeridaId: m.categoriaSugerida.id }
+          : {}),
       }}
       cuentas={cuentas}
       categorias={categorias}

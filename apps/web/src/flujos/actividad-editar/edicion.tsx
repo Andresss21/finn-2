@@ -13,9 +13,10 @@ import { DatoFijo } from '../../componentes/formularios/dato-fijo';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
-import { Categorias, type CategoriaDelCampo } from '../registrar-gasto/categorias';
-import { NUEVA, type EstadoDelGasto } from '../registrar-gasto/estado';
-import { QuienPaga, type Bloqueo } from '../registrar-gasto/quien-paga';
+import type { CategoriaDelCampo } from '../registrar-gasto/categorias';
+import type { EstadoDelGasto } from '../registrar-gasto/estado';
+import type { Bloqueo } from '../registrar-gasto/quien-paga';
+import { SeccionesDelGasto } from '../registrar-gasto/secciones';
 import type { CamposDeEdicion as Campos } from './campos';
 
 interface Referencia {
@@ -80,8 +81,6 @@ export default function Edicion({
   const error = (n: 'cuentaId' | 'fecha' | 'total'): string | undefined =>
     formState.errors[n]?.message;
   const fija = cuentas.find((x) => x.id === c.cuentaId);
-  const nombreDeCategoria = (id: string) => categorias.find((x) => x.id === id)?.nombre ?? '';
-  const unaSola = c.personas.length === 1 ? c.personas[0]?.clave : undefined;
   return (
     <>
       <EntradaMonto
@@ -129,38 +128,17 @@ export default function Edicion({
         />
       </GrupoCampos>
       {e === undefined ? null : (
-        <>
-          <QuienPaga
-            c={c}
-            e={e}
-            conocidas={deudores.map((d) => ({ clave: d.id, nombre: d.nombre }))}
-            destinoDeVos={
-              c.varias && c.filas.length > 1
-                ? g.nCategorias(c.filas.length)
-                : nombreDeCategoria(c.filas[0]?.categoriaId ?? '') || g.elegiUnaCategoria
-            }
-            poner={ponerVarios}
-            alSalir={alSalir('personas')}
-            bloqueo={bloqueo}
-          />
-          <Categorias
-            c={c}
-            e={e}
-            categorias={categorias}
-            errorServidor={deLasPartes}
-            personaUnica={
-              unaSola === undefined
-                ? undefined
-                : unaSola.startsWith(NUEVA)
-                  ? unaSola.slice(NUEVA.length)
-                  : deudores.find((d) => d.id === unaSola)?.nombre
-            }
-            poner={ponerVarios}
-            alSalir={alSalir('categorias')}
-            anunciar={anunciar}
-            bloqueo={bloqueo}
-          />
-        </>
+        <SeccionesDelGasto
+          c={c}
+          e={e}
+          categorias={categorias}
+          deudores={deudores}
+          deLasPartes={deLasPartes}
+          poner={ponerVarios}
+          alSalir={alSalir}
+          anunciar={anunciar}
+          bloqueo={bloqueo}
+        />
       )}
       <GrupoCampos>
         <EntradaTexto etiqueta={g.nota} autoComplete="off" {...formulario.register('nota')} />
