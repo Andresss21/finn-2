@@ -4,6 +4,8 @@
 // después aprueba (OP-37); con la fecha en un período cerrado el servidor pide confirmar con AV-01. Es un flujo largo: siempre
 // página completa (05 §1.4). No calcula montos (PF-3): la suma de las partes la valida el servidor. CH-136 lo porta del export (S4): encabezado,
 // campos con selección nativa y líneas compactas, y el pie fijo con «Aprobar $X» y las salidas del movimiento.
+// [CH-292] Un gasto se reparte con «¿Quién paga?» y «¿En qué categorías?» de Registrar gasto (C-49): sus líneas salen de ellas al
+// aprobar (`lineasDe`), los montos que se proponen los da `formularios/reparto` (CH-276) y «Aprobar» sigue el orden de C-49 §3.
 import {
   lazy,
   Suspense,
@@ -13,7 +15,9 @@ import {
   useRef,
   useState,
   type ComponentProps,
+  type SyntheticEvent,
 } from 'react';
+import type * as z from 'zod';
 import type { FechaLocal } from '@finn/dominio/valores';
 import { useFieldArray } from 'react-hook-form';
 import type { VistaDeImpacto } from '../../componentes/formularios/lineas-impacto';
@@ -35,6 +39,9 @@ import { buscarComprasDevolucion } from '../../servidor/lecturas/interactivas';
 import { bandeja as t } from '../../textos/bandeja';
 import { formularios } from '../../textos/formularios';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
+import { conSecciones, type CamposDeEdicion } from '../actividad-editar/campos';
+import type { CategoriaDelCampo } from '../registrar-gasto/categorias';
+import { estadoDelGasto, lineasDe, type Marcas } from '../registrar-gasto/estado';
 import type { ValorAprobado } from './aprobado';
 import type { DatosCoincidencia } from './coincidencia';
 import { TextoDelSms } from './texto-sms';
@@ -70,6 +77,8 @@ export interface PropsFormularioMovimiento {
     readonly coincidencia?: DatosCoincidencia;
     /** Lo que dice el encabezado (S4): el estado, el comercio, el monto y la categoría sugerida con su origen. */
     readonly resumen: ResumenDelMovimiento;
+    /** [CH-292] La categoría sugerida (CP-3): llena la categoría de «Una» si está vacía. */
+    readonly sugeridaId?: string;
     readonly nota: string | null;
     /** Solo en un posible duplicado: el gasto con el que coincide. */
     readonly duplicado?: DuplicadoDe;
@@ -85,7 +94,7 @@ export interface PropsFormularioMovimiento {
   /** [CH-240 E6-5] `conflicto_desactualizado` al soltar: la categoría que vio la lista (`''`: ninguna). No aprueba hasta «Usar el valor actual». */
   readonly categoriaVista?: string;
   readonly cuentas: readonly CuentaDelMovimiento[];
-  readonly categorias: readonly Referencia[];
+  readonly categorias: readonly CategoriaDelCampo[];
   readonly deudores: readonly Referencia[];
   /** CH-226 (A12): el `hoy` del servidor, del que salen «Hoy» y «Ayer». */
   readonly hoy: FechaLocal;
@@ -132,6 +141,27 @@ const categoriaActual = (lineas: unknown): string | null =>
   Array.isArray(lineas)
     ? ((lineas[0] as { categoriaId?: string | null } | undefined)?.categoriaId ?? null)
     : null;
+
+const SIN_MARCAS: Marcas = { personas: false, categorias: false, enviado: false };
+const TODAS: Marcas = { personas: true, categorias: true, enviado: true };
+const CONTRATO = contrato as unknown as z.ZodType<CamposDeEdicion, CamposDeEdicion>;
+
+/**
+ * [CH-292] Los campos con las dos secciones de un gasto: las partes del movimiento como al editar (C-49 §5), pero sin personas
+ * el modo es «Partes iguales», como en Registrar gasto, y la sugerencia (CP-3) llena la categoría de «Una» si está vacía.
+ */
+function conSeccionesDeRevision(c: Campos, sugeridaId: string | undefined): CamposDeEdicion {
+  const s = conSecciones(c);
+  const [primera, ...resto] = s.filas;
+  return {
+    ...s,
+    modoPersonas: s.personas.length > 0 ? 'montos' : 'iguales',
+    filas:
+      !s.varias && primera?.categoriaId === '' && sugeridaId !== undefined
+        ? [{ ...primera, categoriaId: sugeridaId }, ...resto]
+        : s.filas,
+  };
+}
 
 /** El marco de la página, el mismo en todas las pantallas del flujo: título y ruta padre. */
 type Marco = Omit<ComponentProps<typeof PaginaFlujoDeRuta>, 'children' | 'acciones'>;
@@ -197,10 +227,14 @@ function Flujo({
     [movimiento.esperado, movimiento.origenId],
   );
   // Con una categoría soltada, el formulario la muestra en la línea; `base` sigue siendo lo que hay en el servidor
+  const { sugeridaId } = movimiento;
   const valores = useMemo(
     () =>
-      categoriaSoltada === undefined ? inicial : conCategoriaSoltada(inicial, categoriaSoltada),
-    [inicial, categoriaSoltada],
+      conSeccionesDeRevision(
+        categoriaSoltada === undefined ? inicial : conCategoriaSoltada(inicial, categoriaSoltada),
+        sugeridaId,
+      ),
+    [inicial, categoriaSoltada, sugeridaId],
   );
   const base = useRef(inicial); // lo último guardado en el servidor, para saber qué cambió
   const visto = useRef(movimiento.esperado); // lo que vio la persona (FE-09), para OP-36
@@ -215,14 +249,20 @@ function Flujo({
   const alDescartar = useCallback(() => {
     setDescartado(true);
   }, []);
-  const formulario = useFormularioFinn<Campos>({
-    contrato,
+  const formulario = useFormularioFinn<CamposDeEdicion>({
+    contrato: CONTRATO,
     valoresIniciales: valores,
     operacion: editar,
   });
   const { control } = formulario;
   const partes = useFieldArray({ control, name: 'lineas' });
   const c = formulario.watch();
+  const [marcas, setMarcas] = useState<Marcas>(SIN_MARCAS);
+  const [anuncio, setAnuncio] = useState('');
+  const forma = useRef<HTMLFormElement>(null);
+  const e = c.tipo === 'gasto' ? estadoDelGasto(c, marcas) : undefined;
+  // Las líneas que viajarían ahora: en un gasto, las de las dos secciones; en el resto, las escritas
+  const vivas: Campos = e === undefined ? c : { ...c, lineas: lineasDe(c, e) };
   const { enviar: aprobarAhora } = aprobarSolo;
   const { enviar: confirmarAhora } = coincide;
 
@@ -274,10 +314,10 @@ function Flujo({
     const antes = estadoPrevio.current;
     estadoPrevio.current = movimiento.estado;
     if (antes !== 'error' || movimiento.estado === 'error') return;
-    formulario.reset(inicial);
+    formulario.reset(conSeccionesDeRevision(inicial, sugeridaId));
     base.current = inicial;
     visto.current = movimiento.esperado;
-  }, [movimiento.estado, movimiento.esperado, inicial, formulario]);
+  }, [movimiento.estado, movimiento.esperado, inicial, sugeridaId, formulario]);
 
   // «Aprobar» y «Confirmar» (coincidencia) guardan primero lo que cambió y después aprueban (OP-37 u OP-40)
   const alEnviar = (confirmando: boolean) =>
@@ -356,7 +396,10 @@ function Flujo({
   const totalValido = normalizarMontoEscrito(c.total).estado === 'valido';
   // [CH-240 E3-12, E3-13] Con datos faltantes o a mano, «Aprobar» queda deshabilitado con un solo motivo que los junta
   const motivoFaltan =
-    aMano || movimiento.resumen.vista === 'faltaOtro' ? motivoFaltantes(c) : undefined;
+    aMano || movimiento.resumen.vista === 'faltaOtro' ? motivoFaltantes(vivas) : undefined;
+  // [CH-292] En un gasto, después, el primer motivo de C-49 §3 (como «Guardar» en Registrar gasto)
+  const sinListo = motivoFaltan ?? e?.motivo;
+  const bloqueado = sinListo !== undefined || (e !== undefined && !e.listo);
 
   const salidas = (
     <Suspense fallback={null}>
@@ -407,7 +450,7 @@ function Flujo({
       </PaginaFlujoDeRuta>
     );
 
-  const motivoAprobar = aprobar.motivoSinEnvio ?? motivoFaltan;
+  const motivoAprobar = aprobar.motivoSinEnvio ?? sinListo;
   // «Aprobar $X» (o «Confirmar», que aprueba la coincidencia con OP-40) y, debajo, las salidas tonales
   const pie = (
     <div className="flex w-full flex-col gap-2 lg:ml-auto lg:w-[calc(50%-1rem)]">
@@ -418,7 +461,7 @@ function Flujo({
         textoEnviando={conCoincidencia ? t.revisar.confirmando : t.revisar.aprobando}
         deshabilitado={!aprobar.enLinea}
         // [C-45] CAMPOS-V3 §11: con faltantes se ve apagado y sigue tocable; al tocarlo, el contrato marca lo que falta
-        apagado={motivoFaltan !== undefined}
+        apagado={sinListo !== undefined}
         className="w-full"
         {...(motivoAprobar === undefined ? {} : { motivoDeshabilitado: motivoAprobar })}
       >
@@ -435,14 +478,26 @@ function Flujo({
   return (
     <PaginaFlujoDeRuta {...marco} ancha acciones={pie}>
       <form
+        ref={forma}
         id={ID_FORMULARIO}
-        onSubmit={(e) => {
+        onSubmit={(ev: SyntheticEvent<HTMLFormElement>) => {
           // [C-45] Con faltantes no se envía: se marcan y el foco va al primero (CA-K3-13)
-          if (motivoFaltan === undefined) void alEnviar(conCoincidencia)(e);
-          else {
-            e.preventDefault();
-            void formulario.trigger(undefined, { shouldFocus: true });
+          if (!bloqueado) {
+            if (e !== undefined) formulario.setValue('lineas', vivas.lineas);
+            void alEnviar(conCoincidencia)(ev);
+            return;
           }
+          ev.preventDefault();
+          if (e !== undefined) setMarcas(TODAS);
+          if (motivoFaltan !== undefined) void formulario.trigger(undefined, { shouldFocus: true });
+          else
+            requestAnimationFrame(() => {
+              forma.current
+                ?.querySelector<HTMLElement>(
+                  '[aria-invalid="true"], [data-error] [aria-haspopup="listbox"], [data-estado="error"]',
+                )
+                ?.focus();
+            });
         }}
         noValidate
         className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8"
@@ -492,6 +547,9 @@ function Flujo({
           )}
         </div>
         <div data-columna="campos" className="flex flex-col gap-5">
+          <p role="status" className="sr-only">
+            {anuncio}
+          </p>
           {/* [CH-240 E3-13] Aprobando, los campos quedan de solo lectura */}
           <fieldset disabled={enviando} className="contents">
             <Suspense fallback={null}>
@@ -502,6 +560,11 @@ function Flujo({
                 categorias={categorias}
                 deudores={deudores}
                 deLasPartes={deLasPartes}
+                e={e}
+                alSalir={(k) => () => {
+                  if (!marcas[k]) setMarcas({ ...marcas, [k]: true });
+                }}
+                anunciar={setAnuncio}
                 ayuda={ayuda}
                 hoy={hoy}
                 candidatas={candidatas}
@@ -509,7 +572,7 @@ function Flujo({
               />
             </Suspense>
           </fieldset>
-          {ofreceRecordar(c) ? (
+          {ofreceRecordar(vivas) ? (
             <label className="flex min-h-11 items-center gap-3 rounded-contenedor bg-superficie px-3.5">
               <input
                 type="checkbox"

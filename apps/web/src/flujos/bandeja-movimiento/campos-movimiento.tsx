@@ -3,8 +3,9 @@
 // selector segmentado, las partes en líneas compactas y la nota. Se cargan aparte del resto del flujo para que la ruta no pase su presupuesto de bytes (05 §13.1). `Edicion` sigue siendo de
 // «Editar transacción» (FT-25). CH-226 (A12, D8): la fecha con «Hoy» y «Ayer», el origen de un pago y «Elegí la compra».
 // [C-45] Campos v3: Cuenta, Fecha, Monto y Comercio en un grupo de filas (el monto en fila: el billete es de Registrar y de
-// Editar, CAMPOS-V3 §4), el tipo como segmentado v3 y la nota en su grupo. C-45 y C-49 no dicen nada de Revisar: las partes
-// siguen en líneas compactas (no «¿Quién paga?» ni «¿En qué categorías?»), dentro de una caja de grupo.
+// Editar, CAMPOS-V3 §4), el tipo como segmentado v3 y la nota en su grupo. [CH-292] Un gasto se reparte con «¿Quién paga?» y
+// «¿En qué categorías?» de Registrar gasto (C-49) sobre el Monto del movimiento; una devolución sin compra sigue con las líneas
+// compactas dentro de una caja de grupo.
 import type { FechaLocal } from '@finn/dominio/valores';
 import { lazy, Suspense } from 'react';
 import type { UseFieldArrayReturn, UseFormReturn } from 'react-hook-form';
@@ -16,9 +17,13 @@ import { EntradaFechaConAtajos } from '../../componentes/formularios/entrada-fec
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
 import { bandeja as t } from '../../textos/bandeja';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
+import type { CamposDeEdicion as Campos } from '../actividad-editar/campos';
 import { parteVacia } from '../registrar-gasto/campos';
+import type { CategoriaDelCampo } from '../registrar-gasto/categorias';
+import type { EstadoDelGasto } from '../registrar-gasto/estado';
 import LineasDeGasto from '../registrar-gasto/lineas';
-import { conCompra, type Campos, type CompraCandidata } from './campos';
+import { SeccionesDelGasto } from '../registrar-gasto/secciones';
+import { conCompra, type CompraCandidata } from './campos';
 import type { BuscarCompras } from './eleccion-compra';
 
 /**
@@ -43,10 +48,14 @@ export interface PropsCamposMovimiento {
   readonly formulario: UseFormReturn<Campos>;
   readonly partes: UseFieldArrayReturn<Campos, 'lineas'>;
   readonly cuentas: readonly CuentaDelMovimiento[];
-  readonly categorias: readonly Referencia[];
+  readonly categorias: readonly CategoriaDelCampo[];
   readonly deudores: readonly Referencia[];
   /** El rechazo del servidor que va junto al campo de las partes, si lo hay. */
   readonly deLasPartes: string | undefined;
+  /** [CH-292] El estado de las dos secciones de un gasto (`estadoDelGasto`); sin él, no es un gasto. */
+  readonly e: EstadoDelGasto | undefined;
+  readonly alSalir: (seccion: 'personas' | 'categorias') => () => void;
+  readonly anunciar: (texto: string) => void;
   readonly ayuda: string | undefined;
   /** A12: el `hoy` del servidor, del que salen «Hoy» y «Ayer» (fechas de negocio, no del dispositivo). */
   readonly hoy: FechaLocal;
@@ -81,6 +90,9 @@ export default function CamposMovimiento({
   categorias,
   deudores,
   deLasPartes,
+  e,
+  alSalir,
+  anunciar,
   ayuda,
   hoy,
   candidatas,
@@ -90,6 +102,10 @@ export default function CamposMovimiento({
   const c = formulario.watch();
   const poner = (nombre: Parameters<typeof setValue>[0]) => (valor: unknown) => {
     setValue(nombre, valor as never, { shouldDirty: true, shouldValidate: formState.isSubmitted });
+  };
+  const ponerVarios = (parcial: Partial<Campos>) => {
+    for (const [k, v] of Object.entries(parcial))
+      setValue(k as keyof Campos, v as never, { shouldDirty: true });
   };
   const error = (n: 'cuentaId' | 'fecha' | 'total' | 'origenId'): string | undefined =>
     formState.errors[n]?.message;
@@ -127,7 +143,7 @@ export default function CamposMovimiento({
             etiqueta={t.revisar.monto}
             valor={c.total}
             alCambiar={poner('total')}
-            error={error('total')}
+            error={e?.errorTotal ?? error('total')}
             requerido
           />
           <EntradaTexto
@@ -209,7 +225,19 @@ export default function CamposMovimiento({
           {t.revisar.notaIngreso}
         </p>
       ) : null}
-      {c.tipo === 'gasto' || (c.tipo === 'devolucion' && !sobreCompra) ? (
+      {c.tipo === 'gasto' && e !== undefined ? (
+        <SeccionesDelGasto
+          c={c}
+          e={e}
+          categorias={categorias}
+          deudores={deudores}
+          deLasPartes={deLasPartes}
+          poner={ponerVarios}
+          alSalir={alSalir}
+          anunciar={anunciar}
+        />
+      ) : null}
+      {c.tipo === 'devolucion' && !sobreCompra ? (
         <div className="grupo-campos p-4">
           <LineasDeGasto
             lineas={c.lineas}
