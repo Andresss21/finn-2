@@ -11,7 +11,9 @@ import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { bandeja as t } from '../../textos/bandeja';
 import { cuentas as c } from '../../textos/cuentas';
 import { registrarGasto as g } from '../../textos/registrar-gasto';
+import { conSecciones, type CamposDeEdicion } from '../actividad-editar/campos';
 import { parteVacia } from '../registrar-gasto/campos';
+import { estadoDelGasto } from '../registrar-gasto/estado';
 import { motivoFaltantes, type Campos } from './campos';
 import CamposMovimiento from './campos-movimiento';
 import type { BuscarCompras } from './eleccion-compra';
@@ -76,9 +78,12 @@ const buscarCompras: BuscarCompras = (e) =>
     },
   });
 
+const SIN_MARCAS = { personas: false, categorias: false, enviado: false };
+
 function Arnes({ inicial }: { readonly inicial: Campos }) {
-  const formulario = useForm<Campos>({ defaultValues: inicial });
+  const formulario = useForm<CamposDeEdicion>({ defaultValues: conSecciones(inicial) });
   const partes = useFieldArray({ control: formulario.control, name: 'lineas' });
+  const c = formulario.watch();
   return (
     <CamposMovimiento
       formulario={formulario}
@@ -87,9 +92,14 @@ function Arnes({ inicial }: { readonly inicial: Campos }) {
         { id: VISA, nombre: 'Visa Oro', tipo: 'tarjeta', detalle: g.deudaDeCuenta('$642.18') },
         { id: AHORRO, nombre: 'Ahorro', tipo: 'efectivo', detalle: g.saldoDeCuenta('$900.00') },
       ]}
-      categorias={[{ id: SUPER, nombre: 'Supermercado' }]}
+      categorias={[
+        { id: SUPER, nombre: 'Supermercado', grupo: 'Casa', disponible: '$62.85', negativo: false },
+      ]}
       deudores={[]}
       deLasPartes={undefined}
+      e={c.tipo === 'gasto' ? estadoDelGasto(c, SIN_MARCAS) : undefined}
+      alSalir={() => () => undefined}
+      anunciar={() => undefined}
       ayuda={undefined}
       hoy={HOY}
       candidatas={[
@@ -175,8 +185,8 @@ describe('PRU-CMP-BAND', () => {
     expect(ingreso.querySelector('[data-campo-lineas]')).toBeNull();
   });
 
-  it('PRU-CMP-BAND-213 [CA-35.4] un gasto dividido muestra una fila compacta por línea con selección, monto de 120 px y ×, y «+ Agregar línea»', () => {
-    const nodo = montarElemento(<Arnes inicial={campos('gasto', 2)} />);
+  it('PRU-CMP-BAND-213 [FT-35] una devolución sin compra muestra una fila compacta por línea con selección, monto de 120 px y ×, y «+ Agregar línea»', () => {
+    const nodo = montarElemento(<Arnes inicial={campos('devolucion', 2)} />);
     const lineas = nodo.querySelector('[data-campo-lineas]');
     expect(lineas?.textContent).toContain(g.dividir);
     expect(lineas?.textContent).toContain(g.agregarLinea);
