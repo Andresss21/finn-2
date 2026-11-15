@@ -36,3 +36,19 @@ export const porCobrarCobrar = {
   sinSaldoTitulo: 'Sin saldo por cobrar',
   sinSaldoTexto: 'Esa partida ya no tiene saldo abierto, así que no se puede cobrar.',
 } as const;
+
+/** [CH-291] «Cobrar varios» (OP-31b): un pago del deudor repartido entre sus gastos marcados, del más antiguo al más nuevo. */
+export const porCobrarCobrarVarios = {
+  enlace: 'Cobrar varios',
+  enlaceA: (deudor: string) => `Cobrar varios gastos a ${deudor}`,
+  gastos: 'Gastos que paga',
+  abierto: (monto: string) => `abierto ${monto}`,
+  seCobra: (monto: string) => `Se cobra ${monto}`,
+  marcarUno: 'Marcá al menos un gasto.',
+  guardar: 'Guardar',
+  guardarMonto: (monto: string) => `Guardar ${monto}`,
+  guardando: 'Guardando…',
+  cobraste: (monto: string, deudor: string) => `Cobraste ${monto} a ${deudor}`,
+  cerraste: (n: number) => `cerraste ${n} ${n === 1 ? 'gasto' : 'gastos'}`,
+  queda: (comercio: string, saldo: string) => `${comercio} queda con ${saldo}`,
+} as const;

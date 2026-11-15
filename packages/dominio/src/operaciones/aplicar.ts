@@ -50,6 +50,7 @@ import { op28 } from './op-28';
 import { op29 } from './op-29';
 import { op30 } from './op-30';
 import { op31 } from './op-31';
+import { op31b } from './op-31b';
 import { op32 } from './op-32';
 import { op33 } from './op-33';
 import { op34 } from './op-34';
@@ -125,6 +126,7 @@ const OPERACIONES: {
   'OP-30': op30,
   // TA-119: cobrar y renombrar deudor.
   'OP-31': op31,
+  'OP-31b': op31b, // [CH-291] cobrar varios
   'OP-52': op52,
   // TA-123: conciliación y verificar saldo (OP-45 es una lectura: `op45`).
   'OP-46': (antes, x) =>

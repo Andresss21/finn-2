@@ -101,6 +101,7 @@
   { "patron": "apps/web/src/app/(finn)/por-cobrar/**", "fts": ["FT-45", "FT-46"] },
   { "patron": "apps/web/src/app/(finn)/por-cobrar/deudores/**", "fts": ["FT-48"] },
   { "patron": "apps/web/src/flujos/por-cobrar-cobrar/**", "fts": ["FT-46"] },
+  { "patron": "apps/web/src/flujos/por-cobrar-deudores-cobrar/**", "fts": ["FT-46"] },
   { "patron": "apps/web/src/app/(finn)/por-cobrar/condonar/**", "fts": ["FT-47"] },
   { "patron": "apps/web/src/app/(finn)/@superpuesto/(.)por-cobrar/condonar/**", "fts": ["FT-47"] },
   { "patron": "apps/web/src/flujos/por-cobrar-condonar-linea/**", "fts": ["FT-47"] },

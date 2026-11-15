@@ -101,3 +101,10 @@ export function repartir(
 /** Al entrar en Porcentaje se propone lo mismo para cada fila, con el resto en la primera (50/50, 34/33/33). */
 export const porcentajesIguales = (n: number): string[] =>
   partesIguales(Centavos.desdeEntero(CIEN), n).map(textoDeCentesimas);
+
+/**
+ * [CH-291] «Cobrar varios»: lo que el pago escrito cobra de cada gasto marcado, con la regla del dominio (`llenarEnOrden`) sobre
+ * los saldos abiertos que trajo el servidor (texto decimal, ya en su orden). Solo se ve: el servidor reparte de nuevo.
+ */
+export const cobroEnOrden = (total: string, abiertos: readonly string[]): Centavos[] =>
+  Centavos.llenarEnOrden(centavosEscritos(total), abiertos.map(Centavos.desdeTexto));

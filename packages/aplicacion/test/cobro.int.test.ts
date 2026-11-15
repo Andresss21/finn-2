@@ -15,7 +15,7 @@ import {
   type DepsMarco,
 } from '../src/operaciones/marco.ts';
 import { OP48 } from '../src/operaciones/cuentas/index.ts';
-import { OP31, OP52 } from '../src/operaciones/eventos/index.ts';
+import { OP31, OP31B, OP52 } from '../src/operaciones/eventos/index.ts';
 import { OP53 } from '../src/operaciones/conciliacion/OP-53-verificar-saldo.ts';
 import { OP20 } from '../src/operaciones/transacciones/index.ts';
 
@@ -399,5 +399,80 @@ describe('PRU-INT-COBRO', () => {
       error: { categoria: 'VALIDACION' },
     });
     expect((await hechos()).conciliaciones.some((c) => c.id === otra.id)).toBe(false);
+  });
+
+  it('PRU-INT-COBRO-103 [INV-09] OP-31b: un pago de Ana se reparte entre sus gastos marcados en un solo escribir, un cobro por línea; repetirlo es ya aplicada, otra cuenta con el mismo id es conflicto_id y con una línea que no sirve no se escribe ninguno', async () => {
+    const compra = (n: number, total: string) => ({
+      id: uuid(n),
+      cuentaId: E1,
+      fecha: FECHA,
+      total,
+      lineas: [{ monto: total, destino: { deudorId: D1 } }],
+    });
+    expect(await ejecutar(OP20, compra(1160, '10.00'))).toMatchObject({ ok: true });
+    expect(await ejecutar(OP20, compra(1161, '20.00'))).toMatchObject({ ok: true });
+    const lineaDe = (h: Hechos, t: Uuid) => h.lineas.find((l) => l.transaccionId === t)?.id as Uuid;
+    const h0 = await hechos();
+    const [LA, LB] = [lineaDe(h0, uuid(1160)), lineaDe(h0, uuid(1161))];
+    // a igual fecha, el orden es por id de la línea
+    const [primera, segunda] = [LA, LB].sort() as [Uuid, Uuid];
+    const abierto = { [LA]: 1000, [LB]: 2000 };
+    const entrada = {
+      id: uuid(1162),
+      deudorId: D1,
+      lineaIds: [LB, LA],
+      cuentaId: E2,
+      fecha: FECHA,
+      total: String((abierto[primera] as number) / 100 + 5) + '.00',
+    };
+
+    // con una línea que no es del deudor (la de categoría) no se escribe nada
+    const mala = { ...entrada, id: uuid(1163), lineaIds: [LA, L1] };
+    expect(await ejecutar(OP31B, mala)).toMatchObject(
+      rechazo('linea_no_es_por_cobrar', 'Esa parte no es un por cobrar.'),
+    );
+    expect(
+      (await hechos()).transacciones.filter(
+        (t) =>
+          t.tipo === 'cobro' && t.fecha === FECHA && [LA, LB].includes(t.lineaCobradaId as Uuid),
+      ),
+    ).toEqual([]);
+
+    expect(await ejecutar(OP31B, entrada)).toMatchObject({
+      ok: true,
+      yaAplicada: false,
+      valor: {
+        id: entrada.id,
+        cobros: [
+          { lineaId: primera, monto: abierto[primera], queda: 0 },
+          { lineaId: segunda, monto: 500, queda: (abierto[segunda] as number) - 500 },
+        ],
+      },
+    });
+    const h = await hechos();
+    const cobros = h.transacciones.filter(
+      (t) => t.tipo === 'cobro' && (t.lineaCobradaId === LA || t.lineaCobradaId === LB),
+    );
+    expect(cobros.map((t) => [t.lineaCobradaId, t.total])).toEqual(
+      expect.arrayContaining([
+        [primera, abierto[primera]],
+        [segunda, 500],
+      ]),
+    );
+    expect(cobros).toHaveLength(2);
+    expect(cobros.find((t) => t.lineaCobradaId === primera)?.id).toBe(entrada.id);
+    expect(
+      h.efectos.filter((f) => cobros.some((t) => t.id === f.transaccionId)).map((f) => f.cuentaId),
+    ).toEqual([E2, E2]);
+
+    expect(await ejecutar(OP31B, entrada)).toMatchObject({ ok: true, yaAplicada: true });
+    expect(await ejecutar(OP31B, { ...entrada, cuentaId: E1 })).toMatchObject({
+      ok: false,
+      error: { categoria: 'CONFLICTO', codigo: 'conflicto_id' },
+    });
+    expect(await ejecutar(OP31B, { ...entrada, id: uuid(1164), lineaIds: [] })).toMatchObject({
+      ok: false,
+      error: { categoria: 'VALIDACION' },
+    });
   });
 });

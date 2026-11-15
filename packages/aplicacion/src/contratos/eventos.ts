@@ -1,6 +1,7 @@
 // Contratos de las operaciones de eventos OP-31 a OP-34 (cobrar, condonar, devolver, eliminar evento) y OP-52 (04 §3.5; BE-08). La salida de
 // cada esquema ya es la entrada del dominio: montos en `Centavos`, fechas como `FechaLocal`.
 import * as z from 'zod';
+import type { ParteDeCobro } from '@finn/dominio/selectores';
 import { fechaLocal, textoLimpio, uuid } from './comunes.ts';
 import { montoPositivo, op29 } from './transacciones.ts';
 
@@ -14,6 +15,23 @@ export const op31 = z.object({
   asignarAPagoTarjeta: z.boolean().optional(),
 });
 export type EntradaOp31 = z.output<typeof op31>;
+
+/** [CH-291] OP-31b Cobrar varios: un pago del deudor para sus líneas marcadas (al menos una, sin repetir); el reparto es del dominio. */
+export const op31b = z.object({
+  id: uuid,
+  deudorId: uuid,
+  lineaIds: z
+    .array(uuid)
+    .min(1, { error: 'Marcá al menos un gasto.' })
+    .max(200)
+    .refine((xs) => new Set(xs).size === xs.length, { error: 'Un gasto está repetido.' }),
+  cuentaId: uuid,
+  fecha: fechaLocal,
+  total: montoPositivo,
+});
+export type EntradaOp31b = z.output<typeof op31b>;
+/** Cada cobro que registró, con lo que cobró y el saldo con que quedó la línea; vacío si ya estaba aplicada. */
+export type SalidaOp31b = Readonly<{ id: EntradaOp31b['id']; cobros: readonly ParteDeCobro[] }>;
 
 /** OP-52 Renombrar deudor: valor absoluto, con el nombre que vio la interfaz (4.6.2). */
 export const op52 = z.object({

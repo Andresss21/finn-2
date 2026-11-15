@@ -14,6 +14,7 @@ import { Centavos } from '../valores/centavos';
 import { FechaLocal } from '../valores/fecha-local';
 import { aplicar } from './aplicar';
 import { pagoDe } from './op-01';
+import { repartoDeCobro } from './op-31b';
 
 const c = (n: number) => Centavos.desdeEntero(Math.round(n * 100));
 const f = (t: string) => FechaLocal.desdeTexto(t);
@@ -313,5 +314,113 @@ describe('PRU-DOM-COBRO-101: aplicar, cobrar y renombrar deudor (01 §4.10, §5.
       },
     ]);
     expect(rechazos(renombrar('nadie', 'Carla'))[0]?.codigo).toBe('no_encontrado');
+  });
+});
+
+describe('PRU-DOM-COBRO-104: cobrar varios gastos de un deudor con un solo pago (01 §5.5 OP-31b; 04 §3.5)', () => {
+  // Ana: LA (15 ene, $25, efectivo), LD (10 feb, $40, efectivo) y LT (10 feb, $80, tarjeta T); a igual fecha, por id.
+  const H1 = hechos(
+    H0,
+    op({
+      operacion: 'OP-20',
+      id: id('GA'),
+      cuentaId: id('E'),
+      fecha: f('2027-01-15'),
+      total: c(25),
+      lineas: [{ monto: c(25), destino: { deudorId: id('Ana') } }],
+    }),
+  );
+  const LA = H1.lineas.find((l) => l.transaccionId === id('GA'))?.id as Uuid;
+  const [P1, P2] = [LD, LT].sort() as [Uuid, Uuid];
+  const abierto = (l: Uuid) => linea(H1, l)?.abierto ?? c(0);
+  const pedido = (lineaIds: Uuid[], total: number, extra: object = {}) => ({
+    deudorId: id('Ana'),
+    lineaIds,
+    fecha: MAR,
+    total: c(total),
+    ...extra,
+  });
+  let varios = 0;
+  const cobrarVarios = (h: Hechos, lineaIds: Uuid[], total: number, extra: object = {}) =>
+    aplicarEn(
+      h,
+      op({
+        operacion: 'OP-31b',
+        id: id(`V${++varios}`),
+        cuentaId: id('E'),
+        ...pedido(lineaIds, total, extra),
+      }),
+    );
+
+  it('PRU-DOM-COBRO-104 [INV-09] la regla de reparto: de la más antigua a la más nueva (a igual fecha, por id), cada saldo completo antes de la siguiente; la última que toca queda parcial y el orden de la entrada no cuenta', () => {
+    expect(abierto(LA)).toBe(c(25));
+    const esperado = [
+      { lineaId: LA, monto: c(25), queda: c(0) },
+      { lineaId: P1, monto: c(25), queda: Centavos.restar(abierto(P1), c(25)) },
+    ];
+    expect(repartoDeCobro(H1, pedido([LA, LD, LT], 50))).toEqual(esperado);
+    expect(repartoDeCobro(H1, pedido([LT, LD, LA], 50))).toEqual(esperado);
+    // una sola línea, parcial
+    expect(repartoDeCobro(H1, pedido([LD], 10))).toEqual([
+      { lineaId: LD, monto: c(10), queda: c(30) },
+    ]);
+    // justo la suma de los saldos marcados: todas cerradas, sin excedente
+    expect(repartoDeCobro(H1, pedido([LD, LA], 65))).toEqual([
+      { lineaId: LA, monto: c(25), queda: c(0) },
+      { lineaId: LD, monto: c(40), queda: c(0) },
+    ]);
+  });
+
+  it('PRU-DOM-COBRO-104 [INV-09] el pago que pasa la suma de los saldos marcados deja el excedente en la última marcada; las no marcadas no se tocan', () => {
+    expect(repartoDeCobro(H1, pedido([LD, LA], 100))).toEqual([
+      { lineaId: LA, monto: c(25), queda: c(0) },
+      { lineaId: LD, monto: c(75), queda: c(0) },
+    ]);
+  });
+
+  it('PRU-DOM-COBRO-104 [INV-09, INV-12] rechaza una línea de otro deudor o de categoría, una fecha anterior a la compra de alguna línea y una línea sin saldo abierto en la fecha', () => {
+    expect(repartoDeCobro(H1, pedido([LA, L60], 10))).toEqual({
+      codigo: 'linea_no_es_por_cobrar',
+      datos: { lineaId: L60 },
+    });
+    expect(repartoDeCobro(H1, pedido([LA], 10, { deudorId: id('Beto') }))).toMatchObject({
+      codigo: 'linea_no_es_por_cobrar',
+    });
+    expect(repartoDeCobro(H1, pedido([LA, LD], 10, { fecha: f('2027-02-01') }))).toEqual({
+      codigo: 'evento_anterior_a_original',
+      datos: { fecha: FEB },
+    });
+    const cerrada = exito(cobrar(H1, LA, 'E', 25)).hechosNuevos;
+    expect(repartoDeCobro(cerrada, pedido([LA, LD], 10))).toEqual({
+      codigo: 'sin_saldo_abierto',
+      datos: { lineaId: LA, fecha: MAR },
+    });
+  });
+
+  it('PRU-DOM-COBRO-104 [INV-09, AV-22] OP-31b: un cobro por línea con monto, con la misma cuenta y fecha, en un solo aplicar; el primero lleva el id de la entrada; con un rechazo no se registra ninguno', () => {
+    const r = cobrarVarios(H1, [LA, LD, LT], 100);
+    const { cambios, hechosNuevos: h } = exito(r);
+    const nuevos = cambios.flatMap((x) =>
+      x.tipo === 'insertar' && x.tabla === 'transacciones' ? [x.fila] : [],
+    );
+    const segundo = Centavos.restar(c(75), abierto(P1));
+    expect(nuevos.map((t) => [t.tipo, t.lineaCobradaId, t.total, t.fecha])).toEqual([
+      ['cobro', LA, c(25), MAR],
+      ['cobro', P1, abierto(P1), MAR],
+      ['cobro', P2, segundo, MAR],
+    ]);
+    expect(nuevos[0]?.id).toBe(id(`V${varios}`));
+    expect(new Set(nuevos.map((t) => t.id)).size).toBe(3);
+    expect(saldo(h, id('E'))).toBe(Centavos.sumar(saldo(H1, id('E')), c(100)));
+    expect(linea(h, LA)?.abierto).toBe(c(0));
+    expect(linea(h, P1)?.abierto).toBe(c(0));
+    expect(linea(h, P2)?.abierto).toBe(Centavos.restar(abierto(P2), segundo));
+    // LT fue con la tarjeta T y el cobro entra en efectivo: AV-22, como en OP-31
+    expect(codigos(r)).toContain('AV-22');
+
+    expect(rechazos(cobrarVarios(H1, [LA, L60], 30))[0]?.codigo).toBe('linea_no_es_por_cobrar');
+    expect(rechazos(cobrarVarios(H1, [LA], 30, { cuentaId: id('I') }))[0]?.codigo).toBe(
+      'cuenta_tipo_no_valido',
+    );
   });
 });

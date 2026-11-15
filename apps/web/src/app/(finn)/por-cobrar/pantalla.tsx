@@ -17,6 +17,7 @@ import { EnlaceFinn } from '../../../componentes/navegacion/enlace-finn';
 import { formatearFecha } from '../../../formato';
 import { dominio } from '../../../textos/dominio';
 import { porCobrar as t } from '../../../textos/por-cobrar';
+import { porCobrarCobrarVarios as varios } from '../../../textos/por-cobrar-cobrar';
 
 type Deudor = PorCobrarDto['deudores'][number];
 type Partida = Deudor['items'][number];
@@ -24,6 +25,7 @@ type Partida = Deudor['items'][number];
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const TONAL = `inline-flex min-h-11 min-w-11 items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion ${FOCO}`;
 const ENLACE = `inline-flex min-h-11 min-w-11 items-center justify-center rounded-control px-4 font-semibold text-enlace ${FOCO}`;
+const ENLACE_VARIOS = `${ENLACE} -ml-4`; // [CH-291] «Cobrar varios», con dos o más gastos abiertos
 const ESTADO: Readonly<Record<Partida['estado'], EstadoFinanciero>> = {
   abierto: 'informacion',
   parcial: 'advertencia',
@@ -106,10 +108,21 @@ function TarjetaDeudor({ d }: { readonly d: Deudor }) {
           {t.renombrar}
         </EnlaceFinn>
       </div>
-      <p className="flex items-baseline justify-between gap-3">
-        <span className="text-cuerpo-pequeno text-texto-secundario">
-          {t.teDebe}
-          {primera === undefined ? '' : ` · ${t.desde(formatearFecha(primera.fechaOrigen))}`}
+      <p className="flex items-center justify-between gap-3">
+        <span className="flex flex-col items-start">
+          <span className="text-cuerpo-pequeno text-texto-secundario">
+            {t.teDebe}
+            {primera === undefined ? '' : ` · ${t.desde(formatearFecha(primera.fechaOrigen))}`}
+          </span>
+          {d.items.filter((x) => x.abierto > 0).length < 2 ? null : (
+            <EnlaceFinn
+              href={`/por-cobrar/deudores/${d.deudor.id}/cobrar`}
+              aria-label={varios.enlaceA(d.deudor.nombre)}
+              className={ENLACE_VARIOS}
+            >
+              {varios.enlace}
+            </EnlaceFinn>
+          )}
         </span>
         <span data-deuda-abierta>
           <Monto centavos={d.abierto} rol="cifra" estado="positivo" presentacion="absoluto" />
