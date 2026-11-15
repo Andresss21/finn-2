@@ -197,4 +197,27 @@ describe('PRU-CMP-COBRO por deudor', () => {
     expect(getComputedStyle(condonar).backgroundColor).toBe('rgba(0, 0, 0, 0)');
     sonda.remove();
   });
+
+  it('PRU-CMP-COBRO-140 [CA-45.3] «Cobrar varios» aparece junto al total del deudor solo con dos o más gastos abiertos y lleva a su flujo', () => {
+    const varios = (raiz: HTMLElement) =>
+      raiz.querySelector<HTMLAnchorElement>('a[href="/por-cobrar/deudores/d1/cobrar"]');
+    const una = mostrar(<PantallaPorCobrar dto={dto([ana([partida()])])} cerrados={false} />);
+    expect(varios(una)).toBeNull();
+    const cerrada = partida({ lineaId: 'l3', abierto: 0, estado: 'cerrado' });
+    const conCerrada = mostrar(
+      <PantallaPorCobrar dto={dto([ana([partida(), cerrada])])} cerrados={true} />,
+    );
+    expect(varios(conCerrada)).toBeNull();
+    const dos = mostrar(
+      <PantallaPorCobrar
+        dto={dto([ana([partida(), partida({ lineaId: 'l2', comercio: 'DNERO' })], 3000)])}
+        cerrados={false}
+      />,
+    );
+    const enlace = varios(dos);
+    expect(enlace?.textContent).toBe('Cobrar varios');
+    expect(enlace?.getAttribute('aria-label')).toBe('Cobrar varios gastos a Ana');
+    // junto a «Te debe», dentro de la misma fila que el total
+    expect(enlace?.closest('p')?.querySelector('[data-deuda-abierta]')).not.toBeNull();
+  });
 });
