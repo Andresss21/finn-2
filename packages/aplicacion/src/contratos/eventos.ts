@@ -1,6 +1,7 @@
 // Contratos de las operaciones de eventos OP-31 a OP-34 (cobrar, condonar, devolver, eliminar evento) y OP-52 (04 §3.5; BE-08). La salida de
 // cada esquema ya es la entrada del dominio: montos en `Centavos`, fechas como `FechaLocal`.
 import * as z from 'zod';
+import type { ParteDeCobro } from '@finn/dominio';
 import { fechaLocal, textoLimpio, uuid } from './comunes.ts';
 import { montoPositivo, op29 } from './transacciones.ts';
 
@@ -30,14 +31,7 @@ export const op31b = z.object({
 });
 export type EntradaOp31b = z.output<typeof op31b>;
 /** Cada cobro que registró, con lo que cobró y el saldo con que quedó la línea; vacío si ya estaba aplicada. */
-export interface SalidaOp31b {
-  readonly id: EntradaOp31b['id'];
-  readonly cobros: readonly {
-    readonly lineaId: EntradaOp31b['id'];
-    readonly monto: EntradaOp31b['total'];
-    readonly queda: EntradaOp31b['total'];
-  }[];
-}
+export type SalidaOp31b = Readonly<{ id: EntradaOp31b['id']; cobros: readonly ParteDeCobro[] }>;
 
 /** OP-52 Renombrar deudor: valor absoluto, con el nombre que vio la interfaz (4.6.2). */
 export const op52 = z.object({

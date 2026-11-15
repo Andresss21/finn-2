@@ -51,5 +51,4 @@ export const porCobrarCobrarVarios = {
   cobraste: (monto: string, deudor: string) => `Cobraste ${monto} a ${deudor}`,
   cerraste: (n: number) => `cerraste ${n} ${n === 1 ? 'gasto' : 'gastos'}`,
   queda: (comercio: string, saldo: string) => `${comercio} queda con ${saldo}`,
-  sinGastosTexto: 'Este deudor ya no tiene gastos con saldo abierto.',
 } as const;

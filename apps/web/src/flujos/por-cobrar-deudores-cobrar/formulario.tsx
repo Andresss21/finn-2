@@ -1,10 +1,6 @@
 'use client';
-// `/por-cobrar/deudores/[deudorId]/cobrar` (05 §2 [CH-291], OP-31b): «Cobrar varios», un pago del deudor repartido entre sus
-// gastos abiertos. Campos v3 como Cobrar (C-45): el monto es el billete, precargado con el total abierto; cuenta y fecha en un
-// grupo; y los gastos, del más antiguo al más nuevo, todos marcados al abrir, cada uno con «Se cobra {monto}» según el reparto.
-// Ese reparto solo se ve (`cobroEnOrden`, la regla del dominio): el servidor reparte de nuevo y manda. Un solo viaje, sin «Antes
-// de guardar»; el servidor pide confirmar solo con AV-01. El resultado dice cuánto cobró y qué quedó, con lo que devolvió.
-import type { ErrorFinn } from '@finn/aplicacion/errores';
+// «Cobrar varios» (05 §2 [CH-291], OP-31b), campos v3 como Cobrar (C-45). «Se cobra» solo se ve (`cobroEnOrden`, la regla del
+// dominio, PF-3 [CH-291]): viajan el pago y las marcadas y el servidor reparte. Sin «Antes de guardar»; AV-01 pide confirmar.
 import type { Centavos, FechaLocal } from '@finn/dominio/valores';
 import { useRef, useState } from 'react';
 import * as z from 'zod';
@@ -14,7 +10,6 @@ import { GrupoCampos, MensajeError } from '../../componentes/base/campo';
 import { Casilla } from '../../componentes/base/controles-fila';
 import { Resultado } from '../../componentes/base/resultado';
 import { SeleccionFila } from '../../componentes/base/seleccion-fila';
-import { Vacio } from '../../componentes/base/vacio';
 import { ConfirmacionImpactoDeVista } from '../../componentes/formularios/confirmacion-impacto-de-vista';
 import { EntradaFecha } from '../../componentes/formularios/entrada-fecha';
 import { EntradaMonto } from '../../componentes/formularios/entrada-monto';
@@ -33,40 +28,23 @@ import { formularios } from '../../textos/formularios';
 import { porCobrarCobrar as t, porCobrarCobrarVarios as v } from '../../textos/por-cobrar-cobrar';
 import { PieDeHoja } from '../pie-de-hoja';
 
-export interface LineaDeCobro {
-  readonly id: string;
-  readonly comercio: string;
-  /** Fecha y saldo abierto ya formateados; el saldo también en texto decimal para el reparto que se ve. */
-  readonly fecha: string;
-  readonly abierto: string;
-  readonly abiertoTexto: string;
-  /** La tarjeta de la compra si hay propuesta AV-22. */
-  readonly tarjeta: string | undefined;
-}
+/** Un gasto abierto, ya formateado; `abiertoTexto` (decimal) es para el reparto que se ve. */
+type Linea = { id: string; comercio: string; fecha: string; abierto: string; abiertoTexto: string };
+export type LineaDeCobro = Readonly<Linea>;
+type Cuenta = Readonly<{ id: string; nombre: string; detalle: string; tarjeta: boolean }>;
 
-export interface PropsFormularioCobrarVarios {
-  readonly hoy: FechaLocal;
-  readonly rutaPadre: string;
-  readonly deudorId: string;
-  readonly deudor: string;
-  readonly totalTexto: string;
-  readonly lineas: readonly LineaDeCobro[];
-  readonly cuentas: readonly {
-    readonly id: string;
-    readonly nombre: string;
-    readonly detalle: string;
-    readonly tarjeta: boolean;
-  }[];
-}
+export type PropsFormularioCobrarVarios = Readonly<{
+  hoy: FechaLocal;
+  rutaPadre: string;
+  deudorId: string;
+  deudor: string;
+  totalTexto: string;
+  lineas: readonly LineaDeCobro[];
+  cuentas: readonly Cuenta[];
+}>;
 
-/** Lo que devuelve OP-31b: cada cobro con lo que cobró y el saldo con que quedó la línea (vacío si ya estaba aplicada). */
-interface Salida {
-  readonly cobros: readonly {
-    readonly lineaId: string;
-    readonly monto: Centavos;
-    readonly queda: Centavos;
-  }[];
-}
+/** La salida de OP-31b: lo que cobró de cada línea y el saldo con que quedó (vacía si ya estaba aplicada). */
+type Cobros = readonly { lineaId: string; queda: Centavos }[];
 
 const contrato = z
   .object({
@@ -120,77 +98,46 @@ export function FormularioCobrarVarios(props: PropsFormularioCobrarVarios) {
   const formulario = useFormularioFinn<Campos>({ contrato, valoresIniciales: inicial, operacion });
   const { setValue, formState } = formulario;
   const c = formulario.watch();
+  const opciones = { shouldDirty: true, shouldValidate: formState.isSubmitted };
   const poner = (n: 'total' | 'cuentaId' | 'fecha') => (valor: string) => {
-    setValue(n, valor, { shouldDirty: true, shouldValidate: formState.isSubmitted });
+    setValue(n, valor, opciones);
   };
-  const marcar = (id: string, si: boolean) => {
-    const marcadas = lineas.filter((l) => (l.id === id ? si : c.marcadas.includes(l.id)));
-    setValue(
-      'marcadas',
-      marcadas.map((l) => l.id),
-      { shouldDirty: true, shouldValidate: formState.isSubmitted },
-    );
-  };
-  const error = (n: keyof Campos): string | undefined => formState.errors[n]?.message;
+  const error = (n: 'total' | 'cuentaId' | 'fecha'): string | undefined =>
+    formState.errors[n]?.message;
   const { estado, error: fallo, exito } = operacion;
   const vista = (operacion.previsualizacion ?? {}) as VistaDeImpacto & {
     readonly avisos?: readonly { readonly codigo: string }[];
   };
   const total = normalizarMontoEscrito(c.total);
   const totalFormateado = total.estado === 'valido' ? formatearMontoTexto(total.texto) : undefined;
-  // El reparto que se ve: las marcadas en el orden del servidor, con la regla del dominio
   const marcadas = lineas.filter((l) => c.marcadas.includes(l.id));
-  const reparto = new Map(
-    cobroEnOrden(
-      c.total,
-      marcadas.map((l) => l.abiertoTexto),
-    ).map((m, i) => [marcadas[i]?.id, m]),
-  );
+  const abiertos = marcadas.map(({ abiertoTexto }) => abiertoTexto);
+  const montos = cobroEnOrden(c.total, abiertos);
+  const parteDe = (id: string) => montos[marcadas.findIndex((l) => l.id === id)];
   const forma = useRef<HTMLFormElement>(null);
   useFocoAlPrimerError(forma, formState.submitCount);
   const motivo =
     operacion.motivoSinEnvio ??
     (c.marcadas.length === 0 ? v.marcarUno : motivoQueFalta(contrato, c));
 
-  if (lineas.length === 0)
-    return (
-      <PaginaFlujoDeRuta titulo={t.tituloGenerico} rutaPadre={rutaPadre}>
-        <Vacio titulo={t.sinSaldoTitulo} texto={v.sinGastosTexto} icono="cero" />
-      </PaginaFlujoDeRuta>
-    );
-
   if (estado === 'listo' && exito !== undefined) {
-    const { cobros } = exito.valor as Salida;
+    const { cobros } = exito.valor as { readonly cobros: Cobros };
     const cerradas = cobros.filter((x) => x.queda <= 0).length;
     const parcial = cobros.find((x) => x.queda > 0);
     const comercio = lineas.find((l) => l.id === parcial?.lineaId)?.comercio;
     const partes = [
       ...(cerradas > 0 ? [v.cerraste(cerradas)] : []),
-      ...(parcial === undefined || comercio === undefined
-        ? []
-        : [v.queda(comercio, formatearMonto(parcial.queda))]),
+      ...(parcial && comercio ? [v.queda(comercio, formatearMonto(parcial.queda))] : []),
     ];
     const monto = totalFormateado ?? c.total;
     const texto =
       cobros.length === 0
         ? t.guardado(monto, deudor)
         : `${v.cobraste(monto, deudor)}${partes.length > 0 ? `: ${partes.join('; ')}` : ''}`;
-    // AV-22 (como en Cobrar): un gasto con tarjeta cobrado en efectivo puede reservarse para su tarjeta
-    const tarjeta = exito.avisos.some((a) => a.codigo === 'AV-22')
-      ? lineas.find((l) => l.tarjeta !== undefined && cobros.some((x) => x.lineaId === l.id))
-          ?.tarjeta
-      : undefined;
     return (
       <PaginaFlujoDeRuta titulo={t.tituloListo} rutaPadre={rutaPadre}>
         <div className="flex flex-col gap-4">
-          <div data-resultado-flujo="cobrar-varios">
-            <Resultado texto={texto} />
-          </div>
-          {tarjeta === undefined ? null : (
-            <AvisoEnLinea estado="informacion" aparecioDespues>
-              {t.avisoAV22(tarjeta)}
-            </AvisoEnLinea>
-          )}
+          <Resultado texto={texto} />
           <EnlaceFinn href={rutaPadre} className={ENLACE}>
             {t.volver}
           </EnlaceFinn>
@@ -258,20 +205,20 @@ export function FormularioCobrarVarios(props: PropsFormularioCobrarVarios) {
           </GrupoCampos>
           <GrupoCampos etiqueta={v.gastos}>
             {lineas.map((l) => {
-              const parte = reparto.get(l.id);
+              const parte = parteDe(l.id);
+              const datos = `${l.fecha} · ${v.abierto(l.abierto)}`;
               return (
                 <Casilla
                   key={l.id}
                   etiqueta={l.comercio}
                   descripcion={
-                    parte === undefined
-                      ? `${l.fecha} · ${v.abierto(l.abierto)}`
-                      : `${l.fecha} · ${v.abierto(l.abierto)} · ${v.seCobra(formatearMonto(parte))}`
+                    parte === undefined ? datos : `${datos} · ${v.seCobra(formatearMonto(parte))}`
                   }
                   cifra={l.abierto}
                   marcada={c.marcadas.includes(l.id)}
                   alCambiar={(si) => {
-                    marcar(l.id, si);
+                    const otras = c.marcadas.filter((x) => x !== l.id);
+                    setValue('marcadas', si ? [...otras, l.id] : otras, opciones);
                   }}
                 />
               );
@@ -281,7 +228,21 @@ export function FormularioCobrarVarios(props: PropsFormularioCobrarVarios) {
             <MensajeError>{formState.errors.marcadas.message}</MensajeError>
           )}
           {estado === 'error' && fallo !== undefined ? (
-            <AvisoDeError fallo={fallo} alReintentar={() => void operacion.reintentar()} />
+            <AvisoEnLinea
+              estado="problema"
+              aparecioDespues
+              {...(REINTENTABLES.includes(fallo.categoria)
+                ? {
+                    accion: (
+                      <Boton variante="secundaria" onClick={() => void operacion.reintentar()}>
+                        {formularios.intentarDeNuevo}
+                      </Boton>
+                    ),
+                  }
+                : {})}
+            >
+              {fallo.mensaje}
+            </AvisoEnLinea>
           ) : null}
           <PieDeHoja rutaPadre={rutaPadre} superpuesto={false}>
             <Boton
@@ -299,32 +260,5 @@ export function FormularioCobrarVarios(props: PropsFormularioCobrarVarios) {
         </form>
       )}
     </PaginaFlujoDeRuta>
-  );
-}
-
-/** Los errores del servidor junto al resumen, como en Cobrar; los que se pueden reintentar llevan «Intentar de nuevo». */
-function AvisoDeError({
-  fallo,
-  alReintentar,
-}: {
-  readonly fallo: ErrorFinn;
-  readonly alReintentar: () => void;
-}) {
-  return (
-    <AvisoEnLinea
-      estado="problema"
-      aparecioDespues
-      {...(REINTENTABLES.includes(fallo.categoria)
-        ? {
-            accion: (
-              <Boton variante="secundaria" onClick={alReintentar}>
-                {formularios.intentarDeNuevo}
-              </Boton>
-            ),
-          }
-        : {})}
-    >
-      {fallo.mensaje}
-    </AvisoEnLinea>
   );
 }

@@ -1,6 +1,5 @@
-// `/por-cobrar/deudores/[deudorId]/cobrar` (05 §2 [CH-291], FT-46): «Cobrar varios», un pago del deudor repartido entre sus
-// gastos abiertos (OP-31b). Es un flujo corto, como Cobrar. `formulario({ operacion: 'cobrar', deudorId })` trae sus líneas
-// abiertas, ya de la más antigua a la más nueva, y el catálogo de deudores su total abierto: aquí solo pasan a texto (PF-3).
+// «Cobrar varios» (05 §2 [CH-291], FT-46, OP-31b): las líneas abiertas del deudor, de la más antigua a la más nueva, y su
+// total abierto vienen de `formulario` y aquí solo pasan a texto (PF-3). Sin gastos abiertos, «Esto ya no existe».
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -27,34 +26,30 @@ export default async function PaginaCobrarVarios({
   );
   const lineas = 'lineas' in dto.contexto ? dto.contexto.lineas : [];
   const deudor = dto.catalogos.deudores?.find((d) => d.deudor.id === deudorId);
-  const cuentas = dto.catalogos.cuentas;
+  if (lineas.length === 0 || deudor === undefined) notFound();
+  const { efectivo = [], tarjetas = [] } = dto.catalogos.cuentas ?? {};
   return (
     <FormularioCobrarVarios
       hoy={dto.hoy}
       rutaPadre="/por-cobrar"
       deudorId={deudorId}
-      deudor={deudor?.deudor.nombre ?? ''}
-      totalTexto={deudor === undefined ? '' : centavosATextoDecimal(deudor.abierto)}
+      deudor={deudor.deudor.nombre}
+      totalTexto={centavosATextoDecimal(deudor.abierto)}
       lineas={lineas.map((x) => ({
         id: x.lineaId,
         comercio: x.comercio ?? dominio.sinComercio,
         fecha: formatearFecha(x.fechaOrigen),
         abierto: formatearMonto(x.abierto),
         abiertoTexto: centavosATextoDecimal(x.abierto),
-        tarjeta: x.propuestaAV22 ? x.tarjeta?.nombre : undefined,
       }))}
       cuentas={[
-        ...(cuentas?.efectivo ?? []).map((x) => ({
-          id: x.cuenta.id,
-          nombre: x.cuenta.nombre,
-          detalle: t.saldo(formatearMonto(x.saldo)),
-          tarjeta: false,
+        ...efectivo.map(({ cuenta: k, saldo }) => ({
+          ...{ id: k.id, nombre: k.nombre, tarjeta: false },
+          detalle: t.saldo(formatearMonto(saldo)),
         })),
-        ...(cuentas?.tarjetas ?? []).map((x) => ({
-          id: x.cuenta.id,
-          nombre: x.cuenta.nombre,
-          detalle: t.deuda(formatearMonto(x.deuda)),
-          tarjeta: true,
+        ...tarjetas.map(({ cuenta: k, deuda }) => ({
+          ...{ id: k.id, nombre: k.nombre, tarjeta: true },
+          detalle: t.deuda(formatearMonto(deuda)),
         })),
       ]}
     />

@@ -60,7 +60,6 @@ async function montar(): Promise<HTMLElement> {
             fecha: '01/09/2026',
             abierto: '$40.00',
             abiertoTexto: '40.00',
-            tarjeta: undefined,
           },
           {
             id: L2,
@@ -68,7 +67,6 @@ async function montar(): Promise<HTMLElement> {
             fecha: '20/09/2026',
             abierto: '$74.00',
             abiertoTexto: '74.00',
-            tarjeta: undefined,
           },
         ]}
         cuentas={[{ id: EFECTIVO, nombre: 'Planilla', detalle: 'Saldo $100.00', tarjeta: false }]}
@@ -165,7 +163,7 @@ describe('PRU-CMP-COBRO cobrar varios gastos de un deudor', () => {
     });
     await userEvent.click(guardar());
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-resultado-flujo="cobrar-varios"]')?.textContent).toBe(
+      expect(document.querySelector('[data-testid="resultado"]')?.textContent).toBe(
         `${v.cobraste('$50.00', 'DNERO')}: ${v.cerraste(1)}; ${v.queda('SUPER SELECTOS', '$64.00')}`,
       );
     });

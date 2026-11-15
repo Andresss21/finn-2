@@ -99,10 +99,7 @@ function repartirPorRestoMayor<K>(
   );
 }
 
-/**
- * [CH-291] Llena `topes` en su orden con `monto` ≥ 0: cada parte hasta su tope y lo que sobra, a la última (OP-31b, el
- * excedente de §4.10). Σ partes = monto. Sin división: también la usa la interfaz para mostrar el reparto (PF-3).
- */
+/** [CH-291] OP-31b: `monto` ≥ 0 llena `topes` en orden; lo que sobra va a la última (excedente, §4.10). Σ partes = monto. */
 function llenarEnOrden(monto: Centavos, topes: readonly Centavos[]): Centavos[] {
   let resto = monto;
   return topes.map((tope, i) => {

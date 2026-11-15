@@ -25,8 +25,7 @@ type Partida = Deudor['items'][number];
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const TONAL = `inline-flex min-h-11 min-w-11 items-center justify-center rounded-control bg-accion-tonal px-5 font-semibold text-accion ${FOCO}`;
 const ENLACE = `inline-flex min-h-11 min-w-11 items-center justify-center rounded-control px-4 font-semibold text-enlace ${FOCO}`;
-/** [CH-291] El enlace de texto alineado con «Te debe». */
-const ENLACE_VARIOS = `${ENLACE} -ml-4`;
+const ENLACE_VARIOS = `${ENLACE} -ml-4`; // [CH-291] «Cobrar varios», con dos o más gastos abiertos
 const ESTADO: Readonly<Record<Partida['estado'], EstadoFinanciero>> = {
   abierto: 'informacion',
   parcial: 'advertencia',
@@ -115,7 +114,6 @@ function TarjetaDeudor({ d }: { readonly d: Deudor }) {
             {t.teDebe}
             {primera === undefined ? '' : ` · ${t.desde(formatearFecha(primera.fechaOrigen))}`}
           </span>
-          {/* [CH-291] Un pago para varios gastos: solo con dos o más abiertos */}
           {d.items.filter((x) => x.abierto > 0).length < 2 ? null : (
             <EnlaceFinn
               href={`/por-cobrar/deudores/${d.deudor.id}/cobrar`}
