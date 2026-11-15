@@ -185,7 +185,7 @@ describe('PRU-CMP-BAND revisar un gasto con las secciones de Registrar gasto', (
     expect(editado()?.lineas).toEqual([{ monto: '60.00', destino: { categoriaId: SUPER } }]);
   });
 
-  it('PRU-CMP-BAND-943 [FT-35, C-45, C-49] «Con alguien» con Carlos y una persona nueva en partes iguales envía la línea de tu parte y una por cobrar por cada uno, la nueva con `deudorNuevo`', async () => {
+  it('PRU-CMP-BAND-943 [FT-35, C-45, C-49] «Con alguien» con Carlos y una persona nueva en partes iguales envía la línea de tu parte y una por cobrar por cada uno, la nueva como deudor nuevo', async () => {
     responder();
     await montar({ movimiento: { ...PROPS.movimiento, sugeridaId: SUPER } });
     await userEvent.click(tarjeta(t.conAlguien));
@@ -225,7 +225,7 @@ describe('PRU-CMP-BAND revisar un gasto con las secciones de Registrar gasto', (
     ]);
   });
 
-  it('PRU-CMP-BAND-945 [FT-35, C-49] sin categoría «Aprobar» queda apagado con `aria-disabled` y el motivo de C-49 §3; tocarlo no envía y marca la fila; «Con alguien» sin persona da su propio motivo', async () => {
+  it('PRU-CMP-BAND-945 [FT-35, C-49] sin categoría «Aprobar» queda apagado (aria-disabled) con el motivo de C-49 §3; tocarlo no envía y marca la fila; «Con alguien» sin persona da su propio motivo', async () => {
     responder();
     await montar();
     expect(aprobar().getAttribute('aria-disabled')).toBe('true');
