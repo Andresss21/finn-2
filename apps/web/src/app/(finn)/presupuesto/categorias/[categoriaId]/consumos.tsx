@@ -1,8 +1,11 @@
+'use client';
 // Consumos del detalle de categoría (FT-14, CA-14.1 a CA-14.3; 06-identidad-visual §6): salen del DTO en el orden D2, cada uno con
 // su medio, lo cubierto y lo no cubierto. [CH-223] La nota dice «cubierto $X» (CA-14.1) o «cubierto $X · no cubierto $Y» con los montos del DTO
 // y la barrita de 5 px dibuja el `cubiertoBp` del DTO (A6). Dibuja lo que trae el DTO: no suma ni calcula montos (PF-3).
+// [CH-293] La lista va del más nuevo al más viejo (el orden D2 dado vuelta: los no cubiertos quedan arriba) y muestra los 10 más
+// recientes; «Ver los {n} consumos» la despliega completa en el mismo lugar. Con el filtro por día se ven todos los de ese día.
 import type { DetalleCategoria } from '@finn/dominio/selectores';
-import type { ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Vacio } from '../../../../../componentes/base/vacio';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
@@ -12,18 +15,31 @@ import { categoriaDetalle } from '../../../../../textos/categoria-detalle';
 const t = categoriaDetalle.consumos;
 const ENLACE =
   'inline-flex min-h-11 items-center px-2 font-bold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+/** Cuántos consumos se ven antes de «Ver los {n} consumos» [CH-293]. */
+const LIMITE = 10;
+const VER =
+  'inline-flex min-h-11 items-center self-start px-2 font-bold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 
 export function Consumos({
   consumos,
   volver,
   nota = null,
+  sinLimite = false,
 }: {
   readonly consumos: DetalleCategoria['consumos'];
   /** La ruta de esta pantalla, para el `?volver=` del detalle de cada transacción (05 §3.3). */
   readonly volver: string;
   /** Un aviso entre el título y la lista (el filtro por día del calendario). */
   readonly nota?: ReactNode;
+  /** Sin el límite de 10 ni el botón: el filtro por día del calendario muestra todos los de ese día. */
+  readonly sinLimite?: boolean;
 }) {
+  const [todos, setTodos] = useState(false);
+  const [anuncio, setAnuncio] = useState('');
+  const ver = useRef<HTMLButtonElement>(null);
+  const plegable = !sinLimite && consumos.length > LIMITE;
+  const recientes = [...consumos].reverse();
+  const visibles = plegable && !todos ? recientes.slice(0, LIMITE) : recientes;
   return (
     <section data-seccion="consumos" className="flex flex-col gap-2">
       <h2 className="flex items-baseline justify-between gap-3">
@@ -35,7 +51,7 @@ export function Consumos({
         <Vacio titulo={t.vacio} texto={t.vacioTexto} icono="cero" />
       ) : (
         <ul className="flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie">
-          {consumos.map((x, k) => {
+          {visibles.map((x, k) => {
             const transaccionId = 'transaccionId' in x.origen ? x.origen.transaccionId : null;
             const nombre = x.comercio ?? (transaccionId === null ? t.condonacion : x.cuenta.nombre);
             return (
@@ -102,6 +118,24 @@ export function Consumos({
           })}
         </ul>
       )}
+      {plegable ? (
+        <button
+          ref={ver}
+          type="button"
+          aria-expanded={todos}
+          onClick={() => {
+            setTodos(!todos);
+            setAnuncio(todos ? '' : t.mostrando(consumos.length));
+            ver.current?.focus();
+          }}
+          className={VER}
+        >
+          {todos ? t.verMenos : t.verTodos(consumos.length)}
+        </button>
+      ) : null}
+      <p role="status" className="sr-only">
+        {anuncio}
+      </p>
     </section>
   );
 }

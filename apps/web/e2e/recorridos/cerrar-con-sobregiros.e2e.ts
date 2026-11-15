@@ -130,15 +130,16 @@ test.describe('PRU-E2E-PRES recorrido 4.6 cerrar con sobregiros', () => {
     await fila(page, 'Super').getByRole('link', { name: /Super/ }).first().click();
     await expect(page).toHaveURL(/\/presupuesto\/categorias\/[0-9a-f-]+$/);
     await esperarContenido(page);
+    // [CH-293] La lista va del más nuevo al más viejo: el débito olvidado, último del reparto, arriba
     await expect(consumos(page)).toHaveCount(3);
-    await expect(consumos(page).nth(0)).toContainText('Débito');
-    await esperarMonto(montos(consumos(page).nth(0)).nth(0), 6000);
+    await expect(consumos(page).nth(2)).toContainText('Débito');
+    await esperarMonto(montos(consumos(page).nth(2)).nth(0), 6000);
     await expect(consumos(page).nth(1)).toContainText('Tarjeta');
     await esperarMonto(montos(consumos(page).nth(1)).nth(0), 4000);
     await esperarMonto(montos(consumos(page).nth(1)).nth(1), 3000);
-    await expect(consumos(page).nth(2)).toContainText('Débito');
-    await esperarMonto(montos(consumos(page).nth(2)).nth(0), 0);
-    await esperarMonto(montos(consumos(page).nth(2)).nth(1), 2000);
+    await expect(consumos(page).nth(0)).toContainText('Débito');
+    await esperarMonto(montos(consumos(page).nth(0)).nth(0), 0);
+    await esperarMonto(montos(consumos(page).nth(0)).nth(1), 2000);
     const mixto = page.locator('[data-sobregiro]').first();
     await expect(mixto).toHaveAttribute('data-sobregiro', 'mixto');
     await expect(mixto.locator('[data-centavos="3000"]').first()).toBeVisible();

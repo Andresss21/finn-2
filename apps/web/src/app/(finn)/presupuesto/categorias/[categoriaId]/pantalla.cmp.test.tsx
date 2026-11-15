@@ -822,10 +822,8 @@ describe('Detalle de categoría: los consumos más recientes primero', () => {
 
   it('PRU-CMP-PRES-807 [FT-14] con 12 consumos se ven los 10 más recientes, del más nuevo al más viejo, el contador dice 12 y al pie «Ver los 12 consumos»', () => {
     const raiz = mostrar(dto({ consumos: varios(12) }));
-    expect(fechas(raiz)).toEqual(
-      Array.from({ length: 10 }, (_, k) => `2027-02-${String(21 - k)}`),
-    );
-    expect(sinEspacios(seccion(raiz).querySelector('h2'))).toBe('Consumos 12');
+    expect(fechas(raiz)).toEqual(Array.from({ length: 10 }, (_, k) => `2027-02-${String(21 - k)}`));
+    expect(seccion(raiz).querySelector('h2 span:last-child')?.textContent).toBe('12');
     const ver = boton(seccion(raiz), 'Ver los 12 consumos') as HTMLButtonElement;
     expect(ver).toBeDefined();
     expect(ver.getAttribute('aria-expanded')).toBe('false');
@@ -843,9 +841,7 @@ describe('Detalle de categoría: los consumos más recientes primero', () => {
       ver.focus();
       ver.click();
     });
-    expect(fechas(raiz)).toEqual(
-      Array.from({ length: 12 }, (_, k) => `2027-02-${String(21 - k)}`),
-    );
+    expect(fechas(raiz)).toEqual(Array.from({ length: 12 }, (_, k) => `2027-02-${String(21 - k)}`));
     expect(ver.textContent).toBe('Ver menos');
     expect(ver.getAttribute('aria-expanded')).toBe('true');
     expect(seccion(raiz).querySelector('[role="status"]')?.textContent).toBe(

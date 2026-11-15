@@ -125,6 +125,7 @@ export function ConsumosYCalendario({ consumos, calendario, periodo, hoy, volver
       <Consumos
         consumos={visibles}
         volver={volver}
+        sinLimite={dia !== null}
         nota={
           dia === null ? null : (
             <p className="flex flex-wrap items-center gap-2 text-cuerpo-pequeno">
