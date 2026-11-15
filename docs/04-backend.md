@@ -2154,6 +2154,15 @@ Reglas comunes de 3.4 y 3.5:
   - *Alternativa descartada:* OP-31 y después OP-14 desde la propuesta; sigue disponible si el usuario desmarca y asigna más tarde.
 - **Avisos:** después: AV-22 (si no se asignó en el mismo paso), AV-05 (estado) si el pago implícito deja negativa la categoría de pago (Q7), AV-09 cambia.
 
+**OP-31b Cobrar varios [CH-291].** Variante de OP-31 para un pago de un deudor que cubre varias de sus líneas (01 §5.5).
+- **Entrada:** `id`; `deudorId`; `lineaIds: Uuid[]` (de 1 a 200, sin repetir); `cuentaId` (efectivo o tarjeta); `fecha`; `total: MontoTexto`.
+- **Idempotencia:** creación (`transacciones.id` del primer cobro, el de la línea más antigua que toca). Los demás cobros llevan ids derivados de `id` (BE-31). La huella compara ese primer cobro: tipo `cobro`, fecha, cuenta y una línea de las marcadas; si no coincide, `conflicto_id`.
+- **Reparto:** `repartoDeCobro` de `@finn/dominio` (01 §5.5): lo calcula el dominio en `aplicar`; la aplicación lo usa con los mismos hechos para la salida. La interfaz puede mostrarlo como ayuda visual (05 §0.8 PF-3 [CH-291]) y nunca lo envía.
+- **Precondiciones:** las de OP-31 por línea, con sus códigos (`linea_no_es_por_cobrar` también para una línea de otro deudor, `sin_saldo_abierto`, `evento_anterior_a_original`, cuenta abierta y de efectivo o tarjeta); una lista vacía o repetida es `VALIDACION`.
+- **Hechos:** un PT de OP-31 por línea con monto > 0, misma cuenta, fecha e instante, en un solo `aplicar` y un solo `escribir()` (no es un lote de 4.8: es atómica).
+- **Salida:** `{ id, cobros: { lineaId, monto, queda }[] }`, el saldo abierto con que queda cada línea; `cobros` vacío si ya estaba aplicada.
+- **Avisos:** los de OP-31 por cobro (AV-22 sin la casilla de BE-36, AV-05, AV-09 cambia); antes, AV-01.
+
 #### OP-32 Condonar
 
 - **Entrada:** `id`; `lineaId`; `monto: MontoTexto`; `fecha`; `categoriaId` (la propuesta es la primera línea de categoría de la misma compra si está activa; si no, ninguna).

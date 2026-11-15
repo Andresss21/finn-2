@@ -1104,6 +1104,13 @@ Cualquier edición está sujeta a lo siguiente:
   - AV-05 como estado si el pago implícito deja negativa la categoría de pago.
   - AV-01 si la fecha está en un período cerrado.
 
+**OP-31b Cobrar varios** **[CH-291]** [P9, D1, O1, Q3, Q7]
+- **Entrada:** deudor D; las líneas por cobrar de D marcadas (al menos una, sin repetir); cuenta de depósito (efectivo o tarjeta); fecha; monto C > 0 (un solo pago).
+- **Regla de reparto:** las líneas marcadas se ordenan de la más antigua a la más nueva (fecha de la compra y, a igual fecha, id de la línea). C se aplica en ese orden y cierra cada saldo abierto completo antes de pasar a la siguiente; la última que toca puede quedar parcial. Si C supera la suma de los saldos abiertos marcados, la diferencia es excedente y va a la última línea marcada (§4.10). Las líneas que no reciben nada no se tocan.
+- **Precondiciones:** las de OP-31 para cada línea marcada: es un por cobrar de D, fecha ≥ fecha de la línea, saldo abierto > 0 en la fecha del cobro; cuenta abierta.
+- **Hechos:** un OP-31 por cada línea con monto > 0 del reparto, con la misma cuenta, fecha e instante, en una sola operación: se registran todos o ninguno.
+- **Derivados y avisos:** los de OP-31 para cada cobro (AV-22, AV-05, AV-01). La casilla de asignar a pago(t) de BE-36 no aplica: AV-22 queda como propuesta después.
+
 **OP-32 Condonar** [P9, I4, H8, ajuste 1]
 - **Entrada:** línea por cobrar L; monto K; fecha; categoría elegida. La propuesta es la primera línea de categoría de la misma compra, si existe y está activa; si no, ninguna. [Propio]
 - **Precondiciones:** 0 < K ≤ saldo abierto (inv. 9); categoría normal y activa; fecha ≥ fecha de L.

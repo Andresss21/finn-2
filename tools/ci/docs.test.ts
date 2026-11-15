@@ -77,8 +77,9 @@ describe('PRU-SEG-OPER', () => {
       // CH-27 agrega `devolucion_por_cobrar_otra_cuenta` a 04 §3.0.6: 77 → 78 rechazos; CH-45, `cuota_sin_coincidencia`: 79 (07 §35).
       'escenarios: 50  avisos: 24  operaciones en 3.0.8: 62  consultas: 44  rechazos: 79',
       'PASA: T1 a T7',
-      'operaciones con pantalla: 61/62 (sin pantalla: OP-35, el webhook) · flujos: 49 · carpetas de flujo repetidas: 0',
-      'Árbol: 75 rutas; mapa: 79 filas; consultas usadas: 18/18; variantes de formulario: 18/18',
+      // «Cobrar varios» suma /por-cobrar/deudores/[deudorId]/cobrar a 05 §1.3 y §2: 75 → 76 rutas, 79 → 80 filas, 49 → 50 flujos.
+      'operaciones con pantalla: 61/62 (sin pantalla: OP-35, el webhook) · flujos: 50 · carpetas de flujo repetidas: 0',
+      'Árbol: 76 rutas; mapa: 80 filas; consultas usadas: 18/18; variantes de formulario: 18/18',
       'T1 a T9 pasan',
       "'fichas': 77, 'ops': 62, 'consultas': 19, 'reportes': 15, 'formularios': 15, 'rutas': 80",
       'docs:comprobar: pasan los 7',

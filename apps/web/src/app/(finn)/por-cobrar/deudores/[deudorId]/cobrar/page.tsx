@@ -4,7 +4,7 @@
 import { formulario } from '@finn/aplicacion/consultas/formulario/index';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { FormularioCobrarVarios } from '../../../../../../flujos/por-cobrar-cobrar-varios/formulario';
+import { FormularioCobrarVarios } from '../../../../../../flujos/por-cobrar-deudores-cobrar/formulario';
 import { centavosATextoDecimal, formatearFecha, formatearMonto } from '../../../../../../formato';
 import { consultar } from '../../../../../../servidor/consultar';
 import { depsDeConsulta } from '../../../../../../servidor/consultas';

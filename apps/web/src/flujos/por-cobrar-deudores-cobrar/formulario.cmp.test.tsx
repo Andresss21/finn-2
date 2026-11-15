@@ -149,15 +149,17 @@ describe('PRU-CMP-COBRO cobrar varios gastos de un deudor', () => {
       total: '50.00',
     });
 
+    // La salida de OP-31b llega del servidor con ids y `Centavos`; aquí, sus valores
+    const salida = {
+      id: 'x',
+      cobros: [
+        { lineaId: L1, monto: 4000, queda: 0 },
+        { lineaId: L2, monto: 1000, queda: 6400 },
+      ],
+    } as unknown as Extract<Awaited<ReturnType<typeof cobrarVarios>>, { ok: true }>['valor'];
     vi.mocked(cobrarVarios).mockResolvedValueOnce({
       ok: true,
-      valor: {
-        id: 'x',
-        cobros: [
-          { lineaId: L1, monto: 4000, queda: 0 },
-          { lineaId: L2, monto: 1000, queda: 6400 },
-        ],
-      },
+      valor: salida,
       yaAplicada: false,
       avisos: [],
     });
