@@ -11,5 +11,3 @@ export { avisosDeEstado } from './avisos/estado';
 // TA-113: `aplicar` (04 §2.4) y la forma canónica de su impacto para la huella (04 §4.3, V-20).
 export { aplicar } from './operaciones/aplicar';
 export { formaCanonicaDelImpacto } from './operaciones/impacto';
-// [CH-291] La regla de reparto de OP-31b: la aplicación arma con ella la salida de «Cobrar varios».
-export { repartoDeCobro, type ParteDeCobro } from './operaciones/op-31b';

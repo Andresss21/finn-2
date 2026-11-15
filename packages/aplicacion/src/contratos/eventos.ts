@@ -1,7 +1,7 @@
 // Contratos de las operaciones de eventos OP-31 a OP-34 (cobrar, condonar, devolver, eliminar evento) y OP-52 (04 §3.5; BE-08). La salida de
 // cada esquema ya es la entrada del dominio: montos en `Centavos`, fechas como `FechaLocal`.
 import * as z from 'zod';
-import type { ParteDeCobro } from '@finn/dominio';
+import type { ParteDeCobro } from '@finn/dominio/selectores';
 import { fechaLocal, textoLimpio, uuid } from './comunes.ts';
 import { montoPositivo, op29 } from './transacciones.ts';
 

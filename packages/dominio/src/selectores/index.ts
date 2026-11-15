@@ -26,6 +26,8 @@ export {
 } from './conciliacion';
 // `desglosePropuesto(prestamo, fecha)` de 04 (Anexo A.2 punto 8): también la `propuesta` de la previsualización de OP-24 (04 §4.3 [CH-36])
 export { desglosePropuesto, type PropuestaCuota } from '../operaciones/op-24';
+// [CH-291] La regla de reparto de OP-31b: con ella arma la aplicación la salida de «Cobrar varios»
+export { repartoDeCobro, type ParteDeCobro } from '../operaciones/op-31b';
 // TA-194: el registro automático (04 §10.2 paso 1) corre una ocurrencia por `escribir()`, con `registrarAutomatica`
 export { ocurrenciasAutomaticas } from './registro-automatico';
 export { registrarAutomatica } from '../operaciones/op-43';

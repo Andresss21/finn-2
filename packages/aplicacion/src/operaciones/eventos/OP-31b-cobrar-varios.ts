@@ -1,6 +1,7 @@
 // OP-31b Cobrar varios (04 §3.5 [CH-291]): un cobro OP-31 por línea en un solo `escribir()`. Huella (4.6.1): el primer cobro
 // (fecha, cuenta y una línea marcada); los demás llevan ids derivados (BE-31). La salida sale del mismo `repartoDeCobro`.
-import { repartoDeCobro, type Hechos, type ParteDeCobro, type Rechazo } from '@finn/dominio';
+import type { Hechos, Rechazo } from '@finn/dominio';
+import { repartoDeCobro, type ParteDeCobro } from '@finn/dominio/selectores';
 import { op31b, type EntradaOp31b, type SalidaOp31b } from '../../contratos/eventos.ts';
 import type { DefinicionOperacion, Veredicto } from '../marco.ts';
 
@@ -29,8 +30,5 @@ export const OP31B: DefinicionOperacion<EntradaOp31b, Resuelto, SalidaOp31b> = {
   resolver: (_tx, e, h) => Promise.resolve({ entrada: e, reparto: repartoDeCobro(h, e) }),
   comando: ({ entrada: e }, instante, ids) => ({ ...e, operacion: 'OP-31b', instante, ids }),
   // Solo se llama tras el éxito de `aplicar`, que repartió igual: aquí nunca llega un rechazo.
-  salida: (_r, { entrada, reparto }) => ({
-    id: entrada.id,
-    cobros: Array.isArray(reparto) ? reparto : [],
-  }),
+  salida: (_r, { entrada: e, reparto: r }) => ({ id: e.id, cobros: Array.isArray(r) ? r : [] }),
 };
