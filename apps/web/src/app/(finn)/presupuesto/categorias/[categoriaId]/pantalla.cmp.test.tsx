@@ -256,7 +256,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     expect(raiz.querySelectorAll('[data-consumo]')).toHaveLength(2);
   });
 
-  it('PRU-CMP-PRES-105 [CA-14.1] los consumos salen en el orden del DTO con su medio, lo cubierto y lo no cubierto', () => {
+  it('PRU-CMP-PRES-105 [CA-14.1] los consumos salen en el orden del DTO dado vuelta, del más nuevo al más viejo, con su medio, lo cubierto y lo no cubierto', () => {
     const consumos = [
       consumo('2027-02-10', 'debito', 6000, 6000),
       consumo('2027-02-10', 'tarjeta', 7000, 4000, 5714),
@@ -264,8 +264,8 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     const raiz = mostrar(dto({ consumos }));
     const filas = [...raiz.querySelectorAll('[data-consumo]')].map((f) => sinEspacios(f));
     expect(filas).toEqual([
-      expect.stringMatching(/Débito · Ahorro.*cubierto \$60\.00.*\$60\.00$/),
       expect.stringMatching(/Tarjeta · Visa.*cubierto \$40\.00 · no cubierto \$30\.00.*\$70\.00$/),
+      expect.stringMatching(/Débito · Ahorro.*cubierto \$60\.00.*\$60\.00$/),
     ]);
   });
 
@@ -491,7 +491,7 @@ describe('Detalle de categoría: ajustes del diseño (CH-140)', () => {
     const insignias = [...raiz.querySelectorAll('[data-consumo] [data-insignia-fecha]')].map((x) =>
       x.textContent.replace(/\s+/g, ' ').trim(),
     );
-    expect(insignias).toEqual(['feb05', 'mar01']);
+    expect(insignias).toEqual(['mar01', 'feb05']);
   });
 
   it('PRU-CMP-PRES-241 [CA-14.6] con sobregiro de débito la rejilla suma «Sobregiro» con el total del DTO', () => {
@@ -619,7 +619,7 @@ describe('Detalle de categoría: cobertura de cada consumo (A6)', () => {
         ],
       }),
     );
-    const [parcial, entero] = [...raiz.querySelectorAll<HTMLElement>('[data-consumo]')];
+    const [entero, parcial] = [...raiz.querySelectorAll<HTMLElement>('[data-consumo]')];
     const barrita = (fila: HTMLElement | undefined) =>
       fila?.querySelector('[data-barrita-cobertura]') as HTMLElement;
 
@@ -809,4 +809,86 @@ describe('PRU-CMP-PRES-806 encabezado del detalle sin encimar', () => {
       revisar();
     },
   );
+});
+
+describe('Detalle de categoría: los consumos más recientes primero', () => {
+  /** `n` consumos en días seguidos desde el 10/02, en el orden del DTO (el más viejo primero). */
+  const varios = (n: number) =>
+    Array.from({ length: n }, (_, k) => consumo(`2027-02-${String(10 + k)}`, 'debito', 100, 100));
+  const fechas = (raiz: HTMLElement) =>
+    [...raiz.querySelectorAll('[data-consumo]')].map((x) => x.getAttribute('data-consumo'));
+  const seccion = (raiz: HTMLElement) =>
+    raiz.querySelector('[data-seccion="consumos"]') as HTMLElement;
+
+  it('PRU-CMP-PRES-807 [FT-14] con 12 consumos se ven los 10 más recientes, del más nuevo al más viejo, el contador dice 12 y al pie «Ver los 12 consumos»', () => {
+    const raiz = mostrar(dto({ consumos: varios(12) }));
+    expect(fechas(raiz)).toEqual(
+      Array.from({ length: 10 }, (_, k) => `2027-02-${String(21 - k)}`),
+    );
+    expect(sinEspacios(seccion(raiz).querySelector('h2'))).toBe('Consumos 12');
+    const ver = boton(seccion(raiz), 'Ver los 12 consumos') as HTMLButtonElement;
+    expect(ver).toBeDefined();
+    expect(ver.getAttribute('aria-expanded')).toBe('false');
+    // Al pie de la lista y con el estilo de enlace, sin fondo (C-33)
+    const lista = seccion(raiz).querySelector('ul') as HTMLElement;
+    expect(lista.compareDocumentPosition(ver) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(ver.className).toContain('text-enlace');
+    expect(ver.className).not.toMatch(/bg-/);
+  });
+
+  it('PRU-CMP-PRES-808 [FT-14] tocar «Ver los 12 consumos» los muestra todos, anuncia «Mostrando los 12 consumos.» y pasa a «Ver menos»; al plegar vuelven 10 y el foco queda en el botón', () => {
+    const raiz = mostrar(dto({ consumos: varios(12) }));
+    const ver = boton(seccion(raiz), 'Ver los 12 consumos') as HTMLButtonElement;
+    act(() => {
+      ver.focus();
+      ver.click();
+    });
+    expect(fechas(raiz)).toEqual(
+      Array.from({ length: 12 }, (_, k) => `2027-02-${String(21 - k)}`),
+    );
+    expect(ver.textContent).toBe('Ver menos');
+    expect(ver.getAttribute('aria-expanded')).toBe('true');
+    expect(seccion(raiz).querySelector('[role="status"]')?.textContent).toBe(
+      'Mostrando los 12 consumos.',
+    );
+    act(() => {
+      ver.click();
+    });
+    expect(fechas(raiz)).toHaveLength(10);
+    expect(ver.textContent).toBe('Ver los 12 consumos');
+    expect(document.activeElement).toBe(ver);
+  });
+
+  it('PRU-CMP-PRES-809 [FT-14] con 10 consumos o menos se ven todos y no hay botón', () => {
+    for (const n of [10, 3]) {
+      const raiz = mostrar(dto({ consumos: varios(n) }));
+      expect(fechas(raiz)).toHaveLength(n);
+      expect(boton(seccion(raiz), 'Ver los')).toBeUndefined();
+      expect(boton(seccion(raiz), 'Ver menos')).toBeUndefined();
+    }
+  });
+
+  it('PRU-CMP-PRES-810 [CA-14.4] tocar un día con 11 consumos los muestra todos, sin el límite de 10 ni el botón, y «Ver todos los días» vuelve a los 10 más recientes', () => {
+    const consumos = [
+      consumo('2027-02-23', 'debito', 100, 100),
+      consumo('2027-02-23', 'tarjeta', 100, 100),
+      ...Array.from({ length: 11 }, () => consumo('2027-02-25', 'debito', 100, 100)),
+    ];
+    const calendario = [
+      { fecha: '2027-02-23', gastado: 200, intensidadBp: 1818 },
+      { fecha: '2027-02-25', gastado: 1100, intensidadBp: 10000 },
+    ];
+    const raiz = mostrar(dto({ consumos, calendario }));
+    expect(fechas(raiz)).toHaveLength(10);
+    act(() => {
+      (raiz.querySelector('[data-dia="2027-02-25"]') as HTMLButtonElement).click();
+    });
+    expect(fechas(raiz)).toEqual(Array.from({ length: 11 }, () => '2027-02-25'));
+    expect(boton(seccion(raiz), 'Ver los')).toBeUndefined();
+    act(() => {
+      boton(raiz, 'Ver todos los días')?.click();
+    });
+    expect(fechas(raiz)).toHaveLength(10);
+    expect(boton(seccion(raiz), 'Ver los 13 consumos')).toBeDefined();
+  });
 });
