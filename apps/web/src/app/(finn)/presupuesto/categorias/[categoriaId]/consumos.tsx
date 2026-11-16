@@ -7,6 +7,7 @@
 import type { DetalleCategoria } from '@finn/dominio/selectores';
 import { useRef, useState, type KeyboardEvent, type RefObject } from 'react';
 import { Icono } from '../../../../../componentes/base/icono';
+import { indice } from '../../../../../componentes/movimiento/indice';
 import { Vacio } from '../../../../../componentes/base/vacio';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
@@ -41,7 +42,8 @@ const GIRO = 'transition-transform duration-(--duracion-normal) ease-(--curva-es
 const FLECHA = { abierta: `${GIRO} rotate-180`, cerrada: GIRO };
 const SEMANA = `flex min-h-12 w-full items-center gap-3 text-left ${FOCO}`;
 const QUITAR = `inline-flex size-11 items-center justify-center rounded-pastilla ${FOCO}`;
-const LISTA = 'flex scroll-mt-4 flex-col gap-2.5';
+// [CH-295] C-52 §8: la sección entra en el sexto lugar del escalonado del detalle.
+const LISTA = 'fz-entra-seccion flex scroll-mt-4 flex-col gap-2.5';
 // La lista se funde con el filtro nuevo (§8); `key` la vuelve a montar.
 const FUNDIDO = 'flex flex-col gap-3 animate-[fz-v-in_var(--duracion-normal)_var(--curva-entrada)]';
 const NOTA = {
@@ -106,7 +108,7 @@ export function Consumos({
   };
 
   return (
-    <section ref={lista} data-seccion="consumos" className={LISTA}>
+    <section ref={lista} data-seccion="consumos" className={LISTA} style={indice(6)}>
       <h2 className="flex items-baseline justify-between gap-3">
         <span className="text-titulo-seccion">{t.titulo}</span>
         <span data-cuantos className="text-cifra">

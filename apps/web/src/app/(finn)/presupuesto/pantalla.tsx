@@ -22,6 +22,7 @@ import { dominio } from '../../../textos/dominio';
 import { glosario } from '../../../textos/glosario';
 import { presupuesto as t } from '../../../textos/presupuesto';
 import { MontoDestello } from '../../../componentes/dominio/monto-destello';
+import { PermitirViaje, ViajesDePresupuesto } from '../../../componentes/movimiento/viaje';
 
 /** Los valores de `?filtro=` en la URL (BE-39); sin ninguno, "todas". */
 export type FiltroDeUrl = 'sobregiradas' | 'sin-fondos' | 'cubiertas';
@@ -338,6 +339,9 @@ export function PantallaPresupuesto({
           )}
         </div>
       </div>
+      {/* [CH-295] C-52 §8: al final, para no correr el escalonado de los bloques (C5). */}
+      <PermitirViaje />
+      <ViajesDePresupuesto />
     </main>
   );
 }

@@ -1915,3 +1915,43 @@ textarea.campo-entrada {
     scroll-padding-block-end: 12.5rem;
   }
 }
+
+/* [CH-295] C-52 §8, movimiento del detalle de categoría (docs/anexos/finn-detalle-de-categoria/). La pantalla no se desliza
+   entera (GLO-01) ni entra por columnas (C5): cada sección sube 8 px y aparece, 40 ms por orden (`--n`), y la barra de acciones
+   120 ms después del encabezado. Con movimiento reducido la regla del principio anula todo. */
+#contenido > main[data-detalle-categoria] > :not(:first-child),
+#contenido[data-entrada] > main[data-detalle-categoria] {
+  animation: none;
+}
+.fz-entra-seccion {
+  animation: fz-item var(--duracion-normal) var(--curva-entrada) backwards;
+  animation-delay: calc(var(--n) * 40ms /* C-52 §8: 40 ms por orden, sin token */);
+}
+.fz-entra-barra {
+  animation: fz-item var(--duracion-normal) var(--curva-entrada) backwards;
+  animation-delay: var(--duracion-rapida);
+}
+/* Las barras del historial crecen desde la base la primera vez que se ven: 400 ms, 30 ms entre barras. */
+main[data-detalle-categoria] [data-seccion='historial'] .fz-barra-sube {
+  animation-duration: var(--duracion-lenta);
+  animation-timing-function: var(--curva-entrada);
+  animation-delay: calc(var(--n, 0) * 30ms /* C-52 §8: 30 ms entre barras, sin token */);
+}
+main[data-detalle-categoria] [data-seccion='historial'][data-barras='quietas'] .fz-barra-sube {
+  animation: none;
+}
+/* «Más acciones» del detalle: el menú sube 8 px y aparece. */
+body:has(main[data-detalle-categoria]) .fz-menu:not([data-saliendo]) {
+  animation-name: fz-item;
+}
+/* El viaje Presupuesto ↔ detalle entre documentos (`PermitirViaje` lo declara solo en esas dos pantallas): viajan el nombre y el
+   Disponible (`cat-nombre-{id}`, `cat-disp-{id}`) en `--duracion-transicion` con `--curva-entrada`; el resto cambia sin
+   fundido y entra con su escalonado. */
+::view-transition-group(*) {
+  animation-duration: var(--duracion-transicion);
+  animation-timing-function: var(--curva-entrada);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}

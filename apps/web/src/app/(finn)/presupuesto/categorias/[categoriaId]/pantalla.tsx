@@ -7,7 +7,7 @@
 // barra de acciones fija al pie en el teléfono; en computadora, 380 px fijos a la izquierda y el recorrido a la derecha.
 import type { DetalleCategoriaDto } from '@finn/aplicacion/consultas/detalle-categoria';
 import type { Centavos } from '@finn/dominio/valores';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { AvisoEnLinea } from '../../../../../componentes/base/aviso';
 import { Icono } from '../../../../../componentes/base/icono';
 import { IndicadorEstado } from '../../../../../componentes/dominio/indicador-estado';
@@ -36,6 +36,9 @@ import {
 } from '../../../../../flujos/presupuesto-asignar-categoria/resultado';
 import { PantallaPagoTarjeta } from './pago';
 import { MontoDestello } from '../../../../../componentes/dominio/monto-destello';
+import { indice } from '../../../../../componentes/movimiento/indice';
+import { PermitirViaje, ViajeDelDetalle } from '../../../../../componentes/movimiento/viaje';
+import { viaje } from '../../../../../componentes/movimiento/viaje-nombres';
 
 const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
 const ENLACE = `inline-flex min-h-11 items-center rounded-control px-2 font-bold text-enlace ${FOCO}`;
@@ -51,20 +54,38 @@ const IZQUIERDA =
 // La derecha baja lo que ocupan «Más acciones» y la campana del marco, arriba a la derecha.
 const DERECHA =
   'contents @[996px]:mt-14 @[996px]:flex @[996px]:min-w-0 @[996px]:flex-col @[996px]:gap-6';
-const SOLO_COMPUTADORA = 'hidden flex-col gap-5 @[996px]:flex';
-const SOLO_TELEFONO = 'flex flex-col gap-5 @[996px]:hidden';
+const SOLO_COMPUTADORA = 'fz-entra-seccion hidden flex-col gap-5 @[996px]:flex';
+const SOLO_TELEFONO = 'fz-entra-seccion flex flex-col gap-5 @[996px]:hidden';
+// [CH-295] C-52 §8: cada sección sube 8 px y aparece, 40 ms por orden (`--n`, globals.css); la barra, 120 ms después.
+const ENTRA = 'fz-entra-seccion';
+const ENTRA_ENCABEZADO = 'fz-entra-seccion flex flex-col gap-1.5';
+const ENTRA_DISPONIBLE = 'fz-entra-seccion flex flex-col gap-1';
+const ORDEN = {
+  encabezado: indice(0),
+  selector: indice(1),
+  disponible: indice(2),
+  cifras: indice(3),
+  avisos: indice(4),
+  programadas: indice(7),
+};
 
 function Seccion({
   titulo,
   atributo,
+  orden,
   children,
 }: {
   readonly titulo: string;
   readonly atributo: string;
+  readonly orden: number;
   readonly children: ReactNode;
 }) {
   return (
-    <section data-seccion={atributo} className="flex flex-col gap-2">
+    <section
+      data-seccion={atributo}
+      className="fz-entra-seccion flex flex-col gap-2"
+      style={indice(orden)}
+    >
       <h2 className="text-titulo-seccion">{titulo}</h2>
       {children}
     </section>
@@ -197,9 +218,9 @@ export function PantallaDetalleCategoria({
   // computadora. Se dibujan en los dos lugares y cada uno se oculta en el otro ancho (`display: none`: el lector lee uno).
   const programadasYReglas = (clase: string) =>
     dto.programadas.length === 0 && dto.reglas.length === 0 ? null : (
-      <div data-programadas-y-reglas className={clase}>
+      <div data-programadas-y-reglas className={clase} style={ORDEN.programadas}>
         {dto.programadas.length === 0 ? null : (
-          <Seccion titulo={t.programadas.titulo} atributo="programadas">
+          <Seccion titulo={t.programadas.titulo} atributo="programadas" orden={7}>
             <ul className={CONTENEDOR}>
               {dto.programadas.map((p) => (
                 <li
@@ -223,7 +244,7 @@ export function PantallaDetalleCategoria({
           </Seccion>
         )}
         {dto.reglas.length === 0 ? null : (
-          <Seccion titulo={t.reglas.titulo} atributo="reglas">
+          <Seccion titulo={t.reglas.titulo} atributo="reglas" orden={7}>
             <ul className="flex flex-wrap gap-2">
               {dto.reglas.map((r) => (
                 <li
@@ -249,229 +270,250 @@ export function PantallaDetalleCategoria({
         fechas={formatearPeriodoNumerico(periodo)}
         cerrado={cerrado}
       >
-        <div data-columna="izquierda" className={IZQUIERDA}>
-          <header className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-              <p className="text-rotulo text-texto-secundario">{dto.grupo.nombre}</p>
-              {/* En el teléfono ← y ⋯ van en la barra del marco (§2.1); en computadora la flecha va junto al título (A5). */}
-              <div className="flex items-center gap-1 md:-ml-2">
-                <VolverEnTitulo href={conPeriodo('/presupuesto')} etiqueta={t.volver} />
-                <h1 className="fz-titulo-detalle min-w-0 flex-1">{categoria.nombre}</h1>
-              </div>
-              {archivada ? <p className="text-etiqueta">{t.archivada}</p> : null}
-            </div>
-            <SelectorPeriodo
-              periodo={periodo}
-              periodoActivo={periodoActivo}
-              {...(dto.navegacion.anterior === undefined
-                ? {}
-                : { anterior: dto.navegacion.anterior })}
-              {...(dto.navegacion.siguiente === undefined
-                ? {}
-                : { siguiente: dto.navegacion.siguiente })}
-              ruta={raiz}
-              parametros={{}}
-              sinIrAlActual
-            />
-            <div data-disponible className="flex flex-col gap-1">
-              <p className="text-cuerpo-pequeno">{t.numeros.disponible}</p>
-              <p>
-                <MontoDestello
-                  centavos={numeros.disponible}
-                  rol="cifra-principal"
-                  {...(estadoDisponible ? { estado: estadoDisponible } : {})}
-                />
-              </p>
-              {sobregiro === null ? null : (
-                <div className="flex flex-wrap gap-2">
-                  {sobregiro.parteDebito === 0 ? null : (
-                    <IndicadorEstado estado="problema" etiqueta={t.sobregiro.debito} />
-                  )}
-                  {sobregiro.parteTarjeta === 0 ? null : (
-                    <IndicadorEstado estado="deuda-sin-respaldo" etiqueta={t.sobregiro.tarjeta} />
-                  )}
+        {/* [CH-295] Cambiar de período (‹ ›) entra igual que la pantalla: las columnas se vuelven a montar con la clave. */}
+        <Fragment key={periodo.inicio}>
+          <div data-columna="izquierda" className={IZQUIERDA}>
+            <header className="flex flex-col gap-3">
+              <div className={ENTRA_ENCABEZADO} style={ORDEN.encabezado}>
+                <p className="text-rotulo text-texto-secundario">{dto.grupo.nombre}</p>
+                {/* En el teléfono ← y ⋯ van en la barra del marco (§2.1); en computadora la flecha va junto al título (A5). */}
+                <div className="flex items-center gap-1 md:-ml-2">
+                  <VolverEnTitulo href={conPeriodo('/presupuesto')} etiqueta={t.volver} />
+                  <h1 className="fz-titulo-detalle min-w-0 flex-1">
+                    {/* C-52 §8: el nombre de la fila de Presupuesto viaja hasta acá (`viaje-nombres.ts`). */}
+                    <span className="inline-block" {...viaje(categoria.id, 'nombre')}>
+                      {categoria.nombre}
+                    </span>
+                  </h1>
                 </div>
-              )}
-            </div>
-          </header>
-
-          <dl
-            data-numeros
-            className="grid grid-cols-3 gap-3 rounded-contenedor bg-superficie p-3.5"
-          >
-            {numero(t.numeros.asignado, numeros.asignado)}
-            {numero(t.numeros.gastado, numeros.gastado)}
-            {numero(t.numeros.arrastre, numeros.arrastre)}
-            {numero(t.numeros.fondo, numeros.fondo)}
-            {numero(t.numeros.entradas, numeros.entradas)}
-            {sobregiro === null
-              ? null
-              : sobregiro.tipo === 'tarjeta'
-                ? numero(t.sobregiro.conTarjeta, sobregiro.parteTarjeta)
-                : numero(t.numeros.sobregiro, sobregiro.total)}
-          </dl>
-
-          {cerrado ? (
-            // D-5 con C-51: el aviso lleva «Ir al período actual»; no hay barra de acciones (§5, §6).
-            <AvisoEnLinea
-              estado="informacion"
-              titulo={t.periodoCerradoTitulo(formatearPeriodoNumerico(periodo))}
-              accion={<EnlaceFinn href={raiz}>{t.irAlActual}</EnlaceFinn>}
-            >
-              {t.periodoCerrado}
-            </AvisoEnLinea>
-          ) : null}
-
-          {sobregiro === null ? null : sobregiro.tipo === 'tarjeta' ? (
-            // §6: deuda sin reservar (solo tarjeta), con `card` en `--deuda-sin-respaldo-texto`; explica, sin botón.
-            <div data-sobregiro={sobregiro.tipo}>
-              <AvisoEnLinea
-                estado="deuda-sin-respaldo"
-                icono="card"
-                titulo={
-                  <>
-                    {t.sobregiro.tituloTarjeta(categoria.nombre)}{' '}
-                    <Monto centavos={sobregiro.parteTarjeta} />
-                  </>
-                }
-              >
-                {tarjetas.map((x) => `${t.sobregiro.sumaALoQueFalta(x)}.`).join(' ')}
-              </AvisoEnLinea>
-            </div>
-          ) : (
-            // §6: débito o mixto, tono problema con el borde de C-51 y sin botón: «Cubrir» va en las acciones.
-            <div data-sobregiro={sobregiro.tipo}>
-              <AvisoEnLinea
-                estado="problema"
-                titulo={
-                  <>
-                    {t.sobregiro.tituloDebito} <Monto centavos={sobregiro.total} />
-                  </>
-                }
-              >
-                {t.sobregiro.conDebito} <Monto centavos={sobregiro.parteDebito} /> ·{' '}
-                {t.sobregiro.conTarjetaMinuscula} <Monto centavos={sobregiro.parteTarjeta} />.{' '}
-                {cerrado ? t.sobregiro.alCerrarCerrado : t.sobregiro.alCerrar}{' '}
-                <Monto centavos={sobregiro.parteDebito} />.
-              </AvisoEnLinea>
-            </div>
-          )}
-
-          {archivada && numeros.disponible > 0 ? (
-            <div data-aviso="av-14">
-              <AvisoEnLinea
-                estado="advertencia"
-                titulo={t.archivadaConDinero(categoria.nombre, formatearMonto(numeros.disponible))}
-              >
-                <div className="flex flex-col gap-2">
-                  <p>{t.archivadaTexto}</p>
-                  {sacar === undefined ? null : (
-                    <SacarDeUnToque
-                      categoriaId={categoria.id}
-                      asignado={numeros.asignado}
-                      disponible={numeros.disponible}
-                      accion={sacar}
+                {archivada ? <p className="text-etiqueta">{t.archivada}</p> : null}
+              </div>
+              <div className={ENTRA} style={ORDEN.selector}>
+                <SelectorPeriodo
+                  periodo={periodo}
+                  periodoActivo={periodoActivo}
+                  {...(dto.navegacion.anterior === undefined
+                    ? {}
+                    : { anterior: dto.navegacion.anterior })}
+                  {...(dto.navegacion.siguiente === undefined
+                    ? {}
+                    : { siguiente: dto.navegacion.siguiente })}
+                  ruta={raiz}
+                  parametros={{}}
+                  sinIrAlActual
+                />
+              </div>
+              <div data-disponible className={ENTRA_DISPONIBLE} style={ORDEN.disponible}>
+                <p className="text-cuerpo-pequeno">{t.numeros.disponible}</p>
+                <p>
+                  <span className="inline-block" {...viaje(categoria.id, 'disp')}>
+                    <MontoDestello
+                      centavos={numeros.disponible}
+                      rol="cifra-principal"
+                      {...(estadoDisponible ? { estado: estadoDisponible } : {})}
                     />
+                  </span>
+                </p>
+                {sobregiro === null ? null : (
+                  <div className="flex flex-wrap gap-2">
+                    {sobregiro.parteDebito === 0 ? null : (
+                      <IndicadorEstado estado="problema" etiqueta={t.sobregiro.debito} />
+                    )}
+                    {sobregiro.parteTarjeta === 0 ? null : (
+                      <IndicadorEstado estado="deuda-sin-respaldo" etiqueta={t.sobregiro.tarjeta} />
+                    )}
+                  </div>
+                )}
+              </div>
+            </header>
+
+            <dl
+              data-numeros
+              style={ORDEN.cifras}
+              className="fz-entra-seccion grid grid-cols-3 gap-3 rounded-contenedor bg-superficie p-3.5"
+            >
+              {numero(t.numeros.asignado, numeros.asignado)}
+              {numero(t.numeros.gastado, numeros.gastado)}
+              {numero(t.numeros.arrastre, numeros.arrastre)}
+              {numero(t.numeros.fondo, numeros.fondo)}
+              {numero(t.numeros.entradas, numeros.entradas)}
+              {sobregiro === null
+                ? null
+                : sobregiro.tipo === 'tarjeta'
+                  ? numero(t.sobregiro.conTarjeta, sobregiro.parteTarjeta)
+                  : numero(t.numeros.sobregiro, sobregiro.total)}
+            </dl>
+
+            {cerrado ? (
+              // D-5 con C-51: el aviso lleva «Ir al período actual»; no hay barra de acciones (§5, §6).
+              <AvisoEnLinea
+                className={ENTRA}
+                style={ORDEN.avisos}
+                estado="informacion"
+                titulo={t.periodoCerradoTitulo(formatearPeriodoNumerico(periodo))}
+                accion={<EnlaceFinn href={raiz}>{t.irAlActual}</EnlaceFinn>}
+              >
+                {t.periodoCerrado}
+              </AvisoEnLinea>
+            ) : null}
+
+            {sobregiro === null ? null : sobregiro.tipo === 'tarjeta' ? (
+              // §6: deuda sin reservar (solo tarjeta), con `card` en `--deuda-sin-respaldo-texto`; explica, sin botón.
+              <div data-sobregiro={sobregiro.tipo} className={ENTRA} style={ORDEN.avisos}>
+                <AvisoEnLinea
+                  estado="deuda-sin-respaldo"
+                  icono="card"
+                  titulo={
+                    <>
+                      {t.sobregiro.tituloTarjeta(categoria.nombre)}{' '}
+                      <Monto centavos={sobregiro.parteTarjeta} />
+                    </>
+                  }
+                >
+                  {tarjetas.map((x) => `${t.sobregiro.sumaALoQueFalta(x)}.`).join(' ')}
+                </AvisoEnLinea>
+              </div>
+            ) : (
+              // §6: débito o mixto, tono problema con el borde de C-51 y sin botón: «Cubrir» va en las acciones.
+              <div data-sobregiro={sobregiro.tipo} className={ENTRA} style={ORDEN.avisos}>
+                <AvisoEnLinea
+                  estado="problema"
+                  titulo={
+                    <>
+                      {t.sobregiro.tituloDebito} <Monto centavos={sobregiro.total} />
+                    </>
+                  }
+                >
+                  {t.sobregiro.conDebito} <Monto centavos={sobregiro.parteDebito} /> ·{' '}
+                  {t.sobregiro.conTarjetaMinuscula} <Monto centavos={sobregiro.parteTarjeta} />.{' '}
+                  {cerrado ? t.sobregiro.alCerrarCerrado : t.sobregiro.alCerrar}{' '}
+                  <Monto centavos={sobregiro.parteDebito} />.
+                </AvisoEnLinea>
+              </div>
+            )}
+
+            {archivada && numeros.disponible > 0 ? (
+              <div data-aviso="av-14" className={ENTRA} style={ORDEN.avisos}>
+                <AvisoEnLinea
+                  estado="advertencia"
+                  titulo={t.archivadaConDinero(
+                    categoria.nombre,
+                    formatearMonto(numeros.disponible),
                   )}
-                  <EnlaceFinn href={`${raiz}/sacar`} className={TONAL}>
-                    {t.elegirDestino}
+                >
+                  <div className="flex flex-col gap-2">
+                    <p>{t.archivadaTexto}</p>
+                    {sacar === undefined ? null : (
+                      <SacarDeUnToque
+                        categoriaId={categoria.id}
+                        asignado={numeros.asignado}
+                        disponible={numeros.disponible}
+                        accion={sacar}
+                      />
+                    )}
+                    <EnlaceFinn href={`${raiz}/sacar`} className={TONAL}>
+                      {t.elegirDestino}
+                    </EnlaceFinn>
+                  </div>
+                </AvisoEnLinea>
+              </div>
+            ) : null}
+
+            {meta === null ? null : (
+              <Seccion titulo={t.meta.titulo} atributo="meta" orden={4}>
+                <ResumenMeta meta={meta} conseguido={numeros.disponible} />
+                {archivada ? (
+                  <p data-meta-pausa className="text-cuerpo-pequeno text-texto-secundario">
+                    {t.metaEnPausa(categoria.nombre)}
+                  </p>
+                ) : null}
+              </Seccion>
+            )}
+
+            {conBarra ? (
+              // §5: fija al pie en el teléfono (`fz-barra-acciones`, globals.css); dos botones a lo ancho en la columna fija.
+              <nav aria-label={t.acciones.etiqueta} className="fz-barra-acciones fz-entra-barra">
+                <div className="grid grid-cols-2 gap-2">
+                  <EnlaceFinn href={hrefAsignar} className={PRINCIPAL}>
+                    {sobregiro === null ? (
+                      <>
+                        <Icono nombre="plus" tamano={20} />
+                        {t.acciones.asignar}
+                        {/* A9: con meta, el principal lleva lo que falta del DTO; Asignar no preselecciona la opción (CH-221) */}
+                        {faltaMeta === undefined ? null : (
+                          <>
+                            {' '}
+                            <Monto centavos={faltaMeta} />
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      // CA-14.7: abre Asignar, que trae `rapida.cubrirSobregiro`; el enlace no lleva ningún monto.
+                      <>
+                        {t.sobregiro.cubrir} <Monto centavos={sobregiro.total} />
+                      </>
+                    )}
+                  </EnlaceFinn>
+                  <EnlaceFinn
+                    href={flujo(`/presupuesto/mover?categoria-origen=${categoria.id}`)}
+                    className={TONAL}
+                  >
+                    {t.acciones.mover}
                   </EnlaceFinn>
                 </div>
-              </AvisoEnLinea>
-            </div>
-          ) : null}
-
-          {meta === null ? null : (
-            <Seccion titulo={t.meta.titulo} atributo="meta">
-              <ResumenMeta meta={meta} conseguido={numeros.disponible} />
-              {archivada ? (
-                <p data-meta-pausa className="text-cuerpo-pequeno text-texto-secundario">
-                  {t.metaEnPausa(categoria.nombre)}
-                </p>
-              ) : null}
-            </Seccion>
-          )}
-
-          {conBarra ? (
-            // §5: fija al pie en el teléfono (`fz-barra-acciones`, globals.css); dos botones a lo ancho en la columna fija.
-            <nav aria-label={t.acciones.etiqueta} className="fz-barra-acciones">
-              <div className="grid grid-cols-2 gap-2">
-                <EnlaceFinn href={hrefAsignar} className={PRINCIPAL}>
-                  {sobregiro === null ? (
-                    <>
-                      <Icono nombre="plus" tamano={20} />
-                      {t.acciones.asignar}
-                      {/* A9: con meta, el principal lleva lo que falta del DTO; Asignar no preselecciona la opción (CH-221) */}
-                      {faltaMeta === undefined ? null : (
-                        <>
-                          {' '}
-                          <Monto centavos={faltaMeta} />
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    // CA-14.7: abre Asignar, que trae `rapida.cubrirSobregiro`; el enlace no lleva ningún monto.
-                    <>
-                      {t.sobregiro.cubrir} <Monto centavos={sobregiro.total} />
-                    </>
-                  )}
-                </EnlaceFinn>
-                <EnlaceFinn
-                  href={flujo(`/presupuesto/mover?categoria-origen=${categoria.id}`)}
-                  className={TONAL}
-                >
-                  {t.acciones.mover}
-                </EnlaceFinn>
+              </nav>
+            ) : null}
+            {delFlujo}
+            {archivada ? (
+              <div className="fz-entra-seccion flex flex-col gap-2" style={ORDEN.avisos}>
+                <Desarchivar categoriaId={categoria.id} accion={desarchivar} />
+                <p className="text-cuerpo-pequeno text-texto-secundario">{t.desarchivarPrimero}</p>
               </div>
-            </nav>
-          ) : null}
-          {delFlujo}
-          {archivada ? (
-            <div className="flex flex-col gap-2">
-              <Desarchivar categoriaId={categoria.id} accion={desarchivar} />
-              <p className="text-cuerpo-pequeno text-texto-secundario">{t.desarchivarPrimero}</p>
-            </div>
-          ) : null}
-          {programadasYReglas(SOLO_COMPUTADORA)}
-        </div>
+            ) : null}
+            {programadasYReglas(SOLO_COMPUTADORA)}
+          </div>
 
-        <div data-columna="derecha" className={DERECHA}>
-          <Recorrido
-            consumos={dto.consumos}
-            calendario={dto.calendario}
-            periodo={periodo}
-            hoy={dto.hoy}
-            volver={conPeriodo(raiz)}
-            periodosHistorial={dto.historial.length}
-            historial={
-              ahorroSinGasto ? null : (
-                <Historial historial={dto.historial} resumen={dto.historialResumen} />
-              )
-            }
-          />
-          {dto.entradasDelPeriodo.length === 0 ? null : (
-            <Seccion titulo={t.consumos.entradas} atributo="entradas">
-              <ul className={CONTENEDOR}>
-                {dto.entradasDelPeriodo.map((e) => (
-                  <li
-                    key={`${e.transaccionId}-${e.fecha}`}
-                    className="flex items-center justify-between gap-3 px-3.5 py-3"
-                  >
-                    <EnlaceFinn
-                      href={`/actividad/${e.transaccionId}?volver=${encodeURIComponent(conPeriodo(raiz))}`}
-                      className={ENLACE}
+          <div data-columna="derecha" className={DERECHA}>
+            <Recorrido
+              consumos={dto.consumos}
+              calendario={dto.calendario}
+              periodo={periodo}
+              hoy={dto.hoy}
+              volver={conPeriodo(raiz)}
+              periodosHistorial={dto.historial.length}
+              historial={
+                ahorroSinGasto ? null : (
+                  <Historial historial={dto.historial} resumen={dto.historialResumen} />
+                )
+              }
+            />
+            {dto.entradasDelPeriodo.length === 0 ? null : (
+              <Seccion titulo={t.consumos.entradas} atributo="entradas" orden={7}>
+                <ul className={CONTENEDOR}>
+                  {dto.entradasDelPeriodo.map((e) => (
+                    <li
+                      key={`${e.transaccionId}-${e.fecha}`}
+                      className="flex items-center justify-between gap-3 px-3.5 py-3"
                     >
-                      {formatearFecha(e.fecha)}
-                    </EnlaceFinn>
-                    <Monto centavos={e.monto} />
-                  </li>
-                ))}
-              </ul>
-            </Seccion>
-          )}
-          {programadasYReglas(SOLO_TELEFONO)}
-        </div>
+                      <EnlaceFinn
+                        href={`/actividad/${e.transaccionId}?volver=${encodeURIComponent(conPeriodo(raiz))}`}
+                        className={ENLACE}
+                      >
+                        {formatearFecha(e.fecha)}
+                      </EnlaceFinn>
+                      <Monto centavos={e.monto} />
+                    </li>
+                  ))}
+                </ul>
+              </Seccion>
+            )}
+            {programadasYReglas(SOLO_TELEFONO)}
+          </div>
+        </Fragment>
       </AnunciosDelDetalle>
+      {/* [CH-295] C-52 §8: el viaje desde Presupuesto y de vuelta; al final, fuera de la clave del período. */}
+      <PermitirViaje />
+      <ViajeDelDetalle id={categoria.id} />
     </main>
   );
 }
