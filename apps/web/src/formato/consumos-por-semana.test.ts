@@ -25,7 +25,7 @@ const L: (ConsumoDeLista & { monto: number; cubierto: number })[] = [
 ];
 
 describe('PRU-DOM-PRES-811 lista de consumos por semana del detalle de categoría', () => {
-  it('PRU-DOM-PRES-811 [C-52 §4] semanas de la más reciente a la más antigua con sus filas del consumo más nuevo al más viejo, filtros según lo que hay, filtrar por día y estado, plegado con más de 10, semana recortada al período y la línea del orden', () => {
+  it('PRU-DOM-PRES-811 [C-52] semanas de la más reciente a la más antigua con sus filas del consumo más nuevo al más viejo, filtros según lo que hay, filtrar por día y estado, plegado con más de 10, semana recortada al período y la línea del orden', () => {
     // 1. Semanas de la más reciente a la más antigua, filas del más reciente al más antiguo
     const g = agrupar(L, per);
     expect(g.map((x) => x.titulo)).toEqual([
@@ -68,7 +68,7 @@ describe('PRU-DOM-PRES-811 lista de consumos por semana del detalle de categorí
     expect(explicarOrden(L.slice(0, 2))).toBe(false);
   });
 
-  it('PRU-DOM-PRES-811 [C-52 §7] el nombre de cada día del calendario y el del anuncio: «viernes 9 de oct» y «9 de oct»', () => {
+  it('PRU-DOM-PRES-811 [C-52] el nombre de cada día del calendario y el del anuncio: «viernes 9 de oct» y «9 de oct»', () => {
     expect(nombreDelDia('2026-10-09')).toBe('viernes 9 de oct');
     expect(nombreDelDia('2026-09-21')).toBe('lunes 21 de sep');
     expect(nombreDelDia('2026-10-11')).toBe('domingo 11 de oct');
