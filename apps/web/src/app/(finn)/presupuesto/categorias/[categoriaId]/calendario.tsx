@@ -1,13 +1,13 @@
 'use client';
 // «¿En qué se fue?» y los consumos del detalle de categoría (FT-14, CA-14.4 y CA-14.8; C-52 §2, §3 y §7,
 // `docs/anexos/finn-detalle-de-categoria/`). En el teléfono, una tarjeta con dos vistas («Este período»: el calendario;
-// «Últimos {n}»: el historial); en computadora las dos van lado a lado. El calendario es el índice de la lista: tocar un día la
-// filtra por esa fecha (una precisión, no un cálculo, CF-25), muestra la píldora del día y baja hasta la lista. El punto mide lo
-// que da `intensidadBp`. Dibuja lo que trae el DTO: no suma ni calcula montos (PF-3).
+// «Últimos {n}»: el historial); en computadora, desde 1180 px de contenedor (donde cada día sigue midiendo 44 × 44), van lado a
+// lado. El calendario es el índice de la lista: tocar un día la filtra por esa fecha (una precisión, no un cálculo, CF-25),
+// muestra la píldora del día y baja hasta la lista. El punto mide lo que da `intensidadBp`. Dibuja lo que trae el DTO: no suma
+// ni calcula montos (PF-3).
 import type { DetalleCategoria } from '@finn/dominio/selectores';
 import { useRef, useState, type ReactNode } from 'react';
 import { SelectorSegmentado } from '../../../../../componentes/base/selector-segmentado';
-import { VistaGrafico } from '../../../../../componentes/graficos/vista-grafico';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { formatearFecha, formatearMontoAccesible } from '../../../../../formato';
 import { diasDelCalendario } from '../../../../../formato/calendario';
@@ -35,8 +35,8 @@ const PUNTO = { elegido: `${PUNTO_BASE} scale-[1.15] bg-fondo`, otro: `${PUNTO_B
 // Cambiar de vista: el contenido sube 8 px y aparece (§8). En computadora conviven las dos y no hay control.
 const PANEL =
   'flex min-w-0 flex-col gap-2.5 animate-[fz-item_var(--duracion-normal)_var(--curva-entrada)]';
-const PANEL_OCULTO = 'hidden min-w-0 flex-col gap-2.5 @[996px]:flex';
-const SUBTITULO = 'hidden text-titulo-seccion @[996px]:block';
+const PANEL_OCULTO = 'hidden min-w-0 flex-col gap-2.5 @[1180px]:flex';
+const SUBTITULO = 'hidden text-titulo-seccion @[1180px]:block';
 
 interface Props {
   readonly consumos: DetalleCategoria['consumos'];
@@ -91,7 +91,12 @@ export function Recorrido({
 
   const grafico = (
     <div className="flex flex-col gap-2.5">
-      <div role="group" aria-label={c.etiqueta} data-calendario className="grid grid-cols-7 gap-1">
+      <div
+        role="group"
+        aria-label={c.etiqueta}
+        data-calendario
+        className="grid grid-cols-7 gap-y-1"
+      >
         {DIAS.map((l, k) => (
           <span
             key={k}
@@ -177,9 +182,9 @@ export function Recorrido({
         className="flex flex-col gap-3.5 rounded-contenedor bg-superficie p-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-titulo-seccion @[996px]:sr-only">{v.titulo}</h2>
+          <h2 className="text-titulo-seccion @[1180px]:sr-only">{v.titulo}</h2>
           {conHistorial ? (
-            <div className="@[996px]:hidden">
+            <div className="@[1180px]:hidden">
               <SelectorSegmentado
                 etiqueta={v.ver}
                 opciones={[
@@ -198,10 +203,12 @@ export function Recorrido({
             </div>
           ) : null}
         </div>
-        <div className="flex flex-col gap-6 @[996px]:grid @[996px]:grid-cols-2 @[996px]:gap-8">
+        <div className="flex flex-col gap-6 @[1180px]:grid @[1180px]:grid-cols-2 @[1180px]:gap-6">
           <div data-seccion="calendario" className={vista === 'periodo' ? PANEL : PANEL_OCULTO}>
             <h3 className={SUBTITULO}>{c.titulo}</h3>
-            <VistaGrafico grafico={grafico} tabla={tabla} />
+            {grafico}
+            {/* La tabla equivalente (05 §11.3), siempre en el árbol de accesibilidad, como la vista oculta de `VistaGrafico`. */}
+            <div className="sr-only">{tabla}</div>
           </div>
           {conHistorial ? (
             <div data-seccion="historial" className={vista === 'historial' ? PANEL : PANEL_OCULTO}>

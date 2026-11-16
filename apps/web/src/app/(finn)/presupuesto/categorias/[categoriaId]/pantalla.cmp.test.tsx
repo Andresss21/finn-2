@@ -913,6 +913,8 @@ describe('PRU-CMP-PRES detalle de categoría «Un recorrido» (C-52)', () => {
     ].map((q) => visible(q)?.getBoundingClientRect().top ?? -1);
     expect(orden.every((y) => y >= 0)).toBe(true);
     expect([...orden].sort((a, b) => a - b)).toEqual(orden);
+    const dia = nodo.querySelector('[data-dia="2027-02-23"]') as HTMLElement;
+    expect(dia.getBoundingClientRect().width).toBeGreaterThanOrEqual(44);
     expect(sinEspacios(visible('[data-programadas-y-reglas]'))).toContain('Próxima: 05/03');
 
     const acciones = nodo.querySelector(
@@ -1187,6 +1189,10 @@ describe('PRU-CMP-PRES detalle de categoría «Un recorrido» (C-52)', () => {
     ).getBoundingClientRect();
     expect(calendario.left).toBeGreaterThanOrEqual(izquierda.getBoundingClientRect().right + 39);
     expect(Math.abs(calendario.top - historial.top)).toBeLessThan(1);
+    // Lado a lado, cada día sigue siendo un tocable de 44 × 44.
+    const dia = nodo.querySelector('[data-dia="2027-02-23"]') as HTMLElement;
+    expect(dia.getBoundingClientRect().width).toBeGreaterThanOrEqual(44);
+    expect(dia.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     expect(historial.left).toBeGreaterThanOrEqual(calendario.right);
     expect(consumos.top).toBeGreaterThanOrEqual(Math.max(calendario.bottom, historial.bottom));
     expect(
