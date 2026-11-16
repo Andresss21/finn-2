@@ -1318,3 +1318,168 @@ describe('PRU-CMP-PRES detalle de categoría «Un recorrido» (C-52)', () => {
     ).toEqual([]);
   });
 });
+
+describe('PRU-CMP-PRES movimiento del detalle de categoría (C-52 §8)', () => {
+  const ms = (valor: string): number => Math.round(Number(valor.replace('s', '')) * 1000);
+  const estilo = (el: Element | null | undefined) => getComputedStyle(el as Element);
+  /** Las reglas de estilo de la página, también las que van dentro de `@media`. */
+  const reglasCss = (): CSSStyleRule[] => {
+    const recorrer = (lista: CSSRuleList): CSSStyleRule[] =>
+      [...lista].flatMap((r) =>
+        r instanceof CSSStyleRule ? [r] : r instanceof CSSGroupingRule ? recorrer(r.cssRules) : [],
+      );
+    return [...document.styleSheets].flatMap((h) => {
+      try {
+        return recorrer(h.cssRules);
+      } catch {
+        return [];
+      }
+    });
+  };
+  const completo = (parcial: Record<string, unknown> = {}) =>
+    dto({
+      numeros: { ...ceros, disponible: 135000 },
+      meta: {
+        id: 'meta-1',
+        tipo: 'para_fecha',
+        monto: 300000,
+        pedido: 17500,
+        falta: 7500,
+        estado: 'con_faltante',
+        progresoBp: 4500,
+      },
+      consumos: [consumo('2027-02-23', 'debito', 1000, 1000)],
+      calendario: [{ fecha: '2027-02-23', gastado: 1000, intensidadBp: 10000 }],
+      historial: Array.from({ length: 6 }, (_, k) =>
+        hist(`2026-0${String(k + 3)}-21`, 10000, k === 1 ? 11000 : 9000),
+      ),
+      historialResumen: { promedioGastado: 9167, periodosExcedidos: 1 },
+      reglas: [{ id: 'r1', patron: 'PIZZA HUT' }],
+      ...parcial,
+    });
+
+  it('PRU-CMP-PRES-831 [FT-14] CA-D-12: el nombre y el Disponible del encabezado llevan `cat-nombre-{id}` y `cat-disp-{id}`, la pantalla declara el viaje y no se desliza entera; cada sección sube y aparece 40 ms después de la anterior y la barra de acciones 120 ms después del encabezado', async () => {
+    await page.viewport(390, 844);
+    const nodo = enMarco(completo());
+    const nombre = nodo.querySelector('main header h1 [data-viaje]') as HTMLElement;
+    expect(nombre.textContent).toBe('Super');
+    expect(nombre.style.viewTransitionName).toBe(`cat-nombre-${ID}`);
+    const disponible = nodo.querySelector('[data-disponible] [data-viaje]') as HTMLElement;
+    expect(disponible.style.viewTransitionName).toBe(`cat-disp-${ID}`);
+    expect(disponible.querySelector('[data-centavos="135000"]')).not.toBeNull();
+    expect(nodo.querySelector('main style[data-permitir-viaje]')).not.toBeNull();
+    expect(estilo(nodo.querySelector('main')).animationName).toBe('none');
+    const visible = (q: string) =>
+      [...nodo.querySelectorAll<HTMLElement>(q)].find((x) => x.getBoundingClientRect().height > 0);
+    const secciones = [
+      nodo.querySelector('main header > div'),
+      nodo.querySelector('[data-selector-periodo]')?.parentElement,
+      nodo.querySelector('[data-disponible]'),
+      nodo.querySelector('[data-numeros]'),
+      nodo.querySelector('[data-seccion="meta"]'),
+      nodo.querySelector('[data-seccion="en-que-se-fue"]'),
+      nodo.querySelector('[data-seccion="consumos"]'),
+      visible('[data-programadas-y-reglas]'),
+    ];
+    expect(secciones.map((s) => estilo(s).animationName)).toEqual(Array(8).fill('fz-item'));
+    expect(secciones.map((s) => ms(estilo(s).animationDelay))).toEqual([
+      0, 40, 80, 120, 160, 200, 240, 280,
+    ]);
+    expect(secciones.every((s) => ms(estilo(s).animationDuration) === 220)).toBe(true);
+    expect(estilo(secciones[0]).animationTimingFunction).toBe('cubic-bezier(0.2, 0.9, 0.25, 1)');
+    const barra = nodo.querySelector('nav[aria-label="Acciones de la categoría"]');
+    expect(estilo(barra).animationName).toBe('fz-item');
+    expect(ms(estilo(barra).animationDelay)).toBe(120);
+    // «Más acciones» del detalle sube 8 px y aparece, en `--duracion-rapida`.
+    const menu = reglasCss().find(
+      (r) =>
+        r.selectorText.includes('main[data-detalle-categoria]') &&
+        r.selectorText.includes('.fz-menu'),
+    );
+    expect(menu?.style.getPropertyValue('animation-name')).toBe('fz-item');
+    // Terminada la entrada, nada queda corrido: la barra fija sigue en su lugar.
+    for (const animacion of document.getAnimations()) animacion.finish();
+    expect(estilo(barra).transform).toBe('none');
+  });
+
+  it('PRU-CMP-PRES-832 [FT-14] cambiar de período con ‹ › vuelve a hacer la entrada (las secciones se montan de nuevo) y la región de estado se queda para anunciar el período', () => {
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    act(() => {
+      raiz.render(<PantallaDetalleCategoria dto={completo()} desarchivar={desarchivar} />);
+    });
+    montados.push({ raiz, nodo });
+    const antes = nodo.querySelector('[data-numeros]');
+    const anuncio = nodo.querySelector('[data-anuncio-detalle]');
+    for (const animacion of document.getAnimations()) animacion.finish();
+    act(() => {
+      raiz.render(
+        <PantallaDetalleCategoria
+          dto={completo({ periodo: CERRADO, navegacion: { siguiente: '2027-02-21' } })}
+          desarchivar={desarchivar}
+        />,
+      );
+    });
+    const despues = nodo.querySelector('[data-numeros]') as HTMLElement;
+    expect(despues).not.toBe(antes);
+    expect(despues.getAnimations().map((a) => (a as CSSAnimation).animationName)).toContain(
+      'fz-item',
+    );
+    expect(nodo.querySelector('[data-anuncio-detalle]')).toBe(anuncio);
+    expect(anuncio?.textContent).toBe('Período 21/01 – 20/02/2027, cerrado');
+  });
+
+  it('PRU-CMP-PRES-833 [FT-14] CA-D-13: las barras del historial crecen desde la base en 400 ms, 30 ms entre barras, la primera vez que se ven; al volver a «Últimos 6» ya están dibujadas', () => {
+    const raiz = mostrar(completo());
+    const panel = raiz.querySelector('[data-seccion="historial"]') as HTMLElement;
+    const vista = raiz.querySelector('[role="radiogroup"][aria-label="Ver"]') as HTMLElement;
+    const elegir = (valor: string) => {
+      act(() => {
+        vista.querySelector<HTMLButtonElement>(`[value="${valor}"]`)?.click();
+      });
+    };
+    elegir('historial');
+    expect(panel.getAttribute('data-barras')).toBe('crecen');
+    const barras = [...panel.querySelectorAll('.fz-barra-sube')];
+    expect(barras).toHaveLength(6);
+    expect(estilo(barras[0]).animationName).toBe('fz-barup');
+    expect(ms(estilo(barras[0]).animationDuration)).toBe(400);
+    expect(barras.map((b) => ms(estilo(b).animationDelay))).toEqual([0, 30, 60, 90, 120, 150]);
+    elegir('periodo');
+    elegir('historial');
+    expect(panel.getAttribute('data-barras')).toBe('quietas');
+    expect(estilo(panel.querySelector('.fz-barra-sube')).animationName).toBe('none');
+  });
+
+  it('PRU-CMP-PRES-834 [FT-14] CA-D-14: con movimiento reducido no hay entrada, viaje ni crecimiento (la regla global los anula y el viaje no se declara) y elegir un día baja de una vez', () => {
+    const anula = reglasCss().find(
+      (r) =>
+        r.parentRule instanceof CSSMediaRule &&
+        r.parentRule.conditionText.includes('prefers-reduced-motion: reduce') &&
+        r.selectorText.includes('*'),
+    );
+    expect(anula?.style.getPropertyValue('animation-name')).toBe('none');
+    expect(anula?.style.getPropertyPriority('animation-name')).toBe('important');
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      (consulta: string) =>
+        ({
+          matches: consulta.includes('reduce'),
+          media: consulta,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+        }) as unknown as MediaQueryList,
+    );
+    const baja = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    const raiz = mostrar(completo());
+    expect(raiz.querySelector('style[data-permitir-viaje]')?.textContent).toContain(
+      'prefers-reduced-motion: no-preference',
+    );
+    act(() => {
+      raiz.querySelector<HTMLButtonElement>('[data-dia="2027-02-23"]')?.click();
+    });
+    expect(baja).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' });
+    baja.mockRestore();
+    vi.restoreAllMocks();
+  });
+});
