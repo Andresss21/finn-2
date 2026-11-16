@@ -981,6 +981,58 @@ describe('PRU-CMP-PRES detalle de categoría «Un recorrido» (C-52)', () => {
     expect(expandidas(raiz)).toEqual(['true', 'true', 'false']);
   });
 
+  it('PRU-CMP-PRES-835 [FT-14] CA-D-3: una semana plegada no aporta alto (pista con mínimo 0 y el contenido fuera del dibujo al terminar de cerrarse), también al cerrarla a mano y con movimiento reducido', async () => {
+    const raiz = mostrar(salidas());
+    const plegable = (s: HTMLElement) => s.querySelector('[data-plegable]') as HTMLElement;
+    const contenido = (s: HTMLElement) => plegable(s).firstElementChild as HTMLElement;
+    const cerrada = (s: HTMLElement) => {
+      expect(plegable(s).getBoundingClientRect().height).toBe(0);
+      expect(contenido(s).hidden).toBe(true);
+      expect(getComputedStyle(contenido(s)).display).toBe('none');
+      // La semana mide solo su botón.
+      expect(s.getBoundingClientRect().height).toBe(botonSemana(s).getBoundingClientRect().height);
+    };
+    const [primera, segunda, tercera] = semanas(raiz) as [HTMLElement, HTMLElement, HTMLElement];
+    cerrada(segunda);
+    cerrada(tercera);
+    expect(plegable(segunda).className).toContain('grid-rows-[minmax(0,0fr)]');
+    expect(getComputedStyle(contenido(primera)).minHeight).toBe('0px');
+    expect(getComputedStyle(contenido(primera)).overflow).toBe('hidden');
+    // Cerrar la abierta: baja el alto con la transición y al terminar queda fuera del dibujo.
+    act(() => {
+      botonSemana(primera).click();
+    });
+    expect(plegable(primera).getAttribute('data-plegable')).toBe('cerrando');
+    await vi.waitFor(() => {
+      expect(plegable(primera).getAttribute('data-plegable')).toBe('cerrada');
+    });
+    cerrada(primera);
+    // Abrirla otra vez: el contenido vuelve y la pista pasa a 1fr.
+    act(() => {
+      botonSemana(primera).click();
+    });
+    await vi.waitFor(() => {
+      expect(plegable(primera).getAttribute('data-plegable')).toBe('abierta');
+    });
+    expect(plegable(primera).getBoundingClientRect().height).toBeGreaterThan(0);
+    // Con movimiento reducido se cierra en el acto, sin fase intermedia.
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      (consulta: string) =>
+        ({
+          matches: consulta.includes('reduce'),
+          media: consulta,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+        }) as unknown as MediaQueryList,
+    );
+    act(() => {
+      botonSemana(primera).click();
+    });
+    expect(plegable(primera).getAttribute('data-plegable')).toBe('cerrada');
+    cerrada(primera);
+    vi.restoreAllMocks();
+  });
+
   it('PRU-CMP-PRES-815 [FT-14] CA-D-4: con 10 consumos o menos todas las semanas abiertas; con un día elegido, también', () => {
     const pocos = mostrar(
       dto({
