@@ -34,7 +34,6 @@ describe('PRU-CMP-PWA sin subrayado en las acciones', () => {
       'app/(finn)/presupuesto/pantalla.tsx',
       'app/(finn)/presupuesto/categorias/[categoriaId]/pantalla.tsx',
       'app/(finn)/presupuesto/categorias/[categoriaId]/pago.tsx',
-      'app/(finn)/presupuesto/categorias/[categoriaId]/calendario.tsx',
       'app/(finn)/presupuesto/categorias/[categoriaId]/consumos.tsx',
     ];
     for (const archivo of archivos) {

@@ -169,6 +169,25 @@ const enlace = (raiz: HTMLElement, texto: string) =>
   [...raiz.querySelectorAll('a')].find((a) => a.textContent.includes(texto));
 const boton = (raiz: HTMLElement, texto: string) =>
   [...raiz.querySelectorAll('button')].find((b) => b.textContent.includes(texto));
+/** La × de la píldora del día elegido (C-52 §4). */
+const quitarDia = (raiz: HTMLElement) =>
+  raiz.querySelector<HTMLButtonElement>('button[aria-label="Quitar el filtro del día"]') ??
+  undefined;
+/** Dentro del marco, que dibuja la barra superior, la navegación y «Más acciones». */
+const enMarco = (d: DetalleCategoriaDto): HTMLElement => {
+  const nodo = document.createElement('div');
+  document.body.append(nodo);
+  const raiz = createRoot(nodo);
+  act(() => {
+    raiz.render(
+      <Marco>
+        <PantallaDetalleCategoria dto={d} desarchivar={desarchivar} />
+      </Marco>,
+    );
+  });
+  montados.push({ raiz, nodo });
+  return nodo;
+};
 /** Lo que se ve: sin el texto accesible de los montos (`sr-only`), que repite la cifra, y con los espacios normalizados. */
 const sinEspacios = (el: Element | null | undefined): string => {
   if (el === null || el === undefined) return '';
@@ -187,7 +206,10 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
       { fecha: '2027-02-28', gastado: 2000, intensidadBp: 5000 },
     ];
     const raiz = mostrar(dto({ calendario }));
-    const botones = [...raiz.querySelectorAll('[data-calendario] button[data-dia]')];
+    // C-52 §7: todos los días son botones; los que no tienen gasto, deshabilitados.
+    const botones = [
+      ...raiz.querySelectorAll('[data-calendario] button[data-dia]:not([disabled])'),
+    ];
     expect(botones.map((b) => b.getAttribute('data-dia'))).toEqual([
       '2027-02-23',
       '2027-02-25',
@@ -206,7 +228,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
       ['28/02/2027', '2000'],
     ]);
     // Cada día dice su gasto con su nombre accesible
-    expect(botones[1]?.getAttribute('aria-label')).toBe('25/02/2027, Gastado $40.00');
+    expect(botones[1]?.getAttribute('aria-label')).toBe('jueves 25 de feb, gastaste $40.00');
   });
 
   it('PRU-CMP-PRES-105 [CA-14.8] el punto de cada día crece con el `intensidadBp` que trae el DTO y un día en 0 queda en el tamaño mínimo', () => {
@@ -232,7 +254,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     ]);
   });
 
-  it('PRU-CMP-PRES-105 [CA-14.4] tocar un día deja solo sus consumos y «Ver todos los días» los devuelve', () => {
+  it('PRU-CMP-PRES-105 [CA-14.4] tocar un día deja solo sus consumos y la × de la píldora los devuelve', () => {
     const consumos = [
       consumo('2027-02-23', 'debito', 1000, 1000),
       consumo('2027-02-25', 'debito', 4000, 4000),
@@ -251,7 +273,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     ).toEqual(['2027-02-25']);
     expect(dia.getAttribute('aria-pressed')).toBe('true');
     act(() => {
-      boton(raiz, 'Ver todos los días')?.click();
+      quitarDia(raiz)?.click();
     });
     expect(raiz.querySelectorAll('[data-consumo]')).toHaveLength(2);
   });
@@ -264,8 +286,8 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     const raiz = mostrar(dto({ consumos }));
     const filas = [...raiz.querySelectorAll('[data-consumo]')].map((f) => sinEspacios(f));
     expect(filas).toEqual([
-      expect.stringMatching(/Tarjeta · Visa.*cubierto \$40\.00 · no cubierto \$30\.00.*\$70\.00$/),
-      expect.stringMatching(/Débito · Ahorro.*cubierto \$60\.00.*\$60\.00$/),
+      expect.stringMatching(/Visa · tarjeta.*cubierto \$40\.00 · no cubierto \$30\.00.*\$70\.00$/),
+      expect.stringMatching(/Ahorro · débito.*cubierto \$60\.00.*\$60\.00$/),
     ]);
   });
 
@@ -279,7 +301,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     const raiz = mostrar(
       dto({ historial, historialResumen: { promedioGastado: 7500, periodosExcedidos: 0 } }),
     );
-    expect(raiz.querySelector('[data-seccion="historial"] h2')?.textContent).toBe(
+    expect(raiz.querySelector('[data-seccion="historial"] h3')?.textContent).toBe(
       'Últimos 4 períodos',
     );
     expect(raiz.querySelectorAll('[data-historial] tbody tr')).toHaveLength(4);
@@ -338,7 +360,7 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     );
   });
 
-  it('PRU-CMP-PRES-105 [CA-14.6] con sobregiro mixto el encabezado nombra los dos indicadores sin montos y el desglose trae los montos de cada parte', () => {
+  it('PRU-CMP-PRES-105 [CA-14.6] con sobregiro mixto el encabezado nombra los dos indicadores sin montos y el aviso trae los montos de cada parte', () => {
     const raiz = mostrar(
       dto({
         numeros: { ...ceros, disponible: -5000 },
@@ -353,11 +375,13 @@ describe('PRU-CMP-PRES-105 detalle de categoría', () => {
     ]);
     // Sin tocar nada, ningún indicador trae un monto; al llegar al desglose aparecen los de cada parte (PF-2)
     expect(indicadores.every((i) => !i.textContent.includes('$'))).toBe(true);
+    // C-52 §6: mixto es un solo aviso de problema, con las dos partes y sin botón.
     const desglose = sinEspacios(raiz.querySelector('[data-sobregiro="mixto"]'));
-    expect(desglose).toContain('Con débito $20.00');
-    expect(desglose).toContain('Con tarjeta $30.00');
-    expect(desglose).toContain('Deuda sin reservar en Super: $30.00');
-    expect(desglose).toContain('Esta deuda suma a lo que te falta reservar para Visa');
+    expect(desglose).toContain('Sobregiro con débito o efectivo · $50.00');
+    expect(desglose).toContain(
+      'Con débito $20.00 · con tarjeta $30.00. Al cerrar el período, Listo para asignar bajará $20.00.',
+    );
+    expect(raiz.querySelectorAll('[data-sobregiro="mixto"] :is(a, button)')).toHaveLength(0);
   });
 
   it('PRU-CMP-PRES-105 [CA-14.7] «Cubrir $26.30» abre asignar de la categoría sin armar ningún monto nuevo', () => {
@@ -525,7 +549,7 @@ describe('Detalle de categoría: ajustes del diseño (CH-140)', () => {
     expect(sin.querySelectorAll('[data-numeros] > div')).toHaveLength(5);
   });
 
-  it('PRU-CMP-PRES-243 [CA-14.1] en el orden del diseño: cifras, sobregiro, consumos, historial, y al final las acciones de asignar y mover', () => {
+  it('PRU-CMP-PRES-243 [CA-14.1] en el orden de C-52: cifras, sobregiro, acciones, «¿En qué se fue?» con el historial y después los consumos', () => {
     const raiz = mostrar(
       dto({
         numeros: { ...ceros, disponible: -2630 },
@@ -538,9 +562,9 @@ describe('Detalle de categoría: ajustes del diseño (CH-140)', () => {
     const orden = [
       '[data-numeros]',
       '[data-sobregiro]',
-      '[data-seccion="consumos"]',
-      '[data-seccion="historial"]',
       'nav[aria-label="Acciones de la categoría"]',
+      '[data-seccion="historial"]',
+      '[data-seccion="consumos"]',
     ].map((q) => raiz.querySelector(q));
     expect(orden.every((x) => x !== null)).toBe(true);
     for (let k = 1; k < orden.length; k++) {
@@ -571,6 +595,10 @@ describe('Detalle de categoría: historial sin datos y meta (D9, A9)', () => {
 
   it('PRU-CMP-PRES-400 [CA-14.5] sin períodos anteriores, la caja «Gráfico sin datos»; una categoría de ahorro con meta y sin gasto no lleva historial', () => {
     const vacia = mostrar(dto());
+    // C-52: en el teléfono el historial es la segunda vista de «¿En qué se fue?».
+    act(() => {
+      vacia.querySelector<HTMLButtonElement>('[role="radio"][value="historial"]')?.click();
+    });
     const caja = vacia.querySelector('[data-historial="vacio"]');
     expect(caja?.textContent).toContain('Gráfico sin datos');
     expect(caja?.querySelector('[data-icono="chart"]')).not.toBeNull();
@@ -626,8 +654,9 @@ describe('Detalle de categoría: cobertura de cada consumo (A6)', () => {
     expect(sinEspacios(parcial?.querySelector('[data-nota-cobertura]'))).toBe(
       'cubierto $20.50 · no cubierto $7.80',
     );
+    // C-52 §4: lo no cubierto de una tarjeta va en `--deuda-sin-respaldo-texto` (con débito, `--problema-texto`).
     expect(parcial?.querySelector('[data-nota-cobertura]')?.className).toContain(
-      'text-problema-texto',
+      'text-deuda-sin-respaldo-texto',
     );
     expect(getComputedStyle(barrita(parcial)).height).toBe('5px');
     const cubierto = barrita(parcial).querySelector('[data-segmento="cubierto"]') as HTMLElement;
@@ -713,6 +742,10 @@ describe('PRU-CMP-CATEG entrega 4', () => {
     const raiz = mostrar(
       dto({ historial, historialResumen: { promedioGastado: 11543, periodosExcedidos: 1 } }),
     );
+    // Sin el marco no hay contenedor de computadora: la vista «Últimos 3» muestra el historial.
+    act(() => {
+      raiz.querySelector<HTMLButtonElement>('[role="radio"][value="historial"]')?.click();
+    });
     const tarjeta = raiz.querySelector('[data-historial] [data-vista-grafico]') as HTMLElement;
     const tabla = [...tarjeta.querySelectorAll('[data-tabla-equivalente]')].at(-1) as HTMLElement;
     const grafico = tabla.parentElement?.previousElementSibling as Element;
@@ -749,26 +782,6 @@ describe('PRU-CMP-CATEG entrega 4', () => {
 });
 
 describe('PRU-CMP-PRES-806 encabezado del detalle sin encimar', () => {
-  const montarEnMarco = (nombre: string): HTMLElement => {
-    const nodo = document.createElement('div');
-    document.body.append(nodo);
-    const raiz = createRoot(nodo);
-    act(() => {
-      raiz.render(
-        <Marco>
-          <PantallaDetalleCategoria
-            dto={dto({
-              categoria: { id: ID, nombre },
-              grupo: { id: 'g', nombre: 'Deudas' },
-            })}
-            desarchivar={desarchivar}
-          />
-        </Marco>,
-      );
-    });
-    montados.push({ raiz, nodo });
-    return nodo;
-  };
   const seEncimanVerticalmente = (a: DOMRect, b: DOMRect): boolean =>
     a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
 
@@ -778,10 +791,12 @@ describe('PRU-CMP-PRES-806 encabezado del detalle sin encimar', () => {
     [1280, 'Compras a plazo'],
     [1280, 'Compras a plazo con la tarjeta de crédito del banco'],
   ])(
-    'PRU-CMP-PRES-806 [FT-14] en %i px con «%s», el grupo, el título y el rótulo «Disponible» no se pisan, mientras los bloques entran y después: en teléfono el título va en la barra fija, en computadora en su fila entre el grupo y «Disponible»',
+    'PRU-CMP-PRES-806 [FT-14] en %i px con «%s», el grupo, el título y el rótulo «Disponible» no se pisan, mientras los bloques entran y después: el título va en el encabezado de la página, entre el grupo y «Disponible»',
     async (ancho, nombre) => {
       await page.viewport(ancho, 844);
-      const nodo = montarEnMarco(nombre);
+      const nodo = enMarco(
+        dto({ categoria: { id: ID, nombre }, grupo: { id: 'g', nombre: 'Deudas' } }),
+      );
       const encabezado = nodo.querySelector('main header') as HTMLElement;
       const grupo = encabezado.querySelector('p') as HTMLElement;
       const h1 = encabezado.querySelector('h1') as HTMLElement;
@@ -792,14 +807,10 @@ describe('PRU-CMP-PRES-806 encabezado del detalle sin encimar', () => {
         const g = grupo.getBoundingClientRect();
         const titulo = h1.getBoundingClientRect();
         const d = disponible.getBoundingClientRect();
-        if (ancho < 1024) {
-          // CH-109: en teléfono el `h1` va en la barra de 60 px de arriba, fuera del contenido.
-          expect(titulo.top).toBe(0);
-          expect(titulo.bottom).toBeLessThanOrEqual(g.top + 0.5);
-        } else {
-          expect(titulo.top).toBeGreaterThanOrEqual(g.bottom - 0.5);
-          expect(d.top).toBeGreaterThanOrEqual(titulo.bottom - 0.5);
-        }
+        // C-52 §2.2: en el teléfono el nombre ya no va en la barra fija, sino debajo del grupo (título de 1.75 rem).
+        expect(titulo.top).toBeGreaterThanOrEqual(g.bottom - 0.5);
+        expect(d.top).toBeGreaterThanOrEqual(titulo.bottom - 0.5);
+        expect(getComputedStyle(h1).fontSize).toBe('28px');
         expect(seEncimanVerticalmente(titulo, d)).toBe(false);
         expect(seEncimanVerticalmente(titulo, g)).toBe(false);
       };
@@ -811,80 +822,493 @@ describe('PRU-CMP-PRES-806 encabezado del detalle sin encimar', () => {
   );
 });
 
-describe('Detalle de categoría: los consumos más recientes primero', () => {
-  /** `n` consumos en días seguidos desde el 10/02, en el orden del DTO (el más viejo primero). */
-  const varios = (n: number) =>
-    Array.from({ length: n }, (_, k) => consumo(`2027-02-${String(10 + k)}`, 'debito', 100, 100));
-  const fechas = (raiz: HTMLElement) =>
-    [...raiz.querySelectorAll('[data-consumo]')].map((x) => x.getAttribute('data-consumo'));
-  const seccion = (raiz: HTMLElement) =>
-    raiz.querySelector('[data-seccion="consumos"]') as HTMLElement;
-
-  it('PRU-CMP-PRES-807 [FT-14] con 12 consumos se ven los 10 más recientes, del más nuevo al más viejo, el contador dice 12 y al pie «Ver los 12 consumos»', () => {
-    const raiz = mostrar(dto({ consumos: varios(12) }));
-    expect(fechas(raiz)).toEqual(Array.from({ length: 10 }, (_, k) => `2027-02-${String(21 - k)}`));
-    expect(seccion(raiz).querySelector('h2 span:last-child')?.textContent).toBe('12');
-    const ver = boton(seccion(raiz), 'Ver los 12 consumos') as HTMLButtonElement;
-    expect(ver).toBeDefined();
-    expect(ver.getAttribute('aria-expanded')).toBe('false');
-    // Al pie de la lista y con el estilo de enlace, sin fondo (C-33)
-    const lista = seccion(raiz).querySelector('ul') as HTMLElement;
-    expect(lista.compareDocumentPosition(ver) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
-    expect(ver.className).toContain('text-enlace');
-    expect(ver.className).not.toMatch(/bg-/);
-  });
-
-  it('PRU-CMP-PRES-808 [FT-14] tocar «Ver los 12 consumos» los muestra todos, anuncia «Mostrando los 12 consumos.» y pasa a «Ver menos»; al plegar vuelven 10 y el foco queda en el botón', () => {
-    const raiz = mostrar(dto({ consumos: varios(12) }));
-    const ver = boton(seccion(raiz), 'Ver los 12 consumos') as HTMLButtonElement;
-    act(() => {
-      ver.focus();
-      ver.click();
+describe('PRU-CMP-PRES detalle de categoría «Un recorrido» (C-52)', () => {
+  /** 15 días seguidos del período activo, del 22/02 al 08/03, en tres semanas. */
+  const QUINCE = [
+    ...['22', '23', '24', '25', '26', '27', '28'].map((d) => `2027-02-${d}`),
+    ...['01', '02', '03', '04', '05', '06', '07', '08'].map((d) => `2027-03-${d}`),
+  ];
+  /** Salidas con 45 consumos (3 por día, dos con débito y uno con tarjeta), en el orden del DTO. */
+  const salidas = () =>
+    dto({
+      hoy: '2027-03-16',
+      categoria: { id: ID, nombre: 'Salidas' },
+      consumos: QUINCE.flatMap((f) => [
+        consumo(f, 'debito', 100, 100),
+        consumo(f, 'tarjeta', 200, 200),
+        consumo(f, 'debito', 300, 300),
+      ]),
+      calendario: QUINCE.map((f) => ({ fecha: f, gastado: 600, intensidadBp: 5000 })),
     });
-    expect(fechas(raiz)).toEqual(Array.from({ length: 12 }, (_, k) => `2027-02-${String(21 - k)}`));
-    expect(ver.textContent).toBe('Ver menos');
-    expect(ver.getAttribute('aria-expanded')).toBe('true');
-    expect(seccion(raiz).querySelector('[role="status"]')?.textContent).toBe(
-      'Mostrando los 12 consumos.',
+  const semanas = (raiz: HTMLElement) => [...raiz.querySelectorAll<HTMLElement>('[data-semana]')];
+  const botonSemana = (s: HTMLElement) => s.querySelector('button[aria-expanded]') as HTMLElement;
+  const expandidas = (raiz: HTMLElement) =>
+    semanas(raiz).map((s) => botonSemana(s).getAttribute('aria-expanded'));
+  const ficha = (raiz: HTMLElement, texto: string) =>
+    [...raiz.querySelectorAll<HTMLElement>('[aria-label="Filtrar consumos"] [role="radio"]')].find(
+      (x) => x.textContent === texto,
     );
-    act(() => {
-      ver.click();
+  const anuncio = (raiz: HTMLElement) =>
+    raiz.querySelector('[data-anuncio-detalle]')?.textContent ?? '';
+  const restaurantes = () =>
+    dto({
+      categoria: { id: ID, nombre: 'Restaurantes' },
+      numeros: { ...ceros, asignado: 12000, gastado: 14630, fondo: 12000, disponible: -2630 },
+      sobregiro: { tipo: 'debito', total: 2630, parteTarjeta: 0, parteDebito: 2630 },
+      consumos: [
+        consumo('2027-02-23', 'debito', 4210, 4210),
+        consumo('2027-02-24', 'tarjeta', 2560, 2560),
+        consumo('2027-02-26', 'debito', 875, 875),
+        consumo('2027-02-27', 'debito', 2305, 2305),
+        consumo('2027-02-28', 'debito', 2830, 2050, 7244),
+        consumo('2027-03-01', 'debito', 1850, 0, 0),
+      ],
     });
-    expect(fechas(raiz)).toHaveLength(10);
-    expect(ver.textContent).toBe('Ver los 12 consumos');
-    expect(document.activeElement).toBe(ver);
+
+  it('PRU-CMP-PRES-812 [FT-14] CA-D-1: en el teléfono, ← y ⋯ en la barra; grupo, nombre y selector; Disponible; cifras; meta; «¿En qué se fue?»; consumos; programadas y reglas; y la barra de acciones fija al pie, sobre la navegación, con su alto reservado', async () => {
+    await page.viewport(390, 844);
+    const nodo = enMarco(
+      dto({
+        numeros: { ...ceros, disponible: 135000 },
+        meta: {
+          id: 'meta-1',
+          tipo: 'para_fecha',
+          monto: 300000,
+          pedido: 17500,
+          falta: 7500,
+          estado: 'con_faltante',
+          progresoBp: 4500,
+        },
+        consumos: [consumo('2027-02-23', 'debito', 1000, 1000)],
+        calendario: [{ fecha: '2027-02-23', gastado: 1000, intensidadBp: 10000 }],
+        historial: [hist('2027-01-21', 10000, 9000)],
+        historialResumen: { promedioGastado: 9000, periodosExcedidos: 0 },
+        reglas: [{ id: 'r1', patron: 'PIZZA HUT' }],
+        programadas: [
+          { programada: { id: 'p1', nombre: 'Netflix' }, monto: 1500, proxima: '2027-03-05' },
+        ],
+      }),
+    );
+    await vi.waitFor(() => {
+      expect(
+        nodo.querySelector('header[data-marco-barra] [aria-label="Más acciones"]'),
+      ).not.toBeNull();
+    });
+    const barra = nodo.querySelector('header[data-marco-barra]') as HTMLElement;
+    expect(barra.querySelector('a[aria-label="Volver a Presupuesto"]')).not.toBeNull();
+    expect(barra.querySelector('h1')).toBeNull();
+    for (const animacion of document.getAnimations()) animacion.finish();
+    const visible = (q: string) =>
+      [...nodo.querySelectorAll<HTMLElement>(q)].find((x) => x.getBoundingClientRect().height > 0);
+    const orden = [
+      'main header p',
+      'main header h1',
+      '[data-selector-periodo]',
+      '[data-disponible]',
+      '[data-numeros]',
+      '[data-seccion="meta"]',
+      '[data-seccion="en-que-se-fue"]',
+      '[data-seccion="consumos"]',
+      '[data-programadas-y-reglas]',
+    ].map((q) => visible(q)?.getBoundingClientRect().top ?? -1);
+    expect(orden.every((y) => y >= 0)).toBe(true);
+    expect([...orden].sort((a, b) => a - b)).toEqual(orden);
+    expect(sinEspacios(visible('[data-programadas-y-reglas]'))).toContain('Próxima: 05/03');
+
+    const acciones = nodo.querySelector(
+      'nav[aria-label="Acciones de la categoría"]',
+    ) as HTMLElement;
+    const navegacion = nodo.querySelector('nav[data-marco-barra]') as HTMLElement;
+    expect(getComputedStyle(acciones).position).toBe('fixed');
+    expect(acciones.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      navegacion.getBoundingClientRect().top + 0.5,
+    );
+    expect(getComputedStyle(nodo.querySelector('main') as HTMLElement).paddingBottom).toBe('88px');
+    expect([...acciones.querySelectorAll('a')].map((a) => sinEspacios(a))).toEqual([
+      'Asignar $75.00',
+      'Mover dinero',
+    ]);
   });
 
-  it('PRU-CMP-PRES-809 [FT-14] con 10 consumos o menos se ven todos y no hay botón', () => {
-    for (const n of [10, 3]) {
-      const raiz = mostrar(dto({ consumos: varios(n) }));
-      expect(fechas(raiz)).toHaveLength(n);
-      expect(boton(seccion(raiz), 'Ver los')).toBeUndefined();
-      expect(boton(seccion(raiz), 'Ver menos')).toBeUndefined();
-    }
+  it('PRU-CMP-PRES-813 [FT-14] CA-D-2: con 45 consumos van del más reciente al más antiguo por semana, solo la más reciente abierta, y cada semana dice «{n} consumos» sin ningún monto', () => {
+    const raiz = mostrar(salidas());
+    expect(semanas(raiz).map((s) => s.getAttribute('data-semana'))).toEqual([
+      '2027-03-08',
+      '2027-03-01',
+      '2027-02-22',
+    ]);
+    const textos = (s: HTMLElement) =>
+      [...botonSemana(s).querySelectorAll('span:not([aria-hidden])')]
+        .map((x) => x.textContent)
+        .join(' ');
+    expect(semanas(raiz).map(textos)).toEqual([
+      '8–14 mar 3 consumos',
+      '1–7 mar 21 consumos',
+      '22–28 feb 21 consumos',
+    ]);
+    expect(semanas(raiz).every((s) => !botonSemana(s).textContent.includes('$'))).toBe(true);
+    expect(expandidas(raiz)).toEqual(['true', 'false', 'false']);
+    // Dentro de cada semana, del más reciente al más antiguo; lo cerrado no se alcanza con el teclado.
+    const segunda = semanas(raiz)[1] as HTMLElement;
+    expect(segunda.querySelector('[data-consumo]')?.getAttribute('data-consumo')).toBe(
+      '2027-03-07',
+    );
+    expect(segunda.querySelector('[data-plegable]')?.hasAttribute('inert')).toBe(true);
+    expect(raiz.querySelector('[data-seccion="consumos"] [data-cuantos]')?.textContent).toBe('45');
   });
 
-  it('PRU-CMP-PRES-810 [CA-14.4] tocar un día con 11 consumos los muestra todos, sin el límite de 10 ni el botón, y «Ver todos los días» vuelve a los 10 más recientes', () => {
-    const consumos = [
-      consumo('2027-02-23', 'debito', 100, 100),
-      consumo('2027-02-23', 'tarjeta', 100, 100),
-      ...Array.from({ length: 11 }, () => consumo('2027-02-25', 'debito', 100, 100)),
-    ];
-    const calendario = [
-      { fecha: '2027-02-23', gastado: 200, intensidadBp: 1818 },
-      { fecha: '2027-02-25', gastado: 1100, intensidadBp: 10000 },
-    ];
-    const raiz = mostrar(dto({ consumos, calendario }));
-    expect(fechas(raiz)).toHaveLength(10);
+  it('PRU-CMP-PRES-814 [FT-14] CA-D-3: abrir otra semana la abre con la transición de alto y gira su flecha; cambiar de filtro y volver a «Todos» la deja abierta', () => {
+    const raiz = mostrar(salidas());
+    const segunda = semanas(raiz)[1] as HTMLElement;
     act(() => {
-      (raiz.querySelector('[data-dia="2027-02-25"]') as HTMLButtonElement).click();
+      botonSemana(segunda).click();
     });
-    expect(fechas(raiz)).toEqual(Array.from({ length: 11 }, () => '2027-02-25'));
-    expect(boton(seccion(raiz), 'Ver los')).toBeUndefined();
+    expect(expandidas(raiz)).toEqual(['true', 'true', 'false']);
+    const plegable = segunda.querySelector('[data-plegable]') as HTMLElement;
+    expect(plegable.hasAttribute('inert')).toBe(false);
+    expect(getComputedStyle(plegable).transitionProperty).toContain('grid-template-rows');
+    expect(getComputedStyle(plegable).transitionDuration).toBe('0.22s');
+    expect(segunda.querySelector('button [aria-hidden="true"]')?.className).toContain('rotate-180');
     act(() => {
-      boton(raiz, 'Ver todos los días')?.click();
+      ficha(raiz, 'Débito')?.click();
     });
-    expect(fechas(raiz)).toHaveLength(10);
-    expect(boton(seccion(raiz), 'Ver los 13 consumos')).toBeDefined();
+    expect(expandidas(raiz)).toEqual(['true', 'true', 'true']);
+    act(() => {
+      ficha(raiz, 'Todos · 45')?.click();
+    });
+    expect(expandidas(raiz)).toEqual(['true', 'true', 'false']);
+  });
+
+  it('PRU-CMP-PRES-815 [FT-14] CA-D-4: con 10 consumos o menos todas las semanas abiertas; con un día elegido, también', () => {
+    const pocos = mostrar(
+      dto({
+        consumos: QUINCE.slice(0, 10).map((f) => consumo(f, 'debito', 100, 100)),
+        calendario: QUINCE.slice(0, 10).map((f) => ({
+          fecha: f,
+          gastado: 100,
+          intensidadBp: 10000,
+        })),
+      }),
+    );
+    expect(expandidas(pocos)).toEqual(['true', 'true']);
+    const muchos = mostrar(salidas());
+    act(() => {
+      muchos.querySelector<HTMLButtonElement>('[data-dia="2027-02-24"]')?.click();
+    });
+    expect(expandidas(muchos)).toEqual(['true']);
+  });
+
+  it('PRU-CMP-PRES-816 [FT-14] CA-D-5: tocar el 5 de marzo lo invierte y agranda su punto, muestra la píldora «Viernes 5 de mar» con ×, deja solo ese día, baja suave hasta la lista y anuncia «Consumos del 5 de mar»; la × o el mismo día los devuelven', () => {
+    const baja = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => undefined);
+    const raiz = mostrar(salidas());
+    const dia = raiz.querySelector('[data-dia="2027-03-05"]') as HTMLButtonElement;
+    act(() => {
+      dia.click();
+    });
+    expect(dia.getAttribute('aria-pressed')).toBe('true');
+    expect(dia.className).toContain('bg-texto');
+    expect(dia.querySelector('span[style]')?.className).toContain('scale-[1.15]');
+    const pildora = raiz.querySelector('[data-dia-elegido]') as HTMLElement;
+    expect(sinEspacios(pildora)).toBe('Viernes 5 de mar');
+    expect(pildora.className).toContain('bg-texto');
+    expect(quitarDia(raiz)).toBeDefined();
+    expect(
+      [...raiz.querySelectorAll('[data-consumo]')].map((x) => x.getAttribute('data-consumo')),
+    ).toEqual(['2027-03-05', '2027-03-05', '2027-03-05']);
+    expect(baja).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    expect(baja.mock.contexts[0]).toBe(raiz.querySelector('[data-seccion="consumos"]'));
+    expect(anuncio(raiz)).toBe('Consumos del 5 de mar');
+
+    act(() => {
+      quitarDia(raiz)?.click();
+    });
+    expect(raiz.querySelector('[data-dia-elegido]')).toBeNull();
+    expect(raiz.querySelectorAll('[data-consumo]')).toHaveLength(45);
+    expect(anuncio(raiz)).toBe('Todos los consumos del período');
+    act(() => {
+      dia.click();
+    });
+    act(() => {
+      dia.click();
+    });
+    expect(dia.getAttribute('aria-pressed')).toBe('false');
+    expect(raiz.querySelectorAll('[data-consumo]')).toHaveLength(45);
+    baja.mockRestore();
+  });
+
+  it('PRU-CMP-PRES-817 [FT-14] CA-D-6: un día sin gasto es un botón deshabilitado que dice «…, sin gasto»', () => {
+    const raiz = mostrar(salidas());
+    const domingo = raiz.querySelector('[data-dia="2027-02-21"]') as HTMLButtonElement;
+    expect(domingo.tagName).toBe('BUTTON');
+    expect(domingo.disabled).toBe(true);
+    expect(domingo.getAttribute('aria-label')).toBe('domingo 21 de feb, sin gasto');
+    expect(domingo.querySelector('span[style]')).toBeNull();
+  });
+
+  it('PRU-CMP-PRES-818 [FT-14] CA-D-7: con sobregiro con débito el aviso de problema va sin botón, el principal es «Cubrir $26.30» a Asignar, hay «No cubiertos · 2» y la línea del orden de cobertura va encima de la lista', () => {
+    const raiz = mostrar(restaurantes());
+    const aviso = raiz.querySelector(
+      '[data-sobregiro="debito"] [data-aviso-en-linea]',
+    ) as HTMLElement;
+    expect(aviso.getAttribute('data-estado')).toBe('problema');
+    expect(sinEspacios(aviso)).toContain('Sobregiro con débito o efectivo · $26.30');
+    expect(aviso.querySelectorAll('a, button')).toHaveLength(0);
+    const acciones = raiz.querySelector(
+      'nav[aria-label="Acciones de la categoría"]',
+    ) as HTMLElement;
+    const principal = acciones.querySelector('a') as HTMLElement;
+    expect(sinEspacios(principal)).toBe('Cubrir $26.30');
+    expect(principal.getAttribute('href')).toBe(
+      `/presupuesto/asignar/${ID}?volver=${encodeURIComponent(`/presupuesto/categorias/${ID}`)}`,
+    );
+    expect(ficha(raiz, 'No cubiertos · 2')).toBeDefined();
+    const linea = raiz.querySelector('[data-orden-cobertura]') as HTMLElement;
+    expect(linea.textContent).toBe(
+      'Lo asignado cubre los consumos del más antiguo al más reciente: los últimos son los que quedaron sin cubrir.',
+    );
+    const primera = semanas(raiz)[0] as HTMLElement;
+    expect(linea.compareDocumentPosition(primera) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    act(() => {
+      ficha(raiz, 'No cubiertos · 2')?.click();
+    });
+    expect(raiz.querySelectorAll('[data-consumo]')).toHaveLength(2);
+    expect(anuncio(raiz)).toBe('No cubiertos · 2');
+  });
+
+  it('PRU-CMP-PRES-819 [FT-14] CA-D-8: con sobregiro con tarjeta el aviso es «Deuda sin reservar en Ropa · $45.00» con `card` en `--deuda-sin-respaldo-texto`, y el principal es «Cubrir $45.00»', () => {
+    const raiz = mostrar(
+      dto({
+        categoria: { id: ID, nombre: 'Ropa' },
+        numeros: { ...ceros, disponible: -4500 },
+        sobregiro: { tipo: 'tarjeta', total: 4500, parteTarjeta: 4500, parteDebito: 0 },
+        consumos: [consumo('2027-02-24', 'tarjeta', 9000, 4500, 5000)],
+      }),
+    );
+    const aviso = raiz.querySelector(
+      '[data-sobregiro="tarjeta"] [data-aviso-en-linea]',
+    ) as HTMLElement;
+    expect(sinEspacios(aviso.querySelector('.fz-aviso-titulo'))).toBe(
+      'Deuda sin reservar en Ropa · $45.00',
+    );
+    expect(sinEspacios(aviso)).toContain('Esta deuda suma a lo que te falta reservar para Visa.');
+    const glifo = aviso.querySelector('.fz-aviso-glifo') as HTMLElement;
+    expect(glifo.className).toContain('text-deuda-sin-respaldo-texto');
+    expect(glifo.querySelector('[data-icono="card"]')).not.toBeNull();
+    expect(aviso.querySelectorAll('a, button')).toHaveLength(0);
+    const acciones = raiz.querySelector(
+      'nav[aria-label="Acciones de la categoría"]',
+    ) as HTMLElement;
+    expect(sinEspacios(acciones.querySelector('a'))).toBe('Cubrir $45.00');
+  });
+
+  it('PRU-CMP-PRES-820 [FT-14] CA-D-9: en el período cerrado, el aviso «Período cerrado · fechas» con «Ir al período actual», sin barra de acciones, el calendario sin hoy ni días futuros y › al período actual', () => {
+    const raiz = mostrar(
+      dto({
+        periodo: CERRADO,
+        navegacion: { anterior: '2026-12-21', siguiente: '2027-02-21' },
+        consumos: [consumo('2027-01-25', 'debito', 1000, 1000)],
+        calendario: [{ fecha: '2027-01-25', gastado: 1000, intensidadBp: 10000 }],
+      }),
+    );
+    const aviso = [...raiz.querySelectorAll<HTMLElement>('[data-aviso-en-linea]')].find((x) =>
+      x.textContent.includes('Período cerrado'),
+    ) as HTMLElement;
+    expect(aviso.getAttribute('data-estado')).toBe('informacion');
+    expect(sinEspacios(aviso.querySelector('.fz-aviso-titulo'))).toBe(
+      'Período cerrado · 21/01 – 20/02/2027',
+    );
+    expect(enlace(aviso, 'Ir al período actual')?.getAttribute('href')).toBe(
+      `/presupuesto/categorias/${ID}`,
+    );
+    expect(
+      [...raiz.querySelectorAll('a')].filter((a) => a.textContent === 'Ir al período actual'),
+    ).toHaveLength(1);
+    expect(raiz.querySelector('nav[aria-label="Acciones de la categoría"]')).toBeNull();
+    const dias = [...raiz.querySelectorAll<HTMLElement>('[data-calendario] [data-dia]')];
+    expect(dias).toHaveLength(31);
+    expect(dias.some((d) => d.className.includes('ring-enlace'))).toBe(false);
+    expect(dias.some((d) => d.className.includes('text-texto-terciario'))).toBe(false);
+    expect(raiz.querySelector('a[aria-label="Período siguiente"]')?.getAttribute('href')).toBe(
+      `/presupuesto/categorias/${ID}`,
+    );
+  });
+
+  it('PRU-CMP-PRES-821 [FT-14] CA-D-10: «Archivar» está en Más acciones y no al pie; con Disponible distinto de cero, deshabilitado con su motivo', async () => {
+    const menu = await abrirMenu(
+      dto({
+        numeros: { ...ceros, disponible: 5000 },
+        acciones: { ...acciones, puedeArchivar: false, bloqueosArchivo: ['disponible'] },
+      }),
+    );
+    const archivar = accion(menu, 'Archivar') as HTMLElement;
+    expect(archivar.getAttribute('aria-disabled')).toBe('true');
+    expect(archivar.textContent).toContain(
+      'No se puede archivar: tiene Disponible distinto de cero.',
+    );
+    const main = document.querySelector('main[data-detalle-categoria]') as HTMLElement;
+    expect(main.textContent).not.toContain('Archivar');
+  });
+
+  it('PRU-CMP-PRES-822 [FT-14] CA-D-11: a 1440 px la columna izquierda de 380 px queda fija con las acciones; a la derecha calendario e historial lado a lado, sin el control, y abajo los consumos; «Más acciones» con texto', async () => {
+    await page.viewport(1440, 900);
+    const nodo = enMarco(
+      dto({
+        consumos: [consumo('2027-02-23', 'debito', 1000, 1000)],
+        calendario: [{ fecha: '2027-02-23', gastado: 1000, intensidadBp: 10000 }],
+        historial: [hist('2027-01-21', 10000, 9000), hist('2026-12-21', 10000, 12000)],
+        historialResumen: { promedioGastado: 10500, periodosExcedidos: 1 },
+        reglas: [{ id: 'r1', patron: 'PIZZA HUT' }],
+      }),
+    );
+    await vi.waitFor(() => {
+      expect(
+        nodo.querySelector('header[data-marco-barra] [aria-label="Más acciones"]'),
+      ).not.toBeNull();
+    });
+    for (const animacion of document.getAnimations()) animacion.finish();
+    const izquierda = nodo.querySelector('[data-columna="izquierda"]') as HTMLElement;
+    expect(getComputedStyle(izquierda).position).toBe('sticky');
+    expect(izquierda.getBoundingClientRect().width).toBe(380);
+    const acciones = izquierda.querySelector(
+      'nav[aria-label="Acciones de la categoría"]',
+    ) as HTMLElement;
+    expect(getComputedStyle(acciones).position).toBe('static');
+    expect(
+      izquierda.querySelector('[data-programadas-y-reglas]')?.getBoundingClientRect().height,
+    ).toBeGreaterThan(0);
+    const calendario = (
+      nodo.querySelector('[data-seccion="calendario"]') as HTMLElement
+    ).getBoundingClientRect();
+    const historial = (
+      nodo.querySelector('[data-seccion="historial"]') as HTMLElement
+    ).getBoundingClientRect();
+    const consumos = (
+      nodo.querySelector('[data-seccion="consumos"]') as HTMLElement
+    ).getBoundingClientRect();
+    expect(calendario.left).toBeGreaterThanOrEqual(izquierda.getBoundingClientRect().right + 39);
+    expect(Math.abs(calendario.top - historial.top)).toBeLessThan(1);
+    expect(historial.left).toBeGreaterThanOrEqual(calendario.right);
+    expect(consumos.top).toBeGreaterThanOrEqual(Math.max(calendario.bottom, historial.bottom));
+    expect(
+      (
+        nodo.querySelector('[role="radiogroup"][aria-label="Ver"]') as HTMLElement
+      ).getBoundingClientRect().height,
+    ).toBe(0);
+    expect(
+      nodo.querySelector('header[data-marco-barra] [aria-label="Más acciones"]')?.textContent,
+    ).toContain('Más acciones');
+  });
+
+  it('PRU-CMP-PRES-823 [FT-14] CA-D-13: «Últimos 6» muestra el historial con el promedio y «Se pasó 2 de 6» con `dang`, y las barras en que se pasó van en `--problema-texto`', () => {
+    const seis = Array.from({ length: 6 }, (_, k) =>
+      hist(`2026-0${String(k + 3)}-21`, 10000, k === 1 || k === 3 ? 11000 : 9000),
+    );
+    const raiz = mostrar(
+      dto({ historial: seis, historialResumen: { promedioGastado: 9667, periodosExcedidos: 2 } }),
+    );
+    const vista = raiz.querySelector('[role="radiogroup"][aria-label="Ver"]') as HTMLElement;
+    expect([...vista.querySelectorAll('[role="radio"]')].map((x) => x.textContent)).toEqual([
+      'Este período',
+      'Últimos 6',
+    ]);
+    const panel = raiz.querySelector('[data-seccion="historial"]') as HTMLElement;
+    expect(getComputedStyle(panel).display).toBe('none');
+    act(() => {
+      vista.querySelector<HTMLButtonElement>('[value="historial"]')?.click();
+    });
+    expect(getComputedStyle(panel).display).toBe('flex');
+    expect(
+      getComputedStyle(raiz.querySelector('[data-seccion="calendario"]') as HTMLElement).display,
+    ).toBe('none');
+    const sePaso = panel.querySelector('[data-se-paso]') as HTMLElement;
+    expect(sePaso.textContent).toBe('Se pasó 2 de 6');
+    expect(sePaso.parentElement?.querySelector('[data-icono="dang"]')).not.toBeNull();
+    expect(panel.querySelector('[data-centavos="9667"]')).not.toBeNull();
+    expect(panel.querySelectorAll('svg .fill-problema-texto')).toHaveLength(2);
+  });
+
+  it('PRU-CMP-PRES-824 [FT-14] CA-D-15: el calendario es un grupo con nombre, los filtros y la vista son radios, las semanas llevan `aria-expanded`, y se anuncian la entrada, el filtro y el cambio de período', () => {
+    const nodo = document.createElement('div');
+    document.body.append(nodo);
+    const raiz = createRoot(nodo);
+    act(() => {
+      raiz.render(<PantallaDetalleCategoria dto={salidas()} desarchivar={desarchivar} />);
+    });
+    montados.push({ raiz, nodo });
+    expect(anuncio(nodo)).toBe('Detalle de Salidas');
+    expect(nodo.querySelectorAll('[role="status"]')).toHaveLength(1);
+    expect(nodo.querySelector('[data-calendario]')?.getAttribute('role')).toBe('group');
+    expect(nodo.querySelector('[data-calendario]')?.getAttribute('aria-label')).toBe(
+      'Días del período',
+    );
+    const filtros = nodo.querySelector(
+      '[role="radiogroup"][aria-label="Filtrar consumos"]',
+    ) as HTMLElement;
+    expect([...filtros.querySelectorAll('[role="radio"]')].map((x) => x.textContent)).toEqual([
+      'Todos · 45',
+      'Débito',
+      'Tarjeta',
+    ]);
+    expect(nodo.querySelectorAll('[data-semana] > button[aria-expanded]')).toHaveLength(3);
+    act(() => {
+      ficha(nodo, 'Tarjeta')?.click();
+    });
+    expect(anuncio(nodo)).toBe('Tarjeta');
+    expect(ficha(nodo, 'Tarjeta')?.getAttribute('aria-checked')).toBe('true');
+    act(() => {
+      raiz.render(
+        <PantallaDetalleCategoria
+          dto={dto({ categoria: { id: ID, nombre: 'Salidas' }, periodo: CERRADO })}
+          desarchivar={desarchivar}
+        />,
+      );
+    });
+    expect(anuncio(nodo)).toBe('Período 21/01 – 20/02/2027, cerrado');
+    act(() => {
+      raiz.render(
+        <PantallaDetalleCategoria
+          dto={dto({ categoria: { id: ID, nombre: 'Salidas' } })}
+          desarchivar={desarchivar}
+        />,
+      );
+    });
+    expect(anuncio(nodo)).toBe('Período actual: 21/02 – 20/03/2027');
+  });
+
+  it('PRU-CMP-PRES-825 [FT-14] CA-D-16: sin consumos, «Sin gastos en este período» en lugar de la lista y sin filtros, el calendario sin puntos y el historial con sus 3 períodos', () => {
+    const raiz = mostrar(
+      dto({
+        categoria: { id: ID, nombre: 'Regalos' },
+        historial: [
+          hist('2026-11-21', 5000, 0),
+          hist('2026-12-21', 5000, 4000),
+          hist('2027-01-21', 5000, 0),
+        ],
+        historialResumen: { promedioGastado: 1333, periodosExcedidos: 0 },
+      }),
+    );
+    const seccion = raiz.querySelector('[data-seccion="consumos"]') as HTMLElement;
+    expect(seccion.textContent).toContain('Sin gastos en este período');
+    expect(seccion.querySelector('[data-semana]')).toBeNull();
+    expect(raiz.querySelector('[aria-label="Filtrar consumos"]')).toBeNull();
+    expect(raiz.querySelector('[data-orden-cobertura]')).toBeNull();
+    expect(raiz.querySelectorAll('[data-calendario] [data-dia] span[style]')).toHaveLength(0);
+    expect(
+      raiz.querySelectorAll('[data-calendario] button[data-dia]:not([disabled])'),
+    ).toHaveLength(0);
+    expect(
+      raiz.querySelectorAll('[data-seccion="historial"] [data-historial] tbody tr'),
+    ).toHaveLength(3);
+  });
+
+  it('PRU-CMP-PRES-826 [FT-14] CA-D-15: con sobregiro, filtros, la línea del orden y una semana plegada, la pantalla no tiene violaciones de accesibilidad', async () => {
+    const raiz = mostrar(restaurantes());
+    act(() => {
+      raiz.querySelector<HTMLButtonElement>('[data-semana] button')?.click();
+    });
+    const resultado = await axe.run(raiz, { rules: { 'color-contrast': { enabled: false } } });
+    expect(
+      resultado.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.html).join(' | ')}`),
+    ).toEqual([]);
   });
 });

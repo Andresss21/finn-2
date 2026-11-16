@@ -402,7 +402,12 @@ export function PantallaDetalleCategoria({
                       <Icono nombre="plus" tamano={20} />
                       {t.acciones.asignar}
                       {/* A9: con meta, el principal lleva lo que falta del DTO; Asignar no preselecciona la opción (CH-221) */}
-                      {faltaMeta === undefined ? null : <Monto centavos={faltaMeta} />}
+                      {faltaMeta === undefined ? null : (
+                        <>
+                          {' '}
+                          <Monto centavos={faltaMeta} />
+                        </>
+                      )}
                     </>
                   ) : (
                     // CA-14.7: abre Asignar, que trae `rapida.cubrirSobregiro`; el enlace no lleva ningún monto.
