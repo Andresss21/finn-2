@@ -1824,8 +1824,8 @@ Reglas comunes a todas las fichas:
 **Errores y textos.** `no_encontrado` (id inexistente → "Esto ya no existe."). Textos del glosario de 05 §12.3 ("Deuda sin reservar en {categoría}", "Esta deuda suma a lo que te falta reservar para {tarjeta}"). Sin textos nuevos.
 
 **Criterios de aceptación.**
-- **CA-14.1** Dado el paso 1 de ESC-17, cuando abro Super, entonces los consumos aparecen en este orden: débito $60.00 (cubierto $60.00) y tarjeta $70.00 (cubierto $40.00, no cubierto $30.00); el sobregiro es de tarjeta, $30.00.
-- **CA-14.2** Dado el paso 2 de ESC-17, cuando abro Super, entonces el débito olvidado de $20.00 aparece al final, no cubierto, y el sobregiro es mixto: tarjeta $30.00 y débito $20.00.
+- **CA-14.1** Dado el paso 1 de ESC-17, cuando abro Super, entonces los consumos aparecen en este orden: **[CH-293]** del más nuevo al más viejo (el reparto D2 dado vuelta), tarjeta $70.00 (cubierto $40.00, no cubierto $30.00) y débito $60.00 (cubierto $60.00); el sobregiro es de tarjeta, $30.00.
+- **CA-14.2** Dado el paso 2 de ESC-17, cuando abro Super, entonces el débito olvidado de $20.00 aparece al final del reparto (**[CH-293]** primero en la lista, que va del más nuevo al más viejo), no cubierto, y el sobregiro es mixto: tarjeta $30.00 y débito $20.00.
 - **CA-14.3** Dado el paso 2 de ESC-19, cuando abro Super, entonces la línea de $110.00 de la compra con T muestra cubierto $100.00 y no cubierto $10.00.
 - **CA-14.4** Dado compras en 3 días del período, cuando abro el calendario, entonces muestra esos 3 días con su gastado y la tabla equivalente tiene las mismas cifras.
 - **CA-14.5** Dado una categoría que existió en 4 de los últimos 8 períodos cerrados, cuando abro su historial, entonces muestra esos 4 (3.14).

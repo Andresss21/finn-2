@@ -215,26 +215,28 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
   }) => {
     await sembrarOps(ESC17_PASO1, '2027-02-12');
     await abrirDetalle(page, 'Super');
+    // [CH-293] Del más nuevo al más viejo: la tarjeta (segunda en el reparto D2) va arriba
     await expect(consumos(page)).toHaveCount(2);
-    await expect(consumos(page).nth(0)).toContainText('Débito');
-    await expect(montos(consumos(page).nth(0))).toHaveCount(2);
-    await esperarMonto(montos(consumos(page).nth(0)).nth(0), 6000);
-    await expect(consumos(page).nth(1)).toContainText('Tarjeta');
-    await expect(montos(consumos(page).nth(1))).toHaveCount(3);
-    await esperarMonto(montos(consumos(page).nth(1)).nth(0), 4000);
-    await esperarMonto(montos(consumos(page).nth(1)).nth(1), 3000);
-    await esperarMonto(montos(consumos(page).nth(1)).nth(2), 7000);
+    await expect(consumos(page).nth(1)).toContainText('Débito');
+    await expect(montos(consumos(page).nth(1))).toHaveCount(2);
+    await esperarMonto(montos(consumos(page).nth(1)).nth(0), 6000);
+    await expect(consumos(page).nth(0)).toContainText('Tarjeta');
+    await expect(montos(consumos(page).nth(0))).toHaveCount(3);
+    await esperarMonto(montos(consumos(page).nth(0)).nth(0), 4000);
+    await esperarMonto(montos(consumos(page).nth(0)).nth(1), 3000);
+    await esperarMonto(montos(consumos(page).nth(0)).nth(2), 7000);
     await expect(sobregiro(page)).toHaveAttribute('data-sobregiro', 'tarjeta');
     await esperarMonto(sobregiro(page).locator('[data-centavos]').first(), 3000);
   });
 
-  test('PRU-E2E-PRES-108 [CA-14.2, ESC-17] con el paso 2 de ESC-17 el débito olvidado de $20.00 queda al final, no cubierto, y el sobregiro es mixto: tarjeta $30.00 y débito $20.00', async ({
+  test('PRU-E2E-PRES-108 [CA-14.2, ESC-17] con el paso 2 de ESC-17 el débito olvidado de $20.00 queda último en el reparto y primero en la lista, no cubierto, y el sobregiro es mixto: tarjeta $30.00 y débito $20.00', async ({
     page,
   }) => {
     await sembrarOps(ESC17_PASO2, '2027-02-12');
     await abrirDetalle(page, 'Super');
     await expect(consumos(page)).toHaveCount(3);
-    const ultima = consumos(page).nth(2);
+    // [CH-293] El último del reparto D2 va arriba: la lista va del más nuevo al más viejo
+    const ultima = consumos(page).nth(0);
     await expect(ultima).toContainText('Débito');
     await expect(montos(ultima)).toHaveCount(3);
     await esperarMonto(montos(ultima).nth(0), 0);
@@ -313,11 +315,11 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
       `/presupuesto/asignar/${id}?volver=${encodeURIComponent(`/presupuesto/categorias/${id}`)}`,
     );
     await esperarMonto(cubrir.locator('[data-centavos]'), 2630);
-    // El reparto de A.7: 6 consumos en orden, el de $28.30 con $20.50 cubiertos y $7.80 no
+    // El reparto de A.7: 6 consumos, del más nuevo al más viejo [CH-293], el de $28.30 con $20.50 cubiertos y $7.80 no
     await expect(consumos(page)).toHaveCount(6);
-    await expect(consumos(page).nth(4)).toHaveAttribute('data-consumo', '2026-10-11');
-    await esperarMonto(montos(consumos(page).nth(4)).nth(0), 2050);
-    await esperarMonto(montos(consumos(page).nth(4)).nth(1), 780);
+    await expect(consumos(page).nth(1)).toHaveAttribute('data-consumo', '2026-10-11');
+    await esperarMonto(montos(consumos(page).nth(1)).nth(0), 2050);
+    await esperarMonto(montos(consumos(page).nth(1)).nth(1), 780);
     await expect(page.locator('[data-se-paso]')).toHaveText('Se pasó 2 de 6');
     await expect(page.locator('[data-historial] tbody tr')).toHaveCount(6);
   });

@@ -48,6 +48,10 @@ export const categoriaDetalle = {
     noCubierto: 'no cubierto',
     delDia: (fecha: string) => `Consumos del ${fecha}`,
     todosLosDias: 'Ver todos los días',
+    // [CH-293] La lista muestra los 10 más recientes; el botón al pie la despliega completa.
+    verTodos: (n: number) => `Ver los ${String(n)} consumos`,
+    verMenos: 'Ver menos',
+    mostrando: (n: number) => `Mostrando los ${String(n)} consumos.`,
     entradas: 'Devoluciones y entradas',
   },
   calendario: {
