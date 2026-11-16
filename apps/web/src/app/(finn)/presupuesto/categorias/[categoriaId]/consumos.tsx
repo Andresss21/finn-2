@@ -5,8 +5,17 @@
 // [CH-223] La nota de cada fila dice los montos del DTO y la barrita dibuja su `cubiertoBp` (A6). La interfaz no suma ni calcula
 // montos (PF-3): las semanas solo cuentan filas, sin subtotales.
 import type { DetalleCategoria } from '@finn/dominio/selectores';
-import { useRef, useState, type KeyboardEvent, type RefObject } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+  type RefObject,
+} from 'react';
+import { duracionToken } from '../../../../../componentes/movimiento/use-salida';
 import { Icono } from '../../../../../componentes/base/icono';
+import { indice } from '../../../../../componentes/movimiento/indice';
 import { Vacio } from '../../../../../componentes/base/vacio';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
@@ -30,18 +39,24 @@ const FICHA = {
   elegida: `${FICHA_BASE} bg-texto font-bold text-fondo`,
   otra: `${FICHA_BASE} bg-superficie-hundida text-texto`,
 };
-// §8: el alto de la semana se abre o se cierra (`grid-template-rows` 1fr ↔ 0fr) y la flecha gira 180°.
+// §8: el alto de la semana se abre o se cierra (`grid-template-rows` 1fr ↔ 0fr) y la flecha gira 180°. [CH-295] Corrección de la
+// parte 1: en Safari (iPhone) la fila `0fr` seguía midiendo lo de la semana abierta (el mínimo `auto` de la pista toma el alto
+// del contenido), así que quedaba un hueco del alto de las semanas plegadas. La pista va con mínimo 0 (`minmax(0, …)`) y, al
+// terminar de cerrarse (o en el acto con movimiento reducido), el contenido sale del dibujo (`hidden`): una semana plegada no
+// aporta alto en ningún navegador.
 const PLEGABLE_BASE =
   'grid transition-[grid-template-rows] duration-(--duracion-normal) ease-(--curva-estandar)';
 const PLEGABLE = {
-  abierta: `${PLEGABLE_BASE} grid-rows-[1fr]`,
-  cerrada: `${PLEGABLE_BASE} grid-rows-[0fr]`,
+  abierta: `${PLEGABLE_BASE} grid-rows-[minmax(0,1fr)]`,
+  cerrada: `${PLEGABLE_BASE} grid-rows-[minmax(0,0fr)]`,
 };
+const REDUCIDO = '(prefers-reduced-motion: reduce)';
 const GIRO = 'transition-transform duration-(--duracion-normal) ease-(--curva-estandar)';
 const FLECHA = { abierta: `${GIRO} rotate-180`, cerrada: GIRO };
 const SEMANA = `flex min-h-12 w-full items-center gap-3 text-left ${FOCO}`;
 const QUITAR = `inline-flex size-11 items-center justify-center rounded-pastilla ${FOCO}`;
-const LISTA = 'flex scroll-mt-4 flex-col gap-2.5';
+// [CH-295] C-52 §8: la sección entra en el sexto lugar del escalonado del detalle.
+const LISTA = 'fz-entra-seccion flex scroll-mt-4 flex-col gap-2.5';
 // La lista se funde con el filtro nuevo (§8); `key` la vuelve a montar.
 const FUNDIDO = 'flex flex-col gap-3 animate-[fz-v-in_var(--duracion-normal)_var(--curva-entrada)]';
 const NOTA = {
@@ -106,7 +121,7 @@ export function Consumos({
   };
 
   return (
-    <section ref={lista} data-seccion="consumos" className={LISTA}>
+    <section ref={lista} data-seccion="consumos" className={LISTA} style={indice(6)}>
       <h2 className="flex items-baseline justify-between gap-3">
         <span className="text-titulo-seccion">{t.titulo}</span>
         <span data-cuantos className="text-cifra">
@@ -186,25 +201,80 @@ export function Consumos({
                     <Icono nombre="chevD" tamano={18} />
                   </span>
                 </button>
-                <div
-                  data-plegable
-                  className={abre ? PLEGABLE.abierta : PLEGABLE.cerrada}
-                  inert={!abre}
-                >
-                  <div className="min-h-0 overflow-hidden">
-                    <ul className="flex flex-col divide-y divide-borde-sutil border-t border-borde-sutil">
-                      {s.filas.map((x, j) => (
-                        <Fila key={j} consumo={x} volver={volver} />
-                      ))}
-                    </ul>
-                  </div>
-                </div>
+                <Plegable abre={abre}>
+                  <ul className="flex flex-col divide-y divide-borde-sutil border-t border-borde-sutil">
+                    {s.filas.map((x, j) => (
+                      <Fila key={j} consumo={x} volver={volver} />
+                    ))}
+                  </ul>
+                </Plegable>
               </div>
             );
           })}
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * El cuerpo de una semana. Fases: abierta (`1fr`), cerrándose (`0fr`, el contenido todavía se ve mientras baja el alto), cerrada
+ * (`hidden`) y abriéndose (el contenido vuelve con `0fr` y un cuadro después pasa a `1fr`, para que la transición tenga de dónde
+ * partir). Con movimiento reducido no hay fases intermedias.
+ */
+function Plegable({ abre, children }: { readonly abre: boolean; readonly children: ReactNode }) {
+  const [fase, setFase] = useState<'abierta' | 'cerrando' | 'cerrada' | 'abriendo'>(
+    abre ? 'abierta' : 'cerrada',
+  );
+  const caja = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const reducido = window.matchMedia(REDUCIDO).matches;
+    if (abre) {
+      if (fase === 'abierta' || fase === 'abriendo') return;
+      if (reducido) {
+        setFase('abierta');
+        return;
+      }
+      setFase('abriendo');
+      const cuadro = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setFase('abierta');
+        });
+      });
+      return () => {
+        cancelAnimationFrame(cuadro);
+      };
+    }
+    if (fase === 'cerrada' || fase === 'cerrando') return;
+    if (reducido) {
+      setFase('cerrada');
+      return;
+    }
+    setFase('cerrando');
+    // Si `transitionend` no llega (pestaña oculta), a la duración del token.
+    const tope = window.setTimeout(() => {
+      setFase('cerrada');
+    }, duracionToken('--duracion-normal'));
+    return () => {
+      window.clearTimeout(tope);
+    };
+    // Solo se reevalúa cuando cambia `abre`; la fase la cambian este efecto y `transitionend`.
+  }, [abre]);
+  const expandida = fase === 'abierta';
+  return (
+    <div
+      ref={caja}
+      data-plegable={fase}
+      className={expandida ? PLEGABLE.abierta : PLEGABLE.cerrada}
+      inert={!abre}
+      onTransitionEnd={(e) => {
+        if (e.target === caja.current && fase === 'cerrando') setFase('cerrada');
+      }}
+    >
+      <div className="min-h-0 overflow-hidden" hidden={fase === 'cerrada'}>
+        {children}
+      </div>
+    </div>
   );
 }
 

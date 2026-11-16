@@ -8,6 +8,7 @@
 import type { DetalleCategoria } from '@finn/dominio/selectores';
 import { useRef, useState, type ReactNode } from 'react';
 import { SelectorSegmentado } from '../../../../../componentes/base/selector-segmentado';
+import { indice } from '../../../../../componentes/movimiento/indice';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { formatearFecha, formatearMontoAccesible } from '../../../../../formato';
 import { diasDelCalendario } from '../../../../../formato/calendario';
@@ -64,6 +65,12 @@ export function Recorrido({
   const anunciar = useAnunciar();
   const [dia, setDia] = useState<string | null>(null);
   const [vista, setVista] = useState('periodo');
+  // [CH-295] C-52 §8: las barras del historial crecen la primera vez que se ven; al volver a esa vista ya están dibujadas.
+  const [historialVisto, setHistorialVisto] = useState(false);
+  const cambiarVista = (nueva: string): void => {
+    if (vista === 'historial' && nueva !== 'historial') setHistorialVisto(true);
+    setVista(nueva);
+  };
   const lista = useRef<HTMLElement>(null);
   const porFecha = new Map<string, (typeof calendario)[number]>(
     calendario.map((x) => [x.fecha, x]),
@@ -179,7 +186,8 @@ export function Recorrido({
     <>
       <section
         data-seccion="en-que-se-fue"
-        className="flex flex-col gap-3.5 rounded-contenedor bg-superficie p-4"
+        style={indice(5)}
+        className="fz-entra-seccion flex flex-col gap-3.5 rounded-contenedor bg-superficie p-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-titulo-seccion @[1180px]:sr-only">{v.titulo}</h2>
@@ -198,7 +206,7 @@ export function Recorrido({
                   },
                 ]}
                 valor={vista}
-                alCambiar={setVista}
+                alCambiar={cambiarVista}
               />
             </div>
           ) : null}
@@ -211,7 +219,11 @@ export function Recorrido({
             <div className="sr-only">{tabla}</div>
           </div>
           {conHistorial ? (
-            <div data-seccion="historial" className={vista === 'historial' ? PANEL : PANEL_OCULTO}>
+            <div
+              data-seccion="historial"
+              data-barras={historialVisto ? 'quietas' : 'crecen'}
+              className={vista === 'historial' ? PANEL : PANEL_OCULTO}
+            >
               <h3 className={SUBTITULO}>{tituloHistorial}</h3>
               {historial}
             </div>

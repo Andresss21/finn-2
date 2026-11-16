@@ -2,6 +2,7 @@
 import type { Centavos } from '@finn/dominio/valores';
 import { dominio } from '../../textos/dominio';
 import { Icono } from '../base/icono';
+import { viaje } from '../movimiento/viaje-nombres';
 import { EnlaceFinn } from '../navegacion/enlace-finn';
 import { BarraGastado, type BarraDto } from './barra-gastado';
 import { IndicadorEstado, type EstadoFinanciero } from './indicador-estado';
@@ -99,13 +100,18 @@ export function FilaCategoria({
       data-fila-categoria={fila.categoria.id}
       className="flex items-center gap-3.5 px-4 py-3.5 md:min-h-14 md:gap-3 md:px-3 md:py-2"
     >
-      <a href={hrefDetalle} className={FILA_GRID}>
+      {/* [CH-295] C-52 §8: el nombre y el Disponible viajan al encabezado del detalle (`viaje-nombres.ts`). */}
+      <a href={hrefDetalle} data-viaje-desde className={FILA_GRID}>
         <span className="text-cuerpo font-semibold text-texto md:col-start-1 md:row-start-1">
-          {nombre}
+          <span className="inline-block" {...viaje(fila.categoria.id, 'nombre')}>
+            {nombre}
+          </span>
         </span>
         <span className={C4}>
           <span className="sr-only">{dominio.disponible} </span>
-          <MontoDestello centavos={fila.disponible} rol="cifra" {...(estado ? { estado } : {})} />
+          <span className="inline-block" {...viaje(fila.categoria.id, 'disp')}>
+            <MontoDestello centavos={fila.disponible} rol="cifra" {...(estado ? { estado } : {})} />
+          </span>
         </span>
         <div className="col-span-2 empty:hidden md:hidden">
           <BarraGastado barra={fila.barra} metaCubierta={metaCubierta(fila)} />
