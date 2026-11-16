@@ -5,9 +5,18 @@ import { alcanceReserva, glosario } from './glosario.ts';
 export const categoriaDetalle = {
   titulo: 'Detalle de categoría',
   volver: 'Volver a Presupuesto',
+  // C-52 §9: los anuncios de la región de estado de la pantalla.
+  anuncios: {
+    entrada: (nombre: string) => `Detalle de ${nombre}`,
+    periodoCerrado: (fechas: string) => `Período ${fechas}, cerrado`,
+    periodoActual: (fechas: string) => `Período actual: ${fechas}`,
+    dia: (dia: string) => `Consumos del ${dia}`,
+    todos: 'Todos los consumos del período',
+  },
   // D-5: el aviso de información del período cerrado; el cuerpo es el del catálogo de 04 (`periodo_cerrado`).
   periodoCerradoTitulo: (fechas: string) => `Período cerrado · ${fechas}`,
   periodoCerrado: 'No se puede cambiar lo asignado en un período cerrado.',
+  irAlActual: 'Ir al período actual',
   archivada: 'Categoría archivada',
   // E4-7, E4-30: el detalle de una archivada con Disponible (AV-14) y su meta en pausa.
   archivadaConDinero: (nombre: string, monto: string) =>
@@ -32,30 +41,41 @@ export const categoriaDetalle = {
     conTarjeta: 'Con tarjeta',
     alCerrar: 'Al cerrar el período, Listo para asignar bajará',
     alCerrarCerrado: 'Al cerrar el período, Listo para asignar bajó',
-    deudaEnCategoria: alcanceReserva.deudaEnCategoria,
     sumaALoQueFalta: alcanceReserva.sumaALoQueFalta,
     cubrir: 'Cubrir',
-    reservar: 'Reservar',
+    // C-52 §6: el aviso del sobregiro explica, sin botón; «Cubrir {total}» va en las acciones.
+    tituloDebito: 'Sobregiro con débito o efectivo ·',
+    tituloTarjeta: (nombre: string) => `Deuda sin reservar en ${nombre} ·`,
+    conTarjetaMinuscula: 'con tarjeta',
   },
   consumos: {
     titulo: 'Consumos',
     vacio: 'Sin gastos en este período',
     vacioTexto: 'Cuando gastes en esta categoría, vas a ver acá de dónde salió cada peso.',
-    debito: 'Débito',
-    tarjeta: 'Tarjeta',
+    medioDebito: 'débito',
+    medioTarjeta: 'tarjeta',
     condonacion: 'Condonación',
     cubierto: 'cubierto',
     noCubierto: 'no cubierto',
-    delDia: (fecha: string) => `Consumos del ${fecha}`,
-    todosLosDias: 'Ver todos los días',
-    // [CH-293] La lista muestra los 10 más recientes; el botón al pie la despliega completa.
-    verTodos: (n: number) => `Ver los ${String(n)} consumos`,
-    verMenos: 'Ver menos',
-    mostrando: (n: number) => `Mostrando los ${String(n)} consumos.`,
+    // C-52 §4: filtros, día elegido y la línea del orden de cobertura.
+    filtros: 'Filtrar consumos',
+    quitarDia: 'Quitar el filtro del día',
+    ordenCobertura:
+      'Lo asignado cubre los consumos del más antiguo al más reciente: los últimos son los que quedaron sin cubrir.',
+    sinFiltro: 'Ningún consumo con este filtro.',
     entradas: 'Devoluciones y entradas',
+  },
+  // C-52 §2 y §3: la tarjeta «¿En qué se fue?» con sus dos vistas.
+  enQueSeFue: {
+    titulo: '¿En qué se fue?',
+    ver: 'Ver',
+    estePeriodo: 'Este período',
+    ultimos: (n: number) => `Últimos ${String(n)}`,
   },
   calendario: {
     titulo: 'En el período',
+    conGasto: (dia: string, monto: string) => `${dia}, gastaste ${monto}`,
+    sinGasto: (dia: string) => `${dia}, sin gasto`,
     nota: 'El punto crece con el gasto del día. Tocá un día para ver sus consumos.',
     etiqueta: 'Días del período',
     dia: 'Día',
@@ -68,8 +88,7 @@ export const categoriaDetalle = {
     vacio: 'Todavía no hay períodos cerrados con esta categoría.',
     sePaso: (k: number, n: number) => `Se pasó ${k} de ${n}`,
     promedio: 'Promedio gastado',
-    leyendaGasto: 'Gasto',
-    leyendaSePaso: 'Se pasó',
+    leyendaGasto: glosario.gastado,
     leyendaAsignado: 'Asignado',
     columnas: ['Período', glosario.asignado, glosario.gastado, glosario.disponible],
   },
@@ -82,7 +101,8 @@ export const categoriaDetalle = {
     asignar: 'Asignar',
     progreso: 'Progreso de la meta',
   },
-  programadas: { titulo: 'Programadas', proxima: 'Próxima' },
+  // C-52 §2.8: «Próxima: dd/mm».
+  programadas: { titulo: 'Programadas', proxima: (fecha: string) => `Próxima: ${fecha}` },
   reglas: { titulo: 'Reglas de comercio' },
   // E2-13 [CH-248]: el resultado de Asignar y de Mover queda bajo las acciones, con «Deshacer» cuando hay operación inversa.
   resultado: {

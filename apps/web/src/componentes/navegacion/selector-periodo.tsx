@@ -24,6 +24,8 @@ export interface SelectorPeriodoProps {
   readonly siguiente?: string;
   readonly ruta: string;
   readonly parametros: Readonly<Record<string, string>>;
+  /** Sin «Ir al período actual» debajo: la pantalla lo pone en su aviso (C-52 §6, el detalle de categoría). */
+  readonly sinIrAlActual?: boolean;
 }
 
 const CIRCULO =
@@ -42,6 +44,7 @@ export function SelectorPeriodo({
   siguiente,
   ruta,
   parametros,
+  sinIrAlActual = false,
 }: SelectorPeriodoProps) {
   const hrefDe = (inicio?: string): string => {
     const q = new URLSearchParams(Object.entries(parametros).filter(([k]) => k !== 'periodo'));
@@ -108,7 +111,7 @@ export function SelectorPeriodo({
           </EnlacePeriodo>
         )}
       </div>
-      {esActivo ? null : (
+      {esActivo || sinIrAlActual ? null : (
         <EnlaceFinn
           href={hrefDe()}
           className="inline-flex min-h-11 items-center justify-center text-cuerpo-pequeno font-bold text-enlace"
