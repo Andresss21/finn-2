@@ -217,10 +217,11 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await abrirDetalle(page, 'Super');
     // [CH-293] Del más nuevo al más viejo: la tarjeta (segunda en el reparto D2) va arriba
     await expect(consumos(page)).toHaveCount(2);
-    await expect(consumos(page).nth(1)).toContainText('Débito');
+    // C-52 §4: la fila dice «{cuenta} · débito / tarjeta»
+    await expect(consumos(page).nth(1)).toContainText('· débito');
     await expect(montos(consumos(page).nth(1))).toHaveCount(2);
     await esperarMonto(montos(consumos(page).nth(1)).nth(0), 6000);
-    await expect(consumos(page).nth(0)).toContainText('Tarjeta');
+    await expect(consumos(page).nth(0)).toContainText('· tarjeta');
     await expect(montos(consumos(page).nth(0))).toHaveCount(3);
     await esperarMonto(montos(consumos(page).nth(0)).nth(0), 4000);
     await esperarMonto(montos(consumos(page).nth(0)).nth(1), 3000);
@@ -237,7 +238,7 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await expect(consumos(page)).toHaveCount(3);
     // [CH-293] El último del reparto D2 va arriba: la lista va del más nuevo al más viejo
     const ultima = consumos(page).nth(0);
-    await expect(ultima).toContainText('Débito');
+    await expect(ultima).toContainText('· débito');
     await expect(montos(ultima)).toHaveCount(3);
     await esperarMonto(montos(ultima).nth(0), 0);
     await esperarMonto(montos(ultima).nth(1), 2000);
@@ -283,7 +284,8 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
   }) => {
     await sembrarOps(TRES_DIAS, '2027-02-10');
     await abrirDetalle(page, 'Super');
-    const dias = page.locator('[data-calendario] button[data-dia]');
+    // C-52 §7: todos los días son botones; los que no tienen gasto, deshabilitados
+    const dias = page.locator('[data-calendario] button[data-dia]:not([disabled])');
     await expect(dias).toHaveCount(3);
     await expect(dias.nth(0)).toHaveAttribute('data-intensidad', '2500');
     await expect(dias.nth(1)).toHaveAttribute('data-intensidad', '10000');
@@ -296,7 +298,7 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await dias.nth(1).click();
     await expect(consumos(page)).toHaveCount(1);
     await esperarMonto(montos(consumos(page)).last(), 4000);
-    await page.getByRole('button', { name: 'Ver todos los días' }).click();
+    await page.getByRole('button', { name: 'Quitar el filtro del día' }).click();
     await expect(consumos(page)).toHaveCount(3);
   });
 
@@ -335,8 +337,9 @@ test.describe('PRU-E2E-PRES detalle de categoría', () => {
     await esperarMonto(montos(cifras.last()), 2630);
     const insignia = consumos(page).nth(4).locator('[data-insignia-fecha]');
     await expect(insignia).toHaveText('oct11');
+    // C-52 §5: con sobregiro, el principal es «Cubrir {total}»
     const acciones = page.getByRole('navigation', { name: 'Acciones de la categoría' });
-    await expect(acciones.getByRole('link')).toHaveText(['Asignar', 'Mover dinero']);
+    await expect(acciones.getByRole('link')).toHaveText([/^Cubrir/, 'Mover dinero']);
   });
 
   test('PRU-E2E-PRES-113 una categoría sin consumos en el período dice «Sin gastos en este período»', async ({

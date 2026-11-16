@@ -1886,3 +1886,32 @@ textarea.campo-entrada {
   color: var(--texto-secundario);
   cursor: pointer;
 }
+
+/* [CH-294] Detalle de categoría «Un recorrido» (C-52, docs/anexos/finn-detalle-de-categoria/ §2 y §5). El nombre va en el
+   encabezado de la página (título de 1.75 rem), no en la barra fija; y en el teléfono la barra de acciones queda fija al pie,
+   sobre la navegación (borde 1 + 6 + 56 de alto + su margen seguro), con su alto reservado al final de la página (§9). */
+.fz-titulo-detalle {
+  font-family: var(--fuente-titulo);
+  font-size: 1.75rem;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+@media (width < 64rem) {
+  .fz-barra-acciones {
+    position: fixed;
+    inset-inline: 0;
+    bottom: calc(3.9375rem + max(env(safe-area-inset-bottom), 1.375rem));
+    z-index: 20;
+    padding: var(--espacio-3) 1.25rem;
+    border-top: 1px solid var(--borde-sutil);
+    background: var(--fondo);
+  }
+  main:has(.fz-barra-acciones) {
+    padding-bottom: 5.5rem;
+  }
+  html:has(.fz-barra-acciones) {
+    scroll-padding-block-end: 12.5rem;
+  }
+}

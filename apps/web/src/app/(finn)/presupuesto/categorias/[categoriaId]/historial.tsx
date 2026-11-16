@@ -93,15 +93,23 @@ export function Historial({
       <VistaGrafico
         cifra={<Monto centavos={resumen.promedioGastado} rol="cifra-principal" />}
         nota={t.promedio}
-        aparte={<span data-se-paso>{t.sePaso(resumen.periodosExcedidos, n)}</span>}
+        aparte={
+          // C-52 §7: «Se pasó k de n» lleva `dang` cuando k > 0 (color, glifo y nombre).
+          resumen.periodosExcedidos > 0 ? (
+            <span className="inline-flex items-center gap-1 text-problema-texto">
+              <Icono nombre="dang" tamano={16} />
+              <span data-se-paso>{t.sePaso(resumen.periodosExcedidos, n)}</span>
+            </span>
+          ) : (
+            <span data-se-paso>{t.sePaso(resumen.periodosExcedidos, n)}</span>
+          )
+        }
         tablaAlLado
         leyenda={
           <LeyendaGrafico
             items={[
+              // C-52 §7: Gastado · Asignado.
               { forma: 'barra', texto: t.leyendaGasto },
-              ...(resumen.periodosExcedidos > 0
-                ? [{ forma: 'excedido' as const, texto: t.leyendaSePaso }]
-                : []),
               { forma: 'referencia', texto: t.leyendaAsignado },
             ]}
           />

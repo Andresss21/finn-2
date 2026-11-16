@@ -1,141 +1,274 @@
 'use client';
-// Consumos del detalle de categoría (FT-14, CA-14.1 a CA-14.3; 06-identidad-visual §6): salen del DTO en el orden D2, cada uno con
-// su medio, lo cubierto y lo no cubierto. [CH-223] La nota dice «cubierto $X» (CA-14.1) o «cubierto $X · no cubierto $Y» con los montos del DTO
-// y la barrita de 5 px dibuja el `cubiertoBp` del DTO (A6). Dibuja lo que trae el DTO: no suma ni calcula montos (PF-3).
-// [CH-293] La lista va del más nuevo al más viejo (el orden D2 dado vuelta: los no cubiertos quedan arriba) y muestra los 10 más
-// recientes; «Ver los {n} consumos» la despliega completa en el mismo lugar. Con el filtro por día se ven todos los de ese día.
+// Consumos del detalle de categoría (FT-14, CA-14.1 a CA-14.3; C-52 §4, `docs/anexos/finn-detalle-de-categoria/`): del más
+// reciente al más antiguo, por semana de lunes a domingo, con los filtros que haya y el día que se eligió en el calendario. El
+// orden, los filtros, las semanas y el plegado son los de `logica/consumos.js` (portada a `formato/consumos-por-semana.ts`).
+// [CH-223] La nota de cada fila dice los montos del DTO y la barrita dibuja su `cubiertoBp` (A6). La interfaz no suma ni calcula
+// montos (PF-3): las semanas solo cuentan filas, sin subtotales.
 import type { DetalleCategoria } from '@finn/dominio/selectores';
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type KeyboardEvent, type RefObject } from 'react';
+import { Icono } from '../../../../../componentes/base/icono';
 import { Vacio } from '../../../../../componentes/base/vacio';
 import { Monto } from '../../../../../componentes/dominio/monto';
 import { EnlaceFinn } from '../../../../../componentes/navegacion/enlace-finn';
 import { formatearFechaTexto } from '../../../../../formato';
+import {
+  abierta,
+  agrupar,
+  explicarOrden,
+  filtrar,
+  filtrosVisibles,
+  type FiltroConsumos,
+} from '../../../../../formato/consumos-por-semana';
 import { categoriaDetalle } from '../../../../../textos/categoria-detalle';
 
 const t = categoriaDetalle.consumos;
-const ENLACE =
-  'inline-flex min-h-11 items-center px-2 font-bold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
-/** Cuántos consumos se ven antes de «Ver los {n} consumos» [CH-293]. */
-const LIMITE = 10;
-const VER =
-  'inline-flex min-h-11 items-center self-start px-2 font-bold text-enlace focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+const FOCO = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-foco';
+const ENLACE = `inline-flex min-h-11 items-center px-2 font-bold text-enlace ${FOCO}`;
+// L13: clases literales. La ficha elegida se invierte (`--texto`), como las pastillas de filtro (06-identidad-visual 2.3).
+const FICHA_BASE = `inline-flex min-h-11 shrink-0 items-center rounded-pastilla px-4 text-etiqueta transition-colors duration-(--duracion-rapida) ease-(--curva-estandar) ${FOCO}`;
+const FICHA = {
+  elegida: `${FICHA_BASE} bg-texto font-bold text-fondo`,
+  otra: `${FICHA_BASE} bg-superficie-hundida text-texto`,
+};
+// §8: el alto de la semana se abre o se cierra (`grid-template-rows` 1fr ↔ 0fr) y la flecha gira 180°.
+const PLEGABLE_BASE =
+  'grid transition-[grid-template-rows] duration-(--duracion-normal) ease-(--curva-estandar)';
+const PLEGABLE = {
+  abierta: `${PLEGABLE_BASE} grid-rows-[1fr]`,
+  cerrada: `${PLEGABLE_BASE} grid-rows-[0fr]`,
+};
+const GIRO = 'transition-transform duration-(--duracion-normal) ease-(--curva-estandar)';
+const FLECHA = { abierta: `${GIRO} rotate-180`, cerrada: GIRO };
+const SEMANA = `flex min-h-12 w-full items-center gap-3 text-left ${FOCO}`;
+const QUITAR = `inline-flex size-11 items-center justify-center rounded-pastilla ${FOCO}`;
+const LISTA = 'flex scroll-mt-4 flex-col gap-2.5';
+// La lista se funde con el filtro nuevo (§8); `key` la vuelve a montar.
+const FUNDIDO = 'flex flex-col gap-3 animate-[fz-v-in_var(--duracion-normal)_var(--curva-entrada)]';
+const NOTA = {
+  cubierto: 'text-cuerpo-pequeno',
+  debito: 'text-cuerpo-pequeno text-problema-texto',
+  tarjeta: 'text-cuerpo-pequeno text-deuda-sin-respaldo-texto',
+};
+const SALTO: Readonly<Record<string, 1 | -1>> = {
+  ArrowRight: 1,
+  ArrowDown: 1,
+  ArrowLeft: -1,
+  ArrowUp: -1,
+};
+/** Sin período (un uso suelto de la lista), las semanas no se recortan. */
+const SIN_RECORTE = { inicio: '0000-01-01', fin: '9999-12-31' };
+
+type Consumo = DetalleCategoria['consumos'][number];
 
 export function Consumos({
   consumos,
   volver,
-  nota = null,
-  sinLimite = false,
+  periodo = SIN_RECORTE,
+  dia = null,
+  diaTexto = '',
+  alQuitarDia,
+  anunciar,
+  lista,
 }: {
+  /** En el orden del DTO (D2, del más antiguo al más reciente): la lista los da vuelta. */
   readonly consumos: DetalleCategoria['consumos'];
   /** La ruta de esta pantalla, para el `?volver=` del detalle de cada transacción (05 §3.3). */
   readonly volver: string;
-  /** Un aviso entre el título y la lista (el filtro por día del calendario). */
-  readonly nota?: ReactNode;
-  /** Sin el límite de 10 ni el botón: el filtro por día del calendario muestra todos los de ese día. */
-  readonly sinLimite?: boolean;
+  readonly periodo?: { readonly inicio: string; readonly fin: string };
+  /** El día elegido en el calendario (`AAAA-MM-DD`) y su nombre para la píldora («Viernes 9 de oct»). */
+  readonly dia?: string | null;
+  readonly diaTexto?: string;
+  readonly alQuitarDia?: () => void;
+  /** La región de estado de la pantalla (§9). */
+  readonly anunciar?: (texto: string) => void;
+  /** Hasta dónde baja la página al elegir un día. */
+  readonly lista?: RefObject<HTMLElement | null>;
 }) {
-  const [todos, setTodos] = useState(false);
-  const [anuncio, setAnuncio] = useState('');
-  const ver = useRef<HTMLButtonElement>(null);
-  const plegable = !sinLimite && consumos.length > LIMITE;
-  const recientes = [...consumos].reverse();
-  const visibles = plegable && !todos ? recientes.slice(0, LIMITE) : recientes;
+  const [filtro, setFiltro] = useState<FiltroConsumos>('todos');
+  const [elegidas, setElegidas] = useState<Record<string, boolean>>({});
+  const fichas = useRef<HTMLDivElement>(null);
+  const filtros = filtrosVisibles(consumos);
+  const activo = filtros.some((f) => f.clave === filtro) ? filtro : 'todos';
+  const semanas = agrupar(filtrar(consumos, activo, dia), periodo);
+  const elegir = (clave: FiltroConsumos, texto: string): void => {
+    setFiltro(clave);
+    anunciar?.(texto);
+  };
+  const alTeclear = (e: KeyboardEvent<HTMLButtonElement>, k: number): void => {
+    const paso = SALTO[e.key];
+    if (paso === undefined) return;
+    e.preventDefault();
+    const destino = (k + paso + filtros.length) % filtros.length;
+    const f = filtros[destino];
+    if (f === undefined) return;
+    elegir(f.clave, f.texto);
+    fichas.current?.querySelectorAll<HTMLElement>('[role=radio]')[destino]?.focus();
+  };
+
   return (
-    <section data-seccion="consumos" className="flex flex-col gap-2">
+    <section ref={lista} data-seccion="consumos" className={LISTA}>
       <h2 className="flex items-baseline justify-between gap-3">
         <span className="text-titulo-seccion">{t.titulo}</span>
-        <span className="text-cuerpo-pequeno text-texto-secundario">{consumos.length}</span>
+        <span data-cuantos className="text-cifra">
+          {consumos.length}
+        </span>
       </h2>
-      {nota}
+      {dia === null ? null : (
+        <p
+          data-dia-elegido={dia}
+          className="inline-flex min-h-11 items-center gap-1 self-start rounded-pastilla bg-texto pl-4 text-etiqueta font-bold text-fondo animate-[fz-item_var(--duracion-normal)_var(--curva-entrada)]"
+        >
+          {diaTexto}
+          <button type="button" aria-label={t.quitarDia} onClick={alQuitarDia} className={QUITAR}>
+            <Icono nombre="x" tamano={18} />
+          </button>
+        </p>
+      )}
+      {filtros.length === 0 ? null : (
+        <div
+          ref={fichas}
+          role="radiogroup"
+          aria-label={t.filtros}
+          className="-mx-5 flex gap-2 overflow-x-auto px-5 py-1 [scrollbar-width:none] md:mx-0 md:px-0"
+        >
+          {filtros.map((f, k) => (
+            <button
+              key={f.clave}
+              type="button"
+              role="radio"
+              aria-checked={f.clave === activo}
+              tabIndex={f.clave === activo ? 0 : -1}
+              onClick={() => {
+                elegir(f.clave, f.texto);
+              }}
+              onKeyDown={(e) => {
+                alTeclear(e, k);
+              }}
+              className={f.clave === activo ? FICHA.elegida : FICHA.otra}
+            >
+              {f.texto}
+            </button>
+          ))}
+        </div>
+      )}
       {consumos.length === 0 ? (
         <Vacio titulo={t.vacio} texto={t.vacioTexto} icono="cero" />
+      ) : semanas.length === 0 ? (
+        <p className="rounded-contenedor bg-superficie px-4 py-6 text-center text-cuerpo-pequeno text-texto-secundario">
+          {t.sinFiltro}
+        </p>
       ) : (
-        <ul className="flex flex-col divide-y divide-borde-sutil rounded-contenedor bg-superficie">
-          {visibles.map((x, k) => {
-            const transaccionId = 'transaccionId' in x.origen ? x.origen.transaccionId : null;
-            const nombre = x.comercio ?? (transaccionId === null ? t.condonacion : x.cuenta.nombre);
+        <div key={`${activo}-${dia ?? ''}`} className={FUNDIDO}>
+          {explicarOrden(consumos) ? (
+            <p data-orden-cobertura className="text-cuerpo-pequeno text-texto-secundario">
+              {t.ordenCobertura}
+            </p>
+          ) : null}
+          {semanas.map((s, k) => {
+            const abre = abierta(s, k, consumos.length, activo, dia, elegidas);
             return (
-              <li key={k} data-consumo={x.fecha} className="flex items-start gap-3 px-3.5 py-3">
-                <span
-                  data-insignia-fecha
-                  className="flex w-12 shrink-0 flex-col items-center leading-none"
+              <div
+                key={s.lunes}
+                data-semana={s.lunes}
+                className="rounded-contenedor bg-superficie px-3.5"
+              >
+                <button
+                  type="button"
+                  aria-expanded={abre}
+                  onClick={() => {
+                    setElegidas({ ...elegidas, [s.lunes]: !abre });
+                  }}
+                  className={SEMANA}
                 >
-                  <span className="text-rotulo text-texto-secundario">
-                    {formatearFechaTexto(x.fecha).split(' ')[1]}
+                  <span className="flex-1 text-cuerpo font-semibold">{s.titulo}</span>
+                  <span className="text-cuerpo-pequeno text-texto-secundario">{s.cuenta}</span>
+                  <span aria-hidden="true" className={abre ? FLECHA.abierta : FLECHA.cerrada}>
+                    <Icono nombre="chevD" tamano={18} />
                   </span>
-                  <span className="text-cifra">{x.fecha.slice(8)}</span>
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  {transaccionId === null ? (
-                    <span className="font-semibold">{nombre}</span>
-                  ) : (
-                    <EnlaceFinn
-                      href={`/actividad/${transaccionId}?volver=${encodeURIComponent(volver)}`}
-                      className={ENLACE}
-                    >
-                      {nombre}
-                    </EnlaceFinn>
-                  )}
-                  <span className="text-cuerpo-pequeno text-texto-secundario">
-                    {x.medio === 'tarjeta' ? t.tarjeta : t.debito} · {x.cuenta.nombre}
-                  </span>
-                  {x.noCubierto === 0 ? (
-                    <span data-nota-cobertura className="text-cuerpo-pequeno">
-                      {t.cubierto} <Monto centavos={x.cubierto} />
-                    </span>
-                  ) : (
-                    <span data-nota-cobertura className="text-cuerpo-pequeno text-problema-texto">
-                      {t.cubierto} <Monto centavos={x.cubierto} estado="problema" />
-                      {' · '}
-                      {t.noCubierto} <Monto centavos={x.noCubierto} estado="problema" />
-                    </span>
-                  )}
-                  {x.montoNeto > 0 ? (
-                    <span
-                      aria-hidden="true"
-                      data-barrita-cobertura
-                      className="mt-1.5 flex h-[5px] overflow-hidden rounded-pastilla bg-superficie-hundida"
-                    >
-                      {x.cubiertoBp > 0 ? (
-                        <span
-                          data-segmento="cubierto"
-                          style={{ width: `${x.cubiertoBp / 100}%` }}
-                          className="bg-texto-secundario"
-                        />
-                      ) : null}
-                      {x.noCubierto === 0 ? null : (
-                        <span
-                          data-segmento="no-cubierto"
-                          className="flex-1 bg-[repeating-linear-gradient(135deg,var(--problema-borde)_0_3px,var(--problema-fondo)_3px_6px)]"
-                        />
-                      )}
-                    </span>
-                  ) : null}
-                </span>
-                <Monto centavos={x.montoNeto} rol="cifra" presentacion="salida" />
-              </li>
+                </button>
+                <div
+                  data-plegable
+                  className={abre ? PLEGABLE.abierta : PLEGABLE.cerrada}
+                  inert={!abre}
+                >
+                  <div className="min-h-0 overflow-hidden">
+                    <ul className="flex flex-col divide-y divide-borde-sutil border-t border-borde-sutil">
+                      {s.filas.map((x, j) => (
+                        <Fila key={j} consumo={x} volver={volver} />
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
-      {plegable ? (
-        <button
-          ref={ver}
-          type="button"
-          aria-expanded={todos}
-          onClick={() => {
-            setTodos(!todos);
-            setAnuncio(todos ? '' : t.mostrando(consumos.length));
-            ver.current?.focus();
-          }}
-          className={VER}
-        >
-          {todos ? t.verMenos : t.verTodos(consumos.length)}
-        </button>
-      ) : null}
-      <p role="status" className="sr-only">
-        {anuncio}
-      </p>
     </section>
+  );
+}
+
+/** La fila de hoy (C-52 §4): fecha, comercio, «{cuenta} · débito / tarjeta», lo cubierto, la barrita y el monto. */
+function Fila({ consumo: x, volver }: { readonly consumo: Consumo; readonly volver: string }) {
+  const transaccionId = 'transaccionId' in x.origen ? x.origen.transaccionId : null;
+  const nombre = x.comercio ?? (transaccionId === null ? t.condonacion : x.cuenta.nombre);
+  const tono = x.medio === 'tarjeta' ? 'deuda-sin-respaldo' : 'problema';
+  return (
+    <li data-consumo={x.fecha} className="flex items-start gap-3 py-3">
+      <span data-insignia-fecha className="flex w-12 shrink-0 flex-col items-center leading-none">
+        <span className="text-rotulo text-texto-secundario">
+          {formatearFechaTexto(x.fecha).split(' ')[1]}
+        </span>
+        <span className="text-cifra">{x.fecha.slice(8)}</span>
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        {transaccionId === null ? (
+          <span className="font-semibold">{nombre}</span>
+        ) : (
+          <EnlaceFinn
+            href={`/actividad/${transaccionId}?volver=${encodeURIComponent(volver)}`}
+            className={ENLACE}
+          >
+            {nombre}
+          </EnlaceFinn>
+        )}
+        <span className="text-cuerpo-pequeno text-texto-secundario">
+          {x.cuenta.nombre} · {x.medio === 'tarjeta' ? t.medioTarjeta : t.medioDebito}
+        </span>
+        {x.noCubierto === 0 ? (
+          <span data-nota-cobertura className={NOTA.cubierto}>
+            {t.cubierto} <Monto centavos={x.cubierto} />
+          </span>
+        ) : (
+          <span data-nota-cobertura className={x.medio === 'tarjeta' ? NOTA.tarjeta : NOTA.debito}>
+            {t.cubierto} <Monto centavos={x.cubierto} estado={tono} />
+            {' · '}
+            {t.noCubierto} <Monto centavos={x.noCubierto} estado={tono} />
+          </span>
+        )}
+        {x.montoNeto > 0 ? (
+          <span
+            aria-hidden="true"
+            data-barrita-cobertura
+            className="mt-1.5 flex h-[5px] overflow-hidden rounded-pastilla bg-superficie-hundida"
+          >
+            {x.cubiertoBp > 0 ? (
+              <span
+                data-segmento="cubierto"
+                style={{ width: `${x.cubiertoBp / 100}%` }}
+                className="bg-texto-secundario"
+              />
+            ) : null}
+            {x.noCubierto === 0 ? null : (
+              <span
+                data-segmento="no-cubierto"
+                className="flex-1 bg-[repeating-linear-gradient(135deg,var(--problema-borde)_0_3px,var(--problema-fondo)_3px_6px)]"
+              />
+            )}
+          </span>
+        ) : null}
+      </span>
+      <Monto centavos={x.montoNeto} rol="cifra" presentacion="salida" />
+    </li>
   );
 }

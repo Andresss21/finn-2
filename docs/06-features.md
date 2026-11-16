@@ -1804,9 +1804,9 @@ Reglas comunes a todas las fichas:
 
 **Flujo.**
 1. `/presupuesto/categorias/[categoriaId]?periodo=` → `detalleCategoria()`.
-2. Normal: números (asignado, gastado, arrastrado, disponible, fondo), sobregiro con sus dos partes, consumos en el orden D2 con cubierto y no cubierto, entradas, meta, calendario, historial de 6 períodos, programadas y reglas.
+2. Normal: números (asignado, gastado, arrastrado, disponible, fondo), sobregiro con sus dos partes, consumos en el orden D2 con cubierto y no cubierto, entradas, meta, calendario, historial de 6 períodos, programadas y reglas. **[CH-294]** En el orden de C-52 (`docs/anexos/finn-detalle-de-categoria/`): encabezado con el selector, Disponible, cifras, avisos y meta, «¿En qué se fue?» (calendario o historial), consumos por semana con sus filtros, y programadas y reglas; las acciones en una barra fija al pie (teléfono) o en la columna fija (computadora).
 3. Pago: ver FT-29.
-4. Acciones: asignar (FT-10), mover (FT-11), archivar y fusionar (FT-19, FT-20), meta (FT-17), sacar o desarchivar si está archivada (FT-19).
+4. Acciones: asignar (FT-10), mover (FT-11), archivar y fusionar (FT-19, FT-20), meta (FT-17), sacar o desarchivar si está archivada (FT-19). **[CH-294]** Con sobregiro el principal es «Cubrir {total}» (CA-14.7); «Archivar» va en «Más acciones».
 
 **Piezas.**
 - Operaciones: enlaces a OP-14, OP-15, OP-09, OP-12, OP-18, OP-11; [1T] OP-10.
@@ -1819,13 +1819,13 @@ Reglas comunes a todas las fichas:
 **Estados.**
 - Sin consumos en el período: "Sin gastos en este período".
 - Categoría archivada: sin asignar ni mover hacia ella; con "Sacar" si tiene Disponible y [1T] "Desarchivar".
-- Período cerrado: sin acciones de asignación.
+- Período cerrado: sin acciones de asignación. **[CH-294]** Sin barra de acciones; el aviso lleva «Ir al período actual».
 
-**Errores y textos.** `no_encontrado` (id inexistente → "Esto ya no existe."). Textos del glosario de 05 §12.3 ("Deuda sin reservar en {categoría}", "Esta deuda suma a lo que te falta reservar para {tarjeta}"). Sin textos nuevos.
+**Errores y textos.** `no_encontrado` (id inexistente → "Esto ya no existe."). Textos del glosario de 05 §12.3 ("Deuda sin reservar en {categoría}", "Esta deuda suma a lo que te falta reservar para {tarjeta}"). Sin textos nuevos. **[CH-294]** Los textos nuevos de C-52 §10 (DETALLE-DE-CATEGORIA).
 
 **Criterios de aceptación.**
 - **CA-14.1** Dado el paso 1 de ESC-17, cuando abro Super, entonces los consumos aparecen en este orden: **[CH-293]** del más nuevo al más viejo (el reparto D2 dado vuelta), tarjeta $70.00 (cubierto $40.00, no cubierto $30.00) y débito $60.00 (cubierto $60.00); el sobregiro es de tarjeta, $30.00.
-- **CA-14.2** Dado el paso 2 de ESC-17, cuando abro Super, entonces el débito olvidado de $20.00 aparece al final del reparto (**[CH-293]** primero en la lista, que va del más nuevo al más viejo), no cubierto, y el sobregiro es mixto: tarjeta $30.00 y débito $20.00.
+- **CA-14.2** Dado el paso 2 de ESC-17, cuando abro Super, entonces el débito olvidado de $20.00 aparece al final del reparto (**[CH-293]** primero en la lista, que va del más nuevo al más viejo), no cubierto, y el sobregiro es mixto: tarjeta $30.00 y débito $20.00. **[CH-294]** Con C-52 la lista va por semana y conserva ese orden dentro de cada una.
 - **CA-14.3** Dado el paso 2 de ESC-19, cuando abro Super, entonces la línea de $110.00 de la compra con T muestra cubierto $100.00 y no cubierto $10.00.
 - **CA-14.4** Dado compras en 3 días del período, cuando abro el calendario, entonces muestra esos 3 días con su gastado y la tabla equivalente tiene las mismas cifras.
 - **CA-14.5** Dado una categoría que existió en 4 de los últimos 8 períodos cerrados, cuando abro su historial, entonces muestra esos 4 (3.14).
@@ -4526,7 +4526,7 @@ Cada recorrido encadena las features en el orden en que el usuario las vive. Sir
 | S2 Presupuesto | Período futuro "sin pagos de tarjeta" | FT-09, FT-29 | **Ajuste del diseño:** las filas de pago se muestran con su asignado y sin "te falta reservar" (inv. 2), porque se puede asignar a una categoría de pago en un período futuro (OP-14) |
 | S2 Presupuesto | Barra de gastado sobre asignado en cada fila | FT-09 | **CF-25:** el ancho de cada segmento es una proporción de montos, que la interfaz no calcula (ADR-07, 05 PF-3); el DTO tiene que traerla (5.4) |
 | S3 Detalle | Héroe, números, desglose del sobregiro, consumos D2, reglas, acciones con "Archivar" deshabilitado y su motivo | FT-14, FT-19 | **Coincide** |
-| S3 Detalle | "Cubrir $26.30" y "Reservar $18.75", que abren Asignar con el monto | FT-14, FT-10 | **CF-25:** abrir Asignar con Asignado + sobregiro ya puesto es una suma que la interfaz no puede hacer (PF-3 prohíbe armar un valor que se envía). Se agrega una variante rápida del servidor, "cubrir el sobregiro" |
+| S3 Detalle | "Cubrir $26.30" y "Reservar $18.75", que abren Asignar con el monto (**[CH-294]** con C-52, "Cubrir {total}" también con tarjeta, en la barra de acciones) | FT-14, FT-10 | **CF-25:** abrir Asignar con Asignado + sobregiro ya puesto es una suma que la interfaz no puede hacer (PF-3 prohíbe armar un valor que se envía). Se agrega una variante rápida del servidor, "cubrir el sobregiro" |
 | S3 Detalle | Calendario con un punto que crece con el gasto del día | FT-14 | **CF-25:** la intensidad de cada día (proporción del máximo del período) viene del DTO. "Tocá un día para ver sus consumos" filtra la lista ya cargada por fecha: **precisión**, sin aritmética |
 | S3 Detalle | Historial de 6 períodos con "Se pasó 2 de 6" y el promedio gastado | FT-14 | **CF-25:** el conteo y el promedio vienen del DTO. Las barras y el tope de asignado se dibujan con la escala del servidor (05 FE-44) |
 | S3 Detalle | Meta con barra "45 % · $1,350.00 de $3,000.00" | FT-17 | **CF-25:** `detalleCategoria().meta` no trae el progreso (sí `metas()`, 04 §6.10); se agrega el mismo campo |
@@ -4980,3 +4980,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-282** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisiones de diseño C-45 y C-33). FT-72: «Cambiar el ciclo» con el mismo día queda apagado con `aria-disabled` y el mensaje en la fila y debajo del botón (CA-72.4). FT-77: el tema en segmentado, sin la línea de Sistema. FT-24, FT-39, FT-73 y FT-74: los campos v3. Los CA no cambian. Marca **[CH-282]**.
 - **CH-283** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7). FT-55: en un préstamo en curso con modelo, la tabla muestra las cuotas pagadas antes de Finn, desde el monto original, atenuadas y con "Pagada antes de Finn"; solo presentación. Los CA no cambian. Marca **[CH-283]**.
 - **CH-286** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-51). FT-21: el borrador recuperado avisa una sola vez por borrador y «Descartar borrador» va al pie (enmienda E3-17); textos nuevos: «Descartaste el borrador.» y los nombres ocultos de tono de los avisos («Información:», «Advertencia:», «Problema:», «Listo:»). FT-08 no cambia: la Bandeja ya es la primera fila de «Necesita tu atención». Los CA no cambian. Marca **[CH-286]**.
+- **CH-294** (corrección posterior de TA-597, 15 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-52, PR 1 de 2). FT-14: el orden de «Un recorrido», las acciones en la barra fija o la columna fija con «Cubrir {total}» cuando hay sobregiro, y el período cerrado sin barra y con «Ir al período actual» en el aviso. CA-14.1 a CA-14.10 no cambian.
