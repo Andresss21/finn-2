@@ -72,7 +72,8 @@ test.describe('PRU-E2E-PWA', () => {
       expect(await estilo(page, 'nav[data-marco-barra]', 'padding-bottom')).toBe('22px');
     }
 
-    // Pantalla hija: en teléfono, «Volver a Presupuesto» de 44 px en la barra y el título de 1.625 rem.
+    // Pantalla hija: en teléfono, «Volver a Presupuesto» de 44 px en la barra; el detalle de categoría lleva su título de
+    // 1.75 rem en el encabezado de la página, no en la barra (C-52 §2).
     const id = await page
       .locator('[data-fila-categoria]')
       .first()
@@ -84,7 +85,7 @@ test.describe('PRU-E2E-PWA', () => {
     else {
       await expect(volver).toBeVisible();
       expect(await volver.boundingBox()).toMatchObject({ width: 44, height: 44 });
-      expect(await estilo(page, '#contenido h1', 'font-size')).toBe('26px');
+      expect(await estilo(page, '#contenido h1', 'font-size')).toBe('28px');
       await expect(barra(page).getByRole('link', { name: navegacion.registrar })).toHaveCount(0);
     }
 
