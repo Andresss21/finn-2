@@ -1,5 +1,6 @@
-// 52 notificaciones [T] para la consulta del centro (TA-197; 04 §6.12.5): destinos válidos con la entidad presente y
-// ausente, un destino que no valida, uno sin destino, una leída y 46 más para cruzar la página de 50. Ninguna es de las
+// 54 notificaciones [T] para la consulta del centro (TA-197; 04 §6.12.5): destinos válidos con la entidad presente y
+// ausente, un destino que no valida, uno sin destino, una leída y 48 más para cruzar la página de 50. [CH-298] n1 y n2 son
+// `sms_nuevo`: se registran pero el centro no las lista ni las cuenta. Ninguna es de las
 // 18 tablas [M], así que no cambian `finn.revision`. `n<k>` es el título; `k` crece con la fecha de creación.
 import pg from 'pg';
 import type { BasePrueba } from './base.ts';
@@ -47,7 +48,7 @@ export async function sembrarNotificacionesDelCentro(base: BasePrueba): Promise<
     );
     await fila(5, 'tarea_fallida', { pantalla: 'no_existe' }, false);
     await fila(6, 'cambio_retroactivo', undefined, false);
-    for (let n = 7; n <= 52; n++) await fila(n, 'cierre_periodo', { pantalla: 'inicio' }, false);
+    for (let n = 7; n <= 54; n++) await fila(n, 'cierre_periodo', { pantalla: 'inicio' }, false);
   } finally {
     await admin.end();
   }

@@ -6,7 +6,7 @@ import { calcular } from '@finn/dominio';
 import { porCobrar as selPorCobrar, programadas as selProgramadas } from '@finn/dominio/selectores';
 import { FechaLocal } from '@finn/dominio/valores';
 import { cargarHechos, leer, leerReferenciasDeProgramadas, Memoria } from '@finn/db';
-import { MOVIMIENTOS, sembrarBandejaCompleta } from '../../db/test/ayudantes/ajustes-prueba.ts';
+import { sembrarBandejaCompleta } from '../../db/test/ayudantes/ajustes-prueba.ts';
 import { crearBasePrueba } from '../../db/test/ayudantes/base.ts';
 import { escribirHechosDePrueba, HOY, RELOJ } from '../../db/test/ayudantes/hechos-prueba.ts';
 import { sembrarNotificacionesDelCentro } from '../../db/test/ayudantes/notificaciones-prueba.ts';
@@ -102,21 +102,15 @@ describe('PRU-INT-COBRO', () => {
 
     // 4. notificaciones(): destino válido, existeDestino y el destino que no valida como ausente
     const pagina = await notificaciones(deps);
-    expect(pagina.notificacionesNoLeidas).toBe(51); // 52 sembradas menos la leída
+    expect(pagina.notificacionesNoLeidas).toBe(51); // 54 sembradas menos la leída y las dos sms_nuevo (CH-298)
     expect(pagina.notificaciones).toHaveLength(50);
-    expect(pagina.notificaciones[0]?.titulo).toBe('n52'); // la más nueva primero
+    expect(pagina.notificaciones[0]?.titulo).toBe('n54'); // la más nueva primero
     expect(pagina.siguienteCursor).toBe(pagina.notificaciones[49]?.id);
     const resto = await notificaciones(deps, { cursor: pagina.siguienteCursor });
-    expect(resto.notificaciones.map((n) => n.titulo)).toEqual(['n2', 'n1']);
+    expect(resto.notificaciones.map((n) => n.titulo)).toEqual(['n4', 'n3']);
     expect(resto.siguienteCursor).toBeUndefined();
     const porTitulo = (t: string) =>
       [...pagina.notificaciones, ...resto.notificaciones].find((n) => n.titulo === t);
-    expect(porTitulo('n1')).toMatchObject({
-      destino: { pantalla: 'movimiento', movimientoId: MOVIMIENTOS.pendiente },
-      leida: false,
-      existeDestino: true,
-    });
-    expect(porTitulo('n2')).toMatchObject({ existeDestino: false, leida: false });
     expect(porTitulo('n3')).toMatchObject({
       destino: { pantalla: 'transaccion', transaccionId: TX_SUPER },
       leida: true,
@@ -128,8 +122,28 @@ describe('PRU-INT-COBRO', () => {
     expect(porTitulo('n6')).toMatchObject({ existeDestino: true });
     const noLeidas = await notificaciones(deps, { soloNoLeidas: true });
     expect(noLeidas.notificaciones.some((n) => n.leida || n.titulo === 'n3')).toBe(false);
+    expect(noLeidas.notificacionesNoLeidas).toBe(51);
     expect((await lanzado(notificaciones(deps, { cursor: 'no-es-uuid' }))).categoria).toBe(
       'VALIDACION',
     );
+  });
+
+  it('PRU-INT-NOTIF-108 [FT-69] el centro no lista ni cuenta las notificaciones sms_*, que se resuelven en la Bandeja; las demás siguen', async () => {
+    const deps: DepsConsulta = {
+      memoria: new Memoria(),
+      sesion: sesionDe({ sub: USUARIO, aal: 'aal2' }),
+      usuarioPermitido: USUARIO,
+      opciones: () => RELOJ,
+    };
+    const todas = await notificaciones(deps);
+    const resto = await notificaciones(deps, { cursor: todas.siguienteCursor });
+    const listadas = [...todas.notificaciones, ...resto.notificaciones];
+    expect(listadas.some((n) => n.motivo.startsWith('sms_'))).toBe(false);
+    expect(listadas.map((n) => n.titulo)).not.toContain('n1');
+    expect(listadas.map((n) => n.titulo)).not.toContain('n2');
+    expect(listadas).toHaveLength(52);
+    const sinLeer = await notificaciones(deps, { soloNoLeidas: true });
+    expect(sinLeer.notificaciones.some((n) => n.motivo.startsWith('sms_'))).toBe(false);
+    expect(todas.notificacionesNoLeidas).toBe(51);
   });
 });

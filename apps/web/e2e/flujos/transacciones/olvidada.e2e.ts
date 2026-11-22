@@ -242,13 +242,13 @@ test.describe('PRU-E2E-TX', () => {
       await esperarContenido(pagina);
       const cambio = pagina.locator('[data-cambio-retroactivo]');
       await expect(cambio).toHaveCount(1);
-      await expect(cambio).toContainText('Δ LPA −$30.00, Δ Salidas −$20.00');
+      await expect(cambio).toContainText('Listo para asignar bajó $30.00 · Salidas bajó $20.00');
     } finally {
       await otro.close();
     }
   });
 
-  test('PRU-E2E-TX-435 [CA-08.5, ESC-31] RUTA-/ después de registrar el débito olvidado de ESC-31 Inicio muestra su resumen (Δ LPA −$30.00, Δ Salidas −$20.00) y "Marcar como leído" lo quita y no vuelve al recargar', async ({
+  test('PRU-E2E-TX-435 [CA-08.5, ESC-31] RUTA-/ después de registrar el débito olvidado de ESC-31 Inicio muestra su resumen (Listo para asignar bajó $30.00 · Salidas bajó $20.00) y "Marcar como leído" lo quita y no vuelve al recargar', async ({
     page,
   }) => {
     await preparar('2027-04-05', ESC31_PASO0);
