@@ -247,7 +247,7 @@ describe('PRU-CMP-NOTIF panel de notificaciones en computadora', () => {
     ) as HTMLElement;
   };
 
-  it('PRU-CMP-NOTIF-720 [] desde 1024 px el panel va de arriba abajo de la ventana, sin radio, a 440 px alineado con la campana, y se desplaza entero, sin un desplazamiento propio de la lista', async () => {
+  it('PRU-CMP-NOTIF-720 [] desde 1024 px el panel va de arriba abajo de la ventana, sin radio, a 440 px pegado al borde derecho de la ventana, y se desplaza entero, sin un desplazamiento propio de la lista', async () => {
     for (const [ancho, alto] of [
       [1440, 900],
       [2000, 1000],
@@ -259,12 +259,9 @@ describe('PRU-CMP-NOTIF panel de notificaciones en computadora', () => {
       expect(estilo.bottom, `${String(ancho)} abajo`).toBe('0px');
       expect(d.offsetHeight, `${String(ancho)} alto`).toBe(alto);
       expect(estilo.width).toBe('440px');
-      // El borde derecho es el de la campana (C-32): lo que sobra a cada lado del bloque de 1240 px más el relleno de 48 px
-      const sobra = Math.max(0, (document.documentElement.clientWidth - 248 - 1240) / 2);
+      // Pegado al borde derecho de la ventana, como los paneles laterales de 440 px (no a la campana)
       expect(
-        Math.abs(
-          document.documentElement.clientWidth - d.getBoundingClientRect().right - (sobra + 48),
-        ),
+        Math.abs(document.documentElement.clientWidth - d.getBoundingClientRect().right),
         `${String(ancho)} derecha`,
       ).toBeLessThan(1);
       expect(estilo.borderBottomLeftRadius).toBe('0px');
