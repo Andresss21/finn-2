@@ -5,8 +5,9 @@ import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import type { NotificacionesDto } from '@finn/aplicacion/consultas/notificaciones';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { userEvent } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import '../../globals.css';
+import { Superpuesto } from '../../../componentes/marco/superpuesto';
 import { notificaciones as textos } from '../../../textos/notificaciones';
 import ErrorDelPanel from '../@superpuesto/(.)notificaciones/error';
 import { ContenidoNotificaciones } from './contenido';
@@ -222,5 +223,75 @@ describe('PRU-CMP-NOTIF panel de notificaciones (E6-9)', () => {
     });
     expect(reset).toHaveBeenCalled();
     expect(panel).not.toBeNull();
+  });
+});
+
+describe('PRU-CMP-NOTIF panel de notificaciones en computadora', () => {
+  afterEach(async () => {
+    await page.viewport(414, 896);
+  });
+
+  const panel = () => {
+    const filas = Array.from({ length: 30 }, (_, i) => fila({ id: `n${String(i)}`, leida: i > 2 }));
+    mostrar(
+      <Superpuesto titulo={textos.titulo} desde="arriba" alCerrar={() => undefined}>
+        <ContenidoNotificaciones
+          dto={dto(filas, 3)}
+          soloNoLeidas={false}
+          marcarLeidas={() => Promise.reject(new Error('no se usa'))}
+        />
+      </Superpuesto>,
+    );
+    return document.querySelector<HTMLElement>(
+      '[role="dialog"][data-forma="arriba"]',
+    ) as HTMLElement;
+  };
+
+  it('PRU-CMP-NOTIF-720 [] desde 1024 px el panel va de arriba abajo de la ventana, sin radio, a 440 px pegado al borde derecho de la ventana, y se desplaza entero, sin un desplazamiento propio de la lista', async () => {
+    for (const [ancho, alto] of [
+      [1440, 900],
+      [2000, 1000],
+    ] as const) {
+      await page.viewport(ancho, alto);
+      const d = panel();
+      const estilo = getComputedStyle(d);
+      expect(estilo.top, `${String(ancho)} arriba`).toBe('0px');
+      expect(estilo.bottom, `${String(ancho)} abajo`).toBe('0px');
+      expect(d.offsetHeight, `${String(ancho)} alto`).toBe(alto);
+      expect(estilo.width).toBe('440px');
+      // Pegado al borde derecho de la ventana, como los paneles laterales de 440 px (no a la campana)
+      expect(
+        Math.abs(document.documentElement.clientWidth - d.getBoundingClientRect().right),
+        `${String(ancho)} derecha`,
+      ).toBeLessThan(1);
+      expect(estilo.borderBottomLeftRadius).toBe('0px');
+      expect(estilo.borderBottomRightRadius).toBe('0px');
+      expect(estilo.overflowY).toBe('auto');
+      expect(d.scrollHeight).toBeGreaterThan(d.clientHeight);
+      const cuerpo = d.querySelector<HTMLElement>('[data-cuerpo]') as HTMLElement;
+      expect(getComputedStyle(cuerpo).overflowY).toBe('visible');
+      expect(cuerpo.scrollHeight).toBe(cuerpo.clientHeight);
+      for (const { raiz, nodo } of montados.splice(0)) {
+        act(() => {
+          raiz.unmount();
+        });
+        nodo.remove();
+      }
+    }
+  });
+
+  it('PRU-CMP-NOTIF-721 [] en el teléfono el panel sigue cayendo desde arriba con alto máximo del 92 % y radio abajo', async () => {
+    await page.viewport(390, 844);
+    const d = panel();
+    const estilo = getComputedStyle(d);
+    expect(estilo.top).toBe('0px');
+    expect(d.offsetHeight).toBeLessThan(844);
+    expect(estilo.borderBottomLeftRadius).not.toBe('0px');
+  });
+
+  it('PRU-CMP-NOTIF-722 [] el pie del panel es el aprobado: los movimientos por revisar se resuelven en la Bandeja', () => {
+    const raiz = contenido(dto([fila()], 1));
+    expect(raiz.textContent).toContain('Los movimientos por revisar se resuelven en la Bandeja.');
+    expect(raiz.textContent).not.toContain('tus SMS por revisar');
   });
 });

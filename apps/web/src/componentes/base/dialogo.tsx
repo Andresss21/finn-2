@@ -88,7 +88,9 @@ export function Dialogo({
               {descripcion}
             </Radix.Description>
           )}
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3">{children}</div>
+          <div data-cuerpo className="min-h-0 flex-1 overflow-y-auto px-5 py-3">
+            {children}
+          </div>
           {acciones === undefined ? null : (
             <div className="flex gap-3 px-5 pt-2 pb-6">{acciones}</div>
           )}
