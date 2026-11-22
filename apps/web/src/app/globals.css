@@ -182,13 +182,24 @@ body {
   }
 }
 
-/* [CH-259, C-32] El panel de notificaciones (CF-23) alinea su borde derecho con el de la campana, o sea con el del contenido. */
+/* [CH-259, C-32] El panel de notificaciones (CF-23) alinea su borde derecho con el de la campana, o sea con el del contenido.
+   [CH-296] Como en `K1-navegacion/notificaciones-abiertas-n7__computadora-claro`: de arriba abajo de la ventana, sin radio ni la
+   zona segura del teléfono, y se desplaza entero (título incluido), sin un desplazamiento propio de la lista. */
 @media (width >= 64rem) {
   .fz-hoja[data-forma='arriba'] {
     left: auto;
     right: calc(var(--marco-sobra) + var(--marco-relleno));
+    bottom: 0;
     width: 27.5rem;
     max-width: calc(100% - var(--marco-barra));
+    max-height: none;
+    padding-top: var(--espacio-3);
+    border-radius: 0;
+    overflow-y: auto;
+  }
+  .fz-hoja[data-forma='arriba'] > [data-cuerpo] {
+    flex: none;
+    overflow-y: visible;
   }
 }
 
