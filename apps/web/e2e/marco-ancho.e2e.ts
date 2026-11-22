@@ -1,6 +1,7 @@
 // PRU-E2E-PWA-801 (TA-597; C-32, CA-C32-2 a CA-C32-7 y CA-C32-9 del diseño): el Marco de computadora en pantallas anchas. A 1440, 1920, 2560 y 3440 px
 // (alto 900) el bloque de 1144 px de contenido más 48 px de relleno se centra a la derecha de la barra lateral de 248 px, el título
-// queda en su borde izquierdo, la campana en el derecho y el panel de notificaciones alinea su borde derecho con el de la campana.
+// queda en su borde izquierdo, la campana en el derecho y el panel de notificaciones alinea su borde derecho con el de la campana
+// y va de arriba abajo de la ventana.
 import type { Page } from '@playwright/test';
 import { entrarAal2 } from './ayudas/sesion.ts';
 import { esperarContenido } from './ayudas/esperas.ts';
@@ -82,6 +83,16 @@ test.describe('PRU-E2E-PWA marco en pantallas anchas', () => {
       // Antes del panel llega un diálogo de carga (`auto`): se espera el de las notificaciones, que cae desde arriba
       const panel = page.locator('[role="dialog"][data-forma="arriba"]');
       await expect(panel).toBeVisible();
+      // Va de arriba abajo de la ventana (K1-navegacion, computadora); se espera a que termine de caer
+      await expect
+        .poll(
+          async () => {
+            const c = await panel.boundingBox();
+            return c === null ? null : [Math.round(c.y), Math.round(c.height)];
+          },
+          { message: `${String(ancho)} alto del panel` },
+        )
+        .toEqual([0, 900]);
       const p = await panel.boundingBox();
       expect(p).not.toBeNull();
       expect(

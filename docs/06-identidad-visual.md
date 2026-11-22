@@ -368,7 +368,8 @@ Contenedor, padding 10 12. Botones "Período anterior / siguiente": círculos de
   - Barra: "2 sin leer" `.t-rotulo` + "Marcar todo como leído" (`--enlace` 700). Al marcar: `check` en `--positivo-texto` + "Todo leído", y el contador de la campana y de Más secciones desaparece.
   - Grupos "Nuevas" y "Anteriores" (`.t-rotulo` `--texto-terciario`), separados por una línea `--borde-sutil`.
   - Aviso: columnas `[40][1fr][10]`; cuadro de 40 px, radio 12 (sin leer: fondo `--accion-tonal` e ícono `--accion`; leído: `--superficie-hundida` y `--texto-secundario`); título 700 (600 leído) + hora `--texto-terciario`; texto `.t-cuerpo-pequeno`; acción opcional "Ver tarjeta →"; punto de 9 px `--accion` si no está leído.
-  - Pie: caja `--superficie-hundida` radio 14 con `info` y "Acá llegan recordatorios y avisos de Finn. Los movimientos de tus SMS por revisar están en la Bandeja."
+  - Pie: caja `--superficie-hundida` radio 14 con `info` y "Acá llegan recordatorios y avisos de Finn. Los movimientos de tus SMS por revisar están en la Bandeja." **[CH-296]** El texto es el aprobado en P6-25 (06-features §5.3): «Los movimientos por revisar se resuelven en la Bandeja.».
+  - **[CH-296]** En computadora (desde 1024 px): 440 px con el borde derecho en el de la campana (CH-259), del borde de arriba al de abajo de la ventana, sin radio ni padding de zona segura, y se desplaza entero (`K1-navegacion/notificaciones-abiertas-n7__computadora-claro`).
   - Contenido de ejemplo: "Visa Oro corta el 25/10" (cal, acción "Ver tarjeta" → Cuentas con Visa al frente), "Cuota del préstamo el 20/10" (repeat), "Netflix tiene su meta cubierta" (target), "La regla PIZZA HUT se aplicó" (filter), "Se cerró el período 21/08 – 20/09" (lock).
 
 #### 2.18 Gráficos
@@ -1260,3 +1261,4 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-288** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7). §3.1: la flecha de las pantallas hijas vuelve a la pantalla anterior de Finn y la nombra; al entrar directo, "Volver a <padre>". La forma no cambia.
 - **CH-294** (corrección posterior de TA-597, 15 de noviembre de 2026, `08-tareas.md` §7). §6: el detalle de categoría «Un recorrido» de C-52 (`docs/anexos/finn-detalle-de-categoria/`, que entra en las fuentes de verdad después de este documento como las entregas anteriores), que reemplaza el orden y la distribución de S3 en teléfono y computadora. Marca **[CH-294]**.
 - **CH-295** (corrección posterior de TA-597, 15 de noviembre de 2026, `08-tareas.md` §7). §6: el movimiento de C-52 §8 (viaje Presupuesto ↔ detalle, entrada escalonada, barras del historial). Marca **[CH-295]**.
+- **CH-296** (corrección posterior de TA-597, 22 de noviembre de 2026, `08-tareas.md` §7). 2.17: el panel de notificaciones en computadora (de arriba abajo, sin radio, desplazamiento único) y el pie aprobado en P6-25. Marca **[CH-296]**.

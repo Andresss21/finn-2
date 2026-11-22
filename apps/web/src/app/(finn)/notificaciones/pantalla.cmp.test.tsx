@@ -262,7 +262,9 @@ describe('PRU-CMP-NOTIF panel de notificaciones en computadora', () => {
       // El borde derecho es el de la campana (C-32): lo que sobra a cada lado del bloque de 1240 px más el relleno de 48 px
       const sobra = Math.max(0, (document.documentElement.clientWidth - 248 - 1240) / 2);
       expect(
-        Math.abs(parseFloat(estilo.right) - (sobra + 48)),
+        Math.abs(
+          document.documentElement.clientWidth - d.getBoundingClientRect().right - (sobra + 48),
+        ),
         `${String(ancho)} derecha`,
       ).toBeLessThan(1);
       expect(estilo.borderBottomLeftRadius).toBe('0px');
