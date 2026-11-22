@@ -1,11 +1,10 @@
 // AV-01 "después" (04 §3.0.5, BE-38): los nombres que necesita la interfaz para decir qué cambió y el resumen que Inicio
-// muestra hasta que se marque como leído. Solo formatea los Δ que ya calculó el dominio; no calcula montos (ADR-07).
+// muestra hasta que se marque como leído. [CH-299] El texto del resumen es `resumen-impacto.ts`.
 import type { Hechos, Impacto } from '@finn/dominio';
-import type { Centavos } from '@finn/dominio/valores';
 import { escribirTecnico as escribirTecnicoDb, type OpcionesTx } from '@finn/db';
-import { formatearMonto } from '../errores/formato.ts';
 import { registrarCambioRetroactivo } from '../push/registro.ts';
 import type { EfectoPosterior, Exito } from './marco.ts';
+import { resumenDelImpacto } from './resumen-impacto.ts';
 
 type EscribirTecnico = typeof escribirTecnicoDb;
 
@@ -25,31 +24,6 @@ export function nombresDelImpacto(
     if (c !== undefined) nombres[c.id] = c.nombre;
   }
   return nombres;
-}
-
-const conSigno = (c: Centavos): string => `${c > 0 ? '+' : ''}${formatearMonto(c)}`;
-
-/** `Δ LPA −$30.00, Δ Salidas −$20.00`: Listo para asignar primero y después cada Δ distinto de cero (01 §5.0.3). */
-export function resumenDelImpacto(
-  impacto: Impacto,
-  nombres: Readonly<Record<string, string>>,
-): string {
-  const nombre = (id: string) => nombres[id] ?? '—';
-  const tarjeta = (t: Impacto['deltaTarjetas'][number]) => [
-    ...(t.deltaSaldo === 0
-      ? []
-      : [`Δ te falta reservar de ${nombre(t.tarjetaId)} ${conSigno(t.deltaSaldo)}`]),
-    ...(t.deltaReserva === 0
-      ? []
-      : [`Δ reserva excedente de ${nombre(t.tarjetaId)} ${conSigno(t.deltaReserva)}`]),
-  ];
-  const reduccion = impacto.deltaReduccionProyectadaLpaAlCierre;
-  return [
-    `Δ LPA ${conSigno(impacto.deltaLpa)}`,
-    ...impacto.deltaDisponible.map((x) => `Δ ${nombre(x.categoriaId)} ${conSigno(x.delta)}`),
-    ...impacto.deltaTarjetas.flatMap(tarjeta),
-    ...(reduccion === 0 ? [] : [`Δ reducción proyectada ${conSigno(reduccion)}`]),
-  ].join(', ');
 }
 
 /** BE-38: tras el COMMIT, una operación que produjo AV-01 deja su resumen en `notificaciones`, sin push. */

@@ -172,7 +172,7 @@ const CAMBIO_RETROACTIVO = {
   aviso: 'AV-01',
   motivo: 'cambio_retroactivo',
   titulo: 'Cambiaste el pasado',
-  cuerpo: 'Δ LPA −$30.00, Δ Salidas −$20.00',
+  cuerpo: 'Listo para asignar bajó $30.00 · Salidas bajó $20.00',
 } as const;
 
 async function sembrarOps(

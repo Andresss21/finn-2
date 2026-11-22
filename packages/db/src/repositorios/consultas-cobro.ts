@@ -3,6 +3,7 @@
 import type { Uuid } from '@finn/dominio';
 import { txPrisma, type LectorTx } from '../transacciones.ts';
 import { aMovimiento } from './bandeja.ts';
+import { FUERA_DEL_CENTRO } from './notificaciones.ts';
 
 /** Movimientos que esperan una programada y cuántos procesamientos de SMS la referencian (6.12.1, OP-51). */
 export async function leerReferenciasDeProgramadas(tx: LectorTx) {
@@ -37,13 +38,16 @@ export interface FilaNotificacion {
   readonly leida: boolean;
 }
 
-/** Una página de notificaciones, de la más nueva a la más vieja; `cursor` es el id de la última de la página anterior. */
+/**
+ * Una página de notificaciones, de la más nueva a la más vieja; `cursor` es el id de la última de la página anterior.
+ * [CH-298] Sin las `sms_*`: se registran y se envían igual, pero se resuelven en la Bandeja.
+ */
 export async function leerPaginaDeNotificaciones(
   tx: LectorTx,
   o: { readonly cursor?: string; readonly soloNoLeidas?: boolean; readonly limite: number },
 ): Promise<{ readonly filas: FilaNotificacion[]; readonly siguienteCursor?: string }> {
   const filas = await txPrisma(tx).notificacion.findMany({
-    where: o.soloNoLeidas === true ? { leidaEn: null } : {},
+    where: { ...FUERA_DEL_CENTRO, ...(o.soloNoLeidas === true ? { leidaEn: null } : {}) },
     orderBy: [{ creadaEn: 'desc' }, { id: 'desc' }],
     take: o.limite + 1,
     ...(o.cursor === undefined ? {} : { cursor: { id: o.cursor }, skip: 1 }),

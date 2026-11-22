@@ -25,9 +25,15 @@ export function notificacionesRecientes(tx: LectorTx, limite = 50) {
   return txPrisma(tx).notificacion.findMany({ orderBy: { creadaEn: 'desc' }, take: limite });
 }
 
-/** Cuántas notificaciones no leídas hay (`notificacionesNoLeidas` del encabezado, 04 §6.0.2). */
+/**
+ * [CH-298] Lo que el centro de notificaciones no lista ni cuenta: las `sms_*` (04 §11.2) se registran y se envían por push,
+ * pero se resuelven en la Bandeja (04 §6.12.5).
+ */
+export const FUERA_DEL_CENTRO = { NOT: { motivo: { startsWith: 'sms_' } } } as const;
+
+/** Cuántas notificaciones no leídas hay (`notificacionesNoLeidas` del encabezado, 04 §6.0.2), sin las `sms_*` (CH-298). */
 export function contarNoLeidas(tx: LectorTx): Promise<number> {
-  return txPrisma(tx).notificacion.count({ where: { leidaEn: null } });
+  return txPrisma(tx).notificacion.count({ where: { ...FUERA_DEL_CENTRO, leidaEn: null } });
 }
 
 /** Las no leídas de un aviso, de la más nueva a la más vieja (AV-01 en Inicio, BE-38). */
