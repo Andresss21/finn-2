@@ -1,6 +1,7 @@
 // PRU-E2E-PWA-801 (TA-597; C-32, CA-C32-2 a CA-C32-7 y CA-C32-9 del diseño): el Marco de computadora en pantallas anchas. A 1440, 1920, 2560 y 3440 px
 // (alto 900) el bloque de 1144 px de contenido más 48 px de relleno se centra a la derecha de la barra lateral de 248 px, el título
-// queda en su borde izquierdo, la campana en el derecho y el panel de notificaciones alinea su borde derecho con el de la campana.
+// queda en su borde izquierdo y la campana en el derecho. [CH-297] El panel de notificaciones va pegado al borde derecho de la
+// ventana y de arriba abajo.
 import type { Page } from '@playwright/test';
 import { entrarAal2 } from './ayudas/sesion.ts';
 import { esperarContenido } from './ayudas/esperas.ts';
@@ -32,7 +33,7 @@ test.describe('PRU-E2E-PWA marco en pantallas anchas', () => {
     await entrarAal2(context, baseURL ?? '');
   });
 
-  test('PRU-E2E-PWA-801 [CA-E4-5] a 1440, 1920, 2560 y 3440 px el contenido se centra a la derecha de la barra lateral, con el título en su borde izquierdo, la campana en el derecho, el panel de notificaciones alineado a la campana y sin desplazamiento horizontal', async ({
+  test('PRU-E2E-PWA-801 [CA-E4-5] a 1440, 1920, 2560 y 3440 px el contenido se centra a la derecha de la barra lateral, con el título en su borde izquierdo, la campana en el derecho, el panel de notificaciones pegado al borde derecho de la ventana y sin desplazamiento horizontal', async ({
     page,
   }) => {
     await alinearRelojes(page, `${HOY}T12:41:00-06:00`);
@@ -74,18 +75,27 @@ test.describe('PRU-E2E-PWA marco en pantallas anchas', () => {
         );
         expect(desborda, `${nombre} desplazamiento horizontal`).toBe(false);
       }
-      // El panel de notificaciones: su borde derecho es el de la campana
+      // El panel de notificaciones: pegado al borde derecho de la ventana (CH-297)
       await page.goto('/');
       await esperarContenido(page);
-      const campana = await caja(page, CAMPANA);
       await page.locator(CAMPANA).click();
       // Antes del panel llega un diálogo de carga (`auto`): se espera el de las notificaciones, que cae desde arriba
       const panel = page.locator('[role="dialog"][data-forma="arriba"]');
       await expect(panel).toBeVisible();
+      // Va de arriba abajo de la ventana (K1-navegacion, computadora); se espera a que termine de caer
+      await expect
+        .poll(
+          async () => {
+            const c = await panel.boundingBox();
+            return c === null ? null : [Math.round(c.y), Math.round(c.height)];
+          },
+          { message: `${String(ancho)} alto del panel` },
+        )
+        .toEqual([0, 900]);
       const p = await panel.boundingBox();
       expect(p).not.toBeNull();
       expect(
-        Math.abs((p?.x ?? 0) + (p?.width ?? 0) - (campana.x + campana.width)),
+        Math.abs((p?.x ?? 0) + (p?.width ?? 0) - ancho),
         `${String(ancho)} panel de notificaciones`,
       ).toBeLessThanOrEqual(TOLERANCIA);
     }

@@ -21,8 +21,8 @@ export const navegacion = {
   // Barra de una pantalla hija (06-identidad-visual §3.1)
   volverA: (seccion: string | null) => (seccion === null ? 'Volver' : `Volver a ${seccion}`),
   // Pie del centro de notificaciones (06-identidad-visual 2.17, P6-25)
-  notificacionesPie:
-    'Acá llegan recordatorios y avisos de Finn. Los movimientos de tus SMS por revisar están en la Bandeja.',
+  // [CH-296] El pie aprobado en P6-25 (06-features §5.3): los avisos `sms_*` también se listan en el centro (04 §11.2).
+  notificacionesPie: 'Los movimientos por revisar se resuelven en la Bandeja.',
   secciones: {
     inicio: 'Inicio',
     presupuesto: 'Presupuesto',
