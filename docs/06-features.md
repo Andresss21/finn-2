@@ -347,7 +347,7 @@ Salieron al redactar las fichas de Notificaciones. Las fichas aplican la recomen
 | "La regla PIZZA HUT se aplicó" | **No** | Ocurriría en casi cada SMS; la Bandeja ya dice "(por regla)" en la fila |
 | "Se cerró el período 21/08 – 20/09" | Ya existe (`cierre_periodo`) | — |
 
-- **a) Recomendada:** ningún motivo nuevo además de `pago_tarjeta_proximo` (CF-07). Los ejemplos del diseño se ajustan a los motivos de 04 §11.2 en §5 (Parte E). El pie del panel ("Acá llegan recordatorios y avisos de Finn. Los movimientos de tus SMS por revisar están en la Bandeja.") no cambia, aunque los avisos `sms_*` también quedan en el centro (04 §11.2): conviene ajustar el texto a "Los movimientos por revisar se resuelven en la Bandeja." **(nuevo)**.
+- **a) Recomendada:** ningún motivo nuevo además de `pago_tarjeta_proximo` (CF-07). Los ejemplos del diseño se ajustan a los motivos de 04 §11.2 en §5 (Parte E). El pie del panel ("Acá llegan recordatorios y avisos de Finn. Los movimientos de tus SMS por revisar están en la Bandeja.") no cambia, aunque los avisos `sms_*` también quedan en el centro (04 §11.2): conviene ajustar el texto a "Los movimientos por revisar se resuelven en la Bandeja." **(nuevo)**. **[CH-298]** Los avisos `sms_*` ya no se listan en el centro ni cuentan en la campana (04 §6.12.5): siguen llegando como push y se resuelven en la Bandeja; el pie nuevo sigue valiendo.
 - **b)** Agregar `cuota_proxima`: para las programadas de tipo `cuota_prestamo` **sin** registro automático, una notificación con push 3 días antes de cada ocurrencia, una sola vez por ocurrencia, con destino `programada` y `fechaEsperada`. Sería CF a 04 §10.2 (paso 4), §11.2 y §11.4; sin migración (`motivo` es texto, CF-16 ya admite `aviso` nulo).
 - **c)** Los cuatro avisos del diseño.
 
@@ -1556,7 +1556,7 @@ Reglas comunes a todas las fichas:
 - **CA-08.2 (error 11)** Dado el paso 0 de ESC-31 y el paso 1 de ESC-05, cuando comparo `inicio().atencion.sobregiradas` con `presupuesto().grupos[].categorias[]` del período activo, entonces las categorías con Disponible negativo y sus montos son los mismos.
 - **CA-08.3** Dado el paso 2 de ESC-20, cuando abro Inicio, entonces Listo para asignar es $675.00 y "En camino" es $25.00.
 - **CA-08.4** Dado el paso 4 de ESC-01, cuando abro Inicio, entonces el patrimonio es −$4,300.00 (U+2212).
-- **CA-08.5** Dado un cambio retroactivo confirmado (paso 1 de ESC-31), cuando abro Inicio, entonces veo su resumen (Δ LPA −$30.00, Δ Salidas −$20.00); al tocar "Marcar como leído" desaparece y no vuelve al recargar.
+- **CA-08.5** Dado un cambio retroactivo confirmado (paso 1 de ESC-31), cuando abro Inicio, entonces veo su resumen ~~(Δ LPA −$30.00, Δ Salidas −$20.00)~~ **[CH-299]** «Listo para asignar bajó $30.00 · Salidas bajó $20.00» (sin líneas en cero; si todo es cero, «No cambió nada en el período actual.»); al tocar "Marcar como leído" desaparece y no vuelve al recargar.
 - **CA-08.6** Dado 5 categorías con hallazgo de ritmo, cuando abro Inicio, entonces veo solo las 3 de mayor impacto (`RITMO_INICIO_MAX`), con los mismos montos que el reporte `ritmo` (3.7).
 - **CA-08.7** Dado el paso 4 de ESC-13 (reserva excedente $30.00), cuando toco la propuesta de AV-08, entonces Listo para asignar sube $30.00 (paso 5) y aparece "Deshacer" (05 §4.14).
 - **CA-08.8** Dado ninguna condición de atención, cuando abro Inicio, entonces veo "Todo al día"; con una sola ocurrencia atrasada, no lo veo.
@@ -2362,7 +2362,7 @@ Reglas comunes a todas las fichas:
 
 **Criterios de aceptación.**
 - **CA-27.1** Dado el paso 0 de ESC-31, cuando registro un débito de $50.00 en Salidas con fecha 10 de febrero, entonces la previsualización muestra Δ LPA −$30.00 y Δ Salidas −$20.00; al confirmar, LPA es $560.00 y Salidas $60.00 (paso 1).
-- **CA-27.2** Dado el paso 0 de ESC-31, cuando registro con T $50.00 en Salidas con fecha 10 de febrero, entonces el impacto es Δ Salidas −$20.00, Δ Pago T +$20.00, Δ te falta reservar +$30.00 y Δ LPA $0.00 (ESC-32).
+- **CA-27.2** Dado el paso 0 de ESC-31, cuando registro con T $50.00 en Salidas con fecha 10 de febrero, entonces el impacto es Δ Salidas −$20.00, Δ Pago T +$20.00, Δ te falta reservar +$30.00 y Δ LPA $0.00 (ESC-32). **[CH-299]** Al confirmar, el resumen que queda en Inicio y en Notificaciones es «Salidas bajó $20.00 · Pago T subió $20.00 · Te falta reservar para T subió $30.00», sin Listo para asignar porque no cambia.
 - **CA-27.3** Dado el paso 5 de ESC-49, cuando registro un débito olvidado de $350.00 con fecha 1 de marzo, entonces LPA queda en $300.00 y Super en $300.00 (paso 6).
 - **CA-27.4** Dado el paso 1 de ESC-17, cuando el 12 de febrero registro un débito olvidado de $20.00 con fecha 10 de febrero, entonces queda detrás de las compras del mismo día en el reparto D2 (paso 2), no delante (paso 2′).
 - **CA-27.5** Dado una operación con AV-01 enviada sin `huellaImpacto`, cuando llega al servidor, entonces responde `REQUIERE_CONFIRMACION` y no cambia ningún hecho.
@@ -4094,7 +4094,7 @@ Reglas comunes a las fichas de reportes:
 - Rutas: `/notificaciones`; los destinos de 05 §3.5.
 - Componentes: lista de notificaciones, `Insignia`, `Resultado`, `Superpuesto` (P6-24), `EstadoVacio`.
 
-**Reglas.** 04 §11.1 (el registro es la fuente de verdad), §6.12.5, §11.4 (destinos); 05 §3.5 (FE-32), §2.9; P6-24 (CF-23) y P6-25 (CF-24), resueltas en 0.15 **[R4]**.
+**Reglas.** 04 §11.1 (el registro es la fuente de verdad), §6.12.5, §11.4 (destinos); 05 §3.5 (FE-32), §2.9; P6-24 (CF-23) y P6-25 (CF-24), resueltas en 0.15 **[R4]**. **[CH-298]** El centro y la campana dejan fuera los motivos `sms_*`, que se resuelven en la Bandeja (FT-08).
 
 **Estados.** Sin notificaciones: "No tenés notificaciones". Destino que ya no existe: sin enlace y con "Esto ya no existe".
 
@@ -4565,7 +4565,7 @@ El panel de ejemplo de PANTALLAS §2.17 se reemplaza por ejemplos de motivos que
 | "Visa Oro corta el 25/10 · Te falta reservar $18.75 para que la deuda quede cubierta antes del corte" → Cuentas con Visa al frente | No hay motivo de corte; además lleva un saldo (FD-31) | "Visa Oro: tu fecha de pago es el 15/11. Revisá cuánto pagar para no generar intereses." → "Ver tarjeta" abre el detalle de la tarjeta (destino `cuenta`, CF-07), no la billetera | `pago_tarjeta_proximo` |
 | "Cuota del préstamo el 20/10 · Cuota 14 · $210.00 desde Cuenta de ahorro. Se registra sola." | Una cuota que se registra sola no lleva aviso de cuota próxima (3.16) | "Cuota de Préstamo personal por $210.00 el 20/10. Registrala cuando la pagues." → la ocurrencia | `cuota_proxima` |
 | "Netflix tiene su meta cubierta" | Fuera (P6-25) | "Se registró Netflix por $15.49 el 17/10." (texto de ejemplo, **nuevo**) → la transacción | `registro_automatico` |
-| "La regla PIZZA HUT se aplicó" | Fuera (P6-25) | "Compra en PIZZA HUT por $18.40. Revisala en la bandeja." → el movimiento | `sms_nuevo` (04 §11.4) |
+| "La regla PIZZA HUT se aplicó" | Fuera (P6-25) | ~~"Compra en PIZZA HUT por $18.40. Revisala en la bandeja." → el movimiento~~ **[CH-298]** Sin ejemplo en el panel: los `sms_*` no se listan en el centro (llegan como push y se revisan en la Bandeja) | ~~`sms_nuevo` (04 §11.4)~~ |
 | "Se cerró el período 21/08 – 20/09 · Sobregiros cubiertos: Listo para asignar no cambió." | Coincide con el motivo | "Cerró el período del 21/08 al 20/09. Listo para asignar no cambió." | `cierre_periodo` |
 
 - Pie del panel: "Los movimientos por revisar se resuelven en la Bandeja." (aprobado en P6-25).
@@ -4981,3 +4981,5 @@ Aprobadas en fases posteriores. Cada línea indica qué cambia y dónde está el
 - **CH-283** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7). FT-55: en un préstamo en curso con modelo, la tabla muestra las cuotas pagadas antes de Finn, desde el monto original, atenuadas y con "Pagada antes de Finn"; solo presentación. Los CA no cambian. Marca **[CH-283]**.
 - **CH-286** (corrección posterior de TA-597, 14 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-51). FT-21: el borrador recuperado avisa una sola vez por borrador y «Descartar borrador» va al pie (enmienda E3-17); textos nuevos: «Descartaste el borrador.» y los nombres ocultos de tono de los avisos («Información:», «Advertencia:», «Problema:», «Listo:»). FT-08 no cambia: la Bandeja ya es la primera fila de «Necesita tu atención». Los CA no cambian. Marca **[CH-286]**.
 - **CH-294** (corrección posterior de TA-597, 15 de noviembre de 2026, `08-tareas.md` §7; decisión de diseño C-52, PR 1 de 2). FT-14: el orden de «Un recorrido», las acciones en la barra fija o la columna fija con «Cubrir {total}» cuando hay sobregiro, y el período cerrado sin barra y con «Ir al período actual» en el aviso. CA-14.1 a CA-14.10 no cambian.
+- **CH-298** (corrección posterior de TA-597, 22 de noviembre de 2026, `08-tareas.md` §7). FT-69, P6-25 a) y §5.3: el centro de notificaciones y la campana dejan fuera los `sms_*`; el push sigue. Marca **[CH-298]**.
+- **CH-299** (corrección posterior de TA-597, 22 de noviembre de 2026, `08-tareas.md` §7). CA-08.5 y CA-27.2: el resumen del cambio retroactivo es legible («Listo para asignar bajó $30.00 · Salidas bajó $20.00»), sin líneas en cero. Marca **[CH-299]**.
